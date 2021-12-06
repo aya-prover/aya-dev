@@ -10,7 +10,6 @@ import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourceFileLocator;
 import org.aya.concrete.Expr;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.stmt.Stmt;
@@ -21,7 +20,6 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.IntBuffer;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
@@ -60,18 +58,6 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     return parser;
   }
 
-  public static @NotNull ImmutableSeq<Stmt> program(
-    @NotNull SourceFileLocator locator,
-    @NotNull Reporter reporter, @NotNull Path path
-  ) throws IOException {
-    return new AyaParserImpl(reporter).program(locator, path);
-  }
-
-  public static @NotNull ImmutableSeq<Stmt> program(@NotNull Reporter reporter, SourceFile sourceFile) {
-    return new AyaProducer(Either.left(sourceFile), reporter).visitProgram(
-      parser(sourceFile, reporter).program());
-  }
-
   private static @NotNull <T> T replParser(
     @NotNull Reporter reporter, @NotNull String text,
     @NotNull BiFunction<AyaProducer, AyaParser, T> tree
@@ -81,23 +67,21 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     return tree.apply(new AyaProducer(Either.left(sourceFile), reporter), parser);
   }
 
-  public static @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull Reporter reporter, @NotNull String text) {
+  public static @NotNull Either<ImmutableSeq<Stmt>, Expr>
+  repl(@NotNull Reporter reporter, @NotNull String text) {
     return replParser(reporter, text, (pro, par) -> pro.visitRepl(par.repl()));
   }
 
-  public static @NotNull Expr expr(@NotNull Reporter reporter, @NotNull String text) {
+  public static @NotNull Expr replExpr(@NotNull Reporter reporter, @NotNull String text) {
     return replParser(reporter, text, (pro, par) -> pro.visitExpr(par.expr()));
   }
 
-  public static @NotNull Expr expr(@NotNull Reporter reporter, @NotNull String text, @NotNull SourcePos pos) {
-    return new AyaProducer(Either.right(pos), reporter).visitExpr(parser(text).expr());
-  }
-
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos pos) {
-    return expr(reporter, code, pos);
+    return new AyaProducer(Either.right(pos), reporter).visitExpr(parser(code).expr());
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile) {
-    return program(reporter, sourceFile);
+    return new AyaProducer(Either.left(sourceFile), reporter).visitProgram(
+      parser(sourceFile, reporter).program());
   }
 }

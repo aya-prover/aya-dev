@@ -141,7 +141,7 @@ public class ReplCompiler {
    */
   public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      return tyckExpr(AyaParserImpl.expr(reporter, text)).type().normalize(null, normalizeMode);
+      return tyckExpr(AyaParserImpl.replExpr(reporter, text)).type().normalize(null, normalizeMode);
     } catch (InterruptException ignored) {
       return null;
     }

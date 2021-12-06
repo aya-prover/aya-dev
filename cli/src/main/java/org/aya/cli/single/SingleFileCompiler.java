@@ -62,11 +62,12 @@ public record SingleFileCompiler(
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     return AyaCompiler.catching(reporter, flags, () -> {
-      var program = AyaParserImpl.program(locator, reporter, sourceFile);
+      var ayaParser = new AyaParserImpl(reporter);
+      var program = ayaParser.program(locator, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
-        new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), builder)).toImmutableSeq()));
+        new FileModuleLoader(locator, path, reporter, ayaParser, builder)).toImmutableSeq()));
       loader.tyckModule(ctx, program, builder, (moduleResolve, defs) -> {
         distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
         distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);

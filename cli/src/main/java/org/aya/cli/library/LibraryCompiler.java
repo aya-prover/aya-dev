@@ -65,7 +65,7 @@ public class LibraryCompiler {
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
     if (source.program().value != null) return; // already parsed
     var owner = source.owner();
-    var program = AyaParserImpl.program(owner.locator(), owner.reporter(), source.file());
+    var program = new AyaParserImpl(owner.reporter()).program(owner.locator(), source.file());
     source.program().value = program;
     var finder = new ImportResolver(mod -> {
       var file = owner.findModule(mod);

@@ -17,12 +17,8 @@ import java.nio.file.Path;
 public interface GenericAyaParser {
   @NotNull Expr expr(@NotNull String code, @NotNull SourcePos overridingSourcePos);
   @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile);
-  default @NotNull ImmutableSeq<Stmt> program(
-    @NotNull SourceFileLocator locator,
-    @NotNull Path path
-  ) throws IOException {
-    var sourceFile = new SourceFile(locator.displayName(path).toString(), path, Files.readString(path));
-    return program(sourceFile);
+  default @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFileLocator l, @NotNull Path p) throws IOException {
+    return program(new SourceFile(l.displayName(p).toString(), p, Files.readString(p)));
   }
   @NotNull Reporter reporter();
 }
