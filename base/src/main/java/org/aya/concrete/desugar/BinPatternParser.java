@@ -6,7 +6,7 @@ import kala.collection.SeqView;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.desugar.error.OperatorProblem;
+import org.aya.concrete.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.tyck.pat.PatternProblem;
 import org.aya.util.binop.Assoc;

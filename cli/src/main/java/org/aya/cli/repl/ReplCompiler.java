@@ -16,7 +16,6 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.cli.parse.AyaParsing;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.Expr;
@@ -103,7 +102,7 @@ public class ReplCompiler {
   public @NotNull Either<ImmutableSeq<Def>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
-    var programOrExpr = AyaParsing.repl(reporter, text);
+    var programOrExpr = AyaParserImpl.repl(reporter, text);
     try {
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
         new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), null)).toImmutableSeq()));
@@ -142,7 +141,7 @@ public class ReplCompiler {
    */
   public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      return tyckExpr(AyaParsing.expr(reporter, text)).type().normalize(null, normalizeMode);
+      return tyckExpr(AyaParserImpl.expr(reporter, text)).type().normalize(null, normalizeMode);
     } catch (InterruptException ignored) {
       return null;
     }

@@ -6,7 +6,7 @@ import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.desugar.error.LevelProblem;
+import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.generic.Constants;
 import org.aya.generic.Level;

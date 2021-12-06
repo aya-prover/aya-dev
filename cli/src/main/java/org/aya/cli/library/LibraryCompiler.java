@@ -11,7 +11,7 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.cli.parse.AyaParsing;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
@@ -65,7 +65,7 @@ public class LibraryCompiler {
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
     if (source.program().value != null) return; // already parsed
     var owner = source.owner();
-    var program = AyaParsing.program(owner.locator(), owner.reporter(), source.file());
+    var program = AyaParserImpl.program(owner.locator(), owner.reporter(), source.file());
     source.program().value = program;
     var finder = new ImportResolver(mod -> {
       var file = owner.findModule(mod);

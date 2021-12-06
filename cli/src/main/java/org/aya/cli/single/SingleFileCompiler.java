@@ -10,7 +10,6 @@ import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.cli.parse.AyaParsing;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.resolve.ModuleCallback;
@@ -63,7 +62,7 @@ public record SingleFileCompiler(
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     return AyaCompiler.catching(reporter, flags, () -> {
-      var program = AyaParsing.program(locator, reporter, sourceFile);
+      var program = AyaParserImpl.program(locator, reporter, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->

@@ -20,7 +20,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.parse.error.*;
+import org.aya.concrete.error.*;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;

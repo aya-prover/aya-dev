@@ -6,7 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.antlr.v4.runtime.Token;
 import org.aya.api.util.AyaHome;
-import org.aya.cli.parse.AyaParsing;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.distill.BaseDistiller;
@@ -70,7 +70,7 @@ public final class JlineRepl extends AyaRepl implements AntlrLexer {
   }
 
   @Override public @NotNull SeqView<Token> tokensNoEOF(String line) {
-    return AyaParsing.tokens(line).view().dropLast(1);
+    return AyaParserImpl.tokens(line).view().dropLast(1);
   }
 
   private int widthOf(@NotNull Terminal terminal) {

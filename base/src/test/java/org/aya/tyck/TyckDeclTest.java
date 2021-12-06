@@ -3,7 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.parse.AyaParsing;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.ResolveInfo;
@@ -46,7 +46,7 @@ public class TyckDeclTest {
   }
 
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
-    var decls = AyaParsing.program(ThrowingReporter.INSTANCE, new SourceFile("114514", Path.of("114514"), text));
+    var decls = AyaParserImpl.program(ThrowingReporter.INSTANCE, new SourceFile("114514", Path.of("114514"), text));
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
     resolve(decls, ctx, EmptyModuleLoader.INSTANCE);
     return decls;
