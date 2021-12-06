@@ -55,5 +55,4 @@ def overlap *'-*-iso (m n : Nat) : m *' n = m * n
 | suc m, suc n => pmap (\ x => suc (m + n + x)) (*'-*-iso m n)
   <==> sym (*-suc-suc m n)
 
-def *'-*-eq : (*') = (*) => funExt (*') (*)
-    (\ m => funExt (m *') (m *) (*'-*-iso m))
+def *'-*-eq : (*') = (*) => funExt2 (*') (*) *'-*-iso
