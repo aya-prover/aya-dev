@@ -391,9 +391,16 @@ public final class DefEq {
         assert !state.metas().containsKey(meta);
         var solved = preRhs.subst(subst).freezeHoles(state);
         var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
-        if (scopeCheck.isNotEmpty()) {
-          reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, pos));
+        if (scopeCheck.invalid.isNotEmpty()) {
+          reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid, pos));
           yield new ErrorTerm(solved);
+        }
+        if (scopeCheck.confused.isNotEmpty()) {
+          if (allowVague) state.addEqn(createEqn(lhs, solved));
+          else {
+            reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused, pos));
+            yield new ErrorTerm(solved);
+          }
         }
         if (!meta.solve(state, solved)) {
           reporter.report(new HoleProblem.RecursionError(lhs, solved, pos));

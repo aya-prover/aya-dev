@@ -82,11 +82,23 @@ public interface VarConsumer<P> extends TermConsumer<P> {
 
   final class ScopeChecker implements VarConsumer<Unit> {
     public final @NotNull ImmutableSeq<LocalVar> allowed;
-    public final @NotNull DynamicSeq<LocalVar> invalidVars = DynamicSeq.create();
+    public final @NotNull DynamicSeq<LocalVar> invalid;
+    public final @NotNull DynamicSeq<LocalVar> confused;
     private final @NotNull DynamicSeq<LocalVar> bound = DynamicSeq.create();
 
     @Contract(pure = true) public ScopeChecker(@NotNull ImmutableSeq<LocalVar> allowed) {
+      this(allowed, DynamicSeq.create(), DynamicSeq.create());
+    }
+
+    @Contract(pure = true)
+    private ScopeChecker(
+      @NotNull ImmutableSeq<LocalVar> allowed,
+      @NotNull DynamicSeq<LocalVar> confused,
+      @NotNull DynamicSeq<LocalVar> invalid
+    ) {
       this.allowed = allowed;
+      this.confused = confused;
+      this.invalid = invalid;
     }
 
     @TestOnly @VisibleForTesting public boolean isCleared() {
@@ -119,11 +131,18 @@ public interface VarConsumer<P> extends TermConsumer<P> {
       return unit;
     }
 
+    @Override public Unit visitHole(CallTerm.@NotNull Hole term, Unit unit) {
+      new ScopeChecker(allowed.appendedAll(bound), confused, confused)
+        .visitArgs(unit, term.contextArgs());
+      visitArgs(unit, term.args());
+      return unit;
+    }
+
     @Contract(mutates = "this") @Override public void visitVar(Var v, Unit unit) {
       if (v instanceof LocalVar local
         && !(allowed.contains(local) || bound.contains(local))
-        && !invalidVars.contains(local)
-      ) invalidVars.append(local);
+        && !invalid.contains(local)
+      ) invalid.append(local);
     }
   }
 }
