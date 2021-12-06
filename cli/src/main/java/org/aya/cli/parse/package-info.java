@@ -4,4 +4,4 @@
  * This should be the only package that can access the antlr4 runtime.
  * The <code>parser</code> module is supposed to be used only in this package.
  */
-package org.aya.concrete.parse;
+package org.aya.cli.parse;

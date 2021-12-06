@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.parse;
+package org.aya.cli.parse;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
@@ -16,12 +16,12 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
 import org.aya.util.error.SourceFile;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.IntBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
 
@@ -63,12 +63,11 @@ public interface AyaParsing {
     @NotNull SourceFileLocator locator,
     @NotNull Reporter reporter, @NotNull Path path
   ) throws IOException {
-    var sourceFile = new SourceFile(locator.displayName(path).toString(), path, Files.readString(path));
-    return program(reporter, sourceFile);
+    return new AyaParserImpl(reporter).program(locator, path);
   }
 
   static @NotNull ImmutableSeq<Stmt> program(@NotNull Reporter reporter, SourceFile sourceFile) {
-    return new AyaProducer(sourceFile, reporter).visitProgram(
+    return new AyaProducer(Either.left(sourceFile), reporter).visitProgram(
       parser(sourceFile, reporter).program());
   }
 
@@ -78,7 +77,7 @@ public interface AyaParsing {
   ) {
     var sourceFile = new SourceFile("<stdin>", Path.of("stdin"), text);
     var parser = parser(sourceFile, reporter);
-    return tree.apply(new AyaProducer(sourceFile, reporter), parser);
+    return tree.apply(new AyaProducer(Either.left(sourceFile), reporter), parser);
   }
 
   static @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull Reporter reporter, @NotNull String text) {
@@ -87,5 +86,9 @@ public interface AyaParsing {
 
   static @NotNull Expr expr(@NotNull Reporter reporter, @NotNull String text) {
     return replParser(reporter, text, (pro, par) -> pro.visitExpr(par.expr()));
+  }
+
+  static @NotNull Expr expr(@NotNull Reporter reporter, @NotNull String text, @NotNull SourcePos pos) {
+    return new AyaProducer(Either.right(pos), reporter).visitExpr(parser(text).expr());
   }
 }

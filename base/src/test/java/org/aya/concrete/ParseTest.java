@@ -7,8 +7,8 @@ import kala.control.Either;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.parse.AyaProducer;
+import org.aya.cli.parse.AyaParsing;
+import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
-  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(SourceFile.NONE,
+  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(Either.left(SourceFile.NONE),
     ThrowingReporter.INSTANCE);
 
   @BeforeAll public static void enableTest() {

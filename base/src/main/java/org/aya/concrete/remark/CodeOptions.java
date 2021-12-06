@@ -4,8 +4,7 @@ package org.aya.concrete.remark;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
-import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.parse.AyaProducer;
+import org.aya.concrete.Expr;
 import org.commonmark.node.Code;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +19,8 @@ public record CodeOptions(
   public static final @NotNull CodeOptions DEFAULT =
     new CodeOptions(NormalizeMode.NULL, DistillerOptions.pretty(), ShowCode.Core);
 
-  public static @NotNull Literate.Code analyze(@NotNull Code code, @NotNull AyaProducer producer) {
+  public static @NotNull Literate.Code analyze(@NotNull Code code, @NotNull Expr expr) {
     var distillOpts = new DistillerOptions();
-    var expr = producer.visitExpr(AyaParsing.parser(code.getLiteral()).expr());
     if (code.getFirstChild() instanceof CodeAttrProcessor.Attr attr) {
       return new Literate.Code(expr, attr.options);
     } else return new Literate.Code(expr, DEFAULT);

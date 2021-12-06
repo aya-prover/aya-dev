@@ -3,9 +3,9 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.parse.AyaParsing;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
