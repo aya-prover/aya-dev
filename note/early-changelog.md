@@ -2,6 +2,26 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.14
+
+Upgraded some dependencies, start using our repackaged commonmark-java with jpms,
+added several error reports, implemented the library system and replaced the success
+test cases with a library test suite, extracted a `common` library as a prototype of
+a standard library, extracted `tools-repl` subproject with the REPL command system
+generalized, added prim id to `PrimCall`, added `--verbosity` flag to control the
+least severe level of errors reported, removed `RefTerm::type` (and we plan to remove
+the types of core patterns too) (this means we now use a lot of `LocalCtx` instances,
+even in every `TyckState.Eqn`), removed `LittleTyper` because we seem to be fine even
+without it (we have sufficient universe level equations), refactored the pattern matching
+elaboration to be checking _all_ patterns at once and _then_ check all bodies at once,
+refactored the classifier to generate a tree of classifications (instead of a flattened list),
+allow mutual recursion in conditions, start using the user-configured pretty printing options
+in the CLI pretty printer, insert more obvious implicit arguments.
+
+The library system makes use of the serialization framework
+and supports file-level incremental type checking.
+The language server is updated to work with the library system.
+
 ## 0.13
 
 Upgraded gradle, resolve pattern matching in the resolver instead of the type checker,
