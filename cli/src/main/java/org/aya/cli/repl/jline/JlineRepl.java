@@ -3,6 +3,7 @@
 package org.aya.cli.repl.jline;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.antlr.v4.runtime.Token;
 import org.aya.api.util.AyaHome;
 import org.aya.cli.repl.AyaRepl;
@@ -33,14 +34,15 @@ import org.jline.terminal.impl.DumbTerminal;
 import org.jline.utils.AttributedString;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 public final class JlineRepl extends AyaRepl implements AntlrLexer {
   private final @NotNull Terminal terminal;
   @VisibleForTesting
   public final @NotNull LineReader lineReader;
 
-  public JlineRepl(@NotNull ReplConfig config) throws IOException {
-    super(config);
+  public JlineRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) throws IOException {
+    super(modulePaths, config);
     terminal = TerminalBuilder.builder()
       .jansi(true)
       .jna(false)

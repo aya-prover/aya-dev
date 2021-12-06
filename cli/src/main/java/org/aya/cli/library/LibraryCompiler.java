@@ -44,9 +44,14 @@ public class LibraryCompiler {
     this.owner = owner;
   }
 
-  public static int compileExisting(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner) throws IOException {
-    var compiler = new LibraryCompiler(flags, owner, new LibraryModuleLoader.United());
-    return compiler.start();
+  public static @NotNull LibraryCompiler newCompiler(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner) throws IOException {
+    return new LibraryCompiler(flags, owner, new LibraryModuleLoader.United());
+  }
+
+  public static @NotNull LibraryCompiler newCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
+    var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
+    var owner = DiskLibraryOwner.from(reporter, config);
+    return newCompiler(flags, owner);
   }
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
@@ -54,9 +59,7 @@ public class LibraryCompiler {
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
-    var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
-    var owner = DiskLibraryOwner.from(reporter, config);
-    return compileExisting(flags, owner);
+    return newCompiler(reporter, flags, libraryRoot).start();
   }
 
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
@@ -136,7 +139,7 @@ public class LibraryCompiler {
       src.tycked().value = null;
       src.resolveInfo().value = null;
     });
-    FileUtil.deleteRecursively(owner.underlyingLibrary().libraryOutRoot());
+    FileUtil.deleteRecursively(owner.outDir());
   }
 
   /**
@@ -216,8 +219,8 @@ public class LibraryCompiler {
     private void tyckOne(CountingReporter reporter, LibrarySource file) {
       var moduleName = file.moduleName();
       var mod = moduleLoader.load(moduleName);
-      if (mod == null) throw new IllegalStateException("Unable to load module: " + moduleName);
-      file.resolveInfo().value = mod;
+      if (mod == null || file.resolveInfo().value == null)
+        throw new IllegalStateException("Unable to load module: " + moduleName);
       outerReporter.reportNest("[Tyck] %s (%s)".formatted(
         QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
     }
@@ -230,6 +233,10 @@ public class LibraryCompiler {
   private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {
     dep.suc(info).appendAll(info.imports());
     info.imports().forEach(i -> collectDep(dep, i));
+  }
+
+  public @NotNull LibraryOwner libraryOwner() {
+    return owner;
   }
 
   private static void collectChanged(

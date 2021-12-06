@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.repl.AyaRepl;
@@ -89,7 +90,7 @@ public class PlainReplTest {
     var out = new StringWriter();
     var err = new StringWriter();
     var reader = new StringReader(input + "\n:exit");
-    var repl = new AyaRepl.PlainRepl(config, new IO(reader, out, err));
+    var repl = new AyaRepl.PlainRepl(ImmutableSeq.empty(), config, new IO(reader, out, err));
     repl.run();
     return Tuple.of(out.toString(), err.toString());
   }

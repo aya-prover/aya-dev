@@ -27,7 +27,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       System.err.println("Try `aya --help` to see available commands");
       return 1;
     }
-    if (action.repl != null) return AyaRepl.start(action.repl);
+    if (action.repl != null) return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;

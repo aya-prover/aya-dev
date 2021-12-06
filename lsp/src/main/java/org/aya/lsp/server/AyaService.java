@@ -124,7 +124,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       CompilerFlags.Message.EMOJI, false, true, null,
       SeqView.empty(), null);
     try {
-      LibraryCompiler.compileExisting(flags, owner);
+      LibraryCompiler.newCompiler(flags, owner).start();
     } catch (IOException e) {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
