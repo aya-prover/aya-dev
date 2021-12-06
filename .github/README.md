@@ -112,5 +112,10 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
 ```
 
 + `[project name]` specifies the subproject of Aya you want to use, and the options are `pretty`, `base`, `cli`, `parser`, etc.
-  The type checker lives in `base` and `parser` and the pretty printing framework resides in `pretty`.
+  + The type checker lives in `base` and `parser`.
+  + The generalized pretty printing framework is in `pretty`.
+  + The generalized binary operator parser, generalized tree builder, generalized mutable graph,
+    and a bunch of other utilities (strings, files, etc.) are in `tools`.
+  + The command and argument parsing framework is in `tools-repl`.
+    It offers an implementation of ANTLR4-based jline3 parser and relevant facilities.
 + `[latest version]` is what you see on this badge ![maven] .
