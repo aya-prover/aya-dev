@@ -46,7 +46,7 @@ public record TyckState(
     @NotNull Reporter reporter, Trace.@Nullable Builder tracer,
     @NotNull Eqn eqn, boolean allowVague
   ) {
-    new DefEq(eqn.cmp, reporter, allowVague, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
+    new DefEq(eqn.cmp, reporter, allowVague, allowVague, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
   }
 
   /** @return true if <code>this.eqns</code> and <code>this.activeMetas</code> are mutated. */

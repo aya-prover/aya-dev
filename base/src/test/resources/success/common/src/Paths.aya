@@ -31,9 +31,8 @@ def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
 def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
   => path (\ i x => (p x).at i)
 
--- TODO: fix unification
--- def funExt2 (f g : A -> B -> C) (p : forall a -> forall b -> f a b = g a b) : f = g
---   => path (\ i a b => (p a b).at i)
+def funExt2 (f g : A -> B -> C) (p : forall a -> forall b -> f a b = g a b) : f = g
+  => path (\ i a b => (p a b).at i)
 
 def pmap (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))

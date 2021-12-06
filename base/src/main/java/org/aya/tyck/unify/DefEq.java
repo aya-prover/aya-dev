@@ -42,6 +42,7 @@ public final class DefEq {
   private final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @Nullable Trace.Builder traceBuilder;
   final boolean allowVague;
+  final boolean allowConfused;
   private final @NotNull TyckState state;
   private final @NotNull Reporter reporter;
   private final @NotNull SourcePos pos;
@@ -50,12 +51,14 @@ public final class DefEq {
   private final @NotNull Eta uneta;
 
   public DefEq(
-    @NotNull Ordering cmp, @NotNull Reporter reporter, boolean allowVague,
+    @NotNull Ordering cmp, @NotNull Reporter reporter,
+    boolean allowVague, boolean allowConfused,
     @Nullable Trace.Builder traceBuilder, @NotNull TyckState state,
     @NotNull SourcePos pos, @NotNull LocalCtx ctx
   ) {
     this.cmp = cmp;
     this.allowVague = allowVague;
+    this.allowConfused = allowConfused;
     this.reporter = reporter;
     this.traceBuilder = traceBuilder;
     this.state = state;
@@ -391,9 +394,16 @@ public final class DefEq {
         assert !state.metas().containsKey(meta);
         var solved = preRhs.subst(subst).freezeHoles(state);
         var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
-        if (scopeCheck.isNotEmpty()) {
-          reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, pos));
+        if (scopeCheck.invalid.isNotEmpty()) {
+          reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid, pos));
           yield new ErrorTerm(solved);
+        }
+        if (scopeCheck.confused.isNotEmpty()) {
+          if (allowConfused) state.addEqn(createEqn(lhs, solved));
+          else {
+            reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused, pos));
+            yield new ErrorTerm(solved);
+          }
         }
         if (!meta.solve(state, solved)) {
           reporter.report(new HoleProblem.RecursionError(lhs, solved, pos));
