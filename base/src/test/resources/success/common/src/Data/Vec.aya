@@ -24,7 +24,9 @@ def overlap ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
 | vnil, ys, zs => idp
 | xs, vnil, zs => idp
 | xs, ys, vnil => idp
-| x vcons xs, ys, zs => pmap (x vcons) (++-assoc xs ys zs)
+-- | x vcons xs, ys, zs => pmap (x vcons) (++-assoc xs ys zs)
+-- ^ Scope check failed due to `dummy`. Any idea?
+| x vcons xs, ys, zs => path (\i => x vcons (++-assoc xs ys zs).at i)
 
 def infix !! (l : Vec A n) (i : Fin n) : A
 | a vcons l, fzero => a
