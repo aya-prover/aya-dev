@@ -6,24 +6,13 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.FieldDef;
-import org.aya.value.visitor.Visitor;
 
 import java.util.function.Function;
 
 public sealed interface IntroValue extends Value {
-  record TT() implements IntroValue {
-    @Override
-    public <P, R> R accept(Visitor<P, R> visitor, P p) {
-      return visitor.visitTT(this, p);
-    }
-  }
+  record TT() implements IntroValue {}
 
   record Pair(Value left, Value right) implements IntroValue {
-    @Override
-    public <P, R> R accept(Visitor<P, R> visitor, P p) {
-      return visitor.visitPair(this, p);
-    }
-
     @Override
     public Value projL() {
       return left;
@@ -37,32 +26,17 @@ public sealed interface IntroValue extends Value {
 
   record Lam(Param param, Function<Value, Value> func) implements IntroValue {
     @Override
-    public <P, R> R accept(Visitor<P, R> visitor, P p) {
-      return visitor.visitLam(this, p);
-    }
-
-    @Override
     public Value apply(Arg arg) {
       assert arg.explicit() == param.explicit();
       return func.apply(arg.value());
     }
   }
 
-  record Ctor(CtorDef def, ImmutableSeq<Arg> args, FormValue.Data data) implements IntroValue {
-    @Override
-    public <P, R> R accept(Visitor<P, R> visitor, P p) {
-      return visitor.visitCtor(this, p);
-    }
-  }
+  record Ctor(CtorDef def, ImmutableSeq<Arg> args, FormValue.Data data) implements IntroValue {}
 
-  record New(ImmutableMap<FieldDef, Value> params, FormValue.Struct struct) implements IntroValue {
-    @Override
-    public <P, R> R accept(Visitor<P, R> visitor, P p) {
-      return visitor.visitNew(this, p);
-    }
-
+  record New(ImmutableMap<FieldDef, Value> fields, FormValue.Struct struct) implements IntroValue {
     public Value access(FieldDef field) {
-      return params.get(field);
+      return fields.get(field);
     }
   }
 }

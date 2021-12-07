@@ -7,7 +7,6 @@ import kala.value.LazyValue;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.core.def.FieldDef;
-import org.aya.value.visitor.Visitor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,11 +16,6 @@ public sealed interface RefValue extends Value {
   record Neu(LocalVar var, ImmutableSeq<Segment> spine) implements RefValue {
     public Neu(LocalVar var) {
       this(var, ImmutableSeq.empty());
-    }
-
-    @Override
-    public <P, R> R accept(Visitor<P, R> visitor, P p) {
-      return visitor.visitNeu(this, p);
     }
 
     @Contract("_ -> new") @Override
@@ -46,13 +40,12 @@ public sealed interface RefValue extends Value {
   }
 
   record Flex(Var var, ImmutableSeq<Segment> spine, LazyValue<Value> result) implements RefValue {
-    public Flex(Var var, ImmutableSeq<Segment> spine, Supplier<Value> result) {
-      this(var, spine, LazyValue.of(result));
+    public Flex(Var var, ImmutableSeq<Segment> spine, Supplier<Value> computation) {
+      this(var, spine, LazyValue.of(computation));
     }
 
-    @Override
-    public <P, R> R accept(Visitor<P, R> visitor, P p) {
-      return visitor.visitFlex(this, p);
+    public Flex(Var var, Supplier<Value> computation) {
+      this(var, ImmutableSeq.empty(), computation);
     }
 
     @Contract("_ -> new") @Override
@@ -73,6 +66,12 @@ public sealed interface RefValue extends Value {
     @Contract("_ -> new") @Override
     public @NotNull Flex access(FieldDef field) {
       return new Flex(var, spine.appended(new Segment.Access(field)), result.map(res -> res.access(field)));
+    }
+
+    @Override
+    public @NotNull Value force() {
+      var result = result().get();
+      return result == null ? this : result;
     }
   }
 }

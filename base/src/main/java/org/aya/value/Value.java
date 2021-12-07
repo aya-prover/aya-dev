@@ -5,12 +5,9 @@ package org.aya.value;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.def.FieldDef;
-import org.aya.value.visitor.Visitor;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface Value permits FormValue, IntroValue, RefValue {
-  <P, R> R accept(Visitor<P, R> visitor, P p);
-
   default Value access(FieldDef field) {
     // TODO: report error
     return null;
@@ -30,6 +27,11 @@ public sealed interface Value permits FormValue, IntroValue, RefValue {
     // TODO: report error
     return null;
   }
+
+  default Value force() {
+    return this;
+  }
+
   default Value elim(@NotNull ImmutableSeq<Segment> spine) {
     return spine.foldLeft(this, (value, segment) -> switch (segment) {
       case Segment.Apply app -> this.apply(app.arg());
