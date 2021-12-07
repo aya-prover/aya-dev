@@ -9,5 +9,16 @@ Error: Unsolved meta a'
        in `y {a'}`
        in `\ {_} => y {a'}`
 
-1 error(s), 0 warning(s).
+In file $FILE:5:33 ->
+
+  3 | def y : Pi {a : Unit} -> Unit => \{a} => a
+  4 | def x : Pi {a : Unit} -> Unit => y
+  5 | def z : Pi {a : Unit} -> Unit => x
+                                       ^^
+
+Error: Unsolved meta a'
+       in `x {a'}`
+       in `\ {_} => x {a'}`
+
+2 error(s), 0 warning(s).
 What are you doing?

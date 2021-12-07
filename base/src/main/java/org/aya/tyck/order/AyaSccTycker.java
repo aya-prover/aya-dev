@@ -37,8 +37,12 @@ public record AyaSccTycker(
 
   public @NotNull ImmutableSeq<TyckUnit> tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) {
     try {
-      if (scc.sizeEquals(1)) checkBody(scc.first());
-      else {
+      if (scc.sizeEquals(1)) {
+        var stmt = scc.first();
+        if (stmt instanceof Decl.FnDecl fn && fn.body.isLeft()) {
+          wellTyped.append(tycker.simpleFn(tycker.newTycker(), fn));
+        } else checkBody(stmt);
+      } else {
         var headerOrder = headerOrder(scc);
         headerOrder.forEach(this::checkHeader);
         headerOrder.forEach(this::checkBody);
