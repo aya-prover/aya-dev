@@ -18,7 +18,6 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
-import org.aya.generic.ref.BinOpCollector;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -129,8 +128,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     var args = DynamicSeq.of(expr.argument());
     var head = Expr.unapp(expr.function(), args);
     var infix = false;
-    if (head instanceof Expr.RefExpr ref)
-      infix = BinOpCollector.isInfix(ref.resolvedVar());
+    if (head instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar var)
+      infix = var.isInfix();
     return visitCalls(infix,
       head.accept(this, Outer.AppHead),
       (nest, arg) -> arg.accept(this, nest), outer,

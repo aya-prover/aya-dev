@@ -5,6 +5,7 @@ package org.aya.api.ref;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.core.CoreDef;
+import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
@@ -20,6 +21,11 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
   /** Initialized in the resolver or core deserialization */
   public @UnknownNullability ImmutableSeq<String> module;
   private final @NotNull String name;
+  public @UnknownNullability OpDecl opDecl;
+
+  @Contract(pure = true)  public boolean isInfix() {
+    return opDecl!=null && opDecl.opInfo() == null;
+  }
 
   @Contract(pure = true) public @NotNull String name() {
     return name;

@@ -21,7 +21,6 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
-import org.aya.generic.ref.BinOpCollector;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +137,6 @@ public record CompiledAya(
         s -> true,
         MutableHashMap.create(),
         SourcePos.SER);
-      thisResolve.opSet().operators.putAll(success.opSet().operators);
       thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
     }
   }
@@ -149,32 +147,27 @@ public record CompiledAya(
       var defVar = state.resolve(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc(), serOp.argc());
       var opDecl = new SerDef.SerOpDecl(opInfo);
-      BinOpCollector.collect(defVar);
-      opSet.operators.put(defVar, opDecl);
+      defVar.opDecl = opDecl;
     });
     serOps.view().forEach(serOp -> {
       var defVar = state.resolve(serOp.name());
-      var opDecl = opSet.operators.get(defVar);
+      var opDecl = defVar.opDecl;
       var bind = serOp.bind();
       opSet.ensureHasElem(opDecl);
       bind.loosers().forEach(looser -> {
-        var target = resolveOp(opSet, looser);
+        var target = resolveOp(opSet, state, looser);
         opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
       });
       bind.tighters().forEach(tighter -> {
-        var target = resolveOp(opSet, tighter);
+        var target = resolveOp(opSet, state, tighter);
         opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
       });
     });
   }
 
-  private @NotNull OpDecl resolveOp(@NotNull AyaBinOpSet opSet, @NotNull SerDef.QName name) {
-    var iter = opSet.operators.iterator();
-    while (iter.hasNext()) {
-      var next = iter.next();
-      var defVar = next._1;
-      if (defVar.module.equals(name.mod()) && defVar.name().equals(name.name())) return next._2;
-    }
+  private @NotNull OpDecl resolveOp(@NotNull AyaBinOpSet opSet, @NotNull SerTerm.DeState state, @NotNull SerDef.QName name) {
+    var opDecl = state.resolve(name).opDecl;
+    if (opDecl != null) return opDecl;
     opSet.reporter.report(new UnknownOperatorError(SourcePos.SER, name.name()));
     throw new Context.ResolvingInterruptedException();
   }

@@ -59,7 +59,7 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Pattern elem) {
     return elem.expr() instanceof Pattern.Ctor ref && ref.resolved().data() instanceof DefVar<?, ?> defVar
-      ? opSet.operators.getOrNull(defVar)
+      ? defVar.opDecl
       : null;
   }
 

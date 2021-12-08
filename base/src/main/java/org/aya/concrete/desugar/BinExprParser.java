@@ -52,7 +52,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
     return elem.expr() instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar
-      ? opSet.operators.getOrNull(defVar)
+      ? defVar.opDecl
       : null;
   }
 

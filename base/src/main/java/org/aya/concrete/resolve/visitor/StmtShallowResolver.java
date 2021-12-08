@@ -15,9 +15,6 @@ import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
-import org.aya.generic.ref.BinOpCollector;
-import org.aya.util.binop.Assoc;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -64,7 +61,6 @@ public record StmtShallowResolver(
         if (modInfo.isDefined()) {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().append(mod);
           var modOpSet = modInfo.get().opSet();
-          resolveInfo.opSet().operators.putAll(modOpSet.operators);
           resolveInfo.opSet().importBind(modOpSet, cmd.sourcePos());
         }
       }
@@ -126,8 +122,7 @@ public record StmtShallowResolver(
     if (bind != BindBlock.EMPTY) bind.context().value = context;
     if (signatured.opInfo != null) {
       var ref = signatured.ref();
-      resolveInfo.opSet().operators.put(ref, signatured);
-      BinOpCollector.collect(ref);
+      ref.opDecl = signatured;
     }
   }
 

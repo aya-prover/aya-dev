@@ -110,7 +110,7 @@ public interface StmtResolver {
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
     var opSet = info.opSet();
-    var self = opSet.operators.getOrNull(selfDef);
+    var self = selfDef.opDecl;
     if (self == null && bind != BindBlock.EMPTY) {
       opSet.reporter.report(new OperatorProblem.NotOperator(selfDef.concrete.sourcePos(), selfDef.name()));
       throw new Context.ResolvingInterruptedException();
@@ -127,7 +127,7 @@ public interface StmtResolver {
     @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
   ) throws Context.ResolvingInterruptedException {
     if (ctx.get(id) instanceof DefVar<?, ?> defVar) {
-      var opDecl = opSet.operators.getOrNull(defVar);
+      var opDecl = defVar.opDecl;
       if (opDecl != null) {
         opSet.bind(self, pred, opDecl, id.sourcePos());
         return defVar;
