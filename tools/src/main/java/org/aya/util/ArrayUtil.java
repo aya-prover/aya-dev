@@ -8,10 +8,15 @@ import kala.tuple.Tuple3;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.function.Function;
 
 @SuppressWarnings("unchecked")
 public interface ArrayUtil {
+  static <A> void fill(A @NotNull [][] a, @NotNull A value) {
+    for (var as : a) Arrays.fill(as, value);
+  }
+
   static <A> A @NotNull [] map(A @NotNull [] array, Function<A, A> f) {
     var a = (A[]) Array.newInstance(array.getClass().componentType(), array.length);
     for (int i = 0; i < array.length; i++) a[i] = f.apply(array[i]);
