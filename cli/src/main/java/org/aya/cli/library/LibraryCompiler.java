@@ -231,7 +231,7 @@ public class LibraryCompiler {
   }
 
   private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {
-    dep.suc(info).appendAll(info.imports());
+    dep.sucMut(info).appendAll(info.imports());
     info.imports().forEach(i -> collectDep(dep, i));
   }
 
@@ -245,7 +245,8 @@ public class LibraryCompiler {
     @NotNull MutableGraph<LibrarySource> changedGraph
   ) {
     if (changedGraph.E().containsKey(changed)) return;
-    changedGraph.suc(changed).appendAll(usage.suc(changed));
-    usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedGraph));
+    var suc = usage.suc(changed);
+    changedGraph.sucMut(changed).appendAll(suc);
+    suc.forEach(dep -> collectChanged(usage, dep, changedGraph));
   }
 }

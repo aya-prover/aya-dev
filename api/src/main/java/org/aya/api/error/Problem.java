@@ -7,7 +7,6 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.custom.UnixTermStyle;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -24,10 +23,6 @@ import java.util.stream.Collectors;
  * @author ice1000
  */
 public interface Problem {
-  @NotNull Styles ERROR = Style.bold().and().custom(UnixTermStyle.TerminalRed);
-  @NotNull Styles NOTE = Style.bold().and().custom(UnixTermStyle.TerminalGreen);
-  @NotNull Styles TEXT = Style.bold().and();
-
   enum Severity {
     ERROR,
     GOAL,
@@ -44,7 +39,6 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  /** @see Problem#computeFullErrorMessage(DistillerOptions, boolean, boolean, int)  */
   @NotNull Doc describe(@NotNull DistillerOptions options);
   @NotNull Severity level();
   default @NotNull Stage stage() {
@@ -93,12 +87,7 @@ public interface Problem {
     );
   }
 
-  default @NotNull String computeFullErrorMessage(
-    @NotNull DistillerOptions options, boolean unicode,
-    boolean supportAnsi, int pageWidth
-  ) {
-    var doc = sourcePos() == SourcePos.NONE ? describe(options) : toPrettyError(options).toDoc();
-    if (supportAnsi) return doc.renderToString(StringPrinterConfig.unixTerminal(pageWidth, unicode));
-    return doc.renderWithPageWidth(pageWidth, unicode);
-  }
+  @NotNull Styles ERROR = Style.bold().and().custom(UnixTermStyle.TerminalRed);
+  @NotNull Styles NOTE = Style.bold().and().custom(UnixTermStyle.TerminalGreen);
+  @NotNull Styles TEXT = Style.bold().and();
 }

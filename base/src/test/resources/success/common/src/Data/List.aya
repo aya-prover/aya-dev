@@ -40,7 +40,7 @@ def length_map (f : A -> B) (l : List A) : length (map f l) = length l
 | f, a cons l => pmap suc (length_map f l)
 
 def map_comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l)
-| g, f, nil => idp
+| _, _, nil => idp
 | g, f, a cons l => pmap (g _ cons) (map_comp g f l)
 
 def map_id (l : List A) : map (\x => x) l = l
@@ -49,7 +49,7 @@ def map_id (l : List A) : map (\x => x) l = l
 
 def headDef (x : A) (xs : List A) : A
 | x, nil => x
-| x, a cons b => a
+| _, a cons _ => a
 
 def curry (t : Sig A ** B) (f : A -> B -> C) => f t.1 t.2
 

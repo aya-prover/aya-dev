@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
-import kala.tuple.Tuple;
 import org.aya.api.error.Reporter;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
@@ -119,18 +118,38 @@ public record StmtTycker(
     };
   }
 
+  // Apply a simple checking strategy for maximal metavar inference.
+  public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, Decl.FnDecl fn) {
+    return traced(fn, tycker, (o, w) -> doSimpleFn(tycker, fn));
+  }
+
+  private @NotNull FnDef doSimpleFn(@NotNull ExprTycker tycker, Decl.FnDecl fn) {
+    var okTele = checkTele(tycker, fn.telescope, FormTerm.freshSort(fn.sourcePos));
+    var preresult = tycker.synthesize(fn.result).wellTyped();
+    var levels = tycker.extractLevels();
+    var bodyExpr = fn.body.getLeftValue();
+    var prebody = tycker.inherit(bodyExpr, preresult).wellTyped();
+    tycker.solveMetas();
+    var zonker = tycker.newZonker();
+    var result = zonker.zonk(preresult, fn.result.sourcePos());
+    var tele = zonkTele(tycker, okTele);
+    fn.signature = new Def.Signature(levels, tele, result);
+    var body = zonker.zonk(prebody, bodyExpr.sourcePos());
+    return new FnDef(fn.ref, tele, levels, result, fn.modifiers, Either.left(body));
+  }
+
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     switch (decl) {
       case Decl.FnDecl fn -> {
-        var resultTele = checkTele(tycker, fn.telescope, FormTerm.freshSort(fn.sourcePos));
+        var resultTele = tele(tycker, fn.telescope, FormTerm.freshSort(fn.sourcePos));
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
         fn.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
       }
       case Decl.DataDecl data -> {
         var pos = data.sourcePos;
-        var tele = checkTele(tycker, data.telescope, FormTerm.freshSort(pos));
+        var tele = tele(tycker, data.telescope, FormTerm.freshSort(pos));
         var result = data.result instanceof Expr.HoleExpr ? FormTerm.Univ.ZERO
           // ^ probably omitted
           : tycker.zonk(data.result, tycker.inherit(data.result, FormTerm.freshUniv(pos))).wellTyped();
@@ -139,7 +158,7 @@ public record StmtTycker(
       }
       case Decl.StructDecl struct -> {
         var pos = struct.sourcePos;
-        var tele = checkTele(tycker, struct.telescope, FormTerm.freshSort(pos));
+        var tele = tele(tycker, struct.telescope, FormTerm.freshSort(pos));
         var result = tycker.zonk(struct.result, tycker.inherit(struct.result, FormTerm.freshUniv(pos))).wellTyped();
         // var levelSubst = tycker.equations.solve();
         struct.signature = new Def.Signature(tycker.extractLevels(), tele, result);
@@ -148,7 +167,7 @@ public record StmtTycker(
       case Decl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
         var core = prim.ref.core;
-        var tele = checkTele(tycker, prim.telescope, FormTerm.freshSort(prim.sourcePos));
+        var tele = tele(tycker, prim.telescope, FormTerm.freshSort(prim.sourcePos));
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
           if (prim.result instanceof Expr.ErrorExpr) {
@@ -197,7 +216,7 @@ public record StmtTycker(
       ? patTycker.visitPatterns(sig, ctor.patterns.view())._1
       // No patterns, leave it blank
       : ImmutableSeq.<Pat>empty();
-    var tele = checkTele(tycker, ctor.telescope, dataSort);
+    var tele = tele(tycker, ctor.telescope, dataSort);
     var signature = new Def.Signature(sortParam, tele, dataCall);
     ctor.signature = signature;
     var dataTeleView = dataSig.param().view();
@@ -233,7 +252,7 @@ public record StmtTycker(
     var structSort = structRef.concrete.sort;
     var structSig = structRef.concrete.signature;
     assert structSig != null;
-    var tele = checkTele(tycker, field.telescope, structSort);
+    var tele = tele(tycker, field.telescope, structSort);
     var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
@@ -246,19 +265,30 @@ public record StmtTycker(
   }
 
   private @NotNull ImmutableSeq<Term.Param>
+  tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, Sort sort) {
+    var okTele = checkTele(tycker, tele, sort);
+    tycker.solveMetas();
+    return zonkTele(tycker, okTele);
+  }
+
+  private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
+
+  private @NotNull ImmutableSeq<TeleResult>
   checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, Sort sort) {
-    var okTele = tele.map(param -> {
+    return tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
       var paramTyped = exprTycker.inherit(param.type(), new FormTerm.Univ(sort)).wellTyped();
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
-      return Tuple.of(newParam, param.sourcePos());
+      return new TeleResult(newParam, param.sourcePos());
     });
-    exprTycker.solveMetas();
+  }
+
+  private @NotNull ImmutableSeq<Term.Param> zonkTele(@NotNull ExprTycker exprTycker, ImmutableSeq<TeleResult> okTele) {
     var zonker = exprTycker.newZonker();
     return okTele.map(tt -> {
-      var rawParam = tt._1;
-      var param = new Term.Param(rawParam, zonker.zonk(rawParam.type(), tt._2));
+      var rawParam = tt.param;
+      var param = new Term.Param(rawParam, zonker.zonk(rawParam.type(), tt.pos));
       exprTycker.localCtx.put(param);
       return param;
     });

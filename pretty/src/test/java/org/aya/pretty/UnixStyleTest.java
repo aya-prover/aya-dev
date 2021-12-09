@@ -23,7 +23,13 @@ public class UnixStyleTest {
       Doc.styled(UnixTermStyle.DoubleUnderline, "double underline"),
       Doc.styled(UnixTermStyle.CurlyUnderline, "curly underline"),
       Doc.styled(UnixTermStyle.Blink, "blink"),
-      Doc.styled(UnixTermStyle.Reverse, "reverse")
+      Doc.styled(UnixTermStyle.Reverse, "reverse"),
+      Doc.styled(UnixTermStyle.TerminalRed, "red"),
+      Doc.styled(UnixTermStyle.TerminalGreen, "green"),
+      Doc.styled(UnixTermStyle.TerminalBlue, "blue"),
+      Doc.styled(UnixTermStyle.TerminalYellow, "yellow"),
+      Doc.styled(UnixTermStyle.TerminalPurple, "purple"),
+      Doc.styled(UnixTermStyle.TerminalCyan, "cyan")
     );
     assertFalse(f.renderToString(StringPrinterConfig.unixTerminal()).isEmpty());
   }

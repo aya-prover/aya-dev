@@ -79,9 +79,9 @@ public interface StmtResolver {
         var delegateInfo = new ResolveInfo(info.thisModule(), info.program(), info.opSet());
         resolveStmt(delegate, delegateInfo);
         // little hacky: transfer dependencies from `delegate` to `sample`
-        info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));
+        info.sampleGraph().sucMut(sample).appendAll(delegateInfo.declGraph().suc(delegate));
       }
-      case Remark remark -> info.sampleGraph().suc(remark).appendAll(remark.doResolve(info));
+      case Remark remark -> info.sampleGraph().sucMut(remark).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize.Levels levels -> {}
       case Generalize.Variables variables -> {
@@ -93,7 +93,7 @@ public interface StmtResolver {
   }
 
   private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, ExprResolver resolver) {
-    info.declGraph().suc(decl).appendAll(resolver.reference().view()
+    info.declGraph().sucMut(decl).appendAll(resolver.reference().view()
       .filter(TyckUnit::needTyck));
   }
 

@@ -12,17 +12,6 @@ Error: Cannot check the expression of type
          Type
          (Normalized: Type)
 
-In file $FILE:6:16 ->
-
-  4 | def test
-  5 |  (F : Type -> Type)
-  6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
-                      ^^
-
-Error: Unsolved meta _
-       in `F _`
-       in `Pi (X : F _) -> F (Neg <X>)`
-
 In file $FILE:6:44 ->
 
   4 | def test
@@ -34,8 +23,8 @@ Error: Cannot check the expression of type
          Nat
          (Normalized: Nat)
        against the type
-         F <_>
-         (Normalized: F <_>)
+         F _
+         (Normalized: F _)
 
 In file $FILE:6:42 ->
 
@@ -50,6 +39,17 @@ Error: Cannot check the expression of type
        against the type
          Nat
          (Normalized: Nat)
+
+In file $FILE:6:16 ->
+
+  4 | def test
+  5 |  (F : Type -> Type)
+  6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
+                      ^^
+
+Error: Unsolved meta _
+       in `F _`
+       in `Pi (X : F _) -> F (Neg <X>)`
 
 4 error(s), 0 warning(s).
 What are you doing?

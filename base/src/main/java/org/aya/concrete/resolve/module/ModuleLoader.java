@@ -32,7 +32,7 @@ public interface ModuleLoader {
   default <E extends Exception> @NotNull ResolveInfo
   tyckModule(Trace.Builder builder, ResolveInfo resolveInfo, ModuleCallback<E> onTycked) throws E {
     var delayedReporter = new DelayedReporter(reporter());
-    var sccTycker = new AyaOrgaTycker(new AyaSccTycker(builder, delayedReporter), resolveInfo);
+    var sccTycker = new AyaOrgaTycker(new AyaSccTycker(resolveInfo, builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
     try (delayedReporter) {
       var SCCs = resolveInfo.declGraph().topologicalOrder()

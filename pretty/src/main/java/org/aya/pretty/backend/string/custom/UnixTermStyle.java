@@ -13,4 +13,8 @@ public enum UnixTermStyle implements Style.CustomStyle {
   Reverse,
   TerminalRed,
   TerminalGreen,
+  TerminalBlue,
+  TerminalYellow,
+  TerminalPurple,
+  TerminalCyan,
 }

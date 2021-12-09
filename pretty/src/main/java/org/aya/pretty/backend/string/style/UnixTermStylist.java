@@ -40,6 +40,10 @@ public class UnixTermStylist extends ClosingStylist {
         case Reverse -> new StyleToken("\033[7m", "\033[27m", false);
         case TerminalRed -> new StyleToken("\033[31m", "\033[39m", false);
         case TerminalGreen -> new StyleToken("\033[32m", "\033[39m", false);
+        case TerminalBlue -> new StyleToken("\033[34m", "\033[39m", false);
+        case TerminalYellow -> new StyleToken("\033[33m", "\033[39m", false);
+        case TerminalPurple -> new StyleToken("\033[35m", "\033[39m", false);
+        case TerminalCyan -> new StyleToken("\033[36m", "\033[39m", false);
       };
     }
     return StyleToken.NULL;

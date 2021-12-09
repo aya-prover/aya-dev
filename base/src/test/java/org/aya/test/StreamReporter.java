@@ -5,6 +5,7 @@ package org.aya.test;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
+import org.aya.cli.single.CliReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -16,6 +17,6 @@ import java.io.PrintStream;
 @TestOnly
 public record StreamReporter(@NotNull PrintStream stream) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
-    stream.println(problem.computeFullErrorMessage(DistillerOptions.informative(), false, false, 80));
+    stream.println(CliReporter.errorMessage(problem, DistillerOptions.informative(), false, false, 80));
   }
 }

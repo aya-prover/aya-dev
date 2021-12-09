@@ -4,7 +4,8 @@ package org.aya.pretty.printer;
 
 import kala.collection.mutable.MutableMap;
 import org.aya.pretty.doc.Styles;
+import org.jetbrains.annotations.NotNull;
 
 public interface StyleFamily {
-  MutableMap<String, Styles> definedStyles();
+  @NotNull MutableMap<String, Styles> definedStyles();
 }

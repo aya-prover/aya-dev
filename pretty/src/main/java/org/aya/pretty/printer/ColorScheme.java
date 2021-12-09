@@ -3,9 +3,10 @@
 package org.aya.pretty.printer;
 
 import kala.collection.mutable.MutableMap;
+import org.jetbrains.annotations.NotNull;
 
 public interface ColorScheme {
-  MutableMap<String, Integer> definedColors();
+  @NotNull MutableMap<String, Integer> definedColors();
 
   static int colorOf(float r, float g, float b) {
     var red = (int) (r * 0xFF);

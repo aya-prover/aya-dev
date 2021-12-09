@@ -9,7 +9,7 @@ open data Vec (A : Type) (n : Nat) : Type
 variable A B : Type
 variable n m o : Nat
 
-def map (f : Pi A -> B) (xs : Vec A n) : Vec B n
+def map (f : A -> B) (xs : Vec A n) : Vec B n
 | f, vnil => vnil
 | f, x vcons xs => f x vcons map f xs
 

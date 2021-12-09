@@ -56,8 +56,8 @@ public abstract class BinOpSet {
   }
 
   private void addTighter(@NotNull BinOpSet.BinOP from, @NotNull BinOpSet.BinOP to) {
-    tighterGraph.suc(to);
-    tighterGraph.suc(from).append(to);
+    tighterGraph.sucMut(to);
+    tighterGraph.sucMut(from).append(to);
   }
 
   public void reportIfCyclic() {
