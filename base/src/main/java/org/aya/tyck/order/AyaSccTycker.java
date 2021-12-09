@@ -123,7 +123,7 @@ public record AyaSccTycker(
     stmts.forEach(stmt -> {
       var reference = DynamicSeq.<TyckUnit>create();
       SigRefFinder.HEADER_ONLY.visit(stmt, reference);
-      graph.suc(stmt).appendAll(reference);
+      graph.sucMut(stmt).appendAll(reference);
     });
     var order = graph.topologicalOrder();
     var cycle = order.view().filter(s -> s.sizeGreaterThan(1));

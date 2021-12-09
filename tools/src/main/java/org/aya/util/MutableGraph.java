@@ -2,17 +2,23 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.*;
 import org.jetbrains.annotations.NotNull;
 
-public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull DynamicSeq<@NotNull T>> E) {
+public record MutableGraph<T>(@NotNull MutableMap<T, @NotNull DynamicSeq<@NotNull T>> E) {
   public static @NotNull <T> MutableGraph<T> create() {
-    return new MutableGraph<>(MutableHashMap.create());
+    return new MutableGraph<>(MutableLinkedHashMap.of());
   }
 
-  public @NotNull DynamicSeq<T> suc(@NotNull T elem) {
+  public @NotNull DynamicSeq<T> sucMut(@NotNull T elem) {
     return E.getOrPut(elem, DynamicSeq::of);
+  }
+
+  public @NotNull SeqView<T> suc(@NotNull T elem) {
+    var suc = E.getOrNull(elem);
+    return suc == null ? SeqView.empty() : suc.view();
   }
 
   public boolean hasSuc(@NotNull T vertex, @NotNull T suc) {
@@ -56,8 +62,8 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull DynamicSeq<@No
   public @NotNull MutableGraph<T> transpose() {
     var tr = MutableGraph.<T>create();
     E.forEach((v, ws) -> {
-      tr.suc(v);
-      ws.forEach(w -> tr.suc(w).append(v));
+      tr.sucMut(v);
+      ws.forEach(w -> tr.sucMut(w).append(v));
     });
     return tr;
   }
