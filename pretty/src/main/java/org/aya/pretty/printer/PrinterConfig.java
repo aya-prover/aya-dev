@@ -39,7 +39,7 @@ public interface PrinterConfig {
     return INFINITE_SIZE;
   }
 
-  default @NotNull Stylist getStyleFormatter() {
+  default @NotNull Stylist getStylist() {
     return new Stylist() {
     };
   }

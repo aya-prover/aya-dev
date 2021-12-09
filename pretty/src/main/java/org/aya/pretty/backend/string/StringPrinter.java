@@ -123,8 +123,8 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   }
 
   protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled) {
-    var formatter = config.getStyleFormatter();
-    formatter.format(styled.styles(), cursor, () -> renderDoc(cursor, styled.doc()));
+    var stylist = config.getStylist();
+    stylist.format(styled.styles(), cursor, () -> renderDoc(cursor, styled.doc()));
   }
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {

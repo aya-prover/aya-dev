@@ -13,6 +13,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
 import org.aya.pretty.error.PrettyError;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +25,6 @@ import java.util.stream.Collectors;
  * @author ice1000
  */
 public interface Problem {
-  @NotNull Styles ERROR = Style.bold().and().custom(UnixTermStyle.TerminalRed);
-  @NotNull Styles NOTE = Style.bold().and().custom(UnixTermStyle.TerminalGreen);
-  @NotNull Styles TEXT = Style.bold().and();
-
   enum Severity {
     ERROR,
     GOAL,
@@ -44,7 +41,7 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  /** @see Problem#computeFullErrorMessage(DistillerOptions, boolean, boolean, int)  */
+  /** @see Problem#computeFullErrorMessage(DistillerOptions, boolean, boolean, int) */
   @NotNull Doc describe(@NotNull DistillerOptions options);
   @NotNull Severity level();
   default @NotNull Stage stage() {
@@ -98,7 +95,15 @@ public interface Problem {
     boolean supportAnsi, int pageWidth
   ) {
     var doc = sourcePos() == SourcePos.NONE ? describe(options) : toPrettyError(options).toDoc();
-    if (supportAnsi) return doc.renderToString(StringPrinterConfig.unixTerminal(pageWidth, unicode));
+    if (supportAnsi) {
+      var config = StringPrinterConfig.unixTerminal(pageWidth, unicode);
+      config.getStylist().setStyleFamily(AyaStyleFamily.ADAPTIVE_CLI);
+      return doc.renderToString(config);
+    }
     return doc.renderWithPageWidth(pageWidth, unicode);
   }
+
+  @NotNull Styles ERROR = Style.bold().and().custom(UnixTermStyle.TerminalRed);
+  @NotNull Styles NOTE = Style.bold().and().custom(UnixTermStyle.TerminalGreen);
+  @NotNull Styles TEXT = Style.bold().and();
 }

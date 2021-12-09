@@ -4,20 +4,29 @@ package org.aya.pretty.printer;
 
 import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.pretty.style.EmacsColorScheme;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author kiva
  */
 public abstract class Stylist {
-  protected final ColorScheme colorScheme;
-  protected final StyleFamily styleFamily;
+  protected @NotNull ColorScheme colorScheme;
+  protected @NotNull StyleFamily styleFamily;
 
   public Stylist() {
     this(EmacsColorScheme.INSTANCE, AyaStyleFamily.INSTANCE);
   }
 
-  public Stylist(ColorScheme colorScheme, StyleFamily styleFamily) {
+  public Stylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
     this.colorScheme = colorScheme;
+    this.styleFamily = styleFamily;
+  }
+
+  public void setColorScheme(@NotNull ColorScheme colorScheme) {
+    this.colorScheme = colorScheme;
+  }
+
+  public void setStyleFamily(@NotNull StyleFamily styleFamily) {
     this.styleFamily = styleFamily;
   }
 }
