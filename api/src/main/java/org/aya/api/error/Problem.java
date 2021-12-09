@@ -7,13 +7,11 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.custom.UnixTermStyle;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
 import org.aya.pretty.error.PrettyError;
-import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +39,6 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  /** @see Problem#computeFullErrorMessage(DistillerOptions, boolean, boolean, int) */
   @NotNull Doc describe(@NotNull DistillerOptions options);
   @NotNull Severity level();
   default @NotNull Stage stage() {
@@ -88,19 +85,6 @@ public interface Problem {
       doc,
       Doc.sep(Doc.styled(NOTE, "note:"), Doc.styled(TEXT, Doc.align(hint)))
     );
-  }
-
-  default @NotNull String computeFullErrorMessage(
-    @NotNull DistillerOptions options, boolean unicode,
-    boolean supportAnsi, int pageWidth
-  ) {
-    var doc = sourcePos() == SourcePos.NONE ? describe(options) : toPrettyError(options).toDoc();
-    if (supportAnsi) {
-      var config = StringPrinterConfig.unixTerminal(pageWidth, unicode);
-      config.getStylist().setStyleFamily(AyaStyleFamily.ADAPTIVE_CLI);
-      return doc.renderToString(config);
-    }
-    return doc.renderWithPageWidth(pageWidth, unicode);
   }
 
   @NotNull Styles ERROR = Style.bold().and().custom(UnixTermStyle.TerminalRed);
