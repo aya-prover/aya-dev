@@ -8,5 +8,23 @@ In file $FILE:4:13 ->
 Error: Ambiguous operator precedence detected between `=` and `+`
 note: Use `bind` statement or insert parentheses to make it clear.
 
-1 error(s), 0 warning(s).
+In file $FILE:1:10 ->
+
+  1 | def infix + : Type => +
+                ^^
+  2 | def infix = : Type => =
+  3 | 
+
+Error: The definition `+` does not terminate
+
+In file $FILE:2:10 ->
+
+  1 | def infix + : Type => +
+  2 | def infix = : Type => =
+                ^^
+  3 | 
+
+Error: The definition `=` does not terminate
+
+3 error(s), 0 warning(s).
 What are you doing?

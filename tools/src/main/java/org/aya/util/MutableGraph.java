@@ -36,8 +36,8 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull DynamicSeq<@No
   private boolean hasPath(@NotNull MutableSet<T> book, @NotNull T from, @NotNull T to) {
     if (from == to) return true;
     if (book.contains(from)) return false;
-    for (var test : suc(from)) if (hasPath(book, test, to)) return true;
     book.add(from);
+    for (var test : suc(from)) if (hasPath(book, test, to)) return true;
     return false;
   }
 
