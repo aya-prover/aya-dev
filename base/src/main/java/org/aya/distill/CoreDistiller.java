@@ -255,12 +255,13 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
-    var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "def"),
+    var line1 = DynamicSeq.of(
       linkDef(def.ref(), FN_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
       def.result().accept(this, Outer.Free));
     def.modifiers.forEach(m -> line1.insert(0, Doc.styled(KEYWORD, m.keyword)));
+    line1.insert(0, Doc.styled(KEYWORD, "def"));
     return def.body.fold(
       term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.accept(this, Outer.Free)),
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
