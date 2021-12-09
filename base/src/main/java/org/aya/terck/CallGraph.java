@@ -2,10 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public record CallGraph<T>(
   @NotNull MutableMap<T, @NotNull MutableMap<T, MutableSet<@NotNull CallMatrix<T>>>> graph
@@ -26,13 +27,12 @@ public record CallGraph<T>(
     var set = graph.getOrPut(caller, MutableMap::create)
       .getOrPut(callee, MutableSet::create);
     // TODO: check if there's already a smaller call matrix?
-    if (set.contains(matrix)) return false;
-    set.add(matrix);
-    return true;
+    return set.add(matrix);
   }
 
-  public @Nullable T terck() {
+  public @NotNull ImmutableSeq<T> findNonTerminating() {
     // TODO: complete the call graph first
+    var failed = DynamicSeq.<T>create();
     for (var key : graph.keysView()) {
       var matrix = graph.get(key).get(key);
       var behavior = Behavior.create(key, matrix);
@@ -43,8 +43,8 @@ public record CallGraph<T>(
       if (behavior.diagonals().allMatch(diag -> diag.diagonal().anyMatch(r -> r == Relation.LessThan))) {
         continue;
       }
-      return key;
+      failed.append(key);
     }
-    return null;
+    return failed.toImmutableSeq();
   }
 }

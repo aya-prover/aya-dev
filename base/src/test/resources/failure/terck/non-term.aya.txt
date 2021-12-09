@@ -1,0 +1,11 @@
+In file $FILE:7:4 ->
+
+  5 | --^ TODO: check indirect recursion in SCCs
+  6 | 
+  7 | def non Nat : Nat
+          ^-^
+
+Error: The definition `non` does not terminate
+
+1 error(s), 0 warning(s).
+What are you doing?

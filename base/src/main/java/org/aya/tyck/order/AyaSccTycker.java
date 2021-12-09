@@ -110,12 +110,11 @@ public record AyaSccTycker(
     var resolver = new CallResolver(fn, MutableSet.of(fn));
     var graph = CallGraph.<Def>create();
     fn.accept(resolver, graph);
-    var failed = graph.terck();
-    if (failed != null) {
-      var failedRef = failed.ref();
+    var failed = graph.findNonTerminating();
+    failed.forEach(f -> {
+      var failedRef = f.ref();
       reporter.report(new NonTerminating(failedRef.concrete.sourcePos, failedRef.name()));
-      throw new SCCTyckingFailed(ImmutableSeq.of(failedRef.concrete));
-    }
+    });
   }
 
   /**
