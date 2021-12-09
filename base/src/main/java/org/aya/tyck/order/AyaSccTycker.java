@@ -88,7 +88,7 @@ public record AyaSccTycker(
       case Decl decl -> {
         var tyck = tycker.tyck(decl, tycker.newTycker());
         wellTyped.append(tyck);
-        if (terck) terck(tyck);
+        if (reporter.noError() && terck) terck(tyck);
       }
       case Sample sample -> {
         var tyck = sample.tyck(tycker);
