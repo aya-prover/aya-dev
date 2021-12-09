@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 
 public record NonTerminating(@NotNull SourcePos sourcePos, @NotNull String name) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-    return Doc.sep(Doc.english("The definition"),
+    return Doc.sep(Doc.english("The recursive definition"),
       Doc.styled(Style.code(), name),
-      Doc.english("does not terminate"));
+      Doc.english("is not structurally recursive"));
   }
 
   @Override public @NotNull Severity level() {
