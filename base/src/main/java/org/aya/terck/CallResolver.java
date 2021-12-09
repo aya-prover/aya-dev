@@ -16,6 +16,7 @@ import org.aya.core.term.ElimTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.DefConsumer;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,7 +39,8 @@ public record CallResolver(
     if (!(callTerm.ref() instanceof DefVar<?, ?> defVar)) return;
     var callee = ((Def) defVar.core);
     if (!targets.contains(callee)) return;
-    var matrix = CallMatrix.create(Def::telescope, caller, callee);
+    // TODO: source pos of the CallTerm?
+    var matrix = CallMatrix.create(SourcePos.NONE,Def::telescope, caller, callee);
     fillMatrix(callTerm, callee, matrix);
     graph.put(matrix);
   }

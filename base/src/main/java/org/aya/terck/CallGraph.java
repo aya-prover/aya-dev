@@ -6,6 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record CallGraph<T>(
@@ -30,9 +33,9 @@ public record CallGraph<T>(
     return set.add(matrix);
   }
 
-  public @NotNull ImmutableSeq<T> findNonTerminating() {
+  public @NotNull ImmutableSeq<Tuple2<T, SourcePos>> findNonTerminating() {
     // TODO: complete the call graph first
-    var failed = DynamicSeq.<T>create();
+    var failed = DynamicSeq.<Tuple2<T, SourcePos>>create();
     for (var key : graph.keysView()) {
       var matrix = graph.get(key).get(key);
       var behavior = Behavior.create(key, matrix);
@@ -40,10 +43,9 @@ public record CallGraph<T>(
       // and how the orders of all parameters are altered in this call.
       // We ensure in each possible recursive call, there's at least one parameter decreases.
       // TODO[kiva]: ^ is that enough? I see the checking is so complicated in Arend.
-      if (behavior.diagonals().allMatch(diag -> diag.diagonal().anyMatch(r -> r == Relation.LessThan))) {
-        continue;
-      }
-      failed.append(key);
+      var notDecreasing = behavior.diagonals()
+        .filterNot(diag -> diag.diagonal().contains(Relation.LessThan));
+      notDecreasing.forEach(diag -> failed.append(Tuple.of(key, diag.matrix().sourcePos())));
     }
     return failed.toImmutableSeq();
   }

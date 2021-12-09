@@ -75,9 +75,8 @@ public record AyaSccTycker(
   }
 
   private void checkSimpleFn(@NotNull Decl.FnDecl fn) {
-    var recursive = isRecursive(fn);
-    if (recursive) {
-      reporter.report(new NonTerminating(fn.sourcePos, fn.ref.name()));
+    if (isRecursive(fn)) {
+      reporter.report(new NonTerminating(fn.sourcePos, fn.ref.name(), fn.body.getLeftValue().sourcePos()));
       throw new SCCTyckingFailed(ImmutableSeq.of(fn));
     }
     wellTyped.append(tycker.simpleFn(tycker.newTycker(), fn));
@@ -112,8 +111,9 @@ public record AyaSccTycker(
     fn.accept(resolver, graph);
     var failed = graph.findNonTerminating();
     failed.forEach(f -> {
-      var failedRef = f.ref();
-      reporter.report(new NonTerminating(failedRef.concrete.sourcePos, failedRef.name()));
+      var failedRef = f._1.ref();
+      var callPos = f._2;
+      reporter.report(new NonTerminating(failedRef.concrete.sourcePos, failedRef.name(), callPos));
     });
   }
 

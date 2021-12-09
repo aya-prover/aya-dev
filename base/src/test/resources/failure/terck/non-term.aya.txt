@@ -5,7 +5,7 @@ In file $FILE:7:4 ->
   7 | def non Nat : Nat
           ^-^
 
-Error: The definition `non` does not terminate
+Error: The recursive definition `non` is not structurally recursive
 
 1 error(s), 0 warning(s).
 What are you doing?

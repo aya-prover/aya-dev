@@ -4,6 +4,7 @@ package org.aya.api.error;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
@@ -48,7 +49,7 @@ public interface Problem {
     return Doc.empty();
   }
   default @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
-    return ImmutableSeq.empty();
+    return SeqView.empty();
   }
 
   default boolean isError() {
