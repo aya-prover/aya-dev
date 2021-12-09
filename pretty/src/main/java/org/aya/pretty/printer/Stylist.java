@@ -22,10 +22,6 @@ public abstract class Stylist {
     this.styleFamily = styleFamily;
   }
 
-  public void setColorScheme(@NotNull ColorScheme colorScheme) {
-    this.colorScheme = colorScheme;
-  }
-
   public void setStyleFamily(@NotNull StyleFamily styleFamily) {
     this.styleFamily = styleFamily;
   }
