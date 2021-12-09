@@ -60,4 +60,9 @@ public record Normalizer(@Nullable TyckState state) implements Unfolder<Normaliz
     assert t.items().sizeGreaterThanOrEquals(ix) && ix > 0 : term.toDoc(DistillerOptions.debug()).debugRender();
     return t.items().get(ix - 1).accept(this, mode);
   }
+
+  @Override public @NotNull Term visitDataCall(CallTerm.@NotNull Data dataCall, NormalizeMode normalizeMode) {
+    if (normalizeMode == NormalizeMode.WHNF) return dataCall;
+    return Unfolder.super.visitDataCall(dataCall, normalizeMode);
+  }
 }

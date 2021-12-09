@@ -329,7 +329,7 @@ public final class PatTycker {
    */
   private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
   selectCtor(Term param, @Nullable Var name, @NotNull Pattern pos) {
-    if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
+    if (!(param.normalize(exprTycker.state, NormalizeMode.NF) instanceof CallTerm.Data dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pos, param));
       return null;
     }
