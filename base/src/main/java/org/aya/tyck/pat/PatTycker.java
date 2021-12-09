@@ -33,6 +33,7 @@ import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
