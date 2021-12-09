@@ -15,8 +15,8 @@ import org.aya.concrete.stmt.Sample;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.terck.CallGraph;
+import org.aya.terck.CallResolver;
 import org.aya.terck.error.NonTerminating;
-import org.aya.terck.visitor.CallResolver;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
@@ -110,7 +110,12 @@ public record AyaSccTycker(
     var resolver = new CallResolver(fn, MutableSet.of(fn));
     var graph = CallGraph.<Def>create();
     fn.accept(resolver, graph);
-    // TODO: terck recursive fn
+    var failed = graph.terck();
+    if (failed != null) {
+      var failedRef = failed.ref();
+      reporter.report(new NonTerminating(failedRef.concrete.sourcePos, failedRef.name()));
+      throw new SCCTyckingFailed(ImmutableSeq.of(failedRef.concrete));
+    }
   }
 
   /**
