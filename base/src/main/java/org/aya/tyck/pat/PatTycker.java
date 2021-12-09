@@ -329,7 +329,7 @@ public final class PatTycker {
    */
   private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
   selectCtor(Term param, @Nullable Var name, @NotNull Pattern pos) {
-    if (!(param.normalize(exprTycker.state, NormalizeMode.NF) instanceof CallTerm.Data dataCall)) {
+    if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pos, param));
       return null;
     }
@@ -370,7 +370,13 @@ public final class PatTycker {
   }
 
   private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, CtorDef ctor, @NotNull ImmutableSeq<Term.Param> telescope) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(exprTycker.localCtx, ctor.pats, dataCall.args());
+    if (ctor.pats.isNotEmpty()) return dataArgs(dataCall, ctor, exprTycker.localCtx, exprTycker.state);
     else return Result.ok(Unfolder.buildSubst(telescope, dataCall.args()));
+  }
+
+  public static Result<Substituter.TermSubst, Boolean>
+  dataArgs(@NotNull CallTerm.Data dataCall, @NotNull CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
+    return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
+      .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
   }
 }

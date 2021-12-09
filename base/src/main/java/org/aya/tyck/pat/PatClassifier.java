@@ -19,7 +19,6 @@ import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -242,7 +241,7 @@ public record PatClassifier(
           var conTele = ctor.selfTele.view();
           // Check if this constructor is available by doing the obvious thing
           if (ctor.pats.isNotEmpty()) {
-            var matchy = PatMatcher.tryBuildSubstArgs(null, ctor.pats, dataCall.args());
+            var matchy = PatTycker.dataArgs(dataCall, ctor, null, state);
             // If not, check the reason why: it may fail negatively or positively
             if (matchy.isErr()) {
               // Index unification fails negatively

@@ -79,6 +79,11 @@ public sealed interface Term extends CoreTerm permits
     return checker;
   }
 
+  /**
+   * @param state used for inlining the holes.
+   *              Can be null only if we're absolutely sure that holes are frozen,
+   *              like in the error messages.
+   */
   default @NotNull Term normalize(@Nullable TyckState state, @NotNull NormalizeMode mode) {
     if (mode == NormalizeMode.NULL) return this;
     return accept(new Normalizer(state), mode);
