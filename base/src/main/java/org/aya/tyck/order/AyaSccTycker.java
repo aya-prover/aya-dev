@@ -8,9 +8,11 @@ import kala.control.Option;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.core.def.Def;
+import org.aya.terck.error.NonTerminating;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
@@ -29,20 +31,17 @@ import java.util.function.Function;
 public record AyaSccTycker(
   @NotNull StmtTycker tycker,
   @NotNull CollectingReporter reporter,
+  @NotNull ResolveInfo resolveInfo,
   @NotNull DynamicSeq<@NotNull Def> wellTyped
 ) implements SCCTycker<TyckUnit, AyaSccTycker.SCCTyckingFailed> {
-  public AyaSccTycker(@Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
-    this(new StmtTycker(reporter, builder), reporter, DynamicSeq.create());
+  public AyaSccTycker(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
+    this(new StmtTycker(reporter, builder), reporter, resolveInfo, DynamicSeq.create());
   }
 
   public @NotNull ImmutableSeq<TyckUnit> tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) {
     try {
-      if (scc.sizeEquals(1)) {
-        var stmt = scc.first();
-        if (stmt instanceof Decl.FnDecl fn && fn.body.isLeft()) {
-          wellTyped.append(tycker.simpleFn(tycker.newTycker(), fn));
-        } else checkBody(stmt);
-      } else {
+      if (scc.sizeEquals(1)) checkUnit(scc.first());
+      else {
         var headerOrder = headerOrder(scc);
         headerOrder.forEach(this::checkHeader);
         headerOrder.forEach(this::checkBody);
@@ -53,6 +52,22 @@ public record AyaSccTycker(
     }
   }
 
+  private boolean isRecursive(@NotNull Decl unit) {
+    return resolveInfo.declGraph().hasSuc(unit, unit);
+  }
+
+  private void checkUnit(@NotNull TyckUnit unit) {
+    if (unit instanceof Decl.FnDecl fn && fn.body.isLeft()) {
+      var recursive = isRecursive(fn);
+      if (recursive) {
+        reporter.report(new NonTerminating(fn.sourcePos, fn.ref.name()));
+        throw new SCCTyckingFailed(ImmutableSeq.of(unit));
+      }
+      checkSimpleFn(fn);
+    }
+    else checkBody(unit);
+  }
+
   private void checkHeader(@NotNull TyckUnit stmt) {
     switch (stmt) {
       case Decl decl -> tycker.tyckHeader(decl, tycker.newTycker());
@@ -61,6 +76,10 @@ public record AyaSccTycker(
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
+  }
+
+  private void checkSimpleFn(@NotNull Decl.FnDecl fn) {
+    wellTyped.append(tycker.simpleFn(tycker.newTycker(), fn));
   }
 
   private void checkBody(@NotNull TyckUnit stmt) {

@@ -24,6 +24,7 @@ public record CallGraph<T>(
     var callee = matrix.callee();
     var set = graph.getOrPut(caller, MutableMap::create)
       .getOrPut(callee, MutableSet::create);
+    // TODO: check if there's already a smaller call matrix?
     if (set.contains(matrix)) return false;
     set.add(matrix);
     return true;

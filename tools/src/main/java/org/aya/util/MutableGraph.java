@@ -15,6 +15,20 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull DynamicSeq<@No
     return E.getOrPut(elem, DynamicSeq::of);
   }
 
+  public boolean hasSuc(@NotNull T vertex, @NotNull T suc) {
+    return hasSuc(MutableSet.create(), vertex, suc);
+  }
+
+  private boolean hasSuc(@NotNull MutableSet<T> book, @NotNull T vertex, @NotNull T suc) {
+    if (book.contains(vertex)) return false;
+    book.add(vertex);
+    for (var test : suc(vertex)) {
+      if (test == suc) return true;
+      if (hasSuc(book, test, suc)) return true;
+    }
+    return false;
+  }
+
   public boolean hasPath(@NotNull T from, @NotNull T to) {
     return hasPath(MutableSet.create(), from, to);
   }

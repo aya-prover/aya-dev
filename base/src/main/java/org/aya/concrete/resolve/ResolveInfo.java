@@ -7,7 +7,6 @@ import kala.collection.mutable.DynamicSeq;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.terck.CallGraph;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.Debug;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
  * @param declGraph   dependency graph of decls. for each (v, successors) in the graph,
  *                    `successors` should be tycked first.
  * @param sampleGraph dependency graph of samples and remarks.
- * @param callGraph   call graph of the program, from foetus paper.
  */
 @Debug.Renderer(text = "thisModule.moduleName().joinToString(\"::\")")
 public record ResolveInfo(
@@ -30,10 +28,9 @@ public record ResolveInfo(
   @NotNull DynamicSeq<ResolveInfo> imports,
   @NotNull DynamicSeq<ImmutableSeq<String>> reExports,
   @NotNull MutableGraph<TyckUnit> declGraph,
-  @NotNull MutableGraph<TyckUnit> sampleGraph,
-  @NotNull CallGraph<TyckUnit> callGraph
+  @NotNull MutableGraph<TyckUnit> sampleGraph
 ) {
   public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {
-    this(thisModule, thisProgram, opSet, DynamicSeq.create(), DynamicSeq.create(), MutableGraph.create(), MutableGraph.create(), CallGraph.create());
+    this(thisModule, thisProgram, opSet, DynamicSeq.create(), DynamicSeq.create(), MutableGraph.create(), MutableGraph.create());
   }
 }
