@@ -195,7 +195,7 @@ public final class ExprTycker {
           // [ice] Cannot 'generatePi' because 'generatePi' takes the current contextTele,
           // but it may contain variables absent from the 'contextTele' of 'fTyHole.ref.core'
           var pi = fTyHole.asPi(argLicit);
-          unifier(appE.sourcePos(), Ordering.Eq).compareUntyped(fTy, pi);
+          unifier(appE.sourcePos(), Ordering.Eq).compare(fTy, pi, null);
           fTy = fTy.normalize(state, NormalizeMode.WHNF);
         }
         if (!(fTy instanceof FormTerm.Pi piTerm))
