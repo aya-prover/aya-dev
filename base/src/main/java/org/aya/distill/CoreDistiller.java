@@ -41,7 +41,7 @@ public class CoreDistiller extends BaseDistiller implements
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Outer outer) {
     var params = DynamicSeq.of(term.param());
-    var body = IntroTerm.Lambda.unwrap(term.body(), params);
+    var body = IntroTerm.Lambda.unwrap(term.body(), params::append);
     Doc bodyDoc;
     // Syntactic eta-contraction
     if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {

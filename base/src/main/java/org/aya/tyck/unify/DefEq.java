@@ -278,14 +278,20 @@ public final class DefEq {
         ctx.remove(sigma.params().view().map(Term.Param::ref));
         yield true;
       }
-      case FormTerm.Pi pi -> {
-        var dummyVar = new LocalVar("dummy");
-        var ty = pi.param().type();
-        var dummy = new RefTerm(dummyVar);
-        var dummyArg = new Arg<Term>(dummy, pi.param().explicit());
-        yield ctx.with(dummyVar, ty, () -> compare(
-          CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), lr, rl, pi.substBody(dummy)));
-      }
+      case FormTerm.Pi pi -> ctx.with(pi.param(), () -> {
+        if (lhs instanceof IntroTerm.Lambda lambda) return ctx.with(lambda.param(), () -> {
+          if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(), () -> {
+            lr.map.put(lambda.param().ref(), rambda.param().toTerm());
+            rl.map.put(rambda.param().ref(), lambda.param().toTerm());
+            return compare(lambda.body(), rambda.body(), lr, rl, pi.body());
+          });
+          return compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body());
+        });
+        if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(),
+          () -> compare(CallTerm.make(lhs, rambda.param().toArg()), rambda.body(), lr, rl, pi.body()));
+        // Question: do we need a unification for Pi.body?
+        return compareUntyped(lhs, rhs, lr, rl) != null;
+      });
     };
     traceExit();
     return ret;
@@ -295,7 +301,7 @@ public final class DefEq {
     traceEntrance(new Trace.UnifyT(type.freezeHoles(state),
       preRhs.freezeHoles(state), this.pos));
     var ret = switch (type) {
-      default -> throw new IllegalStateException();
+      default -> throw new IllegalStateException(type.getClass() + ": " + type);
       case RefTerm.MetaPat metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
@@ -409,7 +415,7 @@ public final class DefEq {
         }
         subst.add(argSubst);
         // TODO
-        lr.map.forEach(subst::add);
+        rl.map.forEach(subst::add);
         assert !state.metas().containsKey(meta);
         var solved = preRhs.subst(subst).freezeHoles(state);
         var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());

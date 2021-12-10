@@ -261,7 +261,7 @@ public final class ExprTycker {
   }
 
   private void univArgs(Term app, Expr.UnivArgsExpr univArgs) {
-    if (IntroTerm.Lambda.unwrap(app, null) instanceof CallTerm call) {
+    if (IntroTerm.Lambda.unwrap(app, param -> {}) instanceof CallTerm call) {
       var sortArgs = call.sortArgs();
       var levels = univArgs.univArgs();
       if (sortArgs.sizeEquals(levels)) sortArgs.zipView(levels).forEach(t ->
