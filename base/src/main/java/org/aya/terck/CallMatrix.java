@@ -3,61 +3,60 @@
 package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.Term;
 import org.aya.util.ArrayUtil;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
-public record CallMatrix<T>(
+public record CallMatrix<Def, Param>(
   @NotNull SourcePos sourcePos,
-  int rows, int cols,
-  @NotNull T caller, @NotNull T callee,
-  @NotNull ImmutableSeq<Term.Param> callerTele,
-  @NotNull ImmutableSeq<Term.Param> calleeTele,
+  @NotNull Def domain, @NotNull Def codomain,
+  @NotNull ImmutableSeq<Param> domainTele,
+  @NotNull ImmutableSeq<Param> codomainTele,
   @NotNull Relation[][] matrix
 ) {
-  public static <T> @NotNull CallMatrix<T> create(
+  public CallMatrix(
     @NotNull SourcePos sourcePos,
-    @NotNull Function<T, ImmutableSeq<Term.Param>> arityCounter,
-    @NotNull T caller, @NotNull T callee
+    @NotNull Def domain, @NotNull Def codomain,
+    @NotNull ImmutableSeq<Param> domainTele,
+    @NotNull ImmutableSeq<Param> codomainTele
   ) {
-    var callerTele = arityCounter.apply(caller);
-    var calleeTele = arityCounter.apply(callee);
-    return new CallMatrix<>(sourcePos, calleeTele.size(), callerTele.size(),
-      caller, callee,
-      callerTele, calleeTele);
-  }
-
-  private CallMatrix(@NotNull SourcePos sourcePos, int rows, int cols,
-                     @NotNull T caller, @NotNull T callee,
-                     @NotNull ImmutableSeq<Term.Param> callerTele,
-                     @NotNull ImmutableSeq<Term.Param> calleeTele) {
     // TODO: sparse matrix?
-    this(sourcePos, rows, cols, caller, callee, callerTele, calleeTele, new Relation[rows][cols]);
-    assert calleeTele.sizeEquals(rows);
-    assert callerTele.sizeEquals(cols);
+    this(sourcePos, domain, codomain, domainTele, codomainTele,
+      new Relation[codomainTele.size()][domainTele.size()]);
     ArrayUtil.fill(matrix, Relation.Unknown);
   }
 
-  public void set(@NotNull Term.Param caller, @NotNull Term.Param callee, @NotNull Relation relation) {
-    int row = calleeTele.indexOf(callee);
-    int col = callerTele.indexOf(caller);
+  public int rows() {
+    return codomainTele.size();
+  }
+
+  public int cols() {
+    return domainTele.size();
+  }
+
+  public void set(@NotNull Param domain, @NotNull Param codomain, @NotNull Relation relation) {
+    int row = codomainTele.indexOf(codomain);
+    int col = domainTele.indexOf(domain);
     assert row != -1;
     assert col != -1;
     matrix[row][col] = relation;
   }
 
   @Contract(pure = true)
-  public @NotNull CallMatrix<T> mul(@NotNull CallMatrix<T> rhs) {
-    if (this.cols != rhs.rows) throw new IllegalArgumentException("matrix multiplication?");
-    var result = new CallMatrix<>(rhs.sourcePos, this.rows, rhs.cols, caller, rhs.callee, callerTele, rhs.calleeTele);
-    for (int i = 0; i < result.rows; i++)
-      for (int j = 0; j < result.cols; j++)
-        for (int k = 0; k < this.cols; k++)
-          result.matrix[i][j] = result.matrix[i][j].add(this.matrix[i][k].mul(rhs.matrix[k][j]));
-    return result;
+  public static <Def, Param> @NotNull CallMatrix<Def, Param> combine(
+    @NotNull CallMatrix<Def, Param> A, @NotNull CallMatrix<Def, Param> B
+  ) {
+    if (B.domain != A.codomain) // implies B.cols() != A.rows()
+      throw new IllegalArgumentException("The combine cannot be applied to these two call matrices");
+
+    var BA = new CallMatrix<>(B.sourcePos, A.domain, B.codomain,
+      A.domainTele, B.codomainTele);
+
+    for (int i = 0; i < BA.rows(); i++)
+      for (int j = 0; j < BA.cols(); j++)
+        for (int k = 0; k < B.cols(); k++)
+          BA.matrix[i][j] = BA.matrix[i][j].add(B.matrix[i][k].mul(A.matrix[k][j]));
+    return BA;
   }
 }

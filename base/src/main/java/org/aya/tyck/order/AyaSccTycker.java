@@ -14,6 +14,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.term.Term;
 import org.aya.terck.CallGraph;
 import org.aya.terck.CallResolver;
 import org.aya.terck.error.NonTerminating;
@@ -107,13 +108,12 @@ public record AyaSccTycker(
 
   private void terckRecursiveFn(@NotNull FnDef fn) {
     var resolver = new CallResolver(fn, MutableSet.of(fn));
-    var graph = CallGraph.<Def>create();
+    var graph = CallGraph.<Def, Term.Param>create();
     fn.accept(resolver, graph);
     var failed = graph.findNonTerminating();
     failed.forEach(f -> {
-      var failedRef = f._1.ref();
-      var callPos = f._2;
-      reporter.report(new NonTerminating(failedRef.concrete.sourcePos, failedRef.name(), callPos));
+      var ref = f.data().ref();
+      reporter.report(new NonTerminating(ref.concrete.sourcePos, ref.name(), f.sourcePos()));
     });
   }
 

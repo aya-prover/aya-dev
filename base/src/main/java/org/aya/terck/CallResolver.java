@@ -30,22 +30,23 @@ public record CallResolver(
   @NotNull FnDef caller,
   @NotNull MutableSet<Def> targets,
   @NotNull Ref<Matching> currentMatching
-) implements DefConsumer<CallGraph<Def>> {
+) implements DefConsumer<CallGraph<Def, Term.Param>> {
   public CallResolver(@NotNull FnDef fn, @NotNull MutableSet<Def> targets) {
     this(fn, targets, new Ref<>());
   }
 
-  private void resolveCall(@NotNull CallTerm callTerm, CallGraph<Def> graph) {
+  private void resolveCall(@NotNull CallTerm callTerm, CallGraph<Def, Term.Param> graph) {
     if (!(callTerm.ref() instanceof DefVar<?, ?> defVar)) return;
     var callee = ((Def) defVar.core);
     if (!targets.contains(callee)) return;
     // TODO: source pos of the CallTerm?
-    var matrix = CallMatrix.create(SourcePos.NONE,Def::telescope, caller, callee);
+    // TODO: reduce arguments? I guess no. see https://github.com/agda/agda/issues/2403
+    var matrix = new CallMatrix<>(SourcePos.NONE, caller, callee, caller.telescope, callee.telescope());
     fillMatrix(callTerm, callee, matrix);
     graph.put(matrix);
   }
 
-  private void fillMatrix(@NotNull CallTerm callTerm, @NotNull Def callee, CallMatrix<Def> matrix) {
+  private void fillMatrix(@NotNull CallTerm callTerm, @NotNull Def callee, CallMatrix<Def, Term.Param> matrix) {
     // TODO: do not use zipView, which can only handle direct recursion
     caller.telescope.zipView(callee.telescope())
       .zipView(callTerm.args())
@@ -95,38 +96,38 @@ public record CallResolver(
     };
   }
 
-  @Override public void visitMatching(@NotNull Matching matching, CallGraph<Def> graph) {
+  @Override public void visitMatching(@NotNull Matching matching, CallGraph<Def, Term.Param> graph) {
     this.currentMatching.value = matching;
     DefConsumer.super.visitMatching(matching, graph);
     this.currentMatching.value = null;
   }
 
-  @Override public Unit visitFnCall(CallTerm.@NotNull Fn fnCall, CallGraph<Def> graph) {
+  @Override public Unit visitFnCall(CallTerm.@NotNull Fn fnCall, CallGraph<Def, Term.Param> graph) {
     resolveCall(fnCall, graph);
     return DefConsumer.super.visitFnCall(fnCall, graph);
   }
 
-  @Override public Unit visitConCall(CallTerm.@NotNull Con conCall, CallGraph<Def> graph) {
+  @Override public Unit visitConCall(CallTerm.@NotNull Con conCall, CallGraph<Def, Term.Param> graph) {
     resolveCall(conCall, graph);
     return DefConsumer.super.visitConCall(conCall, graph);
   }
 
-  @Override public Unit visitDataCall(CallTerm.@NotNull Data dataCall, CallGraph<Def> graph) {
+  @Override public Unit visitDataCall(CallTerm.@NotNull Data dataCall, CallGraph<Def, Term.Param> graph) {
     resolveCall(dataCall, graph);
     return DefConsumer.super.visitDataCall(dataCall, graph);
   }
 
-  @Override public Unit visitStructCall(CallTerm.@NotNull Struct structCall, CallGraph<Def> graph) {
+  @Override public Unit visitStructCall(CallTerm.@NotNull Struct structCall, CallGraph<Def, Term.Param> graph) {
     resolveCall(structCall, graph);
     return DefConsumer.super.visitStructCall(structCall, graph);
   }
 
-  @Override public Unit visitAccess(CallTerm.@NotNull Access term, CallGraph<Def> defCallGraph) {
+  @Override public Unit visitAccess(CallTerm.@NotNull Access term, CallGraph<Def, Term.Param> defCallGraph) {
     resolveCall(term, defCallGraph);
     return DefConsumer.super.visitAccess(term, defCallGraph);
   }
 
-  @Override public Unit visitPrimCall(@NotNull CallTerm.Prim prim, CallGraph<Def> graph) {
+  @Override public Unit visitPrimCall(@NotNull CallTerm.Prim prim, CallGraph<Def, Term.Param> graph) {
     resolveCall(prim, graph);
     return DefConsumer.super.visitPrimCall(prim, graph);
   }
