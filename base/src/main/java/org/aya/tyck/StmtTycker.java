@@ -55,7 +55,7 @@ public record StmtTycker(
   traced(@NotNull S yeah, ExprTycker p, @NotNull BiFunction<S, ExprTycker, D> f) {
     tracing(builder -> builder.shift(new Trace.DeclT(yeah.ref(), yeah.sourcePos)));
     var parent = p.localCtx;
-    p.localCtx = parent.derive();
+    p.localCtx = parent.deriveMap();
     var r = f.apply(yeah, p);
     tracing(Trace.Builder::reduce);
     p.localCtx = parent;

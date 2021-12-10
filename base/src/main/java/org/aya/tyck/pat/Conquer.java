@@ -19,7 +19,8 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.LocalCtx;
+import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.env.MapLocalCtx;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,7 @@ public record Conquer(
           var condition = conditions.get(i);
           var matchy = PatMatcher.tryBuildSubstTerms(null, params, condition.patterns().view().map(Pat::toTerm));
           if (matchy.isOk()) {
-            var ctx = new LocalCtx();
+            var ctx = new MapLocalCtx();
             condition.patterns().forEach(tern -> tern.storeBindings(ctx));
             // Do not need `ctor.storeBindings(ctx)` since they're substituted out by matchy
             checkConditions(ctx, ctor, nth, i + 1, condition.body(), matchy.get(), condition.sourcePos());

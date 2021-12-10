@@ -7,7 +7,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
-import org.aya.tyck.LocalCtx;
+import org.aya.tyck.env.MapLocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ public class EtaTest {
     new Term.Param(new LocalVar("B"), FormTerm.Univ.ZERO, false)));
   private static final @NotNull LocalVar X = new LocalVar("x");
   private static final @NotNull LocalVar Y = new LocalVar("y");
-  private static final @NotNull Eta ETA = new Eta(new LocalCtx());
+  private static final @NotNull Eta ETA = new Eta(new MapLocalCtx());
 
   @BeforeAll public static void init() {
     ETA.ctx().put(X, SIGMA);

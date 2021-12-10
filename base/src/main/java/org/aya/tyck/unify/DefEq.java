@@ -24,8 +24,9 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
-import org.aya.tyck.LocalCtx;
 import org.aya.tyck.TyckState;
+import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
@@ -220,7 +221,7 @@ public final class DefEq {
   }
 
   private @NotNull TyckState.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
-    var local = new LocalCtx();
+    var local = new MapLocalCtx();
     ctx.forward(local, lhs, state);
     ctx.forward(local, rhs, state);
     return new TyckState.Eqn(lhs, rhs, cmp, pos, local, lr.clone(), rl.clone());

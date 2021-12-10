@@ -36,6 +36,8 @@ import org.aya.generic.Level;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
@@ -55,7 +57,7 @@ import java.util.function.Consumer;
  */
 public final class ExprTycker {
   public final @NotNull Reporter reporter;
-  public @NotNull LocalCtx localCtx = new LocalCtx();
+  public @NotNull LocalCtx localCtx = new MapLocalCtx();
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull TyckState state = new TyckState();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
