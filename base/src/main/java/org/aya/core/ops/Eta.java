@@ -5,7 +5,7 @@ package org.aya.core.ops;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
-import org.aya.tyck.LocalCtx;
+import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 

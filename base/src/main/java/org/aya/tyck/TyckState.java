@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
@@ -11,14 +10,13 @@ import kala.tuple.Unit;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
-import org.aya.api.ref.LocalVar;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
-import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
@@ -106,7 +104,7 @@ public record TyckState(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull Ordering cmp, @NotNull SourcePos pos,
     @NotNull LocalCtx localCtx,
-    @NotNull ImmutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst
+    @NotNull DefEq.Sub lr, @NotNull DefEq.Sub rl
   ) implements AyaDocile {
     public <P, R> Tuple2<R, R> accept(@NotNull Term.Visitor<P, R> visitor, P p) {
       return Tuple.of(lhs.accept(visitor, p), rhs.accept(visitor, p));

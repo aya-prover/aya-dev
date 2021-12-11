@@ -31,6 +31,7 @@ module org.aya {
   exports org.aya.generic.ref;
   exports org.aya.generic;
   exports org.aya.prelude;
+  exports org.aya.tyck.env;
   exports org.aya.tyck.order;
   exports org.aya.tyck.pat;
   exports org.aya.tyck.trace;

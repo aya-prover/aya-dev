@@ -15,7 +15,7 @@ import org.aya.core.term.IntroTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
-import org.aya.tyck.LocalCtx;
+import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,0 +1,44 @@
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+package org.aya.tyck.env;
+
+import kala.collection.SeqView;
+import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableMap;
+import org.aya.api.ref.LocalVar;
+import org.aya.core.term.Term;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * @author re-xyr, ice1000
+ */
+public record MapLocalCtx(
+  @NotNull MutableMap<LocalVar, Term> localMap,
+  @Override @Nullable LocalCtx parent
+) implements LocalCtx {
+  public MapLocalCtx() {
+    this(MutableLinkedHashMap.of(), null);
+  }
+
+  @Override public void remove(@NotNull SeqView<LocalVar> vars) {
+    vars.forEach(localMap::remove);
+  }
+
+  @Override public @Nullable Term getLocal(@NotNull LocalVar var) {
+    return localMap.getOrNull(var);
+  }
+
+  @Override public void put(@NotNull LocalVar var, @NotNull Term term) {
+    localMap.put(var, term);
+  }
+
+  @Override public boolean isEmpty() {
+    return localMap.isEmpty() && (parent == null || parent.isEmpty());
+  }
+
+  @Override public void extractToLocal(@NotNull DynamicSeq<Term.Param> dest) {
+    localMap.mapTo(dest, (k, v) -> new Term.Param(k, v, false));
+  }
+}

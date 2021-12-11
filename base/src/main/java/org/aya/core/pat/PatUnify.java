@@ -8,7 +8,8 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.LocalCtx;
+import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.env.MapLocalCtx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -83,7 +84,7 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst,
     @NotNull TermSubst lhsSubst,
     @NotNull TermSubst rhsSubst
   ) {
-    var ctx = new LocalCtx();
+    var ctx = new MapLocalCtx();
     assert rpats.sizeEquals(lpats);
     lpats.view().zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, ctx));
     return ctx;
