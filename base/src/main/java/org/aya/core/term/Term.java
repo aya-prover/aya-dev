@@ -54,7 +54,7 @@ public sealed interface Term extends CoreTerm permits
     return subst(subst, LevelSubst.EMPTY);
   }
 
-  default @NotNull Term subst(@NotNull Map<Var, Term> subst) {
+  default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
     return accept(new Substituter(subst, LevelSubst.EMPTY), Unit.unit());
   }
 

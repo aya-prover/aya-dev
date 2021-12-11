@@ -214,7 +214,7 @@ public class ConcreteDistiller extends BaseDistiller implements
         yield tuple.as() == null ? tup
           : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
       }
-      case Pattern.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
+      case Pattern.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());
       case Pattern.CalmFace calmFace -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), calmFace.explicit());
       case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), number.explicit());

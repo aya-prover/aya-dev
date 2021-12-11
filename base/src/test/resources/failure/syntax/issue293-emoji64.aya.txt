@@ -7,10 +7,8 @@ In file $FILE:10:28 ->
 
 Error: Cannot check the expression of type
          ❤️
-         (Normalized: ❤️)
        against the type
          ❤️守❤️护❤️最❤️好❤️的❤️
-         (Normalized: ❤️守❤️护❤️最❤️好❤️的❤️)
 
 1 error(s), 0 warning(s).
 What are you doing?

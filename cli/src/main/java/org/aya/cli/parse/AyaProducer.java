@@ -660,7 +660,7 @@ public final class AyaProducer {
     if (ctx.LPAREN() != null || ctx.LBRACE() != null) {
       var forceEx = ctx.LPAREN() != null;
       var patterns = ctx.patterns();
-      if (patterns == null && forceEx) return ex -> new Pattern.Absurd(sourcePos, ex);
+      if (patterns == null) return ex -> new Pattern.Absurd(sourcePos, ex);
       var id = ctx.ID();
       var as = id != null ? new LocalVar(id.getText(), sourcePosOf(id)) : null;
       var tupElem = Seq.from(patterns.pattern()).view()
