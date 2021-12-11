@@ -43,6 +43,18 @@ public record CallMatrix<Def, Param>(
     matrix[row][col] = relation;
   }
 
+  public @NotNull Relation compare(@NotNull CallMatrix<Def, Param> other) {
+    if (this.domain != other.domain || this.codomain != other.codomain)
+      throw new IllegalArgumentException("Cannot compare unrelated call matrices");
+    if (this == other) return Relation.Equal;
+    for (int i = 0; i < rows(); i++)
+      for (int j = 0; j < cols(); j++) {
+        if (!this.matrix[i][j].lessThanOrEqual(other.matrix[i][j]))
+          return Relation.Unknown;
+      }
+    return Relation.LessThan;
+  }
+
   @Contract(pure = true)
   public static <Def, Param> @NotNull CallMatrix<Def, Param> combine(
     @NotNull CallMatrix<Def, Param> A, @NotNull CallMatrix<Def, Param> B
