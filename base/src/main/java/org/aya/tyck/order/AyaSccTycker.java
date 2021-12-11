@@ -61,7 +61,7 @@ public record AyaSccTycker(
     var headerOrder = headerOrder(scc);
     headerOrder.forEach(this::checkHeader);
     headerOrder.forEach(this::checkBody);
-    terck(scc.view());
+    terck(headerOrder.view());
   }
 
   private void checkUnit(TyckUnit unit) {
@@ -135,7 +135,7 @@ public record AyaSccTycker(
     stmts.forEach(stmt -> {
       var reference = DynamicSeq.<TyckUnit>create();
       SigRefFinder.HEADER_ONLY.visit(stmt, reference);
-      graph.sucMut(stmt).appendAll(reference);
+      graph.sucMut(stmt).appendAll(reference.view().filter(TyckUnit::needTyck));
     });
     var order = graph.topologicalOrder();
     var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
