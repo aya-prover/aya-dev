@@ -418,8 +418,14 @@ public final class DefEq {
         // TODO
         rl.map.forEach(subst::add);
         assert !state.metas().containsKey(meta);
-        var solved = preRhs.subst(subst).freezeHoles(state);
-        var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
+        var solved = preRhs.freezeHoles(state).subst(subst);
+        var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
+        var scopeCheck = solved.scopeCheck(allowedVars);
+        if (scopeCheck.invalid.isNotEmpty()) {
+          // Normalization may remove the usages of certain variables
+          solved = solved.normalize(state, NormalizeMode.NF);
+          scopeCheck = solved.scopeCheck(allowedVars);
+        }
         if (scopeCheck.invalid.isNotEmpty()) {
           reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid, pos));
           yield new ErrorTerm(solved);

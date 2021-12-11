@@ -93,12 +93,13 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst, @Nullable LocalCt
     }
   }
 
-  private void solve(@NotNull Pat pat, @NotNull RefTerm.MetaPat metaPat) {
+  private void solve(@NotNull Pat pat, @NotNull RefTerm.MetaPat metaPat) throws Mismatch {
     var referee = metaPat.ref();
     var todo = referee.solution();
     if (todo.value != null) throw new UnsupportedOperationException(
       "unsure what to do, please file an issue with reproduction if you see this!");
-    assert localCtx != null;
+    // In case this pattern matching is not from `PatTycker#mischa`, just block the evaluation.
+    if (localCtx == null) throw new Mismatch(true);
     todo.value = pat.rename(subst, localCtx, referee.explicit());
   }
 

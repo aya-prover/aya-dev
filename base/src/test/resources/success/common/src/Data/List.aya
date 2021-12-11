@@ -11,11 +11,11 @@ variable A B C : Type
 
 def length (l : List A) : Nat
 | nil => zero
-| a cons l => suc (length l)
+| _ cons l => suc (length l)
 
 def infix !! (l : List A) (i : Fin (length l)) : A
-| a cons l, fzero => a
-| a cons l, fsuc i => l !! i
+| a cons _, fzero => a
+| _ cons l, fsuc i => l !! i
 
 def overlap infixr ++ (xs ys : List A) : List A
 | nil, ys => ys

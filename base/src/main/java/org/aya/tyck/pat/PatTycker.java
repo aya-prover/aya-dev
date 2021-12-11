@@ -33,6 +33,7 @@ import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
@@ -370,7 +371,13 @@ public final class PatTycker {
   }
 
   private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, CtorDef ctor, @NotNull ImmutableSeq<Term.Param> telescope) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(exprTycker.localCtx, ctor.pats, dataCall.args());
+    if (ctor.pats.isNotEmpty()) return dataArgs(dataCall, ctor, exprTycker.localCtx, exprTycker.state);
     else return Result.ok(Unfolder.buildSubst(telescope, dataCall.args()));
+  }
+
+  public static Result<Substituter.TermSubst, Boolean>
+  dataArgs(@NotNull CallTerm.Data dataCall, @NotNull CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
+    return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
+      .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
   }
 }
