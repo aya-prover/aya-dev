@@ -29,10 +29,9 @@ public record CallGraph<T, P>(
     var callee = matrix.codomain();
     var set = graph.getOrPut(caller, MutableMap::create)
       .getOrPut(callee, MutableSet::create);
-    // TODO: check if there's already a smaller call matrix?
     if (set.contains(matrix)) return false;
     var unknown = set.anyMatch(arrow -> arrow.compare(matrix) != Relation.Unknown);
-    if (unknown) return false;
+    if (unknown) return false; // got stuck, fail early
     set.removeAll(existing -> matrix.compare(existing) == Relation.LessThan);
     set.add(matrix);
     return true;
@@ -40,10 +39,10 @@ public record CallGraph<T, P>(
 
   private static <T, P> @NotNull CallGraph<T, P> complete(@NotNull CallGraph<T, P> start) {
     var oldGraph = new Ref<>(start);
-    var newGraph = new Ref<>(CallGraph.<T, P>create());
     var newEdge = new Ref<>(1);
     while (newEdge.value != 0) {
       newEdge.value = 0;
+      var newGraph = new Ref<>(CallGraph.<T, P>create());
       oldGraph.value.graph.forEach((domain, codomains) -> {
         var out = codomains.getOrNull(domain);
         if (out != null) out.forEach(matrix -> newGraph.value.put(matrix));
@@ -56,7 +55,6 @@ public record CallGraph<T, P>(
         }));
       })));
       oldGraph.value = newGraph.value;
-      newGraph.value = CallGraph.create();
     }
     return oldGraph.value;
   }
