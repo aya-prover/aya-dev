@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
+import kala.control.Option;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +36,10 @@ public record CallGraph<T, P>(
     // TODO: complete the call graph first
     var failed = DynamicSeq.<WithPos<T>>create();
     for (var key : graph.keysView()) {
-      var matrix = graph.get(key).get(key);
-      var behavior = Behavior.create(key, matrix);
+      var matrix = Option.of(graph.getOrNull(key))
+        .mapNotNull(g -> g.getOrNull(key));
+      if (matrix.isEmpty()) continue;
+      var behavior = Behavior.create(key, matrix.get());
       // Each diagonal in the behavior is a possible recursive call to `key` and how the orders of all parameters are
       // altered in this call. We ensure in each possible recursive call, there's at least one parameter decreases.
       // note[kiva]: Arend uses foetus termination check. Agda used to choose foetus, but now it applies

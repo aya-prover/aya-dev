@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableSet;
@@ -48,17 +49,24 @@ public record AyaSccTycker(
       if (scc.sizeEquals(1)) {
         var unit = scc.first();
         if (unit instanceof Decl.FnDecl fn && fn.body.isLeft()) checkSimpleFn(fn);
-        else checkBody(unit, true);
-      } else {
-        var headerOrder = headerOrder(scc);
-        headerOrder.forEach(this::checkHeader);
-        headerOrder.forEach(unit -> checkBody(unit, false));
-        // TODO: terck for scc
-      }
+        else checkUnit(unit);
+      } else checkMutual(scc);
       return ImmutableSeq.empty();
     } catch (SCCTyckingFailed failed) {
       return failed.what;
     }
+  }
+
+  private void checkMutual(@NotNull ImmutableSeq<TyckUnit> scc) {
+    var headerOrder = headerOrder(scc);
+    headerOrder.forEach(this::checkHeader);
+    headerOrder.forEach(this::checkBody);
+    terck(scc.view());
+  }
+
+  private void checkUnit(TyckUnit unit) {
+    checkBody(unit);
+    terck(SeqView.of(unit));
   }
 
   private boolean isRecursive(@NotNull Decl unit) {
@@ -83,33 +91,33 @@ public record AyaSccTycker(
     wellTyped.append(tycker.simpleFn(tycker.newTycker(), fn));
   }
 
-  private void checkBody(@NotNull TyckUnit stmt, boolean terck) {
+  private void checkBody(@NotNull TyckUnit stmt) {
     switch (stmt) {
       case Decl decl -> {
         var tyck = tycker.tyck(decl, tycker.newTycker());
         wellTyped.append(tyck);
-        if (reporter.noError() && terck) terck(tyck);
       }
       case Sample sample -> {
         var tyck = sample.tyck(tycker);
         if (tyck != null) wellTyped.append(tyck);
-        // TODO: terck for sample
       }
-      // TODO: terck for remark
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 
-  private void terck(@NotNull Def tyck) {
-    if (tyck instanceof FnDef fn && isRecursive(fn.ref.concrete)) terckRecursiveFn(fn);
+  private void terck(@NotNull SeqView<TyckUnit> units) {
+    var fn = units.filterIsInstance(Decl.FnDecl.class)
+      .map(decl -> decl.ref.core)
+      .filter(def -> isRecursive(def.ref().concrete));
+    terckRecursiveFn(fn);
   }
 
-  private void terckRecursiveFn(@NotNull FnDef fn) {
-    var resolver = new CallResolver(fn, MutableSet.of(fn));
+  private void terckRecursiveFn(@NotNull SeqView<FnDef> fn) {
+    var targets = MutableSet.<Def>from(fn);
     var graph = CallGraph.<Def, Term.Param>create();
-    fn.accept(resolver, graph);
+    fn.forEach(def -> def.accept(new CallResolver(def, targets), graph));
     var failed = graph.findNonTerminating();
     failed.forEach(f -> {
       var ref = f.data().ref();
