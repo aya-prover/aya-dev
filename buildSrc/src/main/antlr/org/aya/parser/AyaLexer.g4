@@ -41,7 +41,7 @@ OVERLAP : 'overlap';
 MODULE_KW : 'module';
 BIND_KW : 'bind';
 MATCH : 'match';
-ABSURD : 'impossible';
+// ABSURD : 'impossible';
 VARIABLE : 'variable';
 DEF : 'def';
 STRUCT : 'struct';
@@ -52,6 +52,13 @@ NEW_KW : 'new';
 LSUC_KW : 'lsuc';
 LMAX_KW : 'lmax';
 PATTERN_KW : 'pattern';
+
+// Unimplemented but reserved
+DO_KW : 'do';
+CODATA_KW : 'codata';
+LET_KW : 'let';
+IN_KW : 'in';
+COMPLETED : 'completed';
 
 // symbols
 SIGMA : 'Sig' | '\u03A3';

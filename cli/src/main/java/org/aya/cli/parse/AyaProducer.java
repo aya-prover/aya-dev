@@ -659,25 +659,22 @@ public final class AyaProducer {
     var sourcePos = sourcePosOf(ctx);
     if (ctx.LPAREN() != null || ctx.LBRACE() != null) {
       var forceEx = ctx.LPAREN() != null;
+      var patterns = ctx.patterns();
+      if (patterns == null && forceEx) return ex -> new Pattern.Absurd(sourcePos, ex);
       var id = ctx.ID();
       var as = id != null ? new LocalVar(id.getText(), sourcePosOf(id)) : null;
-      var tupElem = ctx.patterns().pattern().stream()
+      var tupElem = Seq.from(patterns.pattern()).view()
         .map(t -> visitAtomPatterns(t.atomPatterns()))
-        .collect(ImmutableSeq.factory());
+        .toImmutableSeq();
       return tupElem.sizeEquals(1)
-        ? (exIgnored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
-        : (exIgnored -> new Pattern.Tuple(
-        sourcePos,
-        forceEx,
-        tupElem.map(p -> p.apply(true, null)),
-        as));
+        ? (ignored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
+        : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
     }
     if (ctx.CALM_FACE() != null) return ex -> new Pattern.CalmFace(sourcePos, ex);
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.ID();
     if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)));
-    if (ctx.ABSURD() != null) return ex -> new Pattern.Absurd(sourcePos, ex);
 
     return unreachable(ctx);
   }

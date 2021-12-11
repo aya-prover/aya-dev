@@ -10,4 +10,4 @@ def addN (a b : Nat) : Nat
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (addN a b)
- | a, suc impossible
+ | a, suc ()

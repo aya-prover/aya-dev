@@ -4,6 +4,7 @@ package org.aya.gradle
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
@@ -20,7 +21,7 @@ class GenerateLexerTokenTask extends DefaultTask {
   @OutputDirectory File ymlOutputDir
   @Input String className
   @Input String ymlName
-  @Input def lexerG4 = ""
+  @InputFile def lexerG4 = ""
   @Input def basePackage = ""
 
   @TaskAction def run() {
