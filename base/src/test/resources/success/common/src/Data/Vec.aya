@@ -1,5 +1,6 @@
 open import Arith::Nat
 open import Data::Fin
+open import Data::List
 open import Paths
 
 open data Vec (A : Type) (n : Nat) : Type
@@ -9,27 +10,27 @@ open data Vec (A : Type) (n : Nat) : Type
 variable A B : Type
 variable n m o : Nat
 
-def map (f : A -> B) (xs : Vec A n) : Vec B n
+def vmap (f : A -> B) (xs : Vec A n) : Vec B n
 | f, vnil => vnil
-| f, x vcons xs => f x vcons map f xs
+| f, x vcons xs => f x vcons vmap f xs
 
-def overlap infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
+def overlap infix ++v (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 | vnil, ys => ys
 | xs, vnil => xs
-| x vcons xs, ys => x vcons (xs ++ ys)
+| x vcons xs, ys => x vcons (xs ++v ys)
 bind tighter =
 
-def overlap ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
-  : Path (\i => Vec A (+-assoc.at i)) ((xs ++ ys) ++ zs) (xs ++ (ys ++ zs))
+def overlap ++v-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
+  : Path (\i => Vec A (+-assoc.at i)) ((xs ++v ys) ++v zs) (xs ++v (ys ++v zs))
 | vnil, ys, zs => idp
 | xs, vnil, zs => idp
 | xs, ys, vnil => idp
--- | x vcons xs, ys, zs => ipmap (x vcons) (++-assoc xs ys zs)
-| x vcons xs, ys, zs => path (\i => x vcons (++-assoc xs ys zs).at i)
+-- | x vcons xs, ys, zs => pmapd (Vec _) (x vcons) (++v-assoc xs ys zs)
+| x vcons xs, ys, zs => path (\i => x vcons (++v-assoc xs ys zs).at i)
 
-def infix !! (l : Vec A n) (i : Fin n) : A
+def infix !!v (l : Vec A n) (i : Fin n) : A
 | a vcons l, fzero => a
-| a vcons l, fsuc i => l !! i
+| a vcons l, fsuc i => l !!v i
 
 def fold (f : Pi B A -> B) (init : B) (xs : Vec A n) : B
 | f, init, vnil => init
@@ -43,3 +44,7 @@ def last (Vec A (suc n)) : A
 
 def tail (Vec A (suc n)) : Vec A n
 | _ vcons xs => xs
+
+def toList (Vec A n) : List A
+| a vcons xs => a cons toList xs
+| vnil => nil

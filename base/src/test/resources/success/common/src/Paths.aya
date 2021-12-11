@@ -9,7 +9,7 @@ struct Path (A : I -> Type) (a : A left) (b : A right) : Type
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
 
-variable A B C : Type
+variable A B C D : Type
 
 def infix = (a b : A) : Type => Path (\ i => A) a b
 def idp {a : A} : a = a => path (\ i => a)
@@ -34,8 +34,16 @@ def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
 def funExt2 (f g : A -> B -> C) (p : forall a b -> f a b = g a b) : f = g
   => path (\ i a b => (p a b).at i)
 
-def pmap (f : A -> B) {a b : A} (p : a = b)
-  : f a = f b => path (\ i => f (p.at i))
+def funExt3 (f g : A -> B -> C -> D) (p : forall a b c -> f a b c = g a b c) : f = g
+  => path (\ i a b c => (p a b c).at i)
+
+-- The most general path mapping
+def pmapd' {A : I -> Type} (B : Pi (i : I) (A i) -> Type)
+    (f : Pi (i : I) (a : A i) -> B i a)
+    {a : A left} {b : A right} (p : Path A a b)
+  : Path (\i => B i (p.at i)) (f left a) (f right b) => path (\ i => f i (p.at i))
+
+def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => pmapd' _ (\ i => f) p
 
 prim arcoe (A : I -> Type) (A left) (i : I) : A i
 def hfill2d
