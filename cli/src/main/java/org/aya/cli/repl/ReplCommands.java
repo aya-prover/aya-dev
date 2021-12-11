@@ -15,13 +15,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public interface ReplCommands {
-  record Code(@NotNull String code) {
-  }
+  record Code(@NotNull String code) {}
+
+  record Prompt(@NotNull String prompt) {}
 
   @NotNull Command CHANGE_PROMPT = new Command(ImmutableSeq.of("prompt"), "Change the REPL prompt text") {
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull String argument) {
-      repl.config.prompt = argument;
-      return Result.ok("Changed prompt to `" + argument + "`", true);
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Prompt argument) {
+      var prompt = argument.prompt;
+      if (prompt.startsWith("\"") && prompt.endsWith("\"")) prompt = prompt.substring(1, prompt.length() - 1);
+      repl.config.prompt = prompt;
+      return Result.ok("Changed prompt to `" + prompt + "`", true);
     }
   };
 
@@ -91,9 +94,10 @@ public interface ReplCommands {
       var map = repl.config.distillerOptions.map;
       if (key == null) {
         builder.append("Current pretty printing options:");
-        for (var k : DistillerOptions.Key.values()) builder
-          .append("\n").append(k.name()).append(": ")
-          .append(map.get(k));
+        for (var k : DistillerOptions.Key.values())
+          builder
+            .append("\n").append(k.name()).append(": ")
+            .append(map.get(k));
       } else {
         var newValue = !map.get(key);
         map.put(key, newValue);
