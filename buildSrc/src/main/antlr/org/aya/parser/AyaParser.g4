@@ -119,7 +119,7 @@ atomPatterns : atomPattern+ ;
 atomPattern : LPAREN patterns RPAREN (AS ID)?
             | LBRACE patterns RBRACE (AS ID)?
             | NUMBER
-            | ABSURD
+            | LPAREN RPAREN
             | ID
             | CALM_FACE
             ;

@@ -46,6 +46,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       CommandArg.shellLike(Path.class, new Completers.FileNameCompleter(), this::resolveFile),
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.Code(this), ReplCommands.Code::new),
       CommandArg.from(ReplUtil.HelpItem.class, new ReplCompleters.Help(() -> commandManager), ReplUtil.HelpItem::new),
+      CommandArg.from(ReplCommands.Prompt.class, null, ReplCommands.Prompt::new),
       CommandArg.fromEnum(DistillerOptions.Key.class),
       CommandArg.fromEnum(NormalizeMode.class)
     ), ImmutableSeq.of(
