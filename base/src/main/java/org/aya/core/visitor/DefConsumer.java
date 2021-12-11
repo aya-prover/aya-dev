@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
+import org.aya.core.pat.Lhs;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ public interface DefConsumer<P> extends Def.Visitor<P, Unit>, TermConsumer<P> {
   }
 
   default void visitMatching(@NotNull Matching matching, P p) {
-    matching.patterns().forEach(pat -> visitPat(pat, p));
+    matching.lhss().forEach(lhs -> visitLhs(lhs, p));
     matching.body().accept(this, p);
   }
 
@@ -29,6 +30,14 @@ public interface DefConsumer<P> extends Def.Visitor<P, Unit>, TermConsumer<P> {
     switch (pat) {
       case Pat.Ctor ctor -> ctor.params().forEach(param -> visitPat(param, p));
       case Pat.Tuple tuple -> tuple.pats().forEach(param -> visitPat(param, p));
+      default -> {}
+    }
+  }
+
+  default void visitLhs(@NotNull Lhs lhs, P p) {
+    switch (lhs) {
+      case Lhs.Ctor ctor -> ctor.params().forEach(param -> visitLhs(param, p));
+      case Lhs.Tuple tuple -> tuple.lhss().forEach(param -> visitLhs(param, p));
       default -> {}
     }
   }

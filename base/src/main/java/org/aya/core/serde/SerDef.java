@@ -32,7 +32,7 @@ public sealed interface SerDef extends Serializable {
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
     @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
-    @NotNull Either<SerTerm, ImmutableSeq<SerPat.Matchy>> body,
+    @NotNull Either<SerTerm, ImmutableSeq<SerLhs.Matchy>> body,
     @NotNull EnumSet<Modifier> modifiers,
     @NotNull SerTerm result
   ) implements SerDef {
@@ -50,7 +50,7 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerPat> pats,
     @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
     @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
-    @NotNull ImmutableSeq<SerPat.Matchy> clauses,
+    @NotNull ImmutableSeq<SerLhs.Matchy> clauses,
     @NotNull SerTerm result, boolean coerce
   ) implements SerDef {
     @Override public @NotNull CtorDef de(SerTerm.@NotNull DeState state) {
@@ -83,7 +83,7 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
     @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
     @NotNull SerTerm result,
-    @NotNull ImmutableSeq<SerPat.Matchy> clauses,
+    @NotNull ImmutableSeq<SerLhs.Matchy> clauses,
     @NotNull Option<SerTerm> body,
     boolean coerce
   ) implements SerDef {

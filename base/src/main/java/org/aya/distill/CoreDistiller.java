@@ -12,6 +12,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
+import org.aya.core.pat.Lhs;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.VarConsumer;
@@ -251,6 +252,20 @@ public class CoreDistiller extends BaseDistiller implements
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> visitPat(sub, Outer.Free))));
+    };
+  }
+
+  public Doc visitLhs(@NotNull Lhs lhs, Outer outer) {
+    return switch (lhs) {
+      case Lhs.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());
+      case Lhs.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
+      case Lhs.Ctor ctor -> {
+        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, ctor.params().view().map(Lhs::toArg), outer,
+          options.map.get(DistillerOptions.Key.ShowImplicitPats));
+        yield ctorDoc(outer, ctor.explicit(), ctorDoc, null, ctor.params().isEmpty());
+      }
+      case Lhs.Tuple tuple -> Doc.licit(tuple.explicit(),
+        Doc.commaList(tuple.lhss().view().map(sub -> visitLhs(sub, Outer.Free))));
     };
   }
 

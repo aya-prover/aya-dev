@@ -6,11 +6,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
-import org.aya.core.Matching;
+import org.aya.core.TypedMatching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.core.pat.Lhs;
 import org.aya.core.pat.Pat;
-import org.aya.core.pat.PatMatcher;
+import org.aya.core.pat.LhsPatMatcher;
 import org.aya.core.pat.PatToTerm;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.term.CallTerm;
@@ -31,14 +32,14 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Conquer(
-  @NotNull ImmutableSeq<Matching> matchings,
+  @NotNull ImmutableSeq<TypedMatching> matchings,
   @NotNull SourcePos sourcePos,
   @NotNull Def.Signature signature,
   boolean orderIndependent,
   @NotNull ExprTycker tycker
 ) {
   public static void against(
-    @NotNull ImmutableSeq<Matching> matchings, boolean orderIndependent,
+    @NotNull ImmutableSeq<TypedMatching> matchings, boolean orderIndependent,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
     var conquer = new Conquer(matchings, pos, signature, orderIndependent, tycker);
@@ -60,10 +61,10 @@ public record Conquer(
         var conditions = ctor.ref().core.clauses;
         for (int i = 0, size = conditions.size(); i < size; i++) {
           var condition = conditions.get(i);
-          var matchy = PatMatcher.tryBuildSubstTerms(null, params, condition.patterns().view().map(Pat::toTerm));
+          var matchy = LhsPatMatcher.tryBuildLhsSubstTerms(params.map(Pat::toLhs), condition.lhss().view().map(Lhs::toTerm));
           if (matchy.isOk()) {
             var ctx = new MapLocalCtx();
-            condition.patterns().forEach(tern -> tern.storeBindings(ctx));
+            condition.lhss().forEach(tern -> tern.storeBindings(ctx));
             // Do not need `ctor.storeBindings(ctx)` since they're substituted out by matchy
             checkConditions(ctx, ctor, nth, i + 1, condition.body(), matchy.get(), condition.sourcePos());
           }
@@ -95,7 +96,7 @@ public record Conquer(
       }
     }.visit(pat), pat.explicit()));
     var volynskaya = new Normalizer(tycker.state).tryUnfoldClauses(
-      NormalizeMode.WHNF, orderIndependent, newArgs, LevelSubst.EMPTY, matchings);
+      NormalizeMode.WHNF, orderIndependent, newArgs, LevelSubst.EMPTY, matchings.map(TypedMatching::toMatching));
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));

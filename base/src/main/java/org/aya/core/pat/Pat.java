@@ -13,7 +13,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.Matching;
+import org.aya.core.TypedMatching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
@@ -50,6 +50,7 @@ public sealed interface Pat extends CorePat {
   @NotNull Pat zonk(@NotNull Zonker zonker);
   @NotNull Pat inline();
   void storeBindings(@NotNull LocalCtx localCtx);
+  @NotNull Lhs toLhs();
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
     var localCtx = new SeqLocalCtx();
     for (var pat : pats) pat.storeBindings(localCtx);
@@ -81,6 +82,10 @@ public sealed interface Pat extends CorePat {
     @Override public @NotNull Pat inline() {
       return this;
     }
+
+    @Override public @NotNull Lhs toLhs() {
+      return new Lhs.Bind(explicit, bind, type);
+    }
   }
 
   record Meta(
@@ -109,6 +114,10 @@ public sealed interface Pat extends CorePat {
     public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       throw new IllegalStateException("unreachable");
     }
+
+    @Override public @NotNull Lhs toLhs() {
+      throw new IllegalStateException();
+    }
   }
 
   record Absurd(boolean explicit, @NotNull Term type) implements Pat {
@@ -127,6 +136,10 @@ public sealed interface Pat extends CorePat {
 
     @Override public @NotNull Pat inline() {
       return this;
+    }
+
+    @Override public @NotNull Lhs toLhs() {
+      throw new IllegalStateException();
     }
   }
 
@@ -151,6 +164,10 @@ public sealed interface Pat extends CorePat {
 
     @Override public @NotNull Pat inline() {
       return new Tuple(explicit, pats.map(Pat::inline), type);
+    }
+
+    @Override public @NotNull Lhs toLhs() {
+      return new Lhs.Tuple(explicit, pats.map(Pat::toLhs));
     }
   }
 
@@ -179,6 +196,10 @@ public sealed interface Pat extends CorePat {
     @Override public @NotNull Pat inline() {
       return new Ctor(explicit, ref, params.map(Pat::inline), type);
     }
+
+    @Override public @NotNull Lhs toLhs() {
+      return new Lhs.Ctor(explicit, ref, params.map(Pat::toLhs), type);
+    }
   }
 
   record Prim(
@@ -202,6 +223,10 @@ public sealed interface Pat extends CorePat {
     @Override public @NotNull Pat inline() {
       return this;
     }
+
+    @Override public @NotNull Lhs toLhs() {
+      return new Lhs.Prim(explicit, ref);
+    }
   }
 
   /**
@@ -223,12 +248,12 @@ public sealed interface Pat extends CorePat {
       else return doc;
     }
 
-    public static @NotNull Preclause<Term> weaken(@NotNull Matching clause) {
+    public static @NotNull Preclause<Term> weaken(@NotNull TypedMatching clause) {
       return new Preclause<>(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
     }
 
-    public static @NotNull Option<@NotNull Matching> lift(@NotNull Preclause<Term> clause) {
-      return clause.expr.map(term -> new Matching(clause.sourcePos, clause.patterns, term));
+    public static @NotNull Option<@NotNull TypedMatching> lift(@NotNull Preclause<Term> clause) {
+      return clause.expr.map(term -> new TypedMatching(clause.sourcePos, clause.patterns, term));
     }
   }
 }

@@ -13,7 +13,7 @@ import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
-import org.aya.core.pat.PatMatcher;
+import org.aya.core.pat.LhsPatMatcher;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.sort.Sort.LvlVar;
@@ -115,7 +115,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
-      var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
+      var termSubst = LhsPatMatcher.tryBuildLhsSubstArgs(matchy.lhss(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
         var newBody = matchy.body().subst(subst, levelSubst).accept(this, p).rename();

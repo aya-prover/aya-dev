@@ -11,7 +11,9 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.Matching;
+import org.aya.core.TypedMatching;
 import org.aya.core.def.*;
+import org.aya.core.pat.Lhs;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
@@ -44,8 +46,21 @@ public record Serializer(@NotNull Serializer.State state) implements
     };
   }
 
-  private @NotNull SerPat.Matchy serialize(@NotNull Matching matchy) {
-    return new SerPat.Matchy(serializePats(matchy.patterns()), serialize(matchy.body()));
+  private @NotNull SerLhs serialize(@NotNull Lhs lhs) {
+    return switch (lhs) {
+      case Lhs.Ctor ctor -> new SerLhs.Ctor(
+        ctor.explicit(),
+        state.def(ctor.ref()),
+        serializeLhss(ctor.params()),
+        visitDataCall(ctor.type(), Unit.unit()));
+      case Lhs.Prim prim -> new SerLhs.Prim(prim.explicit(), state.def(prim.ref()));
+      case Lhs.Tuple tuple -> new SerLhs.Tuple(tuple.explicit(), serializeLhss(tuple.lhss()));
+      case Lhs.Bind bind -> new SerLhs.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
+    };
+  }
+
+  private @NotNull SerLhs.Matchy serialize(@NotNull Matching matchy) {
+    return new SerLhs.Matchy(serializeLhss(matchy.lhss()), serialize(matchy.body()));
   }
 
   private SerTerm.SerArg serialize(@NotNull Arg<@NotNull Term> termArg) {
@@ -130,6 +145,10 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   private @NotNull ImmutableSeq<SerPat> serializePats(@NotNull ImmutableSeq<Pat> pats) {
     return pats.map(this::serialize);
+  }
+
+  private @NotNull ImmutableSeq<SerLhs> serializeLhss(@NotNull ImmutableSeq<Lhs> lhss) {
+    return lhss.map(this::serialize);
   }
 
   @Override public SerTerm visitApp(ElimTerm.@NotNull App term, Unit unit) {

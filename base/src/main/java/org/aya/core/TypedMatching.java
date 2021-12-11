@@ -5,25 +5,23 @@ package org.aya.core;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.core.pat.Lhs;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
-import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */
-public record Matching(
+public record TypedMatching(
   @NotNull SourcePos sourcePos,
-  @NotNull ImmutableSeq<Lhs> lhss,
+  @NotNull ImmutableSeq<Pat> patterns,
   @NotNull Term body
 ) implements AyaDocile {
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    var distiller = new CoreDistiller(options);
-    var lhsss = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? lhss : lhss.view().filter(Lhs::explicit);
-    var doc = Doc.emptyIf(lhsss.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
-      lhsss.view().map(l -> distiller.visitLhs(l, BaseDistiller.Outer.Free)))));
-    return Doc.sep(doc, Doc.symbol("=>"), body.toDoc(options));
+    return Pat.Preclause.weaken(this).toDoc(options);
+  }
+
+  public @NotNull Matching toMatching() {
+    return new Matching(sourcePos, patterns.map(Pat::toLhs), body);
   }
 }
