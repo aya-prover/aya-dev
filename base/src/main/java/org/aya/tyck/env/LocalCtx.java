@@ -18,12 +18,14 @@ import org.aya.generic.Constants;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public sealed interface LocalCtx permits MapLocalCtx {
+@Debug.Renderer(hasChildren = "true", childrenArray = "extract().toArray()")
+public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   @NotNull default Tuple2<CallTerm.Hole, Term> freshHole(@NotNull Term type, @NotNull SourcePos sourcePos) {
     return freshHole(type, Constants.ANONYMOUS_PREFIX, sourcePos);
   }
@@ -50,7 +52,14 @@ public sealed interface LocalCtx permits MapLocalCtx {
       }
     }, Unit.unit());
   }
-  <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action);
+  default <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
+    put(var, type);
+    try {
+      return action.get();
+    } finally {
+      remove(SeqView.of(var));
+    }
+  }
   default @NotNull ImmutableSeq<Term.Param> extract() {
     var ctx = DynamicSeq.<Term.Param>create();
     var map = this;
@@ -68,7 +77,7 @@ public sealed interface LocalCtx permits MapLocalCtx {
       if (res != null) return res;
       ctx = ctx.parent();
     }
-    throw new IllegalArgumentException("No such variable: " + var.name());
+    throw new IllegalArgumentException(var.name());
   }
 
   @Contract(pure = true) @Nullable Term getLocal(@NotNull LocalVar var);
@@ -79,6 +88,9 @@ public sealed interface LocalCtx permits MapLocalCtx {
   boolean isEmpty();
   @Contract(" -> new") default @NotNull MapLocalCtx deriveMap() {
     return new MapLocalCtx(MutableLinkedHashMap.of(), this);
+  }
+  @Contract(" -> new") default @NotNull SeqLocalCtx deriveSeq() {
+    return new SeqLocalCtx(DynamicSeq.create(), this);
   }
   @Nullable LocalCtx parent();
 }

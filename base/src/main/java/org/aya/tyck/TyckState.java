@@ -16,6 +16,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;

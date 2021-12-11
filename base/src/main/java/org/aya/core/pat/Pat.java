@@ -25,7 +25,7 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.env.MapLocalCtx;
+import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public sealed interface Pat extends CorePat {
   @NotNull Pat inline();
   void storeBindings(@NotNull LocalCtx localCtx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
-    var localCtx = new MapLocalCtx();
+    var localCtx = new SeqLocalCtx();
     for (var pat : pats) pat.storeBindings(localCtx);
     return localCtx.extract();
   }

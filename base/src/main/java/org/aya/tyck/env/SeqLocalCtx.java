@@ -4,41 +4,39 @@ package org.aya.tyck.env;
 
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableMap;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author re-xyr, ice1000
- */
-public record MapLocalCtx(
-  @NotNull MutableMap<LocalVar, Term> localMap,
+public record SeqLocalCtx(
+  @NotNull DynamicSeq<P> localSeq,
   @Override @Nullable LocalCtx parent
 ) implements LocalCtx {
-  public MapLocalCtx() {
-    this(MutableLinkedHashMap.of(), null);
+  public SeqLocalCtx() {
+    this(DynamicSeq.create(), null);
+  }
+
+  public record P(@NotNull LocalVar var, @NotNull Term type) {
   }
 
   @Override public void remove(@NotNull SeqView<LocalVar> vars) {
-    vars.forEach(localMap::remove);
-  }
-
-  @Override public @Nullable Term getLocal(@NotNull LocalVar var) {
-    return localMap.getOrNull(var);
-  }
-
-  @Override public void put(@NotNull LocalVar var, @NotNull Term term) {
-    localMap.put(var, term);
-  }
-
-  @Override public boolean isEmpty() {
-    return localMap.isEmpty() && (parent == null || parent.isEmpty());
+    localSeq.removeAll(p -> vars.contains(p.var));
   }
 
   @Override public void extractToLocal(@NotNull DynamicSeq<Term.Param> dest) {
-    localMap.mapTo(dest, (k, v) -> new Term.Param(k, v, false));
+    localSeq.mapTo(dest, p -> new Term.Param(p.var, p.type, false));
+  }
+
+  @Override public @Nullable Term getLocal(@NotNull LocalVar var) {
+    return localSeq.firstOption(p -> p.var.equals(var)).map(p -> p.type).getOrNull();
+  }
+
+  @Override public void put(@NotNull LocalVar var, @NotNull Term term) {
+    localSeq.append(new P(var, term));
+  }
+
+  @Override public boolean isEmpty() {
+    return localSeq.isEmpty();
   }
 }
