@@ -6,10 +6,8 @@ In file $FILE:2:0 ->
 
 Error: Cannot check the expression of type
          Type
-         (Normalized: Type)
        against the type
          Nat
-         (Normalized: Nat)
 
 1 error(s), 0 warning(s).
 What are you doing?

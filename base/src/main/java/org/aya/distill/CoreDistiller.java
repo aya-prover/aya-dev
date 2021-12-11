@@ -248,7 +248,7 @@ public class CoreDistiller extends BaseDistiller implements
           options.map.get(DistillerOptions.Key.ShowImplicitPats));
         yield ctorDoc(outer, ctor.explicit(), ctorDoc, null, ctor.params().isEmpty());
       }
-      case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
+      case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> visitPat(sub, Outer.Free))));
     };

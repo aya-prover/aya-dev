@@ -333,7 +333,8 @@ public final class ExprTycker {
         if (lamParam != null) {
           var result = inherit(lamParam, FormTerm.freshUniv(lamParam.sourcePos()));
           var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
-          if (!comparison) {
+          if (comparison != null) {
+            // TODO: maybe also report this unification failure?
             yield fail(lam, dt, BadTypeError.lamParam(lam, type, result.wellTyped));
           } else type = result.wellTyped;
         }
@@ -547,9 +548,13 @@ public final class ExprTycker {
       .toImmutableSeq());
   }
 
-  private boolean unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
+  /** @return null if unified successfully */
+  private DefEq.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.append(new Trace.UnifyT(lower, upper, pos)));
-    return unifier(pos, Ordering.Lt).compare(lower, upper, FormTerm.freshUniv(pos));
+    var unifier = unifier(pos, Ordering.Lt);
+    if (!unifier.compare(lower, upper, FormTerm.freshUniv(pos))) {
+      return unifier.failureData();
+    } else return null;
   }
 
   public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
@@ -568,7 +573,7 @@ public final class ExprTycker {
    */
   void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (!unification) reporter.report(new UnifyError(loc, upper, lower));
+    if (unification != null) reporter.report(new UnifyError(loc, upper, lower, unification));
   }
 
   /**
@@ -586,9 +591,10 @@ public final class ExprTycker {
       term = CallTerm.make(term, mock);
       lower = pi.substBody(mock.term());
     }
-    if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
+    var failureData = unifyTy(upper, lower, loc.sourcePos());
+    if (failureData == null) return new Result(term, lower);
     return fail(term.freezeHoles(state), upper, new UnifyError(loc,
-      upper.freezeHoles(state), lower.freezeHoles(state)));
+      upper.freezeHoles(state), lower.freezeHoles(state), failureData));
   }
 
   public @NotNull Sort sort(@NotNull Expr expr, @NotNull Term term) {

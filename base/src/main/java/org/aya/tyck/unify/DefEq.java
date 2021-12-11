@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class DefEq {
-  public record Sub(@NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> map) implements Cloneable {
+  public record Sub(@NotNull MutableMap<@NotNull Var, @NotNull RefTerm> map) implements Cloneable {
     public Sub() {
       this(MutableMap.create());
     }
@@ -48,6 +48,9 @@ public final class DefEq {
     @SuppressWarnings("MethodDoesntCallSuperMethod") public @NotNull Sub clone() {
       return new Sub(MutableMap.from(map));
     }
+  }
+
+  public record FailureData(@NotNull Term lhs, @NotNull Term rhs) {
   }
 
   private final @Nullable Trace.Builder traceBuilder;
@@ -59,6 +62,11 @@ public final class DefEq {
   private final @NotNull Ordering cmp;
   private final @NotNull LocalCtx ctx;
   private final @NotNull Eta uneta;
+  private FailureData failure;
+
+  public FailureData failureData() {
+    return failure;
+  }
 
   public DefEq(
     @NotNull Ordering cmp, @NotNull Reporter reporter,
@@ -103,7 +111,9 @@ public final class DefEq {
     // ^ Beware of the order!!
     if (lhs instanceof CallTerm.Hole || type == null) return compareUntyped(lhs, rhs, lr, rl) != null;
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
-    return doCompareTyped(type.normalize(state, NormalizeMode.WHNF), lhs, rhs, lr, rl);
+    var result = doCompareTyped(type.normalize(state, NormalizeMode.WHNF), lhs, rhs, lr, rl);
+    if (!result && failure == null) failure = new FailureData(lhs.freezeHoles(state), rhs.freezeHoles(state));
+    return result;
   }
 
   private @Nullable Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
@@ -115,8 +125,10 @@ public final class DefEq {
     }
     lhs = lhs.normalize(state, NormalizeMode.WHNF);
     rhs = rhs.normalize(state, NormalizeMode.WHNF);
-    final var x = doCompareUntyped(lhs, rhs, lr, rl);
-    return x != null ? x.normalize(state, NormalizeMode.WHNF) : null;
+    var x = doCompareUntyped(lhs, rhs, lr, rl);
+    if (x != null) return x.normalize(state, NormalizeMode.WHNF);
+    if (failure == null) failure = new FailureData(lhs.subst(lr.map).freezeHoles(state), rhs.freezeHoles(state));
+    return null;
   }
 
   private boolean compareWHNF(Term lhs, Term preRhs, Sub lr, Sub rl, @NotNull Term type) {

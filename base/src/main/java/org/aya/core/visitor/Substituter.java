@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Substituter(
-  @NotNull Map<Var, Term> termSubst,
+  @NotNull Map<Var, ? extends Term> termSubst,
   @NotNull LevelSubst levelSubst
 ) implements TermFixpoint<Unit> {
   public Substituter(@NotNull TermSubst termSubst, @NotNull LevelSubst levelSubst) {

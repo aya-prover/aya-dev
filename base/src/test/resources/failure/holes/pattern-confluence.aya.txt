@@ -7,10 +7,8 @@ In file $FILE:6:15 ->
 
 Error: Cannot check the expression of type
          Nat
-         (Normalized: Nat)
        against the type
          Type
-         (Normalized: Type)
 
 In file $FILE:7:15 ->
 
@@ -39,10 +37,8 @@ In file $FILE:8:21 ->
 
 Error: Cannot check the expression of type
          Type
-         (Normalized: Type)
        against the type
          Nat
-         (Normalized: Nat)
 
 In file $FILE:8:16 ->
 
@@ -53,10 +49,8 @@ In file $FILE:8:16 ->
 
 Error: Cannot check the expression of type
          Nat
-         (Normalized: Nat)
        against the type
          Type
-         (Normalized: Type)
 
 In file $FILE:9:21 ->
 
@@ -67,10 +61,8 @@ In file $FILE:9:21 ->
 
 Error: Cannot check the expression of type
          Type
-         (Normalized: Type)
        against the type
          Nat
-         (Normalized: Nat)
 
 In file $FILE:9:16 ->
 
@@ -81,10 +73,8 @@ In file $FILE:9:16 ->
 
 Error: Cannot check the expression of type
          Nat
-         (Normalized: Nat)
        against the type
          Type
-         (Normalized: Type)
 
 In file $FILE:7:15 ->
 
