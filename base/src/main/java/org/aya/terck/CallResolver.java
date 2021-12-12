@@ -6,7 +6,6 @@ import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.ref.DefVar;
-import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -60,14 +59,6 @@ public record CallResolver(
     }
   }
 
-  private @NotNull Relation compare(int idx, @NotNull Arg<Term> arg) {
-    var matching = currentMatching.value;
-    if (matching == null) return Relation.Unknown;
-    var pat = matching.patterns().getOrNull(idx);
-    if (pat == null) return Relation.Unknown;
-    return compare(arg.term(), pat);
-  }
-
   /** foetus dependencies */
   private @NotNull Relation compare(@NotNull Term lhs, @NotNull Pat rhs) {
     if (rhs instanceof Pat.Ctor ctor) {
@@ -78,6 +69,7 @@ public record CallResolver(
           .zipView(con.conArgs())
           .map(sub -> compare(sub._2.term(), sub._1));
         if (subCompare.anyMatch(r -> r != Relation.Unknown)) return Relation.Equal;
+        return Relation.Unknown;
       }
       var subCompare = ctor.params().view().map(sub -> compare(lhs, sub));
       if (subCompare.anyMatch(r -> r != Relation.Unknown)) return Relation.LessThan;
