@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author kiva
  */
-public enum Relation {
+public enum Relation implements Comparable<Relation>{
   /** increase or unrelated of callee argument wrt. caller parameter. */
   Unknown("?"),
   /** structurally (maybe strictly) smaller than */
@@ -45,7 +45,7 @@ public enum Relation {
 
   /**
    * A relation `A`is less than another relation `B` iff:
-   * `A` contains less uncertainty than `B`, for example:
+   * `A` contains more uncertainty than `B`, for example:
    * {@link Relation#Unknown} contains nothing about relations between
    * arguments and formal parameters while {@link Relation#LessThan}
    * declares the arguments is strictly structurally smaller than
@@ -54,4 +54,6 @@ public enum Relation {
   public boolean lessThanOrEqual(@NotNull Relation rhs) {
     return this.ordinal() <= rhs.ordinal();
   }
+
+
 }

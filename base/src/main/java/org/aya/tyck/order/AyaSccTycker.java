@@ -64,7 +64,7 @@ public record AyaSccTycker(
     terck(headerOrder.view());
   }
 
-  private void checkUnit(TyckUnit unit) {
+  private void checkUnit(@NotNull TyckUnit unit) {
     checkBody(unit);
     terck(SeqView.of(unit));
   }
@@ -108,6 +108,7 @@ public record AyaSccTycker(
   }
 
   private void terck(@NotNull SeqView<TyckUnit> units) {
+    // TODO: terck other definitions
     var fn = units.filterIsInstance(Decl.FnDecl.class)
       .map(decl -> decl.ref.core)
       .filter(def -> isRecursive(def.ref().concrete));

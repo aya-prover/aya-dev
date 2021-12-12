@@ -37,7 +37,6 @@ public record CallResolver(
     if (!(callTerm.ref() instanceof DefVar<?, ?> defVar)) return;
     var callee = ((Def) defVar.core);
     if (!targets.contains(callee)) return;
-    // TODO: source pos of the CallTerm?
     // TODO: reduce arguments? I guess no. see https://github.com/agda/agda/issues/2403
     var matrix = new CallMatrix<>(callTerm, caller, callee, caller.telescope, callee.telescope());
     fillMatrix(callTerm, callee, matrix);
@@ -49,12 +48,8 @@ public record CallResolver(
     assert matching != null;
     for (var domThing : matching.patterns().zipView(caller.telescope)) {
       for (var codomThing : callTerm.args().zipView(callee.telescope())) {
-        var pat = domThing._1;
-        var arg = codomThing._1;
-        var domain = domThing._2;
-        var codomain = codomThing._2;
-        var relation = compare(arg.term(), pat);
-        matrix.set(domain, codomain, relation);
+        var relation = compare(codomThing._1.term(), domThing._1);
+        matrix.set(domThing._2, codomThing._2, relation);
       }
     }
   }
@@ -62,34 +57,29 @@ public record CallResolver(
   /** foetus dependencies */
   private @NotNull Relation compare(@NotNull Term lhs, @NotNull Pat rhs) {
     if (rhs instanceof Pat.Ctor ctor) {
-      // constructor elimination
       if (lhs instanceof CallTerm.Con con) {
         if (con.ref() != ctor.ref()) return Relation.Unknown;
         if (ctor.params().isEmpty()) return Relation.Equal;
         var subCompare = con.conArgs()
           .zipView(ctor.params())
           .map(sub -> compare(sub._1.term(), sub._2));
-        if (subCompare.anyMatch(r -> r != Relation.Unknown)) {
-          // compare one level deeper, see FoetusLimitation.aya
-          if (subCompare.anyMatch(r -> r == Relation.LessThan)) return Relation.LessThan;
-          return Relation.Equal;
-        }
-        return Relation.Unknown;
+        // compare one level deeper for sub-ctor-patterns like `cons (suc x) xs`, see FoetusLimitation.aya
+        // return subCompare.anyMatch(r -> r != Relation.Unknown) ? Relation.Equal : Relation.Unknown;
+        return subCompare.max();
       }
       var subCompare = ctor.params().view().map(sub -> compare(lhs, sub));
-      if (subCompare.anyMatch(r -> r != Relation.Unknown)) return Relation.LessThan;
+      return subCompare.anyMatch(r -> r != Relation.Unknown)
+        ? Relation.LessThan : Relation.Unknown;
     } else if (rhs instanceof Pat.Bind bind) {
-      if (lhs instanceof RefTerm ref) {
-        if (ref.var() == bind.bind()) return Relation.Equal;
-        return Relation.Unknown;
-      }
-      // application and projection
-      var head = headOf(lhs);
-      if (head instanceof RefTerm ref && bind.bind() == ref.var()) return Relation.LessThan;
+      if (lhs instanceof RefTerm ref)
+        return ref.var() == bind.bind() ? Relation.Equal : Relation.Unknown;
+      if (headOf(lhs) instanceof RefTerm ref)
+        return ref.var() == bind.bind() ? Relation.LessThan : Relation.Unknown;
     }
     return Relation.Unknown;
   }
 
+  /** @return the head of application or projection */
   private @NotNull Term headOf(@NotNull Term term) {
     return switch (term) {
       case ElimTerm.App app -> headOf(app.of());
