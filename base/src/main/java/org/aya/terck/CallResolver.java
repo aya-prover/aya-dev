@@ -46,18 +46,18 @@ public record CallResolver(
   }
 
   private void fillMatrix(@NotNull CallTerm callTerm, @NotNull Def callee, CallMatrix<Def, Term.Param> matrix) {
-    // TODO: do not use zipView, which can only handle direct recursion
-    caller.telescope.zipView(callee.telescope())
-      .zipView(callTerm.args())
-      .withIndex()
-      .forEach(tup -> {
-        var idx = tup._1;
-        var callerParam = tup._2._1._1;
-        var calleeParam = tup._2._1._2;
-        var arg = tup._2._2;
-        var relation = compare(idx, arg);
-        matrix.set(callerParam, calleeParam, relation);
-      });
+    var matching = currentMatching.value;
+    assert matching != null;
+    for (var domThing : matching.patterns().zipView(caller.telescope)) {
+      for (var codomThing : callTerm.args().zipView(callee.telescope())) {
+        var pat = domThing._1;
+        var arg = codomThing._1;
+        var domain = domThing._2;
+        var codomain = codomThing._2;
+        var relation = compare(arg.term(), pat);
+        matrix.set(domain, codomain, relation);
+      }
+    }
   }
 
   private @NotNull Relation compare(int idx, @NotNull Arg<Term> arg) {
@@ -73,7 +73,7 @@ public record CallResolver(
     if (rhs instanceof Pat.Ctor ctor) {
       // constructor elimination
       if (lhs instanceof CallTerm.Con con) {
-        assert con.ref() == ctor.ref() : "ill-typed term";
+        if (con.ref() != ctor.ref()) return Relation.Unknown;
         var subCompare = ctor.params()
           .zipView(con.conArgs())
           .map(sub -> compare(sub._2.term(), sub._1));

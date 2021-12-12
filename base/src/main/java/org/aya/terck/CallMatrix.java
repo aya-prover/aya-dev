@@ -9,17 +9,16 @@ import org.aya.pretty.doc.Docile;
 import org.aya.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public record CallMatrix<Def, Param>(
-  @Nullable CallTerm callTerm,
+  @NotNull CallTerm callTerm,
   @NotNull Def domain, @NotNull Def codomain,
   @NotNull ImmutableSeq<Param> domainTele,
   @NotNull ImmutableSeq<Param> codomainTele,
   @NotNull Relation[][] matrix
 ) implements Docile {
   public CallMatrix(
-    @Nullable CallTerm callTerm,
+    @NotNull CallTerm callTerm,
     @NotNull Def domain, @NotNull Def codomain,
     @NotNull ImmutableSeq<Param> domainTele,
     @NotNull ImmutableSeq<Param> codomainTele

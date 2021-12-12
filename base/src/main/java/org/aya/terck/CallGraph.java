@@ -37,10 +37,13 @@ public record CallGraph<T, P>(
     return true;
   }
 
+  /** the completion of a call graph is finding its transitive closure */
   private static <T, P> @NotNull CallGraph<T, P> complete(@NotNull CallGraph<T, P> start) {
     var oldGraph = new Ref<>(start);
     var newEdge = new Ref<>(1);
-    while (newEdge.value != 0) {
+    // TODO: do we really need this fuel since we are just looking for a fixpoint?
+    var fuel = start.graph.size() + 1;
+    while (newEdge.value != 0 && fuel-- > 0) {
       newEdge.value = 0;
       var newGraph = new Ref<>(CallGraph.<T, P>create());
       oldGraph.value.graph.forEach((domain, codomains) -> {
@@ -59,7 +62,7 @@ public record CallGraph<T, P>(
     return oldGraph.value;
   }
 
-  public @Nullable ImmutableSeq<CallMatrix<T, P>> findNonTerminating() {
+  public @Nullable ImmutableSeq<Behavior.Diag<T, P>> findNonTerminating() {
     var complete = complete(this);
     for (var key : complete.graph.keysView()) {
       var matrix = Option.of(complete.graph.getOrNull(key))
@@ -73,7 +76,7 @@ public record CallGraph<T, P>(
       // https://github.com/agda/agda/blob/master/src/full/Agda/Termination/Termination.hs
       var notDecreasing = behavior.diagonals()
         .filterNot(diag -> diag.diagonal().contains(Relation.LessThan));
-      if (notDecreasing.isNotEmpty()) return notDecreasing.map(Behavior.Diag::matrix);
+      if (notDecreasing.isNotEmpty()) return notDecreasing;
     }
     return null;
   }

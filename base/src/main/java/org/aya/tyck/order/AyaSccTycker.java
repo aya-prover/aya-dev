@@ -111,6 +111,7 @@ public record AyaSccTycker(
     var fn = units.filterIsInstance(Decl.FnDecl.class)
       .map(decl -> decl.ref.core)
       .filter(def -> isRecursive(def.ref().concrete));
+    if (fn.isEmpty()) return;
     terckRecursiveFn(fn);
   }
 
@@ -120,7 +121,7 @@ public record AyaSccTycker(
     fn.forEach(def -> def.accept(new CallResolver(def, targets), graph));
     var failed = graph.findNonTerminating();
     if (failed != null) failed.forEach(f -> {
-      var ref = f.domain().ref();
+      var ref = f.matrix().domain().ref();
       reporter.report(new NonTerminating(ref.concrete.sourcePos, ref.name(), f));
     });
   }
