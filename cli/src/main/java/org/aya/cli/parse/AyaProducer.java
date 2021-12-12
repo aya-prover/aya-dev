@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicLinkedSeq;
-import kala.collection.mutable.MutableHashSet;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanFunction;
@@ -23,7 +22,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadCounterexampleWarn;
 import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
-import org.aya.concrete.error.RedefinitionError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
@@ -560,8 +558,6 @@ public record AyaProducer(
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
-    checkRedefinition(RedefinitionError.Kind.Ctor,
-      body.view().map(ctor -> new WithPos<>(ctor.sourcePos, ctor.ref.name())));
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var data = new Decl.DataDecl(
@@ -675,22 +671,9 @@ public record AyaProducer(
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 
-  private void checkRedefinition(@NotNull RedefinitionError.Kind kind,
-                                 @NotNull SeqLike<WithPos<String>> names) {
-    var set = MutableHashSet.<String>of();
-    var redefs = names.view().filterNot(n -> set.add(n.data())).toImmutableSeq();
-    if (redefs.isNotEmpty()) {
-      var last = redefs.last();
-      reporter.report(new RedefinitionError(kind, last.data(), last.sourcePos()));
-      throw new ParsingInterruptedException();
-    }
-  }
-
   public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var bind = ctx.bindBlock();
     var fields = visitFields(ctx.field());
-    checkRedefinition(RedefinitionError.Kind.Field,
-      fields.view().map(field -> new WithPos<>(field.sourcePos, field.ref.name())));
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     return new Decl.StructDecl(

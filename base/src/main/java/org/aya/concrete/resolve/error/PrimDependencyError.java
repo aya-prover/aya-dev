@@ -1,10 +1,9 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.error;
+package org.aya.concrete.resolve.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.concrete.resolve.error.ResolveProblem;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
