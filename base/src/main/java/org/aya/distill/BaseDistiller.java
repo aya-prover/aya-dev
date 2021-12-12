@@ -5,6 +5,8 @@ package org.aya.distill;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
+import kala.control.Option;
+import org.aya.api.core.CorePat;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
@@ -109,6 +111,17 @@ public abstract class BaseDistiller {
   @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
     return options.map.get(DistillerOptions.Key.ShowLambdaTypes) ? param.toDoc(options)
       : Doc.bracedUnless(param.nameDoc(), param.explicit());
+  }
+
+  public @NotNull Doc clause(
+    @NotNull SeqLike<? extends CorePat> patterns,
+    @NotNull Option<? extends AyaDocile> expr
+  ) {
+    var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(CorePat::explicit);
+    var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
+      pats.view().map(p -> p.toDoc(options)))));
+    if (expr.isDefined()) return Doc.sep(doc, Doc.symbol("=>"), expr.get().toDoc(options));
+    else return doc;
   }
 
   public static @NotNull Doc varDoc(@NotNull Var ref) {

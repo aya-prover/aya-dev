@@ -3,7 +3,7 @@
 package org.aya.core.pat;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.distill.AyaDocile;
+import org.aya.api.core.CorePat;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -25,17 +25,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Lhs is the Pat after type checking, so there shouldn't be too much info.
  * Lhs is mainly used at the evalutioin step, i.e. unfold/normalize
+ *
  * @author tonfeiz
  */
 @Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
-public sealed interface Lhs extends AyaDocile {
-  default @NotNull Term toTerm() {
+public sealed interface Lhs extends CorePat {
+  @Override default @NotNull Term toTerm() {
     return LhsToTerm.INSTANCE.visit(this);
   }
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).visitLhs(this, BaseDistiller.Outer.Free);
   }
-  default @NotNull Arg<Term> toArg() {
+  @Override default @NotNull Arg<Term> toArg() {
     return new Arg<>(toTerm(), explicit());
   }
   @NotNull Lhs rename(@NotNull Substituter.TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit);

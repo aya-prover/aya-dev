@@ -13,7 +13,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.TypedMatching;
+import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
 public sealed interface Pat extends CorePat {
-  @Override @NotNull Term type();
+  @NotNull Term type();
   @Override default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
@@ -240,20 +240,15 @@ public sealed interface Pat extends CorePat {
     @NotNull Option<T> expr
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      var distiller = new CoreDistiller(options);
-      var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
-      var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
-        pats.view().map(p -> distiller.visitPat(p, BaseDistiller.Outer.Free)))));
-      if (expr.isDefined()) return Doc.sep(doc, Doc.symbol("=>"), expr.get().toDoc(options));
-      else return doc;
+      return new CoreDistiller(options).clause(patterns, expr);
     }
 
-    public static @NotNull Preclause<Term> weaken(@NotNull TypedMatching clause) {
+    public static @NotNull Preclause<Term> weaken(@NotNull Matching.Typed clause) {
       return new Preclause<>(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
     }
 
-    public static @NotNull Option<@NotNull TypedMatching> lift(@NotNull Preclause<Term> clause) {
-      return clause.expr.map(term -> new TypedMatching(clause.sourcePos, clause.patterns, term));
+    public static @NotNull Option<Matching.@NotNull Typed> lift(@NotNull Preclause<Term> clause) {
+      return clause.expr.map(term -> new Matching.Typed(clause.sourcePos, clause.patterns, term));
     }
   }
 }

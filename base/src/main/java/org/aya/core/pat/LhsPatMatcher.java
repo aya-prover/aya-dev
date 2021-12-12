@@ -43,9 +43,9 @@ public record LhsPatMatcher(@NotNull Substituter.TermSubst subst, @Nullable Loca
 
   public static Result<Substituter.TermSubst, Boolean> tryBuildPatSubstArgs(
     @NotNull LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms
+    @NotNull SeqView<@NotNull Arg<@NotNull Term>> terms
   ) {
-    return tryBuildPatSubstTerms(localCtx, pats, terms.view().map(Arg::term));
+    return tryBuildPatSubstTerms(localCtx, pats, terms.map(Arg::term));
   }
 
   public static Result<Substituter.TermSubst, Boolean> tryBuildPatSubstTerms(
@@ -63,7 +63,7 @@ public record LhsPatMatcher(@NotNull Substituter.TermSubst subst, @Nullable Loca
 
   /** @see LhsPatMatcher#tryBuildLhsSubstArgs(ImmutableSeq, SeqLike) */
   public static Result<Substituter.TermSubst, Boolean> tryBuildLhsSubstTerms(
-    @Nullable ImmutableSeq<@NotNull Lhs> lhss,
+    @NotNull ImmutableSeq<@NotNull Lhs> lhss,
     @NotNull SeqView<@NotNull Term> terms
   ) {
     var matchy = new LhsPatMatcher(new Substituter.TermSubst(new MutableHashMap<>()), null);

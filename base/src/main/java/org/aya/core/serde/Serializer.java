@@ -11,7 +11,6 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.Matching;
-import org.aya.core.TypedMatching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Lhs;
 import org.aya.core.pat.Pat;

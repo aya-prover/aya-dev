@@ -20,12 +20,12 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.TypedMatching;
+import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
-import org.aya.core.pat.Pat;
 import org.aya.core.pat.LhsPatMatcher;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.TermFixpoint;
@@ -87,7 +87,7 @@ public final class PatTycker {
   public record PatResult(
     @NotNull Term result,
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
-    @NotNull ImmutableSeq<TypedMatching> matchings
+    @NotNull ImmutableSeq<Matching.Typed> matchings
   ) {
   }
 

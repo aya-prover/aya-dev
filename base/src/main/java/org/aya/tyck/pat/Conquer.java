@@ -6,12 +6,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
-import org.aya.core.TypedMatching;
+import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Lhs;
-import org.aya.core.pat.Pat;
 import org.aya.core.pat.LhsPatMatcher;
+import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatToTerm;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.term.CallTerm;
@@ -32,14 +32,14 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Conquer(
-  @NotNull ImmutableSeq<TypedMatching> matchings,
+  @NotNull ImmutableSeq<Matching.Typed> matchings,
   @NotNull SourcePos sourcePos,
   @NotNull Def.Signature signature,
   boolean orderIndependent,
   @NotNull ExprTycker tycker
 ) {
   public static void against(
-    @NotNull ImmutableSeq<TypedMatching> matchings, boolean orderIndependent,
+    @NotNull ImmutableSeq<Matching.Typed> matchings, boolean orderIndependent,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
     var conquer = new Conquer(matchings, pos, signature, orderIndependent, tycker);
@@ -96,7 +96,7 @@ public record Conquer(
       }
     }.visit(pat), pat.explicit()));
     var volynskaya = new Normalizer(tycker.state).tryUnfoldClauses(
-      NormalizeMode.WHNF, orderIndependent, newArgs, LevelSubst.EMPTY, matchings.map(TypedMatching::toMatching));
+      NormalizeMode.WHNF, orderIndependent, newArgs, LevelSubst.EMPTY, matchings.map(Matching.Typed::toMatching));
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));

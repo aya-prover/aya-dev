@@ -10,7 +10,7 @@ import org.aya.api.error.Reporter;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
-import org.aya.core.TypedMatching;
+import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
@@ -92,13 +92,13 @@ public record StmtTycker(
             if (decl.modifiers.contains(Modifier.Overlap)) {
               // Order-independent.
               var result = patTycker.elabClausesDirectly(clauses, signature, decl.result.sourcePos());
-              def = factory.apply(result.result(), Either.right(result.matchings().map(TypedMatching::toMatching)));
+              def = factory.apply(result.result(), Either.right(result.matchings().map(Matching.Typed::toMatching)));
               if (patTycker.noError())
                 ensureConfluent(tycker, signature, result, pos, true);
             } else {
               // First-match semantics.
               var result = patTycker.elabClausesClassified(clauses, signature, decl.result.sourcePos(), pos);
-              def = factory.apply(result.result(), Either.right(result.matchings().map(TypedMatching::toMatching)));
+              def = factory.apply(result.result(), Either.right(result.matchings().map(Matching.Typed::toMatching)));
               if (patTycker.noError()) Conquer.against(result.matchings(), true, tycker, pos, signature);
             }
             return def;
@@ -227,7 +227,7 @@ public record StmtTycker(
     }
     ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature, ctor.sourcePos);
-    var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings().map(TypedMatching::toMatching), dataCall, ctor.coerce);
+    var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings().map(Matching.Typed::toMatching), dataCall, ctor.coerce);
     dataConcrete.checkedBody.append(elaborated);
     if (patTycker.noError())
       ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
@@ -259,7 +259,7 @@ public record StmtTycker(
     var patTycker = new PatTycker(tycker);
     var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature, field.result.sourcePos());
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
-    var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, clauses.matchings().map(TypedMatching::toMatching), body, field.coerce);
+    var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, clauses.matchings().map(Matching.Typed::toMatching), body, field.coerce);
     if (patTycker.noError())
       ensureConfluent(tycker, field.signature, clauses, field.sourcePos, false);
     return elaborated;

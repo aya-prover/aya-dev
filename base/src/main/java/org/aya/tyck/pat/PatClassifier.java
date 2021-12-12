@@ -15,7 +15,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
-import org.aya.core.TypedMatching;
+import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
@@ -117,10 +117,10 @@ public record PatClassifier(
     });
   }
 
-  private static void domination(Substituter.TermSubst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, TypedMatching typedMatching) {
+  private static void domination(Substituter.TermSubst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching.Typed typed) {
     if (rhsSubst.isEmpty())
       reporter.report(new ClausesProblem.Domination(
-        lhsIx + 1, rhsIx + 1, typedMatching.sourcePos()));
+        lhsIx + 1, rhsIx + 1, typed.sourcePos()));
   }
 
   /**
