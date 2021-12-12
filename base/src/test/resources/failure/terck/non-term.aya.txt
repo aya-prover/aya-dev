@@ -1,8 +1,8 @@
-In file $FILE:7:4 ->
+In file $FILE:3:4 ->
 
-  5 | --^ TODO: check indirect recursion in SCCs
-  6 | 
-  7 | def non Nat : Nat
+  1 | open data Nat | zero | suc Nat
+  2 | 
+  3 | def non Nat : Nat
           ^-^
 
 Error: The recursive definition `non` is not structurally recursive

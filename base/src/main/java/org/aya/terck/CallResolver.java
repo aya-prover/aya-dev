@@ -73,6 +73,13 @@ public record CallResolver(
   private @NotNull Relation compare(@NotNull Term lhs, @NotNull Pat rhs) {
     if (rhs instanceof Pat.Ctor ctor) {
       // constructor elimination
+      if (lhs instanceof CallTerm.Con con) {
+        assert con.ref() == ctor.ref() : "ill-typed term";
+        var subCompare = ctor.params()
+          .zipView(con.conArgs())
+          .map(sub -> compare(sub._2.term(), sub._1));
+        if (subCompare.anyMatch(r -> r != Relation.Unknown)) return Relation.Equal;
+      }
       var subCompare = ctor.params().view().map(sub -> compare(lhs, sub));
       if (subCompare.anyMatch(r -> r != Relation.Unknown)) return Relation.LessThan;
     } else if (rhs instanceof Pat.Bind bind) {

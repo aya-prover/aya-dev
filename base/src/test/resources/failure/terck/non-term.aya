@@ -1,9 +1,5 @@
 open data Nat | zero | suc Nat
 
---def h : Type => g
---def g : Type => h
---^ TODO: check indirect recursion in SCCs
-
 def non Nat : Nat
   | zero => zero
   | suc n => non (suc n)
