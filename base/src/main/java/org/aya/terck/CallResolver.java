@@ -65,6 +65,7 @@ public record CallResolver(
       // constructor elimination
       if (lhs instanceof CallTerm.Con con) {
         if (con.ref() != ctor.ref()) return Relation.Unknown;
+        if (ctor.params().isEmpty()) return Relation.Equal;
         var subCompare = ctor.params()
           .zipView(con.conArgs())
           .map(sub -> compare(sub._2.term(), sub._1));
