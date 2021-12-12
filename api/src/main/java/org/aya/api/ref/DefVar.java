@@ -23,8 +23,8 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
   private final @NotNull String name;
   public @UnknownNullability OpDecl opDecl;
 
-  @Contract(pure = true)  public boolean isInfix() {
-    return opDecl!=null && opDecl.opInfo() == null;
+  @Contract(pure = true) public boolean isInfix() {
+    return opDecl != null && opDecl.opInfo() != null;
   }
 
   @Contract(pure = true) public @NotNull String name() {
