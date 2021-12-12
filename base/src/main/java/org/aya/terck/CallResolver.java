@@ -16,7 +16,6 @@ import org.aya.core.term.ElimTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.DefConsumer;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,7 +40,7 @@ public record CallResolver(
     if (!targets.contains(callee)) return;
     // TODO: source pos of the CallTerm?
     // TODO: reduce arguments? I guess no. see https://github.com/agda/agda/issues/2403
-    var matrix = new CallMatrix<>(SourcePos.NONE, caller, callee, caller.telescope, callee.telescope());
+    var matrix = new CallMatrix<>(callTerm, caller, callee, caller.telescope, callee.telescope());
     fillMatrix(callTerm, callee, matrix);
     graph.put(matrix);
   }

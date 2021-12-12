@@ -3,18 +3,17 @@
 package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.util.error.SourcePos;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class CallMatrixTest {
-  CallMatrix<String, String> A = new CallMatrix<>(SourcePos.NONE,
+  CallMatrix<String, String> A = new CallMatrix<>(null,
     "f", "g",
     ImmutableSeq.of("f1"),
     ImmutableSeq.of("g1", "g2"));
-  CallMatrix<String, String> B = new CallMatrix<>(SourcePos.NONE,
+  CallMatrix<String, String> B = new CallMatrix<>(null,
     "g", "h",
     ImmutableSeq.of("g1", "g2"),
     ImmutableSeq.of("h1", "h2", "h3"));

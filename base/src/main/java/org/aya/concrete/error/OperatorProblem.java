@@ -51,7 +51,7 @@ public final class OperatorProblem {
     }
 
     @Override
-    public @NotNull Doc hint() {
+    public @NotNull Doc hint(@NotNull DistillerOptions options) {
       return Doc.english("Make them both left/right-associative to resolve this problem.");
     }
 
@@ -79,7 +79,7 @@ public final class OperatorProblem {
       );
     }
 
-    @Override public @NotNull Doc hint() {
+    @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.plain("Use"),
         Doc.styled(CoreDistiller.KEYWORD.and().code(), Doc.plain("bind")),
         Doc.english("statement or insert parentheses to make it clear."));

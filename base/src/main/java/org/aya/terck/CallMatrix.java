@@ -3,26 +3,29 @@
 package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.term.CallTerm;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.util.ArrayUtil;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public record CallMatrix<Def, Param>(
-  @NotNull SourcePos sourcePos,
+  @Nullable CallTerm callTerm,
   @NotNull Def domain, @NotNull Def codomain,
   @NotNull ImmutableSeq<Param> domainTele,
   @NotNull ImmutableSeq<Param> codomainTele,
   @NotNull Relation[][] matrix
-) {
+) implements Docile {
   public CallMatrix(
-    @NotNull SourcePos sourcePos,
+    @Nullable CallTerm callTerm,
     @NotNull Def domain, @NotNull Def codomain,
     @NotNull ImmutableSeq<Param> domainTele,
     @NotNull ImmutableSeq<Param> codomainTele
   ) {
     // TODO: sparse matrix?
-    this(sourcePos, domain, codomain, domainTele, codomainTele,
+    this(callTerm, domain, codomain, domainTele, codomainTele,
       new Relation[codomainTele.size()][domainTele.size()]);
     ArrayUtil.fill(matrix, Relation.Unknown);
   }
@@ -62,7 +65,7 @@ public record CallMatrix<Def, Param>(
     if (B.domain != A.codomain) // implies B.cols() != A.rows()
       throw new IllegalArgumentException("The combine cannot be applied to these two call matrices");
 
-    var BA = new CallMatrix<>(B.sourcePos, A.domain, B.codomain,
+    var BA = new CallMatrix<>(B.callTerm, A.domain, B.codomain,
       A.domainTele, B.codomainTele);
 
     for (int i = 0; i < BA.rows(); i++)
@@ -70,5 +73,11 @@ public record CallMatrix<Def, Param>(
         for (int k = 0; k < B.cols(); k++)
           BA.matrix[i][j] = BA.matrix[i][j].add(B.matrix[i][k].mul(A.matrix[k][j]));
     return BA;
+  }
+
+  public @NotNull Doc toDoc() {
+    return Doc.vcat(ImmutableSeq.from(matrix).map(
+      row -> Doc.stickySep(ImmutableSeq.from(row)
+        .map(col -> Doc.plain(col.toString())))));
   }
 }

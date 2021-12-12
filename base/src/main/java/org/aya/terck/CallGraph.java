@@ -3,19 +3,19 @@
 package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import kala.value.Ref;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public record CallGraph<T, P>(
   @NotNull MutableMap<T, @NotNull MutableMap<T, MutableSet<@NotNull CallMatrix<T, P>>>> graph
 ) {
   public static <T, P> @NotNull CallGraph<T, P> create() {
-    return new CallGraph<>(MutableMap.create());
+    return new CallGraph<>(MutableLinkedHashMap.of());
   }
 
   /**
@@ -27,7 +27,7 @@ public record CallGraph<T, P>(
   public boolean put(@NotNull CallMatrix<T, P> matrix) {
     var caller = matrix.domain();
     var callee = matrix.codomain();
-    var set = graph.getOrPut(caller, MutableMap::create)
+    var set = graph.getOrPut(caller, MutableLinkedHashMap::of)
       .getOrPut(callee, MutableSet::create);
     if (set.contains(matrix)) return false;
     var unknown = set.anyMatch(arrow -> arrow.compare(matrix) != Relation.Unknown);
@@ -59,9 +59,8 @@ public record CallGraph<T, P>(
     return oldGraph.value;
   }
 
-  public @NotNull ImmutableSeq<WithPos<T>> findNonTerminating() {
+  public @Nullable ImmutableSeq<CallMatrix<T, P>> findNonTerminating() {
     var complete = complete(this);
-    var failed = DynamicSeq.<WithPos<T>>create();
     for (var key : complete.graph.keysView()) {
       var matrix = Option.of(complete.graph.getOrNull(key))
         .mapNotNull(g -> g.getOrNull(key));
@@ -74,9 +73,8 @@ public record CallGraph<T, P>(
       // https://github.com/agda/agda/blob/master/src/full/Agda/Termination/Termination.hs
       var notDecreasing = behavior.diagonals()
         .filterNot(diag -> diag.diagonal().contains(Relation.LessThan));
-      notDecreasing.map(diag -> new WithPos<>(diag.matrix().sourcePos(), key))
-        .forEach(failed::append);
+      if (notDecreasing.isNotEmpty()) return notDecreasing.map(Behavior.Diag::matrix);
     }
-    return failed.toImmutableSeq();
+    return null;
   }
 }

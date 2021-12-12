@@ -45,7 +45,7 @@ public interface Problem {
   default @NotNull Stage stage() {
     return Stage.OTHER;
   }
-  default @NotNull Doc hint() {
+  default @NotNull Doc hint(@NotNull DistillerOptions options) {
     return Doc.empty();
   }
   default @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
@@ -81,7 +81,7 @@ public interface Problem {
       case ERROR -> Doc.styled(ERROR, "Error:");
     };
     var doc = Doc.sep(tag, Doc.styled(TEXT, Doc.align(describe(options))));
-    var hint = hint();
+    var hint = hint(options);
     return hint instanceof Doc.Empty ? doc : Doc.vcat(
       doc,
       Doc.sep(Doc.styled(NOTE, "note:"), Doc.styled(TEXT, Doc.align(hint)))
