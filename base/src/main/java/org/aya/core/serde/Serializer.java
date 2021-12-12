@@ -30,15 +30,14 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   private @NotNull SerPat serialize(@NotNull Pat pat) {
     return switch (pat) {
-      case Pat.Absurd absurd -> new SerPat.Absurd(absurd.explicit(), serialize(absurd.type()));
+      case Pat.Absurd absurd -> new SerPat.Absurd(absurd.explicit());
       case Pat.Ctor ctor -> new SerPat.Ctor(
         ctor.explicit(),
         state.def(ctor.ref()),
         serializePats(ctor.params()),
         visitDataCall(ctor.type(), Unit.unit()));
-      case Pat.Prim prim -> new SerPat.Prim(prim.explicit(), state.def(prim.ref()), serialize(prim.type()));
-      case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(),
-        serializePats(tuple.pats()), serialize(tuple.type()));
+      case Pat.Prim prim -> new SerPat.Prim(prim.explicit(), state.def(prim.ref()));
+      case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(), serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
       case Pat.Meta meta -> throw new IllegalArgumentException(meta.toString());
     };

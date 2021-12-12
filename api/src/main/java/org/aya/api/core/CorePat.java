@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.NonExtendable
 public interface CorePat extends AyaDocile {
   boolean explicit();
-  @NotNull CoreTerm type();
   @NotNull CoreTerm toTerm();
   @NotNull Arg<? extends @NotNull CoreTerm> toArg();
 }

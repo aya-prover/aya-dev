@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
 public sealed interface Pat extends CorePat {
-  @Override @NotNull Term type();
   @Override default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
@@ -111,7 +110,7 @@ public sealed interface Pat extends CorePat {
     }
   }
 
-  record Absurd(boolean explicit, @NotNull Term type) implements Pat {
+  record Absurd(boolean explicit) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       throw new IllegalStateException();
     }
@@ -132,8 +131,7 @@ public sealed interface Pat extends CorePat {
 
   record Tuple(
     boolean explicit,
-    @NotNull ImmutableSeq<Pat> pats,
-    @NotNull Term type
+    @NotNull ImmutableSeq<Pat> pats
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       pats.forEach(pat -> pat.storeBindings(localCtx));
@@ -142,15 +140,15 @@ public sealed interface Pat extends CorePat {
     @Override
     public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = pats.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      return new Tuple(explicit, params, type.subst(subst));
+      return new Tuple(explicit, params);
     }
 
     @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Tuple(explicit, pats.map(pat -> pat.zonk(zonker)), zonker.zonk(type, null));
+      return new Tuple(explicit, pats.map(pat -> pat.zonk(zonker)));
     }
 
     @Override public @NotNull Pat inline() {
-      return new Tuple(explicit, pats.map(Pat::inline), type);
+      return new Tuple(explicit, pats.map(Pat::inline));
     }
   }
 
@@ -183,8 +181,7 @@ public sealed interface Pat extends CorePat {
 
   record Prim(
     boolean explicit,
-    @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
-    @NotNull Term type
+    @NotNull DefVar<PrimDef, Decl.PrimDecl> ref
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       // Do nothing

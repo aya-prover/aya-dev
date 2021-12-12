@@ -143,7 +143,7 @@ public final class PatTycker {
         if (selection != null) {
           foundError(new PatternProblem.PossiblePat(absurd, selection._3));
         }
-        yield new Pat.Absurd(absurd.explicit(), term);
+        yield new Pat.Absurd(absurd.explicit());
       }
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Sigma sigma))
@@ -154,8 +154,7 @@ public final class PatTycker {
           sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        var ret = new Pat.Tuple(tuple.explicit(),
-          visitPatterns(sig, tuple.patterns().view())._1, sigma);
+        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view())._1);
         if (as != null) {
           exprTycker.localCtx.put(as, sigma);
           termSubst.addDirectly(as, ret.toTerm());
@@ -169,7 +168,7 @@ public final class PatTycker {
           && var instanceof DefVar<?, ?> defVar
           && defVar.core instanceof PrimDef def
           && PrimDef.Factory.LEFT_RIGHT.contains(def.id)
-        ) yield new Pat.Prim(ctor.explicit(), (DefVar<PrimDef, Decl.PrimDecl>) defVar, term);
+        ) yield new Pat.Prim(ctor.explicit(), (DefVar<PrimDef, Decl.PrimDecl>) defVar);
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();

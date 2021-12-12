@@ -22,15 +22,15 @@ public sealed interface SerPat extends Serializable {
     }
   }
 
-  record Absurd(boolean explicit, @NotNull SerTerm ty) implements SerPat {
+  record Absurd(boolean explicit) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Absurd(explicit, ty.de(state));
+      return new Pat.Absurd(explicit);
     }
   }
 
-  record Tuple(boolean explicit, @NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm ty) implements SerPat {
+  record Tuple(boolean explicit, @NotNull ImmutableSeq<SerPat> pats) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Tuple(explicit, pats.map(pat -> pat.de(state)), ty.de(state));
+      return new Pat.Tuple(explicit, pats.map(pat -> pat.de(state)));
     }
   }
 
@@ -40,9 +40,9 @@ public sealed interface SerPat extends Serializable {
     }
   }
 
-  record Prim(boolean explicit, @NotNull SerDef.QName name, @NotNull SerTerm ty) implements SerPat {
+  record Prim(boolean explicit, @NotNull SerDef.QName name) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Prim(explicit, state.resolve(name), ty.de(state));
+      return new Pat.Prim(explicit, state.resolve(name));
     }
   }
 
