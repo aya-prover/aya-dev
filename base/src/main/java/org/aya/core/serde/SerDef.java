@@ -5,7 +5,9 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
+import org.aya.api.ref.DefVar;
 import org.aya.api.util.InternalException;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -126,7 +128,8 @@ public sealed interface SerDef extends Serializable {
   ) implements SerDef {
     @Override
     public @NotNull Def de(SerTerm.@NotNull DeState state) {
-      var def = PrimDef.Factory.INSTANCE.getOrCreate(name);
+      var defVar = DefVar.<PrimDef, Decl.PrimDecl>empty(name.id);
+      var def = PrimDef.Factory.INSTANCE.getOrCreate(name, defVar);
       state.putPrim(module, name, def.ref);
       return def;
     }

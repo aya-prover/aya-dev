@@ -24,29 +24,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * @author ice1000
  */
 public final class PrimDef extends TopLevelDef {
   public PrimDef(
+    @NotNull DefVar<@NotNull PrimDef, Decl.@NotNull PrimDecl> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<Sort.LvlVar> levels,
     @NotNull Term result, @NotNull ID name
   ) {
     super(telescope, result, levels);
-    this.ref = DefVar.empty(name.id);
+    this.ref = ref;
     this.id = name;
     ref.core = this;
   }
 
-  public PrimDef(@NotNull Term result, @NotNull ID name) {
-    this(ImmutableSeq.empty(), ImmutableSeq.empty(), result, name);
+  public PrimDef(@NotNull DefVar<@NotNull PrimDef, Decl.@NotNull PrimDecl> ref, @NotNull Term result, @NotNull ID name) {
+    this(ref, ImmutableSeq.empty(), ImmutableSeq.empty(), result, name);
   }
 
   public static @NotNull CallTerm.Prim intervalCall() {
-    return new CallTerm.Prim(Factory.INSTANCE.getOrCreate(ID.INTERVAL).ref(),
+    return new CallTerm.Prim(Factory.INSTANCE.getOption(ID.INTERVAL).get().ref(),
       ImmutableSeq.empty(), ImmutableSeq.empty());
   }
 
@@ -78,23 +79,23 @@ public final class PrimDef extends TopLevelDef {
   record PrimSeed(
     @NotNull ID name,
     @NotNull BiFunction<CallTerm.@NotNull Prim, @Nullable TyckState, @NotNull Term> unfold,
-    @NotNull Supplier<@NotNull PrimDef> supplier,
+    @NotNull Function<@NotNull DefVar<PrimDef, Decl.PrimDecl>, @NotNull PrimDef> supplier,
     @NotNull ImmutableSeq<@NotNull ID> dependency
   ) {
-    public @NotNull PrimDef supply() {
-      return supplier.get();
+    public @NotNull PrimDef supply(@NotNull DefVar<PrimDef, Decl.PrimDecl> ref) {
+      return supplier.apply(ref);
     }
 
     public static final @NotNull PrimSeed INTERVAL = new PrimSeed(
       ID.INTERVAL,
       (prim, state) -> prim,
-      () -> new PrimDef(FormTerm.Univ.ZERO, ID.INTERVAL),
+      ref -> new PrimDef(ref, FormTerm.Univ.ZERO, ID.INTERVAL),
       ImmutableSeq.empty()
     );
     public static final @NotNull PrimDef.PrimSeed LEFT = new PrimSeed(
       ID.LEFT,
       (prim, state) -> prim,
-      () -> new PrimDef(intervalCall(), ID.LEFT),
+      ref -> new PrimDef(ref, intervalCall(), ID.LEFT),
       ImmutableSeq.of(ID.INTERVAL)
     );
 
@@ -102,7 +103,7 @@ public final class PrimDef extends TopLevelDef {
     public static final @NotNull PrimDef.PrimSeed RIGHT = new PrimSeed(
       ID.RIGHT,
       (prim, state) -> prim,
-      () -> new PrimDef(intervalCall(), ID.RIGHT),
+      ref -> new PrimDef(ref, intervalCall(), ID.RIGHT),
       ImmutableSeq.of(ID.INTERVAL)
     );
 
@@ -125,7 +126,7 @@ public final class PrimDef extends TopLevelDef {
       return prim;
     }
 
-    public static final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, PrimSeed::arcoe, () -> {
+    public static final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, PrimSeed::arcoe, ref -> {
       var paramA = new LocalVar("A");
       var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCall(), true);
       var paramI = new LocalVar("i");
@@ -133,9 +134,10 @@ public final class PrimDef extends TopLevelDef {
       var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
       var paramATy = new FormTerm.Pi(paramIToATy, result);
       var aRef = new RefTerm(paramA);
-      var left = Factory.INSTANCE.getOrCreate(ID.LEFT);
+      var left = Factory.INSTANCE.getOption(ID.LEFT).get();
       var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
       return new PrimDef(
+        ref,
         ImmutableSeq.of(
           new Term.Param(paramA, paramATy, true),
           new Term.Param(new LocalVar("base"), baseAtLeft, true),
@@ -145,7 +147,7 @@ public final class PrimDef extends TopLevelDef {
         new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI), true)),
         ID.ARCOE
       );
-    }, ImmutableSeq.empty());
+    }, ImmutableSeq.of(ID.INTERVAL, ID.LEFT));
 
     private static @NotNull Tuple2<PrimDef, PrimDef> leftRight() {
       return Tuple.of(
@@ -168,12 +170,13 @@ public final class PrimDef extends TopLevelDef {
       return new CallTerm.Prim(prim.ref(), ImmutableSeq.empty(), ImmutableSeq.of(new Arg<>(arg, true)));
     }
 
-    public static final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(ID.INVOL, PrimSeed::invol, () -> new PrimDef(
+    public static final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(ID.INVOL, PrimSeed::invol, ref -> new PrimDef(
+      ref,
       ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCall(), true)),
       ImmutableSeq.empty(),
       intervalCall(),
       ID.INVOL
-    ), ImmutableSeq.empty());
+    ), ImmutableSeq.of(ID.INTERVAL));
 
     /** <code>/\</code> in CCHM, <code>I.squeeze</code> in Arend */
     private static @NotNull Term squeezeLeft(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
@@ -194,14 +197,15 @@ public final class PrimDef extends TopLevelDef {
 
 
     public static final @NotNull PrimDef.PrimSeed SQUEEZE_LEFT =
-      new PrimSeed(ID.SQUEEZE_LEFT, PrimSeed::squeezeLeft, () -> new PrimDef(
+      new PrimSeed(ID.SQUEEZE_LEFT, PrimSeed::squeezeLeft, ref -> new PrimDef(
+        ref,
         ImmutableSeq.of(
           new Term.Param(new LocalVar("i"), intervalCall(), true),
           new Term.Param(new LocalVar("j"), intervalCall(), true)),
         ImmutableSeq.empty(),
         intervalCall(),
         ID.SQUEEZE_LEFT
-      ), ImmutableSeq.empty());
+      ), ImmutableSeq.of(ID.INTERVAL));
   }
 
   public static class Factory {
@@ -221,9 +225,9 @@ public final class PrimDef extends TopLevelDef {
       ).map(seed -> Tuple.of(seed.name, seed))
       .toImmutableMap();
 
-    public @NotNull PrimDef factory(@NotNull ID name) {
+    public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, Decl.PrimDecl> ref) {
       assert !have(name);
-      var rst = SEEDS.get(name).supply();
+      var rst = SEEDS.get(name).supply(ref);
       defs.put(name, rst);
       return rst;
     }
@@ -236,8 +240,8 @@ public final class PrimDef extends TopLevelDef {
       return defs.containsKey(name);
     }
 
-    public @NotNull PrimDef getOrCreate(@NotNull ID name) {
-      return getOption(name).getOrElse(() -> factory(name));
+    public @NotNull PrimDef getOrCreate(@NotNull ID name, @NotNull DefVar<PrimDef, Decl.PrimDecl> ref) {
+      return getOption(name).getOrElse(() -> factory(name, ref));
     }
 
     public @NotNull Option<ImmutableSeq<@NotNull ID>> checkDependency(@NotNull ID name) {

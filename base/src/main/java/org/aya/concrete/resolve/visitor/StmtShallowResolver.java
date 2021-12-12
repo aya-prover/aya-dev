@@ -6,6 +6,9 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple2;
+import org.aya.concrete.error.PrimDependencyError;
+import org.aya.concrete.error.RedefinitionError;
+import org.aya.concrete.error.UnknownPrimError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
@@ -15,6 +18,7 @@ import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
+import org.aya.core.def.PrimDef;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -113,7 +117,19 @@ public record StmtShallowResolver(
         resolveDecl(decl, context);
         resolveOpInfo(decl, context);
       }
-      case Decl.PrimDecl decl -> resolveDecl(decl, context);
+      case Decl.PrimDecl decl -> {
+        var name = decl.ref.name();
+        var sourcePos = decl.sourcePos;
+        var primID = PrimDef.ID.find(name);
+        if (primID == null) context.reportAndThrow(new UnknownPrimError(sourcePos, name));
+        var lack = PrimDef.Factory.INSTANCE.checkDependency(primID);
+        if (lack.isNotEmpty() && lack.get().isNotEmpty())
+          context.reportAndThrow(new PrimDependencyError(name, lack.get(), sourcePos));
+        else if (PrimDef.Factory.INSTANCE.have(primID))
+          context.reportAndThrow(new RedefinitionError(RedefinitionError.Kind.Prim, name, sourcePos));
+        PrimDef.Factory.INSTANCE.factory(primID, decl.ref);
+        resolveDecl(decl, context);
+      }
     }
   }
 

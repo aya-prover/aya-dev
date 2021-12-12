@@ -63,7 +63,7 @@ fnModifiers : OPAQUE
 
 structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
 
-primDecl : PRIM assoc? ID tele* type? ;
+primDecl : PRIM ID tele* type? ;
 
 field : COERCE? declNameOrInfix tele* type clauses? bindBlock? # fieldDecl
       | declNameOrInfix tele* type? IMPLIES expr    bindBlock? # fieldImpl
