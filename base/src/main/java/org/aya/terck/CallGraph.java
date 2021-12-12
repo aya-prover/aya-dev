@@ -11,6 +11,14 @@ import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Call graph is a multi-graph; each vertex represents a definition and each edge from vertex `f`
+ * to vertex `g` represents a call to `g` within `f`. The edges are labeled with call matrices,
+ * and can be labelled with several call matrices if there are several paths from `f` to `g`.
+ *
+ * @author kiva
+ * @see CallMatrix
+ */
 public record CallGraph<T, P>(
   @NotNull MutableMap<T, @NotNull MutableMap<T, MutableSet<@NotNull CallMatrix<T, P>>>> graph
 ) {
@@ -19,7 +27,7 @@ public record CallGraph<T, P>(
   }
 
   /**
-   * Add a call matrix to the graph, if there's no same call matrix from
+   * Add a call matrix to the graph, if there's no smaller call matrix from
    * {@link CallMatrix#domain()} to {@link CallMatrix#codomain()} was found.
    *
    * @return whether the matrix it is added to the graph

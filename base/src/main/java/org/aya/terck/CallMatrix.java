@@ -10,6 +10,14 @@ import org.aya.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A call matrix for a call `f --> g` has dimensions `arity(g) * arity(f)`.
+ * Each row corresponds to one argument in the call to `g` (the codomain).
+ * Each column corresponds to one formal argument of caller `f` (the domain).
+ *
+ * @author kiva
+ * @see Relation
+ */
 public record CallMatrix<Def, Param>(
   @NotNull CallTerm callTerm,
   @NotNull Def domain, @NotNull Def codomain,
@@ -45,6 +53,10 @@ public record CallMatrix<Def, Param>(
     matrix[row][col] = relation;
   }
 
+  /**
+   * A call matrix `A` is smaller than another call matrix `B` iff:
+   * each relation in `A` is less than or equal to the corresponding relation in `B`.
+   */
   public @NotNull Relation compare(@NotNull CallMatrix<Def, Param> other) {
     if (this.domain != other.domain || this.codomain != other.codomain)
       throw new IllegalArgumentException("Cannot compare unrelated call matrices");
@@ -57,6 +69,11 @@ public record CallMatrix<Def, Param>(
     return Relation.LessThan;
   }
 
+  /**
+   * Combine two call matrices if there exists an indirect call, for example:
+   * If `f` calls `g` with call matrix `A` and `g` calls `h` with call matrix `B`,
+   * the `f` indirectly calls `h` with call matrix `combine(A, B)` or `AB` in matrix notation.
+   */
   @Contract(pure = true)
   public static <Def, Param> @NotNull CallMatrix<Def, Param> combine(
     @NotNull CallMatrix<Def, Param> A, @NotNull CallMatrix<Def, Param> B
