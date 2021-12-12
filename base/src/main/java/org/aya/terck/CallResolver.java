@@ -66,10 +66,14 @@ public record CallResolver(
       if (lhs instanceof CallTerm.Con con) {
         if (con.ref() != ctor.ref()) return Relation.Unknown;
         if (ctor.params().isEmpty()) return Relation.Equal;
-        var subCompare = ctor.params()
-          .zipView(con.conArgs())
-          .map(sub -> compare(sub._2.term(), sub._1));
-        if (subCompare.anyMatch(r -> r != Relation.Unknown)) return Relation.Equal;
+        var subCompare = con.conArgs()
+          .zipView(ctor.params())
+          .map(sub -> compare(sub._1.term(), sub._2));
+        if (subCompare.anyMatch(r -> r != Relation.Unknown)) {
+          // compare one level deeper, see FoetusLimitation.aya
+          if (subCompare.anyMatch(r -> r == Relation.LessThan)) return Relation.LessThan;
+          return Relation.Equal;
+        }
         return Relation.Unknown;
       }
       var subCompare = ctor.params().view().map(sub -> compare(lhs, sub));
