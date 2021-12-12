@@ -4,8 +4,6 @@ There are two global states:
 
 + `org.aya.util.error.Global`, controlling whether to equalize all
   `SourcePos` and whether to avoid generating random names.
-+ `org.aya.generic.ref.BinOpCollector`, collecting all binary operators
-  which is later used in the pretty printer.
 
 ### `StmtTycker`
 

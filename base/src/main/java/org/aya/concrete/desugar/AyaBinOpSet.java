@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 public final class AyaBinOpSet extends BinOpSet {
   public final @NotNull Reporter reporter;
-  public final @NotNull MutableMap<DefVar<?, ?>, OpDecl> operators = MutableMap.create();
 
   public AyaBinOpSet(@NotNull Reporter reporter) {
     this.reporter = reporter;
