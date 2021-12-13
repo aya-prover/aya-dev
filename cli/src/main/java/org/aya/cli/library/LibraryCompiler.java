@@ -84,7 +84,7 @@ public class LibraryCompiler {
     var graph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
     var startTime = System.currentTimeMillis();
-    for (var file : owner.librarySourceFiles()) {
+    for (var file : owner.librarySources()) {
       resolveImports(file);
       collectDep(graph, file);
     }
@@ -116,7 +116,7 @@ public class LibraryCompiler {
       var depCompiler = new LibraryCompiler(flags, dep, moduleLoader.loader.states());
       var upToDate = depCompiler.make();
       anyDepChanged = anyDepChanged || !upToDate;
-      owner.registerModulePath(dep.outDir());
+      owner.addModulePath(dep.outDir());
     }
 
     reporter.reportString("Compiling " + library.name());
@@ -124,7 +124,7 @@ public class LibraryCompiler {
     if (anyDepChanged || flags.remake()) cleanReused();
 
     var srcRoot = library.librarySrcRoot();
-    owner.registerModulePath(srcRoot);
+    owner.addModulePath(srcRoot);
 
     var depGraph = resolveLibraryImports();
     var make = make(depGraph);
@@ -134,7 +134,7 @@ public class LibraryCompiler {
   }
 
   private void cleanReused() throws IOException {
-    owner.librarySourceFiles().forEach(src -> {
+    owner.librarySources().forEach(src -> {
       src.program().value = null;
       src.tycked().value = null;
       src.resolveInfo().value = null;

@@ -14,6 +14,7 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
 import org.aya.lsp.actions.ComputeTerm;
@@ -80,8 +81,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       aya -> WsLibrary.mock(reporter, FileUtil.canonicalize(aya))));
   }
 
+  private @Nullable LibraryOwner findOwner(@Nullable Path path) {
+    if (path == null) return null;
+    var ayaJson = path.resolve(Constants.AYA_JSON);
+    if (!Files.exists(ayaJson)) return findOwner(path.getParent());
+    return libraries.find(lib -> lib.underlyingLibrary().libraryRoot().equals(path)).getOrNull();
+  }
+
   private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
-    var sources = owner.librarySourceFiles();
+    var sources = owner.librarySources();
     var found = sources.find(src -> src.file().equals(moduleFile));
     if (found.isDefined()) return found.get();
     for (var dep : owner.libraryDeps()) {
@@ -100,8 +108,12 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   private @Nullable LibrarySource find(@NotNull String uri) {
-    var path = FileUtil.canonicalize(Path.of(URI.create(uri)));
+    var path = toPath(uri);
     return find(path);
+  }
+
+  @NotNull private Path toPath(@NotNull String uri) {
+    return FileUtil.canonicalize(Path.of(URI.create(uri)));
   }
 
   public @NotNull List<HighlightResult> loadFile(@NotNull String uri) {
@@ -138,7 +150,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   private void highlight(@NotNull LibraryOwner owner, @NotNull DynamicSeq<HighlightResult> result) {
-    owner.librarySourceFiles().forEach(src -> result.append(highlightOne(src)));
+    owner.librarySources().forEach(src -> result.append(highlightOne(src)));
     for (var dep : owner.libraryDeps()) highlight(dep, result);
   }
 
@@ -199,14 +211,42 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     };
   }
 
-  @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+  @Override public void didChangeWatchedFiles(@NotNull DidChangeWatchedFilesParams params) {
+    params.getChanges().forEach(change -> {
+      switch (change.getType()) {
+        case Created -> {
+          var newSrc = toPath(change.getUri());
+          switch (findOwner(newSrc)) {
+            case MutableLibraryOwner ownerMut -> {
+              Log.d("Created new file: %s, added to owner: %s", newSrc, ownerMut.underlyingLibrary().name());
+              ownerMut.addLibrarySource(newSrc);
+            }
+            case null -> {
+              var mock = WsLibrary.mock(reporter, newSrc);
+              Log.d("Created new file: %s, mocked a library %s for it", newSrc, mock.mockConfig().name());
+              libraries.append(mock);
+            }
+            default -> {}
+          }
+        }
+        case Deleted -> {
+          var src = find(change.getUri());
+          if (src == null) return;
+          Log.d("Deleted file: %s, removed from owner: %s", src.file(), src.owner().underlyingLibrary().name());
+          switch (src.owner()) {
+            case MutableLibraryOwner owner -> owner.removeLibrarySource(src);
+            case WsLibrary owner -> libraries.removeAll(o -> o == owner);
+            default -> {}
+          }
+        }
+      }
+    });
   }
 
   @Override public void didOpen(DidOpenTextDocumentParams params) {
   }
 
   @Override public void didChange(DidChangeTextDocumentParams params) {
-    // TODO: incremental compilation?
   }
 
   @Override public void didClose(DidCloseTextDocumentParams params) {
