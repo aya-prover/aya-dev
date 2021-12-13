@@ -23,13 +23,13 @@ public interface LibraryOwner {
   int DEFAULT_INDENT = 2;
   /** @return Source dirs of this module, out dirs of all dependencies. */
   @NotNull SeqView<Path> modulePath();
-  @NotNull SeqView<LibrarySource> librarySourceFiles();
+  @NotNull SeqView<LibrarySource> librarySources();
   @NotNull SeqView<LibraryOwner> libraryDeps();
   @NotNull CountingReporter reporter();
   @NotNull SourceFileLocator locator();
   @NotNull LibraryConfig underlyingLibrary();
 
-  void registerModulePath(@NotNull Path newPath);
+  void addModulePath(@NotNull Path newPath);
 
   /** @return Out dir of this module. */
   default @NotNull Path outDir() {
@@ -46,7 +46,7 @@ public interface LibraryOwner {
   }
 
   private @Nullable LibrarySource findModuleHere(@NotNull ImmutableSeq<String> mod) {
-    return librarySourceFiles().find(s -> {
+    return librarySources().find(s -> {
       var checkMod = s.moduleName();
       return checkMod.equals(mod);
     }).getOrNull();

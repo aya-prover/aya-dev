@@ -55,7 +55,7 @@ public record WsLibrary(
     return SeqView.of(workspace);
   }
 
-  @Override public @NotNull SeqView<LibrarySource> librarySourceFiles() {
+  @Override public @NotNull SeqView<LibrarySource> librarySources() {
     return sources.view();
   }
 
@@ -67,7 +67,7 @@ public record WsLibrary(
     return mockConfig;
   }
 
-  @Override public void registerModulePath(@NotNull Path newPath) {
+  @Override public void addModulePath(@NotNull Path newPath) {
     // do nothing
   }
 }

@@ -76,7 +76,7 @@ public class ReplCompiler {
   }
 
   private void importModule(@NotNull LibraryOwner owner) {
-    owner.librarySourceFiles()
+    owner.librarySources()
       .map(src -> src.resolveInfo().value.thisModule())
       .filterIsInstance(PhysicalModuleContext.class)
       .forEach(mod -> mod.exports.forEach((name, contents) -> context.importModule(

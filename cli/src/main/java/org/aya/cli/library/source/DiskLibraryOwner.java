@@ -26,11 +26,11 @@ import java.nio.file.Path;
 public record DiskLibraryOwner(
   @NotNull CountingReporter reporter,
   @NotNull SourceFileLocator locator,
-  @NotNull DynamicSeq<Path> thisModulePath,
-  @NotNull DynamicSeq<LibraryOwner> dependencies,
-  @NotNull DynamicSeq<LibrarySource> sources,
+  @NotNull DynamicSeq<Path> modulePathMut,
+  @NotNull DynamicSeq<LibraryOwner> libraryDepsMut,
+  @NotNull DynamicSeq<LibrarySource> librarySourcesMut,
   @NotNull LibraryConfig underlyingLibrary
-) implements LibraryOwner {
+) implements MutableLibraryOwner {
   private static @Nullable LibraryConfig depConfig(@NotNull LibraryConfig config, @NotNull LibraryDependency dep) throws IOException {
     // TODO: test only: dependency resolving should be done in package manager
     if (dep instanceof LibraryDependency.DepFile file)
@@ -48,7 +48,7 @@ public record DiskLibraryOwner(
     var locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
     var owner = new DiskLibraryOwner(reporter, locator, DynamicSeq.of(),
       DynamicSeq.of(), DynamicSeq.of(), config);
-    owner.sources.appendAll(FileUtil.collectSource(srcRoot, Constants.AYA_POSTFIX)
+    owner.librarySourcesMut.appendAll(FileUtil.collectSource(srcRoot, Constants.AYA_POSTFIX)
       .map(p -> new LibrarySource(owner, p)));
     for (var dep : config.deps()) {
       var depConfig = depConfig(config, dep);
@@ -58,24 +58,8 @@ public record DiskLibraryOwner(
         continue;
       }
       var depCompiler = DiskLibraryOwner.from(reporter, depConfig);
-      owner.dependencies.append(depCompiler);
+      owner.libraryDepsMut.append(depCompiler);
     }
     return owner;
-  }
-
-  @Override public @NotNull SeqView<Path> modulePath() {
-    return thisModulePath.view();
-  }
-
-  @Override public @NotNull SeqView<LibrarySource> librarySourceFiles() {
-    return sources.view();
-  }
-
-  @Override public @NotNull SeqView<LibraryOwner> libraryDeps() {
-    return dependencies.view();
-  }
-
-  @Override public void registerModulePath(@NotNull Path newPath) {
-    thisModulePath.append(newPath);
   }
 }
