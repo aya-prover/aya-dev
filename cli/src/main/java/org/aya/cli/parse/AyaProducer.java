@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicLinkedSeq;
-import kala.collection.mutable.MutableHashSet;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanFunction;
@@ -20,11 +19,11 @@ import org.aya.api.error.Reporter;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.error.*;
+import org.aya.concrete.error.BadCounterexampleWarn;
+import org.aya.concrete.error.BadModifierWarn;
+import org.aya.concrete.error.ParseError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
-import org.aya.core.def.PrimDef;
-import org.aya.core.term.Term;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
@@ -48,10 +47,10 @@ import java.util.stream.Stream;
 /**
  * @author ice1000, kiva
  */
-public final class AyaProducer {
-  public final @NotNull Either<SourceFile, SourcePos> source;
-  public final @NotNull Reporter reporter;
-
+public record AyaProducer(
+  @NotNull Either<SourceFile, SourcePos> source,
+  @NotNull Reporter reporter
+) {
   public AyaProducer(@NotNull Either<SourceFile, SourcePos> source, @NotNull Reporter reporter) {
     this.source = source;
     this.reporter = reporter;
@@ -71,27 +70,11 @@ public final class AyaProducer {
     var id = ctx.ID();
     var name = id.getText();
     var sourcePos = sourcePosOf(id);
-    var primID = PrimDef.ID.find(name);
-    if (primID == null) {
-      reporter.report(new UnknownPrimError(sourcePos, name));
-      throw new ParsingInterruptedException();
-    }
-    var lack = PrimDef.Factory.INSTANCE.checkDependency(primID);
-    if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
-      reporter.report(new PrimDependencyError(name, lack.get(), sourcePos));
-      throw new ParsingInterruptedException();
-    } else if (PrimDef.Factory.INSTANCE.have(primID)) {
-      reporter.report(new RedefinitionError(RedefinitionError.Kind.Prim, name, sourcePos));
-      throw new ParsingInterruptedException();
-    }
-    var core = PrimDef.Factory.INSTANCE.factory(primID);
     var type = ctx.type();
-    var assoc = ctx.assoc();
     return new Decl.PrimDecl(
       sourcePos,
       sourcePosOf(ctx),
-      assoc == null ? null : makeInfix(assoc, name, core.telescope.count(Term.Param::explicit)),
-      core.ref(),
+      name,
       visitTelescope(ctx.tele()),
       type == null ? new Expr.ErrorExpr(sourcePos, Doc.plain("missing result")) : visitType(type)
     );
@@ -575,8 +558,6 @@ public final class AyaProducer {
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
-    checkRedefinition(RedefinitionError.Kind.Ctor,
-      body.view().map(ctor -> new WithPos<>(ctor.sourcePos, ctor.ref.name())));
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var data = new Decl.DataDecl(
@@ -690,22 +671,9 @@ public final class AyaProducer {
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 
-  private void checkRedefinition(@NotNull RedefinitionError.Kind kind,
-                                 @NotNull SeqLike<WithPos<String>> names) {
-    var set = MutableHashSet.<String>of();
-    var redefs = names.view().filterNot(n -> set.add(n.data())).toImmutableSeq();
-    if (redefs.isNotEmpty()) {
-      var last = redefs.last();
-      reporter.report(new RedefinitionError(kind, last.data(), last.sourcePos()));
-      throw new ParsingInterruptedException();
-    }
-  }
-
   public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var bind = ctx.bindBlock();
     var fields = visitFields(ctx.field());
-    checkRedefinition(RedefinitionError.Kind.Field,
-      fields.view().map(field -> new WithPos<>(field.sourcePos, field.ref.name())));
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     return new Decl.StructDecl(

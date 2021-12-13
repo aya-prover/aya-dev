@@ -13,8 +13,12 @@ import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.context.NoExportContext;
 import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
+import org.aya.concrete.resolve.error.PrimDependencyError;
+import org.aya.concrete.resolve.error.RedefinitionPrimError;
+import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
+import org.aya.core.def.PrimDef;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -113,7 +117,19 @@ public record StmtShallowResolver(
         resolveDecl(decl, context);
         resolveOpInfo(decl, context);
       }
-      case Decl.PrimDecl decl -> resolveDecl(decl, context);
+      case Decl.PrimDecl decl -> {
+        var name = decl.ref.name();
+        var sourcePos = decl.sourcePos;
+        var primID = PrimDef.ID.find(name);
+        if (primID == null) context.reportAndThrow(new UnknownPrimError(sourcePos, name));
+        var lack = PrimDef.Factory.INSTANCE.checkDependency(primID);
+        if (lack.isNotEmpty() && lack.get().isNotEmpty())
+          context.reportAndThrow(new PrimDependencyError(name, lack.get(), sourcePos));
+        else if (PrimDef.Factory.INSTANCE.have(primID))
+          context.reportAndThrow(new RedefinitionPrimError(name, sourcePos));
+        PrimDef.Factory.INSTANCE.factory(primID, decl.ref);
+        resolveDecl(decl, context);
+      }
     }
   }
 

@@ -100,19 +100,17 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * which means it's unspecified in the concrete syntax.
    * @see PrimDef
    */
-  public static final class PrimDecl extends Decl implements OpDecl {
+  public static final class PrimDecl extends Decl {
     public final @NotNull DefVar<PrimDef, PrimDecl> ref;
 
     public PrimDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @Nullable OpDecl.OpInfo opInfo,
-      @NotNull DefVar<PrimDef, PrimDecl> ref,
+      @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result
     ) {
-      super(sourcePos, entireSourcePos, Accessibility.Public, opInfo, BindBlock.EMPTY, telescope, result);
-      ref.concrete = this;
-      this.ref = ref;
+      super(sourcePos, entireSourcePos, Accessibility.Public, null, BindBlock.EMPTY, telescope, result);
+      this.ref = DefVar.concrete(this, name);
     }
 
     @Override public boolean needTyck() {
@@ -128,7 +126,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
   }
 
-  public static final class DataCtor extends Signatured implements OpDecl {
+  public static final class DataCtor extends Signatured {
     public final @NotNull DefVar<CtorDef, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     /** Similar to {@link Signatured#signature}, but stores the bindings in {@link DataCtor#patterns} */
@@ -165,7 +163,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @author kiva
    * @see DataDef
    */
-  public static final class DataDecl extends Decl implements OpDecl {
+  public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public final @NotNull ImmutableSeq<DataCtor> body;
     /** Yet type-checked constructors */
@@ -202,7 +200,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    *
    * @author vont
    */
-  public static final class StructDecl extends Decl implements OpDecl {
+  public static final class StructDecl extends Decl {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
@@ -234,7 +232,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
   }
 
-  public static final class StructField extends Signatured implements OpDecl {
+  public static final class StructField extends Signatured {
     public final @NotNull DefVar<FieldDef, Decl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
@@ -265,10 +263,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     @Override public @NotNull DefVar<FieldDef, StructField> ref() {
       return ref;
     }
-
-    @Override public @Nullable OpDecl.OpInfo opInfo() {
-      return opInfo;
-    }
   }
 
   /**
@@ -277,7 +271,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @author re-xyr
    * @see FnDef
    */
-  public static final class FnDecl extends Decl implements OpDecl {
+  public static final class FnDecl extends Decl {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;

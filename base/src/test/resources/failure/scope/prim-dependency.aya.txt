@@ -6,6 +6,6 @@ In file $FILE:1:5 ->
 
 Error: The prim `left` depends on undeclared prims: `I`
 
-Parsing interrupted due to:
+Resolving interrupted due to:
 1 error(s), 0 warning(s).
 What are you doing?

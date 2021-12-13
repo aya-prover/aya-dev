@@ -1,33 +1,28 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.error;
+package org.aya.concrete.resolve.error;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.concrete.resolve.error.ResolveProblem;
-import org.aya.core.def.PrimDef;
+import org.aya.api.error.Problem;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author darkflames
- */
-public record PrimDependencyError(
+public record RedefinitionPrimError(
   @NotNull String name,
-  @NotNull ImmutableSeq<PrimDef.ID> lack,
   @Override @NotNull SourcePos sourcePos
-) implements ResolveProblem {
+) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-    assert lack.isNotEmpty();
-    return Doc.sep(
-      Doc.english("The prim"), Doc.styled(Style.code(), Doc.plain(name)),
-      Doc.english("depends on undeclared prims:"),
-      Doc.commaList(lack.map(name -> Doc.styled(Style.code(), Doc.plain(name.id)))));
+    return Doc.sep(Doc.english("Redefinition of primitive"),
+      Doc.styled(Style.code(), Doc.plain(name)));
   }
 
   @Override public @NotNull Severity level() {
     return Severity.ERROR;
+  }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.PARSE;
   }
 }
