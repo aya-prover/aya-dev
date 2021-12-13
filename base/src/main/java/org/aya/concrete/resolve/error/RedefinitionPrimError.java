@@ -14,7 +14,7 @@ public record RedefinitionPrimError(
   @Override @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-    return Doc.sep(Doc.plain("Redefinition of primitive"),
+    return Doc.sep(Doc.english("Redefinition of primitive"),
       Doc.styled(Style.code(), Doc.plain(name)));
   }
 
