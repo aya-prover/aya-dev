@@ -1,0 +1,17 @@
+open import Arith::Nat
+open import Data::Empty
+open import Paths
+
+open data infix < Nat Nat
+| zero, suc m => zc
+| suc n, suc m => sc (n < m)
+
+variable a b c : Nat
+
+def trans< (a < b) (b < c) : a < c
+| zc, sc _ => zc
+| sc p1, sc p2 => sc (trans< p1 p2)
+
+def asym (a < b) (b < a) : Empty
+| zc, ()
+| sc p1, sc p2 => botElim (asym p1 p2)

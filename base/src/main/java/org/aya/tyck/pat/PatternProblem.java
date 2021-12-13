@@ -57,7 +57,7 @@ public sealed interface PatternProblem extends Problem {
   ) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
-        Doc.english("Cannot match with"),
+        Doc.english("I'm not sure if there should be a case for"),
         Doc.par(1, pattern.toDoc(options)),
         Doc.english("as index unification is blocked for type"),
         Doc.par(1, dataCall.toDoc(options)));
