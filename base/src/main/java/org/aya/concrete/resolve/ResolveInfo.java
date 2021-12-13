@@ -13,12 +13,11 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @param opSet       binary operators
- * @param imports     modules imported using `import` command
- * @param reExports   modules re-exported using `public open` command
- * @param declGraph   dependency graph of decls. for each (v, successors) in the graph,
- *                    `successors` should be tycked first.
- * @param sampleGraph dependency graph of samples and remarks.
+ * @param opSet     binary operators
+ * @param imports   modules imported using `import` command
+ * @param reExports modules re-exported using `public open` command
+ * @param depGraph  dependency graph of definitions. for each (v, successors) in the graph,
+ *                  `successors` should be tycked first.
  */
 @Debug.Renderer(text = "thisModule.moduleName().joinToString(\"::\")")
 public record ResolveInfo(
@@ -27,10 +26,9 @@ public record ResolveInfo(
   @NotNull AyaBinOpSet opSet,
   @NotNull DynamicSeq<ResolveInfo> imports,
   @NotNull DynamicSeq<ImmutableSeq<String>> reExports,
-  @NotNull MutableGraph<TyckUnit> declGraph,
-  @NotNull MutableGraph<TyckUnit> sampleGraph
+  @NotNull MutableGraph<TyckUnit> depGraph
 ) {
   public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {
-    this(thisModule, thisProgram, opSet, DynamicSeq.create(), DynamicSeq.create(), MutableGraph.create(), MutableGraph.create());
+    this(thisModule, thisProgram, opSet, DynamicSeq.create(), DynamicSeq.create(), MutableGraph.create());
   }
 }

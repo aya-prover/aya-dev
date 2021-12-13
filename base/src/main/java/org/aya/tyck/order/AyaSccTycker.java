@@ -61,7 +61,7 @@ public record AyaSccTycker(
   }
 
   private boolean isRecursive(@NotNull Decl unit) {
-    return resolveInfo.declGraph().hasSuc(unit, unit);
+    return resolveInfo.depGraph().hasSuc(unit, unit);
   }
 
   private void checkHeader(@NotNull TyckUnit stmt) {

@@ -35,9 +35,7 @@ public interface ModuleLoader {
     var sccTycker = new AyaOrgaTycker(new AyaSccTycker(resolveInfo, builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
     try (delayedReporter) {
-      var SCCs = resolveInfo.declGraph().topologicalOrder()
-        .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder())
-        .toImmutableSeq();
+      var SCCs = resolveInfo.depGraph().topologicalOrder();
       SCCs.forEach(sccTycker::tyckSCC);
     } finally {
       if (onTycked != null) onTycked.onModuleTycked(
