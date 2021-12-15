@@ -3,6 +3,7 @@
 package org.aya.lsp.actions;
 
 import kala.collection.mutable.DynamicSeq;
+import kala.control.Option;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -19,6 +20,7 @@ import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.LocationLink;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +41,10 @@ public class GotoDefinition implements StmtConsumer<XY> {
     locator.visitAll(program, new XY(params.getPosition()));
     return locator.locations.view().mapNotNull(pos -> {
       var target = switch (pos.data()) {
-        case DefVar<?, ?> defVar && defVar.concrete != null -> defVar.concrete.sourcePos();
+        case DefVar<?, ?> defVar -> {
+          if (defVar.concrete != null) yield defVar.concrete.sourcePos();
+          else yield searchLibrary(loadedFile, defVar);
+        }
         case LocalVar localVar -> localVar.definition();
         case null, default -> null;
       };
@@ -48,6 +53,16 @@ public class GotoDefinition implements StmtConsumer<XY> {
       if (res != null) Log.d("Resolved: %s in %s", target, res.getTargetUri());
       return res;
     }).collect(Collectors.toList());
+  }
+
+  private static @Nullable SourcePos searchLibrary(@NotNull LibrarySource loadedFile, @NotNull DefVar<?, ?> defVar) {
+    var owner = loadedFile.owner();
+    return Option.of(owner.findModule(defVar.module))
+      .mapNotNull(m -> m.tycked().value)
+      .mapNotNull(defs -> defs.find(def -> def.ref().name().equals(defVar.name())).getOrNull())
+      .mapNotNull(def -> def.ref().concrete)
+      .mapNotNull(concrete -> concrete.sourcePos)
+      .getOrNull();
   }
 
   @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
