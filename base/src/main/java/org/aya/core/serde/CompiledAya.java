@@ -146,8 +146,7 @@ public record CompiledAya(
     serOps.forEach(serOp -> {
       var defVar = state.resolve(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc(), serOp.argc());
-      var opDecl = new SerDef.SerOpDecl(opInfo);
-      defVar.opDecl = opDecl;
+      defVar.opDecl = new SerDef.SerOpDecl(opInfo);
     });
     serOps.view().forEach(serOp -> {
       var defVar = state.resolve(serOp.name());

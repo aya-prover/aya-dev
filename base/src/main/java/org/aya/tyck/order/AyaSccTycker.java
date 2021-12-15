@@ -149,7 +149,7 @@ public record AyaSccTycker(
   }
 
   public static class SCCTyckingFailed extends InterruptException {
-    public @NotNull ImmutableSeq<TyckUnit> what;
+    public final @NotNull ImmutableSeq<TyckUnit> what;
 
     public SCCTyckingFailed(@NotNull ImmutableSeq<TyckUnit> what) {
       this.what = what;

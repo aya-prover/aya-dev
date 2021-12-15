@@ -44,7 +44,7 @@ public class LibraryCompiler {
     this.owner = owner;
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner) throws IOException {
+  public static @NotNull LibraryCompiler newCompiler(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner) {
     return new LibraryCompiler(flags, owner, new LibraryModuleLoader.United());
   }
 

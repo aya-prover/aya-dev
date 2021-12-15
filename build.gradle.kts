@@ -23,7 +23,7 @@ allprojects {
   version = deps.getProperty("version.project")
 }
 
-@kotlin.Suppress("unsupported")
+@Suppress("unsupported")
 subprojects {
   val useJacoco = name in ["base", "pretty", "cli"]
 
