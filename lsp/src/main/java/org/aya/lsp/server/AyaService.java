@@ -17,6 +17,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
+import org.aya.lsp.actions.ComputeSignature;
 import org.aya.lsp.actions.ComputeTerm;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.actions.SyntaxHighlight;
@@ -269,6 +270,27 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return Either.forLeft(Collections.emptyList());
       return Either.forRight(GotoDefinition.invoke(params, loadedFile));
+    });
+  }
+
+  @Override public CompletableFuture<Hover> hover(HoverParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var loadedFile = find(params.getTextDocument().getUri());
+      if (loadedFile == null) return null;
+      var doc = ComputeSignature.invoke(loadedFile, params.getPosition(), true);
+      if (doc.isEmpty()) return null;
+      return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, Doc.stickySep(doc).commonRender()));
+    });
+  }
+
+  @Override public CompletableFuture<SignatureHelp> signatureHelp(SignatureHelpParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var loadedFile = find(params.getTextDocument().getUri());
+      if (loadedFile == null) return null;
+      var doc = ComputeSignature.invoke(loadedFile, params.getPosition(), false);
+      if (doc.isEmpty()) return null;
+      var help = new SignatureInformation(Doc.stickySep(doc).commonRender());
+      return new SignatureHelp(Collections.singletonList(help), 0, 0);
     });
   }
 
