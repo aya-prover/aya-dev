@@ -3,7 +3,6 @@
 package org.aya.lsp.actions;
 
 import kala.collection.mutable.DynamicSeq;
-import kala.control.Option;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -14,6 +13,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
+import org.aya.lsp.utils.Resolver;
 import org.aya.lsp.utils.XY;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -57,9 +57,7 @@ public class GotoDefinition implements StmtConsumer<XY> {
 
   private static @Nullable SourcePos searchLibrary(@NotNull LibrarySource loadedFile, @NotNull DefVar<?, ?> defVar) {
     var owner = loadedFile.owner();
-    return Option.of(owner.findModule(defVar.module))
-      .mapNotNull(m -> m.tycked().value)
-      .mapNotNull(defs -> defs.find(def -> def.ref().name().equals(defVar.name())).getOrNull())
+    return Resolver.resolve(owner, defVar)
       .mapNotNull(def -> def.ref().concrete)
       .mapNotNull(concrete -> concrete.sourcePos)
       .getOrNull();
