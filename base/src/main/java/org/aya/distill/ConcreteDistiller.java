@@ -31,11 +31,15 @@ import java.util.Objects;
  * @author ice1000, kiva
  * @see CoreDistiller
  */
-public class ConcreteDistiller extends BaseDistiller implements
+public class ConcreteDistiller extends BaseDistiller<Expr> implements
   Stmt.Visitor<Unit, Doc>,
   Expr.Visitor<BaseDistiller.Outer, Doc> {
   public ConcreteDistiller(@NotNull DistillerOptions options) {
     super(options);
+  }
+
+  @Override protected @NotNull Doc term(@NotNull Outer outer, @NotNull Expr expr) {
+    return expr.accept(this, outer);
   }
 
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Outer outer) {
@@ -131,8 +135,7 @@ public class ConcreteDistiller extends BaseDistiller implements
       infix = var.isInfix();
     return visitCalls(infix,
       head.accept(this, Outer.AppHead),
-      (nest, arg) -> arg.accept(this, nest), outer,
-      args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())),
+      args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())), outer,
       options.map.get(DistillerOptions.Key.ShowImplicitArgs)
     );
   }
@@ -140,17 +143,13 @@ public class ConcreteDistiller extends BaseDistiller implements
   @Override public Doc visitLsuc(Expr.@NotNull LSucExpr expr, Outer outer) {
     return visitCalls(false,
       Doc.styled(KEYWORD, "lsuc"),
-      (nest, arg) -> arg.accept(this, nest), outer, SeqView.of(new Arg<>(expr.expr(), true)),
-      true
-    );
+      SeqView.of(new Arg<>(expr.expr(), true)), outer, true);
   }
 
   @Override public Doc visitLmax(Expr.@NotNull LMaxExpr expr, Outer outer) {
     return visitCalls(false,
       Doc.styled(KEYWORD, "lmax"),
-      (nest, arg) -> arg.accept(this, nest), outer, expr.levels().view().map(term -> new Arg<>(term, true)),
-      true
-    );
+      expr.levels().view().map(term -> new Arg<>(term, true)), outer, true);
   }
 
   @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Outer outer) {
@@ -199,7 +198,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     if (seq.sizeEquals(1)) return seq.first().expr().accept(this, outer);
     return visitCalls(false,
       seq.first().expr().accept(this, Outer.AppSpine),
-      (nest, arg) -> arg.accept(this, nest), outer, seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
+      seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())), outer,
       options.map.get(DistillerOptions.Key.ShowImplicitArgs)
     );
   }

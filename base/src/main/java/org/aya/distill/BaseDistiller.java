@@ -3,6 +3,7 @@
 package org.aya.distill;
 
 import kala.collection.Seq;
+import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.api.distill.AyaDocile;
@@ -26,7 +27,7 @@ import java.util.function.ToIntBiFunction;
 /**
  * @author ice1000
  */
-public abstract class BaseDistiller {
+public abstract class BaseDistiller<Term extends AyaDocile> {
   @FunctionalInterface
   protected interface Fmt<T extends AyaDocile> extends BiFunction<Outer, T, Doc> {
   }
@@ -43,6 +44,31 @@ public abstract class BaseDistiller {
 
   protected BaseDistiller(@NotNull DistillerOptions options) {
     this.options = options;
+  }
+
+  protected abstract @NotNull Doc term(@NotNull Outer outer, @NotNull Term term);
+
+  public @NotNull Doc visitCalls(
+    boolean infix, @NotNull Doc fn,
+    @NotNull SeqView<@NotNull Arg<Term>> args,
+    @NotNull Outer outer, boolean showImplicits
+  ) {
+    return visitCalls(infix, fn, this::term, outer, args, showImplicits);
+  }
+
+  public @NotNull Doc visitCalls(
+    @NotNull DefVar<?, ?> var, @NotNull Style style,
+    @NotNull SeqLike<@NotNull Arg<Term>> args,
+    @NotNull Outer outer, boolean showImplicits
+  ) {
+    return visitCalls(var.isInfix(), linkRef(var, style), args.view(), outer, showImplicits);
+  }
+
+  public @NotNull Doc visitArgsCalls(
+    @NotNull DefVar<?, ?> var, @NotNull Style style,
+    @NotNull SeqLike<@NotNull Arg<Term>> args, @NotNull Outer outer
+  ) {
+    return visitCalls(var, style, args, outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
   }
 
   <T extends AyaDocile> @NotNull Doc visitCalls(
@@ -90,11 +116,11 @@ public abstract class BaseDistiller {
     return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
   }
 
-  <Term extends AyaDocile> @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
+  @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
     return visitTele(telescope, null, (t, v) -> 1);
   }
 
-  <Term extends AyaDocile> @NotNull Doc visitTele(
+  @NotNull Doc visitTele(
     @NotNull Seq<? extends ParamLike<Term>> telescope,
     @Nullable Term body,
     @NotNull ToIntBiFunction<Term, Var> findUsages
