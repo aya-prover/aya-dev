@@ -94,6 +94,6 @@ public record CallMatrix<Def, Param>(
   public @NotNull Doc toDoc() {
     return Doc.vcat(ImmutableSeq.from(matrix).map(
       row -> Doc.stickySep(ImmutableSeq.from(row)
-        .map(col -> Doc.plain(col.toString())))));
+        .map(col -> Doc.plain(col.text)))));
   }
 }

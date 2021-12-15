@@ -21,7 +21,7 @@ public enum Relation implements Comparable<Relation>{
   /** structurally strictly smaller than */
   LessThan("<");
 
-  private final @NotNull String text;
+  public final @NotNull String text;
 
   @Contract(pure = true) Relation(@NotNull String text) {
     this.text = text;

@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 @SuppressWarnings("unchecked")
 public interface ArrayUtil {
-  static <A> void fill(A @NotNull [][] a, @NotNull A value) {
+  static <A> void fill(A @NotNull [] @NotNull [] a, @NotNull A value) {
     for (var as : a) Arrays.fill(as, value);
   }
 
