@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
@@ -16,7 +15,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,11 +25,15 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000, kiva
  * @see ConcreteDistiller
  */
-public class CoreDistiller extends BaseDistiller implements
+public class CoreDistiller extends BaseDistiller<Term> implements
   Def.Visitor<Unit, @NotNull Doc>,
   Term.Visitor<BaseDistiller.Outer, Doc> {
   public CoreDistiller(@NotNull DistillerOptions options) {
     super(options);
+  }
+
+  @Override protected @NotNull Doc term(@NotNull Outer outer, @NotNull Term term) {
+    return term.accept(this, outer);
   }
 
   @Override public Doc visitRef(@NotNull RefTerm term, Outer outer) {
@@ -56,7 +58,7 @@ public class CoreDistiller extends BaseDistiller implements
       else {
         var style = chooseStyle(defVar);
         bodyDoc = style != null
-          ? visitCalls(defVar, style, args, Outer.Free)
+          ? visitArgsCalls(defVar, style, args, Outer.Free)
           : visitCalls(false, varDoc(defVar), args, Outer.Free,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
@@ -98,6 +100,7 @@ public class CoreDistiller extends BaseDistiller implements
     if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
       return term.body().accept(this, outer);
     }
+    // Try to omit the Pi keyword
     if (term.body().findUsages(term.param().ref()) == 0) {
       return checkParen(outer, Doc.sep(
         Doc.bracedUnless(term.param().type().toDoc(options), term.param().explicit()),
@@ -109,7 +112,7 @@ public class CoreDistiller extends BaseDistiller implements
     var body = FormTerm.unpi(term.body(), params);
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      visitTele(params),
+      visitTele(params, body, Term::findUsages),
       Doc.symbol("->"),
       body.accept(this, Outer.Codomain)
     );
@@ -120,7 +123,7 @@ public class CoreDistiller extends BaseDistiller implements
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Outer outer) {
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
-      visitTele(term.params().view().dropLast(1)),
+      visitTele(term.params().dropLast(1)),
       Doc.symbol("**"),
       term.params().last().toDoc(options)
     );
@@ -140,29 +143,29 @@ public class CoreDistiller extends BaseDistiller implements
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Outer outer) {
     var args = DynamicSeq.of(term.arg());
     var head = ElimTerm.unapp(term.of(), args);
-    if (head instanceof RefTerm.Field fieldRef) return visitCalls(fieldRef.ref(), FIELD_CALL, args, outer);
+    if (head instanceof RefTerm.Field fieldRef) return visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
     return visitCalls(false, head.accept(this, Outer.AppHead), args.view(), outer,
       options.map.get(DistillerOptions.Key.ShowImplicitArgs));
   }
 
   @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Outer outer) {
-    return visitCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
+    return visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
   }
 
   @Override public Doc visitPrimCall(CallTerm.@NotNull Prim prim, Outer outer) {
-    return visitCalls(prim.ref(), FN_CALL, prim.args(), outer);
+    return visitArgsCalls(prim.ref(), FN_CALL, prim.args(), outer);
   }
 
   @Override public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Outer outer) {
-    return visitCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
+    return visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
   }
 
   @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Outer outer) {
-    return visitCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
+    return visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
   }
 
   @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Outer outer) {
-    return visitCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
+    return visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
   }
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Outer outer) {
@@ -216,29 +219,6 @@ public class CoreDistiller extends BaseDistiller implements
     var ref = metaPat.ref();
     if (ref.solution().value == null) return varDoc(ref.fakeBind());
     return visitPat(ref, outer);
-  }
-
-  private Doc visitCalls(
-    @NotNull DefVar<?, ?> var, @NotNull Style style,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer
-  ) {
-    return visitCalls(var, style, args, outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-  }
-
-  private Doc visitCalls(
-    @NotNull DefVar<?, ?> var, @NotNull Style style,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer, boolean showImplicits
-  ) {
-    return visitCalls(var.isInfix(),
-      linkRef(var, style), args.view(), outer, showImplicits);
-  }
-
-  private Doc visitCalls(
-    boolean infix, @NotNull Doc fn,
-    @NotNull SeqView<@NotNull Arg<@NotNull Term>> args, Outer outer, boolean showImplicits
-  ) {
-    return visitCalls(infix, fn, (nest, term) -> term.accept(this, nest),
-      outer, args, showImplicits);
   }
 
   public Doc visitPat(@NotNull Pat pat, Outer outer) {
