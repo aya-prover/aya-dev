@@ -45,7 +45,7 @@ public record CallResolver(
 
   private void fillMatrix(@NotNull CallTerm callTerm, @NotNull Def callee, CallMatrix<Def, Term.Param> matrix) {
     var matching = currentMatching.value;
-    assert matching != null;
+    if (matching == null) return;
     for (var domThing : matching.patterns().zipView(caller.telescope)) {
       for (var codomThing : callTerm.args().zipView(callee.telescope())) {
         var relation = compare(codomThing._1.term(), domThing._1);
