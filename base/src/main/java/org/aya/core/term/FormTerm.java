@@ -49,7 +49,6 @@ public sealed interface FormTerm extends Term {
       params.append(pi.param);
       term = pi.body;
     }
-    params.reverse();
     return term;
   }
 
