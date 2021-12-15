@@ -3,7 +3,7 @@
 package org.aya.tyck.error;
 
 import kala.collection.Seq;
-import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
@@ -84,8 +84,8 @@ public sealed interface HoleProblem extends Problem {
       return eqns.last().pos();
     }
 
-    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
-      return eqns.map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc(options)));
+    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+      return eqns.view().map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc(options)));
     }
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {

@@ -14,4 +14,4 @@ def trans< (a < b) (b < c) : a < c
 
 def asym (a < b) (b < a) : Empty
 | zc, ()
-| sc p1, sc p2 => botElim (asym p1 p2)
+| sc p1, sc p2 => asym p1 p2

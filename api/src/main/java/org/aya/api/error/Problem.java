@@ -3,7 +3,6 @@
 package org.aya.api.error;
 
 import kala.collection.Seq;
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
@@ -48,7 +47,7 @@ public interface Problem {
   default @NotNull Doc hint(@NotNull DistillerOptions options) {
     return Doc.empty();
   }
-  default @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+  default @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
     return SeqView.empty();
   }
 

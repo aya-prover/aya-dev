@@ -44,8 +44,8 @@ public enum Relation implements Comparable<Relation>{
   }
 
   /**
-   * A relation `A`is less than another relation `B` iff:
-   * `A` contains more uncertainty than `B`, for example:
+   * A relation <code>A</code> is less than another relation <code>B</code> iff:
+   * <code>A</code> contains more uncertainty than <code>B</code>, for example:
    * {@link Relation#Unknown} contains nothing about relations between
    * arguments and formal parameters while {@link Relation#LessThan}
    * declares the arguments is strictly structurally smaller than

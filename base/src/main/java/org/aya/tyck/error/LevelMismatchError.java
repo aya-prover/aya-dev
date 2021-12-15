@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
-import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
@@ -26,7 +26,7 @@ public record LevelMismatchError(
     return pos != null ? pos : eqns.first().sourcePos();
   }
 
-  @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+  @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
     return eqns.view().map(eqn -> new WithPos<>(eqn.sourcePos(), eqn.toDoc()));
   }
 
