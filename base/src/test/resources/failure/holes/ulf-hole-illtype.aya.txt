@@ -31,7 +31,7 @@ In file $FILE:6:42 ->
 
 Error: Cannot check the expression of type
          F (Neg <X>)
-         (Normalized: F (Pi (_ : <X>) -> Empty))
+         (Normalized: F (<X> -> Empty))
        against the type
          Nat
 
@@ -44,7 +44,7 @@ In file $FILE:6:16 ->
 
 Error: Unsolved meta _
        in `F _`
-       in `Pi (X : F _) -> F (Neg <X>)`
+       in `F _ -> F (Neg <X>)`
 
 4 error(s), 0 warning(s).
 What are you doing?
