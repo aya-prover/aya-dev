@@ -3,7 +3,7 @@
 package org.aya.tyck.pat;
 
 import kala.collection.Seq;
-import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
@@ -53,7 +53,7 @@ public sealed interface ClausesProblem extends Problem {
       );
     }
 
-    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
       var view = Seq.of(
         new WithPos<>(conditionPos, Doc.plain("relevant condition")),
         new WithPos<>(iPos, termToHint(lhs, options))).view();
@@ -81,9 +81,9 @@ public sealed interface ClausesProblem extends Problem {
       );
     }
 
-    @Override public @NotNull Seq<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
       return Seq.of(new WithPos<>(iPos, termToHint(lhs, options)),
-        new WithPos<>(jPos, termToHint(rhs, options)));
+        new WithPos<>(jPos, termToHint(rhs, options))).view();
     }
   }
 

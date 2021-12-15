@@ -3,7 +3,7 @@
 package org.aya.api.error;
 
 import kala.collection.Seq;
-import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
@@ -44,11 +44,11 @@ public interface Problem {
   default @NotNull Stage stage() {
     return Stage.OTHER;
   }
-  default @NotNull Doc hint() {
+  default @NotNull Doc hint(@NotNull DistillerOptions options) {
     return Doc.empty();
   }
-  default @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
-    return ImmutableSeq.empty();
+  default @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+    return SeqView.empty();
   }
 
   default boolean isError() {
@@ -80,7 +80,7 @@ public interface Problem {
       case ERROR -> Doc.styled(ERROR, "Error:");
     };
     var doc = Doc.sep(tag, Doc.styled(TEXT, Doc.align(describe(options))));
-    var hint = hint();
+    var hint = hint(options);
     return hint instanceof Doc.Empty ? doc : Doc.vcat(
       doc,
       Doc.sep(Doc.styled(NOTE, "note:"), Doc.styled(TEXT, Doc.align(hint)))

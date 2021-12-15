@@ -6,7 +6,7 @@ In file $FILE:1:31 ->
 Error: Cannot check
          \ {x} => x
        against the Pi type
-         Pi (_ : A) -> A
+         A -> A
        because explicitness do not match
 
 1 error(s), 0 warning(s).

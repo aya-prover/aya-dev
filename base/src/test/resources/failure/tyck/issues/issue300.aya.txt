@@ -6,7 +6,7 @@ In file $FILE:6:35 ->
                                          ^--------^
 
 Error: Cannot check the expression of type
-         Pi (b : Unit) -> Nat
+         Unit -> Nat
        against the type
          Nat
 

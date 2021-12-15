@@ -1,0 +1,7 @@
+open data Nat | zero | suc Nat
+open data List | nil | cons Nat List
+
+def sum List : Nat
+  | nil => zero
+  | cons (suc x) xs => suc (sum (cons x xs))
+  | cons zero xs => sum xs

@@ -40,7 +40,7 @@ public class ConcreteDistiller extends BaseDistiller implements
 
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Outer outer) {
     var ref = expr.resolvedVar();
-    if (ref instanceof DefVar<?, ?> defVar) return visitDefVar(defVar);
+    if (ref instanceof DefVar<?, ?> defVar) return defVar(defVar);
     else if (ref instanceof PreLevelVar levelVar) return linkRef(levelVar, GENERALIZED);
     else return varDoc(ref);
   }
@@ -370,13 +370,13 @@ public class ConcreteDistiller extends BaseDistiller implements
 
     if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
       Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "tighter"),
-      Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)))));
+      Doc.commaList(tighters.view().map(BaseDistiller::defVar)))));
     else if (tighters.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
       Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "looser"),
-      Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar)))));
+      Doc.commaList(loosers.view().map(BaseDistiller::defVar)))));
     return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.sep(
-      Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)),
-      Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar))
+      Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::defVar)),
+      Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BaseDistiller::defVar))
     )))));
   }
 

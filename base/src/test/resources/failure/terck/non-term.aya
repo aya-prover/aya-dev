@@ -1,0 +1,8 @@
+open data Nat | zero | suc Nat
+
+def f Nat : Nat
+  | n => g (suc n)
+
+def g Nat : Nat
+  | zero => zero
+  | suc n => f n

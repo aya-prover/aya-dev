@@ -5,12 +5,23 @@ package org.aya.terck;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public enum Relation {
+/**
+ * Relations between size of formal function parameter and function argument
+ * in one recursive call. Together with the two operations {@link Relation#add(Relation)}
+ * and {@link Relation#mul(Relation)} the relation set forms a commutative semi-ring
+ * with zero {@link Relation#Unknown} and unit {@link Relation#Equal}.
+ *
+ * @author kiva
+ */
+public enum Relation implements Comparable<Relation>{
+  /** increase or unrelated of callee argument wrt. caller parameter. */
   Unknown("?"),
+  /** structurally (maybe strictly) smaller than */
   Equal("="),
+  /** structurally strictly smaller than */
   LessThan("<");
 
-  private final @NotNull String text;
+  public final @NotNull String text;
 
   @Contract(pure = true) Relation(@NotNull String text) {
     this.text = text;
@@ -32,7 +43,17 @@ public enum Relation {
     return this.lessThanOrEqual(rhs) ? rhs : this;
   }
 
+  /**
+   * A relation <code>A</code> is less than another relation <code>B</code> iff:
+   * <code>A</code> contains more uncertainty than <code>B</code>, for example:
+   * {@link Relation#Unknown} contains nothing about relations between
+   * arguments and formal parameters while {@link Relation#LessThan}
+   * declares the arguments is strictly structurally smaller than
+   * formal parameters an unmovable fact.
+   */
   public boolean lessThanOrEqual(@NotNull Relation rhs) {
     return this.ordinal() <= rhs.ordinal();
   }
+
+
 }

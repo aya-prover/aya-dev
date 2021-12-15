@@ -15,3 +15,17 @@ open data Rose (A : Type) : Type
 open data Forest (A : Type) : Type
   | Empty
   | Cons (Rose A) (Forest A)
+
+def ack Nat Nat : Nat
+  | zero, n      => suc n
+  | suc m, zero  => ack m (suc zero)
+  | suc m, suc n => ack m (ack (suc m) n)
+
+def f Nat : Nat
+  | zero => zero
+  | suc n => g (suc n)
+
+def g Nat : Nat
+  | zero => zero
+  | suc n => f n
+

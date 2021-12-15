@@ -135,7 +135,7 @@ public abstract class BaseDistiller {
     return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
   }
 
-  static @NotNull Doc visitDefVar(DefVar<?, ?> ref) {
+  public static @NotNull Doc defVar(DefVar<?, ?> ref) {
     var style = chooseStyle(ref.concrete);
     return style != null ? linkDef(ref, style) : varDoc(ref);
   }

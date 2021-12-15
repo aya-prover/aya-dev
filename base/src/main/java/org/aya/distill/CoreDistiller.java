@@ -98,6 +98,13 @@ public class CoreDistiller extends BaseDistiller implements
     if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
       return term.body().accept(this, outer);
     }
+    if (term.body().findUsages(term.param().ref()) == 0) {
+      return checkParen(outer, Doc.sep(
+        Doc.bracedUnless(term.param().type().toDoc(options), term.param().explicit()),
+        Doc.symbol("->"),
+        term.body().accept(this, Outer.Codomain)
+      ), Outer.BinOp);
+    }
     var params = DynamicSeq.of(term.param());
     var body = FormTerm.unpi(term.body(), params);
     var doc = Doc.sep(
