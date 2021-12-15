@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
-import kala.collection.SeqLike;
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.api.distill.AyaDocile;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.ToIntBiFunction;
 
 /**
  * @author ice1000
@@ -89,21 +90,41 @@ public abstract class BaseDistiller {
     return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
   }
 
-  @NotNull Doc visitTele(@NotNull SeqLike<? extends ParamLike<?>> telescope) {
+  <Term extends AyaDocile> @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
+    return visitTele(telescope, null, (t, v) -> 1);
+  }
+
+  <Term extends AyaDocile> @NotNull Doc visitTele(
+    @NotNull Seq<? extends ParamLike<Term>> telescope,
+    @Nullable Term body,
+    @NotNull ToIntBiFunction<Term, Var> findUsages
+  ) {
     if (telescope.isEmpty()) return Doc.empty();
     var last = telescope.first();
     var buf = DynamicSeq.<Doc>create();
-    var names = DynamicSeq.of(last.nameDoc());
-    for (var param : telescope.view().drop(1)) {
+    var names = DynamicSeq.of(last.ref());
+    for (int i = 1; i < telescope.size(); i++) {
+      var param = telescope.get(i);
       if (!Objects.equals(param.type(), last.type())) {
-        buf.append(last.toDoc(Doc.sep(names), options));
+        if (body != null && names.sizeEquals(1)) {
+          var ref = names.first();
+          var used = telescope.sliceView(i + 1, telescope.size())
+            .map(ParamLike::type).appended(body)
+            .anyMatch(p -> findUsages.applyAsInt(p, ref) > 0);
+          if (used) buf.append(Doc.licit(last.explicit(), last.type().toDoc(options)));
+          else buf.append(dynamicSeqNames(names, last));
+        } else buf.append(dynamicSeqNames(names, last));
         names.clear();
         last = param;
       }
-      names.append(param.nameDoc());
+      names.append(param.ref());
     }
-    buf.append(last.toDoc(Doc.sep(names), options));
+    buf.append(dynamicSeqNames(names, last));
     return Doc.sep(buf);
+  }
+
+  private Doc dynamicSeqNames(DynamicSeq<LocalVar> names, ParamLike<?> param) {
+    return param.toDoc(Doc.sep(names.view().map(BaseDistiller::linkDef).toImmutableSeq()), options);
   }
 
   @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {

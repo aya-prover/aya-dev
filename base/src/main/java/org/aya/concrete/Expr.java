@@ -378,11 +378,11 @@ public sealed interface Expr extends ConcreteExpr {
   record Param(
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar ref,
-    @Nullable Expr type,
+    @NotNull Expr type,
     boolean pattern,
     boolean explicit
   ) implements ParamLike<Expr> {
-    public Param(@NotNull Param param, @Nullable Expr type) {
+    public Param(@NotNull Param param, @NotNull Expr type) {
       this(param.sourcePos, param.ref, type, param.pattern, param.explicit);
     }
 

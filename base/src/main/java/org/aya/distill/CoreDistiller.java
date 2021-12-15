@@ -98,6 +98,7 @@ public class CoreDistiller extends BaseDistiller implements
     if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
       return term.body().accept(this, outer);
     }
+    // Try to omit the Pi keyword
     if (term.body().findUsages(term.param().ref()) == 0) {
       return checkParen(outer, Doc.sep(
         Doc.bracedUnless(term.param().type().toDoc(options), term.param().explicit()),
@@ -109,7 +110,7 @@ public class CoreDistiller extends BaseDistiller implements
     var body = FormTerm.unpi(term.body(), params);
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      visitTele(params),
+      visitTele(params, body, Term::findUsages),
       Doc.symbol("->"),
       body.accept(this, Outer.Codomain)
     );
@@ -120,7 +121,7 @@ public class CoreDistiller extends BaseDistiller implements
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Outer outer) {
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
-      visitTele(term.params().view().dropLast(1)),
+      visitTele(term.params().dropLast(1)),
       Doc.symbol("**"),
       term.params().last().toDoc(options)
     );

@@ -77,8 +77,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     }, Unit.unit());
     Doc doc;
     if (!data[0] && !data[1]) {
-      var type = expr.param().type();
-      var tyDoc = type != null ? type.toDoc(options) : Doc.symbol("?");
+      var tyDoc = expr.param().type().toDoc(options);
       doc = Doc.sep(Doc.bracedUnless(tyDoc, expr.param().explicit()),
         Doc.symbol("->"),
         expr.last().accept(this, Outer.Codomain));

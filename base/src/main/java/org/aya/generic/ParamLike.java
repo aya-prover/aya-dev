@@ -9,7 +9,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @param <Expr> the type of the expression contained, either
@@ -20,7 +19,7 @@ public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
   boolean explicit();
   boolean pattern();
   @NotNull LocalVar ref();
-  @Nullable Expr type();
+  @NotNull Expr type();
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return toDoc(nameDoc(), options);
   }
