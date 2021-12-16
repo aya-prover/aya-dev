@@ -278,8 +278,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return null;
       var doc = ComputeSignature.invoke(loadedFile, params.getPosition(), true);
-      if (doc.isEmpty()) return null;
-      return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, Doc.stickySep(doc).commonRender()));
+      if (doc instanceof Doc.Empty) return null;
+      return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
     });
   }
 
@@ -288,8 +288,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return null;
       var doc = ComputeSignature.invoke(loadedFile, params.getPosition(), false);
-      if (doc.isEmpty()) return null;
-      var help = new SignatureInformation(Doc.stickySep(doc).commonRender());
+      if (doc instanceof Doc.Empty) return null;
+      var help = new SignatureInformation(doc.debugRender());
       return new SignatureHelp(Collections.singletonList(help), 0, 0);
     });
   }

@@ -116,11 +116,11 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
   }
 
-  @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
+  public @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
     return visitTele(telescope, null, (t, v) -> 1);
   }
 
-  @NotNull Doc visitTele(
+  public @NotNull Doc visitTele(
     @NotNull Seq<? extends ParamLike<Term>> telescope,
     @Nullable Term body,
     @NotNull ToIntBiFunction<Term, Var> findUsages
