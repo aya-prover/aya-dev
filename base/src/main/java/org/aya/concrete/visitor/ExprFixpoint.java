@@ -24,7 +24,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   default @NotNull ImmutableSeq<Expr.@NotNull Param> visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, P p) {
     return params.map(param -> {
       var oldType = param.type();
-      if (oldType == null) return param;
       var type = oldType.accept(this, p);
       if (type == oldType) return param;
       return new Expr.Param(param, type);

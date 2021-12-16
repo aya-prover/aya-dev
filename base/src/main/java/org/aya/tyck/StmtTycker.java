@@ -276,7 +276,6 @@ public record StmtTycker(
   private @NotNull ImmutableSeq<TeleResult>
   checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, Sort sort) {
     return tele.map(param -> {
-      assert param.type() != null; // guaranteed by AyaProducer
       var paramTyped = exprTycker.inherit(param.type(), new FormTerm.Univ(sort)).wellTyped();
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
