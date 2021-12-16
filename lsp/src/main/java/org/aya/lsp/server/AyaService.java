@@ -277,7 +277,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return null;
-      var doc = ComputeSignature.invoke(loadedFile, params.getPosition(), true);
+      var doc = ComputeSignature.invokeHover(loadedFile, params.getPosition());
       if (doc.isEmpty()) return null;
       return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
     });
@@ -287,7 +287,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return null;
-      var doc = ComputeSignature.invoke(loadedFile, params.getPosition(), false);
+      var doc = ComputeSignature.invokeSignatureHelp(loadedFile, params.getPosition());
       if (doc.isEmpty()) return null;
       var help = new SignatureInformation(doc.debugRender());
       return new SignatureHelp(Collections.singletonList(help), 0, 0);

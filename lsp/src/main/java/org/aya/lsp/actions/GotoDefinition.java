@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 public interface GotoDefinition {
   static @NotNull List<LocationLink> invoke(@NotNull DefinitionParams params, @NotNull LibrarySource loadedFile) {
-    return Resolver.resolvePosition(loadedFile, params.getPosition()).mapNotNull(pos -> {
+    return Resolver.resolveVar(loadedFile, params.getPosition()).mapNotNull(pos -> {
       var from = pos.sourcePos();
       var target = switch (pos.data()) {
         case DefVar<?, ?> defVar -> defVar.concrete.sourcePos();

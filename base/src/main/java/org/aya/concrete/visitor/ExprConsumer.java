@@ -59,9 +59,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   }
 
   default void visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, P p) {
-    params.forEach(param -> {
-      if (param.type() != null) param.type().accept(this, p);
-    });
+    params.forEach(param -> param.type().accept(this, p));
   }
 
   @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {

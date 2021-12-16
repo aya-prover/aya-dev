@@ -36,8 +36,31 @@ public interface Resolver {
       .flatMap(defs -> defs.find(def -> def.ref().name().equals(name)));
   }
 
+  /** resolve the position to the minimal term that contains the position */
+  static @NotNull SeqView<Expr> resolveExpr(
+    @NotNull LibrarySource source,
+    @NotNull Position position
+  ) {
+    var program = source.program().value;
+    if (program == null) return SeqView.empty();
+    var resolver = new ExprPositionResolver();
+    resolver.visitAll(program, new XY(position));
+    return resolver.stack.view();
+  }
+
+  static @NotNull Option<Expr> resolveAppHead(
+    @NotNull LibrarySource source,
+    @NotNull Position position
+  ) {
+    var expr = Resolver.resolveExpr(source, position);
+    if (expr.isEmpty()) return Option.none();
+    var app = expr.reversed().filterIsInstance(Expr.AppExpr.class).firstOrNull();
+    if (app == null) return Option.none();
+    return Option.some(Expr.unapp(app, null));
+  }
+
   /** resolve the position to its referring target */
-  static @NotNull SeqView<WithPos<@NotNull Var>> resolvePosition(
+  static @NotNull SeqView<WithPos<@NotNull Var>> resolveVar(
     @NotNull LibrarySource source,
     @NotNull Position position
   ) {
@@ -75,6 +98,22 @@ public interface Resolver {
   }
 
   /**
+   * Resolve position to the minimal term that contains the position
+   */
+  class ExprPositionResolver implements StmtConsumer<XY> {
+    private final @NotNull DynamicSeq<Expr> stack = DynamicSeq.create();
+
+    @Override public void traceEntrance(@NotNull Expr expr, @NotNull XY xy) {
+      if (xy.inside(expr.sourcePos())) {
+        if (stack.isEmpty()) stack.append(expr);
+        else if (expr.sourcePos().compareTo(stack.last().sourcePos()) > 0) stack.append(expr);
+      }
+    }
+  }
+
+  /**
+   * Resolve position to its referring target
+   *
    * @author ice1000, kiva
    */
   class DefPositionResolver implements StmtConsumer<XY> {
