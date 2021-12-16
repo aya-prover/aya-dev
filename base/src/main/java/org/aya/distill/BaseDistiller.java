@@ -136,7 +136,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
           var ref = names.first();
           var used = telescope.sliceView(i + 1, telescope.size())
             .map(ParamLike::type).appended(body)
-            .allMatch(p -> findUsages.applyAsInt(p, ref) <= 0);
+            .anyMatch(p -> findUsages.applyAsInt(p, ref) > 0);
           if (used) buf.append(last.explicit()
             ? term(Outer.ProjHead, last.type())
             : Doc.braced(last.type().toDoc(options)));

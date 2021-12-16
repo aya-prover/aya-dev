@@ -31,7 +31,9 @@ public interface ComputeSignature {
     var distiller = new CoreDistiller(options);
     var tele = distiller.visitTele(core.telescope(), core.result(), Term::findUsages);
     if (withResult) {
-      return Doc.stickySep(tele, Doc.symbol(":"), core.result().toDoc(options));
+      var res = core.result().toDoc(options);
+      if (tele.isEmpty()) return res;
+      return Doc.stickySep(tele, Doc.symbol(":"), res);
     } else return tele;
   }
 }

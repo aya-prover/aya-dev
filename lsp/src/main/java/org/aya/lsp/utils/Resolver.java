@@ -33,7 +33,7 @@ public interface Resolver {
     var mod = findModule(owner, module);
     return mod.mapNotNull(m -> m.tycked().value)
       .map(defs -> defs.flatMap(Resolver::withSubLevel))
-      .mapNotNull(defs -> defs.find(def -> def.ref().name().equals(name)).getOrNull());
+      .flatMap(defs -> defs.find(def -> def.ref().name().equals(name)));
   }
 
   /** resolve the position to its referring target */
