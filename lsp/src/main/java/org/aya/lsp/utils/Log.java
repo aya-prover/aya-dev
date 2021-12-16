@@ -6,6 +6,7 @@ import org.aya.lsp.server.AyaLanguageClient;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.intellij.lang.annotations.PrintFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,19 +34,19 @@ public class Log {
     if (CLIENT != null) CLIENT.publishDiagnostics(params);
   }
 
-  public static void i(@NotNull String fmt, Object... args) {
+  public static void i(@NotNull @PrintFormat String fmt, Object... args) {
     log(MessageType.Info, fmt, args);
   }
 
-  public static void e(@NotNull String fmt, Object... args) {
+  public static void e(@NotNull @PrintFormat String fmt, Object... args) {
     log(MessageType.Error, fmt, args);
   }
 
-  public static void w(@NotNull String fmt, Object... args) {
+  public static void w(@NotNull @PrintFormat String fmt, Object... args) {
     log(MessageType.Warning, fmt, args);
   }
 
-  public static void d(@NotNull String fmt, Object... args) {
+  public static void d(@NotNull @PrintFormat String fmt, Object... args) {
     log(MessageType.Log, fmt, args);
   }
 

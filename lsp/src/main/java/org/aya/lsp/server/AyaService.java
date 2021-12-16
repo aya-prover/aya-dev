@@ -167,7 +167,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
-      .peek(p -> Log.d(p.describe(options).debugRender()))
+      .peek(p -> Log.d("%s", p.describe(options).debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints(options).stream().map(t -> new InlineHintProblem(p, t))))
       .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
