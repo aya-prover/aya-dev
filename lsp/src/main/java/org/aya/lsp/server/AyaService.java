@@ -195,7 +195,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var msgBuilder = new StringBuilder();
     var severity = DiagnosticSeverity.Hint;
     for (var p : problems) {
-      msgBuilder.append(p.brief(options).commonRender()).append('\n');
+      msgBuilder.append(p.brief(options).debugRender()).append('\n');
       var ps = severityOf(p);
       if (ps.getValue() < severity.getValue()) severity = ps;
     }
@@ -280,17 +280,6 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var doc = ComputeSignature.invokeHover(loadedFile, params.getPosition());
       if (doc.isEmpty()) return null;
       return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
-    });
-  }
-
-  @Override public CompletableFuture<SignatureHelp> signatureHelp(SignatureHelpParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = find(params.getTextDocument().getUri());
-      if (loadedFile == null) return null;
-      var doc = ComputeSignature.invokeSignatureHelp(loadedFile, params.getPosition());
-      if (doc.isEmpty()) return null;
-      var help = new SignatureInformation(doc.debugRender());
-      return new SignatureHelp(Collections.singletonList(help), 0, 0);
     });
   }
 

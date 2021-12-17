@@ -55,7 +55,6 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
       workCap.setWorkspaceFolders(workOps);
       cap.setWorkspace(workCap);
       cap.setHoverProvider(true);
-      cap.setSignatureHelpProvider(new SignatureHelpOptions(Collections.singletonList(" ")));
 
       var folders = params.getWorkspaceFolders();
       // In case we open a single file, this value will be null, so be careful.

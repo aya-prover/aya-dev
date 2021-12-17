@@ -7,12 +7,10 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.Expr;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.Resolver;
 import org.aya.pretty.doc.Doc;
 import org.eclipse.lsp4j.Position;
@@ -26,18 +24,6 @@ public interface ComputeSignature {
     var target = Resolver.resolveVar(loadedFile, position).firstOrNull();
     if (target == null) return Doc.empty();
     return computeSignature(target.data(), true);
-  }
-
-  static @NotNull Doc invokeSignatureHelp(
-    @NotNull LibrarySource loadedFile,
-    @NotNull Position position
-  ) {
-    var head = Resolver.resolveAppHead(loadedFile, position);
-    Log.d("Resolved app head: %s", head.map(e -> e.toDoc(DistillerOptions.pretty()).debugRender()));
-    if (head.isEmpty()) return Doc.empty();
-    if (head.get() instanceof Expr.RefExpr ref)
-      return computeSignature(ref.resolvedVar(), false);
-    return Doc.empty();
   }
 
   static @NotNull Doc computeSignature(@NotNull Var target, boolean withResult) {
