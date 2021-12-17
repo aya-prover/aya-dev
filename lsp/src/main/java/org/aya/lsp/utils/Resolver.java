@@ -14,6 +14,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.DataDef;
@@ -31,7 +32,7 @@ public interface Resolver {
     @NotNull ImmutableSeq<String> module,
     @NotNull String name
   ) {
-    var mod = findModule(owner, module);
+    var mod = resolveModule(owner, module);
     return mod.mapNotNull(m -> m.tycked().value)
       .map(defs -> defs.flatMap(Resolver::withSubLevel))
       .flatMap(defs -> defs.find(def -> def.ref().name().equals(name)));
@@ -44,9 +45,9 @@ public interface Resolver {
   ) {
     var program = source.program().value;
     if (program == null) return SeqView.empty();
-    var resolver = new DefPositionResolver();
+    var resolver = new PositionResolver();
     resolver.visitAll(program, new XY(position));
-    return resolver.locations.view().mapNotNull(pos -> switch (pos.data()) {
+    return resolver.targetVars.view().mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete != null) yield new WithPos<>(pos.sourcePos(), defVar);
         else {
@@ -57,6 +58,7 @@ public interface Resolver {
         }
       }
       case LocalVar localVar -> new WithPos<>(pos.sourcePos(), localVar);
+      case ModuleVar moduleVar -> new WithPos<>(pos.sourcePos(), moduleVar);
       case null, default -> null;
     });
   }
@@ -69,10 +71,20 @@ public interface Resolver {
     };
   }
 
-  private static @NotNull Option<LibrarySource> findModule(@NotNull LibraryOwner owner, @NotNull ImmutableSeq<String> module) {
+  /** resolve a top-level module by its qualified name */
+  static @NotNull Option<LibrarySource> resolveModule(@NotNull LibraryOwner owner, @NotNull ImmutableSeq<String> module) {
     if (module.isEmpty()) return Option.none();
     var mod = owner.findModule(module);
-    return mod != null ? Option.of(mod) : findModule(owner, module.dropLast(1));
+    return mod != null ? Option.of(mod) : resolveModule(owner, module.dropLast(1));
+  }
+
+  /** resolve a top-level module by its qualified name */
+  static @NotNull Option<LibrarySource> resolveModule(@NotNull SeqView<LibraryOwner> owners, @NotNull ImmutableSeq<String> module) {
+    for (var owner : owners) {
+      var found = resolveModule(owner, module);
+      if (found.isDefined()) return found;
+    }
+    return Option.none();
   }
 
   /**
@@ -80,8 +92,20 @@ public interface Resolver {
    *
    * @author ice1000, kiva
    */
-  class DefPositionResolver implements StmtConsumer<XY> {
-    public final @NotNull DynamicSeq<WithPos<Var>> locations = DynamicSeq.create();
+  class PositionResolver implements StmtConsumer<XY> {
+    public final @NotNull DynamicSeq<WithPos<Var>> targetVars = DynamicSeq.create();
+
+    @Override public Unit visitImport(@NotNull Command.Import cmd, XY xy) {
+      var path = cmd.path();
+      check(xy, path.sourcePos(), new ModuleVar(path));
+      return StmtConsumer.super.visitImport(cmd, xy);
+    }
+
+    @Override public Unit visitOpen(@NotNull Command.Open cmd, XY xy) {
+      var path = cmd.path();
+      check(xy, path.sourcePos(), new ModuleVar(path));
+      return StmtConsumer.super.visitOpen(cmd, xy);
+    }
 
     @Override public void visitDecl(@NotNull Decl decl, XY xy) {
       check(xy, decl.sourcePos(), decl.ref());
@@ -114,7 +138,7 @@ public interface Resolver {
     }
 
     private void check(@NotNull XY xy, @NotNull SourcePos sourcePos, Var var) {
-      if (xy.inside(sourcePos)) locations.append(new WithPos<>(sourcePos, var));
+      if (xy.inside(sourcePos)) targetVars.append(new WithPos<>(sourcePos, var));
     }
   }
 }

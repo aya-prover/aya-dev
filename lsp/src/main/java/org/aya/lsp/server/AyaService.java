@@ -266,7 +266,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return Either.forLeft(Collections.emptyList());
-      return Either.forRight(GotoDefinition.invoke(loadedFile, params.getPosition()));
+      return Either.forRight(GotoDefinition.invoke(loadedFile, params.getPosition(), libraries.view()));
     });
   }
 
