@@ -14,6 +14,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -81,6 +82,11 @@ public interface Resolver {
    */
   class DefPositionResolver implements StmtConsumer<XY> {
     public final @NotNull DynamicSeq<WithPos<Var>> locations = DynamicSeq.create();
+
+    @Override public void visitDecl(@NotNull Decl decl, XY xy) {
+      check(xy, decl.sourcePos(), decl.ref());
+      StmtConsumer.super.visitDecl(decl, xy);
+    }
 
     @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
       check(xy, expr.sourcePos(), expr.resolvedVar());
