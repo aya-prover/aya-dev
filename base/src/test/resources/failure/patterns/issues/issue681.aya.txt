@@ -8,7 +8,7 @@ In file $FILE:29:4 ->
 Error: There is no parameter for the pattern
          zero
        to match against, given the return type
-         Pi (z y x : Nat) -> (=) {Nat} (x + (y + z)) ((x + y) + z)
+         Pi (x y z : Nat) -> (=) {Nat} (x + (y + z)) ((x + y) + z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
 
@@ -22,7 +22,7 @@ In file $FILE:30:4 ->
 Error: There is no parameter for the pattern
          suc x
        to match against, given the return type
-         Pi (z y x : Nat) -> (=) {Nat} (x + (y + z)) ((x + y) + z)
+         Pi (x y z : Nat) -> (=) {Nat} (x + (y + z)) ((x + y) + z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
 

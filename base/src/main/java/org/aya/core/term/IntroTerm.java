@@ -27,10 +27,11 @@ public sealed interface IntroTerm extends Term {
     }
 
     public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
-      if (term instanceof Lambda lambda) {
+      while (term instanceof Lambda lambda) {
         params.accept(lambda.param);
-        return unwrap(lambda.body, params);
-      } else return term;
+        term = lambda.body;
+      }
+      return term;
     }
 
     public static @NotNull Term make(@NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {

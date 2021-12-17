@@ -17,9 +17,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
-import org.aya.lsp.actions.ComputeTerm;
-import org.aya.lsp.actions.GotoDefinition;
-import org.aya.lsp.actions.SyntaxHighlight;
+import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
@@ -166,7 +164,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
-      .peek(p -> Log.d(p.describe(options).debugRender()))
+      .peek(p -> Log.d("%s", p.describe(options).debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints(options).stream().map(t -> new InlineHintProblem(p, t))))
       .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
@@ -194,7 +192,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var msgBuilder = new StringBuilder();
     var severity = DiagnosticSeverity.Hint;
     for (var p : problems) {
-      msgBuilder.append(p.brief(options).commonRender()).append('\n');
+      msgBuilder.append(p.brief(options).debugRender()).append('\n');
       var ps = severityOf(p);
       if (ps.getValue() < severity.getValue()) severity = ps;
     }
@@ -268,7 +266,26 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return Either.forLeft(Collections.emptyList());
-      return Either.forRight(GotoDefinition.invoke(params, loadedFile));
+      return Either.forRight(GotoDefinition.invoke(loadedFile, params.getPosition()));
+    });
+  }
+
+  @Override public CompletableFuture<Hover> hover(HoverParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var loadedFile = find(params.getTextDocument().getUri());
+      if (loadedFile == null) return null;
+      var doc = ComputeSignature.invokeHover(loadedFile, params.getPosition());
+      if (doc.isEmpty()) return null;
+      return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
+    });
+  }
+
+  @Override
+  public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var loadedFile = find(params.getTextDocument().getUri());
+      if (loadedFile == null) return Collections.emptyList();
+      return FindReferences.invoke(loadedFile, params.getPosition(), libraries.view());
     });
   }
 

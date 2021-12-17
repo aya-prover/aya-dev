@@ -15,7 +15,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> 
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope.forEach(p -> {
       var type = p.type();
-      if (type != null) type.accept(this, pp);
+      type.accept(this, pp);
     });
   }
 

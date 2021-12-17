@@ -3,13 +3,10 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
-import org.aya.api.ref.DefVar;
 import org.aya.concrete.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.util.binop.BinOpSet;
-import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

@@ -30,10 +30,8 @@ public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
     var type = type();
     var docs = DynamicSeq.of(names);
     if (pattern()) docs.insert(0, Doc.styled(BaseDistiller.KEYWORD, "pattern"));
-    if (type != null) {
-      docs.append(Doc.symbol(":"));
-      docs.append(type.toDoc(options));
-    }
+    docs.append(Doc.symbol(":"));
+    docs.append(type.toDoc(options));
     return Doc.licit(explicit(), Doc.sep(docs));
   }
 }

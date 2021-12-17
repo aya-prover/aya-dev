@@ -157,12 +157,12 @@ public sealed interface Expr extends ConcreteExpr {
     }
   }
 
-  static @NotNull Expr unapp(@NotNull Expr expr, @NotNull DynamicSeq<NamedArg> args) {
+  static @NotNull Expr unapp(@NotNull Expr expr, @Nullable DynamicSeq<NamedArg> args) {
     while (expr instanceof AppExpr app) {
-      args.append(app.argument);
+      if (args != null) args.append(app.argument);
       expr = app.function;
     }
-    args.reverse();
+    if (args != null) args.reverse();
     return expr;
   }
 
@@ -387,11 +387,11 @@ public sealed interface Expr extends ConcreteExpr {
     }
 
     public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
-      this(sourcePos, var, null, false, explicit);
+      this(sourcePos, var, new HoleExpr(sourcePos, false, null), false, explicit);
     }
 
-    public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @Nullable Expr> mapper) {
-      return new Param(sourcePos, ref, type != null ? mapper.apply(type) : null, pattern, explicit);
+    public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @NotNull Expr> mapper) {
+      return new Param(sourcePos, ref, mapper.apply(type), pattern, explicit);
     }
   }
 }

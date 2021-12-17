@@ -105,8 +105,7 @@ public record ExprResolver(
   }
 
   public @NotNull Tuple2<Expr.Param, Context> visitParam(@NotNull Expr.Param param, Context ctx) {
-    var type = param.type();
-    type = type == null ? null : type.accept(this, ctx);
+    var type = param.type().accept(this, ctx);
     return Tuple2.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
   }
 
@@ -115,8 +114,7 @@ public record ExprResolver(
   resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
     if (params.isEmpty()) return Tuple2.of(SeqView.empty(), ctx);
     var first = params.first();
-    var type = first.type();
-    type = type == null ? null : type.accept(this, ctx);
+    var type = first.type().accept(this, ctx);
     var newCtx = ctx.bind(first.ref(), first.sourcePos());
     var result = resolveParams(params.view().drop(1), newCtx);
     return Tuple2.of(result._1.prepended(new Expr.Param(first, type)), result._2);

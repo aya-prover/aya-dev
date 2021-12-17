@@ -330,14 +330,12 @@ public final class ExprTycker {
         var var = param.ref();
         var lamParam = param.type();
         var type = dt.param().type();
-        if (lamParam != null) {
-          var result = inherit(lamParam, FormTerm.freshUniv(lamParam.sourcePos()));
-          var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
-          if (comparison != null) {
-            // TODO: maybe also report this unification failure?
-            yield fail(lam, dt, BadTypeError.lamParam(lam, type, result.wellTyped));
-          } else type = result.wellTyped;
-        }
+        var result = inherit(lamParam, FormTerm.freshUniv(lamParam.sourcePos()));
+        var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
+        if (comparison != null) {
+          // TODO: maybe also report this unification failure?
+          yield fail(lam, dt, BadTypeError.lamParam(lam, type, result.wellTyped));
+        } else type = result.wellTyped;
         var resultParam = new Term.Param(var, type, param.explicit());
         var body = dt.substBody(resultParam.toTerm());
         yield localCtx.with(resultParam, () -> {
@@ -349,7 +347,6 @@ public final class ExprTycker {
         var param = pi.param();
         final var var = param.ref();
         var type = param.type();
-        if (type == null) type = new Expr.HoleExpr(param.sourcePos(), false, null);
         var result = inherit(type, term);
         var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
         yield localCtx.with(resultParam, () -> {
@@ -361,8 +358,6 @@ public final class ExprTycker {
         var resultTele = DynamicSeq.<Tuple3<LocalVar, Boolean, Term>>create();
         sigma.params().forEach(tuple -> {
           final var type = tuple.type();
-          // https://github.com/aya-prover/aya-dev/pull/210#pullrequestreview-811835389
-          assert type != null : "AyaProducer used to generate hole on omitted type!!";
           var result = inherit(type, term);
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped);

@@ -35,7 +35,10 @@ public sealed interface Doc extends Docile {
   @NotNull Doc ALT_WS = flatAlt(ONE_WS, line());
   @NotNull Doc COMMA = cat(plain(","), ALT_WS);
   default boolean isNotEmpty() {
-    return !(this instanceof Empty);
+    return !isEmpty();
+  }
+  default boolean isEmpty() {
+    return this instanceof Empty;
   }
   @Override default @NotNull Doc toDoc() {
     return this;
@@ -387,7 +390,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("_, _, _ -> new")
   static @NotNull Doc cblock(@NotNull Doc prefix, int indent, @NotNull Doc block) {
-    if (!block.isNotEmpty()) return prefix;
+    if (block.isEmpty()) return prefix;
     return Doc.vcat(Doc.sep(prefix, Doc.symbol("{")), Doc.nest(indent, Doc.vcat(block)), Doc.symbol("}"));
   }
 
