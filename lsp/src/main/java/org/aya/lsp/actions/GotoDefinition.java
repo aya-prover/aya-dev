@@ -8,8 +8,8 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
-import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.LocationLink;
+import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
  * @author ice1000, kiva
  */
 public interface GotoDefinition {
-  static @NotNull List<LocationLink> invoke(@NotNull DefinitionParams params, @NotNull LibrarySource loadedFile) {
-    return Resolver.resolveVar(loadedFile, params.getPosition()).mapNotNull(pos -> {
+  static @NotNull List<LocationLink> invoke(@NotNull LibrarySource loadedFile, @NotNull Position position) {
+    return Resolver.resolveVar(loadedFile, position).mapNotNull(pos -> {
       var from = pos.sourcePos();
       var target = switch (pos.data()) {
         case DefVar<?, ?> defVar -> defVar.concrete.sourcePos();

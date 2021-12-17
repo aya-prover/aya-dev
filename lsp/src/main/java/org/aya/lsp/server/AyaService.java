@@ -17,10 +17,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
-import org.aya.lsp.actions.ComputeSignature;
-import org.aya.lsp.actions.ComputeTerm;
-import org.aya.lsp.actions.GotoDefinition;
-import org.aya.lsp.actions.SyntaxHighlight;
+import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
@@ -269,7 +266,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return Either.forLeft(Collections.emptyList());
-      return Either.forRight(GotoDefinition.invoke(params, loadedFile));
+      return Either.forRight(GotoDefinition.invoke(loadedFile, params.getPosition()));
     });
   }
 
@@ -280,6 +277,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var doc = ComputeSignature.invokeHover(loadedFile, params.getPosition());
       if (doc.isEmpty()) return null;
       return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
+    });
+  }
+
+  @Override
+  public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var loadedFile = find(params.getTextDocument().getUri());
+      if (loadedFile == null) return Collections.emptyList();
+      return FindReferences.invoke(loadedFile, params.getPosition(), libraries.view());
     });
   }
 
