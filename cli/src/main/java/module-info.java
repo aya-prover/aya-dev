@@ -3,7 +3,6 @@ module org.aya.cli {
 
   requires com.google.gson;
   requires info.picocli;
-  requires java.logging;
   requires org.antlr.antlr4.runtime;
   requires org.fusesource.jansi;
   requires org.jline.builtins;

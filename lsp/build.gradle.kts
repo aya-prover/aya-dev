@@ -57,12 +57,8 @@ jlinkTask.configure {
     file("aya.bat").copyTo(imageDir.resolve("bin/aya.bat"), overwrite = true)
     file("aya-lsp.bat").copyTo(imageDir.resolve("bin/aya-lsp.bat"), overwrite = true)
 
-    val aya = imageDir.resolve("bin/aya")
-    val ayalsp = imageDir.resolve("bin/aya-lsp")
-    file("aya.sh").copyTo(aya, overwrite = true)
-    file("aya-lsp.sh").copyTo(ayalsp, overwrite = true)
-    aya.setExecutable(true)
-    ayalsp.setExecutable(true)
+    file("aya.sh").copyTo(imageDir.resolve("bin/aya"), overwrite = true).setExecutable(true)
+    file("aya-lsp.sh").copyTo(imageDir.resolve("bin/aya-lsp"), overwrite = true).setExecutable(true)
   }
 }
 
@@ -73,7 +69,7 @@ tasks.withType<AbstractCopyTask>().configureEach {
 if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
   dependsOn(jlinkTask)
   from(imageDir)
-  into(file(rootProject.property("installDir").toString()))
+  into(file(rootProject.property("installDir")!!))
 }
 
 tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }
