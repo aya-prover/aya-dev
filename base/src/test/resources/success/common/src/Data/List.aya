@@ -4,59 +4,59 @@ open import Data::Fin
 
 public open data List (A : Type) : Type
 | nil
-| infixr cons A (List A)
+| infixr :< A (List A)
 bind tighter =
 
 variable A B C : Type
 
 def length (l : List A) : Nat
 | nil => zero
-| _ cons l => suc (length l)
+| _ :< l => suc (length l)
 
 def infix !! (l : List A) (i : Fin (length l)) : A
-| a cons _, fzero => a
-| _ cons l, fsuc i => l !! i
+| a :< _, fzero => a
+| _ :< l, fsuc i => l !! i
 
 def overlap infixr ++ (xs ys : List A) : List A
 | nil, ys => ys
 | xs, nil => xs
-| a cons xs, ys => a cons (xs ++ ys)
+| a :< xs, ys => a :< (xs ++ ys)
 bind tighter =
 
 def ++-assoc {xs ys zs : List A} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
 | {A}, {nil} => idp
-| {A}, {x cons xs} => pmap (x cons) ++-assoc
+| {A}, {x :< xs} => pmap (x :<) ++-assoc
 
 def ++nil {l : List A} : l ++ nil = l
 | {A}, {nil} => idp
-| {A}, {a cons l} => pmap (a cons) ++nil
+| {A}, {a :< l} => pmap (a :<) ++nil
 
 def map (f : A -> B) (l : List A) : List B
 | f, nil => nil
-| f, a cons l => f a cons map f l
+| f, a :< l => f a :< map f l
 
 def length_map (f : A -> B) (l : List A) : length (map f l) = length l
 | f, nil => idp
-| f, a cons l => pmap suc (length_map f l)
+| f, a :< l => pmap suc (length_map f l)
 
 def map_comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l)
 | _, _, nil => idp
-| g, f, a cons l => pmap (g _ cons) (map_comp g f l)
+| g, f, a :< l => pmap (g _ :<) (map_comp g f l)
 
 def map_id (l : List A) : map (\x => x) l = l
 | nil => idp
-| a cons l => pmap (a cons) (map_id l)
+| a :< l => pmap (a :<) (map_id l)
 
 def headDef (x : A) (xs : List A) : A
 | x, nil => x
-| _, a cons _ => a
+| _, a :< _ => a
 
 def curry (t : Sig A ** B) (f : A -> B -> C) => f t.1 t.2
 
 def splitAt (n : Nat) (l : List A) : Sig (List A) ** (List A)
 | zero, l => (nil, l)
 | suc n, nil => (nil, nil)
-| suc n, a cons l => curry (splitAt n l) (\l1 l2 => (a cons l1, l2))
+| suc n, a :< l => curry (splitAt n l) (\l1 l2 => (a :< l1, l2))
 
 def take (n : Nat) (l : List A) => (splitAt n l).1
 
@@ -68,7 +68,7 @@ def replace (l : List A) (i s : Nat) (r : List A) =>
 def splitAt-appendLem (n : Nat) (l : List A) : take n l ++ drop n l = l
 | zero, l => idp
 | suc n, nil => idp
-| suc n, a cons l => pmap (a cons) (splitAt-appendLem n l)
+| suc n, a :< l => pmap (a :<) (splitAt-appendLem n l)
 
 def slice (l : List A) (i s : Nat) => take s (drop i l)
 
@@ -77,4 +77,4 @@ def slice-appendLem (l : List A) (i s : Nat)
 | l, zero, s => splitAt-appendLem s l
 | nil, suc i, zero => idp
 | nil, suc i, suc s => idp
-| a cons l, suc i, s => pmap (a cons) (slice-appendLem l i s)
+| a :< l, suc i, s => pmap (a :<) (slice-appendLem l i s)
