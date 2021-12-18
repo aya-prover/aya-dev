@@ -10,11 +10,11 @@ def even Nat : Bool
   | suc n => odd n
 
 open data Rose (A : Type) : Type
-  | Node A (Forest A)
+  | node A (Forest A)
 
 open data Forest (A : Type) : Type
-  | Empty
-  | Cons (Rose A) (Forest A)
+  | empty
+  | cons (Rose A) (Forest A)
 
 def ack Nat Nat : Nat
   | zero, n      => suc n

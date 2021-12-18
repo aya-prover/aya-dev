@@ -102,8 +102,8 @@ public class ReplCompiler {
   public @NotNull Either<ImmutableSeq<Def>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
-    var programOrExpr = AyaParserImpl.repl(reporter, text);
     try {
+      var programOrExpr = AyaParserImpl.repl(reporter, text);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
         new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), null)).toImmutableSeq()));
       return programOrExpr.map(
