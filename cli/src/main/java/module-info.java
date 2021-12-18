@@ -1,9 +1,9 @@
 module org.aya.cli {
   requires static org.jetbrains.annotations;
 
-  requires org.antlr.antlr4.runtime;
-  requires info.picocli;
   requires com.google.gson;
+  requires info.picocli;
+  requires org.antlr.antlr4.runtime;
   requires org.fusesource.jansi;
   requires org.jline.builtins;
   requires org.jline.reader;
