@@ -7,7 +7,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.OperatorProblem;
-import org.aya.concrete.resolve.context.Context;
+import org.aya.resolve.context.Context;
 import org.aya.tyck.pat.PatternProblem;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;

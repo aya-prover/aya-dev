@@ -10,17 +10,19 @@ import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.resolve.ResolveInfo;
-import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.resolve.context.PhysicalModuleContext;
-import org.aya.concrete.resolve.error.ModNotFoundError;
-import org.aya.concrete.resolve.error.UnknownOperatorError;
-import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
+import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.error.ModNotFoundError;
+import org.aya.resolve.error.UnknownOperatorError;
+import org.aya.resolve.module.ModuleLoader;
+import org.aya.resolve.visitor.StmtResolver;
+import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +125,7 @@ public record CompiledAya(
     return resolveInfo;
   }
 
-  /** like {@link org.aya.concrete.resolve.visitor.StmtShallowResolver} but only resolve import */
+  /** like {@link StmtShallowResolver} but only resolve import */
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var modName : imports) {
       var success = loader.load(modName);
@@ -141,7 +143,7 @@ public record CompiledAya(
     }
   }
 
-  /** like {@link org.aya.concrete.resolve.visitor.StmtResolver} but only resolve operator */
+  /** like {@link StmtResolver} but only resolve operator */
   private void deOp(@NotNull SerTerm.DeState state, @NotNull AyaBinOpSet opSet) {
     serOps.forEach(serOp -> {
       var defVar = state.resolve(serOp.name());

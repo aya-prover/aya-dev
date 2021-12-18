@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import kala.control.Option;
 import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,8 +72,8 @@ public record CallGraph<T, P>(
   public @Nullable ImmutableSeq<Behavior.Diag<T, P>> findNonTerminating() {
     var complete = complete(this);
     for (var key : complete.graph.keysView()) {
-      var matrix = Option.of(complete.graph.getOrNull(key))
-        .mapNotNull(g -> g.getOrNull(key));
+      var matrix = complete.graph.getOption(key)
+        .flatMap(g -> g.getOption(key));
       if (matrix.isEmpty()) continue;
       var behavior = Behavior.create(key, matrix.get());
       // Each diagonal in the behavior is a possible recursive call to `key` and how the orders of all parameters are

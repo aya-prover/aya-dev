@@ -1,7 +1,5 @@
 lexer grammar AyaLexer;
 
-REPL_COMMAND : ':' [a-zA-Z0-9-]+;
-
 // Do not change the line like `---- AyaLexer xxx: XXX`
 // They are used to generate `GeneratedLexerTokens` class.
 
@@ -101,7 +99,8 @@ fragment AYA_SIMPLE_LETTER : [~!@#$%^&*+=<>?/|[\u005Da-zA-Z_\u2200-\u22FF];
 fragment AYA_UNICODE : [\u0080-\uFEFE] | [\uFF00-\u{10FFFF}]; // exclude U+FEFF which is a truly invisible char
 fragment AYA_LETTER : AYA_SIMPLE_LETTER | AYA_UNICODE;
 fragment AYA_LETTER_FOLLOW : AYA_LETTER | [0-9'-];
-ID : AYA_LETTER AYA_LETTER_FOLLOW* | '-' AYA_LETTER AYA_LETTER_FOLLOW*;
+fragment REPL_COMMAND : ':' AYA_LETTER_FOLLOW+;
+ID : AYA_LETTER AYA_LETTER_FOLLOW* | '-' AYA_LETTER AYA_LETTER_FOLLOW* | REPL_COMMAND;
 
 // whitespaces
 WS : [ \t\r\n]+ -> channel(HIDDEN);

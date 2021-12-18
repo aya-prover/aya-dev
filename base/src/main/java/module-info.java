@@ -12,10 +12,6 @@ module org.aya {
   exports org.aya.concrete.desugar;
   exports org.aya.concrete.error;
   exports org.aya.concrete.remark;
-  exports org.aya.concrete.resolve.context;
-  exports org.aya.concrete.resolve.error;
-  exports org.aya.concrete.resolve.module;
-  exports org.aya.concrete.resolve;
   exports org.aya.concrete.stmt;
   exports org.aya.concrete.visitor;
   exports org.aya.concrete;
@@ -31,6 +27,10 @@ module org.aya {
   exports org.aya.generic.ref;
   exports org.aya.generic;
   exports org.aya.prelude;
+  exports org.aya.resolve.context;
+  exports org.aya.resolve.error;
+  exports org.aya.resolve.module;
+  exports org.aya.resolve;
   exports org.aya.tyck.env;
   exports org.aya.tyck.order;
   exports org.aya.tyck.pat;

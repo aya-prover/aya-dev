@@ -5,7 +5,7 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.Ref;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.resolve.context.Context;
+import org.aya.resolve.context.Context;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

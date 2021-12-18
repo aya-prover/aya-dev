@@ -19,14 +19,14 @@ import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.Expr;
-import org.aya.concrete.resolve.context.EmptyContext;
-import org.aya.concrete.resolve.context.PhysicalModuleContext;
-import org.aya.concrete.resolve.module.CachedModuleLoader;
-import org.aya.concrete.resolve.module.FileModuleLoader;
-import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
+import org.aya.resolve.context.EmptyContext;
+import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.module.CachedModuleLoader;
+import org.aya.resolve.module.FileModuleLoader;
+import org.aya.resolve.module.ModuleListLoader;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -102,8 +102,8 @@ public class ReplCompiler {
   public @NotNull Either<ImmutableSeq<Def>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
-    var programOrExpr = AyaParserImpl.repl(reporter, text);
     try {
+      var programOrExpr = AyaParserImpl.repl(reporter, text);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
         new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), null)).toImmutableSeq()));
       return programOrExpr.map(

@@ -15,7 +15,7 @@ module RedBlackEx {
 
   def rbTreeToList (RBTree A) (List A) : List A
   | rbLeaf, r => r
-  | rbNode x t1 a t2, r => rbTreeToList t1 (a cons rbTreeToList t2 r)
+  | rbNode x t1 a t2, r => rbTreeToList t1 (a :< rbTreeToList t2 r)
 
   def repaint (RBTree A) : RBTree A
   | rbNode c l a r => rbNode black l a r
@@ -41,7 +41,7 @@ module RedBlackEx {
 
   def aux (List A) (RBTree A) (Decider A) : RBTree A
   | nil, r, dec< => r
-  | a cons l, r, dec< => aux l (repaint (insert a r dec<)) dec<
+  | a :< l, r, dec< => aux l (repaint (insert a r dec<)) dec<
 
   def tree-sort (dec< : Decider A) (l : List A) => rbTreeToList (aux l rbLeaf dec<) nil
 }

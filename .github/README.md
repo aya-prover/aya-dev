@@ -31,7 +31,12 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
   We already have a prototype, but we plan to revise it before sharing demos.
 + Binary operators, with precedence specified by a partial ordering
   (instead of a number, such as in Haskell or Agda)
-  which is useful for [equation reasoning][assoc]
+  which is useful for [equation reasoning][assoc].
++ Termination checker inspired from foetus.
+  We adapted some code from Agda's implementation to accept
+  [more definitions][foetus] (which are rejected by, e.g. Arend).
++ Inference of type checking order. That is to say,
+  no syntax for forward-declarations is needed for [mutual recursions][mutual].
 
 See also [use as a library](#use-as-a-library).
 
@@ -48,7 +53,7 @@ check out [how to][proxy] let gradle use a proxy.
 ```bash
 # build Aya and its language server as applications to lsp/build/image
 # the image is usable in Java-free environments 
-./gradlew jlink
+./gradlew jlink --rerun-tasks
 # build Aya and its language server as executable
 # jars to <project>/build/libs/<project>-<version>-fat.jar
 ./gradlew fatJar
@@ -89,6 +94,8 @@ check out [how to][proxy] let gradle use a proxy.
 [funExt]: ../base/src/test/resources/success/common/src/Paths.aya
 [rbtree]: ../base/src/test/resources/success/common/src/Data/RedBlack.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
+[foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
+[mutual]: ../base/src/test/resources/success/src/Order.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 
 ## Use as a library

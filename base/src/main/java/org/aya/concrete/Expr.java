@@ -15,8 +15,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.resolve.context.ModuleContext;
-import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
@@ -24,6 +22,9 @@ import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
+import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.visitor.ExprResolver;
+import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.error.SourceNode;
@@ -50,7 +51,7 @@ public sealed interface Expr extends ConcreteExpr {
 
   /**
    * @see org.aya.concrete.stmt.Stmt#resolve
-   * @see org.aya.concrete.resolve.visitor.StmtShallowResolver
+   * @see StmtShallowResolver
    */
   @Contract(pure = true)
   default Expr resolve(@NotNull ModuleContext context) {
