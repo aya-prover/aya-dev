@@ -8,12 +8,12 @@ import org.aya.api.error.CountingReporter;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.concrete.resolve.ResolveInfo;
-import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;
+import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.module.FileModuleLoader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

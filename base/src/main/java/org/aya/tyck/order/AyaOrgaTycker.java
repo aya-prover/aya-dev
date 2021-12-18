@@ -3,7 +3,7 @@
 package org.aya.tyck.order;
 
 import kala.collection.mutable.MutableSet;
-import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.resolve.ResolveInfo;
 import org.aya.util.MutableGraph;
 import org.aya.util.tyck.OrgaTycker;
 import org.jetbrains.annotations.NotNull;
