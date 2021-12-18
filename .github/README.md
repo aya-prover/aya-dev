@@ -31,7 +31,7 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
   We already have a prototype, but we plan to revise it before sharing demos.
 + Binary operators, with precedence specified by a partial ordering
   (instead of a number, such as in Haskell or Agda)
-  which is useful for [equation reasoning][assoc]
+  which is useful for [equation reasoning][assoc].
 
 See also [use as a library](#use-as-a-library).
 
@@ -48,7 +48,7 @@ check out [how to][proxy] let gradle use a proxy.
 ```bash
 # build Aya and its language server as applications to lsp/build/image
 # the image is usable in Java-free environments 
-./gradlew jlink
+./gradlew jlink --rerun-tasks
 # build Aya and its language server as executable
 # jars to <project>/build/libs/<project>-<version>-fat.jar
 ./gradlew fatJar

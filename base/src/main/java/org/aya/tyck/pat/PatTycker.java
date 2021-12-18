@@ -341,10 +341,9 @@ public final class PatTycker {
       return null;
     }
     var body = Def.dataBody(dataRef);
-    var telescope = Def.defTele(dataRef);
     for (var ctor : body) {
       if (name != null && ctor.ref() != name) continue;
-      var matchy = mischa(dataCall, ctor, telescope);
+      var matchy = mischa(dataCall, ctor, exprTycker.localCtx, exprTycker.state);
       if (matchy.isOk()) return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
       // For absurd pattern, we look at the next constructor
       if (name == null) {
@@ -369,14 +368,10 @@ public final class PatTycker {
     return null;
   }
 
-  private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, CtorDef ctor, @NotNull ImmutableSeq<Term.Param> telescope) {
-    if (ctor.pats.isNotEmpty()) return dataArgs(dataCall, ctor, exprTycker.localCtx, exprTycker.state);
-    else return Result.ok(Unfolder.buildSubst(telescope, dataCall.args()));
-  }
-
   public static Result<Substituter.TermSubst, Boolean>
-  dataArgs(@NotNull CallTerm.Data dataCall, @NotNull CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
-    return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
+  mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
+    else return Result.ok(Unfolder.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }
 }

@@ -240,24 +240,22 @@ public record PatClassifier(
         for (var ctor : body) {
           var conTele = ctor.selfTele.view();
           // Check if this constructor is available by doing the obvious thing
-          if (ctor.pats.isNotEmpty()) {
-            var matchy = PatTycker.dataArgs(dataCall, ctor, null, state);
-            // If not, check the reason why: it may fail negatively or positively
-            if (matchy.isErr()) {
-              // Index unification fails negatively
-              if (matchy.getErr()) {
-                // If subPatsSeq is empty, we continue splitting to see
-                // if we can ensure that the other cases are impossible, it would be fine.
-                if (subPatsSeq.isNotEmpty() &&
-                  // If subPatsSeq has catch-all pattern(s), it would also be fine.
-                  subPatsSeq.noneMatch(seq -> seq.head() instanceof Pat.Bind)) {
-                  reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
-                  continue;
-                }
-              } else continue;
-              // ^ If fails positively, this would be an impossible case
-            } else conTele = conTele.map(param -> param.subst(matchy.get()));
-          }
+          var matchy = PatTycker.mischa(dataCall, ctor, null, state);
+          // If not, check the reason why: it may fail negatively or positively
+          if (matchy.isErr()) {
+            // Index unification fails negatively
+            if (matchy.getErr()) {
+              // If subPatsSeq is empty, we continue splitting to see
+              // if we can ensure that the other cases are impossible, it would be fine.
+              if (subPatsSeq.isNotEmpty() &&
+                // If subPatsSeq has catch-all pattern(s), it would also be fine.
+                subPatsSeq.noneMatch(seq -> seq.head() instanceof Pat.Bind)) {
+                reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
+                continue;
+              }
+            } else continue;
+            // ^ If fails positively, this would be an impossible case
+          } else conTele = conTele.map(param -> param.subst(matchy.get()));
           // Java wants a final local variable, let's alias it
           var conTele2 = conTele.toImmutableSeq();
           // Find all patterns that are either catchall or splitting on this constructor,
