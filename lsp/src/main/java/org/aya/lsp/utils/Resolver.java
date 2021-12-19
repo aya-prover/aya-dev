@@ -112,6 +112,16 @@ public interface Resolver {
       StmtConsumer.super.visitDecl(decl, xy);
     }
 
+    @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, XY xy) {
+      check(xy, ctor.sourcePos(), ctor.ref());
+      return StmtConsumer.super.visitCtor(ctor, xy);
+    }
+
+    @Override public Unit visitField(@NotNull Decl.StructField field, XY xy) {
+      check(xy, field.sourcePos(), field.ref());
+      return StmtConsumer.super.visitField(field, xy);
+    }
+
     @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
       check(xy, expr.sourcePos(), expr.resolvedVar());
       return Unit.unit();
@@ -133,6 +143,7 @@ public interface Resolver {
         }
         case Pattern.Tuple tup -> tup.patterns().forEach(p -> visitPattern(p, xy));
         case Pattern.BinOpSeq seq -> seq.seq().forEach(p -> visitPattern(p, xy));
+        case Pattern.Bind bind -> check(xy, bind.sourcePos(), bind.bind());
         default -> {}
       }
     }
