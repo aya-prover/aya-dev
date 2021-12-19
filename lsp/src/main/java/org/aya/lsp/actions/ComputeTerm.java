@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 public final class ComputeTerm implements SyntaxNodeAction {
   private @Nullable WithPos<Term> result = null;
-  private final @NotNull LibrarySource loadedFile;
+  private final @NotNull LibrarySource source;
   private final @NotNull Kind kind;
 
   public enum Kind {
@@ -34,13 +34,13 @@ public final class ComputeTerm implements SyntaxNodeAction {
     }
   }
 
-  public ComputeTerm(@NotNull LibrarySource loadedFile, @NotNull Kind kind) {
-    this.loadedFile = loadedFile;
+  public ComputeTerm(@NotNull LibrarySource source, @NotNull Kind kind) {
+    this.source = source;
     this.kind = kind;
   }
 
   public @NotNull ComputeTermResult invoke(ComputeTermResult.Params params) {
-    var program = loadedFile.program().value;
+    var program = source.program().value;
     if (program == null) return ComputeTermResult.bad(params);
     visitAll(program, new XY(params.position));
     return result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, result);

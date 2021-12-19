@@ -22,11 +22,11 @@ import java.util.stream.Collectors;
 
 public interface FindReferences {
   static @NotNull List<Location> invoke(
-    @NotNull LibrarySource loadedFile,
+    @NotNull LibrarySource source,
     @NotNull Position position,
     @NotNull SeqView<LibraryOwner> libraries
   ) {
-    var vars = Resolver.resolveVar(loadedFile, position);
+    var vars = Resolver.resolveVar(source, position);
     var resolver = new ReferenceResolver(DynamicSeq.create());
     vars.forEach(var -> libraries.forEach(lib -> resolve(resolver, lib, var.data())));
     return resolver.refs.view()

@@ -264,17 +264,17 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = find(params.getTextDocument().getUri());
-      if (loadedFile == null) return Either.forLeft(Collections.emptyList());
-      return Either.forRight(GotoDefinition.invoke(loadedFile, params.getPosition(), libraries.view()));
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Either.forLeft(Collections.emptyList());
+      return Either.forRight(GotoDefinition.invoke(source, params.getPosition(), libraries.view()));
     });
   }
 
   @Override public CompletableFuture<Hover> hover(HoverParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = find(params.getTextDocument().getUri());
-      if (loadedFile == null) return null;
-      var doc = ComputeSignature.invokeHover(loadedFile, params.getPosition());
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return null;
+      var doc = ComputeSignature.invokeHover(source, params.getPosition());
       if (doc.isEmpty()) return null;
       return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
     });
@@ -283,16 +283,16 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   @Override
   public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = find(params.getTextDocument().getUri());
-      if (loadedFile == null) return Collections.emptyList();
-      return FindReferences.invoke(loadedFile, params.getPosition(), libraries.view());
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return FindReferences.invoke(source, params.getPosition(), libraries.view());
     });
   }
 
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
-    var loadedFile = find(input.uri);
-    if (loadedFile == null) return ComputeTermResult.bad(input);
-    return new ComputeTerm(loadedFile, type).invoke(input);
+    var source = find(input.uri);
+    if (source == null) return ComputeTermResult.bad(input);
+    return new ComputeTerm(source, type).invoke(input);
   }
 
   public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {

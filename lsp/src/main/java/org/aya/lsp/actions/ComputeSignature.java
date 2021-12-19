@@ -18,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ComputeSignature {
   static @NotNull Doc invokeHover(
-    @NotNull LibrarySource loadedFile,
+    @NotNull LibrarySource source,
     @NotNull Position position
   ) {
-    var target = Resolver.resolveVar(loadedFile, position).firstOrNull();
+    var target = Resolver.resolveVar(source, position).firstOrNull();
     if (target == null) return Doc.empty();
     return computeSignature(target.data(), true);
   }
