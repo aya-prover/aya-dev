@@ -28,10 +28,8 @@ jlink {
   addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
   addExtraDependencies("jline-terminal-jansi")
   mergedModule {
-    val jansi = "org.jline.terminal.spi.JansiSupport"
-    uses(jansi)
-    provides(jansi).with("org.jline.terminal.impl.jansi.JansiSupportImpl")
-    requires("java.logging")
+    additive = true
+    uses("org.jline.terminal.spi.JansiSupport")
   }
   launcher {
     mainClass.set(mainClassQName)

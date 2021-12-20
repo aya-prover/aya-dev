@@ -81,8 +81,8 @@ subprojects {
   }
 
   artifacts {
-    add("archives", tasks["sourcesJar"])
-    if (hasProperty("release")) add("archives", tasks["javadocJar"])
+    add("archives", tasks.named("sourcesJar"))
+    if (hasProperty("release")) add("archives", tasks.named("javadocJar"))
   }
 
   if (useJacoco) tasks.jacocoTestReport {
