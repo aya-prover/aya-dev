@@ -1,0 +1,29 @@
+open import Paths
+
+-- c ---- cd ---- d
+-- |              |
+-- |              |
+-- ac            bd
+-- |              |
+-- |              |
+-- a ---- ab ---- b
+struct Square {A : Pi (i j : I) -> Type}
+  {a : A left  left} {b : A left  right}
+  {c : A right left} {d : A right right}
+  (ab : Path (A left ) a b)
+  (cd : Path (A right) c d)
+  (ac : Path (\x => A x left ) a c)
+  (bd : Path (\x => A x right) b d) : Type
+  | at2 (i j : I) : A i j {
+    | left,  i => ab.at i
+    | right, i => cd.at i
+    | i,  left => ac.at i
+    | i, right => bd.at i
+  }
+
+def square {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j) => new Square {A}
+  (path {A left} (p left)) (path {A right} (p right))
+  (path {\x => A x left} (\x => p x left))
+  (path {\x => A x right} (\x => p x right)) {
+    | at2 => p
+  }

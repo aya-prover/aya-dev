@@ -24,6 +24,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
+import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -97,7 +98,8 @@ public record PatClassifier(
         var rhsInfo = contents.get(i);
         var lhsSubst = new Substituter.TermSubst(MutableMap.create());
         var rhsSubst = new Substituter.TermSubst(MutableMap.create());
-        var ctx = PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(), lhsSubst, rhsSubst);
+        var ctx = PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(),
+          lhsSubst, rhsSubst, tycker.localCtx.deriveMap());
         domination(rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
         domination(lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
