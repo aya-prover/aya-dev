@@ -11,7 +11,6 @@ import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.ModuleVar;
 import org.aya.lsp.utils.Resolver;
-import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.LocationLink;
@@ -59,9 +58,9 @@ public interface GotoDefinition {
   }
 
   private static @Nullable SourcePos mockSourcePos(@NotNull SeqView<LibraryOwner> libraries, @NotNull ModuleVar moduleVar) {
-    var src = Resolver.resolveModule(libraries, moduleVar.path().ids()).getOrNull();
-    if (src == null) return null;
-    return new SourcePos(new SourceFile(src.displayPath().toString(), src.file(), ""),
-      0, 0, 1, 0, 1, 0);
+    return Resolver.resolveModule(libraries, moduleVar.path().ids())
+      .map(src -> src.toSourceFile(""))
+      .map(src -> new SourcePos(src, 0, 0, 1, 0, 1, 0))
+      .getOrNull();
   }
 }

@@ -177,7 +177,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
           var used = telescope.sliceView(i + 1, telescope.size())
             .map(ParamLike::type).appended(body)
             .anyMatch(p -> altF7.applyAsInt(p, ref) > 0);
-          if (!used) buf.append(justType(last));
+          if (!used) buf.append(justType(last, Outer.ProjHead));
           else buf.append(dynamicSeqNames(names, last));
         } else buf.append(dynamicSeqNames(names, last));
         names.clear();
@@ -187,13 +187,13 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     }
     if (body != null && names.sizeEquals(1)
       && altF7.applyAsInt(body, names.first()) == 0) {
-      buf.append(justType(last));
+      buf.append(justType(last, Outer.ProjHead));
     } else buf.append(dynamicSeqNames(names, last));
     return Doc.sep(buf);
   }
 
-  private @NotNull Doc justType(@NotNull ParamLike<Term> monika) {
-    return monika.explicit() ? term(Outer.ProjHead, monika.type())
+  @NotNull Doc justType(@NotNull ParamLike<Term> monika, Outer outer) {
+    return monika.explicit() ? term(outer, monika.type())
       : Doc.braced(monika.type().toDoc(options));
   }
 

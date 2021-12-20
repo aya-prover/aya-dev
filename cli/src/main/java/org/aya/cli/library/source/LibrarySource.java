@@ -10,6 +10,7 @@ import org.aya.core.def.Def;
 import org.aya.generic.Constants;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.FileUtil;
+import org.aya.util.error.SourceFile;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +49,10 @@ public record LibrarySource(
 
   public @NotNull Path displayPath() {
     return owner.locator().displayName(file);
+  }
+
+  public @NotNull SourceFile toSourceFile(@NotNull String sourceCode) {
+    return new SourceFile(displayPath().toString(), file, sourceCode);
   }
 
   public @NotNull Path coreFile() {

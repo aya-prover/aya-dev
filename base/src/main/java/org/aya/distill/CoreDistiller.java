@@ -126,7 +126,7 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
       visitTele(term.params().dropLast(1), last.type(), Term::findUsages),
       Doc.symbol("**"),
-      last.toDoc(options)
+      justType(last, Outer.Codomain)
     );
     // Same as Pi
     return checkParen(outer, doc, Outer.BinOp);
