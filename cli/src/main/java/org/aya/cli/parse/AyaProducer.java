@@ -367,9 +367,19 @@ public record AyaProducer(
         visitForallTelescope(forall.tele()).view(),
         visitExpr(forall.expr()));
       // TODO: match
-      // TODO: tactic
+      case AyaParser.TacticContext tactic -> visitTactic(tactic);
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
+  }
+
+  private @NotNull Expr visitTactic(AyaParser.TacticContext tactic) {
+    // return new TacticExpr(visitTacNode(tactic.tacNode()));
+    throw new UnsupportedOperationException();
+  }
+
+  private void visitTacNode(AyaParser.TacNodeContext tacNode) {
+    // TODO: return an instance of some sort of 'tactic node'
+    throw new UnsupportedOperationException();
   }
 
   private @NotNull Expr.Field visitField(AyaParser.NewArgContext na) {

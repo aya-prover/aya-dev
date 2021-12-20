@@ -92,8 +92,12 @@ expr : atom                                 # single
      | SIGMA tele+ SUCHTHAT expr            # sigma
      | LAMBDA tele+ (IMPLIES expr?)?        # lam
      | MATCH exprList clauses               # match
-     | TACTIC LBRACE (BAR expr)* RBRACE     # tactic
+     | TACTIC tacNode                       # tactic
      ;
+
+tacNode : BAR expr
+        | LBRACE tacNode+ RBRACE
+        ;
 
 newArg : BAR weakId ids IMPLIES expr;
 // New body new body but you!
