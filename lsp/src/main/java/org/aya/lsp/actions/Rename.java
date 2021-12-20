@@ -9,7 +9,6 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
-import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextEdit;
@@ -33,13 +32,8 @@ public interface Rename {
     @NotNull String newName,
     @NotNull SeqView<LibraryOwner> libraries
   ) {
-    var defs = GotoDefinition.findDefs(source, position, libraries);
-    var refs = FindReferences.findRefs(source, position, libraries)
-      .map(ref -> new WithPos<>(SourcePos.NONE, ref));
-
-    return defs.concat(refs)
-      .flatMap(pos -> {
-        var to = pos.data();
+    return FindReferences.findOccurrences(source, position, libraries)
+      .flatMap(to -> {
         var edit = new TextEdit(LspRange.toRange(to), newName);
         return to.file().underlying().map(uri -> Tuple.of(uri, edit));
       }).collect(Collectors.groupingBy(tup -> tup._1.toUri().toString(), Collectors.mapping(

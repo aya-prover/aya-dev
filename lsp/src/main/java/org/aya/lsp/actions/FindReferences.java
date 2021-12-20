@@ -9,6 +9,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,16 @@ public interface FindReferences {
     var resolver = new Resolver.UsageResolver();
     vars.forEach(var -> libraries.forEach(lib -> resolve(resolver, lib, var.data())));
     return resolver.refs.view();
+  }
+
+  static @NotNull SeqView<SourcePos> findOccurrences(
+    @NotNull LibrarySource source,
+    @NotNull Position position,
+    @NotNull SeqView<LibraryOwner> libraries
+  ) {
+    var defs = GotoDefinition.findDefs(source, position, libraries).map(WithPos::data);
+    var refs = FindReferences.findRefs(source, position, libraries);
+    return defs.concat(refs);
   }
 
   private static void resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner, @NotNull Var var) {

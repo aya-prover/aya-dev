@@ -16,6 +16,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -130,9 +131,12 @@ public interface Resolver {
   }
 
   /**
+   * In short, this class resolves position to PsiNameIdentifierOwner or PsiNamedElement.
+   * <p>
    * Resolve position to its referring target. This class extends the
    * search to definitions and module commands compared to {@link ReferringResolver},
-   * because the position may be placed at the name part of a function, import command, etc.
+   * because the position may be placed at the name part of a function, a tele,
+   * an import command, etc.
    *
    * @author ice1000, kiva
    */
@@ -149,6 +153,11 @@ public interface Resolver {
       var path = cmd.path();
       check(xy, new ModuleVar(path), path.sourcePos());
       return super.visitOpen(cmd, xy);
+    }
+
+    @Override public void visitSignatured(@NotNull Signatured signatured, XY xy) {
+      signatured.telescope.forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
+      super.visitSignatured(signatured, xy);
     }
 
     @Override public void visitDecl(@NotNull Decl decl, XY xy) {
@@ -172,7 +181,7 @@ public interface Resolver {
   }
 
   /** find usages of a variable */
-  class UsageResolver extends Resolver.ReferringResolver<Var> {
+  class UsageResolver extends ReferringResolver<Var> {
     public final @NotNull DynamicSeq<SourcePos> refs = DynamicSeq.create();
 
     @Override protected void check(@NotNull Var var, @NotNull Var check, @NotNull SourcePos sourcePos) {

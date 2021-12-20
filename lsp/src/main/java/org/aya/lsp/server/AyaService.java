@@ -5,6 +5,7 @@ package org.aya.lsp.server;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.BufferReporter;
@@ -305,6 +306,18 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var begin = Rename.prepare(source, params.getPosition());
       if (begin == null) return null;
       return Either.forRight(new PrepareRenameResult(LspRange.toRange(begin.sourcePos()), begin.data()));
+    });
+  }
+
+  @Override
+  public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
+        .filter(pos -> pos.file().underlying().equals(Option.of(source.file())))
+        .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
+        .stream().toList();
     });
   }
 
