@@ -121,11 +121,12 @@ public class CoreDistiller extends BaseDistiller<Term> implements
   }
 
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Outer outer) {
+    var last = term.params().last();
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
-      visitTele(term.params().dropLast(1)),
+      visitTele(term.params().dropLast(1), last.type(), Term::findUsages),
       Doc.symbol("**"),
-      term.params().last().toDoc(options)
+      last.toDoc(options)
     );
     // Same as Pi
     return checkParen(outer, doc, Outer.BinOp);
