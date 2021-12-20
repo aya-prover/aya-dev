@@ -35,7 +35,7 @@ public interface Rename {
   ) {
     var defs = GotoDefinition.findDefs(source, position, libraries);
     var refs = FindReferences.findRefs(source, position, libraries)
-      .map(ref -> new WithPos<>(SourcePos.NONE, ref.sourcePos()));
+      .map(ref -> new WithPos<>(SourcePos.NONE, ref));
 
     return defs.concat(refs)
       .flatMap(pos -> {

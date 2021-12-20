@@ -3,16 +3,12 @@
 package org.aya.lsp.actions;
 
 import kala.collection.SeqView;
-import kala.collection.mutable.DynamicSeq;
-import kala.tuple.Unit;
-import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.Expr;
-import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
+import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
@@ -27,42 +23,26 @@ public interface FindReferences {
     @NotNull SeqView<LibraryOwner> libraries
   ) {
     return findRefs(source, position, libraries)
-      .map(ref -> LspRange.toLoc(ref.sourcePos()))
+      .map(LspRange::toLoc)
       .collect(Collectors.toList());
   }
 
-  static @NotNull SeqView<Expr.RefExpr> findRefs(
+  static @NotNull SeqView<SourcePos> findRefs(
     @NotNull LibrarySource source,
     @NotNull Position position,
     @NotNull SeqView<LibraryOwner> libraries
   ) {
     var vars = Resolver.resolveVar(source, position);
-    var resolver = new ReferenceResolver(DynamicSeq.create());
+    var resolver = new Resolver.UsageResolver();
     vars.forEach(var -> libraries.forEach(lib -> resolve(resolver, lib, var.data())));
     return resolver.refs.view();
   }
 
-  private static void resolve(@NotNull ReferenceResolver resolver, @NotNull LibraryOwner owner, @NotNull Var var) {
+  private static void resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner, @NotNull Var var) {
     owner.librarySources().forEach(src -> {
       var program = src.program().value;
       if (program != null) resolver.visitAll(program, var);
     });
     owner.libraryDeps().forEach(dep -> resolve(resolver, dep, var));
-  }
-
-  record ReferenceResolver(@NotNull DynamicSeq<Expr.RefExpr> refs) implements StmtConsumer<Var> {
-    @Override public Unit visitRef(@NotNull Expr.RefExpr expr, Var var) {
-      if (check(var, expr.resolvedVar())) refs.append(expr);
-      return Unit.unit();
-    }
-
-    private boolean check(Var var, Var check) {
-      if (check == var) return true;
-      // for imported serialized definitions, let's compare by qualified name
-      return var instanceof DefVar<?, ?> defVar
-        && check instanceof DefVar<?, ?> checkDef
-        && defVar.module.equals(checkDef.module)
-        && defVar.name().equals(checkDef.name());
-    }
   }
 }

@@ -25,6 +25,8 @@ import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public interface Resolver {
   /** resolve a symbol by its qualified name in the whole library */
   static @NotNull Option<@NotNull Def> resolveDef(
@@ -88,68 +90,102 @@ public interface Resolver {
   }
 
   /**
-   * Resolve position to its referring target
+   * Traverse all referring terms including:
+   * {@link Expr.RefExpr}, {@link Expr.ProjExpr} and {@link Pattern}
+   * and check against a given condition implemented in
+   * {@link ReferringResolver#check(P, Var, SourcePos)}
+   */
+  abstract class ReferringResolver<P> implements StmtConsumer<P> {
+    /**
+     * check whether a referable term's referring variable satisfies the parameter
+     * at given source pos.
+     */
+    protected abstract void check(@NotNull P param, @NotNull Var var, @NotNull SourcePos sourcePos);
+
+    @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, P param) {
+      check(param, expr.resolvedVar(), expr.sourcePos());
+      return Unit.unit();
+    }
+
+    @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, P param) {
+      if (expr.ix().isRight()) {
+        var pos = expr.ix().getRightValue();
+        check(param, Objects.requireNonNull(expr.resolvedIx().get()), pos.sourcePos());
+      }
+      return StmtConsumer.super.visitProj(expr, param);
+    }
+
+    @Override public void visitPattern(@NotNull Pattern pattern, P param) {
+      switch (pattern) {
+        case Pattern.Ctor ctor -> {
+          check(param, ctor.resolved().data(), ctor.resolved().sourcePos());
+          ctor.params().forEach(pat -> visitPattern(pat, param));
+        }
+        case Pattern.Tuple tup -> tup.patterns().forEach(p -> visitPattern(p, param));
+        case Pattern.BinOpSeq seq -> seq.seq().forEach(p -> visitPattern(p, param));
+        case Pattern.Bind bind -> check(param, bind.bind(), bind.sourcePos());
+        default -> {}
+      }
+    }
+  }
+
+  /**
+   * Resolve position to its referring target. This class extends the
+   * search to definitions and module commands compared to {@link ReferringResolver},
+   * because the position may be placed at the name part of a function, import command, etc.
    *
    * @author ice1000, kiva
    */
-  class PositionResolver implements StmtConsumer<XY> {
+  class PositionResolver extends ReferringResolver<XY> {
     public final @NotNull DynamicSeq<WithPos<Var>> targetVars = DynamicSeq.create();
 
     @Override public Unit visitImport(@NotNull Command.Import cmd, XY xy) {
       var path = cmd.path();
-      check(xy, path.sourcePos(), new ModuleVar(path));
-      return StmtConsumer.super.visitImport(cmd, xy);
+      check(xy, new ModuleVar(path), path.sourcePos());
+      return super.visitImport(cmd, xy);
     }
 
     @Override public Unit visitOpen(@NotNull Command.Open cmd, XY xy) {
       var path = cmd.path();
-      check(xy, path.sourcePos(), new ModuleVar(path));
-      return StmtConsumer.super.visitOpen(cmd, xy);
+      check(xy, new ModuleVar(path), path.sourcePos());
+      return super.visitOpen(cmd, xy);
     }
 
     @Override public void visitDecl(@NotNull Decl decl, XY xy) {
-      check(xy, decl.sourcePos(), decl.ref());
-      StmtConsumer.super.visitDecl(decl, xy);
+      check(xy, decl.ref(), decl.sourcePos());
+      super.visitDecl(decl, xy);
     }
 
     @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, XY xy) {
-      check(xy, ctor.sourcePos(), ctor.ref());
-      return StmtConsumer.super.visitCtor(ctor, xy);
+      check(xy, ctor.ref(), ctor.sourcePos());
+      return super.visitCtor(ctor, xy);
     }
 
     @Override public Unit visitField(@NotNull Decl.StructField field, XY xy) {
-      check(xy, field.sourcePos(), field.ref());
-      return StmtConsumer.super.visitField(field, xy);
+      check(xy, field.ref(), field.sourcePos());
+      return super.visitField(field, xy);
     }
 
-    @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
-      check(xy, expr.sourcePos(), expr.resolvedVar());
-      return Unit.unit();
-    }
-
-    @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, XY xy) {
-      if (expr.ix().isRight()) {
-        var pos = expr.ix().getRightValue();
-        check(xy, pos.sourcePos(), expr.resolvedIx().get());
-      }
-      return StmtConsumer.super.visitProj(expr, xy);
-    }
-
-    @Override public void visitPattern(@NotNull Pattern pattern, XY xy) {
-      switch (pattern) {
-        case Pattern.Ctor ctor -> {
-          check(xy, ctor.resolved().sourcePos(), ctor.resolved().data());
-          ctor.params().forEach(pat -> visitPattern(pat, xy));
-        }
-        case Pattern.Tuple tup -> tup.patterns().forEach(p -> visitPattern(p, xy));
-        case Pattern.BinOpSeq seq -> seq.seq().forEach(p -> visitPattern(p, xy));
-        case Pattern.Bind bind -> check(xy, bind.sourcePos(), bind.bind());
-        default -> {}
-      }
-    }
-
-    private void check(@NotNull XY xy, @NotNull SourcePos sourcePos, Var var) {
+    @Override protected void check(@NotNull XY xy, @NotNull Var var, @NotNull SourcePos sourcePos) {
       if (xy.inside(sourcePos)) targetVars.append(new WithPos<>(sourcePos, var));
+    }
+  }
+
+  /** find usages of a variable */
+  class UsageResolver extends Resolver.ReferringResolver<Var> {
+    public final @NotNull DynamicSeq<SourcePos> refs = DynamicSeq.create();
+
+    @Override protected void check(@NotNull Var var, @NotNull Var check, @NotNull SourcePos sourcePos) {
+      if (isUsage(var, check)) refs.append(sourcePos);
+    }
+
+    private boolean isUsage(@NotNull Var var, @NotNull Var check) {
+      if (check == var) return true;
+      // for imported serialized definitions, let's compare by qualified name
+      return var instanceof DefVar<?, ?> defVar
+        && check instanceof DefVar<?, ?> checkDef
+        && defVar.module.equals(checkDef.module)
+        && defVar.name().equals(checkDef.name());
     }
   }
 }
