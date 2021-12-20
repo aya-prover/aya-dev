@@ -21,6 +21,7 @@ import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
+import org.aya.generic.Constants;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
@@ -156,7 +157,9 @@ public interface Resolver {
     }
 
     @Override public void visitSignatured(@NotNull Signatured signatured, XY xy) {
-      signatured.telescope.forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
+      signatured.telescope
+        .filterNot(tele -> tele.ref().name().startsWith(Constants.ANONYMOUS_PREFIX))
+        .forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
       super.visitSignatured(signatured, xy);
     }
 
