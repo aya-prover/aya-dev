@@ -13,6 +13,7 @@ import org.aya.lsp.utils.ModuleVar;
 import org.aya.lsp.utils.Resolver;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,20 @@ public interface GotoDefinition {
     @NotNull Position position,
     @NotNull SeqView<LibraryOwner> libraries
   ) {
+    return findDefs(source, position, libraries).mapNotNull(pos -> {
+      var from = pos.sourcePos();
+      var to = pos.data();
+      var res = LspRange.toLoc(from, to);
+      if (res != null) Log.d("Resolved: %s in %s", to, res.getTargetUri());
+      return res;
+    }).collect(Collectors.toList());
+  }
+
+  static @NotNull SeqView<WithPos<SourcePos>> findDefs(
+    @NotNull LibrarySource source,
+    @NotNull Position position,
+    @NotNull SeqView<LibraryOwner> libraries
+  ) {
     return Resolver.resolveVar(source, position).mapNotNull(pos -> {
       var from = pos.sourcePos();
       var target = switch (pos.data()) {
@@ -39,10 +54,8 @@ public interface GotoDefinition {
         case default -> null;
       };
       if (target == null) return null;
-      var res = LspRange.toLoc(from, target);
-      if (res != null) Log.d("Resolved: %s in %s", target, res.getTargetUri());
-      return res;
-    }).collect(Collectors.toList());
+      return new WithPos<>(from, target);
+    });
   }
 
   private static @Nullable SourcePos mockSourcePos(@NotNull SeqView<LibraryOwner> libraries, @NotNull ModuleVar moduleVar) {

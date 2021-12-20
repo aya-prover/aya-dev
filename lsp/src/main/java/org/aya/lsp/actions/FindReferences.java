@@ -26,12 +26,20 @@ public interface FindReferences {
     @NotNull Position position,
     @NotNull SeqView<LibraryOwner> libraries
   ) {
+    return findRefs(source, position, libraries)
+      .map(ref -> LspRange.toLoc(ref.sourcePos()))
+      .collect(Collectors.toList());
+  }
+
+  static @NotNull SeqView<Expr.RefExpr> findRefs(
+    @NotNull LibrarySource source,
+    @NotNull Position position,
+    @NotNull SeqView<LibraryOwner> libraries
+  ) {
     var vars = Resolver.resolveVar(source, position);
     var resolver = new ReferenceResolver(DynamicSeq.create());
     vars.forEach(var -> libraries.forEach(lib -> resolve(resolver, lib, var.data())));
-    return resolver.refs.view()
-      .map(ref -> LspRange.toLoc(ref.sourcePos()))
-      .collect(Collectors.toList());
+    return resolver.refs.view();
   }
 
   private static void resolve(@NotNull ReferenceResolver resolver, @NotNull LibraryOwner owner, @NotNull Var var) {

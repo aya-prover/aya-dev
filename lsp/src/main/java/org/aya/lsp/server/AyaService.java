@@ -289,6 +289,25 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
+  @Override public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return null;
+      var renames = Rename.rename(source, params.getPosition(), params.getNewName(), libraries.view());
+      return new WorkspaceEdit(renames);
+    });
+  }
+
+  @Override public CompletableFuture<Either<Range, PrepareRenameResult>> prepareRename(PrepareRenameParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return null;
+      var begin = Rename.prepare(source, params.getPosition());
+      if (begin == null) return null;
+      return Either.forRight(new PrepareRenameResult(LspRange.toRange(begin.sourcePos()), begin.data()));
+    });
+  }
+
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
     var source = find(input.uri);
     if (source == null) return ComputeTermResult.bad(input);
