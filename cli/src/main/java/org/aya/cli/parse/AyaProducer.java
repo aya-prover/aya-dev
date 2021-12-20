@@ -367,6 +367,7 @@ public record AyaProducer(
         visitForallTelescope(forall.tele()).view(),
         visitExpr(forall.expr()));
       // TODO: match
+      // TODO: tactic
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
   }
