@@ -5,6 +5,7 @@ package org.aya.lsp.server;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.BufferReporter;
@@ -264,17 +265,17 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = find(params.getTextDocument().getUri());
-      if (loadedFile == null) return Either.forLeft(Collections.emptyList());
-      return Either.forRight(GotoDefinition.invoke(loadedFile, params.getPosition()));
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Either.forLeft(Collections.emptyList());
+      return Either.forRight(GotoDefinition.invoke(source, params.getPosition(), libraries.view()));
     });
   }
 
   @Override public CompletableFuture<Hover> hover(HoverParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = find(params.getTextDocument().getUri());
-      if (loadedFile == null) return null;
-      var doc = ComputeSignature.invokeHover(loadedFile, params.getPosition());
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return null;
+      var doc = ComputeSignature.invokeHover(source, params.getPosition());
       if (doc.isEmpty()) return null;
       return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
     });
@@ -283,16 +284,47 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   @Override
   public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = find(params.getTextDocument().getUri());
-      if (loadedFile == null) return Collections.emptyList();
-      return FindReferences.invoke(loadedFile, params.getPosition(), libraries.view());
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return FindReferences.invoke(source, params.getPosition(), libraries.view());
+    });
+  }
+
+  @Override public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return null;
+      var renames = Rename.rename(source, params.getPosition(), params.getNewName(), libraries.view());
+      return new WorkspaceEdit(renames);
+    });
+  }
+
+  @Override public CompletableFuture<Either<Range, PrepareRenameResult>> prepareRename(PrepareRenameParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return null;
+      var begin = Rename.prepare(source, params.getPosition());
+      if (begin == null) return null;
+      return Either.forRight(new PrepareRenameResult(LspRange.toRange(begin.sourcePos()), begin.data()));
+    });
+  }
+
+  @Override
+  public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
+        .filter(pos -> pos.file().underlying().equals(Option.of(source.file())))
+        .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
+        .stream().toList();
     });
   }
 
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
-    var loadedFile = find(input.uri);
-    if (loadedFile == null) return ComputeTermResult.bad(input);
-    return new ComputeTerm(loadedFile, type).invoke(input);
+    var source = find(input.uri);
+    if (source == null) return ComputeTermResult.bad(input);
+    return new ComputeTerm(source, type).invoke(input);
   }
 
   public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {

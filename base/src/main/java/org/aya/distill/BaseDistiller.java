@@ -71,6 +71,16 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return visitCalls(var, style, args, outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
   }
 
+  /**
+   * Pretty-print an application in a smart way.
+   * If an infix operator is applied by two arguments, we use operator syntax.
+   *
+   * @param infix Whether the applied function is an infix operator.
+   * @param fn    The applied function, pretty-printed.
+   * @param fmt   Mostly just {@link #term(Outer, AyaDocile)}, but can be overridden.
+   * @param <T>   Mostly <code>Term</code>.
+   * @see BaseDistiller#prefix(Doc, Fmt, Outer, SeqView)
+   */
   <T extends AyaDocile> @NotNull Doc visitCalls(
     boolean infix, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
     @NotNull SeqView<@NotNull Arg<@NotNull T>> args, boolean showImplicits
@@ -91,6 +101,11 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return prefix(fn, fmt, outer, visibleArgs.view());
   }
 
+  /**
+   * Pretty-print an application in a dumb (but conservative) way, using prefix syntax.
+   *
+   * @see BaseDistiller#visitCalls(boolean, Doc, Fmt, Outer, SeqView, boolean)
+   */
   private <T extends AyaDocile> @NotNull Doc
   prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<Arg<T>> args) {
     var call = Doc.sep(fn, Doc.sep(args.map(arg ->
@@ -108,7 +123,17 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return outer.ordinal() >= binOp.ordinal() ? Doc.parened(binApp) : binApp;
   }
 
-  @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
+  /**
+   * This function does the following if necessary:
+   * <ul>
+   *   <li>Wrap the constructor with parentheses or braces</li>
+   *   <li>Append an 'as' at the end</li>
+   * </ul>
+   *
+   * @param ctorDoc  The constructor pretty-printed doc, without the 'as' or parentheses.
+   * @param noParams Whether the constructor has no parameters or not.
+   */
+  @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, @Nullable LocalVar ctorAs, boolean noParams) {
     boolean as = ctorAs != null;
     var withEx = Doc.bracedUnless(ctorDoc, ex);
     var withAs = !as ? withEx :
@@ -116,14 +141,29 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
   }
 
+  /**
+   * Pretty-print a telescope in a dumb (but conservative) way.
+   *
+   * @see BaseDistiller#visitTele(Seq, AyaDocile, ToIntBiFunction)
+   */
   public @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
     return visitTele(telescope, null, (t, v) -> 1);
   }
 
+  /**
+   * Pretty-print a telescope in a smart way.
+   * The bindings that are not used in the telescope/body are omitted.
+   * Bindings of the same type (by 'same' I mean <code>Objects.equals</code> returns true)
+   * are merged together.
+   *
+   * @param body  the body of the telescope (like the return type in a pi type),
+   *              only used for finding usages (of the variables in the telescope).
+   * @param altF7 a function for finding usages.
+   * @see BaseDistiller#visitTele(Seq)
+   */
   public @NotNull Doc visitTele(
     @NotNull Seq<? extends ParamLike<Term>> telescope,
-    @Nullable Term body,
-    @NotNull ToIntBiFunction<Term, Var> findUsages
+    @Nullable Term body, @NotNull ToIntBiFunction<Term, Var> altF7
   ) {
     if (telescope.isEmpty()) return Doc.empty();
     var last = telescope.first();
@@ -136,10 +176,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
           var ref = names.first();
           var used = telescope.sliceView(i + 1, telescope.size())
             .map(ParamLike::type).appended(body)
-            .anyMatch(p -> findUsages.applyAsInt(p, ref) > 0);
-          if (used) buf.append(last.explicit()
-            ? term(Outer.ProjHead, last.type())
-            : Doc.braced(last.type().toDoc(options)));
+            .anyMatch(p -> altF7.applyAsInt(p, ref) > 0);
+          if (!used) buf.append(justType(last, Outer.ProjHead));
           else buf.append(dynamicSeqNames(names, last));
         } else buf.append(dynamicSeqNames(names, last));
         names.clear();
@@ -147,8 +185,16 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       }
       names.append(param.ref());
     }
-    buf.append(dynamicSeqNames(names, last));
+    if (body != null && names.sizeEquals(1)
+      && altF7.applyAsInt(body, names.first()) == 0) {
+      buf.append(justType(last, Outer.ProjHead));
+    } else buf.append(dynamicSeqNames(names, last));
     return Doc.sep(buf);
+  }
+
+  @NotNull Doc justType(@NotNull ParamLike<Term> monika, Outer outer) {
+    return monika.explicit() ? term(outer, monika.type())
+      : Doc.braced(monika.type().toDoc(options));
   }
 
   private Doc dynamicSeqNames(DynamicSeq<LocalVar> names, ParamLike<?> param) {

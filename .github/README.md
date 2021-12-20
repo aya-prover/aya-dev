@@ -7,15 +7,18 @@
 
 ## Download
 
-You may download the latest nightly release of Aya from [GitHub Releases].
+You may download the latest build of Aya from [GitHub Releases].
+It's updated for per-commit to the `main` branch,
+but the release date displayed is very old and is an issue of GitHub.
+
 There are prebuilt binaries for Windows, Linux, and macOS that can be used
 in Java-free environments as well as fat-jar files which can be invoked via `java --enable-preview -jar`.
-Note that the nightly release is updated for each commit to the `main` branch,
-but the release date displayed is very old and is an issue of GitHub.
 
 The minimum required version of Java is [Java 17].
 
-Aya is under active development. Nothing guaranteed! However, we can share some cool stuffs here:
+Aya is under active development, so please expect bugs, usability/performance issues
+(please file issues or create threads in discussions!).
+However, we can share some cool stuffs here:
 
 + Dependent types, including pi-types, sigma types, etc.
   You could write a [type-safe interpreter][gadt].

@@ -129,12 +129,12 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
   // region import, open, module
 
   @Override public Unit visitImport(Command.@NotNull Import cmd, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
-    buffer.append(new HighlightResult.Symbol(LspRange.toRange(cmd.sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
+    buffer.append(new HighlightResult.Symbol(LspRange.toRange(cmd.path().sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
     return StmtConsumer.super.visitImport(cmd, buffer);
   }
 
   @Override public Unit visitOpen(Command.@NotNull Open cmd, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
-    buffer.append(new HighlightResult.Symbol(LspRange.toRange(cmd.sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
+    buffer.append(new HighlightResult.Symbol(LspRange.toRange(cmd.path().sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
     return StmtConsumer.super.visitOpen(cmd, buffer);
   }
 

@@ -14,7 +14,9 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -24,6 +26,8 @@ import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public interface Resolver {
   /** resolve a symbol by its qualified name in the whole library */
   static @NotNull Option<@NotNull Def> resolveDef(
@@ -31,7 +35,7 @@ public interface Resolver {
     @NotNull ImmutableSeq<String> module,
     @NotNull String name
   ) {
-    var mod = findModule(owner, module);
+    var mod = resolveModule(owner, module);
     return mod.mapNotNull(m -> m.tycked().value)
       .map(defs -> defs.flatMap(Resolver::withSubLevel))
       .flatMap(defs -> defs.find(def -> def.ref().name().equals(name)));
@@ -44,9 +48,9 @@ public interface Resolver {
   ) {
     var program = source.program().value;
     if (program == null) return SeqView.empty();
-    var resolver = new DefPositionResolver();
+    var resolver = new PositionResolver();
     resolver.visitAll(program, new XY(position));
-    return resolver.locations.view().mapNotNull(pos -> switch (pos.data()) {
+    return resolver.targetVars.view().mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete != null) yield new WithPos<>(pos.sourcePos(), defVar);
         else {
@@ -57,6 +61,7 @@ public interface Resolver {
         }
       }
       case LocalVar localVar -> new WithPos<>(pos.sourcePos(), localVar);
+      case ModuleVar moduleVar -> new WithPos<>(pos.sourcePos(), moduleVar);
       case null, default -> null;
     });
   }
@@ -69,52 +74,127 @@ public interface Resolver {
     };
   }
 
-  private static @NotNull Option<LibrarySource> findModule(@NotNull LibraryOwner owner, @NotNull ImmutableSeq<String> module) {
+  /** resolve a top-level module by its qualified name */
+  static @NotNull Option<LibrarySource> resolveModule(@NotNull LibraryOwner owner, @NotNull ImmutableSeq<String> module) {
     if (module.isEmpty()) return Option.none();
     var mod = owner.findModule(module);
-    return mod != null ? Option.of(mod) : findModule(owner, module.dropLast(1));
+    return mod != null ? Option.of(mod) : resolveModule(owner, module.dropLast(1));
+  }
+
+  /** resolve a top-level module by its qualified name */
+  static @NotNull Option<LibrarySource> resolveModule(@NotNull SeqView<LibraryOwner> owners, @NotNull ImmutableSeq<String> module) {
+    for (var owner : owners) {
+      var found = resolveModule(owner, module);
+      if (found.isDefined()) return found;
+    }
+    return Option.none();
   }
 
   /**
-   * Resolve position to its referring target
-   *
-   * @author ice1000, kiva
+   * Traverse all referring terms including:
+   * {@link Expr.RefExpr}, {@link Expr.ProjExpr} and {@link Pattern}
+   * and check against a given condition implemented in
+   * {@link ReferringResolver#check(P, Var, SourcePos)}
    */
-  class DefPositionResolver implements StmtConsumer<XY> {
-    public final @NotNull DynamicSeq<WithPos<Var>> locations = DynamicSeq.create();
+  abstract class ReferringResolver<P> implements StmtConsumer<P> {
+    /**
+     * check whether a referable term's referring variable satisfies the parameter
+     * at given source pos.
+     */
+    protected abstract void check(@NotNull P param, @NotNull Var var, @NotNull SourcePos sourcePos);
 
-    @Override public void visitDecl(@NotNull Decl decl, XY xy) {
-      check(xy, decl.sourcePos(), decl.ref());
-      StmtConsumer.super.visitDecl(decl, xy);
-    }
-
-    @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
-      check(xy, expr.sourcePos(), expr.resolvedVar());
+    @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, P param) {
+      check(param, expr.resolvedVar(), expr.sourcePos());
       return Unit.unit();
     }
 
-    @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, XY xy) {
+    @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, P param) {
       if (expr.ix().isRight()) {
         var pos = expr.ix().getRightValue();
-        check(xy, pos.sourcePos(), expr.resolvedIx().get());
+        check(param, Objects.requireNonNull(expr.resolvedIx().get()), pos.sourcePos());
       }
-      return StmtConsumer.super.visitProj(expr, xy);
+      return StmtConsumer.super.visitProj(expr, param);
     }
 
-    @Override public void visitPattern(@NotNull Pattern pattern, XY xy) {
+    @Override public void visitPattern(@NotNull Pattern pattern, P param) {
       switch (pattern) {
         case Pattern.Ctor ctor -> {
-          check(xy, ctor.resolved().sourcePos(), ctor.resolved().data());
-          ctor.params().forEach(pat -> visitPattern(pat, xy));
+          check(param, ctor.resolved().data(), ctor.resolved().sourcePos());
+          ctor.params().forEach(pat -> visitPattern(pat, param));
         }
-        case Pattern.Tuple tup -> tup.patterns().forEach(p -> visitPattern(p, xy));
-        case Pattern.BinOpSeq seq -> seq.seq().forEach(p -> visitPattern(p, xy));
+        case Pattern.Tuple tup -> tup.patterns().forEach(p -> visitPattern(p, param));
+        case Pattern.BinOpSeq seq -> seq.seq().forEach(p -> visitPattern(p, param));
+        case Pattern.Bind bind -> check(param, bind.bind(), bind.sourcePos());
         default -> {}
       }
     }
+  }
 
-    private void check(@NotNull XY xy, @NotNull SourcePos sourcePos, Var var) {
-      if (xy.inside(sourcePos)) locations.append(new WithPos<>(sourcePos, var));
+  /**
+   * In short, this class resolves position to PsiNameIdentifierOwner or PsiNamedElement.
+   * <p>
+   * Resolve position to its referring target. This class extends the
+   * search to definitions and module commands compared to {@link ReferringResolver},
+   * because the position may be placed at the name part of a function, a tele,
+   * an import command, etc.
+   *
+   * @author ice1000, kiva
+   */
+  class PositionResolver extends ReferringResolver<XY> {
+    public final @NotNull DynamicSeq<WithPos<Var>> targetVars = DynamicSeq.create();
+
+    @Override public Unit visitImport(@NotNull Command.Import cmd, XY xy) {
+      var path = cmd.path();
+      check(xy, new ModuleVar(path), path.sourcePos());
+      return super.visitImport(cmd, xy);
+    }
+
+    @Override public Unit visitOpen(@NotNull Command.Open cmd, XY xy) {
+      var path = cmd.path();
+      check(xy, new ModuleVar(path), path.sourcePos());
+      return super.visitOpen(cmd, xy);
+    }
+
+    @Override public void visitSignatured(@NotNull Signatured signatured, XY xy) {
+      signatured.telescope.forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
+      super.visitSignatured(signatured, xy);
+    }
+
+    @Override public void visitDecl(@NotNull Decl decl, XY xy) {
+      check(xy, decl.ref(), decl.sourcePos());
+      super.visitDecl(decl, xy);
+    }
+
+    @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, XY xy) {
+      check(xy, ctor.ref(), ctor.sourcePos());
+      return super.visitCtor(ctor, xy);
+    }
+
+    @Override public Unit visitField(@NotNull Decl.StructField field, XY xy) {
+      check(xy, field.ref(), field.sourcePos());
+      return super.visitField(field, xy);
+    }
+
+    @Override protected void check(@NotNull XY xy, @NotNull Var var, @NotNull SourcePos sourcePos) {
+      if (xy.inside(sourcePos)) targetVars.append(new WithPos<>(sourcePos, var));
+    }
+  }
+
+  /** find usages of a variable */
+  class UsageResolver extends ReferringResolver<Var> {
+    public final @NotNull DynamicSeq<SourcePos> refs = DynamicSeq.create();
+
+    @Override protected void check(@NotNull Var var, @NotNull Var check, @NotNull SourcePos sourcePos) {
+      if (isUsage(var, check)) refs.append(sourcePos);
+    }
+
+    private boolean isUsage(@NotNull Var var, @NotNull Var check) {
+      if (check == var) return true;
+      // for imported serialized definitions, let's compare by qualified name
+      return var instanceof DefVar<?, ?> defVar
+        && check instanceof DefVar<?, ?> checkDef
+        && defVar.module.equals(checkDef.module)
+        && defVar.name().equals(checkDef.name());
     }
   }
 }
