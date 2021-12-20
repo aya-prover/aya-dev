@@ -10,7 +10,7 @@ plugins {
   `java-library`
   `maven-publish`
   signing
-  id("org.beryx.jlink") version "2.24.1" apply false
+  id("org.beryx.jlink") version "2.24.4" apply false
 }
 
 var deps: Properties by rootProject.ext
@@ -81,8 +81,8 @@ subprojects {
   }
 
   artifacts {
-    add("archives", tasks["sourcesJar"])
-    if (hasProperty("release")) add("archives", tasks["javadocJar"])
+    add("archives", tasks.named("sourcesJar"))
+    if (hasProperty("release")) add("archives", tasks.named("javadocJar"))
   }
 
   if (useJacoco) tasks.jacocoTestReport {

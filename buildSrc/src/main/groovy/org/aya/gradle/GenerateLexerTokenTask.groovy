@@ -97,7 +97,7 @@ patterns:
 
   def genJavaCode(HashMap<String, String> keywords) {
     var content = keywords.entrySet().stream().map(e ->
-      String.format("entry(AyaLexer.${e.key}, \"${e.value}\")")
+      String.format("          entry(AyaLexer.${e.key}, \"${e.value}\")")
     ).collect(Collectors.joining(",\n"))
 
     def code = """\
@@ -106,7 +106,7 @@ patterns:
       import java.util.Map;
       public class $className {
         public static final Map<Integer, String> KEYWORDS = Map.ofEntries(
-          $content
+$content
         );
       }""".stripIndent()
     def outFile = new File(outputDir, "${className}.java")

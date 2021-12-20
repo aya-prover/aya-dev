@@ -1,6 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE file.
-import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
 
 val mainClassQName = "org.aya.lsp.LspMain"
@@ -25,16 +24,12 @@ tasks.withType<JavaCompile>().configureEach {
   }
 }
 
-val isMac = Os.isFamily(Os.FAMILY_MAC)
-
 jlink {
-  options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+  addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
   addExtraDependencies("jline-terminal-jansi")
   mergedModule {
-    val jansi = "org.jline.terminal.spi.JansiSupport"
-    uses(jansi)
-    provides(jansi).with("org.jline.terminal.impl.jansi.JansiSupportImpl")
-    requires("java.logging")
+    additive = true
+    uses("org.jline.terminal.spi.JansiSupport")
   }
   launcher {
     mainClass.set(mainClassQName)
