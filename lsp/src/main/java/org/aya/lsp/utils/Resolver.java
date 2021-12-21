@@ -27,8 +27,6 @@ import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public interface Resolver {
   /** resolve a symbol by its qualified name in the whole library */
   static @NotNull Option<@NotNull Def> resolveDef(
@@ -110,9 +108,10 @@ public interface Resolver {
     }
 
     @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, P param) {
-      if (expr.ix().isRight()) {
+      var field = expr.resolvedIx().get();
+      if (expr.ix().isRight() && field != null) {
         var pos = expr.ix().getRightValue();
-        check(param, Objects.requireNonNull(expr.resolvedIx().get()), pos.sourcePos());
+        check(param, field, pos.sourcePos());
       }
       return StmtConsumer.super.visitProj(expr, param);
     }
