@@ -2,9 +2,6 @@ open import Paths
 
 public open data Unit | unit
 
-def coe {a b : Type} (eq : a = b) (x : a) (i : I) : eq.at i
-  => arcoe eq.at x i
-
 -- *** Types
 
 universe u
@@ -65,7 +62,7 @@ def mkTheta
   (T-inv : Pi (A : Type u) (T : EventT) -> A = getT (setT A T))
   : Theta setT
   => \{A} => \q => \{T} => \p => \f => q (\x => p (\e =>
-    Sig (get (setT A T) e = coe (T-inv A T) x right) ** (f e)))
+    Sig (get (setT A T) e = transport (\A => A) (T-inv A T) x) ** (f e)))
 
 def agent : Theta setAgentT
   => \{A} => mkTheta getAgentT getAgent setAgentT AgentT-inv {A}
