@@ -23,6 +23,10 @@ public interface CountingReporter extends Reporter {
     return errorSize() == 0;
   }
 
+  default boolean anyError() {
+    return !noError();
+  }
+
   default @NotNull String countToString() {
     return String.format("%d error(s), %d warning(s).", errorSize(), warningSize());
   }

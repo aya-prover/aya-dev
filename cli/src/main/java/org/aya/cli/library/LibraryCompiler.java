@@ -210,13 +210,13 @@ public class LibraryCompiler {
       var reporter = CountingReporter.delegate(outerReporter);
       for (var f : order) Files.deleteIfExists(f.coreFile());
       for (var f : order) {
-        tyckOne(reporter, f);
-        if (!reporter.noError()) return ImmutableSeq.of(f);
+        tyckOne(f);
+        if (reporter.anyError()) return ImmutableSeq.of(f);
       }
       return ImmutableSeq.empty();
     }
 
-    private void tyckOne(CountingReporter reporter, LibrarySource file) {
+    private void tyckOne(@NotNull LibrarySource file) {
       var moduleName = file.moduleName();
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().value == null)

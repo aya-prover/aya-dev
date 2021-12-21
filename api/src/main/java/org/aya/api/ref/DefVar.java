@@ -8,6 +8,7 @@ import org.aya.api.core.CoreDef;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 /**
@@ -19,9 +20,10 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
   /** Initialized in type checking or core deserialization, so it might be null for unchecked user definitions. */
   public @UnknownNullability Core core;
   /** Initialized in the resolver or core deserialization */
-  public @UnknownNullability ImmutableSeq<String> module;
+  public @Nullable ImmutableSeq<String> module;
+  /** Initialized in the resolver or core deserialization */
+  public @Nullable OpDecl opDecl;
   private final @NotNull String name;
-  public @UnknownNullability OpDecl opDecl;
 
   @Contract(pure = true) public boolean isInfix() {
     return opDecl != null && opDecl.opInfo() != null;

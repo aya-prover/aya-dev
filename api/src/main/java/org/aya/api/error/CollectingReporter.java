@@ -15,12 +15,4 @@ public interface CollectingReporter extends CountingReporter {
   @Override default void clear() {
     problems().clear();
   }
-
-  default boolean anyError() {
-    return errorSize() > 0;
-  }
-
-  default boolean anyProblem() {
-    return problems().isNotEmpty();
-  }
 }
