@@ -153,6 +153,7 @@ public record CompiledAya(
     serOps.view().forEach(serOp -> {
       var defVar = state.resolve(serOp.name());
       var opDecl = defVar.opDecl;
+      assert opDecl != null; // just initialized above
       var bind = serOp.bind();
       opSet.ensureHasElem(opDecl);
       bind.loosers().forEach(looser -> {
