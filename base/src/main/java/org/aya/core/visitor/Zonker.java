@@ -76,13 +76,11 @@ public final class Zonker implements TermFixpoint<Unit> {
     return metaPat.inline();
   }
 
-  @Override public @Nullable Sort visitSort(@NotNull Sort sort, Unit unit) {
+  @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
     sort = state.levelEqns().applyTo(sort);
     var sourcePos = sort.unsolvedPos();
-    if (sourcePos != null) {
-      reportLevelSolverError(sourcePos);
-      return null;
-    } else return sort;
+    if (sourcePos != null) reportLevelSolverError(sourcePos);
+    return sort;
   }
 
   private void reportLevelSolverError(@NotNull SourcePos pos) {
