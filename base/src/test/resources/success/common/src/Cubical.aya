@@ -1,5 +1,6 @@
 open import Paths
 
+-- Heterogeneous square
 -- c ---- cd ---- d
 -- |              |
 -- |              |
@@ -7,7 +8,7 @@ open import Paths
 -- |              |
 -- |              |
 -- a ---- ab ---- b
-struct Square {A : Pi (i j : I) -> Type}
+struct HeteroSquare {A : Pi (i j : I) -> Type}
   {a : A left  left} {b : A left  right}
   {c : A right left} {d : A right right}
   (ab : Path (A left ) a b)
@@ -21,12 +22,13 @@ struct Square {A : Pi (i j : I) -> Type}
   | i, right => bd.at i
 }
 
-def square {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j) => new Square {A}
-  (path {A left} (p left)) (path {A right} (p right))
-  (path {\x => A x left} (\x => p x left))
-  (path {\x => A x right} (\x => p x right)) {
-    | at2 => p
-  }
+def heteroSquare {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j) =>
+  new HeteroSquare {A}
+    (path {A left} (p left)) (path {A right} (p right))
+    (path {\x => A x left} (\x => p x left))
+    (path {\x => A x right} (\x => p x right)) {
+      | at2 => p
+    }
 
 struct ConnectedPaths (A : Type) : Type
 | p I : A
@@ -36,3 +38,11 @@ struct ConnectedPaths (A : Type) : Type
 
 def connectPaths (A : Type) (c : ConnectedPaths A) : c.p left = c.q right =>
   path c.p <==> path c.q
+
+struct ConnectedSquares (A : Type) : Type
+| p I I : A
+| q I I : A {
+  | left, left => p right right
+}
+
+-- def connectSquares (A : Type) (c : ConnectedSquares A) =>
