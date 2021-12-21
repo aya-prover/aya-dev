@@ -118,7 +118,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
-        var newBody = matchy.body().subst(subst, levelSubst).accept(this, p).rename();
+        var newBody = matchy.body().rename().subst(subst, levelSubst).accept(this, p);
         return new WithPos<>(matchy.sourcePos(), newBody);
       } else if (!orderIndependent && termSubst.getErr()) return null;
       // ^ if we have an order-dependent clause and the pattern matching is blocked,
@@ -130,19 +130,27 @@ public interface Unfolder<P> extends TermFixpoint<P> {
 
   default @NotNull Term visitAccess(CallTerm.@NotNull Access term, P p) {
     var nevv = term.of().accept(this, p);
-    var field = term.ref();
-    var core = field.core;
+    var fieldRef = term.ref();
+    var fieldDef = fieldRef.core;
     if (!(nevv instanceof IntroTerm.New n)) {
       var args = term.args().map(arg -> visitArg(arg, p));
-      var fieldSubst = checkAndBuildSubst(core.fullTelescope(), args);
-      var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
-      var dropped = args.drop(term.structArgs().size());
-      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, levelSubst, core.clauses);
-      return mischa != null ? mischa.data() : new CallTerm.Access(nevv, field,
+      var fieldSubst = checkAndBuildSubst(fieldDef.fullTelescope(), args);
+      var levelSubst = buildSubst(Def.defLevels(fieldRef), term.sortArgs());
+      var structDef = fieldDef.structRef.core;
+      var structArgsSize = term.structArgs().size();
+      for (var field : structDef.fields) {
+        if (field == fieldDef) continue;
+        var tele = Term.Param.subst(field.telescope(), levelSubst);
+        var access = new CallTerm.Access(nevv, field.ref, term.sortArgs(), args.take(structArgsSize), tele.map(Term.Param::toArg));
+        fieldSubst.add(field.ref, IntroTerm.Lambda.make(tele, access));
+      }
+      var dropped = args.drop(structArgsSize);
+      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, levelSubst, fieldDef.clauses);
+      return mischa != null ? mischa.data().subst(fieldSubst, levelSubst) : new CallTerm.Access(nevv, fieldRef,
         term.sortArgs(), term.structArgs(), dropped);
     }
-    var arguments = buildSubst(core.ownerTele, term.structArgs());
-    var fieldBody = term.fieldArgs().foldLeft(n.params().get(field), CallTerm::make);
+    var arguments = buildSubst(fieldDef.ownerTele, term.structArgs());
+    var fieldBody = term.fieldArgs().foldLeft(n.params().get(fieldRef), CallTerm::make);
     return fieldBody.subst(arguments).accept(this, p);
   }
 

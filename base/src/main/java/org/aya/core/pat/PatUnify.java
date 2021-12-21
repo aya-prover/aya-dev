@@ -9,7 +9,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.env.MapLocalCtx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -74,17 +73,18 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst,
    *
    * @param lhsSubst the substitutions that would turn the lhs pattern to the rhs one.
    * @param rhsSubst the substitutions that would turn the rhs pattern to the lhs one.
+   * @param ctx
    * @return a ctx that contains all variables that are not unified.
    * @throws IllegalArgumentException if failed
    * @see PatUnify#visitAs(org.aya.api.ref.LocalVar, org.aya.core.pat.Pat)
    */
-  public static LocalCtx unifyPat(
+  public static @NotNull LocalCtx unifyPat(
     @NotNull SeqLike<Pat> lpats,
     @NotNull SeqLike<Pat> rpats,
     @NotNull TermSubst lhsSubst,
-    @NotNull TermSubst rhsSubst
+    @NotNull TermSubst rhsSubst,
+    @NotNull LocalCtx ctx
   ) {
-    var ctx = new MapLocalCtx();
     assert rpats.sizeEquals(lpats);
     lpats.view().zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, ctx));
     return ctx;
