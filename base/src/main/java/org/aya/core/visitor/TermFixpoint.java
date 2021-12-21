@@ -8,7 +8,6 @@ import org.aya.api.util.Arg;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
 
@@ -84,9 +83,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitUniv(@NotNull FormTerm.Univ term, P p) {
     var sort = visitSort(term.sort(), p);
-    if (sort == null) return new ErrorTerm(term);
-    if (sort == term.sort()) return term;
-    return new FormTerm.Univ(sort);
+    return sort == term.sort() ? term : new FormTerm.Univ(sort);
   }
 
   @Override default @NotNull Term visitPi(@NotNull FormTerm.Pi term, P p) {
@@ -110,7 +107,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new Arg<>(term, arg.explicit());
   }
 
-  default @Nullable Sort visitSort(@NotNull Sort sort, P p) {
+  default @NotNull Sort visitSort(@NotNull Sort sort, P p) {
     return sort;
   }
 
@@ -123,8 +120,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
     var args = fnCall.args().map(arg -> visitArg(arg, p));
-    var sortArgs = fnCall.sortArgs().mapNotNull(sort -> visitSort(sort, p));
-    if (!sortArgs.sizeEquals(fnCall.sortArgs().size())) return new ErrorTerm(fnCall);
+    var sortArgs = fnCall.sortArgs().map(sort -> visitSort(sort, p));
     if (fnCall.sortArgs().sameElements(sortArgs, true)
       && fnCall.args().sameElements(args, true)) return fnCall;
     return new CallTerm.Fn(fnCall.ref(), sortArgs, args);

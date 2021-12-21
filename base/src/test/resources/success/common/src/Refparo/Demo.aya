@@ -1,0 +1,30 @@
+open import Refparo::Model
+open import Paths
+
+-- *** World
+
+open data Entity : Type
+  | johnImpl
+
+def john : Quantifier Entity
+  => mkConstQ johnImpl
+
+
+open data RainImpl : Type
+  | rain1
+
+def Rain (e : Event (new EventT {})) : Type
+  => RainImpl
+
+def rain : Verb (new EventT {})
+  => mkVerb {new EventT {}} Rain
+
+
+open data RunImpl (ag : Entity) : Type
+  | johnImpl => run1
+
+def Run (e : Event (new EventT { | AgentT => Entity })) : Type
+  => RunImpl e.agent
+
+def run : Verb (new EventT { | AgentT => Entity })
+  => mkVerb {new EventT { | AgentT => Entity }} Run
