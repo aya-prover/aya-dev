@@ -42,7 +42,7 @@ def connectPaths (A : Type) (c : ConnectedPaths A) : c.p left = c.q right =>
 struct ConnectedSquares (A : Type) : Type
 | p I I : A
 | q I I : A {
-  | left, left => p right right
+  | left, i => p right i
 }
 
 -- def connectSquares (A : Type) (c : ConnectedSquares A) =>

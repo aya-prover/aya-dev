@@ -1,4 +1,0 @@
--- https://github.com/aya-prover/aya-dev/discussions/7
-open import Refparo::Common
-
-def foo : unit = arcoe (idpath Unit).at unit right => idpath unit

@@ -1,0 +1,81 @@
+open import Paths
+
+public open data Unit | unit
+
+def coe {a b : Type} (eq : a = b) (x : a) (i : I) : eq.at i
+  => arcoe eq.at x i
+
+-- *** Types
+
+universe u
+
+struct EventT : Type (lsuc u)
+  | AgentT : Type u => Unit
+
+def getAgentT (T : EventT) : Type u => T.AgentT
+def setAgentT (A : Type u) (T : EventT) : EventT
+  => new EventT { | AgentT => A }
+def AgentT-inv (A : Type u) (T : EventT) : A = getAgentT (setAgentT A T)
+  => idp
+
+
+struct Event (T : EventT {universe u}) : Type (lsuc u)
+  | agent : T.AgentT
+
+def getAgent (T : EventT) (e : Event T) : T.AgentT => e.agent
+
+
+universe v
+
+def Quantifier (A : Type u) : Type (lmax u (lsuc v)) => (A -> Type v) -> Type v
+
+def mkConstQ {A : Type u} (x : A) : Quantifier A
+  => \f => f x
+
+
+def Verb (T : EventT {universe u}) : Type (lmax (lsuc u) (lsuc v))
+  => Quantifier (Event T) {universe (lsuc u), v}
+
+def mkVerb {T : EventT} (p : Event T -> Type) : Verb T
+  => \f => Sig (e : Event T) ** (Sig (p e) ** (f e))
+
+def VP (T : EventT {universe u}) : Type (lmax (lsuc u) (lsuc v))
+  => Quantifier (Event T) {universe (lsuc u), v}
+
+
+def BNP (A : Type u) : Type (lmax u (lsuc v)) => Quantifier A {universe u, v}
+
+def GNP (setT : Type u -> EventT -> EventT) (A : Type u)
+  : Type (lmax (lsuc u) (lsuc v))
+  => Pi {T : EventT} -> VP (setT A T) -> VP (setT A T)
+
+def NP (A : Type u) : Type (lmax (lsuc u) (lsuc v))
+  => GNP setAgentT A {universe u, v}
+
+
+def Theta (setT : Type u -> EventT -> EventT) : Type (lmax (lsuc u) (lsuc v))
+  => Pi {A : Type u}
+  -> BNP A {universe u, v}
+  -> GNP setT A {universe u, v}
+
+def mkTheta
+  (getT : EventT -> Type u)
+  (get : Pi (T : EventT) -> Event T -> getT T)
+  (setT : Type u -> EventT -> EventT)
+  (T-inv : Pi (A : Type u) (T : EventT) -> A = getT (setT A T))
+  : Theta setT
+  => \{A} => \q => \{T} => \p => \f => q (\x => p (\e =>
+    Sig (get (setT A T) e = coe (T-inv A T) x right) ** (f e)))
+
+def agent : Theta setAgentT
+  => \{A} => mkTheta getAgentT getAgent setAgentT AgentT-inv {A}
+
+
+def mkConstNP {A : Type u} (x : A) : NP A
+  => \{T} p => \f => p (\e => Sig (e.agent = x) ** (f e))
+
+
+def Sentence : Type (lsuc u) => Type u
+
+def mkSentence {T : EventT} (p : Quantifier (Event T)) : Sentence
+  => p (\x => Unit)
