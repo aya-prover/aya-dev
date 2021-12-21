@@ -14,12 +14,12 @@ struct Square {A : Pi (i j : I) -> Type}
   (cd : Path (A right) c d)
   (ac : Path (\x => A x left ) a c)
   (bd : Path (\x => A x right) b d) : Type
-  | at2 (i j : I) : A i j {
-    | left,  i => ab.at i
-    | right, i => cd.at i
-    | i,  left => ac.at i
-    | i, right => bd.at i
-  }
+| at2 (i j : I) : A i j {
+  | left,  i => ab.at i
+  | right, i => cd.at i
+  | i,  left => ac.at i
+  | i, right => bd.at i
+}
 
 def square {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j) => new Square {A}
   (path {A left} (p left)) (path {A right} (p right))
@@ -27,3 +27,12 @@ def square {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j) => new Square 
   (path {\x => A x right} (\x => p x right)) {
     | at2 => p
   }
+
+struct ConnectedPaths (A : Type) : Type
+| p I : A
+| q I : A {
+  | left => p right
+}
+
+def connectPaths (A : Type) (c : ConnectedPaths A) : c.p left = c.q right =>
+  path c.p <==> path c.q
