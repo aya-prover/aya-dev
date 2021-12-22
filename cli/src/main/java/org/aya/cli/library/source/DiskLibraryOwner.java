@@ -4,8 +4,6 @@ package org.aya.cli.library.source;
 
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.error.CountingReporter;
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
@@ -24,7 +22,6 @@ import java.nio.file.Path;
  * @author kiva
  */
 public record DiskLibraryOwner(
-  @NotNull CountingReporter reporter,
   @NotNull SourceFileLocator locator,
   @NotNull DynamicSeq<Path> modulePathMut,
   @NotNull DynamicSeq<LibraryOwner> libraryDepsMut,
@@ -42,22 +39,18 @@ public record DiskLibraryOwner(
     return config.libraryBuildRoot().resolve("deps").resolve(depName + "_" + version);
   }
 
-  public static @NotNull DiskLibraryOwner from(@NotNull Reporter outReporter, @NotNull LibraryConfig config) throws IOException {
-    var reporter = CountingReporter.of(outReporter);
+  public static @NotNull DiskLibraryOwner from(@NotNull LibraryConfig config) throws IOException {
     var srcRoot = config.librarySrcRoot();
     var locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
-    var owner = new DiskLibraryOwner(reporter, locator, DynamicSeq.of(),
+    var owner = new DiskLibraryOwner(locator, DynamicSeq.of(),
       DynamicSeq.of(), DynamicSeq.of(), config);
     owner.librarySourcesMut.appendAll(FileUtil.collectSource(srcRoot, Constants.AYA_POSTFIX)
       .map(p -> new LibrarySource(owner, p)));
     for (var dep : config.deps()) {
       var depConfig = depConfig(config, dep);
       // TODO[kiva]: should not be null if we have a proper package manager
-      if (depConfig == null) {
-        reporter.reportString("Skipping " + dep.depName());
-        continue;
-      }
-      var depCompiler = DiskLibraryOwner.from(reporter, depConfig);
+      if (depConfig == null) continue;
+      var depCompiler = DiskLibraryOwner.from(depConfig);
       owner.libraryDepsMut.append(depCompiler);
     }
     return owner;
