@@ -2,12 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.util.error.SourceNode;
+import org.jetbrains.annotations.NotNull;
 
 public sealed interface TyckUnit
   extends SourceNode
   permits Stmt, Signatured {
-  boolean needTyck();
+  boolean needTyck(@NotNull ImmutableSeq<String> currentMod);
 }

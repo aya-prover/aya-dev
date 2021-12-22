@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.BufferReporter;
 import org.aya.core.def.Def;
 import org.aya.core.def.UserDef;
@@ -15,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface Sample extends Stmt {
   @NotNull Stmt delegate();
 
-  @Override default boolean needTyck() {
-    return delegate().needTyck();
+  @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
+    return delegate().needTyck(currentMod);
   }
 
   /** @return <code>null</code> if the delegate is a command (not a definition) */

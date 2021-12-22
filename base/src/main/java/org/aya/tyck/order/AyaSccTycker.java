@@ -140,7 +140,8 @@ public record AyaSccTycker(
     stmts.forEach(stmt -> {
       var reference = DynamicSeq.<TyckUnit>create();
       SigRefFinder.HEADER_ONLY.visit(stmt, reference);
-      graph.sucMut(stmt).appendAll(reference.view().filter(TyckUnit::needTyck));
+      graph.sucMut(stmt).appendAll(reference.view()
+        .filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName())));
     });
     var order = graph.topologicalOrder();
     var cycle = order.view().filter(s -> s.sizeGreaterThan(1));

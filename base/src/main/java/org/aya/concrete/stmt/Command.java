@@ -8,8 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public sealed interface Command extends Stmt {
-  @Override default boolean needTyck() {
-    return true;
+  @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
+    // commands are desugared in the shallow resolver
+    return false;
   }
 
   /**

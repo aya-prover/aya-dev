@@ -99,7 +99,7 @@ public final class Remark implements Stmt {
   }
 
   /** It's always downstream (cannot be imported), so always need to be checked. */
-  @Override public boolean needTyck() {
+  @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     return true;
   }
 }
