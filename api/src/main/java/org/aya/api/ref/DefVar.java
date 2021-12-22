@@ -59,6 +59,6 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
     var maybeSubmodule = module;
     if (maybeSubmodule == null) return false;
     if (maybeSubmodule.sizeLessThan(moduleName.size())) return false;
-    return maybeSubmodule.slice(0, moduleName.size()).equals(moduleName);
+    return maybeSubmodule.sliceView(0, moduleName.size()).sameElements(moduleName);
   }
 }
