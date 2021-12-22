@@ -64,7 +64,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     if (!Files.exists(ayaJson)) return tryAyaLibrary(path.getParent());
     try {
       var config = LibraryConfigData.fromLibraryRoot(path);
-      var owner = DiskLibraryOwner.from(reporter, config);
+      var owner = DiskLibraryOwner.from(config);
       libraries.append(owner);
     } catch (IOException e) {
       var s = new StringWriter();
@@ -77,7 +77,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   private void mockLibraries(@NotNull Path path) {
     libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1).map(
-      aya -> WsLibrary.mock(reporter, FileUtil.canonicalize(aya))));
+      aya -> WsLibrary.mock(FileUtil.canonicalize(aya))));
   }
 
   private @Nullable LibraryOwner findOwner(@Nullable Path path) {
@@ -135,7 +135,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       CompilerFlags.Message.EMOJI, false, true, null,
       SeqView.empty(), null);
     try {
-      LibraryCompiler.newCompiler(flags, owner).start();
+      LibraryCompiler.newCompiler(reporter, flags, owner).start();
     } catch (IOException e) {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
@@ -221,7 +221,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
               ownerMut.addLibrarySource(newSrc);
             }
             case null -> {
-              var mock = WsLibrary.mock(reporter, newSrc);
+              var mock = WsLibrary.mock(newSrc);
               Log.d("Created new file: %s, mocked a library %s for it", newSrc, mock.mockConfig().name());
               libraries.append(mock);
             }

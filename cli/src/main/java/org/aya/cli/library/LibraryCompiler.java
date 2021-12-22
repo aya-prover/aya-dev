@@ -5,7 +5,6 @@ package org.aya.cli.library;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.api.error.CountingReporter;
-import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
@@ -37,21 +36,22 @@ public class LibraryCompiler {
   private final @NotNull CountingReporter reporter;
   private final @NotNull CompilerFlags flags;
 
-  private LibraryCompiler(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull LibraryModuleLoader.United states) {
-    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(owner, states));
-    this.reporter = owner.reporter();
+  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull LibraryModuleLoader.United states) {
+    var counting = CountingReporter.delegate(reporter);
+    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(counting, owner, states));
+    this.reporter = counting;
     this.flags = flags;
     this.owner = owner;
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner) {
-    return new LibraryCompiler(flags, owner, new LibraryModuleLoader.United());
+  public static @NotNull LibraryCompiler newCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner) {
+    return new LibraryCompiler(reporter, flags, owner, new LibraryModuleLoader.United());
   }
 
   public static @NotNull LibraryCompiler newCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
     var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
-    var owner = DiskLibraryOwner.from(reporter, config);
-    return newCompiler(flags, owner);
+    var owner = DiskLibraryOwner.from(config);
+    return newCompiler(reporter, flags, owner);
   }
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
@@ -65,7 +65,7 @@ public class LibraryCompiler {
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
     if (source.program().value != null) return; // already parsed
     var owner = source.owner();
-    var program = new AyaParserImpl(owner.reporter()).program(owner.locator(), source.file());
+    var program = new AyaParserImpl(reporter).program(owner.locator(), source.file());
     source.program().value = program;
     var finder = new ImportResolver(mod -> {
       var file = owner.findModule(mod);
@@ -113,7 +113,7 @@ public class LibraryCompiler {
     var library = owner.underlyingLibrary();
     var anyDepChanged = false;
     for (var dep : owner.libraryDeps()) {
-      var depCompiler = new LibraryCompiler(flags, dep, moduleLoader.loader.states());
+      var depCompiler = new LibraryCompiler(reporter, flags, dep, moduleLoader.loader.states());
       var upToDate = depCompiler.make();
       anyDepChanged = anyDepChanged || !upToDate;
       owner.addModulePath(dep.outDir());
@@ -160,13 +160,8 @@ public class LibraryCompiler {
     }
 
     Files.createDirectories(owner.outDir());
-    var delayedReporter = new DelayedReporter(reporter);
-    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(delayedReporter, moduleLoader), changed);
-    // use delayed reporter to avoid showing errors in the middle of compilation.
-    // we only show errors after all SCCs are tycked
-    try (delayedReporter) {
-      SCCs.forEachChecked(tycker::tyckSCC);
-    }
+    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader), changed);
+    SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("I dislike the following module(s):");
       tycker.skippedSet.forEach(f -> reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
@@ -202,16 +197,18 @@ public class LibraryCompiler {
   }
 
   record LibrarySccTycker(
-    @NotNull Reporter outerReporter,
+    @NotNull CountingReporter reporter,
     @NotNull ModuleLoader moduleLoader
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
-      var reporter = CountingReporter.delegate(outerReporter);
       for (var f : order) Files.deleteIfExists(f.coreFile());
       for (var f : order) {
         tyckOne(f);
-        if (reporter.anyError()) return ImmutableSeq.of(f);
+        if (reporter.anyError()) {
+          reporter.clear();
+          return ImmutableSeq.of(f);
+        }
       }
       return ImmutableSeq.empty();
     }
@@ -221,7 +218,7 @@ public class LibraryCompiler {
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().value == null)
         throw new IllegalStateException("Unable to load module: " + moduleName);
-      outerReporter.reportNest("[Tyck] %s (%s)".formatted(
+      reporter.reportNest("[Tyck] %s (%s)".formatted(
         QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
     }
   }

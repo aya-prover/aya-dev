@@ -42,13 +42,10 @@ import java.nio.file.Path;
  * @see FileModuleLoader
  */
 record LibraryModuleLoader(
+  @NotNull CountingReporter reporter,
   @NotNull LibraryOwner owner,
   @NotNull LibraryModuleLoader.United states
 ) implements ModuleLoader {
-  @Override public @NotNull CountingReporter reporter() {
-    return owner.reporter();
-  }
-
   private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
     try {
       var coreFile = file.coreFile();

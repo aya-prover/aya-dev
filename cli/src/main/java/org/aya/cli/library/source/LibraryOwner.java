@@ -4,7 +4,6 @@ package org.aya.cli.library.source;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.CountingReporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,6 @@ public interface LibraryOwner {
   @NotNull SeqView<Path> modulePath();
   @NotNull SeqView<LibrarySource> librarySources();
   @NotNull SeqView<LibraryOwner> libraryDeps();
-  @NotNull CountingReporter reporter();
   @NotNull SourceFileLocator locator();
   @NotNull LibraryConfig underlyingLibrary();
 
