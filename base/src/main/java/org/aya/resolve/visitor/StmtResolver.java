@@ -94,7 +94,7 @@ public interface StmtResolver {
 
   private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, ExprResolver resolver) {
     info.depGraph().sucMut(decl).appendAll(resolver.reference().view()
-      .filter(TyckUnit::needTyck));
+      .filter(unit -> unit.needTyck(info.thisModule().moduleName())));
   }
 
   private static @NotNull Tuple2<ExprResolver, Context>

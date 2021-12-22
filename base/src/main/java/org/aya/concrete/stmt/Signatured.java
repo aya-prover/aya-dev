@@ -49,7 +49,7 @@ public sealed abstract class Signatured implements ConcreteDecl, OpDecl, TyckUni
     return opInfo;
   }
 
-  @Override public boolean needTyck() {
-    return ref().core == null;
+  @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
+    return ref().isInModule(currentMod) && ref().core == null;
   }
 }

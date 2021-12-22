@@ -18,7 +18,8 @@ public sealed interface Generalize extends Stmt {
     return Accessibility.Private;
   }
 
-  @Override default boolean needTyck() {
+  @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
+    // commands are desugared in the shallow resolver
     return false;
   }
 

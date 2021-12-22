@@ -54,4 +54,11 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
   @Override public boolean equals(Object o) {
     return this == o;
   }
+
+  public boolean isInModule(@NotNull ImmutableSeq<String> moduleName) {
+    var maybeSubmodule = module;
+    if (maybeSubmodule == null) return false;
+    if (maybeSubmodule.sizeLessThan(moduleName.size())) return false;
+    return maybeSubmodule.slice(0, moduleName.size()).equals(moduleName);
+  }
 }
