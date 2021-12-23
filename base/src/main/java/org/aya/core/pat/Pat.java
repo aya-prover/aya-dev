@@ -43,7 +43,7 @@ public sealed interface Pat extends CorePat {
     return new Arg<>(toTerm(), explicit());
   }
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new CoreDistiller(options).visitPat(this, BaseDistiller.Outer.Free);
+    return new CoreDistiller(options).pat(this, BaseDistiller.Outer.Free);
   }
   @NotNull Pat rename(@NotNull Substituter.TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit);
   @NotNull Pat zonk(@NotNull Zonker zonker);
@@ -215,7 +215,7 @@ public sealed interface Pat extends CorePat {
       var distiller = new CoreDistiller(options);
       var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
       var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
-        pats.view().map(p -> distiller.visitPat(p, BaseDistiller.Outer.Free)))));
+        pats.view().map(p -> distiller.pat(p, BaseDistiller.Outer.Free)))));
       if (expr.isDefined()) return Doc.sep(doc, Doc.symbol("=>"), expr.get().toDoc(options));
       else return doc;
     }
