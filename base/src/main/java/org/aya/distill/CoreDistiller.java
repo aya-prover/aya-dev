@@ -246,8 +246,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
   }
 
   private @NotNull Doc visitClauses(@NotNull ImmutableSeq<Matching> clauses) {
-    return Doc.vcat(clauses.view()
-      .map(matching -> matching.toDoc(options))
-      .map(doc -> Doc.cat(Doc.symbol("|"), doc)));
+    return Doc.vcat(clauses.view().map(matching ->
+      Doc.sep(Doc.symbol("|"), matching.toDoc(options))));
   }
 }

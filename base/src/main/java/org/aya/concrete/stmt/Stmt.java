@@ -44,7 +44,7 @@ public sealed interface Stmt extends AyaDocile, TyckUnit
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new ConcreteDistiller(options), Unit.unit());
+    return new ConcreteDistiller(options).stmt(this);
   }
 
   /**

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface Pattern extends ConcretePat, BinOpParser.Elem<Pattern> {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new ConcreteDistiller(options).visitPattern(this, BaseDistiller.Outer.Free);
+    return new ConcreteDistiller(options).pattern(this, BaseDistiller.Outer.Free);
   }
 
   @Override @NotNull default Pattern expr() {
