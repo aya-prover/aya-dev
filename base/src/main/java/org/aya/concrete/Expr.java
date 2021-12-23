@@ -64,7 +64,7 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new ConcreteDistiller(options), BaseDistiller.Outer.Free);
+    return new ConcreteDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
 
   interface Visitor<P, R> {

@@ -26,57 +26,132 @@ import org.jetbrains.annotations.NotNull;
  * @see ConcreteDistiller
  */
 public class CoreDistiller extends BaseDistiller<Term> implements
-  Def.Visitor<Unit, @NotNull Doc>,
-  Term.Visitor<BaseDistiller.Outer, Doc> {
+  Def.Visitor<Unit, @NotNull Doc> {
   public CoreDistiller(@NotNull DistillerOptions options) {
     super(options);
   }
 
-  @Override protected @NotNull Doc term(@NotNull Outer outer, @NotNull Term term) {
-    return term.accept(this, outer);
-  }
-
-  @Override public Doc visitRef(@NotNull RefTerm term, Outer outer) {
-    return varDoc(term.var());
-  }
-
-  @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Outer outer) {
-    var params = DynamicSeq.of(term.param());
-    var body = IntroTerm.Lambda.unwrap(term.body(), params::append);
-    Doc bodyDoc;
-    // Syntactic eta-contraction
-    if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {
-      var args = visibleArgsOf(call).view();
-      while (params.isNotEmpty() && args.isNotEmpty()) {
-        var param = params.last();
-        if (checkUneta(args, params.last())) {
-          args = args.dropLast(1);
-          params.removeLast();
-        } else break;
+  @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
+    return switch (preterm) {
+      case RefTerm term -> varDoc(term.var());
+      case CallTerm.Hole term -> {
+        var name = term.ref();
+        var inner = varDoc(name);
+        var showImplicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
+        if (options.map.get(DistillerOptions.Key.InlineMetas))
+          yield visitCalls(false, inner, term.args().view(), outer, showImplicits);
+        yield Doc.wrap("{?", "?}",
+          visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
       }
-      if (call instanceof CallTerm.Access access) bodyDoc = visitAccessHead(access);
-      else {
-        var style = chooseStyle(defVar);
-        bodyDoc = style != null
-          ? visitArgsCalls(defVar, style, args, Outer.Free)
-          : visitCalls(false, varDoc(defVar), args, Outer.Free,
+      case IntroTerm.Tuple term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
+      case CallTerm.Con conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
+      case CallTerm.Fn fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
+      case FormTerm.Sigma term -> {
+        var last = term.params().last();
+        var doc = Doc.sep(
+          Doc.styled(KEYWORD, Doc.symbol("Sig")),
+          visitTele(term.params().dropLast(1), last.type(), Term::findUsages),
+          Doc.symbol("**"),
+          justType(last, Outer.Codomain)
+        );
+        // Same as Pi
+        yield checkParen(outer, doc, Outer.BinOp);
+      }
+      case IntroTerm.Lambda term -> {
+        var params = DynamicSeq.of(term.param());
+        var body = IntroTerm.Lambda.unwrap(term.body(), params::append);
+        Doc bodyDoc;
+        // Syntactic eta-contraction
+        if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {
+          var args = visibleArgsOf(call).view();
+          while (params.isNotEmpty() && args.isNotEmpty()) {
+            var param = params.last();
+            if (checkUneta(args, params.last())) {
+              args = args.dropLast(1);
+              params.removeLast();
+            } else break;
+          }
+          if (call instanceof CallTerm.Access access) bodyDoc = visitAccessHead(access);
+          else {
+            var style = chooseStyle(defVar);
+            bodyDoc = style != null
+              ? visitArgsCalls(defVar, style, args, Outer.Free)
+              : visitCalls(false, varDoc(defVar), args, Outer.Free,
+              options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+          }
+        } else bodyDoc = term(Outer.Free, body);
+
+        if (!options.map.get(DistillerOptions.Key.ShowImplicitPats))
+          params.retainAll(Term.Param::explicit);
+        if (params.isEmpty()) yield bodyDoc;
+
+        var list = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
+        params.forEach(param -> list.append(lambdaParam(param)));
+        list.append(Doc.symbol("=>"));
+        list.append(bodyDoc);
+        var doc = Doc.sep(list);
+        // Add paren when it's in a spine
+        yield checkParen(outer, doc, Outer.AppSpine);
+      }
+      case FormTerm.Univ term -> {
+        var fn = Doc.styled(KEYWORD, "Type");
+        if (!options.map.get(DistillerOptions.Key.ShowLevels)) yield fn;
+        yield visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,
+          SeqView.of(new Arg<>(o -> term.sort().toDoc(), true)),
+          options.map.get(DistillerOptions.Key.ShowImplicitArgs)
+        );
+      }
+      case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
+        Doc.vcat(newTerm.params().view()
+          .map((k, v) -> Doc.sep(Doc.symbol("|"),
+            linkRef(k, FIELD_CALL),
+            Doc.symbol("=>"), term(Outer.Free, v)))
+          .toImmutableSeq()));
+      case CallTerm.Access term -> visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
+        options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+      case RefTerm.MetaPat metaPat -> {
+        var ref = metaPat.ref();
+        if (ref.solution().value == null) yield varDoc(ref.fakeBind());
+        yield visitPat(ref, outer);
+      }
+      case ErrorTerm term -> {
+        var doc = term.description().toDoc(options);
+        yield term.isReallyError() ? Doc.angled(doc) : doc;
+      }
+      case ElimTerm.App term -> {
+        var args = DynamicSeq.of(term.arg());
+        var head = ElimTerm.unapp(term.of(), args);
+        if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
+        yield visitCalls(false, term(Outer.AppHead, head), args.view(), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
-    } else {
-      bodyDoc = body.accept(this, Outer.Free);
-    }
-
-    if (!options.map.get(DistillerOptions.Key.ShowImplicitPats))
-      params.retainAll(Term.Param::explicit);
-    if (params.isEmpty()) return bodyDoc;
-
-    var list = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
-    params.forEach(param -> list.append(lambdaParam(param)));
-    list.append(Doc.symbol("=>"));
-    list.append(bodyDoc);
-    var doc = Doc.sep(list);
-    // Add paren when it's in a spine
-    return checkParen(outer, doc, Outer.AppSpine);
+      case CallTerm.Prim prim -> visitArgsCalls(prim.ref(), FN_CALL, prim.args(), outer);
+      case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
+      case ElimTerm.Proj term -> Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+      case FormTerm.Pi term -> {
+        if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
+          yield term(outer, term.body());
+        }
+        // Try to omit the Pi keyword
+        if (term.body().findUsages(term.param().ref()) == 0) yield checkParen(outer, Doc.sep(
+          Doc.bracedUnless(term.param().type().toDoc(options), term.param().explicit()),
+          Doc.symbol("->"),
+          term(Outer.Codomain, term.body())
+        ), Outer.BinOp);
+        var params = DynamicSeq.of(term.param());
+        var body = FormTerm.unpi(term.body(), params);
+        var doc = Doc.sep(
+          Doc.styled(KEYWORD, Doc.symbol("Pi")),
+          visitTele(params, body, Term::findUsages),
+          Doc.symbol("->"),
+          term(Outer.Codomain, body)
+        );
+        // Add paren when it's not free or a codomain
+        yield checkParen(outer, doc, Outer.BinOp);
+      }
+      case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
+      case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
+    };
   }
 
   /** @return if we can eta-contract the last argument */
@@ -96,130 +171,9 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       ? access.fieldArgs() : call.args();
   }
 
-  @Override public Doc visitPi(@NotNull FormTerm.Pi term, Outer outer) {
-    if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
-      return term.body().accept(this, outer);
-    }
-    // Try to omit the Pi keyword
-    if (term.body().findUsages(term.param().ref()) == 0) {
-      return checkParen(outer, Doc.sep(
-        Doc.bracedUnless(term.param().type().toDoc(options), term.param().explicit()),
-        Doc.symbol("->"),
-        term.body().accept(this, Outer.Codomain)
-      ), Outer.BinOp);
-    }
-    var params = DynamicSeq.of(term.param());
-    var body = FormTerm.unpi(term.body(), params);
-    var doc = Doc.sep(
-      Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      visitTele(params, body, Term::findUsages),
-      Doc.symbol("->"),
-      body.accept(this, Outer.Codomain)
-    );
-    // Add paren when it's not free or a codomain
-    return checkParen(outer, doc, Outer.BinOp);
-  }
-
-  @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Outer outer) {
-    var last = term.params().last();
-    var doc = Doc.sep(
-      Doc.styled(KEYWORD, Doc.symbol("Sig")),
-      visitTele(term.params().dropLast(1), last.type(), Term::findUsages),
-      Doc.symbol("**"),
-      justType(last, Outer.Codomain)
-    );
-    // Same as Pi
-    return checkParen(outer, doc, Outer.BinOp);
-  }
-
-  @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
-    var fn = Doc.styled(KEYWORD, "Type");
-    if (!options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
-    return visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,
-      SeqView.of(new Arg<>(o -> term.sort().toDoc(), true)),
-      options.map.get(DistillerOptions.Key.ShowImplicitArgs)
-    );
-  }
-
-  @Override public Doc visitApp(@NotNull ElimTerm.App term, Outer outer) {
-    var args = DynamicSeq.of(term.arg());
-    var head = ElimTerm.unapp(term.of(), args);
-    if (head instanceof RefTerm.Field fieldRef) return visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
-    return visitCalls(false, head.accept(this, Outer.AppHead), args.view(), outer,
-      options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-  }
-
-  @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Outer outer) {
-    return visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
-  }
-
-  @Override public Doc visitPrimCall(CallTerm.@NotNull Prim prim, Outer outer) {
-    return visitArgsCalls(prim.ref(), FN_CALL, prim.args(), outer);
-  }
-
-  @Override public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Outer outer) {
-    return visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
-  }
-
-  @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Outer outer) {
-    return visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
-  }
-
-  @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Outer outer) {
-    return visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
-  }
-
-  @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Outer outer) {
-    return Doc.parened(Doc.commaList(term.items().view()
-      .map(t -> t.accept(this, Outer.Free))));
-  }
-
-  @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Outer outer) {
-    return Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
-      Doc.vcat(newTerm.params().view()
-        .map((k, v) -> Doc.sep(Doc.symbol("|"),
-          linkRef(k, FIELD_CALL),
-          Doc.symbol("=>"), v.accept(this, Outer.Free)))
-        .toImmutableSeq()));
-  }
-
-  @Override public Doc visitProj(@NotNull ElimTerm.Proj term, Outer outer) {
-    return Doc.cat(term.of().accept(this, Outer.ProjHead), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
-  }
-
-  @Override public Doc visitAccess(CallTerm.@NotNull Access term, Outer outer) {
-    return visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
-      options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-  }
-
-  @NotNull private Doc visitAccessHead(CallTerm.@NotNull Access term) {
-    return Doc.cat(term.of().accept(this, Outer.ProjHead), Doc.symbol("."),
+  private @NotNull Doc visitAccessHead(CallTerm.@NotNull Access term) {
+    return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
       linkRef(term.ref(), FIELD_CALL));
-  }
-
-  @Override public Doc visitHole(CallTerm.@NotNull Hole term, Outer outer) {
-    var name = term.ref();
-    var inner = varDoc(name);
-    var showImplicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
-    if (options.map.get(DistillerOptions.Key.InlineMetas))
-      return visitCalls(false, inner, term.args().view(), outer, showImplicits);
-    return Doc.wrap("{?", "?}",
-      visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
-  }
-
-  @Override public Doc visitFieldRef(@NotNull RefTerm.Field term, Outer outer) {
-    return linkRef(term.ref(), FIELD_CALL);
-  }
-
-  @Override public Doc visitError(@NotNull ErrorTerm term, Outer outer) {
-    var doc = term.description().toDoc(options);
-    return !term.isReallyError() ? doc : Doc.angled(doc);
-  }
-
-  @Override public Doc visitMetaPat(RefTerm.@NotNull MetaPat metaPat, Outer outer) {
-    var ref = metaPat.ref();
-    if (ref.solution().value == null) return varDoc(ref.fakeBind());
-    return visitPat(ref, outer);
   }
 
   public Doc visitPat(@NotNull Pat pat, Outer outer) {
@@ -248,10 +202,10 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       linkDef(def.ref(), FN_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().accept(this, Outer.Free)
+      term(Outer.Free, def.result())
     });
     return def.body.fold(
-      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.accept(this, Outer.Free)),
+      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term(Outer.Free, term)),
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
   }
 
@@ -266,7 +220,7 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       linkDef(def.ref(), DATA_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().accept(this, Outer.Free));
+      term(Outer.Free, def.result()));
     return Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, Doc.vcat(
       def.body.view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
@@ -288,7 +242,7 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       linkDef(def.ref(), STRUCT_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().accept(this, Outer.Free)
+      term(Outer.Free, def.result())
     ), Doc.nest(2, Doc.vcat(
       def.fields.view().map(field -> field.accept(this, Unit.unit())))));
   }
@@ -299,7 +253,7 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       linkDef(field.ref(), FIELD_CALL),
       visitTele(field.selfTele),
       Doc.symbol(":"),
-      field.result.accept(this, Outer.Free)), 2, visitClauses(field.clauses));
+      term(Outer.Free, field.result)), 2, visitClauses(field.clauses));
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {

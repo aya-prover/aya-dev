@@ -106,7 +106,7 @@ public sealed interface Term extends CoreTerm permits
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new CoreDistiller(options), BaseDistiller.Outer.Free);
+    return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
 
   interface Visitor<P, R> {
