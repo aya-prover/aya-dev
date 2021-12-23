@@ -33,10 +33,6 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements Docil
     return this.levels().view().mapNotNull(Sort::unsolvedPos).firstOrNull();
   }
 
-  public static @NotNull Sort max(@NotNull Sort lhs, @NotNull Sort rhs) {
-    return new Sort(lhs.levels().appendedAll(rhs.levels()));
-  }
-
   public static @NotNull Sort merge(@NotNull ImmutableSeq<Sort> levels) {
     if (levels.sizeEquals(1)) return levels.first();
     return new Sort(levels.flatMap(Sort::levels));

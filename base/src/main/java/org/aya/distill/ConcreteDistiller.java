@@ -31,176 +31,119 @@ import java.util.Objects;
  * @author ice1000, kiva
  * @see CoreDistiller
  */
-public class ConcreteDistiller extends BaseDistiller<Expr> implements
-  Stmt.Visitor<Unit, Doc>,
-  Expr.Visitor<BaseDistiller.Outer, Doc> {
+public class ConcreteDistiller extends BaseDistiller<Expr> implements Stmt.Visitor<Unit, Doc> {
   public ConcreteDistiller(@NotNull DistillerOptions options) {
     super(options);
   }
 
-  @Override protected @NotNull Doc term(@NotNull Outer outer, @NotNull Expr expr) {
-    return expr.accept(this, outer);
-  }
-
-  @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Outer outer) {
-    var ref = expr.resolvedVar();
-    if (ref instanceof DefVar<?, ?> defVar) return defVar(defVar);
-    else if (ref instanceof PreLevelVar levelVar) return linkRef(levelVar, GENERALIZED);
-    else return varDoc(ref);
-  }
-
-  @Override public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Outer outer) {
-    return Doc.plain(expr.name().join());
-  }
-
-  @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Outer outer) {
-    if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
-      return expr.body().accept(this, outer);
-    }
-    var prelude = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
-      lambdaParam(expr.param()));
-    if (!(expr.body() instanceof Expr.HoleExpr)) {
-      prelude.append(Doc.symbol("=>"));
-      prelude.append(expr.body().accept(this, Outer.Free));
-    }
-    return checkParen(outer, Doc.sep(prelude), Outer.BinOp);
-  }
-
-  @Override public Doc visitPi(Expr.@NotNull PiExpr expr, Outer outer) {
-    var data = new boolean[]{false, false};
-    expr.last().accept(new ExprConsumer<>() {
-      @Override public Unit visitRef(@NotNull Expr.RefExpr ref, Unit unit) {
-        if (ref.resolvedVar() == expr.param().ref()) data[0] = true;
-        return unit;
+  @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Expr prexpr) {
+    return switch (prexpr) {
+      case Expr.ErrorExpr error -> Doc.angled(error.description().toDoc(options));
+      case Expr.TupExpr expr -> Doc.parened(Doc.commaList(expr.items().view().map(e -> term(Outer.Free, e))));
+      case Expr.BinOpSeq binOpSeq -> {
+        var seq = binOpSeq.seq();
+        var first = seq.first().expr();
+        if (seq.sizeEquals(1)) yield term(outer, first);
+        yield visitCalls(false,
+          term(Outer.AppSpine, first),
+          seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())), outer,
+          options.map.get(DistillerOptions.Key.ShowImplicitArgs)
+        );
       }
+      case Expr.LitStringExpr expr -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(expr.string()) + "\"");
+      case Expr.PiExpr expr -> {
+        var data = new boolean[]{false, false};
+        expr.last().accept(new ExprConsumer<>() {
+          @Override public Unit visitRef(@NotNull Expr.RefExpr ref, Unit unit) {
+            if (ref.resolvedVar() == expr.param().ref()) data[0] = true;
+            return unit;
+          }
 
-      @Override public Unit visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Unit unit) {
-        data[1] = true;
-        return unit;
+          @Override public Unit visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Unit unit) {
+            data[1] = true;
+            return unit;
+          }
+        }, Unit.unit());
+        Doc doc;
+        var last = term(Outer.Codomain, expr.last());
+        if (!data[0] && !data[1]) {
+          var tyDoc = expr.param().type().toDoc(options);
+          doc = Doc.sep(Doc.bracedUnless(tyDoc, expr.param().explicit()), Doc.symbol("->"), last);
+        } else {
+          doc = Doc.sep(Doc.styled(KEYWORD, Doc.symbol("Pi")), expr.param().toDoc(options), Doc.symbol("->"), last);
+        }
+        // When outsider is neither a codomain nor non-expression, we need to add parentheses.
+        yield checkParen(outer, doc, Outer.BinOp);
       }
-    }, Unit.unit());
-    Doc doc;
-    if (!data[0] && !data[1]) {
-      var tyDoc = expr.param().type().toDoc(options);
-      doc = Doc.sep(Doc.bracedUnless(tyDoc, expr.param().explicit()),
-        Doc.symbol("->"),
-        expr.last().accept(this, Outer.Codomain));
-    } else doc = Doc.sep(
-      Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      expr.param().toDoc(options),
-      Doc.symbol("->"),
-      expr.last().accept(this, Outer.Codomain));
-    // When outsider is neither a codomain nor non-expression, we need to add parentheses.
-    return checkParen(outer, doc, Outer.BinOp);
-  }
-
-  @Override public Doc visitSigma(Expr.@NotNull SigmaExpr expr, Outer outer) {
-    var doc = Doc.sep(
-      Doc.styled(KEYWORD, Doc.symbol("Sig")),
-      visitTele(expr.params().dropLast(1)),
-      Doc.symbol("**"),
-      Objects.requireNonNull(expr.params().last().type()).accept(this, Outer.Codomain));
-    // Same as Pi
-    return checkParen(outer, doc, Outer.BinOp);
-  }
-
-  @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Outer outer) {
-    return Doc.styled(KEYWORD, "Type");
-  }
-
-  @Override public Doc visitRawUnivArgs(Expr.@NotNull RawUnivArgsExpr expr, Outer outer) {
-    return Doc.sep(Doc.styled(KEYWORD, "universe"),
-      Doc.commaList(expr.univArgs().view().map(e -> e.accept(this, Outer.Free))));
-  }
-
-  @Override public Doc visitUnivArgs(Expr.@NotNull UnivArgsExpr expr, Outer outer) {
-    return Doc.sep(Doc.styled(KEYWORD, "universe"),
-      Doc.commaList(expr.univArgs().view().map(Docile::toDoc)));
-  }
-
-  @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Outer outer) {
-    var fn = Doc.styled(KEYWORD, "Type");
-    if (!options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
-    return visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
-      SeqView.of(new Arg<>(o -> expr.level().toDoc(), true)),
-      true
-    );
-  }
-
-  @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Outer outer) {
-    var args = DynamicSeq.of(expr.argument());
-    var head = Expr.unapp(expr.function(), args);
-    var infix = false;
-    if (head instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar var)
-      infix = var.isInfix();
-    return visitCalls(infix,
-      head.accept(this, Outer.AppHead),
-      args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())), outer,
-      options.map.get(DistillerOptions.Key.ShowImplicitArgs)
-    );
-  }
-
-  @Override public Doc visitLsuc(Expr.@NotNull LSucExpr expr, Outer outer) {
-    return visitCalls(false,
-      Doc.styled(KEYWORD, "lsuc"),
-      SeqView.of(new Arg<>(expr.expr(), true)), outer, true);
-  }
-
-  @Override public Doc visitLmax(Expr.@NotNull LMaxExpr expr, Outer outer) {
-    return visitCalls(false,
-      Doc.styled(KEYWORD, "lmax"),
-      expr.levels().view().map(term -> new Arg<>(term, true)), outer, true);
-  }
-
-  @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Outer outer) {
-    if (!expr.explicit()) return Doc.symbol(Constants.ANONYMOUS_PREFIX);
-    var filling = expr.filling();
-    if (filling == null) return Doc.symbol("{??}");
-    return Doc.sep(Doc.symbol("{?"), filling.accept(this, Outer.Free), Doc.symbol("?}"));
-  }
-
-  @Override public Doc visitTup(Expr.@NotNull TupExpr expr, Outer outer) {
-    return Doc.parened(Doc.commaList(expr.items().view().map(e -> e.accept(this, Outer.Free))));
-  }
-
-  @Override public Doc visitProj(Expr.@NotNull ProjExpr expr, Outer outer) {
-    return Doc.cat(expr.tup().accept(this, Outer.ProjHead), Doc.plain("."), Doc.plain(expr.ix().fold(
-      Objects::toString, WithPos::data
-    )));
-  }
-
-  @Override public Doc visitNew(Expr.@NotNull NewExpr expr, Outer outer) {
-    return Doc.cblock(
-      Doc.sep(Doc.styled(KEYWORD, "new"), expr.struct().accept(this, Outer.Free)),
-      2, Doc.vcat(expr.fields().view().map(t ->
-        Doc.sep(Doc.symbol("|"), Doc.plain(t.name()),
-          Doc.emptyIf(t.bindings().isEmpty(), () ->
-            Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
-          Doc.plain("=>"), t.body().accept(this, Outer.Free))
-      )));
-  }
-
-  @Override public Doc visitLitInt(Expr.@NotNull LitIntExpr expr, Outer outer) {
-    return Doc.plain(String.valueOf(expr.integer()));
-  }
-
-  @Override public Doc visitLitString(Expr.@NotNull LitStringExpr expr, Outer outer) {
-    return Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(expr.string()) + "\"");
-  }
-
-  @Override public Doc visitError(Expr.@NotNull ErrorExpr error, Outer outer) {
-    return Doc.angled(error.description().toDoc(options));
-  }
-
-  @Override
-  public Doc visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Outer outer) {
-    var seq = binOpSeq.seq();
-    if (seq.sizeEquals(1)) return seq.first().expr().accept(this, outer);
-    return visitCalls(false,
-      seq.first().expr().accept(this, Outer.AppSpine),
-      seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())), outer,
-      options.map.get(DistillerOptions.Key.ShowImplicitArgs)
-    );
+      case Expr.AppExpr expr -> {
+        var args = DynamicSeq.of(expr.argument());
+        var head = Expr.unapp(expr.function(), args);
+        var infix = false;
+        if (head instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar var)
+          infix = var.isInfix();
+        yield visitCalls(infix,
+          term(Outer.AppHead, head),
+          args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())), outer,
+          options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+      }
+      case Expr.LMaxExpr expr -> visitCalls(false, Doc.styled(KEYWORD, "lmax"),
+        expr.levels().view().map(term -> new Arg<>(term, true)), outer, true);
+      case Expr.LamExpr expr -> {
+        if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
+          yield term(outer, expr.body());
+        }
+        var prelude = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
+          lambdaParam(expr.param()));
+        if (!(expr.body() instanceof Expr.HoleExpr)) {
+          prelude.append(Doc.symbol("=>"));
+          prelude.append(term(Outer.Free, expr.body()));
+        }
+        yield checkParen(outer, Doc.sep(prelude), Outer.BinOp);
+      }
+      case Expr.HoleExpr expr -> {
+        if (!expr.explicit()) yield Doc.symbol(Constants.ANONYMOUS_PREFIX);
+        var filling = expr.filling();
+        if (filling == null) yield Doc.symbol("{??}");
+        yield Doc.sep(Doc.symbol("{?"), term(Outer.Free, filling), Doc.symbol("?}"));
+      }
+      case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
+        Doc.plain(expr.ix().fold(Objects::toString, WithPos::data)));
+      case Expr.UnivArgsExpr expr -> Doc.sep(Doc.styled(KEYWORD, "universe"),
+        Doc.commaList(expr.univArgs().view().map(Docile::toDoc)));
+      case Expr.UnresolvedExpr expr -> Doc.plain(expr.name().join());
+      case Expr.RefExpr expr -> {
+        var ref = expr.resolvedVar();
+        if (ref instanceof DefVar<?, ?> defVar) yield defVar(defVar);
+        else if (ref instanceof PreLevelVar levelVar) yield linkRef(levelVar, GENERALIZED);
+        else yield varDoc(ref);
+      }
+      case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
+      case Expr.RawUnivExpr e -> Doc.styled(KEYWORD, "Type");
+      case Expr.RawUnivArgsExpr expr -> Doc.sep(Doc.styled(KEYWORD, "universe"),
+        Doc.commaList(expr.univArgs().view().map(e -> term(Outer.Free, e))));
+      case Expr.NewExpr expr -> Doc.cblock(
+        Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
+        2, Doc.vcat(expr.fields().view().map(t ->
+          Doc.sep(Doc.symbol("|"), Doc.plain(t.name()),
+            Doc.emptyIf(t.bindings().isEmpty(), () ->
+              Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
+            Doc.plain("=>"), term(Outer.Free, t.body()))
+        )));
+      case Expr.LSucExpr expr -> visitCalls(false, Doc.styled(KEYWORD, "lsuc"),
+        SeqView.of(new Arg<>(expr.expr(), true)), outer, true);
+      case Expr.SigmaExpr expr -> checkParen(outer, Doc.sep(
+        Doc.styled(KEYWORD, Doc.symbol("Sig")),
+        visitTele(expr.params().dropLast(1)),
+        Doc.symbol("**"),
+        term(Outer.Codomain, expr.params().last().type())), Outer.BinOp);
+      // ^ Same as Pi
+      case Expr.UnivExpr expr -> {
+        var fn = Doc.styled(KEYWORD, "Type");
+        if (!options.map.get(DistillerOptions.Key.ShowLevels)) yield fn;
+        yield visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
+          SeqView.of(new Arg<>(o -> expr.level().toDoc(), true)), true);
+      }
+    };
   }
 
   public @NotNull Doc visitPattern(@NotNull Pattern pattern, Outer outer) {
@@ -236,7 +179,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> implements
 
   public Doc matchy(Pattern.@NotNull Clause match) {
     var doc = visitMaybeCtorPatterns(match.patterns, Outer.Free, Doc.plain(", "));
-    return match.expr.map(e -> Doc.sep(doc, Doc.plain("=>"), e.accept(this, Outer.Free))).getOrDefault(doc);
+    return match.expr.map(e -> Doc.sep(doc, Doc.plain("=>"), term(Outer.Free, e))).getOrDefault(doc);
   }
 
   private Doc visitAccess(Stmt.@NotNull Accessibility accessibility, Stmt.Accessibility def) {
@@ -331,7 +274,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> implements
   private void appendResult(DynamicSeq<Doc> prelude, Expr result) {
     if (result instanceof Expr.HoleExpr) return;
     prelude.append(Doc.symbol(":"));
-    prelude.append(result.accept(this, Outer.Free));
+    prelude.append(term(Outer.Free, result));
   }
 
   @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
@@ -342,7 +285,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> implements
     appendResult(doc, field.result);
     if (field.body.isDefined()) {
       doc.append(Doc.symbol("=>"));
-      doc.append(field.body.get().accept(this, Outer.Free));
+      doc.append(term(Outer.Free, field.body.get()));
     }
     return Doc.cblock(Doc.sepNonEmpty(doc), 2, visitClauses(field.clauses));
   }
@@ -354,7 +297,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> implements
     prelude.append(visitTele(decl.telescope));
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
-      decl.body.fold(expr -> Doc.cat(Doc.ONE_WS, Doc.symbol("=>"), Doc.ONE_WS, expr.accept(this, Outer.Free)),
+      decl.body.fold(expr -> Doc.cat(Doc.ONE_WS, Doc.symbol("=>"), Doc.ONE_WS, term(Outer.Free, expr)),
         clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses)))),
       visitBindBlock(decl.bindBlock)
     );
