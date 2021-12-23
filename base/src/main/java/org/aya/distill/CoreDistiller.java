@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000, kiva
  * @see ConcreteDistiller
  */
-public class CoreDistiller extends BaseDistiller<Term> implements
-  Def.Visitor<Unit, @NotNull Doc> {
+public class CoreDistiller extends BaseDistiller<Term> {
   public CoreDistiller(@NotNull DistillerOptions options) {
     super(options);
   }
@@ -112,7 +111,7 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       case RefTerm.MetaPat metaPat -> {
         var ref = metaPat.ref();
         if (ref.solution().value == null) yield varDoc(ref.fakeBind());
-        yield visitPat(ref, outer);
+        yield pat(ref, outer);
       }
       case ErrorTerm term -> {
         var doc = term.description().toDoc(options);
@@ -176,11 +175,11 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       linkRef(term.ref(), FIELD_CALL));
   }
 
-  public Doc visitPat(@NotNull Pat pat, Outer outer) {
+  public @NotNull Doc pat(@NotNull Pat pat, Outer outer) {
     return switch (pat) {
       case Pat.Meta meta -> {
         var sol = meta.solution().value;
-        yield sol != null ? visitPat(sol, outer) : Doc.bracedUnless(linkDef(meta.fakeBind()), meta.explicit());
+        yield sol != null ? pat(sol, outer) : Doc.bracedUnless(linkDef(meta.fakeBind()), meta.explicit());
       }
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());
       case Pat.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
@@ -191,72 +190,63 @@ public class CoreDistiller extends BaseDistiller<Term> implements
       }
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
-        Doc.commaList(tuple.pats().view().map(sub -> visitPat(sub, Outer.Free))));
+        Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
     };
   }
 
-  @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
-    var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "def"));
-    def.modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
-    line1.appendAll(new Doc[]{
-      linkDef(def.ref(), FN_CALL),
-      visitTele(def.telescope()),
-      Doc.symbol(":"),
-      term(Outer.Free, def.result())
-    });
-    return def.body.fold(
-      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term(Outer.Free, term)),
-      clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
+  public @NotNull Doc def(@NotNull Def predef) {
+    return switch (predef) {
+      case FnDef def -> {
+        var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "def"));
+        def.modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
+        line1.appendAll(new Doc[]{
+          linkDef(def.ref(), FN_CALL),
+          visitTele(def.telescope()),
+          Doc.symbol(":"),
+          term(Outer.Free, def.result())
+        });
+        yield def.body.fold(
+          term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term(Outer.Free, term)),
+          clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
+      }
+      case FieldDef field -> Doc.cblock(Doc.sepNonEmpty(Doc.symbol("|"),
+        coe(field.coerce),
+        linkDef(field.ref(), FIELD_CALL),
+        visitTele(field.selfTele),
+        Doc.symbol(":"),
+        term(Outer.Free, field.result)), 2, visitClauses(field.clauses));
+      case PrimDef def -> primDoc(def.ref());
+      case CtorDef ctor -> {
+        var doc = Doc.sepNonEmpty(coe(ctor.coerce),
+          linkDef(ctor.ref(), CON_CALL),
+          visitTele(ctor.selfTele));
+        Doc line1;
+        if (ctor.pats.isNotEmpty()) {
+          var pats = Doc.commaList(ctor.pats.view().map(pat -> pat(pat, Outer.Free)));
+          line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
+        } else line1 = Doc.sep(Doc.symbol("|"), doc);
+        yield Doc.cblock(line1, 2, visitClauses(ctor.clauses));
+      }
+      case StructDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
+        linkDef(def.ref(), STRUCT_CALL),
+        visitTele(def.telescope()),
+        Doc.symbol(":"),
+        term(Outer.Free, def.result())
+      ), Doc.nest(2, Doc.vcat(def.fields.view().map(this::def))));
+      case DataDef def -> {
+        var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "data"),
+          linkDef(def.ref(), DATA_CALL),
+          visitTele(def.telescope()),
+          Doc.symbol(":"),
+          term(Outer.Free, def.result()));
+        yield Doc.vcat(Doc.sepNonEmpty(line1),
+          Doc.nest(2, Doc.vcat(def.body.view().map(this::def))));
+      }
+    };
   }
 
-  private Doc visitClauses(@NotNull ImmutableSeq<Matching> clauses) {
-    return Doc.vcat(clauses.view()
-      .map(matching -> matching.toDoc(options))
-      .map(doc -> Doc.cat(Doc.symbol("|"), doc)));
-  }
-
-  @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
-    var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "data"),
-      linkDef(def.ref(), DATA_CALL),
-      visitTele(def.telescope()),
-      Doc.symbol(":"),
-      term(Outer.Free, def.result()));
-    return Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, Doc.vcat(
-      def.body.view().map(ctor -> ctor.accept(this, Unit.unit())))));
-  }
-
-  @Override public Doc visitCtor(@NotNull CtorDef ctor, Unit unit) {
-    var doc = Doc.sepNonEmpty(coe(ctor.coerce),
-      linkDef(ctor.ref(), CON_CALL),
-      visitTele(ctor.selfTele));
-    Doc line1;
-    if (ctor.pats.isNotEmpty()) {
-      var pats = Doc.commaList(ctor.pats.view().map(pat -> visitPat(pat, Outer.Free)));
-      line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
-    } else line1 = Doc.sep(Doc.symbol("|"), doc);
-    return Doc.cblock(line1, 2, visitClauses(ctor.clauses));
-  }
-
-  @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
-    return Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
-      linkDef(def.ref(), STRUCT_CALL),
-      visitTele(def.telescope()),
-      Doc.symbol(":"),
-      term(Outer.Free, def.result())
-    ), Doc.nest(2, Doc.vcat(
-      def.fields.view().map(field -> field.accept(this, Unit.unit())))));
-  }
-
-  @Override public Doc visitField(@NotNull FieldDef field, Unit unit) {
-    return Doc.cblock(Doc.sepNonEmpty(Doc.symbol("|"),
-      coe(field.coerce),
-      linkDef(field.ref(), FIELD_CALL),
-      visitTele(field.selfTele),
-      Doc.symbol(":"),
-      term(Outer.Free, field.result)), 2, visitClauses(field.clauses));
-  }
-
-  @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {
-    return primDoc(def.ref());
+  private @NotNull Doc visitClauses(@NotNull ImmutableSeq<Matching> clauses) {
+    return Doc.vcat(clauses.view().map(matching ->
+      Doc.sep(Doc.symbol("|"), matching.toDoc(options))));
   }
 }

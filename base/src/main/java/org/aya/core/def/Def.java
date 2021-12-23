@@ -5,7 +5,6 @@ package org.aya.core.def;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Unit;
 import org.aya.api.core.CoreDef;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
@@ -70,7 +69,7 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new CoreDistiller(options), Unit.unit());
+    return new CoreDistiller(options).def(this);
   }
 
   /**
