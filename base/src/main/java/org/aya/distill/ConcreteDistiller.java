@@ -138,6 +138,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
+      // TODO: add tactic
+      default -> throw new UnsupportedOperationException();
     };
   }
 

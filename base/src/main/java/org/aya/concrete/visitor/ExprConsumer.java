@@ -93,6 +93,18 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
+  default void visitTacNode(@NotNull Expr.TacNode node, P p) {
+    switch (node) {
+      case Expr.ExprTac expr -> expr.expr().accept(this, p);
+      case Expr.ListExprTac list -> list.tacNodes().forEach(n -> visitTacNode(n, p));
+    }
+  }
+
+  @Override default Unit visitTac(Expr.@NotNull TacExpr tactic, P p) {
+    visitTacNode(tactic.tacNode(), p);
+    return Unit.unit();
+  }
+
   @Override default Unit visitLitString(Expr.@NotNull LitStringExpr expr, P p) {
     return Unit.unit();
   }
