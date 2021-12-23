@@ -5,7 +5,7 @@ package org.aya.concrete.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
-import org.aya.distill.CoreDistiller;
+import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.binop.Assoc;
@@ -81,7 +81,7 @@ public final class OperatorProblem {
 
     @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.plain("Use"),
-        Doc.styled(CoreDistiller.KEYWORD.and().code(), Doc.plain("bind")),
+        Doc.styled(BaseDistiller.KEYWORD.and().code(), Doc.plain("bind")),
         Doc.english("statement or insert parentheses to make it clear."));
     }
   }

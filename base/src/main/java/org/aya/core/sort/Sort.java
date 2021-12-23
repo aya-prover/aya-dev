@@ -4,7 +4,7 @@ package org.aya.core.sort;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.Var;
-import org.aya.distill.CoreDistiller;
+import org.aya.distill.BaseDistiller;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -44,7 +44,7 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements Docil
 
   @Override public @NotNull Doc toDoc() {
     return levels.sizeEquals(1) ? levels.first().toDoc() : Doc.parened(Doc.sep(
-      Doc.styled(CoreDistiller.KEYWORD, "lmax"),
+      Doc.styled(BaseDistiller.KEYWORD, "lmax"),
       Doc.sep(levels.map(Docile::toDoc))
     ));
   }

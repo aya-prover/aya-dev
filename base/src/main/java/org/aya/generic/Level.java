@@ -4,7 +4,7 @@ package org.aya.generic;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.Var;
-import org.aya.distill.CoreDistiller;
+import org.aya.distill.BaseDistiller;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -43,7 +43,7 @@ public sealed interface Level<V extends Var> extends Docile {
     @Override public @NotNull Doc toDoc() {
       return Doc.parened(Doc.sep(among.view()
         .map(Docile::toDoc)
-        .prepended(Doc.styled(CoreDistiller.KEYWORD, "max"))
+        .prepended(Doc.styled(BaseDistiller.KEYWORD, "max"))
         .toImmutableSeq()));
     }
   }
