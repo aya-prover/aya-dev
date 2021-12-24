@@ -47,7 +47,9 @@ public record StmtShallowResolver(
         if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
         var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
         resolveInfo.imports().append(success);
-        context.importModules(cmd.path().ids(), Stmt.Accessibility.Private, mod.exports, cmd.sourcePos());
+        var as = cmd.asName();
+        var importedName = as != null ? ImmutableSeq.of(as) : ids;
+        context.importModules(importedName, Stmt.Accessibility.Private, mod.exports, cmd.sourcePos());
       }
       case Command.Open cmd -> {
         var mod = cmd.path().ids();
