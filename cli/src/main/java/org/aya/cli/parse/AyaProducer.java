@@ -107,7 +107,8 @@ public record AyaProducer(
     return unreachable(ctx);
   }
 
-  @NotNull private Remark visitRemark(AyaParser.RemarkContext remark) {
+  @NotNull
+  private Remark visitRemark(AyaParser.RemarkContext remark) {
     var sb = new StringBuilder();
     for (var docComment : remark.DOC_COMMENT()) {
       sb.append(docComment.getText().substring(3)).append("\n");
@@ -373,13 +374,17 @@ public record AyaProducer(
   }
 
   private @NotNull Expr visitTactic(AyaParser.TacticContext tactic) {
-    // return new TacticExpr(visitTacNode(tactic.tacNode()));
-    throw new UnsupportedOperationException();
+    return new Expr.TacExpr(sourcePosOf(tactic), visitTacNode(tactic.tacNode()));
   }
 
-  private void visitTacNode(AyaParser.TacNodeContext tacNode) {
-    // TODO: return an instance of some sort of 'tactic node'
-    throw new UnsupportedOperationException();
+  private @NotNull Expr.TacNode visitTacNode(AyaParser.TacNodeContext tacNode) {
+    if (tacNode.expr() != null) {
+      return new Expr.ExprTac(sourcePosOf(tacNode), visitExpr(tacNode.expr()));
+    } else {
+      var result = tacNode.tacNode()
+        .stream().map(this::visitTacNode).collect(ImmutableSeq.factory());
+      return new Expr.ListExprTac(sourcePosOf(tacNode), result);
+    }
   }
 
   private @NotNull Expr.Field visitField(AyaParser.NewArgContext na) {

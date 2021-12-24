@@ -139,7 +139,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
       // TODO: add tactic
-      default -> throw new UnsupportedOperationException();
+      //default -> throw new UnsupportedOperationException();
+      case Expr.TacExpr expr -> throw new UnsupportedOperationException();
     };
   }
 
