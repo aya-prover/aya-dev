@@ -215,7 +215,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           case Using -> "using";
           case Hiding -> "hiding";
         }),
-        Doc.parened(Doc.commaList(cmd.useHide().list().view().map(Doc::plain)))
+        Doc.parened(Doc.commaList(cmd.useHide().list().view().map(name -> name.asName().equals(name.id()) ? Doc.plain(name.id())
+          : Doc.sep(Doc.plain(name.id()), Doc.styled(KEYWORD, "as"), Doc.plain(name.asName())))))
       );
       case Command.Module mod -> Doc.vcat(
         Doc.sep(visitAccess(mod.accessibility(), Stmt.Accessibility.Public),

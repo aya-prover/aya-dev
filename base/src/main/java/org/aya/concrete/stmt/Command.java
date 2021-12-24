@@ -2,7 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
+import kala.collection.Map;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Tuple;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,14 +49,19 @@ public sealed interface Command extends Stmt {
     /**
      * @author re-xyr
      */
-    public record UseHide(@NotNull ImmutableSeq<@NotNull String> list, @NotNull UseHide.Strategy strategy) {
+    public record UseHide(@NotNull ImmutableSeq<@NotNull UseHideName> list, @NotNull UseHide.Strategy strategy) {
       public static final UseHide EMPTY = new UseHide(ImmutableSeq.empty(), UseHide.Strategy.Hiding);
 
-      public boolean uses(String name) {
+      public boolean uses(@NotNull String name) {
         return switch (strategy) {
-          case Using -> list.contains(name);
-          case Hiding -> !list.contains(name);
+          case Using -> list.find(n -> n.id.equals(name)).isDefined();
+          case Hiding -> list.find(n -> n.id.equals(name)).isEmpty();
         };
+      }
+
+      public @NotNull Map<String, String> renaming() {
+        if (strategy == UseHide.Strategy.Hiding) return ImmutableMap.empty();
+        return list.view().map(i -> Tuple.of(i.id, i.asName)).toImmutableMap();
       }
 
       /**
@@ -63,6 +71,9 @@ public sealed interface Command extends Stmt {
         Using,
         Hiding,
       }
+    }
+
+    public record UseHideName(@NotNull String id, @NotNull String asName) {
     }
   }
 

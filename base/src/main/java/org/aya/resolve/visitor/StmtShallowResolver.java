@@ -54,11 +54,12 @@ public record StmtShallowResolver(
       case Command.Open cmd -> {
         var mod = cmd.path().ids();
         var acc = cmd.accessibility();
+        var useHide = cmd.useHide();
         context.openModule(
           mod,
           acc,
-          cmd.useHide()::uses,
-          MutableHashMap.create(), // TODO handle renaming
+          useHide::uses,
+          useHide.renaming(),
           cmd.sourcePos()
         );
         // open operators as well

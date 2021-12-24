@@ -768,18 +768,34 @@ public record AyaProducer(
     else return ImmutableSeq.of(open);
   }
 
-  public Command.Open.UseHide useHide(List<AyaParser.UseHideListContext> ctxs, Command.Open.UseHide.Strategy strategy) {
+  public Command.Open.UseHide hideList(List<AyaParser.HideListContext> ctxs, Command.Open.UseHide.Strategy strategy) {
     return new Command.Open.UseHide(
       ctxs.stream()
-        .map(AyaParser.UseHideListContext::idsComma)
+        .map(AyaParser.HideListContext::idsComma)
         .flatMap(this::visitIdsComma)
+        .map(id -> new Command.Open.UseHideName(id, id))
         .collect(ImmutableSeq.factory()),
       strategy);
   }
 
+  public Command.Open.UseHide useList(List<AyaParser.UseListContext> ctxs, Command.Open.UseHide.Strategy strategy) {
+    return new Command.Open.UseHide(ctxs.stream()
+        .map(AyaParser.UseListContext::useIdsComma)
+        .flatMap(this::visitUseIdsComma)
+        .collect(ImmutableSeq.factory()),
+      strategy);
+  }
+
+  public Stream<Command.Open.UseHideName> visitUseIdsComma(@NotNull AyaParser.UseIdsCommaContext ctx) {
+    return ctx.useId().stream().map(id -> {
+      var name = id.ID(0).getText();
+      return new Command.Open.UseHideName(name, id.AS() != null ? id.ID(1).getText() : name);
+    });
+  }
+
   public @NotNull Command.Open.UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
-    return useHide(ctx.useHideList(), ctx.USING() != null
-      ? Command.Open.UseHide.Strategy.Using : Command.Open.UseHide.Strategy.Hiding);
+    if (ctx.HIDING() != null) return hideList(ctx.hideList(), Command.Open.UseHide.Strategy.Hiding);
+    return useList(ctx.useList(), Command.Open.UseHide.Strategy.Using);
   }
 
   public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {
