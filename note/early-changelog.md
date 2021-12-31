@@ -2,6 +2,25 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.15
+
+Supported command line module path and load libraries, set `resolveInfo` in module loader,
+delayed equations on flex-flex cases, added `GenericAyaParser`, refactored with `AyaParserImpl`,
+`base` no longer depends on `parser`, distinguished `suc` and `sucMut`, used adaptive
+terminal style in CLI, added more unit tests for coverage, refactored unify, freezeHoles
+before substitution, normalize if scope error, abstracted over implementation for env,
+improved `visitDataCall` on normalization, normalize when building subst for
+constructors, supported '"' in prompts, replaced `impossible` with `()`, improved
+code on lib, import `List` in `Vec`, nuked BinOpCollector, deleted `Pat::type`,
+`Tuple::type`, `Prim::type`, `Absurd::type`, handled file create and delete event
+in LSP, checked both core and concrete, searched definition in the whole library,
+added goto def. for module and import commands, highlight occurrences, skip defVars
+from skipped modules, renamed `cons` to `:<` everywhere and defined square, rewrited
+concrete distiller w/ pattern matching.
+
+The foundation of TERCK is built.
+The language server has gained wonderful features.
+
 ## 0.14
 
 Upgraded some dependencies, start using our repackaged commonmark-java with jpms,
