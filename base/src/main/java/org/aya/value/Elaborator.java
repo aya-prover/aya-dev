@@ -40,24 +40,20 @@ public class Elaborator {
     return unifier.unify(left, right);
   }
 
-  private Expr paramType(Expr.Param param) {
-    return param.type() == null ? new Expr.HoleExpr(param.sourcePos(), false, null) : param.type();
-  }
-
   public Term check(Ctx ctx, Expr expr, Value type) {
     final var ty = type.force();
     return switch (expr) {
       case Expr.SigmaExpr sigma && sigma.params().isEmpty() && ty instanceof FormValue.Univ -> new FormTerm.Sigma(ImmutableSeq.empty());
       case Expr.SigmaExpr sigma && ty instanceof FormValue.Univ univ -> {
         var param = sigma.params().first();
-        var paramTy = check(ctx, paramType(param), univ);
+        var paramTy = check(ctx, param.type(), univ);
         var tailExpr = new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), sigma.params().drop(1));
         var tailTerm = (FormTerm.Sigma) check(ctx.bind(param.ref(), paramTy), tailExpr, univ);
         yield new FormTerm.Sigma(tailTerm.params().prepended(new Term.Param(param, paramTy)));
       }
       case Expr.PiExpr pi && ty instanceof FormValue.Univ univ -> {
         var param = pi.param();
-        var paramType = check(ctx, paramType(param), univ);
+        var paramType = check(ctx, param.type(), univ);
         var body = check(ctx.bind(param.ref(), paramType), pi.last(), univ);
         yield new FormTerm.Pi(new Term.Param(param, paramType), body);
       }
@@ -73,10 +69,8 @@ public class Elaborator {
         var param = lambda.param();
         var paramTy = quote(pi.param().type());
         var annType = param.type();
-        if (annType != null) {
-          var annTy = check(ctx, annType, FormValue.Univ.fresh(annType.sourcePos()));
-          assert unify(eval(ctx, annTy), pi.param().type());
-        }
+        var annTy = check(ctx, annType, FormValue.Univ.fresh(annType.sourcePos()));
+        assert unify(eval(ctx, annTy), pi.param().type());
         var freshVar = new RefValue.Neu(new LocalVar(param.ref().name()));
         var body = check(ctx.bind(param.ref(), freshVar, paramTy), lambda.body(), pi.func().apply(freshVar));
         yield new IntroTerm.Lambda(new Term.Param(param, paramTy), body);
