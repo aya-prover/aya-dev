@@ -2,6 +2,39 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.15
+
+Supported command line module path and load libraries, set `resolveInfo` in module loader,
+created `GenericAyaParser` as an interface for `AyaProducer` where the implementation
+becomes `AyaParserImpl` (so we can decouple `parser` with `base`), used adaptive terminal
+style in CLI, fix jlink builds, added more unit tests, refactored unify (see below),
+generalized `LocalCtx` over implementation of the variable mapping,
+improved `visitDataCall` on normalization, normalize when building subst for
+constructors, supported `"` in prompts, renamed `impossible` with `()`, improved
+code in lib, , nuked `BinOpCollector`, deleted `Pat::type`, `Tuple::type`, `Prim::type`,
+`Absurd::type`, skip `DefVar`s from skipped modules,
+rewrote distillers with pattern matching.
+
++ Built the foundation of termination checking (thanks to @imkiva).
++ New features in the language server:
+  + Show type on hover, many UX improvements on error messages.
+  + Handle file creation and deletion events.
+  + Search definition in the whole library.
+  + Added goto def. for module and import commands.
+  + Highlight occurrences based on resolution.
++ Tools: distinguish `suc` and `sucMut` in mutable graph.
++ Unification improvements:
+  + Avoid creating new local variables, which might be introduced into the solutions.
+  + `freezeHoles` in meta solutions to avoid misleading scope-errors.
+  + Delay solution on flex-flex cases where there might be ill-scoped solutions.
++ Changes to the test library:
+  + Refactored many things.
+  + Conversion between `List` and `Vec`.
+  + Renamed `cons` to `:<`.
+  + Added cubical "square".
+
+There are also many changes in the WIP branches.
+
 ## 0.14
 
 Upgraded some dependencies, start using our repackaged commonmark-java with jpms,
