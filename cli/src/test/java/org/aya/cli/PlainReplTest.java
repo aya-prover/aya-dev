@@ -77,6 +77,8 @@ public class PlainReplTest {
   }
 
   @Test public void pwd() {
+    // This is actually not very good (maybe people just
+    //  clone this repo to some really weird places?) but anyways
     assertTrue(repl(":pwd")._1.contains("aya"));
   }
 

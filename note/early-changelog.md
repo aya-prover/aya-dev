@@ -7,7 +7,7 @@ This file contains the changelog of the Aya language 0.x.
 Supported command line module path and load libraries, set `resolveInfo` in module loader,
 created `GenericAyaParser` as an interface for `AyaProducer` where the implementation
 becomes `AyaParserImpl` (so we can decouple `parser` with `base`), used adaptive terminal
-style in CLI, added more unit tests, refactored unify (see below),
+style in CLI, fix jlink builds, added more unit tests, refactored unify (see below),
 generalized `LocalCtx` over implementation of the variable mapping,
 improved `visitDataCall` on normalization, normalize when building subst for
 constructors, supported `"` in prompts, renamed `impossible` with `()`, improved
