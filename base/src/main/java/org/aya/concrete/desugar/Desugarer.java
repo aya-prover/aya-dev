@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
@@ -11,12 +11,13 @@ import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.generic.Constants;
 import org.aya.generic.Level;
 import org.aya.generic.ref.PreLevelVar;
+import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000, kiva
  */
-public record Desugarer(@NotNull AyaBinOpSet opSet) implements StmtFixpoint<Unit> {
+public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtFixpoint<Unit> {
   @Override public @NotNull Expr visitApp(@NotNull Expr.AppExpr expr, Unit unit) {
     if (expr.function() instanceof Expr.RawUnivExpr univ) return desugarUniv(expr, univ);
     return StmtFixpoint.super.visitApp(expr, unit);
@@ -55,7 +56,7 @@ public record Desugarer(@NotNull AyaBinOpSet opSet) implements StmtFixpoint<Unit
       case Expr.RefExpr ref && ref.resolvedVar() instanceof PreLevelVar lv -> new Level.Reference<>(lv);
       case Expr.HoleExpr hole -> new Level.Reference<>(new PreLevelVar(Constants.randomName(hole), hole.sourcePos()));
       default -> {
-        opSet.reporter.report(new LevelProblem.BadLevelExpr(expr));
+        resolveInfo.opSet().reporter.report(new LevelProblem.BadLevelExpr(expr));
         throw new DesugarInterruption();
       }
     };
@@ -64,7 +65,7 @@ public record Desugarer(@NotNull AyaBinOpSet opSet) implements StmtFixpoint<Unit
   @Override public @NotNull Expr visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Unit unit) {
     var seq = binOpSeq.seq();
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
-    return new BinExprParser(opSet, seq.view())
+    return new BinExprParser(resolveInfo, seq.view())
       .build(binOpSeq.sourcePos())
       .accept(this, Unit.unit());
   }
@@ -72,7 +73,7 @@ public record Desugarer(@NotNull AyaBinOpSet opSet) implements StmtFixpoint<Unit
   @Override public @NotNull Pattern visitBinOpPattern(Pattern.@NotNull BinOpSeq binOpSeq, Unit unit) {
     var seq = binOpSeq.seq();
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
-    var pat = new BinPatternParser(binOpSeq.explicit(), opSet, seq.view()).build(binOpSeq.sourcePos());
+    var pat = new BinPatternParser(binOpSeq.explicit(), resolveInfo, seq.view()).build(binOpSeq.sourcePos());
     return StmtFixpoint.super.visitPattern(pat, unit);
   }
 }

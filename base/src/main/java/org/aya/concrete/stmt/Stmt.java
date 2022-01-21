@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.distill.ConcreteDistiller;
@@ -36,11 +35,11 @@ public sealed interface Stmt extends AyaDocile, TyckUnit
     StmtResolver.resolveBind(statements, resolveInfo);
     var opSet = resolveInfo.opSet();
     opSet.reportIfCyclic();
-    statements.forEach(s -> s.desugar(opSet));
+    statements.forEach(s -> s.desugar(resolveInfo));
   }
 
-  default void desugar(@NotNull AyaBinOpSet opSet) {
-    accept(new Desugarer(opSet), Unit.unit());
+  default void desugar(@NotNull ResolveInfo resolveInfo) {
+    accept(new Desugarer(resolveInfo), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

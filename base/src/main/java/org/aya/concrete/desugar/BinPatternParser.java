@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
@@ -7,6 +7,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.OperatorProblem;
+import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.tyck.pat.PatternProblem;
 import org.aya.util.binop.Assoc;
@@ -21,15 +22,17 @@ import java.util.function.Function;
 
 public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pattern> {
   private final boolean outerMostLicit;
+  private final @NotNull ResolveInfo resolveInfo;
 
-  public BinPatternParser(boolean outerMostLicit, @NotNull AyaBinOpSet opSet, @NotNull SeqView<@NotNull Pattern> seq) {
-    super(opSet, seq);
+  public BinPatternParser(boolean outerMostLicit, @NotNull ResolveInfo resolveInfo, @NotNull SeqView<@NotNull Pattern> seq) {
+    super(resolveInfo.opSet(), seq);
     this.outerMostLicit = outerMostLicit;
+    this.resolveInfo = resolveInfo;
   }
 
   @Override protected @NotNull BinOpParser<AyaBinOpSet, Pattern, Pattern>
   replicate(@NotNull SeqView<@NotNull Pattern> seq) {
-    return new BinPatternParser(outerMostLicit, opSet, seq);
+    return new BinPatternParser(outerMostLicit, resolveInfo, seq);
   }
 
   private static final Pattern OP_APP = new Pattern.Bind(
@@ -59,7 +62,7 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Pattern elem) {
     return elem.expr() instanceof Pattern.Ctor ref && ref.resolved().data() instanceof DefVar<?, ?> defVar
-      ? defVar.opDecl
+      ? defVar.opDeclRename.getOrDefault(resolveInfo.thisModule().moduleName(), defVar.opDecl)
       : null;
   }
 

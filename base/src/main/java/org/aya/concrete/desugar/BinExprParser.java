@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
@@ -8,6 +8,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.error.OperatorProblem;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
+import org.aya.resolve.ResolveInfo;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.binop.BinOpSet;
@@ -19,8 +20,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.NamedArg> {
-  public BinExprParser(@NotNull AyaBinOpSet opSet, @NotNull SeqView<Expr.@NotNull NamedArg> seq) {
-    super(opSet, seq);
+  private final @NotNull ResolveInfo resolveInfo;
+
+  public BinExprParser(@NotNull ResolveInfo resolveInfo, @NotNull SeqView<Expr.@NotNull NamedArg> seq) {
+    super(resolveInfo.opSet(), seq);
+    this.resolveInfo = resolveInfo;
   }
 
   private static final Expr.NamedArg OP_APP = new Expr.NamedArg(
@@ -35,7 +39,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
 
   @Override protected @NotNull BinOpParser<AyaBinOpSet, Expr, Expr.NamedArg>
   replicate(@NotNull SeqView<Expr.@NotNull NamedArg> seq) {
-    return new BinExprParser(opSet, seq);
+    return new BinExprParser(resolveInfo, seq);
   }
 
   @Override protected void reportAmbiguousPred(String op1, String op2, SourcePos pos) {
@@ -52,7 +56,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
     return elem.expr() instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar
-      ? defVar.opDecl
+      ? defVar.opDeclRename.getOrDefault(resolveInfo.thisModule().moduleName(), defVar.opDecl)
       : null;
   }
 
