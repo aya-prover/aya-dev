@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple2;
+import org.aya.api.ref.Bind;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
@@ -80,7 +81,9 @@ public record StmtShallowResolver(
           assert symbol != null;
           @SuppressWarnings("unchecked")
           var defVar = ((DefVar<?, ? extends Signatured>) symbol);
-          var argc = defVar.concrete.telescope.count(Expr.Param::explicit);
+          var argc = defVar.core != null
+            ? defVar.core.telescope().count(Bind::explicit)
+            : defVar.concrete.telescope.count(Expr.Param::explicit);
           OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc(), argc);
           defVar.opDeclRename.put(resolveInfo.thisModule().moduleName(), rename);
           var bind = use.asBind();
