@@ -3,6 +3,7 @@
 package org.aya.api.ref;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.core.CoreDef;
 import org.aya.util.binop.OpDecl;
@@ -24,6 +25,8 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
   public @Nullable ImmutableSeq<String> module;
   /** Initialized in the resolver or core deserialization */
   public @Nullable OpDecl opDecl;
+  /** Initialized in the resolver or core deserialization */
+  public @NotNull MutableMap<ImmutableSeq<String>, OpDecl> opDeclRename = MutableMap.create();
 
 
   @Contract(pure = true) public boolean isInfix() {

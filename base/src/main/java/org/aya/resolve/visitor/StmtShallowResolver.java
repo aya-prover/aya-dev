@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -6,6 +6,8 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple2;
+import org.aya.api.ref.DefVar;
+import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
@@ -19,6 +21,9 @@ import org.aya.resolve.error.PrimDependencyError;
 import org.aya.resolve.error.RedefinitionPrimError;
 import org.aya.resolve.error.UnknownPrimError;
 import org.aya.resolve.module.ModuleLoader;
+import org.aya.util.binop.Assoc;
+import org.aya.util.binop.OpDecl;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -60,16 +65,32 @@ public record StmtShallowResolver(
           acc,
           useHide::uses,
           useHide.renaming(),
-          cmd.sourcePos()
-        );
-        // open operators as well
+          cmd.sourcePos());
+        // open operator precedence bindings from imported modules (not submodules)
+        // because submodules always share the same opSet with file-level resolveInfo.
         var modInfo = resolveInfo.imports().find(i -> i.thisModule().moduleName().equals(mod));
-        // modInfo is empty if we are opening a submodule
         if (modInfo.isDefined()) {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().append(mod);
-          var modOpSet = modInfo.get().opSet();
-          resolveInfo.opSet().importBind(modOpSet, cmd.sourcePos());
+          resolveInfo.opSet().importBind(modInfo.get().opSet(), cmd.sourcePos());
         }
+        // renaming as infix
+        if (useHide.strategy() == Command.Open.UseHide.Strategy.Using) useHide.list().forEach(use -> {
+          if (use.asAssoc() == Assoc.Invalid) return;
+          var symbol = context.getQualifiedLocalMaybe(mod, use.asName(), SourcePos.NONE);
+          assert symbol != null;
+          @SuppressWarnings("unchecked")
+          var defVar = ((DefVar<?, ? extends Signatured>) symbol);
+          var concrete = defVar.concrete;
+          var argc = concrete.telescope.count(Expr.Param::explicit);
+          var thisMod = resolveInfo.thisModule().moduleName();
+          OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc(), argc);
+          defVar.opDeclRename.put(thisMod, rename);
+          var bind = use.asBind();
+          if (bind != BindBlock.EMPTY) {
+            bind.context().value = context;
+            resolveInfo.bindBlockRename().put(rename, bind);
+          }
+        });
       }
       case Remark remark -> remark.ctx = context;
       case Generalize.Levels levels -> {

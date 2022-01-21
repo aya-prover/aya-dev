@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -91,6 +91,7 @@ public record CompiledAya(
     }
 
     private void serOp(@NotNull SerDef serDef, @NotNull Def def) {
+      // TODO: serialize rebind and operator renaming
       var concrete = def.ref().concrete;
       var opInfo = concrete.opInfo;
       if (opInfo != null) serOps.append(new SerDef.SerOp(
@@ -134,6 +135,7 @@ public record CompiledAya(
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
       // TODO: more public open (re-export) info
+      // TODO: handle renaming
       if (reExports.contains(modName)) thisResolve.thisModule().openModule(modName,
         Stmt.Accessibility.Public,
         s -> true,
