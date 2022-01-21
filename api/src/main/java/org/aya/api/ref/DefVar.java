@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.api.ref;
 
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.UnknownNullability;
  * @author ice1000
  */
 public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> implements Var {
+  private final @NotNull String name;
   /** Initialized in parsing, so it might be null for deserialized user definitions. */
   public @UnknownNullability Concrete concrete;
   /** Initialized in type checking or core deserialization, so it might be null for unchecked user definitions. */
@@ -23,7 +24,7 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
   public @Nullable ImmutableSeq<String> module;
   /** Initialized in the resolver or core deserialization */
   public @Nullable OpDecl opDecl;
-  private final @NotNull String name;
+
 
   @Contract(pure = true) public boolean isInfix() {
     return opDecl != null && opDecl.opInfo() != null;

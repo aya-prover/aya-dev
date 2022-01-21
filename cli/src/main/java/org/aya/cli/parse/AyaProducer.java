@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -181,14 +181,14 @@ public record AyaProducer(
     var txt = id.getText();
     var pos = sourcePosOf(id);
     if (assoc == null) return Tuple.of(new WithPos<>(pos, txt), null);
-    var infix = makeInfix(assoc, txt, argc);
+    var infix = new OpDecl.OpInfo(txt, visitAssoc(assoc), argc);
     return Tuple.of(new WithPos<>(pos, infix.name()), infix);
   }
 
-  private @NotNull OpDecl.OpInfo makeInfix(@NotNull AyaParser.AssocContext assoc, @NotNull String id, int argc) {
-    if (assoc.INFIX() != null) return new OpDecl.OpInfo(id, Assoc.Infix, argc);
-    if (assoc.INFIXL() != null) return new OpDecl.OpInfo(id, Assoc.InfixL, argc);
-    if (assoc.INFIXR() != null) return new OpDecl.OpInfo(id, Assoc.InfixR, argc);
+  private @NotNull Assoc visitAssoc(@NotNull AyaParser.AssocContext assoc) {
+    if (assoc.INFIX() != null) return Assoc.Infix;
+    if (assoc.INFIXL() != null) return Assoc.InfixL;
+    if (assoc.INFIXR() != null) return Assoc.InfixR;
     throw new IllegalArgumentException("Unknown assoc: " + assoc.getText());
   }
 
@@ -773,23 +773,30 @@ public record AyaProducer(
       ctxs.stream()
         .map(AyaParser.HideListContext::idsComma)
         .flatMap(this::visitIdsComma)
-        .map(id -> new Command.Open.UseHideName(id, id))
+        .map(id -> new Command.Open.UseHideName(id, id, Assoc.Invalid, BindBlock.EMPTY))
         .collect(ImmutableSeq.factory()),
       strategy);
   }
 
   public Command.Open.UseHide useList(List<AyaParser.UseListContext> ctxs, Command.Open.UseHide.Strategy strategy) {
     return new Command.Open.UseHide(ctxs.stream()
-        .map(AyaParser.UseListContext::useIdsComma)
-        .flatMap(this::visitUseIdsComma)
-        .collect(ImmutableSeq.factory()),
+      .map(AyaParser.UseListContext::useIdsComma)
+      .flatMap(this::visitUseIdsComma)
+      .collect(ImmutableSeq.factory()),
       strategy);
   }
 
   public Stream<Command.Open.UseHideName> visitUseIdsComma(@NotNull AyaParser.UseIdsCommaContext ctx) {
     return ctx.useId().stream().map(id -> {
-      var name = id.ID(0).getText();
-      return new Command.Open.UseHideName(name, id.AS() != null ? id.ID(1).getText() : name);
+      var name = id.ID().getText();
+      var useAs = id.useAs();
+      if (useAs == null) return new Command.Open.UseHideName(name, name, Assoc.Invalid, BindBlock.EMPTY);
+      var asId = useAs.ID().getText();
+      var asAssoc = useAs.assoc();
+      var asBind = useAs.bindBlock();
+      return new Command.Open.UseHideName(name, asId,
+        asAssoc != null ? visitAssoc(asAssoc) : Assoc.Invalid,
+        asBind != null ? visitBind(asBind) : BindBlock.EMPTY);
     });
   }
 

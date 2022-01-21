@@ -27,10 +27,11 @@ openCmd : PUBLIC? OPEN IMPORT? qualifiedId useHide?;
 module : MODULE_KW ID LBRACE stmt* RBRACE;
 
 useHide : USING useList+ | HIDING hideList+;
-useList : LPAREN useIdsComma RPAREN;
-useId : ID (AS ID)?;
-useIdsComma : (useId COMMA)* useId?;
 hideList : LPAREN idsComma RPAREN;
+useList : LPAREN useIdsComma RPAREN;
+useIdsComma : (useId COMMA)* useId?;
+useId : ID useAs?;
+useAs : AS assoc? ID bindBlock?;
 
 levels : ULEVEL ids ;
 generalize : VARIABLE ids type ;
