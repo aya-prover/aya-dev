@@ -51,10 +51,10 @@ public record StmtShallowResolver(
         var success = loader.load(ids);
         if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
         var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
-        resolveInfo.imports().append(success);
         var as = cmd.asName();
         var importedName = as != null ? ImmutableSeq.of(as) : ids;
         context.importModules(importedName, Stmt.Accessibility.Private, mod.exports, cmd.sourcePos());
+        resolveInfo.imports().put(importedName, success);
       }
       case Command.Open cmd -> {
         var mod = cmd.path().ids();
@@ -68,7 +68,7 @@ public record StmtShallowResolver(
           cmd.sourcePos());
         // open operator precedence bindings from imported modules (not submodules)
         // because submodules always share the same opSet with file-level resolveInfo.
-        var modInfo = resolveInfo.imports().find(i -> i.thisModule().moduleName().equals(mod));
+        var modInfo = resolveInfo.imports().getOption(mod);
         if (modInfo.isDefined()) {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().append(mod);
           resolveInfo.opSet().importBind(modInfo.get().opSet(), cmd.sourcePos());
@@ -80,11 +80,9 @@ public record StmtShallowResolver(
           assert symbol != null;
           @SuppressWarnings("unchecked")
           var defVar = ((DefVar<?, ? extends Signatured>) symbol);
-          var concrete = defVar.concrete;
-          var argc = concrete.telescope.count(Expr.Param::explicit);
-          var thisMod = resolveInfo.thisModule().moduleName();
+          var argc = defVar.concrete.telescope.count(Expr.Param::explicit);
           OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc(), argc);
-          defVar.opDeclRename.put(thisMod, rename);
+          defVar.opDeclRename.put(resolveInfo.thisModule().moduleName(), rename);
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) {
             bind.context().value = context;

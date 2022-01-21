@@ -60,7 +60,7 @@ public record CompiledAya(
       return vs.view().map((n, v) -> new SerDef.QName(qnameMod, n));
     }).flatMap(Function.identity()).toImmutableSeq();
 
-    var imports = resolveInfo.imports().toImmutableSeq().map(i -> i.thisModule().moduleName());
+    var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
     return new CompiledAya(imports, exports,
       resolveInfo.reExports().toImmutableSeq(),
       serialization.serDefs.toImmutableSeq(),
@@ -131,7 +131,7 @@ public record CompiledAya(
     for (var modName : imports) {
       var success = loader.load(modName);
       if (success == null) thisResolve.thisModule().reportAndThrow(new ModNotFoundError(modName, SourcePos.SER));
-      thisResolve.imports().append(success);
+      thisResolve.imports().put(success.thisModule().moduleName(), success);
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
       // TODO: more public open (re-export) info

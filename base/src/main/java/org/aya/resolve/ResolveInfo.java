@@ -27,12 +27,12 @@ public record ResolveInfo(
   @NotNull ModuleContext thisModule,
   @NotNull ImmutableSeq<Stmt> program,
   @NotNull AyaBinOpSet opSet,
-  @NotNull DynamicSeq<ResolveInfo> imports,
+  @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> imports,
   @NotNull DynamicSeq<ImmutableSeq<String>> reExports,
   @NotNull MutableGraph<TyckUnit> depGraph,
   @NotNull MutableMap<OpDecl, BindBlock> bindBlockRename
 ) {
   public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {
-    this(thisModule, thisProgram, opSet, DynamicSeq.create(), DynamicSeq.create(), MutableGraph.create(), MutableMap.create());
+    this(thisModule, thisProgram, opSet, MutableMap.create(), DynamicSeq.create(), MutableGraph.create(), MutableMap.create());
   }
 }
