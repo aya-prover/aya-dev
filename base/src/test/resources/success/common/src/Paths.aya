@@ -1,6 +1,5 @@
-prim I
-prim left : I
-prim right : I
+public open import Primitives
+
 struct Path (A : I -> Type) (a : A left) (b : A right) : Type
   | at (i : I) : A i {
     | left => a
@@ -14,7 +13,6 @@ variable A B C D : Type
 def infix = (a b : A) : Type => Path (\ i => A) a b
 def idp {a : A} : a = a => path (\ i => a)
 
-prim squeezeL
 def psqueeze {a b : A} (p : a = b) (i : I)
  : a = p.at i => path (\j => p.at (squeezeL i j))
 
@@ -45,7 +43,6 @@ def pmapd' {A : I -> Type} (B : Pi (i : I) (A i) -> Type)
 
 def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => pmapd' _ (\ i => f) p
 
-prim arcoe (A : I -> Type) (A left) (i : I) : A i
 def hfill2d
   {a b c d : A}
   (p : a = b)

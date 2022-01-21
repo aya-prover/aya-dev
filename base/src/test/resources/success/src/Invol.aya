@@ -1,5 +1,4 @@
 open import Paths
-prim invol
 
 def test : invol left = right => idp
 
