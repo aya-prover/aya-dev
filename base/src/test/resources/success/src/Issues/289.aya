@@ -1,0 +1,17 @@
+open import Paths
+import Arith::Nat as N
+open N using (+ as add, zero as Z, suc as S)
+
+def two => S Z add S Z
+def two-is-two : two = S (S Z) => idp
+
+open import Primitives using (
+  squeezeL as infix 八             ,
+  invol as infix ! bind tighter =  ,
+)
+
+def invol-infix : ! left = right => idp
+
+def psqueeze-infix {A : Type} {a b : A} (p : a = b) (i : I)
+ : a = p.at i => path (\j => p.at (i 八 j))
+

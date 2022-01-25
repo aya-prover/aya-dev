@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -115,11 +115,15 @@ public interface StmtResolver {
       opSet.reporter.report(new OperatorProblem.NotOperator(selfDef.concrete.sourcePos(), selfDef.name()));
       throw new Context.ResolvingInterruptedException();
     }
-    if (bind == BindBlock.EMPTY) return;
-    var ctx = bind.context().value;
+    bind(bind, opSet, self);
+  }
+
+  private static void bind(@NotNull BindBlock bindBlock, AyaBinOpSet opSet, OpDecl self) {
+    if (bindBlock == BindBlock.EMPTY) return;
+    var ctx = bindBlock.context().value;
     assert ctx != null : "no shallow resolver?";
-    bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
-    bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
+    bindBlock.resolvedLoosers().value = bindBlock.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
+    bindBlock.resolvedTighters().value = bindBlock.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
   }
 
   private static @NotNull DefVar<?, ?> bind(
@@ -139,6 +143,7 @@ public interface StmtResolver {
 
   static void resolveBind(@NotNull SeqLike<@NotNull Stmt> contents, @NotNull ResolveInfo info) {
     contents.forEach(s -> resolveBind(s, info));
+    info.bindBlockRename().forEach((opDecl, bindBlock) -> bind(bindBlock, info.opSet(), opDecl));
   }
 
   static void resolveBind(@NotNull Stmt stmt, @NotNull ResolveInfo info) {

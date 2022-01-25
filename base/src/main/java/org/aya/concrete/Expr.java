@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -22,6 +22,8 @@ import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
+import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.function.Function;
 
 /**
@@ -60,7 +63,10 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
-    return accept(new Desugarer(new AyaBinOpSet(reporter)), Unit.unit());
+    var resolveInfo = new ResolveInfo(
+      new EmptyContext(reporter, Path.of("dummy")).derive("dummy"),
+      ImmutableSeq.empty(), new AyaBinOpSet(reporter));
+    return accept(new Desugarer(resolveInfo), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
