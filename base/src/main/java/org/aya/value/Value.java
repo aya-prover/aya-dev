@@ -9,22 +9,18 @@ import org.jetbrains.annotations.NotNull;
 
 public sealed interface Value permits FormValue, IntroValue, RefValue {
   default Value access(FieldDef field) {
-    // TODO: report error
     return null;
   }
 
   default Value apply(Arg arg) {
-    // TODO: report error
     return null;
   }
 
   default Value projL() {
-    // TODO: report error
     return null;
   }
 
   default Value projR() {
-    // TODO: report error
     return null;
   }
 

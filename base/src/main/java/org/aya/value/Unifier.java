@@ -24,6 +24,11 @@ public record Unifier(@NotNull MutableMap<Meta, Value> metaCtx) {
       && leftSpine.zip(rightSpine).allMatch(lr -> unify(lr._1, lr._2));
   }
 
+  private boolean unifyArgs(ImmutableSeq<Value.Arg> leftArgs, ImmutableSeq<Value.Arg> rightArgs) {
+    return leftArgs.sizeEquals(rightArgs)
+      && leftArgs.zip(rightArgs).allMatch(lr -> unify(lr._1.value(), lr._2.value()));
+  }
+
   public boolean unify(Value left, Value right) {
     final var l = left.force();
     final var r = right.force();
@@ -40,13 +45,10 @@ public record Unifier(@NotNull MutableMap<Meta, Value> metaCtx) {
           && unify(lPi.param().type(), rPi.param().type())
           && unify(lPi.func().apply(v), rPi.func().apply(v));
       }
-      case FormValue.Data lData && r instanceof FormValue.Data rData -> {
-        yield false;
-      }
-      case FormValue.Struct lStruct && r instanceof FormValue.Struct rStruct -> {
-        yield false;
-      }
+      case FormValue.Data lData && r instanceof FormValue.Data rData -> lData.def() == rData.def() && unifyArgs(lData.args(), rData.args());
+      case FormValue.Struct lStruct && r instanceof FormValue.Struct rStruct -> lStruct.def() == rStruct.def() && unifyArgs(lStruct.args(), rStruct.args());
       case FormValue.Univ lUniv && r instanceof FormValue.Univ rUniv -> {
+        // TODO: Unify universe levels
         yield false;
       }
       case IntroValue.TT ignore && r instanceof IntroValue.TT -> true;
