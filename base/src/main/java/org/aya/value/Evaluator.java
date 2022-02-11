@@ -7,12 +7,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.Meta;
 import org.aya.core.def.FieldDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
+import org.aya.generic.Arg;
 import org.aya.generic.Environment;
 import org.jetbrains.annotations.NotNull;
 

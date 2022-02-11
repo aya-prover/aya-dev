@@ -4,8 +4,8 @@ package org.aya.value;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.ref.LocalVar;
 import org.aya.core.Meta;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 public record Unifier(@NotNull MutableMap<Meta, Value> metaCtx) {

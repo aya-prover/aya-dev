@@ -3,8 +3,8 @@
 package org.aya.value;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.ref.LocalVar;
 import org.aya.core.def.FieldDef;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface Value permits FormValue, IntroValue, RefValue {

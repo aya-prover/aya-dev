@@ -3,7 +3,7 @@
 package org.aya.generic;
 
 import kala.collection.immutable.ImmutableMap;
-import org.aya.api.ref.LocalVar;
+import org.aya.ref.LocalVar;
 import org.aya.value.Value;
 
 public record Environment(ImmutableMap<LocalVar, Value> map) {

@@ -4,10 +4,10 @@ package org.aya.value;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.ref.LocalVar;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
+import org.aya.ref.LocalVar;
 
 public record Quoter() {
   private Term.Param quote(Value.Param param) {

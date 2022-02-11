@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Expr;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
@@ -15,6 +14,7 @@ import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Constants;
 import org.aya.generic.Environment;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 public class Elaborator {

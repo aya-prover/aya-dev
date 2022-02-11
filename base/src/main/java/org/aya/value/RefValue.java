@@ -4,9 +4,9 @@ package org.aya.value;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
 import org.aya.core.def.FieldDef;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
