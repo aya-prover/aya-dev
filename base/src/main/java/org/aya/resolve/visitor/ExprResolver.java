@@ -99,6 +99,15 @@ public record ExprResolver(
     };
   }
 
+  @Override public @NotNull Expr visitProj(@NotNull Expr.ProjExpr expr, Context context) {
+    var tup = expr.tup().accept(this, context);
+    if (expr.ix().isLeft())
+      return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix(), expr.resolvedIx(), expr.theCore());
+    var projName = expr.ix().getRightValue();
+    var resolvedIx = context.get(projName);
+    return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix(), resolvedIx, expr.theCore());
+  }
+
   private void generalizedUnavailable(Context ctx, SourcePos refExpr, Var var) {
     ctx.reporter().report(new GeneralizedNotAvailableError(refExpr, var));
     throw new Context.ResolvingInterruptedException();

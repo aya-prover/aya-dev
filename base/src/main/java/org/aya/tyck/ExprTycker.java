@@ -154,18 +154,15 @@ public final class ExprTycker {
             var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
             return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
           }, sp -> {
-            // TODO: move resolving to resolver
             var fieldName = sp.justName();
             if (!(projectee.type instanceof CallTerm.Struct structCall))
               return fail(struct, ErrorTerm.unexpected(projectee.type), BadTypeError.structAcc(struct, fieldName, projectee.type));
             var structCore = structCall.ref().core;
             if (structCore == null) throw new UnsupportedOperationException("TODO");
-            var projected = structCore.fields.find(field -> Objects.equals(field.ref().name(), fieldName));
-            if (projected.isEmpty()) return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
             // TODO[ice]: instantiate the type
-            var field = projected.get();
+            if (!(proj.resolvedIx() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
+              return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
             var fieldRef = field.ref();
-            proj.resolvedIx().value = fieldRef;
 
             var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
             var levels = levelStuffs(struct.sourcePos(), fieldRef);

@@ -110,7 +110,7 @@ public interface Resolver {
     }
 
     @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, P param) {
-      var field = expr.resolvedIx().get();
+      var field = expr.resolvedIx();
       if (expr.ix().isRight() && field != null) {
         var pos = expr.ix().getRightValue();
         check(param, field, pos.sourcePos());

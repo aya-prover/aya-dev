@@ -291,14 +291,14 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
     @NotNull Either<Integer, QualifiedID> ix,
-    @NotNull Ref<@Nullable Var> resolvedIx,
+    @Nullable Var resolvedIx,
     @NotNull Ref<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public ProjExpr(
       @NotNull SourcePos sourcePos, @NotNull Expr tup,
       @NotNull Either<Integer, QualifiedID> ix
     ) {
-      this(sourcePos, tup, ix, new Ref<>(), new Ref<>());
+      this(sourcePos, tup, ix, null, new Ref<>());
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

@@ -57,8 +57,7 @@ public interface Context {
   }
 
   default @NotNull Var get(@NotNull QualifiedID name) {
-    var isUnqualified = name.isUnqualified();
-    return isUnqualified
+    return name.isUnqualified()
       ? getUnqualified(name.justName(), name.sourcePos())
       : getQualified(name, name.sourcePos());
   }

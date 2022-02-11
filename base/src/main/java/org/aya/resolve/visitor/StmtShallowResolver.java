@@ -3,9 +3,10 @@
 package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
-import kala.tuple.Tuple2;
+import kala.tuple.Tuple;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
@@ -26,6 +27,9 @@ import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * simply adds all top-level names to the context
@@ -114,28 +118,13 @@ public record StmtShallowResolver(
       }
       case Decl.DataDecl decl -> {
         resolveDecl(decl, context);
-        var dataInnerCtx = context.derive(decl.ref().name());
-        var ctorSymbols = decl.body.map(ctor -> {
-          resolveCtor(ctor, dataInnerCtx);
-          return Tuple2.of(ctor.ref.name(), ctor.ref);
-        });
-        context.importModules(
-          ImmutableSeq.of(decl.ref().name()),
-          decl.accessibility(),
-          MutableHashMap.of(
-            Context.TOP_LEVEL_MOD_NAME,
-            MutableHashMap.from(ctorSymbols)),
-          decl.sourcePos()
-        );
-        decl.ctx = dataInnerCtx;
-        resolveOpInfo(decl, dataInnerCtx);
+        var innerCtx = resolveChildren(decl, context, d -> d.body.view(), this::resolveCtor);
+        resolveOpInfo(decl, innerCtx);
       }
       case Decl.StructDecl decl -> {
         resolveDecl(decl, context);
-        var structInnerCtx = context.derive(decl.ref().name());
-        decl.fields.forEach(field -> resolveField(field, structInnerCtx));
-        decl.ctx = structInnerCtx;
-        resolveOpInfo(decl, structInnerCtx);
+        var innerCtx = resolveChildren(decl, context, s -> s.fields.view(), this::resolveField);
+        resolveOpInfo(decl, innerCtx);
       }
       case Decl.FnDecl decl -> {
         resolveDecl(decl, context);
@@ -155,6 +144,29 @@ public record StmtShallowResolver(
         resolveDecl(decl, context);
       }
     }
+  }
+
+  private <D extends Decl, Child extends Signatured> ModuleContext resolveChildren(
+    @NotNull D decl,
+    @NotNull ModuleContext context,
+    @NotNull Function<D, SeqView<Child>> childrenGet,
+    @NotNull BiConsumer<Child, ModuleContext> childResolver
+  ) {
+    var innerCtx = context.derive(decl.ref().name());
+    var children = childrenGet.apply(decl).map(child -> {
+      childResolver.accept(child, innerCtx);
+      return Tuple.of(child.ref().name(), child.ref());
+    });
+    context.importModules(
+      ImmutableSeq.of(decl.ref().name()),
+      decl.accessibility(),
+      MutableHashMap.of(
+        Context.TOP_LEVEL_MOD_NAME,
+        MutableHashMap.from(children)),
+      decl.sourcePos()
+    );
+    decl.ctx = innerCtx;
+    return innerCtx;
   }
 
   private void resolveOpInfo(@NotNull Signatured signatured, @NotNull ModuleContext context) {
