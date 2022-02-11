@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -90,7 +90,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitProj(Expr.@NotNull ProjExpr expr, P p) {
     var tup = expr.tup().accept(this, p);
     if (tup == expr.tup()) return expr;
-    return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix(), expr.resolvedIx());
+    return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix(), expr.resolvedIx(), expr.theCore());
   }
 
   @Override default @NotNull Expr visitLsuc(Expr.@NotNull LSucExpr expr, P p) {

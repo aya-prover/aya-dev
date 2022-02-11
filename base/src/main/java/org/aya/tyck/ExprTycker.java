@@ -154,7 +154,8 @@ public final class ExprTycker {
             var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
             return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
           }, sp -> {
-            var fieldName = sp.data();
+            // TODO: move resolving to resolver
+            var fieldName = sp.justName();
             if (!(projectee.type instanceof CallTerm.Struct structCall))
               return fail(struct, ErrorTerm.unexpected(projectee.type), BadTypeError.structAcc(struct, fieldName, projectee.type));
             var structCore = structCall.ref().core;

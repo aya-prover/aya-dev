@@ -548,8 +548,7 @@ public record AyaProducer(
       projectee,
       number != null
         ? Either.left(Integer.parseInt(number.getText()))
-        : Either.right(new WithPos<>(sourcePosOf(fix), fix.ID().getText())),
-      new Ref<>(null)
+        : Either.right(visitQualifiedId(fix.qualifiedId()))
     );
   }
 

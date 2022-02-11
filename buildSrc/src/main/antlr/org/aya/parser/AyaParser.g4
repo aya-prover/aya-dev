@@ -110,7 +110,7 @@ argument : atom projFix*
          | LBRACE ULEVEL exprList RBRACE
          ;
 
-projFix : DOT (NUMBER | ID);
+projFix : DOT (NUMBER | qualifiedId);
 
 clauses : LBRACE clause? (BAR clause)* RBRACE ;
 clause : patterns (IMPLIES expr)? ;
