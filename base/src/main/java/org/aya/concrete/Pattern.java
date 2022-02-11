@@ -1,17 +1,18 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import org.aya.api.concrete.ConcretePat;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.aya.util.binop.BinOpParser;
+import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author kiva, ice1000
  */
-public sealed interface Pattern extends ConcretePat, BinOpParser.Elem<Pattern> {
+public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<Pattern> {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new ConcreteDistiller(options).pattern(this, BaseDistiller.Outer.Free);
   }

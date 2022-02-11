@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.LocalVar;
+import org.aya.util.distill.DistillerOptions;
+import org.aya.ref.LocalVar;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
@@ -76,7 +76,7 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst,
    * @param ctx
    * @return a ctx that contains all variables that are not unified.
    * @throws IllegalArgumentException if failed
-   * @see PatUnify#visitAs(org.aya.api.ref.LocalVar, org.aya.core.pat.Pat)
+   * @see PatUnify#visitAs(LocalVar, org.aya.core.pat.Pat)
    */
   public static @NotNull LocalCtx unifyPat(
     @NotNull SeqLike<Pat> lpats,

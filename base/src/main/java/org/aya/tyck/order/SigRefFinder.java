@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Command;
@@ -13,6 +12,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
 import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.visitor.ExprConsumer;
+import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 /**

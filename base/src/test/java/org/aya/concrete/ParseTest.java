@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
-import org.aya.api.distill.DistillerOptions;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.stmt.Command;
@@ -14,6 +13,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;

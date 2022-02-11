@@ -1,13 +1,13 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
-import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

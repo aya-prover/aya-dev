@@ -1,10 +1,8 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.DelayedReporter;
-import org.aya.api.error.Reporter;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.resolve.ModuleCallback;
@@ -13,6 +11,8 @@ import org.aya.resolve.context.ModuleContext;
 import org.aya.tyck.order.AyaOrgaTycker;
 import org.aya.tyck.order.AyaSccTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.reporter.DelayedReporter;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
 import kala.tuple.Unit;
-import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
@@ -13,6 +12,7 @@ import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.*;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.LspRange;
+import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;

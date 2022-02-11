@@ -6,12 +6,12 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple2;
-import org.aya.api.ref.Bind;
-import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
+import org.aya.ref.Bind;
+import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
@@ -78,9 +78,8 @@ public record StmtShallowResolver(
         if (useHide.strategy() == Command.Open.UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
           var symbol = context.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
-          assert symbol != null;
-          @SuppressWarnings("unchecked")
-          var defVar = ((DefVar<?, ? extends Signatured>) symbol);
+          assert symbol instanceof DefVar<?, ?>;
+          var defVar = (DefVar<?, ?>) symbol;
           var argc = defVar.core != null
             ? defVar.core.telescope().count(Bind::explicit)
             : defVar.concrete.telescope.count(Expr.Param::explicit);

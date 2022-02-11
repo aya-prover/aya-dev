@@ -1,11 +1,9 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import org.aya.api.util.Arg;
-import org.aya.api.util.NormalizeMode;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
@@ -18,6 +16,8 @@ import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
+import org.aya.generic.Arg;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;

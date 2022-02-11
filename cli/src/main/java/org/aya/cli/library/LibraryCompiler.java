@@ -1,11 +1,9 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
-import org.aya.api.error.CountingReporter;
-import org.aya.api.error.Reporter;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
@@ -19,6 +17,8 @@ import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.FileUtil;
 import org.aya.util.MutableGraph;
 import org.aya.util.StringUtil;
+import org.aya.util.reporter.CountingReporter;
+import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.OrgaTycker;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;

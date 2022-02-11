@@ -3,7 +3,6 @@ module org.aya {
 
   requires org.commonmark;
 
-  requires transitive org.aya.api;
   requires transitive org.aya.pretty;
   requires transitive org.aya.util;
   requires transitive kala.base;
@@ -25,8 +24,10 @@ module org.aya {
   exports org.aya.core;
   exports org.aya.distill;
   exports org.aya.generic.ref;
+  exports org.aya.generic.util;
   exports org.aya.generic;
   exports org.aya.prelude;
+  exports org.aya.ref;
   exports org.aya.resolve.context;
   exports org.aya.resolve.error;
   exports org.aya.resolve.module;

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -6,14 +6,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
 import kala.control.Option;
-import org.aya.api.concrete.ConcreteDecl;
-import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.*;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
@@ -30,7 +29,7 @@ import java.util.function.BiFunction;
  *
  * @author re-xyr
  */
-public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDecl {
+public sealed abstract class Decl extends Signatured implements Stmt {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;

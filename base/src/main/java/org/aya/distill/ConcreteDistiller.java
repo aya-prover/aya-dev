@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
@@ -8,20 +8,20 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.DefVar;
-import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.ExprConsumer;
+import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.aya.ref.DefVar;
 import org.aya.util.StringEscapeUtil;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 

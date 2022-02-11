@@ -1,13 +1,13 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.trace;
 
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import org.aya.api.distill.DistillerOptions;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {

@@ -1,16 +1,16 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
-import org.aya.api.ref.DefVar;
-import org.aya.api.util.InternalException;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.util.InternalException;
+import org.aya.ref.DefVar;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;

@@ -5,16 +5,7 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
-import kala.tuple.Unit;
 import kala.value.Ref;
-import org.aya.api.concrete.ConcreteExpr;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.Reporter;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
-import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
@@ -22,13 +13,15 @@ import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
-import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.EmptyContext;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.binop.BinOpParser;
+import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -36,13 +29,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.function.Function;
 
 /**
  * @author re-xyr
  */
-public sealed interface Expr extends ConcreteExpr {
+public sealed interface Expr extends AyaDocile, SourceNode {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -60,13 +52,6 @@ public sealed interface Expr extends ConcreteExpr {
   default Expr resolve(@NotNull ModuleContext context) {
     var exprResolver = new ExprResolver(ExprResolver.RESTRICTIVE);
     return accept(exprResolver, context);
-  }
-
-  @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
-    var resolveInfo = new ResolveInfo(
-      new EmptyContext(reporter, Path.of("dummy")).derive("dummy"),
-      ImmutableSeq.empty(), new AyaBinOpSet(reporter));
-    return accept(new Desugarer(resolveInfo), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

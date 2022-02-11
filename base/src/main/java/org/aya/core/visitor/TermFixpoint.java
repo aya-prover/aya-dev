@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.tuple.Tuple;
-import org.aya.api.util.Arg;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.generic.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;

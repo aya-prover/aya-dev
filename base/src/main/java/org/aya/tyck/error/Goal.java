@@ -1,16 +1,16 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.Problem;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.CallTerm;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
 public record Goal(

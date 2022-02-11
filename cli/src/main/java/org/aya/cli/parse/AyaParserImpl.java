@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -9,7 +9,6 @@ import org.antlr.v4.runtime.CodePointBuffer;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
-import org.aya.api.error.Reporter;
 import org.aya.concrete.Expr;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.stmt.Stmt;
@@ -17,6 +16,7 @@ import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

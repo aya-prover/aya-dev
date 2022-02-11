@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.util.Arg;
+import org.aya.ref.LocalVar;
+import org.aya.generic.Arg;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.RefTerm;

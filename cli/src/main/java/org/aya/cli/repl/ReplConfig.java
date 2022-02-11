@@ -1,13 +1,13 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.util.AyaHome;
-import org.aya.api.util.NormalizeMode;
+import org.aya.generic.util.AyaHome;
+import org.aya.generic.util.NormalizeMode;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

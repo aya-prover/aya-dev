@@ -1,15 +1,15 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.Var;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.term.Term;
+import org.aya.ref.DefVar;
+import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +24,7 @@ public record RefFinder(boolean withBody) implements
   public static final @NotNull RefFinder HEADER_AND_BODY = new RefFinder(true);
 
   @Override public void visitVar(Var usage, @NotNull DynamicSeq<Def> defs) {
-    if (usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def) defs.append(def);
+    if (usage instanceof DefVar<?, ?> ref) defs.append(ref.core);
   }
 
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull DynamicSeq<Def> references) {
