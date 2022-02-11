@@ -30,7 +30,7 @@ def heteroSquare {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j) =>
       | at2 => p
     }
 
-struct ConnectedPaths (A : Type) : Type
+open struct ConnectedPaths (A : Type) : Type
 | p I : A
 | q I : A {
   | left => p right

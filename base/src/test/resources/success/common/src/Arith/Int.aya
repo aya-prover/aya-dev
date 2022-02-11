@@ -5,7 +5,7 @@ public open data Int
 | pos Nat
 | neg Nat { | zero => pos zero }
 
-struct IntElimData (R : Int -> Type) : Type
+open struct IntElimData (R : Int -> Type) : Type
 | posElim (x : Nat) : R (pos x)
 | negElim (x : Nat) : R (neg x) {
   | zero => posElim zero

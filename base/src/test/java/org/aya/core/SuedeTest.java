@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -49,7 +49,7 @@ public class SuedeTest {
   @Test public void path() {
     suedeAll("""
       prim I prim left prim right
-      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
+      open struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
        | at (i : I) : A i {
          | left => a
          | right => b
