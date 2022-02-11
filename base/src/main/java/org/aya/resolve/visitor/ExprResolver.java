@@ -17,6 +17,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
+import org.aya.tyck.error.FieldProblem;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -104,7 +105,8 @@ public record ExprResolver(
     if (expr.ix().isLeft())
       return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix(), expr.resolvedIx(), expr.theCore());
     var projName = expr.ix().getRightValue();
-    var resolvedIx = context.get(projName);
+    var resolvedIx = context.getMaybe(projName);
+    if (resolvedIx == null) context.reportAndThrow(new FieldProblem.UnknownField(expr, projName.join()));
     return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix(), resolvedIx, expr.theCore());
   }
 
