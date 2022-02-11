@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -198,7 +197,7 @@ public final class DefEq {
 
   private @Nullable Term visitCall(
     @NotNull CallTerm lhs, @NotNull CallTerm rhs, Sub lr, Sub rl,
-    @NotNull DefVar<? extends Def, ? extends Signatured> lhsRef
+    @NotNull DefVar<?, ?> lhsRef
   ) {
     var retType = getType(lhs, lhsRef);
     // Lossy comparison
@@ -209,7 +208,7 @@ public final class DefEq {
   }
 
   private @NotNull LevelSubst levels(
-    @NotNull DefVar<? extends Def, ? extends Signatured> def,
+    @NotNull DefVar<?, ?> def,
     ImmutableSeq<@NotNull Sort> l, ImmutableSeq<@NotNull Sort> r
   ) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());

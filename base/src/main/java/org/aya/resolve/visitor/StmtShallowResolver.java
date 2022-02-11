@@ -78,9 +78,8 @@ public record StmtShallowResolver(
         if (useHide.strategy() == Command.Open.UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
           var symbol = context.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
-          assert symbol != null;
-          @SuppressWarnings("unchecked")
-          var defVar = ((DefVar<?, ? extends Signatured>) symbol);
+          assert symbol instanceof DefVar<?, ?>;
+          var defVar = (DefVar<?, ?>) symbol;
           var argc = defVar.core != null
             ? defVar.core.telescope().count(Bind::explicit)
             : defVar.concrete.telescope.count(Expr.Param::explicit);

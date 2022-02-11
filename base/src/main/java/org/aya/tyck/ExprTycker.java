@@ -529,7 +529,7 @@ public final class ExprTycker {
   }
 
   private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort>>
-  levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
+  levelStuffs(@NotNull SourcePos pos, DefVar<?, ?> defVar) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     var levelVars = Def.defLevels(defVar).map(v -> {
       var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), pos);

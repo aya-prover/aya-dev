@@ -52,7 +52,7 @@ public sealed abstract class Signatured implements SourceNode, OpDecl, TyckUnit 
   }
 
   @Contract(pure = true)
-  abstract public @NotNull DefVar<? extends Def, ? extends Signatured> ref();
+  abstract public @NotNull DefVar<?, ?> ref();
 
   @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     return ref().isInModule(currentMod) && ref().core == null;

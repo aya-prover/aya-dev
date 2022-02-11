@@ -4,7 +4,6 @@ package org.aya.lsp.actions;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
@@ -31,9 +30,7 @@ public interface ComputeSignature {
   static @NotNull Doc computeSignature(@NotNull Var target, boolean withResult) {
     return switch (target) {
       case LocalVar localVar -> BaseDistiller.varDoc(localVar);
-      case DefVar<?, ?> defVar -> {
-        @SuppressWarnings("unchecked")
-        var ref = (DefVar<? extends Def, ? extends Signatured>) defVar;
+      case DefVar<?, ?> ref -> {
         // #299: hovering a mouse on a definition whose header is failed to tyck
         if (ref.core == null && ref.concrete.signature == null) yield Doc.empty();
         yield computeSignature(Def.defTele(ref), Def.defResult(ref), withResult);
