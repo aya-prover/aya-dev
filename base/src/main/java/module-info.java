@@ -3,7 +3,6 @@ module org.aya {
 
   requires org.commonmark;
 
-  requires transitive org.aya.api;
   requires transitive org.aya.pretty;
   requires transitive org.aya.util;
   requires transitive kala.base;
