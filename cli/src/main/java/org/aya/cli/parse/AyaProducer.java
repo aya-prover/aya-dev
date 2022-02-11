@@ -169,7 +169,7 @@ public record AyaProducer(
     var dataDecl = ctx.dataDecl();
     if (dataDecl != null) return visitDataDecl(dataDecl, accessibility);
     var structDecl = ctx.structDecl();
-    if (structDecl != null) return Tuple.of(visitStructDecl(structDecl, accessibility), ImmutableSeq.empty());
+    if (structDecl != null) return visitStructDecl(structDecl, accessibility);
     var primDecl = ctx.primDecl();
     if (primDecl != null) return Tuple.of(visitPrimDecl(primDecl), ImmutableSeq.empty());
     return unreachable(ctx);
@@ -670,12 +670,13 @@ public record AyaProducer(
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 
-  public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var bind = ctx.bindBlock();
+    var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fields = visitFields(ctx.field());
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
-    return new Decl.StructDecl(
+    var struct = new Decl.StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       accessibility,
@@ -683,10 +684,17 @@ public record AyaProducer(
       nameOrInfix._1.data(),
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
-      // ctx.ids(),
       fields,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
+    return Tuple2.of(struct, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+      new Command.Open(
+        nameOrInfix._1.sourcePos(),
+        openAccessibility,
+        new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
+        Command.Open.UseHide.EMPTY
+      )
+    ));
   }
 
   private ImmutableSeq<Decl.StructField> visitFields(List<AyaParser.FieldContext> field) {
