@@ -1,19 +1,19 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedRunnable;
-import org.aya.api.error.CountingReporter;
-import org.aya.api.util.InternalException;
-import org.aya.api.util.InterruptException;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;
+import org.aya.generic.util.InternalException;
+import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.FileModuleLoader;
+import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

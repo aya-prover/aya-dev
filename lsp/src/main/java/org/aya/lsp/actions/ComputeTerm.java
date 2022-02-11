@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
 import kala.tuple.Unit;
-import org.aya.api.util.NormalizeMode;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.utils.XY;
 import org.aya.tyck.ExprTycker;

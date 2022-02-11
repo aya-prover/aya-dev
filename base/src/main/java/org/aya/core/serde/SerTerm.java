@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -8,14 +8,14 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import org.aya.api.concrete.ConcreteDecl;
-import org.aya.api.core.CoreDef;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.util.Arg;
+import org.aya.concrete.stmt.Signatured;
+import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.generic.Arg;
+import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -39,7 +39,7 @@ public sealed interface SerTerm extends Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    public <Core extends CoreDef, Concrete extends ConcreteDecl>
+    public <Core extends Def, Concrete extends Signatured>
     @NotNull DefVar<Core, Concrete> resolve(@NotNull SerDef.QName name) {
       // We assume this cast to be safe
       var dv = (DefVar<Core, Concrete>) defCache
@@ -50,7 +50,7 @@ public sealed interface SerTerm extends Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    <Core extends CoreDef, Concrete extends ConcreteDecl>
+    <Core extends Def, Concrete extends Signatured>
     @NotNull DefVar<Core, Concrete> newDef(@NotNull SerDef.QName name) {
       // We assume this cast to be safe
       var defVar=  DefVar.empty(name.name());

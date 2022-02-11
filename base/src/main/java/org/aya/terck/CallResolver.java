@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
 import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
 import kala.value.Ref;
-import org.aya.api.ref.DefVar;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -15,6 +14,7 @@ import org.aya.core.term.ElimTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.DefConsumer;
+import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 /**

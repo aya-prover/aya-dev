@@ -1,14 +1,9 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.CountingReporter;
-import org.aya.api.error.Reporter;
-import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
@@ -25,6 +20,11 @@ import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleListLoader;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.SourceFileLocator;
+import org.aya.util.reporter.CountingReporter;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,14 +1,14 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
 import kala.collection.SeqView;
 import kala.tuple.Tuple;
-import org.aya.api.ref.Var;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
+import org.aya.ref.Var;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextEdit;

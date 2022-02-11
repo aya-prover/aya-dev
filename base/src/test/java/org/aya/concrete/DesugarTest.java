@@ -3,12 +3,12 @@
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.distill.DistillerOptions;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.test.ThrowingReporter;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.Global;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;

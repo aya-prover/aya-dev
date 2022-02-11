@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -7,9 +7,6 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.Reporter;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
@@ -22,8 +19,11 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
+import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

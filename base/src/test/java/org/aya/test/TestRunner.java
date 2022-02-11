@@ -1,16 +1,16 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.CountingReporter;
-import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
+import org.aya.util.error.SourceFileLocator;
+import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;

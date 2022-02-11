@@ -3,11 +3,11 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.SeqView;
-import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.error.OperatorProblem;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;

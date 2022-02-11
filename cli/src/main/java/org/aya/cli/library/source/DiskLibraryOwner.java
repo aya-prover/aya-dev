@@ -1,15 +1,15 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
 import org.aya.generic.Constants;
 import org.aya.util.FileUtil;
+import org.aya.util.error.SourceFileLocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

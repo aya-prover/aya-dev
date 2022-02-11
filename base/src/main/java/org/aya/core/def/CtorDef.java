@@ -1,14 +1,14 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
+import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

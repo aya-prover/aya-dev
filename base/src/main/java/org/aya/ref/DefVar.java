@@ -1,11 +1,11 @@
 // Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.api.ref;
+package org.aya.ref;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.concrete.ConcreteDecl;
-import org.aya.api.core.CoreDef;
+import org.aya.concrete.stmt.Signatured;
+import org.aya.core.def.Def;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.UnknownNullability;
 /**
  * @author ice1000
  */
-public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> implements Var {
+public final class DefVar<Core extends Def, Concrete extends Signatured> implements Var {
   private final @NotNull String name;
   /** Initialized in parsing, so it might be null for deserialized user definitions. */
   public @UnknownNullability Concrete concrete;
@@ -44,13 +44,13 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
   }
 
   /** Used in user definitions. */
-  public static <Core extends CoreDef, Concrete extends ConcreteDecl>
+  public static <Core extends Def, Concrete extends Signatured>
   @NotNull DefVar<Core, Concrete> concrete(@NotNull Concrete concrete, @NotNull String name) {
     return new DefVar<>(concrete, null, name);
   }
 
   /** Used in the serialization of core and primitive definitions. */
-  public static <Core extends CoreDef, Concrete extends ConcreteDecl>
+  public static <Core extends Def, Concrete extends Signatured>
   @NotNull DefVar<Core, Concrete> empty(@NotNull String name) {
     return new DefVar<>(null, null, name);
   }

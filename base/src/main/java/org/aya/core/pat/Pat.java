@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
@@ -6,12 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.Ref;
-import org.aya.api.core.CorePat;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.util.Arg;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
@@ -23,9 +17,14 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Zonker;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
+import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
+import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +34,12 @@ import org.jetbrains.annotations.Nullable;
  * @author kiva, ice1000
  */
 @Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
-public sealed interface Pat extends CorePat {
-  @Override default @NotNull Term toTerm() {
+public sealed interface Pat extends AyaDocile {
+  boolean explicit();
+  default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
-  @Override default @NotNull Arg<Term> toArg() {
+  default @NotNull Arg<Term> toArg() {
     return new Arg<>(toTerm(), explicit());
   }
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

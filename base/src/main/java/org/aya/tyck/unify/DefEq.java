@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
@@ -8,12 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
-import org.aya.api.error.Reporter;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
-import org.aya.api.util.Arg;
-import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
@@ -24,6 +18,11 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
+import org.aya.generic.Arg;
+import org.aya.generic.util.NormalizeMode;
+import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
@@ -31,6 +30,7 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

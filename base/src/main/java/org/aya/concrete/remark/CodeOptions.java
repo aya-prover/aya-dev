@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
+import org.aya.generic.util.NormalizeMode;
+import org.aya.util.distill.DistillerOptions;
 import org.commonmark.node.Code;
 import org.jetbrains.annotations.NotNull;
 

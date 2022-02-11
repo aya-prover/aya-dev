@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -11,9 +11,6 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
 import kala.value.Ref;
-import org.aya.api.error.Reporter;
-import org.aya.api.ref.Var;
-import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
@@ -22,12 +19,14 @@ import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
+import org.aya.generic.util.NormalizeMode;
+import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

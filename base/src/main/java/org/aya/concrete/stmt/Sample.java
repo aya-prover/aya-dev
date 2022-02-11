@@ -1,15 +1,15 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.BufferReporter;
 import org.aya.core.def.Def;
 import org.aya.core.def.UserDef;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CounterexampleError;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.BufferReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

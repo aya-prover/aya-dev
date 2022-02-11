@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
@@ -7,15 +7,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
-import org.aya.api.error.CountingReporter;
-import org.aya.api.error.Reporter;
-import org.aya.api.util.InterruptException;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.Term;
+import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.terck.CallGraph;
 import org.aya.terck.CallResolver;
@@ -24,6 +22,8 @@ import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.MutableGraph;
+import org.aya.util.reporter.CountingReporter;
+import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

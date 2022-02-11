@@ -1,13 +1,13 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.Reporter;
 import org.aya.concrete.error.OperatorProblem;
 import org.aya.resolve.context.Context;
 import org.aya.util.binop.BinOpSet;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 public final class AyaBinOpSet extends BinOpSet {

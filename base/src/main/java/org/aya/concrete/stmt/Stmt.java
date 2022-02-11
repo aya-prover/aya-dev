@@ -5,8 +5,6 @@ package org.aya.concrete.stmt;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.distill.ConcreteDistiller;
@@ -16,6 +14,8 @@ import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.visitor.StmtResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.order.TyckUnit;
+import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

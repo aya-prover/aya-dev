@@ -1,17 +1,17 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.Reporter;
-import org.aya.api.error.SourceFileLocator;
-import org.aya.api.util.InternalException;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FileUtil;
+import org.aya.util.error.SourceFileLocator;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -3,10 +3,10 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.SeqView;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.OperatorProblem;
+import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.tyck.pat.PatternProblem;

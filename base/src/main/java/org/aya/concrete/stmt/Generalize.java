@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Expr;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.ref.PreLevelVar;
+import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;

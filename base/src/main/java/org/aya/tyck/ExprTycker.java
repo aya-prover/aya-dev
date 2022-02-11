@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -12,15 +12,6 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.value.LazyValue;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.error.Problem;
-import org.aya.api.error.Reporter;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
-import org.aya.api.util.Arg;
-import org.aya.api.util.InternalException;
-import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
@@ -31,18 +22,27 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.core.visitor.Zonker;
+import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Level;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.PreLevelVar;
+import org.aya.generic.util.InternalException;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
 import org.aya.util.Ordering;
+import org.aya.util.distill.AyaDocile;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Problem;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

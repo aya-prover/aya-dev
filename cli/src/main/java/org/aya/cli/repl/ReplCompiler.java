@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
@@ -6,29 +6,33 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
+import kala.tuple.Unit;
 import kala.value.Ref;
-import org.aya.api.error.CountingReporter;
-import org.aya.api.error.DelayedReporter;
-import org.aya.api.error.Reporter;
-import org.aya.api.error.SourceFileLocator;
-import org.aya.api.util.InterruptException;
-import org.aya.api.util.NormalizeMode;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.Expr;
+import org.aya.concrete.desugar.AyaBinOpSet;
+import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
+import org.aya.generic.util.InterruptException;
+import org.aya.generic.util.NormalizeMode;
+import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleListLoader;
 import org.aya.tyck.ExprTycker;
+import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.CountingReporter;
+import org.aya.util.reporter.DelayedReporter;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,8 +61,16 @@ public class ReplCompiler {
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var tycker = new ExprTycker(delayedReporter, null);
-      return tycker.zonk(expr, tycker.synthesize(resolvedExpr.desugar(delayedReporter)));
+      var desugar = desugarExpr(resolvedExpr, delayedReporter);
+      return tycker.zonk(expr, tycker.synthesize(desugar));
     }
+  }
+
+  private @NotNull Expr desugarExpr(@NotNull Expr expr, @NotNull Reporter reporter) {
+    var resolveInfo = new ResolveInfo(
+      new EmptyContext(reporter, Path.of("dummy")).derive("dummy"),
+      ImmutableSeq.empty(), new AyaBinOpSet(reporter));
+    return expr.accept(new Desugarer(resolveInfo), Unit.unit());
   }
 
   /** @see ReplCompiler#compileExpr(String, NormalizeMode) */

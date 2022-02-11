@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -8,22 +8,22 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
-import org.aya.api.core.CoreTerm;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.Bind;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
-import org.aya.api.util.Arg;
-import org.aya.api.util.NormalizeMode;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
+import org.aya.generic.Arg;
 import org.aya.generic.ParamLike;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.Bind;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
+import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.TestOnly;
  *
  * @author ice1000
  */
-public sealed interface Term extends CoreTerm permits
+public sealed interface Term extends AyaDocile permits
   CallTerm, ElimTerm, ErrorTerm, FormTerm, IntroTerm,
   RefTerm, RefTerm.Field, RefTerm.MetaPat {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
@@ -62,11 +62,11 @@ public sealed interface Term extends CoreTerm permits
     return accept(new Substituter(subst, levelSubst), Unit.unit());
   }
 
-  @Override default @NotNull Term rename() {
+  default @NotNull Term rename() {
     return accept(new Renamer(), Unit.unit());
   }
 
-  @Override default int findUsages(@NotNull Var var) {
+  default int findUsages(@NotNull Var var) {
     var counter = new VarConsumer.UsageCounter(var);
     accept(counter, Unit.unit());
     return counter.usageCount();

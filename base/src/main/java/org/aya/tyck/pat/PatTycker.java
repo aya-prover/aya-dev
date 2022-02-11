@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -12,11 +12,11 @@ import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import kala.value.Ref;
-import org.aya.api.error.Problem;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
-import org.aya.api.util.NormalizeMode;
+import org.aya.util.reporter.Problem;
+import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;

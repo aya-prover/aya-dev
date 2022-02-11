@@ -1,12 +1,8 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.Def;
@@ -15,6 +11,10 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.lsp.utils.Resolver;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
+import org.aya.util.distill.DistillerOptions;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 

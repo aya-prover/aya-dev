@@ -1,13 +1,13 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.LocalVar;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.LocalVar;
+import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 /**

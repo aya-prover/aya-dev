@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.trace;
 
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
+import org.aya.ref.DefVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;

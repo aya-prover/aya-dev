@@ -1,12 +1,9 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.Ref;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.concrete.visitor.ExprFixpoint;
@@ -15,11 +12,14 @@ import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
+import org.aya.ref.DefVar;
+import org.aya.ref.Var;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.order.TyckUnit;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

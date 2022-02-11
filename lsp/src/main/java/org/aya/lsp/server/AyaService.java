@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
@@ -7,9 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.BufferReporter;
-import org.aya.api.error.Problem;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
@@ -26,8 +23,11 @@ import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.FileUtil;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.reporter.BufferReporter;
+import org.aya.util.reporter.Problem;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
