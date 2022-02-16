@@ -84,18 +84,19 @@ dataCtor : COERCE? declNameOrInfix tele* clauses? bindBlock?;
 dataCtorClause : BAR patterns IMPLIES dataCtor;
 
 // expressions
-expr : atom                            # single
-     | expr argument+                  # app
-     | NEW_KW expr LBRACE newArg* RBRACE # new
-     | <assoc=right> expr TO expr      # arr
-     | expr projFix                    # proj
-     | LSUC_KW atom                    # lsuc
-     | LMAX_KW atom+                   # lmax
-     | PI tele+ TO expr                # pi
-     | FORALL tele+ TO expr            # forall
-     | SIGMA tele+ SUCHTHAT expr       # sigma
-     | LAMBDA tele+ (IMPLIES expr?)?   # lam
-     | MATCH exprList clauses          # match
+expr : atom                                 # single
+     | expr argument+                       # app
+     | NEW_KW expr LBRACE newArg* RBRACE    # new
+     | NEW_KW expr                          # newEmpty
+     | <assoc=right> expr TO expr           # arr
+     | expr projFix                         # proj
+     | LSUC_KW atom                         # lsuc
+     | LMAX_KW atom+                        # lmax
+     | PI tele+ TO expr                     # pi
+     | FORALL tele+ TO expr                 # forall
+     | SIGMA tele+ SUCHTHAT expr            # sigma
+     | LAMBDA tele+ (IMPLIES expr?)?        # lam
+     | MATCH exprList clauses               # match
      ;
 
 newArg : BAR ID ids IMPLIES expr;

@@ -18,3 +18,7 @@ struct Pos1 (A : Type) : Type
 struct Pos2 (B : Nat -> Type) : Type
   | x : Nat
   | y : B zero
+
+struct EmptyRecord : Type
+def new-empty1 => new EmptyRecord
+def new-empty2 => new EmptyRecord {}
