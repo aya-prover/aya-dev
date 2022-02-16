@@ -333,6 +333,7 @@ public record AyaProducer(
       case AyaParser.LamContext lam -> visitLam(lam);
       case AyaParser.ArrContext arr -> visitArr(arr);
       case AyaParser.NewContext n -> visitNew(n);
+      case AyaParser.NewEmptyContext n -> visitNewEmpty(n);
       case AyaParser.LsucContext lsuc -> visitLsuc(lsuc);
       case AyaParser.LmaxContext lmax -> visitLmax(lmax);
       case AyaParser.ForallContext forall -> visitForall(forall);
@@ -358,6 +359,13 @@ public record AyaProducer(
           .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
           .collect(ImmutableSeq.factory()), visitExpr(na.expr())))
     );
+  }
+
+  public @NotNull Expr visitNewEmpty(AyaParser.NewEmptyContext ctx) {
+    return new Expr.NewExpr(
+      sourcePosOf(ctx),
+      visitExpr(ctx.expr()),
+      ImmutableSeq.empty());
   }
 
   public @NotNull Expr visitArr(AyaParser.ArrContext ctx) {
