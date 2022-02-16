@@ -1,0 +1,8 @@
+open data Yes | yes
+
+open struct Test : Type
+  | value : Yes
+
+def test => new Test { | value => yes }
+def use1 => test.value
+def use2 => value test test
