@@ -5,7 +5,6 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.tuple.Tuple2;
-import kala.value.Ref;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.stmt.Command;
@@ -150,8 +149,7 @@ public class ParseTest {
               new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "f")),
               new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "a"))
             ))))),
-      Either.left(1),
-      new Ref<>(null)
+      Either.left(1)
     ));
     parseTo("f a . 1", new Expr.BinOpSeq(
         SourcePos.NONE,
@@ -159,7 +157,7 @@ public class ParseTest {
           new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "f")),
           new Expr.NamedArg(true,
             new Expr.ProjExpr(SourcePos.NONE, new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
-              Either.left(1), new Ref<>(null))))
+              Either.left(1))))
       )
     );
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app

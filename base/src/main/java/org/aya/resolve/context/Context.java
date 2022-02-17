@@ -57,10 +57,15 @@ public interface Context {
   }
 
   default @NotNull Var get(@NotNull QualifiedID name) {
-    var isUnqualified = name.isUnqualified();
-    return isUnqualified
+    return name.isUnqualified()
       ? getUnqualified(name.justName(), name.sourcePos())
       : getQualified(name, name.sourcePos());
+  }
+
+  default @Nullable Var getMaybe(@NotNull QualifiedID name) {
+    return name.isUnqualified()
+      ? getUnqualifiedMaybe(name.justName(), name.sourcePos())
+      : getQualifiedMaybe(name, name.sourcePos());
   }
 
   default DynamicSeq<LocalVar> collect(@NotNull DynamicSeq<LocalVar> container) {
@@ -68,9 +73,11 @@ public interface Context {
   }
 
   @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);
+
   default @Nullable Var getUnqualifiedMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     return iterate(c -> c.getUnqualifiedLocalMaybe(name, sourcePos));
   }
+
   default @NotNull Var getUnqualified(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getUnqualifiedMaybe(name, sourcePos);
     if (result == null) reportAndThrow(new UnqualifiedNameNotFoundError(name, sourcePos));
@@ -78,9 +85,16 @@ public interface Context {
   }
 
   @Nullable Var getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos);
+
   default @Nullable Var getQualifiedMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     return iterate(c -> c.getQualifiedLocalMaybe(modName, name, sourcePos));
   }
+
+  default @Nullable Var getQualifiedMaybe(@NotNull QualifiedID qualifiedID, @NotNull SourcePos sourcePos) {
+    var view = qualifiedID.ids().view();
+    return getQualifiedMaybe(view.dropLast(1).toImmutableSeq(), view.last(), sourcePos);
+  }
+
   default @NotNull Var getQualified(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getQualifiedMaybe(modName, name, sourcePos);
     if (result == null) reportAndThrow(new QualifiedNameNotFoundError(modName, name, sourcePos));

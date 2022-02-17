@@ -1,6 +1,6 @@
 public open import Primitives
 
-struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+public open struct Path (A : I -> Type) (a : A left) (b : A right) : Type
   | at (i : I) : A i {
     | left => a
     | right => b

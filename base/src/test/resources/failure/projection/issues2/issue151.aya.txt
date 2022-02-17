@@ -7,5 +7,6 @@ In file $FILE:24:38 ->
 
 Error: Unknown field `add` projected
 
+Resolving interrupted due to:
 1 error(s), 0 warning(s).
 What are you doing?

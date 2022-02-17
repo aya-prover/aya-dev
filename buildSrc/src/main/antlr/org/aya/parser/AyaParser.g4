@@ -65,7 +65,7 @@ fnModifiers : OPAQUE
             | PATTERN_KW
             ;
 
-structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
+structDecl : (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
 
 primDecl : PRIM ID tele* type? ;
 
@@ -111,7 +111,7 @@ argument : atom projFix*
          | LBRACE ULEVEL exprList RBRACE
          ;
 
-projFix : DOT (NUMBER | ID);
+projFix : DOT (NUMBER | qualifiedId);
 
 clauses : LBRACE clause? (BAR clause)* RBRACE ;
 clause : patterns (IMPLIES expr)? ;

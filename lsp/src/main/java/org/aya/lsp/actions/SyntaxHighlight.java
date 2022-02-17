@@ -86,7 +86,7 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
   }
 
   @Override public Unit visitProj(@NotNull Expr.ProjExpr expr, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
-    if (expr.resolvedIx().value instanceof DefVar<?, ?> defVar)
+    if (expr.resolvedIx() instanceof DefVar<?, ?> defVar)
       visitCall(defVar, expr.ix().getRightValue().sourcePos(), buffer);
     return StmtConsumer.super.visitProj(expr, buffer);
   }

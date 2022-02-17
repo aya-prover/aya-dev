@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -39,7 +39,7 @@ public class VisitorTest {
       def add (a b : Nat) : Nat
         | zero, zero => {??}
       prim I prim left : I prim right
-      struct Path (A : I -> Type (lsuc l)) (a : A left) (b : A right) : Type l
+      open struct Path (A : I -> Type (lsuc l)) (a : A left) (b : A right) : Type l
         | at (i : I) : A i { | left => a | right => b }
       open data Int : Type
         | pos Nat

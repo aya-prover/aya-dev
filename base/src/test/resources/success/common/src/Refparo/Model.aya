@@ -9,7 +9,7 @@ def coe {a b : Type} (eq : a = b) (x : a) (i : I) : eq.at i
 
 universe u
 
-struct EventT : Type (lsuc u)
+public open struct EventT : Type (lsuc u)
   | AgentT : Type u => Unit
 
 def getAgentT (T : EventT) : Type u => T.AgentT
@@ -19,7 +19,7 @@ def AgentT-inv (A : Type u) (T : EventT) : A = getAgentT (setAgentT A T)
   => idp
 
 
-struct Event (T : EventT {universe u}) : Type (lsuc u)
+public open struct Event (T : EventT {universe u}) : Type (lsuc u)
   | agent : T.AgentT
 
 def getAgent (T : EventT) (e : Event T) : T.AgentT => e.agent
@@ -67,7 +67,7 @@ def mkTheta
   => \{A} => \q => \{T} => \p => \f => q (\x => p (\e =>
     Sig (get (setT A T) e = coe (T-inv A T) x right) ** (f e)))
 
-def agent : Theta setAgentT
+def agentDef : Theta setAgentT
   => \{A} => mkTheta getAgentT getAgent setAgentT AgentT-inv {A}
 
 

@@ -22,7 +22,6 @@ import org.aya.pretty.doc.Docile;
 import org.aya.ref.DefVar;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.distill.DistillerOptions;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -107,7 +106,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield Doc.sep(Doc.symbol("{?"), term(Outer.Free, filling), Doc.symbol("?}"));
       }
       case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
-        Doc.plain(expr.ix().fold(Objects::toString, WithPos::data)));
+        Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
       case Expr.UnivArgsExpr expr -> Doc.sep(Doc.styled(KEYWORD, "universe"),
         Doc.commaList(expr.univArgs().view().map(Docile::toDoc)));
       case Expr.UnresolvedExpr expr -> Doc.plain(expr.name().join());
