@@ -9,7 +9,6 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.ref.PreLevelVar;
@@ -89,10 +88,7 @@ public record ExprResolver(
             // Collecting tyck order for tycked terms is unnecessary, just skip.
             assert ref.core != null; // ensure it is tycked
           }
-          case Decl decl -> reference.append(decl);
-          case Decl.DataCtor ctor -> reference.append(ctor.dataRef.concrete);
-          case Decl.StructField field -> reference.append(field.structRef.concrete);
-          default -> throw new IllegalStateException("unreachable");
+          case TyckUnit unit -> reference.append(unit);
         }
         yield new Expr.RefExpr(sourcePos, ref);
       }

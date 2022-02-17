@@ -3,6 +3,7 @@
 package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
@@ -50,6 +51,10 @@ public interface StmtResolver {
           ctor.telescope = ctorLocal._1.toImmutableSeq();
           ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
           addReferences(info, ctor, bodyResolver);
+          // Treat ctor's external dependencies as data's.
+          // see Order.aya: Rose and Forest
+          addReferences(info, decl, bodyResolver.reference().view()
+            .filterNot(u -> u instanceof Decl.DataCtor c && c.dataRef == decl.ref));
         }
         addReferences(info, decl, local._1);
       }
@@ -70,6 +75,8 @@ public interface StmtResolver {
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
           addReferences(info, field, bodyResolver);
+          addReferences(info, decl, bodyResolver.reference().view()
+            .filterNot(u -> u instanceof Decl.StructField f && f.structRef == decl.ref));
         });
         addReferences(info, decl, local._1);
       }
@@ -93,9 +100,13 @@ public interface StmtResolver {
     }
   }
 
-  private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, ExprResolver resolver) {
-    info.depGraph().sucMut(decl).appendAll(resolver.reference().view()
+  private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, SeqView<TyckUnit> refs) {
+    info.depGraph().sucMut(decl).appendAll(refs
       .filter(unit -> unit.needTyck(info.thisModule().moduleName())));
+  }
+
+  private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, ExprResolver resolver) {
+    addReferences(info, decl, resolver.reference().view());
   }
 
   private static @NotNull Tuple2<ExprResolver, Context>
