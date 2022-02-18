@@ -21,14 +21,11 @@ import org.aya.terck.error.NonTerminating;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.MutableGraph;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Function;
 
 /**
  * Tyck statements in SCC.
@@ -40,19 +37,17 @@ public record AyaSccTycker(
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull DynamicSeq<@NotNull Def> wellTyped
-) implements SCCTycker<TyckUnit, AyaSccTycker.SCCTyckingFailed> {
+) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
     return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, DynamicSeq.create());
   }
 
-  public @NotNull ImmutableSeq<TyckUnit> tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) {
+  public @NotNull ImmutableSeq<TyckOrder> tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) {
     try {
-      if (scc.sizeEquals(1)) {
-        var unit = scc.first();
-        if (unit instanceof Decl.FnDecl fn && fn.body.isLeft()) checkSimpleFn(fn);
-        else checkUnit(unit);
-      } else checkMutual(scc);
+      if (scc.isEmpty()) return ImmutableSeq.empty();
+      if (scc.sizeEquals(1)) checkUnit(scc.first());
+      else checkMutual(scc);
       return ImmutableSeq.empty();
     } catch (SCCTyckingFailed failed) {
       reporter.clear();
@@ -60,31 +55,44 @@ public record AyaSccTycker(
     }
   }
 
-  private void checkMutual(@NotNull ImmutableSeq<TyckUnit> scc) {
-    var headerOrder = headerOrder(scc);
-    headerOrder.forEach(this::checkHeader);
-    headerOrder.forEach(this::checkBody);
-    terck(headerOrder.view());
+  private void checkMutual(@NotNull ImmutableSeq<TyckOrder> scc) {
+    if (scc.allMatch(t -> t instanceof TyckOrder.Head)) {
+      reporter.report(new CircularSignatureError(scc.map(TyckOrder::unit)));
+      throw new SCCTyckingFailed(scc);
+    }
+    scc.forEach(this::check);
+    terck(scc.view().map(TyckOrder::unit));
   }
 
-  private void checkUnit(@NotNull TyckUnit unit) {
-    checkBody(unit);
-    terck(SeqView.of(unit));
+  private void checkUnit(@NotNull TyckOrder order) {
+    if (order.unit() instanceof Decl.FnDecl fn && fn.body.isLeft()) checkSimpleFn(order, fn);
+    else {
+      check(order);
+      if (order instanceof TyckOrder.Body body)
+        terck(SeqView.of(body.unit()));
+    }
   }
 
   private boolean isRecursive(@NotNull Decl unit) {
-    return resolveInfo.depGraph().hasSuc(unit, unit);
+    return resolveInfo.depGraph().hasSuc(new TyckOrder.Body(unit), new TyckOrder.Body(unit));
   }
 
-  private void checkSimpleFn(@NotNull Decl.FnDecl fn) {
+  private void checkSimpleFn(@NotNull TyckOrder order, @NotNull Decl.FnDecl fn) {
     if (isRecursive(fn)) {
       reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
-      throw new SCCTyckingFailed(ImmutableSeq.of(fn));
+      throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
     wellTyped.append(tycker.simpleFn(tycker.newTycker(), fn));
   }
 
-  private void checkHeader(@NotNull TyckUnit stmt) {
+  private void check(@NotNull TyckOrder tyckOrder) {
+    switch (tyckOrder) {
+      case TyckOrder.Head head -> checkHeader(tyckOrder, head.unit());
+      case TyckOrder.Body body -> checkBody(tyckOrder, body.unit());
+    }
+  }
+
+  private void checkHeader(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
       case Decl decl -> tycker.tyckHeader(decl, tycker.newTycker());
       case Sample sample -> sample.tyckHeader(tycker);
@@ -92,10 +100,10 @@ public record AyaSccTycker(
       case Decl.StructField field -> tycker.visitField(field, tycker.newTycker());
       default -> {}
     }
-    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
+    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
-  private void checkBody(@NotNull TyckUnit stmt) {
+  private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
       case Decl decl -> {
         var tyck = tycker.tyck(decl, tycker.newTycker());
@@ -108,7 +116,7 @@ public record AyaSccTycker(
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
       default -> {}
     }
-    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
+    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
   private void terck(@NotNull SeqView<TyckUnit> units) {
@@ -131,32 +139,10 @@ public record AyaSccTycker(
     });
   }
 
-  /**
-   * Generate the order of dependency of headers, fail if a cycle occurs.
-   *
-   * @author re-xyr, kiva
-   */
-  public @NotNull ImmutableSeq<TyckUnit> headerOrder(@NotNull ImmutableSeq<TyckUnit> stmts) {
-    var graph = MutableGraph.<TyckUnit>create();
-    stmts.forEach(stmt -> {
-      var reference = DynamicSeq.<TyckUnit>create();
-      SigRefFinder.HEADER_ONLY.visit(stmt, reference);
-      graph.sucMut(stmt).appendAll(reference.view()
-        .filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName())));
-    });
-    var order = graph.topologicalOrder();
-    var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
-    if (cycle.isNotEmpty()) {
-      cycle.forEach(c -> reporter.report(new CircularSignatureError(c)));
-      throw new SCCTyckingFailed(stmts);
-    }
-    return order.flatMap(Function.identity());
-  }
-
   public static class SCCTyckingFailed extends InterruptException {
-    public final @NotNull ImmutableSeq<TyckUnit> what;
+    public final @NotNull ImmutableSeq<TyckOrder> what;
 
-    public SCCTyckingFailed(@NotNull ImmutableSeq<TyckUnit> what) {
+    public SCCTyckingFailed(@NotNull ImmutableSeq<TyckOrder> what) {
       this.what = what;
     }
 

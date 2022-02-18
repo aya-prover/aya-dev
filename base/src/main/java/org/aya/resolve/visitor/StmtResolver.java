@@ -19,7 +19,7 @@ import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.UnknownOperatorError;
-import org.aya.tyck.order.TyckUnit;
+import org.aya.tyck.order.TyckOrder;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -43,75 +43,96 @@ public interface StmtResolver {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        addReferences(info, new TyckOrder.Head(decl), local._1);
+        local._1.enterBody();
         for (var ctor : decl.body) {
           var bodyResolver = local._1.member(decl);
+          bodyResolver.enterHead();
           var localCtxWithPat = new Ref<>(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
           var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
           ctor.telescope = ctorLocal._1.toImmutableSeq();
+          addReferences(info, new TyckOrder.Head(ctor), bodyResolver);
+
+          bodyResolver.enterBody();
           ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
-          addReferences(info, ctor, bodyResolver);
-          // Treat ctor's external dependencies as data's.
-          // see Order.aya: Rose and Forest
-          addReferences(info, decl, bodyResolver.reference().view()
-            .filterNot(u -> u instanceof Decl.DataCtor c && c.dataRef == decl.ref));
+          addReferences(info, new TyckOrder.Body(ctor), bodyResolver);
+          addReferences(info, new TyckOrder.Body(decl), SeqView.of(new TyckOrder.Body(ctor)));
         }
-        addReferences(info, decl, local._1);
+        addReferences(info, new TyckOrder.Body(decl), local._1);
       }
       case Decl.FnDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        addReferences(info, new TyckOrder.Head(decl), local._1);
+        local._1.enterBody();
+        var bodyResolver = local._1.body();
+        bodyResolver.enterBody();
         decl.body = decl.body.map(
-          expr -> expr.accept(local._1.body(), local._2),
-          pats -> pats.map(clause -> matchy(clause, local._2, local._1.body())));
-        addReferences(info, decl, local._1);
+          expr -> expr.accept(bodyResolver, local._2),
+          pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
+        addReferences(info, new TyckOrder.Body(decl), local._1);
       }
       case Decl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        addReferences(info, new TyckOrder.Head(decl), local._1);
+        local._1.enterBody();
         decl.fields.forEach(field -> {
           var bodyResolver = local._1.member(decl);
+          bodyResolver.enterHead();
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
           field.telescope = fieldLocal._1.toImmutableSeq();
           field.result = field.result.accept(bodyResolver, fieldLocal._2);
+          addReferences(info, new TyckOrder.Head(field), bodyResolver);
+
+          bodyResolver.enterBody();
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
-          addReferences(info, field, bodyResolver);
-          addReferences(info, decl, bodyResolver.reference().view()
-            .filterNot(u -> u instanceof Decl.StructField f && f.structRef == decl.ref));
+          addReferences(info, new TyckOrder.Body(field), bodyResolver);
+          addReferences(info, new TyckOrder.Body(decl), SeqView.of(new TyckOrder.Body(field)));
         });
-        addReferences(info, decl, local._1);
+        addReferences(info, new TyckOrder.Body(decl), local._1);
       }
-      case Decl.PrimDecl decl -> addReferences(info, decl,
-        resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1);
+      case Decl.PrimDecl decl -> {
+        var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
+        addReferences(info, new TyckOrder.Head(decl), resolver);
+        resolver.enterBody();
+        addReferences(info, new TyckOrder.Body(decl), resolver);
+      }
       case Sample sample -> {
         var delegate = sample.delegate();
         var delegateInfo = new ResolveInfo(info.thisModule(), info.program(), info.opSet());
         resolveStmt(delegate, delegateInfo);
         // little hacky: transfer dependencies from `delegate` to `sample`
-        info.depGraph().sucMut(sample).appendAll(delegateInfo.depGraph().suc(delegate));
+        info.depGraph().sucMut(new TyckOrder.Head(sample)).appendAll(delegateInfo.depGraph().suc(new TyckOrder.Head(delegate)));
+        info.depGraph().sucMut(new TyckOrder.Body(sample)).appendAll(delegateInfo.depGraph().suc(new TyckOrder.Body(delegate)));
+        info.depGraph().sucMut(new TyckOrder.Body(sample)).removeAll(t -> t.equals(new TyckOrder.Head(delegate)));
       }
-      case Remark remark -> info.depGraph().sucMut(remark).appendAll(remark.doResolve(info));
+      case Remark remark -> info.depGraph().sucMut(new TyckOrder.Body(remark)).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize.Levels levels -> {}
       case Generalize.Variables variables -> {
         var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
         variables.type = variables.type.accept(resolver, variables.ctx);
-        addReferences(info, variables, resolver);
+        addReferences(info, new TyckOrder.Body(variables), resolver);
       }
     }
   }
 
-  private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, SeqView<TyckUnit> refs) {
+  private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, SeqView<TyckOrder> refs) {
     info.depGraph().sucMut(decl).appendAll(refs
-      .filter(unit -> unit.needTyck(info.thisModule().moduleName())));
+      .filter(unit -> unit.unit().needTyck(info.thisModule().moduleName())));
+    if (decl instanceof TyckOrder.Body) info.depGraph().sucMut(decl)
+      .append(new TyckOrder.Head(decl.unit()));
   }
 
-  private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, ExprResolver resolver) {
+  private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, ExprResolver resolver) {
     addReferences(info, decl, resolver.reference().view());
   }
 
   private static @NotNull Tuple2<ExprResolver, Context>
   resolveDeclSignature(@NotNull Decl decl, ExprResolver.@NotNull Options options) {
     var resolver = new ExprResolver(options);
+    resolver.enterHead();
     var local = resolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1
       .prependedAll(resolver.allowedGeneralizes().valuesView())

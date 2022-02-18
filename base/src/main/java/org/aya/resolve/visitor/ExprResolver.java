@@ -7,6 +7,7 @@ import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableStack;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
 import org.aya.concrete.visitor.ExprFixpoint;
@@ -17,10 +18,14 @@ import org.aya.ref.Var;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.tyck.error.FieldProblem;
+import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 /**
  * Resolves bindings.
@@ -37,8 +42,32 @@ public record ExprResolver(
   @NotNull Options options,
   @NotNull DynamicSeq<PreLevelVar> allowedLevels,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
-  @NotNull DynamicSeq<TyckUnit> reference
+  @NotNull DynamicSeq<TyckOrder> reference,
+  @NotNull MutableStack<Where> where,
+  @Nullable Consumer<TyckUnit> parentAdd
 ) implements ExprFixpoint<Context> {
+  enum Where {
+    Head, Body
+  }
+
+  public void enterHead() {
+    where.push(Where.Head);
+    reference.clear();
+  }
+
+  public void enterBody() {
+    where.push(Where.Body);
+    reference.clear();
+  }
+
+  private void addReference(@NotNull TyckUnit unit) {
+    if (parentAdd != null) parentAdd.accept(unit);
+    if (where.isEmpty()) throw new IllegalStateException("where am I?");
+    var order = where.peek() == Where.Head
+      ? new TyckOrder.Head(unit) : new TyckOrder.Body(unit);
+    reference.append(order);
+  }
+
   /**
    * @param allowLevels true for signatures, false for bodies
    */
@@ -49,15 +78,17 @@ public record ExprResolver(
   public static final @NotNull Options LAX = new ExprResolver.Options(true, true);
 
   public ExprResolver(@NotNull Options options) {
-    this(options, DynamicSeq.create(), MutableLinkedHashMap.of(), DynamicSeq.create());
+    this(options, DynamicSeq.create(), MutableLinkedHashMap.of(), DynamicSeq.create(), MutableStack.create(), null);
   }
 
   public @NotNull ExprResolver member(@NotNull TyckUnit decl) {
-    return new ExprResolver(RESTRICTIVE, allowedLevels, allowedGeneralizes, DynamicSeq.of(decl));
+    return new ExprResolver(RESTRICTIVE, allowedLevels, allowedGeneralizes, DynamicSeq.of(new TyckOrder.Head(decl)), MutableStack.create(),
+      this::addReference);
   }
 
   public @NotNull ExprResolver body() {
-    return new ExprResolver(RESTRICTIVE, allowedLevels, allowedGeneralizes, reference);
+    return new ExprResolver(RESTRICTIVE, allowedLevels, allowedGeneralizes, reference, MutableStack.create(),
+      this::addReference);
   }
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
@@ -75,7 +106,7 @@ public record ExprResolver(
             var owner = generalized.owner;
             assert owner != null : "Sanity check";
             allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
-            reference.append(owner);
+            addReference(owner);
           }
         } else if (!allowedGeneralizes.containsKey(generalized))
           generalizedUnavailable(ctx, sourcePos, generalized);
@@ -88,7 +119,7 @@ public record ExprResolver(
             // Collecting tyck order for tycked terms is unnecessary, just skip.
             assert ref.core != null; // ensure it is tycked
           }
-          case TyckUnit unit -> reference.append(unit);
+          case TyckUnit unit -> addReference(unit);
         }
         yield new Expr.RefExpr(sourcePos, ref);
       }
