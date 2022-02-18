@@ -45,7 +45,7 @@ public interface StmtResolver {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
-        for (var ctor : decl.body) {
+        decl.body.forEach(ctor -> {
           var bodyResolver = local._1.member(decl);
           bodyResolver.enterHead();
           var localCtxWithPat = new Ref<>(local._2);
@@ -57,9 +57,9 @@ public interface StmtResolver {
           bodyResolver.enterBody();
           ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
           addReferences(info, new TyckOrder.Body(ctor), bodyResolver);
-          addReferences(info, new TyckOrder.Body(decl), SeqView.of(new TyckOrder.Body(ctor)));
-        }
-        addReferences(info, new TyckOrder.Body(decl), local._1);
+        });
+        addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
+          .concat(decl.body.map(TyckOrder.Body::new)));
       }
       case Decl.FnDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
@@ -88,15 +88,14 @@ public interface StmtResolver {
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
           addReferences(info, new TyckOrder.Body(field), bodyResolver);
-          addReferences(info, new TyckOrder.Body(decl), SeqView.of(new TyckOrder.Body(field)));
         });
-        addReferences(info, new TyckOrder.Body(decl), local._1);
+        addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
+          .concat(decl.fields.map(TyckOrder.Body::new)));
       }
       case Decl.PrimDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
         addReferences(info, new TyckOrder.Head(decl), resolver);
-        resolver.enterBody();
-        addReferences(info, new TyckOrder.Body(decl), resolver);
+        addReferences(info, new TyckOrder.Body(decl), SeqView.empty());
       }
       case Sample sample -> {
         var delegate = sample.delegate();
