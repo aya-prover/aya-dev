@@ -103,15 +103,20 @@ public interface StmtResolver {
         var delegateInfo = new ResolveInfo(info.thisModule(), info.program(), info.opSet());
         resolveStmt(delegate, delegateInfo);
         // little hacky: transfer dependencies from `delegate` to `sample`
-        info.depGraph().sucMut(new TyckOrder.Head(sample)).appendAll(delegateInfo.depGraph().suc(new TyckOrder.Head(delegate)));
-        info.depGraph().sucMut(new TyckOrder.Body(sample)).appendAll(delegateInfo.depGraph().suc(new TyckOrder.Body(delegate)));
-        info.depGraph().sucMut(new TyckOrder.Body(sample)).removeAll(t -> t.equals(new TyckOrder.Head(delegate)));
+        var delegateHead = new TyckOrder.Head(delegate);
+        var delegateBody = new TyckOrder.Body(delegate);
+        var sampleHead = new TyckOrder.Head(sample);
+        info.depGraph().sucMut(sampleHead).appendAll(delegateInfo.depGraph().suc(delegateHead));
+        info.depGraph().sucMut(new TyckOrder.Body(sample)).appendAll(delegateInfo.depGraph().suc(delegateBody)
+          .filterNot(order -> order.equals(delegateHead))
+          .appended(sampleHead));
       }
       case Remark remark -> info.depGraph().sucMut(new TyckOrder.Body(remark)).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize.Levels levels -> {}
       case Generalize.Variables variables -> {
         var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
+        resolver.enterBody();
         variables.type = variables.type.accept(resolver, variables.ctx);
         addReferences(info, new TyckOrder.Body(variables), resolver);
       }

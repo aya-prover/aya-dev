@@ -32,6 +32,8 @@ import java.util.function.BiFunction;
 public sealed abstract class Decl extends Signatured implements Stmt {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
+  /** this decl is delegated by a sample */
+  public @Nullable Sample ownerSample = null;
   public @NotNull Expr result;
 
   @Override public @NotNull Accessibility accessibility() {
