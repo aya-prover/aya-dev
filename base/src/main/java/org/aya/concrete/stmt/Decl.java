@@ -9,17 +9,16 @@ import kala.control.Option;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.*;
+import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
+import org.aya.tyck.pat.PatTycker;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.EnumSet;
 import java.util.function.BiFunction;
@@ -136,6 +135,11 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     public @NotNull ImmutableSeq<Pattern> patterns;
     public final boolean coerce;
 
+    /** used when tycking constructor's header */
+    public @UnknownNullability ImmutableSeq<Pat> yetTyckedPat;
+    /** used when tycking constructor's header */
+    public @UnknownNullability PatTycker yetTycker;
+
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @Nullable OpInfo opInfo,
@@ -241,6 +245,9 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     public @NotNull Option<Expr> body;
 
     public final boolean coerce;
+
+    /** used when tycking constructor's header */
+    public @UnknownNullability PatTycker yetTycker;
 
     public StructField(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,

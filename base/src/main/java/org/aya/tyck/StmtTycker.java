@@ -197,9 +197,8 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  @NotNull public CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
-    // TODO[ice]: remove this hack
-    if (ctor.ref.core != null) return ctor.ref.core;
+  public void tyckCtorHeader(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+    if (ctor.signature != null) return;
     var dataRef = ctor.dataRef;
     var dataConcrete = dataRef.concrete;
     var dataSig = dataConcrete.signature;
@@ -220,8 +219,25 @@ public record StmtTycker(
       // No patterns, leave it blank
       : ImmutableSeq.<Pat>empty();
     var tele = tele(tycker, ctor.telescope, dataSort);
-    var signature = new Def.Signature(sortParam, tele, dataCall);
-    ctor.signature = signature;
+    ctor.signature = new Def.Signature(sortParam, tele, dataCall);
+    ctor.yetTycker = patTycker;
+    ctor.yetTyckedPat = pat;
+  }
+
+  @NotNull public CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+    // TODO[ice]: remove this hack
+    if (ctor.ref.core != null) return ctor.ref.core;
+    var dataRef = ctor.dataRef;
+    var dataConcrete = dataRef.concrete;
+    var dataSig = dataConcrete.signature;
+    assert dataSig != null;
+    if (ctor.signature == null) tyckCtorHeader(ctor, tycker);
+    var signature = ctor.signature;
+    var dataCall = ((CallTerm.Data) signature.result());
+    var tele = signature.param();
+    var patTycker = ctor.yetTycker;
+    var pat = ctor.yetTyckedPat;
+    var tyckerReuse = patTycker.exprTycker;
     var dataTeleView = dataSig.param().view();
     if (pat.isNotEmpty()) {
       dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
@@ -232,7 +248,7 @@ public record StmtTycker(
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
     dataConcrete.checkedBody.append(elaborated);
     if (patTycker.noError())
-      ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
+      ensureConfluent(tyckerReuse, signature, elabClauses, ctor.sourcePos, false);
     return elaborated;
   }
 
@@ -250,9 +266,8 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  @NotNull public FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
-    // TODO[ice]: remove this hack
-    if (field.ref.core != null) return field.ref.core;
+  public void tyckFieldHeader(Decl.@NotNull StructField field, ExprTycker tycker) {
+    if (field.signature != null) return;
     var structRef = field.structRef;
     var structSort = structRef.concrete.sort;
     var structSig = structRef.concrete.signature;
@@ -261,12 +276,26 @@ public record StmtTycker(
     structSig.param().forEach(tycker.localCtx::put);
     var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
-    var patTycker = new PatTycker(tycker);
+    field.yetTycker = new PatTycker(tycker);
+  }
+
+  @NotNull public FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
+    // TODO[ice]: remove this hack
+    if (field.ref.core != null) return field.ref.core;
+    var structRef = field.structRef;
+    var structSig = structRef.concrete.signature;
+    assert structSig != null;
+    if (field.signature == null) tyckFieldHeader(field, tycker);
+    var signature = field.signature;
+    var tele = signature.param();
+    var result = signature.result();
+    var patTycker = field.yetTycker;
+    var tyckerReuse = patTycker.exprTycker;
     var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature, field.result.sourcePos());
-    var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
+    var body = field.body.map(e -> tyckerReuse.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, clauses.matchings(), body, field.coerce);
     if (patTycker.noError())
-      ensureConfluent(tycker, field.signature, clauses, field.sourcePos, false);
+      ensureConfluent(tyckerReuse, field.signature, clauses, field.sourcePos, false);
     return elaborated;
   }
 

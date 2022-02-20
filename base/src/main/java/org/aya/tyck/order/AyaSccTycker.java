@@ -5,6 +5,7 @@ package org.aya.tyck.order;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import org.aya.concrete.remark.Remark;
@@ -18,6 +19,7 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.terck.CallGraph;
 import org.aya.terck.CallResolver;
 import org.aya.terck.error.NonTerminating;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
@@ -36,11 +38,12 @@ public record AyaSccTycker(
   @NotNull StmtTycker tycker,
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
-  @NotNull DynamicSeq<@NotNull Def> wellTyped
+  @NotNull DynamicSeq<@NotNull Def> wellTyped,
+  @NotNull MutableMap<TyckUnit, ExprTycker> exprTycker
 ) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
-    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, DynamicSeq.create());
+    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, DynamicSeq.create(), MutableMap.create());
   }
 
   public @NotNull ImmutableSeq<TyckOrder> tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) {
@@ -96,8 +99,8 @@ public record AyaSccTycker(
     switch (stmt) {
       case Decl decl -> tycker.tyckHeader(decl, tycker.newTycker());
       case Sample sample -> sample.tyckHeader(tycker);
-      case Decl.DataCtor ctor -> tycker.visitCtor(ctor, tycker.newTycker());
-      case Decl.StructField field -> tycker.visitField(field, tycker.newTycker());
+      case Decl.DataCtor ctor -> tycker.tyckCtorHeader(ctor, tycker.newTycker());
+      case Decl.StructField field -> tycker.tyckFieldHeader(field, tycker.newTycker());
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
@@ -109,6 +112,8 @@ public record AyaSccTycker(
         var tyck = tycker.tyck(decl, tycker.newTycker());
         wellTyped.append(tyck);
       }
+      case Decl.DataCtor ctor -> tycker.visitCtor(ctor, tycker.newTycker());
+      case Decl.StructField field -> tycker.visitField(field, tycker.newTycker());
       case Sample sample -> {
         var tyck = sample.tyck(tycker);
         if (tyck != null) wellTyped.append(tyck);

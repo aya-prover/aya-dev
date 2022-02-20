@@ -42,7 +42,7 @@ public interface ModuleLoader {
     var sccTycker = new AyaOrgaTycker(AyaSccTycker.create(resolveInfo, builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
     try (delayedReporter) {
-      dumpSCC(SCCs.view());
+      // dumpSCC(SCCs.view());
       SCCs.forEach(sccTycker::tyckSCC);
     } finally {
       if (onTycked != null) onTycked.onModuleTycked(
