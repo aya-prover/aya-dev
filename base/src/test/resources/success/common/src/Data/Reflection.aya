@@ -1,0 +1,140 @@
+open import Data::List
+open import Arith::Nat
+open import Data::Bool
+open import Data::Either
+
+def Name => Nat -- should be string
+def Param => Sig Name ** Term
+def Tele => List Param
+def Explicit => Bool
+def Arg(t: Type) => Sig t ** Explicit
+def Args(t: Type) => List (Arg t)
+def Meta => Nat -- should be a primitive
+
+data Lvl: Type
+    | const Nat
+    | ref Name (lift: Nat)
+
+def Sort => List Lvl
+
+
+---------------------------------------------------------------------------
+-----------------------------TERM------------------------------------------
+---------------------------------------------------------------------------
+
+open data Term: Type
+----------Ref----------------------
+    | ref Name
+----------Form---------------------
+    | pi Param (cod: Term)
+    | sig Tele
+    | univ Sort
+----------Intro--------------------
+    | lam Param (body: Term)
+    | new-struct StructDef CallArgs Tele
+----------Elim---------------------
+    | sig-proj Term Nat
+    | app Term (Arg Term)
+----------Call---------------------
+    | fn-call FnDef CallArgs
+    | prim-call PrimDef CallArgs
+    | data-call DataDef CallArgs
+    | struct-call StructDef CallArgs
+    | ctor-call CtorDef CtorArgs
+    | access-call StructDef Term AccessArgs
+    | hole-call Hole
+
+---------------------------------------------------------------------------
+-----------------------------DECLARATIONS----------------------------------
+---------------------------------------------------------------------------
+
+struct Modifiers: Type
+    | Opaque: Bool
+    | Inline: Bool
+    | Pattern: Bool
+    | Overlap: Bool
+
+struct FnDef: Type
+    | name: Name
+    | modifier: Modifiers
+    | params: Tele
+    | result-ty: Term
+    | param-lvls: List Lvl
+    | body: Either Term Match
+
+struct DataDef: Type
+    | name: Name
+    | tele: Tele
+    | tele-lvls: List Lvl
+    | sort: Sort
+    | body: List CtorDef
+
+struct CtorDef: Type
+    | name: Name
+    | ctor-tele: Tele
+    | data-name: Name
+    | data-tele: Tele
+
+struct StructDef: Type
+    | name: Name
+    | tele: Tele
+    | tele-lvls: List Lvl
+    | sort: Sort
+    | fields: List FieldDef
+
+struct FieldDef: Type
+    | name: Name
+    | field-tele: Tele
+    | struct-name: Name
+    | struct-tele: Tele
+
+struct PrimDef: Type
+    | name: Name
+    | ID: Name
+    | tele: Tele
+    | lvls: List Lvl
+    | result-ty: Term
+
+---------------------------------------------------------------------------
+----------------------------CALL ARGUMENTS---------------------------------
+---------------------------------------------------------------------------
+
+struct CallArgs: Type
+    | args: Args Term
+    | sort-args: Args Sort
+
+struct CtorArgs: Type
+    | args: Args Term
+    | sort-args: Args Sort
+    | data-args: Args Term
+
+struct AccessArgs: Type
+    | sort-args: Args Sort
+    | struct-args: Args Term
+    | field-args: Args Term
+
+---------------------------------------------------------------------------
+------------------------------HOLE-----------------------------------------
+---------------------------------------------------------------------------
+
+struct Hole: Type
+    | name: Meta
+    | ctxArgs: Args Term
+    | args: Args Term
+
+---------------------------------------------------------------------------
+-----------------------------PATTERNS--------------------------------------
+---------------------------------------------------------------------------
+
+open data Pat: Type
+    | catch-all (explicit: Bool) Name (ty: Term)
+    | meta (explicit: Bool) (solution: Pat) (fakeBind: Name) (ty: Term)
+    | absurd (explicit: Bool)
+    | tup (explicit: Bool) (List Pat)
+    | ctor (explicit: Bool) Name (List Pat) DataDef CallArgs
+    | primPat (explicit: Bool) Name
+    | clause (List Pat)
+
+struct Match: Type
+    | pats: List Pat
+    | body: Term
