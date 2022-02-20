@@ -25,6 +25,8 @@ def Sort => List Lvl
 open data Term: Type
 ----------Ref----------------------
     | ref Name
+    | field-ref FieldDef
+    | meta-ref MataPat
 ----------Form---------------------
     | pi Param (cod: Term)
     | sig Tele
@@ -127,13 +129,19 @@ struct Hole: Type
 ---------------------------------------------------------------------------
 
 open data Pat: Type
-    | catch-all (explicit: Bool) Name (ty: Term)
-    | meta (explicit: Bool) (solution: Pat) (fakeBind: Name) (ty: Term)
-    | absurd (explicit: Bool)
-    | tup (explicit: Bool) (List Pat)
-    | ctor (explicit: Bool) Name (List Pat) DataDef CallArgs
-    | primPat (explicit: Bool) Name
+    | catch-all Explicit Name (ty: Term)
+    | meta MataPat
+    | absurd Explicit
+    | tup Explicit (List Pat)
+    | ctor Explicit Name (List Pat) DataDef CallArgs
+    | primPat Explicit Name
     | clause (List Pat)
+
+struct MetaPat: Type
+    | explicit: Explicit
+    | solution: Pat
+    | fakeBind: Name
+    | ty: Term
 
 struct Match: Type
     | pats: List Pat
