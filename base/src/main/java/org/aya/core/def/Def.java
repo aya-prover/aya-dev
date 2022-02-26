@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
@@ -37,19 +36,6 @@ public sealed interface Def extends AyaDocile permits SubLevelDef, TopLevelDef {
     if (defVar.core != null) return defVar.core.body;
       // guaranteed as this is already a core term
     else return defVar.concrete.checkedBody;
-  }
-  static @NotNull ImmutableSeq<Sort.LvlVar> defLevels(@NotNull DefVar<?, ?> defVar) {
-    return switch (defVar.core) {
-      case TopLevelDef topLevel -> topLevel.levels;
-      case CtorDef ctor -> defLevels(ctor.dataRef);
-      case FieldDef field -> defLevels(field.structRef);
-      // guaranteed as this is already a core term
-      case null -> {
-        var signature = defVar.concrete.signature;
-        assert signature != null : defVar.name() + " is not checked";
-        yield signature.sortParam();
-      }
-    };
   }
   static @NotNull Term defResult(@NotNull DefVar<?, ?> defVar) {
     if (defVar.core != null) return defVar.core.result();
@@ -88,12 +74,11 @@ public sealed interface Def extends AyaDocile permits SubLevelDef, TopLevelDef {
    * @author ice1000
    */
   record Signature(
-    @NotNull ImmutableSeq<Sort.@NotNull LvlVar> sortParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements AyaDocile {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Substituter.TermSubst subst) {
-      return new Signature(sortParam, substParams(param, subst), result.subst(subst));
+      return new Signature(substParams(param, subst), result.subst(subst));
     }
 
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {

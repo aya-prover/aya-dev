@@ -6,12 +6,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicLinkedSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import org.aya.core.sort.Sort;
-import org.aya.core.term.*;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.ErrorTerm;
+import org.aya.core.term.RefTerm;
+import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.error.LevelMismatchError;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -33,7 +34,6 @@ public final class Zonker implements TermFixpoint<Unit> {
   public final @NotNull TyckState state;
   public final @NotNull Reporter reporter;
   private final @NotNull DynamicLinkedSeq<Term> stack = DynamicLinkedSeq.create();
-  private boolean reported = false;
 
   public Zonker(@NotNull TyckState state, @NotNull Reporter reporter) {
     this.state = state;
@@ -41,14 +41,7 @@ public final class Zonker implements TermFixpoint<Unit> {
   }
 
   public @NotNull Term zonk(@NotNull Term term, @Nullable SourcePos pos) {
-    term = term.accept(this, Unit.unit());
-    var eqns = state.levelEqns().eqns();
-    if (eqns.isNotEmpty() && !reported) {
-      // There are level errors, but not reported since all levels are solved
-      reporter.report(new LevelMismatchError(pos, eqns.toImmutableSeq()));
-      eqns.clear();
-    }
-    return term;
+    return term.accept(this, Unit.unit());
   }
 
   @Override public void traceEntrance(@NotNull Term term, Unit unit) {
@@ -74,30 +67,6 @@ public final class Zonker implements TermFixpoint<Unit> {
 
   @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
     return metaPat.inline();
-  }
-
-  @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
-    sort = state.levelEqns().applyTo(sort);
-    var sourcePos = sort.unsolvedPos();
-    if (sourcePos != null) reportLevelSolverError(sourcePos);
-    return sort;
-  }
-
-  private void reportLevelSolverError(@NotNull SourcePos pos) {
-    if (reported) return;
-    reporter.report(new LevelMismatchError(pos, state.levelEqns().eqns().toImmutableSeq()));
-    reported = true;
-  }
-
-  @Override public @NotNull Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    var sort = state.levelEqns().applyTo(term.sort());
-    var sourcePos = sort.unsolvedPos();
-    if (sourcePos != null) {
-      reportLevelSolverError(sourcePos);
-      return new ErrorTerm(term);
-    }
-    if (sort == term.sort()) return term;
-    return new FormTerm.Univ(sort);
   }
 
   public record UnsolvedMeta(

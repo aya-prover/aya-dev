@@ -10,7 +10,6 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatToTerm;
-import org.aya.core.sort.LevelSubst;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
@@ -95,7 +94,7 @@ public record Conquer(
       }
     }.visit(pat), pat.explicit()));
     var volynskaya = new Normalizer(tycker.state).tryUnfoldClauses(
-      NormalizeMode.WHNF, orderIndependent, newArgs, LevelSubst.EMPTY, matchings);
+      NormalizeMode.WHNF, orderIndependent, newArgs, 0, matchings);
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));

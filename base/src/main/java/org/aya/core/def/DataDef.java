@@ -4,7 +4,6 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
@@ -21,10 +20,9 @@ public final class DataDef extends UserDef.Type {
 
   public DataDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Sort sort, @NotNull ImmutableSeq<CtorDef> body
+    int ulift, @NotNull ImmutableSeq<CtorDef> body
   ) {
-    super(telescope, sort, levels);
+    super(telescope, ulift);
     ref.core = this;
     this.ref = ref;
     this.body = body;
@@ -48,13 +46,12 @@ public final class DataDef extends UserDef.Type {
    */
   public record CtorTelescopes(
     @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<Sort> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<CtorDef, Decl.DataCtor> conVar) {
       return new CallTerm.Con(fromCtor(conVar), conVar,
         dataTele.map(Term.Param::toArg),
-        sortTele,
+        0, // TODO: is this correct?
         conTele.map(Term.Param::toArg));
     }
 
@@ -62,7 +59,7 @@ public final class DataDef extends UserDef.Type {
       return new CtorTelescopes(dataTele.view()
         .map(Term.Param::implicitify)
         .map(Term.Param::rename)
-        .toImmutableSeq(), sortTele, conTele.map(Term.Param::rename));
+        .toImmutableSeq(), conTele.map(Term.Param::rename));
     }
 
     public @NotNull ImmutableSeq<Term.Param> params() {

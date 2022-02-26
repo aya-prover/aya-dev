@@ -64,10 +64,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.RawUnivArgsExpr(expr.sourcePos(), args);
   }
 
-  @Override default @NotNull Expr visitUnivArgs(Expr.@NotNull UnivArgsExpr expr, P p) {
-    return expr;
-  }
-
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
     return expr;
   }

@@ -25,7 +25,6 @@ import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
-import org.aya.generic.ref.PreLevelVar;
 import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -94,8 +93,6 @@ public record AyaProducer(
     }
     var sample = ctx.sample();
     if (sample != null) return visitSample(sample);
-    var levels = ctx.levels();
-    if (levels != null) return ImmutableSeq.of(visitLevels(levels));
     var generalize = ctx.generalize();
     if (generalize != null) return ImmutableSeq.of(visitGeneralize(generalize));
     var remark = ctx.remark();
@@ -115,12 +112,6 @@ public record AyaProducer(
     return new Generalize.Variables(sourcePosOf(ctx), visitIds(ctx.ids())
       .map(id -> new GeneralizedVar(id.data(), id.sourcePos()))
       .collect(ImmutableSeq.factory()), visitType(ctx.type()));
-  }
-
-  public Generalize visitLevels(AyaParser.LevelsContext ctx) {
-    return new Generalize.Levels(sourcePosOf(ctx), visitIds(ctx.ids())
-      .map(t -> t.map(PreLevelVar::new))
-      .collect(ImmutableSeq.factory()));
   }
 
   public @NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {

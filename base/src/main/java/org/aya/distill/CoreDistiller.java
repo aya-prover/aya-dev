@@ -19,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * It's called distiller, and it serves as the pretty printer.
- * Credit after <a
- * href="https://github.com/jonsterling/dreamtt/blob/master/frontend/Distiller.ml">Jon Sterling</a>
+ * Credit after <a href="https://github.com/jonsterling/dreamtt/blob/main/frontend/Distiller.ml">Jon Sterling</a>
  *
  * @author ice1000, kiva
  * @see ConcreteDistiller
@@ -96,7 +95,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var fn = Doc.styled(KEYWORD, "Type");
         if (!options.map.get(DistillerOptions.Key.ShowLevels)) yield fn;
         yield visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,
-          SeqView.of(new Arg<>(o -> term.sort().toDoc(), true)),
+          SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(term.lift())), true)),
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }

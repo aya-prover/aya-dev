@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
@@ -25,11 +24,11 @@ public final class FnDef extends UserDef {
 
   public FnDef(
     @NotNull DefVar<FnDef, Decl.FnDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result,
+    @NotNull Term result,
     @NotNull EnumSet<Modifier> modifiers,
     @NotNull Either<Term, ImmutableSeq<Matching>> body
   ) {
-    super(telescope, result, levels);
+    super(telescope, result);
     this.modifiers = modifiers;
     ref.core = this;
     this.ref = ref;

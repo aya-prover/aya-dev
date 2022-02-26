@@ -149,9 +149,7 @@ public final class PatTycker {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Sigma sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, term);
         // sig.result is a dummy term
-        var sig = new Def.Signature(
-          ImmutableSeq.empty(),
-          sigma.params(),
+        var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
         var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view())._1);
@@ -174,9 +172,7 @@ public final class PatTycker {
         var ctorRef = realCtor._3.ref();
         var ctorCore = ctorRef.core;
         final var dataCall = realCtor._1;
-        var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
-        var sig = new Def.Signature(ImmutableSeq.empty(),
-          Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall);
+        var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         var patterns = visitPatterns(sig, ctor.params().view())._1;
         var as = ctor.as();
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, dataCall);

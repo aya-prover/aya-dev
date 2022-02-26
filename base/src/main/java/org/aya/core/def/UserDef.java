@@ -4,7 +4,6 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.ExprTycker;
@@ -25,16 +24,16 @@ public sealed abstract class UserDef extends TopLevelDef permits FnDef, UserDef.
    */
   public @Nullable ImmutableSeq<Problem> problems;
 
-  protected UserDef(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result, @NotNull ImmutableSeq<Sort.LvlVar> levels) {
-    super(telescope, result, levels);
+  protected UserDef(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result) {
+    super(telescope, result);
   }
 
   public static abstract sealed class Type extends UserDef permits DataDef, StructDef {
-    public final @NotNull Sort resultSort;
+    public final int resultLevel;
 
-    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Sort sort, @NotNull ImmutableSeq<Sort.LvlVar> levels) {
-      super(telescope, new FormTerm.Univ(sort), levels);
-      this.resultSort = sort;
+    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, int resultLevel) {
+      super(telescope, new FormTerm.Univ(resultLevel));
+      this.resultLevel = resultLevel;
     }
   }
 }

@@ -9,9 +9,7 @@ import kala.value.Ref;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
-import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
-import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -78,7 +76,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     R visitNew(@NotNull NewExpr expr, P p);
     R visitLitInt(@NotNull LitIntExpr expr, P p);
     R visitRawUnivArgs(@NotNull RawUnivArgsExpr expr, P p);
-    R visitUnivArgs(@NotNull UnivArgsExpr expr, P p);
     R visitLsuc(@NotNull LSucExpr expr, P p);
     R visitLmax(@NotNull LMaxExpr expr, P p);
     R visitLitString(@NotNull LitStringExpr expr, P p);
@@ -251,7 +248,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     }
   }
 
-  record UnivExpr(@NotNull SourcePos sourcePos, @NotNull Level<PreLevelVar> level) implements Expr {
+  record UnivExpr(@NotNull SourcePos sourcePos, int lift) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }
@@ -260,15 +257,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record RawUnivArgsExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Expr> univArgs) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitRawUnivArgs(this, p);
-    }
-  }
-
-  record UnivArgsExpr(
-    @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Level<PreLevelVar>> univArgs
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitUnivArgs(this, p);
     }
   }
 

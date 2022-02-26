@@ -33,7 +33,6 @@ public sealed interface SerDef extends Serializable {
   record Fn(
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
     @NotNull Either<SerTerm, ImmutableSeq<SerPat.Matchy>> body,
     @NotNull EnumSet<Modifier> modifiers,
     @NotNull SerTerm result
@@ -41,7 +40,6 @@ public sealed interface SerDef extends Serializable {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new FnDef(
         state.newDef(name), telescope.map(tele -> tele.de(state)),
-        levels.map(level -> level.de(state.levelCache())),
         result.de(state), modifiers,
         body.map(term -> term.de(state), mischa -> mischa.map(matchy -> matchy.de(state))));
     }
@@ -67,15 +65,13 @@ public sealed interface SerDef extends Serializable {
   record Data(
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
-    @NotNull SerLevel.Max result,
+    int resultLift,
     @NotNull ImmutableSeq<Ctor> bodies
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new DataDef(
         state.newDef(name), telescope.map(tele -> tele.de(state)),
-        levels.map(level -> level.de(state.levelCache())),
-        result.de(state.levelCache()), bodies.map(body -> body.de(state)));
+        resultLift, bodies.map(body -> body.de(state)));
     }
   }
 
@@ -107,16 +103,14 @@ public sealed interface SerDef extends Serializable {
   record Struct(
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
-    @NotNull SerLevel.Max result,
+    int resultLift,
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new StructDef(
         state.newDef(name),
         telescope.map(tele -> tele.de(state)),
-        levels.map(level -> level.de(state.levelCache())),
-        result.de(state.levelCache()),
+        resultLift,
         fields.map(field -> field.de(state))
       );
     }

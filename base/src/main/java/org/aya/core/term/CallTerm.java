@@ -8,7 +8,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
-import org.aya.core.sort.Sort;
 import org.aya.generic.Arg;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
@@ -21,14 +20,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface CallTerm extends Term {
   @NotNull Var ref();
-  @NotNull ImmutableSeq<@NotNull Sort> sortArgs();
+  int ulift();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
 
   @FunctionalInterface
   interface Factory<D extends Def, S extends Signatured> {
     @Contract(pure = true, value = "_,_,_->new") @NotNull CallTerm make(
       DefVar<D, S> defVar,
-      ImmutableSeq<@NotNull Sort> sortArgs,
+      int ulift,
       ImmutableSeq<@NotNull Arg<Term>> args
     );
   }
@@ -51,7 +50,7 @@ public sealed interface CallTerm extends Term {
 
   record Fn(
     @NotNull DefVar<FnDef, Decl.FnDecl> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+    int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -62,13 +61,13 @@ public sealed interface CallTerm extends Term {
   record Prim(
     @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
     @NotNull PrimDef.ID id,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+    int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     public Prim(@NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref,
-                @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+                int ulift,
                 @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
-      this(ref, ref.core.id, sortArgs, args);
+      this(ref, ref.core.id, ulift, args);
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -78,7 +77,7 @@ public sealed interface CallTerm extends Term {
 
   record Data(
     @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+    int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -86,7 +85,7 @@ public sealed interface CallTerm extends Term {
     }
 
     public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, Decl.DataCtor> ctorRef) {
-      return new ConHead(ref, ctorRef, sortArgs, args);
+      return new ConHead(ref, ctorRef, ulift, args);
     }
   }
 
@@ -95,7 +94,7 @@ public sealed interface CallTerm extends Term {
    */
   record Struct(
     @NotNull DefVar<StructDef, Decl.StructDecl> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+    int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -106,11 +105,11 @@ public sealed interface CallTerm extends Term {
   record ConHead(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+    int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs
   ) {
     public @NotNull Data underlyingDataCall() {
-      return new Data(dataRef, sortArgs, dataArgs);
+      return new Data(dataRef, ulift, dataArgs);
     }
   }
 
@@ -122,18 +121,18 @@ public sealed interface CallTerm extends Term {
       @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
       @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs,
-      @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+      int ulift,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> conArgs
     ) {
-      this(new ConHead(dataRef, ref, sortArgs, dataArgs), conArgs);
+      this(new ConHead(dataRef, ref, ulift, dataArgs), conArgs);
     }
 
     @Override public @NotNull DefVar<CtorDef, Decl.DataCtor> ref() {
       return head.ref;
     }
 
-    @Override public @NotNull ImmutableSeq<@NotNull Sort> sortArgs() {
-      return head.sortArgs;
+    @Override public int ulift() {
+      return head.ulift;
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -165,8 +164,9 @@ public sealed interface CallTerm extends Term {
       return visitor.visitHole(this, p);
     }
 
-    @Override public @NotNull ImmutableSeq<@NotNull Sort> sortArgs() {
-      return ImmutableSeq.empty();
+    @Override public int ulift() {
+      // TODO: we should be able to lift a meta
+      return 0;
     }
   }
 
@@ -176,7 +176,7 @@ public sealed interface CallTerm extends Term {
   record Access(
     @NotNull Term of,
     @NotNull DefVar<FieldDef, Decl.StructField> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+    int ulift,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {

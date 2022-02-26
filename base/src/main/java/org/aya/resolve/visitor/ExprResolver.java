@@ -13,7 +13,6 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.generic.ref.GeneralizedVar;
-import org.aya.generic.ref.PreLevelVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.aya.resolve.context.Context;
@@ -31,8 +30,6 @@ import java.util.function.Consumer;
 /**
  * Resolves bindings.
  *
- * @param allowedLevels      will be filled with generalized level vars if allowLevels,
- *                           and represents the allowed generalized level vars otherwise
  * @param allowedGeneralizes will be filled with generalized vars if allowGeneralized,
  *                           and represents the allowed generalized level vars otherwise
  * @author re-xyr, ice1000
@@ -41,7 +38,6 @@ import java.util.function.Consumer;
  */
 public record ExprResolver(
   @NotNull Options options,
-  @NotNull DynamicSeq<PreLevelVar> allowedLevels,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull DynamicSeq<TyckOrder> reference,
   @NotNull MutableStack<Where> where,
@@ -79,27 +75,22 @@ public record ExprResolver(
   public static final @NotNull Options LAX = new ExprResolver.Options(true, true);
 
   public ExprResolver(@NotNull Options options) {
-    this(options, DynamicSeq.create(), MutableLinkedHashMap.of(), DynamicSeq.create(), MutableStack.create(), null);
+    this(options, MutableLinkedHashMap.of(), DynamicSeq.create(), MutableStack.create(), null);
   }
 
   public @NotNull ExprResolver member(@NotNull TyckUnit decl) {
-    return new ExprResolver(RESTRICTIVE, allowedLevels, allowedGeneralizes, DynamicSeq.of(new TyckOrder.Head(decl)), MutableStack.create(),
+    return new ExprResolver(RESTRICTIVE, allowedGeneralizes, DynamicSeq.of(new TyckOrder.Head(decl)), MutableStack.create(),
       this::addReference);
   }
 
   public @NotNull ExprResolver body() {
-    return new ExprResolver(RESTRICTIVE, allowedLevels, allowedGeneralizes, reference, MutableStack.create(),
+    return new ExprResolver(RESTRICTIVE, allowedGeneralizes, reference, MutableStack.create(),
       this::addReference);
   }
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
     return switch (ctx.get(expr.name())) {
-      case PreLevelVar levelVar -> {
-        if (options.allowLevels) allowedLevels.append(levelVar);
-        else if (!allowedLevels.contains(levelVar)) generalizedUnavailable(ctx, sourcePos, levelVar);
-        yield new Expr.RefExpr(sourcePos, levelVar);
-      }
       case GeneralizedVar generalized -> {
         if (options.allowGeneralized) {
           // Ordered set semantics. Do not expect too many generalized vars.

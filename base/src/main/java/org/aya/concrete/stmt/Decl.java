@@ -10,7 +10,6 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
@@ -176,7 +175,7 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     public final @NotNull ImmutableSeq<DataCtor> body;
     /** Yet type-checked constructors */
     public final @NotNull DynamicSeq<@NotNull CtorDef> checkedBody = DynamicSeq.create();
-    public Sort sort;
+    public int ulift;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -212,7 +211,7 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
-    public Sort sort;
+    public int ulift;
 
     public StructDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,

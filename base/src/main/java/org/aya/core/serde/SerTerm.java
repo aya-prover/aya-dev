@@ -11,7 +11,6 @@ import kala.tuple.Tuple;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.ref.DefVar;
@@ -27,11 +26,10 @@ import java.util.Objects;
 public sealed interface SerTerm extends Serializable {
   record DeState(
     @NotNull MutableMap<Seq<String>, MutableMap<String, DefVar<?, ?>>> defCache,
-    @NotNull MutableMap<Integer, Sort.LvlVar> levelCache,
     @NotNull MutableMap<Integer, LocalVar> localCache
   ) {
     public DeState() {
-      this(MutableMap.create(), MutableMap.create(), MutableMap.create());
+      this(MutableMap.create(), MutableMap.create());
     }
 
     public @NotNull LocalVar var(@NotNull SimpVar var) {
@@ -49,11 +47,10 @@ public sealed interface SerTerm extends Serializable {
       return dv;
     }
 
-    @SuppressWarnings("unchecked")
-    <Core extends Def, Concrete extends Signatured>
+    @SuppressWarnings("unchecked") <Core extends Def, Concrete extends Signatured>
     @NotNull DefVar<Core, Concrete> newDef(@NotNull SerDef.QName name) {
       // We assume this cast to be safe
-      var defVar=  DefVar.empty(name.name());
+      var defVar = DefVar.empty(name.name());
       var old = defCache
         .getOrPut(name.mod(), MutableHashMap::new)
         .put(name.name(), defVar);
@@ -97,9 +94,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Univ(@NotNull SerLevel.Max u) implements SerTerm {
+  record Univ(int ulift) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Univ(u.de(state.levelCache));
+      return new FormTerm.Univ(ulift);
     }
   }
 
@@ -141,13 +138,9 @@ public sealed interface SerTerm extends Serializable {
   }
 
   record CallData(
-    @NotNull ImmutableSeq<SerLevel.Max> sortArgs,
+    int ulift,
     @NotNull ImmutableSeq<SerArg> args
   ) implements Serializable {
-    public @NotNull ImmutableSeq<Sort> de(@NotNull MutableMap<Integer, Sort.LvlVar> levelCache) {
-      return sortArgs.map(max -> max.de(levelCache));
-    }
-
     public @NotNull ImmutableSeq<Arg<Term>> de(@NotNull DeState state) {
       return args.map(arg -> arg.de(state));
     }
@@ -155,25 +148,25 @@ public sealed interface SerTerm extends Serializable {
 
   record StructCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull CallTerm.Struct de(@NotNull DeState state) {
-      return new CallTerm.Struct(state.resolve(name), data.de(state.levelCache), data.de(state));
+      return new CallTerm.Struct(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record FnCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Fn(state.resolve(name), data.de(state.levelCache), data.de(state));
+      return new CallTerm.Fn(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record DataCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull CallTerm.Data de(@NotNull DeState state) {
-      return new CallTerm.Data(state.resolve(name), data.de(state.levelCache), data.de(state));
+      return new CallTerm.Data(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record PrimCall(@NotNull SerDef.QName name, @NotNull PrimDef.ID id, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Prim(state.resolve(name), id, data.de(state.levelCache), data.de(state));
+      return new CallTerm.Prim(state.resolve(name), id, data.ulift, data.de(state));
     }
   }
 
@@ -184,7 +177,7 @@ public sealed interface SerTerm extends Serializable {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CallTerm.Con(
         state.resolve(dataRef), state.resolve(selfRef),
-        dataArgs.de(state), dataArgs.de(state.levelCache),
+        dataArgs.de(state), dataArgs.ulift,
         args.map(arg -> arg.de(state)));
     }
   }
@@ -198,14 +191,14 @@ public sealed interface SerTerm extends Serializable {
   record Access(
     @NotNull SerTerm of,
     @NotNull SerDef.QName ref,
-    @NotNull ImmutableSeq<SerLevel.@NotNull Max> sortArgs,
+    int ulift,
     @NotNull ImmutableSeq<@NotNull SerArg> structArgs,
     @NotNull ImmutableSeq<@NotNull SerArg> fieldArgs
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CallTerm.Access(
         of.de(state), state.resolve(ref),
-        sortArgs.map(max -> max.de(state.levelCache)),
+        ulift,
         structArgs.map(arg -> arg.de(state)),
         fieldArgs.map(arg -> arg.de(state)));
     }

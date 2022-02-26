@@ -18,7 +18,6 @@ module org.aya {
   exports org.aya.core.ops;
   exports org.aya.core.pat;
   exports org.aya.core.serde;
-  exports org.aya.core.sort;
   exports org.aya.core.term;
   exports org.aya.core.visitor;
   exports org.aya.core;
@@ -36,7 +35,6 @@ module org.aya {
   exports org.aya.tyck.order;
   exports org.aya.tyck.pat;
   exports org.aya.tyck.trace;
-  exports org.aya.tyck.unify.level;
   exports org.aya.tyck.unify;
   exports org.aya.tyck;
 }

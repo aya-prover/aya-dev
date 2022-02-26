@@ -4,7 +4,6 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +21,10 @@ public final class StructDef extends UserDef.Type {
   public StructDef(
     @NotNull DefVar<StructDef, Decl.StructDecl> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Sort sort,
+    int ulift,
     @NotNull ImmutableSeq<FieldDef> fields
   ) {
-    super(telescope, sort, levels);
+    super(telescope, ulift);
     ref.core = this;
     this.ref = ref;
     this.fields = fields;
