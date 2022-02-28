@@ -116,8 +116,8 @@ public record AyaSccTycker(
     switch (stmt) {
       case Decl decl -> tycker.tyckHeader(decl, tycker.newTycker());
       case Sample sample -> sample.tyckHeader(tycker);
-      case Decl.DataCtor ctor -> tycker.tyckCtorHeader(ctor, tycker.newTycker());
-      case Decl.StructField field -> tycker.tyckFieldHeader(field, tycker.newTycker());
+      case Decl.DataCtor ctor -> tycker.tyckHeader(ctor, tycker.newTycker());
+      case Decl.StructField field -> tycker.tyckHeader(field, tycker.newTycker());
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
@@ -129,8 +129,8 @@ public record AyaSccTycker(
         var tyck = tycker.tyck(decl, tycker.newTycker());
         wellTyped.append(tyck);
       }
-      case Decl.DataCtor ctor -> tycker.visitCtor(ctor, tycker.newTycker());
-      case Decl.StructField field -> tycker.visitField(field, tycker.newTycker());
+      case Decl.DataCtor ctor -> tycker.tyck(ctor, tycker.newTycker());
+      case Decl.StructField field -> tycker.tyck(field, tycker.newTycker());
       case Sample sample -> {
         var tyck = sample.tyck(tycker);
         if (tyck != null) wellTyped.append(tyck);

@@ -2,20 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.remark.Remark;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Sample;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.tyck.order.AyaOrgaTycker;
 import org.aya.tyck.order.AyaSccTycker;
-import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.reporter.DelayedReporter;
 import org.aya.util.reporter.Reporter;
@@ -42,27 +36,12 @@ public interface ModuleLoader {
     var sccTycker = new AyaOrgaTycker(AyaSccTycker.create(resolveInfo, builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
     try (delayedReporter) {
-      // dumpSCC(SCCs.view());
       SCCs.forEach(sccTycker::tyckSCC);
     } finally {
       if (onTycked != null) onTycked.onModuleTycked(
         resolveInfo, sccTycker.sccTycker().wellTyped().toImmutableSeq());
     }
     return resolveInfo;
-  }
-
-  private static void dumpSCC(@NotNull SeqView<ImmutableSeq<TyckOrder>> sccs) {
-    System.out.println("==== Tyck order ====");
-    sccs.forEach(scc -> {
-      var c = scc.map(s -> (s instanceof TyckOrder.Head ? "Head[" : "Body[") + switch (s.unit()) {
-        case Signatured decl -> ("Decl[" + decl.ref().name() + "]");
-        case Sample sam && sam.delegate() instanceof Decl delegate -> ((sam instanceof Sample.Working ? "Example[" : "CounterExample[") + delegate.ref().name()) + "]";
-        case Remark rem -> ("Remark[" + rem + "]");
-        default -> "";
-      } + "]").joinToString(", ");
-      System.out.println("  Group: " + c);
-    });
-    System.out.println("====================");
   }
 
   default @NotNull ResolveInfo resolveModule(

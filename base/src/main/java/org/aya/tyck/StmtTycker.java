@@ -106,13 +106,13 @@ public record StmtTycker(
       }
       case Decl.DataDecl decl -> {
         assert signature != null;
-        var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
+        var body = decl.body.map(clause -> traced(clause, tycker, this::tyck));
         yield new DataDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, body);
       }
       case Decl.PrimDecl decl -> decl.ref.core;
       case Decl.StructDecl decl -> {
         assert signature != null;
-        var body = decl.fields.map(field -> traced(field, tycker, this::visitField));
+        var body = decl.fields.map(field -> traced(field, tycker, this::tyck));
         yield new StructDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, body);
       }
     };
@@ -197,7 +197,7 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  public void tyckCtorHeader(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  public void tyckHeader(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     if (ctor.signature != null) return;
     var dataRef = ctor.dataRef;
     var dataConcrete = dataRef.concrete;
@@ -224,14 +224,14 @@ public record StmtTycker(
     ctor.yetTyckedPat = pat;
   }
 
-  @NotNull public CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  @NotNull public CtorDef tyck(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     // TODO[ice]: remove this hack
     if (ctor.ref.core != null) return ctor.ref.core;
     var dataRef = ctor.dataRef;
     var dataConcrete = dataRef.concrete;
     var dataSig = dataConcrete.signature;
     assert dataSig != null;
-    if (ctor.signature == null) tyckCtorHeader(ctor, tycker);
+    if (ctor.signature == null) tyckHeader(ctor, tycker);
     var signature = ctor.signature;
     var dataCall = ((CallTerm.Data) signature.result());
     var tele = signature.param();
@@ -266,7 +266,7 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  public void tyckFieldHeader(Decl.@NotNull StructField field, ExprTycker tycker) {
+  public void tyckHeader(Decl.@NotNull StructField field, ExprTycker tycker) {
     if (field.signature != null) return;
     var structRef = field.structRef;
     var structSort = structRef.concrete.sort;
@@ -279,13 +279,13 @@ public record StmtTycker(
     field.yetTycker = new PatTycker(tycker);
   }
 
-  @NotNull public FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
+  @NotNull public FieldDef tyck(Decl.@NotNull StructField field, ExprTycker tycker) {
     // TODO[ice]: remove this hack
     if (field.ref.core != null) return field.ref.core;
     var structRef = field.structRef;
     var structSig = structRef.concrete.signature;
     assert structSig != null;
-    if (field.signature == null) tyckFieldHeader(field, tycker);
+    if (field.signature == null) tyckHeader(field, tycker);
     var signature = field.signature;
     var tele = signature.param();
     var result = signature.result();
