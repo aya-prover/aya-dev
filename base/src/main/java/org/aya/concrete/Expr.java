@@ -51,6 +51,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   @Contract(pure = true)
   default Expr resolve(@NotNull ModuleContext context) {
     var exprResolver = new ExprResolver(ExprResolver.RESTRICTIVE);
+    exprResolver.enterBody();
     return accept(exprResolver, context);
   }
 
