@@ -272,8 +272,8 @@ public record StmtTycker(
     var structSort = structRef.concrete.sort;
     var structSig = structRef.concrete.signature;
     assert structSig != null;
-    var tele = tele(tycker, field.telescope, structSort);
     structSig.param().forEach(tycker.localCtx::put);
+    var tele = tele(tycker, field.telescope, structSort);
     var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     field.yetTycker = new PatTycker(tycker);
