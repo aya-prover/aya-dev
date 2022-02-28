@@ -23,6 +23,7 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.MutableGraph;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.SCCTycker;
@@ -64,24 +65,40 @@ public record AyaSccTycker(
       throw new SCCTyckingFailed(scc);
     }
     scc.forEach(this::check);
-    terck(scc.view().map(TyckOrder::unit));
+    terck(scc.view());
   }
 
   private void checkUnit(@NotNull TyckOrder order) {
-    if (order.unit() instanceof Decl.FnDecl fn && fn.body.isLeft()) checkSimpleFn(order, fn);
-    else {
+    if (order instanceof TyckOrder.Body && order.unit() instanceof Decl.FnDecl fn && fn.body.isLeft()) {
+      checkSimpleFn(order, fn);
+    } else {
       check(order);
       if (order instanceof TyckOrder.Body body)
-        terck(SeqView.of(body.unit()));
+        terck(SeqView.of(body));
     }
   }
 
-  private boolean isRecursive(@NotNull Decl unit) {
-    return resolveInfo.depGraph().hasSuc(new TyckOrder.Body(unit), new TyckOrder.Body(unit));
+  private boolean hasSuc(
+    @NotNull MutableGraph<TyckOrder> G,
+    @NotNull MutableSet<TyckOrder> book,
+    @NotNull TyckOrder vertex,
+    @NotNull TyckOrder suc
+  ) {
+    if (book.contains(vertex)) return false;
+    book.add(vertex);
+    for (var test : G.suc(vertex)) {
+      if (test.equals(suc)) return true;
+      if (hasSuc(G, book, test, suc)) return true;
+    }
+    return false;
+  }
+
+  private boolean isRecursive(@NotNull TyckOrder unit) {
+    return hasSuc(resolveInfo.depGraph(), MutableSet.create(), unit, unit);
   }
 
   private void checkSimpleFn(@NotNull TyckOrder order, @NotNull Decl.FnDecl fn) {
-    if (isRecursive(fn)) {
+    if (isRecursive(order)) {
       reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
@@ -124,12 +141,14 @@ public record AyaSccTycker(
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
-  private void terck(@NotNull SeqView<TyckUnit> units) {
+  private void terck(@NotNull SeqView<TyckOrder> units) {
+    var recDefs = units.filterIsInstance(TyckOrder.Body.class)
+      .filter(this::isRecursive)
+      .map(TyckOrder::unit);
+    if (recDefs.isEmpty()) return;
     // TODO: terck other definitions
-    var fn = units.filterIsInstance(Decl.FnDecl.class)
-      .map(decl -> decl.ref.core)
-      .filter(def -> isRecursive(def.ref().concrete));
-    if (fn.isEmpty()) return;
+    var fn = recDefs.filterIsInstance(Decl.FnDecl.class)
+      .map(f -> f.ref.core);
     terckRecursiveFn(fn);
   }
 
