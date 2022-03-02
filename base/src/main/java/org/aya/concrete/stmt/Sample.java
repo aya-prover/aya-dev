@@ -21,8 +21,8 @@ public sealed interface Sample extends Stmt {
   }
 
   /** @return <code>null</code> if the delegate is a command (not a definition) */
-  @Nullable Def tyck(@NotNull StmtTycker stmtTycker);
-  void tyckHeader(@NotNull StmtTycker stmtTycker);
+  @Nullable Def tyck(@NotNull StmtTycker stmtTycker, @NotNull ExprTycker exprTycker);
+  void tyckHeader(@NotNull StmtTycker stmtTycker, @NotNull ExprTycker exprTycker);
 
   @Override default @NotNull SourcePos sourcePos() {
     return delegate().sourcePos();
@@ -37,12 +37,12 @@ public sealed interface Sample extends Stmt {
       return visitor.visitExample(this, p);
     }
 
-    @Override public void tyckHeader(@NotNull StmtTycker stmtTycker) {
-      if (delegate instanceof Decl decl) stmtTycker.tyckHeader(decl, stmtTycker.newTycker());
+    @Override public void tyckHeader(@NotNull StmtTycker stmtTycker, @NotNull ExprTycker exprTycker) {
+      if (delegate instanceof Decl decl) stmtTycker.tyckHeader(decl, exprTycker);
     }
 
-    @Override public @Nullable Def tyck(@NotNull StmtTycker stmtTycker) {
-      return delegate instanceof Decl decl ? stmtTycker.tyck(decl, stmtTycker.newTycker()) : null;
+    @Override public @Nullable Def tyck(@NotNull StmtTycker stmtTycker, @NotNull ExprTycker exprTycker) {
+      return delegate instanceof Decl decl ? stmtTycker.tyck(decl, exprTycker) : null;
     }
   }
 
@@ -55,13 +55,11 @@ public sealed interface Sample extends Stmt {
       return visitor.visitCounterexample(this, p);
     }
 
-    @Override public void tyckHeader(@NotNull StmtTycker stmtTycker) {
-      var exprTycker = new ExprTycker(reporter, stmtTycker.traceBuilder());
+    @Override public void tyckHeader(@NotNull StmtTycker stmtTycker, @NotNull ExprTycker exprTycker) {
       stmtTycker.tyckHeader(delegate, exprTycker);
     }
 
-    @Override public @NotNull Def tyck(@NotNull StmtTycker stmtTycker) {
-      var exprTycker = new ExprTycker(reporter, stmtTycker.traceBuilder());
+    @Override public @NotNull Def tyck(@NotNull StmtTycker stmtTycker, @NotNull ExprTycker exprTycker) {
       var def = stmtTycker.tyck(delegate, exprTycker);
       var problems = reporter.problems().toImmutableSeq();
       if (problems.isEmpty()) {

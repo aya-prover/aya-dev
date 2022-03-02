@@ -68,7 +68,6 @@ public record StmtTycker(
 
   private @NotNull Def doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
     if (predecl.signature == null) tyckHeader(predecl, tycker);
-    else predecl.signature.param().forEach(tycker.localCtx::put);
     var signature = predecl.signature;
     return switch (predecl) {
       case Decl.FnDecl decl -> {
@@ -204,7 +203,6 @@ public record StmtTycker(
     var dataSig = dataConcrete.signature;
     var dataSort = dataConcrete.sort;
     assert dataSig != null;
-    dataSig.param().forEach(tycker.localCtx::put);
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var sortParam = dataSig.sortParam();
     var dataCall = new CallTerm.Data(dataRef, sortParam.view()
@@ -275,7 +273,6 @@ public record StmtTycker(
     var structSort = structRef.concrete.sort;
     var structSig = structRef.concrete.signature;
     assert structSig != null;
-    structSig.param().forEach(tycker.localCtx::put);
     var tele = tele(tycker, field.telescope, structSort);
     var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
