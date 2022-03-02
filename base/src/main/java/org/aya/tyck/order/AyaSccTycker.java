@@ -33,14 +33,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Tyck statements in SCC.
  *
+ * @param tyckerReuse Constructors and fields should be checked using
+ *                    the same tycker with theirs data or structs.
  * @author kiva
+ * @see ExprTycker
  */
 public record AyaSccTycker(
   @NotNull StmtTycker tycker,
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull DynamicSeq<@NotNull Def> wellTyped,
-  @NotNull MutableMap<TyckUnit, ExprTycker> exprTycker
+  @NotNull MutableMap<TyckUnit, ExprTycker> tyckerReuse
 ) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
@@ -114,10 +117,12 @@ public record AyaSccTycker(
 
   private void checkHeader(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
+      case Decl.DataDecl decl -> tycker.tyckHeader(decl, reuse(decl));
+      case Decl.StructDecl decl -> tycker.tyckHeader(decl, reuse(decl));
       case Decl decl -> tycker.tyckHeader(decl, tycker.newTycker());
+      case Decl.DataCtor ctor -> tycker.tyckHeader(ctor, reuse(ctor.dataRef.concrete));
+      case Decl.StructField field -> tycker.tyckHeader(field, reuse(field.structRef.concrete));
       case Sample sample -> sample.tyckHeader(tycker);
-      case Decl.DataCtor ctor -> tycker.tyckHeader(ctor, tycker.newTycker());
-      case Decl.StructField field -> tycker.tyckHeader(field, tycker.newTycker());
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
@@ -125,12 +130,11 @@ public record AyaSccTycker(
 
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
-      case Decl decl -> {
-        var tyck = tycker.tyck(decl, tycker.newTycker());
-        wellTyped.append(tyck);
-      }
-      case Decl.DataCtor ctor -> tycker.tyck(ctor, tycker.newTycker());
-      case Decl.StructField field -> tycker.tyck(field, tycker.newTycker());
+      case Decl.DataDecl decl -> wellTyped.append(tycker.tyck(decl, reuse(decl)));
+      case Decl.StructDecl decl -> wellTyped.append(tycker.tyck(decl, reuse(decl)));
+      case Decl decl -> wellTyped.append(tycker.tyck(decl, tycker.newTycker()));
+      case Decl.DataCtor ctor -> tycker.tyck(ctor, reuse(ctor.dataRef.concrete));
+      case Decl.StructField field -> tycker.tyck(field, reuse(field.structRef.concrete));
       case Sample sample -> {
         var tyck = sample.tyck(tycker);
         if (tyck != null) wellTyped.append(tyck);
@@ -139,6 +143,14 @@ public record AyaSccTycker(
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
+  }
+
+  /**
+   * @apiNote use this function only when checking data and structs and their children.
+   * @see ExprTycker
+   */
+  private @NotNull ExprTycker reuse(@NotNull TyckUnit unit) {
+    return tyckerReuse.getOrPut(unit, tycker::newTycker);
   }
 
   private void terck(@NotNull SeqView<TyckOrder> units) {

@@ -18,7 +18,10 @@ import org.aya.resolve.context.Context;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.function.BiFunction;
@@ -136,9 +139,9 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     public final boolean coerce;
 
     /** used when tycking constructor's header */
-    public @UnknownNullability ImmutableSeq<Pat> yetTyckedPat;
+    public @Nullable ImmutableSeq<Pat> yetTyckedPat;
     /** used when tycking constructor's header */
-    public @UnknownNullability PatTycker yetTycker;
+    public @Nullable PatTycker yetTycker;
 
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -245,9 +248,6 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     public @NotNull Option<Expr> body;
 
     public final boolean coerce;
-
-    /** used when tycking constructor's header */
-    public @UnknownNullability PatTycker yetTycker;
 
     public StructField(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,

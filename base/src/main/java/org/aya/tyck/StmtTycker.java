@@ -237,7 +237,10 @@ public record StmtTycker(
     var tele = signature.param();
     var patTycker = ctor.yetTycker;
     var pat = ctor.yetTyckedPat;
-    var tyckerReuse = patTycker.exprTycker;
+    assert patTycker != null && pat != null; // header should be checked first
+    // PatTycker was created when checking the header with another expr tycker,
+    // we should make sure it's the same one here. See comments of ExprTycker.
+    assert tycker == patTycker.exprTycker;
     var dataTeleView = dataSig.param().view();
     if (pat.isNotEmpty()) {
       dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
@@ -248,7 +251,7 @@ public record StmtTycker(
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
     dataConcrete.checkedBody.append(elaborated);
     if (patTycker.noError())
-      ensureConfluent(tyckerReuse, signature, elabClauses, ctor.sourcePos, false);
+      ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
     return elaborated;
   }
 
@@ -276,7 +279,6 @@ public record StmtTycker(
     var tele = tele(tycker, field.telescope, structSort);
     var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
-    field.yetTycker = new PatTycker(tycker);
   }
 
   @NotNull public FieldDef tyck(Decl.@NotNull StructField field, ExprTycker tycker) {
@@ -289,13 +291,12 @@ public record StmtTycker(
     var signature = field.signature;
     var tele = signature.param();
     var result = signature.result();
-    var patTycker = field.yetTycker;
-    var tyckerReuse = patTycker.exprTycker;
+    var patTycker = new PatTycker(tycker);
     var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature, field.result.sourcePos());
-    var body = field.body.map(e -> tyckerReuse.inherit(e, result).wellTyped());
+    var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, clauses.matchings(), body, field.coerce);
     if (patTycker.noError())
-      ensureConfluent(tyckerReuse, field.signature, clauses, field.sourcePos, false);
+      ensureConfluent(tycker, field.signature, clauses, field.sourcePos, false);
     return elaborated;
   }
 
