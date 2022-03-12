@@ -108,8 +108,12 @@ public record StmtShallowResolver(
         for (var variable : variables.variables)
           context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
       }
-      case Sample.Working example -> resolveStmt(example.delegate(), exampleContext(context));
+      case Sample.Working example -> {
+        if (example.delegate() instanceof Decl decl) decl.ownerSample = example;
+        resolveStmt(example.delegate(), exampleContext(context));
+      }
       case Sample.Counter example -> {
+        example.delegate().ownerSample = example;
         var childCtx = exampleContext(context).derive("counter");
         var delegate = example.delegate();
         delegate.ctx = childCtx;

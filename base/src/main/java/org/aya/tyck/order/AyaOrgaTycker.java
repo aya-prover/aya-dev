@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
@@ -17,14 +17,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public record AyaOrgaTycker(
   @NotNull AyaSccTycker sccTycker,
-  @NotNull MutableGraph<TyckUnit> usageGraph,
-  @NotNull MutableSet<TyckUnit> skippedSet
-) implements OrgaTycker<TyckUnit, AyaSccTycker.SCCTyckingFailed> {
+  @NotNull MutableGraph<TyckOrder> usageGraph,
+  @NotNull MutableSet<TyckOrder> skippedSet
+) implements OrgaTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public AyaOrgaTycker(@NotNull AyaSccTycker sccTycker, @NotNull ResolveInfo resolveInfo) {
     this(sccTycker, resolveInfo.depGraph().transpose(), MutableSet.of());
   }
 
-  @Override public @NotNull Iterable<TyckUnit> collectUsageOf(@NotNull TyckUnit failed) {
+  @Override public @NotNull Iterable<TyckOrder> collectUsageOf(@NotNull TyckOrder failed) {
     return usageGraph.suc(failed);
   }
 }

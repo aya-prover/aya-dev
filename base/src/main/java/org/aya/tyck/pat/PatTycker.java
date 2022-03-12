@@ -12,11 +12,6 @@ import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import kala.value.Ref;
-import org.aya.util.reporter.Problem;
-import org.aya.ref.DefVar;
-import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
@@ -31,7 +26,11 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.TermFixpoint;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
@@ -39,6 +38,7 @@ import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ import java.util.function.Supplier;
  * @author ice1000
  */
 public final class PatTycker {
-  private final @NotNull ExprTycker exprTycker;
+  public final @NotNull ExprTycker exprTycker;
   private final @NotNull Substituter.TermSubst termSubst;
   private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;

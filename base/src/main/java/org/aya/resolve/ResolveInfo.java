@@ -9,7 +9,7 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.tyck.order.TyckUnit;
+import org.aya.tyck.order.TyckOrder;
 import org.aya.util.MutableGraph;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Debug;
@@ -29,7 +29,7 @@ public record ResolveInfo(
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> imports,
   @NotNull DynamicSeq<ImmutableSeq<String>> reExports,
-  @NotNull MutableGraph<TyckUnit> depGraph,
+  @NotNull MutableGraph<TyckOrder> depGraph,
   @NotNull MutableMap<OpDecl, BindBlock> bindBlockRename
 ) {
   public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {

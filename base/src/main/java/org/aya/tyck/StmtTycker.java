@@ -68,7 +68,6 @@ public record StmtTycker(
 
   private @NotNull Def doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
     if (predecl.signature == null) tyckHeader(predecl, tycker);
-    else predecl.signature.param().forEach(tycker.localCtx::put);
     var signature = predecl.signature;
     return switch (predecl) {
       case Decl.FnDecl decl -> {
@@ -106,13 +105,13 @@ public record StmtTycker(
       }
       case Decl.DataDecl decl -> {
         assert signature != null;
-        var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
+        var body = decl.body.map(clause -> traced(clause, tycker, this::tyck));
         yield new DataDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, body);
       }
       case Decl.PrimDecl decl -> decl.ref.core;
       case Decl.StructDecl decl -> {
         assert signature != null;
-        var body = decl.fields.map(field -> traced(field, tycker, this::visitField));
+        var body = decl.fields.map(field -> traced(field, tycker, this::tyck));
         yield new StructDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, body);
       }
     };
@@ -197,7 +196,8 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  public void tyckHeader(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+    if (ctor.signature != null) return;
     var dataRef = ctor.dataRef;
     var dataConcrete = dataRef.concrete;
     var dataSig = dataConcrete.signature;
@@ -217,8 +217,28 @@ public record StmtTycker(
       // No patterns, leave it blank
       : ImmutableSeq.<Pat>empty();
     var tele = tele(tycker, ctor.telescope, dataSort);
-    var signature = new Def.Signature(sortParam, tele, dataCall);
-    ctor.signature = signature;
+    ctor.signature = new Def.Signature(sortParam, tele, dataCall);
+    ctor.yetTycker = patTycker;
+    ctor.yetTyckedPat = pat;
+  }
+
+  @NotNull public CtorDef tyck(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+    // TODO[ice]: remove this hack
+    if (ctor.ref.core != null) return ctor.ref.core;
+    var dataRef = ctor.dataRef;
+    var dataConcrete = dataRef.concrete;
+    var dataSig = dataConcrete.signature;
+    assert dataSig != null;
+    if (ctor.signature == null) tyckHeader(ctor, tycker);
+    var signature = ctor.signature;
+    var dataCall = ((CallTerm.Data) signature.result());
+    var tele = signature.param();
+    var patTycker = ctor.yetTycker;
+    var pat = ctor.yetTyckedPat;
+    assert patTycker != null && pat != null; // header should be checked first
+    // PatTycker was created when checking the header with another expr tycker,
+    // we should make sure it's the same one here. See comments of ExprTycker.
+    assert tycker == patTycker.exprTycker;
     var dataTeleView = dataSig.param().view();
     if (pat.isNotEmpty()) {
       dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
@@ -247,7 +267,8 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  private @NotNull FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
+  public void tyckHeader(Decl.@NotNull StructField field, ExprTycker tycker) {
+    if (field.signature != null) return;
     var structRef = field.structRef;
     var structSort = structRef.concrete.sort;
     var structSig = structRef.concrete.signature;
@@ -255,6 +276,18 @@ public record StmtTycker(
     var tele = tele(tycker, field.telescope, structSort);
     var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
+  }
+
+  @NotNull public FieldDef tyck(Decl.@NotNull StructField field, ExprTycker tycker) {
+    // TODO[ice]: remove this hack
+    if (field.ref.core != null) return field.ref.core;
+    var structRef = field.structRef;
+    var structSig = structRef.concrete.signature;
+    assert structSig != null;
+    if (field.signature == null) tyckHeader(field, tycker);
+    var signature = field.signature;
+    var tele = signature.param();
+    var result = signature.result();
     var patTycker = new PatTycker(tycker);
     var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature, field.result.sourcePos());
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());

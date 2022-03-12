@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
@@ -19,20 +19,6 @@ public record MutableGraph<T>(@NotNull MutableMap<T, @NotNull DynamicSeq<@NotNul
   public @NotNull SeqView<T> suc(@NotNull T elem) {
     var suc = E.getOrNull(elem);
     return suc == null ? SeqView.empty() : suc.view();
-  }
-
-  public boolean hasSuc(@NotNull T vertex, @NotNull T suc) {
-    return hasSuc(MutableSet.create(), vertex, suc);
-  }
-
-  private boolean hasSuc(@NotNull MutableSet<T> book, @NotNull T vertex, @NotNull T suc) {
-    if (book.contains(vertex)) return false;
-    book.add(vertex);
-    for (var test : suc(vertex)) {
-      if (test == suc) return true;
-      if (hasSuc(book, test, suc)) return true;
-    }
-    return false;
   }
 
   public boolean hasPath(@NotNull T from, @NotNull T to) {

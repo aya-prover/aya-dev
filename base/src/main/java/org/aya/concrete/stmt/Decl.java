@@ -9,11 +9,13 @@ import kala.control.Option;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.*;
+import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
+import org.aya.tyck.pat.PatTycker;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,6 +34,8 @@ import java.util.function.BiFunction;
 public sealed abstract class Decl extends Signatured implements Stmt {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
+  /** this decl is delegated by a sample */
+  public @Nullable Sample ownerSample = null;
   public @NotNull Expr result;
 
   @Override public @NotNull Accessibility accessibility() {
@@ -133,6 +137,11 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
     public final boolean coerce;
+
+    /** used when tycking constructor's header */
+    public @Nullable ImmutableSeq<Pat> yetTyckedPat;
+    /** used when tycking constructor's header */
+    public @Nullable PatTycker yetTycker;
 
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,

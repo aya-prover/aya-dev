@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
@@ -10,7 +10,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
-import org.aya.tyck.order.TyckUnit;
+import org.aya.tyck.order.TyckOrder;
 import org.aya.util.error.SourcePos;
 import org.commonmark.node.*;
 import org.commonmark.parser.Parser;
@@ -92,7 +92,7 @@ public final class Remark implements Stmt {
     return sourcePos;
   }
 
-  public @NotNull ImmutableSeq<TyckUnit> doResolve(@NotNull ResolveInfo info) {
+  public @NotNull ImmutableSeq<TyckOrder> doResolve(@NotNull ResolveInfo info) {
     if (literate == null) return ImmutableSeq.empty();
     assert ctx != null : "Be sure to call the shallow resolver before resolving";
     return literate.resolve(info, ctx);
