@@ -5,7 +5,9 @@ In file $FILE:9:15 ->
   9 | def u : Nat => true
                      ^--^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         true
+       of type
          Bool
        against the type
          Nat

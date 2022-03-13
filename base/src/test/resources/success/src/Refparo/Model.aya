@@ -23,7 +23,7 @@ public open struct Event (T : EventT) : Type 1
 def getAgent (T : EventT) (e : Event T) : T.AgentT => e.agent
 
 
-def Quantifier (A : Type) => (A -> Type 3) -> Type 3
+def Quantifier (A : Type) => (A -> Type 2) -> Type 3
 
 def mkConstQ {A : Type} (x : A) : Quantifier A
   => \f => f x
@@ -55,7 +55,7 @@ def mkTheta
   (T-inv : Pi (A : Type) (T : EventT) -> A ↑ = getT (setT A T))
   : Theta setT
   -- A : Type
-  -- ↑ q : (↑ A -> Type 3) -> Type 3
+  -- ↑ q : (↑ A -> Type 3) -> Type 4
   -- x : ↑ A
   -- p f : (setT A T -> Type) -> Type
   -- e : setT A T

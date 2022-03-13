@@ -14,7 +14,9 @@ In file $FILE:3:8 ->
   3 |  | cons A (List A)
               ^^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         A
+       of type
          Type 1
        against the type
          Type 0

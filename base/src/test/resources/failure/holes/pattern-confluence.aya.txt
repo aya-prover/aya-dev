@@ -5,7 +5,9 @@ In file $FILE:6:15 ->
   6 |   | zero, n => n
                      ^^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         n
+       of type
          Nat
        against the type
          Type 0
@@ -35,7 +37,9 @@ In file $FILE:8:21 ->
   8 |   | suc m, n => suc (add m n)
                            ^-----^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         add m n
+       of type
          Type 0
        against the type
          Nat
@@ -47,7 +51,9 @@ In file $FILE:8:16 ->
   8 |   | suc m, n => suc (add m n)
                       ^----------^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         suc (add m n)
+       of type
          Nat
        against the type
          Type 0
@@ -59,7 +65,9 @@ In file $FILE:9:21 ->
   9 |   | m, suc n => suc (add m n)
                            ^-----^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         add m n
+       of type
          Type 0
        against the type
          Nat
@@ -71,7 +79,9 @@ In file $FILE:9:16 ->
   9 |   | m, suc n => suc (add m n)
                       ^----------^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         suc (add m n)
+       of type
          Nat
        against the type
          Type 0

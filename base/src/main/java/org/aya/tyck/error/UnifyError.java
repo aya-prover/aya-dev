@@ -21,7 +21,9 @@ public record UnifyError(
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     var actualDoc = actual.toDoc(options);
     var buf = DynamicSeq.of(
-      Doc.english("Cannot check the expression of type"),
+      Doc.english("Cannot check the expression"),
+      Doc.par(1, expr.toDoc(options)),
+      Doc.english("of type"),
       Doc.par(1, actualDoc));
     var actualNFDoc = actual.normalize(null, NormalizeMode.NF).toDoc(options);
     if (!actualNFDoc.equals(actualDoc))
