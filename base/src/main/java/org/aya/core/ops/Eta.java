@@ -16,38 +16,38 @@ public record Eta(@NotNull LocalCtx ctx) {
    */
   public @NotNull Term uneta(@NotNull Term term) {
     return switch (term) {
-      case IntroTerm.Lambda lambdaTerm -> {
-        var etaBodyTerm = uneta(lambdaTerm.body());
-        var lastTerm = getLastTerm(etaBodyTerm);
-        var bodyWithoutLastTerm = constructBodyWithoutLast(etaBodyTerm, lastTerm);
-        if (lastTerm instanceof RefTerm lastRefTerm
-          && compareRefTerm(lambdaTerm.param().toTerm(), lastRefTerm)
-          && appearFree(lastRefTerm, bodyWithoutLastTerm)) yield uneta(bodyWithoutLastTerm);
-        yield IntroTerm.Lambda.make(ImmutableSeq.of(lambdaTerm.param()), etaBodyTerm);
+      case IntroTerm.Lambda lam -> {
+        var etaBody = uneta(lam.body());
+        var last = getLastTerm(etaBody);
+        var bodyWoLast = constructBodyWithoutLast(etaBody, last);
+        if (last instanceof RefTerm lastRef
+          && compareRefTerm(lam.param().toTerm(), lastRef)
+          && appearFree(lastRef, bodyWoLast)) yield uneta(bodyWoLast);
+        yield IntroTerm.Lambda.make(ImmutableSeq.of(lam.param()), etaBody);
       }
-      case IntroTerm.Tuple tupleTerm -> {
-        if (tupleTerm.items().isEmpty()) yield tupleTerm;
-        var etaItems = tupleTerm.items().map(this::uneta);
+      case IntroTerm.Tuple tuple -> {
+        if (tuple.items().isEmpty()) yield tuple;
+        var etaItems = tuple.items().map(this::uneta);
         var defaultRes = new IntroTerm.Tuple(etaItems);
         // Get first item's Proj.of Term to compare with other items'
         var firstItem = etaItems.first();
-        if (!(firstItem instanceof ElimTerm.Proj projTerm
-          && projTerm.of() instanceof RefTerm refTerm
-          && ctx.get(refTerm.var()) instanceof FormTerm.Sigma sigmaTerm)) yield defaultRes;
+        if (!(firstItem instanceof ElimTerm.Proj proj
+          && proj.of() instanceof RefTerm ref
+          && ctx.get(ref.var()) instanceof FormTerm.Sigma sigmaTerm)) yield defaultRes;
         // Make sure targetSigma's size is equal to this tuple's size
-        if (!sigmaTerm.params().sizeEquals(tupleTerm.items().size())) yield defaultRes;
+        if (!sigmaTerm.params().sizeEquals(tuple.items().size())) yield defaultRes;
         // Make sure every Proj.of Term is the same and index match the position
         for (var i = 0; i < etaItems.size(); ++i) {
           var item = etaItems.get(i);
-          if (!(item instanceof ElimTerm.Proj itemProjTerm)
-            || !compareRefTerm(itemProjTerm.of(), refTerm)
-            || (itemProjTerm.ix() != i + 1)) yield defaultRes;
+          if (!(item instanceof ElimTerm.Proj itemProj)
+            || !compareRefTerm(itemProj.of(), ref)
+            || (itemProj.ix() != i + 1)) yield defaultRes;
         }
-        yield refTerm;
+        yield ref;
       }
-      case ElimTerm.App appTerm -> new ElimTerm.App(appTerm.of(),
-        new Arg<>(uneta(appTerm.arg().term()), appTerm.arg().explicit()));
-      case ElimTerm.Proj projTerm -> new ElimTerm.Proj(uneta(projTerm.of()), projTerm.ix());
+      case ElimTerm.App app -> new ElimTerm.App(app.of(), app.ulift(),
+        new Arg<>(uneta(app.arg().term()), app.arg().explicit()));
+      case ElimTerm.Proj proj -> new ElimTerm.Proj(uneta(proj.of()), proj.ulift(), proj.ix());
       // Ignore other cases because they are useless in becoming a RefTerm
       default -> term;
     };
@@ -55,8 +55,8 @@ public record Eta(@NotNull LocalCtx ctx) {
 
   private static @NotNull Term getLastTerm(@NotNull Term term) {
     return switch (term) {
-      case IntroTerm.Lambda lamTerm -> getLastTerm(lamTerm.body());
-      case ElimTerm.App appTerm -> appTerm.arg().term();
+      case IntroTerm.Lambda lam -> getLastTerm(lam.body());
+      case ElimTerm.App app -> app.arg().term();
       default -> term;
     };
   }
@@ -70,12 +70,12 @@ public record Eta(@NotNull LocalCtx ctx) {
     };
   }
 
-  private static boolean appearFree(@NotNull RefTerm refTerm, @NotNull Term term) {
+  private static boolean appearFree(@NotNull RefTerm ref, @NotNull Term term) {
     return switch (term) {
-      case RefTerm rTerm -> !compareRefTerm(refTerm, rTerm);
-      case IntroTerm.Lambda lamTerm -> appearFree(refTerm, lamTerm.body());
-      case ElimTerm.App appTerm -> appearFree(refTerm, appTerm.arg().term())
-        && appearFree(refTerm, appTerm.of());
+      case RefTerm rTerm -> !compareRefTerm(ref, rTerm);
+      case IntroTerm.Lambda lam -> appearFree(ref, lam.body());
+      case ElimTerm.App app -> appearFree(ref, app.arg().term())
+        && appearFree(ref, app.of());
       // TODO: There are many other cases, but if they all need to be considered, maybe a visitor is better
       default -> false;
     };
@@ -83,7 +83,7 @@ public record Eta(@NotNull LocalCtx ctx) {
 
   @VisibleForTesting
   public static boolean compareRefTerm(@NotNull Term lhs, @NotNull Term rhs) {
-    if (!(lhs instanceof RefTerm lhsRefTerm && rhs instanceof RefTerm rhsRefTerm)) return false;
-    return lhsRefTerm.var() == rhsRefTerm.var();
+    if (!(lhs instanceof RefTerm lhsRef && rhs instanceof RefTerm rhsRefTerm)) return false;
+    return lhsRef.var() == rhsRefTerm.var();
   }
 }

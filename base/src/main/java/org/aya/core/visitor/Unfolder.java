@@ -9,12 +9,8 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
 import org.aya.core.Matching;
-import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.PatMatcher;
-import org.aya.core.sort.LevelSubst;
-import org.aya.core.sort.Sort;
-import org.aya.core.sort.Sort.LvlVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
@@ -46,19 +42,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.args().map(arg -> visitArg(arg, p));
-    var levelParams = Def.defLevels(def.ref());
-    var levelArgs = conCall.sortArgs();
-    var levelSubst = buildSubst(levelParams, levelArgs);
+    var levelArgs = ulift() + conCall.ulift();
     var dropped = args.drop(conCall.head().dataArgs().size());
-    var volynskaya = tryUnfoldClauses(p, true, dropped, levelSubst, def.clauses);
+    var volynskaya = tryUnfoldClauses(p, true, dropped, conCall.ulift(), def.clauses);
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped);
-  }
-
-  static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<@NotNull Sort> levelArgs) {
-    var levelSubst = new LevelSubst.Simple(MutableMap.create());
-    assert levelParams.sizeEquals(levelArgs);
-    for (var app : levelArgs.zip(levelParams)) levelSubst.solution().put(app._2, app._1);
-    return levelSubst;
   }
 
   @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
@@ -66,16 +53,16 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return fnCall;
     var args = fnCall.args().map(arg -> visitArg(arg, p));
-    if (def.modifiers.contains(Modifier.Opaque)) return new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
-    var levelSubst = buildSubst(def.levels, fnCall.sortArgs());
+    var ulift = ulift() + fnCall.ulift();
+    if (def.modifiers.contains(Modifier.Opaque)) return new CallTerm.Fn(fnCall.ref(), ulift, args);
     var body = def.body;
     if (body.isLeft()) {
       var termSubst = checkAndBuildSubst(def.telescope(), args);
-      return body.getLeftValue().subst(termSubst, levelSubst).accept(this, p).rename();
+      return body.getLeftValue().subst(termSubst, ulift).accept(this, p).rename();
     }
     var orderIndependent = def.modifiers.contains(Modifier.Overlap);
-    var volynskaya = tryUnfoldClauses(p, orderIndependent, args, levelSubst, body.getRightValue());
-    return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
+    var volynskaya = tryUnfoldClauses(p, orderIndependent, args, ulift, body.getRightValue());
+    return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), ulift, args);
   }
   private @NotNull Substituter.TermSubst
   checkAndBuildSubst(SeqLike<Term.Param> telescope, SeqLike<Arg<Term>> args) {
@@ -103,22 +90,22 @@ public interface Unfolder<P> extends TermFixpoint<P> {
 
   default @Nullable WithPos<Term> tryUnfoldClauses(
     P p, boolean orderIndependent, SeqLike<Arg<Term>> args,
-    LevelSubst levelSubst, @NotNull ImmutableSeq<Matching> clauses
+    int ulift, @NotNull ImmutableSeq<Matching> clauses
   ) {
     return tryUnfoldClauses(p, orderIndependent, args,
-      new Substituter.TermSubst(MutableMap.create()), levelSubst, clauses);
+      new Substituter.TermSubst(MutableMap.create()), ulift, clauses);
   }
 
   default @Nullable WithPos<Term> tryUnfoldClauses(
     P p, boolean orderIndependent, SeqLike<Arg<Term>> args,
-    Substituter.@NotNull TermSubst subst, LevelSubst levelSubst,
+    Substituter.@NotNull TermSubst subst, int ulift,
     @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
-        var newBody = matchy.body().rename().subst(subst, levelSubst).accept(this, p);
+        var newBody = matchy.body().rename().subst(subst, ulift).accept(this, p);
         return new WithPos<>(matchy.sourcePos(), newBody);
       } else if (!orderIndependent && termSubst.getErr()) return null;
       // ^ if we have an order-dependent clause and the pattern matching is blocked,
@@ -135,19 +122,19 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (!(nevv instanceof IntroTerm.New n)) {
       var args = term.args().map(arg -> visitArg(arg, p));
       var fieldSubst = checkAndBuildSubst(fieldDef.fullTelescope(), args);
-      var levelSubst = buildSubst(Def.defLevels(fieldRef), term.sortArgs());
       var structDef = fieldDef.structRef.core;
       var structArgsSize = term.structArgs().size();
+      var ulift = ulift() + term.ulift();
       for (var field : structDef.fields) {
         if (field == fieldDef) continue;
-        var tele = Term.Param.subst(field.telescope(), levelSubst);
-        var access = new CallTerm.Access(nevv, field.ref, term.sortArgs(), args.take(structArgsSize), tele.map(Term.Param::toArg));
+        var tele = Term.Param.subst(field.telescope(), ulift);
+        var access = new CallTerm.Access(nevv, field.ref, ulift, args.take(structArgsSize), tele.map(Term.Param::toArg));
         fieldSubst.add(field.ref, IntroTerm.Lambda.make(tele, access));
       }
       var dropped = args.drop(structArgsSize);
-      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, levelSubst, fieldDef.clauses);
-      return mischa != null ? mischa.data().subst(fieldSubst, levelSubst) : new CallTerm.Access(nevv, fieldRef,
-        term.sortArgs(), term.structArgs(), dropped);
+      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, ulift, fieldDef.clauses);
+      return mischa != null ? mischa.data().subst(fieldSubst, ulift) : new CallTerm.Access(nevv, fieldRef,
+        ulift, term.structArgs(), dropped);
     }
     var arguments = buildSubst(fieldDef.ownerTele, term.structArgs());
     var fieldBody = term.fieldArgs().foldLeft(n.params().get(fieldRef), CallTerm::make);

@@ -5,7 +5,9 @@ In file $FILE:6:35 ->
   6 |   | (suc a, suc b), unit y => suc (max (a, b))
                                          ^--------^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         max (a, b)
+       of type
          Unit -> Nat
        against the type
          Nat

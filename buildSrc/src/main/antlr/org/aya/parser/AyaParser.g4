@@ -14,7 +14,6 @@ stmt : decl
      | openCmd
      | module
      | remark
-     | levels
      | generalize
      | sample
      ;
@@ -33,7 +32,6 @@ useIdsComma : (useId COMMA)* useId?;
 useId : ID useAs?;
 useAs : AS assoc? ID bindBlock?;
 
-levels : ULEVEL ids ;
 generalize : VARIABLE ids type ;
 
 // declarations
@@ -90,8 +88,6 @@ expr : atom                                 # single
      | NEW_KW expr                          # newEmpty
      | <assoc=right> expr TO expr           # arr
      | expr projFix                         # proj
-     | LSUC_KW atom                         # lsuc
-     | LMAX_KW atom+                        # lmax
      | PI tele+ TO expr                     # pi
      | FORALL tele+ TO expr                 # forall
      | SIGMA tele+ SUCHTHAT expr            # sigma
@@ -101,14 +97,14 @@ expr : atom                                 # single
 
 newArg : BAR ID ids IMPLIES expr;
 
-atom : literal
+// ulift is written here because we want `x ulift + y` to work
+atom : ULIFT* literal
      | LPAREN exprList RPAREN
      ;
 
 argument : atom projFix*
          | LBRACE exprList RBRACE
          | LBRACE ID IMPLIES expr? RBRACE
-         | LBRACE ULEVEL exprList RBRACE
          ;
 
 projFix : DOT (NUMBER | qualifiedId);

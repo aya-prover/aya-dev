@@ -4,7 +4,6 @@ package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.tuple.Tuple;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -23,18 +22,18 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new CallTerm.Hole(term.ref(), contextArgs, args);
   }
   @Override
-  @NotNull
-  default Term visitFieldRef(@NotNull RefTerm.Field term, P p) {
+  default @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, P p) {
     return term;
+  }
+
+  default int ulift() {
+    return 0;
   }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
     var args = dataCall.args().map(arg -> visitArg(arg, p));
-    var sortArgs = dataCall.sortArgs().mapNotNull(sort -> visitSort(sort, p));
-    if (!sortArgs.sizeEquals(dataCall.sortArgs().size())) return new ErrorTerm(dataCall);
-    if (dataCall.sortArgs().sameElements(sortArgs, true)
-      && dataCall.args().sameElements(args, true)) return dataCall;
-    return new CallTerm.Data(dataCall.ref(), sortArgs, args);
+    if (ulift() == 0 && dataCall.args().sameElements(args, true)) return dataCall;
+    return new CallTerm.Data(dataCall.ref(), ulift() + dataCall.ulift(), args);
   }
 
   @Override default @NotNull ErrorTerm visitError(@NotNull ErrorTerm term, P p) {
@@ -48,23 +47,18 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
     var dataArgs = conCall.head().dataArgs().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));
-    var sortArgs = conCall.sortArgs().mapNotNull(sort -> visitSort(sort, p));
-    if (!sortArgs.sizeEquals(conCall.sortArgs().size())) return new ErrorTerm(conCall);
-    if (conCall.head().dataArgs().sameElements(dataArgs, true)
-      && conCall.sortArgs().sameElements(sortArgs, true)
+    if (ulift() == 0
+      && conCall.head().dataArgs().sameElements(dataArgs, true)
       && conCall.conArgs().sameElements(conArgs, true)) return conCall;
     var head = new CallTerm.ConHead(conCall.head().dataRef(), conCall.head().ref(),
-      sortArgs, dataArgs);
+      ulift() + conCall.ulift(), dataArgs);
     return new CallTerm.Con(head, conArgs);
   }
 
   @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
     var args = structCall.args().map(arg -> visitArg(arg, p));
-    var sortArgs = structCall.sortArgs().mapNotNull(sort -> visitSort(sort, p));
-    if (!sortArgs.sizeEquals(structCall.sortArgs().size())) return new ErrorTerm(structCall);
-    if (structCall.sortArgs().sameElements(sortArgs, true)
-      && structCall.args().sameElements(args, true)) return structCall;
-    return new CallTerm.Struct(structCall.ref(), sortArgs, args);
+    if (ulift() == 0 && structCall.args().sameElements(args, true)) return structCall;
+    return new CallTerm.Struct(structCall.ref(), ulift() + structCall.ulift(), args);
   }
 
   private <T> T visitParameterized(
@@ -82,8 +76,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitUniv(@NotNull FormTerm.Univ term, P p) {
-    var sort = visitSort(term.sort(), p);
-    return sort == term.sort() ? term : new FormTerm.Univ(sort);
+    if (ulift() == 0) return term;
+    else return new FormTerm.Univ(ulift() + term.lift());
   }
 
   @Override default @NotNull Term visitPi(@NotNull FormTerm.Pi term, P p) {
@@ -107,10 +101,6 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new Arg<>(term, arg.explicit());
   }
 
-  default @NotNull Sort visitSort(@NotNull Sort sort, P p) {
-    return sort;
-  }
-
   @Override default @NotNull Term visitApp(@NotNull ElimTerm.App term, P p) {
     var function = term.of().accept(this, p);
     var arg = visitArg(term.arg(), p);
@@ -120,19 +110,14 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
     var args = fnCall.args().map(arg -> visitArg(arg, p));
-    var sortArgs = fnCall.sortArgs().map(sort -> visitSort(sort, p));
-    if (fnCall.sortArgs().sameElements(sortArgs, true)
-      && fnCall.args().sameElements(args, true)) return fnCall;
-    return new CallTerm.Fn(fnCall.ref(), sortArgs, args);
+    if (ulift() == 0 && fnCall.args().sameElements(args, true)) return fnCall;
+    return new CallTerm.Fn(fnCall.ref(), ulift() + fnCall.ulift(), args);
   }
 
   @Override default @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
     var args = prim.args().map(arg -> visitArg(arg, p));
-    var sortArgs = prim.sortArgs().mapNotNull(sort -> visitSort(sort, p));
-    if (!sortArgs.sizeEquals(prim.sortArgs().size())) return new ErrorTerm(prim);
-    if (prim.args().sameElements(args, true)
-      && prim.sortArgs().sameElements(sortArgs, true)) return prim;
-    return new CallTerm.Prim(prim.ref(), sortArgs, args);
+    if (ulift() == 0 && prim.args().sameElements(args, true)) return prim;
+    return new CallTerm.Prim(prim.ref(), ulift() + prim.ulift(), args);
   }
 
   @Override default @NotNull Term visitTup(@NotNull IntroTerm.Tuple term, P p) {
@@ -152,17 +137,18 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitProj(@NotNull ElimTerm.Proj term, P p) {
     var tuple = term.of().accept(this, p);
-    if (tuple == term.of()) return term;
-    return new ElimTerm.Proj(tuple, term.ix());
+    if (ulift() == 0 && tuple == term.of()) return term;
+    return new ElimTerm.Proj(tuple, ulift() + term.ulift(), term.ix());
   }
 
   @Override default @NotNull Term visitAccess(@NotNull CallTerm.Access term, P p) {
     var tuple = term.of().accept(this, p);
     var args = term.fieldArgs().map(arg -> visitArg(arg, p));
     var structArgs = term.structArgs().map(arg -> visitArg(arg, p));
-    if (term.fieldArgs().sameElements(args, true)
+    if (ulift() == 0
+      && term.fieldArgs().sameElements(args, true)
       && term.structArgs().sameElements(structArgs, true)
       && tuple == term.of()) return term;
-    return new CallTerm.Access(tuple, term.ref(), term.sortArgs(), structArgs, args);
+    return new CallTerm.Access(tuple, term.ref(), ulift() + term.ulift(), structArgs, args);
   }
 }

@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -43,14 +42,14 @@ public final class CtorDef extends SubLevelDef {
    * @return first component: data's telescope, second component: con telescope
    */
   public static @NotNull DataDef.CtorTelescopes
-  telescopes(@NotNull DefVar<CtorDef, Decl.DataCtor> defVar, ImmutableSeq<Sort> sort) {
+  telescopes(@NotNull DefVar<CtorDef, Decl.DataCtor> defVar) {
     var core = defVar.core;
-    if (core != null) return new DataDef.CtorTelescopes(core.ownerTele, sort, core.selfTele);
+    if (core != null) return new DataDef.CtorTelescopes(core.ownerTele, core.selfTele);
     var dataSignature = defVar.concrete.patternTele;
     assert dataSignature != null;
     var conSignature = defVar.concrete.signature;
     assert conSignature != null;
-    return new DataDef.CtorTelescopes(dataSignature, sort, conSignature.param());
+    return new DataDef.CtorTelescopes(dataSignature, conSignature.param());
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

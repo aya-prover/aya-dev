@@ -301,10 +301,6 @@ public class ParseTest {
       }""");
   }
 
-  @Test public void globalStmt() {
-    parseAndPretty("universe uu", "universe uu");
-  }
-
   @Test public void patterns() {
     parseAndPretty("def inline final : Nat => a",
       "def inline final : Nat => a");

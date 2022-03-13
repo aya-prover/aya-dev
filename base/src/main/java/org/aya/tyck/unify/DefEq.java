@@ -4,7 +4,6 @@ package org.aya.tyck.unify;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
@@ -12,8 +11,6 @@ import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.ops.Eta;
-import org.aya.core.sort.LevelSubst;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
@@ -26,6 +23,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.HoleProblem;
+import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -38,6 +36,10 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * @implNote in case {@link DefEq#compareUntyped(Term, Term, Sub, Sub)} returns null,
+ * we will consider it a unification failure, so be careful when returning null.
+ */
 public final class DefEq {
   public record Sub(@NotNull MutableMap<@NotNull Var, @NotNull RefTerm> map) implements Cloneable {
     public Sub() {
@@ -63,7 +65,8 @@ public final class DefEq {
   private final @NotNull Eta uneta;
   private FailureData failure;
 
-  public FailureData failureData() {
+  public @NotNull FailureData getFailure() {
+    assert failure != null;
     return failure;
   }
 
@@ -139,9 +142,12 @@ public final class DefEq {
 
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     return switch (preLhs) {
-      case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
-      case CallTerm.Con lhs && preRhs instanceof CallTerm.Con rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
-      case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+      case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs ->
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+      case CallTerm.Con lhs && preRhs instanceof CallTerm.Con rhs ->
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+      case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
       default -> null;
     };
   }
@@ -171,9 +177,8 @@ public final class DefEq {
   }
 
   private @Contract("->new") @NotNull FormTerm.Univ freshUniv() {
-    // [ice]: the generated univ var may not be used since in most cases we just return `freshUniv()`
-    // and we test if it's non-null. So the level variable won't even present in the level equations.
-    return FormTerm.freshUniv(pos);
+    // TODO[ice]: inline?
+    return FormTerm.Univ.ZERO;
   }
 
   private boolean visitArgs(SeqLike<Arg<Term>> l, SeqLike<Arg<Term>> r, Sub lr, Sub rl, SeqLike<Term.Param> params) {
@@ -201,22 +206,10 @@ public final class DefEq {
   ) {
     var retType = getType(lhs, lhsRef);
     // Lossy comparison
-    var subst = levels(lhsRef, lhs.sortArgs(), rhs.sortArgs());
-    if (visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhsRef), subst))) return retType;
+    if (visitArgs(lhs.args(), rhs.args(), lr, rl,
+      Term.Param.subst(Def.defTele(lhsRef), lhs.ulift()))) return retType;
     if (compareWHNF(lhs, rhs, lr, rl, retType)) return retType;
     else return null;
-  }
-
-  private @NotNull LevelSubst levels(
-    @NotNull DefVar<?, ?> def,
-    ImmutableSeq<@NotNull Sort> l, ImmutableSeq<@NotNull Sort> r
-  ) {
-    var levelSubst = new LevelSubst.Simple(MutableMap.create());
-    for (var levels : l.zip(r).zip(Def.defLevels(def))) {
-      state.levelEqns().add(levels._1._1, levels._1._2, this.cmp, this.pos);
-      levelSubst.solution().put(levels._2, levels._1._1);
-    }
-    return levelSubst;
   }
 
   private @NotNull Term getType(@NotNull CallTerm lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
@@ -265,9 +258,9 @@ public final class DefEq {
           var dummyVars = fieldSig.selfTele.map(par ->
             new LocalVar(par.ref().name(), par.ref().definition()));
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
-            new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
-          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.sortArgs(), type1.args(), dummy);
-          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.sortArgs(), type1.args(), dummy);
+            new Arg<Term>(new RefTerm(vpa._1, 0), vpa._2.explicit()));
+          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.ulift(), type1.args(), dummy);
+          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.ulift(), type1.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);
           if (!compare(l, r, lr, rl, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
         }
@@ -281,10 +274,10 @@ public final class DefEq {
       case FormTerm.Sigma sigma -> {
         var params = sigma.params().view();
         for (int i = 1, size = sigma.params().size(); i <= size; i++) {
-          var l = new ElimTerm.Proj(lhs, i);
+          var l = new ElimTerm.Proj(lhs, 0, i);
           var currentParam = params.first();
           ctx.put(currentParam);
-          if (!compare(l, new ElimTerm.Proj(rhs, i), lr, rl, currentParam.type())) yield false;
+          if (!compare(l, new ElimTerm.Proj(rhs, 0, i), lr, rl, currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
         ctx.remove(sigma.params().view().map(Term.Param::ref));
@@ -338,7 +331,7 @@ public final class DefEq {
         var params = tupType.params().view();
         var subst = new Substituter.TermSubst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
-          var l = new ElimTerm.Proj(lhs, i);
+          var l = new ElimTerm.Proj(lhs, 0, i);
           var currentParam = params.first();
           subst.add(currentParam.ref(), l);
           params = params.drop(1);
@@ -361,30 +354,27 @@ public final class DefEq {
       }
       case FormTerm.Univ lhs -> {
         if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
-        state.levelEqns().add(lhs.sort(), rhs.sort(), cmp, this.pos);
-        yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).sort().lift(1));
+        if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
+        yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
       }
       // See compareApprox for why we don't compare these
       case CallTerm.Fn lhs -> null;
       case CallTerm.Data lhs -> {
         if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) yield null;
-        var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), subst));
+        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         // Do not need to be computed precisely because unification won't need this info
         yield args ? freshUniv() : null;
       }
       case CallTerm.Struct lhs -> {
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
-        var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), subst));
+        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         yield args ? freshUniv() : null;
       }
       case CallTerm.Con lhs -> {
         if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) yield null;
         var retType = getType(lhs, lhs.ref());
         // Lossy comparison
-        var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
-        if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl, Term.Param.subst(CtorDef.conTele(lhs.ref()), subst)))
+        if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl, Term.Param.subst(CtorDef.conTele(lhs.ref()), lhs.ulift())))
           yield retType;
         yield null;
       }
@@ -399,6 +389,8 @@ public final class DefEq {
       case CallTerm.Hole lhs -> {
         var meta = lhs.ref();
         if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
+          // If we do not know the type, then we do not perform the comparison
+          if (meta.result == null) yield null;
           var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
           for (var arg : lhs.args().view().zip(rcall.args())) {
             if (!(holeTy instanceof FormTerm.Pi holePi))
@@ -411,7 +403,9 @@ public final class DefEq {
         // Long time ago I wrote this to generate more unification equations,
         // which solves more universe levels. However, with latest version Aya (0.13),
         // removing this does not break anything.
-        // compareUntyped(preRhs.computeType(state, ctx), meta.result);
+        // Update: this is still needed, see #327 last task (`coe'`)
+        var resultTy = preRhs.computeType(state, ctx);
+        if (meta.result != null) compareUntyped(resultTy, meta.result, rl, lr);
         var argSubst = extract(lhs, preRhs, meta);
         if (argSubst == null) {
           reporter.report(new HoleProblem.BadSpineError(lhs, pos));
@@ -427,6 +421,7 @@ public final class DefEq {
         }
         subst.add(argSubst);
         // TODO
+        // TODO: what's the TODO above? I don't know what's TODO? ????
         rl.map.forEach(subst::add);
         assert !state.metas().containsKey(meta);
         var solved = preRhs.freezeHoles(state).subst(subst);
@@ -453,11 +448,32 @@ public final class DefEq {
           yield new ErrorTerm(solved);
         }
         tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-        yield meta.result;
+        yield resultTy;
       }
     };
     traceExit();
     return ret;
+  }
+
+  private boolean compareLevel(int l, int r) {
+    switch (cmp) {
+      case Eq:
+        if (l != r) {
+          reporter.report(new LevelError(pos, l, r, true));
+          return false;
+        }
+      case Gt:
+        if (l < r) {
+          reporter.report(new LevelError(pos, l, r, false));
+          return false;
+        }
+      case Lt:
+        if (l > r) {
+          reporter.report(new LevelError(pos, r, l, false));
+          return false;
+        }
+    }
+    return true;
   }
 
   public void checkEqn(@NotNull TyckState.Eqn eqn) {

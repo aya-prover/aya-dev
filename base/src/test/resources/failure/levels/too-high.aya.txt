@@ -1,12 +1,25 @@
-In file $FILE:1:15 ->
+In file $FILE:3:8 ->
 
-  1 | data List (A : uType 1) : uType 0
-                     ^---^
+  1 | data List (A : Type 1) : Type 0
   2 |  | nil
   3 |  | cons A (List A)
+              ^^
 
-Error: The name `uType` is not defined in the current scope
+Error: The level is expected to be <= 0 but it is actually 1
 
-Resolving interrupted due to:
-1 error(s), 0 warning(s).
+In file $FILE:3:8 ->
+
+  1 | data List (A : Type 1) : Type 0
+  2 |  | nil
+  3 |  | cons A (List A)
+              ^^
+
+Error: Cannot check the expression
+         A
+       of type
+         Type 1
+       against the type
+         Type 0
+
+2 error(s), 0 warning(s).
 What are you doing?

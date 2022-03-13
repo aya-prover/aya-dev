@@ -1,9 +1,9 @@
-In file $FILE:4:13 ->
+In file $FILE:4:14 ->
 
   2 | def infix = => Type 0
   3 | 
-  4 | def fail : 1 + 1 = 2 => Type
-                   ^^
+  4 | def fail => 1 + 1 = 2
+                    ^^
 
 Error: Ambiguous operator precedence detected between `=` and `+`
 note: Use `bind` statement or insert parentheses to make it clear.

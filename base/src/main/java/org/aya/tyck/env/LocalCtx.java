@@ -30,7 +30,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     return freshHole(type, Constants.ANONYMOUS_PREFIX, sourcePos);
   }
   default @NotNull Tuple2<CallTerm.Hole, Term>
-  freshHole(@NotNull Term type, @NotNull String name, @NotNull SourcePos sourcePos) {
+  freshHole(@Nullable Term type, @NotNull String name, @NotNull SourcePos sourcePos) {
     var ctxTele = extract();
     var meta = Meta.from(ctxTele, name, type, sourcePos);
     var hole = new CallTerm.Hole(meta, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));

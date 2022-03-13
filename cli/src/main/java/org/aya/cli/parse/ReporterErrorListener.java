@@ -26,7 +26,7 @@ public class ReporterErrorListener extends BaseErrorListener {
   public void syntaxError(Recognizer<?, ?> recognizer, Object o, int line, int pos, String msg, RecognitionException e) {
     Token offendingToken = ((Token) o);
     if (offendingToken == null) {
-      // TODO[kiva]: it seems that LexerNoViableAltException is the only lexer error
+      // [kiva]: it seems that LexerNoViableAltException is the only lexer error
       lexerError(line, pos, msg, (LexerNoViableAltException) e);
     } else {
       parserError(line, pos, msg, offendingToken);

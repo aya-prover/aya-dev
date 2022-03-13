@@ -1,4 +1,4 @@
 def infix + => Type 0
 def infix = => Type 0
 
-def fail : 1 + 1 = 2 => Type
+def fail => 1 + 1 = 2

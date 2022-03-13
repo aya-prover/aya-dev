@@ -31,7 +31,7 @@ public class DesugarTest {
   }
 
   @Test public void simpleUniv() {
-    desugarAndPretty("def test => Type", "def test => Type lp");
+    desugarAndPretty("def test => Type", "def test => Type 0");
   }
 
   @Test public void modules() {
@@ -41,7 +41,7 @@ public class DesugarTest {
       }
       """, """
       module Nat {
-        data ℕ : Type lp
+        data ℕ : Type 0
           | zero
           | suc (_ : ℕ)
         open ℕ hiding ()

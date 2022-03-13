@@ -93,6 +93,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     Tuple.of("Sig", "\u03A3"),
     Tuple.of("\\", "\u03BB"),
     Tuple.of("=>", "\u21D2"),
+    Tuple.of("ulift", "\u2191"),
     Tuple.of("->", "\u2192")
   );
 

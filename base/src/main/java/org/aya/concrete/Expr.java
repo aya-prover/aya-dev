@@ -9,9 +9,7 @@ import kala.value.Ref;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
-import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
-import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -70,6 +68,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     R visitPi(@NotNull PiExpr expr, P p);
     R visitSigma(@NotNull SigmaExpr expr, P p);
     R visitRawUniv(@NotNull RawUnivExpr expr, P p);
+    R visitLift(@NotNull LiftExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
@@ -77,10 +76,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     R visitProj(@NotNull ProjExpr expr, P p);
     R visitNew(@NotNull NewExpr expr, P p);
     R visitLitInt(@NotNull LitIntExpr expr, P p);
-    R visitRawUnivArgs(@NotNull RawUnivArgsExpr expr, P p);
-    R visitUnivArgs(@NotNull UnivArgsExpr expr, P p);
-    R visitLsuc(@NotNull LSucExpr expr, P p);
-    R visitLmax(@NotNull LMaxExpr expr, P p);
     R visitLitString(@NotNull LitStringExpr expr, P p);
     R visitBinOpSeq(@NotNull BinOpSeq binOpSeq, P p);
     R visitError(@NotNull ErrorExpr error, P p);
@@ -242,6 +237,12 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     }
   }
 
+  record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLift(this, p);
+    }
+  }
+
   /**
    * @author re-xyr, ice1000
    */
@@ -251,24 +252,9 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     }
   }
 
-  record UnivExpr(@NotNull SourcePos sourcePos, @NotNull Level<PreLevelVar> level) implements Expr {
+  record UnivExpr(@NotNull SourcePos sourcePos, int lift) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
-    }
-  }
-
-  record RawUnivArgsExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Expr> univArgs) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitRawUnivArgs(this, p);
-    }
-  }
-
-  record UnivArgsExpr(
-    @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Level<PreLevelVar>> univArgs
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitUnivArgs(this, p);
     }
   }
 
@@ -330,18 +316,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record LitIntExpr(@NotNull SourcePos sourcePos, int integer) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitInt(this, p);
-    }
-  }
-
-  record LSucExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLsuc(this, p);
-    }
-  }
-
-  record LMaxExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Expr> levels) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLmax(this, p);
     }
   }
 

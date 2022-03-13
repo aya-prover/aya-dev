@@ -5,10 +5,6 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.core.sort.Sort;
-import org.aya.generic.Constants;
-import org.aya.generic.Level;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -61,19 +57,11 @@ public sealed interface FormTerm extends Term {
     }
   }
 
-  static @NotNull Univ freshUniv(@NotNull SourcePos pos) {
-    return new Univ(freshSort(pos));
-  }
-
-  static @NotNull Sort freshSort(@NotNull SourcePos pos) {
-    return new Sort(new Level.Reference<>(new Sort.LvlVar(Constants.randomName(pos), pos)));
-  }
-
   /**
    * @author ice1000
    */
-  record Univ(@NotNull Sort sort) implements FormTerm {
-    public static final @NotNull FormTerm.Univ ZERO = new Univ(new Sort(new Level.Constant<>(0)));
+  record Univ(int lift) implements FormTerm {
+    public static final @NotNull FormTerm.Univ ZERO = new Univ(0);
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);

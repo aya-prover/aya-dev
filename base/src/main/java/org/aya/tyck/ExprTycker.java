@@ -2,11 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -16,17 +13,13 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.*;
-import org.aya.core.sort.LevelSubst;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
-import org.aya.generic.Level;
 import org.aya.generic.Modifier;
-import org.aya.generic.ref.PreLevelVar;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
@@ -60,8 +53,6 @@ public final class ExprTycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull TyckState state = new TyckState();
-  public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
-  public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableLinkedHashMap.of();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -74,20 +65,47 @@ public final class ExprTycker {
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
-      case Expr.UnivExpr univ -> {
-        var sort = transformLevel(univ.level());
-        yield new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.lift(1)));
-      }
+      case Expr.UnivExpr univ -> new Result(new FormTerm.Univ(univ.lift()), new FormTerm.Univ(univ.lift() + 1));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
-          yield new Result(new RefTerm(loc), ty);
+          yield new Result(new RefTerm(loc, 0), ty);
         }
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new IllegalStateException("Unknown var: " + ref.resolvedVar().getClass());
       };
-      case Expr.PiExpr pi -> inherit(pi, FormTerm.freshUniv(pi.sourcePos()));
-      case Expr.SigmaExpr sigma -> inherit(sigma, FormTerm.freshUniv(sigma.sourcePos()));
+      case Expr.PiExpr pi -> {
+        var param = pi.param();
+        final var var = param.ref();
+        var domTy = param.type();
+        var domRes = synthesize(domTy);
+        var domLvl = ensureUniv(domTy, domRes.type);
+        var resultParam = new Term.Param(var, domRes.wellTyped, param.explicit());
+        yield localCtx.with(resultParam, () -> {
+          var cod = synthesize(pi.last());
+          var codLvl = ensureUniv(pi.last(), cod.type);
+          return new Result(new FormTerm.Pi(resultParam, cod.wellTyped), new FormTerm.Univ(Math.max(domLvl, codLvl)));
+        });
+      }
+      case Expr.SigmaExpr sigma -> {
+        var resultTele = DynamicSeq.<Tuple3<LocalVar, Boolean, Term>>create();
+        var maxLevel = 0;
+        for (var tuple : sigma.params()) {
+          final var type = tuple.type();
+          var result = synthesize(type);
+          maxLevel = Math.max(maxLevel, ensureUniv(type, result.type));
+          var ref = tuple.ref();
+          localCtx.put(ref, result.wellTyped);
+          resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
+        }
+        localCtx.remove(sigma.params().view().map(Expr.Param::ref));
+        yield new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), new FormTerm.Univ(maxLevel));
+      }
+      case Expr.LiftExpr lift -> {
+        var result = synthesize(lift.expr());
+        var levels = lift.lift();
+        yield new Result(result.wellTyped.lift(levels), result.type.lift(levels));
+      }
       case Expr.NewExpr newExpr -> {
         var structExpr = newExpr.struct();
         var struct = instImplicits(synthesize(structExpr).wellTyped, structExpr.sourcePos());
@@ -98,8 +116,6 @@ public final class ExprTycker {
         var subst = new Substituter.TermSubst(MutableMap.from(
           Def.defTele(structRef).view().zip(structCall.args())
             .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
-        var levelSubst = new LevelSubst.Simple(MutableMap.from(
-          Def.defLevels(structRef).view().zip(structCall.sortArgs())));
 
         var fields = DynamicSeq.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>create();
         var missing = DynamicSeq.<Var>create();
@@ -112,7 +128,7 @@ public final class ExprTycker {
               missing.append(defField.ref()); // no value available, skip and prepare error reporting
             else {
               // use default value from defField
-              var field = defField.body.get().subst(subst, levelSubst);
+              var field = defField.body.get().subst(subst);
               fields.append(Tuple.of(defField.ref(), field));
               subst.add(defField.ref(), field);
             }
@@ -120,8 +136,8 @@ public final class ExprTycker {
           }
           var conField = conFieldOpt.get();
           conFields = conFields.dropWhile(t -> t == conField);
-          var type = Def.defType(defField.ref()).subst(subst, levelSubst);
-          var telescope = defField.ref().core.selfTele.map(term -> term.subst(subst, levelSubst));
+          var type = Def.defType(defField.ref()).subst(subst);
+          var telescope = defField.ref().core.selfTele.map(term -> term.subst(subst));
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
@@ -152,7 +168,7 @@ public final class ExprTycker {
               return fail(proj, new ProjIxError(proj, ix, telescope.size()));
             var type = telescope.get(index).type();
             var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
-            return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
+            return new Result(new ElimTerm.Proj(projectee.wellTyped, 0, ix), type.subst(subst));
           }, sp -> {
             var fieldName = sp.justName();
             if (!(projectee.type instanceof CallTerm.Struct structCall))
@@ -165,13 +181,12 @@ public final class ExprTycker {
             var fieldRef = field.ref();
 
             var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
-            var levels = levelStuffs(struct.sourcePos(), fieldRef);
-            var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, levels._1);
+            var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
             var teleRenamed = tele.map(Term.Param::rename);
-            var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
+            var access = new CallTerm.Access(projectee.wellTyped, fieldRef, 0,
               structCall.args(), teleRenamed.map(Term.Param::toArg));
             return new Result(IntroTerm.Lambda.make(teleRenamed, access),
-              FormTerm.Pi.make(tele, field.result().subst(structSubst, levels._1)));
+              FormTerm.Pi.make(tele, field.result().subst(structSubst)));
           }
         );
       }
@@ -185,10 +200,6 @@ public final class ExprTycker {
         if (f.wellTyped instanceof ErrorTerm || f.type instanceof ErrorTerm) yield f;
         var app = f.wellTyped;
         var argument = appE.argument();
-        if (argument.expr() instanceof Expr.UnivArgsExpr univArgs) {
-          univArgs(app, univArgs);
-          yield f;
-        }
         var fTy = f.type.normalize(state, NormalizeMode.WHNF);
         var argLicit = argument.explicit();
         if (fTy instanceof CallTerm.Hole fTyHole) {
@@ -222,8 +233,8 @@ public final class ExprTycker {
         subst.addDirectly(pi.param().ref(), elabArg);
         yield new Result(app, pi.body().subst(subst));
       }
-      case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
-        FormTerm.freshUniv(hole.sourcePos()), Constants.randomName(hole), hole.sourcePos())._2);
+      case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
+        Constants.randomName(hole), hole.sourcePos())._2);
       default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm(Doc.english("no rule"), false));
     };
   }
@@ -258,16 +269,6 @@ public final class ExprTycker {
   private FormTerm.@NotNull Pi ensurePiOrThrow(@NotNull Term term) throws NotPi {
     if (term instanceof FormTerm.Pi pi) return pi;
     else throw new NotPi(term);
-  }
-
-  private void univArgs(Term app, Expr.UnivArgsExpr univArgs) {
-    if (IntroTerm.Lambda.unwrap(app, param -> {}) instanceof CallTerm call) {
-      var sortArgs = call.sortArgs();
-      var levels = univArgs.univArgs();
-      if (sortArgs.sizeEquals(levels)) sortArgs.zipView(levels).forEach(t ->
-        state.levelEqns().add(t._1, transformLevel(t._2), Ordering.Eq, univArgs.sourcePos()));
-      else reporter.report(new UnivArgsError.SizeMismatch(univArgs, sortArgs.size()));
-    } else reporter.report(new UnivArgsError.Misplaced(univArgs));
   }
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
@@ -305,16 +306,16 @@ public final class ExprTycker {
         yield new Result(freshHole._2, term);
       }
       case Expr.UnivExpr univExpr -> {
-        var sort = transformLevel(univExpr.level());
         var normTerm = term.normalize(state, NormalizeMode.WHNF);
         if (normTerm instanceof FormTerm.Univ univ) {
-          state.levelEqns().add(sort.lift(1), univ.sort(), Ordering.Lt, univExpr.sourcePos());
-          yield new Result(new FormTerm.Univ(sort), univ);
+          if (univExpr.lift() + 1 > univ.lift()) reporter.report(
+            new LevelError(univExpr.sourcePos(), univExpr.lift() + 1, univ.lift(), false));
+          yield new Result(new FormTerm.Univ(univExpr.lift()), univ);
         } else {
-          var succ = new FormTerm.Univ(sort.lift(1));
+          var succ = new FormTerm.Univ(univExpr.lift());
           unifyTyReported(normTerm, succ, univExpr);
         }
-        yield new Result(new FormTerm.Univ(sort), term);
+        yield new Result(new FormTerm.Univ(univExpr.lift()), term);
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
@@ -328,12 +329,12 @@ public final class ExprTycker {
         var var = param.ref();
         var lamParam = param.type();
         var type = dt.param().type();
-        var result = inherit(lamParam, FormTerm.freshUniv(lamParam.sourcePos()));
-        var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
+        var result = synthesize(lamParam).wellTyped;
+        var comparison = unifyTy(result, type, lamParam.sourcePos());
         if (comparison != null) {
           // TODO: maybe also report this unification failure?
-          yield fail(lam, dt, BadTypeError.lamParam(lam, type, result.wellTyped));
-        } else type = result.wellTyped;
+          yield fail(lam, dt, BadTypeError.lamParam(lam, type, result));
+        } else type = result;
         var resultParam = new Term.Param(var, type, param.explicit());
         var body = dt.substBody(resultParam.toTerm());
         yield localCtx.with(resultParam, () -> {
@@ -341,38 +342,8 @@ public final class ExprTycker {
           return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
         });
       }
-      case Expr.PiExpr pi -> {
-        var param = pi.param();
-        final var var = param.ref();
-        var type = param.type();
-        var result = inherit(type, term);
-        var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
-        yield localCtx.with(resultParam, () -> {
-          var last = inherit(pi.last(), term);
-          return new Result(new FormTerm.Pi(resultParam, last.wellTyped), term);
-        });
-      }
-      case Expr.SigmaExpr sigma -> {
-        var resultTele = DynamicSeq.<Tuple3<LocalVar, Boolean, Term>>create();
-        sigma.params().forEach(tuple -> {
-          final var type = tuple.type();
-          var result = inherit(type, term);
-          var ref = tuple.ref();
-          localCtx.put(ref, result.wellTyped);
-          resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
-        });
-        localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), term);
-      }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
-  }
-
-  public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
-    return Seq.of(universe).view()
-      .filter(state.levelEqns()::used)
-      .appendedAll(levelMapping.valuesView())
-      .toImmutableSeq();
   }
 
   private void traceExit(Result result, @NotNull Expr expr) {
@@ -451,8 +422,9 @@ public final class ExprTycker {
 
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
     var genName = name + Constants.GENERATED_POSTFIX;
-    var domain = localCtx.freshHole(FormTerm.freshUniv(pos), genName + "ty", pos)._2;
-    var codomain = localCtx.freshHole(FormTerm.freshUniv(pos), pos)._2;
+    // [ice]: unsure if ZERO is good enough
+    var domain = localCtx.freshHole(FormTerm.Univ.ZERO, genName + "ty", pos)._2;
+    var codomain = localCtx.freshHole(FormTerm.Univ.ZERO, pos)._2;
     return new FormTerm.Pi(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
   }
 
@@ -463,22 +435,6 @@ public final class ExprTycker {
   private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
     reporter.report(prob);
     return new Result(new ErrorTerm(expr), term);
-  }
-
-  private @NotNull Sort transformLevel(@NotNull Level<PreLevelVar> level) {
-    if (level instanceof Level.Polymorphic) return state.levelEqns().markUsed(universe);
-    if (level instanceof Level.Maximum m)
-      return Sort.merge(m.among().map(this::transformLevel));
-    return new Sort(switch (level) {
-      case Level.Reference<PreLevelVar> v -> {
-        var ref = v.ref();
-        var lvlVar = ref.sourcePos() != null ? new Sort.LvlVar(ref.name(), ref.sourcePos())
-          : levelMapping.getOrPut(ref, () -> new Sort.LvlVar(ref.name(), null));
-        yield new Level.Reference<>(lvlVar, v.lift());
-      }
-      case Level.Constant<PreLevelVar> c -> new Level.Constant<>(c.value());
-      default -> throw new IllegalArgumentException(level.toString());
-    });
   }
 
   @SuppressWarnings("unchecked")
@@ -493,11 +449,10 @@ public final class ExprTycker {
       return defCall(pos, (DefVar<StructDef, Decl.StructDecl>) var, CallTerm.Struct::new);
     } else if (var.core instanceof CtorDef || var.concrete instanceof Decl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, Decl.DataDecl.DataCtor>) var;
-      var level = levelStuffs(pos, conVar);
-      var tele = Term.Param.subst(Def.defTele(conVar), level._1);
-      var type = FormTerm.Pi.make(tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
-      var telescopes = CtorDef.telescopes(conVar, level._2).rename();
-      var body = telescopes.toConCall(conVar).subst(Substituter.TermSubst.EMPTY, level._1);
+      var tele = Def.defTele(conVar);
+      var type = FormTerm.Pi.make(tele, Def.defResult(conVar));
+      var telescopes = CtorDef.telescopes(conVar).rename();
+      var body = telescopes.toConCall(conVar);
       return new Result(IntroTerm.Lambda.make(telescopes.params(), body), type);
     } else if (var.core instanceof FieldDef || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
@@ -505,7 +460,7 @@ public final class ExprTycker {
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
       var field = (DefVar<FieldDef, Decl.StructField>) var;
-      return new Result(new RefTerm.Field(field), Def.defType(field));
+      return new Result(new RefTerm.Field(field, 0), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);
@@ -514,40 +469,23 @@ public final class ExprTycker {
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
   defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
-    var level = levelStuffs(pos, defVar);
-    var tele = Term.Param.subst(Def.defTele(defVar), level._1);
+    var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables
-    Term body = function.make(defVar, level._2, teleRenamed.map(Term.Param::toArg));
-    var type = FormTerm.Pi.make(tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
+    Term body = function.make(defVar, 0, teleRenamed.map(Term.Param::toArg));
+    var type = FormTerm.Pi.make(tele, Def.defResult(defVar));
     if (defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) {
       body = body.normalize(state, NormalizeMode.WHNF);
     }
     return new Result(IntroTerm.Lambda.make(teleRenamed, body), type);
   }
 
-  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort>>
-  levelStuffs(@NotNull SourcePos pos, DefVar<?, ?> defVar) {
-    var levelSubst = new LevelSubst.Simple(MutableMap.create());
-    var levelVars = Def.defLevels(defVar).map(v -> {
-      var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), pos);
-      levelSubst.solution().put(v, new Sort(new Level.Reference<>(lvlVar)));
-      return lvlVar;
-    });
-    state.levelEqns().vars().appendAll(levelVars);
-    return Tuple.of(levelSubst, levelVars.view()
-      .map(Level.Reference::new)
-      .map(Sort::new)
-      .toImmutableSeq());
-  }
-
   /** @return null if unified successfully */
   private DefEq.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.append(new Trace.UnifyT(lower, upper, pos)));
     var unifier = unifier(pos, Ordering.Lt);
-    if (!unifier.compare(lower, upper, FormTerm.freshUniv(pos))) {
-      return unifier.failureData();
-    } else return null;
+    if (!unifier.compare(lower, upper, null)) return unifier.getFailure();
+    else return null;
   }
 
   public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
@@ -590,10 +528,19 @@ public final class ExprTycker {
       upper.freezeHoles(state), lower.freezeHoles(state), failureData));
   }
 
-  public @NotNull Sort sort(@NotNull Expr expr, @NotNull Term term) {
-    if (term instanceof FormTerm.Univ univ) return univ.sort();
-    reporter.report(BadTypeError.univ(expr, term));
-    return FormTerm.Univ.ZERO.sort();
+  public int ensureUniv(@NotNull Expr expr, @NotNull Term term) {
+    return switch (term.normalize(state, NormalizeMode.WHNF)) {
+      case FormTerm.Univ univ -> univ.lift();
+      case CallTerm.Hole hole -> {
+        // TODO[lift-meta]: should be able to solve a lifted meta
+        unifyTyReported(hole, FormTerm.Univ.ZERO, expr);
+        yield hole.ulift();
+      }
+      default -> {
+        reporter.report(BadTypeError.univ(expr, term));
+        yield 0;
+      }
+    };
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {

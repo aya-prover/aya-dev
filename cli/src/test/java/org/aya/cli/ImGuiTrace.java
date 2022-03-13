@@ -6,14 +6,21 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
+import org.aya.cli.single.CliReporter;
+import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.single.SingleFileCompiler;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Problem;
 import org.ice1000.jimgui.*;
 import org.ice1000.jimgui.util.JImGuiUtil;
 import org.ice1000.jimgui.util.JniLoader;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
@@ -165,5 +172,18 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
       type.toDoc(options).debugRender();
     visitSub(s, Color.PINK, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
+  }
+
+  public static void main(String[] args) throws IOException {
+    var traceBuilder = new Trace.Builder();
+    var compiler = new SingleFileCompiler(CliReporter.stdio(true, DistillerOptions.informative(), Problem.Severity.WARN),
+      null, traceBuilder, DistillerOptions.informative());
+    var sourceFile = Paths.get("test.aya");
+    var status = compiler.compile(sourceFile,
+      new CompilerFlags(CompilerFlags.Message.EMOJI,
+        true, true, null, Seq.of(), null
+      ), null);
+    new ImGuiTrace(Files.readString(sourceFile), DistillerOptions.informative())
+      .mainLoop(traceBuilder.root());
   }
 }

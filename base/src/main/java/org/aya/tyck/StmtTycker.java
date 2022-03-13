@@ -4,20 +4,15 @@ package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
-import org.aya.core.sort.LevelSubst;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Substituter;
-import org.aya.generic.Level;
 import org.aya.generic.Modifier;
 import org.aya.tyck.error.PrimProblem;
 import org.aya.tyck.pat.Conquer;
@@ -73,7 +68,7 @@ public record StmtTycker(
       case Decl.FnDecl decl -> {
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
-          new FnDef(decl.ref, signature.param(), signature.sortParam(), resultTy, decl.modifiers, body));
+          new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
         yield decl.body.fold(
           body -> {
             var nobody = tycker.inherit(body, signature.result()).wellTyped();
@@ -106,13 +101,13 @@ public record StmtTycker(
       case Decl.DataDecl decl -> {
         assert signature != null;
         var body = decl.body.map(clause -> traced(clause, tycker, this::tyck));
-        yield new DataDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, body);
+        yield new DataDef(decl.ref, signature.param(), decl.ulift, body);
       }
       case Decl.PrimDecl decl -> decl.ref.core;
       case Decl.StructDecl decl -> {
         assert signature != null;
         var body = decl.fields.map(field -> traced(field, tycker, this::tyck));
-        yield new StructDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, body);
+        yield new StructDef(decl.ref, signature.param(), decl.ulift, body);
       }
     };
   }
@@ -123,50 +118,50 @@ public record StmtTycker(
   }
 
   private @NotNull FnDef doSimpleFn(@NotNull ExprTycker tycker, Decl.FnDecl fn) {
-    var okTele = checkTele(tycker, fn.telescope, FormTerm.freshSort(fn.sourcePos));
+    var okTele = checkTele(tycker, fn.telescope, -1);
     var preresult = tycker.synthesize(fn.result).wellTyped();
-    var levels = tycker.extractLevels();
     var bodyExpr = fn.body.getLeftValue();
     var prebody = tycker.inherit(bodyExpr, preresult).wellTyped();
     tycker.solveMetas();
     var zonker = tycker.newZonker();
     var result = zonker.zonk(preresult, fn.result.sourcePos());
     var tele = zonkTele(tycker, okTele);
-    fn.signature = new Def.Signature(levels, tele, result);
+    fn.signature = new Def.Signature(tele, result);
     var body = zonker.zonk(prebody, bodyExpr.sourcePos());
-    return new FnDef(fn.ref, tele, levels, result, fn.modifiers, Either.left(body));
+    return new FnDef(fn.ref, tele, result, fn.modifiers, Either.left(body));
   }
 
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     switch (decl) {
       case Decl.FnDecl fn -> {
-        var resultTele = tele(tycker, fn.telescope, FormTerm.freshSort(fn.sourcePos));
+        var resultTele = tele(tycker, fn.telescope, -1);
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
-        fn.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
+        fn.signature = new Def.Signature(resultTele, resultRes);
       }
       case Decl.DataDecl data -> {
         var pos = data.sourcePos;
-        var tele = tele(tycker, data.telescope, FormTerm.freshSort(pos));
+        var tele = tele(tycker, data.telescope, -1);
         var result = data.result instanceof Expr.HoleExpr ? FormTerm.Univ.ZERO
           // ^ probably omitted
-          : tycker.zonk(data.result, tycker.inherit(data.result, FormTerm.freshUniv(pos))).wellTyped();
-        data.signature = new Def.Signature(tycker.extractLevels(), tele, result);
-        data.sort = tycker.sort(decl.result, result);
+          : tycker.zonk(data.result, tycker.synthesize(data.result)).wellTyped();
+        data.signature = new Def.Signature(tele, result);
+        // [ice]: this line reports error if result is not a universe term, so we're good
+        data.ulift = tycker.ensureUniv(decl.result, result);
       }
       case Decl.StructDecl struct -> {
         var pos = struct.sourcePos;
-        var tele = tele(tycker, struct.telescope, FormTerm.freshSort(pos));
-        var result = tycker.zonk(struct.result, tycker.inherit(struct.result, FormTerm.freshUniv(pos))).wellTyped();
-        // var levelSubst = tycker.equations.solve();
-        struct.signature = new Def.Signature(tycker.extractLevels(), tele, result);
-        struct.sort = tycker.sort(decl.result, result);
+        var tele = tele(tycker, struct.telescope, -1);
+        var result = tycker.zonk(struct.result, tycker.synthesize(struct.result)).wellTyped();
+        struct.signature = new Def.Signature(tele, result);
+        // [ice]: this line reports error if result is not a universe term, so we're good
+        struct.ulift = tycker.ensureUniv(decl.result, result);
       }
       case Decl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
         var core = prim.ref.core;
-        var tele = tele(tycker, prim.telescope, FormTerm.freshSort(prim.sourcePos));
+        var tele = tele(tycker, prim.telescope, -1);
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
           if (prim.result instanceof Expr.ErrorExpr) {
@@ -174,22 +169,16 @@ public record StmtTycker(
             return;
           }
           var result = tycker.synthesize(prim.result).wellTyped();
-          var levelSubst = new LevelSubst.Simple(MutableMap.create());
-          var levels = tycker.extractLevels();
           // We assume that there aren't many level parameters in prims (at most 1).
-          for (var lvl : core.levels.zip(levels))
-            levelSubst.solution().put(lvl._2, new Sort(new Level.Reference<>(lvl._1)));
-          result = result.subst(Substituter.TermSubst.EMPTY, levelSubst);
-          tele = Term.Param.subst(tele, levelSubst);
           tycker.unifyTyReported(
             FormTerm.Pi.make(tele, result),
             FormTerm.Pi.make(core.telescope, core.result),
             prim.result);
-          prim.signature = new Def.Signature(core.levels, tele, result);
+          prim.signature = new Def.Signature(tele, result);
         } else if (!(prim.result instanceof Expr.ErrorExpr)) {
           var result = tycker.synthesize(prim.result).wellTyped();
           tycker.unifyTyReported(result, core.result, prim.result);
-        } else prim.signature = new Def.Signature(core.levels, core.telescope, core.result);
+        } else prim.signature = new Def.Signature(core.telescope, core.result);
         tycker.solveMetas();
       }
     }
@@ -201,25 +190,21 @@ public record StmtTycker(
     var dataRef = ctor.dataRef;
     var dataConcrete = dataRef.concrete;
     var dataSig = dataConcrete.signature;
-    var dataSort = dataConcrete.sort;
     assert dataSig != null;
     var dataArgs = dataSig.param().map(Term.Param::toArg);
-    var sortParam = dataSig.sortParam();
-    var dataCall = new CallTerm.Data(dataRef, sortParam.view()
-      .map(Level.Reference::new)
-      .map(Sort::new)
-      .toImmutableSeq(), dataArgs);
-    var sig = new Def.Signature(sortParam, dataSig.param(), dataCall);
+    var dataCall = new CallTerm.Data(dataRef, 0, dataArgs);
+    var sig = new Def.Signature(dataSig.param(), dataCall);
     var patTycker = new PatTycker(tycker);
     // There might be patterns in the constructor
     var pat = ctor.patterns.isNotEmpty()
       ? patTycker.visitPatterns(sig, ctor.patterns.view())._1
       // No patterns, leave it blank
       : ImmutableSeq.<Pat>empty();
-    var tele = tele(tycker, ctor.telescope, dataSort);
-    ctor.signature = new Def.Signature(sortParam, tele, dataCall);
+    var tele = tele(tycker, ctor.telescope, dataConcrete.ulift);
+    ctor.signature = new Def.Signature(tele, dataCall);
     ctor.yetTycker = patTycker;
     ctor.yetTyckedPat = pat;
+    ctor.patternTele = pat.isEmpty() ? dataSig.param().map(Term.Param::implicitify) : Pat.extractTele(pat);
   }
 
   @NotNull public CtorDef tyck(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
@@ -239,12 +224,8 @@ public record StmtTycker(
     // PatTycker was created when checking the header with another expr tycker,
     // we should make sure it's the same one here. See comments of ExprTycker.
     assert tycker == patTycker.exprTycker;
-    var dataTeleView = dataSig.param().view();
-    if (pat.isNotEmpty()) {
-      dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
-        dataTeleView.map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
-    }
-    ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
+    if (pat.isNotEmpty()) dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
+      dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
     var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature, ctor.sourcePos);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
     dataConcrete.checkedBody.append(elaborated);
@@ -270,12 +251,12 @@ public record StmtTycker(
   public void tyckHeader(Decl.@NotNull StructField field, ExprTycker tycker) {
     if (field.signature != null) return;
     var structRef = field.structRef;
-    var structSort = structRef.concrete.sort;
     var structSig = structRef.concrete.signature;
     assert structSig != null;
-    var tele = tele(tycker, field.telescope, structSort);
-    var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
-    field.signature = new Def.Signature(structSig.sortParam(), tele, result);
+    var structLvl = structRef.concrete.ulift;
+    var tele = tele(tycker, field.telescope, structLvl);
+    var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structLvl))).wellTyped();
+    field.signature = new Def.Signature(tele, result);
   }
 
   @NotNull public FieldDef tyck(Decl.@NotNull StructField field, ExprTycker tycker) {
@@ -297,8 +278,11 @@ public record StmtTycker(
     return elaborated;
   }
 
+  /**
+   * @param sort If < 0, apply "synthesize" to the types.
+   */
   private @NotNull ImmutableSeq<Term.Param>
-  tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, Sort sort) {
+  tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, int sort) {
     var okTele = checkTele(tycker, tele, sort);
     tycker.solveMetas();
     return zonkTele(tycker, okTele);
@@ -306,10 +290,16 @@ public record StmtTycker(
 
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
+  /**
+   * @param sort If < 0, apply "synthesize" to the types.
+   */
   private @NotNull ImmutableSeq<TeleResult>
-  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, Sort sort) {
+  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, int sort) {
     return tele.map(param -> {
-      var paramTyped = exprTycker.inherit(param.type(), new FormTerm.Univ(sort)).wellTyped();
+      var paramTyped = (sort >= 0
+        ? exprTycker.inherit(param.type(), new FormTerm.Univ(sort))
+        : exprTycker.synthesize(param.type())
+      ).wellTyped();
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
       return new TeleResult(newParam, param.sourcePos());

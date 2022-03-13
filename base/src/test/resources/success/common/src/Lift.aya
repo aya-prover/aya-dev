@@ -1,3 +1,0 @@
-universe u
-open struct Lift (A : Type u) : Type (lsuc u)
-| value : A

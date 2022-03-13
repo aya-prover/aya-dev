@@ -4,8 +4,10 @@ In file $FILE:2:0 ->
   2 | --| test `suc Nat`
       ^----------------^
 
-Error: Cannot check the expression of type
-         Type
+Error: Cannot check the expression
+         Nat
+       of type
+         Type 0
        against the type
          Nat
 

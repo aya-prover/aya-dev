@@ -19,7 +19,7 @@ EXAMPLE : 'example';
 COUNTEREXAMPLE : 'counterexample';
 
 // universe
-ULEVEL : 'universe';
+ULIFT : 'ulift' | '\u2191';
 TYPE : 'Type';
 
 // other keywords
@@ -47,8 +47,6 @@ DATA : 'data';
 PRIM : 'prim';
 EXTENDS : 'extends';
 NEW_KW : 'new';
-LSUC_KW : 'lsuc';
-LMAX_KW : 'lmax';
 PATTERN_KW : 'pattern';
 
 // Unimplemented but reserved

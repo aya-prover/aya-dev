@@ -1,2 +1,0 @@
-def id {A : Type} (a : A) => a
-def test => id {universe 1, 2} Type

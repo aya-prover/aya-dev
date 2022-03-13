@@ -9,8 +9,6 @@ import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.core.pat.Pat;
-import org.aya.core.sort.LevelSubst;
-import org.aya.core.sort.Sort;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
@@ -21,7 +19,9 @@ import org.aya.pretty.doc.Doc;
 import org.aya.ref.Bind;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
+import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
+import org.aya.tyck.env.LocalCtx;
 import org.aya.util.distill.AyaDocile;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
@@ -51,15 +51,15 @@ public sealed interface Term extends AyaDocile permits
   }
 
   default @NotNull Term subst(@NotNull Substituter.TermSubst subst) {
-    return subst(subst, LevelSubst.EMPTY);
+    return subst(subst, 0);
   }
 
   default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
-    return accept(new Substituter(subst, LevelSubst.EMPTY), Unit.unit());
+    return accept(new Substituter(subst, 0), Unit.unit());
   }
 
-  default @NotNull Term subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
-    return accept(new Substituter(subst, levelSubst), Unit.unit());
+  default @NotNull Term subst(@NotNull Substituter.TermSubst subst, int ulift) {
+    return accept(new Substituter(subst, ulift), Unit.unit());
   }
 
   default @NotNull Term rename() {
@@ -98,15 +98,17 @@ public sealed interface Term extends AyaDocile permits
         if (!metas.containsKey(sol)) return TermFixpoint.super.visitHole(term, unit);
         return metas.get(sol).accept(this, Unit.unit());
       }
-
-      @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
-        return state != null ? state.levelEqns().applyTo(sort) : sort;
-      }
     }, Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
+  }
+  default @NotNull Term lift(int ulift) {
+    return subst(Substituter.TermSubst.EMPTY, ulift);
+  }
+  default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
+    return accept(new LittleTyper(state, ctx), Unit.unit());
   }
 
   interface Visitor<P, R> {
@@ -173,7 +175,7 @@ public sealed interface Term extends AyaDocile permits
     }
 
     @Contract(" -> new") public @NotNull RefTerm toTerm() {
-      return new RefTerm(ref);
+      return new RefTerm(ref, 0);
     }
 
     public @NotNull Pat toPat() {
@@ -185,23 +187,23 @@ public sealed interface Term extends AyaDocile permits
     }
 
     public @NotNull Param subst(@NotNull Substituter.TermSubst subst) {
-      return subst(subst, LevelSubst.EMPTY);
+      return subst(subst, 0);
     }
 
     public static @NotNull ImmutableSeq<Param> subst(
       @NotNull ImmutableSeq<@NotNull Param> params,
-      @NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst
+      @NotNull Substituter.TermSubst subst, int ulift
     ) {
-      return params.map(param -> param.subst(subst, levelSubst));
+      return params.map(param -> param.subst(subst, ulift));
     }
 
     public static @NotNull ImmutableSeq<Param>
-    subst(@NotNull ImmutableSeq<@NotNull Param> params, @NotNull LevelSubst levelSubst) {
-      return subst(params, Substituter.TermSubst.EMPTY, levelSubst);
+    subst(@NotNull ImmutableSeq<@NotNull Param> params, int ulift) {
+      return subst(params, Substituter.TermSubst.EMPTY, ulift);
     }
 
-    public @NotNull Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
-      return new Param(ref, type.subst(subst, levelSubst), pattern, explicit);
+    public @NotNull Param subst(@NotNull Substituter.TermSubst subst, int ulift) {
+      return new Param(ref, type.subst(subst, ulift), pattern, explicit);
     }
 
     @TestOnly @Contract(pure = true)

@@ -5,7 +5,9 @@ In file $FILE:14:30 ->
   14 |   new Pair Nat Nat { | fst => make-pair Nat Nat zero zero | snd => suc zero }
                                      ^-------------------------^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         make-pair Nat Nat zero zero
+       of type
          Pair Nat Nat
        against the type
          Nat

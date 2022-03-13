@@ -5,7 +5,9 @@ In file $FILE:13:14 ->
   13 | def u : 😊 => 🐒
                      ^^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         🐒
+       of type
          😂
        against the type
          😊

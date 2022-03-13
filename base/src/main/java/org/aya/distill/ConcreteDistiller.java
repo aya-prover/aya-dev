@@ -16,9 +16,7 @@ import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
-import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.aya.ref.DefVar;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.distill.DistillerOptions;
@@ -85,8 +83,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
-      case Expr.LMaxExpr expr -> visitCalls(false, Doc.styled(KEYWORD, "lmax"),
-        expr.levels().view().map(term -> new Arg<>(term, true)), outer, true);
       case Expr.LamExpr expr -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
           yield term(outer, expr.body());
@@ -107,19 +103,14 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
         Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
-      case Expr.UnivArgsExpr expr -> Doc.sep(Doc.styled(KEYWORD, "universe"),
-        Doc.commaList(expr.univArgs().view().map(Docile::toDoc)));
       case Expr.UnresolvedExpr expr -> Doc.plain(expr.name().join());
       case Expr.RefExpr expr -> {
         var ref = expr.resolvedVar();
         if (ref instanceof DefVar<?, ?> defVar) yield defVar(defVar);
-        else if (ref instanceof PreLevelVar levelVar) yield linkRef(levelVar, GENERALIZED);
         else yield varDoc(ref);
       }
       case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawUnivExpr e -> Doc.styled(KEYWORD, "Type");
-      case Expr.RawUnivArgsExpr expr -> Doc.sep(Doc.styled(KEYWORD, "universe"),
-        Doc.commaList(expr.univArgs().view().map(e -> term(Outer.Free, e))));
       case Expr.NewExpr expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
@@ -128,8 +119,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
               Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
             Doc.plain("=>"), term(Outer.Free, t.body()))
         )));
-      case Expr.LSucExpr expr -> visitCalls(false, Doc.styled(KEYWORD, "lsuc"),
-        SeqView.of(new Arg<>(expr.expr(), true)), outer, true);
       case Expr.SigmaExpr expr -> checkParen(outer, Doc.sep(
         Doc.styled(KEYWORD, Doc.symbol("Sig")),
         visitTele(expr.params().dropLast(1)),
@@ -140,8 +129,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var fn = Doc.styled(KEYWORD, "Type");
         if (!options.map.get(DistillerOptions.Key.ShowLevels)) yield fn;
         yield visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
-          SeqView.of(new Arg<>(o -> expr.level().toDoc(), true)), true);
+          SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(expr.lift())), true)), true);
       }
+      // TODO: show the number of lifts, currently we assume it's 1
+      case Expr.LiftExpr expr -> Doc.sep(
+        Doc.styled(KEYWORD, Doc.symbol("ulift")),
+        term(Outer.Lifted, expr.expr()));
     };
   }
 
@@ -198,10 +191,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield Doc.sep(prelude);
       }
       case Generalize.Variables variables -> Doc.sep(Doc.styled(KEYWORD, "variables"), visitTele(variables.toExpr()));
-      case Generalize.Levels levels -> {
-        var vars = levels.levels().map(t -> linkDef(t.data(), GENERALIZED));
-        yield Doc.sep(Doc.styled(KEYWORD, "universe"), Doc.sep(vars));
-      }
       case Remark remark -> {
         var literate = remark.literate;
         yield literate != null ? literate.toDoc() : Doc.plain(remark.raw);

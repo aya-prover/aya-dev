@@ -6,8 +6,8 @@ In file $FILE:1:19 ->
 Error: Unable to apply the expression
          \ x => x
        because the type of what you applied is not a Pi type, but instead:
-         Type
-         (Normalized: Type)
+         Type 0
+         (Normalized: Type 0)
 
 1 error(s), 0 warning(s).
 What are you doing?

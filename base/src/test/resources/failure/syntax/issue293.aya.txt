@@ -5,7 +5,9 @@ In file $FILE:7:37 ->
   7 | def 测测测测测测测测测 : 单人代词 => 我们
                                            ^-^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         我们
+       of type
          多人代词
        against the type
          单人代词

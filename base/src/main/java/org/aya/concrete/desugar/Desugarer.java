@@ -8,9 +8,6 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
-import org.aya.generic.Constants;
-import org.aya.generic.Level;
-import org.aya.generic.ref.PreLevelVar;
 import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,11 +21,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtFixpoin
   }
 
   @Override public @NotNull Expr visitRawUniv(@NotNull Expr.RawUnivExpr expr, Unit unit) {
-    return new Expr.UnivExpr(expr.sourcePos(), new Level.Polymorphic(0));
-  }
-
-  @Override public @NotNull Expr visitRawUnivArgs(@NotNull Expr.RawUnivArgsExpr expr, Unit unit) {
-    return catching(expr, () -> new Expr.UnivArgsExpr(expr.sourcePos(), expr.univArgs().mapChecked(this::levelVar)));
+    return new Expr.UnivExpr(expr.sourcePos(), 0);
   }
 
   @NotNull private Expr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) {
@@ -47,14 +40,11 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtFixpoin
   public static class DesugarInterruption extends Exception {
   }
 
-  private @NotNull Level<PreLevelVar> levelVar(@NotNull Expr expr) throws DesugarInterruption {
+  private int levelVar(@NotNull Expr expr) throws DesugarInterruption {
     return switch (expr) {
+      // [ice]: I forgot the purpose of this case
       case Expr.BinOpSeq binOpSeq -> levelVar(visitBinOpSeq(binOpSeq, Unit.unit()));
-      case Expr.LMaxExpr uMax -> new Level.Maximum(uMax.levels().mapChecked(this::levelVar));
-      case Expr.LSucExpr uSuc -> levelVar(uSuc.expr()).lift(1);
-      case Expr.LitIntExpr uLit -> new Level.Constant<>(uLit.integer());
-      case Expr.RefExpr ref && ref.resolvedVar() instanceof PreLevelVar lv -> new Level.Reference<>(lv);
-      case Expr.HoleExpr hole -> new Level.Reference<>(new PreLevelVar(Constants.randomName(hole), hole.sourcePos()));
+      case Expr.LitIntExpr uLit -> uLit.integer();
       default -> {
         resolveInfo.opSet().reporter.report(new LevelProblem.BadLevelExpr(expr));
         throw new DesugarInterruption();

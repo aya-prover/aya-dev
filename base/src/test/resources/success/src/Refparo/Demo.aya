@@ -6,8 +6,7 @@ open import Paths
 open data Entity : Type
   | johnImpl
 
-def john : Quantifier Entity
-  => mkConstQ johnImpl
+def john : (Entity -> Type) -> Type => mkConstQ johnImpl
 
 
 open data RainImpl : Type

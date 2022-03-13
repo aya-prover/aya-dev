@@ -5,11 +5,9 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.generic.ref.GeneralizedVar;
-import org.aya.generic.ref.PreLevelVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,15 +19,6 @@ public sealed interface Generalize extends Stmt {
   @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     // commands are desugared in the shallow resolver
     return false;
-  }
-
-  record Levels(
-    @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<WithPos<PreLevelVar>> levels
-  ) implements Generalize {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLevels(this, p);
-    }
   }
 
   final class Variables implements Generalize {

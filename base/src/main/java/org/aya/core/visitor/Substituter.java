@@ -8,8 +8,6 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
 import kala.tuple.Unit;
-import org.aya.core.sort.LevelSubst;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
@@ -27,23 +25,22 @@ import org.jetbrains.annotations.NotNull;
  */
 public record Substituter(
   @NotNull Map<Var, ? extends Term> termSubst,
-  @NotNull LevelSubst levelSubst
+  int ulift
 ) implements TermFixpoint<Unit> {
-  public Substituter(@NotNull TermSubst termSubst, @NotNull LevelSubst levelSubst) {
-    this(termSubst.map, levelSubst);
-  }
-
-  @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
-    return levelSubst.applyTo(sort);
+  public Substituter(@NotNull TermSubst termSubst, int ulift) {
+    this(termSubst.map, ulift);
   }
 
   @Override public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
-    return termSubst.getOption(term.ref()).map(Term::rename).getOrDefault(term);
+    return termSubst.getOption(term.ref())
+      .map(t -> t.rename().lift(ulift))
+      .getOrDefault(term);
   }
 
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
-    return termSubst.getOption(term.var()).map(Term::rename).getOrElse(() ->
-      TermFixpoint.super.visitRef(term, Unit.unit()));
+    return termSubst.getOption(term.var())
+      .map(t -> t.rename().lift(ulift))
+      .getOrElse(() -> TermFixpoint.super.visitRef(term, Unit.unit()));
   }
 
   /**

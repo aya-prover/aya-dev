@@ -211,7 +211,7 @@ public record PatClassifier(
             // Probably nonempty, and in this case, prim is defined, so we can safely call `.get`
             if (classes.isNotEmpty()) {
               // We're gonna instantiate the telescope with this term!
-              var lrCall = new CallTerm.Prim(prim.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+              var lrCall = new CallTerm.Prim(prim.get().ref, 0, ImmutableSeq.empty());
               var newTele = telescope.drop(1)
                 .map(param -> param.subst(target.ref(), lrCall))
                 .toImmutableSeq().view();

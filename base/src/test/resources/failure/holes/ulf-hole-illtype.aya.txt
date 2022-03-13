@@ -5,10 +5,12 @@ In file $FILE:6:29 ->
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                    ^^
 
-Error: Cannot check the expression of type
+Error: Cannot check the expression
+         X
+       of type
          F _
        against the type
-         Type
+         Type 0
 
 In file $FILE:6:16 ->
 

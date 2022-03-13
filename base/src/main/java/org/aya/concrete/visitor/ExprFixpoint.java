@@ -58,14 +58,10 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return expr;
   }
 
-  @Override default @NotNull Expr visitRawUnivArgs(Expr.@NotNull RawUnivArgsExpr expr, P p) {
-    var args = expr.univArgs().map(e -> e.accept(this, p));
-    if (args.sameElements(expr.univArgs(), true)) return expr;
-    return new Expr.RawUnivArgsExpr(expr.sourcePos(), args);
-  }
-
-  @Override default @NotNull Expr visitUnivArgs(Expr.@NotNull UnivArgsExpr expr, P p) {
-    return expr;
+  @Override default @NotNull Expr visitLift(Expr.@NotNull LiftExpr expr, P p) {
+    var mapped = expr.expr().accept(this, p);
+    if (mapped == expr.expr()) return expr;
+    return new Expr.LiftExpr(expr.sourcePos(), mapped, expr.lift());
   }
 
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
@@ -91,18 +87,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     var tup = expr.tup().accept(this, p);
     if (tup == expr.tup()) return expr;
     return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix(), expr.resolvedIx(), expr.theCore());
-  }
-
-  @Override default @NotNull Expr visitLsuc(Expr.@NotNull LSucExpr expr, P p) {
-    var lvl = expr.expr().accept(this, p);
-    if (lvl == expr.expr()) return expr;
-    return new Expr.LSucExpr(expr.sourcePos(), lvl);
-  }
-
-  @Override default @NotNull Expr visitLmax(Expr.@NotNull LMaxExpr expr, P p) {
-    var fields = expr.levels().map(t -> t.accept(this, p));
-    if (fields.sameElements(expr.levels(), true)) return expr;
-    return new Expr.LMaxExpr(expr.sourcePos(), fields);
   }
 
   @Override default @NotNull Expr visitNew(Expr.@NotNull NewExpr expr, P p) {

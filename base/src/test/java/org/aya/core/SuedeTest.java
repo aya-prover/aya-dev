@@ -28,7 +28,7 @@ public class SuedeTest {
   }
 
   @Test public void piSig() {
-    suedeAll("def test (y : Type 0) : Type 3 => Pi (x : Type 0 -> Type (lsuc 1)) -> Sig (x y) ** x y");
+    suedeAll("def test (y : Type 0) : Type 3 => Pi (x : Type 0 -> Type 2) -> Sig (x y) ** x y");
   }
 
   @Test public void adjunction() {

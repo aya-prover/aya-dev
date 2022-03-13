@@ -97,12 +97,6 @@ public record StmtShallowResolver(
         });
       }
       case Remark remark -> remark.ctx = context;
-      case Generalize.Levels levels -> {
-        for (var level : levels.levels()) {
-          var genVar = level.data();
-          context.addGlobalSimple(levels.accessibility(), genVar, level.sourcePos());
-        }
-      }
       case Generalize.Variables variables -> {
         variables.ctx = context;
         for (var variable : variables.variables)

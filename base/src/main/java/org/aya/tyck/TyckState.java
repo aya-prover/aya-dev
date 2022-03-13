@@ -17,7 +17,6 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
-import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
 import org.aya.util.distill.AyaDocile;
 import org.aya.util.distill.DistillerOptions;
@@ -33,11 +32,10 @@ import org.jetbrains.annotations.Nullable;
 public record TyckState(
   @NotNull DynamicSeq<Eqn> eqns,
   @NotNull DynamicSeq<WithPos<Meta>> activeMetas,
-  @NotNull LevelEqnSet levelEqns,
   @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas
 ) {
   public TyckState() {
-    this(DynamicSeq.create(), DynamicSeq.create(), new LevelEqnSet(), MutableMap.create());
+    this(DynamicSeq.create(), DynamicSeq.create(), MutableMap.create());
   }
 
   /**
@@ -83,7 +81,6 @@ public record TyckState(
         reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
       }
     }
-    levelEqns.solve();
   }
 
   public void addEqn(@NotNull Eqn eqn) {
