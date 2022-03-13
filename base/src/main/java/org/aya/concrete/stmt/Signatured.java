@@ -57,4 +57,8 @@ public sealed abstract class Signatured implements SourceNode, OpDecl, TyckUnit 
   @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     return ref().isInModule(currentMod) && ref().core == null;
   }
+
+  @Override public String toString() {
+    return getClass().getSimpleName() + "[" + ref().name() + "]";
+  }
 }

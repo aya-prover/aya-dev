@@ -317,53 +317,59 @@ public record AyaProducer(
   public @NotNull Expr visitExpr(AyaParser.ExprContext ctx) {
     return switch (ctx) {
       case AyaParser.SingleContext sin -> visitAtom(sin.atom());
-      case AyaParser.AppContext app -> visitApp(app);
-      case AyaParser.ProjContext proj -> visitProj(proj);
-      case AyaParser.PiContext pi -> visitPi(pi);
-      case AyaParser.SigmaContext sig -> visitSigma(sig);
-      case AyaParser.LamContext lam -> visitLam(lam);
-      case AyaParser.ArrContext arr -> visitArr(arr);
-      case AyaParser.NewContext n -> visitNew(n);
-      case AyaParser.NewEmptyContext n -> visitNewEmpty(n);
-      case AyaParser.ForallContext forall -> visitForall(forall);
+      case AyaParser.AppContext app -> {
+        var head = new Expr.NamedArg(true, visitExpr(app.expr()));
+        var tail = app.argument().stream()
+          .map(this::visitArgument)
+          .collect(DynamicLinkedSeq.factory());
+        tail.push(head);
+        yield new Expr.BinOpSeq(sourcePosOf(app), tail.toImmutableSeq());
+      }
+      case AyaParser.ProjContext proj -> buildProj(sourcePosOf(proj), visitExpr(proj.expr()), proj.projFix());
+      case AyaParser.PiContext pi -> buildPi(
+        sourcePosOf(pi), false,
+        visitTelescope(pi.tele()).view(),
+        visitExpr(pi.expr()));
+      case AyaParser.SigmaContext sig -> new Expr.SigmaExpr(
+        sourcePosOf(sig), false,
+        visitTelescope(sig.tele()).appended(new Expr.Param(
+          visitExpr(sig.expr()).sourcePos(),
+          Constants.anonymous(),
+          visitExpr(sig.expr()), false, true)));
+      case AyaParser.LamContext lam -> {
+        Expr result;
+        var bodyExpr = lam.expr();
+        if (bodyExpr == null) {
+          var impliesToken = lam.IMPLIES();
+          var bodyHolePos = impliesToken == null ? sourcePosOf(lam) : sourcePosOf(impliesToken);
+          result = new Expr.HoleExpr(bodyHolePos, false, null);
+        } else result = visitExpr(bodyExpr);
+        yield buildLam(sourcePosOf(lam), visitLamTelescope(lam.tele()).view(), result);
+      }
+      case AyaParser.ArrContext arr -> {
+        var expr0 = arr.expr(0);
+        var to = visitExpr(arr.expr(1));
+        var pos = sourcePosOf(expr0);
+        var param = new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(expr0), false, true);
+        yield new Expr.PiExpr(sourcePosOf(arr), false, param, to);
+      }
+      case AyaParser.NewContext n -> new Expr.NewExpr(
+        sourcePosOf(n), visitExpr(n.expr()),
+        ImmutableSeq.from(n.newArg())
+          .map(na -> new Expr.Field(na.ID().getText(), visitIds(na.ids())
+            .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
+            .collect(ImmutableSeq.factory()), visitExpr(na.expr()))));
+      case AyaParser.NewEmptyContext n -> new Expr.NewExpr(
+        sourcePosOf(n),
+        visitExpr(n.expr()),
+        ImmutableSeq.empty());
+      case AyaParser.ForallContext forall -> buildPi(
+        sourcePosOf(forall), false,
+        visitForallTelescope(forall.tele()).view(),
+        visitExpr(forall.expr()));
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
-  }
-
-  public @NotNull Expr visitNew(AyaParser.NewContext ctx) {
-    return new Expr.NewExpr(
-      sourcePosOf(ctx),
-      visitExpr(ctx.expr()),
-      ImmutableSeq.from(ctx.newArg())
-        .map(na -> new Expr.Field(na.ID().getText(), visitIds(na.ids())
-          .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
-          .collect(ImmutableSeq.factory()), visitExpr(na.expr())))
-    );
-  }
-
-  public @NotNull Expr visitNewEmpty(AyaParser.NewEmptyContext ctx) {
-    return new Expr.NewExpr(
-      sourcePosOf(ctx),
-      visitExpr(ctx.expr()),
-      ImmutableSeq.empty());
-  }
-
-  public @NotNull Expr visitArr(AyaParser.ArrContext ctx) {
-    var expr0 = ctx.expr(0);
-    var to = visitExpr(ctx.expr(1));
-    var pos = sourcePosOf(expr0);
-    var param = new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(expr0), false, true);
-    return new Expr.PiExpr(sourcePosOf(ctx), false, param, to);
-  }
-
-  public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
-    var head = new Expr.NamedArg(true, visitExpr(ctx.expr()));
-    var tail = ctx.argument().stream()
-      .map(this::visitArgument)
-      .collect(DynamicLinkedSeq.factory());
-    tail.push(head);
-    return new Expr.BinOpSeq(sourcePosOf(ctx), tail.toImmutableSeq());
   }
 
   public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {
@@ -421,14 +427,6 @@ public record AyaProducer(
       ImmutableSeq.of(expr), as, expr.explicit());
   }
 
-  public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
-    return (Expr.LamExpr) buildLam(
-      sourcePosOf(ctx),
-      visitLamTelescope(ctx.tele()).view(),
-      visitLamBody(ctx)
-    );
-  }
-
   public static @NotNull Expr buildLam(
     SourcePos sourcePos,
     SeqLike<Expr.Param> params,
@@ -439,51 +437,6 @@ public record AyaProducer(
       sourcePos,
       params.first(),
       buildLam(sourcePosForSubExpr(sourcePos.file(), params, body), params.view().drop(1), body)
-    );
-  }
-
-  private @NotNull Expr visitLamBody(@NotNull AyaParser.LamContext ctx) {
-    var bodyExpr = ctx.expr();
-
-    if (bodyExpr == null) {
-      var impliesToken = ctx.IMPLIES();
-      var bodyHolePos = impliesToken == null
-        ? sourcePosOf(ctx)
-        : sourcePosOf(impliesToken);
-
-      return new Expr.HoleExpr(bodyHolePos, false, null);
-    }
-
-    return visitExpr(bodyExpr);
-  }
-
-  public Expr.@NotNull SigmaExpr visitSigma(AyaParser.SigmaContext ctx) {
-    return new Expr.SigmaExpr(
-      sourcePosOf(ctx),
-      false,
-      visitTelescope(ctx.tele()).appended(new Expr.Param(
-        visitExpr(ctx.expr()).sourcePos(),
-        Constants.anonymous(),
-        visitExpr(ctx.expr()),
-        false, true))
-    );
-  }
-
-  public Expr.@NotNull PiExpr visitPi(AyaParser.PiContext ctx) {
-    return (Expr.PiExpr) buildPi(
-      sourcePosOf(ctx),
-      false,
-      visitTelescope(ctx.tele()).view(),
-      visitExpr(ctx.expr())
-    );
-  }
-
-  public Expr.@NotNull PiExpr visitForall(AyaParser.ForallContext ctx) {
-    return (Expr.PiExpr) buildPi(
-      sourcePosOf(ctx),
-      false,
-      visitForallTelescope(ctx.tele()).view(),
-      visitExpr(ctx.expr())
     );
   }
 
@@ -522,10 +475,6 @@ public record AyaProducer(
       bodySourcePos.endLine(),
       bodySourcePos.endColumn()
     );
-  }
-
-  public Expr.@NotNull ProjExpr visitProj(AyaParser.ProjContext proj) {
-    return buildProj(sourcePosOf(proj), visitExpr(proj.expr()), proj.projFix());
   }
 
   private Expr.@NotNull ProjExpr buildProj(@NotNull SourcePos sourcePos,
