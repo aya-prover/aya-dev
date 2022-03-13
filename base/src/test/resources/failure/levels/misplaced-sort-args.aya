@@ -1,2 +1,0 @@
-open data Unit : Type 0 | unit
-def test2 => (\ (x : Unit) => x) {universe 1, 2} unit
