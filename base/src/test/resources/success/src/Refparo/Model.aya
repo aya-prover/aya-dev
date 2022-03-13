@@ -2,8 +2,8 @@ open import Paths
 
 public open data Unit | unit
 
-def coe {a b : Type} (eq : a = b) (x : a) (i : I) : eq.at i
-  => arcoe eq.at x i
+def coe {a b : Type} (eq : a = b) (x : a) : b
+  => arcoe eq.at x right
 
 -- *** Types
 
@@ -23,18 +23,18 @@ public open struct Event (T : EventT) : Type 1
 def getAgent (T : EventT) (e : Event T) : T.AgentT => e.agent
 
 
-def Quantifier (A : Type) => (A -> Type) -> Type
+def Quantifier (A : Type) => (A -> Type 3) -> Type 3
 
 def mkConstQ {A : Type} (x : A) : Quantifier A
   => \f => f x
 
 
-def Verb (T : EventT) => ulift Quantifier (Event T)
+def Verb (T : EventT) => ↑ Quantifier (Event T)
 
 def mkVerb {T : EventT} (p : Event T -> Type) : Verb T
   => \f => Sig (e : Event T) ** (Sig (p e) ** (f e))
 
-def VP (T : EventT) => ulift Quantifier (Event T)
+def VP (T : EventT) => Verb T
 
 
 def BNP (A : Type) => Quantifier A
@@ -42,7 +42,7 @@ def BNP (A : Type) => Quantifier A
 def GNP (setT : Type -> EventT -> EventT) (A : Type)
   => Pi {T : EventT} -> VP (setT A T) -> VP (setT A T)
 
-def NP (A : Type) => ulift GNP setAgentT A
+def NP (A : Type) => ↑ GNP setAgentT A
 
 
 def Theta (setT : Type -> EventT -> EventT)
@@ -51,13 +51,16 @@ def Theta (setT : Type -> EventT -> EventT)
 def mkTheta
   (getT : EventT -> Type)
   (get : Pi (T : EventT) -> Event T -> getT T)
-  (setT : Type 2 -> EventT -> EventT)
-  (T-inv : Pi (A : Type 2) (T : EventT) -> A ↑ ↑ = getT (setT A T))
-  : ↑ Theta setT
-  -- q : BNP A => Quantifier A
-  -- p f : VP (setT A T) => Quantifier (setT A T)
-  => \{A} => \q => \{T} => \p f => ulift q (\x => p (\e =>
-    Sig (get (setT A T) e ↑ = ↑ coe (T-inv A T) x right) ** (f e)))
+  (setT : Type -> EventT -> EventT)
+  (T-inv : Pi (A : Type) (T : EventT) -> A ↑ = getT (setT A T))
+  : Theta setT
+  -- A : Type
+  -- ↑ q : (↑ A -> Type 3) -> Type 3
+  -- x : ↑ A
+  -- p f : (setT A T -> Type) -> Type
+  -- e : setT A T
+  => \{A} => \q => \{T} => \p f => ↑ q (\x => p (\e =>
+    Sig (get (setT A T) e ↑ ↑ = ↑ ↑ coe (↑ T-inv A T) x) ** (f e)))
 
 def agentDef : Theta setAgentT
   => \{A} => mkTheta getAgentT getAgent setAgentT AgentT-inv {A}
@@ -67,7 +70,6 @@ def mkConstNP {A : Type} (x : A) : NP A
   => \{T} p => \f => p (\e => Sig (e.agent = x) ** (f e))
 
 
-def Sentence => Type
+-- def Sentence => Type
 
-def mkSentence {T : EventT} (p : ulift Quantifier (Event T)) : ulift Sentence
-  => p (\x => Unit)
+def mkSentence {T : EventT} (p : ↑ Quantifier (Event T)) => p (\x => Unit)

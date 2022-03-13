@@ -91,8 +91,8 @@ public class DistillerTest {
       """);
     var test1 = ((FnDef) decls.get(1)).body.getLeftValue();
     var test2 = ((FnDef) decls.get(2)).body.getLeftValue();
-    assertEquals("Pi (A : Type) -> A = X", test1.toDoc(DistillerOptions.informative()).debugRender());
-    assertEquals("(Pi (A : Type) -> A) = X", test2.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("Pi (A : Type 0) -> A = X", test1.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("(Pi (A : Type 0) -> A) = X", test2.toDoc(DistillerOptions.informative()).debugRender());
   }
 
   @AfterEach public void tearDown() {

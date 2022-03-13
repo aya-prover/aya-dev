@@ -8,7 +8,7 @@ In file $FILE:6:15 ->
 Error: Cannot check the expression of type
          Nat
        against the type
-         Type
+         Type 0
 
 In file $FILE:7:15 ->
 
@@ -18,8 +18,8 @@ In file $FILE:7:15 ->
                      ^--^
 
 Goal: Goal of type
-        Type
-        (Normalized: Type)
+        Type 0
+        (Normalized: Type 0)
       Context:
         {m : Nat}
         {m : Nat} (not in scope)
@@ -36,7 +36,7 @@ In file $FILE:8:21 ->
                            ^-----^
 
 Error: Cannot check the expression of type
-         Type
+         Type 0
        against the type
          Nat
 
@@ -50,7 +50,7 @@ In file $FILE:8:16 ->
 Error: Cannot check the expression of type
          Nat
        against the type
-         Type
+         Type 0
 
 In file $FILE:9:21 ->
 
@@ -60,7 +60,7 @@ In file $FILE:9:21 ->
                            ^-----^
 
 Error: Cannot check the expression of type
-         Type
+         Type 0
        against the type
          Nat
 
@@ -74,7 +74,7 @@ In file $FILE:9:16 ->
 Error: Cannot check the expression of type
          Nat
        against the type
-         Type
+         Type 0
 
 In file $FILE:7:15 ->
 

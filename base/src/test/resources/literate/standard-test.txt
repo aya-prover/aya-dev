@@ -1,25 +1,25 @@
 Some preload definitions:
-data Nat : Type
+data Nat : Type 0
   | zero
   | suc (_ : Nat)
 open Nat hiding ()
-data Unit : Type
+data Unit : Type 0
   | unit
 open Unit hiding ()
 Lately, Daylily told me an interesting problem about Aya's pattern unification.
 Consider this function (some parameters renamed from the test suites):
-def wow-fun {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => zero
+def wow-fun {U : Type 0} {T : U -> Type 0} (A B : U) (x : T A) (y : T B) : Nat => zero
 In order to make it irreducible, we make it a constructor of an inductive type:
-data Wow : Type
-  | wow {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B)
+data Wow : Type 1
+  | wow {U : Type 0} {T : U -> Type 0} (A B : U) (x : T A) (y : T B)
 open Wow hiding ()
 Here, `wow` has two implicit parameters,
 and note that the second one is a higher one (it is of a function type).
 Consider the following example:
-def test1 {A B : Type} {a : A} {b : B} => wow A B a b
+def test1 {A B : Type 0} {a : A} {b : B} => wow A B a b
 Observe the elaborated term of `test1`: `wow A B a b`
 Consider another example:
-def test2 {A B : Type} {a : A} {b : B} => wow A B a a
+def test2 {A B : Type 0} {a : A} {b : B} => wow A B a a
 Observe the elaborated term of `test2`: `wow A B a a`
 Showing the implicit arguments: `wow {Type} {\ _ => A} A B a a`
 Showing the implicit patterns: `\ {A} {B} {a} {b} => wow A B a a`

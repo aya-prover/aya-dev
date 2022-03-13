@@ -5,7 +5,7 @@ In file $FILE:2:0 ->
       ^----------------^
 
 Error: Cannot check the expression of type
-         Type
+         Type 0
        against the type
          Nat
 

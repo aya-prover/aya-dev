@@ -10,8 +10,8 @@ def wow-fun {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => ze
 
 --| In order to make it irreducible, we make it a constructor of an inductive type:
 
-open data Wow : Type 2
-  | wow {U : Type 1} {T : U -> Type 0} (A B : U) (x : T A) (y : T B)
+open data Wow : Type 1
+  | wow {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B)
 
 --| Here, `wow` has two implicit parameters,
 --| and note that the second one is a higher one (it is of a function type).\

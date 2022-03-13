@@ -6,7 +6,7 @@ In file $FILE:3:3 ->
          ^----^
 
 Error: Cannot split on a non-inductive type
-         Type
+         Type 0
        with a constructor pattern
          unit y
 
