@@ -26,7 +26,7 @@ open data Term: Type
 ----------Ref----------------------
     | ref Name
     | field-ref FieldDef
-    | meta-ref MataPat
+    | meta-ref MetaPat
 ----------Form---------------------
     | pi Param (cod: Term)
     | sig Tele
@@ -130,7 +130,7 @@ struct Hole: Type
 
 open data Pat: Type
     | catch-all Explicit Name (ty: Term)
-    | meta MataPat
+    | meta MetaPat
     | absurd Explicit
     | tup Explicit (List Pat)
     | ctor Explicit Name (List Pat) DataDef CallArgs
