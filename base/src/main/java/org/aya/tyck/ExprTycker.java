@@ -307,7 +307,7 @@ public final class ExprTycker {
       case Expr.UnivExpr univExpr -> {
         var normTerm = term.normalize(state, NormalizeMode.WHNF);
         if (normTerm instanceof FormTerm.Univ univ) {
-          if (univExpr.lift() + 1 >= univ.lift()) reporter.report(
+          if (univExpr.lift() + 1 > univ.lift()) reporter.report(
             new LevelError(univExpr.sourcePos(), univExpr.lift() + 1, univ.lift(), false));
           yield new Result(new FormTerm.Univ(univExpr.lift()), univ);
         } else {

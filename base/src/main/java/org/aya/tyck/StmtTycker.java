@@ -204,6 +204,12 @@ public record StmtTycker(
     ctor.signature = new Def.Signature(tele, dataCall);
     ctor.yetTycker = patTycker;
     ctor.yetTyckedPat = pat;
+    var dataTeleView = dataSig.param().view();
+    if (pat.isNotEmpty()) {
+      dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
+        dataTeleView.map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
+    }
+    ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
   }
 
   @NotNull public CtorDef tyck(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
@@ -223,12 +229,6 @@ public record StmtTycker(
     // PatTycker was created when checking the header with another expr tycker,
     // we should make sure it's the same one here. See comments of ExprTycker.
     assert tycker == patTycker.exprTycker;
-    var dataTeleView = dataSig.param().view();
-    if (pat.isNotEmpty()) {
-      dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
-        dataTeleView.map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
-    }
-    ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature, ctor.sourcePos);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
     dataConcrete.checkedBody.append(elaborated);
