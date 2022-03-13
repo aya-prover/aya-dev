@@ -148,7 +148,7 @@ public record StmtTycker(
           : tycker.zonk(data.result, tycker.synthesize(data.result)).wellTyped();
         data.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
-        data.ulift = tycker.ulift(decl.result, result);
+        data.ulift = tycker.ensureUniv(decl.result, result);
       }
       case Decl.StructDecl struct -> {
         var pos = struct.sourcePos;
@@ -156,7 +156,7 @@ public record StmtTycker(
         var result = tycker.zonk(struct.result, tycker.synthesize(struct.result)).wellTyped();
         struct.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
-        struct.ulift = tycker.ulift(decl.result, result);
+        struct.ulift = tycker.ensureUniv(decl.result, result);
       }
       case Decl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
@@ -204,12 +204,7 @@ public record StmtTycker(
     ctor.signature = new Def.Signature(tele, dataCall);
     ctor.yetTycker = patTycker;
     ctor.yetTyckedPat = pat;
-    var dataTeleView = dataSig.param().view();
-    if (pat.isNotEmpty()) {
-      dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
-        dataTeleView.map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
-    }
-    ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
+    ctor.patternTele = pat.isEmpty() ? dataSig.param().map(Term.Param::implicitify) : Pat.extractTele(pat);
   }
 
   @NotNull public CtorDef tyck(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
@@ -229,6 +224,8 @@ public record StmtTycker(
     // PatTycker was created when checking the header with another expr tycker,
     // we should make sure it's the same one here. See comments of ExprTycker.
     assert tycker == patTycker.exprTycker;
+    if (pat.isNotEmpty()) dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
+      dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
     var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature, ctor.sourcePos);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
     dataConcrete.checkedBody.append(elaborated);

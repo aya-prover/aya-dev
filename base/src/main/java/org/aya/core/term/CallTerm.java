@@ -165,7 +165,7 @@ public sealed interface CallTerm extends Term {
     }
 
     @Override public int ulift() {
-      // TODO: we should be able to lift a meta
+      // TODO[lift-meta]: we should be able to lift a meta
       return 0;
     }
   }

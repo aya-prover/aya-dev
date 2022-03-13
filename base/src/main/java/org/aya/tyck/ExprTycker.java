@@ -77,14 +77,14 @@ public final class ExprTycker {
       case Expr.PiExpr pi -> {
         var param = pi.param();
         final var var = param.ref();
-        var type = param.type();
-        var result = synthesize(type);
-        var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
+        var domTy = param.type();
+        var domRes = synthesize(domTy);
+        var domLvl = ensureUniv(domTy, domRes.type);
+        var resultParam = new Term.Param(var, domRes.wellTyped, param.explicit());
         yield localCtx.with(resultParam, () -> {
-          var last = synthesize(pi.last());
-          return new Result(new FormTerm.Pi(resultParam, last.wellTyped),
-            // TODO[ice]: ExprTycker::isType
-            new FormTerm.Univ(Math.max(((FormTerm.Univ) result.type).lift(), ((FormTerm.Univ) last.type).lift())));
+          var cod = synthesize(pi.last());
+          var codLvl = ensureUniv(pi.last(), cod.type);
+          return new Result(new FormTerm.Pi(resultParam, cod.wellTyped), new FormTerm.Univ(Math.max(domLvl, codLvl)));
         });
       }
       case Expr.SigmaExpr sigma -> {
@@ -93,7 +93,7 @@ public final class ExprTycker {
         for (var tuple : sigma.params()) {
           final var type = tuple.type();
           var result = synthesize(type);
-          maxLevel = Math.max(maxLevel, ((FormTerm.Univ) result.type).lift());
+          maxLevel = Math.max(maxLevel, ensureUniv(type, result.type));
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped);
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
@@ -527,10 +527,20 @@ public final class ExprTycker {
       upper.freezeHoles(state), lower.freezeHoles(state), failureData));
   }
 
-  public int ulift(@NotNull Expr expr, @NotNull Term term) {
-    if (term instanceof FormTerm.Univ univ) return univ.lift();
-    reporter.report(BadTypeError.univ(expr, term));
-    return 0;
+  public int ensureUniv(@NotNull Expr expr, @NotNull Term term) {
+    return switch (term) {
+      case FormTerm.Univ univ ->
+         univ.lift();
+      case CallTerm.Hole hole -> {
+        // TODO[lift-meta]: should be able to solve a lifted meta
+        unifyTyReported(hole, FormTerm.Univ.ZERO, expr);
+        yield hole.ulift();
+      }
+      default -> {
+        reporter.report(BadTypeError.univ(expr, term));
+        yield 0;
+      }
+    };
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
