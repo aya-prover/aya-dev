@@ -103,7 +103,8 @@ public final class ExprTycker {
       }
       case Expr.LiftExpr lift -> {
         var result = synthesize(lift.expr());
-        yield new Result(result.wellTyped.lift(1), result.type.lift(1));
+        var levels = lift.lift();
+        yield new Result(result.wellTyped.lift(levels), result.type.lift(levels));
       }
       case Expr.NewExpr newExpr -> {
         var structExpr = newExpr.struct();
@@ -483,7 +484,7 @@ public final class ExprTycker {
   private DefEq.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.append(new Trace.UnifyT(lower, upper, pos)));
     var unifier = unifier(pos, Ordering.Lt);
-    if (!unifier.compare(lower, upper, null)) return unifier.failureData();
+    if (!unifier.compare(lower, upper, null)) return unifier.getFailure();
     else return null;
   }
 

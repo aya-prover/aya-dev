@@ -237,7 +237,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     }
   }
 
-  record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr) implements Expr {
+  record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLift(this, p);
     }

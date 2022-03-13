@@ -61,7 +61,8 @@ public final class DefEq {
   private final @NotNull Eta uneta;
   private FailureData failure;
 
-  public FailureData failureData() {
+  public @NotNull FailureData getFailure() {
+    assert failure != null;
     return failure;
   }
 
@@ -349,7 +350,7 @@ public final class DefEq {
       }
       case FormTerm.Univ lhs -> {
         if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
-        compareLevel(lhs.lift(), rhs.lift());
+        if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
         yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
       }
       // See compareApprox for why we don't compare these
@@ -445,15 +446,25 @@ public final class DefEq {
     return ret;
   }
 
-  private void compareLevel(int l, int r) {
+  private boolean compareLevel(int l, int r) {
     switch (cmp) {
       case Eq:
-        if (l != r) reporter.report(new LevelError(pos, l, r, true));
+        if (l != r) {
+          reporter.report(new LevelError(pos, l, r, true));
+          return false;
+        }
       case Gt:
-        if (l < r) reporter.report(new LevelError(pos, l, r, false));
+        if (l < r) {
+          reporter.report(new LevelError(pos, l, r, false));
+          return false;
+        }
       case Lt:
-        if (l > r) reporter.report(new LevelError(pos, r, l, false));
+        if (l > r) {
+          reporter.report(new LevelError(pos, r, l, false));
+          return false;
+        }
     }
+    return true;
   }
 
   public void checkEqn(@NotNull TyckState.Eqn eqn) {

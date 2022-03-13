@@ -34,7 +34,6 @@ public final class DistillerOptions {
   @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions debug() {
     var map = informative();
     map.map.put(Key.ShowLambdaTypes, true);
-    map.map.put(Key.ShowLevels, true);
     return map;
   }
 
@@ -47,6 +46,7 @@ public final class DistillerOptions {
   @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions pretty() {
     var map = new DistillerOptions();
     map.map.put(Key.ShowImplicitPats, true);
+    map.map.put(Key.ShowLevels, true);
     return map;
   }
 }

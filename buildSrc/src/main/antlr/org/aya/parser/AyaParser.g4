@@ -98,7 +98,7 @@ expr : atom                                 # single
 newArg : BAR ID ids IMPLIES expr;
 
 // ulift is written here because we want `x ulift + y` to work
-atom : ULIFT? literal
+atom : ULIFT* literal
      | LPAREN exprList RPAREN
      ;
 

@@ -131,6 +131,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
           SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(expr.lift())), true)), true);
       }
+      // TODO: show the number of lifts, currently we assume it's 1
       case Expr.LiftExpr expr -> Doc.sep(
         Doc.styled(KEYWORD, Doc.symbol("ulift")),
         term(Outer.Lifted, expr.expr()));

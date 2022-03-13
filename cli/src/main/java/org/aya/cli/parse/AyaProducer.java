@@ -370,7 +370,8 @@ public record AyaProducer(
     var literal = ctx.literal();
     if (literal != null) {
       var expr = visitLiteral(literal);
-      return ctx.ULIFT() != null ? new Expr.LiftExpr(sourcePosOf(ctx), expr) : expr;
+      var lifts = ctx.ULIFT().size();
+      return lifts > 0 ? new Expr.LiftExpr(sourcePosOf(ctx), expr, lifts) : expr;
     }
 
     var expr = ctx.exprList().expr();
