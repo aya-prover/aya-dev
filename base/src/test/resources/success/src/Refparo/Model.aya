@@ -2,8 +2,8 @@ open import Paths
 
 public open data Unit | unit
 
-def coe {a b : Type} (eq : a = b) (x : a) : b
-  => arcoe eq.at x right
+def coe {a b : Type} (eq : a ↑ = b) (x : a) : b
+  => ↑ arcoe eq.at x right
 
 -- *** Types
 
@@ -13,9 +13,8 @@ public open struct EventT : Type 1
 def getAgentT (T : EventT) => T.AgentT
 def setAgentT (A : Type) (T : EventT) : EventT
   => new EventT { | AgentT => A }
-def AgentT-inv (A : Type) (T : EventT) : A = getAgentT (setAgentT A T)
+def AgentT-inv (T : EventT) (A : Type) : A = getAgentT (setAgentT A T)
   => idp
-
 
 public open struct Event (T : EventT) : Type 1
   | agent : T.AgentT
@@ -23,53 +22,44 @@ public open struct Event (T : EventT) : Type 1
 def getAgent (T : EventT) (e : Event T) : T.AgentT => e.agent
 
 
-def Quantifier (A : Type) => (A -> Type 2) -> Type 3
+-- Idea:
+-- def Quantifier (A : Type) => (A -> Type) -> Type
 
-def mkConstQ {A : Type} (x : A) : Quantifier A
+def mkConstQ {A : Type} (x : A) : (A -> Type) -> Type
   => \f => f x
 
 
-def Verb (T : EventT) => ↑ Quantifier (Event T)
+def Verb (T : EventT) => (Event T -> Type) -> Type
 
-def mkVerb {T : EventT} (p : Event T -> Type) : Verb T
+def mkVerb {T : EventT} (p : Event T -> Type) : ↑ Verb T
   => \f => Sig (e : Event T) ** (Sig (p e) ** (f e))
 
 def VP (T : EventT) => Verb T
 
-
-def BNP (A : Type) => Quantifier A
-
 def GNP (setT : Type -> EventT -> EventT) (A : Type)
   => Pi {T : EventT} -> VP (setT A T) -> VP (setT A T)
 
-def NP (A : Type) => ↑ GNP setAgentT A
+def NP (A : Type) => GNP setAgentT A
 
-
-def Theta (setT : Type -> EventT -> EventT)
-  => Pi {A : Type} -> BNP A -> GNP setT A
+def Theta (setT : Type -> EventT -> EventT) : Type 4
+  => Pi {u : Type} {t : EventT}
+  -> ((u -> Type 3) -> Type 3)
+  -> ((Event (setT u t) -> Type 3) -> Type 3)
+  -> (Event (setT u t) -> Type 3) -> Type 3
 
 def mkTheta
   (getT : EventT -> Type)
-  (get : Pi (T : EventT) -> Event T -> getT T)
+  (get : Pi (t : EventT) -> Event t -> getT t)
   (setT : Type -> EventT -> EventT)
-  (T-inv : Pi (A : Type) (T : EventT) -> A ↑ = getT (setT A T))
+  (invariant : Pi (t : EventT) (u : Type) -> u = getT (setT u t))
   : Theta setT
-  -- A : Type
-  -- ↑ q : (↑ A -> Type 3) -> Type 4
-  -- x : ↑ A
-  -- p f : (setT A T -> Type) -> Type
-  -- e : setT A T
-  => \{A} => \q => \{T} => \p f => ↑ q (\x => p (\e =>
-    Sig (get (setT A T) e ↑ ↑ = ↑ ↑ coe (↑ T-inv A T) x) ** (f e)))
+  => \{u} {t} => \q p => \f =>
+    q (\x => p (\e => Sig (get (setT u t) e = coe (invariant t u) x) ** (f e)))
 
 def agentDef : Theta setAgentT
-  => \{A} => mkTheta getAgentT getAgent setAgentT AgentT-inv {A}
-
+  => \{A} {t} => mkTheta getAgentT getAgent setAgentT AgentT-inv {A} {t}
 
 def mkConstNP {A : Type} (x : A) : NP A
   => \{T} p => \f => p (\e => Sig (e.agent = x) ** (f e))
 
-
--- def Sentence => Type
-
-def mkSentence {T : EventT} (p : ↑ Quantifier (Event T)) => p (\x => Unit)
+def mkSentence {T : EventT} (p : (Event T -> Type) -> Type) => p (\x => Unit)
