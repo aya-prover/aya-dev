@@ -13,8 +13,8 @@ public open struct EventT : Type 1
 def getAgentT (T : EventT) => T.AgentT
 def setAgentT (A : Type) (T : EventT) : EventT
   => new EventT { | AgentT => A }
-def AgentT-inv (T : EventT) (A : Type) : A = getAgentT (setAgentT A T)
-  => idp
+def AgentT-inv (T : EventT) (A : Type) : A ↑ = getAgentT (setAgentT A T)
+  => ↑ idp
 
 public open struct Event (T : EventT) : Type 1
   | agent : T.AgentT
@@ -51,7 +51,7 @@ def mkTheta
   (getT : EventT -> Type)
   (get : Pi (t : EventT) -> Event t -> getT t)
   (setT : Type -> EventT -> EventT)
-  (invariant : Pi (t : EventT) (u : Type) -> u = getT (setT u t))
+  (invariant : Pi (t : EventT) (u : Type) -> u ↑ = getT (setT u t))
   : Theta setT
   => \{u} {t} => \q p => \f =>
     q (\x => p (\e => Sig (get (setT u t) e = coe (invariant t u) x) ** (f e)))
