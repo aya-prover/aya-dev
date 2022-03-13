@@ -266,5 +266,6 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     AppHead,
     AppSpine,
     ProjHead,
+    Lifted
   }
 }

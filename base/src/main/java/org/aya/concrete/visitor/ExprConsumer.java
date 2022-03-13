@@ -40,6 +40,10 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
+  @Override default Unit visitLift(Expr.@NotNull LiftExpr expr, P p) {
+    return expr.expr().accept(this, p);
+  }
+
   @Override default Unit visitRawUniv(Expr.@NotNull RawUnivExpr expr, P p) {
     return Unit.unit();
   }

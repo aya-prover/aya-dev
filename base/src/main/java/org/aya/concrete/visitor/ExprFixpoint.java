@@ -58,6 +58,12 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return expr;
   }
 
+  @Override default @NotNull Expr visitLift(Expr.@NotNull LiftExpr expr, P p) {
+    var mapped = expr.expr().accept(this, p);
+    if (mapped == expr.expr()) return expr;
+    return new Expr.LiftExpr(expr.sourcePos(), mapped);
+  }
+
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
     return expr;
   }
