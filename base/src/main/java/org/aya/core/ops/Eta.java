@@ -22,7 +22,7 @@ public record Eta(@NotNull LocalCtx ctx) {
         var bodyWoLast = constructBodyWithoutLast(etaBody, last);
         if (last instanceof RefTerm lastRef
           && compareRefTerm(lam.param().toTerm(), lastRef)
-          && appearFree(lastRef, bodyWoLast)) yield uneta(bodyWoLast);
+          && bodyWoLast.findUsages(lastRef.var()) <= 0) yield uneta(bodyWoLast);
         yield IntroTerm.Lambda.make(ImmutableSeq.of(lam.param()), etaBody);
       }
       case IntroTerm.Tuple tuple -> {
@@ -67,17 +67,6 @@ public record Eta(@NotNull LocalCtx ctx) {
         constructBodyWithoutLast(lamTerm.body(), lastTerm));
       case ElimTerm.App appTerm -> compareRefTerm(appTerm.arg().term(), lastTerm) ? appTerm.of() : appTerm;
       default -> term;
-    };
-  }
-
-  private static boolean appearFree(@NotNull RefTerm ref, @NotNull Term term) {
-    return switch (term) {
-      case RefTerm rTerm -> !compareRefTerm(ref, rTerm);
-      case IntroTerm.Lambda lam -> appearFree(ref, lam.body());
-      case ElimTerm.App app -> appearFree(ref, app.arg().term())
-        && appearFree(ref, app.of());
-      // TODO: There are many other cases, but if they all need to be considered, maybe a visitor is better
-      default -> false;
     };
   }
 
