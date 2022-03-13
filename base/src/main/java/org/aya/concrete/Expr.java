@@ -75,9 +75,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     R visitProj(@NotNull ProjExpr expr, P p);
     R visitNew(@NotNull NewExpr expr, P p);
     R visitLitInt(@NotNull LitIntExpr expr, P p);
-    R visitRawUnivArgs(@NotNull RawUnivArgsExpr expr, P p);
-    R visitLsuc(@NotNull LSucExpr expr, P p);
-    R visitLmax(@NotNull LMaxExpr expr, P p);
     R visitLitString(@NotNull LitStringExpr expr, P p);
     R visitBinOpSeq(@NotNull BinOpSeq binOpSeq, P p);
     R visitError(@NotNull ErrorExpr error, P p);
@@ -254,12 +251,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     }
   }
 
-  record RawUnivArgsExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Expr> univArgs) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitRawUnivArgs(this, p);
-    }
-  }
-
   /**
    * @author re-xyr
    */
@@ -318,18 +309,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record LitIntExpr(@NotNull SourcePos sourcePos, int integer) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitInt(this, p);
-    }
-  }
-
-  record LSucExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLsuc(this, p);
-    }
-  }
-
-  record LMaxExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Expr> levels) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLmax(this, p);
     }
   }
 

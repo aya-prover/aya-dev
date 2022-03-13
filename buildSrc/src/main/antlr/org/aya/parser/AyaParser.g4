@@ -14,7 +14,6 @@ stmt : decl
      | openCmd
      | module
      | remark
-     | levels
      | generalize
      | sample
      ;
@@ -33,7 +32,6 @@ useIdsComma : (useId COMMA)* useId?;
 useId : ID useAs?;
 useAs : AS assoc? ID bindBlock?;
 
-levels : ULEVEL ids ;
 generalize : VARIABLE ids type ;
 
 // declarations
@@ -85,13 +83,12 @@ dataCtorClause : BAR patterns IMPLIES dataCtor;
 
 // expressions
 expr : atom                                 # single
+     | ULIFT expr                           # lift
      | expr argument+                       # app
      | NEW_KW expr LBRACE newArg* RBRACE    # new
      | NEW_KW expr                          # newEmpty
      | <assoc=right> expr TO expr           # arr
      | expr projFix                         # proj
-     | LSUC_KW atom                         # lsuc
-     | LMAX_KW atom+                        # lmax
      | PI tele+ TO expr                     # pi
      | FORALL tele+ TO expr                 # forall
      | SIGMA tele+ SUCHTHAT expr            # sigma
@@ -108,7 +105,6 @@ atom : literal
 argument : atom projFix*
          | LBRACE exprList RBRACE
          | LBRACE ID IMPLIES expr? RBRACE
-         | LBRACE ULEVEL exprList RBRACE
          ;
 
 projFix : DOT (NUMBER | qualifiedId);

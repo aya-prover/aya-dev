@@ -325,20 +325,10 @@ public record AyaProducer(
       case AyaParser.ArrContext arr -> visitArr(arr);
       case AyaParser.NewContext n -> visitNew(n);
       case AyaParser.NewEmptyContext n -> visitNewEmpty(n);
-      case AyaParser.LsucContext lsuc -> visitLsuc(lsuc);
-      case AyaParser.LmaxContext lmax -> visitLmax(lmax);
       case AyaParser.ForallContext forall -> visitForall(forall);
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
-  }
-
-  public @NotNull Expr visitLsuc(AyaParser.LsucContext ctx) {
-    return new Expr.LSucExpr(sourcePosOf(ctx), visitAtom(ctx.atom()));
-  }
-
-  public @NotNull Expr visitLmax(AyaParser.LmaxContext ctx) {
-    return new Expr.LMaxExpr(sourcePosOf(ctx), ImmutableSeq.from(ctx.atom()).map(this::visitAtom));
   }
 
   public @NotNull Expr visitNew(AyaParser.NewContext ctx) {
@@ -406,10 +396,6 @@ public record AyaProducer(
     var id = ctx.ID();
     if (id != null) return new Expr.NamedArg(false, id.getText(), visitExpr(ctx.expr()));
     var items = ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
-    if (ctx.ULEVEL() != null) {
-      var univArgsExpr = new Expr.RawUnivArgsExpr(sourcePosOf(ctx), items);
-      return new Expr.NamedArg(false, univArgsExpr);
-    }
     if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.first()));
     var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
     return new Expr.NamedArg(false, tupExpr);

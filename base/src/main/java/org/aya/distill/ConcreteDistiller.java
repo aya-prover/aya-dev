@@ -83,8 +83,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
-      case Expr.LMaxExpr expr -> visitCalls(false, Doc.styled(KEYWORD, "lmax"),
-        expr.levels().view().map(term -> new Arg<>(term, true)), outer, true);
       case Expr.LamExpr expr -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
           yield term(outer, expr.body());
@@ -113,8 +111,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawUnivExpr e -> Doc.styled(KEYWORD, "Type");
-      case Expr.RawUnivArgsExpr expr -> Doc.sep(Doc.styled(KEYWORD, "universe"),
-        Doc.commaList(expr.univArgs().view().map(e -> term(Outer.Free, e))));
       case Expr.NewExpr expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
@@ -123,8 +119,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
               Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
             Doc.plain("=>"), term(Outer.Free, t.body()))
         )));
-      case Expr.LSucExpr expr -> visitCalls(false, Doc.styled(KEYWORD, "lsuc"),
-        SeqView.of(new Arg<>(expr.expr(), true)), outer, true);
       case Expr.SigmaExpr expr -> checkParen(outer, Doc.sep(
         Doc.styled(KEYWORD, Doc.symbol("Sig")),
         visitTele(expr.params().dropLast(1)),

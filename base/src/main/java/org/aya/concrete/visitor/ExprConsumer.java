@@ -44,11 +44,6 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  @Override default Unit visitRawUnivArgs(Expr.@NotNull RawUnivArgsExpr expr, P p) {
-    expr.univArgs().forEach(e -> e.accept(this, p));
-    return Unit.unit();
-  }
-
   @Override default Unit visitApp(Expr.@NotNull AppExpr expr, P p) {
     expr.argument().expr().accept(this, p);
     return expr.function().accept(this, p);
@@ -84,15 +79,6 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
 
   @Override default Unit visitLitInt(Expr.@NotNull LitIntExpr expr, P p) {
     return Unit.unit();
-  }
-
-  @Override default Unit visitLmax(Expr.@NotNull LMaxExpr expr, P p) {
-    for (var level : expr.levels()) level.accept(this, p);
-    return Unit.unit();
-  }
-
-  @Override default Unit visitLsuc(Expr.@NotNull LSucExpr expr, P p) {
-    return expr.expr().accept(this, p);
   }
 
   @Override default Unit visitLitString(Expr.@NotNull LitStringExpr expr, P p) {
