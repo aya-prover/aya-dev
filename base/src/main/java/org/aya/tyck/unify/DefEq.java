@@ -28,7 +28,6 @@ import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,7 +152,7 @@ public final class DefEq {
   }
 
   private <T> T checkParam(
-    Term.Param l, Term.Param r, @NotNull Term type,
+    Term.Param l, Term.Param r, @Nullable Term type,
     Sub lr, Sub rl, Supplier<T> fail, Supplier<T> success
   ) {
     if (l.explicit() != r.explicit()) return fail.get();
@@ -172,13 +171,8 @@ public final class DefEq {
   ) {
     if (!l.sizeEquals(r)) return fail.get();
     if (l.isEmpty()) return success.get();
-    return checkParam(l.first(), r.first(), freshUniv(), lr, rl, fail, () ->
+    return checkParam(l.first(), r.first(), null, lr, rl, fail, () ->
       checkParams(l.drop(1), r.drop(1), lr, rl, fail, success));
-  }
-
-  private @Contract("->new") @NotNull FormTerm.Univ freshUniv() {
-    // TODO[ice]: inline?
-    return FormTerm.Univ.ZERO;
   }
 
   private boolean visitArgs(SeqLike<Arg<Term>> l, SeqLike<Arg<Term>> r, Sub lr, Sub rl, SeqLike<Term.Param> params) {
@@ -342,15 +336,15 @@ public final class DefEq {
       case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
       case FormTerm.Pi lhs -> {
         if (!(preRhs instanceof FormTerm.Pi rhs)) yield null;
-        yield checkParam(lhs.param(), rhs.param(), freshUniv(), lr, rl, () -> null, () -> {
-          var bodyIsOk = compare(lhs.body(), rhs.body(), lr, rl, freshUniv());
+        yield checkParam(lhs.param(), rhs.param(), null, lr, rl, () -> null, () -> {
+          var bodyIsOk = compare(lhs.body(), rhs.body(), lr, rl, null);
           if (!bodyIsOk) return null;
-          return freshUniv();
+          return FormTerm.Univ.ZERO;
         });
       }
       case FormTerm.Sigma lhs -> {
         if (!(preRhs instanceof FormTerm.Sigma rhs)) yield null;
-        yield checkParams(lhs.params().view(), rhs.params().view(), lr, rl, () -> null, this::freshUniv);
+        yield checkParams(lhs.params().view(), rhs.params().view(), lr, rl, () -> null, () -> FormTerm.Univ.ZERO);
       }
       case FormTerm.Univ lhs -> {
         if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
@@ -363,12 +357,12 @@ public final class DefEq {
         if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         // Do not need to be computed precisely because unification won't need this info
-        yield args ? freshUniv() : null;
+        yield args ? FormTerm.Univ.ZERO : null;
       }
       case CallTerm.Struct lhs -> {
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
-        yield args ? freshUniv() : null;
+        yield args ? FormTerm.Univ.ZERO : null;
       }
       case CallTerm.Con lhs -> {
         if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) yield null;
