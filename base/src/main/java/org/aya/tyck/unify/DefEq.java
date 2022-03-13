@@ -253,7 +253,7 @@ public final class DefEq {
           var dummyVars = fieldSig.selfTele.map(par ->
             new LocalVar(par.ref().name(), par.ref().definition()));
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
-            new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
+            new Arg<Term>(new RefTerm(vpa._1, 0), vpa._2.explicit()));
           var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.ulift(), type1.args(), dummy);
           var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.ulift(), type1.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);
@@ -269,10 +269,10 @@ public final class DefEq {
       case FormTerm.Sigma sigma -> {
         var params = sigma.params().view();
         for (int i = 1, size = sigma.params().size(); i <= size; i++) {
-          var l = new ElimTerm.Proj(lhs, i);
+          var l = new ElimTerm.Proj(lhs, 0, i);
           var currentParam = params.first();
           ctx.put(currentParam);
-          if (!compare(l, new ElimTerm.Proj(rhs, i), lr, rl, currentParam.type())) yield false;
+          if (!compare(l, new ElimTerm.Proj(rhs, 0, i), lr, rl, currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
         ctx.remove(sigma.params().view().map(Term.Param::ref));
@@ -326,7 +326,7 @@ public final class DefEq {
         var params = tupType.params().view();
         var subst = new Substituter.TermSubst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
-          var l = new ElimTerm.Proj(lhs, i);
+          var l = new ElimTerm.Proj(lhs, 0, i);
           var currentParam = params.first();
           subst.add(currentParam.ref(), l);
           params = params.drop(1);

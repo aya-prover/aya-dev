@@ -129,9 +129,9 @@ public final class PrimDef extends TopLevelDef {
       var paramI = new LocalVar("i");
       var result = new FormTerm.Univ(0);
       var paramATy = new FormTerm.Pi(paramIToATy, result);
-      var aRef = new RefTerm(paramA);
+      var aRef = new RefTerm(paramA, 0);
       var left = Factory.INSTANCE.getOption(ID.LEFT).get();
-      var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, 0, ImmutableSeq.empty()), true));
+      var baseAtLeft = new ElimTerm.App(aRef, 0, new Arg<>(new CallTerm.Prim(left.ref, 0, ImmutableSeq.empty()), true));
       return new PrimDef(
         ref,
         ImmutableSeq.of(
@@ -139,7 +139,7 @@ public final class PrimDef extends TopLevelDef {
           new Term.Param(new LocalVar("base"), baseAtLeft, true),
           new Term.Param(paramI, intervalCall(), true)
         ),
-        new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI), true)),
+        new ElimTerm.App(aRef, 0, new Arg<>(new RefTerm(paramI, 0), true)),
         ID.ARCOE
       );
     }, ImmutableSeq.of(ID.INTERVAL, ID.LEFT));

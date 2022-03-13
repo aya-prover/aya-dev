@@ -319,7 +319,6 @@ public record AyaProducer(
       case AyaParser.SingleContext sin -> visitAtom(sin.atom());
       case AyaParser.AppContext app -> visitApp(app);
       case AyaParser.ProjContext proj -> visitProj(proj);
-      case AyaParser.LiftContext lift -> new Expr.LiftExpr(sourcePosOf(ctx), visitExpr(lift.expr()));
       case AyaParser.PiContext pi -> visitPi(pi);
       case AyaParser.SigmaContext sig -> visitSigma(sig);
       case AyaParser.LamContext lam -> visitLam(lam);
@@ -369,7 +368,10 @@ public record AyaProducer(
 
   public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {
     var literal = ctx.literal();
-    if (literal != null) return visitLiteral(literal);
+    if (literal != null) {
+      var expr = visitLiteral(literal);
+      return ctx.ULIFT() != null ? new Expr.LiftExpr(sourcePosOf(ctx), expr) : expr;
+    }
 
     var expr = ctx.exprList().expr();
     if (expr.size() == 1) return newBinOPScope(visitExpr(expr.get(0)));

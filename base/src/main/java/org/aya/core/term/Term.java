@@ -102,6 +102,9 @@ public sealed interface Term extends AyaDocile permits
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
+  default @NotNull Term lift(int ulift) {
+    return subst(Substituter.TermSubst.EMPTY, ulift);
+  }
 
   interface Visitor<P, R> {
     default void traceEntrance(@NotNull Term term, P p) {
@@ -167,7 +170,7 @@ public sealed interface Term extends AyaDocile permits
     }
 
     @Contract(" -> new") public @NotNull RefTerm toTerm() {
-      return new RefTerm(ref);
+      return new RefTerm(ref, 0);
     }
 
     public @NotNull Pat toPat() {

@@ -42,7 +42,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.args().map(arg -> visitArg(arg, p));
-    var levelArgs = ulift(conCall.ulift());
+    var levelArgs = ulift() + conCall.ulift();
     var dropped = args.drop(conCall.head().dataArgs().size());
     var volynskaya = tryUnfoldClauses(p, true, dropped, conCall.ulift(), def.clauses);
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped);
@@ -53,7 +53,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return fnCall;
     var args = fnCall.args().map(arg -> visitArg(arg, p));
-    var ulift = ulift(fnCall.ulift());
+    var ulift = ulift() + fnCall.ulift();
     if (def.modifiers.contains(Modifier.Opaque)) return new CallTerm.Fn(fnCall.ref(), ulift, args);
     var body = def.body;
     if (body.isLeft()) {
@@ -124,7 +124,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var fieldSubst = checkAndBuildSubst(fieldDef.fullTelescope(), args);
       var structDef = fieldDef.structRef.core;
       var structArgsSize = term.structArgs().size();
-      var ulift = ulift(term.ulift());
+      var ulift = ulift() + term.ulift();
       for (var field : structDef.fields) {
         if (field == fieldDef) continue;
         var tele = Term.Param.subst(field.telescope(), ulift);

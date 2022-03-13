@@ -86,8 +86,8 @@ public class DistillerTest {
   @Test public void nestedPi() {
     var decls = TyckDeclTest.successTyckDecls("""
       def infix = (A B : Type) => A
-      def test1 (X : Type) => Pi (A : Type) -> A = X
-      def test2 (X : Type) => (Pi (A : Type) -> A) = X
+      def test1 (X : Type) => Pi (A : Type) -> A ulift = X
+      def test2 (X : Type) => (Pi (A : Type) -> A) ulift = X
       """);
     var test1 = ((FnDef) decls.get(1)).body.getLeftValue();
     var test2 = ((FnDef) decls.get(2)).body.getLeftValue();

@@ -22,19 +22,18 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new CallTerm.Hole(term.ref(), contextArgs, args);
   }
   @Override
-  @NotNull
-  default Term visitFieldRef(@NotNull RefTerm.Field term, P p) {
+  default @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, P p) {
     return term;
   }
 
-  default int ulift(int ulift) {
-    return ulift;
+  default int ulift() {
+    return 0;
   }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
     var args = dataCall.args().map(arg -> visitArg(arg, p));
-    if (dataCall.args().sameElements(args, true)) return dataCall;
-    return new CallTerm.Data(dataCall.ref(), ulift(dataCall.ulift()), args);
+    if (ulift() == 0 && dataCall.args().sameElements(args, true)) return dataCall;
+    return new CallTerm.Data(dataCall.ref(), ulift() + dataCall.ulift(), args);
   }
 
   @Override default @NotNull ErrorTerm visitError(@NotNull ErrorTerm term, P p) {
@@ -48,17 +47,18 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
     var dataArgs = conCall.head().dataArgs().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));
-    if (conCall.head().dataArgs().sameElements(dataArgs, true)
+    if (ulift() == 0
+      && conCall.head().dataArgs().sameElements(dataArgs, true)
       && conCall.conArgs().sameElements(conArgs, true)) return conCall;
     var head = new CallTerm.ConHead(conCall.head().dataRef(), conCall.head().ref(),
-      ulift(conCall.ulift()), dataArgs);
+      ulift() + conCall.ulift(), dataArgs);
     return new CallTerm.Con(head, conArgs);
   }
 
   @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
     var args = structCall.args().map(arg -> visitArg(arg, p));
-    if (structCall.args().sameElements(args, true)) return structCall;
-    return new CallTerm.Struct(structCall.ref(), ulift(structCall.ulift()), args);
+    if (ulift() == 0 && structCall.args().sameElements(args, true)) return structCall;
+    return new CallTerm.Struct(structCall.ref(), ulift() + structCall.ulift(), args);
   }
 
   private <T> T visitParameterized(
@@ -109,14 +109,14 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
     var args = fnCall.args().map(arg -> visitArg(arg, p));
-    if ( fnCall.args().sameElements(args, true)) return fnCall;
-    return new CallTerm.Fn(fnCall.ref(), ulift(fnCall.ulift()), args);
+    if (ulift() == 0 && fnCall.args().sameElements(args, true)) return fnCall;
+    return new CallTerm.Fn(fnCall.ref(), ulift() + fnCall.ulift(), args);
   }
 
   @Override default @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
     var args = prim.args().map(arg -> visitArg(arg, p));
-    if (prim.args().sameElements(args, true)) return prim;
-    return new CallTerm.Prim(prim.ref(), ulift(prim.ulift()), args);
+    if (ulift() == 0 && prim.args().sameElements(args, true)) return prim;
+    return new CallTerm.Prim(prim.ref(), ulift() + prim.ulift(), args);
   }
 
   @Override default @NotNull Term visitTup(@NotNull IntroTerm.Tuple term, P p) {
@@ -136,17 +136,18 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitProj(@NotNull ElimTerm.Proj term, P p) {
     var tuple = term.of().accept(this, p);
-    if (tuple == term.of()) return term;
-    return new ElimTerm.Proj(tuple, term.ix());
+    if (ulift() == 0 && tuple == term.of()) return term;
+    return new ElimTerm.Proj(tuple, ulift() + term.ulift(), term.ix());
   }
 
   @Override default @NotNull Term visitAccess(@NotNull CallTerm.Access term, P p) {
     var tuple = term.of().accept(this, p);
     var args = term.fieldArgs().map(arg -> visitArg(arg, p));
     var structArgs = term.structArgs().map(arg -> visitArg(arg, p));
-    if (term.fieldArgs().sameElements(args, true)
+    if (ulift() == 0
+      && term.fieldArgs().sameElements(args, true)
       && term.structArgs().sameElements(structArgs, true)
       && tuple == term.of()) return term;
-    return new CallTerm.Access(tuple, term.ref(), ulift(term.ulift()), structArgs, args);
+    return new CallTerm.Access(tuple, term.ref(), ulift() + term.ulift(), structArgs, args);
   }
 }

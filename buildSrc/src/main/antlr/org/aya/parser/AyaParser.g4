@@ -83,7 +83,6 @@ dataCtorClause : BAR patterns IMPLIES dataCtor;
 
 // expressions
 expr : atom                                 # single
-     | ULIFT expr                           # lift
      | expr argument+                       # app
      | NEW_KW expr LBRACE newArg* RBRACE    # new
      | NEW_KW expr                          # newEmpty
@@ -98,7 +97,8 @@ expr : atom                                 # single
 
 newArg : BAR ID ids IMPLIES expr;
 
-atom : literal
+// ulift is written here because we want `x ulift + y` to work
+atom : ULIFT? literal
      | LPAREN exprList RPAREN
      ;
 

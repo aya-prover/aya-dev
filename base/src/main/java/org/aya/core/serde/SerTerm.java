@@ -100,9 +100,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Ref(@NotNull SimpVar var) implements SerTerm {
+  record Ref(@NotNull SimpVar var, int ulift) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new RefTerm(state.var(var));
+      return new RefTerm(state.var(var), ulift);
     }
   }
 
@@ -119,9 +119,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Proj(@NotNull SerTerm of, int ix) implements SerTerm {
+  record Proj(@NotNull SerTerm of, int ulift, int ix) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.Proj(of.de(state), ix);
+      return new ElimTerm.Proj(of.de(state), ulift, ix);
     }
   }
 
@@ -131,9 +131,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record App(@NotNull SerTerm of, @NotNull SerArg arg) implements SerTerm {
+  record App(@NotNull SerTerm of, int ulift, @NotNull SerArg arg) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.App(of.de(state), arg.de(state));
+      return new ElimTerm.App(of.de(state), ulift, arg.de(state));
     }
   }
 
@@ -204,9 +204,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record FieldRef(@NotNull SerDef.QName name) implements SerTerm {
+  record FieldRef(@NotNull SerDef.QName name, int ulift) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new RefTerm.Field(state.resolve(name));
+      return new RefTerm.Field(state.resolve(name), ulift);
     }
   }
 }

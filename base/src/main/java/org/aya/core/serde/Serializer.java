@@ -90,11 +90,11 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   @Override
   public SerTerm visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
-    return new SerTerm.FieldRef(state.def(term.ref()));
+    return new SerTerm.FieldRef(state.def(term.ref()), term.lift());
   }
 
   @Override public SerTerm visitRef(@NotNull RefTerm term, Unit unit) {
-    return new SerTerm.Ref(state.local(term.var()));
+    return new SerTerm.Ref(state.local(term.var()), term.lift());
   }
 
   @Override public SerTerm visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
@@ -122,7 +122,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitApp(ElimTerm.@NotNull App term, Unit unit) {
-    return new SerTerm.App(serialize(term.of()), serialize(term.arg()));
+    return new SerTerm.App(serialize(term.of()), term.ulift(), serialize(term.arg()));
   }
 
   private @NotNull SerTerm.CallData serializeCall(
@@ -171,7 +171,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
-    return new SerTerm.Proj(serialize(term.of()), term.ix());
+    return new SerTerm.Proj(serialize(term.of()), term.ulift(), term.ix());
   }
 
   @Override public SerTerm visitAccess(CallTerm.@NotNull Access term, Unit unit) {

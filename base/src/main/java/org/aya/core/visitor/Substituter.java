@@ -32,12 +32,15 @@ public record Substituter(
   }
 
   @Override public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
-    return termSubst.getOption(term.ref()).map(Term::rename).getOrDefault(term);
+    return termSubst.getOption(term.ref())
+      .map(t -> t.rename().lift(ulift))
+      .getOrDefault(term);
   }
 
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
-    return termSubst.getOption(term.var()).map(Term::rename).getOrElse(() ->
-      TermFixpoint.super.visitRef(term, Unit.unit()));
+    return termSubst.getOption(term.var())
+      .map(t -> t.rename().lift(ulift))
+      .getOrElse(() -> TermFixpoint.super.visitRef(term, Unit.unit()));
   }
 
   /**

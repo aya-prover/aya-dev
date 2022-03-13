@@ -69,7 +69,7 @@ public final class ExprTycker {
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
-          yield new Result(new RefTerm(loc), ty);
+          yield new Result(new RefTerm(loc, 0), ty);
         }
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new IllegalStateException("Unknown var: " + ref.resolvedVar().getClass());
@@ -100,6 +100,10 @@ public final class ExprTycker {
         }
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), new FormTerm.Univ(maxLevel));
+      }
+      case Expr.LiftExpr lift -> {
+        var result = synthesize(lift.expr());
+        yield new Result(result.wellTyped.lift(1), result.type.lift(1));
       }
       case Expr.NewExpr newExpr -> {
         var structExpr = newExpr.struct();
@@ -163,7 +167,7 @@ public final class ExprTycker {
               return fail(proj, new ProjIxError(proj, ix, telescope.size()));
             var type = telescope.get(index).type();
             var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
-            return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
+            return new Result(new ElimTerm.Proj(projectee.wellTyped, 0, ix), type.subst(subst));
           }, sp -> {
             var fieldName = sp.justName();
             if (!(projectee.type instanceof CallTerm.Struct structCall))
@@ -455,7 +459,7 @@ public final class ExprTycker {
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
       var field = (DefVar<FieldDef, Decl.StructField>) var;
-      return new Result(new RefTerm.Field(field), Def.defType(field));
+      return new Result(new RefTerm.Field(field, 0), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);
