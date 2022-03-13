@@ -397,7 +397,8 @@ public final class DefEq {
         // Long time ago I wrote this to generate more unification equations,
         // which solves more universe levels. However, with latest version Aya (0.13),
         // removing this does not break anything.
-        // compareUntyped(preRhs.computeType(state, ctx), meta.result);
+        // Update: this is still needed, see #327
+        compareUntyped(preRhs.computeType(state, ctx), meta.result);
         var argSubst = extract(lhs, preRhs, meta);
         if (argSubst == null) {
           reporter.report(new HoleProblem.BadSpineError(lhs, pos));
@@ -413,6 +414,7 @@ public final class DefEq {
         }
         subst.add(argSubst);
         // TODO
+        // TODO: what's the TODO above? I don't know what's TODO? ????
         rl.map.forEach(subst::add);
         assert !state.metas().containsKey(meta);
         var solved = preRhs.freezeHoles(state).subst(subst);

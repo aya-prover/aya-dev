@@ -19,7 +19,9 @@ import org.aya.pretty.doc.Doc;
 import org.aya.ref.Bind;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
+import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
+import org.aya.tyck.env.LocalCtx;
 import org.aya.util.distill.AyaDocile;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
@@ -104,6 +106,9 @@ public sealed interface Term extends AyaDocile permits
   }
   default @NotNull Term lift(int ulift) {
     return subst(Substituter.TermSubst.EMPTY, ulift);
+  }
+  default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
+    return accept(new LittleTyper(state, ctx), Unit.unit());
   }
 
   interface Visitor<P, R> {
