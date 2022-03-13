@@ -7,6 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.range.primitive.IntRange;
 import kala.tuple.Unit;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -131,10 +132,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
           SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(expr.lift())), true)), true);
       }
-      // TODO: show the number of lifts, currently we assume it's 1
-      case Expr.LiftExpr expr -> Doc.sep(
-        Doc.styled(KEYWORD, Doc.symbol("ulift")),
-        term(Outer.Lifted, expr.expr()));
+      case Expr.LiftExpr expr -> Doc.sep(Seq
+        .from(IntRange.closed(0, expr.lift()).iterator()).view()
+        .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
+        .appended(term(Outer.Lifted, expr.expr())));
     };
   }
 
