@@ -76,7 +76,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitUniv(@NotNull FormTerm.Univ term, P p) {
-    return term;
+    if (ulift() == 0) return term;
+    else return new FormTerm.Univ(ulift() + term.lift());
   }
 
   @Override default @NotNull Term visitPi(@NotNull FormTerm.Pi term, P p) {

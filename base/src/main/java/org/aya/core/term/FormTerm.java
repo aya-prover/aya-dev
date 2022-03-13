@@ -63,10 +63,6 @@ public sealed interface FormTerm extends Term {
   record Univ(int lift) implements FormTerm {
     public static final @NotNull FormTerm.Univ ZERO = new Univ(0);
 
-    public @NotNull Univ lift(int n) {
-      return new Univ(lift + n);
-    }
-
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }
