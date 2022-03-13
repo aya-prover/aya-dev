@@ -1,15 +1,13 @@
-universe u v
+open data EventT : Type 1
+  | CarrierT (A : Type)
 
-open data EventT : Type (lsuc u)
-  | CarrierT (A : Type u)
-
-def GetAgentT (T : EventT {universe u}) : Type u
+def GetAgentT (T : EventT) : Type 1
   | CarrierT A => A
 
-open struct Event (T : EventT {universe u}) : Type u
+open struct Event (T : EventT) : Type 1
   | agent : GetAgentT T
 
-def Quantifier (A : Type u) : Type (lmax u (lsuc v)) => (A -> Type v) -> Type v
+def Quantifier (A : Type) : Type 1 => (A -> Type) -> Type
 
-def mkVerb (T : EventT {universe u}) : Type (lmax u (lsuc v)) =>
-  Quantifier {universe u, v} (Event T)
+def mkVerb (T : EventT) : Type 2 =>
+  ulift Quantifier (Event T)
