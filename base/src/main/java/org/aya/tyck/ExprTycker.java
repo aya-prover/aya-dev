@@ -233,8 +233,8 @@ public final class ExprTycker {
         subst.addDirectly(pi.param().ref(), elabArg);
         yield new Result(app, pi.body().subst(subst));
       }
-      case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
-        FormTerm.Univ.ZERO, Constants.randomName(hole), hole.sourcePos())._2);
+      case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
+        Constants.randomName(hole), hole.sourcePos())._2);
       default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm(Doc.english("no rule"), false));
     };
   }
@@ -529,9 +529,8 @@ public final class ExprTycker {
   }
 
   public int ensureUniv(@NotNull Expr expr, @NotNull Term term) {
-    return switch (term) {
-      case FormTerm.Univ univ ->
-         univ.lift();
+    return switch (term.normalize(state, NormalizeMode.WHNF)) {
+      case FormTerm.Univ univ -> univ.lift();
       case CallTerm.Hole hole -> {
         // TODO[lift-meta]: should be able to solve a lifted meta
         unifyTyReported(hole, FormTerm.Univ.ZERO, expr);

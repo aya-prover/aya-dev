@@ -4,6 +4,7 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.ErrorTerm;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -20,7 +21,8 @@ public record Goal(
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     var meta = hole.ref();
-    var result = meta.result.freezeHoles(state);
+    var result = meta.result != null ? meta.result.freezeHoles(state)
+      : new ErrorTerm(Doc.plain("???"), false);
     var doc = Doc.vcatNonEmpty(
       Doc.english("Goal of type"),
       Doc.par(1, result.toDoc(options)),

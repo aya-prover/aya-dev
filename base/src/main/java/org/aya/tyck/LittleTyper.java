@@ -2,17 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
-import org.aya.api.ref.DefVar;
-import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
+import org.aya.generic.util.NormalizeMode;
+import org.aya.ref.DefVar;
+import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,7 +32,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     var paramTyRaw = term.param().type().accept(this, Unit.unit()).normalize(state, NormalizeMode.WHNF);
     var retTyRaw = term.body().accept(this, Unit.unit()).normalize(state, NormalizeMode.WHNF);
     if (paramTyRaw instanceof FormTerm.Univ paramTy && retTyRaw instanceof FormTerm.Univ retTy)
-      return new FormTerm.Univ(Sort.max(paramTy.sort(), retTy.sort()));
+      return new FormTerm.Univ(Math.max(paramTy.lift(), retTy.lift()));
     else return ErrorTerm.typeOf(term);
   }
 
@@ -52,12 +51,12 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       .filterIsInstance(FormTerm.Univ.class)
       .toImmutableSeq();
     if (univ.sizeEquals(term.params().size()))
-      return new FormTerm.Univ(univ.view().map(FormTerm.Univ::sort).reduce(Sort::max));
+      return new FormTerm.Univ(univ.view().map(FormTerm.Univ::lift).max());
     else return ErrorTerm.typeOf(term);
   }
 
   @Override public Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    return new FormTerm.Univ(term.sort().lift(1));
+    return new FormTerm.Univ(term.lift() + 1);
   }
 
   @Override public Term visitApp(ElimTerm.@NotNull App term, Unit unit) {
@@ -66,29 +65,28 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
   }
 
   @Override public Term visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
-    return defCall(fnCall.ref(), fnCall.sortArgs());
+    return defCall(fnCall.ref(), fnCall.ulift());
   }
 
   @Override public Term visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {
-    return defCall(dataCall.ref(), dataCall.sortArgs());
+    return defCall(dataCall.ref(), dataCall.ulift());
   }
 
   @Override public Term visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
-    return defCall(conCall.head().dataRef(), conCall.sortArgs());
+    return defCall(conCall.head().dataRef(), conCall.ulift());
   }
 
   @Override public Term visitStructCall(@NotNull CallTerm.Struct structCall, Unit unit) {
-    return defCall(structCall.ref(), structCall.sortArgs());
+    return defCall(structCall.ref(), structCall.ulift());
   }
 
   @NotNull
-  private Term defCall(DefVar<? extends Def, ? extends Decl> ref, ImmutableSeq<@NotNull Sort> sortArgs) {
-    var levels = Def.defLevels(ref);
-    return Def.defResult(ref).subst(Substituter.TermSubst.EMPTY, Unfolder.buildSubst(levels, sortArgs));
+  private Term defCall(DefVar<? extends Def, ? extends Decl> ref, int ulift) {
+    return Def.defResult(ref).subst(Substituter.TermSubst.EMPTY, ulift);
   }
 
   @Override public Term visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
-    return defCall(prim.ref(), prim.sortArgs());
+    return defCall(prim.ref(), prim.ulift());
   }
 
   @Override public Term visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {

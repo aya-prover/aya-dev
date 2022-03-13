@@ -16,6 +16,7 @@ import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000, re-xyr
@@ -26,7 +27,7 @@ public final class Meta implements Var {
   public final @NotNull ImmutableSeq<Term.Param> contextTele;
   public final @NotNull ImmutableSeq<Term.Param> telescope;
   public final @NotNull String name;
-  public final @NotNull Term result;
+  public final @Nullable Term result;
   public final @NotNull SourcePos sourcePos;
   public final @NotNull DynamicSeq<Tuple2<Substituter.TermSubst, Term>> conditions = DynamicSeq.create();
 
@@ -43,7 +44,7 @@ public final class Meta implements Var {
   private Meta(
     @NotNull ImmutableSeq<Term.Param> contextTele,
     @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull String name, @NotNull Term result,
+    @NotNull String name, @Nullable Term result,
     @NotNull SourcePos sourcePos
   ) {
     this.contextTele = contextTele;
@@ -55,7 +56,7 @@ public final class Meta implements Var {
 
   public static @NotNull Meta from(
     @NotNull ImmutableSeq<Term.Param> contextTele, @NotNull String name,
-    @NotNull Term result, @NotNull SourcePos sourcePos
+    @Nullable Term result, @NotNull SourcePos sourcePos
   ) {
     if (result instanceof FormTerm.Pi pi) {
       var buf = DynamicSeq.<Term.Param>create();

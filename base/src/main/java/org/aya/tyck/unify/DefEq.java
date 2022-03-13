@@ -385,6 +385,8 @@ public final class DefEq {
       case CallTerm.Hole lhs -> {
         var meta = lhs.ref();
         if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
+          // If we do not know the type, then we do not perform the comparison
+          if (meta.result == null) yield null;
           var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
           for (var arg : lhs.args().view().zip(rcall.args())) {
             if (!(holeTy instanceof FormTerm.Pi holePi))
@@ -397,8 +399,9 @@ public final class DefEq {
         // Long time ago I wrote this to generate more unification equations,
         // which solves more universe levels. However, with latest version Aya (0.13),
         // removing this does not break anything.
-        // Update: this is still needed, see #327
-        compareUntyped(preRhs.computeType(state, ctx), meta.result);
+        // Update: this is still needed, see #327 last task (`coe'`)
+        var resultTy = preRhs.computeType(state, ctx);
+        if (meta.result != null) compareUntyped(resultTy, meta.result, rl, lr);
         var argSubst = extract(lhs, preRhs, meta);
         if (argSubst == null) {
           reporter.report(new HoleProblem.BadSpineError(lhs, pos));
@@ -441,7 +444,7 @@ public final class DefEq {
           yield new ErrorTerm(solved);
         }
         tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-        yield meta.result;
+        yield resultTy;
       }
     };
     traceExit();
