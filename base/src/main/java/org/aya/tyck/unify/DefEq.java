@@ -36,6 +36,10 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * @implNote in case {@link DefEq#compareUntyped(Term, Term, Sub, Sub)} returns null,
+ * we will consider it a unification failure, so be careful when returning null.
+ */
 public final class DefEq {
   public record Sub(@NotNull MutableMap<@NotNull Var, @NotNull RefTerm> map) implements Cloneable {
     public Sub() {
