@@ -52,7 +52,8 @@ public interface StmtResolver {
           ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
           var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
           ctor.telescope = ctorLocal._1.toImmutableSeq();
-          addReferences(info, new TyckOrder.Head(ctor), bodyResolver);
+          addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
+            .appended(new TyckOrder.Head(decl)));
 
           bodyResolver.enterBody();
           ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
@@ -82,7 +83,8 @@ public interface StmtResolver {
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
           field.telescope = fieldLocal._1.toImmutableSeq();
           field.result = field.result.accept(bodyResolver, fieldLocal._2);
-          addReferences(info, new TyckOrder.Head(field), bodyResolver);
+          addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()
+            .appended(new TyckOrder.Head(decl)));
 
           bodyResolver.enterBody();
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
