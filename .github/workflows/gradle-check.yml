@@ -15,7 +15,7 @@ jobs:
       - uses: eskatos/gradle-command-action@v1
         with:
           dependencies-cache-enabled: true
-          arguments: mergeJacocoReports --info --no-daemon --stacktrace --warning-mode all
+          arguments: testCodeCoverageReport --info --no-daemon --stacktrace --warning-mode all
       - uses: eskatos/gradle-command-action@v1
         if: github.base_ref == null && github.ref == 'refs/heads/main'
         with:
@@ -28,9 +28,7 @@ jobs:
           path : ./lsp/build/image
       - name: Upload coverage to Codecov
         if: github.base_ref != null
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./build/reports/
-          path_to_write_report: ./build/codecov_report.txt
-          verbose: true
+          files: ./build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
