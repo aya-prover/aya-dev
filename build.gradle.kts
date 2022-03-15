@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE file.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import java.util.*
 
 plugins {
   java
-  jacoco
+  `jacoco-report-aggregation`
   idea
   `java-library`
   `maven-publish`
@@ -24,13 +24,13 @@ allprojects {
 }
 
 @Suppress("unsupported")
-subprojects {
-  val useJacoco = name in ["base", "pretty", "cli"]
+val useJacoco = ["base", "pretty", "cli"]
 
+subprojects {
   apply {
     plugin("java")
     plugin("idea")
-    if (useJacoco) plugin("jacoco")
+    if (name in useJacoco) plugin("jacoco")
     plugin("maven-publish")
     plugin("java-library")
     plugin("signing")
@@ -46,7 +46,7 @@ subprojects {
     }
   }
 
-  if (useJacoco) jacoco {
+  if (name in useJacoco) jacoco {
     toolVersion = deps.getProperty("version.jacoco")
   }
 
@@ -85,9 +85,13 @@ subprojects {
     if (hasProperty("release")) add("archives", tasks.named("javadocJar"))
   }
 
-  if (useJacoco) tasks.jacocoTestReport {
+  if (name in useJacoco) tasks.jacocoTestReport {
     dependsOn(tasks.test)
-    reports { configureReports(false) }
+    reports {
+      xml.required.set(true)
+      csv.required.set(false)
+      html.required.set(false)
+    }
   }
 
   tasks.withType<Test>().configureEach {
@@ -131,21 +135,14 @@ subprojects {
           }
         }
         developers {
-          developer {
-            id.set("ice1000")
-            name.set("Tesla Ice Zhang")
-            email.set("ice1000kotlin@foxmail.com")
+          fun dev(i: String, n: String, u: String) = developer {
+            id.set(i)
+            name.set(n)
+            url.set(u)
           }
-          developer {
-            id.set("imkiva")
-            name.set("Kiva Oyama")
-            email.set("imkiva@islovely.icu")
-          }
-          developer {
-            id.set("re-xyr")
-            name.set("Xy Ren")
-            email.set("xy.r@outlook.com")
-          }
+          dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
+          dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
+          dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
         }
         scm {
           connection.set("scm:git:$githubUrl")
@@ -160,40 +157,20 @@ subprojects {
   }
 }
 
-val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
-  group = "verification"
-  subprojects.forEach { subproject ->
-    subproject.plugins.withType<JacocoPlugin>().configureEach {
-      subproject.tasks.matching { it.extensions.findByType<JacocoTaskExtension>() != null }.configureEach {
-        sourceSets(subproject.sourceSets.main.get())
-        executionData(this)
-      }
+apply { plugin("jacoco-report-aggregation") }
+dependencies { useJacoco.forEach { jacocoAggregation(project(":$it")) { isTransitive = false } } }
 
-      subproject.tasks.matching { it.extensions.findByType<JacocoTaskExtension>() != null }.forEach {
-        dependsOn(it)
-      }
-    }
-  }
-
-  reports { configureReports(true) }
-  doLast {
-    if (Os.isFamily(Os.FAMILY_WINDOWS) && System.getenv("CI") != "true") exec {
-      commandLine("explorer.exe", ".\\build\\reports\\jacoco\\mergeJacocoReports\\html\\index.html")
-    }
-  }
-}
-
+val ccr = tasks["testCodeCoverageReport"]
 tasks.register("githubActions") {
   group = "verification"
-  dependsOn(mergeJacocoReports, tasks.findByPath(":lsp:jlink"))
+  dependsOn(ccr, tasks.findByPath(":lsp:jlink"))
+}
+
+if (Os.isFamily(Os.FAMILY_WINDOWS)) tasks.register("showCCR") {
+  dependsOn(ccr)
+  doLast { exec { commandLine("cmd", "/c", "explorer", "build\\reports\\jacoco\\testCodeCoverageReport\\html\\index.html") } }
 }
 
 tasks.withType<Sync>().configureEach {
   dependsOn(tasks.findByPath(":buildSrc:copyModuleInfo"))
-}
-
-fun JacocoReportsContainer.configureReports(merger: Boolean) {
-  xml.required.set(true)
-  csv.required.set(false)
-  html.required.set(merger)
 }

@@ -65,7 +65,9 @@ check out [how to][proxy] let gradle use a proxy.
 # requires https://wixtoolset.org/releases on Windows
 ./gradlew jpackage
 # run tests and generate coverage report to build/reports
-./gradlew mergeJacocoReports
+./gradlew testCodeCoverageReport
+# (Windows only) show the coverage report in your default browser
+./gradlew showCCR
 ```
 
 ## Contributing to Aya

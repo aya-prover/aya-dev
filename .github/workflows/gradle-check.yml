@@ -15,7 +15,7 @@ jobs:
       - uses: eskatos/gradle-command-action@v1
         with:
           dependencies-cache-enabled: true
-          arguments: mergeJacocoReports --info --no-daemon --stacktrace --warning-mode all
+          arguments: testCodeCoverageReport --info --no-daemon --stacktrace --warning-mode all
       - uses: eskatos/gradle-command-action@v1
         if: github.base_ref == null && github.ref == 'refs/heads/main'
         with:
