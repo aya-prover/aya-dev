@@ -42,7 +42,6 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtFixpoin
 
   private int levelVar(@NotNull Expr expr) throws DesugarInterruption {
     return switch (expr) {
-      // [ice]: I forgot the purpose of this case
       case Expr.BinOpSeq binOpSeq -> levelVar(visitBinOpSeq(binOpSeq, Unit.unit()));
       case Expr.LitIntExpr uLit -> uLit.integer();
       default -> {
