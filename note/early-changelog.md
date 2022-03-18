@@ -2,6 +2,41 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.16
+
+Supported `import as` and renaming open, supported use as infix, used new name in bin op parser,
+supported rename in open command, added `Primitives.aya` and more tests,
+removed the api module and simplified code, supported qualified projection on struct,
+supported `open struct`, enhanced projection error message, allowed empty `new` block,
+collected external dependencies of ctors and fields in the resolver,
+infered header order together with body order and fixed sample's tyck order,
+fixed simple function tycking, fixed field teles useing struct params,
+used same expr tycker for same decl, supported mutual recursion on constructors and fields,
+removed universe polymorphism with preparation of McBride universes and raw universe args, lsuc, lmax,
+added `LiftExpr` and lift in core and `ensureUniv`, restored `LittleTyper`,
+improved `Signatured::toString`, fixed eta severe bug,
+removed unneeded method in unify, fixed ctor/field dependencies on their top-level decls,
+upgraded gradle and reported to codecov, updated the "semantic model" test with lower ulevels,
+`RefTerm`s in the header depended on the whole referred body,
+highlighted `NewExpr` and resolved position in `NewExpr`'s fields and bindings in the language server,
+stored field resolving result in `NewExpr`, substituted patterns for variables in telescope,
+used better source pos, ensured pi body normalized.
+
++ Added the support for Mutual recursion on constructors and fields
+  + Header and body orders are generated at the same time, which is done by recording the part (header or body) where the resolver is working on.
+  + Constructors and fields are treated as top-level definitions during resolving and tyck order inference.
+  + Expr Resolver now has a hierarchical structure since we will treat ctors' and fields' dependencies as the body dependencies of the corresponding data and struct.
++ Overhauled the level system
+  + remove universe polymorphism
+  + remove `lmax`, `lsuc`, etc. things in concrete and surface
+  + prepare for McBride universe liftings
+  + implement McBride universe (even cruder stratification)
++ Resolved projection early
+  + Struct fields are resolved in the resolver instead of the tycker.
+  + Structs can be `open`ed like `data`s.
+  + Fields can be projected by qualified names like `p.Paths::at`
+
+
 ## 0.15
 
 Supported command line module path and load libraries, set `resolveInfo` in module loader,
