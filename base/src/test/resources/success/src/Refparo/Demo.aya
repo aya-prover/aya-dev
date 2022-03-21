@@ -1,29 +1,50 @@
-open import Refparo::Model
 open import Paths
 
--- *** World
+open import Refparo::Model
 
-open data Entity : Type
-  | johnImpl
+module Example-V {
+  public open data RainImpl : Type 0
+    | rain1
 
-def john : (Entity -> Type) -> Type => mkConstQ johnImpl
+  def Rain (e : Event (new EventT {})) : Type 0
+    => RainImpl
+
+  def rain : Verb (new EventT {})
+    => mkVerb {new EventT {}} Rain
+
+  def rains : Sentence =>
+    mkSentence rain
+
+  def proof-rains-event : Event (new EventT {})
+    => new Event (new EventT {}) { | agent => unit }
+
+  def proof-rains : rains
+    => (proof-rains-event, rain1, unit)
+}
 
 
-open data RainImpl : Type
-  | rain1
+module Example-SV {
+  open data Entity : Type 0
+    | johnImpl
 
-def Rain (e : Event (new EventT {})) : Type
-  => RainImpl
+  def john : Quantifier Entity
+    => mkConstQ johnImpl
 
-def rain : Verb (new EventT {})
-  => mkVerb {new EventT {}} Rain
+  public open data RunImpl (ag : Entity) : Type 0
+    | johnImpl => run1
 
+  def Run (e : Event (new EventT { | AgentT => Entity })) : Type 0
+    => RunImpl e.agent
 
-open data RunImpl (ag : Entity) : Type
-  | johnImpl => run1
+  def run : Verb (new EventT { | AgentT => Entity })
+    => mkVerb {new EventT { | AgentT => Entity }} Run
 
-def Run (e : Event (new EventT { | AgentT => Entity })) : Type
-  => RunImpl e.agent
+  def john-runs : Sentence =>
+    mkSentence (agentDef john {new EventT {}} run)
 
-def run : Verb (new EventT { | AgentT => Entity })
-  => mkVerb {new EventT { | AgentT => Entity }} Run
+  def proof-john-runs-event : Event (new EventT { | AgentT => Entity })
+    => new Event (new EventT { | AgentT => Entity }) { | agent => johnImpl }
+
+  def proof-john-runs : john-runs
+    => (proof-john-runs-event, run1, (idp, unit))
+}
