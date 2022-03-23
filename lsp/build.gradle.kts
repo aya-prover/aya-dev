@@ -1,5 +1,5 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE file.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.CommonTasks
 
 val mainClassQName = "org.aya.lsp.LspMain"
@@ -29,6 +29,7 @@ jlink {
   addExtraDependencies("jline-terminal-jansi")
   mergedModule {
     additive = true
+    requires("com.google.gson")
     uses("org.jline.terminal.spi.JansiSupport")
   }
   launcher {
