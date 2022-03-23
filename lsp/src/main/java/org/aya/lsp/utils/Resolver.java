@@ -179,6 +179,12 @@ public interface Resolver {
       return super.visitField(field, xy);
     }
 
+    @Override public Unit visitNew(@NotNull Expr.NewExpr expr, XY xy) {
+      expr.fields().forEach(field -> field.bindings().forEach(binding ->
+        check(xy, binding.data(), binding.sourcePos())));
+      return super.visitNew(expr, xy);
+    }
+
     @Override protected void check(@NotNull XY xy, @NotNull Var var, @NotNull SourcePos sourcePos) {
       if (xy.inside(sourcePos)) targetVars.append(new WithPos<>(sourcePos, var));
     }
