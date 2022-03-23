@@ -115,7 +115,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.NewExpr expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
-          Doc.sep(Doc.symbol("|"), Doc.plain(t.name().data()),
+          Doc.sep(Doc.symbol("|"), Doc.styled(FIELD_CALL, t.name().data()),
             Doc.emptyIf(t.bindings().isEmpty(), () ->
               Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
             Doc.plain("=>"), term(Outer.Free, t.body()))
