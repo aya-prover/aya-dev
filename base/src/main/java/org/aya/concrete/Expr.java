@@ -7,6 +7,7 @@ import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
 import kala.value.Ref;
 import org.aya.concrete.stmt.QualifiedID;
+import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.ParamLike;
@@ -79,6 +80,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     R visitLitString(@NotNull LitStringExpr expr, P p);
     R visitBinOpSeq(@NotNull BinOpSeq binOpSeq, P p);
     R visitError(@NotNull ErrorExpr error, P p);
+    R visitMetaPat(@NotNull MetaPat metaPat, P p);
   }
 
   sealed interface WithTerm extends Expr {
@@ -326,6 +328,12 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record LitStringExpr(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitString(this, p);
+    }
+  }
+
+  record MetaPat(@NotNull SourcePos sourcePos, Pat.Meta meta) implements Expr {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitMetaPat(this, p);
     }
   }
 

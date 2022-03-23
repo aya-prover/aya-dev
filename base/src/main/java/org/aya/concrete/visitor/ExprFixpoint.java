@@ -58,6 +58,10 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return expr;
   }
 
+  @Override default @NotNull Expr visitMetaPat(Expr.@NotNull MetaPat metaPat, P p) {
+    return metaPat;
+  }
+
   @Override default @NotNull Expr visitLift(Expr.@NotNull LiftExpr expr, P p) {
     var mapped = expr.expr().accept(this, p);
     if (mapped == expr.expr()) return expr;
