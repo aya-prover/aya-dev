@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.Map;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
@@ -50,7 +51,8 @@ import java.util.function.Supplier;
  */
 public final class PatTycker {
   public final @NotNull ExprTycker exprTycker;
-  private final @NotNull Substituter.TermSubst termSubst;
+  private final @NotNull Substituter.TermSubst typeSubst;
+  private final @NotNull MutableMap<Var, Expr> bodySubst;
   private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
   private Pattern.Clause currentClause = null;
@@ -61,11 +63,12 @@ public final class PatTycker {
 
   public PatTycker(
     @NotNull ExprTycker exprTycker,
-    @NotNull Substituter.TermSubst termSubst,
-    @Nullable Trace.Builder traceBuilder
+    @NotNull Substituter.TermSubst typeSubst,
+    @NotNull MutableMap<Var, Expr> bodySubst, @Nullable Trace.Builder traceBuilder
   ) {
     this.exprTycker = exprTycker;
-    this.termSubst = termSubst;
+    this.typeSubst = typeSubst;
+    this.bodySubst = bodySubst;
     this.traceBuilder = traceBuilder;
   }
 
@@ -81,7 +84,7 @@ public final class PatTycker {
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new Substituter.TermSubst(MutableMap.create()), exprTycker.traceBuilder);
+    this(exprTycker, new Substituter.TermSubst(MutableMap.create()), MutableMap.create(), exprTycker.traceBuilder);
   }
 
   public record PatResult(
@@ -89,6 +92,14 @@ public final class PatTycker {
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
     @NotNull ImmutableSeq<Matching> matchings
   ) {
+  }
+
+  /**
+   * After checking a pattern, we need to replace the references of the
+   * corresponding telescope binding with the pattern.
+   */
+  private void addPatSubst(@NotNull Var var, @NotNull Pat pat) {
+    typeSubst.addDirectly(var, pat.toTerm());
   }
 
   public @NotNull PatResult elabClausesDirectly(
@@ -140,9 +151,7 @@ public final class PatTycker {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
-        if (selection != null) {
-          foundError(new PatternProblem.PossiblePat(absurd, selection._3));
-        }
+        if (selection != null) foundError(new PatternProblem.PossiblePat(absurd, selection._3));
         yield new Pat.Absurd(absurd.explicit());
       }
       case Pattern.Tuple tuple -> {
@@ -155,7 +164,7 @@ public final class PatTycker {
         var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view())._1);
         if (as != null) {
           exprTycker.localCtx.put(as, sigma);
-          termSubst.addDirectly(as, ret.toTerm());
+          addPatSubst(as, ret);
         }
         yield ret;
       }
@@ -178,7 +187,7 @@ public final class PatTycker {
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
           exprTycker.localCtx.put(as, dataCall);
-          termSubst.addDirectly(as, ret.toTerm());
+          addPatSubst(as, ret);
         }
         yield ret;
       }
@@ -193,10 +202,15 @@ public final class PatTycker {
     };
   }
 
+  /**
+   * @param bodySubst in case the body uses references from the telescope,
+   *                  we need to replace them with the corresponding patterns
+   * @param hasError  if there is an error in the patterns
+   */
   public record LhsResult(
     @NotNull LocalCtx gamma,
     @NotNull Term type,
-    @NotNull Substituter.TermSubst subst,
+    @NotNull Map<Var, Expr> bodySubst,
     boolean hasError,
     @NotNull Pat.Preclause<Expr> preclause
   ) {
@@ -217,7 +231,7 @@ public final class PatTycker {
       // and in case the patterns are malformed, some bindings may
       // not be added to the localCtx of tycker, causing assertion errors
       ? new ErrorTerm(e, false)
-      : exprTycker.inherit(e, type).wellTyped().subst(lhsResult.subst));
+      : exprTycker.inherit(e, type).wellTyped());
     exprTycker.localCtx = parent;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), patterns, term);
   }
@@ -226,13 +240,13 @@ public final class PatTycker {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
-    var patResult = visitPatterns(signature, match.patterns.view());
-    var subst = termSubst.replicate();
-    termSubst.clear();
-    var gamma = exprTycker.localCtx;
+    var step0 = visitPatterns(signature, match.patterns.view());
+    var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.toImmutableMap(), match.hasError,
+      new Pat.Preclause<>(match.sourcePos, step0._1, match.expr));
     exprTycker.localCtx = parent;
-    return new LhsResult(gamma, patResult._2, subst, match.hasError,
-      new Pat.Preclause<>(match.sourcePos, patResult._1, match.expr));
+    typeSubst.clear();
+    bodySubst.clear();
+    return step1;
   }
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
@@ -285,9 +299,9 @@ public final class PatTycker {
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
     var res = doTyck(pat, type);
     tracing(TreeBuilder::reduce);
-    termSubst.add(data.param.ref(), res.toTerm());
+    addPatSubst(data.param.ref(), res);
     data.results.append(res);
-    return data.sig.inst(termSubst);
+    return data.sig.inst(typeSubst);
   }
 
   private @NotNull Def.Signature generatePat(PatData data) {
@@ -299,8 +313,8 @@ public final class PatTycker {
     else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());
-    termSubst.add(ref, bind.toTerm());
-    return data.sig.inst(termSubst);
+    addPatSubst(ref, bind);
+    return data.sig.inst(typeSubst);
   }
 
   private void foundError(@Nullable Problem problem) {
