@@ -110,12 +110,21 @@ public interface Resolver {
     }
 
     @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, P param) {
-      var field = expr.resolvedIx();
-      if (expr.ix().isRight() && field != null) {
+      var fieldRef = expr.resolvedIx();
+      if (expr.ix().isRight() && fieldRef != null) {
         var pos = expr.ix().getRightValue();
-        check(param, field, pos.sourcePos());
+        check(param, fieldRef, pos.sourcePos());
       }
       return StmtConsumer.super.visitProj(expr, param);
+    }
+
+    @Override public Unit visitNew(@NotNull Expr.NewExpr expr, P param) {
+      expr.fields().forEach(field -> {
+        var fieldRef = field.resolvedField().value;
+        if (fieldRef != null)
+          check(param, fieldRef, field.name().sourcePos());
+      });
+      return StmtConsumer.super.visitNew(expr, param);
     }
 
     @Override public void visitPattern(@NotNull Pattern pattern, P param) {
