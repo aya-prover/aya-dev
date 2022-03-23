@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
-import kala.collection.Map;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
@@ -16,6 +16,7 @@ import kala.value.Ref;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -98,8 +99,9 @@ public final class PatTycker {
    * After checking a pattern, we need to replace the references of the
    * corresponding telescope binding with the pattern.
    */
-  private void addPatSubst(@NotNull Var var, @NotNull Pat pat) {
+  private void addPatSubst(@NotNull Var var, @NotNull Pat pat, @NotNull SourcePos pos) {
     typeSubst.addDirectly(var, pat.toTerm());
+    bodySubst.put(var, pat.toExpr(pos));
   }
 
   public @NotNull PatResult elabClausesDirectly(
@@ -164,7 +166,7 @@ public final class PatTycker {
         var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view())._1);
         if (as != null) {
           exprTycker.localCtx.put(as, sigma);
-          addPatSubst(as, ret);
+          addPatSubst(as, ret, tuple.sourcePos());
         }
         yield ret;
       }
@@ -187,7 +189,7 @@ public final class PatTycker {
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
           exprTycker.localCtx.put(as, dataCall);
-          addPatSubst(as, ret);
+          addPatSubst(as, ret, ctor.sourcePos());
         }
         yield ret;
       }
@@ -210,7 +212,7 @@ public final class PatTycker {
   public record LhsResult(
     @NotNull LocalCtx gamma,
     @NotNull Term type,
-    @NotNull Map<Var, Expr> bodySubst,
+    @NotNull ImmutableMap<Var, Expr> bodySubst,
     boolean hasError,
     @NotNull Pat.Preclause<Expr> preclause
   ) {
@@ -231,7 +233,7 @@ public final class PatTycker {
       // and in case the patterns are malformed, some bindings may
       // not be added to the localCtx of tycker, causing assertion errors
       ? new ErrorTerm(e, false)
-      : exprTycker.inherit(e, type).wellTyped());
+      : exprTycker.inherit(e.accept(new BodySubstitutor(lhsResult.bodySubst), Unit.unit()), type).wellTyped());
     exprTycker.localCtx = parent;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), patterns, term);
   }
@@ -299,7 +301,7 @@ public final class PatTycker {
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
     var res = doTyck(pat, type);
     tracing(TreeBuilder::reduce);
-    addPatSubst(data.param.ref(), res);
+    addPatSubst(data.param.ref(), res, pat.sourcePos());
     data.results.append(res);
     return data.sig.inst(typeSubst);
   }
@@ -313,7 +315,8 @@ public final class PatTycker {
     else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());
-    addPatSubst(ref, bind);
+    // Is this a good idea?
+    addPatSubst(ref, bind, currentClause.sourcePos);
     return data.sig.inst(typeSubst);
   }
 
@@ -383,5 +386,23 @@ public final class PatTycker {
     if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
     else return Result.ok(Unfolder.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
+  }
+
+  private class BodySubstitutor implements ExprFixpoint<Unit> {
+    private final @NotNull ImmutableMap<Var, Expr> bodySubst;
+
+    public BodySubstitutor(@NotNull ImmutableMap<Var, Expr> bodySubst) {
+      this.bodySubst = bodySubst;
+    }
+
+    @Override public @NotNull Expr visitRef(@NotNull Expr.RefExpr expr, Unit unit) {
+      if (bodySubst.containsKey(expr.resolvedVar()))
+        return bodySubst.get(expr.resolvedVar()).accept(this, unit);
+      return ExprFixpoint.super.visitRef(expr, unit);
+    }
+
+    @Override public @NotNull Expr visitMetaPat(@NotNull Expr.MetaPat metaPat, Unit unit) {
+      return metaPat.meta().inline().toExpr(metaPat.sourcePos()).accept(this, unit);
+    }
   }
 }

@@ -23,6 +23,7 @@ public class PatToTerm {
 
   public Term visit(@NotNull Pat pat) {
     return switch (pat) {
+      // [ice]: this code is reachable (to substitute a telescope), but the telescope will be dropped anyway.
       case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"), 0);
       case Pat.Prim prim -> new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.empty());
       case Pat.Ctor ctor -> visitCtor(ctor);

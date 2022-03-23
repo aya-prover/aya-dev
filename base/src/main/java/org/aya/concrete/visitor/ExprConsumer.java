@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -37,6 +37,10 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   }
 
   @Override default Unit visitUniv(Expr.@NotNull UnivExpr expr, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitMetaPat(Expr.@NotNull MetaPat metaPat, P p) {
     return Unit.unit();
   }
 

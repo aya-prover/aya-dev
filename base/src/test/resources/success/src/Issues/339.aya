@@ -1,0 +1,13 @@
+open data Nat | suc Nat | zero
+open data NatPred Nat | blah
+
+def mk (a : Nat) : NatPred a => blah
+def conjecture {a : Nat} Nat : NatPred a
+| b => mk a
+
+open data Unit : Type | unit
+
+open struct Wrapped (A : Type) : Type
+
+def test {B : Type} Unit : Wrapped B -> Unit
+  | unit => \(x : Wrapped B) => unit
