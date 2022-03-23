@@ -122,22 +122,24 @@ public final class ExprTycker {
         var conFields = newExpr.fields();
 
         for (var defField : structRef.core.fields) {
-          var conFieldOpt = conFields.find(t -> t.name().equals(defField.ref().name()));
+          var fieldRef = defField.ref();
+          var conFieldOpt = conFields.find(t -> t.name().data().equals(fieldRef.name()));
           if (conFieldOpt.isEmpty()) {
             if (defField.body.isEmpty())
-              missing.append(defField.ref()); // no value available, skip and prepare error reporting
+              missing.append(fieldRef); // no value available, skip and prepare error reporting
             else {
               // use default value from defField
               var field = defField.body.get().subst(subst);
-              fields.append(Tuple.of(defField.ref(), field));
-              subst.add(defField.ref(), field);
+              fields.append(Tuple.of(fieldRef, field));
+              subst.add(fieldRef, field);
             }
             continue;
           }
           var conField = conFieldOpt.get();
+          conField.resolvedField().value = fieldRef;
           conFields = conFields.dropWhile(t -> t == conField);
-          var type = Def.defType(defField.ref()).subst(subst);
-          var telescope = defField.ref().core.selfTele.map(term -> term.subst(subst));
+          var type = Def.defType(fieldRef).subst(subst);
+          var telescope = fieldRef.core.selfTele.map(term -> term.subst(subst));
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
@@ -146,14 +148,14 @@ public final class ExprTycker {
           var fieldExpr = bindings.zip(telescope).foldRight(conField.body(), (pair, lamExpr) ->
             new Expr.LamExpr(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
           var field = inherit(fieldExpr, type).wellTyped;
-          fields.append(Tuple.of(defField.ref(), field));
-          subst.add(defField.ref(), field);
+          fields.append(Tuple.of(fieldRef, field));
+          subst.add(fieldRef, field);
         }
 
         if (missing.isNotEmpty())
           yield fail(newExpr, structCall, new FieldProblem.MissingFieldError(newExpr.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
-          yield fail(newExpr, structCall, new FieldProblem.NoSuchFieldError(newExpr.sourcePos(), conFields.map(Expr.Field::name)));
+          yield fail(newExpr, structCall, new FieldProblem.NoSuchFieldError(newExpr.sourcePos(), conFields.map(f -> f.name().data())));
         yield new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
       }
       case Expr.ProjExpr proj -> {

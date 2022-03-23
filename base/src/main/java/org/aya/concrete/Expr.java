@@ -271,7 +271,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   }
 
   /**
-   * @param resolvedIx will be modified during tycking
+   * @param resolvedIx will be set to the field's DefVar during resolving if this is a field access.
    * @author re-xyr
    */
   record ProjExpr(
@@ -303,10 +303,14 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     }
   }
 
+  /**
+   * @param resolvedField will be modified during tycking for LSP to function properly.
+   */
   record Field(
-    @NotNull String name,
+    @NotNull WithPos<String> name,
     @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
-    @NotNull Expr body
+    @NotNull Expr body,
+    @NotNull Ref<Var> resolvedField
   ) {
   }
 
