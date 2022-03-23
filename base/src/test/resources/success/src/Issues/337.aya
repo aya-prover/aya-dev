@@ -1,0 +1,7 @@
+public open data Unit | unit
+
+def foo : SomeType => unit
+def foo' (s: SomeType) : SomeType => s
+
+def SomeType => Unit
+
