@@ -83,6 +83,14 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     return StmtConsumer.super.visitProj(expr, buffer);
   }
 
+  @Override public Unit visitNew(@NotNull Expr.NewExpr expr, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
+    expr.fields().forEach(field -> {
+      if (field.resolvedField().value instanceof DefVar<?,?> defVar)
+        visitCall(defVar, field.name().sourcePos(), buffer);
+    });
+    return StmtConsumer.super.visitNew(expr, buffer);
+  }
+
   @Override public Unit visitError(Expr.@NotNull ErrorExpr error, @NotNull DynamicSeq<HighlightResult.Symbol> symbols) {
     return Unit.unit();
   }
