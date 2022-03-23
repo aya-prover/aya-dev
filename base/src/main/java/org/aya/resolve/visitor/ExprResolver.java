@@ -60,9 +60,12 @@ public record ExprResolver(
   private void addReference(@NotNull TyckUnit unit) {
     if (parentAdd != null) parentAdd.accept(unit);
     if (where.isEmpty()) throw new IllegalStateException("where am I?");
-    var order = where.peek() == Where.Head
-      ? new TyckOrder.Head(unit) : new TyckOrder.Body(unit);
-    reference.append(order);
+    if (where.peek() == Where.Head) {
+      reference.append(new TyckOrder.Head(unit));
+      reference.append(new TyckOrder.Body(unit));
+    } else {
+      reference.append(new TyckOrder.Body(unit));
+    }
   }
 
   /**
