@@ -356,9 +356,9 @@ public record AyaProducer(
       case AyaParser.NewContext n -> new Expr.NewExpr(
         sourcePosOf(n), visitExpr(n.expr()),
         ImmutableSeq.from(n.newArg())
-          .map(na -> new Expr.Field(na.ID().getText(), visitIds(na.ids())
+          .map(na -> new Expr.Field(new WithPos<>(sourcePosOf(na.ID()), na.ID().getText()), visitIds(na.ids())
             .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
-            .collect(ImmutableSeq.factory()), visitExpr(na.expr()))));
+            .collect(ImmutableSeq.factory()), visitExpr(na.expr()), new Ref<>())));
       case AyaParser.NewEmptyContext n -> new Expr.NewExpr(
         sourcePosOf(n),
         visitExpr(n.expr()),

@@ -93,8 +93,8 @@ public interface Resolver {
 
   /**
    * Traverse all referring terms including:
-   * {@link Expr.RefExpr}, {@link Expr.ProjExpr} and {@link Pattern}
-   * and check against a given condition implemented in
+   * {@link Expr.RefExpr}, {@link Expr.ProjExpr}, {@link Expr.NewExpr}
+   * and {@link Pattern} and check against a given condition implemented in
    * {@link ReferringResolver#check(P, Var, SourcePos)}
    */
   abstract class ReferringResolver<P> implements StmtConsumer<P> {
@@ -110,12 +110,21 @@ public interface Resolver {
     }
 
     @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, P param) {
-      var field = expr.resolvedIx();
-      if (expr.ix().isRight() && field != null) {
+      var fieldRef = expr.resolvedIx();
+      if (expr.ix().isRight() && fieldRef != null) {
         var pos = expr.ix().getRightValue();
-        check(param, field, pos.sourcePos());
+        check(param, fieldRef, pos.sourcePos());
       }
       return StmtConsumer.super.visitProj(expr, param);
+    }
+
+    @Override public Unit visitNew(@NotNull Expr.NewExpr expr, P param) {
+      expr.fields().forEach(field -> {
+        var fieldRef = field.resolvedField().value;
+        if (fieldRef != null)
+          check(param, fieldRef, field.name().sourcePos());
+      });
+      return StmtConsumer.super.visitNew(expr, param);
     }
 
     @Override public void visitPattern(@NotNull Pattern pattern, P param) {
@@ -177,6 +186,12 @@ public interface Resolver {
     @Override public Unit visitField(@NotNull Decl.StructField field, XY xy) {
       check(xy, field.ref(), field.sourcePos());
       return super.visitField(field, xy);
+    }
+
+    @Override public Unit visitNew(@NotNull Expr.NewExpr expr, XY xy) {
+      expr.fields().forEach(field -> field.bindings().forEach(binding ->
+        check(xy, binding.data(), binding.sourcePos())));
+      return super.visitNew(expr, xy);
     }
 
     @Override protected void check(@NotNull XY xy, @NotNull Var var, @NotNull SourcePos sourcePos) {

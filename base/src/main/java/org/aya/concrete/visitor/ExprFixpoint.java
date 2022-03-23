@@ -99,7 +99,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   default Expr.@NotNull Field visitField(@NotNull Expr.Field t, P p) {
     var accept = t.body().accept(this, p);
     if (accept == t.body()) return t;
-    return new Expr.Field(t.name(), t.bindings(), accept);
+    return new Expr.Field(t.name(), t.bindings(), accept, t.resolvedField());
   }
 
   @Override default @NotNull Expr visitLitInt(Expr.@NotNull LitIntExpr expr, P p) {
