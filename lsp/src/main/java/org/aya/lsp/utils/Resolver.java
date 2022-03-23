@@ -93,8 +93,8 @@ public interface Resolver {
 
   /**
    * Traverse all referring terms including:
-   * {@link Expr.RefExpr}, {@link Expr.ProjExpr} and {@link Pattern}
-   * and check against a given condition implemented in
+   * {@link Expr.RefExpr}, {@link Expr.ProjExpr}, {@link Expr.NewExpr}
+   * and {@link Pattern} and check against a given condition implemented in
    * {@link ReferringResolver#check(P, Var, SourcePos)}
    */
   abstract class ReferringResolver<P> implements StmtConsumer<P> {
