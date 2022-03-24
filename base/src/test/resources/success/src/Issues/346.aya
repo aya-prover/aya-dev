@@ -1,0 +1,11 @@
+open import Data::Unit
+
+data Test {A : Type} (x : Unit) : Type
+| unit => test
+
+variable A : Type
+
+open data UnitP Type : Type | unitP
+
+data Test2 (x : UnitP A) : Type
+| unitP => test
