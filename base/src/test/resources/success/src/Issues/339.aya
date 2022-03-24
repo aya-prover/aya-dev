@@ -1,11 +1,10 @@
-open data Nat | suc Nat | zero
-open data NatPred Nat | blah
+open import Data::Unit
 
-def mk (a : Nat) : NatPred a => blah
-def conjecture {a : Nat} Nat : NatPred a
+open data UnitPred Unit | blah
+def mk (a : Unit) : UnitPred a => blah
+
+def conjecture {a : Unit} Unit : UnitPred a
 | b => mk a
-
-open data Unit : Type | unit
 
 open struct Wrapped (A : Type) : Type
 

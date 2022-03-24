@@ -293,7 +293,14 @@ public final class PatTycker {
     return Tuple.of(results.toImmutableSeq(), sig.result());
   }
 
-  private record PatData(Def.Signature sig, DynamicSeq<Pat> results, Term.Param param) {
+  private record PatData(
+    @NotNull Def.Signature sig,
+    @NotNull DynamicSeq<Pat> results,
+    @NotNull Term.Param param
+  ) {
+    public @NotNull SourcePos paramPos() {
+      return param.ref().definition();
+    }
   }
 
   private @NotNull Def.Signature updateSig(PatData data, Pattern pat) {
@@ -306,17 +313,16 @@ public final class PatTycker {
     return data.sig.inst(typeSubst);
   }
 
-  private @NotNull Def.Signature generatePat(PatData data) {
+  private @NotNull Def.Signature generatePat(@NotNull PatData data) {
     var ref = data.param.ref();
     Pat bind;
     var freshVar = new LocalVar(ref.name(), ref.definition());
     if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)
-      bind = new Pat.Meta(false, new Ref<>(), freshVar, data.param.type());
+      bind = new Pat.Meta(false, new Ref<>(), freshVar, dataCall);
     else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());
-    // Is this a good idea?
-    addPatSubst(ref, bind, currentClause.sourcePos);
+    addPatSubst(ref, bind, data.paramPos());
     return data.sig.inst(typeSubst);
   }
 

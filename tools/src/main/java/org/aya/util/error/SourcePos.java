@@ -29,9 +29,7 @@ public record SourcePos(
 ) implements Comparable<SourcePos> {
   public static final int UNAVAILABLE_AND_FUCK_ANTLR4 = -114514;
 
-  /**
-   * Single instance SourcePos for mocking tests and other usages.
-   */
+  /** Single instance SourcePos for mocking tests and other usages. */
   public static final SourcePos NONE = new SourcePos(SourceFile.NONE, -1, -1, -1, -1, -1, -1);
   /** Source pos used in serialized core */
   public static final SourcePos SER = new SourcePos(SourceFile.SER, -1, -1, -1, -1, -1, -1);
