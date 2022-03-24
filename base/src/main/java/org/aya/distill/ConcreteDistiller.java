@@ -133,7 +133,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(expr.lift())), true)), true);
       }
       case Expr.LiftExpr expr -> Doc.sep(Seq
-        .from(IntRange.closed(0, expr.lift()).iterator()).view()
+        .from(IntRange.closed(1, expr.lift()).iterator()).view()
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);

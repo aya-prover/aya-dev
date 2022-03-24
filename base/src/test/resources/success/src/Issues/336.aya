@@ -1,0 +1,10 @@
+open import Data::Unit
+open data Data : Type 1
+  | mkData (a : Type)
+
+def test-data : ↑ Data => ↑ mkData ↑ Unit
+
+open struct Struct : Type 1 | field : Type
+
+def test-struct : ↑ Struct
+  => new ↑ Struct { | field => ↑ Unit }

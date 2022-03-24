@@ -42,9 +42,9 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.args().map(arg -> visitArg(arg, p));
-    var levelArgs = ulift() + conCall.ulift();
+    var ulift = ulift() + conCall.ulift();
     var dropped = args.drop(conCall.head().dataArgs().size());
-    var volynskaya = tryUnfoldClauses(p, true, dropped, conCall.ulift(), def.clauses);
+    var volynskaya = tryUnfoldClauses(p, true, dropped, ulift, def.clauses);
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped);
   }
 

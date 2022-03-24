@@ -129,7 +129,7 @@ public final class ExprTycker {
               missing.append(fieldRef); // no value available, skip and prepare error reporting
             else {
               // use default value from defField
-              var field = defField.body.get().subst(subst);
+              var field = defField.body.get().subst(subst, structCall.ulift());
               fields.append(Tuple.of(fieldRef, field));
               subst.add(fieldRef, field);
             }
@@ -138,8 +138,8 @@ public final class ExprTycker {
           var conField = conFieldOpt.get();
           conField.resolvedField().value = fieldRef;
           conFields = conFields.dropWhile(t -> t == conField);
-          var type = Def.defType(fieldRef).subst(subst);
-          var telescope = fieldRef.core.selfTele.map(term -> term.subst(subst));
+          var type = Def.defType(fieldRef).subst(subst, structCall.ulift());
+          var telescope = fieldRef.core.selfTele.map(term -> term.subst(subst, structCall.ulift()));
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
