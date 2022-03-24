@@ -226,7 +226,7 @@ public final class ExprTycker {
               pi = ensurePiOrThrow(pi.body());
             } else yield fail(appE, new ErrorTerm(pi.body()), new LicitProblem.UnexpectedImplicitArgError(argument));
           }
-          pi = ensurePiOrThrow(pi.subst(subst).normalize(state, NormalizeMode.WHNF));
+          pi = ensurePiOrThrow(pi.subst(subst));
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(expr, notPi.what));
         }
@@ -269,6 +269,7 @@ public final class ExprTycker {
   }
 
   private FormTerm.@NotNull Pi ensurePiOrThrow(@NotNull Term term) throws NotPi {
+    term = term.normalize(state, NormalizeMode.WHNF);
     if (term instanceof FormTerm.Pi pi) return pi;
     else throw new NotPi(term);
   }
