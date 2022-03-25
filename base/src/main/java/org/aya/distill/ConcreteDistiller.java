@@ -219,11 +219,15 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     };
   }
 
+  private Stmt.Accessibility defaultAcc(@NotNull Decl.Personality personality) {
+    return personality == Decl.Personality.NORMAL ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
+  }
+
   public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
       case Decl.StructDecl decl -> {
         var prelude = DynamicSeq.of(
-          visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "struct"),
           linkDef(decl.ref, STRUCT_CALL),
@@ -237,7 +241,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case Decl.FnDecl decl -> {
         var prelude = DynamicSeq.of(
-          visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "def"));
         prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
@@ -252,7 +256,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case Decl.DataDecl decl -> {
         var prelude = DynamicSeq.of(
-          visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "data"),
           linkDef(decl.ref, DATA_CALL),
