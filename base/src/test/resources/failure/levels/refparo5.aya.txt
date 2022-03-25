@@ -5,7 +5,7 @@ In file $FILE:4:11 ->
   4 |   | type : Type
                  ^--^
 
-Error: The level is expected to be <= 1 but it is actually 0
+Error: The level here is expected to be <= 0 but it is actually 1
 
 1 error(s), 0 warning(s).
 What are you doing?
