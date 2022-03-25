@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -46,7 +46,7 @@ public class TracingTest {
   @Test public void traceHole() {
     assertFalse(new MdUnicodeTrace().docify(Objects.requireNonNull(mkBuilder("""
       open data Nat : Type | zero | suc Nat
-      def wow {A : Type} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => zero
+      def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => zero
       example def test (A B : Type) (x : A) (y : B) => wow A B x y
       """))).debugRender().isEmpty());
   }
