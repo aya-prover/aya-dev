@@ -65,7 +65,8 @@ public record StmtShallowResolver(
         var mod = cmd.path().ids();
         var acc = cmd.accessibility();
         var useHide = cmd.useHide();
-        context.openModule(
+        var ctx = cmd.openExample() ? exampleContext(context) : context;
+        ctx.openModule(
           mod,
           acc,
           useHide::uses,
@@ -81,7 +82,7 @@ public record StmtShallowResolver(
         // renaming as infix
         if (useHide.strategy() == Command.Open.UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
-          var symbol = context.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
+          var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
           var defVar = (DefVar<?, ?>) symbol;
           var argc = defVar.core != null
@@ -91,7 +92,7 @@ public record StmtShallowResolver(
           defVar.opDeclRename.put(resolveInfo.thisModule().moduleName(), rename);
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) {
-            bind.context().value = context;
+            bind.context().value = ctx;
             resolveInfo.bindBlockRename().put(rename, bind);
           }
         });

@@ -41,7 +41,8 @@ public sealed interface Command extends Stmt {
     @Override @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
     @NotNull QualifiedID path,
-    @NotNull UseHide useHide
+    @NotNull UseHide useHide,
+    boolean openExample
   ) implements Command {
     public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitOpen(this, p);

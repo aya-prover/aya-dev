@@ -516,7 +516,8 @@ public record AyaProducer(
         nameOrInfix._1.sourcePos(),
         openAccessibility,
         new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
-        Command.Open.UseHide.EMPTY
+        Command.Open.UseHide.EMPTY,
+        personality == Decl.Personality.EXAMPLE
       )
     ));
   }
@@ -635,7 +636,8 @@ public record AyaProducer(
         nameOrInfix._1.sourcePos(),
         openAccessibility,
         new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
-        Command.Open.UseHide.EMPTY
+        Command.Open.UseHide.EMPTY,
+        personality == Decl.Personality.EXAMPLE
       )
     ));
   }
@@ -709,7 +711,8 @@ public record AyaProducer(
       namePos,
       accessibility,
       modName,
-      useHide != null ? visitUseHide(useHide) : Command.Open.UseHide.EMPTY
+      useHide != null ? visitUseHide(useHide) : Command.Open.UseHide.EMPTY,
+      false
     );
     if (ctx.IMPORT() != null) return ImmutableSeq.of(
       new Command.Import(namePos, modName, null),
