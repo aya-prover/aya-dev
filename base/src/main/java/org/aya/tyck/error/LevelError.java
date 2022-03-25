@@ -18,7 +18,7 @@ public record LevelError(
   int lower, int upper, boolean wantEqual
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-    return Doc.sepNonEmpty(Doc.english("The level is expected to be"),
+    return Doc.sepNonEmpty(Doc.english("The level here is expected to be"),
       Doc.emptyIf(wantEqual, () -> Doc.symbol("<=")),
       Doc.plain(String.valueOf(lower)),
       Doc.english("but it is actually"),
