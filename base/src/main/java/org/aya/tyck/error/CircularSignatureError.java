@@ -5,7 +5,6 @@ package org.aya.tyck.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.order.TyckUnit;
@@ -35,7 +34,6 @@ public record CircularSignatureError(
   private @NotNull String nameOf(@NotNull TyckUnit stmt) {
     return switch (stmt) {
       case Decl decl -> decl.ref().name();
-      case Sample sample -> nameOf(sample.delegate());
       case Remark remark -> "a remark";
       case Signatured signatured -> signatured.ref().name();
       default -> throw new IllegalStateException("Unexpected stmt seen in SCCTycker: " + stmt);

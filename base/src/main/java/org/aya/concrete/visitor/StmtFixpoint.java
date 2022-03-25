@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -98,13 +98,5 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   @Override default Unit visitVariables(Generalize.@NotNull Variables variables, P p) {
     variables.type = variables.type.accept(this, p);
     return Unit.unit();
-  }
-
-  @Override default Unit visitExample(Sample.@NotNull Working example, P p) {
-    return example.delegate().accept(this, p);
-  }
-
-  @Override default Unit visitCounterexample(Sample.@NotNull Counter example, P p) {
-    return example.delegate().accept(this, p);
   }
 }

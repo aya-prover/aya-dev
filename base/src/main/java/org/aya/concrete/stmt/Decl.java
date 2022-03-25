@@ -31,11 +31,16 @@ import java.util.function.BiFunction;
  * @author re-xyr
  */
 public sealed abstract class Decl extends Signatured implements Stmt {
+  public enum Personality {
+    NORMAL,
+    EXAMPLE,
+    COUNTEREXAMPLE,
+  }
+
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
-  /** this decl is delegated by a sample */
-  public @Nullable Sample ownerSample = null;
   public @NotNull Expr result;
+  public final @NotNull Decl.Personality personality;
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;
@@ -47,11 +52,13 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     @Nullable OpInfo opInfo,
     @NotNull BindBlock bindBlock,
     @NotNull ImmutableSeq<Expr.Param> telescope,
-    @NotNull Expr result
+    @NotNull Expr result,
+    @NotNull Decl.Personality personality
   ) {
     super(sourcePos, entireSourcePos, opInfo, bindBlock, telescope);
     this.accessibility = accessibility;
     this.result = result;
+    this.personality = personality;
   }
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
@@ -111,7 +118,7 @@ public sealed abstract class Decl extends Signatured implements Stmt {
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result
     ) {
-      super(sourcePos, entireSourcePos, Accessibility.Public, null, BindBlock.EMPTY, telescope, result);
+      super(sourcePos, entireSourcePos, Accessibility.Public, null, BindBlock.EMPTY, telescope, result, Personality.NORMAL);
       this.ref = DefVar.concrete(this, name);
     }
 
@@ -185,9 +192,10 @@ public sealed abstract class Decl extends Signatured implements Stmt {
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull ImmutableSeq<DataCtor> body,
-      @NotNull BindBlock bindBlock
+      @NotNull BindBlock bindBlock,
+      @NotNull Decl.Personality personality
     ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result);
+      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.body = body;
       this.ref = DefVar.concrete(this, name);
       body.forEach(ctors -> ctors.dataRef = ref);
@@ -222,9 +230,10 @@ public sealed abstract class Decl extends Signatured implements Stmt {
       @NotNull Expr result,
       // @NotNull ImmutableSeq<String> superClassNames,
       @NotNull ImmutableSeq<StructField> fields,
-      @NotNull BindBlock bindBlock
+      @NotNull BindBlock bindBlock,
+      @NotNull Decl.Personality personality
     ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result);
+      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.fields = fields;
       this.ref = DefVar.concrete(this, name);
       fields.forEach(field -> field.structRef = ref);
@@ -292,9 +301,10 @@ public sealed abstract class Decl extends Signatured implements Stmt {
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
-      @NotNull BindBlock bindBlock
+      @NotNull BindBlock bindBlock,
+      @NotNull Decl.Personality personality
     ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result);
+      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.modifiers = modifiers;
       this.ref = DefVar.concrete(this, name);
       this.body = body;

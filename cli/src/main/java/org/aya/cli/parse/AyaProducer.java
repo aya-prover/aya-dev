@@ -89,10 +89,14 @@ public record AyaProducer(
     var decl = ctx.decl();
     if (decl != null) {
       var result = visitDecl(decl);
-      return result._2.view().prepended(result._1);
+      var stmts = result._2.view().prepended(result._1);
+      if (result._1.personality == Decl.Personality.COUNTEREXAMPLE) {
+        var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof Decl));
+        if (stmtOption.isDefined()) reporter.report(new BadCounterexampleWarn(stmtOption.get()));
+        return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
+      }
+      return stmts;
     }
-    var sample = ctx.sample();
-    if (sample != null) return visitSample(sample);
     var generalize = ctx.generalize();
     if (generalize != null) return ImmutableSeq.of(visitGeneralize(generalize));
     var remark = ctx.remark();
@@ -138,17 +142,6 @@ public record AyaProducer(
     return ctx.qualifiedId().stream().map(this::visitQualifiedId);
   }
 
-  public @NotNull ImmutableSeq<Stmt> visitSample(AyaParser.SampleContext ctx) {
-    var decl = visitDecl(ctx.decl());
-    var stmts = decl._2.view().prepended(decl._1);
-    if (ctx.COUNTEREXAMPLE() != null) {
-      var stmtOption = decl._2.firstOption(stmt -> !(stmt instanceof Decl));
-      if (stmtOption.isDefined()) reporter.report(new BadCounterexampleWarn(stmtOption.get()));
-      return stmts.filterIsInstance(Decl.class).<Stmt>map(Sample.Counter::new).toImmutableSeq();
-    }
-    return stmts.<Stmt>map(Sample.Working::new).toImmutableSeq();
-  }
-
   private <T> T unreachable(ParserRuleContext ctx) {
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
@@ -188,6 +181,7 @@ public record AyaProducer(
   }
 
   public Decl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
+    var personality = visitSampleModifiers(ctx.sampleModifiers());
     var modifiers = Seq.from(ctx.fnModifiers()).view()
       .map(fn -> Tuple.of(fn, visitFnModifiers(fn)))
       .toImmutableSeq();
@@ -210,7 +204,7 @@ public record AyaProducer(
     return new Decl.FnDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
-      accessibility,
+      personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
         () -> EnumSet.noneOf(Modifier.class))),
       nameOrInfix._2,
@@ -218,8 +212,15 @@ public record AyaProducer(
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
       dynamite,
-      bind == null ? BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind),
+      personality
     );
+  }
+
+  public @NotNull Decl.Personality visitSampleModifiers(AyaParser.SampleModifiersContext ctx) {
+    if (ctx == null) return Decl.Personality.NORMAL;
+    if (ctx.EXAMPLE() != null) return Decl.Personality.EXAMPLE;
+    return Decl.Personality.COUNTEREXAMPLE;
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(List<AyaParser.TeleContext> telescope) {
@@ -492,6 +493,7 @@ public record AyaProducer(
 
   public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>>
   visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
+    var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
@@ -500,13 +502,14 @@ public record AyaProducer(
     var data = new Decl.DataDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
-      accessibility,
+      personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
       body,
-      bind == null ? BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind),
+      personality
     );
     return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
@@ -609,6 +612,7 @@ public record AyaProducer(
   }
 
   public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
+    var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fields = visitFields(ctx.field());
@@ -617,13 +621,14 @@ public record AyaProducer(
     var struct = new Decl.StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
-      accessibility,
+      personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
       fields,
-      bind == null ? BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind),
+      personality
     );
     return Tuple2.of(struct, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(

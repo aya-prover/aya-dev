@@ -99,19 +99,6 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Head(decl), resolver);
         addReferences(info, new TyckOrder.Body(decl), SeqView.empty());
       }
-      case Sample sample -> {
-        var delegate = sample.delegate();
-        var delegateInfo = new ResolveInfo(info.thisModule(), info.program(), info.opSet());
-        resolveStmt(delegate, delegateInfo);
-        // little hacky: transfer dependencies from `delegate` to `sample`
-        var delegateHead = new TyckOrder.Head(delegate);
-        var delegateBody = new TyckOrder.Body(delegate);
-        var sampleHead = new TyckOrder.Head(sample);
-        info.depGraph().sucMut(sampleHead).appendAll(delegateInfo.depGraph().suc(delegateHead));
-        info.depGraph().sucMut(new TyckOrder.Body(sample)).appendAll(delegateInfo.depGraph().suc(delegateBody)
-          .filterNot(order -> order.equals(delegateHead))
-          .appended(sampleHead));
-      }
       case Remark remark -> info.depGraph().sucMut(new TyckOrder.Body(remark)).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize.Variables variables -> {
@@ -196,7 +183,6 @@ public interface StmtResolver {
         visitBind(decl.ref, decl.bindBlock, info);
       }
       case Decl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
-      case Sample sample -> resolveBind(sample.delegate(), info);
       case Remark remark -> {}
       case Command cmd -> {}
       case Decl.PrimDecl decl -> {}

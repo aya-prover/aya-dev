@@ -216,17 +216,15 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         Doc.nest(2, Doc.vcat(mod.contents().view().map(this::stmt))),
         Doc.symbol("}")
       );
-      case Sample.Counter counter -> Doc.sep(Doc.styled(KEYWORD, "counterexample"),
-        decl(counter.delegate()));
-      case Sample.Working working -> Doc.sep(Doc.styled(KEYWORD, "example"),
-        stmt(working.delegate()));
     };
   }
 
   public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
       case Decl.StructDecl decl -> {
-        var prelude = DynamicSeq.of(visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
+        var prelude = DynamicSeq.of(
+          visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
+          visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "struct"),
           linkDef(decl.ref, STRUCT_CALL),
           visitTele(decl.telescope));
@@ -240,6 +238,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Decl.FnDecl decl -> {
         var prelude = DynamicSeq.of(
           visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
+          visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "def"));
         prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
         prelude.append(linkDef(decl.ref, FN_CALL));
@@ -254,6 +253,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Decl.DataDecl decl -> {
         var prelude = DynamicSeq.of(
           visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
+          visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "data"),
           linkDef(decl.ref, DATA_CALL),
           visitTele(decl.telescope));
@@ -265,6 +265,14 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         );
       }
       case Decl.PrimDecl decl -> primDoc(decl.ref);
+    };
+  }
+
+  public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
+    return switch (personality) {
+      case NORMAL -> Doc.empty();
+      case EXAMPLE -> Doc.styled(KEYWORD, "example");
+      case COUNTEREXAMPLE -> Doc.styled(KEYWORD, "counterexample");
     };
   }
 

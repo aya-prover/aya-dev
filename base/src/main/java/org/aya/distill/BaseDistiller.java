@@ -7,7 +7,6 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Sample;
 import org.aya.generic.Arg;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
@@ -243,7 +242,6 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       case Decl.StructDecl d -> STRUCT_CALL;
       case Decl.StructField d -> FIELD_CALL;
       case Decl.PrimDecl d -> FN_CALL;
-      case Sample sample -> chooseStyle(sample.delegate());
       case null, default -> null;
     };
   }
