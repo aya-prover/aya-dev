@@ -67,13 +67,13 @@ public final class Meta implements Var {
 
   public @NotNull FormTerm.Pi asPi(
     @NotNull String domName, @NotNull String codName, boolean explicit,
-    @NotNull ImmutableSeq<Arg<Term>> contextArgs
+    int ulift, @NotNull ImmutableSeq<Arg<Term>> contextArgs
   ) {
     assert telescope.isEmpty();
     var domVar = Meta.from(contextTele, domName, result, sourcePos);
     var codVar = Meta.from(contextTele, codName, result, sourcePos);
-    var dom = new CallTerm.Hole(domVar, contextArgs, ImmutableSeq.empty());
-    var cod = new CallTerm.Hole(codVar, contextArgs, ImmutableSeq.empty());
+    var dom = new CallTerm.Hole(domVar, ulift, contextArgs, ImmutableSeq.empty());
+    var cod = new CallTerm.Hole(codVar, ulift, contextArgs, ImmutableSeq.empty());
     var domParam = new Term.Param(Constants.randomlyNamed(sourcePos), dom, explicit);
     return new FormTerm.Pi(domParam, cod);
   }

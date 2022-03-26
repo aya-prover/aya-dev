@@ -380,73 +380,81 @@ public final class DefEq {
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }
-      case CallTerm.Hole lhs -> {
-        var meta = lhs.ref();
-        if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
-          // If we do not know the type, then we do not perform the comparison
-          if (meta.result == null) yield null;
-          var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
-          for (var arg : lhs.args().view().zip(rcall.args())) {
-            if (!(holeTy instanceof FormTerm.Pi holePi))
-              throw new IllegalStateException("meta arg size larger than param size. this should not happen");
-            if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) yield null;
-            holeTy = holePi.substBody(arg._1.term());
-          }
-          yield holeTy;
-        }
-        // Long time ago I wrote this to generate more unification equations,
-        // which solves more universe levels. However, with latest version Aya (0.13),
-        // removing this does not break anything.
-        // Update: this is still needed, see #327 last task (`coe'`)
-        var resultTy = preRhs.computeType(state, ctx);
-        if (meta.result != null) compareUntyped(resultTy, meta.result, rl, lr);
-        var argSubst = extract(lhs, preRhs, meta);
-        if (argSubst == null) {
-          reporter.report(new HoleProblem.BadSpineError(lhs, pos));
-          yield null;
-        }
-        var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
-        // In this case, the solution may not be unique (see #608),
-        // so we may delay its resolution to the end of the tycking when we disallow vague unification.
-        if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {
-          state.addEqn(createEqn(lhs, preRhs, lr, rl));
-          // Skip the unification and scope check
-          yield meta.result;
-        }
-        subst.add(argSubst);
-        // TODO
-        // TODO: what's the TODO above? I don't know what's TODO? ????
-        rl.map.forEach(subst::add);
-        assert !state.metas().containsKey(meta);
-        var solved = preRhs.freezeHoles(state).subst(subst);
-        var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
-        var scopeCheck = solved.scopeCheck(allowedVars);
-        if (scopeCheck.invalid.isNotEmpty()) {
-          // Normalization may remove the usages of certain variables
-          solved = solved.normalize(state, NormalizeMode.NF);
-          scopeCheck = solved.scopeCheck(allowedVars);
-        }
-        if (scopeCheck.invalid.isNotEmpty()) {
-          reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid, pos));
-          yield new ErrorTerm(solved);
-        }
-        if (scopeCheck.confused.isNotEmpty()) {
-          if (allowConfused) state.addEqn(createEqn(lhs, solved, lr, rl));
-          else {
-            reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused, pos));
-            yield new ErrorTerm(solved);
-          }
-        }
-        if (!meta.solve(state, solved)) {
-          reporter.report(new HoleProblem.RecursionError(lhs, solved, pos));
-          yield new ErrorTerm(solved);
-        }
-        tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-        yield resultTy;
-      }
+      case CallTerm.Hole lhs -> solveMeta(preRhs, lr, rl, lhs);
     };
     traceExit();
     return ret;
+  }
+
+  private @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, CallTerm.Hole lhs) {
+    var meta = lhs.ref();
+    if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
+      // If we do not know the type, then we do not perform the comparison
+      if (meta.result == null) return null;
+      // Is this going to produce a readable error message?
+      compareLevel(lhs.ulift(), rcall.ulift());
+      var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
+      for (var arg : lhs.args().view().zip(rcall.args())) {
+        if (!(holeTy instanceof FormTerm.Pi holePi))
+          throw new IllegalStateException("meta arg size larger than param size. this should not happen");
+        if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
+        holeTy = holePi.substBody(arg._1.term());
+      }
+      return holeTy.subst(Substituter.TermSubst.EMPTY, lhs.ulift());
+    }
+    // Long time ago I wrote this to generate more unification equations,
+    // which solves more universe levels. However, with latest version Aya (0.13),
+    // removing this does not break anything.
+    // Update: this is still needed, see #327 last task (`coe'`)
+    var resultTy = preRhs.computeType(state, ctx);
+    if (meta.result != null) {
+      var liftedType = meta.result.subst(Substituter.TermSubst.EMPTY, lhs.ulift());
+      compareUntyped(resultTy, liftedType, rl, lr);
+    }
+    var argSubst = extract(lhs, preRhs, meta);
+    if (argSubst == null) {
+      reporter.report(new HoleProblem.BadSpineError(lhs, pos));
+      return null;
+    }
+    var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
+    // In this case, the solution may not be unique (see #608),
+    // so we may delay its resolution to the end of the tycking when we disallow vague unification.
+    if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {
+      state.addEqn(createEqn(lhs, preRhs, lr, rl));
+      // Skip the unification and scope check
+      return resultTy;
+    }
+    subst.add(argSubst);
+    // TODO
+    // TODO: what's the TODO above? I don't know what's TODO? ????
+    rl.map.forEach(subst::add);
+    assert !state.metas().containsKey(meta);
+    // TODO: report error if unlifting makes < 0 levels
+    var solved = preRhs.freezeHoles(state).subst(subst, -lhs.ulift());
+    var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
+    var scopeCheck = solved.scopeCheck(allowedVars);
+    if (scopeCheck.invalid.isNotEmpty()) {
+      // Normalization may remove the usages of certain variables
+      solved = solved.normalize(state, NormalizeMode.NF);
+      scopeCheck = solved.scopeCheck(allowedVars);
+    }
+    if (scopeCheck.invalid.isNotEmpty()) {
+      reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid, pos));
+      return new ErrorTerm(solved);
+    }
+    if (scopeCheck.confused.isNotEmpty()) {
+      if (allowConfused) state.addEqn(createEqn(lhs, solved, lr, rl));
+      else {
+        reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused, pos));
+        return new ErrorTerm(solved);
+      }
+    }
+    if (!meta.solve(state, solved)) {
+      reporter.report(new HoleProblem.RecursionError(lhs, solved, pos));
+      return new ErrorTerm(solved);
+    }
+    tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
+    return resultTy;
   }
 
   private boolean compareLevel(int l, int r) {
