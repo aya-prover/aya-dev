@@ -9,6 +9,7 @@ added `Primitives.aya` and more tests, removed the api module, supported qualifi
 supported `open struct`, enhanced projection error message, allowed empty `new` block,
 supported mutual recursion on constructors and fields, restored `LittleTyper`,
 fixed many bugs on simple functions and structs and pattern inference and eta contraction,
+report error on missing pattern for non-splittable types,
 improved `Signatured::toString`, upgraded gradle and codecov reports,
 highlighted `NewExpr` and resolved position in `NewExpr`'s fields and bindings in the language server,
 stored field resolving result in `NewExpr`, ensured pi body normalized.
