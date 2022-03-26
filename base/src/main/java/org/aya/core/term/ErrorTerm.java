@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @param isReallyError true if this is indeed an error,
  *                      false if this is just for pretty printing placeholder
  * @author ice1000
- * @see CoreDistiller#visitError(ErrorTerm, BaseDistiller.Outer)
+ * @see CoreDistiller#term(BaseDistiller.Outer, Term) (ErrorTerm case)
  */
 public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) implements Term {
   public ErrorTerm(@NotNull Term description) {
