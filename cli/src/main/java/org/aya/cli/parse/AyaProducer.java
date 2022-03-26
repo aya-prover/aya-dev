@@ -113,7 +113,7 @@ public record AyaProducer(
   }
 
   public Generalize visitGeneralize(AyaParser.GeneralizeContext ctx) {
-    return new Generalize.Variables(sourcePosOf(ctx), visitIds(ctx.ids())
+    return new Generalize(sourcePosOf(ctx), visitIds(ctx.ids())
       .map(id -> new GeneralizedVar(id.data(), id.sourcePos()))
       .collect(ImmutableSeq.factory()), visitType(ctx.type()));
   }

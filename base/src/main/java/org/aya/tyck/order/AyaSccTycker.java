@@ -140,13 +140,14 @@ public record AyaSccTycker(
   }
 
   private void decideTyckResult(@NotNull Decl decl, @NotNull Def def) {
-    if (decl.personality == Decl.Personality.NORMAL)
-      wellTyped.append(def);
-    else if (decl.personality == Decl.Personality.COUNTEREXAMPLE) {
-      var sampleReporter = sampleReporters.getOrPut(decl, BufferReporter::new);
-      var problems = sampleReporter.problems().toImmutableSeq();
-      if (problems.isEmpty()) reporter.report(new CounterexampleError(decl.sourcePos, decl.ref()));
-      if (def instanceof UserDef userDef) userDef.problems = problems;
+    switch (decl.personality) {
+      case NORMAL -> wellTyped.append(def);
+      case COUNTEREXAMPLE -> {
+        var sampleReporter = sampleReporters.getOrPut(decl, BufferReporter::new);
+        var problems = sampleReporter.problems().toImmutableSeq();
+        if (problems.isEmpty()) reporter.report(new CounterexampleError(decl.sourcePos, decl.ref()));
+        if (def instanceof UserDef userDef) userDef.problems = problems;
+      }
     }
   }
 

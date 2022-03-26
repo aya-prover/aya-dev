@@ -192,7 +192,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         }
         yield Doc.sep(prelude);
       }
-      case Generalize.Variables variables -> Doc.sep(Doc.styled(KEYWORD, "variables"), visitTele(variables.toExpr()));
+      case Generalize variables -> Doc.sep(Doc.styled(KEYWORD, "variables"), visitTele(variables.toExpr()));
       case Remark remark -> {
         var literate = remark.literate;
         yield literate != null ? literate.toDoc() : Doc.plain(remark.raw);

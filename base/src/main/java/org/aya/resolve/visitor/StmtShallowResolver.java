@@ -98,7 +98,7 @@ public record StmtShallowResolver(
         });
       }
       case Remark remark -> remark.ctx = context;
-      case Generalize.Variables variables -> {
+      case Generalize variables -> {
         variables.ctx = context;
         for (var variable : variables.variables)
           context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
@@ -169,7 +169,7 @@ public record StmtShallowResolver(
     var ctx = switch (decl.personality) {
       case NORMAL -> context;
       case EXAMPLE -> exampleContext(context);
-      case COUNTEREXAMPLE -> exampleContext(context).derive("counter");
+      case COUNTEREXAMPLE -> exampleContext(context).derive(decl.ref().name());
     };
     decl.ctx = ctx;
     decl.ref().module = ctx.moduleName();

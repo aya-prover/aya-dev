@@ -101,7 +101,7 @@ public interface StmtResolver {
       }
       case Remark remark -> info.depGraph().sucMut(new TyckOrder.Body(remark)).appendAll(remark.doResolve(info));
       case Command cmd -> {}
-      case Generalize.Variables variables -> {
+      case Generalize variables -> {
         var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
         resolver.enterBody();
         variables.type = variables.type.accept(resolver, variables.ctx);

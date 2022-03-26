@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public final class GeneralizedVar implements Var {
   public final @NotNull String name;
   public final @NotNull SourcePos sourcePos;
-  public Generalize.Variables owner;
+  public Generalize owner;
 
   public GeneralizedVar(@NotNull String name, @NotNull SourcePos sourcePos) {
     this.name = name;
