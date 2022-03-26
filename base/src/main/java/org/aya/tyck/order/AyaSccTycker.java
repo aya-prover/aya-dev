@@ -10,9 +10,9 @@ import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Sample;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
@@ -22,8 +22,11 @@ import org.aya.terck.error.NonTerminating;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
+import org.aya.tyck.error.CounterexampleError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.MutableGraph;
+import org.aya.util.reporter.BufferReporter;
+import org.aya.util.reporter.CollectingReporter;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.SCCTycker;
@@ -42,11 +45,12 @@ public record AyaSccTycker(
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull DynamicSeq<@NotNull Def> wellTyped,
-  @NotNull MutableMap<TyckUnit, ExprTycker> tyckerReuse
+  @NotNull MutableMap<Decl, ExprTycker> tyckerReuse,
+  @NotNull MutableMap<Decl, CollectingReporter> sampleReporters
 ) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
-    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, DynamicSeq.create(), MutableMap.create());
+    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, DynamicSeq.create(), MutableMap.create(), MutableMap.create());
   }
 
   public @NotNull ImmutableSeq<TyckOrder> tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) {
@@ -104,7 +108,7 @@ public record AyaSccTycker(
       reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
-    wellTyped.append(tycker.simpleFn(tycker.newTycker(), fn));
+    decideTyckResult(fn, tycker.simpleFn(tycker.newTycker(), fn));
   }
 
   private void check(@NotNull TyckOrder tyckOrder) {
@@ -119,7 +123,6 @@ public record AyaSccTycker(
       case Decl decl -> tycker.tyckHeader(decl, reuse(decl));
       case Decl.DataCtor ctor -> tycker.tyckHeader(ctor, reuse(ctor.dataRef.concrete));
       case Decl.StructField field -> tycker.tyckHeader(field, reuse(field.structRef.concrete));
-      case Sample sample -> sample.tyckHeader(tycker, reuse(sample));
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
@@ -127,24 +130,32 @@ public record AyaSccTycker(
 
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
-      case Decl decl -> wellTyped.append(tycker.tyck(decl, reuse(decl)));
+      case Decl decl -> decideTyckResult(decl, tycker.tyck(decl, reuse(decl)));
       case Decl.DataCtor ctor -> tycker.tyck(ctor, reuse(ctor.dataRef.concrete));
       case Decl.StructField field -> tycker.tyck(field, reuse(field.structRef.concrete));
-      case Sample sample -> {
-        var tyck = sample.tyck(tycker, reuse(sample));
-        if (tyck != null) wellTyped.append(tyck);
-      }
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
-  private @NotNull ExprTycker reuse(@NotNull TyckUnit unit) {
-    // counter examples have special problem handlers on their own
-    if (unit instanceof Sample.Counter counter)
-      return tyckerReuse.getOrPut(unit, () -> new ExprTycker(counter.reporter(), tycker.traceBuilder()));
-    return tyckerReuse.getOrPut(unit, tycker::newTycker);
+  private void decideTyckResult(@NotNull Decl decl, @NotNull Def def) {
+    switch (decl.personality) {
+      case NORMAL -> wellTyped.append(def);
+      case COUNTEREXAMPLE -> {
+        var sampleReporter = sampleReporters.getOrPut(decl, BufferReporter::new);
+        var problems = sampleReporter.problems().toImmutableSeq();
+        if (problems.isEmpty()) reporter.report(new CounterexampleError(decl.sourcePos, decl.ref()));
+        if (def instanceof UserDef userDef) userDef.problems = problems;
+      }
+    }
+  }
+
+  private @NotNull ExprTycker reuse(@NotNull Decl decl) {
+    // prevent counterexample errors from being reported to the user reporter
+    if (decl.personality == Decl.Personality.COUNTEREXAMPLE)
+      return tyckerReuse.getOrPut(decl, () -> new ExprTycker(sampleReporters.getOrPut(decl, BufferReporter::new), tycker.traceBuilder()));
+    return tyckerReuse.getOrPut(decl, tycker::newTycker);
   }
 
   private void terck(@NotNull SeqView<TyckOrder> units) {

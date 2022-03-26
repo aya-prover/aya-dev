@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public sealed interface Stmt extends AyaDocile, TyckUnit
-  permits Command, Decl, Generalize, Remark, Sample {
+  permits Command, Decl, Generalize, Remark {
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
@@ -59,9 +59,7 @@ public sealed interface Stmt extends AyaDocile, TyckUnit
     R visitOpen(@NotNull Command.Open cmd, P p);
     R visitModule(@NotNull Command.Module mod, P p);
     R visitRemark(@NotNull Remark remark, P p);
-    R visitVariables(@NotNull Generalize.Variables variables, P p);
-    R visitExample(@NotNull Sample.Working example, P p);
-    R visitCounterexample(@NotNull Sample.Counter example, P p);
+    R visitGeneralize(@NotNull Generalize generalize, P p);
   }
 
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);

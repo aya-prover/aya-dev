@@ -65,7 +65,8 @@ public record StmtShallowResolver(
         var mod = cmd.path().ids();
         var acc = cmd.accessibility();
         var useHide = cmd.useHide();
-        context.openModule(
+        var ctx = cmd.openExample() ? exampleContext(context) : context;
+        ctx.openModule(
           mod,
           acc,
           useHide::uses,
@@ -81,7 +82,7 @@ public record StmtShallowResolver(
         // renaming as infix
         if (useHide.strategy() == Command.Open.UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
-          var symbol = context.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
+          var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
           var defVar = (DefVar<?, ?>) symbol;
           var argc = defVar.core != null
@@ -91,42 +92,30 @@ public record StmtShallowResolver(
           defVar.opDeclRename.put(resolveInfo.thisModule().moduleName(), rename);
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) {
-            bind.context().value = context;
+            bind.context().value = ctx;
             resolveInfo.bindBlockRename().put(rename, bind);
           }
         });
       }
       case Remark remark -> remark.ctx = context;
-      case Generalize.Variables variables -> {
+      case Generalize variables -> {
         variables.ctx = context;
         for (var variable : variables.variables)
           context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
       }
-      case Sample.Working example -> {
-        if (example.delegate() instanceof Decl decl) decl.ownerSample = example;
-        resolveStmt(example.delegate(), exampleContext(context));
-      }
-      case Sample.Counter example -> {
-        example.delegate().ownerSample = example;
-        var childCtx = exampleContext(context).derive("counter");
-        var delegate = example.delegate();
-        delegate.ctx = childCtx;
-        delegate.ref().module = childCtx.moduleName();
-        childCtx.addGlobalSimple(Stmt.Accessibility.Private, delegate.ref(), delegate.sourcePos);
-      }
       case Decl.DataDecl decl -> {
-        resolveDecl(decl, context);
-        var innerCtx = resolveChildren(decl, context, d -> d.body.view(), this::resolveCtor);
+        var ctx = resolveDecl(decl, context);
+        var innerCtx = resolveChildren(decl, ctx, d -> d.body.view(), this::resolveCtor);
         resolveOpInfo(decl, innerCtx);
       }
       case Decl.StructDecl decl -> {
-        resolveDecl(decl, context);
-        var innerCtx = resolveChildren(decl, context, s -> s.fields.view(), this::resolveField);
+        var ctx = resolveDecl(decl, context);
+        var innerCtx = resolveChildren(decl, ctx, s -> s.fields.view(), this::resolveField);
         resolveOpInfo(decl, innerCtx);
       }
       case Decl.FnDecl decl -> {
-        resolveDecl(decl, context);
-        resolveOpInfo(decl, context);
+        var ctx = resolveDecl(decl, context);
+        resolveOpInfo(decl, ctx);
       }
       case Decl.PrimDecl decl -> {
         var name = decl.ref.name();
@@ -176,10 +165,16 @@ public record StmtShallowResolver(
     }
   }
 
-  private void resolveDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
-    decl.ref().module = context.moduleName();
-    context.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
-    decl.ctx = context;
+  private @NotNull ModuleContext resolveDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
+    var ctx = switch (decl.personality) {
+      case NORMAL -> context;
+      case EXAMPLE -> exampleContext(context);
+      case COUNTEREXAMPLE -> exampleContext(context).derive(decl.ref().name());
+    };
+    decl.ctx = ctx;
+    decl.ref().module = ctx.moduleName();
+    ctx.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos);
+    return ctx;
   }
 
   private @NotNull NoExportContext exampleContext(@NotNull ModuleContext context) {

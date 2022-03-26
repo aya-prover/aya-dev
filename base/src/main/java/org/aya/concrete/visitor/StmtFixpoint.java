@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -33,8 +33,10 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
     return switch (pattern) {
       case Pattern.BinOpSeq seq -> visitBinOpPattern(seq, pp);
-      case Pattern.Ctor ctor -> new Pattern.Ctor(ctor.sourcePos(), ctor.explicit(), ctor.resolved(), ctor.params().map(p -> visitPattern(p, pp)), ctor.as());
-      case Pattern.Tuple tup -> new Pattern.Tuple(tup.sourcePos(), tup.explicit(), tup.patterns().map(p -> visitPattern(p, pp)), tup.as());
+      case Pattern.Ctor ctor ->
+        new Pattern.Ctor(ctor.sourcePos(), ctor.explicit(), ctor.resolved(), ctor.params().map(p -> visitPattern(p, pp)), ctor.as());
+      case Pattern.Tuple tup ->
+        new Pattern.Tuple(tup.sourcePos(), tup.explicit(), tup.patterns().map(p -> visitPattern(p, pp)), tup.as());
       default -> pattern;
     };
   }
@@ -95,16 +97,8 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
     return Unit.unit();
   }
 
-  @Override default Unit visitVariables(Generalize.@NotNull Variables variables, P p) {
+  @Override default Unit visitGeneralize(@NotNull Generalize variables, P p) {
     variables.type = variables.type.accept(this, p);
     return Unit.unit();
-  }
-
-  @Override default Unit visitExample(Sample.@NotNull Working example, P p) {
-    return example.delegate().accept(this, p);
-  }
-
-  @Override default Unit visitCounterexample(Sample.@NotNull Counter example, P p) {
-    return example.delegate().accept(this, p);
   }
 }

@@ -15,10 +15,8 @@ stmt : decl
      | module
      | remark
      | generalize
-     | sample
      ;
 
-sample : (EXAMPLE | COUNTEREXAMPLE) decl ;
 remark : DOC_COMMENT+;
 
 importCmd : IMPORT qualifiedId (AS ID)?;
@@ -36,6 +34,8 @@ generalize : VARIABLE ids type ;
 
 // declarations
 
+sampleModifiers : EXAMPLE | COUNTEREXAMPLE;
+
 decl : PRIVATE?
      ( fnDecl
      | structDecl
@@ -52,7 +52,7 @@ bindBlock : BIND_KW (TIGHTER | LOOSER) qIdsComma
 tighters : TIGHTER qIdsComma;
 loosers : LOOSER qIdsComma;
 
-fnDecl : DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?;
+fnDecl : sampleModifiers? DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?;
 
 fnBody : IMPLIES expr
        | (BAR clause)* ;
@@ -63,7 +63,7 @@ fnModifiers : OPAQUE
             | PATTERN_KW
             ;
 
-structDecl : (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
+structDecl : sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
 
 primDecl : PRIM ID tele* type? ;
 
@@ -71,7 +71,7 @@ field : COERCE? declNameOrInfix tele* type clauses? bindBlock? # fieldDecl
       | declNameOrInfix tele* type? IMPLIES expr    bindBlock? # fieldImpl
       ;
 
-dataDecl : (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* bindBlock?;
+dataDecl : sampleModifiers? (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* bindBlock?;
 
 dataBody : (BAR dataCtor)       # dataCtors
          | dataCtorClause       # dataClauses

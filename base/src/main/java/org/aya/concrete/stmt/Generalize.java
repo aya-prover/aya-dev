@@ -11,43 +11,41 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public sealed interface Generalize extends Stmt {
-  @Override default @NotNull Accessibility accessibility() {
+public final class Generalize implements Stmt {
+  @Override public @NotNull Accessibility accessibility() {
     return Accessibility.Private;
   }
 
-  @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
+  @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     // commands are desugared in the shallow resolver
     return false;
   }
 
-  final class Variables implements Generalize {
-    public final @NotNull SourcePos sourcePos;
-    public final @NotNull ImmutableSeq<GeneralizedVar> variables;
-    public @NotNull Expr type;
-    public @Nullable Context ctx = null;
+  public final @NotNull SourcePos sourcePos;
+  public final @NotNull ImmutableSeq<GeneralizedVar> variables;
+  public @NotNull Expr type;
+  public @Nullable Context ctx = null;
 
-    public Variables(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<GeneralizedVar> variables, @NotNull Expr type) {
-      this.sourcePos = sourcePos;
-      this.variables = variables;
-      this.type = type;
-      variables.forEach(variable -> variable.owner = this);
-    }
+  public Generalize(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<GeneralizedVar> variables, @NotNull Expr type) {
+    this.sourcePos = sourcePos;
+    this.variables = variables;
+    this.type = type;
+    variables.forEach(variable -> variable.owner = this);
+  }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitVariables(this, p);
-    }
+  @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+    return visitor.visitGeneralize(this, p);
+  }
 
-    public @NotNull Expr.Param toExpr(boolean explicit, @NotNull LocalVar ref) {
-      return new Expr.Param(sourcePos, ref, type, false, explicit);
-    }
+  public @NotNull Expr.Param toExpr(boolean explicit, @NotNull LocalVar ref) {
+    return new Expr.Param(sourcePos, ref, type, false, explicit);
+  }
 
-    public @NotNull ImmutableSeq<Expr.Param> toExpr() {
-      return variables.map(one -> toExpr(true, one.toLocal()));
-    }
+  public @NotNull ImmutableSeq<Expr.Param> toExpr() {
+    return variables.map(one -> toExpr(true, one.toLocal()));
+  }
 
-    public @NotNull SourcePos sourcePos() {
-      return sourcePos;
-    }
+  public @NotNull SourcePos sourcePos() {
+    return sourcePos;
   }
 }

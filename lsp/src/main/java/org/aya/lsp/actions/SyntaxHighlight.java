@@ -61,11 +61,11 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
   }
 
   @Override
-  public Unit visitVariables(@NotNull Generalize.Variables variables, @NotNull DynamicSeq<HighlightResult.Symbol> symbols) {
+  public Unit visitGeneralize(@NotNull Generalize variables, @NotNull DynamicSeq<HighlightResult.Symbol> symbols) {
     for (var generalized : variables.variables)
       symbols.append(new HighlightResult.Symbol(LspRange.toRange(generalized.sourcePos),
         HighlightResult.Symbol.Kind.Generalize));
-    return StmtConsumer.super.visitVariables(variables, symbols);
+    return StmtConsumer.super.visitGeneralize(variables, symbols);
   }
 
   // endregion

@@ -10,7 +10,6 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.ref.DefVar;
@@ -114,7 +113,6 @@ public record ExprResolver(
             // Collecting tyck order for tycked terms is unnecessary, just skip.
             assert ref.core != null; // ensure it is tycked
           }
-          case TyckUnit unit && unit instanceof Decl decl && decl.ownerSample != null -> addReference(decl.ownerSample);
           case TyckUnit unit -> addReference(unit);
         }
         yield new Expr.RefExpr(sourcePos, ref);
