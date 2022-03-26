@@ -99,6 +99,22 @@ public sealed interface ClausesProblem extends Problem {
     }
   }
 
+  /**
+   * @author ice1000
+   */
+  record MissingBindCase(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull Term.Param param,
+    @NotNull Term typeNF
+  ) implements ClausesProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(Doc.english("The parameter:"),
+        Doc.par(1, param.toDoc(options)),
+        Doc.par(1, Doc.parened(Doc.sep(Doc.english("Normalized:"), typeNF.toDoc(options)))),
+        Doc.english("requires a binding in the patterns"));
+    }
+  }
+
   record SplitInterval(@Override @NotNull SourcePos sourcePos, @NotNull Pat pat) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(

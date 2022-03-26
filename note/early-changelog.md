@@ -2,6 +2,31 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.16
+
+Supported `import as` and renaming open and renaming as infix,
+added `Primitives.aya` and more tests, removed the api module, supported qualified projection on struct,
+supported `open struct`, enhanced projection error message, allowed empty `new` block,
+supported mutual recursion on constructors and fields, restored `LittleTyper`,
+fixed many bugs on simple functions and structs and pattern inference and eta contraction,
+report error on missing pattern for non-splittable types,
+improved `Signatured::toString`, upgraded gradle and codecov reports,
+highlighted `NewExpr` and resolved position in `NewExpr`'s fields and bindings in the language server,
+stored field resolving result in `NewExpr`, ensured pi body normalized.
+
++ Added the support for mutual recursion on constructors and fields
+  + Header and body orders are generated at the same time, which is done by recording the part (header or body) where the resolver is working on.
+  + Constructors and fields are treated as top-level definitions during resolving and tyck order inference.
+  + Expr Resolver now has a hierarchical structure since we will treat constructors' and fields' dependencies as the body dependencies of the corresponding data and struct.
++ Overhauled the level system
+  + remove universe polymorphism and its things such as `lmax`, `lsuc` in concrete and surface
+  + implement McBride universe and its liftings
++ Resolved projection early
+  + Struct fields are resolved in the resolver instead of the type checker.
+  + Structs can be `open`ed like `data`s.
+  + Fields can be projected by qualified names like `p.Paths::at`
+
+
 ## 0.15
 
 Supported command line module path and load libraries, set `resolveInfo` in module loader,

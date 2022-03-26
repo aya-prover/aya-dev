@@ -160,8 +160,11 @@ public record PatClassifier(
     // We're gonna split on this type
     var target = telescope.first();
     var explicit = target.explicit();
-    switch (target.type().normalize(state, NormalizeMode.WHNF)) {
+    var normalize = target.type().normalize(state, NormalizeMode.WHNF);
+    switch (normalize) {
       default -> {
+        if (subPatsSeq.isEmpty() && coverage)
+          reporter.report(new ClausesProblem.MissingBindCase(pos, target, normalize));
       }
       // The type is sigma type, and do we have any non-catchall patterns?
       // Note that we cannot have ill-typed patterns such as constructor patterns,

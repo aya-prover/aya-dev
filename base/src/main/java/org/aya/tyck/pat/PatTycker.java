@@ -120,8 +120,10 @@ public final class PatTycker {
     if (noError()) {
       var classes = PatClassifier.classify(lhsResults.view().map(LhsResult::preclause),
         signature.param(), exprTycker, overallPos, true);
-      var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
-      // refinePatterns(lhsResults, usages, classes);
+      if (clauses.isNotEmpty()) {
+        var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
+        // refinePatterns(lhsResults, usages, classes);
+      }
     }
     return checkAllRhs(lhsResults, resultPos, signature.result());
   }
