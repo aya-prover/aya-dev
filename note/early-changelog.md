@@ -18,12 +18,10 @@ stored field resolving result in `NewExpr`, ensured pi body normalized.
   + Constructors and fields are treated as top-level definitions during resolving and tyck order inference.
   + Expr Resolver now has a hierarchical structure since we will treat constructors' and fields' dependencies as the body dependencies of the corresponding data and struct.
 + Overhauled the level system
-  + remove universe polymorphism
-  + remove `lmax`, `lsuc`, etc. things in concrete and surface
-  + prepare for McBride universe liftings
-  + implement McBride universe (even cruder stratification)
+  + remove universe polymorphism and its things such as `lmax`, `lsuc` in concrete and surface
+  + implement McBride universe and its liftings
 + Resolved projection early
-  + Struct fields are resolved in the resolver instead of the tycker.
+  + Struct fields are resolved in the resolver instead of the type checker.
   + Structs can be `open`ed like `data`s.
   + Fields can be projected by qualified names like `p.Paths::at`
 
