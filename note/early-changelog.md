@@ -2,6 +2,8 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.17
+
 ## 0.16
 
 Supported `import as` and renaming open and renaming as infix,

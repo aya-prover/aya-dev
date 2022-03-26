@@ -4,18 +4,18 @@ package org.aya.core.pat;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.util.distill.DistillerOptions;
-import org.aya.ref.LocalVar;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * The unification of patterns. This is <strong>not</strong> pattern unification.
  *
  * @author ice1000
- * @see PatUnify#unifyPat(SeqLike, SeqLike, TermSubst, TermSubst)
+ * @see PatUnify#unifyPat(SeqLike, SeqLike, TermSubst, TermSubst, LocalCtx)
  */
 public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst, @NotNull LocalCtx ctx) {
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
