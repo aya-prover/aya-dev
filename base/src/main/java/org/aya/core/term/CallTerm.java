@@ -36,7 +36,7 @@ public sealed interface CallTerm extends Term {
   make(@NotNull Term f, @NotNull Arg<Term> arg) {
     if (f instanceof Hole hole) {
       if (hole.args.sizeLessThan(hole.ref.telescope))
-        return new Hole(hole.ref, hole.contextArgs, hole.args.appended(arg));
+        return new Hole(hole.ref, hole.ulift, hole.contextArgs, hole.args.appended(arg));
     }
     if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, 0, arg);
     return make(lam, arg);
@@ -149,11 +149,12 @@ public sealed interface CallTerm extends Term {
    */
   record Hole(
     @NotNull Meta ref,
+    int ulift,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
   ) implements CallTerm {
     public @NotNull FormTerm.Pi asPi(boolean explicit) {
-      return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, contextArgs);
+      return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, ulift, contextArgs);
     }
 
     public @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {
@@ -162,11 +163,6 @@ public sealed interface CallTerm extends Term {
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitHole(this, p);
-    }
-
-    @Override public int ulift() {
-      // TODO[lift-meta]: we should be able to lift a meta
-      return 0;
     }
   }
 
