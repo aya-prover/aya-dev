@@ -144,11 +144,11 @@ public interface TermView {
   }
 
   default TermView postMap(Function<Term, Term> f) {
-    return new TermPostMap(this, f);
+    return new TermMap(this, t -> t, f);
   }
 
   default TermView preMap(Function<Term, Term> f) {
-    return new TermPreMap(this, f);
+    return new TermMap(this, f, t -> t);
   }
 
   default TermView map(Function<Term, Term> pre, Function<Term, Term> post) {
