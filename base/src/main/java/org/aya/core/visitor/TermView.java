@@ -13,22 +13,6 @@ import java.util.function.Function;
 public interface TermView {
   Term initial();
 
-  default TermView lift(int shift) {
-    return new TermLift(this, shift);
-  }
-
-  default TermView postMap(Function<Term, Term> f) {
-    return new TermPostMap(this, f);
-  }
-
-  default TermView preMap(Function<Term, Term> f) {
-    return new TermPreMap(this, f);
-  }
-
-  default TermView map(Function<Term, Term> pre, Function<Term, Term> post) {
-    return new TermMap(this, pre, post);
-  }
-
   default Term pre(Term term) {
     return term;
   }
@@ -153,5 +137,21 @@ public interface TermView {
 
   default Term commit() {
     return commit(initial());
+  }
+
+  default TermView lift(int shift) {
+    return new TermLift(this, shift);
+  }
+
+  default TermView postMap(Function<Term, Term> f) {
+    return new TermPostMap(this, f);
+  }
+
+  default TermView preMap(Function<Term, Term> f) {
+    return new TermPreMap(this, f);
+  }
+
+  default TermView map(Function<Term, Term> pre, Function<Term, Term> post) {
+    return new TermMap(this, pre, post);
   }
 }

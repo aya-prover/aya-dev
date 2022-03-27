@@ -216,4 +216,8 @@ public sealed interface Term extends AyaDocile permits
     }
   }
 
+  default TermView view() {
+    var term = this;
+    return () -> term;
+  }
 }
