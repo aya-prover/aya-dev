@@ -66,7 +66,7 @@ public record AyaProducer(
   }
 
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
-    var id = ctx.ID();
+    var id = ctx.weakId();
     var name = id.getText();
     var sourcePos = sourcePosOf(id);
     var type = ctx.type();
@@ -161,7 +161,7 @@ public record AyaProducer(
 
   public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx, int argc) {
     var assoc = ctx.assoc();
-    var id = ctx.ID();
+    var id = ctx.weakId();
     var txt = id.getText();
     var pos = sourcePosOf(id);
     if (assoc == null) return Tuple.of(new WithPos<>(pos, txt), null);
@@ -243,7 +243,7 @@ public record AyaProducer(
 
   public QualifiedID visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
     return new QualifiedID(sourcePosOf(ctx),
-      ctx.ID().stream().map(ParseTree::getText)
+      ctx.weakId().stream().map(ParseTree::getText)
         .collect(ImmutableSeq.factory()));
   }
 
@@ -357,7 +357,7 @@ public record AyaProducer(
       case AyaParser.NewContext n -> new Expr.NewExpr(
         sourcePosOf(n), visitExpr(n.expr()),
         ImmutableSeq.from(n.newArg())
-          .map(na -> new Expr.Field(new WithPos<>(sourcePosOf(na.ID()), na.ID().getText()), visitIds(na.ids())
+          .map(na -> new Expr.Field(new WithPos<>(sourcePosOf(na.weakId()), na.weakId().getText()), visitIds(na.ids())
             .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
             .collect(ImmutableSeq.factory()), visitExpr(na.expr()), new Ref<>())));
       case AyaParser.NewEmptyContext n -> new Expr.NewExpr(
@@ -404,7 +404,7 @@ public record AyaProducer(
       return new Expr.NamedArg(true, projected);
     }
     // assert ctx.LBRACE() != null;
-    var id = ctx.ID();
+    var id = ctx.weakId();
     if (id != null) return new Expr.NamedArg(false, id.getText(), visitExpr(ctx.expr()));
     var items = ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
     if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.first()));
@@ -583,7 +583,7 @@ public record AyaProducer(
       var forceEx = ctx.LPAREN() != null;
       var patterns = ctx.patterns();
       if (patterns == null) return ex -> new Pattern.Absurd(sourcePos, ex);
-      var id = ctx.ID();
+      var id = ctx.weakId();
       var as = id != null ? new LocalVar(id.getText(), sourcePosOf(id)) : null;
       var tupElem = Seq.from(patterns.pattern()).view()
         .map(t -> visitAtomPatterns(t.atomPatterns()))
@@ -595,7 +595,7 @@ public record AyaProducer(
     if (ctx.CALM_FACE() != null) return ex -> new Pattern.CalmFace(sourcePos, ex);
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
-    var id = ctx.ID();
+    var id = ctx.weakId();
     if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)));
 
     return unreachable(ctx);
@@ -691,7 +691,7 @@ public record AyaProducer(
   }
 
   public @NotNull Stmt visitImportCmd(AyaParser.ImportCmdContext ctx) {
-    final var id = ctx.ID();
+    final var id = ctx.weakId();
     return new Command.Import(
       sourcePosOf(ctx.qualifiedId()),
       visitQualifiedId(ctx.qualifiedId()),
@@ -741,10 +741,10 @@ public record AyaProducer(
 
   public Stream<Command.Open.UseHideName> visitUseIdsComma(@NotNull AyaParser.UseIdsCommaContext ctx) {
     return ctx.useId().stream().map(id -> {
-      var name = id.ID().getText();
+      var name = id.weakId().getText();
       var useAs = id.useAs();
       if (useAs == null) return new Command.Open.UseHideName(name, name, Assoc.Invalid, BindBlock.EMPTY);
-      var asId = useAs.ID().getText();
+      var asId = useAs.weakId().getText();
       var asAssoc = useAs.assoc();
       var asBind = useAs.bindBlock();
       return new Command.Open.UseHideName(name, asId,
@@ -759,7 +759,7 @@ public record AyaProducer(
   }
 
   public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {
-    var id = ctx.ID();
+    var id = ctx.weakId();
     return new Command.Module(
       sourcePosOf(id), id.getText(),
       ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt)
@@ -767,11 +767,11 @@ public record AyaProducer(
   }
 
   public @NotNull Stream<WithPos<String>> visitIds(AyaParser.IdsContext ctx) {
-    return ctx.ID().stream().map(id -> new WithPos<>(sourcePosOf(id), id.getText()));
+    return ctx.weakId().stream().map(id -> new WithPos<>(sourcePosOf(id), id.getText()));
   }
 
   public @NotNull Stream<String> visitIdsComma(AyaParser.IdsCommaContext ctx) {
-    return ctx.ID().stream().map(ParseTree::getText);
+    return ctx.weakId().stream().map(ParseTree::getText);
   }
 
   public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {

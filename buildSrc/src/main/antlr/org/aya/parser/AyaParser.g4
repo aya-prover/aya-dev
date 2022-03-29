@@ -6,7 +6,7 @@ options { tokenVocab = AyaLexer; }
 
 program : stmt* EOF;
 
-repl : stmt+ | ID? expr ;
+repl : stmt+ | REPL_COMMAND? expr ;
 
 // statements
 stmt : decl
@@ -19,16 +19,16 @@ stmt : decl
 
 remark : DOC_COMMENT+;
 
-importCmd : IMPORT qualifiedId (AS ID)?;
+importCmd : IMPORT qualifiedId (AS weakId)?;
 openCmd : PUBLIC? OPEN IMPORT? qualifiedId useHide?;
-module : MODULE_KW ID LBRACE stmt* RBRACE;
+module : MODULE_KW weakId LBRACE stmt* RBRACE;
 
 useHide : USING useList+ | HIDING hideList+;
 hideList : LPAREN idsComma RPAREN;
 useList : LPAREN useIdsComma RPAREN;
 useIdsComma : (useId COMMA)* useId?;
-useId : ID useAs?;
-useAs : AS assoc? ID bindBlock?;
+useId : weakId useAs?;
+useAs : AS assoc? weakId bindBlock?;
 
 generalize : VARIABLE ids type ;
 
@@ -45,7 +45,7 @@ decl : PRIVATE?
 
 assoc : INFIX | INFIXL | INFIXR;
 
-declNameOrInfix : ID | assoc ID;
+declNameOrInfix : weakId | assoc weakId;
 
 bindBlock : BIND_KW (TIGHTER | LOOSER) qIdsComma
           | BIND_KW LBRACE (tighters | loosers)* RBRACE ;
@@ -65,7 +65,7 @@ fnModifiers : OPAQUE
 
 structDecl : sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
 
-primDecl : PRIM ID tele* type? ;
+primDecl : PRIM weakId tele* type? ;
 
 field : COERCE? declNameOrInfix tele* type clauses? bindBlock? # fieldDecl
       | declNameOrInfix tele* type? IMPLIES expr    bindBlock? # fieldImpl
@@ -95,7 +95,7 @@ expr : atom                                 # single
      | MATCH exprList clauses               # match
      ;
 
-newArg : BAR ID ids IMPLIES expr;
+newArg : BAR weakId ids IMPLIES expr;
 
 // ulift is written here because we want `x ulift + y` to work
 atom : ULIFT* literal
@@ -104,7 +104,7 @@ atom : ULIFT* literal
 
 argument : atom projFix*
          | LBRACE exprList RBRACE
-         | LBRACE ID IMPLIES expr? RBRACE
+         | LBRACE weakId IMPLIES expr? RBRACE
          ;
 
 projFix : DOT (NUMBER | qualifiedId);
@@ -117,11 +117,11 @@ pattern : atomPatterns
         ;
 
 atomPatterns : atomPattern+ ;
-atomPattern : LPAREN patterns RPAREN (AS ID)?
-            | LBRACE patterns RBRACE (AS ID)?
+atomPattern : LPAREN patterns RPAREN (AS weakId)?
+            | LBRACE patterns RBRACE (AS weakId)?
             | NUMBER
             | LPAREN RPAREN
-            | ID
+            | weakId
             | CALM_FACE
             ;
 
@@ -146,9 +146,10 @@ teleMaybeTypedExpr : PATTERN_KW? ids type?;
 
 // utilities
 exprList : (expr COMMA)* expr?;
-idsComma : (ID COMMA)* ID?;
+idsComma : (weakId COMMA)* weakId?;
 qIdsComma : (qualifiedId COMMA)* qualifiedId?;
-ids : ID*;
+ids : weakId*;
 type : COLON expr;
 
-qualifiedId : ID (COLON2 ID)*;
+qualifiedId : weakId (COLON2 weakId)*;
+weakId : ID | REPL_COMMAND;
