@@ -57,8 +57,7 @@ public record CliReporter(
   ) {
     var doc = problem.sourcePos() == SourcePos.NONE ? problem.describe(options) : problem.toPrettyError(options).toDoc();
     if (supportAnsi) {
-      var config = StringPrinterConfig.unixTerminal(pageWidth, unicode);
-      config.getStylist().setStyleFamily(AyaStyleFamily.ADAPTIVE_CLI);
+      var config = StringPrinterConfig.unixTerminal(AyaStyleFamily.ADAPTIVE_CLI, pageWidth, unicode);
       return doc.renderToString(config);
     }
     return doc.renderWithPageWidth(pageWidth, unicode);
