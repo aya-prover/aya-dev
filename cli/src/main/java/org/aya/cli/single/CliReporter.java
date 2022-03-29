@@ -2,13 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.printer.PrinterConfig;
-import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.reporter.ThrowingReporter;
 import org.fusesource.jansi.AnsiConsole;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,7 @@ public record CliReporter(
     if (level.ordinal() > minimum.ordinal()
       // If it's `SourcePos.NONE`, it's a compiler output!
       && problem.sourcePos() != SourcePos.NONE) return;
-    var errorMsg = errorMessage(problem, options.get(), unicode.getAsBoolean(), supportAnsi, terminalWidth());
+    var errorMsg = ThrowingReporter.errorMessage(problem, options.get(), unicode.getAsBoolean(), supportAnsi, terminalWidth());
     if (level == Problem.Severity.ERROR || level == Problem.Severity.WARN) err.accept(errorMsg);
     else out.accept(errorMsg);
   }
@@ -49,17 +48,5 @@ public record CliReporter(
     int w = AnsiConsole.getTerminalWidth();
     // output is redirected to a file, so it has infinite width
     return w <= 0 ? PrinterConfig.INFINITE_SIZE : w;
-  }
-
-  public static @NotNull String errorMessage(
-    @NotNull Problem problem, @NotNull DistillerOptions options,
-    boolean unicode, boolean supportAnsi, int pageWidth
-  ) {
-    var doc = problem.sourcePos() == SourcePos.NONE ? problem.describe(options) : problem.toPrettyError(options).toDoc();
-    if (supportAnsi) {
-      var config = StringPrinterConfig.unixTerminal(AyaStyleFamily.ADAPTIVE_CLI, pageWidth, unicode);
-      return doc.renderToString(config);
-    }
-    return doc.renderWithPageWidth(pageWidth, unicode);
   }
 }
