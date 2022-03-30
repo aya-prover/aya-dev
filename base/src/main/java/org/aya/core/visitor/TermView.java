@@ -6,12 +6,17 @@ import kala.collection.immutable.ImmutableMap;
 import kala.tuple.Tuple;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-/// Generic Term traversal with pre-order and post-order hooks
+/**
+ * Generic Term traversal with pre-order and post-order hooks
+ *
+ * @author wsx
+ */
 public interface TermView {
-  Term initial();
+  @NotNull Term initial();
 
   default Term pre(Term term) {
     return term;

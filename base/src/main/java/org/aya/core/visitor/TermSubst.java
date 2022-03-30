@@ -4,20 +4,18 @@ package org.aya.core.visitor;
 
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.jetbrains.annotations.NotNull;
 
 public record TermSubst(TermView view, Subst subst) implements TermView {
-  @Override
-  public Term initial() {
+  @Override public @NotNull Term initial() {
     return view.initial();
   }
 
-  @Override
-  public TermView subst(Subst subst) {
+  @Override public TermView subst(Subst subst) {
     return new TermSubst(view, subst.add(subst));
   }
 
-  @Override
-  public Term post(Term term) {
+  @Override public Term post(Term term) {
     return  switch (view.post(term)) {
       case RefTerm ref -> subst.map().getOption(ref.var()).map(Term::rename).getOrDefault(ref);
       case RefTerm.Field field -> subst.map().getOption(field.ref()).map(Term::rename).getOrDefault(field);

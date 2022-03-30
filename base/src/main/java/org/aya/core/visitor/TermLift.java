@@ -6,20 +6,18 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.ElimTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
+import org.jetbrains.annotations.NotNull;
 
 public record TermLift(TermView view, int ulift) implements TermView {
-  @Override
-  public Term initial() {
+  @Override public @NotNull Term initial() {
     return view.initial();
   }
 
-  @Override
-  public TermView lift(int shift) {
+  @Override public TermView lift(int shift) {
     return new TermLift(view, ulift + shift);
   }
 
-  @Override
-  public Term post(Term term) {
+  @Override public Term post(Term term) {
     // TODO: Implement the correct rules.
     return switch (view.post(term)) {
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + ulift);

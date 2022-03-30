@@ -146,7 +146,7 @@ teleBinder : expr
 teleMaybeTypedExpr : PATTERN_KW? ids type?;
 
 // utilities
-exprList : (expr COMMA)* expr?;
+exprList : (expr COMMA)* expr;
 idsComma : (weakId COMMA)* weakId?;
 qIdsComma : (qualifiedId COMMA)* qualifiedId?;
 ids : weakId*;
