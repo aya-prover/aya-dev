@@ -1,14 +1,14 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
-import org.aya.test.ThrowingReporter;
 import org.aya.tyck.pat.MCT;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
