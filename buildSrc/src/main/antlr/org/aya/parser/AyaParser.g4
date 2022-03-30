@@ -84,8 +84,7 @@ dataCtorClause : BAR patterns IMPLIES dataCtor;
 // expressions
 expr : atom                                 # single
      | expr argument+                       # app
-     | NEW_KW expr LBRACE newArg* RBRACE    # new
-     | NEW_KW expr                          # newEmpty
+     | NEW_KW expr newBody?                 # new
      | <assoc=right> expr TO expr           # arr
      | expr projFix                         # proj
      | PI tele+ TO expr                     # pi
@@ -96,6 +95,8 @@ expr : atom                                 # single
      ;
 
 newArg : BAR weakId ids IMPLIES expr;
+// New body new body but you!
+newBody : LBRACE newArg* RBRACE;
 
 // ulift is written here because we want `x ulift + y` to work
 atom : ULIFT* literal
