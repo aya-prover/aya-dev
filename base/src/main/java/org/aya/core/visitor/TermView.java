@@ -143,6 +143,10 @@ public interface TermView {
     return new TermLift(this, shift);
   }
 
+  default TermView subst(Substituter.TermSubst subst) {
+    return new TermSubst(this, subst);
+  }
+
   default TermView postMap(Function<Term, Term> f) {
     return new TermMap(this, t -> t, f);
   }
