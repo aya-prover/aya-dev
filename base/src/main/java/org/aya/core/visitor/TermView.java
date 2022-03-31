@@ -78,8 +78,7 @@ public interface TermView {
         var function = commit(app.of());
         var arg = commit(app.arg());
         if (function == app.of() && arg == app.arg()) yield app;
-        // TODO: Should we use `yield CallTerm.make(function, arg);` instead?
-        yield new ElimTerm.App(function, app.ulift(), arg);
+        yield CallTerm.make(function, arg);
       }
       case ElimTerm.Proj proj -> {
         var tuple = commit(proj.of());

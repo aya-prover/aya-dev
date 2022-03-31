@@ -6,6 +6,7 @@ import kala.collection.Map;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.core.pat.Pat;
@@ -47,15 +48,15 @@ public sealed interface Term extends AyaDocile permits
   }
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
-    return subst(new Substituter.TermSubst(var, term));
+    return view().subst(new Substituter.TermSubst(var, term)).commit();
   }
 
   default @NotNull Term subst(@NotNull Substituter.TermSubst subst) {
-    return subst(subst, 0);
+    return view().subst(subst).commit();
   }
 
   default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
-    return accept(new Substituter(subst, 0), Unit.unit());
+    return view().subst(new Substituter.TermSubst(MutableMap.from(subst))).commit();
   }
 
   default @NotNull Term subst(@NotNull Substituter.TermSubst subst, int ulift) {
@@ -217,7 +218,6 @@ public sealed interface Term extends AyaDocile permits
   }
 
   default TermView view() {
-    var term = this;
-    return () -> term;
+    return () -> this;
   }
 }
