@@ -14,7 +14,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
@@ -47,7 +47,7 @@ public sealed interface Pat extends AyaDocile {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).pat(this, BaseDistiller.Outer.Free);
   }
-  @NotNull Pat rename(@NotNull Substituter.TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit);
+  @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit);
   @NotNull Pat zonk(@NotNull Zonker zonker);
   @NotNull Pat inline();
   void storeBindings(@NotNull LocalCtx localCtx);
@@ -71,7 +71,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override
-    public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var newName = new LocalVar(bind.name(), bind.definition());
       var newBind = new Bind(explicit, newName, type.subst(subst));
       subst.addDirectly(bind, new RefTerm(newName, 0));
@@ -115,7 +115,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override
-    public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       throw new IllegalStateException("unreachable");
     }
   }
@@ -131,7 +131,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override
-    public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       throw new IllegalStateException();
     }
 
@@ -157,7 +157,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override
-    public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = pats.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
       return new Tuple(explicit, params);
     }
@@ -187,7 +187,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override
-    public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = this.params.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
       return new Ctor(explicit, ref, params, (CallTerm.Data) type.subst(subst));
     }
@@ -216,7 +216,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override
-    public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       return this;
     }
 

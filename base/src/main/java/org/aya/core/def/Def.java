@@ -8,7 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
@@ -43,7 +43,7 @@ public sealed interface Def extends AyaDocile permits SubLevelDef, TopLevelDef {
     else return Objects.requireNonNull(defVar.concrete.signature).result;
   }
   static @NotNull ImmutableSeq<Term.Param>
-  substParams(@NotNull SeqLike<Term.@NotNull Param> param, Substituter.@NotNull TermSubst subst) {
+  substParams(@NotNull SeqLike<Term.@NotNull Param> param, @NotNull Subst subst) {
     return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
   }
 
@@ -77,7 +77,7 @@ public sealed interface Def extends AyaDocile permits SubLevelDef, TopLevelDef {
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements AyaDocile {
-    @Contract("_ -> new") public @NotNull Signature inst(@NotNull Substituter.TermSubst subst) {
+    @Contract("_ -> new") public @NotNull Signature inst(@NotNull Subst subst) {
       return new Signature(substParams(param, subst), result.subst(subst));
     }
 

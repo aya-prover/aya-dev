@@ -142,7 +142,7 @@ public interface TermView {
     return new TermLift(this, shift);
   }
 
-  default TermView subst(Substituter.TermSubst subst) {
+  default TermView subst(Subst subst) {
     return new TermSubst(this, subst);
   }
 

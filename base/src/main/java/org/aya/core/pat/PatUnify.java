@@ -4,7 +4,7 @@ package org.aya.core.pat;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.visitor.Substituter.TermSubst;
+import org.aya.core.visitor.Subst;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
  * The unification of patterns. This is <strong>not</strong> pattern unification.
  *
  * @author ice1000
- * @see PatUnify#unifyPat(SeqLike, SeqLike, TermSubst, TermSubst, LocalCtx)
+ * @see PatUnify#unifyPat(SeqLike, SeqLike, Subst, Subst, LocalCtx)
  */
-public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst, @NotNull LocalCtx ctx) {
+public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNull LocalCtx ctx) {
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
     switch (lhs) {
       default -> throw new IllegalStateException();
@@ -57,7 +57,7 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst,
     throw new IllegalArgumentException(doc.debugRender() + " are patterns of different types!");
   }
 
-  private static void unifyPat(Pat lhs, Pat rhs, TermSubst lhsSubst, TermSubst rhsSubst, LocalCtx ctx) {
+  private static void unifyPat(Pat lhs, Pat rhs, Subst lhsSubst, Subst rhsSubst, LocalCtx ctx) {
     PatUnify unify;
     if (rhs instanceof Pat.Bind) {
       unify = new PatUnify(rhsSubst, lhsSubst, ctx);
@@ -81,8 +81,8 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst,
   public static @NotNull LocalCtx unifyPat(
     @NotNull SeqLike<Pat> lpats,
     @NotNull SeqLike<Pat> rpats,
-    @NotNull TermSubst lhsSubst,
-    @NotNull TermSubst rhsSubst,
+    @NotNull Subst lhsSubst,
+    @NotNull Subst rhsSubst,
     @NotNull LocalCtx ctx
   ) {
     assert rpats.sizeEquals(lpats);

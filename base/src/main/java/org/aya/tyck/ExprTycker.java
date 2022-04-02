@@ -14,7 +14,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Unfolder;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.Arg;
@@ -113,7 +113,7 @@ public final class ExprTycker {
           yield fail(structExpr, struct, BadTypeError.structCon(newExpr, struct));
         var structRef = structCall.ref();
 
-        var subst = new Substituter.TermSubst(MutableMap.from(
+        var subst = new Subst(MutableMap.from(
           Def.defTele(structRef).view().zip(structCall.args())
             .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
 
@@ -214,7 +214,7 @@ public final class ExprTycker {
         if (!(fTy instanceof FormTerm.Pi piTerm))
           yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
         var pi = piTerm;
-        var subst = new Substituter.TermSubst(MutableMap.create());
+        var subst = new Subst(MutableMap.create());
         try {
           while (pi.param().explicit() != argLicit ||
             argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
@@ -285,7 +285,7 @@ public final class ExprTycker {
           yield fail(tuple, term, BadTypeError.sigmaCon(tuple, term));
         var againstTele = dt.params().view();
         var last = dt.params().last().type();
-        var subst = new Substituter.TermSubst(MutableMap.create());
+        var subst = new Subst(MutableMap.create());
         for (var iter = tuple.items().iterator(); iter.hasNext(); ) {
           var item = iter.next();
           var first = againstTele.first().subst(subst);

@@ -28,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface Unfolder<P> extends TermFixpoint<P> {
   @Nullable TyckState state();
-  @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
+  @Contract(pure = true) static @NotNull Subst buildSubst(
     @NotNull SeqLike<Term.@NotNull Param> self,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
   ) {
-    var subst = new Substituter.TermSubst(MutableMap.create());
+    var subst = new Subst(MutableMap.create());
     self.view().zip(args).forEach(t -> subst.add(t._1.ref(), t._2.term()));
     return subst;
   }
@@ -64,7 +64,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var volynskaya = tryUnfoldClauses(p, orderIndependent, args, ulift, body.getRightValue());
     return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), ulift, args);
   }
-  private @NotNull Substituter.TermSubst
+  private @NotNull Subst
   checkAndBuildSubst(SeqLike<Term.Param> telescope, SeqLike<Arg<Term>> args) {
     // assert args.sizeEquals(telescope);
     // assert Term.Param.checkSubst(telescope, args);
@@ -93,12 +93,12 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     int ulift, @NotNull ImmutableSeq<Matching> clauses
   ) {
     return tryUnfoldClauses(p, orderIndependent, args,
-      new Substituter.TermSubst(MutableMap.create()), ulift, clauses);
+      new Subst(MutableMap.create()), ulift, clauses);
   }
 
   default @Nullable WithPos<Term> tryUnfoldClauses(
     P p, boolean orderIndependent, SeqLike<Arg<Term>> args,
-    Substituter.@NotNull TermSubst subst, int ulift,
+    @NotNull Subst subst, int ulift,
     @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {

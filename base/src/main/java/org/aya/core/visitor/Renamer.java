@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public final class Renamer implements TermFixpoint<Unit> {
-  private final Substituter.TermSubst subst = new Substituter.TermSubst(MutableMap.create());
+  private final Subst subst = new Subst(MutableMap.create());
 
   @Override public @NotNull Term visitFieldRef(@NotNull RefTerm.Field field, Unit unit) {
     return subst.map().getOrDefault(field.ref(), field);

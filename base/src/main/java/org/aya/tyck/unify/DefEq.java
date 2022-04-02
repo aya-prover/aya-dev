@@ -12,7 +12,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Arg;
 import org.aya.generic.util.NormalizeMode;
@@ -225,10 +225,10 @@ public final class DefEq {
     return new TyckState.Eqn(lhs, rhs, cmp, pos, local, lr.clone(), rl.clone());
   }
 
-  private @Nullable Substituter.TermSubst extract(
+  private @Nullable Subst extract(
     @NotNull CallTerm.Hole lhs, @NotNull Term rhs, @NotNull Meta meta
   ) {
-    var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
+    var subst = new Subst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : lhs.args().view().zip(meta.telescope)) {
       if (uneta.uneta(arg._1.term()) instanceof RefTerm ref) {
         if (subst.map().containsKey(ref.var())) return null;
@@ -247,7 +247,7 @@ public final class DefEq {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
           Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
-        var fieldSubst = new Substituter.TermSubst(MutableHashMap.create());
+        var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
           var dummyVars = fieldSig.selfTele.map(par ->
             new LocalVar(par.ref().name(), par.ref().definition()));
@@ -323,7 +323,7 @@ public final class DefEq {
         if (!(preTupType instanceof FormTerm.Sigma tupType)) yield null;
         if (lhs.ix() != rhs.ix()) yield null;
         var params = tupType.params().view();
-        var subst = new Substituter.TermSubst(MutableMap.create());
+        var subst = new Subst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
           var l = new ElimTerm.Proj(lhs, 0, i);
           var currentParam = params.first();
@@ -400,7 +400,7 @@ public final class DefEq {
         if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
         holeTy = holePi.substBody(arg._1.term());
       }
-      return holeTy.subst(Substituter.TermSubst.EMPTY, lhs.ulift());
+      return holeTy.subst(Subst.EMPTY, lhs.ulift());
     }
     // Long time ago I wrote this to generate more unification equations,
     // which solves more universe levels. However, with latest version Aya (0.13),
@@ -408,7 +408,7 @@ public final class DefEq {
     // Update: this is still needed, see #327 last task (`coe'`)
     var resultTy = preRhs.computeType(state, ctx);
     if (meta.result != null) {
-      var liftedType = meta.result.subst(Substituter.TermSubst.EMPTY, lhs.ulift());
+      var liftedType = meta.result.subst(Subst.EMPTY, lhs.ulift());
       compareUntyped(resultTy, liftedType, rl, lr);
     }
     var argSubst = extract(lhs, preRhs, meta);

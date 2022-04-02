@@ -5,14 +5,14 @@ package org.aya.core.visitor;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 
-public record TermSubst(TermView view, Substituter.TermSubst subst) implements TermView {
+public record TermSubst(TermView view, Subst subst) implements TermView {
   @Override
   public Term initial() {
     return view.initial();
   }
 
   @Override
-  public TermView subst(Substituter.TermSubst subst) {
+  public TermView subst(Subst subst) {
     return new TermSubst(view, subst.add(subst));
   }
 

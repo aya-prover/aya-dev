@@ -24,7 +24,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.TermFixpoint;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
@@ -52,7 +52,7 @@ import java.util.function.Supplier;
  */
 public final class PatTycker {
   public final @NotNull ExprTycker exprTycker;
-  private final @NotNull Substituter.TermSubst typeSubst;
+  private final @NotNull Subst typeSubst;
   private final @NotNull MutableMap<Var, Expr> bodySubst;
   private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
@@ -64,7 +64,7 @@ public final class PatTycker {
 
   public PatTycker(
     @NotNull ExprTycker exprTycker,
-    @NotNull Substituter.TermSubst typeSubst,
+    @NotNull Subst typeSubst,
     @NotNull MutableMap<Var, Expr> bodySubst, @Nullable Trace.Builder traceBuilder
   ) {
     this.exprTycker = exprTycker;
@@ -85,7 +85,7 @@ public final class PatTycker {
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new Substituter.TermSubst(MutableMap.create()), MutableMap.create(), exprTycker.traceBuilder);
+    this(exprTycker, new Subst(MutableMap.create()), MutableMap.create(), exprTycker.traceBuilder);
   }
 
   public record PatResult(
@@ -348,7 +348,7 @@ public final class PatTycker {
    * @param name if null, the selection will be performed on all constructors
    * @return null means selection failed
    */
-  private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
+  private @Nullable Tuple3<CallTerm.Data, Subst, CallTerm.ConHead>
   selectCtor(Term param, @Nullable Var name, @NotNull Pattern pos) {
     if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pos, param));
@@ -389,7 +389,7 @@ public final class PatTycker {
     return null;
   }
 
-  public static Result<Substituter.TermSubst, Boolean>
+  public static Result<Subst, Boolean>
   mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));

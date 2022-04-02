@@ -14,7 +14,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Normalizer;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.ExprTycker;
@@ -79,7 +79,7 @@ public record Conquer(
 
   private void checkConditions(
     LocalCtx ctx, Pat ctor, int nth, int i,
-    Term condition, Substituter.TermSubst matchy, SourcePos conditionPos
+    Term condition, Subst matchy, SourcePos conditionPos
   ) {
     var currentClause = matchings.get(nth);
     var newBody = currentClause.body().subst(matchy);

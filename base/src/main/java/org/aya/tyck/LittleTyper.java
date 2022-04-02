@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -6,7 +6,7 @@ import kala.tuple.Unit;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
@@ -82,7 +82,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
 
   @NotNull
   private Term defCall(DefVar<? extends Def, ? extends Decl> ref, int ulift) {
-    return Def.defResult(ref).subst(Substituter.TermSubst.EMPTY, ulift);
+    return Def.defResult(ref).subst(Subst.EMPTY, ulift);
   }
 
   @Override public Term visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
