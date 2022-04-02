@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.style;
 
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public record AyaStyleFamily(
   @NotNull MutableMap<String, Styles> definedStyles
 ) implements StyleFamily {
-  public static final @NotNull AyaStyleFamily INSTANCE = new AyaStyleFamily(MutableMap.ofEntries(
+  public static final @NotNull AyaStyleFamily DEFAULT = new AyaStyleFamily(MutableMap.ofEntries(
     Tuple.of("aya:Keyword", Style.bold().and().color("aya:Keyword")),
     Tuple.of("aya:FnCall", Style.color("aya:FnCall").and()),
     Tuple.of("aya:DataCall", Style.color("aya:DataCall").and()),

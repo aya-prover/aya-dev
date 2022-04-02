@@ -13,6 +13,7 @@ import org.aya.generic.util.AyaHome;
 import org.aya.parser.GeneratedLexerTokens;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.repl.CmdCompleter;
 import org.aya.repl.ReplUtil;
 import org.aya.repl.antlr.AntlrLexer;
@@ -84,7 +85,8 @@ public final class JlineRepl extends AyaRepl implements AntlrLexer {
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
-    return doc.renderToString(StringPrinterConfig.unixTerminal(prettyPrintWidth, config.enableUnicode));
+    var printerConfig = StringPrinterConfig.unixTerminal(AyaStyleFamily.ADAPTIVE_CLI, prettyPrintWidth, config.enableUnicode);
+    return doc.renderToString(printerConfig);
   }
 
   @Override public void println(@NotNull String x) {

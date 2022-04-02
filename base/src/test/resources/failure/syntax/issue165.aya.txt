@@ -2,7 +2,7 @@ In file $FILE:2:0 ->
 
   1 | def
 
-Error: Parser error: mismatched input '<EOF>' expecting {'infix', 'infixl', 'infixr', 'opaque', 'inline', 'overlap', 'pattern', ID}
+Error: Parser error: mismatched input '<EOF>' expecting {'infix', 'infixl', 'infixr', 'opaque', 'inline', 'overlap', 'pattern', REPL_COMMAND, ID}
 
 Parsing interrupted due to:
 1 error(s), 0 warning(s).

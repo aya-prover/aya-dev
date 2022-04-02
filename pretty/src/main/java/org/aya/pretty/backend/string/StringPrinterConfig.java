@@ -1,9 +1,11 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
 import org.aya.pretty.backend.string.style.UnixTermStylist;
 import org.aya.pretty.printer.PrinterConfig;
+import org.aya.pretty.printer.StyleFamily;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 
 public class StringPrinterConfig extends PrinterConfig.Basic {
@@ -21,12 +23,12 @@ public class StringPrinterConfig extends PrinterConfig.Basic {
     return stylist;
   }
 
-  public static @NotNull StringPrinterConfig unixTerminal(int pageWidth, boolean unicode) {
-    return new StringPrinterConfig(UnixTermStylist.INSTANCE, pageWidth, unicode);
+  public static @NotNull StringPrinterConfig unixTerminal(@NotNull StyleFamily styleFamily, int pageWidth, boolean unicode) {
+    return new StringPrinterConfig(new UnixTermStylist(styleFamily), pageWidth, unicode);
   }
 
   public static @NotNull StringPrinterConfig unixTerminal(int pageWidth) {
-    return unixTerminal(pageWidth, true);
+    return unixTerminal(AyaStyleFamily.DEFAULT, pageWidth, true);
   }
 
   public static @NotNull StringPrinterConfig unixTerminal() {
