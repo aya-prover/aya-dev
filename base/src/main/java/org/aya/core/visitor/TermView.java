@@ -144,22 +144,22 @@ public interface TermView {
   }
 
   default TermView lift(int shift) {
-    return shift == 0 ? this : new TermLift(this, shift);
+    return shift == 0 ? this : new TermOps.Elevator(this, shift);
   }
 
   default TermView subst(Subst subst) {
-    return subst.isEmpty() ? this : new TermSubst(this, subst);
+    return subst.isEmpty() ? this : new TermOps.Subster(this, subst);
   }
 
   default TermView postMap(Function<Term, Term> f) {
-    return new TermMap(this, t -> t, f);
+    return new TermOps.Mapper(this, t -> t, f);
   }
 
   default TermView preMap(Function<Term, Term> f) {
-    return new TermMap(this, f, t -> t);
+    return new TermOps.Mapper(this, f, t -> t);
   }
 
   default TermView map(Function<Term, Term> pre, Function<Term, Term> post) {
-    return new TermMap(this, pre, post);
+    return new TermOps.Mapper(this, pre, post);
   }
 }
