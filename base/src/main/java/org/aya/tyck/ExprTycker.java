@@ -163,7 +163,7 @@ public final class ExprTycker extends Tycker {
               return fail(proj, new ProjIxError(proj, ix, telescope.size()));
             var type = telescope.get(index).type();
             var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
-            return new Result(new ElimTerm.Proj(projectee.wellTyped, 0, ix), type.subst(subst));
+            return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
           }, sp -> {
             var fieldName = sp.justName();
             if (!(projectee.type instanceof CallTerm.Struct structCall))

@@ -3,6 +3,7 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableMap;
+import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
@@ -88,7 +89,7 @@ public interface TermView {
       case ElimTerm.Proj proj -> {
         var tuple = commit(proj.of());
         if (tuple == proj.of()) yield proj;
-        yield new ElimTerm.Proj(tuple, proj.ulift(), proj.ix());
+        yield new ElimTerm.Proj(tuple, proj.ix());
       }
       case CallTerm.Struct struct -> {
         var args = struct.args().map(this::commit);
@@ -144,7 +145,7 @@ public interface TermView {
   }
 
   default TermView lift(int shift) {
-    return shift == 0 ? this : new TermOps.Elevator(this, shift);
+    return shift == 0 ? this : new TermOps.Elevator(this, shift, MutableList.create());
   }
 
   default TermView subst(Subst subst) {

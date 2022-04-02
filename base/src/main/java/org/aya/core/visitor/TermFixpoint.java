@@ -139,7 +139,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitProj(@NotNull ElimTerm.Proj term, P p) {
     var tuple = term.of().accept(this, p);
     if (ulift() == 0 && tuple == term.of()) return term;
-    return new ElimTerm.Proj(tuple, ulift() + term.ulift(), term.ix());
+    return new ElimTerm.Proj(tuple, term.ix());
   }
 
   @Override default @NotNull Term visitAccess(@NotNull CallTerm.Access term, P p) {

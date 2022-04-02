@@ -16,18 +16,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface ElimTerm extends Term {
   @NotNull Term of();
-  int ulift();
 
   /**
    * @author re-xyr
    */
-  record Proj(@NotNull Term of, int ulift, int ix) implements ElimTerm {
+  record Proj(@NotNull Term of, int ix) implements ElimTerm {
     public static @NotNull Subst
     projSubst(@NotNull Term term, int index, ImmutableSeq<Param> telescope) {
       // instantiate the type
       var subst = new Subst(MutableMap.create());
       telescope.view().take(index).reversed().forEachIndexed((i, param) ->
-        subst.add(param.ref(), new Proj(term, 0, i + 1)));
+        subst.add(param.ref(), new Proj(term, i + 1)));
       return subst;
     }
 
@@ -36,7 +35,7 @@ public sealed interface ElimTerm extends Term {
     }
   }
 
-  record App(@NotNull Term of, int ulift, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
+  record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }

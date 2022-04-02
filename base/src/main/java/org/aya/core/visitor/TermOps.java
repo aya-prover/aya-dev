@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
+import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -82,16 +84,32 @@ public interface TermOps extends TermView {
   }
 
   /** A lift but in American English. */
-  record Elevator(@NotNull @Override TermView view, int ulift) implements TermOps {
+  record Elevator(@NotNull @Override TermView view, int ulift, MutableList<Var> boundVars) implements TermOps {
     @Override public TermView lift(int shift) {
-      return new Elevator(view, ulift + shift);
+      return new Elevator(view, ulift + shift, boundVars);
     }
 
-    @Override public Term post(Term term) {
-      // TODO: Implement the correct rules.
+    public Term pre(Term term) {
+      return view.pre(switch (term) {
+        case IntroTerm.Lambda lambda -> {
+          boundVars.append(lambda.param().ref());
+          yield lambda;
+        }
+        case FormTerm.Pi pi -> {
+          boundVars.append(pi.param().ref());
+          yield pi;
+        }
+        case FormTerm.Sigma sigma -> {
+          boundVars.appendAll(sigma.params().map(Term.Param::ref));
+          yield sigma;
+        }
+        default -> term;
+      });
+    }
+
+    public Term post(Term term) {
       return switch (view.post(term)) {
         case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + ulift);
-        case ElimTerm.Proj proj -> new ElimTerm.Proj(proj.of(), proj.ulift() + ulift, proj.ix());
         case CallTerm.Struct struct -> new CallTerm.Struct(struct.ref(), struct.ulift() + ulift, struct.args());
         case CallTerm.Data data -> new CallTerm.Data(data.ref(), data.ulift() + ulift, data.args());
         case CallTerm.Con con -> {
@@ -100,10 +118,13 @@ public interface TermOps extends TermView {
           yield new CallTerm.Con(head, con.conArgs());
         }
         case CallTerm.Fn fn -> new CallTerm.Fn(fn.ref(), fn.ulift() + ulift, fn.args());
-        case CallTerm.Access access ->
-          new CallTerm.Access(access.of(), access.ref(), access.ulift() + ulift, access.structArgs(), access.fieldArgs());
+        case CallTerm.Access access -> new CallTerm.Access(access.of(), access.ref(), access.ulift() + ulift, access.structArgs(), access.fieldArgs());
         case CallTerm.Prim prim -> new CallTerm.Prim(prim.ref(), prim.ulift() + ulift, prim.args());
         case CallTerm.Hole hole -> new CallTerm.Hole(hole.ref(), hole.ulift() + ulift, hole.contextArgs(), hole.args());
+        case RefTerm ref -> boundVars.contains(ref.var())
+          ? ref : new RefTerm(ref.var(), ref.lift() + ulift);
+        case RefTerm.Field field -> boundVars.contains(field.ref())
+          ? field : new RefTerm.Field(field.ref(), field.lift() + ulift);
         case Term misc -> misc;
       };
     }

@@ -37,7 +37,7 @@ public class EtaTest {
       // Params
       ImmutableSeq.of(xParamTerm),
       // Body
-      new ElimTerm.App(fRefTerm, 0, new Arg<>(xRefTerm, false))
+      new ElimTerm.App(fRefTerm, new Arg<>(xRefTerm, false))
     );
     assertTrue(Eta.compareRefTerm(fRefTerm, ETA.uneta(lambda)));
   }
@@ -54,7 +54,7 @@ public class EtaTest {
       ImmutableSeq.of(xParamTerm, yParamTerm),
       // Body
       new ElimTerm.App(
-        new ElimTerm.App(fRefTerm, 0, new Arg<>(yRefTerm, false)), 0,
+        new ElimTerm.App(fRefTerm, new Arg<>(yRefTerm, false)),
         new Arg<>(xRefTerm, false))
     );
     assertTrue(Eta.compareRefTerm(fRefTerm, ETA.uneta(lambda)));
@@ -63,8 +63,8 @@ public class EtaTest {
   // (x.1, x.2)
   @Test public void tupleUneta() {
     var xRefTerm = new RefTerm(X, 0);
-    var firstTerm = new ElimTerm.Proj(xRefTerm, 0, 1);
-    var secondTerm = new ElimTerm.Proj(xRefTerm, 0, 2);
+    var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
+    var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
     assertTrue(Eta.compareRefTerm(xRefTerm, ETA.uneta(tuple)));
   }
@@ -72,10 +72,10 @@ public class EtaTest {
   // (x.1, (x.1, x.2).2)
   @Test public void nestTupleUneta() {
     var xRefTerm = new RefTerm(X, 0);
-    var firstTerm = new ElimTerm.Proj(xRefTerm, 0, 1);
-    var secondTerm = new ElimTerm.Proj(xRefTerm, 0, 2);
+    var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
+    var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
-    var finalTuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, new ElimTerm.Proj(tuple, 0, 2)));
+    var finalTuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, new ElimTerm.Proj(tuple, 2)));
     assertTrue(Eta.compareRefTerm(xRefTerm, ETA.uneta(finalTuple)));
   }
 
@@ -85,14 +85,14 @@ public class EtaTest {
     var xRefTerm = new RefTerm(X, 0);
     var fRefTerm = new RefTerm(new LocalVar("f"), 0);
     // construct lambda body: tuple term
-    var firstTerm = new ElimTerm.Proj(xRefTerm, 0, 1);
-    var secondTerm = new ElimTerm.Proj(xRefTerm, 0, 2);
+    var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
+    var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
     var lambda = IntroTerm.Lambda.make(
       // Params
       ImmutableSeq.of(xParamTerm),
       // Body
-      new ElimTerm.App(fRefTerm, 0, new Arg<>(tuple, false))
+      new ElimTerm.App(fRefTerm, new Arg<>(tuple, false))
     );
     assertTrue(Eta.compareRefTerm(fRefTerm, ETA.uneta(lambda)));
   }

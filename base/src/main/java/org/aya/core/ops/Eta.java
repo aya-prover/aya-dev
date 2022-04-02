@@ -45,9 +45,9 @@ public record Eta(@NotNull LocalCtx ctx) {
         }
         yield ref;
       }
-      case ElimTerm.App app -> new ElimTerm.App(app.of(), app.ulift(),
+      case ElimTerm.App app -> new ElimTerm.App(app.of(),
         new Arg<>(uneta(app.arg().term()), app.arg().explicit()));
-      case ElimTerm.Proj proj -> new ElimTerm.Proj(uneta(proj.of()), proj.ulift(), proj.ix());
+      case ElimTerm.Proj proj -> new ElimTerm.Proj(uneta(proj.of()), proj.ix());
       // Ignore other cases because they are useless in becoming a RefTerm
       default -> term;
     };
