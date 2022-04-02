@@ -15,13 +15,13 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.Zonker;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.util.distill.AyaDocile;
@@ -29,7 +29,6 @@ import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kiva, ice1000
@@ -48,7 +47,7 @@ public sealed interface Pat extends AyaDocile {
     return new CoreDistiller(options).pat(this, BaseDistiller.Outer.Free);
   }
   @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit);
-  @NotNull Pat zonk(@NotNull Zonker zonker);
+  @NotNull Pat zonk(@NotNull Tycker tycker);
   @NotNull Pat inline();
   void storeBindings(@NotNull LocalCtx localCtx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
@@ -79,8 +78,8 @@ public sealed interface Pat extends AyaDocile {
       return newBind;
     }
 
-    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Bind(explicit, bind, zonker.zonk(type));
+    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
+      return new Bind(explicit, bind, tycker.zonk(type));
     }
 
     @Override public @NotNull Pat inline() {
@@ -104,7 +103,7 @@ public sealed interface Pat extends AyaDocile {
       return new Expr.MetaPat(pos, this);
     }
 
-    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
+    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       throw new IllegalStateException("unreachable");
     }
 
@@ -135,7 +134,7 @@ public sealed interface Pat extends AyaDocile {
       throw new IllegalStateException();
     }
 
-    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
+    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       return this;
     }
 
@@ -162,8 +161,8 @@ public sealed interface Pat extends AyaDocile {
       return new Tuple(explicit, params);
     }
 
-    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Tuple(explicit, pats.map(pat -> pat.zonk(zonker)));
+    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
+      return new Tuple(explicit, pats.map(pat -> pat.zonk(tycker)));
     }
 
     @Override public @NotNull Pat inline() {
@@ -192,9 +191,9 @@ public sealed interface Pat extends AyaDocile {
       return new Ctor(explicit, ref, params, (CallTerm.Data) type.subst(subst));
     }
 
-    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Ctor(explicit, ref, params.map(pat -> pat.zonk(zonker)),
-        (CallTerm.Data) zonker.zonk(type));
+    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
+      return new Ctor(explicit, ref, params.map(pat -> pat.zonk(tycker)),
+        (CallTerm.Data) tycker.zonk(type));
       // The cast must succeed
     }
 
@@ -220,7 +219,7 @@ public sealed interface Pat extends AyaDocile {
       return this;
     }
 
-    @Override public @NotNull Pat zonk(@Nullable Zonker zonker) {
+    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       return this;
     }
 

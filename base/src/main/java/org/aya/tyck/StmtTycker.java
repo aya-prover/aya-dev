@@ -73,10 +73,9 @@ public record StmtTycker(
           body -> {
             var nobody = tycker.inherit(body, signature.result()).wellTyped();
             tycker.solveMetas();
-            var zonker = tycker.newZonker();
             // It may contain unsolved metas. See `checkTele`.
-            var resultTy = zonker.zonk(signature.result());
-            return factory.apply(resultTy, Either.left(zonker.zonk(nobody)));
+            var resultTy = tycker.zonk(signature.result());
+            return factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
           },
           clauses -> {
             var patTycker = new PatTycker(tycker);
@@ -123,11 +122,10 @@ public record StmtTycker(
     var bodyExpr = fn.body.getLeftValue();
     var prebody = tycker.inherit(bodyExpr, preresult).wellTyped();
     tycker.solveMetas();
-    var zonker = tycker.newZonker();
-    var result = zonker.zonk(preresult);
+    var result = tycker.zonk(preresult);
     var tele = zonkTele(tycker, okTele);
     fn.signature = new Def.Signature(tele, result);
-    var body = zonker.zonk(prebody);
+    var body = tycker.zonk(prebody);
     return new FnDef(fn.ref, tele, result, fn.modifiers, Either.left(body));
   }
 
@@ -307,10 +305,9 @@ public record StmtTycker(
   }
 
   private @NotNull ImmutableSeq<Term.Param> zonkTele(@NotNull ExprTycker exprTycker, ImmutableSeq<TeleResult> okTele) {
-    var zonker = exprTycker.newZonker();
     return okTele.map(tt -> {
       var rawParam = tt.param;
-      var param = new Term.Param(rawParam, zonker.zonk(rawParam.type()));
+      var param = new Term.Param(rawParam, exprTycker.zonk(rawParam.type()));
       exprTycker.localCtx.put(param);
       return param;
     });

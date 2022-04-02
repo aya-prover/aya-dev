@@ -16,7 +16,6 @@ import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Unfolder;
-import org.aya.core.visitor.Zonker;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -48,18 +47,12 @@ import java.util.function.Consumer;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl}s.
  */
-public final class ExprTycker {
-  public final @NotNull Reporter reporter;
+public final class ExprTycker extends Tycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull TyckState state = new TyckState();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
-  }
-
-  public @NotNull Zonker newZonker() {
-    return new Zonker(state, reporter);
   }
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
@@ -378,7 +371,7 @@ public final class ExprTycker {
   */
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-    this.reporter = reporter;
+    super(reporter, new TyckState());
     this.traceBuilder = traceBuilder;
   }
 
@@ -413,8 +406,7 @@ public final class ExprTycker {
 
   public @NotNull Result zonk(@NotNull Result result) {
     solveMetas();
-    var zonker = newZonker();
-    return new Result(zonker.zonk(result.wellTyped), zonker.zonk(result.type));
+    return new Result(zonk(result.wellTyped), zonk(result.type));
   }
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {
