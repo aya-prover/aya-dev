@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,37 @@ public interface TermOps extends TermView {
       return switch (view.post(term)) {
         case RefTerm ref -> subst.map().getOption(ref.var()).map(Term::rename).getOrDefault(ref);
         case RefTerm.Field field -> subst.map().getOption(field.ref()).map(Term::rename).getOrDefault(field);
+        case Term misc -> misc;
+      };
+    }
+  }
+
+  /** Not an IntelliJ Renamer. */
+  record Renamer(@NotNull @Override TermView view, Subst subst) implements TermOps {
+    public Renamer(@NotNull TermView view) {
+      this(view, new Subst(MutableMap.create()));
+    }
+
+    private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {
+      var v = param.renameVar();
+      subst.addDirectly(param.ref(), new RefTerm(v, 0));
+      return new Term.Param(v, param.type(), param.pattern(), param.explicit());
+    }
+
+    @Override public Term pre(Term term) {
+      return switch (view.pre(term)) {
+        case IntroTerm.Lambda lambda -> new IntroTerm.Lambda(handleBinder(lambda.param()), lambda.body());
+        case FormTerm.Pi pi -> new FormTerm.Pi(handleBinder(pi.param()), pi.body());
+        case FormTerm.Sigma sigma -> new FormTerm.Sigma(sigma.params().map(this::handleBinder));
+        case Term misc -> misc;
+      };
+    }
+
+    @Override public Term post(Term term) {
+      return switch (view.post(term)) {
+        case RefTerm ref -> subst.map().getOrDefault(ref.var(), ref);
+        // [ice]: need to generate "replacements" for 'this' bindings as well?
+        case RefTerm.Field field -> subst.map().getOrDefault(field.ref(), field);
         case Term misc -> misc;
       };
     }

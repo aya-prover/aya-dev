@@ -162,4 +162,8 @@ public interface TermView {
   default TermView map(Function<Term, Term> pre, Function<Term, Term> post) {
     return new TermOps.Mapper(this, pre, post);
   }
+
+  default TermView rename() {
+    return new TermOps.Renamer(this);
+  }
 }

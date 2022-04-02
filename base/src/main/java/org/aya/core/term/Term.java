@@ -64,7 +64,7 @@ public sealed interface Term extends AyaDocile permits
   }
 
   default @NotNull Term rename() {
-    return accept(new Renamer(), Unit.unit());
+    return view().rename().commit();
   }
 
   default int findUsages(@NotNull Var var) {
