@@ -105,7 +105,12 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
-        var newBody = matchy.body().rename().subst(subst, ulift).accept(this, p);
+        var newBody = matchy.body().view()
+          .rename()
+          .subst(subst)
+          .lift(ulift)
+          .commit()
+          .accept(this, p);
         return new WithPos<>(matchy.sourcePos(), newBody);
       } else if (!orderIndependent && termSubst.getErr()) return null;
       // ^ if we have an order-dependent clause and the pattern matching is blocked,

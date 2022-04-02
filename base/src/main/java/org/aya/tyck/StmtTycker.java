@@ -73,10 +73,9 @@ public record StmtTycker(
           body -> {
             var nobody = tycker.inherit(body, signature.result()).wellTyped();
             tycker.solveMetas();
-            var zonker = tycker.newZonker();
             // It may contain unsolved metas. See `checkTele`.
-            var resultTy = zonker.zonk(signature.result(), decl.result.sourcePos());
-            return factory.apply(resultTy, Either.left(zonker.zonk(nobody, body.sourcePos())));
+            var resultTy = tycker.zonk(signature.result());
+            return factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
           },
           clauses -> {
             var patTycker = new PatTycker(tycker);
@@ -84,7 +83,7 @@ public record StmtTycker(
             var pos = decl.sourcePos;
             if (decl.modifiers.contains(Modifier.Overlap)) {
               // Order-independent.
-              var result = patTycker.elabClausesDirectly(clauses, signature, decl.result.sourcePos());
+              var result = patTycker.elabClausesDirectly(clauses, signature);
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (patTycker.noError())
                 ensureConfluent(tycker, signature, result, pos, true);
@@ -123,11 +122,10 @@ public record StmtTycker(
     var bodyExpr = fn.body.getLeftValue();
     var prebody = tycker.inherit(bodyExpr, preresult).wellTyped();
     tycker.solveMetas();
-    var zonker = tycker.newZonker();
-    var result = zonker.zonk(preresult, fn.result.sourcePos());
+    var result = tycker.zonk(preresult);
     var tele = zonkTele(tycker, okTele);
     fn.signature = new Def.Signature(tele, result);
-    var body = zonker.zonk(prebody, bodyExpr.sourcePos());
+    var body = tycker.zonk(prebody);
     return new FnDef(fn.ref, tele, result, fn.modifiers, Either.left(body));
   }
 
@@ -145,7 +143,7 @@ public record StmtTycker(
         var tele = tele(tycker, data.telescope, -1);
         var result = data.result instanceof Expr.HoleExpr ? FormTerm.Univ.ZERO
           // ^ probably omitted
-          : tycker.zonk(data.result, tycker.synthesize(data.result)).wellTyped();
+          : tycker.zonk(tycker.synthesize(data.result)).wellTyped();
         data.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
         data.ulift = tycker.ensureUniv(decl.result, result);
@@ -153,7 +151,7 @@ public record StmtTycker(
       case Decl.StructDecl struct -> {
         var pos = struct.sourcePos;
         var tele = tele(tycker, struct.telescope, -1);
-        var result = tycker.zonk(struct.result, tycker.synthesize(struct.result)).wellTyped();
+        var result = tycker.zonk(tycker.synthesize(struct.result)).wellTyped();
         struct.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
         struct.ulift = tycker.ensureUniv(decl.result, result);
@@ -226,7 +224,7 @@ public record StmtTycker(
     assert tycker == patTycker.exprTycker;
     if (pat.isNotEmpty()) dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
       dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
-    var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature, ctor.sourcePos);
+    var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
     dataConcrete.checkedBody.append(elaborated);
     if (patTycker.noError())
@@ -255,7 +253,7 @@ public record StmtTycker(
     assert structSig != null;
     var structLvl = structRef.concrete.ulift;
     var tele = tele(tycker, field.telescope, structLvl);
-    var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structLvl))).wellTyped();
+    var result = tycker.zonk(tycker.inherit(field.result, new FormTerm.Univ(structLvl))).wellTyped();
     field.signature = new Def.Signature(tele, result);
   }
 
@@ -270,7 +268,7 @@ public record StmtTycker(
     var tele = signature.param();
     var result = signature.result();
     var patTycker = new PatTycker(tycker);
-    var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature, field.result.sourcePos());
+    var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature);
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, clauses.matchings(), body, field.coerce);
     if (patTycker.noError())
@@ -307,10 +305,9 @@ public record StmtTycker(
   }
 
   private @NotNull ImmutableSeq<Term.Param> zonkTele(@NotNull ExprTycker exprTycker, ImmutableSeq<TeleResult> okTele) {
-    var zonker = exprTycker.newZonker();
     return okTele.map(tt -> {
       var rawParam = tt.param;
-      var param = new Term.Param(rawParam, zonker.zonk(rawParam.type(), tt.pos));
+      var param = new Term.Param(rawParam, exprTycker.zonk(rawParam.type()));
       exprTycker.localCtx.put(param);
       return param;
     });

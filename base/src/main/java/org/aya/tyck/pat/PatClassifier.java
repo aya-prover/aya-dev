@@ -23,6 +23,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
+import org.aya.tyck.Tycker;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -41,7 +42,7 @@ public record PatClassifier(
 ) {
   public static @NotNull MCT classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
-    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ExprTycker tycker,
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull Tycker tycker,
     @NotNull SourcePos pos, boolean coverage
   ) {
     return classify(clauses, telescope, tycker.state, tycker.reporter, pos, coverage);

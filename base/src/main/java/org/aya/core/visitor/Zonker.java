@@ -5,21 +5,17 @@ package org.aya.core.visitor;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicLinkedSeq;
 import kala.collection.mutable.DynamicSeq;
-import kala.tuple.Unit;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.Tycker;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
-import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Instantiates holes (assuming all holes are solved).
@@ -30,43 +26,42 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public final class Zonker implements TermFixpoint<Unit> {
-  public final @NotNull TyckState state;
-  public final @NotNull Reporter reporter;
-  private final @NotNull DynamicLinkedSeq<Term> stack = DynamicLinkedSeq.create();
-
-  public Zonker(@NotNull TyckState state, @NotNull Reporter reporter) {
-    this.state = state;
-    this.reporter = reporter;
+public record Zonker<StackType extends DynamicLinkedSeq<Term>>(
+  @NotNull @Override TermView view,
+  @NotNull Tycker tycker,
+  @NotNull StackType stack
+) implements TermOps {
+  public static @NotNull Zonker<DynamicLinkedSeq<Term>> make(@NotNull Term term, @NotNull Tycker tycker) {
+    return new Zonker<>(term.view(), tycker, DynamicLinkedSeq.create());
   }
 
-  public @NotNull Term zonk(@NotNull Term term, @Nullable SourcePos pos) {
-    return term.accept(this, Unit.unit());
-  }
-
-  @Override public void traceEntrance(@NotNull Term term, Unit unit) {
+  @Override public Term pre(Term term) {
     stack.push(term);
+    return switch (view.pre(term)) {
+      case CallTerm.Hole hole -> {
+        var sol = hole.ref();
+        var metas = tycker.state.metas();
+        if (!metas.containsKey(sol)) {
+          tycker.reporter.report(new UnsolvedMeta(stack.view()
+            .drop(1)
+            .map(t -> t.freezeHoles(tycker.state))
+            .toImmutableSeq(), sol.sourcePos, sol.name));
+          yield new ErrorTerm(hole);
+        }
+        yield pre(metas.get(sol));
+      }
+      case RefTerm.MetaPat metaPat -> metaPat.inline();
+      case Term misc -> misc;
+    };
   }
 
-  @Override public void traceExit(@NotNull Term term) {
+  @Override public Term post(Term term) {
     stack.pop();
+    return view.post(term);
   }
 
-  @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
-    var sol = term.ref();
-    var metas = state.metas();
-    if (!metas.containsKey(sol)) {
-      reporter.report(new UnsolvedMeta(stack.view()
-        .drop(1)
-        .map(t -> t.freezeHoles(state))
-        .toImmutableSeq(), sol.sourcePos, sol.name));
-      return new ErrorTerm(term);
-    }
-    return metas.get(sol).accept(this, Unit.unit());
-  }
-
-  @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
-    return metaPat.inline();
+  @Override public @NotNull Term initial() {
+    return view.initial();
   }
 
   public record UnsolvedMeta(
