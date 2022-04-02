@@ -139,11 +139,11 @@ public interface TermView {
   }
 
   default TermView lift(int shift) {
-    return new TermLift(this, shift);
+    return shift == 0 ? this : new TermLift(this, shift);
   }
 
   default TermView subst(Subst subst) {
-    return new TermSubst(this, subst);
+    return subst.isEmpty() ? this : new TermSubst(this, subst);
   }
 
   default TermView postMap(Function<Term, Term> f) {

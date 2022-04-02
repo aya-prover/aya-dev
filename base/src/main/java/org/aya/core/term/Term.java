@@ -56,11 +56,11 @@ public sealed interface Term extends AyaDocile permits
   }
 
   default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
-    return view().subst(new Subst(MutableMap.from(subst))).commit();
+    return subst(new Subst(MutableMap.from(subst)));
   }
 
   default @NotNull Term subst(@NotNull Subst subst, int ulift) {
-    return accept(new Substituter(subst, ulift), Unit.unit());
+    return view().subst(subst).lift(ulift).commit();
   }
 
   default @NotNull Term rename() {

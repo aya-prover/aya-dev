@@ -18,11 +18,10 @@ public record TermSubst(TermView view, Subst subst) implements TermView {
 
   @Override
   public Term post(Term term) {
-    var processed = view.post(term);
-    return subst.isEmpty() ? processed : switch (processed) {
+    return  switch (view.post(term)) {
       case RefTerm ref -> subst.map().getOption(ref.var()).map(Term::rename).getOrDefault(ref);
       case RefTerm.Field field -> subst.map().getOption(field.ref()).map(Term::rename).getOrDefault(field);
-      default -> processed;
+      case Term misc -> misc;
     };
   }
 }

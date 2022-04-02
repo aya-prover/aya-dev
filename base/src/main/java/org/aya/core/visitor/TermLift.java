@@ -21,8 +21,7 @@ public record TermLift(TermView view, int ulift) implements TermView {
   @Override
   public Term post(Term term) {
     // TODO: Implement the correct rules.
-    var processed = view.post(term);
-    return (ulift == 0) ? processed : switch (processed) {
+    return switch (view.post(term)) {
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + ulift);
       case ElimTerm.Proj proj -> new ElimTerm.Proj(proj.of(), proj.ulift() + ulift, proj.ix());
       case CallTerm.Struct struct -> new CallTerm.Struct(struct.ref(), struct.ulift() + ulift, struct.args());
@@ -36,7 +35,7 @@ public record TermLift(TermView view, int ulift) implements TermView {
       case CallTerm.Access access -> new CallTerm.Access(access.of(), access.ref(), access.ulift() + ulift, access.structArgs(), access.fieldArgs());
       case CallTerm.Prim prim -> new CallTerm.Prim(prim.ref(), prim.ulift() + ulift, prim.args());
       case CallTerm.Hole hole -> new CallTerm.Hole(hole.ref(), hole.ulift() + ulift, hole.contextArgs(), hole.args());
-      default -> processed;
+      case Term misc -> misc;
     };
   }
 }
