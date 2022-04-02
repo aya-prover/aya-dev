@@ -3,8 +3,8 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.RefTerm;
@@ -26,13 +26,13 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author ice1000
  */
-public record Zonker<StackType extends MutableSinglyLinkedList<Term>>(
+public record Zonker(
   @NotNull @Override TermView view,
   @NotNull Tycker tycker,
-  @NotNull StackType stack
+  @NotNull MutableSinglyLinkedList<Term> stack
 ) implements TermOps {
-  public static @NotNull Zonker<MutableSinglyLinkedList<Term>> make(@NotNull Term term, @NotNull Tycker tycker) {
-    return new Zonker<>(term.view(), tycker, MutableSinglyLinkedList.create());
+  public static @NotNull Zonker make(@NotNull Term term, @NotNull Tycker tycker) {
+    return new Zonker(term.view(), tycker, MutableSinglyLinkedList.create());
   }
 
   @Override public Term pre(Term term) {
