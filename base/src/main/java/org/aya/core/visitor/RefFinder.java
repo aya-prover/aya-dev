@@ -3,7 +3,7 @@
 package org.aya.core.visitor;
 
 import kala.collection.SeqLike;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
@@ -18,16 +18,16 @@ import org.jetbrains.annotations.NotNull;
  * @see RefFinder#HEADER_AND_BODY
  */
 public record RefFinder(boolean withBody) implements
-  Def.Visitor<@NotNull DynamicSeq<Def>, Unit>,
-  VarConsumer<@NotNull DynamicSeq<Def>> {
+  Def.Visitor<@NotNull MutableList<Def>, Unit>,
+  VarConsumer<@NotNull MutableList<Def>> {
   public static final @NotNull RefFinder HEADER_ONLY = new RefFinder(false);
   public static final @NotNull RefFinder HEADER_AND_BODY = new RefFinder(true);
 
-  @Override public void visitVar(Var usage, @NotNull DynamicSeq<Def> defs) {
+  @Override public void visitVar(Var usage, @NotNull MutableList<Def> defs) {
     if (usage instanceof DefVar<?, ?> ref) defs.append(ref.core);
   }
 
-  @Override public Unit visitFn(@NotNull FnDef fn, @NotNull DynamicSeq<Def> references) {
+  @Override public Unit visitFn(@NotNull FnDef fn, @NotNull MutableList<Def> references) {
     tele(references, fn.telescope());
     fn.result().accept(this, references);
     if (withBody) fn.body.map(
@@ -39,20 +39,20 @@ public record RefFinder(boolean withBody) implements
     return Unit.unit();
   }
 
-  @Override public Unit visitCtor(@NotNull CtorDef def, @NotNull DynamicSeq<Def> references) {
+  @Override public Unit visitCtor(@NotNull CtorDef def, @NotNull MutableList<Def> references) {
     tele(references, def.selfTele);
     if (withBody) for (var clause : def.clauses) matchy(clause, references);
     return Unit.unit();
   }
 
-  @Override public Unit visitStruct(@NotNull StructDef def, @NotNull DynamicSeq<Def> references) {
+  @Override public Unit visitStruct(@NotNull StructDef def, @NotNull MutableList<Def> references) {
     tele(references, def.telescope());
     def.result().accept(this, references);
     if (withBody) def.fields.forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 
-  @Override public Unit visitField(@NotNull FieldDef def, @NotNull DynamicSeq<Def> references) {
+  @Override public Unit visitField(@NotNull FieldDef def, @NotNull MutableList<Def> references) {
     tele(references, def.telescope());
     def.body.forEach(t -> t.accept(this, references));
     def.result().accept(this, references);
@@ -60,23 +60,23 @@ public record RefFinder(boolean withBody) implements
     return Unit.unit();
   }
 
-  @Override public Unit visitPrim(@NotNull PrimDef def, @NotNull DynamicSeq<Def> defs) {
+  @Override public Unit visitPrim(@NotNull PrimDef def, @NotNull MutableList<Def> defs) {
     tele(defs, def.telescope());
     return Unit.unit();
   }
 
-  @Override public Unit visitData(@NotNull DataDef def, @NotNull DynamicSeq<Def> references) {
+  @Override public Unit visitData(@NotNull DataDef def, @NotNull MutableList<Def> references) {
     tele(references, def.telescope());
     def.result().accept(this, references);
     if (withBody) def.body.forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 
-  public void matchy(@NotNull Matching match, @NotNull DynamicSeq<Def> defs) {
+  public void matchy(@NotNull Matching match, @NotNull MutableList<Def> defs) {
     match.body().accept(this, defs);
   }
 
-  private void tele(@NotNull DynamicSeq<Def> references, @NotNull SeqLike<Term.Param> telescope) {
+  private void tele(@NotNull MutableList<Def> references, @NotNull SeqLike<Term.Param> telescope) {
     telescope.forEach(param -> param.type().accept(this, references));
   }
 }

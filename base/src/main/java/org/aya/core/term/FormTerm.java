@@ -4,7 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +25,7 @@ public sealed interface FormTerm extends Term {
       return body.subst(param.ref(), term);
     }
 
-    public @NotNull Term parameters(@NotNull DynamicSeq<Term.@NotNull Param> params) {
+    public @NotNull Term parameters(@NotNull MutableList<Term.@NotNull Param> params) {
       params.append(param);
       var t = body;
       while (t instanceof Pi pi) {
@@ -40,7 +40,7 @@ public sealed interface FormTerm extends Term {
     }
   }
 
-  static @NotNull Term unpi(@NotNull Term term, @NotNull DynamicSeq<Term.Param> params) {
+  static @NotNull Term unpi(@NotNull Term term, @NotNull MutableList<Term.Param> params) {
     while (term instanceof Pi pi) {
       params.append(pi.param);
       term = pi.body;

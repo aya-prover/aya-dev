@@ -4,7 +4,7 @@ package org.aya.core;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
@@ -29,7 +29,7 @@ public final class Meta implements Var {
   public final @NotNull String name;
   public final @Nullable Term result;
   public final @NotNull SourcePos sourcePos;
-  public final @NotNull DynamicSeq<Tuple2<Subst, Term>> conditions = DynamicSeq.create();
+  public final @NotNull MutableList<Tuple2<Subst, Term>> conditions = MutableList.create();
 
   public SeqView<Term.Param> fullTelescope() {
     return contextTele.view().concat(telescope);
@@ -59,7 +59,7 @@ public final class Meta implements Var {
     @Nullable Term result, @NotNull SourcePos sourcePos
   ) {
     if (result instanceof FormTerm.Pi pi) {
-      var buf = DynamicSeq.<Term.Param>create();
+      var buf = MutableList.<Term.Param>create();
       var r = pi.parameters(buf);
       return new Meta(contextTele, buf.toImmutableSeq(), name, r, sourcePos);
     } else return new Meta(contextTele, ImmutableSeq.empty(), name, result, sourcePos);

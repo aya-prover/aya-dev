@@ -5,7 +5,7 @@ package org.aya.tyck.pat;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Result;
 import kala.tuple.Tuple;
@@ -254,7 +254,7 @@ public final class PatTycker {
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
   visitPatterns(Def.Signature sig, SeqView<Pattern> stream) {
-    var results = DynamicSeq.<Pat>create();
+    var results = MutableList.<Pat>create();
     if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.toImmutableSeq(), sig.result());
     Pattern last_pat = stream.last();
     while (sig.param().isNotEmpty()) {
@@ -296,7 +296,7 @@ public final class PatTycker {
 
   private record PatData(
     @NotNull Def.Signature sig,
-    @NotNull DynamicSeq<Pat> results,
+    @NotNull MutableList<Pat> results,
     @NotNull Term.Param param
   ) {
     public @NotNull SourcePos paramPos() {

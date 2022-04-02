@@ -3,7 +3,7 @@
 package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -37,7 +37,7 @@ public record BindContext(
     return parent.underlyingFile();
   }
 
-  @Override public DynamicSeq<LocalVar> collect(@NotNull DynamicSeq<LocalVar> container) {
+  @Override public MutableList<LocalVar> collect(@NotNull MutableList<LocalVar> container) {
     if (container.noneMatch(v -> Objects.equals(v.name(), ref.name()))) container.append(ref);
     return parent.collect(container);
   }

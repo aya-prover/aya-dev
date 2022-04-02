@@ -4,7 +4,7 @@ package org.aya.lsp.library;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
@@ -21,7 +21,7 @@ import java.nio.file.Path;
  */
 public record WsLibrary(
   @NotNull SourceFileLocator locator,
-  @NotNull DynamicSeq<LibrarySource> sources,
+  @NotNull MutableList<LibrarySource> sources,
   @NotNull LibraryConfig mockConfig,
   @NotNull Path workspace
 ) implements LibraryOwner {
@@ -29,7 +29,7 @@ public record WsLibrary(
     var parent = ayaSource.getParent();
     var mockConfig = mockConfig(parent);
     var locator = new SourceFileLocator.Module(SeqView.of(parent));
-    var owner = new WsLibrary(locator, DynamicSeq.create(), mockConfig, parent);
+    var owner = new WsLibrary(locator, MutableList.create(), mockConfig, parent);
     owner.sources.append(new LibrarySource(owner, ayaSource));
     return owner;
   }

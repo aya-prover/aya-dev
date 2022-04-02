@@ -3,7 +3,7 @@
 package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
@@ -106,7 +106,7 @@ public record SingleFileCompiler(
     ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
     String fileName, String fileExt, BiFunction<Doc, Boolean, String> toString
   ) throws IOException {
-    var docs = DynamicSeq.<Doc>create();
+    var docs = MutableList.<Doc>create();
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
       // Skip uninteresting items

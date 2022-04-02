@@ -3,7 +3,7 @@
 package org.aya.tyck.env;
 
 import kala.collection.SeqView;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.term.Term;
@@ -38,7 +38,7 @@ public record MapLocalCtx(
     return localMap.isEmpty() && (parent == null || parent.isEmpty());
   }
 
-  @Override public void extractToLocal(@NotNull DynamicSeq<Term.Param> dest) {
+  @Override public void extractToLocal(@NotNull MutableList<Term.Param> dest) {
     localMap.mapTo(dest, (k, v) -> new Term.Param(k, v, false));
   }
 }

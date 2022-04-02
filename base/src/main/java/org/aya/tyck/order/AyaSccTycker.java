@@ -4,7 +4,7 @@ package org.aya.tyck.order;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
@@ -44,13 +44,13 @@ public record AyaSccTycker(
   @NotNull StmtTycker tycker,
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
-  @NotNull DynamicSeq<@NotNull Def> wellTyped,
+  @NotNull MutableList<@NotNull Def> wellTyped,
   @NotNull MutableMap<Decl, ExprTycker> tyckerReuse,
   @NotNull MutableMap<Decl, CollectingReporter> sampleReporters
 ) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
-    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, DynamicSeq.create(), MutableMap.create(), MutableMap.create());
+    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, MutableList.create(), MutableMap.create(), MutableMap.create());
   }
 
   public @NotNull ImmutableSeq<TyckOrder> tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) {

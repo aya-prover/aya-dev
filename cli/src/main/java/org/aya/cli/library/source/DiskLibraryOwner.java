@@ -3,7 +3,7 @@
 package org.aya.cli.library.source;
 
 import kala.collection.SeqView;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
@@ -23,9 +23,9 @@ import java.nio.file.Path;
  */
 public record DiskLibraryOwner(
   @NotNull SourceFileLocator locator,
-  @NotNull DynamicSeq<Path> modulePathMut,
-  @NotNull DynamicSeq<LibraryOwner> libraryDepsMut,
-  @NotNull DynamicSeq<LibrarySource> librarySourcesMut,
+  @NotNull MutableList<Path> modulePathMut,
+  @NotNull MutableList<LibraryOwner> libraryDepsMut,
+  @NotNull MutableList<LibrarySource> librarySourcesMut,
   @NotNull LibraryConfig underlyingLibrary
 ) implements MutableLibraryOwner {
   private static @Nullable LibraryConfig depConfig(@NotNull LibraryConfig config, @NotNull LibraryDependency dep) throws IOException {
@@ -42,8 +42,8 @@ public record DiskLibraryOwner(
   public static @NotNull DiskLibraryOwner from(@NotNull LibraryConfig config) throws IOException {
     var srcRoot = config.librarySrcRoot();
     var locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
-    var owner = new DiskLibraryOwner(locator, DynamicSeq.of(),
-      DynamicSeq.of(), DynamicSeq.of(), config);
+    var owner = new DiskLibraryOwner(locator, MutableList.of(),
+      MutableList.of(), MutableList.of(), config);
     owner.librarySourcesMut.appendAll(FileUtil.collectSource(srcRoot, Constants.AYA_POSTFIX)
       .map(p -> new LibrarySource(owner, p)));
     for (var dep : config.deps()) {

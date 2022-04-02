@@ -4,7 +4,7 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 public record ExprResolver(
   @NotNull Options options,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
-  @NotNull DynamicSeq<TyckOrder> reference,
+  @NotNull MutableList<TyckOrder> reference,
   @NotNull MutableStack<Where> where,
   @Nullable Consumer<TyckUnit> parentAdd
 ) implements ExprFixpoint<Context> {
@@ -77,11 +77,11 @@ public record ExprResolver(
   public static final @NotNull Options LAX = new ExprResolver.Options(true, true);
 
   public ExprResolver(@NotNull Options options) {
-    this(options, MutableLinkedHashMap.of(), DynamicSeq.create(), MutableStack.create(), null);
+    this(options, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), null);
   }
 
   public @NotNull ExprResolver member(@NotNull TyckUnit decl) {
-    return new ExprResolver(RESTRICTIVE, allowedGeneralizes, DynamicSeq.of(new TyckOrder.Head(decl)), MutableStack.create(),
+    return new ExprResolver(RESTRICTIVE, allowedGeneralizes, MutableList.of(new TyckOrder.Head(decl)), MutableStack.create(),
       this::addReference);
   }
 
@@ -175,7 +175,7 @@ public record ExprResolver(
   }
 
   @Override public @NotNull Expr visitHole(@NotNull Expr.HoleExpr expr, Context context) {
-    expr.accessibleLocal().set(context.collect(DynamicSeq.create()).toImmutableSeq());
+    expr.accessibleLocal().set(context.collect(MutableList.create()).toImmutableSeq());
     return ExprFixpoint.super.visitHole(expr, context);
   }
 }

@@ -3,18 +3,18 @@
 package org.aya.tyck.env;
 
 import kala.collection.SeqView;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record SeqLocalCtx(
-  @NotNull DynamicSeq<P> localSeq,
+  @NotNull MutableList<P> localSeq,
   @Override @Nullable LocalCtx parent
 ) implements LocalCtx {
   public SeqLocalCtx() {
-    this(DynamicSeq.create(), null);
+    this(MutableList.create(), null);
   }
 
   public record P(@NotNull LocalVar var, @NotNull Term type) {
@@ -24,7 +24,7 @@ public record SeqLocalCtx(
     localSeq.removeAll(p -> vars.contains(p.var));
   }
 
-  @Override public void extractToLocal(@NotNull DynamicSeq<Term.Param> dest) {
+  @Override public void extractToLocal(@NotNull MutableList<Term.Param> dest) {
     localSeq.mapTo(dest, p -> new Term.Param(p.var, p.type, false));
   }
 

@@ -3,7 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableMap;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -81,7 +81,7 @@ public final class ExprTycker extends Tycker {
         });
       }
       case Expr.SigmaExpr sigma -> {
-        var resultTele = DynamicSeq.<Tuple3<LocalVar, Boolean, Term>>create();
+        var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
         var maxLevel = 0;
         for (var tuple : sigma.params()) {
           final var type = tuple.type();
@@ -110,8 +110,8 @@ public final class ExprTycker extends Tycker {
           Def.defTele(structRef).view().zip(structCall.args())
             .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
 
-        var fields = DynamicSeq.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>create();
-        var missing = DynamicSeq.<Var>create();
+        var fields = MutableList.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>create();
+        var missing = MutableList.<Var>create();
         var conFields = newExpr.fields();
 
         for (var defField : structRef.core.fields) {
@@ -270,8 +270,8 @@ public final class ExprTycker extends Tycker {
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
       case Expr.TupExpr tuple -> {
-        var items = DynamicSeq.<Term>create();
-        var resultTele = DynamicSeq.<Term.@NotNull Param>create();
+        var items = MutableList.<Term>create();
+        var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = term.normalize(state, NormalizeMode.WHNF);
         if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(tuple), tuple);
         if (!(typeWHNF instanceof FormTerm.Sigma dt))

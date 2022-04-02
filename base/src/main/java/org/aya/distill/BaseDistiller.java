@@ -5,7 +5,7 @@ package org.aya.distill;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.Decl;
 import org.aya.generic.Arg;
 import org.aya.generic.ParamLike;
@@ -166,8 +166,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   ) {
     if (telescope.isEmpty()) return Doc.empty();
     var last = telescope.first();
-    var buf = DynamicSeq.<Doc>create();
-    var names = DynamicSeq.of(last.ref());
+    var buf = MutableList.<Doc>create();
+    var names = MutableList.of(last.ref());
     for (int i = 1; i < telescope.size(); i++) {
       var param = telescope.get(i);
       if (!Objects.equals(param.type(), last.type())) {
@@ -177,8 +177,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
             .map(ParamLike::type).appended(body)
             .anyMatch(p -> altF7.applyAsInt(p, ref) > 0);
           if (!used) buf.append(justType(last, Outer.ProjHead));
-          else buf.append(dynamicSeqNames(names, last));
-        } else buf.append(dynamicSeqNames(names, last));
+          else buf.append(mutableListNames(names, last));
+        } else buf.append(mutableListNames(names, last));
         names.clear();
         last = param;
       }
@@ -187,7 +187,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     if (body != null && names.sizeEquals(1)
       && altF7.applyAsInt(body, names.first()) == 0) {
       buf.append(justType(last, Outer.ProjHead));
-    } else buf.append(dynamicSeqNames(names, last));
+    } else buf.append(mutableListNames(names, last));
     return Doc.sep(buf);
   }
 
@@ -196,7 +196,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       : Doc.braced(monika.type().toDoc(options));
   }
 
-  private Doc dynamicSeqNames(DynamicSeq<LocalVar> names, ParamLike<?> param) {
+  private Doc mutableListNames(MutableList<LocalVar> names, ParamLike<?> param) {
     return param.toDoc(Doc.sep(names.view().map(BaseDistiller::linkDef).toImmutableSeq()), options);
   }
 

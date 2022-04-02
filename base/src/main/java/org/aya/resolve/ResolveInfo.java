@@ -3,7 +3,7 @@
 package org.aya.resolve;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
@@ -28,11 +28,11 @@ public record ResolveInfo(
   @NotNull ImmutableSeq<Stmt> program,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> imports,
-  @NotNull DynamicSeq<ImmutableSeq<String>> reExports,
+  @NotNull MutableList<ImmutableSeq<String>> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph,
   @NotNull MutableMap<OpDecl, BindBlock> bindBlockRename
 ) {
   public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {
-    this(thisModule, thisProgram, opSet, MutableMap.create(), DynamicSeq.create(), MutableGraph.create(), MutableMap.create());
+    this(thisModule, thisProgram, opSet, MutableMap.create(), MutableList.create(), MutableGraph.create(), MutableMap.create());
   }
 }

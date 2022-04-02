@@ -5,7 +5,7 @@ package org.aya.pretty.doc;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.string.LinkId;
@@ -524,7 +524,7 @@ public sealed interface Doc extends Docile {
     if (cache.isEmpty()) return empty();
     var first = cache.first();
     if (cache.sizeEquals(1)) return first;
-    return simpleCat(cache.view().drop(1).foldLeft(DynamicSeq.of(first), (l, r) -> {
+    return simpleCat(cache.view().drop(1).foldLeft(MutableList.of(first), (l, r) -> {
       l.append(delim);
       l.append(r);
       return l;

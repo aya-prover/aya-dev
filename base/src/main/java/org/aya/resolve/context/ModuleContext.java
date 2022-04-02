@@ -5,7 +5,7 @@ package org.aya.resolve.context;
 import kala.collection.Map;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Stmt;
@@ -39,7 +39,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     if (result == null) return null;
     else if (result.size() == 1) return result.iterator().next().getValue();
     else {
-      var disamb = DynamicSeq.<Seq<String>>create();
+      var disamb = MutableList.<Seq<String>>create();
       result.forEach((k, v) -> disamb.append(k));
       return reportAndThrow(new AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
     }

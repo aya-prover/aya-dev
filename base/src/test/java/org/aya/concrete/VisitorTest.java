@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.PrimDef;
@@ -27,7 +27,7 @@ public class VisitorTest {
   }
 
   @Test public void stmt() {
-    var exprs = DynamicSeq.<Expr>create();
+    var exprs = MutableList.<Expr>create();
     var visitor = new StmtConsumer<Unit>() {
       @Override public Unit visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Unit unit) {
         exprs.append(expr);

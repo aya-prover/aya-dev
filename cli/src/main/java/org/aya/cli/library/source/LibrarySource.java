@@ -3,7 +3,7 @@
 package org.aya.cli.library.source;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.value.Ref;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
@@ -29,13 +29,13 @@ import java.util.stream.IntStream;
 public record LibrarySource(
   @NotNull LibraryOwner owner,
   @NotNull Path file,
-  @NotNull DynamicSeq<LibrarySource> imports,
+  @NotNull MutableList<LibrarySource> imports,
   @NotNull Ref<ImmutableSeq<Stmt>> program,
   @NotNull Ref<ImmutableSeq<Def>> tycked,
   @NotNull Ref<ResolveInfo> resolveInfo
 ) {
   public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {
-    this(owner, FileUtil.canonicalize(file), DynamicSeq.create(), new Ref<>(), new Ref<>(), new Ref<>());
+    this(owner, FileUtil.canonicalize(file), MutableList.create(), new Ref<>(), new Ref<>(), new Ref<>());
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {

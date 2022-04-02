@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.trace;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
@@ -32,7 +32,7 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   final class Builder extends TreeBuilder<Trace> {
-    @VisibleForTesting public @NotNull Deque<DynamicSeq<Trace>> getTops() {
+    @VisibleForTesting public @NotNull Deque<MutableList<Trace>> getTops() {
       return tops;
     }
   }
@@ -40,10 +40,10 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
   record LabelT(
     @NotNull SourcePos pos,
     @NotNull String label,
-    @NotNull DynamicSeq<@NotNull Trace> children
+    @NotNull MutableList<@NotNull Trace> children
   ) implements Trace {
     public LabelT(@NotNull SourcePos pos, @NotNull String label) {
-      this(pos, label, DynamicSeq.create());
+      this(pos, label, MutableList.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -53,10 +53,10 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
 
   record DeclT(
     @NotNull DefVar<?, ?> var, @NotNull SourcePos pos,
-    @NotNull DynamicSeq<@NotNull Trace> children
+    @NotNull MutableList<@NotNull Trace> children
   ) implements Trace {
     public DeclT(@NotNull DefVar<?, ?> var, @NotNull SourcePos pos) {
-      this(var, pos, DynamicSeq.create());
+      this(var, pos, MutableList.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -64,9 +64,9 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
     }
   }
 
-  record ExprT(@NotNull Expr expr, @Nullable Term term, @NotNull DynamicSeq<@NotNull Trace> children) implements Trace {
+  record ExprT(@NotNull Expr expr, @Nullable Term term, @NotNull MutableList<@NotNull Trace> children) implements Trace {
     public ExprT(@NotNull Expr expr, @Nullable Term term) {
-      this(expr, term, DynamicSeq.create());
+      this(expr, term, MutableList.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -77,14 +77,14 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
   record UnifyT(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull SourcePos pos, @Nullable Term type,
-    @NotNull DynamicSeq<@NotNull Trace> children
+    @NotNull MutableList<@NotNull Trace> children
   ) implements Trace {
     public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos) {
       this(lhs, rhs, pos, null);
     }
 
     public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos, @Nullable Term type) {
-      this(lhs, rhs, pos, type, DynamicSeq.create());
+      this(lhs, rhs, pos, type, MutableList.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -95,10 +95,10 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
   record TyckT(
     @NotNull Term term, @NotNull Term type,
     @NotNull SourcePos pos,
-    @NotNull DynamicSeq<@NotNull Trace> children
+    @NotNull MutableList<@NotNull Trace> children
   ) implements Trace {
     public TyckT(@NotNull ExprTycker.Result result, @NotNull SourcePos pos) {
-      this(result.wellTyped(), result.type(), pos, DynamicSeq.create());
+      this(result.wellTyped(), result.type(), pos, MutableList.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -109,10 +109,10 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
   record PatT(
     @NotNull Term term, @NotNull Pattern pat,
     @NotNull SourcePos pos,
-    @NotNull DynamicSeq<@NotNull Trace> children
+    @NotNull MutableList<@NotNull Trace> children
   ) implements Trace {
     public PatT(@NotNull Term term, @NotNull Pattern pat, @NotNull SourcePos pos) {
-      this(term, pat, pos, DynamicSeq.create());
+      this(term, pat, pos, MutableList.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

@@ -4,7 +4,7 @@ package org.aya.lsp.utils;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.tuple.Unit;
 import org.aya.cli.library.source.LibraryOwner;
@@ -152,7 +152,7 @@ public interface Resolver {
    * @author ice1000, kiva
    */
   class PositionResolver extends ReferringResolver<XY> {
-    public final @NotNull DynamicSeq<WithPos<Var>> targetVars = DynamicSeq.create();
+    public final @NotNull MutableList<WithPos<Var>> targetVars = MutableList.create();
 
     @Override public Unit visitImport(@NotNull Command.Import cmd, XY xy) {
       var path = cmd.path();
@@ -201,7 +201,7 @@ public interface Resolver {
 
   /** find usages of a variable */
   class UsageResolver extends ReferringResolver<Var> {
-    public final @NotNull DynamicSeq<SourcePos> refs = DynamicSeq.create();
+    public final @NotNull MutableList<SourcePos> refs = MutableList.create();
 
     @Override protected void check(@NotNull Var var, @NotNull Var check, @NotNull SourcePos sourcePos) {
       if (isUsage(var, check)) refs.append(sourcePos);

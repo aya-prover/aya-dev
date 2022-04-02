@@ -7,13 +7,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.*;
 import org.jetbrains.annotations.NotNull;
 
-public record MutableGraph<T>(@NotNull MutableMap<T, @NotNull DynamicSeq<@NotNull T>> E) {
+public record MutableGraph<T>(@NotNull MutableMap<T, @NotNull MutableList<@NotNull T>> E) {
   public static @NotNull <T> MutableGraph<T> create() {
     return new MutableGraph<>(MutableLinkedHashMap.of());
   }
 
-  public @NotNull DynamicSeq<T> sucMut(@NotNull T elem) {
-    return E.getOrPut(elem, DynamicSeq::of);
+  public @NotNull MutableList<T> sucMut(@NotNull T elem) {
+    return E.getOrPut(elem, MutableList::of);
   }
 
   public @NotNull SeqView<T> suc(@NotNull T elem) {
@@ -71,8 +71,8 @@ public record MutableGraph<T>(@NotNull MutableMap<T, @NotNull DynamicSeq<@NotNul
    */
   private class Tarjan {
     final MutableMap<T, Info> info = MutableLinkedHashMap.of();
-    final DynamicLinkedSeq<T> stack = DynamicLinkedSeq.create();
-    final DynamicSeq<ImmutableSeq<T>> SCCs = DynamicSeq.create();
+    final MutableSinglyLinkedList<T> stack = MutableSinglyLinkedList.create();
+    final MutableList<ImmutableSeq<T>> SCCs = MutableList.create();
     int index = 0;
 
     private @NotNull Info info(@NotNull T t) {
@@ -110,7 +110,7 @@ public record MutableGraph<T>(@NotNull MutableMap<T, @NotNull DynamicSeq<@NotNul
 
       // If v is a root node, pop the stack and generate an SCC
       if (infoV.lowlink == infoV.index) {
-        var scc = DynamicSeq.<T>create();
+        var scc = MutableList.<T>create();
         T t = null;
         while (v != t) {
           t = pop();

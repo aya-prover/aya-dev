@@ -27,8 +27,8 @@ public abstract class BinOpParser<
     this.seq = seq;
   }
 
-  private final DynamicLinkedSeq<Tuple2<Arg, BinOpSet.BinOP>> opStack = DynamicLinkedSeq.create();
-  private final DynamicDoubleLinkedSeq<Arg> prefixes = DynamicDoubleLinkedSeq.create();
+  private final MutableSinglyLinkedList<Tuple2<Arg, BinOpSet.BinOP>> opStack = MutableSinglyLinkedList.create();
+  private final MutableLinkedList<Arg> prefixes = MutableLinkedList.create();
   private final MutableMap<Arg, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
 
   /** @implSpec equivalent to <code>new BinOpParser(this.opSet, seq)</code>. */
@@ -109,7 +109,7 @@ public abstract class BinOpParser<
   protected abstract @NotNull Expr createErrorExpr(@NotNull SourcePos sourcePos);
 
   private @NotNull Seq<Arg> insertApplication() {
-    var seqWithApp = DynamicSeq.<Arg>create();
+    var seqWithApp = MutableList.<Arg>create();
     var lastIsOperand = true;
     for (var expr : seq) {
       var isOperand = isOperand(expr, opSet);

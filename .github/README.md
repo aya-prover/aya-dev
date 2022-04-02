@@ -89,7 +89,6 @@ check out [how to][proxy] let gradle use a proxy.
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
 [codecov]: https://img.shields.io/codecov/c/github/aya-prover/aya-dev?logo=codecov&logoColor=white
 [gitter]: https://img.shields.io/gitter/room/aya-prover/community?color=cyan&logo=gitter
-[jitpack]: https://img.shields.io/jitpack/v/github/aya-prover/aya-dev?logo=github
 [tokei]: https://img.shields.io/tokei/lines/github/aya-prover/aya-dev?logo=java
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
 [oop]: ../base/src/test/resources/success/common/src/Arith/Nat.aya
@@ -106,8 +105,7 @@ check out [how to][proxy] let gradle use a proxy.
 ## Use as a library
 
 It's indexed in [mvnrepository](https://mvnrepository.com/artifact/org.aya-prover),
-and here are some example build configurations (maybe you need to add the <https://jitpack.io>
-repository as we are using an upstream dependency from there):
+and here are some example build configurations:
 
 ```xml
 <!-- Maven -->

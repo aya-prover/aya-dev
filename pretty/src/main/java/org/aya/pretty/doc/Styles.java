@@ -2,14 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
 
 public class Styles {
-  public DynamicSeq<Style> styles;
+  public MutableList<Style> styles;
 
   Styles(Style style) {
-    this.styles = DynamicSeq.of(style);
+    this.styles = MutableList.of(style);
   }
 
   public @NotNull Styles italic() {
