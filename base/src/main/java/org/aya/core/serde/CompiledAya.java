@@ -3,7 +3,7 @@
 package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
@@ -51,7 +51,7 @@ public record CompiledAya(
       throw new UnsupportedOperationException();
     }
 
-    var serialization = new Serialization(state, DynamicSeq.create(), DynamicSeq.create());
+    var serialization = new Serialization(state, MutableList.create(), MutableList.create());
     serialization.ser(defs);
 
     var modName = ctx.moduleName();
@@ -70,8 +70,8 @@ public record CompiledAya(
 
   private record Serialization(
     @NotNull Serializer.State state,
-    @NotNull DynamicSeq<SerDef> serDefs,
-    @NotNull DynamicSeq<SerDef.SerOp> serOps
+    @NotNull MutableList<SerDef> serDefs,
+    @NotNull MutableList<SerDef.SerOp> serOps
   ) {
     private void ser(@NotNull ImmutableSeq<Def> defs) {
       defs.forEach(this::serDef);

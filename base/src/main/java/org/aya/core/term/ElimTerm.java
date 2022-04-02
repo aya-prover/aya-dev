@@ -3,7 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
@@ -42,7 +42,7 @@ public sealed interface ElimTerm extends Term {
     }
   }
 
-  static @NotNull Term unapp(@NotNull Term term, DynamicSeq<Arg<@NotNull Term>> args) {
+  static @NotNull Term unapp(@NotNull Term term, MutableList<Arg<@NotNull Term>> args) {
     while (term instanceof ElimTerm.App app) {
       args.append(app.arg);
       term = app.of;

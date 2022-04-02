@@ -4,7 +4,7 @@ package org.aya.lsp.server;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
@@ -50,7 +50,7 @@ import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
   private final BufferReporter reporter = new BufferReporter();
-  private final @NotNull DynamicSeq<LibraryOwner> libraries = DynamicSeq.create();
+  private final @NotNull MutableList<LibraryOwner> libraries = MutableList.create();
   private Set<Path> lastErrorReportedFiles = Collections.emptySet();
 
   public void registerLibrary(@NotNull Path path) {
@@ -143,18 +143,18 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     }
     reportErrors(reporter, DistillerOptions.pretty());
     // build highlight
-    var symbols = DynamicSeq.<HighlightResult>create();
+    var symbols = MutableList.<HighlightResult>create();
     highlight(owner, symbols);
     return symbols.asJava();
   }
 
-  private void highlight(@NotNull LibraryOwner owner, @NotNull DynamicSeq<HighlightResult> result) {
+  private void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {
     owner.librarySources().forEach(src -> result.append(highlightOne(src)));
     for (var dep : owner.libraryDeps()) highlight(dep, result);
   }
 
   private @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
-    var symbols = DynamicSeq.<HighlightResult.Symbol>create();
+    var symbols = MutableList.<HighlightResult.Symbol>create();
     var program = source.program().value;
     if (program != null) program.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
     return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));

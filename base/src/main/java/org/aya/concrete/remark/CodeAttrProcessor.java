@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.util.StringUtil;
 import org.aya.util.distill.DistillerOptions;
@@ -55,7 +55,7 @@ public class CodeAttrProcessor implements DelimiterProcessor {
     var opener = openingRun.getOpener();
     if (!(opener.getPrevious() instanceof Code code)) return 0;
 
-    var toUnlink = DynamicSeq.<Node>create();
+    var toUnlink = MutableList.<Node>create();
     var content = new StringBuilder();
 
     for (var node : Nodes.between(opener, closingRun.getCloser())) {

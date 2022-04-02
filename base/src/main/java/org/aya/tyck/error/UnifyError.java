@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
@@ -20,7 +20,7 @@ public record UnifyError(
 ) implements ExprProblem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     var actualDoc = actual.toDoc(options);
-    var buf = DynamicSeq.of(
+    var buf = MutableList.of(
       Doc.english("Cannot check the expression"),
       Doc.par(1, expr.toDoc(options)),
       Doc.english("of type"),

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck.error;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
@@ -29,7 +29,7 @@ public record NonTerminating(
   @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
     if (diag == null) return Doc.empty();
     var matrix = diag.matrix();
-    var buffer = DynamicSeq.of(
+    var buffer = MutableList.of(
       Doc.english("In particular, the problematic call is:"),
       Doc.nest(2, matrix.callTerm().toDoc(options)),
       Doc.english("whose call matrix is:"),

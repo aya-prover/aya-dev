@@ -3,8 +3,8 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicLinkedSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableSinglyLinkedList;
+import kala.collection.mutable.MutableList;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.RefTerm;
@@ -26,13 +26,13 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author ice1000
  */
-public record Zonker<StackType extends DynamicLinkedSeq<Term>>(
+public record Zonker<StackType extends MutableSinglyLinkedList<Term>>(
   @NotNull @Override TermView view,
   @NotNull Tycker tycker,
   @NotNull StackType stack
 ) implements TermOps {
-  public static @NotNull Zonker<DynamicLinkedSeq<Term>> make(@NotNull Term term, @NotNull Tycker tycker) {
-    return new Zonker<>(term.view(), tycker, DynamicLinkedSeq.create());
+  public static @NotNull Zonker<MutableSinglyLinkedList<Term>> make(@NotNull Term term, @NotNull Tycker tycker) {
+    return new Zonker<>(term.view(), tycker, MutableSinglyLinkedList.create());
   }
 
   @Override public Term pre(Term term) {
@@ -69,9 +69,9 @@ public record Zonker<StackType extends DynamicLinkedSeq<Term>>(
     @Override @NotNull SourcePos sourcePos, @NotNull String name
   ) implements Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      var lines = DynamicSeq.of(Doc.english("Unsolved meta " + name));
+      var lines = MutableList.of(Doc.english("Unsolved meta " + name));
       for (var term : termStack) {
-        var buf = DynamicSeq.of(Doc.plain("in"), Doc.par(1, Doc.styled(Style.code(), term.toDoc(options))));
+        var buf = MutableList.of(Doc.plain("in"), Doc.par(1, Doc.styled(Style.code(), term.toDoc(options))));
         if (term instanceof RefTerm) {
           buf.append(Doc.ALT_WS);
           buf.append(Doc.parened(Doc.english("in the type")));

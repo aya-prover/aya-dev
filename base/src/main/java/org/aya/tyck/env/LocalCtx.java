@@ -4,7 +4,7 @@ package org.aya.tyck.env;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
@@ -61,7 +61,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     }
   }
   default @NotNull ImmutableSeq<Term.Param> extract() {
-    var ctx = DynamicSeq.<Term.Param>create();
+    var ctx = MutableList.<Term.Param>create();
     var map = this;
     while (map != null) {
       map.extractToLocal(ctx);
@@ -69,7 +69,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     }
     return ctx.toImmutableSeq();
   }
-  @Contract(mutates = "param1") void extractToLocal(@NotNull DynamicSeq<Term.Param> dest);
+  @Contract(mutates = "param1") void extractToLocal(@NotNull MutableList<Term.Param> dest);
   @Contract(pure = true) default @NotNull Term get(@NotNull LocalVar var) {
     var ctx = this;
     while (ctx != null) {
@@ -90,7 +90,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     return new MapLocalCtx(MutableLinkedHashMap.of(), this);
   }
   @Contract(" -> new") default @NotNull SeqLocalCtx deriveSeq() {
-    return new SeqLocalCtx(DynamicSeq.create(), this);
+    return new SeqLocalCtx(MutableList.create(), this);
   }
   @Nullable LocalCtx parent();
 }

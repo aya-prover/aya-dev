@@ -4,7 +4,7 @@ package org.aya.tyck.pat;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.concrete.Pattern;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
@@ -25,7 +25,7 @@ public sealed interface MCT {
   }
 
   default @NotNull ImmutableSeq<PatClass> toSeq() {
-    var buffer = DynamicSeq.<PatClass>create();
+    var buffer = MutableList.<PatClass>create();
     forEach(buffer::append);
     return buffer.toImmutableSeq();
   }

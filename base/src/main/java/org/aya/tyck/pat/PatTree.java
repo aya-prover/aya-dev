@@ -3,7 +3,7 @@
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.util.TreeBuilder;
@@ -17,10 +17,10 @@ import org.jetbrains.annotations.NotNull;
 public record PatTree(
   @NotNull String s,
   boolean explicit, int argsCount,
-  @NotNull DynamicSeq<PatTree> children
+  @NotNull MutableList<PatTree> children
 ) implements TreeBuilder.Tree<PatTree> {
   public PatTree(@NotNull String s, boolean explicit, int argsCount) {
-    this(s, explicit, argsCount, DynamicSeq.create());
+    this(s, explicit, argsCount, MutableList.create());
   }
 
   public @NotNull Pattern toPattern() {

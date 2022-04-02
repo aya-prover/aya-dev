@@ -3,16 +3,16 @@
 package org.aya.cli.library.source;
 
 import kala.collection.SeqView;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
 public interface MutableLibraryOwner extends LibraryOwner {
-  @NotNull DynamicSeq<Path> modulePathMut();
-  @NotNull DynamicSeq<LibrarySource> librarySourcesMut();
-  @NotNull DynamicSeq<LibraryOwner> libraryDepsMut();
+  @NotNull MutableList<Path> modulePathMut();
+  @NotNull MutableList<LibrarySource> librarySourcesMut();
+  @NotNull MutableList<LibraryOwner> libraryDepsMut();
 
   @Override default @NotNull SeqView<Path> modulePath() {
     return modulePathMut().view();

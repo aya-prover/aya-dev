@@ -3,7 +3,7 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.core.term.*;
 import org.aya.ref.LocalVar;
@@ -82,19 +82,19 @@ public interface VarConsumer<P> extends TermConsumer<P> {
 
   final class ScopeChecker implements VarConsumer<Unit> {
     public final @NotNull ImmutableSeq<LocalVar> allowed;
-    public final @NotNull DynamicSeq<LocalVar> invalid;
-    public final @NotNull DynamicSeq<LocalVar> confused;
-    private final @NotNull DynamicSeq<LocalVar> bound = DynamicSeq.create();
+    public final @NotNull MutableList<LocalVar> invalid;
+    public final @NotNull MutableList<LocalVar> confused;
+    private final @NotNull MutableList<LocalVar> bound = MutableList.create();
 
     @Contract(pure = true) public ScopeChecker(@NotNull ImmutableSeq<LocalVar> allowed) {
-      this(allowed, DynamicSeq.create(), DynamicSeq.create());
+      this(allowed, MutableList.create(), MutableList.create());
     }
 
     @Contract(pure = true)
     private ScopeChecker(
       @NotNull ImmutableSeq<LocalVar> allowed,
-      @NotNull DynamicSeq<LocalVar> confused,
-      @NotNull DynamicSeq<LocalVar> invalid
+      @NotNull MutableList<LocalVar> confused,
+      @NotNull MutableList<LocalVar> invalid
     ) {
       this.allowed = allowed;
       this.confused = confused;
@@ -126,7 +126,7 @@ public interface VarConsumer<P> extends TermConsumer<P> {
         param.type().accept(this, Unit.unit());
       });
       for (int i = 0; i < term.params().size(); i++) {
-        bound.removeAt(start); // TODO: DynamicSeq::removeAt(int, int)
+        bound.removeAt(start); // TODO: MutableList::removeAt(int, int)
       }
       return unit;
     }

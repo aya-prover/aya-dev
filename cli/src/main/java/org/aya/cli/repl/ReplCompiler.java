@@ -4,7 +4,7 @@ package org.aya.cli.repl;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.tuple.Unit;
 import kala.value.Ref;
@@ -126,9 +126,9 @@ public class ReplCompiler {
           if (reporter.noError()) return defs;
           else {
             // When there are errors, we need to remove the defs from the context.
-            var toRemoveDef = DynamicSeq.<String>create();
+            var toRemoveDef = MutableList.<String>create();
             context.definitions.forEach((name, mod) -> {
-              var toRemoveMod = DynamicSeq.<Seq<String>>create();
+              var toRemoveMod = MutableList.<Seq<String>>create();
               mod.forEach((modName, def) -> {
                 if (defs.anyMatch(realDef -> realDef.ref() == def)) toRemoveMod.append(modName);
               });

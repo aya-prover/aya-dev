@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -30,12 +30,12 @@ import org.jetbrains.annotations.Nullable;
  * Currently we only deal with ambiguous equations (so no 'stuck' equations).
  */
 public record TyckState(
-  @NotNull DynamicSeq<Eqn> eqns,
-  @NotNull DynamicSeq<WithPos<Meta>> activeMetas,
+  @NotNull MutableList<Eqn> eqns,
+  @NotNull MutableList<WithPos<Meta>> activeMetas,
   @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas
 ) {
   public TyckState() {
-    this(DynamicSeq.create(), DynamicSeq.create(), MutableMap.create());
+    this(MutableList.create(), MutableList.create(), MutableMap.create());
   }
 
   /**
@@ -52,7 +52,7 @@ public record TyckState(
   public boolean simplify(
     @NotNull Reporter reporter, @Nullable Trace.Builder tracer
   ) {
-    var removingMetas = DynamicSeq.<WithPos<Meta>>create();
+    var removingMetas = MutableList.<WithPos<Meta>>create();
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
         eqns.filterInPlace(eqn -> {

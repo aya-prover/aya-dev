@@ -4,7 +4,7 @@ package org.aya.resolve.context;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.Constants;
@@ -68,7 +68,7 @@ public interface Context {
       : getQualifiedMaybe(name, name.sourcePos());
   }
 
-  default DynamicSeq<LocalVar> collect(@NotNull DynamicSeq<LocalVar> container) {
+  default MutableList<LocalVar> collect(@NotNull MutableList<LocalVar> container) {
     return container;
   }
 

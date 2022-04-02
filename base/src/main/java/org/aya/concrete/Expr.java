@@ -3,7 +3,7 @@
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.value.Ref;
 import org.aya.concrete.stmt.QualifiedID;
@@ -147,7 +147,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     }
   }
 
-  static @NotNull Expr unapp(@NotNull Expr expr, @Nullable DynamicSeq<NamedArg> args) {
+  static @NotNull Expr unapp(@NotNull Expr expr, @Nullable MutableList<NamedArg> args) {
     while (expr instanceof AppExpr app) {
       if (args != null) args.append(app.argument);
       expr = app.function;

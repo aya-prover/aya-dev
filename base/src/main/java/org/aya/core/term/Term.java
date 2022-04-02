@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.Map;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
@@ -155,7 +155,7 @@ public sealed interface Term extends AyaDocile permits
       this(param.ref(), type, param.pattern(), param.explicit());
     }
 
-    public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(DynamicSeq<Tuple3<LocalVar, Boolean, Term>> buf) {
+    public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(MutableList<Tuple3<LocalVar, Boolean, Term>> buf) {
       return buf.view().map(tup -> new Param(tup._1, tup._3, false, tup._2)).toImmutableSeq();
     }
 

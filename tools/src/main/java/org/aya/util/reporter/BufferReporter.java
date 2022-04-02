@@ -2,12 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
 
-public record BufferReporter(@NotNull DynamicSeq<@NotNull Problem> problems) implements CollectingReporter {
+public record BufferReporter(@NotNull MutableList<@NotNull Problem> problems) implements CollectingReporter {
   public BufferReporter() {
-    this(DynamicSeq.create());
+    this(MutableList.create());
   }
 
   @Override public void report(@NotNull Problem problem) {

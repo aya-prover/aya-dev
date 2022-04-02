@@ -3,7 +3,7 @@
 package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
@@ -43,7 +43,7 @@ public final class Remark implements Stmt {
     @NotNull GenericAyaParser producer
   ) {
     Node next;
-    var children = DynamicSeq.<Literate>create();
+    var children = MutableList.<Literate>create();
     for (var node = parent.getFirstChild(); node != null; node = next) {
       if (children.isNotEmpty() && node instanceof Paragraph) {
         children.append(new Literate.Raw(Doc.line()));

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -15,17 +15,17 @@ import java.util.Objects;
  */
 public abstract class TreeBuilder<T extends TreeBuilder.Tree<T>> {
   public interface Tree<T extends Tree<T>> {
-    @NotNull DynamicSeq<T> children();
+    @NotNull MutableList<T> children();
   }
 
-  protected final Deque<@NotNull DynamicSeq<@NotNull T>> tops = new ArrayDeque<>();
+  protected final Deque<@NotNull MutableList<@NotNull T>> tops = new ArrayDeque<>();
 
-  public @NotNull DynamicSeq<@NotNull T> root() {
+  public @NotNull MutableList<@NotNull T> root() {
     return tops.getFirst();
   }
 
   {
-    tops.addLast(DynamicSeq.create());
+    tops.addLast(MutableList.create());
   }
 
   public void append(@NotNull T trace) {

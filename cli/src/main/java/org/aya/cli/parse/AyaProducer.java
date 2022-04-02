@@ -5,7 +5,7 @@ package org.aya.cli.parse;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicLinkedSeq;
+import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanFunction;
@@ -322,7 +322,7 @@ public record AyaProducer(
         var head = new Expr.NamedArg(true, visitExpr(app.expr()));
         var tail = app.argument().stream()
           .map(this::visitArgument)
-          .collect(DynamicLinkedSeq.factory());
+          .collect(MutableSinglyLinkedList.factory());
         tail.push(head);
         yield new Expr.BinOpSeq(sourcePosOf(app), tail.toImmutableSeq());
       }

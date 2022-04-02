@@ -6,7 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.range.primitive.IntRange;
 import kala.tuple.Unit;
 import org.aya.concrete.Expr;
@@ -74,7 +74,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield checkParen(outer, doc, Outer.BinOp);
       }
       case Expr.AppExpr expr -> {
-        var args = DynamicSeq.of(expr.argument());
+        var args = MutableList.of(expr.argument());
         var head = Expr.unapp(expr.function(), args);
         var infix = false;
         if (head instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar var)
@@ -88,7 +88,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
           yield term(outer, expr.body());
         }
-        var prelude = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
+        var prelude = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
           lambdaParam(expr.param()));
         if (!(expr.body() instanceof Expr.HoleExpr)) {
           prelude.append(Doc.symbol("=>"));
@@ -185,7 +185,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     return switch (prestmt) {
       case Decl decl -> decl(decl);
       case Command.Import cmd -> {
-        var prelude = DynamicSeq.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
+        var prelude = MutableList.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
         if (cmd.asName() != null) {
           prelude.append(Doc.styled(KEYWORD, "as"));
           prelude.append(Doc.plain(cmd.asName()));
@@ -226,7 +226,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
   public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
       case Decl.StructDecl decl -> {
-        var prelude = DynamicSeq.of(
+        var prelude = MutableList.of(
           visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "struct"),
@@ -240,7 +240,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         );
       }
       case Decl.FnDecl decl -> {
-        var prelude = DynamicSeq.of(
+        var prelude = MutableList.of(
           visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "def"));
@@ -255,7 +255,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         );
       }
       case Decl.DataDecl decl -> {
-        var prelude = DynamicSeq.of(
+        var prelude = MutableList.of(
           visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
           Doc.styled(KEYWORD, "data"),
@@ -284,7 +284,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     return switch (signatured) {
       case Decl decl -> decl(decl);
       case Decl.StructField field -> {
-        var doc = DynamicSeq.of(Doc.symbol("|"),
+        var doc = MutableList.of(Doc.symbol("|"),
           coe(field.coerce),
           linkDef(field.ref, FIELD_CALL),
           visitTele(field.telescope));
@@ -316,7 +316,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map(doc -> Doc.sep(Doc.symbol("|"), doc)));
   }
 
-  private void appendResult(DynamicSeq<Doc> prelude, Expr result) {
+  private void appendResult(MutableList<Doc> prelude, Expr result) {
     if (result instanceof Expr.HoleExpr) return;
     prelude.append(Doc.symbol(":"));
     prelude.append(term(Outer.Free, result));

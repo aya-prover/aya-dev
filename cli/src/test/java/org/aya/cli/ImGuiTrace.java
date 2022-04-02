@@ -4,7 +4,7 @@ package org.aya.cli;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
@@ -119,7 +119,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
 
   private void visitSub(
     String s, Color color, JImGui imGui,
-    DynamicSeq<@NotNull Trace> subtraces,
+    MutableList<@NotNull Trace> subtraces,
     @NotNull Runnable callback,
     int hashCode
   ) {
@@ -155,7 +155,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
       " : " +
       type.toDoc(options).debugRender();
     imGui.text("-".repeat(s.length() + 4));
-    visitSub(s, Color.YELLOW, imGui, DynamicSeq.create(), () -> pos = t.pos(), Objects.hashCode(t));
+    visitSub(s, Color.YELLOW, imGui, MutableList.create(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
 

@@ -4,7 +4,7 @@ package org.aya.distill;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
@@ -56,7 +56,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield checkParen(outer, doc, Outer.BinOp);
       }
       case IntroTerm.Lambda term -> {
-        var params = DynamicSeq.of(term.param());
+        var params = MutableList.of(term.param());
         var body = IntroTerm.Lambda.unwrap(term.body(), params::append);
         Doc bodyDoc;
         // Syntactic eta-contraction
@@ -83,7 +83,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           params.retainAll(Term.Param::explicit);
         if (params.isEmpty()) yield bodyDoc;
 
-        var list = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
+        var list = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
         params.forEach(param -> list.append(lambdaParam(param)));
         list.append(Doc.symbol("=>"));
         list.append(bodyDoc);
@@ -117,7 +117,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield term.isReallyError() ? Doc.angled(doc) : doc;
       }
       case ElimTerm.App term -> {
-        var args = DynamicSeq.of(term.arg());
+        var args = MutableList.of(term.arg());
         var head = ElimTerm.unapp(term.of(), args);
         if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
         yield visitCalls(false, term(Outer.AppHead, head), args.view(), outer,
@@ -136,7 +136,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           Doc.symbol("->"),
           term(Outer.Codomain, term.body())
         ), Outer.BinOp);
-        var params = DynamicSeq.of(term.param());
+        var params = MutableList.of(term.param());
         var body = FormTerm.unpi(term.body(), params);
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Pi")),
@@ -196,7 +196,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
   public @NotNull Doc def(@NotNull Def predef) {
     return switch (predef) {
       case FnDef def -> {
-        var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "def"));
+        var line1 = MutableList.of(Doc.styled(KEYWORD, "def"));
         def.modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
         line1.appendAll(new Doc[]{
           linkDef(def.ref(), FN_CALL),
@@ -233,7 +233,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         term(Outer.Free, def.result())
       ), Doc.nest(2, Doc.vcat(def.fields.view().map(this::def))));
       case DataDef def -> {
-        var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "data"),
+        var line1 = MutableList.of(Doc.styled(KEYWORD, "data"),
           linkDef(def.ref(), DATA_CALL),
           visitTele(def.telescope()),
           Doc.symbol(":"),
