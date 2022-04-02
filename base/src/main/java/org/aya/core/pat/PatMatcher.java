@@ -13,7 +13,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
@@ -26,13 +26,13 @@ import org.jetbrains.annotations.Nullable;
  * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike)} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
-public record PatMatcher(@NotNull Substituter.TermSubst subst, @Nullable LocalCtx localCtx) {
+public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
   /**
    * @param localCtx not null only if we expect the presence of {@link RefTerm.MetaPat}
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
-  public static Result<Substituter.TermSubst, Boolean> tryBuildSubstArgs(
+  public static Result<Subst, Boolean> tryBuildSubstArgs(
     @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms
   ) {
@@ -40,11 +40,11 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst, @Nullable LocalCt
   }
 
   /** @see PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike) */
-  public static Result<Substituter.TermSubst, Boolean> tryBuildSubstTerms(
+  public static Result<Subst, Boolean> tryBuildSubstTerms(
     @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms
   ) {
-    var matchy = new PatMatcher(new Substituter.TermSubst(new MutableHashMap<>()), localCtx);
+    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), localCtx);
     try {
       for (var pat : pats.zip(terms)) matchy.match(pat);
       return Result.ok(matchy.subst());

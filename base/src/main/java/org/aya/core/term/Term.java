@@ -6,6 +6,7 @@ import kala.collection.Map;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.core.pat.Pat;
@@ -47,19 +48,19 @@ public sealed interface Term extends AyaDocile permits
   }
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
-    return subst(new Substituter.TermSubst(var, term));
+    return view().subst(new Subst(var, term)).commit();
   }
 
-  default @NotNull Term subst(@NotNull Substituter.TermSubst subst) {
-    return subst(subst, 0);
+  default @NotNull Term subst(@NotNull Subst subst) {
+    return view().subst(subst).commit();
   }
 
   default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
-    return accept(new Substituter(subst, 0), Unit.unit());
+    return subst(new Subst(MutableMap.from(subst)));
   }
 
-  default @NotNull Term subst(@NotNull Substituter.TermSubst subst, int ulift) {
-    return accept(new Substituter(subst, ulift), Unit.unit());
+  default @NotNull Term subst(@NotNull Subst subst, int ulift) {
+    return view().subst(subst).lift(ulift).commit();
   }
 
   default @NotNull Term rename() {
@@ -105,7 +106,7 @@ public sealed interface Term extends AyaDocile permits
     return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
   default @NotNull Term lift(int ulift) {
-    return subst(Substituter.TermSubst.EMPTY, ulift);
+    return subst(Subst.EMPTY, ulift);
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return accept(new LittleTyper(state, ctx), Unit.unit());
@@ -183,26 +184,26 @@ public sealed interface Term extends AyaDocile permits
     }
 
     public @NotNull Param subst(@NotNull Var var, @NotNull Term term) {
-      return subst(new Substituter.TermSubst(var, term));
+      return subst(new Subst(var, term));
     }
 
-    public @NotNull Param subst(@NotNull Substituter.TermSubst subst) {
+    public @NotNull Param subst(@NotNull Subst subst) {
       return subst(subst, 0);
     }
 
     public static @NotNull ImmutableSeq<Param> subst(
       @NotNull ImmutableSeq<@NotNull Param> params,
-      @NotNull Substituter.TermSubst subst, int ulift
+      @NotNull Subst subst, int ulift
     ) {
       return params.map(param -> param.subst(subst, ulift));
     }
 
     public static @NotNull ImmutableSeq<Param>
     subst(@NotNull ImmutableSeq<@NotNull Param> params, int ulift) {
-      return subst(params, Substituter.TermSubst.EMPTY, ulift);
+      return subst(params, Subst.EMPTY, ulift);
     }
 
-    public @NotNull Param subst(@NotNull Substituter.TermSubst subst, int ulift) {
+    public @NotNull Param subst(@NotNull Subst subst, int ulift) {
       return new Param(ref, type.subst(subst, ulift), pattern, explicit);
     }
 
@@ -216,4 +217,7 @@ public sealed interface Term extends AyaDocile permits
     }
   }
 
+  default TermView view() {
+    return () -> this;
+  }
 }

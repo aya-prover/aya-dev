@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,10 +22,10 @@ public sealed interface ElimTerm extends Term {
    * @author re-xyr
    */
   record Proj(@NotNull Term of, int ulift, int ix) implements ElimTerm {
-    public static @NotNull Substituter.TermSubst
+    public static @NotNull Subst
     projSubst(@NotNull Term term, int index, ImmutableSeq<Param> telescope) {
       // instantiate the type
-      var subst = new Substituter.TermSubst(MutableMap.create());
+      var subst = new Subst(MutableMap.create());
       telescope.view().take(index).reversed().forEachIndexed((i, param) ->
         subst.add(param.ref(), new Proj(term, 0, i + 1)));
       return subst;

@@ -356,14 +356,8 @@ public record AyaProducer(
       }
       case AyaParser.NewContext n -> new Expr.NewExpr(
         sourcePosOf(n), visitExpr(n.expr()),
-        ImmutableSeq.from(n.newArg())
-          .map(na -> new Expr.Field(new WithPos<>(sourcePosOf(na.weakId()), na.weakId().getText()), visitIds(na.ids())
-            .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
-            .collect(ImmutableSeq.factory()), visitExpr(na.expr()), new Ref<>())));
-      case AyaParser.NewEmptyContext n -> new Expr.NewExpr(
-        sourcePosOf(n),
-        visitExpr(n.expr()),
-        ImmutableSeq.empty());
+        Option.of(n.newBody()).map(b -> ImmutableSeq.from(b.newArg()).map(this::visitField))
+          .getOrDefault(ImmutableSeq.empty()));
       case AyaParser.ForallContext forall -> buildPi(
         sourcePosOf(forall), false,
         visitForallTelescope(forall.tele()).view(),
@@ -371,6 +365,13 @@ public record AyaProducer(
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
+  }
+
+  private @NotNull Expr.Field visitField(AyaParser.NewArgContext na) {
+    var weakId = na.weakId();
+    return new Expr.Field(new WithPos<>(sourcePosOf(weakId), weakId.getText()), visitIds(na.ids())
+      .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
+      .collect(ImmutableSeq.factory()), visitExpr(na.expr()), new Ref<>());
   }
 
   public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {

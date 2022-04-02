@@ -9,7 +9,7 @@ import kala.tuple.Tuple2;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.ref.Var;
@@ -29,7 +29,7 @@ public final class Meta implements Var {
   public final @NotNull String name;
   public final @Nullable Term result;
   public final @NotNull SourcePos sourcePos;
-  public final @NotNull DynamicSeq<Tuple2<Substituter.TermSubst, Term>> conditions = DynamicSeq.create();
+  public final @NotNull DynamicSeq<Tuple2<Subst, Term>> conditions = DynamicSeq.create();
 
   public SeqView<Term.Param> fullTelescope() {
     return contextTele.view().concat(telescope);

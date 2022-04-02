@@ -18,7 +18,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
@@ -95,8 +95,8 @@ public record PatClassifier(
       for (int i = 1, size = contents.size(); i < size; i++) {
         var lhsInfo = contents.get(i - 1);
         var rhsInfo = contents.get(i);
-        var lhsSubst = new Substituter.TermSubst(MutableMap.create());
-        var rhsSubst = new Substituter.TermSubst(MutableMap.create());
+        var lhsSubst = new Subst(MutableMap.create());
+        var rhsSubst = new Subst(MutableMap.create());
         var ctx = PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(),
           lhsSubst, rhsSubst, tycker.localCtx.deriveMap());
         domination(rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
@@ -118,7 +118,7 @@ public record PatClassifier(
     });
   }
 
-  private static void domination(Substituter.TermSubst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching matching) {
+  private static void domination(Subst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching matching) {
     if (rhsSubst.isEmpty())
       reporter.report(new ClausesProblem.Domination(
         lhsIx + 1, rhsIx + 1, matching.sourcePos()));
