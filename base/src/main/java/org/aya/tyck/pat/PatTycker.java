@@ -106,9 +106,9 @@ public final class PatTycker {
 
   public @NotNull PatResult elabClausesDirectly(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature, @NotNull SourcePos resultPos
+    @NotNull Def.Signature signature
   ) {
-    return checkAllRhs(checkAllLhs(clauses, signature), resultPos, signature.result());
+    return checkAllRhs(checkAllLhs(clauses, signature), signature.result());
   }
 
   public @NotNull PatResult elabClausesClassified(
@@ -125,7 +125,7 @@ public final class PatTycker {
         // refinePatterns(lhsResults, usages, classes);
       }
     }
-    return checkAllRhs(lhsResults, resultPos, signature.result());
+    return checkAllRhs(lhsResults, signature.result());
   }
 
   private @NotNull ImmutableSeq<LhsResult>
@@ -137,7 +137,7 @@ public final class PatTycker {
 
   private @NotNull PatResult checkAllRhs(
     @NotNull ImmutableSeq<LhsResult> clauses,
-    @NotNull SourcePos resultPos, @NotNull Term result
+    @NotNull Term result
   ) {
     var res = clauses.mapIndexed((index, lhs) -> traced(
       () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
@@ -146,8 +146,8 @@ public final class PatTycker {
     var zonker = exprTycker.newZonker();
     var preclauses = res.map(c -> new Pat.Preclause<>(
       c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
-      c.expr().map(e -> zonker.zonk(e, c.sourcePos()))));
-    return new PatResult(zonker.zonk(result, resultPos), preclauses,
+      c.expr().map(e -> zonker.zonk(e))));
+    return new PatResult(zonker.zonk(result), preclauses,
       preclauses.flatMap(Pat.Preclause::lift));
   }
 

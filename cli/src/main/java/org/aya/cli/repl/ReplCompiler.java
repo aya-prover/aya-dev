@@ -62,7 +62,7 @@ public class ReplCompiler {
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var tycker = new ExprTycker(delayedReporter, null);
       var desugar = desugarExpr(resolvedExpr, delayedReporter);
-      return tycker.zonk(expr, tycker.synthesize(desugar));
+      return tycker.zonk(tycker.synthesize(desugar));
     }
   }
 

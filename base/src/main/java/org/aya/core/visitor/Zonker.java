@@ -19,7 +19,6 @@ import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Instantiates holes (assuming all holes are solved).
@@ -40,7 +39,7 @@ public final class Zonker implements TermFixpoint<Unit> {
     this.reporter = reporter;
   }
 
-  public @NotNull Term zonk(@NotNull Term term, @Nullable SourcePos pos) {
+  public @NotNull Term zonk(@NotNull Term term) {
     return term.accept(this, Unit.unit());
   }
 

@@ -80,7 +80,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Bind(explicit, bind, zonker.zonk(type, bind.definition()));
+      return new Bind(explicit, bind, zonker.zonk(type));
     }
 
     @Override public @NotNull Pat inline() {
@@ -194,7 +194,7 @@ public sealed interface Pat extends AyaDocile {
 
     @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
       return new Ctor(explicit, ref, params.map(pat -> pat.zonk(zonker)),
-        (CallTerm.Data) zonker.zonk(type, null));
+        (CallTerm.Data) zonker.zonk(type));
       // The cast must succeed
     }
 

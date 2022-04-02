@@ -105,7 +105,7 @@ public sealed interface Literate extends Docile {
     }
 
     @Override public void tyck(@NotNull ExprTycker tycker) {
-      tyckResult = tycker.zonk(expr, tycker.synthesize(expr));
+      tyckResult = tycker.zonk(tycker.synthesize(expr));
     }
 
     @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
