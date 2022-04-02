@@ -125,9 +125,7 @@ public interface VarConsumer<P> extends TermConsumer<P> {
         bound.append(param.ref());
         param.type().accept(this, Unit.unit());
       });
-      for (int i = 0; i < term.params().size(); i++) {
-        bound.removeAt(start); // TODO: MutableList::removeAt(int, int)
-      }
+      bound.removeInRange(start, start + term.params().size());
       return unit;
     }
 
