@@ -177,7 +177,6 @@ public record Serializer(@NotNull Serializer.State state) implements
   @Override public SerTerm visitAccess(CallTerm.@NotNull Access term, Unit unit) {
     return new SerTerm.Access(
       serialize(term.of()), state.def(term.ref()),
-      term.ulift(),
       serializeArgs(term.structArgs()),
       serializeArgs(term.fieldArgs())
     );

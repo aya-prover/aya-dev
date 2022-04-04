@@ -124,22 +124,22 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var nevv = term.of().accept(this, p);
     var fieldRef = term.ref();
     var fieldDef = fieldRef.core;
+    // This is wrong, but we're gonna remove records w/ conditions anyway :wink:
     if (!(nevv instanceof IntroTerm.New n)) {
       var args = term.args().map(arg -> visitArg(arg, p));
       var fieldSubst = checkAndBuildSubst(fieldDef.fullTelescope(), args);
       var structDef = fieldDef.structRef.core;
       var structArgsSize = term.structArgs().size();
-      var ulift = ulift() + term.ulift();
       for (var field : structDef.fields) {
         if (field == fieldDef) continue;
-        var tele = Term.Param.subst(field.telescope(), ulift);
-        var access = new CallTerm.Access(nevv, field.ref, ulift, args.take(structArgsSize), tele.map(Term.Param::toArg));
+        var tele = field.telescope();
+        var access = new CallTerm.Access(nevv, field.ref, args.take(structArgsSize), tele.map(Term.Param::toArg));
         fieldSubst.add(field.ref, IntroTerm.Lambda.make(tele, access));
       }
       var dropped = args.drop(structArgsSize);
-      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, ulift, fieldDef.clauses);
-      return mischa != null ? mischa.data().subst(fieldSubst, ulift) : new CallTerm.Access(nevv, fieldRef,
-        ulift, term.structArgs(), dropped);
+      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, 0, fieldDef.clauses);
+      return mischa != null ? mischa.data().subst(fieldSubst) : new CallTerm.Access(nevv, fieldRef,
+        term.structArgs(), dropped);
     }
     var arguments = buildSubst(fieldDef.ownerTele, term.structArgs());
     var fieldBody = term.fieldArgs().foldLeft(n.params().get(fieldRef), CallTerm::make);

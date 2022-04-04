@@ -119,7 +119,7 @@ public interface TermView {
           && structArgs.sameElements(access.structArgs(), true)
           && fieldArgs.sameElements(access.fieldArgs(), true))
           yield access;
-        yield new CallTerm.Access(struct, access.ref(), access.ulift(), structArgs, fieldArgs);
+        yield new CallTerm.Access(struct, access.ref(), structArgs, fieldArgs);
       }
       case CallTerm.Prim prim -> {
         var args = prim.args().map(this::commit);

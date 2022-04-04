@@ -178,7 +178,7 @@ public final class ExprTycker extends Tycker {
             var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
             var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
             var teleRenamed = tele.map(Term.Param::rename);
-            var access = new CallTerm.Access(projectee.wellTyped, fieldRef, 0,
+            var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
               structCall.args(), teleRenamed.map(Term.Param::toArg));
             return new Result(IntroTerm.Lambda.make(teleRenamed, access),
               FormTerm.Pi.make(tele, field.result().subst(structSubst)));

@@ -253,8 +253,8 @@ public final class DefEq {
             new LocalVar(par.ref().name(), par.ref().definition()));
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
             new Arg<Term>(new RefTerm(vpa._1, 0), vpa._2.explicit()));
-          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.ulift(), type1.args(), dummy);
-          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.ulift(), type1.args(), dummy);
+          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.args(), dummy);
+          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);
           if (!compare(l, r, lr, rl, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
         }

@@ -122,7 +122,6 @@ public interface TermOps extends TermView {
           yield new CallTerm.Con(head, con.conArgs());
         }
         case CallTerm.Fn fn -> new CallTerm.Fn(fn.ref(), fn.ulift() + ulift, fn.args());
-        case CallTerm.Access access -> new CallTerm.Access(access.of(), access.ref(), access.ulift() + ulift, access.structArgs(), access.fieldArgs());
         case CallTerm.Prim prim -> new CallTerm.Prim(prim.ref(), prim.ulift() + ulift, prim.args());
         case CallTerm.Hole hole -> new CallTerm.Hole(hole.ref(), hole.ulift() + ulift, hole.contextArgs(), hole.args());
         case RefTerm ref -> boundVars.contains(ref.var())
