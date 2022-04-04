@@ -3,7 +3,6 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableMap;
-import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
@@ -140,15 +139,15 @@ public interface TermView {
     };
   }
 
-  default Term commit() {
+  default @NotNull Term commit() {
     return commit(initial());
   }
 
-  default TermView lift(int shift) {
-    return shift == 0 ? this : new TermOps.Elevator(this, shift, MutableList.create());
+  default @NotNull TermView lift(int shift) {
+    return shift == 0 ? this : new TermOps.Elevator(this, shift);
   }
 
-  default TermView subst(Subst subst) {
+  default @NotNull TermView subst(@NotNull Subst subst) {
     return subst.isEmpty() ? this : new TermOps.Subster(this, subst);
   }
 

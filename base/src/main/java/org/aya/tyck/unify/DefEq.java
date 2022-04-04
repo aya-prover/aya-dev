@@ -142,11 +142,11 @@ public final class DefEq {
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     return switch (preLhs) {
       case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case CallTerm.Con lhs && preRhs instanceof CallTerm.Con rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };
   }
@@ -196,12 +196,12 @@ public final class DefEq {
 
   private @Nullable Term visitCall(
     @NotNull CallTerm lhs, @NotNull CallTerm rhs, Sub lr, Sub rl,
-    @NotNull DefVar<?, ?> lhsRef
+    @NotNull DefVar<?, ?> lhsRef, int ulift
   ) {
     var retType = getType(lhs, lhsRef);
     // Lossy comparison
     if (visitArgs(lhs.args(), rhs.args(), lr, rl,
-      Term.Param.subst(Def.defTele(lhsRef), lhs.ulift()))) return retType;
+      Term.Param.subst(Def.defTele(lhsRef), ulift))) return retType;
     if (compareWHNF(lhs, rhs, lr, rl, retType)) return retType;
     else return null;
   }

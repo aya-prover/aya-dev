@@ -38,8 +38,8 @@ public interface TermOps extends TermView {
     }
   }
 
-  record Subster(@NotNull @Override TermView view, Subst subst) implements TermOps {
-    @Override public TermView subst(Subst subst) {
+  record Subster(@Override @NotNull TermView view, @NotNull Subst subst) implements TermOps {
+    @Override public @NotNull TermView subst(@NotNull Subst subst) {
       return new Subster(view, subst.add(subst));
     }
 
@@ -53,7 +53,7 @@ public interface TermOps extends TermView {
   }
 
   /** Not an IntelliJ Renamer. */
-  record Renamer(@NotNull @Override TermView view, Subst subst) implements TermOps {
+  record Renamer(@Override @NotNull TermView view, Subst subst) implements TermOps {
     public Renamer(@NotNull TermView view) {
       this(view, new Subst(MutableMap.create()));
     }
@@ -84,8 +84,12 @@ public interface TermOps extends TermView {
   }
 
   /** A lift but in American English. */
-  record Elevator(@NotNull @Override TermView view, int ulift, MutableList<Var> boundVars) implements TermOps {
-    @Override public TermView lift(int shift) {
+  record Elevator(@Override @NotNull TermView view, int ulift, MutableList<Var> boundVars) implements TermOps {
+    public Elevator(@NotNull TermView view, int ulift) {
+      this(view, ulift, MutableList.create());
+    }
+
+    @Override public @NotNull TermView lift(int shift) {
       return new Elevator(view, ulift + shift, boundVars);
     }
 

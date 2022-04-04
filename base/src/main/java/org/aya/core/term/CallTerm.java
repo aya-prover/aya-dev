@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface CallTerm extends Term {
   @NotNull Var ref();
-  int ulift();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
 
   @FunctionalInterface
@@ -131,7 +130,7 @@ public sealed interface CallTerm extends Term {
       return head.ref;
     }
 
-    @Override public int ulift() {
+    public int ulift() {
       return head.ulift;
     }
 
