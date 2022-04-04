@@ -88,7 +88,7 @@ public interface TermView {
       case ElimTerm.Proj proj -> {
         var tuple = commit(proj.of());
         if (tuple == proj.of()) yield proj;
-        yield new ElimTerm.Proj(tuple, proj.ulift(), proj.ix());
+        yield new ElimTerm.Proj(tuple, proj.ix());
       }
       case CallTerm.Struct struct -> {
         var args = struct.args().map(this::commit);
@@ -119,7 +119,7 @@ public interface TermView {
           && structArgs.sameElements(access.structArgs(), true)
           && fieldArgs.sameElements(access.fieldArgs(), true))
           yield access;
-        yield new CallTerm.Access(struct, access.ref(), access.ulift(), structArgs, fieldArgs);
+        yield new CallTerm.Access(struct, access.ref(), structArgs, fieldArgs);
       }
       case CallTerm.Prim prim -> {
         var args = prim.args().map(this::commit);
@@ -139,15 +139,15 @@ public interface TermView {
     };
   }
 
-  default Term commit() {
+  default @NotNull Term commit() {
     return commit(initial());
   }
 
-  default TermView lift(int shift) {
+  default @NotNull TermView lift(int shift) {
     return shift == 0 ? this : new TermOps.Elevator(this, shift);
   }
 
-  default TermView subst(Subst subst) {
+  default @NotNull TermView subst(@NotNull Subst subst) {
     return subst.isEmpty() ? this : new TermOps.Subster(this, subst);
   }
 

@@ -142,11 +142,11 @@ public final class DefEq {
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     return switch (preLhs) {
       case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case CallTerm.Con lhs && preRhs instanceof CallTerm.Con rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref());
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };
   }
@@ -196,12 +196,12 @@ public final class DefEq {
 
   private @Nullable Term visitCall(
     @NotNull CallTerm lhs, @NotNull CallTerm rhs, Sub lr, Sub rl,
-    @NotNull DefVar<?, ?> lhsRef
+    @NotNull DefVar<?, ?> lhsRef, int ulift
   ) {
     var retType = getType(lhs, lhsRef);
     // Lossy comparison
     if (visitArgs(lhs.args(), rhs.args(), lr, rl,
-      Term.Param.subst(Def.defTele(lhsRef), lhs.ulift()))) return retType;
+      Term.Param.subst(Def.defTele(lhsRef), ulift))) return retType;
     if (compareWHNF(lhs, rhs, lr, rl, retType)) return retType;
     else return null;
   }
@@ -253,8 +253,8 @@ public final class DefEq {
             new LocalVar(par.ref().name(), par.ref().definition()));
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
             new Arg<Term>(new RefTerm(vpa._1, 0), vpa._2.explicit()));
-          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.ulift(), type1.args(), dummy);
-          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.ulift(), type1.args(), dummy);
+          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.args(), dummy);
+          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);
           if (!compare(l, r, lr, rl, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
         }
@@ -268,10 +268,10 @@ public final class DefEq {
       case FormTerm.Sigma sigma -> {
         var params = sigma.params().view();
         for (int i = 1, size = sigma.params().size(); i <= size; i++) {
-          var l = new ElimTerm.Proj(lhs, 0, i);
+          var l = new ElimTerm.Proj(lhs, i);
           var currentParam = params.first();
           ctx.put(currentParam);
-          if (!compare(l, new ElimTerm.Proj(rhs, 0, i), lr, rl, currentParam.type())) yield false;
+          if (!compare(l, new ElimTerm.Proj(rhs, i), lr, rl, currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
         ctx.remove(sigma.params().view().map(Term.Param::ref));
@@ -325,7 +325,7 @@ public final class DefEq {
         var params = tupType.params().view();
         var subst = new Subst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
-          var l = new ElimTerm.Proj(lhs, 0, i);
+          var l = new ElimTerm.Proj(lhs, i);
           var currentParam = params.first();
           subst.add(currentParam.ref(), l);
           params = params.drop(1);

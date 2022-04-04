@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface CallTerm extends Term {
   @NotNull Var ref();
-  int ulift();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
 
   @FunctionalInterface
@@ -38,7 +37,7 @@ public sealed interface CallTerm extends Term {
       if (hole.args.sizeLessThan(hole.ref.telescope))
         return new Hole(hole.ref, hole.ulift, hole.contextArgs, hole.args.appended(arg));
     }
-    if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, 0, arg);
+    if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, arg);
     return make(lam, arg);
   }
 
@@ -131,7 +130,7 @@ public sealed interface CallTerm extends Term {
       return head.ref;
     }
 
-    @Override public int ulift() {
+    public int ulift() {
       return head.ulift;
     }
 
@@ -172,7 +171,6 @@ public sealed interface CallTerm extends Term {
   record Access(
     @NotNull Term of,
     @NotNull DefVar<FieldDef, Decl.StructField> ref,
-    int ulift,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {
