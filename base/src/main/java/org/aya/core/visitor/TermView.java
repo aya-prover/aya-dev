@@ -152,7 +152,7 @@ public interface TermView {
     return subst.isEmpty() ? this : new TermOps.Subster(this, subst);
   }
 
-  default TermView normal(TyckState state) {
+  default TermView normalize(TyckState state) {
     return new TermOps.Normalizer(this, state);
   }
 

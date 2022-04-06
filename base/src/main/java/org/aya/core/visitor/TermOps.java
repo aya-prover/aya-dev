@@ -169,7 +169,7 @@ public interface TermOps extends TermView {
         var result = PatMatcher.tryBuildSubstArgs(null, match.patterns(), args);
         if (result.isOk()) {
           subst.add(result.get());
-          var body = match.body().view().rename().subst(subst).normal(state).commit();
+          var body = match.body().view().subst(subst).normalize(state).commit();
           return new WithPos<>(match.sourcePos(), body);
         } else if (!orderIndependent && result.getErr())
           return null;
@@ -205,11 +205,10 @@ public interface TermOps extends TermView {
           if (def == null) yield fn;
           if (def.modifiers.contains(Modifier.Opaque)) yield fn;
           yield def.body.fold(
-            lamBody -> lamBody.view().subst(buildSubst(def.telescope(), fn.args())).rename().normal(state).commit(),
+            lamBody -> lamBody.view().subst(buildSubst(def.telescope(), fn.args())).normalize(state).commit(),
             patBody -> {
               var orderIndependent = def.modifiers.contains(Modifier.Overlap);
               var unfolded = unfoldClauses(orderIndependent, fn.args(), patBody);
-              // CHECK: Do we need to normalize `unfolded` again?
               return unfolded != null ? unfolded.data() : fn;
             }
           );
@@ -218,7 +217,7 @@ public interface TermOps extends TermView {
           var fieldDef = access.ref().core;
           if (access.of() instanceof IntroTerm.New n) {
             var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
-            yield fieldBody.view().subst(buildSubst(fieldDef.ownerTele, access.structArgs())).normal(state).commit();
+            yield fieldBody.view().subst(buildSubst(fieldDef.ownerTele, access.structArgs())).normalize(state).commit();
           } else {
             var subst = buildSubst(fieldDef.fullTelescope(), access.args());
             for (var field : fieldDef.structRef.core.fields) {
@@ -228,7 +227,6 @@ public interface TermOps extends TermView {
               subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
             }
             var unfolded = unfoldClauses(true, access.fieldArgs(), subst, fieldDef.clauses);
-            // CHECK: seems no need to substitute `unfolded` again with `subst`
             yield unfolded != null ? unfolded.data() : access;
           }
         }
@@ -237,7 +235,7 @@ public interface TermOps extends TermView {
           var def = hole.ref();
           if (state == null || !state.metas().containsKey(def)) yield hole;
           var body = state.metas().get(def);
-          yield body.view().subst(buildSubst(def.fullTelescope(), hole.fullArgs())).normal(state).commit();
+          yield body.view().subst(buildSubst(def.fullTelescope(), hole.fullArgs())).normalize(state).commit();
         }
         case RefTerm.MetaPat metaPat -> metaPat.inline();
         case Term t -> t;
