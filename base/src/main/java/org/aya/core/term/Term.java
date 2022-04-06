@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
+import org.aya.core.Meta;
 import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
@@ -221,5 +222,30 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
 
   default TermView view() {
     return () -> this;
+  }
+
+  default @NotNull ImmutableSeq<Meta> allMetas() {
+    record MetaCollector(@Override @NotNull TermView view, MutableList<Meta> metas) implements TermOps {
+      @Contract("_ -> new") public static @NotNull MetaCollector from(@NotNull Term term) {
+        return new MetaCollector(term.view(), MutableList.create());
+      }
+
+      @Override public Term pre(Term term) {
+        return switch (term) {
+          case CallTerm.Hole hole -> {
+            metas.append(hole.ref());
+            yield hole;
+          }
+          case Term misc -> misc;
+        };
+      }
+
+      public @NotNull ImmutableSeq<Meta> collect() {
+        commit();
+        return metas.toImmutableSeq();
+      }
+    }
+
+    return MetaCollector.from(this).collect();
   }
 }
