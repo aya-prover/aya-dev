@@ -32,6 +32,17 @@ public interface ExprView {
     return new Expr.NamedArg(arg.explicit(), expr);
   }
 
+  private Expr.TacNode commit(Expr.TacNode node) {
+    return switch (node) {
+      case Expr.ExprTac exprTac -> commit(exprTac);
+      case Expr.ListExprTac listExprTac -> {
+        var tacNodes = listExprTac.tacNodes().map(this::commit);
+        if (tacNodes.sameElements(listExprTac.tacNodes(), true)) yield listExprTac;
+        yield new Expr.ListExprTac(listExprTac.sourcePos(), tacNodes);
+      }
+    };
+  }
+
   private @NotNull Expr traverse(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.RefExpr ref -> ref; // I don't know
@@ -94,6 +105,11 @@ public interface ExprView {
       }
       case Expr.ErrorExpr error -> error;
       case Expr.MetaPat meta -> meta;
+      case Expr.TacExpr tac -> {
+        var node = commit(tac.tacNode());
+        if (node == tac.tacNode()) yield tac;
+        yield new Expr.TacExpr(tac.sourcePos(), node);
+      }
     };
   }
 
