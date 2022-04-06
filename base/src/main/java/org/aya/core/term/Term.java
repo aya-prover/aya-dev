@@ -87,6 +87,7 @@ public sealed interface Term extends AyaDocile permits
    */
   default @NotNull Term normalize(@Nullable TyckState state, @NotNull NormalizeMode mode) {
     if (mode == NormalizeMode.NULL) return this;
+    if (mode == NormalizeMode.NF) return this.view().normal(state).commit();
     return accept(new Normalizer(state), mode);
   }
 
