@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.tuple.Tuple;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -149,6 +150,10 @@ public interface TermView {
 
   default @NotNull TermView subst(@NotNull Subst subst) {
     return subst.isEmpty() ? this : new TermOps.Subster(this, subst);
+  }
+
+  default TermView normalize(TyckState state) {
+    return new TermOps.Normalizer(this, state);
   }
 
   default TermView postMap(Function<Term, Term> f) {

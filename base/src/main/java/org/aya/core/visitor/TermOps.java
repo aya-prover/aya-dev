@@ -3,10 +3,21 @@
 package org.aya.core.visitor;
 
 import kala.collection.mutable.MutableList;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import org.aya.core.Matching;
+import org.aya.core.def.PrimDef;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.ref.Var;
+import org.aya.generic.Arg;
+import org.aya.generic.Modifier;
+import org.aya.tyck.TyckState;
+import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -129,6 +140,105 @@ public interface TermOps extends TermView {
         case RefTerm.Field field -> boundVars.contains(field.ref())
           ? field : new RefTerm.Field(field.ref(), field.lift() + ulift);
         case Term misc -> misc;
+      };
+    }
+  }
+
+  record Normalizer(@NotNull @Override TermView view, TyckState state) implements TermOps {
+    static private @NotNull Subst buildSubst(
+      @NotNull SeqLike<Term.@NotNull Param> params,
+      @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
+    ) {
+      var subst = new Subst(MutableMap.create());
+      params.view().zip(args).forEach(t -> subst.add(t._1.ref(), t._2.term()));
+      return subst;
+    }
+
+    private @Nullable WithPos<Term> unfoldClauses(
+      boolean orderIndependent, SeqLike<Arg<Term>> args,
+      @NotNull ImmutableSeq<Matching> clauses
+    ) {
+      return unfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), clauses);
+    }
+
+    private @Nullable WithPos<Term> unfoldClauses(
+      boolean orderIndependent, SeqLike<Arg<Term>> args,
+      @NotNull Subst subst, @NotNull ImmutableSeq<Matching> clauses
+    ) {
+      for (var match : clauses) {
+        var result = PatMatcher.tryBuildSubstArgs(null, match.patterns(), args);
+        if (result.isOk()) {
+          subst.add(result.get());
+          var body = match.body().view().subst(subst).normalize(state).commit();
+          return new WithPos<>(match.sourcePos(), body);
+        } else if (!orderIndependent && result.getErr())
+          return null;
+      }
+      return null;
+    }
+
+    @Override public Term post(Term term) {
+      return switch (view.post(term)) {
+        case ElimTerm.App app -> {
+          var fn = app.of();
+          if (fn instanceof IntroTerm.Lambda lambda)
+            yield CallTerm.make(lambda, app.arg());
+          else yield app;
+        }
+        case ElimTerm.Proj proj -> {
+          var tup = proj.of();
+          var ix = proj.ix();
+          if (tup instanceof IntroTerm.Tuple tuple) {
+            assert tuple.items().sizeGreaterThanOrEquals(ix) && ix > 0
+              : proj.toDoc(DistillerOptions.debug()).debugRender();
+            yield tuple.items().get(ix - 1);
+          } else yield proj;
+        }
+        case CallTerm.Con con -> {
+          var def = con.ref().core;
+          if (def == null) yield con;
+          var unfolded = unfoldClauses(true, con.conArgs(), def.clauses);
+          yield unfolded != null ? unfolded.data() : con;
+        }
+        case CallTerm.Fn fn -> {
+          var def = fn.ref().core;
+          if (def == null) yield fn;
+          if (def.modifiers.contains(Modifier.Opaque)) yield fn;
+          yield def.body.fold(
+            lamBody -> lamBody.view().subst(buildSubst(def.telescope(), fn.args())).normalize(state).commit(),
+            patBody -> {
+              var orderIndependent = def.modifiers.contains(Modifier.Overlap);
+              var unfolded = unfoldClauses(orderIndependent, fn.args(), patBody);
+              return unfolded != null ? unfolded.data() : fn;
+            }
+          );
+        }
+        case CallTerm.Access access -> {
+          var fieldDef = access.ref().core;
+          if (access.of() instanceof IntroTerm.New n) {
+            var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
+            yield fieldBody.view().subst(buildSubst(fieldDef.ownerTele, access.structArgs())).normalize(state).commit();
+          } else {
+            var subst = buildSubst(fieldDef.fullTelescope(), access.args());
+            for (var field : fieldDef.structRef.core.fields) {
+              if (field == fieldDef) continue;
+              var fieldArgs = field.telescope().map(Term.Param::toArg);
+              var acc = new CallTerm.Access(access.of(), field.ref, access.structArgs(), fieldArgs);
+              subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
+            }
+            var unfolded = unfoldClauses(true, access.fieldArgs(), subst, fieldDef.clauses);
+            yield unfolded != null ? unfolded.data() : access;
+          }
+        }
+        case CallTerm.Prim prim -> PrimDef.Factory.INSTANCE.unfold(prim.id(), prim, state);
+        case CallTerm.Hole hole -> {
+          var def = hole.ref();
+          if (state == null || !state.metas().containsKey(def)) yield hole;
+          var body = state.metas().get(def);
+          yield body.view().subst(buildSubst(def.fullTelescope(), hole.fullArgs())).normalize(state).commit();
+        }
+        case RefTerm.MetaPat metaPat -> metaPat.inline();
+        case Term t -> t;
       };
     }
   }
