@@ -18,12 +18,12 @@ public interface TacticProblem extends Problem {
     return Severity.ERROR;
   }
 
-  record HoleNumberMismatchError(@NotNull SourcePos sourcePos,
-                                 int expected, int supplied) implements TacticProblem {
+  record HoleFillerNumberMismatch(@NotNull SourcePos sourcePos,
+                                  int expected, int supplied) implements TacticProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Expected"),
         Doc.plain(String.valueOf(expected)),
-        Doc.english("holes in the tactic head, but found"),
+        Doc.english("filler(s) in the tactic block, but found"),
         Doc.plain(String.valueOf(supplied)));
     }
   }

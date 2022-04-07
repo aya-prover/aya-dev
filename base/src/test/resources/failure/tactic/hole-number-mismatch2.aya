@@ -8,9 +8,9 @@ def overlap infixl + (a b : Nat) : Nat
 | suc a, b => suc (a + b)
 | a, suc b => suc (a + b)
 
-
-example def simpleTac1: Nat => tactic {
+example def simpleTac2: Nat => tactic {
   | {??} + {??}
   | tactic { | suc {??} | zero }
+  | zero
   | zero
 }

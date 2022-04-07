@@ -444,7 +444,7 @@ public final class ExprTycker extends Tycker {
               if (metas.size() >= metaSize)
                 throw new UnsupportedOperationException(); // TODO: internal error meta is not filled after tactic
             } else yield tacFail(exprToElab,
-              new TacticProblem.HoleNumberMismatchError(listExprTac.sourcePos(), metaSize, tailNodes.size()));
+              new TacticProblem.HoleFillerNumberMismatch(listExprTac.sourcePos(), metaSize, tailNodes.size()));
           }
 
           yield new TacElabResult(exprToElab, new Result(inherit(exprToElab, term).wellTyped, term));

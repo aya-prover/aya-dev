@@ -11,6 +11,5 @@ def overlap infixl + (a b : Nat) : Nat
 
 example def simpleTac1: Nat => tactic {
   | {??} + {??}
-  | tactic { | suc {??} | zero }
   | zero
 }
