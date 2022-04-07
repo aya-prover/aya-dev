@@ -391,6 +391,7 @@ public final class ExprTycker extends Tycker {
             }
 
             public @NotNull Expr fill(Expr exprWithHole, Expr filling) {
+              filled = false;
               this.exprWithHole = exprWithHole;
               this.filling = filling;
               return commit();
@@ -410,8 +411,7 @@ public final class ExprTycker extends Tycker {
               var firstNode = tailNodes.first();
               var filling = elaborateTactic(firstNode, firstMeta.result).elaborated;
 
-              tailNodes = tailNodes.drop(0);
-
+              tailNodes = tailNodes.drop(1);
               exprToElab = holeFiller.fill(exprToElab, filling);
               tacTycker = new ExprTycker(reporter, traceBuilder);
               tacHead = tacTycker.inherit(exprToElab, term).wellTyped;
