@@ -10,7 +10,7 @@ import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author luna
+ * @author Luna
  */
 public interface TacticProblem extends Problem {
 

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A generic view for traversing Expr
  *
- * @author luna
+ * @author Luna
  */
 
 public interface ExprView {
@@ -51,7 +51,7 @@ public interface ExprView {
 
   private @NotNull Expr traverse(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.RefExpr ref -> ref; // I don't know
+      case Expr.RefExpr ref -> ref;
       case Expr.UnresolvedExpr unresolved -> unresolved;
       case Expr.LamExpr lam -> {
         var param = commit(lam.param());

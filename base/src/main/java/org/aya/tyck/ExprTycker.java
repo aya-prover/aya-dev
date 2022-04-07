@@ -430,7 +430,7 @@ public final class ExprTycker extends Tycker {
 
           var metas = tacHead.allMetas();
           // we can check the remaining nodes against the meta type, but the problem is that the later expected types might change
-          // so we probably need to instantiate the meta and tyck again?
+          // so we need to instantiate the meta and tyck again.
           // we should refill the final, filled concrete expr and type check it against the goal type
 
           while (metas.isNotEmpty()) {
