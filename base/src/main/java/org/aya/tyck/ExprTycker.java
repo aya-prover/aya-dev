@@ -13,6 +13,7 @@ import kala.value.LazyValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
+import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
@@ -33,6 +34,7 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
 import org.aya.util.Ordering;
 import org.aya.util.distill.AyaDocile;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -348,7 +350,40 @@ public final class ExprTycker extends Tycker {
           yield fail(expr, new NoRuleError(expr, null));
         }
       }
-      case Expr.TacExpr tac -> elaborateTactic(tac.tacNode(), term).result;
+      case Expr.TacExpr tac -> {
+        var NestedTacChecker = new ExprOps() {
+          boolean nested = false;
+          Expr.TacExpr theNested = null;
+
+          @Override public @NotNull ExprView view() {
+            return tac.view();
+          }
+
+          @Override public Expr pre(Expr expr) {
+            return switch (expr) {
+              case Expr.TacExpr nestedTac -> {
+                nested = true;
+                theNested = nestedTac;
+                yield nestedTac;
+              }
+              case Expr misc -> misc;
+            };
+          }
+
+          @Override public Expr lastly(Expr expr) {return nested ? theNested : expr;}
+        };
+
+        // if nested then the nested one is returned, otherwise the original one is returned.
+        var tacOrNested = NestedTacChecker.commit();
+
+        reporter.reportDoc(tacOrNested.toDoc(DistillerOptions.debug()));
+
+        if (tac != tacOrNested) {
+          yield tacFail(tac, new TacticProblem.NestedTactic(tac.sourcePos(), tac, (Expr.TacExpr) tacOrNested)).result;
+        }
+
+        yield elaborateTactic(tac.tacNode(), term).result;
+      }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
   }
@@ -367,15 +402,14 @@ public final class ExprTycker extends Tycker {
           var exprToElab = exprTac.expr();
           var tacHead = tacTycker.inherit(exprToElab, term).wellTyped; // tyck this expr to insert all metas
 
-
-          var placeHolder = new Expr.ErrorExpr(SourcePos.NONE, Doc.english("Internal Error for expr hole filler"));
-          class ExprHoleFiller implements ExprView {
+          var holeFiller = new ExprOps() {
             boolean filled = false;
+            final Expr placeHolder = new Expr.ErrorExpr(SourcePos.NONE, Doc.english("Internal Error for expr hole filler"));
             Expr filling = placeHolder;
             Expr exprWithHole = placeHolder;
 
-            @Override public @NotNull Expr initial() {
-              return exprWithHole;
+            @Override public @NotNull ExprView view() {
+              return exprWithHole.view();
             }
 
             @Override public Expr pre(Expr expr) {
@@ -396,8 +430,7 @@ public final class ExprTycker extends Tycker {
               this.filling = filling;
               return commit();
             }
-          }
-          var holeFiller = new ExprHoleFiller();
+          };
 
           var metas = tacHead.allMetas();
           // we can check the remaining nodes against the meta type, but the problem is that the later expected types might change
@@ -674,8 +707,9 @@ public final class ExprTycker extends Tycker {
 
   /**
    * Tactic elaboration result that contains expr with filled holes
+   *
    * @param elaborated the {@link Expr} being elaborated
-   * @param result the {@link Result} after checking
+   * @param result     the {@link Result} after checking
    * @author Luna
    */
   public record TacElabResult(@NotNull Expr elaborated, @NotNull Result result) {}
