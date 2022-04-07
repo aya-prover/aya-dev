@@ -111,6 +111,7 @@ public interface ExprView {
         if (node == tac.tacNode()) yield tac;
         yield new Expr.TacExpr(tac.sourcePos(), node);
       }
+      case null -> null;
     };
   }
 
