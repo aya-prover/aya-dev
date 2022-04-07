@@ -2,14 +2,15 @@ tactic {
   | suc {??}
   | zero
 }
-In file $FILE:12:31 ->
+In file $FILE:11:31 ->
 
+   9 | | a, suc b => suc (a + b)
   10 | 
-  11 | 
-  12 | example def simpleTac1: Nat => tactic {
+  11 | example def simpleTac2: Nat => tactic {
                                       ^^
-  13 |   | {??} + {??}
-  14 |   | tactic { | suc {??} | zero }
+  12 |   | {??} + {??}
+  13 |   | tactic { | suc {??} | zero }
+  14 |   | zero
   15 |   | zero
   16 | }
 
@@ -26,6 +27,7 @@ Error: tactic {
            | suc {??}
            | zero
          }
+         | zero
          | zero
        }
 

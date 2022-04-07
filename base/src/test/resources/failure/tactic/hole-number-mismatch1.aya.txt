@@ -1,0 +1,42 @@
+tactic {
+  | {??} + {??}
+  | zero
+}
+In file $FILE:13:4 ->
+
+  11 | 
+  12 | example def simpleTac1: Nat => tactic {
+  13 |   | {??} + {??}
+           ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+
+In file $FILE:13:11 ->
+
+  11 | 
+  12 | example def simpleTac1: Nat => tactic {
+  13 |   | {??} + {??}
+                  ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+
+In file $FILE:12:38 ->
+
+  10 | 
+  11 | 
+  12 | example def simpleTac1: Nat => tactic {
+                                             ^^
+  13 |   | {??} + {??}
+  14 |   | zero
+  15 | }
+
+Error: Expected 2 filler(s) in the tactic block, but found 1
+
+1 error(s), 0 warning(s).
+What are you doing?
