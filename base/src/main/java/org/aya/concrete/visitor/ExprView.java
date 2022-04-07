@@ -18,7 +18,9 @@ public interface ExprView {
 
   default @NotNull Expr post(@NotNull Expr expr) { return expr; }
 
-  private @NotNull Expr commit(@NotNull Expr expr) { return post(traverse(pre(expr))); }
+  default @NotNull Expr lastly(Expr expr) {return expr;}
+
+  private @NotNull Expr commit(Expr expr) {return post(traverse(pre(expr)));}
 
   private Expr.@NotNull Param commit(Expr.@NotNull Param param) {
     var type = commit(param.type());
@@ -34,7 +36,11 @@ public interface ExprView {
 
   private Expr.TacNode commit(Expr.TacNode node) {
     return switch (node) {
-      case Expr.ExprTac exprTac -> commit(exprTac);
+      case Expr.ExprTac exprTac -> {
+        var expr = commit(exprTac.expr());
+        if (expr == exprTac.expr()) yield exprTac;
+        yield new Expr.ExprTac(exprTac.sourcePos(), expr);
+      }
       case Expr.ListExprTac listExprTac -> {
         var tacNodes = listExprTac.tacNodes().map(this::commit);
         if (tacNodes.sameElements(listExprTac.tacNodes(), true)) yield listExprTac;
@@ -115,7 +121,5 @@ public interface ExprView {
     };
   }
 
-  default @NotNull Expr commit() {
-    return commit(initial());
-  }
+  default @NotNull Expr commit() {return lastly(commit(initial()));}
 }
