@@ -386,12 +386,12 @@ public final class ExprTycker extends Tycker {
 
   private TacElabResult elaborateTactic(Expr.TacNode tacNode, Term term) {
     return switch (tacNode) {
-      case Expr.ExprTac exprTac -> new TacElabResult(exprTac.expr(), inherit(exprTac.expr(), term));
-      case Expr.ListExprTac listExprTac -> {
+      case Expr.TacNode.ExprTac exprTac -> new TacElabResult(exprTac.expr(), inherit(exprTac.expr(), term));
+      case Expr.TacNode.ListExprTac listExprTac -> {
         var tacNodes = listExprTac.tacNodes();
         var headNode = tacNodes.first();
         var tailNodes = tacNodes.slice(1, tacNodes.size());
-        if (headNode instanceof Expr.ExprTac exprTac) {
+        if (headNode instanceof Expr.TacNode.ExprTac exprTac) {
           // we need a local state here to store new metas, but we want to inherit to insert metas
           // for now we instantiate a new tycker
           var tacTycker = new ExprTycker(reporter, traceBuilder);
@@ -458,7 +458,7 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private @NotNull TacElabResult tacFail(@NotNull Expr.ListExprTac listExprTac, @NotNull Problem problem) {
+  private @NotNull TacElabResult tacFail(@NotNull Expr.TacNode.ListExprTac listExprTac, @NotNull Problem problem) {
     return new TacElabResult(new Expr.ErrorExpr(listExprTac.sourcePos(), listExprTac), fail(listExprTac, problem));
   }
 

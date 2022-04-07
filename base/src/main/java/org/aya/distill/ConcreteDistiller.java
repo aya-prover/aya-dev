@@ -313,13 +313,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
   public @NotNull Doc tacNode(@NotNull Expr.TacNode tacNode) {
     return switch (tacNode) {
-      case Expr.ExprTac exprTac -> Doc.sep(Doc.symbol("|"), exprTac.expr().toDoc(options));
-      case Expr.ListExprTac listExprTac -> tacList(listExprTac);
+      case Expr.TacNode.ExprTac exprTac -> Doc.sep(Doc.symbol("|"), exprTac.expr().toDoc(options));
+      case Expr.TacNode.ListExprTac listExprTac -> tacList(listExprTac);
     };
   }
 
-  // TODO: don't know if this is correct
-  public @NotNull Doc tacList(@NotNull Expr.ListExprTac tacList) {
+  public @NotNull Doc tacList(@NotNull Expr.TacNode.ListExprTac tacList) {
     return Doc.cat(
       Doc.symbol("{"),
       Doc.emptyIf(tacList.tacNodes().isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
