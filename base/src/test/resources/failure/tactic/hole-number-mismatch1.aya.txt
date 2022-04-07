@@ -1,7 +1,3 @@
-tactic {
-  | {??} + {??}
-  | zero
-}
 In file $FILE:13:4 ->
 
   11 | 

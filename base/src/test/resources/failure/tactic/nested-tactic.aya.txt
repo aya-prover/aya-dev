@@ -1,7 +1,3 @@
-tactic {
-  | suc {??}
-  | zero
-}
 In file $FILE:12:31 ->
 
   10 | 

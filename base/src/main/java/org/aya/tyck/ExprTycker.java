@@ -33,7 +33,6 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
 import org.aya.util.Ordering;
 import org.aya.util.distill.AyaDocile;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -366,9 +365,6 @@ public final class ExprTycker extends Tycker {
 
         // if nested then the nested one is returned, otherwise the original one is returned.
         var tacOrNested = NestedTacChecker.commit();
-
-        reporter.reportDoc(tacOrNested.toDoc(DistillerOptions.debug()));
-
         if (tac != tacOrNested) {
           yield tacFail(tac, new TacticProblem.NestedTactic(tac.sourcePos(), tac, (Expr.TacExpr) tacOrNested)).result;
         }
