@@ -4,6 +4,8 @@ example def simpleTac1: Nat => tactic | zero + zero
 
 example def simpleTac2: Nat => tactic {
   | {??} + {??}
-  | zero
+  { | suc {??}
+    | zero
+  }
   | zero
 }

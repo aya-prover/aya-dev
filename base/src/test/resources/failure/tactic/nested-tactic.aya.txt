@@ -1,0 +1,33 @@
+tactic{
+  | suc {??}
+  | zero
+}
+In file $FILE:12:31 ->
+
+  10 | 
+  11 | 
+  12 | example def simpleTac3: Nat => tactic {
+                                      ^^
+  13 |   | {??} + {??}
+  14 |   | tactic { | suc {??} | zero }
+  15 |   | zero
+  16 | }
+
+Error: tactic{
+         | suc {??}
+         | zero
+       }
+       
+       is nested in
+       
+       tactic{
+         | {??} + {??}
+         | tactic{
+           | suc {??}
+           | zero
+         }
+         | zero
+       }
+
+1 error(s), 0 warning(s).
+What are you doing?
