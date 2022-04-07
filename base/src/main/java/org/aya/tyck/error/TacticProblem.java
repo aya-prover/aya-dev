@@ -28,12 +28,12 @@ public interface TacticProblem extends Problem {
     }
   }
 
-  record TacHeadCannotBeList(@NotNull SourcePos sourcePos, @NotNull Expr.ListExprTac tacList,
-                              @NotNull Expr.TacNode first) implements TacticProblem {
+  record TacHeadCannotBeList(@NotNull SourcePos sourcePos, @NotNull Expr.ListExprTac tacList) implements TacticProblem {
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.english("Tactic head cannot be list");
-      // TODO: make this more verbose
+      return Doc.sep(Doc.english("Tactic head of"),
+        tacList.toDoc(options),
+        Doc.english("cannot be a list"));
     }
   }
 

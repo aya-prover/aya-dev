@@ -13,6 +13,7 @@ import kala.value.LazyValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
+import org.aya.concrete.visitor.ExprView;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
@@ -347,8 +348,93 @@ public final class ExprTycker extends Tycker {
           yield fail(expr, new NoRuleError(expr, null));
         }
       }
+      case Expr.TacExpr tac -> elaborateTactic(tac.tacNode(), term).result;
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
+  }
+
+  private TacElabResult elaborateTactic(Expr.TacNode tacNode, Term term) {
+    return switch (tacNode) {
+      case Expr.ExprTac exprTac -> new TacElabResult(exprTac.expr(), inherit(exprTac.expr(), term));
+      case Expr.ListExprTac listExprTac -> {
+        var tacNodes = listExprTac.tacNodes();
+        var headNode = tacNodes.first();
+        var tailNodes = tacNodes.slice(1, tacNodes.size());
+        if (headNode instanceof Expr.ExprTac exprTac) {
+          // we need a local state here to store new metas, but we want to inherit to insert metas
+          // for now we instantiate a new tycker
+          var tacTycker = new ExprTycker(reporter, traceBuilder);
+          var exprToElab = exprTac.expr();
+          var tacHead = tacTycker.inherit(exprToElab, term).wellTyped; // tyck this expr to insert all metas
+
+
+          var placeHolder = new Expr.ErrorExpr(SourcePos.NONE, Doc.english("Internal Error for expr hole filler"));
+          class ExprHoleFiller implements ExprView {
+            boolean filled = false;
+            Expr filling = placeHolder;
+            Expr exprWithHole = placeHolder;
+
+            @Override public @NotNull Expr initial() {
+              return exprWithHole;
+            }
+
+            @Override public Expr pre(Expr expr) {
+              return switch (expr) {
+                case Expr.HoleExpr hole -> {
+                  if (!filled) {
+                    filled = true;
+                    yield filling;
+                  } else yield hole;
+                }
+                case Expr misc -> misc;
+              };
+            }
+
+            public @NotNull Expr fill(Expr exprWithHole, Expr filling) {
+              this.exprWithHole = exprWithHole;
+              this.filling = filling;
+              return commit();
+            }
+          }
+          var holeFiller = new ExprHoleFiller();
+
+          var metas = tacHead.allMetas();
+          // we can check the remaining nodes against the meta type, but the problem is that the later expected types might change
+          // so we probably need to instantiate the meta and tyck again?
+          // we should refill the final, filled concrete expr and type check it against the goal type
+
+          while (metas.isNotEmpty()) {
+            var metaSize = metas.size();
+            if (tailNodes.size() == metaSize) {
+              var firstMeta = metas.first();
+              var firstNode = tailNodes.first();
+              var filling = elaborateTactic(firstNode, firstMeta.result).elaborated;
+
+              tailNodes = tailNodes.drop(0);
+
+              exprToElab = holeFiller.fill(exprToElab, filling);
+              tacTycker = new ExprTycker(reporter, traceBuilder);
+              tacHead = tacTycker.inherit(exprToElab, term).wellTyped;
+              metas = tacHead.allMetas();
+
+              if (metas.size() >= metaSize)
+                throw new UnsupportedOperationException(); // TODO: internal error meta is not filled after tactic
+            } else yield tacFail(exprToElab,
+              new TacticProblem.HoleNumberMismatchError(listExprTac.sourcePos(), metaSize, tailNodes.size()));
+          }
+
+          yield new TacElabResult(exprToElab, new Result(inherit(exprToElab, term).wellTyped, term));
+        } else yield tacFail(listExprTac, new TacticProblem.TacHeadCannotBeList(listExprTac.sourcePos(), listExprTac));
+      }
+    };
+  }
+
+  private @NotNull TacElabResult tacFail(@NotNull Expr.ListExprTac listExprTac, @NotNull Problem problem) {
+    return new TacElabResult(new Expr.ErrorExpr(listExprTac.sourcePos(), listExprTac), fail(listExprTac, problem));
+  }
+
+  private @NotNull TacElabResult tacFail(@NotNull Expr exprToElab, @NotNull Problem problem) {
+    return new TacElabResult(new Expr.ErrorExpr(exprToElab.sourcePos(), exprToElab), fail(exprToElab, problem));
   }
 
   private void traceExit(Result result, @NotNull Expr expr) {
@@ -585,4 +671,12 @@ public final class ExprTycker extends Tycker {
       return new Result(wellTyped.freezeHoles(state), type.freezeHoles(state));
     }
   }
+
+  /**
+   * Tactic elaboration result that contains expr with filled holes
+   * @param elaborated the {@link Expr} being elaborated
+   * @param result the {@link Result} after checking
+   * @author Luna
+   */
+  public record TacElabResult(@NotNull Expr elaborated, @NotNull Result result) {}
 }
