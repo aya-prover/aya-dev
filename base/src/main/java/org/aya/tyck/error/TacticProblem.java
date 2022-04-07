@@ -29,11 +29,25 @@ public interface TacticProblem extends Problem {
   }
 
   record TacHeadCannotBeList(@NotNull SourcePos sourcePos, @NotNull Expr.ListExprTac tacList) implements TacticProblem {
-
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Tactic head of"),
+        Doc.line(),
         tacList.toDoc(options),
         Doc.english("cannot be a list"));
+    }
+  }
+
+  record NestedTactic(@NotNull SourcePos sourcePos, @NotNull Expr.TacExpr outer,
+                      @NotNull Expr.TacExpr inner) implements TacticProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.cat(
+        inner.toDoc(options),
+        Doc.line(),
+        Doc.line(),
+        Doc.english("is nested in"),
+        Doc.line(),
+        Doc.line(),
+        outer.toDoc(options));
     }
   }
 
