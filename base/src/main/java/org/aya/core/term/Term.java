@@ -224,9 +224,11 @@ public sealed interface Term extends AyaDocile permits
   }
 
   default @NotNull ImmutableSeq<Meta> allMetas() {
-    record MetaCollector(@Override @NotNull TermView view, MutableList<Meta> metas) implements TermOps {
-      @Contract("_ -> new") public static @NotNull MetaCollector from(@NotNull Term term) {
-        return new MetaCollector(term.view(), MutableList.create());
+    return new TermOps() {
+      final MutableList<Meta> metas = MutableList.create();
+
+      @Override public @NotNull TermView view() {
+        return Term.this.view();
       }
 
       @Override public Term pre(Term term) {
@@ -243,8 +245,6 @@ public sealed interface Term extends AyaDocile permits
         commit();
         return metas.toImmutableSeq();
       }
-    }
-
-    return MetaCollector.from(this).collect();
+    }.collect();
   }
 }
