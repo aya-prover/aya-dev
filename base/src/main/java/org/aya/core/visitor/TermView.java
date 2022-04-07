@@ -27,6 +27,10 @@ public interface TermView {
     return term;
   }
 
+  default @NotNull Term lastly(Term term) {
+    return term;
+  }
+
   private @NotNull Term commit(@NotNull Term term) {
     return post(traverse(pre(term)));
   }
@@ -141,7 +145,7 @@ public interface TermView {
   }
 
   default @NotNull Term commit() {
-    return commit(initial());
+    return lastly(commit(initial()));
   }
 
   default @NotNull TermView lift(int shift) {
