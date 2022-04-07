@@ -378,11 +378,11 @@ public record AyaProducer(
 
   private @NotNull Expr.TacNode visitTacNode(AyaParser.TacNodeContext tacNode) {
     if (tacNode.expr() != null) {
-      return new Expr.ExprTac(sourcePosOf(tacNode), visitExpr(tacNode.expr()));
+      return new Expr.TacNode.ExprTac(sourcePosOf(tacNode), visitExpr(tacNode.expr()));
     } else {
       var result = tacNode.tacNode()
         .stream().map(this::visitTacNode).collect(ImmutableSeq.factory());
-      return new Expr.ListExprTac(sourcePosOf(tacNode), result);
+      return new Expr.TacNode.ListExprTac(sourcePosOf(tacNode), result);
     }
   }
 

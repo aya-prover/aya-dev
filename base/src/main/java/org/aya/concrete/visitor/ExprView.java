@@ -36,15 +36,15 @@ public interface ExprView {
 
   private Expr.TacNode commit(Expr.TacNode node) {
     return switch (node) {
-      case Expr.ExprTac exprTac -> {
+      case Expr.TacNode.ExprTac exprTac -> {
         var expr = commit(exprTac.expr());
         if (expr == exprTac.expr()) yield exprTac;
-        yield new Expr.ExprTac(exprTac.sourcePos(), expr);
+        yield new Expr.TacNode.ExprTac(exprTac.sourcePos(), expr);
       }
-      case Expr.ListExprTac listExprTac -> {
+      case Expr.TacNode.ListExprTac listExprTac -> {
         var tacNodes = listExprTac.tacNodes().map(this::commit);
         if (tacNodes.sameElements(listExprTac.tacNodes(), true)) yield listExprTac;
-        yield new Expr.ListExprTac(listExprTac.sourcePos(), tacNodes);
+        yield new Expr.TacNode.ListExprTac(listExprTac.sourcePos(), tacNodes);
       }
     };
   }

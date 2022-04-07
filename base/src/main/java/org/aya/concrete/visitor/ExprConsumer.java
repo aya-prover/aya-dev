@@ -91,8 +91,8 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
 
   default void visitTacNode(@NotNull Expr.TacNode node, P p) {
     switch (node) {
-      case Expr.ExprTac expr -> expr.expr().accept(this, p);
-      case Expr.ListExprTac list -> list.tacNodes().forEach(n -> visitTacNode(n, p));
+      case Expr.TacNode.ExprTac expr -> expr.expr().accept(this, p);
+      case Expr.TacNode.ListExprTac list -> list.tacNodes().forEach(n -> visitTacNode(n, p));
     }
   }
 

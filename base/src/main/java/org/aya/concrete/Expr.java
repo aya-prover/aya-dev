@@ -349,11 +349,11 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return new ConcreteDistiller(options).tacNode(this);
     }
+
+    record ExprTac(@NotNull SourcePos sourcePos, @NotNull Expr expr) implements TacNode {}
+
+    record ListExprTac(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<TacNode> tacNodes) implements TacNode {}
   }
-
-  record ExprTac(@NotNull SourcePos sourcePos, @NotNull Expr expr) implements TacNode {}
-
-  record ListExprTac(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<TacNode> tacNodes) implements TacNode {}
 
 
   /**
