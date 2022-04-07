@@ -98,6 +98,7 @@ public interface ExprView {
       }
       case Expr.ErrorExpr error -> error;
       case Expr.MetaPat meta -> meta;
+      case null -> null;
     };
   }
 
