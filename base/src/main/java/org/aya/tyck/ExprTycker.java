@@ -350,7 +350,7 @@ public final class ExprTycker extends Tycker {
             return tac.view();
           }
 
-          @Override public Expr pre(Expr expr) {
+          @Override public @NotNull Expr pre(@NotNull Expr expr) {
             return switch (expr) {
               case Expr.TacExpr nestedTac -> {
                 nested = true;
@@ -361,7 +361,7 @@ public final class ExprTycker extends Tycker {
             };
           }
 
-          @Override public Expr lastly(Expr expr) {return nested ? theNested : expr;}
+          @Override public @NotNull Expr lastly(@NotNull Expr expr) {return nested ? theNested : expr;}
         };
 
         // if nested then the nested one is returned, otherwise the original one is returned.
@@ -400,7 +400,7 @@ public final class ExprTycker extends Tycker {
               return exprWithHole.view();
             }
 
-            @Override public Expr pre(Expr expr) {
+            @Override public @NotNull Expr pre(@NotNull Expr expr) {
               return switch (expr) {
                 case Expr.HoleExpr hole -> {
                   if (!filled) {
