@@ -35,7 +35,7 @@ public interface ExprView {
     return new Expr.NamedArg(arg.explicit(), expr);
   }
 
-  private TacNode commit(TacNode node) {
+  private @NotNull TacNode commit(@NotNull TacNode node) {
     return switch (node) {
       case TacNode.ExprTac exprTac -> {
         var expr = commit(exprTac.expr());
@@ -118,9 +118,8 @@ public interface ExprView {
         if (node == tac.tacNode()) yield tac;
         yield new Expr.TacExpr(tac.sourcePos(), node);
       }
-      case null -> null;
     };
   }
 
-  default @NotNull Expr commit() {return lastly(commit(initial()));}
+  default @NotNull Expr commit() { return lastly(commit(initial())); }
 }
