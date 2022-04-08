@@ -1,29 +1,40 @@
-In file $FILE:11:31 ->
+In file $FILE:12:4 ->
+
+  10 | 
+  11 | example def simpleTac2: Nat => tactic {
+  12 |   | {??} + {??}
+           ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+
+In file $FILE:12:11 ->
+
+  10 | 
+  11 | example def simpleTac2: Nat => tactic {
+  12 |   | {??} + {??}
+                  ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+
+In file $FILE:11:38 ->
 
    9 | | a, suc b => suc (a + b)
   10 | 
   11 | example def simpleTac2: Nat => tactic {
-                                      ^^
+                                             ^^
   12 |   | {??} + {??}
-  13 |   | tactic { | suc {??} | zero }
+  13 |   | zero
   14 |   | zero
   15 |   | zero
   16 | }
 
-Error:  tactic {
-          | suc {??}
-          | zero
-        }
-       is nested in
-         tactic {
-          | {??} + {??}
-          | tactic {
-            | suc {??}
-            | zero
-          }
-          | zero
-          | zero
-        }
+Error: Expected 2 filler(s) in the tactic block, but found 3
 
 1 error(s), 0 warning(s).
 What are you doing?
