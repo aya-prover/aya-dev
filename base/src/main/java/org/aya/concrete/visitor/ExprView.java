@@ -58,7 +58,6 @@ public interface ExprView {
         yield new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), params);
       }
       case Expr.RawUnivExpr rawUniv -> rawUniv;
-
       case Expr.LiftExpr lift -> lift; // do this for now
       case Expr.UnivExpr univ -> univ;
       case Expr.AppExpr app -> {

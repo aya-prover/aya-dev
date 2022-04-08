@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
@@ -391,7 +391,7 @@ public sealed interface Doc extends Docile {
   @Contract("_, _, _ -> new")
   static @NotNull Doc cblock(@NotNull Doc prefix, int indent, @NotNull Doc block) {
     if (block.isEmpty()) return prefix;
-    return Doc.vcat(Doc.sep(prefix, Doc.symbol("{")), Doc.nest(indent, Doc.vcat(block)), Doc.symbol("}"));
+    return Doc.vcat(Doc.sepNonEmpty(prefix, Doc.symbol("{")), Doc.nest(indent, Doc.vcat(block)), Doc.symbol("}"));
   }
 
   @Contract("_ -> new")
