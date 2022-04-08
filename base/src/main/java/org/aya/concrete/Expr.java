@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.value.Ref;
 import org.aya.concrete.stmt.QualifiedID;
+import org.aya.concrete.visitor.ExprView;
 import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
@@ -371,5 +372,9 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @NotNull Expr> mapper) {
       return new Param(sourcePos, ref, mapper.apply(type), pattern, explicit);
     }
+  }
+
+  default @NotNull ExprView view() {
+    return () -> this;
   }
 }

@@ -2,17 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
-import kala.collection.mutable.MutableList;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.Matching;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
-import org.aya.ref.Var;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
+import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
@@ -25,6 +25,14 @@ public interface TermOps extends TermView {
   @NotNull TermView view();
   @Override default @NotNull Term initial() {
     return view().initial();
+  }
+
+  @Override default Term pre(Term term) {
+    return view().pre(term);
+  }
+
+  @Override default Term post(Term term) {
+    return view().post(term);
   }
 
   record Mapper(
@@ -76,12 +84,12 @@ public interface TermOps extends TermView {
     }
 
     @Override public Term pre(Term term) {
-      return switch (view.pre(term)) {
+      return view.pre(switch (term) {
         case IntroTerm.Lambda lambda -> new IntroTerm.Lambda(handleBinder(lambda.param()), lambda.body());
         case FormTerm.Pi pi -> new FormTerm.Pi(handleBinder(pi.param()), pi.body());
         case FormTerm.Sigma sigma -> new FormTerm.Sigma(sigma.params().map(this::handleBinder));
         case Term misc -> misc;
-      };
+      });
     }
 
     @Override public Term post(Term term) {

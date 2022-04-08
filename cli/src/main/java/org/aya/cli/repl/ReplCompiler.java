@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
-import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.source.LibraryOwner;
@@ -70,7 +69,7 @@ public class ReplCompiler {
     var resolveInfo = new ResolveInfo(
       new EmptyContext(reporter, Path.of("dummy")).derive("dummy"),
       ImmutableSeq.empty(), new AyaBinOpSet(reporter));
-    return expr.accept(new Desugarer(resolveInfo), Unit.unit());
+    return new Desugarer.ForExpr(expr.view(), resolveInfo).commit();
   }
 
   /** @see ReplCompiler#compileExpr(String, NormalizeMode) */

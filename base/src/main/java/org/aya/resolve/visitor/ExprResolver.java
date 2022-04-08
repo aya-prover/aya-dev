@@ -4,13 +4,13 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.mutable.MutableList;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
-import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
@@ -41,7 +41,77 @@ public record ExprResolver(
   @NotNull MutableList<TyckOrder> reference,
   @NotNull MutableStack<Where> where,
   @Nullable Consumer<TyckUnit> parentAdd
-) implements ExprFixpoint<Context> {
+) implements Expr.Visitor<Context, @NotNull Expr> {
+  @Override public @NotNull Expr visitRef(Expr.@NotNull RefExpr expr, Context p) {
+    return expr;
+  }
+
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, Context p) {
+    return params.map(param -> {
+      var oldType = param.type();
+      var type = oldType.accept(this, p);
+      if (type == oldType) return param;
+      return new Expr.Param(param, type);
+    });
+  }
+
+  @Override public @NotNull Expr visitError(Expr.@NotNull ErrorExpr error, Context p) {
+    return error;
+  }
+
+  @Override public @NotNull Expr visitRawUniv(Expr.@NotNull RawUnivExpr expr, Context p) {
+    return expr;
+  }
+
+  @Override public @NotNull Expr visitMetaPat(Expr.@NotNull MetaPat metaPat, Context p) {
+    return metaPat;
+  }
+
+  @Override public @NotNull Expr visitLift(Expr.@NotNull LiftExpr expr, Context p) {
+    var mapped = expr.expr().accept(this, p);
+    if (mapped == expr.expr()) return expr;
+    return new Expr.LiftExpr(expr.sourcePos(), mapped, expr.lift());
+  }
+
+  @Override public @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, Context p) {
+    return expr;
+  }
+
+  @Override public @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, Context p) {
+    var function = expr.function().accept(this, p);
+    var argument = expr.argument();
+    var argExpr = argument.expr().accept(this, p);
+    if (function == expr.function() && argExpr == argument.expr()) return expr;
+    var newArg = new Expr.NamedArg(argument.explicit(), argument.name(), argExpr);
+    return new Expr.AppExpr(expr.sourcePos(), function, newArg);
+  }
+
+  @Override public @NotNull Expr visitTup(Expr.@NotNull TupExpr expr, Context p) {
+    var items = expr.items().map(item -> item.accept(this, p));
+    if (items.sameElements(expr.items(), true)) return expr;
+    return new Expr.TupExpr(expr.sourcePos(), items);
+  }
+
+  @Override public @NotNull Expr visitNew(Expr.@NotNull NewExpr expr, Context p) {
+    var struct = expr.struct().accept(this, p);
+    var fields = expr.fields().map(t -> visitField(t, p));
+    if (expr.struct() == struct && fields.sameElements(expr.fields(), true)) return expr;
+    return new Expr.NewExpr(expr.sourcePos(), struct, fields);
+  }
+
+  @Override public @NotNull Expr visitLitInt(Expr.@NotNull LitIntExpr expr, Context p) {
+    return expr;
+  }
+
+  @Override public @NotNull Expr visitLitString(Expr.@NotNull LitStringExpr expr, Context p) {
+    return expr;
+  }
+
+  @Override public @NotNull Expr visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Context p) {
+    return new Expr.BinOpSeq(binOpSeq.sourcePos(),
+      binOpSeq.seq().map(e -> new Expr.NamedArg(e.explicit(), e.name(), e.expr().accept(this, p))));
+  }
+
   enum Where {
     Head, Body
   }
@@ -158,9 +228,11 @@ public record ExprResolver(
     return new Expr.LamExpr(expr.sourcePos(), param._1, body);
   }
 
-  @Override public Expr.@NotNull Field visitField(Expr.@NotNull Field t, Context context) {
+  public Expr.@NotNull Field visitField(Expr.@NotNull Field t, Context context) {
     for (var binding : t.bindings()) context = context.bind(binding.data(), binding.sourcePos());
-    return ExprFixpoint.super.visitField(t, context);
+    var accept = t.body().accept(this, context);
+    if (accept == t.body()) return t;
+    return new Expr.Field(t.name(), t.bindings(), accept, t.resolvedField());
   }
 
   @Override public @NotNull Expr visitPi(@NotNull Expr.PiExpr expr, Context ctx) {
@@ -176,6 +248,8 @@ public record ExprResolver(
 
   @Override public @NotNull Expr visitHole(@NotNull Expr.HoleExpr expr, Context context) {
     expr.accessibleLocal().set(context.collect(MutableList.create()).toImmutableSeq());
-    return ExprFixpoint.super.visitHole(expr, context);
+    var h = expr.filling() != null ? expr.filling().accept(this, context) : null;
+    if (h == expr.filling()) return expr;
+    return new Expr.HoleExpr(expr.sourcePos(), expr.explicit(), h);
   }
 }
