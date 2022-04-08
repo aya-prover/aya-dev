@@ -4,8 +4,6 @@ package org.aya.tyck.pat;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.Pattern;
 import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
@@ -92,10 +90,10 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Pattern> pats
+    @NotNull PatClassifier.PatErr pats
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(t -> t.toDoc(options))));
+      return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.missing().map(t -> t.toDoc(options))));
     }
   }
 
