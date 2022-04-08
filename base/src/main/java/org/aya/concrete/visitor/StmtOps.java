@@ -3,6 +3,7 @@
 package org.aya.concrete.visitor;
 
 import kala.tuple.Unit;
+import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
@@ -10,24 +11,29 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
+ * TODO: rewrite this class using pattern matching
  */
-public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> {
+public interface StmtOps<P> extends Stmt.Visitor<P, Unit> {
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
-    signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> expr.accept(this, pp)));
+    signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> visitExpr(expr, pp)));
   }
 
   @Override default Unit visitRemark(@NotNull Remark remark, P p) {
-    if (remark.literate != null) remark.literate.modify(this, p);
+    if (remark.literate != null) remark.literate.modify(expr -> visitExpr(expr, p));
     return Unit.unit();
   }
 
   default void visitDecl(@NotNull Decl decl, P pp) {
     visitSignatured(decl, pp);
-    decl.result = decl.result.accept(this, pp);
+    decl.result = visitExpr(decl.result, pp);
+  }
+
+  default @NotNull Expr visitExpr(@NotNull Expr expr, P pp) {
+    return expr;
   }
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {
-    return new Pattern.Clause(c.sourcePos, c.patterns.map(p -> visitPattern(p, pp)), c.expr.map(expr -> expr.accept(this, pp)));
+    return new Pattern.Clause(c.sourcePos, c.patterns.map(p -> visitPattern(p, pp)), c.expr.map(expr -> visitExpr(expr, pp)));
   }
 
   default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
@@ -60,7 +66,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   @Override default Unit visitFn(@NotNull Decl.FnDecl decl, P p) {
     visitDecl(decl, p);
     decl.body = decl.body.map(
-      expr -> expr.accept(this, p),
+      expr -> visitExpr(expr, p),
       clauses -> clauses.map(clause -> visitClause(clause, p))
     );
     return Unit.unit();
@@ -91,14 +97,14 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   }
   @Override default Unit visitField(Decl.@NotNull StructField field, P p) {
     visitSignatured(field, p);
-    field.result = field.result.accept(this, p);
+    field.result = visitExpr(field.result, p);
     field.clauses = field.clauses.map(clause -> visitClause(clause, p));
-    field.body = field.body.map(expr -> expr.accept(this, p));
+    field.body = field.body.map(expr -> visitExpr(expr, p));
     return Unit.unit();
   }
 
   @Override default Unit visitGeneralize(@NotNull Generalize variables, P p) {
-    variables.type = variables.type.accept(this, p);
+    variables.type = visitExpr(variables.type, p);
     return Unit.unit();
   }
 }

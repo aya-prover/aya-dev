@@ -49,8 +49,8 @@ public interface ExprView {
       case Expr.PiExpr pi -> {
         var param = commit(pi.param());
         var last = commit(pi.last());
-        if (param == pi.param() && last == pi.last()) yield last;
-        yield new Expr.LamExpr(pi.sourcePos(), param, last);
+        if (param == pi.param() && last == pi.last()) yield pi;
+        yield new Expr.PiExpr(pi.sourcePos(), pi.co(), param, last);
       }
       case Expr.SigmaExpr sigma -> {
         var params = sigma.params().map(this::commit);
@@ -79,7 +79,7 @@ public interface ExprView {
       case Expr.ProjExpr proj -> {
         var tup = commit(proj.tup());
         if (tup == proj.tup()) yield proj;
-        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix());
+        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
       }
       case Expr.NewExpr neu -> {
         var struct = commit(neu.struct());

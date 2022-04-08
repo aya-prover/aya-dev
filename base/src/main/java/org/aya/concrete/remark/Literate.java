@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.Ref;
 import org.aya.concrete.Expr;
 import org.aya.concrete.visitor.ExprConsumer;
-import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
@@ -25,11 +24,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * @author ice1000
  */
 public sealed interface Literate extends Docile {
-  default <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
+  default <P> void modify(@NotNull Function<Expr, Expr> fixpoint) {
   }
   default <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
   }
@@ -50,8 +51,8 @@ public sealed interface Literate extends Docile {
       return ImmutableSeq.empty();
     }
 
-    @Override public <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
-      children.forEach(literate -> literate.modify(fixpoint, p));
+    @Override public <P> void modify(@NotNull Function<Expr, Expr> fixpoint) {
+      children.forEach(literate -> literate.modify(fixpoint));
     }
 
     @Override public <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
@@ -96,8 +97,8 @@ public sealed interface Literate extends Docile {
     }
 
     @Override @Contract(mutates = "this")
-    public <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
-      expr = expr.accept(fixpoint, p);
+    public <P> void modify(@NotNull Function<Expr, Expr> fixpoint) {
+      expr = fixpoint.apply(expr);
     }
 
     @Override public <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
@@ -111,7 +112,7 @@ public sealed interface Literate extends Docile {
     @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
       resolver.enterBody();
-      modify(resolver, context);
+      modify(e -> e.accept(resolver, context));
       return resolver.reference().toImmutableSeq();
     }
 
