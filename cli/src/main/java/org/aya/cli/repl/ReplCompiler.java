@@ -17,6 +17,7 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.generic.util.NormalizeMode;
@@ -27,6 +28,7 @@ import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleListLoader;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.TyckState;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.CountingReporter;
@@ -45,11 +47,13 @@ public class ReplCompiler {
   private final @NotNull ReplContext context;
   private final @NotNull ImmutableSeq<Path> modulePaths;
   private final @NotNull CompilerFlags flags;
+  private final @NotNull PrimDef.Factory primFactory;
 
   ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.modulePaths = modulePaths;
     this.reporter = CountingReporter.delegate(reporter);
     this.locator = locator;
+    this.primFactory = new PrimDef.Factory();
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
     this.flags = new CompilerFlags(CompilerFlags.Message.EMOJI, false, true, null,
       modulePaths.view(), null);
@@ -59,14 +63,14 @@ public class ReplCompiler {
     var resolvedExpr = expr.resolve(context);
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      var tycker = new ExprTycker(delayedReporter, null);
+      var tycker = new ExprTycker(primFactory, delayedReporter, null);
       var desugar = desugarExpr(resolvedExpr, delayedReporter);
       return tycker.zonk(tycker.synthesize(desugar));
     }
   }
 
   private @NotNull Expr desugarExpr(@NotNull Expr expr, @NotNull Reporter reporter) {
-    var resolveInfo = new ResolveInfo(
+    var resolveInfo = new ResolveInfo(primFactory,
       new EmptyContext(reporter, Path.of("dummy")).derive("dummy"),
       ImmutableSeq.empty(), new AyaBinOpSet(reporter));
     return new Desugarer.ForExpr(expr.view(), resolveInfo).commit();
@@ -79,7 +83,7 @@ public class ReplCompiler {
   }
 
   private int loadLibrary(@NotNull Path libraryRoot) throws IOException {
-    var compiler = LibraryCompiler.newCompiler(reporter, flags, libraryRoot);
+    var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, libraryRoot);
     int result = compiler.start();
     var owner = compiler.libraryOwner();
     importModule(owner);
@@ -116,11 +120,11 @@ public class ReplCompiler {
     try {
       var programOrExpr = AyaParserImpl.repl(reporter, text);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
-        new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), null)).toImmutableSeq()));
+        new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
-          loader.tyckModule(context, program, null, ((moduleResolve, defs) -> newDefs.set(defs)));
+          loader.tyckModule(primFactory, context, program, null, ((moduleResolve, defs) -> newDefs.set(defs)));
           var defs = newDefs.get();
           if (reporter.noError()) return defs;
           else {
@@ -138,7 +142,7 @@ public class ReplCompiler {
             return ImmutableSeq.empty();
           }
         },
-        expr -> tyckExpr(expr).wellTyped().normalize(null, normalizeMode)
+        expr -> tyckExpr(expr).wellTyped().normalize(new TyckState(primFactory), normalizeMode)
       );
     } catch (InterruptException ignored) {
       return Either.left(ImmutableSeq.empty());
@@ -152,7 +156,7 @@ public class ReplCompiler {
    */
   public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      return tyckExpr(AyaParserImpl.replExpr(reporter, text)).type().normalize(null, normalizeMode);
+      return tyckExpr(AyaParserImpl.replExpr(reporter, text)).type().normalize(new TyckState(primFactory), normalizeMode);
     } catch (InterruptException ignored) {
       return null;
     }

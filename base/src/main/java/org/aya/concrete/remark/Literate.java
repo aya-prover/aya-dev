@@ -8,6 +8,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
+import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
@@ -17,6 +18,7 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -89,6 +91,7 @@ public sealed interface Literate extends Docile {
   final class Code implements Literate {
     public @NotNull Expr expr;
     public @Nullable ExprTycker.Result tyckResult;
+    public @Nullable TyckState state;
     public final @NotNull CodeOptions options;
 
     public Code(@NotNull Expr expr, @NotNull CodeOptions options) {
@@ -107,6 +110,7 @@ public sealed interface Literate extends Docile {
 
     @Override public void tyck(@NotNull ExprTycker tycker) {
       tyckResult = tycker.zonk(tycker.synthesize(expr));
+      state = tycker.state;
     }
 
     @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
@@ -118,7 +122,8 @@ public sealed interface Literate extends Docile {
 
     private @NotNull Doc normalize(@NotNull Term term) {
       var mode = options.mode();
-      return term.normalize(null, mode).toDoc(options.options());
+      if (state == null) throw InternalException.unexpected("No tyck state");
+      return term.normalize(state, mode).toDoc(options.options());
     }
 
     @Override public @NotNull Doc toDoc() {

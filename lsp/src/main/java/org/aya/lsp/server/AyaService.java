@@ -14,6 +14,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
@@ -51,7 +52,13 @@ import java.util.stream.Stream;
 public class AyaService implements WorkspaceService, TextDocumentService {
   private final BufferReporter reporter = new BufferReporter();
   private final @NotNull MutableList<LibraryOwner> libraries = MutableList.create();
-  private Set<Path> lastErrorReportedFiles = Collections.emptySet();
+  /**
+   * When working with LSP, we need to track all previously created Primitives.
+   * This is shared among all loaded libraries just like a Global PrimFactory before.
+   * @implNote consider using one shared factory among all mocked libraries, and separate factory for each real library.
+   */
+  protected final @NotNull PrimDef.Factory sharedPrimFactory = new PrimDef.Factory();
+  private @NotNull Set<Path> lastErrorReportedFiles = Collections.emptySet();
 
   public void registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
@@ -135,11 +142,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       CompilerFlags.Message.EMOJI, false, true, null,
       SeqView.empty(), null);
     try {
-      LibraryCompiler.newCompiler(reporter, flags, owner).start();
+      LibraryCompiler.newCompiler(sharedPrimFactory, reporter, flags, owner).start();
     } catch (IOException e) {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
       Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
+    } finally {
+      sharedPrimFactory.clear();
     }
     reportErrors(reporter, DistillerOptions.pretty());
     // build highlight

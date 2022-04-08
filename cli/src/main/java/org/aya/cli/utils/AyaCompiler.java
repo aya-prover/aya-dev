@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedRunnable;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.core.def.Def;
-import org.aya.core.def.PrimDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.util.InternalException;
@@ -36,8 +35,6 @@ public class AyaCompiler {
     } catch (InterruptException e) {
       reporter.reportString(e.stage().name() + " interrupted due to:");
       if (flags.interruptedTrace()) e.printStackTrace();
-    } finally {
-      PrimDef.Factory.INSTANCE.clear();
     }
     if (reporter.noError()) {
       reporter.reportString(flags.message().successNotion());

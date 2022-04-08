@@ -35,7 +35,7 @@ public record Zonker(
     return new Zonker(term.view(), tycker, MutableSinglyLinkedList.create());
   }
 
-  @Override public Term pre(Term term) {
+  @Override public @NotNull Term pre(@NotNull Term term) {
     stack.push(term);
     return switch (view.pre(term)) {
       case CallTerm.Hole hole -> {
@@ -55,7 +55,7 @@ public record Zonker(
     };
   }
 
-  @Override public Term post(Term term) {
+  @Override public @NotNull Term post(@NotNull Term term) {
     stack.pop();
     return view.post(term);
   }

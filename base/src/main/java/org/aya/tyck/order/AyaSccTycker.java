@@ -108,7 +108,7 @@ public record AyaSccTycker(
       reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
-    decideTyckResult(fn, tycker.simpleFn(tycker.newTycker(), fn));
+    decideTyckResult(fn, tycker.simpleFn(newExprTycker(), fn));
   }
 
   private void check(@NotNull TyckOrder tyckOrder) {
@@ -133,7 +133,7 @@ public record AyaSccTycker(
       case Decl decl -> decideTyckResult(decl, tycker.tyck(decl, reuse(decl)));
       case Decl.DataCtor ctor -> tycker.tyck(ctor, reuse(ctor.dataRef.concrete));
       case Decl.StructField field -> tycker.tyck(field, reuse(field.structRef.concrete));
-      case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
+      case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(newExprTycker()));
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
@@ -154,8 +154,12 @@ public record AyaSccTycker(
   private @NotNull ExprTycker reuse(@NotNull Decl decl) {
     // prevent counterexample errors from being reported to the user reporter
     if (decl.personality == Decl.Personality.COUNTEREXAMPLE)
-      return tyckerReuse.getOrPut(decl, () -> new ExprTycker(sampleReporters.getOrPut(decl, BufferReporter::new), tycker.traceBuilder()));
-    return tyckerReuse.getOrPut(decl, tycker::newTycker);
+      return tyckerReuse.getOrPut(decl, () -> new ExprTycker(resolveInfo.primFactory(), sampleReporters.getOrPut(decl, BufferReporter::new), tycker.traceBuilder()));
+    return tyckerReuse.getOrPut(decl, this::newExprTycker);
+  }
+
+  private @NotNull ExprTycker newExprTycker() {
+    return tycker.newTycker(resolveInfo.primFactory());
   }
 
   private void terck(@NotNull SeqView<TyckOrder> units) {

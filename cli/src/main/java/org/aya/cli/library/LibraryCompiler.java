@@ -13,6 +13,7 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.util.InternalException;
+import org.aya.core.def.PrimDef;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.FileUtil;
@@ -45,22 +46,22 @@ public class LibraryCompiler {
     this.owner = owner;
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner) {
-    return new LibraryCompiler(reporter, flags, owner, new LibraryModuleLoader.United());
+  public static @NotNull LibraryCompiler newCompiler(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner) {
+    return new LibraryCompiler(reporter, flags, owner, new LibraryModuleLoader.United(primFactory));
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
+  public static @NotNull LibraryCompiler newCompiler(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
     var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
     var owner = DiskLibraryOwner.from(config);
-    return newCompiler(reporter, flags, owner);
+    return newCompiler(primFactory, reporter, flags, owner);
   }
 
-  public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
+  public static int compile(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
     if (!Files.exists(libraryRoot)) {
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
-    return newCompiler(reporter, flags, libraryRoot).start();
+    return newCompiler(primFactory, reporter, flags, libraryRoot).start();
   }
 
   private void resolveImports(@NotNull LibrarySource source) throws IOException {

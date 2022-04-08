@@ -19,37 +19,37 @@ import java.util.function.Function;
 public interface TermView {
   @NotNull Term initial();
 
-  default Term pre(Term term) {
+  default @NotNull Term pre(@NotNull Term term) {
     return term;
   }
 
-  default Term post(Term term) {
+  default @NotNull Term post(@NotNull Term term) {
     return term;
   }
 
-  private Term commit(Term term) {
+  private @NotNull Term commit(@NotNull Term term) {
     return post(traverse(pre(term)));
   }
 
-  private Term.Param commit(Term.Param param) {
+  private @NotNull Term.Param commit(@NotNull Term.Param param) {
     var type = commit(param.type());
     if (type == param.type()) return param;
     return new Term.Param(param, type);
   }
 
-  private Arg<Term> commit(Arg<Term> arg) {
+  private @NotNull Arg<Term> commit(@NotNull Arg<Term> arg) {
     var term = commit(arg.term());
     if (term == arg.term()) return arg;
     return new Arg<>(term, arg.explicit());
   }
 
-  private CallTerm.ConHead commit(CallTerm.ConHead head) {
+  private @NotNull CallTerm.ConHead commit(@NotNull CallTerm.ConHead head) {
     var args = head.dataArgs().map(this::commit);
     if (args.sameElements(head.dataArgs(), true)) return head;
     return new CallTerm.ConHead(head.dataRef(), head.ref(), head.ulift(), args);
   }
 
-  private Term traverse(Term term) {
+  private @NotNull Term traverse(@NotNull Term term) {
     return switch (term) {
       case FormTerm.Pi pi -> {
         var param = commit(pi.param());
@@ -152,23 +152,23 @@ public interface TermView {
     return subst.isEmpty() ? this : new TermOps.Subster(this, subst);
   }
 
-  default TermView normalize(TyckState state) {
+  default @NotNull TermView normalize(@NotNull TyckState state) {
     return new TermOps.Normalizer(this, state);
   }
 
-  default TermView postMap(Function<Term, Term> f) {
+  default @NotNull TermView postMap(@NotNull Function<Term, Term> f) {
     return new TermOps.Mapper(this, t -> t, f);
   }
 
-  default TermView preMap(Function<Term, Term> f) {
+  default @NotNull TermView preMap(@NotNull Function<Term, Term> f) {
     return new TermOps.Mapper(this, f, t -> t);
   }
 
-  default TermView map(Function<Term, Term> pre, Function<Term, Term> post) {
+  default @NotNull TermView map(@NotNull Function<Term, Term> pre, @NotNull Function<Term, Term> post) {
     return new TermOps.Mapper(this, pre, post);
   }
 
-  default TermView rename() {
+  default @NotNull TermView rename() {
     return new TermOps.Renamer(this);
   }
 }

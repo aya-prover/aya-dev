@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
-import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatToTerm;
@@ -48,10 +47,11 @@ public record Conquer(
   }
 
   public void visit(@NotNull Pat pat, int nth) {
+    var primFactory = tycker.state.primFactory();
     switch (pat) {
       case Pat.Prim prim -> {
         var core = prim.ref().core;
-        assert PrimDef.Factory.INSTANCE.leftOrRight(core);
+        assert primFactory.leftOrRight(core);
       }
       case Pat.Ctor ctor -> {
         var params = ctor.params();
@@ -59,7 +59,7 @@ public record Conquer(
         var conditions = ctor.ref().core.clauses;
         for (int i = 0, size = conditions.size(); i < size; i++) {
           var condition = conditions.get(i);
-          var matchy = PatMatcher.tryBuildSubstTerms(null, params, condition.patterns().view().map(Pat::toTerm));
+          var matchy = PatMatcher.tryBuildSubstTerms(primFactory, null, params, condition.patterns().view().map(Pat::toTerm));
           if (matchy.isOk()) {
             var ctx = new MapLocalCtx();
             condition.patterns().forEach(tern -> tern.storeBindings(ctx));

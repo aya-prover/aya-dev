@@ -16,6 +16,7 @@ import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
+import org.aya.generic.util.InternalException;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.WithPos;
@@ -72,7 +73,9 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
-    return PrimDef.Factory.INSTANCE.unfold(prim.id(), prim, state());
+    var state = state();
+    if (state == null) throw InternalException.unexpected("unfolding prims without TyckState");
+    return state.primFactory().unfold(prim.id(), prim, state());
   }
 
   default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
@@ -101,8 +104,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull Subst subst, int ulift,
     @NotNull ImmutableSeq<Matching> clauses
   ) {
+    var state = state();
+    if (state == null) throw InternalException.unexpected("unfolding clauses without TyckState");
     for (var matchy : clauses) {
-      var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
+      var termSubst = PatMatcher.tryBuildSubstArgs(state.primFactory(), null, matchy.patterns(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
         var newBody = matchy.body().view()
@@ -167,6 +172,11 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       if (!unfolding.contains(conCall.ref())) return conCall;
       unfolded.add(conCall.ref());
       return Unfolder.super.visitConCall(conCall, unit);
+    }
+
+    @Override public @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
+      // TODO[kiva]: Q: is OK to use `state`? so we don't need this override.
+      return factory.unfold(prim.id(), prim, state());
     }
   }
 }

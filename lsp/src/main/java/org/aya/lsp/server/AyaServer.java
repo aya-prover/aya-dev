@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
@@ -29,12 +29,12 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
 
   @JsonRequest("aya/computeType")
   public @NotNull CompletableFuture<@NotNull ComputeTermResult> computeType(ComputeTermResult.Params input) {
-    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.Type));
+    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.type(service.sharedPrimFactory)));
   }
 
   @JsonRequest("aya/computeNF")
   public @NotNull CompletableFuture<@NotNull ComputeTermResult> computeNF(ComputeTermResult.Params input) {
-    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.Nf));
+    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.nf(service.sharedPrimFactory)));
   }
 
   @Override public void connect(@NotNull LanguageClient client) {

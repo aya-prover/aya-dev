@@ -201,9 +201,10 @@ public record PatClassifier(
           // so in case we need coverage, report an error on this pattern matching
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
           // For `left` and `right`,
-          for (var primName : PrimDef.Factory.LEFT_RIGHT) {
+          var primFactory = state.primFactory();
+          for (var primName : primFactory.LEFT_RIGHT) {
             builder.append(new PatTree(primName.id, explicit, 0));
-            var prim = PrimDef.Factory.INSTANCE.getOption(primName);
+            var prim = primFactory.getOption(primName);
             var patClass = new MCT.Leaf<>(subPatsSeq.view()
               // Filter out all patterns that matches it,
               .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, prim)).map(MCT.SubPats::ix).toImmutableSeq());

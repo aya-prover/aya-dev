@@ -26,10 +26,11 @@ import java.util.Objects;
 public sealed interface SerTerm extends Serializable {
   record DeState(
     @NotNull MutableMap<Seq<String>, MutableMap<String, DefVar<?, ?>>> defCache,
-    @NotNull MutableMap<Integer, LocalVar> localCache
+    @NotNull MutableMap<Integer, LocalVar> localCache,
+    @NotNull PrimDef.Factory primFactory
   ) {
-    public DeState() {
-      this(MutableMap.create(), MutableMap.create());
+    public DeState(@NotNull PrimDef.Factory primFactory) {
+      this(MutableMap.create(), MutableMap.create(), primFactory);
     }
 
     public @NotNull LocalVar var(@NotNull SimpVar var) {

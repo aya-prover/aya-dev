@@ -61,17 +61,19 @@ public record SingleFileCompiler(
     var reporter = CountingReporter.of(this.reporter);
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
+    var primFactory = new PrimDef.Factory();
     return AyaCompiler.catching(reporter, flags, () -> {
       var ayaParser = new AyaParserImpl(reporter);
       var program = ayaParser.program(locator, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
-        new FileModuleLoader(locator, path, reporter, ayaParser, builder)).toImmutableSeq()));
-      loader.tyckModule(ctx, program, builder, (moduleResolve, defs) -> {
+        new FileModuleLoader(locator, path, reporter, ayaParser, primFactory, builder)).toImmutableSeq()));
+      loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
         distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
         distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
-        if (flags.outputFile() != null) AyaCompiler.saveCompiledCore(flags.outputFile(), moduleResolve, defs, new Serializer.State());
+        if (flags.outputFile() != null)
+          AyaCompiler.saveCompiledCore(flags.outputFile(), moduleResolve, defs, new Serializer.State());
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
       });
     });
@@ -93,7 +95,8 @@ public record SingleFileCompiler(
       case html -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
       case latex -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, $) -> thisDoc.renderToTeX());
       case plain -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.debugRender());
-      case unix -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.renderToString(StringPrinterConfig.unixTerminal()));
+      case unix ->
+        doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.renderToString(StringPrinterConfig.unixTerminal()));
     }
   }
 
