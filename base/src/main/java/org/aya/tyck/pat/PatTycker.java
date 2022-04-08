@@ -397,7 +397,7 @@ public final class PatTycker {
   }
 
   private record BodySubstitutor(
-    @NotNull ExprView view,
+    @Override @NotNull ExprView view,
     @NotNull ImmutableMap<Var, Expr> bodySubst
   ) implements ExprOps {
     @Override public @NotNull Expr pre(@NotNull Expr expr) {

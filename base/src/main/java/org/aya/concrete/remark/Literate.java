@@ -116,7 +116,7 @@ public sealed interface Literate extends Docile {
     @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
       resolver.enterBody();
-      modify(e -> e.accept(resolver, context));
+      modify(e -> resolver.resolve(e, context));
       return resolver.reference().toImmutableSeq();
     }
 

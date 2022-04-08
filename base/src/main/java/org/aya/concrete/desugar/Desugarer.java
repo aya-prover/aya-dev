@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000, kiva
  */
 public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Unit> {
-  public record ForExpr(@NotNull ExprView view, @NotNull ResolveInfo info) implements ExprOps {
+  public record ForExpr(@Override @NotNull ExprView view, @NotNull ResolveInfo info) implements ExprOps {
     private int levelVar(@NotNull Expr expr) throws DesugarInterruption {
       return switch (expr) {
         case Expr.BinOpSeq binOpSeq -> levelVar(pre(binOpSeq));
