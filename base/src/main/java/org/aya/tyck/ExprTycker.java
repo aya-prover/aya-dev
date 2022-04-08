@@ -348,8 +348,11 @@ public final class ExprTycker extends Tycker {
           Expr.TacExpr theNested = null;
 
           @Override public Unit visitTac(@NotNull Expr.TacExpr tactic, Unit unit) {
-            if (tactic != tac) theNested = tactic;
-            return unit;
+            if (tactic != tac) {
+              theNested = tactic;
+              return unit;
+            }
+            return ExprConsumer.super.visitTac(tactic, unit);
           }
         };
 
