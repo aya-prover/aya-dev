@@ -4,6 +4,7 @@ module org.aya.repl {
   requires transitive kala.collection;
   requires org.antlr.antlr4.runtime;
   requires org.aya.pretty;
+  requires org.aya.util;
   requires org.jline.reader;
   requires org.jline.terminal;
 

@@ -4,6 +4,7 @@ package org.aya.cli.parse;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
@@ -28,6 +29,7 @@ import org.aya.generic.ref.GeneralizedVar;
 import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
+import org.aya.repl.antlr.AntlrUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
@@ -429,59 +431,31 @@ public record AyaProducer(
       ImmutableSeq.of(expr), as, expr.explicit());
   }
 
-  public static @NotNull Expr buildLam(
-    SourcePos sourcePos,
-    SeqLike<Expr.Param> params,
-    Expr body
-  ) {
+  public static @NotNull Expr buildLam(SourcePos sourcePos, SeqView<Expr.Param> params, Expr body) {
     if (params.isEmpty()) return body;
+    var drop = params.drop(1);
     return new Expr.LamExpr(
-      sourcePos,
-      params.first(),
-      buildLam(sourcePosForSubExpr(sourcePos.file(), params, body), params.view().drop(1), body)
-    );
+      sourcePos, params.first(),
+      buildLam(AntlrUtil.sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.Param::sourcePos), body.sourcePos()), drop, body));
   }
 
   public static @NotNull Expr buildPi(
-    SourcePos sourcePos,
-    boolean co,
-    SeqLike<Expr.Param> params,
-    Expr body
+    SourcePos sourcePos, boolean co,
+    SeqView<Expr.Param> params, Expr body
   ) {
     if (params.isEmpty()) return body;
-    var first = params.first();
+    var drop = params.drop(1);
     return new Expr.PiExpr(
-      sourcePos,
-      co,
-      first,
-      buildPi(sourcePosForSubExpr(sourcePos.file(), params, body), co, params.view().drop(1), body)
-    );
+      sourcePos, co, params.first(),
+      buildPi(AntlrUtil.sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.Param::sourcePos), body.sourcePos()), co, drop, body));
   }
 
-  @NotNull
-  private static SourcePos sourcePosForSubExpr(@NotNull SourceFile sourceFile, SeqLike<Expr.Param> params, Expr body) {
-    var restParamSourcePos = params.stream().skip(1)
-      .map(Expr.Param::sourcePos)
-      .reduce(SourcePos.NONE, (acc, it) -> {
-        if (acc == SourcePos.NONE) return it;
-        return new SourcePos(sourceFile, acc.tokenStartIndex(), it.tokenEndIndex(),
-          acc.startLine(), acc.startColumn(), it.endLine(), it.endColumn());
-      });
-    var bodySourcePos = body.sourcePos();
-    return new SourcePos(
-      sourceFile,
-      restParamSourcePos.tokenStartIndex(),
-      bodySourcePos.tokenEndIndex(),
-      restParamSourcePos.startLine(),
-      restParamSourcePos.startColumn(),
-      bodySourcePos.endLine(),
-      bodySourcePos.endColumn()
-    );
-  }
-
-  private Expr.@NotNull ProjExpr buildProj(@NotNull SourcePos sourcePos,
-                                           @NotNull Expr projectee,
-                                           @NotNull AyaParser.ProjFixContext fix) {
+  private Expr.@NotNull ProjExpr buildProj(
+    @NotNull SourcePos sourcePos, @NotNull Expr projectee,
+    @NotNull AyaParser.ProjFixContext fix
+  ) {
     var number = fix.NUMBER();
     return new Expr.ProjExpr(
       sourcePos,
@@ -784,34 +758,10 @@ public record AyaProducer(
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
-    return source.fold(sourceFile -> {
-      var start = ctx.getStart();
-      var end = ctx.getStop();
-      return new SourcePos(
-        sourceFile,
-        start.getStartIndex(),
-        end.getStopIndex(),
-        start.getLine(),
-        start.getCharPositionInLine(),
-        end.getLine(),
-        end.getCharPositionInLine() + end.getText().length() - 1
-      );
-    }, pos -> pos);
+    return source.fold(sourceFile -> AntlrUtil.sourcePosOf(ctx, sourceFile), pos -> pos);
   }
 
   private @NotNull SourcePos sourcePosOf(TerminalNode node) {
-    return source.fold(sourceFile -> {
-      var token = node.getSymbol();
-      var line = token.getLine();
-      return new SourcePos(
-        sourceFile,
-        token.getStartIndex(),
-        token.getStopIndex(),
-        line,
-        token.getCharPositionInLine(),
-        line,
-        token.getCharPositionInLine() + token.getText().length() - 1
-      );
-    }, pos -> pos);
+    return source.fold(sourceFile -> AntlrUtil.sourcePosOf(node, sourceFile), pos -> pos);
   }
 }
