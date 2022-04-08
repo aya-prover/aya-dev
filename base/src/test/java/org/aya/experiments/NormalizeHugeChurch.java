@@ -5,6 +5,7 @@ package org.aya.experiments;
 import org.aya.core.def.FnDef;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
+import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ public class NormalizeHugeChurch {
 
   @Test @Timeout(value = 5000) public void ppBench() {
     var startup = System.currentTimeMillis();
-    var decls = TyckDeclTest.successTyckDecls("""
+    var res = TyckDeclTest.successTyckDecls("""
       def Num => Pi (x : Type 0) -> (x -> x) -> (x -> x)
       def zero : Num => \\ A f x => x
       def suc (a : Num) : Num => \\ A f x => a A f (f x)
@@ -28,6 +29,8 @@ public class NormalizeHugeChurch {
       def #16 : Num => mul #4 #4
       def #256 : Num => add #16 #16
       """);
+    var state = new TyckState(res._1);
+    var decls = res._2;
     var last = ((FnDef) decls.last()).body.getLeftValue();
     println("Tyck: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();

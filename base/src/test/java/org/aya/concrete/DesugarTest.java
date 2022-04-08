@@ -4,6 +4,7 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.desugar.AyaBinOpSet;
+import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
@@ -49,7 +50,7 @@ public class DesugarTest {
   }
 
   private void desugarAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
-    var resolveInfo = new ResolveInfo(new EmptyContext(ThrowingReporter.INSTANCE, Path.of("dummy")).derive("dummy"), ImmutableSeq.empty(), new AyaBinOpSet(ThrowingReporter.INSTANCE));
+    var resolveInfo = new ResolveInfo(new PrimDef.Factory(), new EmptyContext(ThrowingReporter.INSTANCE, Path.of("dummy")).derive("dummy"), ImmutableSeq.empty(), new AyaBinOpSet(ThrowingReporter.INSTANCE));
     var stmt = ParseTest.parseStmt(code);
     stmt.forEach(s -> s.desugar(resolveInfo));
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()

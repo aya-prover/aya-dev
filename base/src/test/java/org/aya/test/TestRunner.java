@@ -5,7 +5,6 @@ package org.aya.test;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.core.def.PrimDef;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
@@ -34,7 +33,6 @@ public class TestRunner {
   };
 
   @BeforeAll public static void startDash() {
-    PrimDef.Factory.INSTANCE.clear();
     Global.NO_RANDOM_NAME = true;
   }
 
