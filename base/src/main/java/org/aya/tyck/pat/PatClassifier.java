@@ -32,6 +32,8 @@ import org.aya.util.tyck.MCT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
+
 /**
  * @author ice1000, kiva
  */
@@ -129,28 +131,13 @@ public record PatClassifier(
         lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
-  /**
-   * Helper method to avoid stack being too deep and fuel being consumed for distinct patterns.
-   *
-   * @param subPatsSeq should be of the same length, and should <strong>not</strong> be empty.
-   * @param coverage   if true, in uncovered cases an error will be reported
-   * @return pattern classes
-   */
   private @NotNull MCT<Term, PatErr> classifySub(
     @NotNull SeqView<Term.Param> telescope,
     @NotNull ImmutableSeq<MCT.SubPats<Pat>> subPatsSeq,
     boolean coverage, int fuel
   ) {
-    while (telescope.isNotEmpty()) {
-      var res = classifySubImpl(telescope, subPatsSeq, coverage, fuel);
-      if (res != null) return res;
-      else {
-        telescope = telescope.drop(1);
-        subPatsSeq = subPatsSeq.map(MCT.SubPats::drop);
-      }
-    }
-    // Done
-    return new MCT.Leaf<>(subPatsSeq.map(MCT.SubPats::ix));
+    return MCT.classify(telescope, subPatsSeq, (params, subPats) ->
+      classifySubImpl(params, subPats, coverage, fuel));
   }
 
   private static @NotNull Pat head(@NotNull MCT.SubPats<Pat> subPats) {
@@ -160,7 +147,8 @@ public record PatClassifier(
 
   /**
    * @param telescope must be nonempty
-   * @see #classifySub(SeqView, ImmutableSeq, boolean, int)
+   * @param coverage  if true, in uncovered cases an error will be reported
+   * @see MCT#classify(SeqView, ImmutableSeq, BiFunction)
    */
   private @Nullable MCT<Term, PatErr> classifySubImpl(
     @NotNull SeqView<Term.Param> telescope,

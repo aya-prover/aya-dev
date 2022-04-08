@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -20,6 +21,29 @@ public sealed interface MCT<Term, Err> {
   static <Term, Pat, Err> @NotNull ImmutableSeq<SubPats<Pat>> extract(
     PatClass<Term, Err> pats, @NotNull ImmutableSeq<SubPats<Pat>> subPatsSeq) {
     return pats.contents().map(subPatsSeq::get);
+  }
+  /**
+   * Helper method to avoid stack being too deep and fuel being consumed for distinct patterns.
+   *
+   * @param subPatsSeq should be of the same length, and should <strong>not</strong> be empty.
+   * @param classifier turn a set of sub-patterns into an MCT.
+   * @return pattern classes
+   */
+  static @NotNull <Term, Err, Pat, Param> MCT<Term, Err> classify(
+    @NotNull SeqView<Param> telescope,
+    @NotNull ImmutableSeq<SubPats<Pat>> subPatsSeq,
+    @NotNull BiFunction<SeqView<Param>, ImmutableSeq<SubPats<Pat>>, MCT<Term, Err>> classifier
+  ) {
+    while (telescope.isNotEmpty()) {
+      var res = classifier.apply(telescope, subPatsSeq);
+      if (res != null) return res;
+      else {
+        telescope = telescope.drop(1);
+        subPatsSeq = subPatsSeq.map(SubPats::drop);
+      }
+    }
+    // Done
+    return new Leaf<>(subPatsSeq.map(SubPats::ix));
   }
 
   default @NotNull ImmutableSeq<PatClass<Term, Err>> toSeq() {
