@@ -372,7 +372,7 @@ public final class ExprTycker extends Tycker {
       case TacNode.ListExprTac listExprTac -> {
         var tacNodes = listExprTac.tacNodes();
         var headNode = tacNodes.first();
-        var tailNodes = tacNodes.slice(1, tacNodes.size());
+        var tailNodes = tacNodes.drop(1);
         if (headNode instanceof TacNode.ExprTac exprTac) {
           // we need a local state here to store new metas, but we want to inherit to insert metas
           // for now we instantiate a new tycker
