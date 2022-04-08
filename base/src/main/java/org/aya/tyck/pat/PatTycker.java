@@ -400,7 +400,7 @@ public final class PatTycker {
     @NotNull ExprView view,
     @NotNull ImmutableMap<Var, Expr> bodySubst
   ) implements ExprOps {
-    @Override public Expr pre(Expr expr) {
+    @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
         case Expr.RefExpr ref && bodySubst.containsKey(ref.resolvedVar()) -> pre(bodySubst.get(ref.resolvedVar()));
         case Expr.MetaPat metaPat -> pre(metaPat.meta().inline().toExpr(metaPat.sourcePos()));

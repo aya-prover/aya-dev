@@ -28,7 +28,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
       };
     }
 
-    @Override public Expr pre(Expr expr) {
+    @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
         case Expr.AppExpr app && app.function() instanceof Expr.RawUnivExpr univ -> {
           try {

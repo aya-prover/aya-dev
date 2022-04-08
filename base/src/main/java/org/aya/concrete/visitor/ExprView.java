@@ -14,29 +14,25 @@ import org.jetbrains.annotations.NotNull;
 public interface ExprView {
   @NotNull Expr initial();
 
-  default Expr pre(Expr expr) {
-    return expr;
-  }
+  default @NotNull Expr pre(@NotNull Expr expr) { return expr; }
 
-  default Expr post(Expr expr) {return expr;}
+  default @NotNull Expr post(@NotNull Expr expr) { return expr; }
 
-  private Expr commit(Expr expr) {
-    return post(traverse(pre(expr)));
-  }
+  private @NotNull Expr commit(@NotNull Expr expr) { return post(traverse(pre(expr))); }
 
-  private Expr.Param commit(Expr.Param param) {
+  private Expr.@NotNull Param commit(Expr.@NotNull Param param) {
     var type = commit(param.type());
     if (type == param.type()) return param;
     return new Expr.Param(param, type);
   }
 
-  private Expr.NamedArg commit(Expr.NamedArg arg) {
+  private Expr.@NotNull NamedArg commit(Expr.@NotNull NamedArg arg) {
     var expr = commit(arg.expr());
     if (expr == arg.expr()) return arg;
     return new Expr.NamedArg(arg.explicit(), expr);
   }
 
-  private Expr traverse(Expr expr) {
+  private @NotNull Expr traverse(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.RefExpr ref -> ref; // I don't know
       case Expr.UnresolvedExpr unresolved -> unresolved;
@@ -67,9 +63,10 @@ public interface ExprView {
         yield new Expr.AppExpr(app.sourcePos(), func, arg);
       }
       case Expr.HoleExpr hole -> {
-        var filling = commit(hole.filling());
-        if (filling == hole.filling()) yield hole;
-        yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), filling);
+        var filling = hole.filling();
+        var committed = filling != null ? commit(filling) : null;
+        if (committed == filling) yield hole;
+        yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), committed);
       }
       case Expr.TupExpr tup -> {
         var items = tup.items().map(this::commit);
@@ -97,7 +94,6 @@ public interface ExprView {
       }
       case Expr.ErrorExpr error -> error;
       case Expr.MetaPat meta -> meta;
-      case null -> null;
     };
   }
 
