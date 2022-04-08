@@ -10,6 +10,7 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
+import org.aya.concrete.TacNode;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
@@ -23,6 +24,7 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 
 import java.util.function.Consumer;
 
@@ -99,6 +101,9 @@ public record ExprResolver(
         if (h == hole.filling()) yield hole;
         yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h);
       }
+
+      case Expr.TacExpr tac -> new Expr.TacExpr(tac.sourcePos(), resolveTacNode(tac.tacNode(), ctx));
+
       case Expr.UnresolvedExpr unresolved -> {
         var sourcePos = unresolved.sourcePos();
         yield switch (ctx.get(unresolved.name())) {
@@ -130,6 +135,14 @@ public record ExprResolver(
         };
       }
       default -> expr;
+    };
+  }
+
+  private @NotNull TacNode resolveTacNode(@NotNull TacNode tacNode, @NotNull Context ctx) {
+    return switch (tacNode) {
+      case TacNode.ExprTac exprTac -> new TacNode.ExprTac(exprTac.sourcePos(), resolve(exprTac.expr(), ctx));
+      case TacNode.ListExprTac listExprTac -> new TacNode.ListExprTac(listExprTac.sourcePos(),
+        listExprTac.tacNodes().map(node -> resolveTacNode(node, ctx)));
     };
   }
 
