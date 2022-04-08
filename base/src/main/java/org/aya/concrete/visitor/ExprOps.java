@@ -10,4 +10,12 @@ public interface ExprOps extends ExprView {
   @Override default @NotNull Expr initial() {
     return view().initial();
   }
+
+  @Override default Expr pre(Expr expr) {
+    return view().pre(expr);
+  }
+
+  @Override default Expr post(Expr expr) {
+    return view().post(expr);
+  }
 }

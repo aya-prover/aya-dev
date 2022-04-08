@@ -16,7 +16,8 @@ import kala.value.Ref;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.visitor.ExprFixpoint;
+import org.aya.concrete.visitor.ExprOps;
+import org.aya.concrete.visitor.ExprView;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -234,7 +235,7 @@ public final class PatTycker {
       // and in case the patterns are malformed, some bindings may
       // not be added to the localCtx of tycker, causing assertion errors
       ? new ErrorTerm(e, false)
-      : exprTycker.inherit(e.accept(new BodySubstitutor(lhsResult.bodySubst), Unit.unit()), type).wellTyped());
+      : exprTycker.inherit(new BodySubstitutor(e.view(), lhsResult.bodySubst).commit(), type).wellTyped());
     exprTycker.localCtx = parent;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), patterns, term);
   }
@@ -395,21 +396,16 @@ public final class PatTycker {
     else return Result.ok(Unfolder.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }
 
-  private class BodySubstitutor implements ExprFixpoint<Unit> {
-    private final @NotNull ImmutableMap<Var, Expr> bodySubst;
-
-    public BodySubstitutor(@NotNull ImmutableMap<Var, Expr> bodySubst) {
-      this.bodySubst = bodySubst;
-    }
-
-    @Override public @NotNull Expr visitRef(@NotNull Expr.RefExpr expr, Unit unit) {
-      if (bodySubst.containsKey(expr.resolvedVar()))
-        return bodySubst.get(expr.resolvedVar()).accept(this, unit);
-      return ExprFixpoint.super.visitRef(expr, unit);
-    }
-
-    @Override public @NotNull Expr visitMetaPat(@NotNull Expr.MetaPat metaPat, Unit unit) {
-      return metaPat.meta().inline().toExpr(metaPat.sourcePos()).accept(this, unit);
+  private record BodySubstitutor(
+    @NotNull ExprView view,
+    @NotNull ImmutableMap<Var, Expr> bodySubst
+  ) implements ExprOps {
+    @Override public Expr pre(Expr expr) {
+      return switch (expr) {
+        case Expr.RefExpr ref && bodySubst.containsKey(ref.resolvedVar()) -> pre(bodySubst.get(ref.resolvedVar()));
+        case Expr.MetaPat metaPat -> pre(metaPat.meta().inline().toExpr(metaPat.sourcePos()));
+        case Expr misc -> misc;
+      };
     }
   }
 }
