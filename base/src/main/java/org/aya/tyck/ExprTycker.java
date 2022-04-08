@@ -8,11 +8,13 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
+import kala.tuple.Unit;
 import kala.value.LazyValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.TacNode;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
+import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.def.*;
@@ -342,35 +344,20 @@ public final class ExprTycker extends Tycker {
         });
       }
       case Expr.TacExpr tac -> {
-        var NestedTacChecker = new ExprOps() {
-          boolean nested = false;
+        var nestChecker = new ExprConsumer<Unit>() {
           Expr.TacExpr theNested = null;
 
-          @Override public @NotNull ExprView view() {
-            return tac.view();
+          @Override public Unit visitTac(@NotNull Expr.TacExpr tactic, Unit unit) {
+            if (tactic != tac) theNested = tactic;
+            return unit;
           }
-
-          @Override public @NotNull Expr pre(@NotNull Expr expr) {
-            return switch (expr) {
-              case Expr.TacExpr nestedTac -> {
-                nested = true;
-                theNested = nestedTac;
-                yield nestedTac;
-              }
-              case Expr misc -> misc;
-            };
-          }
-
-          @Override public @NotNull Expr lastly(@NotNull Expr expr) {return nested ? theNested : expr;}
         };
 
         // if nested then the nested one is returned, otherwise the original one is returned.
-        var tacOrNested = NestedTacChecker.commit();
-        if (tac != tacOrNested) {
-          yield tacFail(tac, new TacticProblem.NestedTactic(tac.sourcePos(), tac, (Expr.TacExpr) tacOrNested)).result;
-        }
-
-        yield elaborateTactic(tac.tacNode(), term).result;
+        tac.accept(nestChecker, Unit.unit());
+        if (nestChecker.theNested != null) {
+          yield tacFail(tac, new TacticProblem.NestedTactic(tac.sourcePos(), tac, nestChecker.theNested)).result;
+        } else yield elaborateTactic(tac.tacNode(), term).result;
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };

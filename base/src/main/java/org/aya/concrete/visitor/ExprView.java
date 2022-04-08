@@ -32,7 +32,7 @@ public interface ExprView {
   private Expr.@NotNull NamedArg commit(Expr.@NotNull NamedArg arg) {
     var expr = commit(arg.expr());
     if (expr == arg.expr()) return arg;
-    return new Expr.NamedArg(arg.explicit(), expr);
+    return new Expr.NamedArg(arg.explicit(), arg.name(), expr);
   }
 
   private @NotNull TacNode commit(@NotNull TacNode node) {
