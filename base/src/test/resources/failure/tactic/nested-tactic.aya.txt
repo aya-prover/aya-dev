@@ -9,21 +9,19 @@ In file $FILE:12:31 ->
   15 |   | zero
   16 | }
 
-Error: tactic {
-         | suc {??}
-         | zero
-       }
-       
+Error:  tactic {
+          | suc {??}
+          | zero
+        }
        is nested in
-       
-       tactic {
-         | {??} + {??}
-         | tactic {
-           | suc {??}
-           | zero
-         }
-         | zero
-       }
+         tactic {
+          | {??} + {??}
+          | tactic {
+            | suc {??}
+            | zero
+          }
+          | zero
+        }
 
 1 error(s), 0 warning(s).
 What are you doing?

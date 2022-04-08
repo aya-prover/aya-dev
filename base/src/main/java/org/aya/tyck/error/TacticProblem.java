@@ -3,6 +3,7 @@
 package org.aya.tyck.error;
 
 import org.aya.concrete.Expr;
+import org.aya.concrete.TacNode;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -12,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Luna
  */
-public interface TacticProblem extends Problem {
-
+public sealed interface TacticProblem extends Problem {
   @Override default @NotNull Problem.Severity level() {
     return Severity.ERROR;
   }
@@ -29,10 +29,9 @@ public interface TacticProblem extends Problem {
   }
 
   record TacHeadCannotBeList(@NotNull SourcePos sourcePos,
-                             @NotNull Expr.TacNode.ListExprTac tacList) implements TacticProblem {
+                             @NotNull TacNode.ListExprTac tacList) implements TacticProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.sep(Doc.english("Tactic head of"),
-        Doc.line(),
+      return Doc.vcat(Doc.english("Tactic head of"),
         tacList.toDoc(options),
         Doc.english("cannot be a list"));
     }
@@ -41,14 +40,9 @@ public interface TacticProblem extends Problem {
   record NestedTactic(@NotNull SourcePos sourcePos, @NotNull Expr.TacExpr outer,
                       @NotNull Expr.TacExpr inner) implements TacticProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.cat(
-        inner.toDoc(options),
-        Doc.line(),
-        Doc.line(),
+      return Doc.vcat(Doc.par(1, inner.toDoc(options)),
         Doc.english("is nested in"),
-        Doc.line(),
-        Doc.line(),
-        outer.toDoc(options));
+        Doc.par(1, outer.toDoc(options)));
     }
   }
 

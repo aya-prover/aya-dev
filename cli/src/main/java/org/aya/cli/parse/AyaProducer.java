@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.TacNode;
 import org.aya.concrete.error.BadCounterexampleWarn;
 import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
@@ -376,13 +377,13 @@ public record AyaProducer(
     return new Expr.TacExpr(sourcePosOf(tactic), visitTacNode(tactic.tacNode()));
   }
 
-  private @NotNull Expr.TacNode visitTacNode(AyaParser.TacNodeContext tacNode) {
+  private @NotNull TacNode visitTacNode(AyaParser.TacNodeContext tacNode) {
     if (tacNode.expr() != null) {
-      return new Expr.TacNode.ExprTac(sourcePosOf(tacNode), visitExpr(tacNode.expr()));
+      return new TacNode.ExprTac(sourcePosOf(tacNode), visitExpr(tacNode.expr()));
     } else {
       var result = tacNode.tacNode()
         .stream().map(this::visitTacNode).collect(ImmutableSeq.factory());
-      return new Expr.TacNode.ListExprTac(sourcePosOf(tacNode), result);
+      return new TacNode.ListExprTac(sourcePosOf(tacNode), result);
     }
   }
 

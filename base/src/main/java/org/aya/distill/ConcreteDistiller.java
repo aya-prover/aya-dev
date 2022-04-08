@@ -137,8 +137,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
-      case Expr.TacExpr expr -> Doc.sep(Doc.styled(KEYWORD, "tactic"),
-        tacNode(expr.tacNode()));
+      case Expr.TacExpr expr -> Doc.sep(Doc.styled(KEYWORD, "tactic"), expr.tacNode().toDoc(options));
     };
   }
 
@@ -308,23 +307,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         } else yield Doc.sep(Doc.symbol("|"), doc);
       }
     };
-  }
-
-  public @NotNull Doc tacNode(@NotNull Expr.TacNode tacNode) {
-    return switch (tacNode) {
-      case Expr.TacNode.ExprTac exprTac -> Doc.sep(Doc.symbol("|"), exprTac.expr().toDoc(options));
-      case Expr.TacNode.ListExprTac listExprTac -> tacList(listExprTac);
-    };
-  }
-
-  public @NotNull Doc tacList(@NotNull Expr.TacNode.ListExprTac tacList) {
-    return Doc.cat(
-      Doc.symbol("{"),
-      Doc.emptyIf(tacList.tacNodes().isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        tacList.tacNodes().view().map(this::tacNode))))),
-      Doc.emptyIf(tacList.tacNodes().isEmpty(), Doc::line),
-      Doc.symbol("}")
-    );
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses) {

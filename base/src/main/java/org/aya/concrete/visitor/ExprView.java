@@ -3,6 +3,7 @@
 package org.aya.concrete.visitor;
 
 import org.aya.concrete.Expr;
+import org.aya.concrete.TacNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,17 +35,17 @@ public interface ExprView {
     return new Expr.NamedArg(arg.explicit(), expr);
   }
 
-  private Expr.TacNode commit(Expr.TacNode node) {
+  private TacNode commit(TacNode node) {
     return switch (node) {
-      case Expr.TacNode.ExprTac exprTac -> {
+      case TacNode.ExprTac exprTac -> {
         var expr = commit(exprTac.expr());
         if (expr == exprTac.expr()) yield exprTac;
-        yield new Expr.TacNode.ExprTac(exprTac.sourcePos(), expr);
+        yield new TacNode.ExprTac(exprTac.sourcePos(), expr);
       }
-      case Expr.TacNode.ListExprTac listExprTac -> {
+      case TacNode.ListExprTac listExprTac -> {
         var tacNodes = listExprTac.tacNodes().map(this::commit);
         if (tacNodes.sameElements(listExprTac.tacNodes(), true)) yield listExprTac;
-        yield new Expr.TacNode.ListExprTac(listExprTac.sourcePos(), tacNodes);
+        yield new TacNode.ListExprTac(listExprTac.sourcePos(), tacNodes);
       }
     };
   }

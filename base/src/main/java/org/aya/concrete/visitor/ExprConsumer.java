@@ -5,6 +5,7 @@ package org.aya.concrete.visitor;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.concrete.Expr;
+import org.aya.concrete.TacNode;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
@@ -89,10 +90,10 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  default void visitTacNode(@NotNull Expr.TacNode node, P p) {
+  default void visitTacNode(@NotNull TacNode node, P p) {
     switch (node) {
-      case Expr.TacNode.ExprTac expr -> expr.expr().accept(this, p);
-      case Expr.TacNode.ListExprTac list -> list.tacNodes().forEach(n -> visitTacNode(n, p));
+      case TacNode.ExprTac expr -> expr.expr().accept(this, p);
+      case TacNode.ListExprTac list -> list.tacNodes().forEach(n -> visitTacNode(n, p));
     }
   }
 
