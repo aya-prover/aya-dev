@@ -4,6 +4,10 @@ This file contains the changelog of the Aya language 0.x.
 
 ## 0.17
 
+Moved some ANTLR4 helpers and MCT to `tools-repl`/`tools`, fixed REPL parsing and color styles,
+introduced some lazy term/expr pattern matching frameworks which will eventually replace visitors,
+migrated some visitors to this API.
+
 ## 0.16
 
 Supported `import as` and renaming open and renaming as infix,
