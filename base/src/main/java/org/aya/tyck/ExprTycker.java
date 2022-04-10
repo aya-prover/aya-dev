@@ -365,7 +365,7 @@ public final class ExprTycker extends Tycker {
           }
         };
 
-        // if nested then the nested one is returned, otherwise the original one is returned.
+        // if there is nested tactic then the nested one is recorded
         tac.accept(nestChecker, Unit.unit());
         if (nestChecker.theNested != null) {
           yield tacFail(tac, new TacticProblem.NestedTactic(tac.sourcePos(), tac, nestChecker.theNested)).result;
