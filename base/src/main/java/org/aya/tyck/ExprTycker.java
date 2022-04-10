@@ -366,19 +366,20 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private TacElabResult elaborateTactic(TacNode tacNode, Term term) {
+  private @NotNull TacElabResult elaborateTactic(TacNode tacNode, Term term) {
     return switch (tacNode) {
       case TacNode.ExprTac exprTac -> new TacElabResult(exprTac.expr(), inherit(exprTac.expr(), term));
       case TacNode.ListExprTac listExprTac -> {
+        TacElabResult result = null;
+
         var tacNodes = listExprTac.tacNodes();
         var headNode = tacNodes.first();
         var tailNodes = tacNodes.drop(1);
+        // enter into a new local state
+        localCtx = localCtx.deriveMap();
         if (headNode instanceof TacNode.ExprTac exprTac) {
-          // we need a local state here to store new metas, but we want to inherit to insert metas
-          // for now we instantiate a new tycker
-          var tacTycker = new ExprTycker(reporter, traceBuilder);
           var exprToElab = exprTac.expr();
-          var tacHead = tacTycker.inherit(exprToElab, term).wellTyped; // tyck this expr to insert all metas
+          var tacHead = inherit(exprToElab, term).wellTyped; // tyck this expr to insert all metas
 
           var holeFiller = new ExprOps() {
             boolean filled = false;
@@ -424,18 +425,26 @@ public final class ExprTycker extends Tycker {
 
               tailNodes = tailNodes.drop(1);
               exprToElab = holeFiller.fill(exprToElab, filling);
-              tacTycker = new ExprTycker(reporter, traceBuilder);
-              tacHead = tacTycker.inherit(exprToElab, term).wellTyped;
+              tacHead = inherit(exprToElab, term).wellTyped;
               metas = tacHead.allMetas();
 
               if (metas.size() >= metaSize)
-                throw new UnsupportedOperationException(); // TODO: internal error meta is not filled after tactic
-            } else yield tacFail(exprToElab,
-              new TacticProblem.HoleFillerNumberMismatch(listExprTac.sourcePos(), metaSize, tailNodes.size()));
+                throw new IllegalStateException("Meta is not solved after elab"); // TODO: internal error meta is not filled after tactic
+            } else {
+              result = tacFail(exprToElab,
+                new TacticProblem.HoleFillerNumberMismatch(listExprTac.sourcePos(), metaSize, tailNodes.size()));
+              break;
+            }
           }
 
-          yield new TacElabResult(exprToElab, new Result(inherit(exprToElab, term).wellTyped, term));
-        } else yield tacFail(listExprTac, new TacticProblem.TacHeadCannotBeList(listExprTac.sourcePos(), listExprTac));
+          if (result == null)
+            result = new TacElabResult(exprToElab, new Result(inherit(exprToElab, term).wellTyped, term));
+        } else {
+          result = tacFail(listExprTac, new TacticProblem.TacHeadCannotBeList(listExprTac.sourcePos(), listExprTac));
+        }
+
+        localCtx = Objects.requireNonNull(localCtx.parent()); // This should allow contexts to revert to original
+        yield result;
       }
     };
   }

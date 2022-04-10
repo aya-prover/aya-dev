@@ -9,3 +9,12 @@ example def simpleTac2: Nat => tactic {
   }
   | zero
 }
+
+-- tactic can reference parameters in the parent context
+example def tacWithParam (a b: Nat) => tactic {
+  | {??} + {??}
+  { | suc {??}
+    | suc a
+  }
+  | suc b
+}
