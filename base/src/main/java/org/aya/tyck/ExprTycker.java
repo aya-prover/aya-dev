@@ -377,7 +377,14 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull TacElabResult elaborateTactic(TacNode tacNode, Term term) {
     return switch (tacNode) {
-      case TacNode.ExprTac exprTac -> new TacElabResult(exprTac.expr(), inherit(exprTac.expr(), term));
+      case TacNode.ExprTac exprTac -> {
+        var result = inherit(exprTac.expr(), term);
+        var metaSize = result.wellTyped.allMetas().size();
+        if (metaSize != 0) {
+          yield tacFail(exprTac.expr(), new TacticProblem.HoleFillerNumberMismatch(exprTac.sourcePos(), 0, metaSize));
+        }
+        yield new TacElabResult(exprTac.expr(), inherit(exprTac.expr(), term));
+      }
       case TacNode.ListExprTac listExprTac -> {
         TacElabResult result = null;
 
@@ -438,7 +445,7 @@ public final class ExprTycker extends Tycker {
               metas = tacHead.allMetas();
 
               if (metas.size() >= metaSize)
-                throw new IllegalStateException("Meta is not solved after elab"); // TODO: internal error meta is not filled after tactic
+                throw new IllegalStateException("Meta is not solved after elaboration"); // TODO: internal error meta is not filled after tactic
             } else {
               result = tacFail(exprToElab,
                 new TacticProblem.HoleFillerNumberMismatch(listExprTac.sourcePos(), metaSize, tailNodes.size()));
