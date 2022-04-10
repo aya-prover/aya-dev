@@ -392,6 +392,7 @@ public final class ExprTycker extends Tycker {
         var headNode = tacNodes.first();
         var tailNodes = tacNodes.drop(1);
         // enter into a new local state
+        var parentCtx = localCtx;
         localCtx = localCtx.deriveMap();
         if (headNode instanceof TacNode.ExprTac exprTac) {
           var exprToElab = exprTac.expr();
@@ -459,7 +460,7 @@ public final class ExprTycker extends Tycker {
           result = tacFail(listExprTac, new TacticProblem.TacHeadCannotBeList(listExprTac.sourcePos(), listExprTac));
         }
 
-        localCtx = Objects.requireNonNull(localCtx.parent()); // This should allow contexts to revert to original
+        localCtx = parentCtx; // This should allow contexts to revert to original
         yield result;
       }
     };
