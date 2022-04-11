@@ -1,4 +1,8 @@
-def infix + => Type 0
-def infix = => Type 0
+public open data Nat
+| zero
+| suc Nat
 
-def fail => 1 + 1 = 2
+def infix + (a b: Nat) : Nat => zero
+def infix = (a b: Nat) : Nat => zero
+
+def fail: Nat => (suc zero) + (suc zero) = (suc (suc zero))

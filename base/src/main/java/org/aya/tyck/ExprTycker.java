@@ -21,7 +21,6 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -230,7 +229,8 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
         Constants.randomName(hole), hole.sourcePos())._2);
-      default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm(Doc.english("no rule"), false));
+      case Expr.ErrorExpr err -> Result.error(err.description());
+      default -> fail(expr, new NoRuleError(expr, null));
     };
   }
 
@@ -566,6 +566,10 @@ public final class ExprTycker extends Tycker {
   public record Result(@NotNull Term wellTyped, @NotNull Term type) {
     @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
       return Tuple.of(type, wellTyped);
+    }
+
+    public static @NotNull Result error(@NotNull AyaDocile description) {
+      return new Result(ErrorTerm.unexpected(description), ErrorTerm.typeOf(description));
     }
 
     public @NotNull Result freezeHoles(@NotNull TyckState state) {
