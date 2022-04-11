@@ -1,0 +1,15 @@
+In file $FILE:13:4 ->
+
+  11 | -- error at checking position
+  12 | example def headNodeError: Nat => tactic {
+  13 |   | zero {??}
+           ^-------^
+
+Error: Unable to apply the expression
+         zero {??}
+       because the type of what you applied is not a Pi type, but instead:
+         Nat
+         (Normalized: Nat)
+
+1 error(s), 0 warning(s).
+What are you doing?

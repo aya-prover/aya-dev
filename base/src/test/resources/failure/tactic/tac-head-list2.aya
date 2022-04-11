@@ -1,0 +1,12 @@
+public open data Nat
+| zero
+| suc Nat
+
+-- error at inference position
+example def tacHeadList2: Nat => tactic {
+  { | {??}
+    | suc zero
+  }
+  { | suc {??} | zero }
+  | zero
+} zero

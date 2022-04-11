@@ -22,4 +22,5 @@ example def tacWithParam (a b: Nat) => tactic {
 }
 
 -- tactic can appear at application position
-example def badtac1: Nat => (tactic { | {??} | suc }) (tactic { | zero })
+example def tacapp1: Nat => (tactic { | {??} | suc }) (tactic { | zero })
+example def tacapp2: Nat => (tactic | suc) zero
