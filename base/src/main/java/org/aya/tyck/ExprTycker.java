@@ -21,7 +21,6 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -230,7 +229,7 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
         Constants.randomName(hole), hole.sourcePos())._2);
-      default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm(Doc.english("no rule"), false));
+      default -> fail(expr, new NoRuleError(expr, null));
     };
   }
 
