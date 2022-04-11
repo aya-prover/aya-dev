@@ -10,13 +10,16 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 sealed public interface TacNode extends AyaDocile {
-  record ExprTac(@NotNull SourcePos sourcePos, @NotNull Expr expr) implements TacNode {
+
+  @NotNull SourcePos sourcePos();
+
+  record ExprTac(@Override @NotNull SourcePos sourcePos, @NotNull Expr expr) implements TacNode {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.symbol("|"), expr.toDoc(options));
     }
   }
 
-  record ListExprTac(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<TacNode> tacNodes) implements TacNode {
+  record ListExprTac(@Override @NotNull SourcePos sourcePos, @NotNull ImmutableSeq<TacNode> tacNodes) implements TacNode {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.cblock(Doc.empty(), 2, Doc.emptyIf(tacNodes.isEmpty(), () ->
         Doc.vcat(tacNodes.view().map(tacNode -> tacNode.toDoc(options)))));
