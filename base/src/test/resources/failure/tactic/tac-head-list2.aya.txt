@@ -1,0 +1,29 @@
+In file $FILE:6:40 ->
+
+   4 | 
+   5 | -- error at inference position
+   6 | example def tacHeadList2: Nat => tactic {
+                                               ^^
+   7 |   { | {??}
+   8 |     | suc zero
+   9 |   }
+  10 |   { | suc {??} | zero }
+  11 |   | zero
+  12 | } zero
+
+Error: Tactic head of
+       {
+         {
+           | {??}
+           | suc zero
+         }
+         {
+           | suc {??}
+           | zero
+         }
+         | zero
+       }
+       cannot be a list
+
+1 error(s), 0 warning(s).
+What are you doing?

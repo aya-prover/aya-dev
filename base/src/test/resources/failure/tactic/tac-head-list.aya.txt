@@ -1,0 +1,29 @@
+In file $FILE:12:39 ->
+
+  10 | 
+  11 | 
+  12 | example def tacHeadList: Nat => tactic {
+                                              ^^
+  13 |   { | {??}
+  14 |     | suc zero
+  15 |   }
+  16 |   { | suc {??} | zero }
+  17 |   | zero
+  18 | }
+
+Error: Tactic head of
+       {
+         {
+           | {??}
+           | suc zero
+         }
+         {
+           | suc {??}
+           | zero
+         }
+         | zero
+       }
+       cannot be a list
+
+1 error(s), 0 warning(s).
+What are you doing?

@@ -1,0 +1,15 @@
+public open data Nat
+| zero
+| suc Nat
+
+def overlap infixl + (a b : Nat) : Nat
+| zero, a => a
+| a, zero => a
+| suc a, b => suc (a + b)
+| a, suc b => suc (a + b)
+
+-- error at inference position
+example def headNodeError: Nat => tactic {
+  | zero {??}
+  | zero
+} zero
