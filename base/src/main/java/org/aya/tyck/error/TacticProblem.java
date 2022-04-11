@@ -46,4 +46,10 @@ public sealed interface TacticProblem extends Problem {
     }
   }
 
+  record HoleFillerCannotHaveHole(@NotNull SourcePos sourcePos, @NotNull TacNode.ExprTac exprTac) implements TacticProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.english("Hole filler cannot have holes");
+    }
+  }
+
 }

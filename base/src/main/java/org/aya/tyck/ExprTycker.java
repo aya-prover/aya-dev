@@ -368,14 +368,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull TacElabResult elaborateTactic(TacNode tacNode, Term term) {
     return switch (tacNode) {
-      case TacNode.ExprTac exprTac -> {
-        var result = inherit(exprTac.expr(), term);
-        var metaSize = result.wellTyped.allMetas().size();
-        if (metaSize != 0) {
-          yield tacFail(exprTac.expr(), new TacticProblem.HoleFillerNumberMismatch(exprTac.sourcePos(), 0, metaSize));
-        }
-        yield new TacElabResult(exprTac.expr(), inherit(exprTac.expr(), term));
-      }
+      case TacNode.ExprTac exprTac -> elaborateTacExpr(exprTac, term);
       case TacNode.ListExprTac listExprTac -> {
         TacElabResult result = null;
 
@@ -385,9 +378,14 @@ public final class ExprTycker extends Tycker {
         // enter into a new local state
         var parentCtx = localCtx;
         localCtx = localCtx.deriveMap();
-        if (headNode instanceof TacNode.ExprTac exprTac) {
-          var exprToElab = exprTac.expr();
-          var tacHead = inherit(exprToElab, term).wellTyped; // tyck this expr to insert all metas
+        if (headNode instanceof TacNode.ExprTac headTac) {
+          var exprToElab = headTac.expr();
+          var tacHeadResult = inherit(exprToElab, term); // tyck this expr to insert all metas
+          var headTerm = tacHeadResult.wellTyped;
+
+          if (headTerm instanceof ErrorTerm errorTerm) {
+            yield tacPropagateError(headTac, errorTerm, tacHeadResult);
+          }
 
           var holeFiller = new ExprOps() {
             boolean filled = false;
@@ -419,7 +417,7 @@ public final class ExprTycker extends Tycker {
             }
           };
 
-          var metas = tacHead.allMetas();
+          var metas = headTerm.allMetas();
           // we can check the remaining nodes against the meta type, but the problem is that the later expected types might change
           // so we need to instantiate the meta and tyck again.
           // we should refill the final, filled concrete expr and type check it against the goal type
@@ -429,12 +427,18 @@ public final class ExprTycker extends Tycker {
             if (tailNodes.size() == metaSize) {
               var firstMeta = metas.first();
               var firstNode = tailNodes.first();
-              var filling = elaborateTactic(firstNode, firstMeta.result).elaborated;
+              var fillingElabResult = elaborateTactic(firstNode, firstMeta.result);
+              var filling = fillingElabResult.elaborated;
+
+              // propagate error immediately
+              if (filling instanceof Expr.ErrorExpr) {
+                yield fillingElabResult;
+              }
 
               tailNodes = tailNodes.drop(1);
               exprToElab = holeFiller.fill(exprToElab, filling);
-              tacHead = inherit(exprToElab, term).wellTyped;
-              metas = tacHead.allMetas();
+              headTerm = inherit(exprToElab, term).wellTyped;
+              metas = headTerm.allMetas();
 
               if (metas.size() >= metaSize)
                 throw new IllegalStateException("Meta is not solved after elaboration"); // TODO: internal error meta is not filled after tactic
@@ -457,10 +461,31 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private @NotNull TacElabResult tacFail(@NotNull TacNode.ListExprTac listExprTac, @NotNull Problem problem) {
-    return new TacElabResult(new Expr.ErrorExpr(listExprTac.sourcePos(), listExprTac), fail(listExprTac, problem));
+  private @NotNull TacElabResult elaborateTacExpr(@NotNull TacNode.ExprTac exprTac, @NotNull Term term) {
+    var result = inherit(exprTac.expr(), term);
+    var metaSize = result.wellTyped.allMetas().size();
+
+    if (result.wellTyped instanceof ErrorTerm errorTerm)
+      return tacPropagateError(exprTac, errorTerm, result);
+    else if (metaSize != 0)
+      return tacFail(exprTac.expr(), new TacticProblem.HoleFillerCannotHaveHole(exprTac.sourcePos(), exprTac));
+
+    return new TacElabResult(exprTac.expr(), result);
   }
 
+  @Contract("_, _, _ -> new")
+  private @NotNull TacElabResult tacPropagateError(@NotNull TacNode tacNode,
+                                                   @NotNull ErrorTerm errorTerm,
+                                                   @NotNull Result errorResult) {
+    return new TacElabResult(new Expr.ErrorExpr(tacNode.sourcePos(), errorTerm.description()), errorResult);
+  }
+
+  @Contract("_, _ -> new")
+  private @NotNull TacElabResult tacFail(@NotNull TacNode tacNode, @NotNull Problem problem) {
+    return new TacElabResult(new Expr.ErrorExpr(tacNode.sourcePos(), tacNode), fail(tacNode, problem));
+  }
+
+  @Contract("_, _ -> new")
   private @NotNull TacElabResult tacFail(@NotNull Expr exprToElab, @NotNull Problem problem) {
     return new TacElabResult(new Expr.ErrorExpr(exprToElab.sourcePos(), exprToElab), fail(exprToElab, problem));
   }
