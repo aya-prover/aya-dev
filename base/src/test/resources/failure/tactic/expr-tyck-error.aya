@@ -1,0 +1,16 @@
+public open data Nat
+| zero
+| suc Nat
+
+def overlap infixl + (a b : Nat) : Nat
+| zero, a => a
+| a, zero => a
+| suc a, b => suc (a + b)
+| a, suc b => suc (a + b)
+
+
+example def exprTyckError: Nat => tactic {
+  | {??} + {??}
+  | zero {??} -- this results in a tyck error (application not allowed here)
+  | zero
+}
