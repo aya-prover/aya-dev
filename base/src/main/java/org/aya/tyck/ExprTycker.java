@@ -478,7 +478,7 @@ public final class ExprTycker extends Tycker {
           if (result == null)
             result = new TacElabResult(exprToElab, new Result(inherit(exprToElab, term).wellTyped, term));
         } else {
-          result = tacFail(listExprTac, new TacticProblem.TacHeadCannotBeList(listExprTac.sourcePos(), listExprTac));
+          result = tacFail(headNode, new TacticProblem.TacHeadCannotBeList(listExprTac.sourcePos(), listExprTac));
         }
 
         localCtx = parentCtx; // This should allow contexts to revert to original
