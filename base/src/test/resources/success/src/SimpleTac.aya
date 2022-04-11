@@ -1,7 +1,9 @@
 open import Arith::Nat
 
+-- trivial tactic
 example def simpleTac1: Nat => tactic | zero + zero
 
+-- nested tactic nodes
 example def simpleTac2: Nat => tactic {
   | {??} + {??}
   { | suc {??}
@@ -18,3 +20,6 @@ example def tacWithParam (a b: Nat) => tactic {
   }
   | suc b
 }
+
+-- tactic can appear at application position
+example def badtac1: Nat => (tactic { | {??} | suc }) (tactic { | zero })

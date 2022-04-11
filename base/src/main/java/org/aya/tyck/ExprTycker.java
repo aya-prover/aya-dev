@@ -27,6 +27,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -237,6 +238,22 @@ public final class ExprTycker extends Tycker {
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
         Constants.randomName(hole), hole.sourcePos())._2);
       case Expr.ErrorExpr err -> Result.error(err.description());
+      case Expr.TacExpr tac -> switch (tac.tacNode()) {
+        case TacNode.ExprTac exprTac -> synthesize(exprTac.expr());
+        case TacNode.ListExprTac listExprTac -> {
+          var tacNodes = listExprTac.tacNodes();
+          var headTac = tacNodes.first();
+
+          if (headTac instanceof TacNode.ExprTac exprHead) {
+            var inferredResult = synthesize(exprHead.expr());
+            var inferredHead = inferredResult.wellTyped;
+            if (inferredHead instanceof ErrorTerm) yield inferredResult;
+            else yield inherit(tac, inferredResult.type);
+          } else yield tacFail(headTac,
+            new TacticProblem.TacHeadCannotBeList(listExprTac.sourcePos(),
+              listExprTac)).result;
+        }
+      };
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
