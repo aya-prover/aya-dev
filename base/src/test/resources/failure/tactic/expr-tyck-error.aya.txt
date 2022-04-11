@@ -1,0 +1,39 @@
+In file $FILE:13:4 ->
+
+  11 | 
+  12 | example def exprTyckError: Nat => tactic {
+  13 |   | {??} + {??}
+           ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+
+In file $FILE:13:11 ->
+
+  11 | 
+  12 | example def exprTyckError: Nat => tactic {
+  13 |   | {??} + {??}
+                  ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+
+In file $FILE:14:4 ->
+
+  12 | example def exprTyckError: Nat => tactic {
+  13 |   | {??} + {??}
+  14 |   | zero {??} -- this results in a tyck error (application not allowed here)
+           ^-------^
+
+Error: Unable to apply the expression
+         zero {??}
+       because the type of what you applied is not a Pi type, but instead:
+         Nat
+         (Normalized: Nat)
+
+1 error(s), 0 warning(s).
+What are you doing?

@@ -1,0 +1,35 @@
+In file $FILE:12:4 ->
+
+  10 | 
+  11 | example def simpleTac1: Nat => tactic {
+  12 |   | {??}
+           ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+
+In file $FILE:13:8 ->
+
+  11 | example def simpleTac1: Nat => tactic {
+  12 |   | {??}
+  13 |   | suc {??} -- every hole filler should have zero holes
+               ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+
+In file $FILE:13:2 ->
+
+  11 | example def simpleTac1: Nat => tactic {
+  12 |   | {??}
+  13 |   | suc {??} -- every hole filler should have zero holes
+         ^--------^
+
+Error: Hole filler cannot have holes
+
+1 error(s), 0 warning(s).
+What are you doing?
