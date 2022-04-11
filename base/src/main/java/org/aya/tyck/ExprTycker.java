@@ -229,6 +229,7 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
         Constants.randomName(hole), hole.sourcePos())._2);
+      case Expr.ErrorExpr err -> Result.error(err);
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -565,6 +566,10 @@ public final class ExprTycker extends Tycker {
   public record Result(@NotNull Term wellTyped, @NotNull Term type) {
     @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
       return Tuple.of(type, wellTyped);
+    }
+
+    public static @NotNull Result error(@NotNull Expr.ErrorExpr error) {
+      return new Result(new ErrorTerm(error.description()), new ErrorTerm(error.description()));
     }
 
     public @NotNull Result freezeHoles(@NotNull TyckState state) {

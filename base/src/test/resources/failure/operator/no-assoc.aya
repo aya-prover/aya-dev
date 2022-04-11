@@ -4,6 +4,6 @@ def infixl + (a b : Nat) : Nat => zero
 def infixr ^ (a b : Nat) : Nat => zero
 def infix  = (a b : Nat) : Nat => zero
 
-def test1 => 1 + 2 + 3
-def test2 => 1 ^ 2 ^ 3
-def test3 => 1 = 2 = 3
+def test1 => (suc zero) + (suc (suc zero)) + (suc (suc (suc zero)))
+def test2 => (suc zero) ^ (suc (suc zero)) ^ (suc (suc (suc zero)))
+def test3 => (suc zero) = (suc (suc zero)) = (suc (suc (suc zero)))

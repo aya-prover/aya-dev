@@ -1,9 +1,9 @@
-In file $FILE:4:14 ->
+In file $FILE:8:28 ->
 
-  2 | def infix = => Type 0
-  3 | 
-  4 | def fail => 1 + 1 = 2
-                    ^^
+  6 | def infix = (a b: Nat) : Nat => zero
+  7 | 
+  8 | def fail: Nat => (suc zero) + (suc zero) = (suc (suc zero))
+                                  ^^
 
 Error: Ambiguous operator precedence detected between `=` and `+`
 note: Use `bind` statement or insert parentheses to make it clear.
