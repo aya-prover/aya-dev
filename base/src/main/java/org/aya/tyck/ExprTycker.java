@@ -64,7 +64,7 @@ public final class ExprTycker extends Tycker {
           yield new Result(new RefTerm(loc, 0), ty);
         }
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
-        default -> throw new IllegalStateException("Unknown var: " + ref.resolvedVar().getClass());
+        default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
       case Expr.PiExpr pi -> {
         var param = pi.param();
@@ -457,7 +457,7 @@ public final class ExprTycker extends Tycker {
       return new Result(new RefTerm.Field(field, 0), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
-      throw new IllegalStateException(msg);
+      throw new InternalException(msg);
     }
   }
 

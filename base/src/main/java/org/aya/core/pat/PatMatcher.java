@@ -15,6 +15,7 @@ import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
+import org.aya.generic.util.InternalException;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
-      case Pat.Absurd absurd -> throw new IllegalStateException("unreachable");
+      case Pat.Absurd ignored -> throw new InternalException("unreachable");
       case Pat.Prim prim -> {
         var core = prim.ref().core;
         assert PrimDef.Factory.INSTANCE.leftOrRight(core);

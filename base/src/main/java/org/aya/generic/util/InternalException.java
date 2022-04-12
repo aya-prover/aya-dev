@@ -5,14 +5,18 @@ package org.aya.generic.util;
 /**
  * @author ice1000
  */
-public abstract class InternalException extends RuntimeException {
-  public InternalException() {
-  }
+public class InternalException extends RuntimeException {
+  public InternalException() {}
 
   public InternalException(String message) {
     super(message);
   }
 
-  public abstract void printHint();
-  public abstract int exitCode();
+  public void printHint() {
+    System.out.println(getMessage());
+  }
+
+  public int exitCode() {
+    return -1;
+  }
 }

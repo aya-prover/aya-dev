@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.utils;
 
+import org.aya.generic.util.InternalException;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
@@ -25,7 +26,7 @@ public class Log {
     if (CLIENT == null) synchronized (Log.class) {
       if (CLIENT == null) CLIENT = client;
         // if the code was right, this should never happen
-      else throw new IllegalStateException("double initialization occurred");
+      else throw new InternalException("double initialization occurred");
     }
     i("Log file: %s", LOG_FILE);
   }

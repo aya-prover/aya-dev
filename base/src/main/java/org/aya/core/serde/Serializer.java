@@ -12,6 +12,7 @@ import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.Contract;
@@ -38,7 +39,7 @@ public record Serializer(@NotNull Serializer.State state) implements
       case Pat.Prim prim -> new SerPat.Prim(prim.explicit(), state.def(prim.ref()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(), serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
-      case Pat.Meta meta -> throw new IllegalArgumentException(meta.toString());
+      case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
     };
   }
 

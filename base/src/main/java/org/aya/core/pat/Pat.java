@@ -18,6 +18,7 @@ import org.aya.core.visitor.Subst;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
+import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -104,7 +105,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      throw new IllegalStateException("unreachable");
+      throw new InternalException("unreachable");
     }
 
     @Override public @NotNull Pat inline() {
@@ -115,13 +116,13 @@ public sealed interface Pat extends AyaDocile {
 
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      throw new IllegalStateException("unreachable");
+      throw new InternalException("unreachable");
     }
   }
 
   record Absurd(boolean explicit) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      throw new IllegalStateException();
+      throw new InternalException("unreachable");
     }
 
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
@@ -131,7 +132,7 @@ public sealed interface Pat extends AyaDocile {
 
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      throw new IllegalStateException();
+      throw new InternalException();
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {

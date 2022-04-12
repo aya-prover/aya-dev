@@ -12,6 +12,7 @@ import kala.collection.mutable.MutableStack;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
 import org.aya.generic.ref.GeneralizedVar;
+import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.aya.resolve.context.Context;
@@ -128,7 +129,7 @@ public record ExprResolver(
 
   private void addReference(@NotNull TyckUnit unit) {
     if (parentAdd != null) parentAdd.accept(unit);
-    if (where.isEmpty()) throw new IllegalStateException("where am I?");
+    if (where.isEmpty()) throw new InternalException("where am I?");
     if (where.peek() == Where.Head) {
       reference.append(new TyckOrder.Head(unit));
       reference.append(new TyckOrder.Body(unit));

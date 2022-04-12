@@ -5,6 +5,7 @@ package org.aya.core.pat;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.visitor.Subst;
+import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNull LocalCtx ctx) {
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
     switch (lhs) {
-      default -> throw new IllegalStateException();
+      default -> throw new InternalException();
       case Pat.Bind bind -> visitAs(bind.bind(), rhs);
       case Pat.Meta meta -> visitAs(meta.fakeBind(), rhs);
       case Pat.Tuple tuple -> {
@@ -54,7 +55,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
 
   private void reportError(@NotNull Pat lhs, @NotNull Pat pat) {
     var doc = Doc.sep(lhs.toDoc(DistillerOptions.debug()), Doc.plain("and"), pat.toDoc(DistillerOptions.debug()));
-    throw new IllegalArgumentException(doc.debugRender() + " are patterns of different types!");
+    throw new InternalException(doc.debugRender() + " are patterns of different types!");
   }
 
   private static void unifyPat(Pat lhs, Pat rhs, Subst lhsSubst, Subst rhsSubst, LocalCtx ctx) {

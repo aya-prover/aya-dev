@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
+import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.distill.DistillerOptions;
@@ -36,7 +37,7 @@ public record CircularSignatureError(
       case Decl decl -> decl.ref().name();
       case Remark remark -> "a remark";
       case Signatured signatured -> signatured.ref().name();
-      default -> throw new IllegalStateException("Unexpected stmt seen in SCCTycker: " + stmt);
+      default -> throw new InternalException("Unexpected stmt seen in SCCTycker: " + stmt);
     };
   }
 

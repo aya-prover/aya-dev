@@ -11,6 +11,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
+import org.aya.generic.util.InternalException;
 import org.aya.ref.Bind;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
@@ -180,7 +181,7 @@ public record StmtShallowResolver(
   private @NotNull NoExportContext exampleContext(@NotNull ModuleContext context) {
     if (context instanceof PhysicalModuleContext physical)
       return physical.exampleContext();
-    else throw new IllegalArgumentException("Invalid context: " + context);
+    else throw new InternalException("Invalid context: " + context);
   }
 
   private void resolveCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
