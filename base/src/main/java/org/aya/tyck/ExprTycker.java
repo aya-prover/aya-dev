@@ -458,7 +458,7 @@ public final class ExprTycker extends Tycker {
               metas = headTerm.allMetas();
 
               if (metas.size() >= metaSize)
-                throw new IllegalStateException("Meta is not solved after elaboration"); // TODO: internal error meta is not filled after tactic
+                throw new InternalException("Meta is not solved after elaboration");
             } else {
               result = tacFail(exprToElab,
                 new TacticProblem.HoleFillerNumberMismatch(listExprTac.sourcePos(), metaSize, tailNodes.size()));
