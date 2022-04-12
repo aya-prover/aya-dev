@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.gradle
 
@@ -28,6 +28,7 @@ final class CommonTasks {
         'Main-Class': mainClass,
         'Build': new SimpleDateFormat('yyyy/M/dd HH:mm:ss').format(new Date())
       )
+      doLast { StripPreviewRunner.run(temporaryDirFactory.create(), outputs.files.files) }
       def jar = project.tasks.jar
       dependsOn(jar)
       //noinspection GroovyAssignabilityCheck
