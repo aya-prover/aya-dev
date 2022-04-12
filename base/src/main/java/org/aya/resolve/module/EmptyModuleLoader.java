@@ -3,6 +3,7 @@
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.util.InternalException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ public final class EmptyModuleLoader implements ModuleLoader {
   public static final @NotNull EmptyModuleLoader INSTANCE = new EmptyModuleLoader();
 
   @Override public @NotNull Reporter reporter() {
-    throw new IllegalStateException("unreachable");
+    throw new InternalException("unreachable");
   }
 
   private EmptyModuleLoader() {}

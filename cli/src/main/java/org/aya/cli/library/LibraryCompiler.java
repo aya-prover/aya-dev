@@ -12,6 +12,7 @@ import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.stmt.QualifiedID;
+import org.aya.generic.util.InternalException;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.FileUtil;
@@ -69,7 +70,7 @@ public class LibraryCompiler {
     source.program().value = program;
     var finder = new ImportResolver(mod -> {
       var file = owner.findModule(mod);
-      if (file == null) throw new IllegalStateException("no library owns module: " + mod);
+      if (file == null) throw new InternalException("no library owns module: " + mod);
       try {
         resolveImports(file);
       } catch (IOException e) {
@@ -217,7 +218,7 @@ public class LibraryCompiler {
       var moduleName = file.moduleName();
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().value == null)
-        throw new IllegalStateException("Unable to load module: " + moduleName);
+        throw new InternalException("Unable to load module: " + moduleName);
       reporter.reportNest("[Tyck] %s (%s)".formatted(
         QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
     }

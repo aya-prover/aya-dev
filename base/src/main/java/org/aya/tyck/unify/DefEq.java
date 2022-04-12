@@ -15,6 +15,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Arg;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -260,10 +261,10 @@ public final class DefEq {
         }
         yield true;
       }
-      case IntroTerm.Lambda $ -> throw new IllegalStateException("LamTerm is never type");
-      case CallTerm.Con $ -> throw new IllegalStateException("ConCall is never type");
-      case IntroTerm.Tuple $ -> throw new IllegalStateException("TupTerm is never type");
-      case IntroTerm.New $ -> throw new IllegalStateException("NewTerm is never type");
+      case IntroTerm.Lambda $ -> throw new InternalException("LamTerm is never type");
+      case CallTerm.Con $ -> throw new InternalException("ConCall is never type");
+      case IntroTerm.Tuple $ -> throw new InternalException("TupTerm is never type");
+      case IntroTerm.New $ -> throw new InternalException("NewTerm is never type");
       case ErrorTerm $ -> true;
       case FormTerm.Sigma sigma -> {
         var params = sigma.params().view();
@@ -300,7 +301,7 @@ public final class DefEq {
     traceEntrance(new Trace.UnifyT(type.freezeHoles(state),
       preRhs.freezeHoles(state), this.pos));
     var ret = switch (type) {
-      default -> throw new IllegalStateException(type.getClass() + ": " + type);
+      default -> throw new InternalException(type.getClass() + ": " + type);
       case RefTerm.MetaPat metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
@@ -396,7 +397,7 @@ public final class DefEq {
       var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
       for (var arg : lhs.args().view().zip(rcall.args())) {
         if (!(holeTy instanceof FormTerm.Pi holePi))
-          throw new IllegalStateException("meta arg size larger than param size. this should not happen");
+          throw new InternalException("meta arg size larger than param size. this should not happen");
         if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
         holeTy = holePi.substBody(arg._1.term());
       }

@@ -4,6 +4,7 @@ package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.CallTerm;
+import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.ArrayUtil;
@@ -79,7 +80,7 @@ public record CallMatrix<Def, Param>(
     @NotNull CallMatrix<Def, Param> A, @NotNull CallMatrix<Def, Param> B
   ) {
     if (B.domain != A.codomain) // implies B.cols() != A.rows()
-      throw new IllegalArgumentException("The combine cannot be applied to these two call matrices");
+      throw new InternalException("The combine cannot be applied to these two call matrices");
 
     var BA = new CallMatrix<>(B.callTerm, A.domain, B.codomain,
       A.domainTele, B.codomainTele);

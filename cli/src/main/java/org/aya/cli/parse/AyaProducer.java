@@ -26,6 +26,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
+import org.aya.generic.util.InternalException;
 import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -145,7 +146,7 @@ public record AyaProducer(
   }
 
   private <T> T unreachable(ParserRuleContext ctx) {
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    throw new InternalException(ctx.getClass() + ": " + ctx.getText());
   }
 
   public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
@@ -175,7 +176,7 @@ public record AyaProducer(
     if (assoc.INFIX() != null) return Assoc.Infix;
     if (assoc.INFIXL() != null) return Assoc.InfixL;
     if (assoc.INFIXR() != null) return Assoc.InfixR;
-    throw new IllegalArgumentException("Unknown assoc: " + assoc.getText());
+    throw new InternalException("Unknown assoc: " + assoc.getText());
   }
 
   private int countExplicit(@NotNull ImmutableSeq<Expr.Param> tele) {
@@ -621,7 +622,7 @@ public record AyaProducer(
     return ImmutableSeq.from(field).map(fieldCtx -> {
       if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
       else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
-      else throw new IllegalArgumentException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
+      else throw new InternalException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
     });
   }
 

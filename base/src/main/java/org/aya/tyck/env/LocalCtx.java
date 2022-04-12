@@ -4,8 +4,8 @@ package org.aya.tyck.env;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.core.Meta;
@@ -14,6 +14,7 @@ import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.SourcePos;
@@ -77,7 +78,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
       if (res != null) return res;
       ctx = ctx.parent();
     }
-    throw new IllegalArgumentException(var.name());
+    throw new InternalException(var.name());
   }
 
   @Contract(pure = true) @Nullable Term getLocal(@NotNull LocalVar var);
