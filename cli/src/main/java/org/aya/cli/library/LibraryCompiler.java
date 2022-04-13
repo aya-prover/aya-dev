@@ -12,8 +12,10 @@ import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.generic.util.InternalException;
 import org.aya.core.def.PrimDef;
+import org.aya.generic.util.InternalException;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.error.ModNotFoundError;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.FileUtil;
@@ -69,9 +71,12 @@ public class LibraryCompiler {
     var owner = source.owner();
     var program = new AyaParserImpl(reporter).program(owner.locator(), source.file());
     source.program().value = program;
-    var finder = new ImportResolver(mod -> {
+    var finder = new ImportResolver((mod, sourcePos) -> {
       var file = owner.findModule(mod);
-      if (file == null) throw new InternalException("no library owns module: " + mod);
+      if (file == null) {
+        reporter.report(new ModNotFoundError(mod, sourcePos));
+        throw new Context.ResolvingInterruptedException();
+      }
       try {
         resolveImports(file);
       } catch (IOException e) {

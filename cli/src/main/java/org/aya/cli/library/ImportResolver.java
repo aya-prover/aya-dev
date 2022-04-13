@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -7,12 +7,13 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record ImportResolver(@NotNull ImportLoader loader, @NotNull LibrarySource librarySource) {
   @FunctionalInterface
   public interface ImportLoader {
-    @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod);
+    @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod, @NotNull SourcePos sourcePos);
   }
 
   public void resolveStmt(@NotNull SeqLike<Stmt> stmts) {
@@ -24,7 +25,7 @@ public record ImportResolver(@NotNull ImportLoader loader, @NotNull LibrarySourc
       case Command.Module mod -> resolveStmt(mod.contents());
       case Command.Import cmd -> {
         var ids = cmd.path().ids();
-        var success = loader.load(ids);
+        var success = loader.load(ids, cmd.sourcePos());
         librarySource.imports().append(success);
       }
       default -> {}
