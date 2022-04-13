@@ -49,7 +49,7 @@ public interface ExprOps extends ExprView {
       this.exprWithHole = exprWithHole;
       this.filling = filling;
       var filledExpr = commit();
-      if (!filled) throw new InternalException("Tactic elaborator cannot fill the hole of " + exprWithHole);
+      if (!filled) throw new InternalException("No hole has been found in " + exprWithHole);
 
       return filledExpr;
     }
