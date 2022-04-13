@@ -74,7 +74,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
 
   @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
     var state = state();
-    if (state == null) throw InternalException.unexpected("unfolding prims without TyckState");
+    if (state == null) throw new InternalException("unfolding prims without TyckState");
     return state.primFactory().unfold(prim.id(), prim, state());
   }
 
@@ -105,7 +105,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull ImmutableSeq<Matching> clauses
   ) {
     var state = state();
-    if (state == null) throw InternalException.unexpected("unfolding clauses without TyckState");
+    if (state == null) throw new InternalException("unfolding clauses without TyckState");
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(state.primFactory(), null, matchy.patterns(), args);
       if (termSubst.isOk()) {

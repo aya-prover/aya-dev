@@ -122,7 +122,7 @@ public sealed interface Literate extends Docile {
 
     private @NotNull Doc normalize(@NotNull Term term) {
       var mode = options.mode();
-      if (state == null) throw InternalException.unexpected("No tyck state");
+      if (state == null) throw new InternalException("No tyck state");
       return term.normalize(state, mode).toDoc(options.options());
     }
 
