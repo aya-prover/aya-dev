@@ -33,6 +33,8 @@ import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * Tyck statements in SCC.
  *
@@ -66,12 +68,44 @@ public record AyaSccTycker(
   }
 
   private void checkMutual(@NotNull ImmutableSeq<TyckOrder> scc) {
-    if (scc.allMatch(t -> t instanceof TyckOrder.Head)) {
-      reporter.report(new CircularSignatureError(scc.map(TyckOrder::unit)));
-      throw new SCCTyckingFailed(scc);
+    var unit = scc.stream().map(TyckOrder::unit).distinct().collect(ImmutableSeq.factory());
+    // the flattened dependency graph (FDG) lose information about header order, in other words,
+    // FDG treats all order as body order, so it allows all kinds of mutual recursion to be generated.
+    // To detect circular dependency in signatures which we forbid, we have to apply the old way,
+    // that is, what we did before https://github.com/aya-prover/aya-dev/pull/326
+    var headerOrder = headerOrder(scc, unit);
+    if (headerOrder.sizeEquals(1)) {
+      checkUnit(new TyckOrder.Body(headerOrder.first()));
+    } else {
+      var tyckTasks = headerOrder.view()
+        .<TyckOrder>map(TyckOrder.Head::new)
+        .appendedAll(headerOrder.map(TyckOrder.Body::new))
+        .toImmutableSeq();
+      tyckTasks.forEach(this::check);
+      terck(tyckTasks.view());
     }
-    scc.forEach(this::check);
-    terck(scc.view());
+  }
+
+  /**
+   * Generate the order of dependency of headers, fail if a cycle occurs.
+   *
+   * @author re-xyr, kiva
+   */
+  public @NotNull ImmutableSeq<TyckUnit> headerOrder(@NotNull ImmutableSeq<TyckOrder> forError, @NotNull ImmutableSeq<TyckUnit> stmts) {
+    var graph = MutableGraph.<TyckUnit>create();
+    stmts.forEach(stmt -> {
+      var reference = MutableList.<TyckUnit>create();
+      SigRefFinder.HEADER_ONLY.visit(stmt, reference);
+      graph.sucMut(stmt).appendAll(reference.view()
+        .filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName())));
+    });
+    var order = graph.topologicalOrder();
+    var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
+    if (cycle.isNotEmpty()) {
+      cycle.forEach(c -> reporter.report(new CircularSignatureError(c)));
+      throw new SCCTyckingFailed(forError);
+    }
+    return order.flatMap(Function.identity());
   }
 
   private void checkUnit(@NotNull TyckOrder order) {

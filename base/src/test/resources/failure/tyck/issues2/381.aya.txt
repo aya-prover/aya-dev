@@ -1,0 +1,29 @@
+In file $FILE:1:4 ->
+
+  1 | def a a => a
+          ^^
+  2 | 
+  3 | def f g => g
+
+Error: The recursive definition `a` is not structurally recursive
+
+In file $FILE:4:4 ->
+
+  2 | 
+  3 | def f g => g
+  4 | def g f => f
+          ^^
+
+Error: Circular signature dependency found between f, g
+
+In file $FILE:7:4 ->
+
+  5 | 
+  6 | def f' g' | x => x
+  7 | def g' f' | x => x
+          ^^
+
+Error: Circular signature dependency found between f', g'
+
+3 error(s), 0 warning(s).
+What are you doing?

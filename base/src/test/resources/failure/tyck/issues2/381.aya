@@ -1,0 +1,7 @@
+def a a => a
+
+def f g => g
+def g f => f
+
+def f' g' | x => x
+def g' f' | x => x
