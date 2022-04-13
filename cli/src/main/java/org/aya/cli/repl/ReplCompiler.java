@@ -3,6 +3,7 @@
 package org.aya.cli.repl;
 
 import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
@@ -15,13 +16,16 @@ import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
+import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.module.CachedModuleLoader;
@@ -123,30 +127,35 @@ public class ReplCompiler {
         new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
       return programOrExpr.map(
         program -> {
-          var newDefs = new Ref<ImmutableSeq<Def>>();
-          loader.tyckModule(primFactory, context, program, null, ((moduleResolve, defs) -> newDefs.set(defs)));
-          var defs = newDefs.get();
-          if (reporter.noError()) return defs;
-          else {
-            // When there are errors, we need to remove the defs from the context.
-            var toRemoveDef = MutableList.<String>create();
-            context.definitions.forEach((name, mod) -> {
-              var toRemoveMod = MutableList.<Seq<String>>create();
-              mod.forEach((modName, def) -> {
-                if (defs.anyMatch(realDef -> realDef.ref() == def)) toRemoveMod.append(modName);
-              });
-              if (toRemoveMod.sizeEquals(mod.size())) toRemoveDef.append(name);
-              else toRemoveMod.forEach(mod::remove);
-            });
-            toRemoveDef.forEach(context.definitions::remove);
-            return ImmutableSeq.empty();
+          try {
+            var newDefs = new Ref<ImmutableSeq<Def>>();
+            loader.tyckModule(primFactory, context, program, null, ((moduleResolve, defs) -> newDefs.set(defs)));
+            return reporter.noError() ? newDefs.get() : cleanup(newDefs.get().view().map(Def::ref));
+          } catch (InterruptException ignored) {
+            return cleanup(program.view().filterIsInstance(Signatured.class).map(Signatured::ref));
           }
         },
         expr -> tyckExpr(expr).wellTyped().normalize(new TyckState(primFactory), normalizeMode)
       );
-    } catch (InterruptException ignored) {
+    } catch (Context.ResolvingInterruptedException ignored) {
+      // Maybe handle other exceptions
       return Either.left(ImmutableSeq.empty());
     }
+  }
+
+  @NotNull private ImmutableSeq<Def> cleanup(SeqView<DefVar<?, ?>> defs) {
+    // When there are errors, we need to remove the defs from the context.
+    var toRemoveDef = MutableList.<String>create();
+    context.definitions.forEach((name, mod) -> {
+      var toRemoveMod = MutableList.<Seq<String>>create();
+      mod.forEach((modName, def) -> {
+        if (defs.anyMatch(realDef -> realDef == def)) toRemoveMod.append(modName);
+      });
+      if (toRemoveMod.sizeEquals(mod.size())) toRemoveDef.append(name);
+      else toRemoveMod.forEach(mod::remove);
+    });
+    toRemoveDef.forEach(context.definitions::remove);
+    return ImmutableSeq.empty();
   }
 
   /**
