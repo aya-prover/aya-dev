@@ -7,6 +7,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
@@ -45,7 +46,7 @@ record LibraryModuleLoader(
   @NotNull CountingReporter reporter,
   @NotNull LibraryOwner owner,
   @NotNull LibraryModuleLoader.United states
-) implements ModuleLoader {
+  ) implements ModuleLoader {
   private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
     try {
       var coreFile = file.coreFile();
@@ -82,7 +83,7 @@ record LibraryModuleLoader(
     var program = source.program().value;
     assert program != null;
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
-    var resolveInfo = resolveModule(context, program, recurseLoader);
+    var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
     source.resolveInfo().value = resolveInfo;
     return tyckModule(null, resolveInfo, (moduleResolve, defs) -> {
       source.tycked().value = defs;
@@ -104,9 +105,9 @@ record LibraryModuleLoader(
     }
   }
 
-  record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {
-    public United() {
-      this(new SerTerm.DeState(), new Serializer.State());
+  record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser, @NotNull PrimDef.Factory primFactory) {
+    public United(@NotNull PrimDef.Factory primFactory) {
+      this(new SerTerm.DeState(primFactory), new Serializer.State(), primFactory);
     }
   }
 }

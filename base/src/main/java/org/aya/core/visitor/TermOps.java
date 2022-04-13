@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.Matching;
-import org.aya.core.def.PrimDef;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
@@ -40,19 +39,19 @@ public interface TermOps extends TermView {
     @NotNull Function<@NotNull Term, @NotNull Term> pre,
     @NotNull Function<@NotNull Term, @NotNull Term> post
   ) implements TermOps {
-    @Override public TermView preMap(Function<Term, Term> f) {
+    @Override public @NotNull TermView preMap(@NotNull Function<Term, Term> f) {
       return new Mapper(view, pre.compose(f), post);
     }
 
-    @Override public TermView postMap(Function<Term, Term> f) {
+    @Override public @NotNull TermView postMap(@NotNull Function<Term, Term> f) {
       return new Mapper(view, pre, f.compose(post));
     }
 
-    @Override public Term pre(Term term) {
+    @Override public @NotNull Term pre(@NotNull Term term) {
       return view.pre(pre.apply(term));
     }
 
-    @Override public Term post(Term term) {
+    @Override public @NotNull Term post(@NotNull Term term) {
       return post.apply(view.post(term));
     }
   }
@@ -62,7 +61,7 @@ public interface TermOps extends TermView {
       return new Subster(view, subst.add(subst));
     }
 
-    @Override public Term post(Term term) {
+    @Override public @NotNull Term post(@NotNull Term term) {
       return switch (view.post(term)) {
         case RefTerm ref -> subst.map().getOption(ref.var()).map(Term::rename).getOrDefault(ref);
         case RefTerm.Field field -> subst.map().getOption(field.ref()).map(Term::rename).getOrDefault(field);
@@ -83,7 +82,7 @@ public interface TermOps extends TermView {
       return new Term.Param(v, param.type(), param.pattern(), param.explicit());
     }
 
-    @Override public Term pre(Term term) {
+    @Override public @NotNull Term pre(@NotNull Term term) {
       return view.pre(switch (term) {
         case IntroTerm.Lambda lambda -> new IntroTerm.Lambda(handleBinder(lambda.param()), lambda.body());
         case FormTerm.Pi pi -> new FormTerm.Pi(handleBinder(pi.param()), pi.body());
@@ -92,7 +91,7 @@ public interface TermOps extends TermView {
       });
     }
 
-    @Override public Term post(Term term) {
+    @Override public @NotNull Term post(@NotNull Term term) {
       return switch (view.post(term)) {
         case RefTerm ref -> subst.map().getOrDefault(ref.var(), ref);
         // [ice]: need to generate "replacements" for 'this' bindings as well?
@@ -103,7 +102,7 @@ public interface TermOps extends TermView {
   }
 
   /** A lift but in American English. */
-  record Elevator(@Override @NotNull TermView view, int ulift, MutableList<Var> boundVars) implements TermOps {
+  record Elevator(@Override @NotNull TermView view, int ulift, @NotNull MutableList<Var> boundVars) implements TermOps {
     public Elevator(@NotNull TermView view, int ulift) {
       this(view, ulift, MutableList.create());
     }
@@ -112,7 +111,7 @@ public interface TermOps extends TermView {
       return new Elevator(view, ulift + shift, boundVars);
     }
 
-    public Term pre(Term term) {
+    public @NotNull Term pre(@NotNull Term term) {
       return view.pre(switch (term) {
         case IntroTerm.Lambda lambda -> {
           boundVars.append(lambda.param().ref());
@@ -130,7 +129,7 @@ public interface TermOps extends TermView {
       });
     }
 
-    public Term post(Term term) {
+    public @NotNull Term post(@NotNull Term term) {
       return switch (view.post(term)) {
         case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + ulift);
         case CallTerm.Struct struct -> new CallTerm.Struct(struct.ref(), struct.ulift() + ulift, struct.args());
@@ -152,7 +151,7 @@ public interface TermOps extends TermView {
     }
   }
 
-  record Normalizer(@NotNull @Override TermView view, TyckState state) implements TermOps {
+  record Normalizer(@NotNull @Override TermView view, @NotNull TyckState state) implements TermOps {
     static private @NotNull Subst buildSubst(
       @NotNull SeqLike<Term.@NotNull Param> params,
       @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
@@ -174,7 +173,7 @@ public interface TermOps extends TermView {
       @NotNull Subst subst, @NotNull ImmutableSeq<Matching> clauses
     ) {
       for (var match : clauses) {
-        var result = PatMatcher.tryBuildSubstArgs(null, match.patterns(), args);
+        var result = PatMatcher.tryBuildSubstArgs(state.primFactory(), null, match.patterns(), args);
         if (result.isOk()) {
           subst.add(result.get());
           var body = match.body().view().subst(subst).normalize(state).commit();
@@ -185,7 +184,7 @@ public interface TermOps extends TermView {
       return null;
     }
 
-    @Override public Term post(Term term) {
+    @Override public @NotNull Term post(@NotNull Term term) {
       return switch (view.post(term)) {
         case ElimTerm.App app -> {
           var fn = app.of();
@@ -238,10 +237,10 @@ public interface TermOps extends TermView {
             yield unfolded != null ? unfolded.data() : access;
           }
         }
-        case CallTerm.Prim prim -> PrimDef.Factory.INSTANCE.unfold(prim.id(), prim, state);
+        case CallTerm.Prim prim -> state.primFactory().unfold(prim.id(), prim, state);
         case CallTerm.Hole hole -> {
           var def = hole.ref();
-          if (state == null || !state.metas().containsKey(def)) yield hole;
+          if (!state.metas().containsKey(def)) yield hole;
           var body = state.metas().get(def);
           yield body.view().subst(buildSubst(def.fullTelescope(), hole.fullArgs())).normalize(state).commit();
         }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
@@ -9,6 +9,7 @@ import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.MainArgs;
+import org.aya.core.def.PrimDef;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
 import picocli.CommandLine;
@@ -49,7 +50,7 @@ public class Main extends MainArgs implements Callable<Integer> {
 
     if (action.compile.isLibrary || action.compile.isRemake) {
       // TODO: move to a new tool
-      return LibraryCompiler.compile(reporter, flags, filePath);
+      return LibraryCompiler.compile(new PrimDef.Factory(), reporter, flags, filePath);
     }
     var traceBuilder = enableTrace ? new Trace.Builder() : null;
     var compiler = new SingleFileCompiler(reporter, null, traceBuilder, distillOptions);

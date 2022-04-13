@@ -31,15 +31,15 @@ import java.util.function.Consumer;
 /**
  * @author ice1000, kiva
  * @apiNote this class does not create {@link ExprTycker} instances itself,
- * but use the one passed to it. {@link StmtTycker#newTycker()} creates instances
+ * but use the one passed to it. {@link StmtTycker#newTycker(PrimDef.Factory)} creates instances
  * of expr tyckers.
  */
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
 ) {
-  public @NotNull ExprTycker newTycker() {
-    return new ExprTycker(reporter, traceBuilder);
+  public @NotNull ExprTycker newTycker(@NotNull PrimDef.Factory primFactory) {
+    return new ExprTycker(primFactory, reporter, traceBuilder);
   }
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {

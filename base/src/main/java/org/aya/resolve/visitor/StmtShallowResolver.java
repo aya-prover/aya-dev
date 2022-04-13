@@ -119,16 +119,17 @@ public record StmtShallowResolver(
         resolveOpInfo(decl, ctx);
       }
       case Decl.PrimDecl decl -> {
+        var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
         var sourcePos = decl.sourcePos;
         var primID = PrimDef.ID.find(name);
         if (primID == null) context.reportAndThrow(new UnknownPrimError(sourcePos, name));
-        var lack = PrimDef.Factory.INSTANCE.checkDependency(primID);
+        var lack = factory.checkDependency(primID);
         if (lack.isNotEmpty() && lack.get().isNotEmpty())
           context.reportAndThrow(new PrimDependencyError(name, lack.get(), sourcePos));
-        else if (PrimDef.Factory.INSTANCE.have(primID))
+        else if (factory.have(primID))
           context.reportAndThrow(new RedefinitionPrimError(name, sourcePos));
-        PrimDef.Factory.INSTANCE.factory(primID, decl.ref);
+        factory.factory(primID, decl.ref);
         resolveDecl(decl, context);
       }
     }

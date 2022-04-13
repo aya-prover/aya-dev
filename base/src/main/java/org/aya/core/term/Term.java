@@ -85,7 +85,7 @@ public sealed interface Term extends AyaDocile permits
    *              Can be null only if we're absolutely sure that holes are frozen,
    *              like in the error messages.
    */
-  default @NotNull Term normalize(@Nullable TyckState state, @NotNull NormalizeMode mode) {
+  default @NotNull Term normalize(@NotNull TyckState state, @NotNull NormalizeMode mode) {
     if (mode == NormalizeMode.NULL) return this;
     if (mode == NormalizeMode.NF) return this.view().normalize(state).commit();
     return accept(new Normalizer(state), mode);

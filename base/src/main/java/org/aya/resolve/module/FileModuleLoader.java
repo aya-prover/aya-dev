@@ -4,6 +4,7 @@ package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.GenericAyaParser;
+import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.resolve.ResolveInfo;
@@ -23,6 +24,7 @@ public record FileModuleLoader(
   @NotNull Path basePath,
   @Override @NotNull Reporter reporter,
   @NotNull GenericAyaParser parser,
+  @NotNull PrimDef.Factory primFactory,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
   @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
@@ -30,7 +32,7 @@ public record FileModuleLoader(
     try {
       var program = parser.program(locator, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(builder, resolveModule(context, program, recurseLoader),  null);
+      return tyckModule(builder, resolveModule(primFactory, context, program, recurseLoader),  null);
     } catch (IOException e) {
       return null;
     }

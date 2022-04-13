@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableMap;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.core.def.PrimDef;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.util.MutableGraph;
@@ -26,13 +27,14 @@ import org.jetbrains.annotations.NotNull;
 public record ResolveInfo(
   @NotNull ModuleContext thisModule,
   @NotNull ImmutableSeq<Stmt> program,
+  @NotNull PrimDef.Factory primFactory,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> imports,
   @NotNull MutableList<ImmutableSeq<String>> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph,
   @NotNull MutableMap<OpDecl, BindBlock> bindBlockRename
 ) {
-  public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {
-    this(thisModule, thisProgram, opSet, MutableMap.create(), MutableList.create(), MutableGraph.create(), MutableMap.create());
+  public ResolveInfo(@NotNull PrimDef.Factory primFactory, @NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {
+    this(thisModule, thisProgram, primFactory, opSet, MutableMap.create(), MutableList.create(), MutableGraph.create(), MutableMap.create());
   }
 }

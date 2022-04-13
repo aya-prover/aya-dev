@@ -178,7 +178,7 @@ public final class PatTycker {
           && prim.ref().core.id == PrimDef.ID.INTERVAL
           && var instanceof DefVar<?, ?> defVar
           && defVar.core instanceof PrimDef def
-          && PrimDef.Factory.LEFT_RIGHT.contains(def.id)
+          && exprTycker.state.primFactory().LEFT_RIGHT.contains(def.id)
         ) yield new Pat.Prim(ctor.explicit(), (DefVar<PrimDef, Decl.PrimDecl>) defVar);
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(pattern, term);
@@ -391,7 +391,7 @@ public final class PatTycker {
 
   public static Result<Subst, Boolean>
   mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(state.primFactory(), ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
     else return Result.ok(Unfolder.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }

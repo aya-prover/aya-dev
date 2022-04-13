@@ -5,7 +5,6 @@ package org.aya.concrete;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.concrete.visitor.StmtConsumer;
-import org.aya.core.def.PrimDef;
 import org.aya.util.error.Global;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
@@ -16,13 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VisitorTest {
   @BeforeAll public static void enableTest() {
-    PrimDef.Factory.INSTANCE.clear();
     Global.NO_RANDOM_NAME = true;
     Global.UNITE_SOURCE_POS = true;
   }
 
   @AfterAll public static void exit() {
-    PrimDef.Factory.INSTANCE.clear();
     Global.reset();
   }
 

@@ -3,13 +3,11 @@
 package org.aya.core;
 
 import org.aya.core.def.FnDef;
-import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.util.distill.DistillerOptions;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -79,7 +77,6 @@ public class DistillerTest {
         | id_l (a: A) : op id a = a
       """;
     assertFalse(declDoc(code).renderToTeX().isEmpty());
-    tearDown();
     assertFalse(declCDoc(code).renderToTeX().isEmpty());
   }
 
@@ -88,22 +85,18 @@ public class DistillerTest {
       def infix = (A B : Type) => A
       def test1 (X : Type) => Pi (A : Type) -> A ulift = X
       def test2 (X : Type) => (Pi (A : Type) -> A) ulift = X
-      """);
+      """)._2;
     var test1 = ((FnDef) decls.get(1)).body.getLeftValue();
     var test2 = ((FnDef) decls.get(2)).body.getLeftValue();
     assertEquals("Pi (A : Type 0) -> A = X", test1.toDoc(DistillerOptions.informative()).debugRender());
     assertEquals("(Pi (A : Type 0) -> A) = X", test2.toDoc(DistillerOptions.informative()).debugRender());
   }
 
-  @AfterEach public void tearDown() {
-    PrimDef.Factory.INSTANCE.clear();
-  }
-
   private @NotNull Doc declDoc(@Language("TEXT") String text) {
-    return Doc.vcat(TyckDeclTest.successTyckDecls(text).map(d -> d.toDoc(DistillerOptions.debug())));
+    return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(DistillerOptions.debug())));
   }
 
   private @NotNull Doc declCDoc(@Language("TEXT") String text) {
-    return Doc.vcat(TyckDeclTest.successDesugarDecls(text).map(s -> s.toDoc(DistillerOptions.debug())));
+    return Doc.vcat(TyckDeclTest.successDesugarDecls(text)._2.map(s -> s.toDoc(DistillerOptions.debug())));
   }
 }

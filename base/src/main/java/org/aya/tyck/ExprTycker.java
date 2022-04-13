@@ -102,7 +102,7 @@ public final class ExprTycker extends Tycker {
         var structExpr = newExpr.struct();
         var struct = instImplicits(synthesize(structExpr).wellTyped, structExpr.sourcePos());
         if (!(struct instanceof CallTerm.Struct structCall))
-          yield fail(structExpr, struct, BadTypeError.structCon(newExpr, struct));
+          yield fail(structExpr, struct, BadTypeError.structCon(state, newExpr, struct));
         var structRef = structCall.ref();
 
         var subst = new Subst(MutableMap.from(
@@ -155,7 +155,7 @@ public final class ExprTycker extends Tycker {
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
             if (!(projectee.type instanceof FormTerm.Sigma sigma))
-              return fail(struct, projectee.type, BadTypeError.sigmaAcc(struct, ix, projectee.type));
+              return fail(struct, projectee.type, BadTypeError.sigmaAcc(state, struct, ix, projectee.type));
             var telescope = sigma.params();
             var index = ix - 1;
             if (index < 0 || index >= telescope.size())
@@ -166,7 +166,7 @@ public final class ExprTycker extends Tycker {
           }, sp -> {
             var fieldName = sp.justName();
             if (!(projectee.type instanceof CallTerm.Struct structCall))
-              return fail(struct, ErrorTerm.unexpected(projectee.type), BadTypeError.structAcc(struct, fieldName, projectee.type));
+              return fail(struct, ErrorTerm.unexpected(projectee.type), BadTypeError.structAcc(state, struct, fieldName, projectee.type));
             var structCore = structCall.ref().core;
             if (structCore == null) throw new UnsupportedOperationException("TODO");
             // TODO[ice]: instantiate the type
@@ -204,7 +204,7 @@ public final class ExprTycker extends Tycker {
           fTy = fTy.normalize(state, NormalizeMode.WHNF);
         }
         if (!(fTy instanceof FormTerm.Pi piTerm))
-          yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
+          yield fail(appE, f.type, BadTypeError.pi(state, appE, f.type));
         var pi = piTerm;
         var subst = new Subst(MutableMap.create());
         try {
@@ -220,7 +220,7 @@ public final class ExprTycker extends Tycker {
           }
           pi = ensurePiOrThrow(pi.subst(subst));
         } catch (NotPi notPi) {
-          yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(expr, notPi.what));
+          yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
         var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped;
         app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
@@ -275,7 +275,7 @@ public final class ExprTycker extends Tycker {
         var typeWHNF = term.normalize(state, NormalizeMode.WHNF);
         if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(tuple), tuple);
         if (!(typeWHNF instanceof FormTerm.Sigma dt))
-          yield fail(tuple, term, BadTypeError.sigmaCon(tuple, term));
+          yield fail(tuple, term, BadTypeError.sigmaCon(state, tuple, term));
         var againstTele = dt.params().view();
         var last = dt.params().last().type();
         var subst = new Subst(MutableMap.create());
@@ -316,7 +316,7 @@ public final class ExprTycker extends Tycker {
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
         if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
-          yield fail(lam, term, BadTypeError.pi(lam, term));
+          yield fail(lam, term, BadTypeError.pi(state, lam, term));
         }
         var param = lam.param();
         if (param.explicit() != dt.param().explicit()) {
@@ -329,7 +329,7 @@ public final class ExprTycker extends Tycker {
         var comparison = unifyTy(result, type, lamParam.sourcePos());
         if (comparison != null) {
           // TODO: maybe also report this unification failure?
-          yield fail(lam, dt, BadTypeError.lamParam(lam, type, result));
+          yield fail(lam, dt, BadTypeError.lamParam(state, lam, type, result));
         } else type = result;
         var resultParam = new Term.Param(var, type, param.explicit());
         var body = dt.substBody(resultParam.toTerm());
@@ -370,8 +370,8 @@ public final class ExprTycker extends Tycker {
   }
   */
 
-  public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-    super(reporter, new TyckState());
+  public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+    super(reporter, new TyckState(primFactory));
     this.traceBuilder = traceBuilder;
   }
 
@@ -498,7 +498,7 @@ public final class ExprTycker extends Tycker {
    */
   void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (unification != null) reporter.report(new UnifyError(loc, upper, lower, unification));
+    if (unification != null) reporter.report(new UnifyError(loc, upper, lower, unification, state));
   }
 
   /**
@@ -519,7 +519,7 @@ public final class ExprTycker extends Tycker {
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return new Result(term, lower);
     return fail(term.freezeHoles(state), upper, new UnifyError(loc,
-      upper.freezeHoles(state), lower.freezeHoles(state), failureData));
+      upper.freezeHoles(state), lower.freezeHoles(state), failureData, state));
   }
 
   public int ensureUniv(@NotNull Expr expr, @NotNull Term term) {
@@ -531,7 +531,7 @@ public final class ExprTycker extends Tycker {
         yield hole.ulift();
       }
       default -> {
-        reporter.report(BadTypeError.univ(expr, term));
+        reporter.report(BadTypeError.univ(state, expr, term));
         yield 0;
       }
     };

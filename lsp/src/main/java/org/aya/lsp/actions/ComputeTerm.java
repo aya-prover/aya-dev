@@ -5,11 +5,13 @@ package org.aya.lsp.actions;
 import kala.tuple.Unit;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
+import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.utils.XY;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.TyckState;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,16 +23,21 @@ public final class ComputeTerm implements SyntaxNodeAction {
   private final @NotNull LibrarySource source;
   private final @NotNull Kind kind;
 
-  public enum Kind {
-    Type(ExprTycker.Result::type),
-    Id(ExprTycker.Result::wellTyped),
-    Nf(term -> term.wellTyped().normalize(null, NormalizeMode.NF)),
-    Whnf(term -> term.wellTyped().normalize(null, NormalizeMode.WHNF)),
-    ;
-    private final Function<ExprTycker.Result, Term> map;
+  public record Kind(@NotNull PrimDef.Factory primFactory, @NotNull Function<ExprTycker.Result, Term> map) {
+    public static @NotNull Kind type(@NotNull PrimDef.Factory primFactory) {
+      return new Kind(primFactory, ExprTycker.Result::type);
+    }
 
-    Kind(Function<ExprTycker.Result, Term> map) {
-      this.map = map;
+    public static @NotNull Kind id(@NotNull PrimDef.Factory primFactory) {
+      return new Kind(primFactory, ExprTycker.Result::wellTyped);
+    }
+
+    public static @NotNull Kind nf(@NotNull PrimDef.Factory primFactory) {
+      return new Kind(primFactory, term -> term.wellTyped().normalize(new TyckState(primFactory), NormalizeMode.NF));
+    }
+
+    public static @NotNull Kind whnf(@NotNull PrimDef.Factory primFactory) {
+      return new Kind(primFactory, term -> term.wellTyped().normalize(new TyckState(primFactory), NormalizeMode.WHNF));
     }
   }
 

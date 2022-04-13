@@ -31,10 +31,11 @@ public class TracingTest {
   }
 
   @NotNull private Trace.Builder mkBuilder(@Language("TEXT") String code) {
-    var decls = TyckDeclTest.successDesugarDecls(code);
+    var res =  TyckDeclTest.successDesugarDecls(code);
+    var decls = res._2;
     var builder = new Trace.Builder();
     decls.forEach(decl -> {
-      if (decl instanceof Decl signatured) TyckDeclTest.tyck(signatured, builder);
+      if (decl instanceof Decl signatured) TyckDeclTest.tyck(res._1, signatured, builder);
     });
     return builder;
   }

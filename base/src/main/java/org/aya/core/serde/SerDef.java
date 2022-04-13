@@ -123,7 +123,7 @@ public sealed interface SerDef extends Serializable {
     @Override
     public @NotNull Def de(SerTerm.@NotNull DeState state) {
       var defVar = DefVar.<PrimDef, Decl.PrimDecl>empty(name.id);
-      var def = PrimDef.Factory.INSTANCE.getOrCreate(name, defVar);
+      var def = state.primFactory().getOrCreate(name, defVar);
       state.putPrim(module, name, def.ref);
       return def;
     }

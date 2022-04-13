@@ -3,21 +3,15 @@
 package org.aya.core;
 
 import kala.tuple.Unit;
-import org.aya.core.def.PrimDef;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.tyck.TyckDeclTest;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SuedeTest {
-  @BeforeEach public void cleanup() {
-    PrimDef.Factory.INSTANCE.clear();
-  }
-
   @Test public void nat() {
     suedeAll("""
       open data Nat : Type | zero | suc Nat
@@ -69,9 +63,10 @@ public class SuedeTest {
   }
 
   private void suedeAll(@Language("TEXT") @NotNull String code) {
-    var state = new SerTerm.DeState();
+    var res = TyckDeclTest.successTyckDecls(code);
+    var state = new SerTerm.DeState(res._1);
     var serializer = new Serializer(new Serializer.State());
-    TyckDeclTest.successTyckDecls(code).view()
+    res._2.view()
       .map(def -> def.accept(serializer, Unit.unit()))
       .map(ser -> ser.de(state))
       .forEach(Assertions::assertNotNull);

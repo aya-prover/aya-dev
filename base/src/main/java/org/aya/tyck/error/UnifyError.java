@@ -8,6 +8,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.DefEq;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,8 @@ public record UnifyError(
   @Override @NotNull Expr expr,
   @NotNull Term expected,
   @NotNull Term actual,
-  @NotNull DefEq.FailureData failureData
+  @NotNull DefEq.FailureData failureData,
+  @NotNull TyckState state
 ) implements ExprProblem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     var actualDoc = actual.toDoc(options);
@@ -25,13 +27,13 @@ public record UnifyError(
       Doc.par(1, expr.toDoc(options)),
       Doc.english("of type"),
       Doc.par(1, actualDoc));
-    var actualNFDoc = actual.normalize(null, NormalizeMode.NF).toDoc(options);
+    var actualNFDoc = actual.normalize(state, NormalizeMode.NF).toDoc(options);
     if (!actualNFDoc.equals(actualDoc))
       buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualNFDoc))));
     var expectedDoc = expected.toDoc(options);
     buf.append(Doc.english("against the type"));
     buf.append(Doc.par(1, expectedDoc));
-    var expectedNFDoc = expected.normalize(null, NormalizeMode.NF).toDoc(options);
+    var expectedNFDoc = expected.normalize(state, NormalizeMode.NF).toDoc(options);
     if (!expectedNFDoc.equals(expectedDoc))
       buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expectedNFDoc))));
     var failureLhs = failureData.lhs().toDoc(options);

@@ -8,6 +8,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.core.Meta;
+import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
@@ -32,10 +33,11 @@ import org.jetbrains.annotations.Nullable;
 public record TyckState(
   @NotNull MutableList<Eqn> eqns,
   @NotNull MutableList<WithPos<Meta>> activeMetas,
-  @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas
+  @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas,
+  @NotNull PrimDef.Factory primFactory
 ) {
-  public TyckState() {
-    this(MutableList.create(), MutableList.create(), MutableMap.create());
+  public TyckState(@NotNull PrimDef.Factory primFactory) {
+    this(MutableList.create(), MutableList.create(), MutableMap.create(), primFactory);
   }
 
   /**

@@ -3,6 +3,7 @@
 package org.aya.test;
 
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.core.def.PrimDef;
 import org.aya.util.FileUtil;
 import org.aya.util.reporter.ThrowingReporter;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,6 @@ public class LibraryTest {
   }
 
   private static int compile() throws IOException {
-    return LibraryCompiler.compile(ThrowingReporter.INSTANCE, TestRunner.flags(), DIR);
+    return LibraryCompiler.compile(new PrimDef.Factory(), ThrowingReporter.INSTANCE, TestRunner.flags(), DIR);
   }
 }
