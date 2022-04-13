@@ -408,6 +408,7 @@ public final class DefEq {
     // removing this does not break anything.
     // Update: this is still needed, see #327 last task (`coe'`)
     var resultTy = preRhs.computeType(state, ctx);
+    // resultTy might be an ErrorTerm, what to do?
     if (meta.result != null) {
       var liftedType = meta.result.subst(Subst.EMPTY, lhs.ulift());
       compareUntyped(resultTy, liftedType, rl, lr);

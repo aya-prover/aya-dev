@@ -110,7 +110,7 @@ public sealed interface Term extends AyaDocile permits
     return subst(Subst.EMPTY, ulift);
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
-    return accept(new LittleTyper(state, ctx), Unit.unit());
+    return new LittleTyper(state, ctx).term(this);
   }
 
   interface Visitor<P, R> {
