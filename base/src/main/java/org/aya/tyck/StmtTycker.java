@@ -14,6 +14,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimProblem;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
@@ -137,6 +138,8 @@ public record StmtTycker(
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
         fn.signature = new Def.Signature(resultTele, resultRes);
+        if (resultTele.isEmpty() && fn.body.isRight() && fn.body.getRightValue().isEmpty())
+          reporter.report(new NobodyError(decl.sourcePos, fn.ref));
       }
       case Decl.DataDecl data -> {
         var pos = data.sourcePos;
