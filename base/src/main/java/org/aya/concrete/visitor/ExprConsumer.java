@@ -52,6 +52,10 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
+  @Override
+  default Unit visitInterval(Expr.@NotNull IntervalExpr expr, P p) {
+    return Unit.unit();
+  }
   @Override default Unit visitApp(Expr.@NotNull AppExpr expr, P p) {
     expr.argument().expr().accept(this, p);
     return expr.function().accept(this, p);
