@@ -69,7 +69,7 @@ public interface StmtResolver {
         var bodyResolver = local._1.body();
         bodyResolver.enterBody();
         decl.body = decl.body.map(
-          expr -> expr.accept(bodyResolver, local._2),
+          expr -> bodyResolver.resolve(expr, local._2),
           pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
         addReferences(info, new TyckOrder.Body(decl), local._1);
       }
@@ -82,12 +82,12 @@ public interface StmtResolver {
           bodyResolver.enterHead();
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
           field.telescope = fieldLocal._1.toImmutableSeq();
-          field.result = field.result.accept(bodyResolver, fieldLocal._2);
+          field.result = bodyResolver.resolve(field.result, fieldLocal._2);
           addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));
 
           bodyResolver.enterBody();
-          field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
+          field.body = field.body.map(e -> bodyResolver.resolve(e, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
           addReferences(info, new TyckOrder.Body(field), bodyResolver);
         });
@@ -104,7 +104,8 @@ public interface StmtResolver {
       case Generalize variables -> {
         var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
         resolver.enterBody();
-        variables.type = variables.type.accept(resolver, variables.ctx);
+        assert variables.ctx != null;
+        variables.type = resolver.resolve(variables.type, variables.ctx);
         addReferences(info, new TyckOrder.Body(variables), resolver);
       }
     }
@@ -129,7 +130,7 @@ public interface StmtResolver {
     decl.telescope = local._1
       .prependedAll(resolver.allowedGeneralizes().valuesView())
       .toImmutableSeq();
-    decl.result = decl.result.accept(resolver, local._2);
+    decl.result = resolver.resolve(decl.result, local._2);
     return Tuple.of(resolver, local._2);
   }
 
@@ -198,7 +199,7 @@ public interface StmtResolver {
     var ctx = new Ref<>(context);
     var pats = match.patterns.map(pat -> subpatterns(ctx, pat));
     return new Pattern.Clause(match.sourcePos, pats,
-      match.expr.map(e -> e.accept(bodyResolver, ctx.value)));
+      match.expr.map(e -> bodyResolver.resolve(e, ctx.value)));
   }
 
   static @NotNull Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
