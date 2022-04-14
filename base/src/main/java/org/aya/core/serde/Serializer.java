@@ -85,6 +85,11 @@ public record Serializer(@NotNull Serializer.State state) implements
     throw new AssertionError("Shall not have metaPats serialized.");
   }
 
+  @Override
+  public SerTerm visitIntervalRef(FormTerm.@NotNull Interval interval, Unit unit) {
+    return new SerTerm.Interval();
+  }
+
   @Override public SerTerm visitHole(CallTerm.@NotNull Hole term, Unit unit) {
     throw new AssertionError("Shall not have holes serialized.");
   }

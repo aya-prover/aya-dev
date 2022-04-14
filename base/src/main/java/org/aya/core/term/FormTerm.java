@@ -68,4 +68,10 @@ public sealed interface FormTerm extends Term {
     }
 
   }
+
+  record Interval() implements Term {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitIntervalRef(this, p);
+    }
+  }
 }

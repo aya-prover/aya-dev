@@ -136,6 +136,7 @@ public interface TermView {
       case RefTerm.Field field -> field;
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
+      case FormTerm.Interval interval -> interval;
       case ErrorTerm error -> error;
     };
   }

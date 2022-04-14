@@ -352,6 +352,7 @@ public final class DefEq {
         if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
         yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
       }
+      case FormTerm.Interval lhs -> preRhs instanceof FormTerm.Interval rhs ? lhs : null;
       // See compareApprox for why we don't compare these
       case CallTerm.Fn lhs -> null;
       case CallTerm.Data lhs -> {

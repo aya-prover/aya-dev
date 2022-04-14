@@ -208,4 +208,11 @@ public sealed interface SerTerm extends Serializable {
       return new RefTerm.Field(state.resolve(name), ulift);
     }
   }
+
+  record Interval() implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new FormTerm.Interval();
+    }
+  }
 }

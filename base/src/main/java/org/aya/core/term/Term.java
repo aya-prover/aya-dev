@@ -37,7 +37,7 @@ import org.jetbrains.annotations.TestOnly;
  */
 public sealed interface Term extends AyaDocile permits
   CallTerm, ElimTerm, ErrorTerm, FormTerm, IntroTerm,
-  RefTerm, RefTerm.Field, RefTerm.MetaPat {
+  RefTerm, RefTerm.Field, RefTerm.MetaPat, FormTerm.Interval {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -137,6 +137,7 @@ public sealed interface Term extends AyaDocile permits
     R visitFieldRef(@NotNull RefTerm.Field field, P p);
     R visitError(@NotNull ErrorTerm error, P p);
     R visitMetaPat(@NotNull RefTerm.MetaPat metaPat, P p);
+    R visitIntervalRef(@NotNull FormTerm.Interval interval, P p);
   }
 
   /**

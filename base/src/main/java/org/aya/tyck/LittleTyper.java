@@ -30,6 +30,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term);
       case RefTerm.Field field -> Def.defType(field.ref());
+      case FormTerm.Interval interval -> new FormTerm.Univ(0);
       case CallTerm.Access access -> {
         var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
         if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
