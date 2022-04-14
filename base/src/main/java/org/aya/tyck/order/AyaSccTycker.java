@@ -96,7 +96,7 @@ public record AyaSccTycker(
     stmts.forEach(stmt -> {
       var reference = MutableList.<TyckUnit>create();
       SigRefFinder.HEADER_ONLY.visit(stmt, reference);
-      var filter = reference.view().filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName()));
+      var filter = reference.filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName()));
       // If your telescope uses yourself, you should reject the function. --- ice1000
       // note: just check direct references, indirect ones will be checked using topological order
       if (filter.contains(stmt)) {
@@ -106,7 +106,7 @@ public record AyaSccTycker(
       graph.sucMut(stmt).appendAll(filter);
     });
     var order = graph.topologicalOrder();
-    var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
+    var cycle = order.filter(s -> s.sizeGreaterThan(1));
     if (cycle.isNotEmpty()) {
       cycle.forEach(c -> reporter.report(new TyckOrderProblem.CircularSignatureError(c)));
       throw new SCCTyckingFailed(forError);
