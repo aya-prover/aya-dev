@@ -21,8 +21,8 @@ import org.aya.terck.CallResolver;
 import org.aya.terck.error.NonTerminating;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
-import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.error.CounterexampleError;
+import org.aya.tyck.error.TyckOrderProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.MutableGraph;
 import org.aya.util.reporter.BufferReporter;
@@ -32,6 +32,8 @@ import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Function;
 
 /**
  * Tyck statements in SCC.
@@ -66,12 +68,50 @@ public record AyaSccTycker(
   }
 
   private void checkMutual(@NotNull ImmutableSeq<TyckOrder> scc) {
-    if (scc.allMatch(t -> t instanceof TyckOrder.Head)) {
-      reporter.report(new CircularSignatureError(scc.map(TyckOrder::unit)));
-      throw new SCCTyckingFailed(scc);
+    var unit = scc.stream().map(TyckOrder::unit).distinct().collect(ImmutableSeq.factory());
+    // the flattened dependency graph (FDG) lose information about header order, in other words,
+    // FDG treats all order as body order, so it allows all kinds of mutual recursion to be generated.
+    // To detect circular dependency in signatures which we forbid, we have to apply the old way,
+    // that is, what we did before https://github.com/aya-prover/aya-dev/pull/326
+    var headerOrder = headerOrder(scc, unit);
+    if (headerOrder.sizeEquals(1)) {
+      checkUnit(new TyckOrder.Body(headerOrder.first()));
+    } else {
+      var tyckTasks = headerOrder.view()
+        .<TyckOrder>map(TyckOrder.Head::new)
+        .appendedAll(headerOrder.map(TyckOrder.Body::new))
+        .toImmutableSeq();
+      tyckTasks.forEach(this::check);
+      terck(tyckTasks.view());
     }
-    scc.forEach(this::check);
-    terck(scc.view());
+  }
+
+  /**
+   * Generate the order of dependency of headers, fail if a cycle occurs.
+   *
+   * @author re-xyr, kiva
+   */
+  public @NotNull ImmutableSeq<TyckUnit> headerOrder(@NotNull ImmutableSeq<TyckOrder> forError, @NotNull ImmutableSeq<TyckUnit> stmts) {
+    var graph = MutableGraph.<TyckUnit>create();
+    stmts.forEach(stmt -> {
+      var reference = MutableList.<TyckUnit>create();
+      SigRefFinder.HEADER_ONLY.visit(stmt, reference);
+      var filter = reference.filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName()));
+      // If your telescope uses yourself, you should reject the function. --- ice1000
+      // note: just check direct references, indirect ones will be checked using topological order
+      if (filter.contains(stmt)) {
+        reporter.report(new TyckOrderProblem.SelfReferenceError(stmt));
+        throw new SCCTyckingFailed(forError);
+      }
+      graph.sucMut(stmt).appendAll(filter);
+    });
+    var order = graph.topologicalOrder();
+    var cycle = order.filter(s -> s.sizeGreaterThan(1));
+    if (cycle.isNotEmpty()) {
+      cycle.forEach(c -> reporter.report(new TyckOrderProblem.CircularSignatureError(c)));
+      throw new SCCTyckingFailed(forError);
+    }
+    return order.flatMap(Function.identity());
   }
 
   private void checkUnit(@NotNull TyckOrder order) {
@@ -84,11 +124,11 @@ public record AyaSccTycker(
     }
   }
 
-  private boolean hasSuc(
-    @NotNull MutableGraph<TyckOrder> G,
-    @NotNull MutableSet<TyckOrder> book,
-    @NotNull TyckOrder vertex,
-    @NotNull TyckOrder suc
+  private <T> boolean hasSuc(
+    @NotNull MutableGraph<T> G,
+    @NotNull MutableSet<T> book,
+    @NotNull T vertex,
+    @NotNull T suc
   ) {
     if (book.contains(vertex)) return false;
     book.add(vertex);
@@ -99,12 +139,12 @@ public record AyaSccTycker(
     return false;
   }
 
-  private boolean isRecursive(@NotNull TyckOrder unit) {
-    return hasSuc(resolveInfo.depGraph(), MutableSet.create(), unit, unit);
+  private <T> boolean selfReferencing(@NotNull MutableGraph<T> graph, @NotNull T unit) {
+    return hasSuc(graph, MutableSet.create(), unit, unit);
   }
 
   private void checkSimpleFn(@NotNull TyckOrder order, @NotNull Decl.FnDecl fn) {
-    if (isRecursive(order)) {
+    if (selfReferencing(resolveInfo.depGraph(), order)) {
       reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
@@ -164,7 +204,7 @@ public record AyaSccTycker(
 
   private void terck(@NotNull SeqView<TyckOrder> units) {
     var recDefs = units.filterIsInstance(TyckOrder.Body.class)
-      .filter(this::isRecursive)
+      .filter(u -> selfReferencing(resolveInfo.depGraph(), u))
       .map(TyckOrder::unit);
     if (recDefs.isEmpty()) return;
     // TODO: terck other definitions
