@@ -21,8 +21,8 @@ import org.aya.terck.CallResolver;
 import org.aya.terck.error.NonTerminating;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
-import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.error.CounterexampleError;
+import org.aya.tyck.error.TyckOrderProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.MutableGraph;
 import org.aya.util.reporter.BufferReporter;
@@ -100,7 +100,7 @@ public record AyaSccTycker(
       // If your telescope uses yourself, you should reject the function. --- ice1000
       // note: just check direct references, indirect ones will be checked using topological order
       if (filter.contains(stmt)) {
-        reporter.report(new CircularSignatureError(ImmutableSeq.of(stmt)));
+        reporter.report(new TyckOrderProblem.SelfReferenceError(stmt));
         throw new SCCTyckingFailed(forError);
       }
       graph.sucMut(stmt).appendAll(filter);
@@ -108,7 +108,7 @@ public record AyaSccTycker(
     var order = graph.topologicalOrder();
     var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
     if (cycle.isNotEmpty()) {
-      cycle.forEach(c -> reporter.report(new CircularSignatureError(c)));
+      cycle.forEach(c -> reporter.report(new TyckOrderProblem.CircularSignatureError(c)));
       throw new SCCTyckingFailed(forError);
     }
     return order.flatMap(Function.identity());
