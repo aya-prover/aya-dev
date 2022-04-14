@@ -47,7 +47,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override
   @NotNull
-  default Term visitIntervalRef(FormTerm.@NotNull Interval interval, P p) {
+  default Term visitInterval(FormTerm.@NotNull Interval interval, P p) {
     return interval;
   }
 

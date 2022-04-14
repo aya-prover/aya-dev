@@ -114,7 +114,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override
-  default Unit visitIntervalRef(FormTerm.@NotNull Interval interval, P p) {
+  default Unit visitInterval(FormTerm.@NotNull Interval interval, P p) {
     return Unit.unit();
   }
 

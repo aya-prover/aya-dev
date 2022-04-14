@@ -86,7 +86,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override
-  public SerTerm visitIntervalRef(FormTerm.@NotNull Interval interval, Unit unit) {
+  public SerTerm visitInterval(FormTerm.@NotNull Interval interval, Unit unit) {
     return new SerTerm.Interval();
   }
 
