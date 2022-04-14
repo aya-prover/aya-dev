@@ -96,8 +96,14 @@ public record AyaSccTycker(
     stmts.forEach(stmt -> {
       var reference = MutableList.<TyckUnit>create();
       SigRefFinder.HEADER_ONLY.visit(stmt, reference);
-      graph.sucMut(stmt).appendAll(reference.view()
-        .filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName())));
+      var filter = reference.view().filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName()));
+      // If your telescope uses yourself, you should reject the function. --- ice1000
+      // note: just check direct references, indirect ones will be checked using topological order
+      if (filter.contains(stmt)) {
+        reporter.report(new CircularSignatureError(ImmutableSeq.of(stmt)));
+        throw new SCCTyckingFailed(forError);
+      }
+      graph.sucMut(stmt).appendAll(filter);
     });
     var order = graph.topologicalOrder();
     var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
@@ -118,11 +124,11 @@ public record AyaSccTycker(
     }
   }
 
-  private boolean hasSuc(
-    @NotNull MutableGraph<TyckOrder> G,
-    @NotNull MutableSet<TyckOrder> book,
-    @NotNull TyckOrder vertex,
-    @NotNull TyckOrder suc
+  private <T> boolean hasSuc(
+    @NotNull MutableGraph<T> G,
+    @NotNull MutableSet<T> book,
+    @NotNull T vertex,
+    @NotNull T suc
   ) {
     if (book.contains(vertex)) return false;
     book.add(vertex);
@@ -133,12 +139,12 @@ public record AyaSccTycker(
     return false;
   }
 
-  private boolean isRecursive(@NotNull TyckOrder unit) {
-    return hasSuc(resolveInfo.depGraph(), MutableSet.create(), unit, unit);
+  private <T> boolean selfReferencing(@NotNull MutableGraph<T> graph, @NotNull T unit) {
+    return hasSuc(graph, MutableSet.create(), unit, unit);
   }
 
   private void checkSimpleFn(@NotNull TyckOrder order, @NotNull Decl.FnDecl fn) {
-    if (isRecursive(order)) {
+    if (selfReferencing(resolveInfo.depGraph(), order)) {
       reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
@@ -198,7 +204,7 @@ public record AyaSccTycker(
 
   private void terck(@NotNull SeqView<TyckOrder> units) {
     var recDefs = units.filterIsInstance(TyckOrder.Body.class)
-      .filter(this::isRecursive)
+      .filter(u -> selfReferencing(resolveInfo.depGraph(), u))
       .map(TyckOrder::unit);
     if (recDefs.isEmpty()) return;
     // TODO: terck other definitions

@@ -5,7 +5,7 @@ In file $FILE:1:4 ->
   2 | 
   3 | def f g => g
 
-Error: The recursive definition `a` is not structurally recursive
+Error: Circular signature dependency found between a
 
 In file $FILE:4:4 ->
 
