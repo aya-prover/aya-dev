@@ -132,6 +132,7 @@ literal : qualifiedId
         | NUMBER
         | STRING
         | TYPE
+        | I
         ;
 
 tele : literal

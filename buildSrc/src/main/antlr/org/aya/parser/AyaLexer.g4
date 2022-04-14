@@ -48,6 +48,7 @@ PRIM : 'prim';
 EXTENDS : 'extends';
 NEW_KW : 'new';
 PATTERN_KW : 'pattern';
+I: 'I';
 
 // Unimplemented but reserved
 DO_KW : 'do';
