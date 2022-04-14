@@ -90,6 +90,14 @@ public record Serializer(@NotNull Serializer.State state) implements
     return new SerTerm.Interval();
   }
 
+  @Override public SerTerm visitLeft(FormTerm.@NotNull Left left, Unit unit) {
+    return new SerTerm.Left();
+  }
+
+  @Override public SerTerm visitRight(FormTerm.@NotNull Right right, Unit unit) {
+    return new SerTerm.Right();
+  }
+
   @Override public SerTerm visitHole(CallTerm.@NotNull Hole term, Unit unit) {
     throw new AssertionError("Shall not have holes serialized.");
   }

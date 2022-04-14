@@ -231,6 +231,11 @@ public final class ExprTycker extends Tycker {
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
         Constants.randomName(hole), hole.sourcePos())._2);
       case Expr.ErrorExpr err -> Result.error(err.description());
+      case Expr.LitIntExpr lit -> switch(lit.integer()) {
+        case 0 -> new Result(new FormTerm.Left(), new FormTerm.Interval());
+        case 1 -> new Result(new FormTerm.Right(), new FormTerm.Interval());
+        default -> fail(expr, new NoRuleError(expr, null));
+      };
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }

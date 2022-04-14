@@ -117,6 +117,13 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   default Unit visitIntervalRef(FormTerm.@NotNull Interval interval, P p) {
     return Unit.unit();
   }
+
+  @Override default Unit visitLeft(FormTerm.@NotNull Left left, P p) {
+    return Unit.unit();
+  }
+  @Override default Unit visitRight(FormTerm.@NotNull Right right, P p) {
+    return Unit.unit();
+  }
   @Override default Unit visitProj(@NotNull ElimTerm.Proj term, P p) {
     return term.of().accept(this, p);
   }

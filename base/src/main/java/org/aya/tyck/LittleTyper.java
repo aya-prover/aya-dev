@@ -30,7 +30,6 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term);
       case RefTerm.Field field -> Def.defType(field.ref());
-      case FormTerm.Interval interval -> new FormTerm.Univ(0);
       case CallTerm.Access access -> {
         var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
         if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
@@ -76,6 +75,9 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
+      case FormTerm.Interval interval -> new FormTerm.Univ(0);
+      case FormTerm.Right right -> new FormTerm.Interval();
+      case FormTerm.Left left -> new FormTerm.Interval();
     };
   }
 

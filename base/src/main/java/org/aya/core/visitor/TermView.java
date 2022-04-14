@@ -63,6 +63,9 @@ public interface TermView {
         yield new FormTerm.Sigma(params);
       }
       case FormTerm.Univ univ -> univ;
+      case FormTerm.Interval interval -> interval;
+      case FormTerm.Left left -> left;
+      case FormTerm.Right right -> right;
       case IntroTerm.Lambda lambda -> {
         var param = commit(lambda.param());
         var body = commit(lambda.body());
@@ -136,7 +139,6 @@ public interface TermView {
       case RefTerm.Field field -> field;
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
-      case FormTerm.Interval interval -> interval;
       case ErrorTerm error -> error;
     };
   }
