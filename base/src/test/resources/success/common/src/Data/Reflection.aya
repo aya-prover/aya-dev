@@ -11,9 +11,7 @@ def Arg(t: Type) => Sig t ** Explicit
 def Args(t: Type) => List (Arg t)
 def Meta => Nat -- should be a primitive
 
-data Lvl: Type
-    | const Nat
-    | ref Name (lift: Nat)
+def Lvl => Nat
 
 def Sort => List Lvl
 
@@ -128,7 +126,7 @@ struct Hole: Type
 -----------------------------PATTERNS--------------------------------------
 ---------------------------------------------------------------------------
 
-open data Pat: Type
+data Pat: Type
     | catch-all Explicit Name (ty: Term)
     | meta MetaPat
     | absurd Explicit
@@ -146,3 +144,22 @@ struct MetaPat: Type
 struct Match: Type
     | pats: List Pat
     | body: Term
+
+struct Field: Type
+| name: Name
+| bindings: Tele
+| body: Expr
+
+
+data Expr: Type
+| ref     Expr
+| lam     Name (dom: Expr) (body: Expr)
+| pi      Name (dom: Expr) (cod: Expr)
+| sigma   Name (fst: Expr) (snd: Expr)
+| univ    Lvl
+| app     Expr Expr
+| tup     (List Expr)
+| newEx   Expr (List Field)
+| hole    Name Expr
+
+
