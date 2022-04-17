@@ -1,20 +1,21 @@
 name : nightly
 on :
   push :
-    branches : [ main, auto-release ]
+    branches : [ main, when-i-am-free ]
 jobs :
   move-tag :
     runs-on : ubuntu-latest
     steps :
       - name : Move ci tag
-        uses : weareyipyip/walking-tag-action@v2
-        with :
-          tag-name : nightly-build
-          tag-message : |
-            Last commit build by the CI
+        run : |
+          mkdir repo
+          git clone -b "$BRANCH_NAME" "https://github.com/${GITHUB_REPOSITORY}" repo
+          cd repo
+          bash .github/workflows/move-tag.sh "nightly-build" "Last commit build by the CI"
         env :
           GITHUB_TOKEN : ${{ secrets.GH_TOKEN }}
-        if : github.ref == 'refs/heads/main' || github.ref == 'refs/heads/auto-release'
+          BRANCH_NAME : ${{ github.head_ref || github.ref_name }}
+        if : github.ref == 'refs/heads/main' || github.ref == 'refs/heads/when-i-am-free'
 
   nightly-build :
     needs : [ move-tag ]
@@ -56,7 +57,7 @@ jobs :
         with :
           files : ./lsp/build/image
           dest : aya-prover-jlink-${{ matrix.os }}_x86-64.zip
-        if : matrix.os == 'windows-latest' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/auto-release')
+        if : matrix.os == 'windows-latest' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/when-i-am-free')
 
       - name : Zip Artifacts (Unix)
         run : |
@@ -78,5 +79,5 @@ jobs :
           assets : aya-prover-jlink-${{ matrix.os }}_x86-64.zip;./lsp-fatjar.jar;./cli-fatjar.jar
           replace_assets : true
           github_token : ${{ secrets.GH_TOKEN }}
-        if : github.ref == 'refs/heads/main' || github.ref == 'refs/heads/auto-release'
+        if : github.ref == 'refs/heads/main' || github.ref == 'refs/heads/when-i-am-free'
 
