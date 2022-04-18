@@ -12,6 +12,7 @@ import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.CachedModuleLoader;
@@ -20,7 +21,6 @@ import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.FileUtil;
 import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,7 +57,7 @@ record LibraryModuleLoader(
     }
   }
 
-  @Override public @Nullable ResolveInfo
+  @Override public @NotNull ResolveInfo
   load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
     var basePaths = owner.modulePath();
     var sourcePath = FileUtil.resolveFile(basePaths, mod, ".aya");
@@ -91,7 +91,7 @@ record LibraryModuleLoader(
     });
   }
 
-  private @Nullable ResolveInfo loadCompiledCore(
+  private @NotNull ResolveInfo loadCompiledCore(
     @NotNull ImmutableSeq<String> mod, @NotNull Path corePath,
     @NotNull Path sourcePath, @NotNull ModuleLoader recurseLoader
   ) {
@@ -101,7 +101,7 @@ record LibraryModuleLoader(
       var compiledAya = (CompiledAya) inputStream.readObject();
       return compiledAya.toResolveInfo(recurseLoader, context, states().de());
     } catch (IOException | ClassNotFoundException e) {
-      return null;
+      throw new InternalException("Compiled aya found but cannot be loaded", e);
     }
   }
 
