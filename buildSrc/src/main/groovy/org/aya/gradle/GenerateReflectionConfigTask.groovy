@@ -27,9 +27,16 @@ class GenerateReflectionConfigTask extends DefaultTask {
       .filter(line -> !line.startsWith("#"))
       .filter(line -> !line.isEmpty())
       .flatMap(line -> expand(line).stream())
-      .map(line -> generateConfig(line))
+      .toList()
+
+    var reflectConfig = lines.stream()
+      .map(line -> generateReflectConfig(line))
       .collect(Collectors.joining(",\n", "[\n", "]\n"))
-    Files.writeString(outputDir.toPath().resolve("reflect-config.json"), lines)
+    var serializeConfig = lines.stream()
+      .map(line -> generateSerializeConfig(line))
+      .collect(Collectors.joining(",\n", "[\n", "]\n"))
+    Files.writeString(outputDir.toPath().resolve("reflect-config.json"), reflectConfig)
+    Files.writeString(outputDir.toPath().resolve("serialization-config.json"), serializeConfig)
   }
 
   def List<String> expand(String line) {
@@ -43,7 +50,7 @@ class GenerateReflectionConfigTask extends DefaultTask {
       .toList()
   }
 
-  def String generateConfig(String className) {
+  def String generateReflectConfig(String className) {
     return """\
     {
       "name": "$className",
@@ -54,5 +61,9 @@ class GenerateReflectionConfigTask extends DefaultTask {
       "allDeclaredConstructors": true
     }
     """.stripIndent()
+  }
+
+  def String generateSerializeConfig(String className) {
+    return """{"name": "$className"}"""
   }
 }
