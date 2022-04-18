@@ -55,6 +55,7 @@ graalvmNative {
       sharedLibrary.set(false)
       configurationFileDirectories.from(genDir)
       useFatJar.set(true)
+      buildArgs.add("--report-unsupported-elements-at-runtime")
     }
   }
 
