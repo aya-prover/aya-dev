@@ -57,17 +57,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
       case Pat.Absurd ignored -> throw new InternalException("unreachable");
-      case Pat.Prim prim -> {
-        var core = prim.ref().core;
-        assert primFactory.leftOrRight(core);
-        switch (term) {
-          case CallTerm.Prim primCall -> {
-            if (primCall.ref() != prim.ref()) throw new Mismatch(false);
-          }
-          case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
-          default -> throw new Mismatch(true);
-        }
-      }
+      case Pat.Prim prim -> throw new InternalException("unreachable");
       case Pat.Ctor ctor -> {
         switch (term) {
           case CallTerm.Con conCall -> {

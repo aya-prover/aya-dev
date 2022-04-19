@@ -49,10 +49,6 @@ public record Conquer(
   public void visit(@NotNull Pat pat, int nth) {
     var primFactory = tycker.state.primFactory();
     switch (pat) {
-      case Pat.Prim prim -> {
-        var core = prim.ref().core;
-        assert primFactory.leftOrRight(core);
-      }
       case Pat.Ctor ctor -> {
         var params = ctor.params();
         for (var sub : params) visit(sub, nth);

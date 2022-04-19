@@ -11,6 +11,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -81,39 +82,12 @@ public final class PrimDef extends TopLevelDef {
 
   public static class Factory {
     private final class Initializer {
-      public @NotNull CallTerm.Prim intervalCall() {
-        return new CallTerm.Prim(Factory.this.getOption(ID.INTERVAL).get().ref(),
-          0, ImmutableSeq.empty());
-      }
-
-      public final @NotNull PrimSeed INTERVAL = new PrimSeed(
-        ID.INTERVAL,
-        (prim, state) -> prim,
-        ref -> new PrimDef(ref, FormTerm.Univ.ZERO, ID.INTERVAL),
-        ImmutableSeq.empty()
-      );
-      public final @NotNull PrimDef.PrimSeed LEFT = new PrimSeed(
-        ID.LEFT,
-        (prim, state) -> prim,
-        ref -> new PrimDef(ref, intervalCall(), ID.LEFT),
-        ImmutableSeq.of(ID.INTERVAL)
-      );
-
-      // Right
-      public final @NotNull PrimDef.PrimSeed RIGHT = new PrimSeed(
-        ID.RIGHT,
-        (prim, state) -> prim,
-        ref -> new PrimDef(ref, intervalCall(), ID.RIGHT),
-        ImmutableSeq.of(ID.INTERVAL)
-      );
-
       /** Arend's coe */
       private @NotNull Term arcoe(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var args = prim.args();
         var argBase = args.get(1);
         var argI = args.get(2);
-        var left = Factory.this.getOption(ID.LEFT);
-        if (argI.term() instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
+        if (argI.term() instanceof FormTerm.Left left)
           return argBase.term();
         var argA = args.get(0).term();
 
@@ -128,79 +102,65 @@ public final class PrimDef extends TopLevelDef {
 
       public final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, this::arcoe, ref -> {
         var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCall(), true);
+        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), new FormTerm.Interval(), true);
         var paramI = new LocalVar("i");
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA, 0);
-        var left = Factory.this.getOption(ID.LEFT).get();
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, 0, ImmutableSeq.empty()), true));
+        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new FormTerm.Left(), true));
         return new PrimDef(
           ref,
           ImmutableSeq.of(
             new Term.Param(paramA, paramATy, true),
             new Term.Param(new LocalVar("base"), baseAtLeft, true),
-            new Term.Param(paramI, intervalCall(), true)
+            new Term.Param(paramI, new FormTerm.Interval(), true)
           ),
           new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, 0), true)),
           ID.ARCOE
         );
-      }, ImmutableSeq.of(ID.INTERVAL, ID.LEFT));
-
-      private @NotNull Tuple2<PrimDef, PrimDef> leftRight() {
-        return Tuple.of(
-          Factory.this.getOption(ID.LEFT).get(),
-          Factory.this.getOption(ID.RIGHT).get());
-      }
+      }, ImmutableSeq.of());
 
       /** Involution, ~ in Cubical Agda */
       private @NotNull Term invol(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var arg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
-        if (arg instanceof CallTerm.Prim primCall) {
-          var lr = leftRight();
-          var left = lr._1;
-          var right = lr._2;
-          if (primCall.ref() == left.ref)
-            return new CallTerm.Prim(right.ref, 0, ImmutableSeq.empty());
-          if (primCall.ref() == right.ref)
-            return new CallTerm.Prim(left.ref, 0, ImmutableSeq.empty());
-        }
-        return new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.of(new Arg<>(arg, true)));
+        return switch (arg) {
+          case FormTerm.Left left -> new FormTerm.Right();
+          case FormTerm.Right right -> new FormTerm.Left();
+          default -> new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.of(new Arg<>(arg, true)));
+        };
       }
 
       public final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(ID.INVOL, this::invol, ref -> new PrimDef(
         ref,
-        ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCall(), true)),
-        intervalCall(),
+        ImmutableSeq.of(new Term.Param(new LocalVar("i"), new FormTerm.Interval(), true)),
+        new FormTerm.Interval(),
         ID.INVOL
-      ), ImmutableSeq.of(ID.INTERVAL));
+      ), ImmutableSeq.of());
 
       /** <code>/\</code> in CCHM, <code>I.squeeze</code> in Arend */
       private @NotNull Term squeezeLeft(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var lhsArg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var rhsArg = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
-        var lr = leftRight();
-        var left = lr._1;
-        var right = lr._2;
-        if (lhsArg instanceof CallTerm.Prim lhs) {
-          if (lhs.ref() == left.ref) return lhs;
-          if (lhs.ref() == right.ref) return rhsArg;
-        } else if (rhsArg instanceof CallTerm.Prim rhs) {
-          if (rhs.ref() == left.ref) return rhs;
-          if (rhs.ref() == right.ref) return lhsArg;
-        }
-        return prim;
+        return switch (lhsArg) {
+          case FormTerm.Left left -> left;
+          case FormTerm.Right right -> rhsArg;
+          default -> switch (rhsArg) {
+            case FormTerm.Left left -> left;
+            case FormTerm.Right right -> lhsArg;
+            default -> prim;
+          };
+        };
       }
 
       public final @NotNull PrimDef.PrimSeed SQUEEZE_LEFT =
         new PrimSeed(ID.SQUEEZE_LEFT, this::squeezeLeft, ref -> new PrimDef(
           ref,
           ImmutableSeq.of(
-            new Term.Param(new LocalVar("i"), intervalCall(), true),
-            new Term.Param(new LocalVar("j"), intervalCall(), true)),
-          intervalCall(),
+            new Term.Param(new LocalVar("i"), new FormTerm.Interval(), true),
+            new Term.Param(new LocalVar("j"), new FormTerm.Interval(), true)),
+          new FormTerm.Interval(),
           ID.SQUEEZE_LEFT
-        ), ImmutableSeq.of(ID.INTERVAL));
+        ), ImmutableSeq.of());
     }
 
     private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
@@ -210,9 +170,6 @@ public final class PrimDef extends TopLevelDef {
     public Factory() {
       var init = new Initializer();
       SEEDS = ImmutableSeq.of(
-          init.INTERVAL,
-          init.LEFT,
-          init.RIGHT,
           init.ARCOE,
           init.SQUEEZE_LEFT,
           init.INVOL
@@ -246,25 +203,12 @@ public final class PrimDef extends TopLevelDef {
     public @NotNull Term unfold(@NotNull ID name, @NotNull CallTerm.Prim primCall, @Nullable TyckState state) {
       return SEEDS.get(name).unfold.apply(primCall, state);
     }
-
-    public final @NotNull ImmutableSeq<ID> LEFT_RIGHT = ImmutableSeq.of(ID.LEFT, ID.RIGHT);
-
-    public boolean leftOrRight(PrimDef core) {
-      for (var primName : LEFT_RIGHT) {
-        var cur = getOption(primName);
-        if (cur.isNotEmpty() && core == cur.get())
-          return true;
-      }
-      return false;
-    }
-
     public void clear() {
       defs.clear();
     }
   }
 
   public enum ID {
-    INTERVAL("I"), LEFT("left"), RIGHT("right"),
     /** Short for <em>Arend coe</em>. */
     ARCOE("arcoe"),
     SQUEEZE_LEFT("squeezeL"),

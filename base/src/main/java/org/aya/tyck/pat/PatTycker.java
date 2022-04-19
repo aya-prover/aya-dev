@@ -174,12 +174,6 @@ public final class PatTycker {
       }
       case Pattern.Ctor ctor -> {
         var var = ctor.resolved().data();
-        if (term instanceof CallTerm.Prim prim
-          && prim.ref().core.id == PrimDef.ID.INTERVAL
-          && var instanceof DefVar<?, ?> defVar
-          && defVar.core instanceof PrimDef def
-          && exprTycker.state.primFactory().LEFT_RIGHT.contains(def.id)
-        ) yield new Pat.Prim(ctor.explicit(), (DefVar<PrimDef, Decl.PrimDecl>) defVar);
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();
