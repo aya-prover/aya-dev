@@ -229,6 +229,64 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
+  record Left(
+    boolean explicit
+  ) implements Pat {
+    @Override
+    public @NotNull Expr toExpr(@NotNull SourcePos pos) {
+      return new Expr.LitIntExpr(pos, 0);
+    }
+
+    @Override
+    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+      return this;
+    }
+
+    @Override
+    public @NotNull Pat zonk(@NotNull Tycker tycker) {
+      return this;
+    }
+
+    @Override
+    public @NotNull Pat inline() {
+      return this;
+    }
+
+    @Override
+    public void storeBindings(@NotNull LocalCtx localCtx) {
+      // do nothing
+    }
+  }
+
+  record Right(
+    boolean explicit
+  ) implements Pat {
+    @Override
+    public @NotNull Expr toExpr(@NotNull SourcePos pos) {
+      return new Expr.LitIntExpr(pos, 0);
+    }
+
+    @Override
+    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+      return this;
+    }
+
+    @Override
+    public @NotNull Pat zonk(@NotNull Tycker tycker) {
+      return this;
+    }
+
+    @Override
+    public @NotNull Pat inline() {
+      return this;
+    }
+
+    @Override
+    public void storeBindings(@NotNull LocalCtx localCtx) {
+      // do nothing
+    }
+  }
+
   /**
    * It's 'pre' because there are also impossible clauses, which are removed after tycking.
    *

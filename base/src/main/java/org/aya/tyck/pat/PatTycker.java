@@ -202,7 +202,12 @@ public final class PatTycker {
       }
       case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
-      case default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
+      case Pattern.Number num -> switch (num.number()) {
+        case 0 -> new Pat.Left(num.explicit());
+        case 1 -> new Pat.Right(num.explicit());
+        default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
+      };
+      default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
     };
   }
 

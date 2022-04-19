@@ -3,10 +3,7 @@
 package org.aya.core.pat;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +27,8 @@ public class PatToTerm {
       case Pat.Bind bind -> new RefTerm(bind.bind(), 0);
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new RefTerm.MetaPat(meta, 0);
+      case Pat.Left left -> new FormTerm.Left();
+      case Pat.Right right -> new FormTerm.Right();
     };
   }
 

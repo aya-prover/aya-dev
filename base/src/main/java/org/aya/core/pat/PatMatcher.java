@@ -9,10 +9,7 @@ import kala.collection.mutable.MutableHashMap;
 import kala.control.Result;
 import kala.tuple.Tuple2;
 import org.aya.core.def.PrimDef;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
@@ -92,6 +89,12 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
         var sol = meta.solution().value;
         assert sol != null : "Unsolved pattern " + meta;
         match(primFactory, sol, term);
+      }
+      case Pat.Left left -> {
+        if (term instanceof FormTerm.Right right) throw new Mismatch(true);
+      }
+      case Pat.Right right -> {
+        if (term instanceof FormTerm.Left left) throw new Mismatch(true);
       }
     }
   }

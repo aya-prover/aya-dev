@@ -55,4 +55,22 @@ public sealed interface SerPat extends Serializable {
       return new Pat.Ctor(explicit, state.resolve(name), params.map(param -> param.de(state)), ty.de(state));
     }
   }
+
+  record Left(
+    boolean explicit
+  ) implements SerPat {
+    @Override
+    public @NotNull Pat de(SerTerm.@NotNull DeState state) {
+      return new Pat.Left(explicit);
+    }
+  }
+
+  record Right(
+    boolean explicit
+  ) implements SerPat {
+    @Override
+    public @NotNull Pat de(SerTerm.@NotNull DeState state) {
+      return new Pat.Right(explicit);
+    }
+  }
 }
