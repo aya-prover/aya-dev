@@ -5,7 +5,7 @@ In file $FILE:7:4 ->
   7 | def addN (a : I) : Nat
           ^--^
 
-Error: Cannot perform pattern matching `left`
+Error: Cannot perform pattern matching `0`
 
 1 error(s), 0 warning(s).
 What are you doing?

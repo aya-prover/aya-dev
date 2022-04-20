@@ -2,7 +2,7 @@ In file $FILE:11:5 ->
 
    9 | 
   10 | def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  11 |   => new Path A (p left) (p right) { | at i j => p i}
+  11 |   => new Path A (p 0) (p 1) { | at i j => p i}
             ^----------------------------------------------^
 
 Error: Expected 1 arguments, but found 2 arguments for field at

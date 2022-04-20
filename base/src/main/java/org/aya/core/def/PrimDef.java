@@ -105,7 +105,7 @@ public final class PrimDef extends TopLevelDef {
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA, 0);
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new PrimTerm.End(false), true));
+        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new PrimTerm.End(PrimTerm.LEFT), true));
         return new PrimDef(
           ref,
           ImmutableSeq.of(

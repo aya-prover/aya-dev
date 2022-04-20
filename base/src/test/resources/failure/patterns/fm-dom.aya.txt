@@ -7,4 +7,4 @@ In file $FILE:6:2 ->
 
 Warning: The 4th clause is dominated by the other clauses, hence unreachable
 
-That looks right!
+That looks 1!

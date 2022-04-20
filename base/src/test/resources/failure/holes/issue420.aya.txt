@@ -13,4 +13,4 @@ Goal: Candidate exists:
       Context:
         {a : Nat}
 
-That looks right!
+That looks 1!

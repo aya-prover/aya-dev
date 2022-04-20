@@ -264,17 +264,17 @@ public class ParseTest {
   @Test public void parseStructs() {
     parseAndPretty(
       """
-        struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+        struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
          | at (i : I) : A i {
-           | left => a
-           | right => b
+           | 0 => a
+           | 1 => b
          }
         """,
       """
-        struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+        struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
           | at (i : I) : A i {
-            | left => a
-            | right => b
+            | 0 => a
+            | 1 => b
           }
         """
     );

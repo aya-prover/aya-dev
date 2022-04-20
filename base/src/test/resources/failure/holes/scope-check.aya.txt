@@ -2,7 +2,7 @@ In file $FILE:15:46 ->
 
   13 | 
   14 | -- https://cstheory.stackexchange.com/a/49160/50892
-  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
+  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
                                                      ^^
 
 Error: The solution
@@ -14,7 +14,7 @@ In file $FILE:15:14 ->
 
   13 | 
   14 | -- https://cstheory.stackexchange.com/a/49160/50892
-  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
+  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
                      ^^
 
 Error: Unsolved meta _
@@ -23,7 +23,7 @@ In file $FILE:15:14 ->
 
   13 | 
   14 | -- https://cstheory.stackexchange.com/a/49160/50892
-  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
+  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
                      ^^
 
 Error: Unsolved meta _

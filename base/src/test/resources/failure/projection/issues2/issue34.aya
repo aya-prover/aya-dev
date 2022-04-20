@@ -1,13 +1,10 @@
-prim I
-prim left
-prim right
-open struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
   | at (i : I) : A i {
-    | left => a
-    | right => b
+    | 0 => a
+    | 1 => b
   }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p left) (p right) { | at i => p i }
+  => new Path A (p 0) (p 1) { | at i => p i }
 def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
 
 def psqueeze {A : Type} {a a' : A} (p : a = a') (i : I) : a = p.at i => path (\j => p.at (I.squeeze i j))

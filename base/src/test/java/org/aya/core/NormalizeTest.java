@@ -45,19 +45,16 @@ public class NormalizeTest {
   @Test public void unfoldPrim() {
     var res = TyckDeclTest.successTyckDecls("""
       data Nat : Type 0 | zero | suc Nat
-      prim I
-      prim left
-      prim right
       prim arcoe
-      def xyr : Nat => arcoe (\\ i => Nat) Nat::zero left
-      def kiva : Nat => arcoe (\\ i => Nat) (Nat::suc Nat::zero) right""");
+      def xyr : Nat => arcoe (\\ i => Nat) Nat::zero 0
+      def kiva : Nat => arcoe (\\ i => Nat) (Nat::suc Nat::zero) 1""");
     var state = new TyckState(res._1);
     var defs = res._2;
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
-    assertTrue(normalizer.apply(5) instanceof CallTerm.Con conCall
+    assertTrue(normalizer.apply(2) instanceof CallTerm.Con conCall
       && Objects.equals(conCall.ref().name(), "zero")
       && conCall.conArgs().isEmpty());
-    assertTrue(normalizer.apply(6) instanceof CallTerm.Con conCall
+    assertTrue(normalizer.apply(3) instanceof CallTerm.Con conCall
       && Objects.equals(conCall.ref().name(), "suc"));
   }
 }

@@ -1,10 +1,10 @@
 In file $FILE:2:5 ->
 
-  1 | prim I
-  2 | prim I
+  1 | prim arcoe
+  2 | prim arcoe
            ^^
 
-Error: Redefinition of primitive `I`
+Error: Redefinition of primitive `arcoe`
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).

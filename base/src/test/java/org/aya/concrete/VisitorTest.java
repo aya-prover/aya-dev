@@ -35,8 +35,7 @@ public class VisitorTest {
       open data Nat : Type | zero | suc Nat
       def add (a b : Nat) : Nat
         | zero, zero => {??}
-      prim I prim left : I prim right
-      open struct Path (A : I -> Type (lsuc l)) (a : A left) (b : A right) : Type l
+      open struct Path (A : I -> Type (lsuc l)) (a : A 0) (b : A 1) : Type l
         | at (i : I) : A i { | left => a | right => b }
       open data Int : Type
         | pos Nat
