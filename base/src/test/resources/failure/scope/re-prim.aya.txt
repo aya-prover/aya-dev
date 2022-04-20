@@ -2,7 +2,7 @@ In file $FILE:2:5 ->
 
   1 | prim arcoe
   2 | prim arcoe
-           ^^
+           ^---^
 
 Error: Redefinition of primitive `arcoe`
 

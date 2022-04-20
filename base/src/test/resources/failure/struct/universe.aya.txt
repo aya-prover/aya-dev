@@ -1,4 +1,4 @@
-In file $FILE:2:14 ->
+In file $FILE:1:14 ->
 
   1 | struct Test : I
                     ^^

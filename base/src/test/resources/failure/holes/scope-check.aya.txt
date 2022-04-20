@@ -1,8 +1,8 @@
-In file $FILE:15:46 ->
+In file $FILE:12:46 ->
 
-  13 | 
-  14 | -- https://cstheory.stackexchange.com/a/49160/50892
-  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
+  10 | 
+  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  12 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
                                                      ^^
 
 Error: The solution
@@ -10,20 +10,20 @@ Error: The solution
        is not well-scoped
        In particular, these variables are not in scope: `B`
 
-In file $FILE:15:14 ->
+In file $FILE:12:14 ->
 
-  13 | 
-  14 | -- https://cstheory.stackexchange.com/a/49160/50892
-  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
+  10 | 
+  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  12 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
                      ^^
 
 Error: Unsolved meta _
 
-In file $FILE:15:14 ->
+In file $FILE:12:14 ->
 
-  13 | 
-  14 | -- https://cstheory.stackexchange.com/a/49160/50892
-  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
+  10 | 
+  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  12 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
                      ^^
 
 Error: Unsolved meta _
