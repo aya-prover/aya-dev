@@ -35,11 +35,8 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
           visitList(ctor.params(), ctor1.params());
         } else reportError(lhs, rhs);
       }
-      case Pat.Left left -> {
-        if(!(rhs instanceof Pat.Left || rhs instanceof Pat.Right)) reportError(lhs, rhs);
-      }
-      case Pat.Right right -> {
-        if(!(rhs instanceof Pat.Left || rhs instanceof Pat.Right)) reportError(lhs, rhs);
+      case Pat.End end -> {
+        if(!(rhs instanceof Pat.End rhsEnd)) reportError(lhs, rhs);
       }
     }
   }

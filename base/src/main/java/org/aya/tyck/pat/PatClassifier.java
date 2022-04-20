@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
-import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.primitive.IntObjTuple2;
@@ -16,7 +15,6 @@ import kala.value.Ref;
 import org.aya.concrete.Pattern;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
-import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
@@ -194,7 +192,7 @@ public record PatClassifier(
         var lrSplit = subPatsSeq
           .mapNotNull(subPats -> {
             var pat = head(subPats);
-            return pat instanceof Pat.Left left | pat instanceof Pat.Right right ? pat : null;
+            return pat instanceof Pat.End end ? pat : null;
           })
           .firstOption();
 
@@ -202,9 +200,9 @@ public record PatClassifier(
           var buffer = MutableList.<MCT<Term, PatErr>>create();
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
 
-          ImmutableSeq<Tuple2<Either<CallTerm.Left, CallTerm.Right>, String>> interval_items = ImmutableSeq.of(
-            Tuple2.of(Either.left(new CallTerm.Left()), "0"),
-            Tuple2.of(Either.right(new CallTerm.Right()), "1")
+          ImmutableSeq<Tuple2<PrimTerm.End, String>> interval_items = ImmutableSeq.of(
+            Tuple2.of(new PrimTerm.End(PrimTerm.LEFT), "0"),
+            Tuple2.of(new PrimTerm.End(PrimTerm.RIGHT), "1")
           );
 
           for(var item: interval_items) {
@@ -217,12 +215,8 @@ public record PatClassifier(
 
             if (classes.isNotEmpty()) {
               // We're gonna instantiate the telescope with this term!
-              Term term = item.component1().fold(
-                (left) -> left ,
-                (right) -> right
-              );
               var newTele = telescope.drop(1)
-                .map(param -> param.subst(target.ref(), term))
+                .map(param -> param.subst(target.ref(), item.component1()))
                 .toImmutableSeq().view();
               // Classify according the rest of the patterns
               var rest = classifySub(newTele, classes, false, fuel);
@@ -311,12 +305,9 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<org.aya.core.pat.Pat> subPats, int ix, Either<CallTerm.Left, CallTerm.Right> leftOrRight) {
+  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<org.aya.core.pat.Pat> subPats, int ix, PrimTerm.End end) {
     var head = head(subPats);
-    return (
-        head instanceof Pat.Left left && leftOrRight.isLeft()
-        || head instanceof Pat.Right right && leftOrRight.isRight()
-    ) ? new MCT.SubPats<>(subPats.pats(), ix) : null;
+    return head instanceof Pat.End headEnd && headEnd.val() == end.val() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
   }
 
   private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {

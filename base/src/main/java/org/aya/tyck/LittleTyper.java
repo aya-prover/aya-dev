@@ -76,8 +76,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
       case FormTerm.Interval interval -> new FormTerm.Univ(0);
-      case CallTerm.Right right -> new FormTerm.Interval();
-      case CallTerm.Left left -> new FormTerm.Interval();
+      case PrimTerm.End end -> new FormTerm.Interval();
     };
   }
 

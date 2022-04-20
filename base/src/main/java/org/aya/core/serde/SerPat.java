@@ -50,21 +50,13 @@ public sealed interface SerPat extends Serializable {
     }
   }
 
-  record Left(
+  record End(
+    boolean val,
     boolean explicit
   ) implements SerPat {
     @Override
     public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Left(explicit);
-    }
-  }
-
-  record Right(
-    boolean explicit
-  ) implements SerPat {
-    @Override
-    public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Right(explicit);
+      return new Pat.End(val, explicit);
     }
   }
 }

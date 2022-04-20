@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.ref.LocalVar;
@@ -26,8 +25,7 @@ public class PatToTerm {
       case Pat.Bind bind -> new RefTerm(bind.bind(), 0);
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new RefTerm.MetaPat(meta, 0);
-      case Pat.Left left -> new CallTerm.Left();
-      case Pat.Right right -> new CallTerm.Right();
+      case Pat.End end -> new PrimTerm.End(end.val());
     };
   }
 

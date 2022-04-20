@@ -118,12 +118,11 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  @Override default Unit visitLeft(CallTerm.@NotNull Left left, P p) {
-    return Unit.unit();
+  @Override
+  default Unit visitEnd(PrimTerm.@NotNull End end, P p) {
+    return  Unit.unit();
   }
-  @Override default Unit visitRight(CallTerm.@NotNull Right right, P p) {
-    return Unit.unit();
-  }
+
   @Override default Unit visitProj(@NotNull ElimTerm.Proj term, P p) {
     return term.of().accept(this, p);
   }

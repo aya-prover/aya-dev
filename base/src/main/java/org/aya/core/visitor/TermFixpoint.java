@@ -51,12 +51,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return interval;
   }
 
-  @Override @NotNull default Term visitLeft(CallTerm.@NotNull Left left, P p) {
-    return left;
+  @Override @NotNull default Term visitEnd(PrimTerm.@NotNull End end, P p) {
+    return end;
   }
-  @Override @NotNull default Term visitRight(CallTerm.@NotNull Right right, P p) {
-    return right;
-  }
+
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
     var dataArgs = conCall.head().dataArgs().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));

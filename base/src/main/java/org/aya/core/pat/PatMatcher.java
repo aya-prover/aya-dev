@@ -79,11 +79,10 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
         assert sol != null : "Unsolved pattern " + meta;
         match(primFactory, sol, term);
       }
-      case Pat.Left left -> {
-        if (term instanceof CallTerm.Right right) throw new Mismatch(true);
-      }
-      case Pat.Right right -> {
-        if (term instanceof CallTerm.Left left) throw new Mismatch(true);
+      case Pat.End end -> {
+        if (!(term instanceof PrimTerm.End termEnd && termEnd.val() == end.val())) {
+          throw new Mismatch(true);
+        }
       }
     }
   }

@@ -85,7 +85,7 @@ public final class PrimDef extends TopLevelDef {
         var args = prim.args();
         var argBase = args.get(1);
         var argI = args.get(2);
-        if (argI.term() instanceof CallTerm.Left left)
+        if (argI.term() instanceof PrimTerm.End end && end.left())
           return argBase.term();
         var argA = args.get(0).term();
 
@@ -105,7 +105,7 @@ public final class PrimDef extends TopLevelDef {
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA, 0);
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Left(), true));
+        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new PrimTerm.End(false), true));
         return new PrimDef(
           ref,
           ImmutableSeq.of(
@@ -121,11 +121,11 @@ public final class PrimDef extends TopLevelDef {
       /** Involution, ~ in Cubical Agda */
       private @NotNull Term invol(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var arg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
-        return switch (arg) {
-          case CallTerm.Left left -> new CallTerm.Right();
-          case CallTerm.Right right -> new CallTerm.Left();
-          default -> new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.of(new Arg<>(arg, true)));
-        };
+        if (arg instanceof PrimTerm.End end) {
+          return new PrimTerm.End(!end.val());
+        } else {
+          return new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.of(new Arg<>(arg, true)));
+        }
       }
 
       public final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(ID.INVOL, this::invol, ref -> new PrimDef(
@@ -139,15 +139,21 @@ public final class PrimDef extends TopLevelDef {
       private @NotNull Term squeezeLeft(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var lhsArg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var rhsArg = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
-        return switch (lhsArg) {
-          case CallTerm.Left left -> left;
-          case CallTerm.Right right -> rhsArg;
-          default -> switch (rhsArg) {
-            case CallTerm.Left left -> left;
-            case CallTerm.Right right -> lhsArg;
-            default -> prim;
-          };
-        };
+        if (lhsArg instanceof PrimTerm.End lhsEnd) {
+          if (lhsEnd.left()) {
+            return lhsEnd;
+          } else {
+            return rhsArg;
+          }
+        } else if (rhsArg instanceof PrimTerm.End rhsEnd) {
+          if (rhsEnd.left()) {
+            return rhsEnd;
+          } else {
+            return lhsArg;
+          }
+        }
+
+        return prim;
       }
 
       public final @NotNull PrimDef.PrimSeed SQUEEZE_LEFT =

@@ -15,13 +15,11 @@ import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
-import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
@@ -31,12 +29,12 @@ import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.error.NoRuleError;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
@@ -196,11 +194,17 @@ public final class PatTycker {
       }
       case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
-      case Pattern.Number num -> switch (num.number()) {
-        case 0 -> new Pat.Left(num.explicit());
-        case 1 -> new Pat.Right(num.explicit());
-        default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
-      };
+      case Pattern.Number num -> {
+        var map = ImmutableMap.of(
+                0, PrimTerm.LEFT,
+                1, PrimTerm.RIGHT
+        );
+        if (map.keysView().contains(num.number())) {
+          yield new Pat.End(map.get(num.number()), num.explicit());
+        } else {
+          throw new UnsupportedOperationException("Number patterns are unsupported yet");
+        }
+      }
       default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
     };
   }
