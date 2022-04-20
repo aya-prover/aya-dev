@@ -6,12 +6,10 @@ import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
-import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -87,7 +85,7 @@ public final class PrimDef extends TopLevelDef {
         var args = prim.args();
         var argBase = args.get(1);
         var argI = args.get(2);
-        if (argI.term() instanceof FormTerm.Left left)
+        if (argI.term() instanceof CallTerm.Left left)
           return argBase.term();
         var argA = args.get(0).term();
 
@@ -107,7 +105,7 @@ public final class PrimDef extends TopLevelDef {
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA, 0);
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new FormTerm.Left(), true));
+        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Left(), true));
         return new PrimDef(
           ref,
           ImmutableSeq.of(
@@ -118,14 +116,14 @@ public final class PrimDef extends TopLevelDef {
           new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, 0), true)),
           ID.ARCOE
         );
-      }, ImmutableSeq.of());
+      }, ImmutableSeq.empty());
 
       /** Involution, ~ in Cubical Agda */
       private @NotNull Term invol(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var arg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         return switch (arg) {
-          case FormTerm.Left left -> new FormTerm.Right();
-          case FormTerm.Right right -> new FormTerm.Left();
+          case CallTerm.Left left -> new CallTerm.Right();
+          case CallTerm.Right right -> new CallTerm.Left();
           default -> new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.of(new Arg<>(arg, true)));
         };
       }
@@ -135,18 +133,18 @@ public final class PrimDef extends TopLevelDef {
         ImmutableSeq.of(new Term.Param(new LocalVar("i"), new FormTerm.Interval(), true)),
         new FormTerm.Interval(),
         ID.INVOL
-      ), ImmutableSeq.of());
+      ), ImmutableSeq.empty());
 
       /** <code>/\</code> in CCHM, <code>I.squeeze</code> in Arend */
       private @NotNull Term squeezeLeft(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var lhsArg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var rhsArg = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
         return switch (lhsArg) {
-          case FormTerm.Left left -> left;
-          case FormTerm.Right right -> rhsArg;
+          case CallTerm.Left left -> left;
+          case CallTerm.Right right -> rhsArg;
           default -> switch (rhsArg) {
-            case FormTerm.Left left -> left;
-            case FormTerm.Right right -> lhsArg;
+            case CallTerm.Left left -> left;
+            case CallTerm.Right right -> lhsArg;
             default -> prim;
           };
         };
@@ -160,7 +158,7 @@ public final class PrimDef extends TopLevelDef {
             new Term.Param(new LocalVar("j"), new FormTerm.Interval(), true)),
           new FormTerm.Interval(),
           ID.SQUEEZE_LEFT
-        ), ImmutableSeq.of());
+        ), ImmutableSeq.empty());
     }
 
     private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);

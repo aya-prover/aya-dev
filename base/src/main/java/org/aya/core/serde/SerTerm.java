@@ -219,14 +219,14 @@ public sealed interface SerTerm extends Serializable {
   record Left() implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Left();
+      return new CallTerm.Left();
     }
   }
 
   record Right() implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Right();
+      return new CallTerm.Right();
     }
   }
 }

@@ -36,7 +36,6 @@ public record Serializer(@NotNull Serializer.State state) implements
         state.def(ctor.ref()),
         serializePats(ctor.params()),
         visitDataCall(ctor.type(), Unit.unit()));
-      case Pat.Prim prim -> new SerPat.Prim(prim.explicit(), state.def(prim.ref()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(), serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
       case Pat.Left left -> new SerPat.Left(left.explicit());
@@ -92,11 +91,11 @@ public record Serializer(@NotNull Serializer.State state) implements
     return new SerTerm.Interval();
   }
 
-  @Override public SerTerm visitLeft(FormTerm.@NotNull Left left, Unit unit) {
+  @Override public SerTerm visitLeft(CallTerm.@NotNull Left left, Unit unit) {
     return new SerTerm.Left();
   }
 
-  @Override public SerTerm visitRight(FormTerm.@NotNull Right right, Unit unit) {
+  @Override public SerTerm visitRight(CallTerm.@NotNull Right right, Unit unit) {
     return new SerTerm.Right();
   }
 

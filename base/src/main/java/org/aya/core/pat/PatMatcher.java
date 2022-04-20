@@ -57,7 +57,6 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
       case Pat.Absurd ignored -> throw new InternalException("unreachable");
-      case Pat.Prim prim -> throw new InternalException("unreachable");
       case Pat.Ctor ctor -> {
         switch (term) {
           case CallTerm.Con conCall -> {
@@ -81,10 +80,10 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
         match(primFactory, sol, term);
       }
       case Pat.Left left -> {
-        if (term instanceof FormTerm.Right right) throw new Mismatch(true);
+        if (term instanceof CallTerm.Right right) throw new Mismatch(true);
       }
       case Pat.Right right -> {
-        if (term instanceof FormTerm.Left left) throw new Mismatch(true);
+        if (term instanceof CallTerm.Left left) throw new Mismatch(true);
       }
     }
   }

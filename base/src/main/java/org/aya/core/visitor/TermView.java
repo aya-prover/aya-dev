@@ -64,8 +64,8 @@ public interface TermView {
       }
       case FormTerm.Univ univ -> univ;
       case FormTerm.Interval interval -> interval;
-      case FormTerm.Left left -> left;
-      case FormTerm.Right right -> right;
+      case CallTerm.Left left -> left;
+      case CallTerm.Right right -> right;
       case IntroTerm.Lambda lambda -> {
         var param = commit(lambda.param());
         var body = commit(lambda.body());

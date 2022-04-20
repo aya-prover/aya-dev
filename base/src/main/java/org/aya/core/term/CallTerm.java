@@ -182,4 +182,16 @@ public sealed interface CallTerm extends Term {
       return structArgs.concat(fieldArgs);
     }
   }
+
+  record Left() implements Term {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLeft(this, p);
+    }
+  }
+
+  record Right() implements Term {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitRight(this, p);
+    }
+  }
 }

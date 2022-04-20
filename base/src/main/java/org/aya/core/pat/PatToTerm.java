@@ -22,13 +22,12 @@ public class PatToTerm {
     return switch (pat) {
       // [ice]: this code is reachable (to substitute a telescope), but the telescope will be dropped anyway.
       case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"), 0);
-      case Pat.Prim prim -> new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.empty());
       case Pat.Ctor ctor -> visitCtor(ctor);
       case Pat.Bind bind -> new RefTerm(bind.bind(), 0);
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new RefTerm.MetaPat(meta, 0);
-      case Pat.Left left -> new FormTerm.Left();
-      case Pat.Right right -> new FormTerm.Right();
+      case Pat.Left left -> new CallTerm.Left();
+      case Pat.Right right -> new CallTerm.Right();
     };
   }
 

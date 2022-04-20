@@ -202,9 +202,9 @@ public record PatClassifier(
           var buffer = MutableList.<MCT<Term, PatErr>>create();
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
 
-          ImmutableSeq<Tuple2<Either<FormTerm.Left, FormTerm.Right>, String>> interval_items = ImmutableSeq.of(
-            Tuple2.of(Either.left(new FormTerm.Left()), "0"),
-            Tuple2.of(Either.right(new FormTerm.Right()), "1")
+          ImmutableSeq<Tuple2<Either<CallTerm.Left, CallTerm.Right>, String>> interval_items = ImmutableSeq.of(
+            Tuple2.of(Either.left(new CallTerm.Left()), "0"),
+            Tuple2.of(Either.right(new CallTerm.Right()), "1")
           );
 
           for(var item: interval_items) {
@@ -311,13 +311,7 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, Option<PrimDef> existedPrim) {
-    var head = head(subPats);
-    return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
-      || head instanceof Pat.Bind ? new MCT.SubPats<>(subPats.pats(), ix) : null;
-  }
-
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<org.aya.core.pat.Pat> subPats, int ix, Either<FormTerm.Left, FormTerm.Right> leftOrRight) {
+  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<org.aya.core.pat.Pat> subPats, int ix, Either<CallTerm.Left, CallTerm.Right> leftOrRight) {
     var head = head(subPats);
     return (
         head instanceof Pat.Left left && leftOrRight.isLeft()

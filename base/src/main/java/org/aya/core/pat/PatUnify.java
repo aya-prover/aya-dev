@@ -28,10 +28,6 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
         if (rhs instanceof Pat.Tuple tuple1) visitList(tuple.pats(), tuple1.pats());
         else reportError(lhs, rhs);
       }
-      case Pat.Prim prim -> {
-        if (!(rhs instanceof Pat.Prim prim1)) reportError(lhs, rhs);
-        else assert prim.ref() == prim1.ref();
-      }
       case Pat.Ctor ctor -> {
         if (rhs instanceof Pat.Ctor ctor1) {
           // Assumption

@@ -74,16 +74,4 @@ public sealed interface FormTerm extends Term {
       return visitor.visitInterval(this, p);
     }
   }
-
-  record Left() implements Term {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLeft(this, p);
-    }
-  }
-
-  record Right() implements Term {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitRight(this, p);
-    }
-  }
 }

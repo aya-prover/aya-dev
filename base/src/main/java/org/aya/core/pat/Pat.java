@@ -203,32 +203,6 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  record Prim(
-    boolean explicit,
-    @NotNull DefVar<PrimDef, Decl.PrimDecl> ref
-  ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      // Do nothing
-    }
-
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.RefExpr(pos, ref);
-    }
-
-    @Override
-    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      return this;
-    }
-
-    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return this;
-    }
-
-    @Override public @NotNull Pat inline() {
-      return this;
-    }
-  }
-
   record Left(
     boolean explicit
   ) implements Pat {
