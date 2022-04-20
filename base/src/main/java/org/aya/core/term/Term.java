@@ -9,11 +9,14 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
+import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
+import org.aya.generic.Modifier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
@@ -25,6 +28,7 @@ import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,15 +83,116 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     return checker;
   }
 
+  static private @NotNull Subst buildSubst(
+    @NotNull SeqLike<Term.@NotNull Param> params,
+    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
+  ) {
+    var subst = new Subst(MutableMap.create());
+    params.view().zip(args).forEach(t -> subst.add(t._1.ref(), t._2.term()));
+    return subst;
+  }
+
+  private @Nullable WithPos<Term> unfoldClauses(
+    boolean orderIndependent, SeqLike<Arg<Term>> args,
+    @NotNull ImmutableSeq<Matching> clauses,
+    TyckState state
+  ) {
+    return unfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), clauses, state);
+  }
+
+  private @Nullable WithPos<Term> unfoldClauses(
+    boolean orderIndependent, SeqLike<Arg<Term>> args,
+    @NotNull Subst subst, @NotNull ImmutableSeq<Matching> clauses,
+    TyckState state
+  ) {
+    for (var match : clauses) {
+      var result = PatMatcher.tryBuildSubstArgs(state.primFactory(), null, match.patterns(), args);
+      if (result.isOk()) {
+        subst.add(result.get());
+        var body = match.body().view().subst(subst).commit();
+        return new WithPos<>(match.sourcePos(), body);
+      } else if (!orderIndependent && result.getErr())
+        return null;
+    }
+    return null;
+  }
+
   /**
    * @param state used for inlining the holes.
    *              Can be null only if we're absolutely sure that holes are frozen,
    *              like in the error messages.
    */
   default @NotNull Term normalize(@NotNull TyckState state, @NotNull NormalizeMode mode) {
-    if (mode == NormalizeMode.NULL) return this;
-    if (mode == NormalizeMode.NF) return this.view().normalize(state).commit();
-    return accept(new Normalizer(state), mode);
+    return switch (mode) {
+      case NULL -> this;
+      case NF -> this.view().normalize(state).commit();
+      case WHNF -> switch (this) {
+        case ElimTerm.App app -> {
+          var function = app.of().normalize(state, NormalizeMode.WHNF);
+          if (function instanceof IntroTerm.Lambda lambda) {
+            yield CallTerm.make(lambda, app.arg()).normalize(state, NormalizeMode.WHNF);
+          }
+          yield function == app.of() ? this : CallTerm.make(function, app.arg());
+        }
+        case ElimTerm.Proj proj -> {
+          var tup = proj.of().normalize(state, NormalizeMode.WHNF);
+          var ix = proj.ix();
+          if (tup instanceof IntroTerm.Tuple tuple) {
+            assert tuple.items().sizeGreaterThanOrEquals(ix) && ix > 0
+              : proj.toDoc(DistillerOptions.debug()).debugRender();
+            yield tuple.items().get(ix - 1).normalize(state, NormalizeMode.WHNF);
+          }
+          yield tup == proj.of() ? this : new ElimTerm.Proj(tup, ix);
+        }
+        case CallTerm.Con con -> {
+          var def = con.ref().core;
+          if (def == null) yield con;
+          var unfolded = unfoldClauses(true, con.conArgs(), def.clauses, state);
+          yield unfolded == null ? con : unfolded.data().normalize(state, NormalizeMode.WHNF);
+        }
+        case CallTerm.Fn fn -> {
+          var def = fn.ref().core;
+          if (def == null) yield fn;
+          if (def.modifiers.contains(Modifier.Opaque)) yield fn;
+          yield def.body.fold(
+            lamBody -> lamBody.view().subst(buildSubst(def.telescope(), fn.args())).commit().normalize(state, NormalizeMode.WHNF),
+            patBody -> {
+              var orderIndependent = def.modifiers.contains(Modifier.Overlap);
+              var unfolded = unfoldClauses(orderIndependent, fn.args(), patBody, state);
+              return unfolded == null ? fn : unfolded.data().normalize(state, NormalizeMode.WHNF);
+            }
+          );
+        }
+        case CallTerm.Access access -> {
+          // TODO: Normalize args;
+          var struct = access.of().normalize(state, NormalizeMode.WHNF);
+          var fieldDef = access.ref().core;
+          if (struct instanceof IntroTerm.New n) {
+            var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
+            yield fieldBody.view().subst(buildSubst(fieldDef.ownerTele, access.structArgs())).commit().normalize(state, NormalizeMode.WHNF);
+          } else {
+            var subst = buildSubst(fieldDef.fullTelescope(), access.args());
+            for (var field : fieldDef.structRef.core.fields) {
+              if (field == fieldDef) continue;
+              var fieldArgs = field.telescope().map(Term.Param::toArg);
+              var acc = new CallTerm.Access(struct, field.ref, access.structArgs(), fieldArgs);
+              subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
+            }
+            var unfolded = unfoldClauses(true, access.fieldArgs(), subst, fieldDef.clauses, state);
+            yield unfolded == null ? access : unfolded.data().normalize(state, NormalizeMode.WHNF);
+          }
+        }
+        case CallTerm.Prim prim -> state.primFactory().unfold(prim.id(), prim, state);
+        case CallTerm.Hole hole -> {
+          var def = hole.ref();
+          if (!state.metas().containsKey(def)) yield hole;
+          var body = state.metas().get(def);
+          yield body.view().subst(buildSubst(def.fullTelescope(), hole.fullArgs())).commit().normalize(state, NormalizeMode.WHNF);
+        }
+        case RefTerm.MetaPat metaPat -> metaPat.inline();
+        case Term t -> t;
+      };
+    };
   }
 
   default @NotNull Term freezeHoles(@Nullable TyckState state) {
