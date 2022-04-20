@@ -66,7 +66,9 @@ tasks.register<JavaExec>("bench") {
   group = "Execution"
   mainClass.set("org.aya.test.ListBench")
   classpath = sourceSets.test.get().runtimeClasspath
-  val resultFile = file("${project.buildDir}/bench/report.json").absoluteFile
+  val resultFile = file("${project.buildDir}/bench/report.txt").absoluteFile
+
+  // doesn't need this actually
   val inputFiles = file("src/test/resources/bench").listFiles()?.map { it.absoluteFile }
   args(resultFile)
   if (inputFiles != null) {

@@ -48,8 +48,10 @@ def two-k: Nat => (suc (suc zero)) *' thousand
 
 def four-k: Nat => (suc (suc zero)) *' two-k
 
-def eight-k: Nat => (suc (suc zero      )) *' four-k
+def eight-k: Nat => (suc (suc zero)) *' four-k
 
 def sixteen-k: Nat => (suc (suc zero)) *' eight-k
+
+def thirty-two-k: Nat => (suc (suc zero)) *' sixteen-k
 
 def test (n: Nat): Nat => foldr (\a b => a + b) zero (map (\l => head l) (tails (gen n)))

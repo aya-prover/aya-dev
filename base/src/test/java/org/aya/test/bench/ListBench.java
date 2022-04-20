@@ -1,17 +1,17 @@
 // Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.test;
+package org.aya.test.bench;
 
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.ReplCompiler;
 import org.aya.cli.single.CliReporter;
-import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 
-@BenchmarkMode(Mode.SampleTime)
+@BenchmarkMode(Mode.SingleShotTime)
 @Warmup(iterations = 3)
 @Measurement(iterations = 10, time = 5, timeUnit = TimeUnit.SECONDS)
 @Threads(8)
@@ -33,7 +33,7 @@ public class ListBench {
 
   final @NotNull ReplCompiler replCompiler;
   final @NotNull Path benchFile;
-  @Param({"ten", "hundred", "two-k", "four-k", "eight-k"})
+  @Param({"ten", "hundred", "two-k", "four-k", "eight-k", "sixteen-k", "thirty-two-k"})
   private String param;
 
   public ListBench() {
@@ -41,11 +41,6 @@ public class ListBench {
 
     var reporter = CliReporter.stdio(true, DistillerOptions.debug(), Problem.Severity.WARN);
     replCompiler = new ReplCompiler(ImmutableSeq.empty(), reporter, null);
-    try {
-      replCompiler.loadToContext(benchFile);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public static void main(String[] args) throws RunnerException {
@@ -63,12 +58,26 @@ public class ListBench {
   }
 
   @Benchmark
-  public Term normBench() {
-    return replCompiler.compileExpr("test " + param, NormalizeMode.NF);
+  public void baseline(@NotNull Blackhole bh) {
+    try {
+      bh.consume(replCompiler.loadToContext(benchFile));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Benchmark
+  public void normBench(@NotNull Blackhole bh) {
+    try {
+      replCompiler.loadToContext(benchFile);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    bh.consume(replCompiler.compileToContext("test " + param, NormalizeMode.NF));
+  }
+
+  /*@Benchmark
   public Term normBase() {
     return replCompiler.compileExpr("(suc (suc zero))", NormalizeMode.NF);
-  }
+  }*/
 }
