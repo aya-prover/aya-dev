@@ -36,7 +36,7 @@ import org.jetbrains.annotations.TestOnly;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, ErrorTerm,
-        FormTerm, FormTerm.Interval, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat {
+        FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
