@@ -104,10 +104,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull Subst subst, int ulift,
     @NotNull ImmutableSeq<Matching> clauses
   ) {
-    var state = state();
-    if (state == null) throw new InternalException("unfolding clauses without TyckState");
     for (var matchy : clauses) {
-      var termSubst = PatMatcher.tryBuildSubstArgs(state.primFactory(), null, matchy.patterns(), args);
+      var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
         var newBody = matchy.body().view()

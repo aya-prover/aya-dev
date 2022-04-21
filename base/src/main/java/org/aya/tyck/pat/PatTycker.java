@@ -394,7 +394,7 @@ public final class PatTycker {
 
   public static Result<Subst, Boolean>
   mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(state.primFactory(), ctx, ctor.pats, dataCall.args().view()
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
     else return Result.ok(Unfolder.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }

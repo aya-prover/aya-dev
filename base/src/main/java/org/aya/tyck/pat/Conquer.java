@@ -47,7 +47,6 @@ public record Conquer(
   }
 
   public void visit(@NotNull Pat pat, int nth) {
-    var primFactory = tycker.state.primFactory();
     switch (pat) {
       case Pat.Ctor ctor -> {
         var params = ctor.params();
@@ -55,7 +54,7 @@ public record Conquer(
         var conditions = ctor.ref().core.clauses;
         for (int i = 0, size = conditions.size(); i < size; i++) {
           var condition = conditions.get(i);
-          var matchy = PatMatcher.tryBuildSubstTerms(primFactory, null, params, condition.patterns().view().map(Pat::toTerm));
+          var matchy = PatMatcher.tryBuildSubstTerms(null, params, condition.patterns().view().map(Pat::toTerm));
           if (matchy.isOk()) {
             var ctx = new MapLocalCtx();
             condition.patterns().forEach(tern -> tern.storeBindings(ctx));
