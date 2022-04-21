@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.tuple.primitive.IntObjTuple2;
 import kala.value.Ref;
 import org.aya.concrete.Pattern;
@@ -195,27 +194,25 @@ public record PatClassifier(
           })
           .firstOption();
 
-        if(lrSplit.isDefined()) {
+        if (lrSplit.isDefined()) {
           var buffer = MutableList.<MCT<Term, PatErr>>create();
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
 
-          ImmutableSeq<Tuple2<PrimTerm.End, String>> interval_items = ImmutableSeq.of(
-            Tuple2.of(new PrimTerm.End(PrimTerm.LEFT), "0"),
-            Tuple2.of(new PrimTerm.End(PrimTerm.RIGHT), "1")
-          );
-
-          for(var item: interval_items) {
-            builder.append(new PatTree(item.component2(), explicit, 0));
+          for (var item : ImmutableSeq.of(
+            Tuple.of(new PrimTerm.End(PrimTerm.LEFT), "0"),
+            Tuple.of(new PrimTerm.End(PrimTerm.RIGHT), "1")
+          )) {
+            builder.append(new PatTree(item._2, explicit, 0));
             var patClass = new MCT.Leaf<>(subPatsSeq.view()
               // Filter out all patterns that matches it,
-              .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, item.component1())).map(MCT.SubPats::ix).toImmutableSeq());
+              .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, item._1)).map(MCT.SubPats::ix).toImmutableSeq());
 
             var classes = MCT.extract(patClass, subPatsSeq).map(MCT.SubPats::drop);
 
             if (classes.isNotEmpty()) {
               // We're gonna instantiate the telescope with this term!
               var newTele = telescope.drop(1)
-                .map(param -> param.subst(target.ref(), item.component1()))
+                .map(param -> param.subst(target.ref(), item._1))
                 .toImmutableSeq().view();
               // Classify according the rest of the patterns
               var rest = classifySub(newTele, classes, false, fuel);

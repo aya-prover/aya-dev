@@ -100,7 +100,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         );
       }
       case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
-      case PrimTerm.End end -> Doc.styled(KEYWORD, !end.isRight ? "0" : "1");
+      case PrimTerm.End end -> Doc.styled(KEYWORD, end.isRight() ? "1" : "0");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
