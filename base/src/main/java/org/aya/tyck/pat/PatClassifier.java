@@ -108,7 +108,7 @@ public record PatClassifier(
         domination(lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
         var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
-        // TODO: Currently all holes at this point is in an ErrorTerm
+        // TODO: Currently all holes at this point are in an ErrorTerm
         if (lhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
           hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
         } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
@@ -188,10 +188,7 @@ public record PatClassifier(
       }
       case FormTerm.Interval interval -> {
         var lrSplit = subPatsSeq
-          .mapNotNull(subPats -> {
-            var pat = head(subPats);
-            return pat instanceof Pat.End end ? pat : null;
-          })
+          .mapNotNull(subPats -> head(subPats) instanceof Pat.End end ? end : null)
           .firstOption();
 
         if (lrSplit.isDefined()) {
@@ -301,7 +298,7 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<org.aya.core.pat.Pat> subPats, int ix, PrimTerm.End end) {
+  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, PrimTerm.End end) {
     var head = head(subPats);
     return head instanceof Pat.End headEnd && headEnd.isRight() == end.isRight() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
   }
