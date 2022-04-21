@@ -122,7 +122,7 @@ public final class PrimDef extends TopLevelDef {
       private @NotNull Term invol(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var arg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         if (arg instanceof PrimTerm.End end) {
-          return new PrimTerm.End(!end.val());
+          return new PrimTerm.End(!end.isRight());
         } else {
           return new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.of(new Arg<>(arg, true)));
         }

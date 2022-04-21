@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.control.Result;
 import kala.tuple.Tuple2;
-import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
@@ -78,7 +77,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
         match(sol, term);
       }
       case Pat.End end -> {
-        if (!(term instanceof PrimTerm.End termEnd && termEnd.val() == end.val())) {
+        if (!(term instanceof PrimTerm.End termEnd && termEnd.isRight() == end.isRight())) {
           throw new Mismatch(true);
         }
       }

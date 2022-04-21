@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.control.Either;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.primitive.IntObjTuple2;
@@ -307,7 +306,7 @@ public record PatClassifier(
 
   private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<org.aya.core.pat.Pat> subPats, int ix, PrimTerm.End end) {
     var head = head(subPats);
-    return head instanceof Pat.End headEnd && headEnd.val() == end.val() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
+    return head instanceof Pat.End headEnd && headEnd.isRight() == end.isRight() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
   }
 
   private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {

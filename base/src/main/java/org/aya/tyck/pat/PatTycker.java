@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Result;
+import kala.range.primitive.IntRange;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -34,7 +35,6 @@ import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.error.NoRuleError;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
@@ -194,13 +194,9 @@ public final class PatTycker {
       }
       case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
-      case Pattern.Number num -> {
-        var map = ImmutableMap.of(
-                0, PrimTerm.LEFT,
-                1, PrimTerm.RIGHT
-        );
-        if (map.keysView().contains(num.number())) {
-          yield new Pat.End(map.get(num.number()), num.explicit());
+      case Pattern.Number num && IntRange.closed(0, 1).contains(num.number()) -> {
+        if (term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
+          yield new Pat.End(num.number() == 0, num.explicit());
         } else {
           throw new UnsupportedOperationException("Number patterns are unsupported yet");
         }

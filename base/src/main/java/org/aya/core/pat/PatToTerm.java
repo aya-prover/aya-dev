@@ -25,7 +25,7 @@ public class PatToTerm {
       case Pat.Bind bind -> new RefTerm(bind.bind(), 0);
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new RefTerm.MetaPat(meta, 0);
-      case Pat.End end -> new PrimTerm.End(end.val());
+      case Pat.End end -> new PrimTerm.End(end.isRight());
     };
   }
 

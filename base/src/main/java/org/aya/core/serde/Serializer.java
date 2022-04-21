@@ -38,7 +38,7 @@ public record Serializer(@NotNull Serializer.State state) implements
         visitDataCall(ctor.type(), Unit.unit()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(), serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
-      case Pat.End end -> new SerPat.End(end.val(), end.explicit());
+      case Pat.End end -> new SerPat.End(end.isRight(), end.explicit());
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
     };
   }
@@ -92,7 +92,7 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   @Override
   public SerTerm visitEnd(PrimTerm.@NotNull End end, Unit unit) {
-    return new SerTerm.End(end.val());
+    return new SerTerm.End(end.isRight());
   }
 
   @Override public SerTerm visitHole(CallTerm.@NotNull Hole term, Unit unit) {

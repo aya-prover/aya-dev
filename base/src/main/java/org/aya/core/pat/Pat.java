@@ -203,17 +203,12 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  record End(
-    boolean val,
-    boolean explicit
-  ) implements Pat {
-    @Override
-    public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.LitIntExpr(pos, 0);
+  record End(boolean isRight, boolean explicit) implements Pat {
+    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
+      return new Expr.LitIntExpr(pos, isRight ? 1 : 0);
     }
 
-    @Override
-    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+    @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       return this;
     }
 
@@ -222,22 +217,20 @@ public sealed interface Pat extends AyaDocile {
       return this;
     }
 
-    @Override
-    public @NotNull Pat inline() {
+    @Override public @NotNull Pat inline() {
       return this;
     }
 
-    @Override
-    public void storeBindings(@NotNull LocalCtx localCtx) {
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       // do nothing
     }
 
     public boolean left() {
-      return val() == PrimTerm.LEFT;
+      return isRight() == PrimTerm.LEFT;
     }
 
     public boolean right() {
-      return val() == PrimTerm.RIGHT;
+      return isRight() == PrimTerm.RIGHT;
     }
   }
 
