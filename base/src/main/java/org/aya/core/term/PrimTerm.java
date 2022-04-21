@@ -5,22 +5,20 @@ package org.aya.core.term;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface PrimTerm extends Term {
-    boolean LEFT = false;
-    boolean RIGHT = true;
+  boolean LEFT = false;
+  boolean RIGHT = true;
 
-    record End(
-        boolean val
-    ) implements PrimTerm {
-        @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-            return visitor.visitEnd(this, p);
-        }
-
-        public boolean left() {
-            return val() == LEFT;
-        }
-
-        public boolean right() {
-            return val() == RIGHT;
-        }
+  record End(boolean isLeft) implements PrimTerm {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitEnd(this, p);
     }
+
+    public boolean left() {
+      return isLeft() == LEFT;
+    }
+
+    public boolean right() {
+      return isLeft() == RIGHT;
+    }
+  }
 }
