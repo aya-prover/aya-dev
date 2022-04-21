@@ -3,9 +3,9 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableMap;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.range.primitive.IntRange;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -232,17 +232,6 @@ public final class ExprTycker extends Tycker {
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
         Constants.randomName(hole), hole.sourcePos())._2);
       case Expr.ErrorExpr err -> Result.error(err.description());
-      case Expr.LitIntExpr lit -> {
-        var map = ImmutableMap.of(
-          0, PrimTerm.LEFT,
-          1, PrimTerm.RIGHT
-        );
-        if (map.keysView().contains(lit.integer())) {
-          yield new Result(new PrimTerm.End(map.get(lit.integer())), new FormTerm.Interval());
-        } else {
-          yield fail(expr, new NoRuleError(expr, null));
-        }
-      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -350,6 +339,13 @@ public final class ExprTycker extends Tycker {
           var rec = inherit(lam.body(), body);
           return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
         });
+      }
+      case Expr.LitIntExpr lit && IntRange.closed(0, 1).contains(lit.integer()) -> {
+        if (term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
+          yield new Result(new PrimTerm.End(lit.integer() == 1), term);
+        } else {
+          yield fail(expr, new NoRuleError(expr, null));
+        }
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };

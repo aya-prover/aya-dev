@@ -12,13 +12,5 @@ public sealed interface PrimTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitEnd(this, p);
     }
-
-    public boolean left() {
-      return isRight() == LEFT;
-    }
-
-    public boolean right() {
-      return isRight() == RIGHT;
-    }
   }
 }

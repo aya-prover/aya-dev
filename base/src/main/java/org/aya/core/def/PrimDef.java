@@ -79,13 +79,13 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public static class Factory {
-    private final class Initializer {
+    private static final class Initializer {
       /** Arend's coe */
       private @NotNull Term arcoe(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var args = prim.args();
         var argBase = args.get(1);
         var argI = args.get(2);
-        if (argI.term() instanceof PrimTerm.End end && end.left())
+        if (argI.term() instanceof PrimTerm.End end && !end.isRight())
           return argBase.term();
         var argA = args.get(0).term();
 
@@ -105,7 +105,7 @@ public final class PrimDef extends TopLevelDef {
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA, 0);
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new PrimTerm.End(PrimTerm.LEFT), true));
+        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new PrimTerm.End(false), true));
         return new PrimDef(
           ref,
           ImmutableSeq.of(
@@ -140,17 +140,9 @@ public final class PrimDef extends TopLevelDef {
         var lhsArg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var rhsArg = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
         if (lhsArg instanceof PrimTerm.End lhsEnd) {
-          if (lhsEnd.left()) {
-            return lhsEnd;
-          } else {
-            return rhsArg;
-          }
+          return lhsEnd.isRight() ? rhsArg : lhsEnd;
         } else if (rhsArg instanceof PrimTerm.End rhsEnd) {
-          if (rhsEnd.left()) {
-            return rhsEnd;
-          } else {
-            return lhsArg;
-          }
+          return rhsEnd.isRight() ? lhsArg : rhsEnd;
         }
 
         return prim;

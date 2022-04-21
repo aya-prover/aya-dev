@@ -11,7 +11,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.term.CallTerm;
-import org.aya.core.term.PrimTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
@@ -223,14 +222,6 @@ public sealed interface Pat extends AyaDocile {
 
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       // do nothing
-    }
-
-    public boolean left() {
-      return isRight() == PrimTerm.LEFT;
-    }
-
-    public boolean right() {
-      return isRight() == PrimTerm.RIGHT;
     }
   }
 

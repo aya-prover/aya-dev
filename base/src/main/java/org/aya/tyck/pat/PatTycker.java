@@ -149,7 +149,7 @@ public final class PatTycker {
       preclauses.flatMap(Pat.Preclause::lift));
   }
 
-  @SuppressWarnings("unchecked") private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
+  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
@@ -196,7 +196,7 @@ public final class PatTycker {
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
       case Pattern.Number num && IntRange.closed(0, 1).contains(num.number()) -> {
         if (term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
-          yield new Pat.End(num.number() == 0, num.explicit());
+          yield new Pat.End(num.number() == 1, num.explicit());
         } else {
           throw new UnsupportedOperationException("Number patterns are unsupported yet");
         }

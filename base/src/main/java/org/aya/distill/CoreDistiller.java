@@ -100,7 +100,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         );
       }
       case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
-      case PrimTerm.End end -> Doc.styled(KEYWORD, end.left() ? "0" : "1");
+      case PrimTerm.End end -> Doc.styled(KEYWORD, !end.isRight ? "0" : "1");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
@@ -191,7 +191,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
-      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, end.left() ? "0": "1"), end.explicit());
+      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0": "1"), end.explicit());
     };
   }
 
