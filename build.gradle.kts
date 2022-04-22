@@ -1,6 +1,7 @@
 // Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.aya.gradle.StripPreview
 import java.util.*
 
 plugins {
@@ -63,6 +64,13 @@ subprojects {
       isDeprecation = true
       release.set(17)
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
+    }
+
+    doLast {
+      val tree = fileTree(destinationDirectory)
+      tree.include("**/*.class")
+      tree.exclude("module-info.class")
+      tree.forEach { StripPreview.stripPreview(it.toPath()) }
     }
   }
 
