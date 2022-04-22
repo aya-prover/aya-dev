@@ -10,6 +10,10 @@ dependencies {
   testImplementation(project(":cli"))
 }
 
+plugins {
+  id("org.graalvm.buildtools.native") version "0.9.11"
+}
+
 val genDir = file("src/main/gen")
 val generateVersion = tasks.register<org.aya.gradle.GenerateVersionTask>("generateVersion") {
   basePackage = "org.aya"
@@ -41,4 +45,41 @@ tasks.register<JavaExec>("runCustomTest") {
   group = "Execution"
   classpath = sourceSets.test.get().runtimeClasspath
   main = "org.aya.test.TestRunner"
+}
+
+val configGenDir = file("build/native-config")
+val configTemplateFile = file("reflect-config.txt")
+
+val generateReflectionConfig = tasks.register<org.aya.gradle.GenerateReflectionConfigTask>("generateReflectionConfig") {
+  outputDir = configGenDir
+  inputFile = configTemplateFile
+}
+
+graalvmNative {
+  binaries {
+    named("test") {
+    }
+  }
+
+  binaries.configureEach {
+    fallback.set(false)
+    verbose.set(true)
+    sharedLibrary.set(false)
+    configurationFileDirectories.from(configGenDir)
+    buildArgs.add("--report-unsupported-elements-at-runtime")
+
+    javaLauncher.set(javaToolchains.launcherFor {
+      languageVersion.set(JavaLanguageVersion.of(17))
+      vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+    })
+  }
+}
+
+tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeCompile") {
+  // native compiling base module is meaningless, just disable it
+  this.enabled = false
+}
+
+tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeTestCompile") {
+  dependsOn(generateReflectionConfig)
 }

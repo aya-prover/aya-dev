@@ -37,7 +37,6 @@ if (isMac) tasks.withType<JavaExec>().configureEach {
 tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }
 
 val genDir = file("build/native-config")
-val testGenDir = file("build/native-config-test")
 val configFile = file("reflect-config.txt")
 
 val generateReflectionConfig = tasks.register<org.aya.gradle.GenerateReflectionConfigTask>("generateReflectionConfig") {
@@ -52,7 +51,6 @@ graalvmNative {
       mainClass.set("org.aya.cli.Main")
       debug.set(System.getenv("CI") == null)
       useFatJar.set(true)
-      configurationFileDirectories.from(genDir)
     }
 
     named("test") {
@@ -63,6 +61,7 @@ graalvmNative {
     fallback.set(false)
     verbose.set(true)
     sharedLibrary.set(false)
+    configurationFileDirectories.from(genDir)
     buildArgs.add("--report-unsupported-elements-at-runtime")
 
     javaLauncher.set(javaToolchains.launcherFor {
