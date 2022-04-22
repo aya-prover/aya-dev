@@ -43,7 +43,6 @@ graalvmNative {
       imageName.set("aya")
       mainClass.set("org.aya.cli.Main")
       debug.set(System.getenv("CI") == null)
-      useFatJar.set(true)
     }
   }
   CommonTasks.nativeImageBinaries(
@@ -51,9 +50,4 @@ graalvmNative {
     true,
     true
   )
-}
-
-tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeCompile") {
-  dependsOn(tasks.named("fatJar"))
-  classpathJar.set(file("build/libs/cli-${project.version}-fat.jar"))
 }
