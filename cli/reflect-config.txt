@@ -74,11 +74,13 @@ org.aya.core.serde.SerTerm$ConCall
 org.aya.core.serde.SerTerm$Tup
 org.aya.core.serde.SerTerm$Access
 org.aya.core.serde.SerTerm$FieldRef
+org.aya.core.serde.SerTerm$Interval
+org.aya.core.serde.SerTerm$End
 org.aya.core.serde.SerPat$Matchy
 org.aya.core.serde.SerPat$Absurd
 org.aya.core.serde.SerPat$Tuple
 org.aya.core.serde.SerPat$Bind
-org.aya.core.serde.SerPat$Prim
+org.aya.core.serde.SerPat$End
 org.aya.core.serde.SerPat$Ctor
 
 # TODO: generate record from file
