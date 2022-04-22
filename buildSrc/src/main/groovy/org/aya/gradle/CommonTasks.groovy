@@ -11,9 +11,39 @@ import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 
 /**
- * @author ice1000
+ * @author ice1000, kiva
  */
 final class CommonTasks {
+  static TaskProvider<GenerateReflectionConfigTask> nativeImageConfig(Project project) {
+    var root = project.projectDir.toPath()
+    var configGenDir = root.resolve("build/native-config").toFile()
+    var configTemplateFile = root.resolve("reflect-config.txt").toFile()
+    var metaInfDir = root.resolve(
+      "src/main/resources/META-INF/native-image/${project.group}.${project.name}"
+    ).toFile()
+
+    var task = project.tasks.register('generateNativeImageConfig', GenerateReflectionConfigTask) {
+      outputDir = configGenDir
+      inputFile = configTemplateFile
+      doFirst {
+        metaInfDir.mkdirs()
+      }
+      doLast {
+        project.copy {
+          from(configGenDir)
+          into(metaInfDir)
+        }
+      }
+    }
+    var cleanMetaInf = project.tasks.register("cleanNativeImageConfig") {
+      metaInfDir.deleteDir()
+    }
+    project.tasks.named("compileJava") { dependsOn(task) }
+    project.tasks.named("sourcesJar") { dependsOn(task) }
+    project.tasks.named("clean") { dependsOn(cleanMetaInf) }
+    task
+  }
+
   static TaskProvider<Jar> fatJar(Project project, String mainClass) {
     project.tasks.register('fatJar', Jar) {
       archiveClassifier.set 'fat'

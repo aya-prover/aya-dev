@@ -85,11 +85,3 @@ org.aya.core.serde.SerPat$Ctor
 
 # TODO: generate record from file
 # @<xxx.java>:org.aya.core.serde.SerTerm$:record ([a-zA-Z0-9_]+)
-
-# Library Compiler, for Gson
-org.aya.cli.library.json.LibraryConfigData
-org.aya.cli.library.json.LibraryDependencyData
-
-# REPL commands, for our REPL framework
-org.aya.repl.Command
-org.aya.cli.repl.ReplCommands${1,11}
