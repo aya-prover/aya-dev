@@ -28,7 +28,6 @@ final class CommonTasks {
         'Main-Class': mainClass,
         'Build': new SimpleDateFormat('yyyy/M/dd HH:mm:ss').format(new Date())
       )
-      doLast { StripPreviewRunner.run(temporaryDirFactory.create(), outputs.files.files) }
       def jar = project.tasks.jar
       dependsOn(jar)
       //noinspection GroovyAssignabilityCheck

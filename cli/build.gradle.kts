@@ -37,6 +37,7 @@ if (isMac) tasks.withType<JavaExec>().configureEach {
 tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }
 
 val genDir = file("build/native-config")
+val testGenDir = file("build/native-config-test")
 val configFile = file("reflect-config.txt")
 
 val generateReflectionConfig = tasks.register<org.aya.gradle.GenerateReflectionConfigTask>("generateReflectionConfig") {
@@ -49,17 +50,21 @@ graalvmNative {
     named("main") {
       imageName.set("aya")
       mainClass.set("org.aya.cli.Main")
-      verbose.set(true)
-      fallback.set(false)
       debug.set(System.getenv("CI") == null)
-      sharedLibrary.set(false)
-      configurationFileDirectories.from(genDir)
       useFatJar.set(true)
-      buildArgs.add("--report-unsupported-elements-at-runtime")
+      configurationFileDirectories.from(genDir)
+    }
+
+    named("test") {
     }
   }
 
   binaries.configureEach {
+    fallback.set(false)
+    verbose.set(true)
+    sharedLibrary.set(false)
+    buildArgs.add("--report-unsupported-elements-at-runtime")
+
     javaLauncher.set(javaToolchains.launcherFor {
       languageVersion.set(JavaLanguageVersion.of(17))
       vendor.set(JvmVendorSpec.matching("GraalVM Community"))
@@ -70,5 +75,5 @@ graalvmNative {
 tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeCompile") {
   dependsOn(generateReflectionConfig)
   dependsOn(tasks.named("fatJar"))
-  classpathJar.set(file("build/libs/cli-${project.version}-fat-no-preview.jar"))
+  classpathJar.set(file("build/libs/cli-${project.version}-fat.jar"))
 }
