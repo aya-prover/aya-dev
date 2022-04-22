@@ -63,6 +63,8 @@ public interface TermView {
         yield new FormTerm.Sigma(params);
       }
       case FormTerm.Univ univ -> univ;
+      case FormTerm.Interval interval -> interval;
+      case PrimTerm.End end -> end;
       case IntroTerm.Lambda lambda -> {
         var param = commit(lambda.param());
         var body = commit(lambda.body());

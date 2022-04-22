@@ -1,12 +1,12 @@
 public open import Primitives
 
-public open struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+public open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
   | at (i : I) : A i {
-    | left => a
-    | right => b
+    | 0 => a
+    | 1 => b
   }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p left) (p right) { | at i => p i }
+  => new Path A (p 0) (p 1) { | at i => p i }
 
 variable A B C D : Type
 
@@ -18,7 +18,7 @@ def psqueeze {a b : A} (p : a = b) (i : I)
 
 def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b p =>
-      arcoe (\ i => B (p.at i) (psqueeze p i)) r right
+      arcoe (\ i => B (p.at i) (psqueeze p i)) r 1
 
 def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
   => J (\b' p' => B b') x p
@@ -38,8 +38,8 @@ def funExt3 (f g : A -> B -> C -> D) (p : forall a b c -> f a b c = g a b c) : f
 -- The most general path mapping
 def pmapd' {A : I -> Type} (B : Pi (i : I) (A i) -> Type)
     (f : Pi (i : I) (a : A i) -> B i a)
-    {a : A left} {b : A right} (p : Path A a b)
-  : Path (\i => B i (p.at i)) (f left a) (f right b) => path (\ i => f i (p.at i))
+    {a : A 0} {b : A 1} (p : Path A a b)
+  : Path (\i => B i (p.at i)) (f 0 a) (f 1 b) => path (\ i => f i (p.at i))
 
 def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => pmapd' _ (\ i => f) p
 
@@ -55,7 +55,7 @@ def hcomp2d
   (p : a = b)
   (q : b = d)
   (r : a = c) : c = d
-  => path (hfill2d p q r right)
+  => path (hfill2d p q r 1)
 
 def sym {a b : A} (p : a = b) : b = a => hcomp2d idp idp p
 def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q idp

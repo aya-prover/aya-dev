@@ -75,6 +75,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
+      case FormTerm.Interval interval -> new FormTerm.Univ(0);
+      case PrimTerm.End end -> new FormTerm.Interval();
     };
   }
 

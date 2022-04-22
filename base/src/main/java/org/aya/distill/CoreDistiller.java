@@ -99,6 +99,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
+      case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
+      case PrimTerm.End end -> Doc.styled(KEYWORD, end.isRight() ? "1" : "0");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
@@ -181,7 +183,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield sol != null ? pat(sol, outer) : Doc.bracedUnless(linkDef(meta.fakeBind()), meta.explicit());
       }
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());
-      case Pat.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
       case Pat.Ctor ctor -> {
         var ctorDoc = visitCalls(ctor.ref(), CON_CALL, ctor.params().view().map(Pat::toArg), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitPats));
@@ -190,6 +191,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
+      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0": "1"), end.explicit());
     };
   }
 

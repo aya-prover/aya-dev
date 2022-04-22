@@ -1,8 +1,8 @@
-In file $FILE:41:56 ->
+In file $FILE:38:56 ->
 
-  39 |  | a, suc b => suc (addN a b)
-  40 | 
-  41 | def addN-identity (a : Nat) : Eq (addN a zero) a => idp {? ?}
+  36 |  | a, suc b => suc (addN a b)
+  37 | 
+  38 | def addN-identity (a : Nat) : Eq (addN a zero) a => idp {? ?}
                                                                ^---^
 
 Goal: Candidate exists:

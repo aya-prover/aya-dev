@@ -7,14 +7,12 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
 import kala.value.Ref;
 import org.aya.concrete.Pattern;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
-import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
@@ -110,7 +108,7 @@ public record PatClassifier(
         domination(lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
         var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
-        // TODO: Currently all holes at this point is in an ErrorTerm
+        // TODO: Currently all holes at this point are in an ErrorTerm
         if (lhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
           hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
         } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
@@ -188,34 +186,30 @@ public record PatClassifier(
             classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats<Pat>::drop), coverage, fuelCopy)));
         }
       }
-      // Only `I` might be split, we just assume that
-      case CallTerm.Prim primCall -> {
-        assert primCall.ref().core.id == PrimDef.ID.INTERVAL;
-        // Any prim patterns?
+      case FormTerm.Interval interval -> {
         var lrSplit = subPatsSeq
-          .mapNotNull(subPats -> head(subPats) instanceof Pat.Prim prim ? prim : null)
+          .mapNotNull(subPats -> head(subPats) instanceof Pat.End end ? end : null)
           .firstOption();
+
         if (lrSplit.isDefined()) {
           var buffer = MutableList.<MCT<Term, PatErr>>create();
-          // Interval pattern matching is only available in conditions,
-          // so in case we need coverage, report an error on this pattern matching
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
-          // For `left` and `right`,
-          var primFactory = state.primFactory();
-          for (var primName : primFactory.LEFT_RIGHT) {
-            builder.append(new PatTree(primName.id, explicit, 0));
-            var prim = primFactory.getOption(primName);
+
+          for (var item : ImmutableSeq.of(
+            Tuple.of(new PrimTerm.End(false), "0"),
+            Tuple.of(new PrimTerm.End(true), "1")
+          )) {
+            builder.append(new PatTree(item._2, explicit, 0));
             var patClass = new MCT.Leaf<>(subPatsSeq.view()
               // Filter out all patterns that matches it,
-              .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, prim)).map(MCT.SubPats::ix).toImmutableSeq());
-            // We extract the corresponding clauses and drop the current pattern
+              .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, item._1)).map(MCT.SubPats::ix).toImmutableSeq());
+
             var classes = MCT.extract(patClass, subPatsSeq).map(MCT.SubPats::drop);
-            // Probably nonempty, and in this case, prim is defined, so we can safely call `.get`
+
             if (classes.isNotEmpty()) {
               // We're gonna instantiate the telescope with this term!
-              var lrCall = new CallTerm.Prim(prim.get().ref, 0, ImmutableSeq.empty());
               var newTele = telescope.drop(1)
-                .map(param -> param.subst(target.ref(), lrCall))
+                .map(param -> param.subst(target.ref(), item._1))
                 .toImmutableSeq().view();
               // Classify according the rest of the patterns
               var rest = classifySub(newTele, classes, false, fuel);
@@ -224,7 +218,7 @@ public record PatClassifier(
             }
             builder.unshift();
           }
-          return new MCT.Node<>(primCall, buffer.toImmutableSeq());
+          return new MCT.Node<>(interval, buffer.toImmutableSeq());
         }
       }
       // THE BIG GAME
@@ -304,10 +298,9 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, Option<PrimDef> existedPrim) {
+  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, PrimTerm.End end) {
     var head = head(subPats);
-    return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
-      || head instanceof Pat.Bind ? new MCT.SubPats<>(subPats.pats(), ix) : null;
+    return head instanceof Pat.End headEnd && headEnd.isRight() == end.isRight() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
   }
 
   private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {

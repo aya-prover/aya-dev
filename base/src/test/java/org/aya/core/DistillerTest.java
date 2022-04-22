@@ -41,16 +41,13 @@ public class DistillerTest {
 
   @Test public void neo() {
     assertFalse(declDoc("""
-      prim I prim left
-      prim right
-
       struct Pair (A : Type) (B : Type) : Type
         | fst : A
         | snd : B
         | we-are-together : Sig A ** B => (fst, snd)
 
       def test-nat-pair : Pair I I =>
-        new Pair I I { | fst => left | snd => left }
+        new Pair I I { | fst => 0 | snd => 1 }
 
       def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
         new Pair A B { | fst => a | snd => b }
@@ -61,14 +58,13 @@ public class DistillerTest {
 
   @Test public void path() {
     @Language("TEXT") var code = """
-      prim I prim left prim right
-      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
+      struct Path (A : Pi I -> Type) (a : A 0) (b : A 1) : Type
        | at (i : I) : A i {
-         | left => a
-         | right => b
+         | 0 => a
+         | 1 => b
        }
       def path {A : Pi I -> Type} (p : Pi (i : I) -> A i)
-        => new Path A (p left) (p right) { | at i => p i }
+        => new Path A (p 0) (p 1) { | at i => p i }
       def infix = {A : Type} (a b : A) : Type => Path (\\ i => A) a b
       struct Monoid {A : Type} (op : A -> A -> A): Type
         | id : A

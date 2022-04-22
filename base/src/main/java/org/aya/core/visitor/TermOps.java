@@ -173,7 +173,7 @@ public interface TermOps extends TermView {
       @NotNull Subst subst, @NotNull ImmutableSeq<Matching> clauses
     ) {
       for (var match : clauses) {
-        var result = PatMatcher.tryBuildSubstArgs(state.primFactory(), null, match.patterns(), args);
+        var result = PatMatcher.tryBuildSubstArgs(null, match.patterns(), args);
         if (result.isOk()) {
           subst.add(result.get());
           var body = match.body().view().subst(subst).normalize(state).commit();

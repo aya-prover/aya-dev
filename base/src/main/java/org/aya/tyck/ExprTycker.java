@@ -5,6 +5,7 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.range.primitive.IntRange;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -58,6 +59,7 @@ public final class ExprTycker extends Tycker {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> new Result(new FormTerm.Univ(univ.lift()), new FormTerm.Univ(univ.lift() + 1));
+      case Expr.IntervalExpr interval -> new Result(new FormTerm.Interval(), new FormTerm.Univ(0));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
@@ -337,6 +339,13 @@ public final class ExprTycker extends Tycker {
           var rec = inherit(lam.body(), body);
           return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
         });
+      }
+      case Expr.LitIntExpr lit && IntRange.closed(0, 1).contains(lit.integer()) -> {
+        if (term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
+          yield new Result(new PrimTerm.End(lit.integer() == 1), term);
+        } else {
+          yield fail(expr, new NoRuleError(expr, null));
+        }
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };

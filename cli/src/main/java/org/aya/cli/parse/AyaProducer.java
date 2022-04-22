@@ -256,6 +256,7 @@ public record AyaProducer(
     var id = ctx.qualifiedId();
     if (id != null) return new Expr.UnresolvedExpr(pos, visitQualifiedId(id));
     if (ctx.TYPE() != null) return new Expr.RawUnivExpr(pos);
+    if (ctx.I() != null) return new Expr.IntervalExpr(pos);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);

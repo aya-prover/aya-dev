@@ -1,8 +1,6 @@
-prim I prim left
-
 open data Nat : Type 0
  | zero
  | suc Nat
 
 def addN (a : I) : Nat
- | left => zero
+ | 0 => zero

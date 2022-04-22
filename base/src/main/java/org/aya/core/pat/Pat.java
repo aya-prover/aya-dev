@@ -10,7 +10,6 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
-import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
@@ -203,29 +202,26 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  record Prim(
-    boolean explicit,
-    @NotNull DefVar<PrimDef, Decl.PrimDecl> ref
-  ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      // Do nothing
-    }
-
+  record End(boolean isRight, boolean explicit) implements Pat {
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.RefExpr(pos, ref);
+      return new Expr.LitIntExpr(pos, isRight ? 1 : 0);
     }
 
-    @Override
-    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+    @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       return this;
     }
 
-    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
+    @Override
+    public @NotNull Pat zonk(@NotNull Tycker tycker) {
       return this;
     }
 
     @Override public @NotNull Pat inline() {
       return this;
+    }
+
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      // do nothing
     }
   }
 

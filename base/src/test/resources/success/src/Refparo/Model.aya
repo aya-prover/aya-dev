@@ -3,7 +3,7 @@ open import Paths
 public open data Unit | unit
 
 def coe {a b : Type} (eq : a ↑ = b) (x : a) : b
-  => ↑ arcoe eq.at x right
+  => ↑ arcoe eq.at x 1
 
 -- *** Types
 

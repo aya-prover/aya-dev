@@ -36,9 +36,9 @@ public record Serializer(@NotNull Serializer.State state) implements
         state.def(ctor.ref()),
         serializePats(ctor.params()),
         visitDataCall(ctor.type(), Unit.unit()));
-      case Pat.Prim prim -> new SerPat.Prim(prim.explicit(), state.def(prim.ref()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(), serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
+      case Pat.End end -> new SerPat.End(end.isRight(), end.explicit());
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
     };
   }
@@ -83,6 +83,16 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   @Override public SerTerm visitMetaPat(RefTerm.@NotNull MetaPat metaPat, Unit unit) {
     throw new AssertionError("Shall not have metaPats serialized.");
+  }
+
+  @Override
+  public SerTerm visitInterval(FormTerm.@NotNull Interval interval, Unit unit) {
+    return new SerTerm.Interval();
+  }
+
+  @Override
+  public SerTerm visitEnd(PrimTerm.@NotNull End end, Unit unit) {
+    return new SerTerm.End(end.isRight());
   }
 
   @Override public SerTerm visitHole(CallTerm.@NotNull Hole term, Unit unit) {

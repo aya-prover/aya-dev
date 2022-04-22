@@ -10,7 +10,7 @@ open import Primitives using (
   invol as infix ! bind tighter =  ,
 )
 
-def invol-infix : ! left = right => idp
+def invol-infix : ! 0 = 1 => idp
 
 def psqueeze-infix {A : Type} {a b : A} (p : a = b) (i : I)
  : a = p.at i => path (\j => p.at (i 八 j))

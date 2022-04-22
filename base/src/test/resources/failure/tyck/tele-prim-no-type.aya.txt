@@ -1,10 +1,9 @@
-In file $FILE:2:5 ->
+In file $FILE:1:5 ->
 
-  1 | prim I
-  2 | prim left (i : I)
-           ^--^
+  1 | prim invol (i : I)
+           ^---^
 
-Error: prim left is expected to have a type
+Error: prim invol is expected to have a type
 
 1 error(s), 0 warning(s).
 What are you doing?

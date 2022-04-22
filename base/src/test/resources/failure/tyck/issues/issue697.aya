@@ -1,14 +1,11 @@
-prim I
-prim left
-prim right
 prim arcoe
-open struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
   | at (i : I) : A i {
-    | left => a
-    | right => b
+    | 0 => a
+    | 1 => b
   }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p left) (p right) { | at i => p i }
+  => new Path A (p 0) (p 1) { | at i => p i }
 def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} {a : A} : a = a => path (\ i => a)
 
@@ -24,6 +21,6 @@ def hcomp2d {A : Type}
   (p : a = b)
   (q : b = d)
   (r : a = c) : c = d
-  => path (hfill2d p q r right)
+  => path (hfill2d p q r 1)
 
 def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p

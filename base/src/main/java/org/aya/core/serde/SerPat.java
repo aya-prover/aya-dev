@@ -40,12 +40,6 @@ public sealed interface SerPat extends Serializable {
     }
   }
 
-  record Prim(boolean explicit, @NotNull SerDef.QName name) implements SerPat {
-    @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Prim(explicit, state.resolve(name));
-    }
-  }
-
   record Ctor(
     boolean explicit,
     @NotNull SerDef.QName name, @NotNull ImmutableSeq<SerPat> params,
@@ -53,6 +47,16 @@ public sealed interface SerPat extends Serializable {
   ) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
       return new Pat.Ctor(explicit, state.resolve(name), params.map(param -> param.de(state)), ty.de(state));
+    }
+  }
+
+  record End(
+    boolean val,
+    boolean explicit
+  ) implements SerPat {
+    @Override
+    public @NotNull Pat de(SerTerm.@NotNull DeState state) {
+      return new Pat.End(val, explicit);
     }
   }
 }

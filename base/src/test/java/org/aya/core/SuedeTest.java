@@ -42,11 +42,10 @@ public class SuedeTest {
 
   @Test public void path() {
     suedeAll("""
-      prim I prim left prim right
-      open struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
+      open struct Path (A : Pi I -> Type) (a : A 0) (b : A 1) : Type
        | at (i : I) : A i {
-         | left => a
-         | right => b
+         | 0 => a
+         | 1 => b
        }
       def infix = {A : Type} (a b : A) : Type => Path (\\ i => A) a b
       prim arcoe

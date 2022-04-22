@@ -45,6 +45,16 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return metaPat;
   }
 
+  @Override
+  @NotNull
+  default Term visitInterval(FormTerm.@NotNull Interval interval, P p) {
+    return interval;
+  }
+
+  @Override @NotNull default Term visitEnd(PrimTerm.@NotNull End end, P p) {
+    return end;
+  }
+
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
     var dataArgs = conCall.head().dataArgs().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));

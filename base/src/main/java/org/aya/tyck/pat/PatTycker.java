@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Result;
+import kala.range.primitive.IntRange;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -15,13 +16,11 @@ import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
-import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
@@ -31,7 +30,6 @@ import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
@@ -151,7 +149,7 @@ public final class PatTycker {
       preclauses.flatMap(Pat.Preclause::lift));
   }
 
-  @SuppressWarnings("unchecked") private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
+  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
@@ -174,12 +172,6 @@ public final class PatTycker {
       }
       case Pattern.Ctor ctor -> {
         var var = ctor.resolved().data();
-        if (term instanceof CallTerm.Prim prim
-          && prim.ref().core.id == PrimDef.ID.INTERVAL
-          && var instanceof DefVar<?, ?> defVar
-          && defVar.core instanceof PrimDef def
-          && exprTycker.state.primFactory().LEFT_RIGHT.contains(def.id)
-        ) yield new Pat.Prim(ctor.explicit(), (DefVar<PrimDef, Decl.PrimDecl>) defVar);
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();
@@ -202,7 +194,14 @@ public final class PatTycker {
       }
       case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
-      case default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
+      case Pattern.Number num && IntRange.closed(0, 1).contains(num.number()) -> {
+        if (term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
+          yield new Pat.End(num.number() == 1, num.explicit());
+        } else {
+          throw new UnsupportedOperationException("Number patterns are unsupported yet");
+        }
+      }
+      default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
     };
   }
 
@@ -391,7 +390,7 @@ public final class PatTycker {
 
   public static Result<Subst, Boolean>
   mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(state.primFactory(), ctx, ctor.pats, dataCall.args().view()
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
     else return Result.ok(Unfolder.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }

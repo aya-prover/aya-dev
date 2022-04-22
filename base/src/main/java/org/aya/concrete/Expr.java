@@ -70,6 +70,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     R visitPi(@NotNull PiExpr expr, P p);
     R visitSigma(@NotNull SigmaExpr expr, P p);
     R visitRawUniv(@NotNull RawUnivExpr expr, P p);
+    R visitInterval(@NotNull IntervalExpr intervalExpr, P p);
     R visitLift(@NotNull LiftExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
@@ -252,6 +253,13 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record RawUnivExpr(@NotNull SourcePos sourcePos) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitRawUniv(this, p);
+    }
+  }
+
+  record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {
+    @Override
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return  visitor.visitInterval(this, p);
     }
   }
 

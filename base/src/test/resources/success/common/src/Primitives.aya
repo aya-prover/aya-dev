@@ -1,6 +1,3 @@
-prim I
-prim left : I
-prim right : I
 prim squeezeL (i : I) (j : I) : I
-prim arcoe (A : I -> Type) (A left) (i : I) : A i
+prim arcoe (A : I -> Type) (A 0) (i : I) : A i
 prim invol (i : I) : I

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -67,5 +67,11 @@ public sealed interface FormTerm extends Term {
       return visitor.visitUniv(this, p);
     }
 
+  }
+
+  record Interval() implements FormTerm {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitInterval(this, p);
+    }
   }
 }

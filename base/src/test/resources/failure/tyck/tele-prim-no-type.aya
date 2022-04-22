@@ -1,2 +1,1 @@
-prim I
-prim left (i : I)
+prim invol (i : I)
