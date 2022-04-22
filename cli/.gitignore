@@ -1,4 +1,1 @@
-build
-.gradle
-src/main/gen
 src/main/resources/META-INF/native-image

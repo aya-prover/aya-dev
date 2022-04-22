@@ -1,5 +1,8 @@
 // Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+import org.aya.gradle.CommonTasks
+CommonTasks.nativeImageConfig(project)
+
 dependencies {
   api(project(":tools"))
   api(project(":pretty"))
@@ -44,15 +47,7 @@ tasks.named<Test>("test") {
 tasks.register<JavaExec>("runCustomTest") {
   group = "Execution"
   classpath = sourceSets.test.get().runtimeClasspath
-  main = "org.aya.test.TestRunner"
-}
-
-val configGenDir = file("build/native-config")
-val configTemplateFile = file("reflect-config.txt")
-
-val generateReflectionConfig = tasks.register<org.aya.gradle.GenerateReflectionConfigTask>("generateReflectionConfig") {
-  outputDir = configGenDir
-  inputFile = configTemplateFile
+  mainClass.set("org.aya.test.TestRunner")
 }
 
 graalvmNative {
@@ -65,21 +60,18 @@ graalvmNative {
     fallback.set(false)
     verbose.set(true)
     sharedLibrary.set(false)
-    configurationFileDirectories.from(configGenDir)
     buildArgs.add("--report-unsupported-elements-at-runtime")
 
-    javaLauncher.set(javaToolchains.launcherFor {
-      languageVersion.set(JavaLanguageVersion.of(17))
-      vendor.set(JvmVendorSpec.matching("GraalVM Community"))
-    })
+    javaLauncher.set(
+      javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(17))
+        vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+      },
+    )
   }
 }
 
 tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeCompile") {
   // native compiling base module is meaningless, just disable it
   this.enabled = false
-}
-
-tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeTestCompile") {
-  dependsOn(generateReflectionConfig)
 }

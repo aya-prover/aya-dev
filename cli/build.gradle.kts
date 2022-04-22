@@ -3,6 +3,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
 CommonTasks.fatJar(project, "org.aya.cli.Main")
+CommonTasks.nativeImageConfig(project)
 
 dependencies {
   api(project(":base"))
@@ -36,14 +37,6 @@ if (isMac) tasks.withType<JavaExec>().configureEach {
 
 tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }
 
-val genDir = file("build/native-config")
-val configFile = file("reflect-config.txt")
-
-val generateReflectionConfig = tasks.register<org.aya.gradle.GenerateReflectionConfigTask>("generateReflectionConfig") {
-  outputDir = genDir
-  inputFile = configFile
-}
-
 graalvmNative {
   binaries {
     named("main") {
@@ -61,7 +54,6 @@ graalvmNative {
     fallback.set(false)
     verbose.set(true)
     sharedLibrary.set(false)
-    configurationFileDirectories.from(genDir)
     buildArgs.add("--report-unsupported-elements-at-runtime")
 
     javaLauncher.set(javaToolchains.launcherFor {
@@ -72,7 +64,6 @@ graalvmNative {
 }
 
 tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeCompile") {
-  dependsOn(generateReflectionConfig)
   dependsOn(tasks.named("fatJar"))
   classpathJar.set(file("build/libs/cli-${project.version}-fat.jar"))
 }
