@@ -24,15 +24,15 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            arch: x86_64
+            arch: x86-64
             graalVM: https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/22.2.0-dev-20220421_2218/graalvm-ce-java17-linux-amd64-dev.tar.gz
             binaryExt: ''
           - os: macos-latest
-            arch: x86_64
+            arch: x86-64
             graalVM: https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/22.2.0-dev-20220421_2218/graalvm-ce-java17-darwin-amd64-dev.tar.gz
             binaryExt: ''
           - os: windows-latest
-            arch: x86_64
+            arch: x86-64
             graalVM: https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/22.2.0-dev-20220421_2218/graalvm-ce-java17-windows-amd64-dev.zip
             binaryExt: '.exe'
     steps:
