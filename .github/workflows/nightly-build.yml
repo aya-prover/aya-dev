@@ -1,7 +1,7 @@
 name: nightly
 on:
   push:
-    branches: [main, when-i-am-free]
+    branches: [main, when-i-am-free, strip-preview]
 jobs:
   move-tag:
     runs-on: ubuntu-latest
@@ -33,7 +33,7 @@ jobs:
             binaryExt: ''
           - os: windows-latest
             arch: x86-64
-            graalVM: https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/22.2.0-dev-20220421_2218/graalvm-ce-java17-windows-amd64-dev.zip
+            graalVM: https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/22.2.0-dev-20220329_0949/graalvm-ce-java17-windows-amd64-dev.zip
             binaryExt: '.exe'
     steps:
       - uses: actions/checkout@v2
@@ -48,6 +48,10 @@ jobs:
           jdkFile: ${{ steps.graalvm-download.outputs.filename }}
           java-version: '17'
           architecture: x64
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        if: ${{ matrix.os }} == 'windows-latest'
 
       - name: gradle jlink
         uses: eskatos/gradle-command-action@v1
@@ -73,7 +77,7 @@ jobs:
           cp ./cli/build/libs/cli-*-fat.jar ./cli-fatjar.jar
 
       - name: Copy aya Native Image
-        run: cp ./cli/build/native/nativeCompile/aya ./aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}
+        run: cp ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} ./aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}
 
       - name: Zip Artifacts (Windows)
         uses: papeloto/action-zip@v1
