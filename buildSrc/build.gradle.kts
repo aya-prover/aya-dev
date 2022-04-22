@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import java.util.*
 
@@ -8,7 +8,10 @@ plugins {
   antlr
 }
 
-repositories { mavenCentral() }
+repositories {
+  mavenCentral()
+  gradlePluginPortal()
+}
 
 val rootDir = projectDir.parentFile!!
 val parserDir = rootDir.resolve("parser")
@@ -43,4 +46,9 @@ dependencies {
   val deps = Properties()
   deps.load(rootDir.resolve("gradle/deps.properties").reader())
   antlr("org.antlr", "antlr4", deps.getProperty("version.antlr"))
+
+  // The following is required for
+  // - extracting common parts inside `graalvmNative` block
+  // - specifying the plugin version from deps.properties
+  implementation("org.graalvm.buildtools.native", "org.graalvm.buildtools.native.gradle.plugin", deps.getProperty("version.graalBuildTools"))
 }

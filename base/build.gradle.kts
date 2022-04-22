@@ -14,7 +14,7 @@ dependencies {
 }
 
 plugins {
-  id("org.graalvm.buildtools.native") version "0.9.11"
+  id("org.graalvm.buildtools.native")
 }
 
 val genDir = file("src/main/gen")
@@ -51,27 +51,9 @@ tasks.register<JavaExec>("runCustomTest") {
 }
 
 graalvmNative {
-  binaries {
-    named("test") {
-    }
-  }
-
-  binaries.configureEach {
-    fallback.set(false)
-    verbose.set(true)
-    sharedLibrary.set(false)
-    buildArgs.add("--report-unsupported-elements-at-runtime")
-
-    javaLauncher.set(
-      javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(17))
-        vendor.set(JvmVendorSpec.matching("GraalVM Community"))
-      },
-    )
-  }
-}
-
-tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeCompile") {
-  // native compiling base module is meaningless, just disable it
-  this.enabled = false
+  CommonTasks.nativeImageBinaries(
+    project, javaToolchains, this,
+    false,
+    true
+  )
 }

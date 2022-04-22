@@ -3,17 +3,43 @@
 package org.aya.gradle
 
 import com.ibm.icu.text.SimpleDateFormat
+import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
+import org.gradle.jvm.toolchain.JavaToolchainService
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JvmVendorSpec
+import org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask
 
 /**
  * @author ice1000, kiva
  */
 final class CommonTasks {
+  static void nativeImageBinaries(Project project, JavaToolchainService toolchain, GraalVMExtension ext, boolean allowNativeImage, boolean allowNativeTest) {
+    ext.binaries.configureEach {
+      fallback.set(false)
+      verbose.set(true)
+      sharedLibrary.set(false)
+      buildArgs.add("--report-unsupported-elements-at-runtime")
+
+      javaLauncher.set(
+        toolchain.launcherFor {
+          languageVersion.set(JavaLanguageVersion.of(17))
+          vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+        },
+      )
+    }
+
+    if (!allowNativeImage) project.tasks.named("nativeCompile", BuildNativeImageTask) {
+      it.enabled = false
+    }
+    if (!allowNativeTest) ext.testSupport.set(false)
+  }
+
   static TaskProvider<GenerateReflectionConfigTask> nativeImageConfig(Project project) {
     var root = project.projectDir.toPath()
     var configGenDir = root.resolve("build/native-config").toFile()

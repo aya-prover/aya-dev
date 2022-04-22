@@ -23,7 +23,7 @@ dependencies {
 }
 
 plugins {
-  id("org.graalvm.buildtools.native") version "0.9.11"
+  id("org.graalvm.buildtools.native")
 }
 
 tasks.withType<AbstractCopyTask>().configureEach {
@@ -45,22 +45,12 @@ graalvmNative {
       debug.set(System.getenv("CI") == null)
       useFatJar.set(true)
     }
-
-    named("test") {
-    }
   }
-
-  binaries.configureEach {
-    fallback.set(false)
-    verbose.set(true)
-    sharedLibrary.set(false)
-    buildArgs.add("--report-unsupported-elements-at-runtime")
-
-    javaLauncher.set(javaToolchains.launcherFor {
-      languageVersion.set(JavaLanguageVersion.of(17))
-      vendor.set(JvmVendorSpec.matching("GraalVM Community"))
-    })
-  }
+  CommonTasks.nativeImageBinaries(
+    project, javaToolchains, this,
+    true,
+    true
+  )
 }
 
 tasks.named<org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask>("nativeCompile") {
