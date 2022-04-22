@@ -4,12 +4,12 @@ on:
     branches:
       - main
 jobs:
-  commit-check :
-    runs-on : ubuntu-20.04
-    steps :
-      - uses : actions/checkout@v2
-        with :
-          fetch-depth : 0
-          ref : ${{ github.event.pull_request.head.sha }}
-      - name : Check git commit message
-        run : bash .github/workflows/commit-check.sh
+  commit-check:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Check git commit message
+        run: bash .github/workflows/commit-check.sh
