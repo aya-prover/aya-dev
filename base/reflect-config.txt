@@ -1,0 +1,95 @@
+# This file defines the template of reflection config for GraalVM native image
+# and is used to generate the `reflect-config.json` and `serialization-config.json`
+# needed for building GraalVM native image.
+
+# Each line in this file contains a valid Java full qualified class name
+# and an optional generator directive. Generator directive is an
+# expandable glob like `{1,100}` which expands to sequence from 1 to 100 (inclusive).
+# For example: the line
+#   org.aya.some.Name${1,3}
+# will generate 3 classes:
+#   org.aya.some.Name$1
+#   org.aya.some.Name$2
+#   org.aya.some.Name$3
+# This is useful when generating reflection config for anonymous classes.
+
+# Java classes
+java.lang.Class
+java.lang.String
+java.lang.String[]
+java.lang.Enum
+java.lang.Enum[]
+java.util.EnumSet$SerializationProxy
+java.util.EnumSet
+java.util.RegularEnumSet
+
+# Kala classes, TODO: move to kala
+kala.control.Either
+kala.control.Either$Left
+kala.control.Either$Right
+kala.control.Option
+kala.control.Option$NoneReplaced
+kala.control.AnyOption
+kala.function.Balances$Optimized
+kala.collection.internal.hash.HashBase
+kala.collection.mutable.MutableHashMap
+kala.collection.immutable.ImmutableHashMap
+kala.collection.immutable.ImmutableVector
+kala.collection.immutable.ImmutableVectors$Vector{0,6}
+kala.collection.immutable.ImmutableVectors$BigVector
+kala.collection.immutable.ImmutableSeqs$Seq{0,5}
+kala.collection.immutable.ImmutableSeqs$SeqN
+
+# Serialized core terms, for ObjectOutputStream
+org.aya.core.serde.CompiledAya
+org.aya.util.binop.OpDecl$OpInfo
+org.aya.core.serde.SerDef
+org.aya.core.serde.SerDef$SerOpDecl
+org.aya.core.serde.SerDef$SerOp
+org.aya.core.serde.SerDef$SerBind
+org.aya.core.serde.SerDef$QName
+org.aya.core.serde.SerDef$Fn
+org.aya.core.serde.SerDef$Prim
+org.aya.core.serde.SerDef$Data
+org.aya.core.serde.SerDef$Ctor
+org.aya.core.serde.SerDef$Struct
+org.aya.core.serde.SerDef$Field
+org.aya.core.serde.SerTerm$SimpVar
+org.aya.core.serde.SerTerm$SerParam
+org.aya.core.serde.SerTerm$Pi
+org.aya.core.serde.SerTerm$Sigma
+org.aya.core.serde.SerTerm$Univ
+org.aya.core.serde.SerTerm$Ref
+org.aya.core.serde.SerTerm$Lam
+org.aya.core.serde.SerTerm$New
+org.aya.core.serde.SerTerm$Proj
+org.aya.core.serde.SerTerm$SerArg
+org.aya.core.serde.SerTerm$App
+org.aya.core.serde.SerTerm$CallData
+org.aya.core.serde.SerTerm$StructCall
+org.aya.core.serde.SerTerm$FnCall
+org.aya.core.serde.SerTerm$DataCall
+org.aya.core.serde.SerTerm$PrimCall
+org.aya.core.serde.SerTerm$ConCall
+org.aya.core.serde.SerTerm$Tup
+org.aya.core.serde.SerTerm$Access
+org.aya.core.serde.SerTerm$FieldRef
+org.aya.core.serde.SerTerm$Interval
+org.aya.core.serde.SerTerm$End
+org.aya.core.serde.SerPat$Matchy
+org.aya.core.serde.SerPat$Absurd
+org.aya.core.serde.SerPat$Tuple
+org.aya.core.serde.SerPat$Bind
+org.aya.core.serde.SerPat$End
+org.aya.core.serde.SerPat$Ctor
+
+# TODO: generate record from file
+# @<xxx.java>:org.aya.core.serde.SerTerm$:record ([a-zA-Z0-9_]+)
+
+# Library Compiler, for Gson
+org.aya.cli.library.json.LibraryConfigData
+org.aya.cli.library.json.LibraryDependencyData
+
+# REPL commands, for our REPL framework
+org.aya.repl.Command
+org.aya.cli.repl.ReplCommands${1,11}
