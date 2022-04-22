@@ -1,4 +1,4 @@
-name : test
+name: test
 on:
   push:
     branches: [main, staging, trying]
@@ -25,7 +25,7 @@ jobs:
         if: github.base_ref == null && github.ref == 'refs/heads/main'
         with:
           name: nightly-build
-          path : ./lsp/build/image
+          path: ./lsp/build/image
       - name: Upload coverage to Codecov
         if: github.base_ref != null
         uses: codecov/codecov-action@v2
