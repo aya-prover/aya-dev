@@ -1,5 +1,8 @@
 // Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+import org.aya.gradle.CommonTasks
+CommonTasks.nativeImageConfig(project)
+
 dependencies {
   api(project(":tools"))
   api(project(":pretty"))
@@ -8,6 +11,10 @@ dependencies {
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
   testImplementation(project(":cli"))
+}
+
+plugins {
+  id("org.graalvm.buildtools.native")
 }
 
 val genDir = file("src/main/gen")
@@ -40,5 +47,13 @@ tasks.named<Test>("test") {
 tasks.register<JavaExec>("runCustomTest") {
   group = "Execution"
   classpath = sourceSets.test.get().runtimeClasspath
-  main = "org.aya.test.TestRunner"
+  mainClass.set("org.aya.test.TestRunner")
+}
+
+graalvmNative {
+  CommonTasks.nativeImageBinaries(
+    project, javaToolchains, this,
+    false,
+    true
+  )
 }

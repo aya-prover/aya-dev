@@ -1,19 +1,75 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.gradle
 
 import com.ibm.icu.text.SimpleDateFormat
+import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
+import org.gradle.jvm.toolchain.JavaToolchainService
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JvmVendorSpec
+import org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask
 
 /**
- * @author ice1000
+ * @author ice1000, kiva
  */
 final class CommonTasks {
+  static void nativeImageBinaries(Project project, JavaToolchainService toolchain, GraalVMExtension ext, boolean allowNativeImage, boolean allowNativeTest) {
+    ext.binaries.configureEach {
+      fallback.set(false)
+      verbose.set(true)
+      sharedLibrary.set(false)
+      buildArgs.add("--report-unsupported-elements-at-runtime")
+
+      javaLauncher.set(
+        toolchain.launcherFor {
+          languageVersion.set(JavaLanguageVersion.of(17))
+          vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+        },
+      )
+    }
+
+    if (!allowNativeImage) project.tasks.named("nativeCompile", BuildNativeImageTask) {
+      it.enabled = false
+    }
+    if (!allowNativeTest) ext.testSupport.set(false)
+  }
+
+  static TaskProvider<GenerateReflectionConfigTask> nativeImageConfig(Project project) {
+    var root = project.projectDir.toPath()
+    var configGenDir = root.resolve("build/native-config").toFile()
+    var configTemplateFile = root.resolve("reflect-config.txt").toFile()
+    var metaInfDir = root.resolve(
+      "src/main/resources/META-INF/native-image/${project.group}.${project.name}"
+    ).toFile()
+
+    var task = project.tasks.register('generateNativeImageConfig', GenerateReflectionConfigTask) {
+      outputDir = configGenDir
+      inputFile = configTemplateFile
+      doFirst {
+        metaInfDir.mkdirs()
+      }
+      doLast {
+        project.copy {
+          from(configGenDir)
+          into(metaInfDir)
+        }
+      }
+    }
+    var cleanMetaInf = project.tasks.register("cleanNativeImageConfig") {
+      metaInfDir.deleteDir()
+    }
+    project.tasks.named("compileJava") { dependsOn(task) }
+    project.tasks.named("sourcesJar") { dependsOn(task) }
+    project.tasks.named("clean") { dependsOn(cleanMetaInf) }
+    task
+  }
+
   static TaskProvider<Jar> fatJar(Project project, String mainClass) {
     project.tasks.register('fatJar', Jar) {
       archiveClassifier.set 'fat'

@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
 CommonTasks.fatJar(project, "org.aya.cli.Main")
+CommonTasks.nativeImageConfig(project)
 
 dependencies {
   api(project(":base"))
@@ -21,6 +22,10 @@ dependencies {
   // testImplementation("org.ice1000.jimgui", "fun", version = deps.getProperty("version.jimgui"))
 }
 
+plugins {
+  id("org.graalvm.buildtools.native")
+}
+
 tasks.withType<AbstractCopyTask>().configureEach {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
@@ -31,3 +36,18 @@ if (isMac) tasks.withType<JavaExec>().configureEach {
 }
 
 tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }
+
+graalvmNative {
+  binaries {
+    named("main") {
+      imageName.set("aya")
+      mainClass.set("org.aya.cli.Main")
+      debug.set(System.getenv("CI") == null)
+    }
+  }
+  CommonTasks.nativeImageBinaries(
+    project, javaToolchains, this,
+    true,
+    true
+  )
+}
