@@ -1,7 +1,7 @@
+/*
 // Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.bench;
-
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.ReplCompiler;
@@ -23,24 +23,28 @@ import java.util.concurrent.TimeUnit;
 
 
 @BenchmarkMode(Mode.SingleShotTime)
-@Measurement(iterations = 50, time = 30, timeUnit = TimeUnit.SECONDS)
-@Warmup(iterations = 10, time = 10, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 10, time = 5, timeUnit = TimeUnit.SECONDS)
+@Threads(8)
+@Fork(2)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Thread)
-@Fork(0)
-@Timeout(time = 50, timeUnit = TimeUnit.SECONDS)
-public class ListBench {
+public class ListBench2 {
 
   final @NotNull ReplCompiler replCompiler;
   final @NotNull Path benchFile;
-  @Param({"hundred"})
+  @Param({"ten", "hundred", "two-k", "four-k", "eight-k"})
   private String param;
 
-  public ListBench() {
-    benchFile = Path.of("ListBench.aya");
+  public ListBench2() {
+    benchFile = Path.of(ListBench2.class.getTypeName() + ".aya");
 
     var reporter = CliReporter.stdio(true, DistillerOptions.debug(), Problem.Severity.WARN);
     replCompiler = new ReplCompiler(ImmutableSeq.empty(), reporter, null);
+    try {
+      replCompiler.loadToContext(benchFile);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void main(String[] args) throws RunnerException {
@@ -58,26 +62,15 @@ public class ListBench {
   }
 
   @Benchmark
-  public void baseline(@NotNull Blackhole bh) {
-    try {
-      bh.consume(replCompiler.loadToContext(benchFile));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Benchmark
   public void normBench(@NotNull Blackhole bh) {
-    try {
-      replCompiler.loadToContext(benchFile);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    bh.consume(replCompiler.compileToContext("test " + param, NormalizeMode.NF));
+    bh.consume(replCompiler.compileExpr("test " + param, NormalizeMode.NF));
   }
 
-  /*@Benchmark
+  */
+/*@Benchmark
   public Term normBase() {
     return replCompiler.compileExpr("(suc (suc zero))", NormalizeMode.NF);
-  }*/
+  }*//*
+
 }
+*/

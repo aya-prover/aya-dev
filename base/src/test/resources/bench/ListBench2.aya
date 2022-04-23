@@ -1,0 +1,46 @@
+open data Nat: Type
+| zero
+| suc Nat
+
+def overlap infixl + (a b : Nat) : Nat
+| zero, a => a
+| a, zero => a
+| suc a, b => suc (a + b)
+| a, suc b => suc (a + b)
+
+def overlap infixl *' (m n : Nat) : Nat
+| zero, n => zero
+| m, zero => zero
+| suc m, suc n => suc (m + n + m *' n)
+bind tighter +
+
+def ten: Nat => (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))
+
+def hundred: Nat => ten *' ten
+
+def thousand: Nat => hundred *' ten
+
+def two-k: Nat => (suc (suc zero)) *' thousand
+
+def four-k: Nat => (suc (suc zero)) *' two-k
+
+def eight-k: Nat => (suc (suc zero)) *' four-k
+
+def sixteen-k: Nat => (suc (suc zero)) *' eight-k
+
+-----
+
+open data SList {A B : Type} : Type
+| sl (B -> (A -> (SList {A} {B}) -> B) -> B)
+
+def runList {A B} (l: SList {A} {B}): B -> (A -> SList {A} {B} -> B) -> B
+| sl f => f
+
+def mkNil {A B: Type} : SList {A} {B} => sl (\z cons => z)
+def mkCons {A B: Type} (x: A) (xs: SList {A} {B}): SList {A} {B} => sl (\z cons => cons x xs)
+
+def gen {B: Type} (n: Nat): SList {Nat} {B}
+| zero => mkNil
+| suc n => mkCons (suc n) (gen n)
+
+def sum {B: Type} (xs: SList {Nat} {B}): Nat => runList xs 0 (\x xs' => x + sum xs')

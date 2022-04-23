@@ -1,3 +1,6 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 // Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.CommonTasks
@@ -64,9 +67,11 @@ graalvmNative {
 tasks.register<JavaExec>("bench") {
   description = "Executes JMH micro-benchmarking"
   group = "Execution"
-  mainClass.set("org.aya.test.ListBench")
+  mainClass.set("org.aya.test.bench.ListBench")
   classpath = sourceSets.test.get().runtimeClasspath
-  val resultFile = file("${project.buildDir}/bench/report.txt").absoluteFile
+
+  val time = DateTimeFormatter.ofPattern("yyyy-LLL-dd-hh-mm-ss").format(LocalDateTime.now())
+  val resultFile = file("${project.buildDir}/bench/report${time}.txt").absoluteFile
 
   // doesn't need this actually
   val inputFiles = file("src/test/resources/bench").listFiles()?.map { it.absoluteFile }
