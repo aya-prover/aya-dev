@@ -1,12 +1,14 @@
 open import Arith::Nat
 open import Data::List
 
-{--AYAINTERNAL--}
+@Internal
+open module Internal {
 def SourcePos: Type => Nat
 def TAC_STATE: Type => Nat
 def ENV: Type => Nat
 open data Str: Type
 def Name: Type => Str
+}
 ---
 
 struct FailureData: Type
@@ -39,7 +41,7 @@ def TacM (Ty: Type): Type => InteractMonad.M TAC_STATE Ty
 def infixl <|> {S Ty} (m1 m2: M S Ty): TacM S Ty => InteractMonad.(<|>)
 
 
-{--AYAINTERNAL PrimMethods--}
+@Internal
 open module PrimMethods {
   def fail {Ty}: Str -> TacM Ty
   def getDecl: Name -> TacM Decl
