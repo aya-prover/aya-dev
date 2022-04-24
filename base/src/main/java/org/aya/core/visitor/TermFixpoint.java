@@ -161,4 +161,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
       && tuple == term.of()) return term;
     return new CallTerm.Access(tuple, term.ref(), structArgs, args);
   }
+
+  @Override default @NotNull Term visitShapedLit(LitTerm.@NotNull ShapedInt shaped, P p) {
+    return shaped;
+  }
 }

@@ -151,6 +151,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
       case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
+      case LitTerm.ShapedInt shaped -> Doc.plain(String.valueOf(shaped.value()));
     };
   }
 

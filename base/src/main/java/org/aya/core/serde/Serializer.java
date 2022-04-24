@@ -247,4 +247,8 @@ public record Serializer(@NotNull Serializer.State state) implements
     assert def.ref.module != null;
     return new SerDef.Prim(def.ref.module, def.id);
   }
+
+  @Override public SerTerm visitShapedLit(LitTerm.@NotNull ShapedInt shaped, Unit unit) {
+    throw new UnsupportedOperationException("TODO");
+  }
 }

@@ -118,9 +118,8 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  @Override
-  default Unit visitEnd(PrimTerm.@NotNull End end, P p) {
-    return  Unit.unit();
+  @Override default Unit visitEnd(PrimTerm.@NotNull End end, P p) {
+    return Unit.unit();
   }
 
   @Override default Unit visitProj(@NotNull ElimTerm.Proj term, P p) {
@@ -131,5 +130,9 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     visitArgs(p, term.fieldArgs());
     visitCall(term, p);
     return term.of().accept(this, p);
+  }
+
+  @Override default Unit visitShapedLit(LitTerm.@NotNull ShapedInt shaped, P p) {
+    return Unit.unit();
   }
 }
