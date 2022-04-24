@@ -75,12 +75,16 @@ public record StmtShallowResolver(
           useHide::uses,
           useHide.renaming(),
           cmd.sourcePos());
-        // open operator precedence bindings from imported modules (not submodules)
-        // because submodules always share the same opSet with file-level resolveInfo.
+        // open necessities from imported modules (not submodules)
+        // because the module itself and its submodules share the same ResolveInfo
         var modInfo = resolveInfo.imports().getOption(mod);
         if (modInfo.isDefined()) {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().append(mod);
-          resolveInfo.opSet().importBind(modInfo.get().opSet(), cmd.sourcePos());
+          var modResolveInfo = modInfo.get();
+          // open operator precedence bindings
+          resolveInfo.opSet().importBind(modResolveInfo.opSet(), cmd.sourcePos());
+          // open discovered shapes as well
+          resolveInfo.discoveredShapes().putAll(modResolveInfo.discoveredShapes());
         }
         // renaming as infix
         if (useHide.strategy() == Command.Open.UseHide.Strategy.Using) useHide.list().forEach(use -> {

@@ -14,6 +14,8 @@ import org.aya.concrete.stmt.TopLevelDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.UserDef;
+import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.ShapeMatcher;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
@@ -182,7 +184,10 @@ public record AyaSccTycker(
 
   private void decideTyckResult(@NotNull Decl decl, @NotNull Def def) {
     switch (decl.personality) {
-      case NORMAL -> wellTyped.append(def);
+      case NORMAL -> {
+        wellTyped.append(def);
+        bonjour(def);
+      }
       case COUNTEREXAMPLE -> {
         var sampleReporter = sampleReporters.getOrPut(decl, BufferReporter::new);
         var problems = sampleReporter.problems().toImmutableSeq();
@@ -190,6 +195,13 @@ public record AyaSccTycker(
         if (def instanceof UserDef userDef) userDef.problems = problems;
       }
     }
+  }
+
+  /** Discovery of shaped literals */
+  private void bonjour(@NotNull Def def) {
+    AyaShape.LITERAL_SHAPES.view()
+      .filter(shape -> ShapeMatcher.match(shape.codeShape(), def))
+      .forEach(shape -> resolveInfo.shapeFactory().discovered().getOrPut(def, MutableList::create).append(shape));
   }
 
   private @NotNull ExprTycker reuse(@NotNull TopLevelDecl decl) {
