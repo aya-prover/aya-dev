@@ -1,0 +1,85 @@
+open import Arith::Nat
+open import Data::List
+
+{--AYAINTERNAL--}
+def SourcePos: Type => Nat
+def TAC_STATE: Type => Nat
+def ENV: Type => Nat
+open data Str: Type
+def Name: Type => Str
+---
+
+struct FailureData: Type
+| sourcePos: SourcePos
+| reason: Str
+
+open data Exceptional (A: Type): Type
+| success A
+| failure Str --- error result can be more verbose
+
+open data TacResult (State: Type) (Ty: Type): Type
+| tacSucc State Ty
+| tacFail FailureData State
+
+module InteractMonad {
+  def M (State: Type) (Ty: Type): Type => State -> TacResult State Ty
+
+  def infixl <|> {S Ty} (m1 m2: M S Ty): InteractM S Ty =>
+    do res1 <- m1
+       res2 <- m2
+       return (choose res1 res2)
+       where def choose (res1 res2: TacResult State Ty): TacResult State Ty
+             | tacSucc s ty, _ => tacSucc s ty
+             | tacFail sp1 s1, tacSucc sp2 s2 => tacSucc sp2 s2
+             | tacFail sp1 s1, _ => tacFail sp1 s1
+}
+
+def TacM (Ty: Type): Type => InteractMonad.M TAC_STATE Ty
+
+def infixl <|> {S Ty} (m1 m2: M S Ty): TacM S Ty => InteractMonad.(<|>)
+
+
+{--AYAINTERNAL PrimMethods--}
+open module PrimMethods {
+  def fail {Ty}: Str -> TacM Ty
+  def getDecl: Name -> TacM Decl
+  def addDecl: Decl -> TacM Unit
+  def getConNames: Name -> List Name
+  def getConExps: Name -> Name -> Term
+  def getGoals: TacM (List Term)
+  def getFirstGoal: TacM (Exceptional Term)
+  def getRestGoal: TacM (Exceptional (List Term))
+  def setGoals: List Term -> TacM Unit
+  def hasGoal: TacM Bool
+  def QED: TacM Unit
+  ------
+  def infer: Term -> TacM Term
+  def unify: Term -> Term -> TacM Unit
+  def intro: Term
+  -------
+  -- def printGoals: TacM Str
+}
+
+-- when a term is elaborated,
+
+-- TODO: bulletin syntax
+
+tacdef focus {Ty} (tac: TacM Ty): TacM Ty =>
+  do g <- getFirstGoal
+          gs <- getRestGoals
+          setGoals [g] -- TODO: list syntax
+          a <- tac
+          newGs <- getGoals
+          setGoals (newGoals ++ gs)
+          return a
+
+tacdef attackAll {Ty} (tac: TacM Ty): TacM (List Ty) =>
+  do gs <- getGoals
+     go gs []
+     where def go: List Term -> List Term -> TacM (List Ty) =>
+           | nil, new_gs => do setGoals new_gs
+                               return nil
+           | g <: gs, new_gs => do setGoals [g]
+                                   a <- tac
+                                   new_gs' <- getGoals
+                                   as <- go gs (new_gs' ++ new_gs) -- memorizing generated goals
