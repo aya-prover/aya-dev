@@ -232,7 +232,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
         return Term.this.view();
       }
 
-      @Override public Term pre(Term term) {
+      @Override public @NotNull Term pre(Term term) {
         return switch (term) {
           case CallTerm.Hole hole -> {
             metas.append(hole.ref());

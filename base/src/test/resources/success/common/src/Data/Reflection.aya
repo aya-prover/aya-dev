@@ -2,8 +2,10 @@ open import Data::List
 open import Arith::Nat
 open import Data::Bool
 open import Data::Either
+open import Data::Maybe
 
 def Name => Nat -- should be string
+def QualifiedID => List Name
 def Param => Sig Name ** Term
 def Tele => List Param
 def Explicit => Bool
@@ -147,19 +149,20 @@ struct Match: Type
 
 struct Field: Type
 | name: Name
-| bindings: Tele
+| bindings: (List Name)
 | body: Expr
 
 
 data Expr: Type
-| ref     Expr
-| lam     Name (dom: Expr) (body: Expr)
-| pi      Name (dom: Expr) (cod: Expr)
-| sigma   Name (fst: Expr) (snd: Expr)
-| univ    Lvl
-| app     Expr Expr
-| tup     (List Expr)
-| newEx   Expr (List Field)
-| hole    Name Expr
-
-
+| ref       Expr
+| lam       Name (dom: Expr) (body: Expr)
+| pi        Name (dom: Expr) (cod: Expr)
+| sigma     Name (fst: Expr) (snd: Expr)
+| univ      Lvl
+| lift      Expr Nat
+| app       Expr Expr
+| tup       (List Expr)
+| Interval
+| proj      Expr (Either Nat QualifiedID)
+| neu       Expr (List Field)
+| hole      (Maybe Expr) Expr
