@@ -15,6 +15,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
+import org.aya.core.visitor.Zonker;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
@@ -243,7 +244,8 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return this;
+      // The cast must succeed
+      return new Pat.ShapedInt(repr, shape, (CallTerm.Data) tycker.zonk(type), explicit);
     }
 
     @Override public @NotNull Pat inline() {
