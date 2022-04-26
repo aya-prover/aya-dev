@@ -4,8 +4,9 @@ package org.aya.core.repr;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.control.Option;
+import kala.tuple.Tuple;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
@@ -80,9 +81,28 @@ public sealed interface AyaShape {
     }
   }
 
-  record Factory(@NotNull MutableMap<Def, MutableList<AyaShape>> discovered) {
+  record Factory(@NotNull MutableMap<Def, AyaShape> discovered) {
     public Factory() {
       this(MutableLinkedHashMap.of());
+    }
+
+    public @NotNull Option<Def> findImpl(@NotNull AyaShape shape) {
+      var defs = discovered.view().map(Tuple::of)
+        .filter(t -> t._2 == shape)
+        .map(t -> t._1)
+        .toImmutableSeq();
+      // TODO[literal]: what if a shaped can be encoded by multiple defs?
+      if (defs.sizeGreaterThan(1)) return Option.none();
+      return defs.firstOption();
+    }
+
+    public @NotNull Option<AyaShape> find(@NotNull Def def) {
+      return discovered.getOption(def);
+    }
+
+    public void bonjour(@NotNull Def def, @NotNull AyaShape shape) {
+      // TODO[literal]: what if a def has multiple shapes?
+      discovered.put(def, shape);
     }
   }
 }

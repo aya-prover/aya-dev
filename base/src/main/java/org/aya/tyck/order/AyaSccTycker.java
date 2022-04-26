@@ -201,7 +201,7 @@ public record AyaSccTycker(
   private void bonjour(@NotNull Def def) {
     AyaShape.LITERAL_SHAPES.view()
       .filter(shape -> ShapeMatcher.match(shape.codeShape(), def))
-      .forEach(shape -> resolveInfo.shapeFactory().discovered().getOrPut(def, MutableList::create).append(shape));
+      .forEach(shape -> resolveInfo.shapeFactory().bonjour(def, shape));
   }
 
   private @NotNull ExprTycker reuse(@NotNull TopLevelDecl decl) {

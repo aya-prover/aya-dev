@@ -50,7 +50,7 @@ import java.util.function.Consumer;
  */
 public final class ExprTycker extends Tycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
-  public @NotNull AyaShape.Factory literalShapes;
+  public @NotNull AyaShape.Factory shapeFactory;
   public final @Nullable Trace.Builder traceBuilder;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -236,15 +236,10 @@ public final class ExprTycker extends Tycker {
       case Expr.ErrorExpr err -> Result.error(err.description());
       case Expr.LitIntExpr lit -> {
         int integer = lit.integer();
-        if (integer < 0) throw new UnsupportedOperationException("TODO: int shape");
-        var nats = literalShapes.discovered().view()
-          .map(Tuple::of)
-          .filter(t -> t._2.contains(AyaShape.NAT_SHAPE))
-          .map(t -> t._1)
-          .toImmutableSeq();
-        if (nats.sizeGreaterThan(1)) throw new UnsupportedOperationException("TODO: how to choose?");
-        var dataDef = ((DataDef) nats.first());
-        var type = new CallTerm.Data(dataDef.ref, 0, ImmutableSeq.empty());
+        // TODO[literal]: int literals. Currently the parser does not allow negative literals.
+        var dataDef = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
+        if (dataDef.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
+        var type = new CallTerm.Data(((DataDef) dataDef.get()).ref, 0, ImmutableSeq.empty());
         yield new Result(new LitTerm.ShapedInt(integer, AyaShape.NAT_SHAPE, type), type);
       }
       default -> fail(expr, new NoRuleError(expr, null));
@@ -364,12 +359,8 @@ public final class ExprTycker extends Tycker {
         }
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
-          var shapes = literalShapes.discovered().getOption(data);
-          if (shapes.isDefined()) {
-            var shape = shapes.get();
-            if (shape.sizeGreaterThan(1)) throw new UnsupportedOperationException("TODO: how to choose?");
-            yield new Result(new LitTerm.ShapedInt(lit.integer(), shape.first(), dataCall), term);
-          }
+          var shape = shapeFactory.find(data);
+          if (shape.isDefined()) yield new Result(new LitTerm.ShapedInt(lit.integer(), shape.get(), dataCall), term);
         }
         yield unifyTyMaybeInsert(term, synthesize(expr), expr);
       }
@@ -407,12 +398,12 @@ public final class ExprTycker extends Tycker {
 
   public ExprTycker(
     @NotNull PrimDef.Factory primFactory,
-    @NotNull AyaShape.Factory literalShapes,
+    @NotNull AyaShape.Factory shapeFactory,
     @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder
   ) {
     super(reporter, new TyckState(primFactory));
     this.traceBuilder = traceBuilder;
-    this.literalShapes = literalShapes;
+    this.shapeFactory = shapeFactory;
   }
 
   public void solveMetas() {

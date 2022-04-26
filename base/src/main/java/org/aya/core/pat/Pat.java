@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva, ice1000
  */
-@Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
+@Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
   boolean explicit();
   default @NotNull Term toTerm() {

@@ -35,8 +35,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
             assert ctor.ref() == ctor1.ref();
             visitList(ctor.params(), ctor1.params());
           }
-          // TODO: convert ctor to literal?
-          case Pat.ShapedInt lit -> unify(ctor, lit.constructorForm());
+          case Pat.ShapedInt lit -> unifyLitWithCtor(ctor, lit, lhs);
           default -> reportError(lhs, rhs);
         }
       }
@@ -49,14 +48,20 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
             if (lhsInt.shape() != rhsInt.shape()) reportError(lhs, rhs);
             if (lhsInt.integer() != rhsInt.integer()) reportError(lhs, rhs);
           }
-          case Pat.Ctor rhsCtor -> {
-            // TODO: convert rhsCtor to literal?
-            unify(lhsInt.constructorForm(), rhs);
-          }
+          case Pat.Ctor ctor -> unifyLitWithCtor(ctor, lhsInt, lhs);
+          // Try one more time in case we add more rhs case when lhs is a constructor.
+          // see: PatMatcher#match(Pat, Term)
           default -> unify(lhsInt.constructorForm(), rhs);
         }
       }
     }
+  }
+
+  /** @param lhs marker of left-hand-side for recursion */
+  private void unifyLitWithCtor(@NotNull Pat.Ctor ctor, @NotNull Pat.ShapedInt lit, @NotNull Pat lhs) {
+    // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
+    if (lhs == ctor) unify(ctor, lit.constructorForm());
+    if (lhs == lit) unify(lit.constructorForm(), ctor);
   }
 
   private void visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {

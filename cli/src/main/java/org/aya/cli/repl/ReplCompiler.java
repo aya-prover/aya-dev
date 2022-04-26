@@ -62,7 +62,7 @@ public class ReplCompiler {
     var resolvedExpr = expr.resolve(context);
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      // TODO: literal shapes
+      // TODO[literal]: literal shapes
       var tycker = new ExprTycker(primFactory, new AyaShape.Factory(), delayedReporter, null);
       var desugar = desugarExpr(resolvedExpr, delayedReporter);
       return tycker.zonk(tycker.synthesize(desugar));

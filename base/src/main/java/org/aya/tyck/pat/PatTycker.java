@@ -204,12 +204,8 @@ public final class PatTycker {
         }
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
-          var shapes = exprTycker.literalShapes.discovered().getOption(data);
-          if (shapes.isDefined()) {
-            var shape = shapes.get();
-            if (shape.sizeGreaterThan(1)) throw new UnsupportedOperationException("TODO: how to choose?");
-            yield new Pat.ShapedInt(num.number(), shape.first(), dataCall, num.explicit());
-          }
+          var shape = exprTycker.shapeFactory.find(data);
+          if (shape.isDefined()) yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
         }
         throw new UnsupportedOperationException("Number patterns are unsupported yet");
       }
