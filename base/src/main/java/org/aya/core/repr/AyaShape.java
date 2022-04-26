@@ -33,10 +33,8 @@ public sealed interface AyaShape {
     }
   }
 
-  record Factory(@NotNull MutableMap<Def, AyaShape> discovered) {
-    public Factory() {
-      this(MutableLinkedHashMap.of());
-    }
+  class Factory {
+    public @NotNull MutableMap<Def, AyaShape> discovered = MutableLinkedHashMap.of();
 
     public @NotNull ImmutableSeq<Def> findImpl(@NotNull AyaShape shape) {
       return discovered.view().map(Tuple::of)
@@ -52,6 +50,10 @@ public sealed interface AyaShape {
     public void bonjour(@NotNull Def def, @NotNull AyaShape shape) {
       // TODO[literal]: what if a def has multiple shapes?
       discovered.put(def, shape);
+    }
+
+    public void importAll(@NotNull Factory other) {
+      discovered.putAll(other.discovered);
     }
   }
 }
