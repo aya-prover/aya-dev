@@ -29,14 +29,32 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
         else reportError(lhs, rhs);
       }
       case Pat.Ctor ctor -> {
-        if (rhs instanceof Pat.Ctor ctor1) {
-          // Assumption
-          assert ctor.ref() == ctor1.ref();
-          visitList(ctor.params(), ctor1.params());
-        } else reportError(lhs, rhs);
+        switch (rhs) {
+          case Pat.Ctor ctor1 -> {
+            // Assumption
+            assert ctor.ref() == ctor1.ref();
+            visitList(ctor.params(), ctor1.params());
+          }
+          // TODO: convert ctor to literal?
+          case Pat.ShapedInt lit -> unify(ctor, lit.constructorForm());
+          default -> reportError(lhs, rhs);
+        }
       }
       case Pat.End end -> {
         if(!(rhs instanceof Pat.End rhsEnd)) reportError(lhs, rhs);
+      }
+      case Pat.ShapedInt lhsInt -> {
+        switch (rhs) {
+          case Pat.ShapedInt rhsInt -> {
+            if (lhsInt.shape() != rhsInt.shape()) reportError(lhs, rhs);
+            if (lhsInt.integer() != rhsInt.integer()) reportError(lhs, rhs);
+          }
+          case Pat.Ctor rhsCtor -> {
+            // TODO: convert rhsCtor to literal?
+            unify(lhsInt.constructorForm(), rhs);
+          }
+          default -> unify(lhsInt.constructorForm(), rhs);
+        }
       }
     }
   }

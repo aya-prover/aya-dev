@@ -61,6 +61,8 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
             visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
           }
           case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
+          // TODO: convert con to literal?
+          case LitTerm.ShapedInt litTerm -> match(ctor, litTerm.constructorForm());
           default -> throw new Mismatch(true);
         }
       }
@@ -79,6 +81,19 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
       case Pat.End end -> {
         if (!(term instanceof PrimTerm.End termEnd && termEnd.isRight() == end.isRight())) {
           throw new Mismatch(true);
+        }
+      }
+      case Pat.ShapedInt lit -> {
+        switch (term) {
+          case LitTerm.ShapedInt litTerm -> {
+            if (lit.shape() != litTerm.shape()) throw new Mismatch(true);
+            if (lit.integer() != litTerm.integer()) throw new Mismatch(true);
+          }
+          case CallTerm.Con con -> {
+            // TODO: convert con to literal?
+            match(lit.constructorForm(), term);
+          }
+          default -> match(lit.constructorForm(), term);
         }
       }
     }

@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Result;
-import kala.range.primitive.IntRange;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -28,6 +27,7 @@ import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.TermFixpoint;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -196,15 +196,24 @@ public final class PatTycker {
       case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
       case Pattern.Number num -> {
-        if (term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
-          if (IntRange.closed(0, 1).contains(num.number()))
-            yield new Pat.End(num.number() == 1, num.explicit());
-          yield withError(new NotAnIntervalError(num.sourcePos(), num.number()), num, term);
-        } else {
-          throw new UnsupportedOperationException("Number patterns are unsupported yet");
+        var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
+        if (ty instanceof FormTerm.Interval) {
+          var end = num.number();
+          if (end == 0 || end == 1) yield new Pat.End(num.number() == 1, num.explicit());
+          yield withError(new NotAnIntervalError(num.sourcePos(), end), num, term);
         }
+        if (ty instanceof CallTerm.Data dataCall) {
+          var data = dataCall.ref().core;
+          var shapes = exprTycker.literalShapes.discovered().getOption(data);
+          if (shapes.isDefined()) {
+            var shape = shapes.get();
+            if (shape.sizeGreaterThan(1)) throw new UnsupportedOperationException("TODO: how to choose?");
+            yield new Pat.ShapedInt(num.number(), shape.first(), dataCall, num.explicit());
+          }
+        }
+        throw new UnsupportedOperationException("Number patterns are unsupported yet");
       }
-      default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
+      case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
   }
 
