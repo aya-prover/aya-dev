@@ -25,7 +25,6 @@ import org.aya.generic.util.InterruptException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.module.CachedModuleLoader;
@@ -137,8 +136,8 @@ public class ReplCompiler {
         },
         expr -> tyckExpr(expr).wellTyped().normalize(new TyckState(primFactory), normalizeMode)
       );
-    } catch (Context.ResolvingInterruptedException ignored) {
-      // Maybe handle other exceptions
+    } catch (InterruptException ignored) {
+      // Only two kinds of interruptions are possible: parsing and resolving
       return Either.left(ImmutableSeq.empty());
     }
   }
