@@ -47,7 +47,7 @@ public class ReplCompiler {
   private final @NotNull CompilerFlags flags;
   private final @NotNull PrimDef.Factory primFactory;
 
-  ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
+  public ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.modulePaths = modulePaths;
     this.reporter = CountingReporter.delegate(reporter);
     this.locator = locator;
