@@ -147,8 +147,17 @@ public final class DefEq {
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case CallTerm.Con lhs && preRhs instanceof CallTerm.Con rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
+      case CallTerm.Con lhs && preRhs instanceof LitTerm.ShapedInt rhs ->
+        compareApprox(lhs, rhs.constructorForm(), lr, rl);
+      case LitTerm.ShapedInt lhs && preRhs instanceof CallTerm.Con rhs ->
+        compareApprox(lhs.constructorForm(), rhs, lr, rl);
       case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
+      case LitTerm.ShapedInt lhs && preRhs instanceof LitTerm.ShapedInt rhs -> {
+        if (lhs.shape() != rhs.shape()) yield null;
+        if (lhs.integer() != rhs.integer()) yield null;
+        yield lhs.type(); // TODO: what about rhs.type()? Does same shape imply same type?
+      }
       default -> null;
     };
   }
