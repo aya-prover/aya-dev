@@ -194,9 +194,11 @@ public final class PatTycker {
       }
       case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
-      case Pattern.Number num && IntRange.closed(0, 1).contains(num.number()) -> {
+      case Pattern.Number num -> {
         if (term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
-          yield new Pat.End(num.number() == 1, num.explicit());
+          if (IntRange.closed(0, 1).contains(num.number()))
+            yield new Pat.End(num.number() == 1, num.explicit());
+          yield withError(new PatternProblem.UnknownInterval(num), num, term);
         } else {
           throw new UnsupportedOperationException("Number patterns are unsupported yet");
         }

@@ -106,13 +106,25 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record TooManyImplicitPattern(@Override @NotNull Pattern pattern, @NotNull Term.Param param) implements PatternProblem {
+  record TooManyImplicitPattern(@Override @NotNull Pattern pattern,
+                                @NotNull Term.Param param) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("There are too many implicit patterns:"),
         Doc.par(1, pattern.toDoc(options)),
         Doc.english("should be an explicit pattern matched against"),
         Doc.par(1, param.toDoc(options)));
+    }
+  }
+
+  record UnknownInterval(@Override @NotNull Pattern pattern) implements PatternProblem {
+    @Override
+    public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(
+        Doc.english("The pattern of interval type should be 0(left) or 1(right), while the actual pattern"),
+        Doc.par(1, pattern.toDoc(options)),
+        Doc.english("does not look like one")
+      );
     }
   }
 
