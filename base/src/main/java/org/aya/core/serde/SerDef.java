@@ -7,6 +7,7 @@ import kala.control.Either;
 import kala.control.Option;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.*;
+import org.aya.core.repr.AyaShape;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
@@ -140,6 +141,22 @@ public sealed interface SerDef extends Serializable {
   /** Serialized version of {@link org.aya.concrete.stmt.BindBlock} */
   record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
     public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
+  }
+
+  /** serialized {@link AyaShape} */
+  enum SerAyaShape implements Serializable {
+    NAT;
+
+    public @NotNull AyaShape de() {
+      return switch (this) {
+        case NAT -> AyaShape.NAT_SHAPE;
+      };
+    }
+
+    public static @NotNull SerAyaShape serialize(@NotNull AyaShape shape) {
+      if (shape == AyaShape.NAT_SHAPE) return NAT;
+      throw new InternalException("unexpected shape: " + shape.getClass());
+    }
   }
 
   class DeserializeException extends InternalException {

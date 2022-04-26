@@ -40,8 +40,10 @@ public record Serializer(@NotNull Serializer.State state) implements
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
       case Pat.End end -> new SerPat.End(end.isRight(), end.explicit());
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
-      // TODO: serialize lit patterns
-      case Pat.ShapedInt lit -> throw new UnsupportedOperationException("TODO");
+      case Pat.ShapedInt lit -> new SerPat.ShapedInt(
+        lit.repr(), lit.explicit(),
+        SerDef.SerAyaShape.serialize(lit.shape()),
+        visitDataCall(lit.type(), Unit.unit()));
     };
   }
 
@@ -251,7 +253,6 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitShapedLit(LitTerm.@NotNull ShapedInt shaped, Unit unit) {
-    // TODO: serialize lit terms
-    throw new UnsupportedOperationException("TODO");
+    return new SerTerm.ShapedInt(shaped.repr(), SerDef.SerAyaShape.serialize(shaped.shape()), serialize(shaped.type()));
   }
 }

@@ -218,4 +218,14 @@ public sealed interface SerTerm extends Serializable {
       return isRight ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT;
     }
   }
+
+  record ShapedInt(
+    int integer,
+    @NotNull SerDef.SerAyaShape shape,
+    @NotNull SerTerm type
+  ) implements SerTerm {
+    @Override public @NotNull Term de(SerTerm.@NotNull DeState state) {
+      return new LitTerm.ShapedInt(integer, shape.de(), type.de(state));
+    }
+  }
 }
