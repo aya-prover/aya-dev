@@ -1,0 +1,26 @@
+In file $FILE:2:4 ->
+
+  1 | def test(i: I): I
+  2 |   | 3 => 0
+          ^^
+  3 |   | 4 => 1
+
+Error: The pattern of interval type should be 0(left) or 1(right), while the actual
+       pattern
+         3
+       does not look like one
+
+In file $FILE:3:4 ->
+
+  1 | def test(i: I): I
+  2 |   | 3 => 0
+  3 |   | 4 => 1
+          ^^
+
+Error: The pattern of interval type should be 0(left) or 1(right), while the actual
+       pattern
+         4
+       does not look like one
+
+2 error(s), 0 warning(s).
+What are you doing?
