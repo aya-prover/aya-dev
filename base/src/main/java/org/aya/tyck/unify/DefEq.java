@@ -154,9 +154,8 @@ public final class DefEq {
       case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case LitTerm.ShapedInt lhs && preRhs instanceof LitTerm.ShapedInt rhs -> {
-        if (lhs.shape() != rhs.shape()) yield null;
-        if (lhs.integer() != rhs.integer()) yield null;
-        yield lhs.type(); // TODO: what about rhs.type()? Does same shape imply same type?
+        if (!lhs.sameValue(rhs)) yield null;
+        yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
       }
       default -> null;
     };

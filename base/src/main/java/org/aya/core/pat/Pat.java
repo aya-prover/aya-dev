@@ -18,6 +18,7 @@ import org.aya.core.visitor.Subst;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
+import org.aya.generic.Shaped;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
@@ -227,14 +228,13 @@ public sealed interface Pat extends AyaDocile {
   }
 
   record ShapedInt(
-    int integer,
-    @NotNull AyaShape shape,
-    // TODO: remove the type
+    @Override int repr,
+    @Override @NotNull AyaShape shape,
     @NotNull CallTerm.Data type,
     boolean explicit
-  ) implements Pat {
+  ) implements Pat, Shaped.Inductively<Pat> {
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.LitIntExpr(pos, integer);
+      return new Expr.LitIntExpr(pos, repr);
     }
 
     @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
@@ -253,8 +253,16 @@ public sealed interface Pat extends AyaDocile {
       // do nothing
     }
 
-    public @NotNull Pat constructorForm() {
-      return shape.transformPat(this, type);
+    @Override public @NotNull Pat makeZero(@NotNull CtorDef zero) {
+      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), type);
+    }
+
+    @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Pat pat) {
+      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.of(pat), type);
+    }
+
+    @Override public @NotNull Pat destruct(int repr) {
+      return new Pat.ShapedInt(repr, this.shape, this.type, true);
     }
   }
 

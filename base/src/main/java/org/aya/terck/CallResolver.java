@@ -82,7 +82,7 @@ public record CallResolver(
       case Pat.ShapedInt intPat -> switch (term) {
         case LitTerm.ShapedInt intTerm -> {
           if (intTerm.shape() != intPat.shape()) yield Relation.Unknown;
-          yield Relation.fromCompare(Integer.compare(intTerm.integer(), intPat.integer()));
+          yield Relation.fromCompare(Integer.compare(intTerm.repr(), intPat.repr()));
         }
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
         case CallTerm.Con con -> compare(con, intPat.constructorForm());

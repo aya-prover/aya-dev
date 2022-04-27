@@ -2,22 +2,34 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
+import org.aya.generic.Arg;
+import org.aya.generic.Shaped;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface LitTerm extends Term {
   record ShapedInt(
-    int integer,
-    @NotNull AyaShape shape,
-    // TODO: remove the type
+    @Override int repr,
+    @Override @NotNull AyaShape shape,
     @NotNull CallTerm.Data type
-  ) implements LitTerm {
+  ) implements LitTerm, Shaped.Inductively<Term> {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitShapedLit(this, p);
     }
 
-    public @NotNull Term constructorForm() {
-      return shape.transformTerm(this, type);
+    @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
+      return new CallTerm.Con(type.ref(), zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
+    }
+
+    @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Term term) {
+      return new CallTerm.Con(type.ref(), suc.ref, ImmutableSeq.empty(), 0,
+        ImmutableSeq.of(new Arg<>(term, true)));
+    }
+
+    @Override public @NotNull Term destruct(int repr) {
+      return new LitTerm.ShapedInt(repr, this.shape, this.type);
     }
   }
 }
