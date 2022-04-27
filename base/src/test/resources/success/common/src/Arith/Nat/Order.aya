@@ -3,7 +3,7 @@ open import Data::Empty
 open import Paths
 
 open data infix < Nat Nat
-| zero, suc m => zc
+| 0, suc m => zc
 | suc n, suc m => sc (n < m)
 
 variable a b c : Nat

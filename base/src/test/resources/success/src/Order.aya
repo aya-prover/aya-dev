@@ -17,15 +17,15 @@ open data Forest (A : Type) : Type
   | infixr :< (Rose A) (Forest A)
 
 def ack Nat Nat : Nat
-  | zero, n      => suc n
-  | suc m, zero  => ack m (suc zero)
+  | 0, n      => suc n
+  | suc m, 0  => ack m 1
   | suc m, suc n => ack m (ack (suc m) n)
 
 def f Nat : Nat
-  | zero => zero
+  | 0 => zero
   | suc n => g (suc n)
 
 def g Nat : Nat
-  | zero => zero
+  | zero => 0
   | suc n => f n
 

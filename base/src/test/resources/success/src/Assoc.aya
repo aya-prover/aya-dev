@@ -6,10 +6,10 @@ open data Term : Type
   | Bin Term Term
   | Atom Nat
 
-def _0 : Term => Atom zero
-def _1 : Term => Atom (suc zero)
-def _2 : Term => Atom (suc (suc zero))
-def _3 : Term => Atom (suc (suc (suc zero)))
+def _0 : Term => Atom 0
+def _1 : Term => Atom 1
+def _2 : Term => Atom 2
+def _3 : Term => Atom 3
 
 def infixl * (a b : Term) : Term => Bin a b
 def infixr ^ (a b : Term) : Term => Bin a b
@@ -34,14 +34,14 @@ def infix qed {A : Type} (a : A) : a = a => idp {A} {a}
 -----------------------------------------
 
 def overlap infix +' (a b : Nat) : Nat
- | a, zero => a
+ | a, 0 => a
  | a, suc b => suc (a +' b)
  bind tighter =, ==<, qed
 
 def +'-comm (a b : Nat) : a +' b = b +' a
-  | zero, zero => idp
-  | suc a, zero => pmap suc (+'-comm a zero)
-  | zero, suc b => pmap suc (+'-comm zero b)
+  | 0, 0 => idp
+  | suc a, 0 => pmap suc (+'-comm a 0)
+  | 0, suc b => pmap suc (+'-comm 0 b)
   | suc a, suc b => pmap suc (
     suc a +' b
   ==< +'-comm (suc a) b >==
@@ -58,11 +58,11 @@ def +'-comm (a b : Nat) : a +' b = b +' a
 def a (b : Nat) : Nat => suc b
 def infix suc' (a : Nat) : Term => Atom a
 
-def what-if-they're-prefixed : (suc' a zero) = (suc' (a zero))  => idp
-def what-if-they're-prefixed' : (suc' a zero) = (Atom (suc zero))  => idp
+def what-if-they're-prefixed : (suc' a 0) = (suc' (a 0))  => idp
+def what-if-they're-prefixed' : (suc' a 0) = (Atom (suc 0))  => idp
 
-def what-if-they're-xjbfixed : (suc' a zero) = (a zero suc')  => idp
-def what-if-they're-xjbfixed' : (a zero suc') = (Atom (suc zero))  => idp
+def what-if-they're-xjbfixed : (suc' a 0) = (a 0 suc')  => idp
+def what-if-they're-xjbfixed' : (a 0 suc') = (Atom (suc 0))  => idp
 
 -----------------------------------------
 
