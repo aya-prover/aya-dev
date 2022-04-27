@@ -52,9 +52,8 @@ public interface StmtOps<P> extends ExprTraversal<P> {
     if(decl instanceof TopTeleDecl declWithSig) visitTelescopic(declWithSig, pp);
     decl.setResult(visitExpr(decl.result(), pp));
     switch (decl) {
-      case ClassDecl classDecl -> {}
       case TopTeleDecl.DataDecl data -> data.body.forEach(ctor -> traced(ctor, pp, this::visitCtor));
-      case TopTeleDecl.StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitField));
+      case StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitField));
       case TopTeleDecl.FnDecl fn -> fn.body = fn.body.map(
         expr -> visitExpr(expr, pp),
         clauses -> clauses.map(clause -> visitClause(clause, pp))

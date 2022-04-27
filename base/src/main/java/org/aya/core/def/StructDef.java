@@ -4,37 +4,47 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.StructDecl;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * core struct definition, corresponding to {@link TopTeleDecl.StructDecl}
+ * core struct definition, corresponding to {@link StructDecl}
  *
  * @author vont
  */
 
-public final class StructDef extends UserDef.Type {
-  public final @NotNull DefVar<StructDef, TopTeleDecl.StructDecl> ref;
+public final class StructDef extends ClassDef {
+  public final @NotNull DefVar<StructDef, StructDecl> ref;
   public final @NotNull ImmutableSeq<FieldDef> fields;
 
   public StructDef(
-    @NotNull DefVar<StructDef, TopTeleDecl.StructDecl> ref,
-    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull DefVar<StructDef, StructDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<FieldDef> fields
   ) {
-    super(telescope, ulift);
+    super();
     ref.core = this;
     this.ref = ref;
     this.fields = fields;
+    this.resultLevel = ulift;
+  }
+
+  @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
+    return ref;
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitStruct(this, p);
   }
 
-  public @NotNull DefVar<StructDef, TopTeleDecl.StructDecl> ref() {
+  public @NotNull DefVar<StructDef, StructDecl> ref() {
     return ref;
+  }
+
+  @Override public @NotNull Term result() {
+    return new FormTerm.Univ(resultLevel);
   }
 }

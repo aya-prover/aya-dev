@@ -10,7 +10,7 @@ import org.aya.ref.DefVar;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
-public non-sealed/*sealed*/ interface ClassDef extends AyaDocile, GenericDef {
+public sealed interface ClassDef extends AyaDocile, GenericDef permits StructDef {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).def(this);
   }

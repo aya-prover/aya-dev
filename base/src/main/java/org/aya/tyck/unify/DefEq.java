@@ -250,8 +250,10 @@ public final class DefEq {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
       case CallTerm.Struct type1 -> {
         var fieldSigs = type1.ref().core.fields;
-        var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
-          Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
+        if(true) throw new UnsupportedOperationException("TODO");
+        var paramSubst = new Subst(MutableHashMap.create());
+        //var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
+        //  Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
         var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
           var dummyVars = fieldSig.selfTele.map(par ->
@@ -368,9 +370,10 @@ public final class DefEq {
         yield args ? FormTerm.Univ.ZERO : null;
       }
       case CallTerm.Struct lhs -> {
-        if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
-        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
-        yield args ? FormTerm.Univ.ZERO : null;
+        throw new UnsupportedOperationException("TODO");
+        //if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
+        //var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
+        //yield args ? FormTerm.Univ.ZERO : null;
       }
       case CallTerm.Con lhs -> switch (preRhs) {
         case CallTerm.Con rhs -> {

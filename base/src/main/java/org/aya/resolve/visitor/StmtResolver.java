@@ -40,7 +40,6 @@ public interface StmtResolver {
   /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
   static void resolveStmt(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case TopTeleDecl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
@@ -74,7 +73,7 @@ public interface StmtResolver {
           pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
         addReferences(info, new TyckOrder.Body(decl), local._1);
       }
-      case TopTeleDecl.StructDecl decl -> {
+      case StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
@@ -135,6 +134,11 @@ public interface StmtResolver {
     return Tuple.of(resolver, local._2);
   }
 
+  private static @NotNull Tuple2<ExprResolver, Context>
+  resolveStructDeclSignature(@NotNull StructDecl decl, ExprResolver.@NotNull Options options) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
     var opSet = info.opSet();
     var self = selfDef.opDecl;
@@ -175,13 +179,12 @@ public interface StmtResolver {
 
   static void resolveBind(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> resolveBind(mod.contents(), info);
       case TopTeleDecl.DataDecl decl -> {
         decl.body.forEach(ctor -> visitBind(ctor.ref, ctor.bindBlock, info));
         visitBind(decl.ref, decl.bindBlock, info);
       }
-      case TopTeleDecl.StructDecl decl -> {
+      case StructDecl decl -> {
         decl.fields.forEach(field -> visitBind(field.ref, field.bindBlock, info));
         visitBind(decl.ref, decl.bindBlock, info);
       }

@@ -151,7 +151,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
+      case CallTerm.Struct structCall -> throw new UnsupportedOperationException("TODO");//visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
       case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
       case LitTerm.ShapedInt shaped -> options.map.get(DistillerOptions.Key.ShowLiterals)
         ? Doc.plain(String.valueOf(shaped.repr()))
@@ -215,7 +215,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
 
   public @NotNull Doc def(@NotNull GenericDef predef) {
     return switch (predef) {
-      case ClassDef classDef -> throw new UnsupportedOperationException("not implemented yet");
       case FnDef def -> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "def"));
         def.modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
@@ -249,7 +248,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case StructDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
         linkDef(def.ref(), STRUCT_CALL),
-        visitTele(def.telescope()),
         Doc.symbol(":"),
         term(Outer.Free, def.result())
       ), Doc.nest(2, Doc.vcat(def.fields.view().map(this::def))));

@@ -48,7 +48,6 @@ public record StmtShallowResolver(
 
   public void resolveStmt(@NotNull Stmt stmt, @NotNull ModuleContext context) {
     switch (stmt) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> {
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
@@ -118,7 +117,7 @@ public record StmtShallowResolver(
         var innerCtx = resolveChildren(decl, ctx, d -> d.body.view(), this::resolveCtor);
         resolveOpInfo(decl, innerCtx);
       }
-      case TopTeleDecl.StructDecl decl -> {
+      case StructDecl decl -> {
         var ctx = resolveDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, s -> s.fields.view(), this::resolveField);
         resolveOpInfo(decl, innerCtx);

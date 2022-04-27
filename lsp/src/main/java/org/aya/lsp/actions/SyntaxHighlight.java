@@ -50,7 +50,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
       case TopTeleDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
       case TopTeleDecl.DataCtor $ -> HighlightResult.Kind.ConDef;
       case TopTeleDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
-      case TopTeleDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
+      //case TopTeleDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
     }));
     StmtOps.super.visitTelescopic(signatured, buffer);
   }
@@ -123,7 +123,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   private HighlightResult.@Nullable Kind kindOf(@NotNull DefVar<?, ?> ref) {
     if (ref.core instanceof FnDef || ref.concrete instanceof TopTeleDecl.FnDecl)
       return HighlightResult.Kind.FnCall;
-    else if (ref.core instanceof StructDef || ref.concrete instanceof TopTeleDecl.StructDecl)
+    else if (ref.core instanceof StructDef || ref.concrete instanceof StructDecl)
       return HighlightResult.Kind.StructCall;
     else if (ref.core instanceof FieldDef || ref.concrete instanceof TopTeleDecl.StructField)
       return HighlightResult.Kind.FieldCall;

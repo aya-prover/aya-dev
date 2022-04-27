@@ -28,7 +28,7 @@ public sealed abstract class UserDef extends TopLevelDef permits FnDef, UserDef.
     super(telescope, result);
   }
 
-  public static abstract sealed class Type extends UserDef permits DataDef, StructDef {
+  public static abstract sealed class Type extends UserDef permits DataDef {
     public final int resultLevel;
 
     protected Type(@NotNull ImmutableSeq<Term.Param> telescope, int resultLevel) {

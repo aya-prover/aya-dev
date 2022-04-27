@@ -6,6 +6,8 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.BaseDecl;
 import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.Signatured;
+import org.aya.concrete.stmt.StructDecl;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
 import org.aya.generic.Arg;
@@ -92,7 +94,7 @@ public sealed interface CallTerm extends Term {
    * @author kiva
    */
   record Struct(
-    @NotNull DefVar<StructDef, TopTeleDecl.StructDecl> ref,
+    @NotNull DefVar<StructDef, StructDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {

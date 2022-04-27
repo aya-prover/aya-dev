@@ -710,20 +710,19 @@ public record AyaProducer(
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 
-  public @NotNull Tuple2<TopTeleDecl, ImmutableSeq<Stmt>> visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Tuple2<StructDecl, ImmutableSeq<Stmt>> visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
-    var fields = visitFields(ctx.field());
     var tele = visitTelescope(ctx.tele());
+    var fields = visitFields(tele, ctx.field());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
-    var struct = new TopTeleDecl.StructDecl(
+    var struct = new StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       personality == TopTeleDecl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      tele,
       type(ctx.type(), sourcePosOf(ctx)),
       fields,
       bind == null ? BindBlock.EMPTY : visitBind(bind),
@@ -741,6 +740,7 @@ public record AyaProducer(
   }
 
   private ImmutableSeq<TopTeleDecl.StructField> visitFields(List<AyaParser.FieldContext> field) {
+    if(true) throw new UnsupportedOperationException("TODO");
     return Seq.wrapJava(field).map(fieldCtx -> {
       if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
       else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);

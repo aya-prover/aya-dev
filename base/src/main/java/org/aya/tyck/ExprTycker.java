@@ -13,6 +13,7 @@ import kala.value.LazyValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.BaseDecl;
 import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.StructDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
@@ -109,9 +110,13 @@ public final class ExprTycker extends Tycker {
           yield fail(structExpr, struct, BadTypeError.structCon(state, newExpr, struct));
         var structRef = structCall.ref();
 
+        /*
         var subst = new Subst(MutableMap.from(
           Def.defTele(structRef).view().zip(structCall.args())
             .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
+         */
+        var subst = new Subst(MutableMap.from(kala.collection.Seq.empty()));
+        if (true) throw new UnsupportedOperationException("TODO");
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TopTeleDecl.StructField>, Term>>create();
         var missing = MutableList.<Var>create();
@@ -178,7 +183,8 @@ public final class ExprTycker extends Tycker {
               return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
             var fieldRef = field.ref();
 
-            var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
+            if(true) throw new UnsupportedOperationException("TODO");
+            var structSubst = Unfolder.buildSubst(kala.collection.Seq.empty()/*structCore.telescope()*/, structCall.args());
             var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
             var teleRenamed = tele.map(Term.Param::rename);
             var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
@@ -480,8 +486,9 @@ public final class ExprTycker extends Tycker {
       return defCall(pos, (DefVar<PrimDef, TopTeleDecl.PrimDecl>) var, CallTerm.Prim::new);
     } else if (var.core instanceof DataDef || var.concrete instanceof TopTeleDecl.DataDecl) {
       return defCall(pos, (DefVar<DataDef, TopTeleDecl.DataDecl>) var, CallTerm.Data::new);
-    } else if (var.core instanceof StructDef || var.concrete instanceof TopTeleDecl.StructDecl) {
-      return defCall(pos, (DefVar<StructDef, TopTeleDecl.StructDecl>) var, CallTerm.Struct::new);
+    } else if (var.core instanceof StructDef || var.concrete instanceof StructDecl) {
+      throw new UnsupportedOperationException("TODO");
+      //return defCall(pos, (DefVar<StructDef, TopTeleDecl.StructDecl>) var, CallTerm.Struct::new);
     } else if (var.core instanceof CtorDef || var.concrete instanceof TopTeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TopTeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);

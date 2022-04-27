@@ -69,7 +69,6 @@ public record StmtTycker(
     if (predecl instanceof TopTeleDecl decl && decl.signature == null) tyckHeader(decl, tycker);
     var signature = predecl instanceof TopTeleDecl decl ? decl.signature : null;
     return switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TopTeleDecl.FnDecl decl -> {
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
@@ -108,10 +107,9 @@ public record StmtTycker(
         yield new DataDef(decl.ref, signature.param(), decl.ulift, body);
       }
       case TopTeleDecl.PrimDecl decl -> decl.ref.core;
-      case TopTeleDecl.StructDecl decl -> {
-        assert signature != null;
+      case StructDecl decl -> {
         var body = decl.fields.map(field -> traced(field, tycker, this::tyck));
-        yield new StructDef(decl.ref, signature.param(), decl.ulift, body);
+        yield new StructDef(decl.ref, decl.ulift, body);
       }
     };
   }
@@ -137,7 +135,6 @@ public record StmtTycker(
   public void tyckHeader(@NotNull TopLevelDecl decl, @NotNull ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope")));
     switch (decl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TopTeleDecl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, -1);
         // It might contain unsolved holes, but that's acceptable.
@@ -156,11 +153,9 @@ public record StmtTycker(
         // [ice]: this line reports error if result is not a universe term, so we're good
         data.ulift = tycker.ensureUniv(decl.result(), result);
       }
-      case TopTeleDecl.StructDecl struct -> {
+      case StructDecl struct -> {
         var pos = struct.sourcePos;
-        var tele = tele(tycker, struct.telescope, -1);
         var result = tycker.zonk(tycker.synthesize(struct.result)).wellTyped();
-        struct.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
         struct.ulift = tycker.ensureUniv(decl.result(), result);
       }
@@ -257,8 +252,9 @@ public record StmtTycker(
   public void tyckHeader(TopTeleDecl.@NotNull StructField field, ExprTycker tycker) {
     if (field.signature != null) return;
     var structRef = field.structRef;
-    var structSig = structRef.concrete.signature;
-    assert structSig != null;
+    // TODO
+    //var structSig = structRef.concrete.signature;
+    //assert structSig != null;
     var structLvl = structRef.concrete.ulift;
     var tele = tele(tycker, field.telescope, structLvl);
     var result = tycker.zonk(tycker.inherit(field.result, new FormTerm.Univ(structLvl))).wellTyped();
@@ -266,6 +262,7 @@ public record StmtTycker(
   }
 
   @NotNull public FieldDef tyck(TopTeleDecl.@NotNull StructField field, ExprTycker tycker) {
+    /*
     // TODO[ice]: remove this hack
     if (field.ref.core != null) return field.ref.core;
     var structRef = field.structRef;
@@ -282,6 +279,8 @@ public record StmtTycker(
     if (patTycker.noError())
       ensureConfluent(tycker, field.signature, clauses, field.sourcePos, false);
     return elaborated;
+    */
+    throw new UnsupportedOperationException("TODO");
   }
 
   /**

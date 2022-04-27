@@ -16,10 +16,13 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author zaoqi
  */
-public non-sealed/*sealed*/ abstract class ClassDecl extends BaseDecl implements TopLevelDecl {
+public sealed abstract class ClassDecl extends BaseDecl implements TopLevelDecl {
+  public final @NotNull SourcePos sourcePos;
+  public final @NotNull SourcePos entireSourcePos;
+  public final @Nullable OpDecl.OpInfo opInfo;
+  public final @NotNull BindBlock bindBlock;
   public @NotNull Expr result;
   public final @NotNull TopLevelDecl.Personality personality;
-
   public @Nullable Context ctx = null;
   public final @NotNull Accessibility accessibility;
 
