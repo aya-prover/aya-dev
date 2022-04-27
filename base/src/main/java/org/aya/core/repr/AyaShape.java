@@ -52,6 +52,13 @@ public sealed interface AyaShape {
       discovered.put(def, shape);
     }
 
+    /** Discovery of shaped literals */
+    public void bonjour(@NotNull Def def) {
+      AyaShape.LITERAL_SHAPES.view()
+        .filter(shape -> ShapeMatcher.match(shape.codeShape(), def))
+        .forEach(shape -> bonjour(def, shape));
+    }
+
     public void importAll(@NotNull Factory other) {
       discovered.putAll(other.discovered);
     }

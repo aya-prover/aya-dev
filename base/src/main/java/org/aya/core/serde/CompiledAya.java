@@ -13,6 +13,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.aya.resolve.ResolveInfo;
@@ -121,7 +122,7 @@ public record CompiledAya(
   public @NotNull ResolveInfo toResolveInfo(@NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull SerTerm.DeState state) {
     var resolveInfo = new ResolveInfo(state.primFactory(), context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
     shallowResolve(loader, resolveInfo);
-    serDefs.forEach(serDef -> de(context, serDef, state));
+    serDefs.forEach(serDef -> de(resolveInfo.shapeFactory(), context, serDef, state));
     deOp(state, resolveInfo.opSet());
     return resolveInfo;
   }
@@ -142,6 +143,7 @@ public record CompiledAya(
         MutableHashMap.create(),
         SourcePos.SER);
       thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
+      thisResolve.shapeFactory().importAll(success.shapeFactory());
     }
   }
 
@@ -176,11 +178,12 @@ public record CompiledAya(
     throw new Context.ResolvingInterruptedException();
   }
 
-  private void de(@NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
+  private void de(@NotNull AyaShape.Factory shapeFactory, @NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
     var mod = context.moduleName();
     var drop = mod.size();
     var def = serDef.de(state);
     assert def.ref().core != null;
+    shapeFactory.bonjour(def);
     switch (serDef) {
       case SerDef.Fn fn -> {
         if (isExported(fn.name())) {
