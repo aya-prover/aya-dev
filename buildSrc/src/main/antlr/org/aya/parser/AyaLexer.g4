@@ -50,7 +50,6 @@ NEW_KW : 'new';
 PATTERN_KW : 'pattern';
 I: 'I';
 DO_KW : 'do';
-RETURN_KW : 'return';
 
 // Unimplemented but reserved
 CODATA_KW : 'codata';
