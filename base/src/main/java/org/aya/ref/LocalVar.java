@@ -7,10 +7,17 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 /**
  * @author ice1000
  */
 public record LocalVar(@NotNull String name, @NotNull SourcePos definition) implements Var {
+
+  public static LocalVar IGNORED_LOCAL() {
+    return new LocalVar("AYA_INTERNAL_IGNORED_LOCALVAR" + UUID.randomUUID());
+  }
+
   public LocalVar(@NotNull String name) {
     this(name, SourcePos.NONE);
   }

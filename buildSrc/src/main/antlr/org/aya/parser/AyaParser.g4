@@ -92,7 +92,14 @@ expr : atom                                 # single
      | SIGMA tele+ SUCHTHAT expr            # sigma
      | LAMBDA tele+ (IMPLIES expr?)?        # lam
      | MATCH exprList clauses               # match
+     | DO_KW doBindInfo? doBlock            # do
      ;
+
+doBindInfo : LPAREN qualifiedId AS BIND_KW COMMA qualifiedId AS RETURN_KW RPAREN;
+
+doBlock : (doBlockExpr COMMA)* doBlockExpr;
+
+doBlockExpr : weakId LARROW expr | RETURN_KW expr | expr;
 
 newArg : BAR weakId ids IMPLIES expr;
 // New body new body but you!

@@ -268,6 +268,16 @@ public sealed interface Expr extends AyaDocile, SourceNode {
       this(sourcePos, var, new HoleExpr(sourcePos, false, null), false, explicit);
     }
 
+    @Contract("_ -> new")
+    public static @NotNull Param ignoredParam(@NotNull SourcePos sourcePos) {
+      return new Param(sourcePos, LocalVar.IGNORED_LOCAL(),
+        new HoleExpr(sourcePos, false, null), false, true);
+    }
+
+    public static @NotNull Param ignoredWithType(@NotNull SourcePos sourcePos, @NotNull Expr type) {
+      return new Param(sourcePos, LocalVar.IGNORED_LOCAL(), type, false, true);
+    }
+
     public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @NotNull Expr> mapper) {
       return new Param(sourcePos, ref, mapper.apply(type), pattern, explicit);
     }

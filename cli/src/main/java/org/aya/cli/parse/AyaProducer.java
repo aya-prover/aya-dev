@@ -375,9 +375,56 @@ public record AyaProducer(
         sourcePosOf(forall), false,
         visitForallTelescope(forall.tele()).view(),
         visitExpr(forall.expr()));
+      case AyaParser.DoContext doCtx -> visitDo(doCtx);
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
+  }
+
+  private @NotNull Expr visitDo(AyaParser.DoContext ctx) {
+    var doBindInfo = ctx.doBindInfo();
+    var doBlockExprCtxs = ctx.doBlock().doBlockExpr();
+    var lastExprCtx = doBlockExprCtxs.get(doBlockExprCtxs.size() - 1);
+    if (lastExprCtx.LARROW() != null) {
+      reporter.report(new ParseError(sourcePosOf(lastExprCtx),
+        "last expression in a do block cannot be a bind expression"));
+      throw new ParsingInterruptedException();
+    }
+
+    Expr.NamedArg bindOp;
+    Expr.NamedArg returnOp;
+
+    if (doBindInfo != null) {
+      var bindId = visitQualifiedId(doBindInfo.qualifiedId(0));
+      var returnId = visitQualifiedId(doBindInfo.qualifiedId(1));
+      bindOp = new Expr.NamedArg(true, new Expr.UnresolvedExpr(bindId.sourcePos(), bindId));
+      returnOp = new Expr.NamedArg(true, new Expr.UnresolvedExpr(returnId.sourcePos(), returnId));
+    } else {
+      bindOp = new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, ">>="));
+      returnOp = new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "return"));
+    }
+
+    var lastExpr = visitExpr(lastExprCtx.expr());
+    doBlockExprCtxs.remove(lastExprCtx);
+    var doBlockExprCtxsSeq = ImmutableSeq.from(doBlockExprCtxs);
+
+    return doBlockExprCtxsSeq.foldRight(lastExpr, (doCtx, accExpr) -> {
+      var sourcePos = sourcePosOf(doCtx);
+      if (doCtx.LARROW() != null) {
+        var param = new Expr.Param(sourcePosOf(doCtx.weakId()), new LocalVar(doCtx.weakId().getText()), true);
+        var rhs = new Expr.NamedArg(true, new Expr.LamExpr(sourcePos, param, accExpr));
+        var lhs = new Expr.NamedArg(true, visitExpr(doCtx.expr()));
+        var seq = ImmutableSeq.of(lhs, bindOp, rhs);
+        return new Expr.BinOpSeq(sourcePos, seq);
+      } else {
+        var param = Expr.Param.ignoredParam(SourcePos.NONE);
+        var rhs = new Expr.NamedArg(true, new Expr.LamExpr(sourcePos, param, accExpr));
+        var lhs = new Expr.NamedArg(true, visitExpr(doCtx.expr()));
+
+        var seq = ImmutableSeq.of(lhs, bindOp, rhs);
+        return new Expr.BinOpSeq(sourcePos, doCtx.RETURN_KW() == null ? seq : seq.prepended(returnOp));
+      }
+    });
   }
 
   private @NotNull Expr.Field visitField(AyaParser.NewArgContext na) {

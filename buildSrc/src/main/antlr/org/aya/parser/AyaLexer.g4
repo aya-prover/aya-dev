@@ -49,13 +49,17 @@ EXTENDS : 'extends';
 NEW_KW : 'new';
 PATTERN_KW : 'pattern';
 I: 'I';
+DO_KW : 'do';
+RETURN_KW : 'return';
 
 // Unimplemented but reserved
-DO_KW : 'do';
 CODATA_KW : 'codata';
 LET_KW : 'let';
 IN_KW : 'in';
 COMPLETED : 'completed';
+
+// reserved
+IGNORED_LOCAL : 'AYA_INTERNAL_IGNORED_LOCALVAR';
 
 // symbols
 SIGMA : 'Sig' | '\u03A3';
@@ -68,6 +72,7 @@ LOR : '\\/' | '\u2228';
 // ---- AyaLexer end: Keywords
 
 TO : '->' | '\u2192';
+LARROW : '<-' | '\u2190';
 IMPLIES : '=>' | '\u21D2';
 DEFINE_AS : ':=';
 SUCHTHAT : '**';
