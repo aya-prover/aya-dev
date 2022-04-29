@@ -17,6 +17,7 @@ module org.aya {
   exports org.aya.core.def;
   exports org.aya.core.ops;
   exports org.aya.core.pat;
+  exports org.aya.core.repr;
   exports org.aya.core.serde;
   exports org.aya.core.term;
   exports org.aya.core.visitor;
