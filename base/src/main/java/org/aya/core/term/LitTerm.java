@@ -13,23 +13,27 @@ public sealed interface LitTerm extends Term {
   record ShapedInt(
     @Override int repr,
     @Override @NotNull AyaShape shape,
-    @NotNull CallTerm.Data type
+    @Override @NotNull Term type
   ) implements LitTerm, Shaped.Inductively<Term> {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitShapedLit(this, p);
     }
 
     @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
-      return new CallTerm.Con(type.ref(), zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
+      return new CallTerm.Con(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
     }
 
     @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Term term) {
-      return new CallTerm.Con(type.ref(), suc.ref, ImmutableSeq.empty(), 0,
+      return new CallTerm.Con(suc.dataRef, suc.ref, ImmutableSeq.empty(), 0,
         ImmutableSeq.of(new Arg<>(term, true)));
     }
 
     @Override public @NotNull Term destruct(int repr) {
       return new LitTerm.ShapedInt(repr, this.shape, this.type);
+    }
+
+    @Override public @NotNull Term self() {
+      return this;
     }
   }
 }

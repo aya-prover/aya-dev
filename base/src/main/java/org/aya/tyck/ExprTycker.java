@@ -363,6 +363,9 @@ public final class ExprTycker extends Tycker {
           var shape = shapeFactory.find(data);
           if (shape.isDefined()) yield new Result(new LitTerm.ShapedInt(lit.integer(), shape.get(), dataCall), term);
         }
+        if (ty instanceof CallTerm.Hole hole) {
+          yield new Result(new LitTerm.ShapedInt(lit.integer(), AyaShape.NAT_SHAPE, hole), term);
+        }
         yield unifyTyMaybeInsert(term, synthesize(expr), expr);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);

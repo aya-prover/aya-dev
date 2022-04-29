@@ -135,7 +135,11 @@ public interface TermView {
         if (contextArgs.sameElements(hole.contextArgs(), true) && args.sameElements(hole.args(), true)) yield hole;
         yield new CallTerm.Hole(hole.ref(), hole.ulift(), contextArgs, args);
       }
-      case LitTerm.ShapedInt shaped -> shaped;
+      case LitTerm.ShapedInt shaped -> {
+        var type = commit(shaped.type());
+        if (type == shaped.type()) yield shaped;
+        yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
+      }
       case RefTerm.Field field -> field;
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;

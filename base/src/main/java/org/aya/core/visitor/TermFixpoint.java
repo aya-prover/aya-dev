@@ -163,6 +163,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitShapedLit(LitTerm.@NotNull ShapedInt shaped, P p) {
-    return shaped;
+    var type = shaped.type().accept(this, p);
+    if (type == shaped.type()) return shaped;
+    return new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
   }
 }

@@ -133,6 +133,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitShapedLit(LitTerm.@NotNull ShapedInt shaped, P p) {
+    shaped.type().accept(this, p);
     return Unit.unit();
   }
 }
