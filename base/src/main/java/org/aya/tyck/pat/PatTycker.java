@@ -35,6 +35,7 @@ import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.error.BadLiteralPatternError;
 import org.aya.tyck.error.NotAnIntervalError;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
@@ -207,7 +208,7 @@ public final class PatTycker {
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined()) yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
         }
-        throw new UnsupportedOperationException("Number patterns are unsupported yet");
+        yield withError(new BadLiteralPatternError(num.sourcePos(), num.number(), term), num, term);
       }
       case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
