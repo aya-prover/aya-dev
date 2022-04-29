@@ -71,10 +71,10 @@ def infixl |=> (a b : Dir) : Sig Dir ** Dir => (a, b)
 
 def id {A : Type} (a : A) : A => a
 
-def secR => (|=> id id id id R)
+def secR => ( |=> id id id id R)
 def secL => (id L |=>)
 
-def secR' => (|=> R)
+def secR' => ( |=> R)
 def secL' => (L |=>)
 
 def secR-yes : secR L = (L, R) => idp
