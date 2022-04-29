@@ -382,16 +382,38 @@ public record AyaProducer(
         yield visitIdiomBlock(idmCtx.idiomBlock());
       }
       case AyaParser.ArrayContext arrCtx -> {
-        if (arrCtx.exprList() == null)
+        if (arrCtx.arrayBlock() == null)
           yield Constants.unresolvedListNil(sourcePosOf(arrCtx));
-        yield visitArr(arrCtx);
+        else if (arrCtx.arrayBlock().BAR() == null)
+          yield visitArray(arrCtx.arrayBlock());
+        else
+          yield visitListComprehension(arrCtx.arrayBlock());
       }
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
   }
 
-  private @NotNull Expr visitArr(AyaParser.ArrayContext ctx) {
+  private @NotNull Expr visitListComprehension(AyaParser.ArrayBlockContext ctx) {
+    var firstExpr = new Expr.NamedArg(true, visitExpr(ctx.expr()));
+    var pure = new Expr.NamedArg(true, Constants.unresolvedFunctorPure(firstExpr.sourcePos()));
+    var returnedExpr = new Expr.BinOpSeq(firstExpr.sourcePos(), ImmutableSeq.of(pure, firstExpr));
+
+    return ImmutableSeq.from(ctx.doBindingExpr())
+      .foldRight(returnedExpr, (doBindingCtx, accExpr) -> {
+        var bindOp = new Expr.NamedArg(true, Constants.unresolvedMonadBind(sourcePosOf(doBindingCtx.LARROW())));
+        var pos = sourcePosOf(doBindingCtx);
+        var param = new Expr.Param(sourcePosOf(doBindingCtx.weakId()),
+          new LocalVar(doBindingCtx.weakId().getText()), true);
+
+        var rhs = new Expr.NamedArg(true, new Expr.LamExpr(pos, param, accExpr));
+        var lhs = new Expr.NamedArg(true, visitExpr(doBindingCtx.expr()));
+        var seq = ImmutableSeq.of(lhs, bindOp, rhs);
+        return new Expr.BinOpSeq(pos, seq);
+      });
+  }
+
+  private @NotNull Expr visitArray(AyaParser.ArrayBlockContext ctx) {
     var consArg = new Expr.NamedArg(true, Constants.unresolvedListCons(sourcePosOf(ctx)));
     var nilArg = new Expr.NamedArg(true, Constants.unresolvedListNil(sourcePosOf(ctx)));
     var args = ImmutableSeq.from(ctx.exprList().expr()).view()
@@ -441,27 +463,37 @@ public record AyaProducer(
   private @NotNull Expr visitDo(AyaParser.DoContext ctx) {
     var doBlockExprCtxs = ctx.doBlock().doBlockExpr();
     var lastExprCtx = doBlockExprCtxs.get(doBlockExprCtxs.size() - 1);
-    if (lastExprCtx.LARROW() != null) {
+    if (lastExprCtx.doBindingExpr() != null) {
       reporter.report(new ParseError(sourcePosOf(lastExprCtx),
         "last expression in a do block cannot be a bind expression"));
       throw new ParsingInterruptedException();
     }
 
-    var bindOp = new Expr.NamedArg(true, Constants.unresolvedMonadBind(sourcePosOf(ctx)));
     var lastExpr = visitExpr(lastExprCtx.expr());
     doBlockExprCtxs.remove(lastExprCtx);
     var doBlockExprCtxsSeq = ImmutableSeq.from(doBlockExprCtxs);
     return doBlockExprCtxsSeq.foldRight(lastExpr, (doCtx, accExpr) -> {
+      var lArrow = doCtx.doBindingExpr() != null ? doCtx.doBindingExpr().LARROW() : null;
+      var pos = lArrow != null ? sourcePosOf(lArrow) : sourcePosOf(doCtx);
+      var bindOp = new Expr.NamedArg(true, Constants.unresolvedMonadBind(pos));
+
       var sourcePos = sourcePosOf(doCtx);
       Expr.Param param;
 
-      if (doCtx.LARROW() != null)
-        param = new Expr.Param(sourcePosOf(doCtx.weakId()), new LocalVar(doCtx.weakId().getText()), true);
+      if (doCtx.doBindingExpr() != null)
+        param = new Expr.Param(sourcePosOf(doCtx.doBindingExpr().weakId()),
+          new LocalVar(doCtx.doBindingExpr().weakId().getText()), true);
       else
-        param = Expr.Param.ignoredParam(SourcePos.NONE);
+        param = Expr.Param.ignoredParam(sourcePosOf(doCtx));
 
       var rhs = new Expr.NamedArg(true, new Expr.LamExpr(sourcePos, param, accExpr));
-      var lhs = new Expr.NamedArg(true, visitExpr(doCtx.expr()));
+      Expr.NamedArg lhs;
+
+      if (doCtx.doBindingExpr() != null)
+        lhs = new Expr.NamedArg(true, visitExpr(doCtx.doBindingExpr().expr()));
+      else
+        lhs = new Expr.NamedArg(true, visitExpr(doCtx.expr()));
+
       var seq = ImmutableSeq.of(lhs, bindOp, rhs);
       return new Expr.BinOpSeq(sourcePos, seq);
     });

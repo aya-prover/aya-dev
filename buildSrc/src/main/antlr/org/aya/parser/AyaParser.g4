@@ -94,14 +94,16 @@ expr : atom                                 # single
      | MATCH exprList clauses               # match
      | DO_KW LBRACE? doBlock RBRACE?        # do
      | LIDIOM idiomBlock? RIDIOM            # idiom
-     | LARRAY exprList? RARRAY              # array
+     | LARRAY arrayBlock? RARRAY            # array
      ;
+
+arrayBlock : exprList | expr BAR doBindingExpr+;
 
 idiomBlock : barredExpr* expr+;
 
 doBlock : (doBlockExpr COMMA)* doBlockExpr;
 
-doBlockExpr : weakId LARROW expr | expr;
+doBlockExpr : doBindingExpr | expr;
 
 newArg : BAR weakId ids IMPLIES expr;
 // New body new body but you!
@@ -163,6 +165,7 @@ idsComma : (weakId COMMA)* weakId?;
 qIdsComma : (qualifiedId COMMA)* qualifiedId?;
 ids : weakId*;
 type : COLON expr;
+doBindingExpr : weakId LARROW expr;
 
 qualifiedId : weakId (COLON2 weakId)*;
 weakId : ID | REPL_COMMAND;
