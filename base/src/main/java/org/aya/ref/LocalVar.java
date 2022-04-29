@@ -4,6 +4,7 @@ package org.aya.ref;
 
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,8 @@ import java.util.UUID;
  */
 public record LocalVar(@NotNull String name, @NotNull SourcePos definition) implements Var {
 
-  public static LocalVar IGNORED_LOCAL() {
+  @Contract(" -> new")
+  public static @NotNull LocalVar ignoredLocal() {
     return new LocalVar("AYA_INTERNAL_IGNORED_LOCALVAR" + UUID.randomUUID());
   }
 

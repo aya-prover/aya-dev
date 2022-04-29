@@ -378,12 +378,12 @@ public record AyaProducer(
       case AyaParser.DoContext doCtx -> visitDo(doCtx);
       case AyaParser.IdiomContext idmCtx -> {
         if (idmCtx.idiomBlock().barredExpr() == null)
-          yield new Expr.UnresolvedExpr(sourcePosOf(idmCtx), "empty");
+          yield Constants.unresolvedAlternativeEmpty(sourcePosOf(idmCtx));
         yield visitIdiomBlock(idmCtx.idiomBlock());
       }
       case AyaParser.ArrayContext arrCtx -> {
         if (arrCtx.exprList() == null)
-          yield new Expr.UnresolvedExpr(sourcePosOf(arrCtx), "nil");
+          yield Constants.unresolvedListNil(sourcePosOf(arrCtx));
         yield visitArr(arrCtx);
       }
       // TODO: match
@@ -392,8 +392,8 @@ public record AyaProducer(
   }
 
   private @NotNull Expr visitArr(AyaParser.ArrayContext ctx) {
-    var consArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(sourcePosOf(ctx), ":<"));
-    var nilArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(sourcePosOf(ctx), "nil"));
+    var consArg = new Expr.NamedArg(true, Constants.unresolvedListCons(sourcePosOf(ctx)));
+    var nilArg = new Expr.NamedArg(true, Constants.unresolvedListNil(sourcePosOf(ctx)));
     var args = ImmutableSeq.from(ctx.exprList().expr()).view()
       .map(exprCtx -> new Expr.NamedArg(true, visitExpr(exprCtx)))
       .flatMap(expr -> ImmutableSeq.of(expr, consArg))
@@ -406,28 +406,28 @@ public record AyaProducer(
    * Warning: the parser cannot enforce left associativity at this stage
    */
   private @NotNull Expr visitIdiomBlock(AyaParser.IdiomBlockContext ctx) {
-    var orArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(sourcePosOf(ctx), "<*>"));
+    var orArg = new Expr.NamedArg(true, Constants.unresolvedAlternativeOr(sourcePosOf(ctx)));
 
     if (ctx.barredExpr().isEmpty()) {
-      var apSeq = buildApSeq(ctx.expr());
-      var pure = new Expr.UnresolvedExpr(apSeq.first().sourcePos(), "pure");
+      var apSeq = buildApSeq(sourcePosOf(ctx), ctx.expr());
+      var pure = Constants.unresolvedFunctorPure(apSeq.first().sourcePos());
       var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, apSeq.first()));
       return new Expr.BinOpSeq(sourcePosOf(ctx), apSeq.drop(1).prepended(pureFirst).toImmutableSeq());
     }
 
     var first = new Expr.NamedArg(true, visitExpr(ctx.barredExpr(0).expr(0)));
-    var pure = new Expr.UnresolvedExpr(first.sourcePos(), "pure");
+    var pure = Constants.unresolvedFunctorPure(first.sourcePos());
     var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, first));
     var appSeq = ImmutableSeq.from(ctx.barredExpr()).view()
-      .flatMap(barredExprCtx -> buildApSeq(barredExprCtx.expr()).prepended(orArg))
+      .flatMap(barredExprCtx -> buildApSeq(sourcePosOf(barredExprCtx), barredExprCtx.expr()).prepended(orArg))
       .drop(1)
       .prepended(pureFirst)
       .toImmutableSeq();
     return new Expr.BinOpSeq(sourcePosOf(ctx), appSeq);
   }
 
-  private @NotNull SeqView<Expr.NamedArg> buildApSeq(@NotNull List<AyaParser.ExprContext> exprs) {
-    var ap = new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "<*>"));
+  private @NotNull SeqView<Expr.NamedArg> buildApSeq(@NotNull SourcePos pos, @NotNull List<AyaParser.ExprContext> exprs) {
+    var ap = new Expr.NamedArg(true, Constants.unresolvedApplicativeApp(pos));
     return Seq.from(exprs).view()
       .map(expr -> new Expr.NamedArg(true, visitExpr(expr)))
       .flatMap(arg -> ImmutableSeq.of(ap, arg))
@@ -443,7 +443,7 @@ public record AyaProducer(
       throw new ParsingInterruptedException();
     }
 
-    var bindOp = new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, ">>="));
+    var bindOp = new Expr.NamedArg(true, Constants.unresolvedMonadBind(sourcePosOf(ctx)));
     var lastExpr = visitExpr(lastExprCtx.expr());
     doBlockExprCtxs.remove(lastExprCtx);
     var doBlockExprCtxsSeq = ImmutableSeq.from(doBlockExprCtxs);
