@@ -381,16 +381,32 @@ public record AyaProducer(
           yield new Expr.UnresolvedExpr(sourcePosOf(idmCtx), "empty");
         yield visitIdiomBlock(idmCtx.idiomBlock());
       }
+      case AyaParser.ArrayContext arrCtx -> {
+        if (arrCtx.exprList() == null)
+          yield new Expr.UnresolvedExpr(sourcePosOf(arrCtx), "nil");
+        yield visitArr(arrCtx);
+      }
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
+  }
+
+  private @NotNull Expr visitArr(AyaParser.ArrayContext ctx) {
+    var consArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(sourcePosOf(ctx), ":<"));
+    var nilArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(sourcePosOf(ctx), "nil"));
+    var args = ImmutableSeq.from(ctx.exprList().expr()).view()
+      .map(exprCtx -> new Expr.NamedArg(true, visitExpr(exprCtx)))
+      .flatMap(expr -> ImmutableSeq.of(expr, consArg))
+      .appended(nilArg)
+      .toImmutableSeq();
+    return new Expr.BinOpSeq(sourcePosOf(ctx), args);
   }
 
   /**
    * Warning: the parser cannot enforce left associativity at this stage
    */
   private @NotNull Expr visitIdiomBlock(AyaParser.IdiomBlockContext ctx) {
-    var orArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "<*>"));
+    var orArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(sourcePosOf(ctx), "<*>"));
 
     if (ctx.barredExpr().isEmpty()) {
       var apSeq = buildApSeq(ctx.expr());

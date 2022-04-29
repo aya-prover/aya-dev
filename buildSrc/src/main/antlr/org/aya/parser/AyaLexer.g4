@@ -88,6 +88,8 @@ LPAREN : '(';
 RPAREN : ')';
 LIDIOM : '(|' | '\u2987';
 RIDIOM : '|)' | '\u2988';
+LARRAY : '[';
+RARRAY : ']';
 LGOAL : '{?';
 RGOAL : '?}';
 

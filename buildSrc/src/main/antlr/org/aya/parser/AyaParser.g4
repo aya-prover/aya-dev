@@ -94,6 +94,7 @@ expr : atom                                 # single
      | MATCH exprList clauses               # match
      | DO_KW LBRACE? doBlock RBRACE?        # do
      | LIDIOM idiomBlock? RIDIOM            # idiom
+     | LARRAY exprList? RARRAY              # array
      ;
 
 idiomBlock : barredExpr* expr+;
