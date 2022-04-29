@@ -237,9 +237,10 @@ public final class ExprTycker extends Tycker {
       case Expr.LitIntExpr lit -> {
         int integer = lit.integer();
         // TODO[literal]: int literals. Currently the parser does not allow negative literals.
-        var dataDef = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
-        if (dataDef.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
-        var type = new CallTerm.Data(((DataDef) dataDef.get()).ref, 0, ImmutableSeq.empty());
+        var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
+        if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
+        if (defs.sizeGreaterThan(1)) yield fail(expr, new AmbiguousLitError(expr, defs));
+        var type = new CallTerm.Data(((DataDef) defs.first()).ref, 0, ImmutableSeq.empty());
         yield new Result(new LitTerm.ShapedInt(integer, AyaShape.NAT_SHAPE, type), type);
       }
       default -> fail(expr, new NoRuleError(expr, null));
