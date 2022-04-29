@@ -376,9 +376,46 @@ public record AyaProducer(
         visitForallTelescope(forall.tele()).view(),
         visitExpr(forall.expr()));
       case AyaParser.DoContext doCtx -> visitDo(doCtx);
+      case AyaParser.IdiomContext idmCtx -> {
+        if (idmCtx.idiomBlock().barredExpr() == null)
+          yield new Expr.UnresolvedExpr(sourcePosOf(idmCtx), "empty");
+        yield visitIdiomBlock(idmCtx.idiomBlock());
+      }
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
+  }
+
+  /**
+   * Warning: the parser cannot enforce left associativity at this stage
+   */
+  private @NotNull Expr visitIdiomBlock(AyaParser.IdiomBlockContext ctx) {
+    var orArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "<*>"));
+
+    if (ctx.barredExpr().isEmpty()) {
+      var appSeq = buildApSeq(ctx.expr());
+      var pure = new Expr.UnresolvedExpr(appSeq.first().sourcePos(), "pure");
+      var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, appSeq.first()));
+      return new Expr.BinOpSeq(sourcePosOf(ctx), appSeq.drop(1).prepended(pureFirst).toImmutableSeq());
+    }
+
+    var first = new Expr.NamedArg(true, visitExpr(ctx.barredExpr(0).expr(0)));
+    var pure = new Expr.UnresolvedExpr(first.sourcePos(), "pure");
+    var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, first));
+    var appSeq = ImmutableSeq.from(ctx.barredExpr()).view()
+      .flatMap(barredExprCtx -> buildApSeq(barredExprCtx.expr()).prepended(orArg))
+      .drop(1)
+      .prepended(pureFirst)
+      .toImmutableSeq();
+    return new Expr.BinOpSeq(sourcePosOf(ctx), appSeq);
+  }
+
+  private @NotNull SeqView<Expr.NamedArg> buildApSeq(@NotNull List<AyaParser.ExprContext> exprs) {
+    var ap = new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "<*>"));
+    return Seq.from(exprs).view()
+      .map(expr -> new Expr.NamedArg(true, visitExpr(expr)))
+      .flatMap(arg -> ImmutableSeq.of(ap, arg))
+      .drop(1);
   }
 
   private @NotNull Expr visitDo(AyaParser.DoContext ctx) {

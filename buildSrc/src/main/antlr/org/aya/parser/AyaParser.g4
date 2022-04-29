@@ -93,7 +93,10 @@ expr : atom                                 # single
      | LAMBDA tele+ (IMPLIES expr?)?        # lam
      | MATCH exprList clauses               # match
      | DO_KW LBRACE? doBlock RBRACE?        # do
+     | LIDIOM idiomBlock? RIDIOM            # idiom
      ;
+
+idiomBlock : barredExpr* expr+;
 
 doBlock : (doBlockExpr COMMA)* doBlockExpr;
 
@@ -151,8 +154,10 @@ teleBinder : expr
 
 teleMaybeTypedExpr : PATTERN_KW? ids type?;
 
+
 // utilities
 exprList : (expr COMMA)* expr;
+barredExpr : expr+ BAR;
 idsComma : (weakId COMMA)* weakId?;
 qIdsComma : (qualifiedId COMMA)* qualifiedId?;
 ids : weakId*;

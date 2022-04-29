@@ -86,6 +86,8 @@ LBRACE : '{';
 RBRACE : '}';
 LPAREN : '(';
 RPAREN : ')';
+LIDIOM : '(|' | '\u2987';
+RIDIOM : '|)' | '\u2988';
 LGOAL : '{?';
 RGOAL : '?}';
 
