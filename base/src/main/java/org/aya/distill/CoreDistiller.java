@@ -193,6 +193,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
       case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0" : "1"), end.explicit());
+      case Pat.ShapedInt lit -> Doc.bracedUnless(Doc.plain(String.valueOf(lit.integer())), lit.explicit());
     };
   }
 

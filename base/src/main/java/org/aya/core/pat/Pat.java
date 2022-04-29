@@ -10,6 +10,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
@@ -222,6 +223,38 @@ public sealed interface Pat extends AyaDocile {
 
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       // do nothing
+    }
+  }
+
+  record ShapedInt(
+    int integer,
+    @NotNull AyaShape shape,
+    // TODO: remove the type
+    @NotNull CallTerm.Data type,
+    boolean explicit
+  ) implements Pat {
+    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
+      return new Expr.LitIntExpr(pos, integer);
+    }
+
+    @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+      return this;
+    }
+
+    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
+      return this;
+    }
+
+    @Override public @NotNull Pat inline() {
+      return this;
+    }
+
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      // do nothing
+    }
+
+    public @NotNull Pat constructorForm() {
+      return shape.transformPat(this, type);
     }
   }
 
