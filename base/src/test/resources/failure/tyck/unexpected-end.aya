@@ -1,0 +1,7 @@
+public open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
+  | at (i : I) : A i {
+    | 0 => a
+    | 1 => b
+  }
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  => new Path A (p 3) (p 4) { | at i => p i }

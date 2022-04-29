@@ -340,9 +340,11 @@ public final class ExprTycker extends Tycker {
           return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
         });
       }
-      case Expr.LitIntExpr lit && IntRange.closed(0, 1).contains(lit.integer()) -> {
+      case Expr.LitIntExpr lit -> {
         if (term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
-          yield new Result(new PrimTerm.End(lit.integer() == 1), term);
+          if (IntRange.closed(0, 1).contains(lit.integer()))
+            yield new Result(new PrimTerm.End(lit.integer() == 1), term);
+          yield fail(lit, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
         } else {
           yield fail(expr, new NoRuleError(expr, null));
         }

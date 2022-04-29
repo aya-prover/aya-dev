@@ -35,6 +35,7 @@ import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.error.NotAnIntervalError;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
@@ -194,9 +195,11 @@ public final class PatTycker {
       }
       case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
-      case Pattern.Number num && IntRange.closed(0, 1).contains(num.number()) -> {
+      case Pattern.Number num -> {
         if (term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
-          yield new Pat.End(num.number() == 1, num.explicit());
+          if (IntRange.closed(0, 1).contains(num.number()))
+            yield new Pat.End(num.number() == 1, num.explicit());
+          yield withError(new NotAnIntervalError(num.sourcePos(), num.number()), num, term);
         } else {
           throw new UnsupportedOperationException("Number patterns are unsupported yet");
         }
