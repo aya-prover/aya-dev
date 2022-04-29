@@ -92,11 +92,13 @@ def infixl <*> {A B : Type} (fs : List (A -> B)) (xs : List A) : List B
 | nil, _ => nil
 | f :< fs, xs => (fmap f xs) ++ (fs <*> xs)
 bind { tighter =
-       looser + }
+       looser  +}
 
 def empty {A : Type} : List A => nil
 
 def infixl <|> {A : Type} (l1 l2 : List A) : List A => l1 ++ l2
+bind { tighter =
+       looser  <*>}
 
 ----- monadic -----
 def return {A : Type} => pure {A}

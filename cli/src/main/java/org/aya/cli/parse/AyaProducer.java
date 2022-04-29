@@ -377,7 +377,7 @@ public record AyaProducer(
         visitExpr(forall.expr()));
       case AyaParser.DoContext doCtx -> visitDo(doCtx);
       case AyaParser.IdiomContext idmCtx -> {
-        if (idmCtx.idiomBlock().barredExpr() == null)
+        if (idmCtx.idiomBlock() == null)
           yield Constants.unresolvedAlternativeEmpty(sourcePosOf(idmCtx));
         yield visitIdiomBlock(idmCtx.idiomBlock());
       }
@@ -405,23 +405,27 @@ public record AyaProducer(
   /**
    * Warning: the parser cannot enforce left associativity at this stage
    */
+  private @NotNull Expr visitUnBarredIdiom(@NotNull SourcePos pos, List<AyaParser.ExprContext> ctxs) {
+    var apSeq = buildApSeq(pos, ctxs);
+    var pure = Constants.unresolvedFunctorPure(apSeq.first().sourcePos());
+    var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, apSeq.first()));
+    return new Expr.BinOpSeq(pos, apSeq.drop(1).prepended(pureFirst).toImmutableSeq());
+  }
+
   private @NotNull Expr visitIdiomBlock(AyaParser.IdiomBlockContext ctx) {
-    var orArg = new Expr.NamedArg(true, Constants.unresolvedAlternativeOr(sourcePosOf(ctx)));
+    var lastIdiom = visitUnBarredIdiom(sourcePosOf(ctx), ctx.expr());
 
-    if (ctx.barredExpr().isEmpty()) {
-      var apSeq = buildApSeq(sourcePosOf(ctx), ctx.expr());
-      var pure = Constants.unresolvedFunctorPure(apSeq.first().sourcePos());
-      var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, apSeq.first()));
-      return new Expr.BinOpSeq(sourcePosOf(ctx), apSeq.drop(1).prepended(pureFirst).toImmutableSeq());
-    }
+    if (ctx.barredExpr().isEmpty())
+      return lastIdiom;
 
-    var first = new Expr.NamedArg(true, visitExpr(ctx.barredExpr(0).expr(0)));
-    var pure = Constants.unresolvedFunctorPure(first.sourcePos());
-    var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, first));
     var appSeq = ImmutableSeq.from(ctx.barredExpr()).view()
-      .flatMap(barredExprCtx -> buildApSeq(sourcePosOf(barredExprCtx), barredExprCtx.expr()).prepended(orArg))
-      .drop(1)
-      .prepended(pureFirst)
+      .flatMap(barredExprCtx -> {
+        var unBarred = visitUnBarredIdiom(sourcePosOf(barredExprCtx), barredExprCtx.expr());
+        var unBarredArg = new Expr.NamedArg(true, unBarred);
+        var orArg = new Expr.NamedArg(true, Constants.unresolvedAlternativeOr(sourcePosOf(barredExprCtx.BAR())));
+        return ImmutableSeq.of(unBarredArg, orArg);
+      })
+      .appended(new Expr.NamedArg(true, lastIdiom))
       .toImmutableSeq();
     return new Expr.BinOpSeq(sourcePosOf(ctx), appSeq);
   }

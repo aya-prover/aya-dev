@@ -9,3 +9,10 @@ def five => three + two
 def six => three + three
 
 def result : List Nat => (| (+) [ one, two, three ]  [ four, five, six ] |)
+
+def result2 : List Nat => (| (+) [ one, two, three ]  [ four, five, six ]
+                           | (+) [ one, two, three ]  [ four, five, six ] |)
+
+def result3 : List Nat => (||)
+
+def result4 : List Nat => [ ]
