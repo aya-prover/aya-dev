@@ -399,7 +399,8 @@ public record AyaProducer(
     var pure = new Expr.NamedArg(true, Constants.unresolvedFunctorPure(firstExpr.sourcePos()));
     var returnedExpr = new Expr.BinOpSeq(firstExpr.sourcePos(), ImmutableSeq.of(pure, firstExpr));
 
-    return ImmutableSeq.from(ctx.doBindingExpr())
+
+    return ImmutableSeq.from(ctx.listComp().doBindingExpr())
       .foldRight(returnedExpr, (doBindingCtx, accExpr) -> {
         var bindOp = new Expr.NamedArg(true, Constants.unresolvedMonadBind(sourcePosOf(doBindingCtx.LARROW())));
         var pos = sourcePosOf(doBindingCtx);

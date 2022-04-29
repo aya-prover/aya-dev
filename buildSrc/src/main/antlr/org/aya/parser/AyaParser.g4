@@ -97,7 +97,9 @@ expr : atom                                 # single
      | LARRAY arrayBlock? RARRAY            # array
      ;
 
-arrayBlock : exprList | expr BAR doBindingExpr+;
+arrayBlock : exprList | expr BAR listComp;
+
+listComp : (doBindingExpr COMMA)* doBindingExpr;
 
 idiomBlock : barredExpr* expr+;
 
