@@ -393,10 +393,10 @@ public record AyaProducer(
     var orArg = new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "<*>"));
 
     if (ctx.barredExpr().isEmpty()) {
-      var appSeq = buildApSeq(ctx.expr());
-      var pure = new Expr.UnresolvedExpr(appSeq.first().sourcePos(), "pure");
-      var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, appSeq.first()));
-      return new Expr.BinOpSeq(sourcePosOf(ctx), appSeq.drop(1).prepended(pureFirst).toImmutableSeq());
+      var apSeq = buildApSeq(ctx.expr());
+      var pure = new Expr.UnresolvedExpr(apSeq.first().sourcePos(), "pure");
+      var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, apSeq.first()));
+      return new Expr.BinOpSeq(sourcePosOf(ctx), apSeq.drop(1).prepended(pureFirst).toImmutableSeq());
     }
 
     var first = new Expr.NamedArg(true, visitExpr(ctx.barredExpr(0).expr(0)));

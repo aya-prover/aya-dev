@@ -89,7 +89,7 @@ def fmap {A B : Type} => map {A} {B}
 def pure {A : Type} (x : A) : List A => x :< nil
 
 def infixl <*> {A B : Type} (fs : List (A -> B)) (xs : List A) : List B
-| nil, xs => nil
+| nil, _ => nil
 | f :< fs, xs => (fmap f xs) ++ (fs <*> xs)
 
 ----- monadic -----
