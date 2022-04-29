@@ -151,7 +151,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
       case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
-      case LitTerm.ShapedInt shaped -> Doc.plain(String.valueOf(shaped.repr()));
+      case LitTerm.ShapedInt shaped -> shaped.with(
+        (zero, suc) -> shaped.repr() == 0
+          ? linkLit(0, zero.ref, CON_CALL)
+          : linkLit(shaped.repr(), suc.ref, CON_CALL),
+        () -> Doc.plain(String.valueOf(shaped.repr())));
     };
   }
 
@@ -193,7 +197,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
       case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0" : "1"), end.explicit());
-      case Pat.ShapedInt lit -> Doc.bracedUnless(Doc.plain(String.valueOf(lit.repr())), lit.explicit());
+      case Pat.ShapedInt lit -> Doc.bracedUnless(lit.with(
+          (zero, suc) -> lit.repr() == 0
+            ? linkLit(0, zero.ref, CON_CALL)
+            : linkLit(lit.repr(), suc.ref, CON_CALL),
+          () -> Doc.plain(String.valueOf(lit.repr()))),
+        lit.explicit());
     };
   }
 

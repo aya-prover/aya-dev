@@ -225,6 +225,10 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return Doc.linkRef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
+  public static @NotNull Doc linkLit(int literal, @NotNull Var ref, @NotNull Style color) {
+    return Doc.linkRef(Doc.styled(color, Doc.plain(String.valueOf(literal))), ref.hashCode());
+  }
+
   public static @NotNull Doc linkDef(@NotNull Var ref) {
     return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
   }
