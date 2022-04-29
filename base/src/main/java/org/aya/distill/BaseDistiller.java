@@ -8,6 +8,7 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.Decl;
 import org.aya.generic.Arg;
+import org.aya.generic.Constants;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -206,7 +207,10 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static @NotNull Doc varDoc(@NotNull Var ref) {
-    return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
+    if (ref.name().startsWith(Constants.INTERNAL_LOCALVAR))
+      return Doc.linkRef(Doc.plain("_"), ref.hashCode());
+    else
+      return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
   }
 
   static @NotNull Doc coe(boolean coerce) {
