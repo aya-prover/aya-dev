@@ -7,6 +7,7 @@ import kala.control.Option;
 import kala.value.Ref;
 import org.aya.cli.utils.RepoLike;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.repr.AyaShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,7 @@ public class ReplShapeFactory extends AyaShape.Factory implements RepoLike<ReplS
     this.parent = parent;
   }
 
-  @Override public @NotNull ImmutableSeq<Def> findImpl(@NotNull AyaShape shape) {
+  @Override public @NotNull ImmutableSeq<GenericDef> findImpl(@NotNull AyaShape shape) {
     var found = super.findImpl(shape);
     if (found.isNotEmpty()) return found;
     return parent == null ? ImmutableSeq.empty() : parent.findImpl(shape);

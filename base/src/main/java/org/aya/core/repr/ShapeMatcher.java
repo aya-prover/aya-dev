@@ -10,6 +10,7 @@ import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
@@ -27,7 +28,7 @@ public record ShapeMatcher(
   @NotNull MutableLinkedList<DefVar<? extends Def, ? extends Signatured>> def,
   @NotNull MutableMap<Var, Var> teleSubst
 ) {
-  public static boolean match(@NotNull CodeShape shape, @NotNull Def def) {
+  public static boolean match(@NotNull CodeShape shape, @NotNull GenericDef def) {
     if (shape instanceof CodeShape.DataShape dataShape && def instanceof DataDef data)
       return new ShapeMatcher(MutableLinkedList.create(), MutableMap.create()).matchData(dataShape, data);
     return false;

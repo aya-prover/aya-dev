@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.core.repr.CodeShape.CtorShape;
@@ -34,9 +35,9 @@ public sealed interface AyaShape {
   }
 
   class Factory {
-    public @NotNull MutableMap<Def, AyaShape> discovered = MutableLinkedHashMap.of();
+    public @NotNull MutableMap<GenericDef, AyaShape> discovered = MutableLinkedHashMap.of();
 
-    public @NotNull ImmutableSeq<Def> findImpl(@NotNull AyaShape shape) {
+    public @NotNull ImmutableSeq<GenericDef> findImpl(@NotNull AyaShape shape) {
       return discovered.view().map(Tuple::of)
         .filter(t -> t._2 == shape)
         .map(t -> t._1)
@@ -47,13 +48,13 @@ public sealed interface AyaShape {
       return discovered.getOption(def);
     }
 
-    public void bonjour(@NotNull Def def, @NotNull AyaShape shape) {
+    public void bonjour(@NotNull GenericDef def, @NotNull AyaShape shape) {
       // TODO[literal]: what if a def has multiple shapes?
       discovered.put(def, shape);
     }
 
     /** Discovery of shaped literals */
-    public void bonjour(@NotNull Def def) {
+    public void bonjour(@NotNull GenericDef def) {
       AyaShape.LITERAL_SHAPES.view()
         .filter(shape -> ShapeMatcher.match(shape.codeShape(), def))
         .forEach(shape -> bonjour(def, shape));
