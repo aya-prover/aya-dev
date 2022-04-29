@@ -5,9 +5,8 @@ In file $FILE:7:19 ->
   7 |   => new Path A (p 3) (p 4) { | at i => p i }
                          ^^
 
-Error: Unable to check the expression
-         3
-       of interval type
+Error: The point `3` does not live in interval
+note: Did you mean:  `0` or `1`
 
 In file $FILE:7:25 ->
 
@@ -16,9 +15,8 @@ In file $FILE:7:25 ->
   7 |   => new Path A (p 3) (p 4) { | at i => p i }
                                ^^
 
-Error: Unable to check the expression
-         4
-       of interval type
+Error: The point `4` does not live in interval
+note: Did you mean:  `0` or `1`
 
 2 error(s), 0 warning(s).
 What are you doing?

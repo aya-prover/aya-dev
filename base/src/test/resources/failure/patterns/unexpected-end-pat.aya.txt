@@ -5,10 +5,8 @@ In file $FILE:2:4 ->
           ^^
   3 |   | 4 => 1
 
-Error: The pattern of interval type should be 0(left) or 1(right), while the actual
-       pattern
-         3
-       does not look like one
+Error: The point `3` does not live in interval
+note: Did you mean:  `0` or `1`
 
 In file $FILE:3:4 ->
 
@@ -17,10 +15,8 @@ In file $FILE:3:4 ->
   3 |   | 4 => 1
           ^^
 
-Error: The pattern of interval type should be 0(left) or 1(right), while the actual
-       pattern
-         4
-       does not look like one
+Error: The point `4` does not live in interval
+note: Did you mean:  `0` or `1`
 
 2 error(s), 0 warning(s).
 What are you doing?

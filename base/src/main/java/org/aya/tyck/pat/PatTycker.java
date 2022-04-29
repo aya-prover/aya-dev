@@ -35,6 +35,7 @@ import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.error.NotAnIntervalError;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
@@ -198,7 +199,7 @@ public final class PatTycker {
         if (term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
           if (IntRange.closed(0, 1).contains(num.number()))
             yield new Pat.End(num.number() == 1, num.explicit());
-          yield withError(new PatternProblem.UnknownInterval(num), num, term);
+          yield withError(new NotAnIntervalError(num.sourcePos(), num.number()), num, term);
         } else {
           throw new UnsupportedOperationException("Number patterns are unsupported yet");
         }

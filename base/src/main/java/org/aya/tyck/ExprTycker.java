@@ -344,7 +344,7 @@ public final class ExprTycker extends Tycker {
         if (term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
           if (IntRange.closed(0, 1).contains(lit.integer()))
             yield new Result(new PrimTerm.End(lit.integer() == 1), term);
-          yield fail(lit, new IntervalProblem.UnknownInterval(lit));
+          yield fail(lit, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
         } else {
           yield fail(expr, new NoRuleError(expr, null));
         }
