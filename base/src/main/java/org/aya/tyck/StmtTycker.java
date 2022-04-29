@@ -10,6 +10,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
@@ -32,15 +33,15 @@ import java.util.function.Consumer;
 /**
  * @author ice1000, kiva
  * @apiNote this class does not create {@link ExprTycker} instances itself,
- * but use the one passed to it. {@link StmtTycker#newTycker(PrimDef.Factory)} creates instances
+ * but use the one passed to it. {@link StmtTycker#newTycker(PrimDef.Factory, AyaShape.Factory)} creates instances
  * of expr tyckers.
  */
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
 ) {
-  public @NotNull ExprTycker newTycker(@NotNull PrimDef.Factory primFactory) {
-    return new ExprTycker(primFactory, reporter, traceBuilder);
+  public @NotNull ExprTycker newTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory literalShapes) {
+    return new ExprTycker(primFactory, literalShapes, reporter, traceBuilder);
   }
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {

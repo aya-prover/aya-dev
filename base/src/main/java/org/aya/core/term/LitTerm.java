@@ -2,14 +2,21 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.repr.CodeShape;
+import org.aya.core.repr.AyaShape;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface LitTerm extends Term {
-  record ShapedInt(int value, @NotNull ImmutableSeq<CodeShape> possibleShapes) implements LitTerm {
+  record ShapedInt(
+    int integer,
+    @NotNull AyaShape shape,
+    @NotNull CallTerm.Data type
+  ) implements LitTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitShapedLit(this, p);
+    }
+
+    public @NotNull Term constructorForm() {
+      return shape.transform(this, type);
     }
   }
 }

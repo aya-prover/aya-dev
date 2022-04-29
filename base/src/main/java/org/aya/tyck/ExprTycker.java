@@ -3,9 +3,9 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.range.primitive.IntRange;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -14,6 +14,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.*;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Unfolder;
@@ -49,6 +50,7 @@ import java.util.function.Consumer;
  */
 public final class ExprTycker extends Tycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
+  public @NotNull AyaShape.Factory literalShapes;
   public final @Nullable Trace.Builder traceBuilder;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -232,6 +234,19 @@ public final class ExprTycker extends Tycker {
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(null,
         Constants.randomName(hole), hole.sourcePos())._2);
       case Expr.ErrorExpr err -> Result.error(err.description());
+      case Expr.LitIntExpr lit -> {
+        int integer = lit.integer();
+        if (integer < 0) throw new UnsupportedOperationException("TODO: int shape");
+        var nats = literalShapes.discovered().view()
+          .map(Tuple::of)
+          .filter(t -> t._2.contains(AyaShape.NAT_SHAPE))
+          .map(t -> t._1)
+          .toImmutableSeq();
+        if (nats.sizeGreaterThan(1)) throw new UnsupportedOperationException("TODO: how to choose?");
+        var dataDef = ((DataDef) nats.first());
+        var type = new CallTerm.Data(dataDef.ref, 0, ImmutableSeq.empty());
+        yield new Result(new LitTerm.ShapedInt(integer, AyaShape.NAT_SHAPE, type), type);
+      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -341,13 +356,22 @@ public final class ExprTycker extends Tycker {
         });
       }
       case Expr.LitIntExpr lit -> {
-        if (term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
-          if (IntRange.closed(0, 1).contains(lit.integer()))
-            yield new Result(lit.integer() == 1 ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT, term);
-          yield fail(lit, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
-        } else {
-          yield fail(expr, new NoRuleError(expr, null));
+        var ty = term.normalize(state, NormalizeMode.WHNF);
+        if (ty instanceof FormTerm.Interval) {
+          var end = lit.integer();
+          if (end == 0 || end == 1) yield new Result(end == 1 ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT, term);
+          else yield fail(expr, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
         }
+        if (ty instanceof CallTerm.Data dataCall) {
+          var data = dataCall.ref().core;
+          var shapes = literalShapes.discovered().getOption(data);
+          if (shapes.isDefined()) {
+            var shape = shapes.get();
+            if (shape.sizeGreaterThan(1)) throw new UnsupportedOperationException("TODO: how to choose?");
+            yield new Result(new LitTerm.ShapedInt(lit.integer(), shape.first(), dataCall), term);
+          }
+        }
+        yield unifyTyMaybeInsert(term, synthesize(expr), expr);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
@@ -381,9 +405,14 @@ public final class ExprTycker extends Tycker {
   }
   */
 
-  public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+  public ExprTycker(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull AyaShape.Factory literalShapes,
+    @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder
+  ) {
     super(reporter, new TyckState(primFactory));
     this.traceBuilder = traceBuilder;
+    this.literalShapes = literalShapes;
   }
 
   public void solveMetas() {

@@ -16,6 +16,7 @@ import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.generic.util.NormalizeMode;
@@ -61,7 +62,8 @@ public class ReplCompiler {
     var resolvedExpr = expr.resolve(context);
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      var tycker = new ExprTycker(primFactory, delayedReporter, null);
+      // TODO: literal shapes
+      var tycker = new ExprTycker(primFactory, new AyaShape.Factory(), delayedReporter, null);
       var desugar = desugarExpr(resolvedExpr, delayedReporter);
       return tycker.zonk(tycker.synthesize(desugar));
     }
