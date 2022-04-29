@@ -9,6 +9,7 @@ public sealed interface LitTerm extends Term {
   record ShapedInt(
     int integer,
     @NotNull AyaShape shape,
+    // TODO: remove the type
     @NotNull CallTerm.Data type
   ) implements LitTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -16,7 +17,7 @@ public sealed interface LitTerm extends Term {
     }
 
     public @NotNull Term constructorForm() {
-      return shape.transform(this, type);
+      return shape.transformTerm(this, type);
     }
   }
 }

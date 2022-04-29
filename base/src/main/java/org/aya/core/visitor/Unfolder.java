@@ -13,6 +13,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
+import org.aya.core.term.LitTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
@@ -147,6 +148,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var arguments = buildSubst(fieldDef.ownerTele, term.structArgs());
     var fieldBody = term.fieldArgs().foldLeft(n.params().get(fieldRef), CallTerm::make);
     return fieldBody.subst(arguments).accept(this, p);
+  }
+
+  @Override @NotNull default Term visitShapedLit(@NotNull LitTerm.ShapedInt shaped, P p) {
+    return shaped.constructorForm();
   }
 
   /**
