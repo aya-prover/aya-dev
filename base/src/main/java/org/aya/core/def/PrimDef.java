@@ -100,18 +100,18 @@ public final class PrimDef extends TopLevelDef {
 
       public final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, this::arcoe, ref -> {
         var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), new FormTerm.Interval(), true);
+        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), FormTerm.Interval.INSTANCE, true);
         var paramI = new LocalVar("i");
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA, 0);
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new PrimTerm.End(false), true));
+        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(PrimTerm.End.LEFT, true));
         return new PrimDef(
           ref,
           ImmutableSeq.of(
             new Term.Param(paramA, paramATy, true),
             new Term.Param(new LocalVar("base"), baseAtLeft, true),
-            new Term.Param(paramI, new FormTerm.Interval(), true)
+            new Term.Param(paramI, FormTerm.Interval.INSTANCE, true)
           ),
           new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, 0), true)),
           ID.ARCOE
@@ -122,7 +122,7 @@ public final class PrimDef extends TopLevelDef {
       private @NotNull Term invol(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var arg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         if (arg instanceof PrimTerm.End end) {
-          return new PrimTerm.End(!end.isRight());
+          return end.isRight() ? PrimTerm.End.LEFT : PrimTerm.End.RIGHT;
         } else {
           return new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.of(new Arg<>(arg, true)));
         }
@@ -130,8 +130,8 @@ public final class PrimDef extends TopLevelDef {
 
       public final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(ID.INVOL, this::invol, ref -> new PrimDef(
         ref,
-        ImmutableSeq.of(new Term.Param(new LocalVar("i"), new FormTerm.Interval(), true)),
-        new FormTerm.Interval(),
+        ImmutableSeq.of(new Term.Param(new LocalVar("i"), FormTerm.Interval.INSTANCE, true)),
+        FormTerm.Interval.INSTANCE,
         ID.INVOL
       ), ImmutableSeq.empty());
 
@@ -152,9 +152,9 @@ public final class PrimDef extends TopLevelDef {
         new PrimSeed(ID.SQUEEZE_LEFT, this::squeezeLeft, ref -> new PrimDef(
           ref,
           ImmutableSeq.of(
-            new Term.Param(new LocalVar("i"), new FormTerm.Interval(), true),
-            new Term.Param(new LocalVar("j"), new FormTerm.Interval(), true)),
-          new FormTerm.Interval(),
+            new Term.Param(new LocalVar("i"), FormTerm.Interval.INSTANCE, true),
+            new Term.Param(new LocalVar("j"), FormTerm.Interval.INSTANCE, true)
+          ), FormTerm.Interval.INSTANCE,
           ID.SQUEEZE_LEFT
         ), ImmutableSeq.empty());
     }

@@ -59,7 +59,7 @@ public final class ExprTycker extends Tycker {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> new Result(new FormTerm.Univ(univ.lift()), new FormTerm.Univ(univ.lift() + 1));
-      case Expr.IntervalExpr interval -> new Result(new FormTerm.Interval(), new FormTerm.Univ(0));
+      case Expr.IntervalExpr interval -> new Result(FormTerm.Interval.INSTANCE, new FormTerm.Univ(0));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
@@ -343,7 +343,7 @@ public final class ExprTycker extends Tycker {
       case Expr.LitIntExpr lit -> {
         if (term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Interval) {
           if (IntRange.closed(0, 1).contains(lit.integer()))
-            yield new Result(new PrimTerm.End(lit.integer() == 1), term);
+            yield new Result(lit.integer() == 1 ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT, term);
           yield fail(lit, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
         } else {
           yield fail(expr, new NoRuleError(expr, null));

@@ -211,13 +211,13 @@ public sealed interface SerTerm extends Serializable {
 
   record Interval() implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Interval();
+      return FormTerm.Interval.INSTANCE;
     }
   }
 
-  record End(boolean val) implements SerTerm {
+  record End(boolean isRight) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PrimTerm.End(val);
+      return isRight ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT;
     }
   }
 }

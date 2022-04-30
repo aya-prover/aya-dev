@@ -5,9 +5,22 @@ package org.aya.core.term;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface PrimTerm extends Term {
-  record End(boolean isRight) implements PrimTerm {
+  final class End implements PrimTerm {
+    private final boolean isRight;
+
+    public static End LEFT = new End(false);
+    public static End RIGHT = new End(true);
+
+    private End(boolean isRight) {
+      this.isRight = isRight;
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitEnd(this, p);
+    }
+
+    public boolean isRight() {
+      return isRight;
     }
   }
 }

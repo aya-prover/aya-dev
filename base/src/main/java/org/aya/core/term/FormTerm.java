@@ -66,10 +66,14 @@ public sealed interface FormTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }
-
   }
 
-  record Interval() implements FormTerm {
+  final class Interval implements FormTerm {
+    public static Interval INSTANCE = new Interval();
+
+    private Interval() {
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitInterval(this, p);
     }

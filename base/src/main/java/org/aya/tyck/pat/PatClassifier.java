@@ -196,8 +196,8 @@ public record PatClassifier(
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
 
           for (var item : ImmutableSeq.of(
-            Tuple.of(new PrimTerm.End(false), "0"),
-            Tuple.of(new PrimTerm.End(true), "1")
+            Tuple.of(PrimTerm.End.LEFT, "0"),
+            Tuple.of(PrimTerm.End.RIGHT, "1")
           )) {
             builder.append(new PatTree(item._2, explicit, 0));
             var patClass = new MCT.Leaf<>(subPatsSeq.view()
