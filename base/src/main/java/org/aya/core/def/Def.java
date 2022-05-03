@@ -22,7 +22,7 @@ import java.util.Objects;
 /**
  * @author ice1000
  */
-public sealed interface Def extends AyaDocile permits SubLevelDef, TopLevelDef {
+public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, TopLevelDef {
   static @NotNull Term defType(@NotNull DefVar<?, ?> defVar) {
     return FormTerm.Pi.make(defTele(defVar), defResult(defVar));
   }
@@ -48,7 +48,7 @@ public sealed interface Def extends AyaDocile permits SubLevelDef, TopLevelDef {
   }
 
   @NotNull Term result();
-  @NotNull DefVar<?, ?> ref();
+  @Override @NotNull DefVar<?, ?> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);

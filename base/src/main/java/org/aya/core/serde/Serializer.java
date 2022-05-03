@@ -14,6 +14,7 @@ import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
+import org.aya.ref.GenericDefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,7 @@ public record Serializer(@NotNull Serializer.State state) implements
       return new SerTerm.SimpVar(localCache.getOrPut(var, localCache::size), var.name());
     }
 
-    public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {
+    public @NotNull SerDef.QName def(@NotNull GenericDefVar<?, ?> var) {
       assert var.module != null;
       return new SerDef.QName(var.module, var.name());
     }

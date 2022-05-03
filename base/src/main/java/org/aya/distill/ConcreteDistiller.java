@@ -184,6 +184,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
   public @NotNull Doc stmt(@NotNull Stmt prestmt) {
     return switch (prestmt) {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Decl decl -> decl(decl);
       case Command.Import cmd -> {
         var prelude = MutableList.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));

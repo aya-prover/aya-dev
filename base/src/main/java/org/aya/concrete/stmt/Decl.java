@@ -30,7 +30,7 @@ import java.util.function.BiFunction;
  *
  * @author re-xyr
  */
-public sealed abstract class Decl extends Signatured implements Stmt {
+public sealed abstract class Decl extends Signatured implements Stmt, GenericDecl {
   public enum Personality {
     NORMAL,
     EXAMPLE,
@@ -81,20 +81,7 @@ public sealed abstract class Decl extends Signatured implements Stmt {
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  public interface Visitor<P, R> {
-    default void traceEntrance(@NotNull Signatured item, P p) {
-    }
-    default void traceExit(P p, R r) {
-    }
-
-    @ApiStatus.NonExtendable
-    default <T extends Signatured, RR extends R> RR traced(@NotNull T yeah, P p, @NotNull BiFunction<T, P, RR> f) {
-      traceEntrance(yeah, p);
-      var r = f.apply(yeah, p);
-      traceExit(p, r);
-      return r;
-    }
-
+  public interface Visitor<P, R> extends GenericDecl.Visitor<P, R> {
     @ApiStatus.OverrideOnly R visitCtor(Decl.@NotNull DataCtor ctor, P p);
     @ApiStatus.OverrideOnly R visitField(Decl.@NotNull StructField field, P p);
     R visitData(Decl.@NotNull DataDecl decl, P p);

@@ -22,7 +22,7 @@ import java.util.EnumSet;
  * @author ice1000
  */
 public sealed interface SerDef extends Serializable {
-  @NotNull Def de(@NotNull SerTerm.DeState state);
+  @NotNull GenericDef de(@NotNull SerTerm.DeState state);
 
   record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name) implements Serializable {
     @Override public String toString() {

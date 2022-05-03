@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -196,6 +197,10 @@ public record AyaSccTycker(
     if (decl.personality == Decl.Personality.COUNTEREXAMPLE)
       return tyckerReuse.getOrPut(decl, () -> new ExprTycker(resolveInfo.primFactory(), sampleReporters.getOrPut(decl, BufferReporter::new), tycker.traceBuilder()));
     return tyckerReuse.getOrPut(decl, this::newExprTycker);
+  }
+
+  private @NotNull ExprTycker reuse(@NotNull ClassDecl decl) {
+    throw new UnsupportedOperationException("TODO");
   }
 
   private @NotNull ExprTycker newExprTycker() {

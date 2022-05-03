@@ -127,7 +127,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case CallTerm.Prim prim -> visitArgsCalls(prim.ref(), FN_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
-      case ElimTerm.Proj term -> Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+      case ElimTerm.Proj term ->
+        Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
       case FormTerm.Pi term -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
           yield term(outer, term.body());
@@ -191,12 +192,13 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
-      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0": "1"), end.explicit());
+      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0" : "1"), end.explicit());
     };
   }
 
-  public @NotNull Doc def(@NotNull Def predef) {
+  public @NotNull Doc def(@NotNull GenericDef predef) {
     return switch (predef) {
+      case ClassDef classDef -> throw new UnsupportedOperationException("not implemented yet");
       case FnDef def -> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "def"));
         def.modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));

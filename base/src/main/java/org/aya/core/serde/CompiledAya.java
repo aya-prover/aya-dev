@@ -14,6 +14,7 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
 import org.aya.ref.DefVar;
+import org.aya.ref.GenericDefVar;
 import org.aya.ref.Var;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
@@ -211,7 +212,7 @@ public record CompiledAya(
     }
   }
 
-  private void export(@NotNull PhysicalModuleContext context, int dropMod, @NotNull SerDef.QName qname, DefVar<?, ?> ref) {
+  private void export(@NotNull PhysicalModuleContext context, int dropMod, @NotNull SerDef.QName qname, GenericDefVar<?, ?> ref) {
     export(context, qname.mod().drop(dropMod), qname.name(), ref);
   }
 

@@ -47,6 +47,7 @@ public record StmtShallowResolver(
 
   public void resolveStmt(@NotNull Stmt stmt, @NotNull ModuleContext context) {
     switch (stmt) {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> {
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
