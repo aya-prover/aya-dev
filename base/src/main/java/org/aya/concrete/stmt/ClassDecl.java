@@ -29,9 +29,13 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements SourceNode, Tyck
   public final @Nullable OpDecl.OpInfo opInfo;
   public final @NotNull BindBlock bindBlock;
   public @NotNull Expr result;
-  public final @NotNull Decl.Personality personality;
+  public final @NotNull GenericDecl.Personality personality;
 
   public final @NotNull Accessibility accessibility;
+
+  @Override public @NotNull GenericDecl.Personality personality() {
+    return personality;
+  }
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;

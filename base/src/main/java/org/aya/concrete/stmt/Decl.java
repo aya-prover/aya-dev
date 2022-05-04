@@ -31,16 +31,14 @@ import java.util.function.BiFunction;
  * @author re-xyr
  */
 public sealed abstract class Decl extends Signatured implements Stmt, GenericDecl {
-  public enum Personality {
-    NORMAL,
-    EXAMPLE,
-    COUNTEREXAMPLE,
-  }
-
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
-  public final @NotNull Decl.Personality personality;
+  public final @NotNull GenericDecl.Personality personality;
+
+  @Override public @NotNull GenericDecl.Personality personality() {
+    return personality;
+  }
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;

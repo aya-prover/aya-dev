@@ -14,6 +14,14 @@ import java.util.function.BiFunction;
  * @author zaoqi
  */
 public sealed interface GenericDecl permits ClassDecl, Decl {
+  enum Personality {
+    NORMAL,
+    EXAMPLE,
+    COUNTEREXAMPLE,
+  }
+
+  @NotNull Personality personality();
+
   interface Visitor<P, R> {
     default void traceEntrance(@NotNull Object item, P p) {
     }
