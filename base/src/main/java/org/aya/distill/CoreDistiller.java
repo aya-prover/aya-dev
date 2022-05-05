@@ -127,8 +127,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case CallTerm.Prim prim -> visitArgsCalls(prim.ref(), FN_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
-      case ElimTerm.Proj term ->
-        Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+      case ElimTerm.Proj term -> Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
       case FormTerm.Pi term -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
           yield term(outer, term.body());
