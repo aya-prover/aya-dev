@@ -24,7 +24,7 @@ public record RefFinder(boolean withBody) implements
   public static final @NotNull RefFinder HEADER_AND_BODY = new RefFinder(true);
 
   @Override public void visitVar(Var usage, @NotNull MutableList<Def> defs) {
-    if (usage instanceof DefVar<?, ?> ref) defs.append(ref.core);
+    if (usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def) defs.append(def);
   }
 
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull MutableList<Def> references) {

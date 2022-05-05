@@ -2,14 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
-import org.aya.concrete.stmt.Decl;
+import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
-import org.aya.ref.GenericDefVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author zaoqi
  */
 public sealed interface GenericDef permits ClassDef, Def {
-  @NotNull GenericDefVar<?, ?> ref();
+  @NotNull DefVar<?, ?> ref();
+
+  @NotNull Term result();
 }

@@ -2,10 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.core.term.Term;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.ClassDefVar;
 import org.aya.ref.DefVar;
 import org.aya.util.distill.AyaDocile;
 import org.aya.util.distill.DistillerOptions;
@@ -16,7 +16,5 @@ public non-sealed/*sealed*/ interface ClassDef extends AyaDocile, GenericDef {
     return new CoreDistiller(options).def(this);
   }
 
-  @Override @NotNull ClassDefVar<?, ?> ref();
-
-  @NotNull Term result();
+  @Override @NotNull DefVar<? extends ClassDef, ? extends ClassDecl> ref();
 }

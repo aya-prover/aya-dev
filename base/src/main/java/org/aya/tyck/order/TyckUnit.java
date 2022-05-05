@@ -4,6 +4,7 @@ package org.aya.tyck.order;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.ClassDecl;
+import org.aya.concrete.stmt.GenericDecl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.util.error.SourceNode;
@@ -11,6 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 public sealed interface TyckUnit
   extends SourceNode
-  permits ClassDecl, Signatured, Stmt {
+  permits GenericDecl, Stmt {
   boolean needTyck(@NotNull ImmutableSeq<String> currentMod);
 }

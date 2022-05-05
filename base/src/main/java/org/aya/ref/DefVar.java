@@ -4,8 +4,10 @@ package org.aya.ref;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import org.aya.concrete.stmt.GenericDecl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,11 +17,32 @@ import org.jetbrains.annotations.UnknownNullability;
 /**
  * @author ice1000
  */
-public final class DefVar<Core extends Def, Concrete extends Signatured> extends GenericDefVar<Core, Concrete> {
+public final class DefVar<Core extends GenericDef, Concrete extends GenericDecl> implements Var {
+  private final @NotNull String name;
+  /** Initialized in parsing, so it might be null for deserialized user definitions. */
+  public @UnknownNullability Concrete concrete;
+  /** Initialized in type checking or core deserialization, so it might be null for unchecked user definitions. */
+  public @UnknownNullability Core core;
+  /** Initialized in the resolver or core deserialization */
+  public @Nullable ImmutableSeq<String> module;
+  /** Initialized in the resolver or core deserialization */
+  public @Nullable OpDecl opDecl;
+  /** Initialized in the resolver or core deserialization */
+  public @NotNull MutableMap<ImmutableSeq<String>, OpDecl> opDeclRename = MutableMap.create();
+
+
+  @Contract(pure = true) public boolean isInfix() {
+    return opDecl != null && opDecl.opInfo() != null;
+  }
+
+  @Contract(pure = true) public @NotNull String name() {
+    return name;
+  }
+
   private DefVar(Concrete concrete, Core core, @NotNull String name) {
-    super(name);
     this.concrete = concrete;
     this.core = core;
+    this.name = name;
   }
 
   /** Used in user definitions. */
@@ -32,5 +55,16 @@ public final class DefVar<Core extends Def, Concrete extends Signatured> extends
   public static <Core extends Def, Concrete extends Signatured>
   @NotNull DefVar<Core, Concrete> empty(@NotNull String name) {
     return new DefVar<>(null, null, name);
+  }
+
+  @Override public boolean equals(Object o) {
+    return this == o;
+  }
+
+  public boolean isInModule(@NotNull ImmutableSeq<String> moduleName) {
+    var maybeSubmodule = module;
+    if (maybeSubmodule == null) return false;
+    if (maybeSubmodule.sizeLessThan(moduleName.size())) return false;
+    return maybeSubmodule.sliceView(0, moduleName.size()).sameElements(moduleName);
   }
 }

@@ -10,6 +10,7 @@ import kala.tuple.Tuple;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
+import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.Bind;
@@ -86,7 +87,10 @@ public record StmtShallowResolver(
           if (use.asAssoc() == Assoc.Invalid) return;
           var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
-          var defVar = (DefVar<?, ?>) symbol;
+          var defVar0 = (DefVar<?, ?>) symbol;
+          assert (defVar0.core instanceof Def) || (defVar0.concrete instanceof Signatured);
+          @SuppressWarnings("unchecked")
+          var defVar = (DefVar<? extends Def, ? extends Signatured>) defVar0;
           var argc = defVar.core != null
             ? defVar.core.telescope().count(Bind::explicit)
             : defVar.concrete.telescope.count(Expr.Param::explicit);

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed abstract class Signatured implements SourceNode, OpDecl, TyckUnit permits Decl, Decl.DataCtor, Decl.StructField {
+public sealed abstract class Signatured implements OpDecl, GenericDecl permits Decl, Decl.DataCtor, Decl.StructField {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpInfo opInfo;
@@ -50,9 +50,6 @@ public sealed abstract class Signatured implements SourceNode, OpDecl, TyckUnit 
   @Override public @Nullable OpInfo opInfo() {
     return opInfo;
   }
-
-  @Contract(pure = true)
-  abstract public @NotNull DefVar<?, ?> ref();
 
   @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     return ref().isInModule(currentMod) && ref().core == null;

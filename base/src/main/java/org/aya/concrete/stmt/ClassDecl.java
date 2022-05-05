@@ -5,13 +5,12 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.core.def.ClassDef;
-import org.aya.ref.ClassDefVar;
+import org.aya.ref.DefVar;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author zaoqi
  */
-public non-sealed/*sealed*/ abstract class ClassDecl implements SourceNode, TyckUnit, Stmt, GenericTopLevelDecl {
+public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, GenericTopLevelDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpDecl.OpInfo opInfo;
@@ -49,8 +48,7 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements SourceNode, Tyck
     this.accessibility = accessibility;
   }
 
-  @Contract(pure = true)
-  abstract public @NotNull ClassDefVar<?, ?> ref();
+  @Override @NotNull public abstract DefVar<? extends ClassDef, ? extends ClassDecl> ref();
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
