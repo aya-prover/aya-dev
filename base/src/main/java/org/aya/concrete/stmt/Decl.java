@@ -23,20 +23,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.function.BiFunction;
 
 /**
  * Concrete definition, corresponding to {@link Def}.
  *
  * @author re-xyr
  */
-public sealed abstract class Decl extends Signatured implements Stmt, GenericDecl {
+public sealed abstract class Decl extends Signatured implements Stmt, GenericTopLevelDecl {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
-  public final @NotNull GenericDecl.Personality personality;
+  public final @NotNull GenericTopLevelDecl.Personality personality;
 
-  @Override public @NotNull GenericDecl.Personality personality() {
+  @Override public @NotNull GenericTopLevelDecl.Personality personality() {
     return personality;
   }
 
@@ -79,7 +78,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, GenericDec
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  public interface Visitor<P, R> extends GenericDecl.Visitor<P, R> {
+  public interface Visitor<P, R> extends GenericTopLevelDecl.Visitor<P, R> {
     @ApiStatus.OverrideOnly R visitCtor(Decl.@NotNull DataCtor ctor, P p);
     @ApiStatus.OverrideOnly R visitField(Decl.@NotNull StructField field, P p);
     R visitData(Decl.@NotNull DataDecl decl, P p);

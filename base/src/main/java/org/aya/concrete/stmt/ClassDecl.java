@@ -15,25 +15,23 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiFunction;
-
 /**
  * An item in the signature, with fields and result type.
  * Concrete definition, corresponding to {@link ClassDef}.
  *
  * @author zaoqi
  */
-public non-sealed/*sealed*/ abstract class ClassDecl implements SourceNode, TyckUnit, Stmt, GenericDecl {
+public non-sealed/*sealed*/ abstract class ClassDecl implements SourceNode, TyckUnit, Stmt, GenericTopLevelDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpDecl.OpInfo opInfo;
   public final @NotNull BindBlock bindBlock;
   public @NotNull Expr result;
-  public final @NotNull GenericDecl.Personality personality;
+  public final @NotNull GenericTopLevelDecl.Personality personality;
 
   public final @NotNull Accessibility accessibility;
 
-  @Override public @NotNull GenericDecl.Personality personality() {
+  @Override public @NotNull GenericTopLevelDecl.Personality personality() {
     return personality;
   }
 
@@ -84,6 +82,6 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements SourceNode, Tyck
     return doAccept((Visitor<P, R>) visitor, p);
   }
 
-  public interface Visitor<P, R> extends GenericDecl.Visitor<P, R> {
+  public interface Visitor<P, R> extends GenericTopLevelDecl.Visitor<P, R> {
   }
 }
