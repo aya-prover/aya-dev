@@ -67,6 +67,7 @@ FORALL : 'forall' | '\u2200';
 
 TO : '->' | '\u2192';
 IMPLIES : '=>' | '\u21D2';
+DEFINE_AS : ':=';
 SUCHTHAT : '**';
 DOT : '.';
 BAR : '|';

@@ -105,7 +105,7 @@ atom : ULIFT* literal
 
 argument : atom projFix*
          | LBRACE exprList RBRACE
-         | LBRACE weakId IMPLIES expr? RBRACE
+         | LBRACE weakId DEFINE_AS expr? RBRACE
          ;
 
 projFix : DOT (NUMBER | qualifiedId);
