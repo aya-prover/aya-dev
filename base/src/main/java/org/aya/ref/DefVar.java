@@ -4,8 +4,10 @@ package org.aya.ref;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import org.aya.concrete.stmt.GenericDecl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +17,7 @@ import org.jetbrains.annotations.UnknownNullability;
 /**
  * @author ice1000
  */
-public final class DefVar<Core extends Def, Concrete extends Signatured> implements Var {
+public final class DefVar<Core extends GenericDef, Concrete extends GenericDecl> implements Var {
   private final @NotNull String name;
   /** Initialized in parsing, so it might be null for deserialized user definitions. */
   public @UnknownNullability Concrete concrete;

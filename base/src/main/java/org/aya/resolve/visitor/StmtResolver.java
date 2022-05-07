@@ -40,6 +40,7 @@ public interface StmtResolver {
   /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
   static void resolveStmt(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
@@ -174,6 +175,7 @@ public interface StmtResolver {
 
   static void resolveBind(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> resolveBind(mod.contents(), info);
       case Decl.DataDecl decl -> {
         decl.body.forEach(ctor -> visitBind(ctor.ref, ctor.bindBlock, info));

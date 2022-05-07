@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
@@ -31,6 +32,7 @@ public class SigRefFinder implements ExprConsumer<@NotNull MutableList<TyckUnit>
   public void visit(@NotNull TyckUnit sn, @NotNull MutableList<TyckUnit> references) {
     switch (sn) {
       case Decl decl -> decl(references, decl);
+      case ClassDecl decl -> throw new UnsupportedOperationException("TODO");
       case Decl.DataCtor ctor -> tele(ctor.telescope, references);
       case Decl.StructField field -> {
         tele(field.telescope, references);

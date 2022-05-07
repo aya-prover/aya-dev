@@ -8,8 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import org.aya.concrete.stmt.Signatured;
-import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
@@ -38,18 +36,18 @@ public sealed interface SerTerm extends Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    public <Core extends Def, Concrete extends Signatured>
-    @NotNull DefVar<Core, Concrete> resolve(@NotNull SerDef.QName name) {
+    public <V extends DefVar<?, ?>>
+    @NotNull V resolve(@NotNull SerDef.QName name) {
       // We assume this cast to be safe
-      var dv = (DefVar<Core, Concrete>) defCache
+      var dv = (V) defCache
         .getOrThrow(name.mod(), () -> new SerDef.DeserializeException("Unable to find module: " + name.mod()))
         .getOrThrow(name.name(), () -> new SerDef.DeserializeException("Unable to find DefVar: " + name));
       assert Objects.equals(name.name(), dv.name());
       return dv;
     }
 
-    @SuppressWarnings("unchecked") <Core extends Def, Concrete extends Signatured>
-    @NotNull DefVar<Core, Concrete> newDef(@NotNull SerDef.QName name) {
+    @SuppressWarnings("unchecked") <V extends DefVar<?, ?>>
+    @NotNull V newDef(@NotNull SerDef.QName name) {
       // We assume this cast to be safe
       var defVar = DefVar.empty(name.name());
       var old = defCache
@@ -57,7 +55,7 @@ public sealed interface SerTerm extends Serializable {
         .put(name.name(), defVar);
       if (old.isDefined()) throw new SerDef.DeserializeException("Same definition deserialized twice: " + name);
       defVar.module = name.mod();
-      return (DefVar<Core, Concrete>) defVar;
+      return (V) defVar;
     }
 
     public void putPrim(

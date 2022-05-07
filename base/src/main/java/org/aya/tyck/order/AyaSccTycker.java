@@ -10,6 +10,7 @@ import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TopLevelDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.UserDef;
@@ -47,8 +48,8 @@ public record AyaSccTycker(
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull MutableList<@NotNull Def> wellTyped,
-  @NotNull MutableMap<Decl, ExprTycker> tyckerReuse,
-  @NotNull MutableMap<Decl, CollectingReporter> sampleReporters
+  @NotNull MutableMap<TopLevelDecl, ExprTycker> tyckerReuse,
+  @NotNull MutableMap<TopLevelDecl, CollectingReporter> sampleReporters
 ) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
@@ -191,9 +192,9 @@ public record AyaSccTycker(
     }
   }
 
-  private @NotNull ExprTycker reuse(@NotNull Decl decl) {
+  private @NotNull ExprTycker reuse(@NotNull TopLevelDecl decl) {
     // prevent counterexample errors from being reported to the user reporter
-    if (decl.personality == Decl.Personality.COUNTEREXAMPLE)
+    if (decl.personality() == Decl.Personality.COUNTEREXAMPLE)
       return tyckerReuse.getOrPut(decl, () -> new ExprTycker(resolveInfo.primFactory(), sampleReporters.getOrPut(decl, BufferReporter::new), tycker.traceBuilder()));
     return tyckerReuse.getOrPut(decl, this::newExprTycker);
   }

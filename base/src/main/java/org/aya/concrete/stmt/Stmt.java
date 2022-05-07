@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public sealed interface Stmt extends AyaDocile, TyckUnit
-  permits Command, Decl, Generalize, Remark {
+  permits Remark, ClassDecl, Command, Decl, Generalize {
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
@@ -49,7 +49,7 @@ public sealed interface Stmt extends AyaDocile, TyckUnit
   /**
    * @author re-xyr
    */
-  interface Visitor<P, R> extends Decl.Visitor<P, R> {
+  interface Visitor<P, R> extends Decl.Visitor<P, R>, TopLevelDecl.Visitor<P, R> {
     default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       stmts.forEach(stmt -> stmt.accept(this, p));
       // [xyr]: Is this OK? The order of visiting must be preserved.

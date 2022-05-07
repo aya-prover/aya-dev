@@ -191,12 +191,13 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
-      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0": "1"), end.explicit());
+      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0" : "1"), end.explicit());
     };
   }
 
-  public @NotNull Doc def(@NotNull Def predef) {
+  public @NotNull Doc def(@NotNull GenericDef predef) {
     return switch (predef) {
+      case ClassDef classDef -> throw new UnsupportedOperationException("not implemented yet");
       case FnDef def -> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "def"));
         def.modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
