@@ -5,12 +5,8 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.core.def.Def;
-import org.aya.ref.DefVar;
-import org.aya.tyck.order.TyckUnit;
 import org.aya.util.binop.OpDecl;
-import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +45,6 @@ public sealed abstract class Signatured implements OpDecl, GenericDecl permits D
 
   @Override public @Nullable OpInfo opInfo() {
     return opInfo;
-  }
-
-  @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
-    return ref().isInModule(currentMod) && ref().core == null;
   }
 
   @Override public String toString() {

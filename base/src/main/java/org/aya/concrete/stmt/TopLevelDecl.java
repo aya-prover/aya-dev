@@ -13,7 +13,7 @@ import java.util.function.BiFunction;
  *
  * @author zaoqi
  */
-public sealed interface GenericTopLevelDecl extends GenericDecl permits ClassDecl, Decl {
+public sealed interface TopLevelDecl extends GenericDecl permits ClassDecl, Decl {
   enum Personality {
     NORMAL,
     EXAMPLE,

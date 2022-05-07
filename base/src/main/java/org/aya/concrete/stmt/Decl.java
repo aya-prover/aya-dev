@@ -29,13 +29,13 @@ import java.util.EnumSet;
  *
  * @author re-xyr
  */
-public sealed abstract class Decl extends Signatured implements Stmt, GenericTopLevelDecl {
+public sealed abstract class Decl extends Signatured implements Stmt, TopLevelDecl {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
-  public final @NotNull GenericTopLevelDecl.Personality personality;
+  public final @NotNull TopLevelDecl.Personality personality;
 
-  @Override public @NotNull GenericTopLevelDecl.Personality personality() {
+  @Override public @NotNull TopLevelDecl.Personality personality() {
     return personality;
   }
 
@@ -78,7 +78,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, GenericTop
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  public interface Visitor<P, R> extends GenericTopLevelDecl.Visitor<P, R> {
+  public interface Visitor<P, R> extends TopLevelDecl.Visitor<P, R> {
     @ApiStatus.OverrideOnly R visitCtor(Decl.@NotNull DataCtor ctor, P p);
     @ApiStatus.OverrideOnly R visitField(Decl.@NotNull StructField field, P p);
     R visitData(Decl.@NotNull DataDecl decl, P p);
@@ -107,7 +107,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, GenericTop
     }
 
     @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
-      return ref.isInModule(currentMod) && ref.concrete.signature == null;
+      return ref.isInModule(currentMod) && signature == null;
     }
 
     @Override public @NotNull DefVar<PrimDef, PrimDecl> ref() {

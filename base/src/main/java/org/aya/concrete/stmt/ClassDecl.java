@@ -2,13 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.core.def.ClassDef;
 import org.aya.ref.DefVar;
-import org.aya.tyck.order.TyckUnit;
 import org.aya.util.binop.OpDecl;
-import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,17 +17,17 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author zaoqi
  */
-public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, GenericTopLevelDecl {
+public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, TopLevelDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpDecl.OpInfo opInfo;
   public final @NotNull BindBlock bindBlock;
   public @NotNull Expr result;
-  public final @NotNull GenericTopLevelDecl.Personality personality;
+  public final @NotNull TopLevelDecl.Personality personality;
 
   public final @NotNull Accessibility accessibility;
 
-  @Override public @NotNull GenericTopLevelDecl.Personality personality() {
+  @Override public @NotNull TopLevelDecl.Personality personality() {
     return personality;
   }
 
@@ -38,7 +35,15 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, GenericTop
     return accessibility;
   }
 
-  protected ClassDecl(@NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos, OpDecl.OpInfo opInfo, @NotNull BindBlock bindBlock, @NotNull Expr result, Decl.Personality personality, @NotNull Accessibility accessibility) {
+  protected ClassDecl(
+    @NotNull SourcePos sourcePos,
+    @NotNull SourcePos entireSourcePos,
+    @Nullable OpDecl.OpInfo opInfo,
+    @NotNull BindBlock bindBlock,
+    @NotNull Expr result,
+    @NotNull Decl.Personality personality,
+    @NotNull Accessibility accessibility
+  ) {
     this.sourcePos = sourcePos;
     this.entireSourcePos = entireSourcePos;
     this.opInfo = opInfo;
@@ -52,10 +57,6 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, GenericTop
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
-  }
-
-  @Override public boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
-    return ref().isInModule(currentMod) && ref().core == null;
   }
 
   @Override public String toString() {
@@ -80,6 +81,6 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, GenericTop
     return doAccept((Visitor<P, R>) visitor, p);
   }
 
-  public interface Visitor<P, R> extends GenericTopLevelDecl.Visitor<P, R> {
+  public interface Visitor<P, R> extends TopLevelDecl.Visitor<P, R> {
   }
 }
