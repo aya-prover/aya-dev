@@ -3,5 +3,5 @@ open import Arith::Int
 open import Data::List
 
 def simple : List Nat => zero :< suc zero :< nil
-def length1: Nat => length {A => Nat} simple
-def length2: Nat => length (map {B => Int} pos simple)
+def length1: Nat => length {A := Nat} simple
+def length2: Nat => length (map {B := Int} pos simple)
