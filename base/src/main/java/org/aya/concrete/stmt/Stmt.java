@@ -49,7 +49,7 @@ public sealed interface Stmt extends AyaDocile, TyckUnit
   /**
    * @author re-xyr
    */
-  interface Visitor<P, R> extends Decl.Visitor<P, R>, ClassDecl.Visitor<P, R> {
+  interface Visitor<P, R> extends Decl.Visitor<P, R>, TopLevelDecl.Visitor<P, R> {
     default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       stmts.forEach(stmt -> stmt.accept(this, p));
       // [xyr]: Is this OK? The order of visiting must be preserved.

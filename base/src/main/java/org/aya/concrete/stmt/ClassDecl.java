@@ -63,13 +63,13 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, TopLevelDe
     return getClass().getSimpleName() + "[" + ref().name() + "]";
   }
 
-  protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
+  protected abstract <P, R> R doAccept(@NotNull TopLevelDecl.Visitor<P, R> visitor, P p);
 
   @Override public final <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return accept((Visitor<? super P, ? extends R>) visitor, p);
+    return accept((TopLevelDecl.Visitor<? super P, ? extends R>) visitor, p);
   }
 
-  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+  public final <P, R> R accept(@NotNull TopLevelDecl.Visitor<P, R> visitor, P p) {
     visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
     visitor.traceExit(p, ret);
@@ -78,9 +78,6 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, TopLevelDe
 
   @ApiStatus.NonExtendable
   public final @Override <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return doAccept((Visitor<P, R>) visitor, p);
-  }
-
-  public interface Visitor<P, R> extends TopLevelDecl.Visitor<P, R> {
+    return doAccept((TopLevelDecl.Visitor<P, R>) visitor, p);
   }
 }
