@@ -251,7 +251,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
-          decl.body.fold(expr -> Doc.cat(Doc.ONE_WS, Doc.symbol("=>"), Doc.ONE_WS, term(Outer.Free, expr)),
+          decl.body.fold(expr -> Doc.cat(Doc.spaced(Doc.symbol("=>")), term(Outer.Free, expr)),
             clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses)))),
           visitBindBlock(decl.bindBlock)
         );

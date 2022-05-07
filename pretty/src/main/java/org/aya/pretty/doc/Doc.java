@@ -226,6 +226,10 @@ public sealed interface Doc extends Docile {
     return wrap(explicit ? "(" : "{", explicit ? ")" : "}", doc);
   }
 
+  static @NotNull Doc spaced(Doc symbol) {
+    return Doc.cat(Doc.ONE_WS, symbol, Doc.ONE_WS);
+  }
+
   static @NotNull Doc wrap(String leftSymbol, String rightSymbol, Doc doc) {
     return cat(symbol(leftSymbol), doc, symbol(rightSymbol));
   }
