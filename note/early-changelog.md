@@ -2,6 +2,22 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.18
+
+Implemented full normalization with TermView,
+moved primitive related states from global variables to TyckState,
+fixed "no rule" reporting and handled inference of error term,
+thrown `InternalException` instead of `IllegalxxxException`, checked the hole's solution in the little typer,
+fixed a tyck order bug `def a a`, detected circular signature dependency, fixed library compiler's error reporting,
+built GraalVM Native images and fixed github actions, used adaptive-cli style outputting to a terminal,
+fixed bugs on repl and added tests, implemented nat code shape matcher as a part of the implementation of java integer backed literals,
+added api for classable def, improved pretty and syntax for named applications.
+
++ Changes to the language:
+  + `I` is now a keyword instead of prim and `left` and `right` are now `0` and `1`.
+  + Named application is changed from `=>` to `:=`
+  + `Sigma`, `\/` and `/\` are accepted
+
 ## 0.17
 
 Moved some ANTLR4 helpers and MCT to `tools-repl`/`tools`, fixed REPL parsing and color styles,
