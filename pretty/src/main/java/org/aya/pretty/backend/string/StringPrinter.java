@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -91,7 +91,10 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   private static final @NotNull Map<String, String> unicodeMapping = Map.ofEntries(
     Tuple.of("Pi", "\u03A0"),
     Tuple.of("Sig", "\u03A3"),
+    Tuple.of("Sigma", "\u03A3"),
     Tuple.of("\\", "\u03BB"),
+    Tuple.of("/\\", "\u2227"),
+    Tuple.of("\\/", "\u2228"),
     Tuple.of("=>", "\u21D2"),
     Tuple.of("ulift", "\u2191"),
     Tuple.of("->", "\u2192")
@@ -99,7 +102,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {
     if (config.unicode) for (var k : unicodeMapping.keysView()) {
-      if (text.contains(k)) {
+      if (text.trim().equals(k)) {
         cursor.visibleContent(text.replace(k, unicodeMapping.get(k)));
         return;
       }
