@@ -13,10 +13,12 @@ built GraalVM Native images and fixed github actions, used adaptive-cli style ou
 fixed bugs on repl and added tests, implemented nat code shape matcher as a part of the implementation of java integer backed literals,
 added api for classable def, improved pretty and syntax for named applications.
 
+Deleted concrete visitors (including for decl and for expr)!!
+
 + Changes to the language:
   + `I` is now a keyword instead of prim and `left` and `right` are now `0` and `1`.
   + Named application is changed from `=>` to `:=`
-  + `Sigma`, `\/` and `/\` are accepted
+  + `\/` and `/\` are reserved but unused yet
 
 ## 0.17
 
