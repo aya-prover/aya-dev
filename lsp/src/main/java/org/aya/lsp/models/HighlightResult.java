@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.models;
 
@@ -17,27 +17,15 @@ public record HighlightResult(
     this(uri, symbols.collect(Collectors.toList()));
   }
 
+  public enum Kind {
+    // definitions
+    ModuleDef, FnDef, DataDef, StructDef, ConDef, FieldDef, PrimDef,
+    // expressions
+    Generalize, FnCall, DataCall, StructCall, ConCall, FieldCall, PrimCall,
+  }
+
   public record Symbol(
     @NotNull Range range,
-    @NotNull HighlightResult.Symbol.Kind kind
-  ) {
-    public enum Kind {
-      // definitions
-      ModuleDef,
-      FnDef,
-      DataDef,
-      StructDef,
-      ConDef,
-      FieldDef,
-      PrimDef,
-      // expressions
-      Generalize,
-      FnCall,
-      DataCall,
-      StructCall,
-      ConCall,
-      FieldCall,
-      PrimCall,
-    }
-  }
+    @NotNull HighlightResult.Kind kind
+  ) {}
 }

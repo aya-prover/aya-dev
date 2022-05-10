@@ -28,10 +28,6 @@ public sealed interface Command extends Stmt {
     @Override public @NotNull Accessibility accessibility() {
       return Accessibility.Private;
     }
-
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitImport(this, p);
-    }
   }
 
   /**
@@ -44,10 +40,6 @@ public sealed interface Command extends Stmt {
     @NotNull UseHide useHide,
     boolean openExample
   ) implements Command {
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitOpen(this, p);
-    }
-
     /**
      * @author re-xyr
      */
@@ -95,10 +87,6 @@ public sealed interface Command extends Stmt {
 
     @Override public @NotNull Accessibility accessibility() {
       return Accessibility.Public;
-    }
-
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitModule(this, p);
     }
   }
 }

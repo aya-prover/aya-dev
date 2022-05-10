@@ -17,7 +17,6 @@ import org.aya.resolve.context.Context;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,33 +59,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, TopLevelDe
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
-  protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
-  @Override public final <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return accept((Visitor<? super P, ? extends R>) visitor, p);
-  }
-
-  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    visitor.traceEntrance(this, p);
-    var ret = doAccept(visitor, p);
-    visitor.traceExit(p, ret);
-    return ret;
-  }
-
-  @ApiStatus.NonExtendable
-  public final @Override <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return doAccept((Decl.Visitor<P, R>) visitor, p);
-  }
-
-  public interface Visitor<P, R> extends TopLevelDecl.Visitor<P, R> {
-    @ApiStatus.OverrideOnly R visitCtor(Decl.@NotNull DataCtor ctor, P p);
-    @ApiStatus.OverrideOnly R visitField(Decl.@NotNull StructField field, P p);
-    R visitData(Decl.@NotNull DataDecl decl, P p);
-    R visitStruct(Decl.@NotNull StructDecl decl, P p);
-    R visitFn(Decl.@NotNull FnDecl decl, P p);
-    R visitPrim(Decl.@NotNull PrimDecl decl, P p);
-  }
-
   /**
    * @author ice1000
    * @implSpec the result field of {@link PrimDecl} might be {@link org.aya.concrete.Expr.ErrorExpr},
@@ -112,10 +84,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, TopLevelDe
 
     @Override public @NotNull DefVar<PrimDef, PrimDecl> ref() {
       return ref;
-    }
-
-    @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
-      return visitor.visitPrim(this, p);
     }
   }
 
@@ -185,10 +153,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, TopLevelDe
       body.forEach(ctors -> ctors.dataRef = ref);
     }
 
-    @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
-      return visitor.visitData(this, p);
-    }
-
     @Override public @NotNull DefVar<DataDef, DataDecl> ref() {
       return this.ref;
     }
@@ -225,10 +189,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, TopLevelDe
 
     @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
       return ref;
-    }
-
-    @Override protected <P, R> R doAccept(Decl.@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitStruct(this, p);
     }
   }
 
@@ -292,10 +252,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, TopLevelDe
       this.modifiers = modifiers;
       this.ref = DefVar.concrete(this, name);
       this.body = body;
-    }
-
-    @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
-      return visitor.visitFn(this, p);
     }
 
     @Override public @NotNull DefVar<FnDef, FnDecl> ref() {

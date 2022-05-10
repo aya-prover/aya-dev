@@ -3,7 +3,6 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
@@ -39,33 +38,11 @@ public sealed interface Stmt extends AyaDocile, TyckUnit
   }
 
   default void desugar(@NotNull ResolveInfo resolveInfo) {
-    accept(new Desugarer(resolveInfo), Unit.unit());
+    new Desugarer(resolveInfo).visit(this, Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new ConcreteDistiller(options).stmt(this);
-  }
-
-  /**
-   * @author re-xyr
-   */
-  interface Visitor<P, R> extends Decl.Visitor<P, R>, TopLevelDecl.Visitor<P, R> {
-    default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
-      stmts.forEach(stmt -> stmt.accept(this, p));
-      // [xyr]: Is this OK? The order of visiting must be preserved.
-      // [ice]: I guess so, map should preserve the order.
-    }
-    R visitImport(@NotNull Command.Import cmd, P p);
-    R visitOpen(@NotNull Command.Open cmd, P p);
-    R visitModule(@NotNull Command.Module mod, P p);
-    R visitRemark(@NotNull Remark remark, P p);
-    R visitGeneralize(@NotNull Generalize generalize, P p);
-  }
-
-  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
-  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return doAccept(visitor, p);
   }
 
   /**

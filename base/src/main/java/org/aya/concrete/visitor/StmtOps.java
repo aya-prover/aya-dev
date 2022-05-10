@@ -2,34 +2,100 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
-import kala.tuple.Unit;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BiConsumer;
+
 /**
  * @author ice1000
  * TODO: rewrite this class using pattern matching
  */
-public interface StmtOps<P> extends Stmt.Visitor<P, Unit> {
+public interface StmtOps<P> {
+  default <T extends GenericDecl> void traced(@NotNull T yeah, P p, @NotNull BiConsumer<T, P> f) {
+    traceEntrance(yeah, p);
+    f.accept(yeah, p);
+    traceExit(p);
+  }
+
+  default void traceEntrance(@NotNull GenericDecl item, P p) {
+  }
+  default void traceExit(P p) {
+  }
+
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> visitExpr(expr, pp)));
   }
 
-  @Override default Unit visitRemark(@NotNull Remark remark, P p) {
-    if (remark.literate != null) remark.literate.modify(expr -> visitExpr(expr, p));
-    return Unit.unit();
+  default void visit(@NotNull Stmt stmt, P pp) {
+    switch (stmt) {
+      case Remark remark -> {
+        if (remark.literate != null) remark.literate.modify(expr -> visitExpr(expr, pp));
+      }
+      case Decl decl -> visitDecl(decl, pp);
+      case Command cmd -> visitCommand(cmd, pp);
+      case Generalize generalize -> generalize.type = visitExpr(generalize.type, pp);
+      case ClassDecl cls -> {}
+    }
+  }
+  default void visitCommand(@NotNull Command cmd, P pp) {
+    switch (cmd) {
+      case Command.Module moduleCmd -> moduleCmd.contents().forEach(stmt -> visit(stmt, pp));
+      case Command.Import importCmd -> {}
+      case Command.Open open -> {}
+    }
   }
 
   default void visitDecl(@NotNull Decl decl, P pp) {
     visitSignatured(decl, pp);
     decl.result = visitExpr(decl.result, pp);
+    switch (decl) {
+      case Decl.DataDecl data -> data.body.forEach(ctor -> traced(ctor, pp, this::visitCtor));
+      case Decl.StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitField));
+      case Decl.FnDecl fn -> fn.body = fn.body.map(
+        expr -> visitExpr(expr, pp),
+        clauses -> clauses.map(clause -> visitClause(clause, pp))
+      );
+      case Decl.PrimDecl prim -> {}
+    }
   }
 
   default @NotNull Expr visitExpr(@NotNull Expr expr, P pp) {
+    switch (expr) {
+      case Expr.AppExpr app -> {
+        visitExpr(app.function(), pp);
+        visitExpr(app.argument().expr(), pp);
+      }
+      case Expr.NewExpr neo -> {
+        neo.fields().forEach(e -> visitExpr(e.body(), pp));
+        visitExpr(neo.struct(), pp);
+      }
+      case Expr.BinOpSeq seq -> seq.seq().forEach(e -> visitExpr(e.expr(), pp));
+      case Expr.SigmaExpr sig -> sig.params().forEach(e -> visitParam(e, pp));
+      case Expr.LamExpr lamExpr -> {
+        visitParam(lamExpr.param(), pp);
+        visitExpr(lamExpr.body(), pp);
+      }
+      case Expr.TupExpr tup -> tup.items().forEach(i -> visitExpr(i, pp));
+      case Expr.ProjExpr proj -> visitExpr(proj.tup(), pp);
+      case Expr.LiftExpr lift -> visitExpr(lift.expr(), pp);
+      case Expr.HoleExpr hole -> {
+        if (hole.filling() != null) visitExpr(hole.filling(), pp);
+      }
+      case Expr.PiExpr pi -> {
+        visitParam(pi.param(), pp);
+        visitExpr(pi.last(), pp);
+      }
+      default -> {}
+    }
     return expr;
+  }
+
+  default @NotNull Expr visitParam(Expr.Param e, P pp) {
+    return visitExpr(e.type(), pp);
   }
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {
@@ -51,60 +117,15 @@ public interface StmtOps<P> extends Stmt.Visitor<P, Unit> {
     return new Pattern.BinOpSeq(seq.sourcePos(), seq.seq().map(p -> visitPattern(p, pp)), seq.as(), seq.explicit());
   }
 
-  @Override default Unit visitData(@NotNull Decl.DataDecl decl, P p) {
-    visitDecl(decl, p);
-    decl.body.forEach(ctor -> traced(ctor, p, this::visitCtor));
-    return Unit.unit();
-  }
-
-  @Override default Unit visitStruct(@NotNull Decl.StructDecl decl, P p) {
-    visitDecl(decl, p);
-    decl.fields.forEach(field -> traced(field, p, this::visitField));
-    return Unit.unit();
-  }
-
-  @Override default Unit visitFn(@NotNull Decl.FnDecl decl, P p) {
-    visitDecl(decl, p);
-    decl.body = decl.body.map(
-      expr -> visitExpr(expr, p),
-      clauses -> clauses.map(clause -> visitClause(clause, p))
-    );
-    return Unit.unit();
-  }
-
-  @Override default Unit visitPrim(@NotNull Decl.PrimDecl decl, P p) {
-    visitDecl(decl, p);
-    return Unit.unit();
-  }
-
-  @Override default Unit visitImport(Command.@NotNull Import cmd, P p) {
-    return Unit.unit();
-  }
-
-  @Override default Unit visitOpen(Command.@NotNull Open cmd, P p) {
-    return Unit.unit();
-  }
-
-  @Override default Unit visitModule(Command.@NotNull Module mod, P p) {
-    mod.contents().forEach(stmt -> stmt.accept(this, p));
-    return Unit.unit();
-  }
-  @Override default Unit visitCtor(Decl.@NotNull DataCtor ctor, P p) {
+  default void visitCtor(Decl.@NotNull DataCtor ctor, P p) {
     visitSignatured(ctor, p);
     ctor.patterns = ctor.patterns.map(pat -> visitPattern(pat, p));
     ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, p));
-    return Unit.unit();
   }
-  @Override default Unit visitField(Decl.@NotNull StructField field, P p) {
+  default void visitField(Decl.@NotNull StructField field, P p) {
     visitSignatured(field, p);
     field.result = visitExpr(field.result, p);
     field.clauses = field.clauses.map(clause -> visitClause(clause, p));
     field.body = field.body.map(expr -> visitExpr(expr, p));
-    return Unit.unit();
-  }
-
-  @Override default Unit visitGeneralize(@NotNull Generalize variables, P p) {
-    variables.type = visitExpr(variables.type, p);
-    return Unit.unit();
   }
 }

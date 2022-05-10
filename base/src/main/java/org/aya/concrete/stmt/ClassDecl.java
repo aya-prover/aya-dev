@@ -7,7 +7,6 @@ import org.aya.core.def.ClassDef;
 import org.aya.ref.DefVar;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,23 +60,5 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, TopLevelDe
 
   @Override public String toString() {
     return getClass().getSimpleName() + "[" + ref().name() + "]";
-  }
-
-  protected abstract <P, R> R doAccept(@NotNull TopLevelDecl.Visitor<P, R> visitor, P p);
-
-  @Override public final <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return accept((TopLevelDecl.Visitor<? super P, ? extends R>) visitor, p);
-  }
-
-  public final <P, R> R accept(@NotNull TopLevelDecl.Visitor<P, R> visitor, P p) {
-    visitor.traceEntrance(this, p);
-    var ret = doAccept(visitor, p);
-    visitor.traceExit(p, ret);
-    return ret;
-  }
-
-  @ApiStatus.NonExtendable
-  public final @Override <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return doAccept((TopLevelDecl.Visitor<P, R>) visitor, p);
   }
 }

@@ -6,15 +6,14 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.tuple.Unit;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
-import org.aya.concrete.visitor.StmtConsumer;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
@@ -52,7 +51,7 @@ public interface Resolver {
     return resolver.targetVars.view().mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete != null) yield new WithPos<>(pos.sourcePos(), defVar);
-        // defVar is an imported and serialized symbol, so we need to find the original one
+          // defVar is an imported and serialized symbol, so we need to find the original one
         else if (defVar.module != null) {
           yield Resolver.resolveDef(source.owner(), defVar.module, defVar.name())
             .map(target -> new WithPos<Var>(pos.sourcePos(), target.ref()))
@@ -97,47 +96,43 @@ public interface Resolver {
    * and {@link Pattern} and check against a given condition implemented in
    * {@link ReferringResolver#check(P, Var, SourcePos)}
    */
-  abstract class ReferringResolver<P> implements StmtConsumer<P> {
+  abstract class ReferringResolver<P> implements StmtOps<P> {
+    public void visitAll(ImmutableSeq<Stmt> program, P xy) {
+      program.forEach(stmt -> visit(stmt, xy));
+    }
+
     /**
      * check whether a referable term's referring variable satisfies the parameter
      * at given source pos.
      */
     protected abstract void check(@NotNull P param, @NotNull Var var, @NotNull SourcePos sourcePos);
 
-    @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, P param) {
-      check(param, expr.resolvedVar(), expr.sourcePos());
-      return Unit.unit();
-    }
-
-    @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, P param) {
-      var fieldRef = expr.resolvedIx();
-      if (expr.ix().isRight() && fieldRef != null) {
-        var pos = expr.ix().getRightValue();
-        check(param, fieldRef, pos.sourcePos());
-      }
-      return StmtConsumer.super.visitProj(expr, param);
-    }
-
-    @Override public Unit visitNew(@NotNull Expr.NewExpr expr, P param) {
-      expr.fields().forEach(field -> {
-        var fieldRef = field.resolvedField().value;
-        if (fieldRef != null)
-          check(param, fieldRef, field.name().sourcePos());
-      });
-      return StmtConsumer.super.visitNew(expr, param);
-    }
-
-    @Override public void visitPattern(@NotNull Pattern pattern, P param) {
-      switch (pattern) {
-        case Pattern.Ctor ctor -> {
-          check(param, ctor.resolved().data(), ctor.resolved().sourcePos());
-          ctor.params().forEach(pat -> visitPattern(pat, param));
+    @Override public @NotNull Expr visitExpr(@NotNull Expr expr, P pp) {
+      switch (expr) {
+        case Expr.RefExpr ref -> check(pp, ref.resolvedVar(), ref.sourcePos());
+        case Expr.ProjExpr proj -> {
+          if (proj.ix().isRight() && proj.resolvedIx() != null) {
+            var pos = proj.ix().getRightValue();
+            check(pp, proj.resolvedIx(), pos.sourcePos());
+          }
         }
-        case Pattern.Tuple tup -> tup.patterns().forEach(p -> visitPattern(p, param));
-        case Pattern.BinOpSeq seq -> seq.seq().forEach(p -> visitPattern(p, param));
+        case Expr.NewExpr neo -> neo.fields().forEach(field -> {
+          var fieldRef = field.resolvedField().value;
+          if (fieldRef != null)
+            check(pp, fieldRef, field.name().sourcePos());
+        });
+        default -> {}
+      }
+      return StmtOps.super.visitExpr(expr, pp);
+    }
+
+    @Override public @NotNull Pattern visitPattern(@NotNull Pattern pattern, P param) {
+      switch (pattern) {
+        case Pattern.Ctor ctor -> check(param, ctor.resolved().data(), ctor.resolved().sourcePos());
         case Pattern.Bind bind -> check(param, bind.bind(), bind.sourcePos());
         default -> {}
       }
+      return pattern;
     }
   }
 
@@ -154,44 +149,31 @@ public interface Resolver {
   class PositionResolver extends ReferringResolver<XY> {
     public final @NotNull MutableList<WithPos<Var>> targetVars = MutableList.create();
 
-    @Override public Unit visitImport(@NotNull Command.Import cmd, XY xy) {
-      var path = cmd.path();
-      check(xy, new ModuleVar(path), path.sourcePos());
-      return super.visitImport(cmd, xy);
-    }
-
-    @Override public Unit visitOpen(@NotNull Command.Open cmd, XY xy) {
-      var path = cmd.path();
-      check(xy, new ModuleVar(path), path.sourcePos());
-      return super.visitOpen(cmd, xy);
+    @Override public void visitCommand(@NotNull Command cmd, XY pp) {
+      switch (cmd) {
+        case Command.Import imp -> check(pp, new ModuleVar(imp.path()), imp.path().sourcePos());
+        case Command.Open open -> check(pp, new ModuleVar(open.path()), open.path().sourcePos());
+        case Command.Module module -> {}
+      }
+      super.visitCommand(cmd, pp);
     }
 
     @Override public void visitSignatured(@NotNull Signatured signatured, XY xy) {
       signatured.telescope
         .filterNot(tele -> tele.ref().name().startsWith(Constants.ANONYMOUS_PREFIX))
         .forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
+      check(xy, signatured.ref(), signatured.sourcePos());
       super.visitSignatured(signatured, xy);
     }
 
-    @Override public void visitDecl(@NotNull Decl decl, XY xy) {
-      check(xy, decl.ref(), decl.sourcePos());
-      super.visitDecl(decl, xy);
-    }
-
-    @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, XY xy) {
-      check(xy, ctor.ref(), ctor.sourcePos());
-      return super.visitCtor(ctor, xy);
-    }
-
-    @Override public Unit visitField(@NotNull Decl.StructField field, XY xy) {
-      check(xy, field.ref(), field.sourcePos());
-      return super.visitField(field, xy);
-    }
-
-    @Override public Unit visitNew(@NotNull Expr.NewExpr expr, XY xy) {
-      expr.fields().forEach(field -> field.bindings().forEach(binding ->
-        check(xy, binding.data(), binding.sourcePos())));
-      return super.visitNew(expr, xy);
+    @Override public @NotNull Expr visitExpr(@NotNull Expr expr, XY pp) {
+      if (expr instanceof Expr.NewExpr neo) neo.fields().forEach(field -> {
+        field.bindings().forEach(binding ->
+          check(pp, binding.data(), binding.sourcePos()));
+        var fieldRef = field.resolvedField().value;
+        if (fieldRef != null) check(pp, fieldRef, field.name().sourcePos());
+      });
+      return super.visitExpr(expr, pp);
     }
 
     @Override protected void check(@NotNull XY xy, @NotNull Var var, @NotNull SourcePos sourcePos) {
