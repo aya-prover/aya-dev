@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
-import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
@@ -14,7 +13,7 @@ import java.util.function.BiConsumer;
  * @author ice1000
  * TODO: rewrite this class using pattern matching
  */
-public interface StmtOps<P> {
+public interface StmtOps<P> extends ExprTraversal<P> {
   default <T extends GenericDecl> void traced(@NotNull T yeah, P p, @NotNull BiConsumer<T, P> f) {
     traceEntrance(yeah, p);
     f.accept(yeah, p);
@@ -61,41 +60,6 @@ public interface StmtOps<P> {
       );
       case Decl.PrimDecl prim -> {}
     }
-  }
-
-  default @NotNull Expr visitExpr(@NotNull Expr expr, P pp) {
-    switch (expr) {
-      case Expr.AppExpr app -> {
-        visitExpr(app.function(), pp);
-        visitExpr(app.argument().expr(), pp);
-      }
-      case Expr.NewExpr neo -> {
-        neo.fields().forEach(e -> visitExpr(e.body(), pp));
-        visitExpr(neo.struct(), pp);
-      }
-      case Expr.BinOpSeq seq -> seq.seq().forEach(e -> visitExpr(e.expr(), pp));
-      case Expr.SigmaExpr sig -> sig.params().forEach(e -> visitParam(e, pp));
-      case Expr.LamExpr lamExpr -> {
-        visitParam(lamExpr.param(), pp);
-        visitExpr(lamExpr.body(), pp);
-      }
-      case Expr.TupExpr tup -> tup.items().forEach(i -> visitExpr(i, pp));
-      case Expr.ProjExpr proj -> visitExpr(proj.tup(), pp);
-      case Expr.LiftExpr lift -> visitExpr(lift.expr(), pp);
-      case Expr.HoleExpr hole -> {
-        if (hole.filling() != null) visitExpr(hole.filling(), pp);
-      }
-      case Expr.PiExpr pi -> {
-        visitParam(pi.param(), pp);
-        visitExpr(pi.last(), pp);
-      }
-      default -> {}
-    }
-    return expr;
-  }
-
-  default @NotNull Expr visitParam(Expr.Param e, P pp) {
-    return visitExpr(e.type(), pp);
   }
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {

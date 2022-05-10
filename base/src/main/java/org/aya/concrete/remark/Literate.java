@@ -5,7 +5,7 @@ package org.aya.concrete.remark;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.Ref;
 import org.aya.concrete.Expr;
-import org.aya.concrete.visitor.ExprConsumer;
+import org.aya.concrete.visitor.ExprTraversal;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
@@ -34,7 +34,7 @@ import java.util.function.Function;
 public sealed interface Literate extends Docile {
   default <P> void modify(@NotNull Function<Expr, Expr> fixpoint) {
   }
-  default <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
+  default <P> void visit(@NotNull ExprTraversal<P> consumer, P p) {
   }
   default void tyck(@NotNull ExprTycker tycker) {
   }
@@ -57,7 +57,7 @@ public sealed interface Literate extends Docile {
       children.forEach(literate -> literate.modify(fixpoint));
     }
 
-    @Override public <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
+    @Override public <P> void visit(@NotNull ExprTraversal<P> consumer, P p) {
       children.forEach(literate -> literate.visit(consumer, p));
     }
 
@@ -104,8 +104,8 @@ public sealed interface Literate extends Docile {
       expr = fixpoint.apply(expr);
     }
 
-    @Override public <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
-      expr.accept(consumer, p);
+    @Override public <P> void visit(@NotNull ExprTraversal<P> consumer, P p) {
+      consumer.visitExpr(expr, p);
     }
 
     @Override public void tyck(@NotNull ExprTycker tycker) {
