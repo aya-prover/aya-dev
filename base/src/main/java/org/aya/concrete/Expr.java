@@ -35,15 +35,6 @@ import java.util.function.Function;
  * @author re-xyr
  */
 public sealed interface Expr extends AyaDocile, SourceNode {
-  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
-  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    visitor.traceEntrance(this, p);
-    var ret = doAccept(visitor, p);
-    visitor.traceExit(ret, this, p);
-    return ret;
-  }
-
   /**
    * @see org.aya.concrete.stmt.Stmt#resolve
    * @see StmtShallowResolver
@@ -57,32 +48,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new ConcreteDistiller(options).term(BaseDistiller.Outer.Free, this);
-  }
-
-  interface Visitor<P, R> {
-    default void traceEntrance(@NotNull Expr expr, P p) {
-    }
-    default void traceExit(R r, @NotNull Expr expr, P p) {
-    }
-    R visitRef(@NotNull RefExpr expr, P p);
-    R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
-    R visitLam(@NotNull LamExpr expr, P p);
-    R visitPi(@NotNull PiExpr expr, P p);
-    R visitSigma(@NotNull SigmaExpr expr, P p);
-    R visitRawUniv(@NotNull RawUnivExpr expr, P p);
-    R visitInterval(@NotNull IntervalExpr intervalExpr, P p);
-    R visitLift(@NotNull LiftExpr expr, P p);
-    R visitUniv(@NotNull UnivExpr expr, P p);
-    R visitApp(@NotNull AppExpr expr, P p);
-    R visitHole(@NotNull HoleExpr expr, P p);
-    R visitTup(@NotNull TupExpr expr, P p);
-    R visitProj(@NotNull ProjExpr expr, P p);
-    R visitNew(@NotNull NewExpr expr, P p);
-    R visitLitInt(@NotNull LitIntExpr expr, P p);
-    R visitLitString(@NotNull LitStringExpr expr, P p);
-    R visitBinOpSeq(@NotNull BinOpSeq binOpSeq, P p);
-    R visitError(@NotNull ErrorExpr error, P p);
-    R visitMetaPat(@NotNull MetaPat metaPat, P p);
   }
 
   sealed interface WithTerm extends Expr {
@@ -103,9 +68,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
       this(sourcePos, new QualifiedID(sourcePos, name));
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitUnresolved(this, p);
-    }
   }
 
   record ErrorExpr(@NotNull SourcePos sourcePos, @NotNull AyaDocile description) implements Expr {
@@ -113,9 +75,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
       this(sourcePos, options -> description);
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitError(this, p);
-    }
   }
 
   /**
@@ -131,9 +90,6 @@ public sealed interface Expr extends AyaDocile, SourceNode {
       this(sourcePos, explicit, filling, new Ref<>());
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitHole(this, p);
-    }
   }
 
   /**
@@ -143,11 +99,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull SourcePos sourcePos,
     @NotNull Expr function,
     @NotNull NamedArg argument
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitApp(this, p);
-    }
-  }
+  ) implements Expr {}
 
   static @NotNull Expr unapp(@NotNull Expr expr, @Nullable MutableList<NamedArg> args) {
     while (expr instanceof AppExpr app) {
@@ -187,11 +139,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     boolean co,
     @NotNull Expr.Param param,
     @NotNull Expr last
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitPi(this, p);
-    }
-  }
+  ) implements Expr {}
 
   /**
    * @author re-xyr
@@ -200,11 +148,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull SourcePos sourcePos,
     @NotNull Expr.Param param,
     @NotNull Expr body
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLam(this, p);
-    }
-  }
+  ) implements Expr {}
 
   /**
    * @author re-xyr
@@ -213,11 +157,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull SourcePos sourcePos,
     boolean co,
     @NotNull ImmutableSeq<@NotNull Param> params
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitSigma(this, p);
-    }
-  }
+  ) implements Expr {}
 
   /**
    * <pre>
@@ -236,38 +176,18 @@ public sealed interface Expr extends AyaDocile, SourceNode {
       this(sourcePos, resolvedVar, new Ref<>());
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitRef(this, p);
-    }
   }
 
-  record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLift(this, p);
-    }
-  }
+  record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {}
 
   /**
    * @author re-xyr, ice1000
    */
-  record RawUnivExpr(@NotNull SourcePos sourcePos) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitRawUniv(this, p);
-    }
-  }
+  record RawUnivExpr(@NotNull SourcePos sourcePos) implements Expr {}
 
-  record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {
-    @Override
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return  visitor.visitInterval(this, p);
-    }
-  }
+  record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {}
 
-  record UnivExpr(@NotNull SourcePos sourcePos, int lift) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitUniv(this, p);
-    }
-  }
+  record UnivExpr(@NotNull SourcePos sourcePos, int lift) implements Expr {}
 
   /**
    * @author re-xyr
@@ -275,11 +195,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record TupExpr(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<@NotNull Expr> items
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTup(this, p);
-    }
-  }
+  ) implements Expr {}
 
   /**
    * @param resolvedIx will be set to the field's DefVar during resolving if this is a field access.
@@ -299,20 +215,13 @@ public sealed interface Expr extends AyaDocile, SourceNode {
       this(sourcePos, tup, ix, null, new Ref<>());
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitProj(this, p);
-    }
   }
 
   record NewExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr struct,
     @NotNull ImmutableSeq<Field> fields
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitNew(this, p);
-    }
-  }
+  ) implements Expr {}
 
   /**
    * @param resolvedField will be modified during tycking for LSP to function properly.
@@ -322,29 +231,16 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
     @NotNull Expr body,
     @NotNull Ref<Var> resolvedField
-  ) {
-  }
+  ) {}
 
   /**
    * @author kiva
    */
-  record LitIntExpr(@NotNull SourcePos sourcePos, int integer) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLitInt(this, p);
-    }
-  }
+  record LitIntExpr(@NotNull SourcePos sourcePos, int integer) implements Expr {}
 
-  record LitStringExpr(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLitString(this, p);
-    }
-  }
+  record LitStringExpr(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {}
 
-  record MetaPat(@NotNull SourcePos sourcePos, Pat.Meta meta) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitMetaPat(this, p);
-    }
-  }
+  record MetaPat(@NotNull SourcePos sourcePos, Pat.Meta meta) implements Expr {}
 
   /**
    * @author kiva
@@ -352,12 +248,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<NamedArg> seq
-  ) implements Expr {
-    @Override
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitBinOpSeq(this, p);
-    }
-  }
+  ) implements Expr {}
 
   /**
    * @author re-xyr
