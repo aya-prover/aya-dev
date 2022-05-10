@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
-import kala.tuple.Unit;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.core.def.PrimDef;
@@ -53,21 +52,14 @@ public final class ComputeTerm implements SyntaxNodeAction {
     return result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, result);
   }
 
-  @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
-    check(xy, expr);
-    return Unit.unit();
-  }
-
-  @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, XY xy) {
-    check(xy, expr);
-    return SyntaxNodeAction.super.visitProj(expr, xy);
-  }
-
-  private <T extends Expr.WithTerm> void check(@NotNull XY xy, @NotNull T cored) {
-    var sourcePos = cored.sourcePos();
-    if (xy.inside(sourcePos)) {
-      var core = cored.core();
-      if (core != null) result = new WithPos<>(sourcePos, kind.map.apply(core));
+  @Override public @NotNull Expr visitExpr(@NotNull Expr expr, XY pp) {
+    if (expr instanceof Expr.WithTerm withTerm) {
+      var sourcePos = withTerm.sourcePos();
+      if (pp.inside(sourcePos)) {
+        var core = withTerm.core();
+        if (core != null) result = new WithPos<>(sourcePos, kind.map.apply(core));
+      }
     }
+    return SyntaxNodeAction.super.visitExpr(expr, pp);
   }
 }
