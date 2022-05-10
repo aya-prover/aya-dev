@@ -33,10 +33,6 @@ public final class Generalize implements Stmt {
     variables.forEach(variable -> variable.owner = this);
   }
 
-  @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitGeneralize(this, p);
-  }
-
   public @NotNull Expr.Param toExpr(boolean explicit, @NotNull LocalVar ref) {
     return new Expr.Param(sourcePos, ref, type, false, explicit);
   }

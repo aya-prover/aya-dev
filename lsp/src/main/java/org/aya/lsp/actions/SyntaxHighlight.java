@@ -25,7 +25,6 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   }
 
   // region def, data, struct, prim, levels
-
   @Override
   public void visitSignatured(@NotNull Signatured signatured, @NotNull MutableList<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(signatured), switch (signatured) {

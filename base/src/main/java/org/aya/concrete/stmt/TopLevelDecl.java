@@ -3,10 +3,7 @@
 package org.aya.concrete.stmt;
 
 import org.aya.core.def.GenericDef;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.BiFunction;
 
 /**
  * Generic concrete definition, corresponding to {@link GenericDef}.
@@ -21,19 +18,4 @@ public sealed interface TopLevelDecl extends GenericDecl permits ClassDecl, Decl
   }
 
   @NotNull Personality personality();
-
-  interface Visitor<P, R> {
-    default void traceEntrance(@NotNull Object item, P p) {
-    }
-    default void traceExit(P p, R r) {
-    }
-
-    @ApiStatus.NonExtendable
-    default <T, RR extends R> RR traced(@NotNull T yeah, P p, @NotNull BiFunction<T, P, RR> f) {
-      traceEntrance(yeah, p);
-      var r = f.apply(yeah, p);
-      traceExit(p, r);
-      return r;
-    }
-  }
 }

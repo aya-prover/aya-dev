@@ -84,10 +84,6 @@ public final class Remark implements Stmt {
     return Accessibility.Private;
   }
 
-  @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitRemark(this, p);
-  }
-
   public @NotNull SourcePos sourcePos() {
     return sourcePos;
   }

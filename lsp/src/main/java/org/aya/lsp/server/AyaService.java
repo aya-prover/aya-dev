@@ -165,7 +165,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   private @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
     var symbols = MutableList.<HighlightResult.Symbol>create();
     var program = source.program().value;
-    if (program != null) program.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
+    if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
     return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
