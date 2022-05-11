@@ -7,6 +7,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.SerTerm;
@@ -47,7 +48,7 @@ record LibraryModuleLoader(
   @NotNull LibraryOwner owner,
   @NotNull LibraryModuleLoader.United states
   ) implements ModuleLoader {
-  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
+  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs) {
     try {
       var coreFile = file.coreFile();
       AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states.ser);

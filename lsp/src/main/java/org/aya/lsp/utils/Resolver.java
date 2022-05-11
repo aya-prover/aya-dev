@@ -17,6 +17,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.generic.Constants;
 import org.aya.ref.DefVar;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Resolver {
   /** resolve a symbol by its qualified name in the whole library */
-  static @NotNull Option<@NotNull Def> resolveDef(
+  static @NotNull Option<@NotNull GenericDef> resolveDef(
     @NotNull LibraryOwner owner,
     @NotNull ImmutableSeq<String> module,
     @NotNull String name
@@ -67,10 +68,10 @@ public interface Resolver {
     });
   }
 
-  private static @NotNull SeqView<Def> withChildren(@NotNull Def def) {
+  private static @NotNull SeqView<GenericDef> withChildren(@NotNull GenericDef def) {
     return switch (def) {
-      case DataDef data -> SeqView.<Def>of(data).appendedAll(data.body);
-      case StructDef struct -> SeqView.<Def>of(struct).appendedAll(struct.fields);
+      case DataDef data -> SeqView.<GenericDef>of(data).appendedAll(data.body);
+      case StructDef struct -> SeqView.<GenericDef>of(struct).appendedAll(struct.fields);
       default -> SeqView.of(def);
     };
   }

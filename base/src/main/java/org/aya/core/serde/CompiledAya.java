@@ -11,6 +11,7 @@ import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.ref.DefVar;
@@ -43,7 +44,7 @@ public record CompiledAya(
   @NotNull ImmutableSeq<SerDef.SerOp> serOps
 ) implements Serializable {
   public static @NotNull CompiledAya from(
-    @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs,
+    @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs,
     @NotNull Serializer.State state
   ) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
@@ -73,11 +74,12 @@ public record CompiledAya(
     @NotNull MutableList<SerDef> serDefs,
     @NotNull MutableList<SerDef.SerOp> serOps
   ) {
-    private void ser(@NotNull ImmutableSeq<Def> defs) {
+    private void ser(@NotNull ImmutableSeq<GenericDef> defs) {
       defs.forEach(this::serDef);
     }
 
-    private void serDef(@NotNull Def def) {
+    private void serDef(@NotNull GenericDef def0) {
+      if (!(def0 instanceof Def def)) throw new UnsupportedOperationException("TODO");
       var serDef = new Serializer(state).serialize(def);
       serDefs.append(serDef);
       serOp(serDef, def);

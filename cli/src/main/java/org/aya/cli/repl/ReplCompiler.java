@@ -15,6 +15,7 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
@@ -114,7 +115,7 @@ public class ReplCompiler {
    * @param text the text of code to compile, witch might either be a `program` or an `expr`.
    * @see org.aya.cli.single.SingleFileCompiler#compile
    */
-  public @NotNull Either<ImmutableSeq<Def>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
+  public @NotNull Either<ImmutableSeq<GenericDef>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
     try {
@@ -123,7 +124,7 @@ public class ReplCompiler {
         new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
       return programOrExpr.map(
         program -> {
-          var newDefs = new Ref<ImmutableSeq<Def>>();
+          var newDefs = new Ref<ImmutableSeq<GenericDef>>();
           var resolveInfo = loader.resolveModule(primFactory, context.fork(), program, loader);
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(null, resolveInfo, ((moduleResolve, defs) -> newDefs.set(defs)));

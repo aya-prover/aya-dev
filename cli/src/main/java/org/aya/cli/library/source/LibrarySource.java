@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableList;
 import kala.value.Ref;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.generic.Constants;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.FileUtil;
@@ -31,7 +32,7 @@ public record LibrarySource(
   @NotNull Path file,
   @NotNull MutableList<LibrarySource> imports,
   @NotNull Ref<ImmutableSeq<Stmt>> program,
-  @NotNull Ref<ImmutableSeq<Def>> tycked,
+  @NotNull Ref<ImmutableSeq<GenericDef>> tycked,
   @NotNull Ref<ResolveInfo> resolveInfo
 ) {
   public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {

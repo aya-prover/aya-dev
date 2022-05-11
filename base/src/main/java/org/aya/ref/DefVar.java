@@ -51,7 +51,7 @@ public final class DefVar<Core extends GenericDef, Concrete extends GenericDecl>
   }
 
   /** Used in user definitions. */
-  public static <Core extends Def, Concrete extends Signatured>
+  public static <Core extends GenericDef, Concrete extends GenericDecl>
   @NotNull DefVar<Core, Concrete> concrete(@NotNull Concrete concrete, @NotNull String name) {
     return new DefVar<>(concrete, null, name);
   }

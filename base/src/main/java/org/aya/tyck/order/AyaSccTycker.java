@@ -13,6 +13,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TopLevelDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
@@ -47,7 +48,7 @@ public record AyaSccTycker(
   @NotNull StmtTycker tycker,
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
-  @NotNull MutableList<@NotNull Def> wellTyped,
+  @NotNull MutableList<@NotNull GenericDef> wellTyped,
   @NotNull MutableMap<TopLevelDecl, ExprTycker> tyckerReuse,
   @NotNull MutableMap<TopLevelDecl, CollectingReporter> sampleReporters
 ) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {

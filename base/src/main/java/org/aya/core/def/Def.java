@@ -57,18 +57,6 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
   }
 
   /**
-   * @author re-xyr
-   */
-  interface Visitor<P, R> {
-    R visitFn(@NotNull FnDef def, P p);
-    R visitData(@NotNull DataDef def, P p);
-    R visitCtor(@NotNull CtorDef def, P p);
-    R visitStruct(@NotNull StructDef def, P p);
-    R visitField(@NotNull FieldDef def, P p);
-    R visitPrim(@NotNull PrimDef def, P p);
-  }
-
-  /**
    * Signature of a definition, used in concrete and tycking.
    *
    * @author ice1000
