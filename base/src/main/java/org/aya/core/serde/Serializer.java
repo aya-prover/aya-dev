@@ -43,7 +43,6 @@ public record Serializer(@NotNull Serializer.State state) {
       );
       case StructDef struct -> new SerDef.Struct(
         state.def(struct.ref()),
-        serializeParams(struct.telescope),
         struct.resultLevel,
         struct.fields.map(field -> (SerDef.Field) serialize(field))
       );
