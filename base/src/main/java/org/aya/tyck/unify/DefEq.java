@@ -148,13 +148,13 @@ public final class DefEq {
       case CallTerm.Con lhs && preRhs instanceof CallTerm.Con rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case CallTerm.Con lhs && preRhs instanceof LitTerm.ShapedInt rhs ->
-        compareApprox(lhs, rhs.constructorForm(), lr, rl);
+        compareApprox(lhs, rhs.constructorForm(state), lr, rl);
       case LitTerm.ShapedInt lhs && preRhs instanceof CallTerm.Con rhs ->
-        compareApprox(lhs.constructorForm(), rhs, lr, rl);
+        compareApprox(lhs.constructorForm(state), rhs, lr, rl);
       case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case LitTerm.ShapedInt lhs && preRhs instanceof LitTerm.ShapedInt rhs -> {
-        if (!lhs.sameValue(rhs)) yield null;
+        if (!lhs.sameValue(state, rhs)) yield null;
         yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
       }
       default -> null;

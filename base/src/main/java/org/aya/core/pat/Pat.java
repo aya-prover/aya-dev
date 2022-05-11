@@ -15,7 +15,6 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.Zonker;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
@@ -24,6 +23,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
@@ -228,7 +228,13 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  /** TODO[literal]: literal type needs meta-solving for first-class patterns */
+  /**
+   * TODO[literal]: literal type needs meta-solving for first-class patterns. Possible changes:
+   *  - Make {@link ShapedInt#type} a {@link Term} instead of {@link CallTerm.Data}
+   *  - Call {@link ShapedInt#constructorForm()} with a {@link org.aya.tyck.TyckState}
+   *  - Call {@link ShapedInt#sameValue(TyckState, Shaped)} with a {@link org.aya.tyck.TyckState}
+   *  see https://github.com/aya-prover/aya-dev/pull/400#discussion_r862371935
+   */
   record ShapedInt(
     @Override int repr,
     @Override @NotNull AyaShape shape,

@@ -86,7 +86,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
       case Pat.ShapedInt lit -> {
         switch (term) {
           case LitTerm.ShapedInt litTerm -> {
-            if (!lit.sameValue(litTerm)) throw new Mismatch(true);
+            if (!lit.sameValue(null, litTerm)) throw new Mismatch(true);
           }
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
           case CallTerm.Con con -> match(lit.constructorForm(), con);
