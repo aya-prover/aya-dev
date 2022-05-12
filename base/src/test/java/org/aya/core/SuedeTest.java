@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
-import kala.tuple.Unit;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.tyck.TyckDeclTest;
@@ -66,7 +65,7 @@ public class SuedeTest {
     var state = new SerTerm.DeState(res._1);
     var serializer = new Serializer(new Serializer.State());
     res._2.view()
-      .map(def -> def.accept(serializer, Unit.unit()))
+      .map(serializer::serialize)
       .map(ser -> ser.de(state))
       .forEach(Assertions::assertNotNull);
   }

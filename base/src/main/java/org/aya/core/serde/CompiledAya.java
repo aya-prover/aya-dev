@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Unit;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
@@ -79,7 +78,7 @@ public record CompiledAya(
     }
 
     private void serDef(@NotNull Def def) {
-      var serDef = def.accept(new Serializer(state), Unit.unit());
+      var serDef = new Serializer(state).serialize(def);
       serDefs.append(serDef);
       serOp(serDef, def);
       switch (serDef) {
