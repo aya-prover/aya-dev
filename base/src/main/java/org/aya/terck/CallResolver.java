@@ -9,10 +9,7 @@ import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ElimTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.core.visitor.DefConsumer;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -55,28 +52,44 @@ public record CallResolver(
   }
 
   /** foetus dependencies */
-  private @NotNull Relation compare(@NotNull Term lhs, @NotNull Pat rhs) {
-    if (rhs instanceof Pat.Ctor ctor) {
-      if (lhs instanceof CallTerm.Con con) {
-        if (con.ref() != ctor.ref()) return Relation.Unknown;
-        if (ctor.params().isEmpty()) return Relation.Equal;
-        var subCompare = con.conArgs()
-          .zipView(ctor.params())
-          .map(sub -> compare(sub._1.term(), sub._2));
-        // compare one level deeper for sub-ctor-patterns like `cons (suc x) xs`, see FoetusLimitation.aya
-        // return subCompare.anyMatch(r -> r != Relation.Unknown) ? Relation.Equal : Relation.Unknown;
-        return subCompare.max();
+  private @NotNull Relation compare(@NotNull Term term, @NotNull Pat pat) {
+    return switch (pat) {
+      case Pat.Ctor ctor -> switch (term) {
+        case CallTerm.Con con -> {
+          if (con.ref() != ctor.ref()) yield Relation.Unknown;
+          if (ctor.params().isEmpty()) yield Relation.Equal;
+          var subCompare = con.conArgs()
+            .zipView(ctor.params())
+            .map(sub -> compare(sub._1.term(), sub._2));
+          // compare one level deeper for sub-ctor-patterns like `cons (suc x) xs`, see FoetusLimitation.aya
+          // return subCompare.anyMatch(r -> r != Relation.Unknown) ? Relation.Equal : Relation.Unknown;
+          yield subCompare.max();
+        }
+        // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
+        case LitTerm.ShapedInt lit -> compare(lit.constructorForm(), ctor);
+        default -> {
+          var subCompare = ctor.params().view().map(sub -> compare(term, sub));
+          yield subCompare.anyMatch(r -> r != Relation.Unknown) ? Relation.LessThan : Relation.Unknown;
+        }
+      };
+      case Pat.Bind bind -> {
+        if (term instanceof RefTerm ref)
+          yield ref.var() == bind.bind() ? Relation.Equal : Relation.Unknown;
+        if (headOf(term) instanceof RefTerm ref)
+          yield ref.var() == bind.bind() ? Relation.LessThan : Relation.Unknown;
+        yield Relation.Unknown;
       }
-      var subCompare = ctor.params().view().map(sub -> compare(lhs, sub));
-      return subCompare.anyMatch(r -> r != Relation.Unknown)
-        ? Relation.LessThan : Relation.Unknown;
-    } else if (rhs instanceof Pat.Bind bind) {
-      if (lhs instanceof RefTerm ref)
-        return ref.var() == bind.bind() ? Relation.Equal : Relation.Unknown;
-      if (headOf(lhs) instanceof RefTerm ref)
-        return ref.var() == bind.bind() ? Relation.LessThan : Relation.Unknown;
-    }
-    return Relation.Unknown;
+      case Pat.ShapedInt intPat -> switch (term) {
+        case LitTerm.ShapedInt intTerm -> {
+          if (intTerm.shape() != intPat.shape()) yield Relation.Unknown;
+          yield Relation.fromCompare(Integer.compare(intTerm.repr(), intPat.repr()));
+        }
+        // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
+        case CallTerm.Con con -> compare(con, intPat.constructorForm());
+        default -> compare(term, intPat.constructorForm());
+      };
+      default -> Relation.Unknown;
+    };
   }
 
   /** @return the head of application or projection */

@@ -1,0 +1,15 @@
+In file $FILE:6:17 ->
+
+  4 | 
+  5 | def take Empty => Empty
+  6 | def test => take 0
+                       ^^
+
+Error: More than one types can be used to encode the literal:
+         0
+       Candidates are:
+         `Nat1`, `Nat2`
+note: Specify the type explicitly can resolve the ambiguity.
+
+1 error(s), 0 warning(s).
+What are you doing?

@@ -10,6 +10,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
@@ -17,10 +18,12 @@ import org.aya.core.visitor.Subst;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
+import org.aya.generic.Shaped;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
@@ -33,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva, ice1000
  */
-@Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
+@Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
   boolean explicit();
   default @NotNull Term toTerm() {
@@ -222,6 +225,57 @@ public sealed interface Pat extends AyaDocile {
 
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       // do nothing
+    }
+  }
+
+  /**
+   * TODO[literal]: literal type needs meta-solving for first-class patterns. Possible changes:
+   *  - Make {@link ShapedInt#type} a {@link Term} instead of {@link CallTerm.Data}
+   *  - Call {@link ShapedInt#constructorForm()} with a {@link org.aya.tyck.TyckState}
+   *  - Call {@link ShapedInt#sameValue(TyckState, Shaped)} with a {@link org.aya.tyck.TyckState}
+   *  see https://github.com/aya-prover/aya-dev/pull/400#discussion_r862371935
+   */
+  record ShapedInt(
+    @Override int repr,
+    @Override @NotNull AyaShape shape,
+    @NotNull CallTerm.Data type,
+    boolean explicit
+  ) implements Pat, Shaped.Inductively<Pat> {
+    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
+      return new Expr.LitIntExpr(pos, repr);
+    }
+
+    @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+      return this;
+    }
+
+    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
+      // The cast must succeed
+      return new Pat.ShapedInt(repr, shape, (CallTerm.Data) tycker.zonk(type), explicit);
+    }
+
+    @Override public @NotNull Pat inline() {
+      return this;
+    }
+
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      // do nothing
+    }
+
+    @Override public @NotNull Pat makeZero(@NotNull CtorDef zero) {
+      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), type);
+    }
+
+    @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Pat pat) {
+      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.of(pat), type);
+    }
+
+    @Override public @NotNull Pat destruct(int repr) {
+      return new Pat.ShapedInt(repr, this.shape, this.type, true);
+    }
+
+    @Override public @NotNull Pat self() {
+      return this;
     }
   }
 

@@ -61,6 +61,8 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
             visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
           }
           case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
+          // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
+          case LitTerm.ShapedInt litTerm -> match(ctor, litTerm.constructorForm());
           default -> throw new Mismatch(true);
         }
       }
@@ -79,6 +81,18 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
       case Pat.End end -> {
         if (!(term instanceof PrimTerm.End termEnd && termEnd.isRight() == end.isRight())) {
           throw new Mismatch(true);
+        }
+      }
+      case Pat.ShapedInt lit -> {
+        switch (term) {
+          case LitTerm.ShapedInt litTerm -> {
+            if (!lit.sameValue(null, litTerm)) throw new Mismatch(false);
+          }
+          // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
+          case CallTerm.Con con -> match(lit.constructorForm(), con);
+          // we only need to handle matching both literals, otherwise we just rematch it
+          // with constructor form to reuse the code as much as possible (like solving MetaPats).
+          default -> match(lit.constructorForm(), term);
         }
       }
     }

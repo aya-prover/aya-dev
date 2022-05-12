@@ -26,11 +26,11 @@ public interface TermOps extends TermView {
     return view().initial();
   }
 
-  @Override default Term pre(Term term) {
+  @Override default @NotNull Term pre(@NotNull Term term) {
     return view().pre(term);
   }
 
-  @Override default Term post(Term term) {
+  @Override default @NotNull Term post(@NotNull Term term) {
     return view().post(term);
   }
 

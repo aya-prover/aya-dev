@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
@@ -55,5 +55,9 @@ public enum Relation implements Comparable<Relation>{
     return this.ordinal() <= rhs.ordinal();
   }
 
-
+  public static @NotNull Relation fromCompare(int compare) {
+    if (compare == 0) return Relation.Equal;
+    if (compare < 0) return Relation.LessThan;
+    return Relation.Unknown;
+  }
 }

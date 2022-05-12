@@ -11,6 +11,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
@@ -31,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class TyckDeclTest {
   public static Def tyck(@NotNull PrimDef.Factory factory, @NotNull Decl decl, Trace.@Nullable Builder builder) {
     var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
-    return tycker.tyck(decl, tycker.newTycker(factory));
+    return tycker.tyck(decl, tycker.newTycker(factory, new AyaShape.Factory()));
   }
 
   public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<Stmt>> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {

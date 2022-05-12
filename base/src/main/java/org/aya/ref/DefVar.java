@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.GenericDecl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.Def;
+import org.aya.resolve.ResolveInfo;
 import org.aya.core.def.GenericDef;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
@@ -27,7 +28,11 @@ public final class DefVar<Core extends GenericDef, Concrete extends GenericDecl>
   public @Nullable ImmutableSeq<String> module;
   /** Initialized in the resolver or core deserialization */
   public @Nullable OpDecl opDecl;
-  /** Initialized in the resolver or core deserialization */
+  /**
+   * Binary operators can be renamed in other modules.
+   * Initialized in the resolver or core deserialization.
+   * see {@link ResolveInfo#bindBlockRename()}
+   */
   public @NotNull MutableMap<ImmutableSeq<String>, OpDecl> opDeclRename = MutableMap.create();
 
 

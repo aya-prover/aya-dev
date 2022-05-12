@@ -14,6 +14,8 @@ import org.aya.concrete.stmt.TopLevelDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.UserDef;
+import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.ShapeMatcher;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
@@ -182,7 +184,10 @@ public record AyaSccTycker(
 
   private void decideTyckResult(@NotNull Decl decl, @NotNull Def def) {
     switch (decl.personality) {
-      case NORMAL -> wellTyped.append(def);
+      case NORMAL -> {
+        wellTyped.append(def);
+        bonjour(def);
+      }
       case COUNTEREXAMPLE -> {
         var sampleReporter = sampleReporters.getOrPut(decl, BufferReporter::new);
         var problems = sampleReporter.problems().toImmutableSeq();
@@ -192,15 +197,28 @@ public record AyaSccTycker(
     }
   }
 
+  /** Discovery of shaped literals */
+  private void bonjour(@NotNull Def def) {
+    AyaShape.LITERAL_SHAPES.view()
+      .filter(shape -> ShapeMatcher.match(shape.codeShape(), def))
+      .forEach(shape -> resolveInfo.shapeFactory().bonjour(def, shape));
+  }
+
   private @NotNull ExprTycker reuse(@NotNull TopLevelDecl decl) {
     // prevent counterexample errors from being reported to the user reporter
-    if (decl.personality() == Decl.Personality.COUNTEREXAMPLE)
-      return tyckerReuse.getOrPut(decl, () -> new ExprTycker(resolveInfo.primFactory(), sampleReporters.getOrPut(decl, BufferReporter::new), tycker.traceBuilder()));
+    if (decl.personality() == Decl.Personality.COUNTEREXAMPLE) {
+      var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);
+      return tyckerReuse.getOrPut(decl, () -> newExprTycker(reporter));
+    }
     return tyckerReuse.getOrPut(decl, this::newExprTycker);
   }
 
   private @NotNull ExprTycker newExprTycker() {
-    return tycker.newTycker(resolveInfo.primFactory());
+    return tycker.newTycker(resolveInfo.primFactory(), resolveInfo.shapeFactory());
+  }
+
+  private @NotNull ExprTycker newExprTycker(@NotNull Reporter reporter) {
+    return new ExprTycker(resolveInfo.primFactory(), resolveInfo.shapeFactory(), reporter, tycker.traceBuilder());
   }
 
   private void terck(@NotNull SeqView<TyckOrder> units) {

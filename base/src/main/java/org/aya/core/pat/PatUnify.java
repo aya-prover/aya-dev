@@ -29,16 +29,38 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
         else reportError(lhs, rhs);
       }
       case Pat.Ctor ctor -> {
-        if (rhs instanceof Pat.Ctor ctor1) {
-          // Assumption
-          assert ctor.ref() == ctor1.ref();
-          visitList(ctor.params(), ctor1.params());
-        } else reportError(lhs, rhs);
+        switch (rhs) {
+          case Pat.Ctor ctor1 -> {
+            // Assumption
+            assert ctor.ref() == ctor1.ref();
+            visitList(ctor.params(), ctor1.params());
+          }
+          case Pat.ShapedInt lit -> unifyLitWithCtor(ctor, lit, lhs);
+          default -> reportError(lhs, rhs);
+        }
       }
       case Pat.End end -> {
         if(!(rhs instanceof Pat.End rhsEnd)) reportError(lhs, rhs);
       }
+      case Pat.ShapedInt lhsInt -> {
+        switch (rhs) {
+          case Pat.ShapedInt rhsInt -> {
+            if (!lhsInt.sameValue(null, rhsInt)) reportError(lhs, rhs);
+          }
+          case Pat.Ctor ctor -> unifyLitWithCtor(ctor, lhsInt, lhs);
+          // Try one more time in case we add more rhs case when lhs is a constructor.
+          // see: PatMatcher#match(Pat, Term)
+          default -> unify(lhsInt.constructorForm(), rhs);
+        }
+      }
     }
+  }
+
+  /** @param lhs marker of left-hand-side for recursion */
+  private void unifyLitWithCtor(@NotNull Pat.Ctor ctor, @NotNull Pat.ShapedInt lit, @NotNull Pat lhs) {
+    // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
+    if (lhs == ctor) unify(ctor, lit.constructorForm());
+    if (lhs == lit) unify(lit.constructorForm(), ctor);
   }
 
   private void visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {

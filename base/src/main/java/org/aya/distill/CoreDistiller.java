@@ -151,6 +151,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
       case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
+      case LitTerm.ShapedInt shaped -> Doc.plain(String.valueOf(shaped.repr()));
     };
   }
 
@@ -192,6 +193,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
       case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0" : "1"), end.explicit());
+      case Pat.ShapedInt lit -> Doc.bracedUnless(Doc.plain(String.valueOf(lit.repr())), lit.explicit());
     };
   }
 

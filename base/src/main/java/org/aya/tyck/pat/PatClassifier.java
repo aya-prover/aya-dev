@@ -139,8 +139,11 @@ public record PatClassifier(
   }
 
   private static @NotNull Pat head(@NotNull MCT.SubPats<Pat> subPats) {
+    var head = subPats.head();
+    // Just build the head to avoid unnecessary computation
+    if (head instanceof Pat.ShapedInt lit) return lit.constructorForm();
     // This 'inline' is actually a 'dereference'
-    return subPats.head().inline();
+    else return head.inline();
   }
 
   /**

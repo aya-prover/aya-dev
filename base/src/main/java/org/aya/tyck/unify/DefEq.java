@@ -369,14 +369,18 @@ public final class DefEq {
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         yield args ? FormTerm.Univ.ZERO : null;
       }
-      case CallTerm.Con lhs -> {
-        if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) yield null;
-        var retType = getType(lhs, lhs.ref());
-        // Lossy comparison
-        if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl, Term.Param.subst(CtorDef.conTele(lhs.ref()), lhs.ulift())))
-          yield retType;
-        yield null;
-      }
+      case CallTerm.Con lhs -> switch (preRhs) {
+        case CallTerm.Con rhs -> {
+          if (lhs.ref() != rhs.ref()) yield null;
+          var retType = getType(lhs, lhs.ref());
+          // Lossy comparison
+          if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl, Term.Param.subst(CtorDef.conTele(lhs.ref()), lhs.ulift())))
+            yield retType;
+          yield null;
+        }
+        case LitTerm.ShapedInt rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
+        default -> null;
+      };
       case CallTerm.Prim lhs -> null;
       case CallTerm.Access lhs -> {
         if (!(preRhs instanceof CallTerm.Access rhs)) yield null;
@@ -385,6 +389,14 @@ public final class DefEq {
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }
+      case LitTerm.ShapedInt lhs -> switch (preRhs) {
+        case LitTerm.ShapedInt rhs -> {
+          if (!lhs.sameValue(state, rhs)) yield null;
+          yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
+        }
+        case CallTerm.Con rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
+        default -> null;
+      };
       case CallTerm.Hole lhs -> solveMeta(preRhs, lr, rl, lhs);
     };
     traceExit();

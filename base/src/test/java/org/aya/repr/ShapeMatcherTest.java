@@ -17,16 +17,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ShapeMatcherTest {
   @Test
   public void matchNat() {
-    match(true, AyaShape.DATA_NAT, "open data Nat | zero | suc Nat");
-    match(true, AyaShape.DATA_NAT, "open data Nat | suc Nat | zero");
-    match(true, AyaShape.DATA_NAT, "open data Nat | z | s Nat");
+    match(true, AyaShape.AyaIntLitShape.DATA_NAT, "open data Nat | zero | suc Nat");
+    match(true, AyaShape.AyaIntLitShape.DATA_NAT, "open data Nat | suc Nat | zero");
+    match(true, AyaShape.AyaIntLitShape.DATA_NAT, "open data Nat | z | s Nat");
 
-    match(ImmutableSeq.of(true, false), AyaShape.DATA_NAT, """
+    match(ImmutableSeq.of(true, false), AyaShape.AyaIntLitShape.DATA_NAT, """
     open data Nat | zero | suc Nat
     open data Fin (n : Nat) | suc n => fzero | suc n => fsuc (Fin n)
     """);
 
-    match(false, AyaShape.DATA_NAT, "open data Nat | s | z");
+    match(false, AyaShape.AyaIntLitShape.DATA_NAT, "open data Nat | s | z");
   }
 
   public void match(boolean should, @NotNull CodeShape shape, @Language("TEXT") @NonNls @NotNull String code) {
