@@ -28,7 +28,11 @@ public interface TermView {
   }
 
   private @NotNull Term commit(@NotNull Term term) {
-    return post(traverse(pre(term)));
+    // Leave these temporary vars for debugging
+    var pre = pre(term);
+    var tra = traverse(pre);
+    var pos = post(tra);
+    return pos;
   }
 
   private @NotNull Term.Param commit(@NotNull Term.Param param) {
@@ -87,6 +91,8 @@ public interface TermView {
         var function = commit(app.of());
         var arg = commit(app.arg());
         if (function == app.of() && arg == app.arg()) yield app;
+        // see Normalizer.java:16
+        if (function instanceof IntroTerm.Lambda) yield commit(CallTerm.make(function, arg));
         yield CallTerm.make(function, arg);
       }
       case ElimTerm.Proj proj -> {
