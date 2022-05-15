@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Unfolder;
@@ -77,6 +78,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
       case FormTerm.Interval interval -> new FormTerm.Univ(0);
       case PrimTerm.End end -> FormTerm.Interval.INSTANCE;
+      case PrimTerm.Str str -> state.primFactory().getOption(PrimDef.ID.STR).get().result();
       case LitTerm.ShapedInt shaped -> shaped.type();
     };
   }

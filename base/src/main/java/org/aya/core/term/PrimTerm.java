@@ -23,4 +23,11 @@ public sealed interface PrimTerm extends Term {
       return isRight;
     }
   }
+
+  record Str(@NotNull String string) implements PrimTerm {
+
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitStr(this, p);
+    }
+  }
 }

@@ -10,6 +10,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -79,7 +80,7 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public static class Factory {
-    private static final class Initializer {
+    private final class Initializer {
       /** Arend's coe */
       private @NotNull Term arcoe(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
         var args = prim.args();
@@ -157,6 +158,32 @@ public final class PrimDef extends TopLevelDef {
           ), FormTerm.Interval.INSTANCE,
           ID.SQUEEZE_LEFT
         ), ImmutableSeq.empty());
+
+      public final @NotNull PrimDef.PrimSeed STR =
+        new PrimSeed(ID.STR,
+          ((prim, tyckState) -> prim),
+          ref -> new PrimDef(ref, FormTerm.Univ.ZERO, ID.STR), ImmutableSeq.empty());
+      public final @NotNull PrimDef.PrimSeed STRCONCAT =
+        new PrimSeed(ID.STRCONCAT, this::concat, ref -> new PrimDef(
+          ref,
+          ImmutableSeq.of(
+            new Term.Param(new LocalVar("str1"), getCall(ID.STR, ImmutableSeq.empty()), true),
+            new Term.Param(new LocalVar("str2"), getCall(ID.STR, ImmutableSeq.empty()), true)
+          ),
+          getCall(ID.STR, ImmutableSeq.empty()),
+          ID.STRCONCAT
+        ), ImmutableSeq.of(ID.STR));
+
+      private @NotNull Term concat(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
+        var first = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
+        var second = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
+
+        if (first instanceof PrimTerm.Str str1 && second instanceof PrimTerm.Str str2) {
+          return new PrimTerm.Str(str1.string() + str2.string());
+        }
+
+        throw new InternalException("Expected strings but found " + first + " and " + second);
+      }
     }
 
     private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
@@ -168,9 +195,15 @@ public final class PrimDef extends TopLevelDef {
       SEEDS = ImmutableSeq.of(
           init.ARCOE,
           init.SQUEEZE_LEFT,
-          init.INVOL
+          init.INVOL,
+          init.STR,
+          init.STRCONCAT
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
+    }
+
+    public @NotNull CallTerm.Prim getCall(@NotNull ID id, @NotNull ImmutableSeq<Arg<Term>> args) {
+      return new CallTerm.Prim(getOption(id).get().ref(), 0, args);
     }
 
     public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, Decl.PrimDecl> ref) {
@@ -178,6 +211,10 @@ public final class PrimDef extends TopLevelDef {
       var rst = SEEDS.get(name).supply(ref);
       defs.put(name, rst);
       return rst;
+    }
+
+    public @NotNull CallTerm.Prim getCall(@NotNull ID id) {
+      return new CallTerm.Prim(getOption(id).get().ref(), 0, ImmutableSeq.empty());
     }
 
     public @NotNull Option<PrimDef> getOption(@NotNull ID name) {
@@ -199,6 +236,7 @@ public final class PrimDef extends TopLevelDef {
     public @NotNull Term unfold(@NotNull ID name, @NotNull CallTerm.Prim primCall, @Nullable TyckState state) {
       return SEEDS.get(name).unfold.apply(primCall, state);
     }
+
     public void clear() {
       defs.clear();
     }
@@ -208,7 +246,10 @@ public final class PrimDef extends TopLevelDef {
     /** Short for <em>Arend coe</em>. */
     ARCOE("arcoe"),
     SQUEEZE_LEFT("squeezeL"),
-    INVOL("invol");
+    INVOL("invol"),
+    STR("Str"),
+    STRCONCAT("strcat");
+
     public final @NotNull @NonNls String id;
 
     @Override public String toString() {

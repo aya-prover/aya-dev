@@ -270,7 +270,8 @@ public record AyaProducer(
       throw new ParsingInterruptedException();
     }
     var string = ctx.STRING();
-    if (string != null) return new Expr.LitStringExpr(pos, string.getText());
+    if (string != null)
+      return new Expr.LitStringExpr(pos, string.getText().substring(1, string.getText().length() - 1));
     return unreachable(ctx);
   }
 

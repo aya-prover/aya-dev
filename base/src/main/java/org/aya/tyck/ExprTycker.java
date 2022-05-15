@@ -243,6 +243,12 @@ public final class ExprTycker extends Tycker {
         var type = new CallTerm.Data(((DataDef) defs.first()).ref, 0, ImmutableSeq.empty());
         yield new Result(new LitTerm.ShapedInt(integer, AyaShape.NAT_SHAPE, type), type);
       }
+      case Expr.LitStringExpr litStr -> {
+        if (!state.primFactory().have(PrimDef.ID.STR))
+          yield fail(expr, new NoRuleError(expr, null));
+
+        yield new Result(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STR));
+      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -367,6 +373,12 @@ public final class ExprTycker extends Tycker {
           yield new Result(new LitTerm.ShapedInt(lit.integer(), AyaShape.NAT_SHAPE, hole), term);
         }
         yield unifyTyMaybeInsert(term, synthesize(expr), expr);
+      }
+      case Expr.LitStringExpr litStr -> {
+        if (term instanceof CallTerm.Prim prim && prim.id() == PrimDef.ID.STR)
+          yield new Result(new PrimTerm.Str(litStr.string()), term);
+
+        yield fail(expr, new NoRuleError(expr, term));
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };

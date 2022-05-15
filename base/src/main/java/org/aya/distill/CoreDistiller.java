@@ -14,6 +14,7 @@ import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
+import org.aya.util.StringEscapeUtil;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -159,6 +160,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           ? linkLit(0, zero.ref, CON_CALL)
           : linkLit(shaped.repr(), suc.ref, CON_CALL),
         () -> Doc.plain(String.valueOf(shaped.repr())));
+      case PrimTerm.Str str -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(str.string()) + "\"");
     };
   }
 
