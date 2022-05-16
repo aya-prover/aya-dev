@@ -202,10 +202,6 @@ public final class PrimDef extends TopLevelDef {
         .toImmutableMap();
     }
 
-    public @NotNull CallTerm.Prim getCall(@NotNull ID id, @NotNull ImmutableSeq<Arg<Term>> args) {
-      return new CallTerm.Prim(getOption(id).get().ref(), 0, args);
-    }
-
     public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, Decl.PrimDecl> ref) {
       assert !have(name);
       var rst = SEEDS.get(name).supply(ref);
@@ -213,8 +209,12 @@ public final class PrimDef extends TopLevelDef {
       return rst;
     }
 
+    public @NotNull CallTerm.Prim getCall(@NotNull ID id, @NotNull ImmutableSeq<Arg<Term>> args) {
+      return new CallTerm.Prim(getOption(id).get().ref(), 0, args);
+    }
+
     public @NotNull CallTerm.Prim getCall(@NotNull ID id) {
-      return new CallTerm.Prim(getOption(id).get().ref(), 0, ImmutableSeq.empty());
+      return getCall(id, ImmutableSeq.empty());
     }
 
     public @NotNull Option<PrimDef> getOption(@NotNull ID name) {
