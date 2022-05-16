@@ -16,7 +16,6 @@ import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
-import org.aya.core.repr.AyaShape;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.generic.util.NormalizeMode;
@@ -47,12 +46,14 @@ public class ReplCompiler {
   private final @NotNull ImmutableSeq<Path> modulePaths;
   private final @NotNull CompilerFlags flags;
   private final @NotNull PrimDef.Factory primFactory;
+  private final @NotNull ReplShapeFactory shapeFactory;
 
   public ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.modulePaths = modulePaths;
     this.reporter = CountingReporter.delegate(reporter);
     this.locator = locator;
     this.primFactory = new PrimDef.Factory();
+    this.shapeFactory = new ReplShapeFactory(null);
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
     this.flags = new CompilerFlags(CompilerFlags.Message.EMOJI, false, true, null,
       modulePaths.view(), null);
@@ -62,8 +63,7 @@ public class ReplCompiler {
     var resolvedExpr = expr.resolve(context);
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      // TODO[literal]: literal shapes
-      var tycker = new ExprTycker(primFactory, new AyaShape.Factory(), delayedReporter, null);
+      var tycker = new ExprTycker(primFactory, shapeFactory, delayedReporter, null);
       var desugar = desugarExpr(resolvedExpr, delayedReporter);
       return tycker.zonk(tycker.synthesize(desugar));
     }
@@ -124,9 +124,12 @@ public class ReplCompiler {
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
-          loader.tyckModule(primFactory, context.fork(), program, null, ((moduleResolve, defs) -> newDefs.set(defs)));
+          var resolveInfo = loader.resolveModule(primFactory, context.fork(), program, loader);
+          resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
+          loader.tyckModule(null, resolveInfo, ((moduleResolve, defs) -> newDefs.set(defs)));
           if (reporter.anyError()) return ImmutableSeq.empty();
           context.merge();
+          shapeFactory.merge();
           return newDefs.get();
         },
         expr -> tyckExpr(expr).wellTyped().normalize(new TyckState(primFactory), normalizeMode)

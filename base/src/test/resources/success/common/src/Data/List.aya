@@ -10,7 +10,7 @@ bind tighter =
 variable A B C : Type
 
 def length (l : List A) : Nat
-| nil => zero
+| nil => 0
 | _ :< l => suc (length l)
 
 def infix !! (l : List A) (i : Fin (length l)) : A
@@ -54,7 +54,7 @@ def headDef (x : A) (xs : List A) : A
 def curry (t : Sig A ** B) (f : A -> B -> C) => f t.1 t.2
 
 def splitAt (n : Nat) (l : List A) : Sig (List A) ** (List A)
-| zero, l => (nil, l)
+| 0, l => (nil, l)
 | suc n, nil => (nil, nil)
 | suc n, a :< l => curry (splitAt n l) (\l1 l2 => (a :< l1, l2))
 
@@ -66,7 +66,7 @@ def replace (l : List A) (i s : Nat) (r : List A) =>
   curry (splitAt i l) (\l1 l2 => l1 ++ r ++ drop s l2)
 
 def splitAt-appendLem (n : Nat) (l : List A) : take n l ++ drop n l = l
-| zero, l => idp
+| 0, l => idp
 | suc n, nil => idp
 | suc n, a :< l => pmap (a :<) (splitAt-appendLem n l)
 
@@ -74,7 +74,7 @@ def slice (l : List A) (i s : Nat) => take s (drop i l)
 
 def slice-appendLem (l : List A) (i s : Nat)
    : take i l ++ (slice l i s ++ drop s (drop i l)) = l
-| l, zero, s => splitAt-appendLem s l
-| nil, suc i, zero => idp
+| l, 0, s => splitAt-appendLem s l
+| nil, suc i, 0 => idp
 | nil, suc i, suc s => idp
 | a :< l, suc i, s => pmap (a :<) (slice-appendLem l i s)

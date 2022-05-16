@@ -54,6 +54,7 @@ org.aya.core.serde.SerDef$Data
 org.aya.core.serde.SerDef$Ctor
 org.aya.core.serde.SerDef$Struct
 org.aya.core.serde.SerDef$Field
+org.aya.core.serde.SerDef$SerAyaShape
 org.aya.core.serde.SerTerm$SimpVar
 org.aya.core.serde.SerTerm$SerParam
 org.aya.core.serde.SerTerm$Pi
@@ -76,12 +77,14 @@ org.aya.core.serde.SerTerm$Access
 org.aya.core.serde.SerTerm$FieldRef
 org.aya.core.serde.SerTerm$Interval
 org.aya.core.serde.SerTerm$End
+org.aya.core.serde.SerTerm$ShapedInt
 org.aya.core.serde.SerPat$Matchy
 org.aya.core.serde.SerPat$Absurd
 org.aya.core.serde.SerPat$Tuple
 org.aya.core.serde.SerPat$Bind
 org.aya.core.serde.SerPat$End
 org.aya.core.serde.SerPat$Ctor
+org.aya.core.serde.SerPat$ShapedInt
 
 # TODO: generate record from file
 # @<xxx.java>:org.aya.core.serde.SerTerm$:record ([a-zA-Z0-9_]+)

@@ -1,0 +1,71 @@
+open import Paths
+open import Arith::Nat
+
+open data Nat2 | zero2 | suc2 Nat2
+
+open data Vec (A : Type) (n : Nat) : Type
+  | A, 0 => vnil
+  | A, suc m => infixr :> A (Vec A m)
+
+open data Vec2 (A : Type) (n : Nat2) : Type
+  | A, 0 => vnil2
+  | A, suc2 m => infixr :>2 A (Vec2 A m)
+
+def vec1 : Vec Nat2 1 => 114 :>  vnil
+def vec2 : Vec2 Nat 1 => 514 :>2 vnil2
+
+def litAdd  : Nat => 1 + 1
+def ctorAdd : Nat => (suc zero) + (suc zero)
+
+def yes1 : suc zero + suc zero = suc (suc zero) => idp
+def yes2 : 1 + 1 = 2 => idp
+def yes3 : litAdd = ctorAdd => idp
+
+def e1 : Nat2 => 2147483647
+def e2 => 114514 + 1919810
+
+-- e1 is unfolded to constructor when unifying, which is not needed
+def e1-y : e1 = 2147483647 => idp
+
+-- e2 is unfolded to constructor form for applying functions, causing StackOverflow
+-- def e2-y : e2 = 1 => idp
+
+def magic Nat : Nat
+  | 0 => 1
+  | suc 0 => 1
+  | suc 1 => 4
+  | 3 => 5
+  | suc 3 => 1
+  | 5 => 4
+  | suc a => suc a
+
+def magic-is-ok-0 : magic 0 = 1 => idp
+def magic-is-ok-1 : magic 1 = 1 => idp
+def magic-is-ok-2 : magic 2 = 4 => idp
+def magic-is-ok-3 : magic 3 = 5 => idp
+def magic-is-ok-4 : magic 4 = 1 => idp
+def magic-is-ok-5 : magic 5 = 4 => idp
+def magic-is-ok-6 : magic 6 = 6 => idp
+def magic-is-ok-9 : magic 9 = 9 => idp
+
+def overlap prev Nat : Nat
+  | 0 => 0
+  | suc a => a
+
+open data Bool | true | false
+
+def odd Nat : Bool
+  | 0 => false
+  | 1 => even 0
+  | suc n => even n
+
+def even Nat : Bool
+  | 0 => true
+  | 1 => odd 0
+  | suc n => odd n
+
+def overlap largeInt Nat : Nat
+  | 0 => 0
+-- TODO: PatClassifier
+--  | 2147483647 => 2147483647
+  | suc a => suc a

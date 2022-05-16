@@ -84,7 +84,7 @@ public record StmtShallowResolver(
           // open operator precedence bindings
           resolveInfo.opSet().importBind(modResolveInfo.opSet(), cmd.sourcePos());
           // open discovered shapes as well
-          resolveInfo.shapeFactory().discovered().putAll(modResolveInfo.shapeFactory().discovered());
+          resolveInfo.shapeFactory().importAll(modResolveInfo.shapeFactory());
         }
         // renaming as infix
         if (useHide.strategy() == Command.Open.UseHide.Strategy.Using) useHide.list().forEach(use -> {

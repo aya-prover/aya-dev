@@ -6,13 +6,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Unit;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.aya.resolve.ResolveInfo;
@@ -78,7 +78,7 @@ public record CompiledAya(
     }
 
     private void serDef(@NotNull Def def) {
-      var serDef = def.accept(new Serializer(state), Unit.unit());
+      var serDef = new Serializer(state).serialize(def);
       serDefs.append(serDef);
       serOp(serDef, def);
       switch (serDef) {
@@ -121,7 +121,7 @@ public record CompiledAya(
   public @NotNull ResolveInfo toResolveInfo(@NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull SerTerm.DeState state) {
     var resolveInfo = new ResolveInfo(state.primFactory(), context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
     shallowResolve(loader, resolveInfo);
-    serDefs.forEach(serDef -> de(context, serDef, state));
+    serDefs.forEach(serDef -> de(resolveInfo.shapeFactory(), context, serDef, state));
     deOp(state, resolveInfo.opSet());
     return resolveInfo;
   }
@@ -142,6 +142,7 @@ public record CompiledAya(
         MutableHashMap.create(),
         SourcePos.SER);
       thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
+      thisResolve.shapeFactory().importAll(success.shapeFactory());
     }
   }
 
@@ -176,11 +177,12 @@ public record CompiledAya(
     throw new Context.ResolvingInterruptedException();
   }
 
-  private void de(@NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
+  private void de(@NotNull AyaShape.Factory shapeFactory, @NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
     var mod = context.moduleName();
     var drop = mod.size();
     var def = serDef.de(state);
     assert def.ref().core != null;
+    shapeFactory.bonjour(def);
     switch (serDef) {
       case SerDef.Fn fn -> {
         if (isExported(fn.name())) {

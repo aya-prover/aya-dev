@@ -127,7 +127,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case CallTerm.Prim prim -> visitArgsCalls(prim.ref(), FN_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
-      case ElimTerm.Proj term -> Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+      case ElimTerm.Proj term ->
+        Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
       case FormTerm.Pi term -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
           yield term(outer, term.body());
@@ -151,7 +152,13 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
       case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
-      case LitTerm.ShapedInt shaped -> Doc.plain(String.valueOf(shaped.repr()));
+      case LitTerm.ShapedInt shaped -> options.map.get(DistillerOptions.Key.ShowLiterals)
+        ? Doc.plain(String.valueOf(shaped.repr()))
+        : shaped.with(
+        (zero, suc) -> shaped.repr() == 0
+          ? linkLit(0, zero.ref, CON_CALL)
+          : linkLit(shaped.repr(), suc.ref, CON_CALL),
+        () -> Doc.plain(String.valueOf(shaped.repr())));
     };
   }
 
@@ -193,7 +200,14 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
       case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0" : "1"), end.explicit());
-      case Pat.ShapedInt lit -> Doc.bracedUnless(Doc.plain(String.valueOf(lit.repr())), lit.explicit());
+      case Pat.ShapedInt lit -> options.map.get(DistillerOptions.Key.ShowLiterals)
+        ? Doc.plain(String.valueOf(lit.repr()))
+        : Doc.bracedUnless(lit.with(
+          (zero, suc) -> lit.repr() == 0
+            ? linkLit(0, zero.ref, CON_CALL)
+            : linkLit(lit.repr(), suc.ref, CON_CALL),
+          () -> Doc.plain(String.valueOf(lit.repr()))),
+        lit.explicit());
     };
   }
 

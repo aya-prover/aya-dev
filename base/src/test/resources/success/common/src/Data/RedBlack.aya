@@ -50,7 +50,7 @@ module RedBlackEx {
 
 module RedBlackIn {
   open data Tree (A : Type) Color Nat : Type
-  | A, black, zero => rbLeaf
+  | A, black, 0 => rbLeaf
   | A, red, n => rbRed (Tree A black n) A (Tree A black n)
   | A, black, suc n => rbBlack {c1 c2 : Color} (Tree A c1 n) A (Tree A c2 n)
 

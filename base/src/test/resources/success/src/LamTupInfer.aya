@@ -1,16 +1,16 @@
 open import Arith::Nat
 
-example def test => \ x => x + zero
+example def test => \ x => x + 0
 
-example def test2 => (zero, suc zero)
+example def test2 => (0, suc 0)
 
 def overlap addTup (Sig Nat ** Nat) : Nat
- | (zero, a) => a
- | (a, zero) => a
+ | (0, a) => a
+ | (a, 0) => a
  | (suc a, b) => suc (a + b)
  | (a, suc b) => suc (a + b)
 
 open data Wow (n : Nat)
- | suc zero => wow
+ | 1 => wow
 
 example def test3 : Wow (addTup test2) => wow

@@ -3,24 +3,24 @@ open import Paths
 
 public open data Int
 | pos Nat
-| neg Nat { | zero => pos zero }
+| neg Nat { | 0 => pos 0 }
 
 open struct IntElimData (R : Int -> Type) : Type
 | posElim (x : Nat) : R (pos x)
 | negElim (x : Nat) : R (neg x) {
-  | zero => posElim zero
+  | 0 => posElim 0
 }
 
 def overlap subNI (a b : Nat) : Int
-| zero, a => neg a
-| a, zero => pos a
+| 0, a => neg a
+| a, 0 => pos a
 | suc a, suc b => subNI a b
 
 def overlap addI (a b : Int) : Int
-| pos zero, n => n
-| n, pos zero => n
-| neg zero, n => n
-| n, neg zero => n
+| pos 0, n => n
+| n, pos 0 => n
+| neg 0, n => n
+| n, neg 0 => n
 | pos n, pos m => pos (n + m)
 | neg n, neg m => neg (n + m)
 | neg n, pos m => subNI m n

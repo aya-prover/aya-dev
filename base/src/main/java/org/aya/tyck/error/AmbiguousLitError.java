@@ -4,14 +4,14 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
-import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
-public record AmbiguousLitError(@Override @NotNull Expr expr, @NotNull ImmutableSeq<Def> defs) implements ExprProblem {
+public record AmbiguousLitError(@Override @NotNull Expr expr, @NotNull ImmutableSeq<GenericDef> defs) implements ExprProblem {
   @Override public @NotNull Severity level() {
     return Severity.ERROR;
   }

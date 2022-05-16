@@ -3,7 +3,7 @@ open import Paths
 
 open struct Monoid : Type
 | infix <> (a b : Nat) : Nat {
-  | zero, n => n
+  | 0, n => n
 } bind tighter =
-| r-id (a : Nat) : a <> zero = a
+| r-id (a : Nat) : a <> 0 = a
 | assoc (a b c : Nat) : (a <> b) <> c = a <> (b <> c)

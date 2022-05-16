@@ -263,7 +263,12 @@ public record AyaProducer(
       return new Expr.HoleExpr(pos, true, filling);
     }
     var number = ctx.NUMBER();
-    if (number != null) return new Expr.LitIntExpr(pos, Integer.parseInt(number.getText()));
+    if (number != null) try {
+      return new Expr.LitIntExpr(pos, Integer.parseInt(number.getText()));
+    } catch (NumberFormatException ignored) {
+      reporter.report(new ParseError(sourcePosOf(number), "Unsupported integer literal `" + number.getText()  + "`"));
+      throw new ParsingInterruptedException();
+    }
     var string = ctx.STRING();
     if (string != null) return new Expr.LitStringExpr(pos, string.getText());
     return unreachable(ctx);
