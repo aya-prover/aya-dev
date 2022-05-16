@@ -14,7 +14,7 @@ but the release date displayed is very old and is an issue of GitHub.
 There are prebuilt binaries for Windows, Linux, and macOS that can be used
 in Java-free environments as well as fat-jar files which can be invoked via `java --enable-preview -jar`.
 
-The minimum required version of Java is [Java 17].
+The minimum required version of Java is [Java 18].
 
 Aya is under active development, so please expect bugs, usability/performance issues
 (please file issues or create threads in discussions!).
@@ -44,11 +44,11 @@ However, we can share some cool stuffs here:
 See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
-[Java 17]: https://jdk.java.net/17
+[Java 18]: https://jdk.java.net/18
 
 ## Build
 
-Since you need Java 17 to set this project up,  in case your choice
+Since you need Java 18 to set this project up,  in case your choice
 of IDE is IntelliJ IDEA, version 2021.2.1 or higher is required.
 If you have problems downloading dependencies (like you are in China),
 check out [how to][proxy] let gradle use a proxy.
