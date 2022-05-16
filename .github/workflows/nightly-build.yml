@@ -46,7 +46,7 @@ jobs:
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ steps.graalvm-download.outputs.filename }}
-          java-version: '17'
+          java-version: '18'
           architecture: x64
 
       - name: Setup MSVC

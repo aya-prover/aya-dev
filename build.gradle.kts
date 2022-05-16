@@ -37,13 +37,14 @@ subprojects {
     plugin("signing")
   }
 
+  val javaVersion = 18
   java {
     withSourcesJar()
     if (hasProperty("release")) withJavadocJar()
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_18
+    targetCompatibility = JavaVersion.VERSION_18
     toolchain {
-      languageVersion.set(JavaLanguageVersion.of(17))
+      languageVersion.set(JavaLanguageVersion.of(javaVersion))
     }
   }
 
@@ -62,7 +63,7 @@ subprojects {
     options.apply {
       encoding = "UTF-8"
       isDeprecation = true
-      release.set(17)
+      release.set(javaVersion)
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
     }
 
@@ -78,7 +79,7 @@ subprojects {
     val options = options as StandardJavadocDocletOptions
     options.modulePath = tasks.compileJava.get().classpath.toList()
     options.addBooleanOption("-enable-preview", true)
-    options.addStringOption("-source", "17")
+    options.addStringOption("-source", javaVersion.toString())
     options.addStringOption("Xdoclint:none", "-quiet")
     options.encoding("UTF-8")
     options.tags(
