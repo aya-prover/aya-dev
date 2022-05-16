@@ -78,7 +78,7 @@ public record CompiledAya(
     }
 
     private void serDef(@NotNull Def def) {
-      var serDef = def.accept(new Serializer(state), Unit.unit());
+      var serDef = new Serializer(state).serialize(def);
       serDefs.append(serDef);
       serOp(serDef, def);
       switch (serDef) {

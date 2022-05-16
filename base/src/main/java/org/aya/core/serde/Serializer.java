@@ -21,8 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public record Serializer(@NotNull Serializer.State state) implements
-  Def.Visitor<Unit, SerDef> {
+public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerPat serialize(@NotNull Pat pat) {
     return switch (pat) {
@@ -142,22 +141,33 @@ public record Serializer(@NotNull Serializer.State state) implements
     return new SerTerm.CallData(ulift, serializeArgs(args));
   }
 
-  @Override public SerDef visitFn(@NotNull FnDef def, Unit unit) {
-    return new SerDef.Fn(state.def(def.ref), serializeParams(def.telescope),
-      def.body.map(this::serialize, matchings -> matchings.map(this::serialize)),
-      def.modifiers, serialize(def.result));
+  public @NotNull SerDef serialize(@NotNull Def def) {
+    return switch (def) {
+      case PrimDef prim -> {
+        assert prim.ref.module != null;
+        yield new SerDef.Prim(prim.ref.module, prim.id);
+      }
+      case FieldDef field -> visitField(field);
+      case StructDef struct -> new SerDef.Struct(
+        state.def(struct.ref()),
+        serializeParams(struct.telescope),
+        struct.resultLevel,
+        struct.fields.map(this::visitField)
+      );
+      case CtorDef ctor -> visitCtor(ctor);
+      case DataDef data -> new SerDef.Data(
+        state.def(data.ref()),
+        serializeParams(data.telescope),
+        data.resultLevel,
+        data.body.map(this::visitCtor)
+      );
+      case FnDef fn -> new SerDef.Fn(state.def(fn.ref), serializeParams(fn.telescope),
+        fn.body.map(this::serialize, matchings -> matchings.map(this::serialize)),
+        fn.modifiers, serialize(fn.result));
+    };
   }
 
-  @Override public SerDef visitData(@NotNull DataDef def, Unit unit) {
-    return new SerDef.Data(
-      state.def(def.ref),
-      serializeParams(def.telescope),
-      def.resultLevel,
-      def.body.map(ctor -> visitCtor(ctor, Unit.unit()))
-    );
-  }
-
-  @Override public SerDef.Ctor visitCtor(@NotNull CtorDef def, Unit unit) {
+  private SerDef.Ctor visitCtor(@NotNull CtorDef def) {
     return new SerDef.Ctor(
       state.def(def.dataRef),
       state.def(def.ref),
@@ -170,16 +180,7 @@ public record Serializer(@NotNull Serializer.State state) implements
     );
   }
 
-  @Override public SerDef visitStruct(@NotNull StructDef def, Unit unit) {
-    return new SerDef.Struct(
-      state.def(def.ref()),
-      serializeParams(def.telescope),
-      def.resultLevel,
-      def.fields.map(field -> visitField(field, Unit.unit()))
-    );
-  }
-
-  @Override public SerDef.Field visitField(@NotNull FieldDef def, Unit unit) {
+  private SerDef.Field visitField(@NotNull FieldDef def) {
     return new SerDef.Field(
       state.def(def.structRef),
       state.def(def.ref),
@@ -190,10 +191,5 @@ public record Serializer(@NotNull Serializer.State state) implements
       def.body.map(this::serialize),
       def.coerce
     );
-  }
-
-  @Override public SerDef visitPrim(@NotNull PrimDef def, Unit unit) {
-    assert def.ref.module != null;
-    return new SerDef.Prim(def.ref.module, def.id);
   }
 }

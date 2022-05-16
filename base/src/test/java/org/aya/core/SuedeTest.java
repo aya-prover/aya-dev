@@ -66,7 +66,7 @@ public class SuedeTest {
     var state = new SerTerm.DeState(res._1);
     var serializer = new Serializer(new Serializer.State());
     res._2.view()
-      .map(def -> def.accept(serializer, Unit.unit()))
+      .map(serializer::serialize)
       .map(ser -> ser.de(state))
       .forEach(Assertions::assertNotNull);
   }
