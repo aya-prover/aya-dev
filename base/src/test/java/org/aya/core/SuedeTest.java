@@ -60,6 +60,14 @@ public class SuedeTest {
       """);
   }
 
+  @Test public void string() {
+    suedeAll("""
+      prim String: Type
+      prim strcat (str1 str2: String) : String
+      def c => strcat "123" "456"
+      """);
+  }
+
   private void suedeAll(@Language("TEXT") @NotNull String code) {
     var res = TyckDeclTest.successTyckDecls(code);
     var state = new SerTerm.DeState(res._1);
