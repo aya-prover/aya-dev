@@ -247,7 +247,7 @@ public final class PrimDef extends TopLevelDef {
     ARCOE("arcoe"),
     SQUEEZE_LEFT("squeezeL"),
     INVOL("invol"),
-    STR("Str"),
+    STR("String"),
     STRCONCAT("strcat");
 
     public final @NotNull @NonNls String id;
