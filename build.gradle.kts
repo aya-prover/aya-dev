@@ -71,7 +71,7 @@ subprojects {
       val tree = fileTree(destinationDirectory)
       tree.include("**/*.class")
       tree.exclude("module-info.class")
-      tree.forEach { StripPreview.stripPreview(it.toPath()) }
+      tree.forEach { StripPreview.stripPreview(it.toPath(), true) }
     }
   }
 
