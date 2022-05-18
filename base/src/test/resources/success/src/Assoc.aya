@@ -67,15 +67,15 @@ def what-if-they're-xjbfixed' : (a 0 suc') = (Atom (suc 0))  => idp
 -----------------------------------------
 
 open data Dir : Type | L | R
-def infixl |=> (a b : Dir) : Sig Dir ** Dir => (a, b)
+def infixl ====> (a b : Dir) : Sig Dir ** Dir => (a, b)
 
 def id {A : Type} (a : A) : A => a
 
-def secR => ( |=> id id id id R)
-def secL => (id L |=>)
+def secR => (====> id id id id R)
+def secL => (id L ====>)
 
-def secR' => ( |=> R)
-def secL' => (L |=>)
+def secR' => (====> R)
+def secL' => (L ====>)
 
 def secR-yes : secR L = (L, R) => idp
 def secL-yes : secL R = (L, R) => idp
