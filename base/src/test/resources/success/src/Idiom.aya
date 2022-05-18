@@ -1,17 +1,10 @@
 open import Data::List
 open import Arith::Nat
 
-def one => suc zero
-def two => suc one
-def three => one + two
-def four => two + two
-def five => three + two
-def six => three + three
+def result : List Nat => (| (+) [ 1, 2, 3 ]  [ 4, 5, 6 ] |)
 
-def result : List Nat => (| (+) [ one, two, three ]  [ four, five, six ] |)
-
-def result2 : List Nat => (| (+) [ one, two, three ]  [ four, five, six ]
-                           | (+) [ one, two, three ]  [ four, five, six ] |)
+def result2 : List Nat => (| (+) [ 1, 2, 3 ]  [ 4, 5, 6 ]
+                           | (+) [ 1, 2, 3 ]  [ 4, 5, 6 ] |)
 
 def result3 : List Nat => (||)
 

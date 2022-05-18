@@ -1,11 +1,4 @@
 open import Data::List
 open import Arith::Nat
 
-def one => suc zero
-def two => suc one
-def three => one + two
-def four => two + two
-def five => three + two
-def six => three + three
-
-def result3 : List Nat => [ a + b | a <- [ one, two, three ] , b <- [ four, five, six ] ]
+def result3 : List Nat => [ a + b | a <- [ 1, 2, 3 ] , b <- [ 4, 5, 6 ] ]
