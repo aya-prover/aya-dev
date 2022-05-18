@@ -86,39 +86,39 @@ def slice-appendLem (l : List A) (i s : Nat)
 ----- functorial -----
 def fmap {A B : Type} => map {A} {B}
 
-def pure {A : Type} (x : A) : List A => x :< nil
+def pure (x : A) : List A => x :< nil
 
-def infixl <*> {A B : Type} (fs : List (A -> B)) (xs : List A) : List B
+def infixl <*> (fs : List (A -> B)) (xs : List A) : List B
 | nil, _ => nil
 | f :< fs, xs => (fmap f xs) ++ (fs <*> xs)
 bind { tighter =
-       looser  +}
+       looser  + }
 
 def empty {A : Type} : List A => nil
 
-def infixl <|> {A : Type} (l1 l2 : List A) : List A => l1 ++ l2
+def infixl <|> (l1 l2 : List A) : List A => l1 ++ l2
 bind { tighter =
-       looser  <*>}
+       looser  <*> }
 
 ----- monadic -----
 def return {A : Type} => pure {A}
 
 def join {A : Type} => concat {A}
 
-def infix >>= {A B : Type} (l : List A) (f : A -> List B) : List B => join (fmap f l)
+def infix >>= (l : List A) (f : A -> List B) : List B => join (fmap f l)
 bind tighter =
 
-def infix >> {A B : Type} (l1 : List A) (l2 : List B) : List B => do l1, l2
+def infix >> (l1 : List A) (l2 : List B) : List B => do l1, l2
 bind tighter =
 
-def liftM {A B : Type} (f : A -> B) (l : List A) : List B =>
+def liftM (f : A -> B) (l : List A) : List B =>
   do x <- l,
      return (f x)
 
-def ap {A B : Type} (fs : List (A -> B)) (xs : List A) : List B =>
+def ap (fs : List (A -> B)) (xs : List A) : List B =>
   do f <- fs,
      x <- xs,
      return (f x)
 
-def infix >=> {A B C : Type} (f : A -> List B) (g : B -> List C) : A -> List C => \x => f x >>= g
+def infix >=> (f : A -> List B) (g : B -> List C) : A -> List C => \x => f x >>= g
 bind tighter =
