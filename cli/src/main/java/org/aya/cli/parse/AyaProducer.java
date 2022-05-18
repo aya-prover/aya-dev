@@ -378,12 +378,12 @@ public record AyaProducer(
       case AyaParser.DoContext doCtx -> visitDo(doCtx);
       case AyaParser.IdiomContext idmCtx -> {
         if (idmCtx.idiomBlock() == null)
-          yield Constants.unresolvedAlternativeEmpty(sourcePosOf(idmCtx));
+          yield Constants.alternativeEmpty(sourcePosOf(idmCtx));
         yield visitIdiomBlock(idmCtx.idiomBlock());
       }
       case AyaParser.ArrayContext arrCtx -> {
         if (arrCtx.arrayBlock() == null)
-          yield Constants.unresolvedListNil(sourcePosOf(arrCtx));
+          yield Constants.listNil(sourcePosOf(arrCtx));
         else if (arrCtx.arrayBlock().BAR() == null)
           yield visitArray(arrCtx.arrayBlock());
         else
@@ -396,13 +396,12 @@ public record AyaProducer(
 
   private @NotNull Expr visitListComprehension(AyaParser.ArrayBlockContext ctx) {
     var firstExpr = new Expr.NamedArg(true, visitExpr(ctx.expr()));
-    var pure = new Expr.NamedArg(true, Constants.unresolvedFunctorPure(firstExpr.sourcePos()));
+    var pure = new Expr.NamedArg(true, Constants.functorPure(firstExpr.sourcePos()));
     var returnedExpr = new Expr.BinOpSeq(firstExpr.sourcePos(), ImmutableSeq.of(pure, firstExpr));
-
 
     return ImmutableSeq.from(ctx.listComp().doBindingExpr())
       .foldRight(returnedExpr, (doBindingCtx, accExpr) -> {
-        var bindOp = new Expr.NamedArg(true, Constants.unresolvedMonadBind(sourcePosOf(doBindingCtx.LARROW())));
+        var bindOp = new Expr.NamedArg(true, Constants.monadBind(sourcePosOf(doBindingCtx.LARROW())));
         var pos = sourcePosOf(doBindingCtx);
         var param = new Expr.Param(sourcePosOf(doBindingCtx.weakId()),
           new LocalVar(doBindingCtx.weakId().getText()), true);
@@ -415,8 +414,8 @@ public record AyaProducer(
   }
 
   private @NotNull Expr visitArray(AyaParser.ArrayBlockContext ctx) {
-    var consArg = new Expr.NamedArg(true, Constants.unresolvedListCons(sourcePosOf(ctx)));
-    var nilArg = new Expr.NamedArg(true, Constants.unresolvedListNil(sourcePosOf(ctx)));
+    var consArg = new Expr.NamedArg(true, Constants.listCons(sourcePosOf(ctx)));
+    var nilArg = new Expr.NamedArg(true, Constants.listNil(sourcePosOf(ctx)));
     var args = ImmutableSeq.from(ctx.exprList().expr()).view()
       .map(exprCtx -> new Expr.NamedArg(true, visitExpr(exprCtx)))
       .flatMap(expr -> ImmutableSeq.of(expr, consArg))
@@ -430,7 +429,7 @@ public record AyaProducer(
    */
   private @NotNull Expr visitUnBarredIdiom(@NotNull SourcePos pos, List<AyaParser.ExprContext> ctxs) {
     var apSeq = buildApSeq(pos, ctxs);
-    var pure = Constants.unresolvedFunctorPure(apSeq.first().sourcePos());
+    var pure = Constants.functorPure(apSeq.first().sourcePos());
     var pureFirst = new Expr.NamedArg(true, new Expr.AppExpr(pure.sourcePos(), pure, apSeq.first()));
     return new Expr.BinOpSeq(pos, apSeq.drop(1).prepended(pureFirst).toImmutableSeq());
   }
@@ -445,7 +444,7 @@ public record AyaProducer(
       .flatMap(barredExprCtx -> {
         var unBarred = visitUnBarredIdiom(sourcePosOf(barredExprCtx), barredExprCtx.expr());
         var unBarredArg = new Expr.NamedArg(true, unBarred);
-        var orArg = new Expr.NamedArg(true, Constants.unresolvedAlternativeOr(sourcePosOf(barredExprCtx.BAR())));
+        var orArg = new Expr.NamedArg(true, Constants.alternativeOr(sourcePosOf(barredExprCtx.BAR())));
         return ImmutableSeq.of(unBarredArg, orArg);
       })
       .appended(new Expr.NamedArg(true, lastIdiom))
@@ -454,7 +453,7 @@ public record AyaProducer(
   }
 
   private @NotNull SeqView<Expr.NamedArg> buildApSeq(@NotNull SourcePos pos, @NotNull List<AyaParser.ExprContext> exprs) {
-    var ap = new Expr.NamedArg(true, Constants.unresolvedApplicativeApp(pos));
+    var ap = new Expr.NamedArg(true, Constants.applicativeApp(pos));
     return Seq.from(exprs).view()
       .map(expr -> new Expr.NamedArg(true, visitExpr(expr)))
       .flatMap(arg -> ImmutableSeq.of(ap, arg))
@@ -471,29 +470,21 @@ public record AyaProducer(
     }
 
     var lastExpr = visitExpr(lastExprCtx.expr());
-    doBlockExprCtxs.remove(lastExprCtx);
-    var doBlockExprCtxsSeq = ImmutableSeq.from(doBlockExprCtxs);
-    return doBlockExprCtxsSeq.foldRight(lastExpr, (doCtx, accExpr) -> {
+    return ImmutableSeq.from(doBlockExprCtxs).view().dropLast(1).foldRight(lastExpr, (doCtx, accExpr) -> {
       var lArrow = doCtx.doBindingExpr() != null ? doCtx.doBindingExpr().LARROW() : null;
       var pos = lArrow != null ? sourcePosOf(lArrow) : sourcePosOf(doCtx);
-      var bindOp = new Expr.NamedArg(true, Constants.unresolvedMonadBind(pos));
+      var bindOp = new Expr.NamedArg(true, Constants.monadBind(pos));
 
       var sourcePos = sourcePosOf(doCtx);
-      Expr.Param param;
-
-      if (doCtx.doBindingExpr() != null)
-        param = new Expr.Param(sourcePosOf(doCtx.doBindingExpr().weakId()),
-          new LocalVar(doCtx.doBindingExpr().weakId().getText()), true);
-      else
-        param = Expr.Param.ignoredParam(sourcePosOf(doCtx));
+      var param = doCtx.doBindingExpr() != null
+        ? new Expr.Param(sourcePosOf(doCtx.doBindingExpr().weakId()),
+        new LocalVar(doCtx.doBindingExpr().weakId().getText()), true)
+        : Expr.Param.ignoredParam(sourcePosOf(doCtx));
 
       var rhs = new Expr.NamedArg(true, new Expr.LamExpr(sourcePos, param, accExpr));
-      Expr.NamedArg lhs;
-
-      if (doCtx.doBindingExpr() != null)
-        lhs = new Expr.NamedArg(true, visitExpr(doCtx.doBindingExpr().expr()));
-      else
-        lhs = new Expr.NamedArg(true, visitExpr(doCtx.expr()));
+      var lhs = doCtx.doBindingExpr() != null
+        ? new Expr.NamedArg(true, visitExpr(doCtx.doBindingExpr().expr()))
+        : new Expr.NamedArg(true, visitExpr(doCtx.expr()));
 
       var seq = ImmutableSeq.of(lhs, bindOp, rhs);
       return new Expr.BinOpSeq(sourcePos, seq);

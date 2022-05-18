@@ -18,46 +18,33 @@ public interface Constants {
   @NotNull @NonNls String AYA_JSON = "aya.json";
 
   @NotNull @NonNls String ALTERNATIVE_EMPTY = "empty";
-
   @NotNull @NonNls String ALTERNATIVE_OR = "<|>";
-
   @NotNull @NonNls String LIST_NIL = "nil";
-
   @NotNull @NonNls String LIST_CONS = ":<";
-
   @NotNull @NonNls String APPLICATIVE_APP = "<*>";
-
   @NotNull @NonNls String FUNCTOR_PURE = "pure";
-
   @NotNull @NonNls String MONAD_BIND = ">>=";
-
   @NotNull @NonNls String INTERNAL_LOCALVAR = "AYA_INTERNAL_IGNORED_LOCALVAR";
 
-  static @NotNull Expr unresolvedAlternativeOr(@NotNull SourcePos pos) {
+  static @NotNull Expr alternativeOr(@NotNull SourcePos pos) {
     return new Expr.UnresolvedExpr(pos, ALTERNATIVE_OR);
   }
-
-  static @NotNull Expr unresolvedAlternativeEmpty(@NotNull SourcePos pos) {
+  static @NotNull Expr alternativeEmpty(@NotNull SourcePos pos) {
     return new Expr.UnresolvedExpr(pos, ALTERNATIVE_EMPTY);
   }
-
-  static @NotNull Expr unresolvedListNil(@NotNull SourcePos pos) {
+  static @NotNull Expr listNil(@NotNull SourcePos pos) {
     return new Expr.UnresolvedExpr(pos, LIST_NIL);
   }
-
-  static @NotNull Expr unresolvedListCons(@NotNull SourcePos pos) {
+  static @NotNull Expr listCons(@NotNull SourcePos pos) {
     return new Expr.UnresolvedExpr(pos, LIST_CONS);
   }
-
-  static @NotNull Expr unresolvedApplicativeApp(@NotNull SourcePos pos) {
+  static @NotNull Expr applicativeApp(@NotNull SourcePos pos) {
     return new Expr.UnresolvedExpr(pos, APPLICATIVE_APP);
   }
-
-  static @NotNull Expr unresolvedFunctorPure(@NotNull SourcePos pos) {
+  static @NotNull Expr functorPure(@NotNull SourcePos pos) {
     return new Expr.UnresolvedExpr(pos, FUNCTOR_PURE);
   }
-
-  static @NotNull Expr unresolvedMonadBind(@NotNull SourcePos pos) {
+  static @NotNull Expr monadBind(@NotNull SourcePos pos) {
     return new Expr.UnresolvedExpr(pos, MONAD_BIND);
   }
 
