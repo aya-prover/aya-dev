@@ -176,7 +176,9 @@ public interface TermOps extends TermView {
         var result = PatMatcher.tryBuildSubstArgs(null, match.patterns(), args);
         if (result.isOk()) {
           subst.add(result.get());
-          var body = match.body().view().subst(subst).normalize(state).commit();
+          var body = match.body()
+            .view().subst(subst).commit()
+            .view().normalize(state).commit();
           return new WithPos<>(match.sourcePos(), body);
         } else if (!orderIndependent && result.getErr())
           return null;
@@ -187,9 +189,8 @@ public interface TermOps extends TermView {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (view.post(term)) {
         case ElimTerm.App app -> {
-          var fn = app.of();
-          if (fn instanceof IntroTerm.Lambda lambda)
-            yield CallTerm.make(lambda, app.arg());
+          if (app.of() instanceof IntroTerm.Lambda lambda)
+            yield post(CallTerm.make(lambda, app.arg()));
           else yield app;
         }
         case ElimTerm.Proj proj -> {
