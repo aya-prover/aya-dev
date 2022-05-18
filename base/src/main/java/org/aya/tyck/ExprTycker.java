@@ -374,12 +374,6 @@ public final class ExprTycker extends Tycker {
         }
         yield unifyTyMaybeInsert(term, synthesize(expr), expr);
       }
-      case Expr.LitStringExpr litStr -> {
-        if (term instanceof CallTerm.Prim prim && prim.id() == PrimDef.ID.STR)
-          yield new Result(new PrimTerm.Str(litStr.string()), term);
-
-        yield fail(expr, new NoRuleError(expr, term));
-      }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
   }
