@@ -24,7 +24,6 @@ public interface Constants {
   @NotNull @NonNls String APPLICATIVE_APP = "<*>";
   @NotNull @NonNls String FUNCTOR_PURE = "pure";
   @NotNull @NonNls String MONAD_BIND = ">>=";
-  @NotNull @NonNls String INTERNAL_LOCALVAR = "AYA_INTERNAL_IGNORED_LOCALVAR";
 
   static @NotNull Expr alternativeOr(@NotNull SourcePos pos) {
     return new Expr.UnresolvedExpr(pos, ALTERNATIVE_OR);

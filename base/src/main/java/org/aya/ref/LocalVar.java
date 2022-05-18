@@ -2,23 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ref;
 
+import org.aya.generic.Constants;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.UUID;
 
 /**
  * @author ice1000
  */
 public record LocalVar(@NotNull String name, @NotNull SourcePos definition) implements Var {
-
-  @Contract(" -> new")
-  public static @NotNull LocalVar ignoredLocal() {
-    return new LocalVar("AYA_INTERNAL_IGNORED_LOCALVAR" + UUID.randomUUID());
-  }
+  public static final @NotNull LocalVar IGNORED = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE);
 
   public LocalVar(@NotNull String name) {
     this(name, SourcePos.NONE);

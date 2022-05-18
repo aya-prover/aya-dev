@@ -471,19 +471,20 @@ public record AyaProducer(
 
     var lastExpr = visitExpr(lastExprCtx.expr());
     return ImmutableSeq.from(doBlockExprCtxs).view().dropLast(1).foldRight(lastExpr, (doCtx, accExpr) -> {
-      var lArrow = doCtx.doBindingExpr() != null ? doCtx.doBindingExpr().LARROW() : null;
+      var doBinding = doCtx.doBindingExpr();
+
+      var lArrow = doBinding != null ? doBinding.LARROW() : null;
       var pos = lArrow != null ? sourcePosOf(lArrow) : sourcePosOf(doCtx);
       var bindOp = new Expr.NamedArg(true, Constants.monadBind(pos));
 
       var sourcePos = sourcePosOf(doCtx);
-      var param = doCtx.doBindingExpr() != null
-        ? new Expr.Param(sourcePosOf(doCtx.doBindingExpr().weakId()),
-        new LocalVar(doCtx.doBindingExpr().weakId().getText()), true)
-        : Expr.Param.ignoredParam(sourcePosOf(doCtx));
+      var param = doBinding != null
+        ? new Expr.Param(sourcePosOf(doBinding.weakId()), new LocalVar(doBinding.weakId().getText()), true)
+        : new Expr.Param(sourcePosOf(doCtx), LocalVar.IGNORED, true);
 
       var rhs = new Expr.NamedArg(true, new Expr.LamExpr(sourcePos, param, accExpr));
-      var lhs = doCtx.doBindingExpr() != null
-        ? new Expr.NamedArg(true, visitExpr(doCtx.doBindingExpr().expr()))
+      var lhs = doBinding != null
+        ? new Expr.NamedArg(true, visitExpr(doBinding.expr()))
         : new Expr.NamedArg(true, visitExpr(doCtx.expr()));
 
       var seq = ImmutableSeq.of(lhs, bindOp, rhs);

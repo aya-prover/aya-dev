@@ -57,9 +57,6 @@ LET_KW : 'let';
 IN_KW : 'in';
 COMPLETED : 'completed';
 
-// reserved
-IGNORED_LOCAL : 'AYA_INTERNAL_IGNORED_LOCALVAR' AYA_LETTER_FOLLOW*;
-
 // symbols
 SIGMA : 'Sig' | '\u03A3';
 LAMBDA : '\\' | '\u03BB';

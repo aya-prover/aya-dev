@@ -11,6 +11,8 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
+import org.aya.generic.util.InternalException;
+import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
@@ -63,6 +65,8 @@ public interface TermOps extends TermView {
 
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (view.post(term)) {
+        // ignored var can never be referenced
+        case RefTerm ref && ref.var() == LocalVar.IGNORED -> throw new InternalException("found usage of ignored var");
         case RefTerm ref -> subst.map().getOption(ref.var()).map(Term::rename).getOrDefault(ref);
         case RefTerm.Field field -> subst.map().getOption(field.ref()).map(Term::rename).getOrDefault(field);
         case Term misc -> misc;
