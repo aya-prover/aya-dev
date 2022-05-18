@@ -138,6 +138,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     R visitMetaPat(@NotNull RefTerm.MetaPat metaPat, P p);
     R visitInterval(@NotNull FormTerm.Interval interval, P p);
     R visitEnd(@NotNull PrimTerm.End end, P p);
+    R visitStr(@NotNull PrimTerm.Str str, P p);
     R visitShapedLit(@NotNull LitTerm.ShapedInt shaped, P p);
   }
 

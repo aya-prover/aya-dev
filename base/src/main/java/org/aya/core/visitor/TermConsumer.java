@@ -122,6 +122,10 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     return Unit.unit();
   }
 
+  @Override default Unit visitStr(PrimTerm.@NotNull Str str, P p) {
+    return Unit.unit();
+  }
+
   @Override default Unit visitProj(@NotNull ElimTerm.Proj term, P p) {
     return term.of().accept(this, p);
   }

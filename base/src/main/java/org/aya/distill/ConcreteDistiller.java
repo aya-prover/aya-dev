@@ -48,7 +48,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case Expr.LitStringExpr expr -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(expr.string()) + "\"");
+      case Expr.LitStringExpr expr -> Doc.plain('"' + StringEscapeUtil.unescapeStringCharacters(expr.string()) + '"');
       case Expr.PiExpr expr -> {
         var data = new boolean[]{false, false};
         new ExprTraversal<Unit>() {

@@ -228,4 +228,10 @@ public sealed interface SerTerm extends Serializable {
       return new LitTerm.ShapedInt(integer, shape.de(), type.de(state));
     }
   }
+
+  record Str(@NotNull String string) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new PrimTerm.Str(string);
+    }
+  }
 }

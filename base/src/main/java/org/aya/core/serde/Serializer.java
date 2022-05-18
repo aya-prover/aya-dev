@@ -73,6 +73,7 @@ public record Serializer(@NotNull Serializer.State state) {
     return switch (term) {
       case LitTerm.ShapedInt lit -> new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
       case PrimTerm.End end -> new SerTerm.End(end.isRight());
+      case PrimTerm.Str str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()), ref.lift());
       case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()), ref.lift());
       case FormTerm.Interval interval -> new SerTerm.Interval();
