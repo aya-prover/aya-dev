@@ -31,6 +31,7 @@ import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.repl.antlr.AntlrUtil;
+import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
@@ -266,12 +267,14 @@ public record AyaProducer(
     if (number != null) try {
       return new Expr.LitIntExpr(pos, Integer.parseInt(number.getText()));
     } catch (NumberFormatException ignored) {
-      reporter.report(new ParseError(sourcePosOf(number), "Unsupported integer literal `" + number.getText()  + "`"));
+      reporter.report(new ParseError(sourcePosOf(number), "Unsupported integer literal `" + number.getText() + "`"));
       throw new ParsingInterruptedException();
     }
     var string = ctx.STRING();
-    if (string != null)
-      return new Expr.LitStringExpr(pos, string.getText().substring(1, string.getText().length() - 1));
+    if (string != null) {
+      var content = string.getText().substring(1, string.getText().length() - 1);
+      return new Expr.LitStringExpr(pos, StringEscapeUtil.escapeStringCharacters(content));
+    }
     return unreachable(ctx);
   }
 
