@@ -70,9 +70,12 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitStructCall(@NotNull StructCall structCall, P p) {
+    throw new UnsupportedOperationException("TODO");
+    /*
     var args = structCall.args().map(arg -> visitArg(arg, p));
     if (ulift() == 0 && structCall.args().sameElements(args, true)) return structCall;
     return new StructCall(structCall.ref(), ulift() + structCall.ulift(), args);
+    */
   }
 
   private <T> T visitParameterized(

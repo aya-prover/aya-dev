@@ -251,7 +251,8 @@ public final class DefEq {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
       case StructCall type1 -> {
         var fieldSigs = type1.ref().core.fields;
-        if(true) throw new UnsupportedOperationException("TODO");
+        throw new UnsupportedOperationException("TODO");
+        /*
         var paramSubst = new Subst(MutableHashMap.create());
         //var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
         //  Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
@@ -267,6 +268,7 @@ public final class DefEq {
           if (!compare(l, r, lr, rl, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
         }
         yield true;
+        */
       }
       case IntroTerm.Lambda $ -> throw new InternalException("LamTerm is never type");
       case CallTerm.Con $ -> throw new InternalException("ConCall is never type");

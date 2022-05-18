@@ -136,7 +136,7 @@ public interface TermOps extends TermView {
     public @NotNull Term post(@NotNull Term term) {
       return switch (view.post(term)) {
         case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + ulift);
-        case StructCall struct -> new StructCall(struct.ref(), struct.ulift() + ulift, struct.args());
+        case StructCall struct -> throw new UnsupportedOperationException("TODO"); // new StructCall(struct.ref(), struct.ulift() + ulift, struct.args());
         case CallTerm.Data data -> new CallTerm.Data(data.ref(), data.ulift() + ulift, data.args());
         case CallTerm.Con con -> {
           var head = con.head();

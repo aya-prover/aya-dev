@@ -85,9 +85,10 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitStructCall(@NotNull StructCall structCall, P p) {
-    visitArgs(p, structCall.args());
-    visitCall(structCall, p);
-    return Unit.unit();
+    throw new UnsupportedOperationException("TODO");
+    //visitArgs(p, structCall.args());
+    //visitCall(structCall, p);
+    //return Unit.unit();
   }
 
   @Override default Unit visitTup(@NotNull IntroTerm.Tuple term, P p) {

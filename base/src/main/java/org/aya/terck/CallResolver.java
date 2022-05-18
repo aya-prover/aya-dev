@@ -124,8 +124,9 @@ public record CallResolver(
   }
 
   @Override public Unit visitStructCall(@NotNull StructCall structCall, CallGraph<Def, Term.Param> graph) {
-    resolveCall(structCall, graph);
-    return DefConsumer.super.visitStructCall(structCall, graph);
+    throw new UnsupportedOperationException("TODO");
+    //resolveCall(structCall, graph);
+    //return DefConsumer.super.visitStructCall(structCall, graph);
   }
 
   @Override public Unit visitAccess(CallTerm.@NotNull Access term, CallGraph<Def, Term.Param> defCallGraph) {

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @see CallTerm#make(Term, Arg)
  */
-public sealed interface CallTerm extends Term permits CallTerm.Access, CallTerm.Con, CallTerm.Data, CallTerm.Fn, CallTerm.Hole, CallTerm.Prim, StructCall {
+public sealed interface CallTerm extends Term {
   @NotNull Var ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
 

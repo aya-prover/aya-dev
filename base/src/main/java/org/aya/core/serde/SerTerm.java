@@ -147,7 +147,8 @@ public sealed interface SerTerm extends Serializable {
 
   record StructCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull org.aya.core.term.StructCall de(@NotNull DeState state) {
-      return new org.aya.core.term.StructCall(state.resolve(name), data.ulift, data.de(state));
+      throw new UnsupportedOperationException("TODO");
+      //return new org.aya.core.term.StructCall(state.resolve(name), data.ulift, data.de(state));
     }
   }
 

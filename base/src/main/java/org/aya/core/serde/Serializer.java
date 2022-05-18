@@ -135,9 +135,12 @@ public record Serializer(@NotNull Serializer.State state) {
   }
 
   private @NotNull SerTerm.StructCall serializeStructCall(@NotNull StructCall structCall) {
+    throw new UnsupportedOperationException("TODO");
+    /*
     return new SerTerm.StructCall(
       state.def(structCall.ref()),
       serializeCall(structCall.ulift(), structCall.args()));
+    */
   }
 
   private @NotNull SerPat.Matchy serialize(@NotNull Matching matchy) {
