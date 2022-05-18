@@ -78,6 +78,7 @@ org.aya.core.serde.SerTerm$FieldRef
 org.aya.core.serde.SerTerm$Interval
 org.aya.core.serde.SerTerm$End
 org.aya.core.serde.SerTerm$ShapedInt
+org.aya.core.serde.SerTerm$Str
 org.aya.core.serde.SerPat$Matchy
 org.aya.core.serde.SerPat$Absurd
 org.aya.core.serde.SerPat$Tuple

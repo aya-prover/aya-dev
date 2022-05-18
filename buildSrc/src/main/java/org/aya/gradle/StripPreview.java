@@ -8,7 +8,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 public class StripPreview {
-  public static void stripPreview(Path classFile) {
+  public static void stripPreview(Path classFile, boolean forceJava17) {
     // struct Head {
     //   u4 magic;
     //   u2 minor_version;
@@ -17,11 +17,18 @@ public class StripPreview {
     final int careSize = 4 + 2 + 2;
     try (var raf = new RandomAccessFile(classFile.toFile(), "rw")) {
       var mm = raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, careSize);
-      int magic = mm.getInt();
+      int magic = mm.getInt(0);
       int minor = mm.getShort(4) & 0xFFFF;
-      if (magic == 0xCAFEBABE && minor == 0xFFFF) {
+      int major = mm.getShort(6) & 0xFFFF;
+      if (magic != 0xCAFEBABE) return;
+      if (minor == 0xFFFF) {
         System.out.printf("AyaStripPreview: %s has preview feature bit set (minor = %d), clearing\n", classFile.toAbsolutePath(), minor);
         mm.putShort(4, (short) 0);
+      }
+      // Java 17 uses major version 61
+      if (forceJava17 && major > 61) {
+        System.out.printf("AyaStripPreview: %s has major version %d, forcing to 61 (Java 17)\n", classFile.toAbsolutePath(), major);
+        mm.putShort(6, (short) 61);
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
