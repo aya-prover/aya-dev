@@ -83,7 +83,7 @@ public record Serializer(@NotNull Serializer.State state) {
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
         serializeArgs(conCall.args()));
-      case CallTerm.Struct structCall -> serializeStructCall(structCall);
+      case StructCall structCall -> serializeStructCall(structCall);
       case CallTerm.Data dataCall -> serializeDataCall(dataCall);
       case CallTerm.Prim prim -> new SerTerm.PrimCall(
         state.def(prim.ref()),
@@ -134,7 +134,7 @@ public record Serializer(@NotNull Serializer.State state) {
       serializeCall(dataCall.ulift(), dataCall.args()));
   }
 
-  private @NotNull SerTerm.StructCall serializeStructCall(CallTerm.@NotNull Struct structCall) {
+  private @NotNull SerTerm.StructCall serializeStructCall(@NotNull StructCall structCall) {
     return new SerTerm.StructCall(
       state.def(structCall.ref()),
       serializeCall(structCall.ulift(), structCall.args()));

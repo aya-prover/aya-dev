@@ -106,7 +106,7 @@ public final class ExprTycker extends Tycker {
       case Expr.NewExpr newExpr -> {
         var structExpr = newExpr.struct();
         var struct = instImplicits(synthesize(structExpr).wellTyped, structExpr.sourcePos());
-        if (!(struct instanceof CallTerm.Struct structCall))
+        if (!(struct instanceof StructCall structCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, newExpr, struct));
         var structRef = structCall.ref();
 
@@ -174,7 +174,7 @@ public final class ExprTycker extends Tycker {
             return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
           }, sp -> {
             var fieldName = sp.justName();
-            if (!(projectee.type instanceof CallTerm.Struct structCall))
+            if (!(projectee.type instanceof StructCall structCall))
               return fail(struct, ErrorTerm.unexpected(projectee.type), BadTypeError.structAcc(state, struct, fieldName, projectee.type));
             var structCore = structCall.ref().core;
             if (structCore == null) throw new UnsupportedOperationException("TODO");

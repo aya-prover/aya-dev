@@ -7,7 +7,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
@@ -24,7 +23,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     return switch (preterm) {
       case RefTerm term -> localCtx.get(term.var());
       case CallTerm.Data dataCall -> defCall(dataCall.ref(), dataCall.ulift());
-      case CallTerm.Struct structCall -> throw new UnsupportedOperationException("TODO");//defCall(structCall.ref(), structCall.ulift());
+      case StructCall structCall -> throw new UnsupportedOperationException("TODO");//defCall(structCall.ref(), structCall.ulift());
       case CallTerm.Hole hole -> {
         var result = hole.ref().result;
         yield result == null ? ErrorTerm.typeOf(hole) : result;
@@ -33,7 +32,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case RefTerm.Field field -> Def.defType(field.ref());
       case CallTerm.Access access -> {
         var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
-        if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
+        if (!(callRaw instanceof StructCall call)) yield ErrorTerm.typeOf(access);
         var core = access.ref().core;
         throw new UnsupportedOperationException("TODO");
         /*
