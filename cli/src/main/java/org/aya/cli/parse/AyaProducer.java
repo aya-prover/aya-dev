@@ -5,6 +5,7 @@ package org.aya.cli.parse;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
@@ -717,6 +718,7 @@ public record AyaProducer(
     var tele = visitTelescope(ctx.tele());
     var fields = visitFields(tele, ctx.field());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
+    ImmutableSeq<Expr> parents = ctx.exprList() == null ? ImmutableSeq.empty() : ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
     var struct = new StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
@@ -724,6 +726,7 @@ public record AyaProducer(
       nameOrInfix._2,
       nameOrInfix._1.data(),
       type(ctx.type(), sourcePosOf(ctx)),
+      parents,
       fields,
       bind == null ? BindBlock.EMPTY : visitBind(bind),
       personality

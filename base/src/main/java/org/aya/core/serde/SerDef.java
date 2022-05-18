@@ -107,11 +107,14 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
     @Override public @NotNull StructDef de(SerTerm.@NotNull DeState state) {
+      throw new UnsupportedOperationException("TODO");
+      /*
       return new StructDef(
         state.newDef(name),
         resultLift,
-        fields.map(field -> field.de(state))
+              parents, fields.map(field -> field.de(state))
       );
+      */
     }
   }
 

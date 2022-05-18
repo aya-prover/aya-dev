@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class StructDecl extends ClassDecl {
   public final @NotNull DefVar<StructDef, StructDecl> ref;
+  public final @NotNull ImmutableSeq<Expr> parents;
   public @NotNull
   final ImmutableSeq<Decl.StructField> fields;
   public int ulift;
@@ -29,13 +30,14 @@ public final class StructDecl extends ClassDecl {
     @NotNull String name,
     @NotNull Expr result,
     // @NotNull ImmutableSeq<String> superClassNames,
+    @NotNull ImmutableSeq<Expr> parents,
     @NotNull ImmutableSeq<Decl.StructField> fields,
     @NotNull BindBlock bindBlock,
-    @NotNull Decl.Personality personality
-  ) {
+    @NotNull Decl.Personality personality) {
     super(sourcePos, entireSourcePos, opInfo, bindBlock,result, personality, accessibility);
     this.fields = fields;
     this.ref = DefVar.concrete(this, name);
+    this.parents = parents;
     fields.forEach(field -> field.structRef = ref);
   }
 

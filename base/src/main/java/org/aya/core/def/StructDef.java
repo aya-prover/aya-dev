@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.concrete.stmt.StructDecl;
 import org.aya.core.term.FormTerm;
+import org.aya.core.term.StructCall;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -18,14 +19,17 @@ import org.jetbrains.annotations.NotNull;
 
 public final class StructDef extends ClassDef {
   public final @NotNull DefVar<StructDef, StructDecl> ref;
+  public final @NotNull ImmutableSeq<StructCall> parents;
   public final @NotNull ImmutableSeq<FieldDef> fields;
 
   public StructDef(
     @NotNull DefVar<StructDef, StructDecl> ref,
     int ulift,
+    @NotNull ImmutableSeq<StructCall> parents,
     @NotNull ImmutableSeq<FieldDef> fields
   ) {
     super();
+    this.parents = parents;
     ref.core = this;
     this.ref = ref;
     this.fields = fields;
