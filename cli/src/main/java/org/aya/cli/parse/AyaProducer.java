@@ -742,13 +742,14 @@ public record AyaProducer(
     ));
   }
 
-  private ImmutableSeq<TopTeleDecl.StructField> visitFields(List<AyaParser.FieldContext> field) {
-    if(true) throw new UnsupportedOperationException("TODO");
-    return Seq.wrapJava(field).map(fieldCtx -> {
+  private ImmutableSeq<TopTeleDecl.StructField> visitFields(ImmutableSeq<Expr.Param> tele, List<AyaParser.FieldContext> field) {
+    var teleFields = tele.map(this::visitFieldParam);
+    var originFields = Seq.wrapJava(field).map(fieldCtx -> {
       if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
       else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
       else throw new InternalException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
     });
+    return teleFields.concat(originFields);
   }
 
   public TopTeleDecl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
@@ -784,6 +785,22 @@ public record AyaProducer(
       visitClauses(ctx.clauses()),
       ctx.COERCE() != null,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
+    );
+  }
+
+  public @NotNull Decl.StructField visitFieldParam(@NotNull Expr.Param param) {
+    // TODO: fix me
+    return new Decl.StructField(
+      param.sourcePos(),
+      param.sourcePos(),
+      null,
+      param.ref().name(), // TODO: fix me
+      ImmutableSeq.empty(),
+      param.type(),
+      Option.none(),
+      ImmutableSeq.empty(),
+      false,
+      BindBlock.EMPTY
     );
   }
 
