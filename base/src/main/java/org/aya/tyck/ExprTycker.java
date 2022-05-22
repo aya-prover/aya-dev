@@ -110,13 +110,7 @@ public final class ExprTycker extends Tycker {
           yield fail(structExpr, struct, BadTypeError.structCon(state, newExpr, struct));
         var structRef = structCall.ref();
 
-        /*
-        var subst = new Subst(MutableMap.from(
-          Def.defTele(structRef).view().zip(structCall.args())
-            .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
-         */
-        var subst = new Subst(MutableMap.from(kala.collection.Seq.empty()));
-        if (true) throw new UnsupportedOperationException("TODO");
+        var subst = new Subst(MutableMap.from(structCall.params().map(p -> Tuple.of(p._1, p._2.term()))));
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TopTeleDecl.StructField>, Term>>create();
         var missing = MutableList.<Var>create();

@@ -2,8 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.StructDecl;
 import org.aya.core.def.FieldDef;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface StructCall extends Term {
   @NotNull DefVar<StructDef, StructDecl> ref();
   @NotNull Option<DefVar<FieldDef, Decl.StructField>> nextField();
-  @NotNull ImmutableMap<DefVar<FieldDef, Decl.StructField>, Arg<@NotNull Term>> params();
+  @NotNull ImmutableSeq<Tuple2<DefVar<FieldDef, Decl.StructField>, Arg<@NotNull Term>>> params();
   int ulift();
 
   record Ref(
@@ -36,8 +37,8 @@ public sealed interface StructCall extends Term {
     }
 
     @Override
-    public @NotNull ImmutableMap<DefVar<FieldDef, Decl.StructField>, Arg<@NotNull Term>> params() {
-      return ImmutableMap.empty();
+    public @NotNull ImmutableSeq<Tuple2<DefVar<FieldDef, Decl.StructField>, Arg<Term>>> params() {
+      return ImmutableSeq.empty();
     }
   }
 
@@ -60,12 +61,12 @@ public sealed interface StructCall extends Term {
     @Override
     public @NotNull Option<DefVar<FieldDef, Decl.StructField>> nextField() {
       var params = params();
-      return ref().core.allFields().find(field -> !params.containsKey(field.ref)).map(FieldDef::ref);
+      return ref().core.allFields().findFirst(field -> !params.find(x -> x._1 == field.ref).isDefined()).map(FieldDef::ref);
     }
 
     @Override
-    public @NotNull ImmutableMap<DefVar<FieldDef, Decl.StructField>, Arg<@NotNull Term>> params() {
-      return struct.params().putted(field, arg);
+    public @NotNull ImmutableSeq<Tuple2<DefVar<FieldDef, Decl.StructField>, Arg<Term>>> params() {
+      return struct.params().appended(Tuple2.of(field, arg));
     }
   }
 }
