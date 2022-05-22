@@ -32,7 +32,7 @@ public sealed interface StructCall extends Term {
 
     @Override
     public @NotNull Option<DefVar<FieldDef, Decl.StructField>> nextField() {
-      return ref.core.fields.getOption(0).map(FieldDef::ref);
+      return ref.core.allFields().getOption(0).map(FieldDef::ref);
     }
 
     @Override
@@ -60,7 +60,7 @@ public sealed interface StructCall extends Term {
     @Override
     public @NotNull Option<DefVar<FieldDef, Decl.StructField>> nextField() {
       var params = params();
-      return ref().core.fields.find(field -> !params.containsKey(field.ref)).map(FieldDef::ref);
+      return ref().core.allFields().find(field -> !params.containsKey(field.ref)).map(FieldDef::ref);
     }
 
     @Override

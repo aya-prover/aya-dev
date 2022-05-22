@@ -51,4 +51,8 @@ public final class StructDef extends ClassDef {
   @Override public @NotNull Term result() {
     return new FormTerm.Univ(resultLevel);
   }
+
+  public @NotNull ImmutableSeq<FieldDef> allFields() {
+    return parents.flatMap(x->x.ref().core.allFields()).concat(fields);
+  }
 }
