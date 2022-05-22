@@ -95,12 +95,9 @@ public interface TermView {
         yield new ElimTerm.Proj(tuple, proj.ix());
       }
       case StructCall struct -> {
-        throw new UnsupportedOperationException("TODO");
-        /*
-        var args = struct.args().map(this::commit);
-        if (args.sameElements(struct.args(), true)) yield struct;
-        yield new StructCall(struct.ref(), struct.ulift(), args);
-        */
+        var params = struct.params().map(p->Tuple.of(p._1, commit(p._2)));
+        if (params.sameElements(struct.params(), true)) yield struct;
+        yield new StructCall(struct.ref(), struct.ulift(), params);
       }
       case CallTerm.Data data -> {
         var args = data.args().map(this::commit);
