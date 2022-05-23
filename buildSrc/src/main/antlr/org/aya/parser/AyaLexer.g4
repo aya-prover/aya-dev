@@ -49,9 +49,9 @@ EXTENDS : 'extends';
 NEW_KW : 'new';
 PATTERN_KW : 'pattern';
 I: 'I';
+DO_KW : 'do';
 
 // Unimplemented but reserved
-DO_KW : 'do';
 CODATA_KW : 'codata';
 LET_KW : 'let';
 IN_KW : 'in';
@@ -68,6 +68,7 @@ LOR : '\\/' | '\u2228';
 // ---- AyaLexer end: Keywords
 
 TO : '->' | '\u2192';
+LARROW : '<-' | '\u2190';
 IMPLIES : '=>' | '\u21D2';
 DEFINE_AS : ':=';
 SUCHTHAT : '**';
@@ -82,6 +83,10 @@ LBRACE : '{';
 RBRACE : '}';
 LPAREN : '(';
 RPAREN : ')';
+LIDIOM : '(|' | '\u2987';
+RIDIOM : '|)' | '\u2988';
+LARRAY : '[';
+RARRAY : ']';
 LGOAL : '{?';
 RGOAL : '?}';
 

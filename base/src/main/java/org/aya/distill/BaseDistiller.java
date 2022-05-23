@@ -206,7 +206,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static @NotNull Doc varDoc(@NotNull Var ref) {
-    return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
+    if (ref == LocalVar.IGNORED) return Doc.plain("_");
+    else return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
   }
 
   static @NotNull Doc coe(boolean coerce) {

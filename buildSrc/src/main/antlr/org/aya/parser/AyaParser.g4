@@ -92,7 +92,20 @@ expr : atom                                 # single
      | SIGMA tele+ SUCHTHAT expr            # sigma
      | LAMBDA tele+ (IMPLIES expr?)?        # lam
      | MATCH exprList clauses               # match
+     | DO_KW LBRACE? doBlock RBRACE?        # do
+     | LIDIOM idiomBlock? RIDIOM            # idiom
+     | LARRAY arrayBlock? RARRAY            # array
      ;
+
+arrayBlock : exprList | expr BAR listComp;
+
+listComp : (doBindingExpr COMMA)* doBindingExpr;
+
+idiomBlock : barredExpr* expr+;
+
+doBlock : (doBlockExpr COMMA)* doBlockExpr;
+
+doBlockExpr : doBindingExpr | expr;
 
 newArg : BAR weakId ids IMPLIES expr;
 // New body new body but you!
@@ -146,12 +159,15 @@ teleBinder : expr
 
 teleMaybeTypedExpr : PATTERN_KW? ids type?;
 
+
 // utilities
 exprList : (expr COMMA)* expr;
+barredExpr : expr+ BAR;
 idsComma : (weakId COMMA)* weakId?;
 qIdsComma : (qualifiedId COMMA)* qualifiedId?;
 ids : weakId*;
 type : COLON expr;
+doBindingExpr : weakId LARROW expr;
 
 qualifiedId : weakId (COLON2 weakId)*;
 weakId : ID | REPL_COMMAND;

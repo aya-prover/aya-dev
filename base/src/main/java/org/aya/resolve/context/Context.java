@@ -111,7 +111,7 @@ public interface Context {
     return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 
-  default @NotNull BindContext bind(
+  default @NotNull Context bind(
     @NotNull LocalVar ref,
     @NotNull SourcePos sourcePos,
     @NotNull Predicate<@Nullable Var> toWarn
@@ -119,16 +119,18 @@ public interface Context {
     return bind(ref.name(), ref, sourcePos, toWarn);
   }
 
-  default @NotNull BindContext bind(@NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
+  default @NotNull Context bind(@NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
     return bind(ref.name(), ref, sourcePos, var -> var instanceof LocalVar);
   }
 
-  default @NotNull BindContext bind(
+  default @NotNull Context bind(
     @NotNull String name,
     @NotNull LocalVar ref,
     @NotNull SourcePos sourcePos,
     @NotNull Predicate<@Nullable Var> toWarn
   ) {
+    // do not bind ignored var, and users should not try to use it
+    if (ref == LocalVar.IGNORED) return this;
     if (toWarn.test(getUnqualifiedMaybe(name, sourcePos)) && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
       reporter().report(new ShadowingWarn(name, sourcePos));
     }

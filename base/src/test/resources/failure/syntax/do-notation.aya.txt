@@ -1,0 +1,11 @@
+In file $FILE:2:5 ->
+
+  1 | def A: Type =>
+  2 |   do a <- b
+           ^----^
+
+Error: Parser error: last expression in a do block cannot be a bind expression
+
+Parsing interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
