@@ -66,6 +66,5 @@ def even Nat : Bool
 
 def overlap largeInt Nat : Nat
   | 0 => 0
--- TODO: PatClassifier
---  | 2147483647 => 2147483647
+  | 2147483647 => 2147483647
   | suc a => suc a

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 /**
  * @author ice1000, kiva
@@ -140,10 +141,8 @@ public record PatClassifier(
 
   private static @NotNull Pat head(@NotNull MCT.SubPats<Pat> subPats) {
     var head = subPats.head();
-    // Just build the head to avoid unnecessary computation
-    if (head instanceof Pat.ShapedInt lit) return lit.constructorForm();
     // This 'inline' is actually a 'dereference'
-    else return head.inline();
+    return head.inline();
   }
 
   /**
@@ -230,7 +229,7 @@ public record PatClassifier(
         // but since we're gonna remove this keyword, this check may not be needed in the future? LOL
         if (subPatsSeq.anyMatch(subPats -> subPats.pats().isNotEmpty()) &&
           // there are no clauses starting with a constructor pattern -- we don't need a split!
-          subPatsSeq.noneMatch(subPats -> head(subPats) instanceof Pat.Ctor)
+          subPatsSeq.noneMatch(subPats -> head(subPats) instanceof Pat.Ctor || head(subPats) instanceof Pat.ShapedInt)
         ) break;
         var buffer = MutableList.<MCT<Term, PatErr>>create();
         var data = dataCall.ref();
@@ -280,7 +279,28 @@ public record PatClassifier(
             builder.unshift();
             continue;
           }
-          var classified = classifySub(conTele2.view(), matches, coverage, fuel);
+          MCT<Term, PatErr> classified;
+          // The base case of classifying literals together with other patterns is that:
+          // the `matches` only has two kinds of patterns: bind and literal.
+          // We should put all bind patterns altogether and check overlapping of literals, which avoids
+          // converting them to constructor forms and preventing possible stack overflow
+          // (because literal overlapping check is simple).
+          var hasLit = matches.filter(subPats -> subPats.pats().isNotEmpty() && head(subPats) instanceof Pat.ShapedInt);
+          var hasBind = matches.filter(subPats -> subPats.pats().isNotEmpty() && head(subPats) instanceof Pat.Bind);
+          if (hasLit.isNotEmpty() && hasBind.isNotEmpty() && hasLit.size() + hasBind.size() == matches.size()) {
+            // We are in the base case.
+            var bindsIx = hasBind.map(MCT.SubPats::ix);
+            // classify all literals
+            var lits = hasLit.stream()
+              .collect(Collectors.groupingBy(subPats -> ((Pat.ShapedInt) head(subPats)).repr()))
+              .values().stream()
+              .map(ImmutableSeq::from)
+              .<MCT<Term, PatErr>>map(subPats -> new MCT.Leaf<>(subPats.map(MCT.SubPats::ix).concat(bindsIx)))
+              .collect(ImmutableSeq.factory());
+            classified = new MCT.Node<>(dataCall, lits);
+          } else {
+            classified = classifySub(conTele2.view(), matches, coverage, fuel);
+          }
           builder.reduce();
           var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
           var newTele = telescope.drop(1)
@@ -288,7 +308,7 @@ public record PatClassifier(
             .toImmutableSeq().view();
           var fuelCopy = fuel;
           var rest = classified.flatMap(pat -> pat.propagate(
-            classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats<Pat>::drop), coverage, fuelCopy)));
+            classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats::drop), coverage, fuelCopy)));
           builder.unshift();
           buffer.append(rest);
         }
@@ -308,6 +328,8 @@ public record PatClassifier(
 
   private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {
     var head = head(subPats);
+    // Literals are matched against constructor patterns
+    if (head instanceof Pat.ShapedInt lit) head = lit.constructorForm();
     if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
       return new MCT.SubPats<>(ctorPat.params().view(), ix);
     if (head instanceof Pat.Bind)
