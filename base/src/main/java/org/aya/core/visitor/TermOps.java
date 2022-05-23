@@ -213,7 +213,9 @@ public interface TermOps extends TermView {
           if (def == null) yield fn;
           if (def.modifiers.contains(Modifier.Opaque)) yield fn;
           yield def.body.fold(
-            lamBody -> lamBody.view().subst(buildSubst(def.telescope(), fn.args())).normalize(state).commit(),
+            lamBody -> lamBody
+              .view().subst(buildSubst(def.telescope(), fn.args())).commit()
+              .view().normalize(state).commit(),
             patBody -> {
               var orderIndependent = def.modifiers.contains(Modifier.Overlap);
               var unfolded = unfoldClauses(orderIndependent, fn.args(), patBody);
@@ -225,7 +227,9 @@ public interface TermOps extends TermView {
           var fieldDef = access.ref().core;
           if (access.of() instanceof IntroTerm.New n) {
             var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
-            yield fieldBody.view().subst(buildSubst(fieldDef.ownerTele, access.structArgs())).normalize(state).commit();
+            yield fieldBody
+              .view().subst(buildSubst(fieldDef.ownerTele, access.structArgs())).commit()
+              .view().normalize(state).commit();
           } else {
             var subst = buildSubst(fieldDef.fullTelescope(), access.args());
             for (var field : fieldDef.structRef.core.fields) {
@@ -243,7 +247,9 @@ public interface TermOps extends TermView {
           var def = hole.ref();
           if (!state.metas().containsKey(def)) yield hole;
           var body = state.metas().get(def);
-          yield body.view().subst(buildSubst(def.fullTelescope(), hole.fullArgs())).normalize(state).commit();
+          yield body
+            .view().subst(buildSubst(def.fullTelescope(), hole.fullArgs())).commit()
+            .view().normalize(state).commit();
         }
         case RefTerm.MetaPat metaPat -> metaPat.inline();
         case Term t -> t;
