@@ -68,3 +68,16 @@ def overlap largeInt Nat : Nat
   | 0 => 0
   | 2147483647 => 2147483647
   | suc a => suc a
+
+def overlap largeInt2 Nat Nat : Nat
+  | a, b => a
+  | 114514, 1919810 => 114514
+
+def overlap multi-nodes Nat Nat : Nat
+  | 114, 0 => 0
+  | 114, suc b => suc b
+  | 114, 514 => 514
+  | 115, 514 => 514
+  | a, b => b
+--^ should be 3 groups: [0, 4], [1, 2, 4], [3, 4]
+
