@@ -37,8 +37,8 @@ public sealed interface CallTerm extends Term {
       if (hole.args.sizeLessThan(hole.ref.telescope))
         return new Hole(hole.ref, hole.ulift, hole.contextArgs, hole.args.appended(arg));
     }
-    if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, arg);
-    return make(lam, arg);
+    if (f instanceof IntroTerm.Lambda lam) return make(lam, arg);
+    return new ElimTerm.App(f, arg);
   }
 
   static @NotNull Term make(IntroTerm.Lambda lam, @NotNull Arg<Term> arg) {
