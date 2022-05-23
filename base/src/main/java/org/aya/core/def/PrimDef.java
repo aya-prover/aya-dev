@@ -9,7 +9,6 @@ import kala.tuple.Tuple;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
-import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
@@ -101,7 +100,7 @@ public final class PrimDef extends TopLevelDef {
 
       public final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, this::arcoe, ref -> {
         var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), FormTerm.Interval.INSTANCE, true);
+        var paramIToATy = new Term.Param(LocalVar.IGNORED, FormTerm.Interval.INSTANCE, true);
         var paramI = new LocalVar("i");
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);

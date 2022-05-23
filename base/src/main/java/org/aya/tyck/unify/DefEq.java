@@ -159,8 +159,11 @@ public final class DefEq {
   ) {
     if (l.explicit() != r.explicit()) return fail.get();
     if (!compare(l.type(), r.type(), lr, rl, type)) return fail.get();
-    rl.map.put(r.ref(), l.toTerm());
-    lr.map.put(l.ref(), r.toTerm());
+    // Do not substitute when one side is ignored
+    if (l.ref() != LocalVar.IGNORED && r.ref() != LocalVar.IGNORED) {
+      rl.map.put(r.ref(), l.toTerm());
+      lr.map.put(l.ref(), r.toTerm());
+    }
     var result = ctx.with(l, () -> ctx.with(r, success));
     rl.map.remove(r.ref());
     lr.map.remove(l.ref());

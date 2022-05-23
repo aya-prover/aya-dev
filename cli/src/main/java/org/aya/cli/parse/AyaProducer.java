@@ -300,7 +300,7 @@ public record AyaProducer(
       var pos = sourcePosOf(ctx);
       return ImmutableSeq.of(isParamLiteral
         ? new Expr.Param(pos, visitParamLiteral(literal), type(null, pos), false, true)
-        : new Expr.Param(pos, Constants.randomlyNamed(pos), visitLiteral(literal), false, true)
+        : new Expr.Param(pos, LocalVar.IGNORED, visitLiteral(literal), false, true)
       );
     }
     var teleBinder = ctx.teleBinder();
@@ -309,7 +309,7 @@ public record AyaProducer(
       var type = teleBinder.expr();
       if (type != null) {
         var pos = sourcePosOf(ctx);
-        return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(type), false, true));
+        return ImmutableSeq.of(new Expr.Param(pos, LocalVar.IGNORED, visitExpr(type), false, true));
       }
       teleMaybeTypedExpr = teleBinder.teleMaybeTypedExpr();
     }
@@ -348,7 +348,7 @@ public record AyaProducer(
         sourcePosOf(sig), false,
         visitTelescope(sig.tele()).appended(new Expr.Param(
           visitExpr(sig.expr()).sourcePos(),
-          Constants.anonymous(),
+          LocalVar.IGNORED,
           visitExpr(sig.expr()), false, true)));
       case AyaParser.LamContext lam -> {
         Expr result;
