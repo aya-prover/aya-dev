@@ -62,11 +62,11 @@ public record AyaProducer(
   public Either<ImmutableSeq<Stmt>, Expr> visitRepl(AyaParser.ReplContext ctx) {
     var expr = ctx.expr();
     if (expr != null) return Either.right(visitExpr(expr));
-    return Either.left(ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt));
+    return Either.left(Seq.wrapJava(ctx.stmt()).flatMap(this::visitStmt));
   }
 
   public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
-    return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
+    return Seq.wrapJava(ctx.stmt()).flatMap(this::visitStmt);
   }
 
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
@@ -228,21 +228,21 @@ public record AyaProducer(
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(List<AyaParser.TeleContext> telescope) {
-    return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, false));
+    return Seq.wrapJava(telescope).flatMap(t -> visitTele(t, false));
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitLamTelescope(List<AyaParser.TeleContext> telescope) {
-    return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, true));
+    return Seq.wrapJava(telescope).flatMap(t -> visitTele(t, true));
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitForallTelescope(List<AyaParser.TeleContext> telescope) {
-    return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, true));
+    return Seq.wrapJava(telescope).flatMap(t -> visitTele(t, true));
   }
 
   public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> visitFnBody(AyaParser.FnBodyContext ctx) {
     var expr = ctx.expr();
     if (expr != null) return Either.left(visitExpr(expr));
-    return Either.right(ImmutableSeq.from(ctx.clause()).map(this::visitClause));
+    return Either.right(Seq.wrapJava(ctx.clause()).map(this::visitClause));
   }
 
   public QualifiedID visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
@@ -369,7 +369,7 @@ public record AyaProducer(
       }
       case AyaParser.NewContext n -> new Expr.NewExpr(
         sourcePosOf(n), visitExpr(n.expr()),
-        Option.of(n.newBody()).map(b -> ImmutableSeq.from(b.newArg()).map(this::visitField))
+        Option.of(n.newBody()).map(b -> Seq.wrapJava(b.newArg()).map(this::visitField))
           .getOrDefault(ImmutableSeq.empty()));
       case AyaParser.ForallContext forall -> buildPi(
         sourcePosOf(forall), false,
@@ -399,7 +399,7 @@ public record AyaProducer(
     var pure = new Expr.NamedArg(true, Constants.functorPure(firstExpr.sourcePos()));
     var returnedExpr = new Expr.BinOpSeq(firstExpr.sourcePos(), ImmutableSeq.of(pure, firstExpr));
 
-    return ImmutableSeq.from(ctx.listComp().doBindingExpr())
+    return Seq.wrapJava(ctx.listComp().doBindingExpr())
       .foldRight(returnedExpr, (doBindingCtx, accExpr) -> {
         var bindOp = new Expr.NamedArg(true, Constants.monadBind(sourcePosOf(doBindingCtx.LARROW())));
         var pos = sourcePosOf(doBindingCtx);
@@ -416,7 +416,7 @@ public record AyaProducer(
   private @NotNull Expr visitArray(AyaParser.ArrayBlockContext ctx) {
     var consArg = new Expr.NamedArg(true, Constants.listCons(sourcePosOf(ctx)));
     var nilArg = new Expr.NamedArg(true, Constants.listNil(sourcePosOf(ctx)));
-    var args = ImmutableSeq.from(ctx.exprList().expr()).view()
+    var args = Seq.wrapJava(ctx.exprList().expr()).view()
       .map(exprCtx -> new Expr.NamedArg(true, visitExpr(exprCtx)))
       .flatMap(expr -> ImmutableSeq.of(expr, consArg))
       .appended(nilArg)
@@ -437,10 +437,11 @@ public record AyaProducer(
   private @NotNull Expr visitIdiomBlock(AyaParser.IdiomBlockContext ctx) {
     var lastIdiom = visitUnBarredIdiom(sourcePosOf(ctx), ctx.expr());
 
-    if (ctx.barredExpr().isEmpty())
+    var barredExpr = Seq.wrapJava(ctx.barredExpr());
+    if (barredExpr.isEmpty())
       return lastIdiom;
 
-    var appSeq = ImmutableSeq.from(ctx.barredExpr()).view()
+    var appSeq = barredExpr.view()
       .flatMap(barredExprCtx -> {
         var unBarred = visitUnBarredIdiom(sourcePosOf(barredExprCtx), barredExprCtx.expr());
         var unBarredArg = new Expr.NamedArg(true, unBarred);
@@ -454,15 +455,15 @@ public record AyaProducer(
 
   private @NotNull SeqView<Expr.NamedArg> buildApSeq(@NotNull SourcePos pos, @NotNull List<AyaParser.ExprContext> exprs) {
     var ap = new Expr.NamedArg(true, Constants.applicativeApp(pos));
-    return Seq.from(exprs).view()
+    return Seq.wrapJava(exprs).view()
       .map(expr -> new Expr.NamedArg(true, visitExpr(expr)))
       .flatMap(arg -> ImmutableSeq.of(ap, arg))
       .drop(1);
   }
 
   private @NotNull Expr visitDo(AyaParser.DoContext ctx) {
-    var doBlockExprCtxs = ctx.doBlock().doBlockExpr();
-    var lastExprCtx = doBlockExprCtxs.get(doBlockExprCtxs.size() - 1);
+    var doBlockExprCtxs = Seq.wrapJava(ctx.doBlock().doBlockExpr());
+    var lastExprCtx = doBlockExprCtxs.last();
     if (lastExprCtx.doBindingExpr() != null) {
       reporter.report(new ParseError(sourcePosOf(lastExprCtx),
         "last expression in a do block cannot be a bind expression"));
@@ -470,7 +471,7 @@ public record AyaProducer(
     }
 
     var lastExpr = visitExpr(lastExprCtx.expr());
-    return ImmutableSeq.from(doBlockExprCtxs).view().dropLast(1).foldRight(lastExpr, (doCtx, accExpr) -> {
+    return doBlockExprCtxs.view().dropLast(1).foldRight(lastExpr, (doCtx, accExpr) -> {
       var doBinding = doCtx.doBindingExpr();
 
       var lArrow = doBinding != null ? doBinding.LARROW() : null;
@@ -523,7 +524,7 @@ public record AyaProducer(
     if (atom != null) {
       var fixes = ctx.projFix();
       var expr = visitAtom(atom);
-      var projected = ImmutableSeq.from(fixes)
+      var projected = Seq.wrapJava(fixes)
         .foldLeft(Tuple.of(sourcePosOf(ctx), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
@@ -532,7 +533,7 @@ public record AyaProducer(
     // assert ctx.LBRACE() != null;
     var id = ctx.weakId();
     if (id != null) return new Expr.NamedArg(false, id.getText(), visitExpr(ctx.expr()));
-    var items = ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
+    var items = Seq.wrapJava(ctx.exprList().expr()).map(this::visitExpr);
     if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.first()));
     var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
     return new Expr.NamedArg(false, tupExpr);
@@ -651,7 +652,7 @@ public record AyaProducer(
 
   public ImmutableSeq<Pattern.Clause> visitClauses(@Nullable AyaParser.ClausesContext ctx) {
     if (ctx == null) return ImmutableSeq.empty();
-    return ImmutableSeq.from(ctx.clause()).map(this::visitClause);
+    return Seq.wrapJava(ctx.clause()).map(this::visitClause);
   }
 
   public @NotNull Decl.DataCtor visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
@@ -683,9 +684,8 @@ public record AyaProducer(
       if (patterns == null) return ex -> new Pattern.Absurd(sourcePos, ex);
       var id = ctx.weakId();
       var as = id != null ? new LocalVar(id.getText(), sourcePosOf(id)) : null;
-      var tupElem = Seq.from(patterns.pattern()).view()
-        .map(t -> visitAtomPatterns(t.atomPatterns()))
-        .toImmutableSeq();
+      var tupElem = Seq.wrapJava(patterns.pattern())
+        .map(t -> visitAtomPatterns(t.atomPatterns()));
       return tupElem.sizeEquals(1)
         ? (ignored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
         : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
@@ -741,7 +741,7 @@ public record AyaProducer(
   }
 
   private ImmutableSeq<Decl.StructField> visitFields(List<AyaParser.FieldContext> field) {
-    return ImmutableSeq.from(field).map(fieldCtx -> {
+    return Seq.wrapJava(field).map(fieldCtx -> {
       if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
       else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
       else throw new InternalException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
@@ -860,7 +860,7 @@ public record AyaProducer(
     var id = ctx.weakId();
     return new Command.Module(
       sourcePosOf(id), id.getText(),
-      ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt)
+      Seq.wrapJava(ctx.stmt()).flatMap(this::visitStmt)
     );
   }
 
