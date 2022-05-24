@@ -4,7 +4,7 @@ package org.aya.ref;
 
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
-import org.aya.util.distill.AyaDocile;
+import org.aya.generic.AyaDocile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

@@ -6,7 +6,6 @@ import kala.collection.mutable.MutableList;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
-import org.aya.util.distill.AyaDocile;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 

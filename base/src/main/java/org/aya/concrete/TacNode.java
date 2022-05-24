@@ -3,8 +3,8 @@
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.AyaDocile;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;

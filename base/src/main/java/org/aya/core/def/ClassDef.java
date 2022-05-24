@@ -3,11 +3,10 @@
 package org.aya.core.def;
 
 import org.aya.concrete.stmt.ClassDecl;
-import org.aya.core.term.Term;
 import org.aya.distill.CoreDistiller;
+import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.distill.AyaDocile;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 

@@ -4,9 +4,9 @@ package org.aya.core.term;
 
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
+import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.util.distill.AyaDocile;
 import org.jetbrains.annotations.NotNull;
 
 /**

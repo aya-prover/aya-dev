@@ -1,8 +1,9 @@
 // Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.util.distill;
+package org.aya.generic;
 
 import org.aya.pretty.doc.Doc;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
