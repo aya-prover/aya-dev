@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
@@ -145,10 +146,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record StructCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+  record StructCall(@NotNull SerDef.QName name, int ulift, @NotNull ImmutableSeq<Tuple2<SerDef.QName, SerArg>> params) implements SerTerm {
     @Override public @NotNull org.aya.core.term.StructCall de(@NotNull DeState state) {
-      throw new UnsupportedOperationException("TODO");
-      //return new org.aya.core.term.StructCall(state.resolve(name), data.ulift, data.de(state));
+      return new org.aya.core.term.StructCall(state.resolve(name), ulift, params.map(p -> Tuple.of(state.resolve(p._1), p._2.de(state))));
     }
   }
 

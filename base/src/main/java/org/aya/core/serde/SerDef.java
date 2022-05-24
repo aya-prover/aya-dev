@@ -104,17 +104,16 @@ public sealed interface SerDef extends Serializable {
   record Struct(
     @NotNull QName name,
     int resultLift,
+    @NotNull ImmutableSeq<SerTerm.StructCall> parents,
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
     @Override public @NotNull StructDef de(SerTerm.@NotNull DeState state) {
-      throw new UnsupportedOperationException("TODO");
-      /*
       return new StructDef(
         state.newDef(name),
         resultLift,
-              parents, fields.map(field -> field.de(state))
+        parents.map(parent -> parent.de(state)),
+        fields.map(field -> field.de(state))
       );
-      */
     }
   }
 
