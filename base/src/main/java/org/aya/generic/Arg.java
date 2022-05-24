@@ -3,7 +3,6 @@
 package org.aya.generic;
 
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.AyaDocile;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
