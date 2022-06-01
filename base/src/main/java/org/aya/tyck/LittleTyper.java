@@ -31,6 +31,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term);
       case RefTerm.Field field -> Def.defType(field.ref());
+      case RefTerm.Self self -> throw new UnsupportedOperationException("TODO");
       case CallTerm.Access access -> {
         var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
         if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);

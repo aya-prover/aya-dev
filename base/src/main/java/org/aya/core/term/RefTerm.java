@@ -2,12 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.FieldDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
@@ -31,6 +34,16 @@ public record RefTerm(@NotNull LocalVar var, int lift) implements Term {
     public @NotNull Term inline() {
       var sol = ref.solution().get();
       return sol != null ? sol.toTerm() : this;
+    }
+  }
+
+  /**
+   *
+   * @author zaoqi
+   */
+  public record Self(@Nullable DefVar<StructDef, ClassDecl.StructDecl> structRef, int lift) implements Term {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitSelf(this, p);
     }
   }
 }
