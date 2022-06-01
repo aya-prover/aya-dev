@@ -35,6 +35,7 @@ public interface ExprView {
   private @NotNull Expr traverse(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.RefExpr ref -> ref; // I don't know
+      case Expr.ThisExpr ref -> ref;
       case Expr.UnresolvedExpr unresolved -> unresolved;
       case Expr.LamExpr lam -> {
         var param = commit(lam.param());

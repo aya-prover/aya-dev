@@ -3,11 +3,14 @@
 package org.aya.core.term;
 
 import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.StructDecl;
 import org.aya.core.def.FieldDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
@@ -31,6 +34,16 @@ public record RefTerm(@NotNull LocalVar var, int lift) implements Term {
     public @NotNull Term inline() {
       var sol = ref.solution().value;
       return sol != null ? sol.toTerm() : this;
+    }
+  }
+
+  /**
+   *
+   * @author zaoqi
+   */
+  public static record Self(@Nullable DefVar<StructDef, StructDecl> structRef, int lift) implements Term {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitSelf(this, p);
     }
   }
 }

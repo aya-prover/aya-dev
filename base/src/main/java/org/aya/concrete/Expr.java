@@ -179,6 +179,12 @@ public sealed interface Expr extends AyaDocile, SourceNode {
 
   }
 
+  record ThisExpr(
+    @NotNull SourcePos sourcePos,
+    @Nullable Var resolvedStruct
+  ) implements Expr {
+  }
+
   record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {}
 
   /**

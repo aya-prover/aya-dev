@@ -109,6 +109,11 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         if (ref instanceof DefVar<?, ?> defVar) yield defVar(defVar);
         else yield varDoc(ref);
       }
+      case Expr.ThisExpr self -> {
+        if (self.resolvedStruct() != null) yield Doc.cat(Doc.styled(KEYWORD, Doc.symbol("this")),
+          Doc.symbol("@"), varDoc(self.resolvedStruct()));
+        else yield Doc.symbol("this");
+      }
       case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawUnivExpr e -> Doc.styled(KEYWORD, "Type");
       case Expr.IntervalExpr e -> Doc.styled(KEYWORD, "I");
