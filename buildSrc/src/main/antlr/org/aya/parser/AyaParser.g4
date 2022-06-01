@@ -81,6 +81,8 @@ dataCtor : COERCE? declNameOrInfix tele* clauses? bindBlock?;
 
 dataCtorClause : BAR patterns IMPLIES dataCtor;
 
+thisExpr : THIS_KW | THIS_KW AT qualifiedId;
+
 // expressions
 expr : atom                                 # single
      | expr argument+                       # app
@@ -95,6 +97,7 @@ expr : atom                                 # single
      | DO_KW LBRACE? doBlock RBRACE?        # do
      | LIDIOM idiomBlock? RIDIOM            # idiom
      | LARRAY arrayBlock? RARRAY            # array
+     | thisExpr                             # this
      ;
 
 arrayBlock : exprList | expr BAR listComp;
