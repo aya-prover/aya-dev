@@ -22,6 +22,8 @@ fixed primitive reload and polished some error messages, reduced expensive graph
 fixed a problem where distilling `{? expr ?}` may cause NPE by passing `accessibleLocal`,
 implemented new `Term` traversal api, disallowed universe lifting for local bindings.
 
+Deleted core visitors (and all the other visitors)!
+
 ## 0.18
 
 Implemented full normalization with TermView,
