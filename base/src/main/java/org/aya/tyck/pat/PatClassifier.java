@@ -280,14 +280,15 @@ public record PatClassifier(
             continue;
           }
           MCT<Term, PatErr> classified;
-          // The base case of classifying literals together with other patterns is that:
-          // the `matches` only has two kinds of patterns: bind and literal.
+          // The base case of classifying literals together with other patterns:
+          // variable `nonEmpty` only has two kinds of patterns: bind and literal.
           // We should put all bind patterns altogether and check overlapping of literals, which avoids
           // converting them to constructor forms and preventing possible stack overflow
           // (because literal overlapping check is simple).
-          var hasLit = matches.filter(subPats -> subPats.pats().isNotEmpty() && head(subPats) instanceof Pat.ShapedInt);
-          var hasBind = matches.filter(subPats -> subPats.pats().isNotEmpty() && head(subPats) instanceof Pat.Bind);
-          if (hasLit.isNotEmpty() && hasBind.isNotEmpty() && hasLit.size() + hasBind.size() == matches.size()) {
+          var nonEmpty = matches.filter(subPats -> subPats.pats().isNotEmpty());
+          var hasLit = nonEmpty.filter(subPats -> head(subPats) instanceof Pat.ShapedInt);
+          var hasBind = nonEmpty.filter(subPats -> head(subPats) instanceof Pat.Bind);
+          if (hasLit.isNotEmpty() && hasBind.isNotEmpty() && hasLit.size() + hasBind.size() == nonEmpty.size()) {
             // We are in the base case.
             var bindsIx = hasBind.map(MCT.SubPats::ix);
             // classify all literals
