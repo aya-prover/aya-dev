@@ -1,0 +1,10 @@
+open data Nat | zero | suc Nat
+
+def overlap test Nat : Nat
+  | 0 => 0
+  | a => a
+  | suc a => suc a
+  | suc (suc a) => a
+  | 2147483647 => 3
+  | 2147483647 => 4
+  | 114514 => 1919
