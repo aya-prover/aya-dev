@@ -19,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 public final class StructDef extends ClassDef {
   public final @NotNull DefVar<StructDef, StructDecl> ref;
+  // TODO: change to ImmutableSeq<DefVar<StructDef, StructDecl>>
   public final @NotNull ImmutableSeq<StructCall> parents;
+  // TODO: public final @NotNull ImmutableSeq<FieldDef> parentFields;
   public final @NotNull ImmutableSeq<FieldDef> fields;
 
   public StructDef(

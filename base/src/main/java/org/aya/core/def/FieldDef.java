@@ -12,6 +12,9 @@ import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 public final class FieldDef extends SubLevelDef {
+  // TODO: type override or default value override
+  // explicit override or override in `extends` clause
+  public final @NotNull Option<DefVar<FieldDef, Decl.StructField>> parent = Option.none();
   public final @NotNull DefVar<StructDef, StructDecl> structRef;
   public final @NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref;
   public final @NotNull Option<Term> body;
