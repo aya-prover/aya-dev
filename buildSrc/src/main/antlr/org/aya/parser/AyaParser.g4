@@ -63,7 +63,7 @@ fnModifiers : OPAQUE
             | PATTERN_KW
             ;
 
-structDecl : sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
+structDecl : sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS exprList)? (BAR field)* bindBlock?;
 
 primDecl : PRIM weakId tele* type? ;
 
