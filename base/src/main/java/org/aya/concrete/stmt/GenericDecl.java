@@ -5,6 +5,7 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.ref.DefVar;
 import org.aya.tyck.order.TyckUnit;
+import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -14,8 +15,9 @@ import org.jetbrains.annotations.NotNull;
  * @author zaoqi
  * @see DefVar
  */
-public sealed interface GenericDecl extends SourceNode, TyckUnit permits TopLevelDecl, Signatured {
+public sealed interface GenericDecl extends OpDecl, SourceNode, TyckUnit permits TopLevelDecl, Signatured {
   @Contract(pure = true) @NotNull DefVar<?, ?> ref();
+  @NotNull BindBlock bindBlock();
 
   @NotNull SourcePos entireSourcePos();
 

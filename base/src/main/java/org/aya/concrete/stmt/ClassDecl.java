@@ -5,6 +5,7 @@ package org.aya.concrete.stmt;
 import org.aya.concrete.Expr;
 import org.aya.core.def.ClassDef;
 import org.aya.ref.DefVar;
+import org.aya.resolve.context.Context;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author zaoqi
  */
-public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, TopLevelDecl {
+public non-sealed/*sealed*/ abstract class ClassDecl implements TopLevelDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpDecl.OpInfo opInfo;
@@ -24,6 +25,7 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, TopLevelDe
   public @NotNull Expr result;
   public final @NotNull TopLevelDecl.Personality personality;
 
+  public @Nullable Context ctx = null;
   public final @NotNull Accessibility accessibility;
 
   @Override public @NotNull TopLevelDecl.Personality personality() {
@@ -32,6 +34,30 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements Stmt, TopLevelDe
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;
+  }
+
+  @Override public @NotNull BindBlock bindBlock() {
+    return bindBlock;
+  }
+
+  @Override public @Nullable OpInfo opInfo() {
+    return opInfo;
+  }
+
+  @Override public @Nullable Context getCtx() {
+    return ctx;
+  }
+
+  @Override public void setCtx(@NotNull Context ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override public @NotNull Expr result() {
+    return result;
+  }
+
+  @Override public void setResult(@NotNull Expr result) {
+    this.result = result;
   }
 
   protected ClassDecl(

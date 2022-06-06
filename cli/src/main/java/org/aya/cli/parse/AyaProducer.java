@@ -94,7 +94,7 @@ public record AyaProducer(
     if (decl != null) {
       var result = visitDecl(decl);
       var stmts = result._2.view().prepended(result._1);
-      if (result._1.personality == Decl.Personality.COUNTEREXAMPLE) {
+      if (result._1.personality() == Decl.Personality.COUNTEREXAMPLE) {
         var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof Decl));
         if (stmtOption.isDefined()) reporter.report(new BadCounterexampleWarn(stmtOption.get()));
         return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
@@ -150,7 +150,7 @@ public record AyaProducer(
     throw new InternalException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
+  public @NotNull Tuple2<? extends TopLevelDecl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
     var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
     if (fnDecl != null) return Tuple.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.empty());

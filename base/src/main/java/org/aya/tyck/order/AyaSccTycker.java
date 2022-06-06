@@ -181,8 +181,8 @@ public record AyaSccTycker(
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
-  private void decideTyckResult(@NotNull Decl decl, @NotNull Def def) {
-    switch (decl.personality) {
+  private void decideTyckResult(@NotNull TopLevelDecl decl, @NotNull GenericDef def) {
+    switch (decl.personality()) {
       case NORMAL -> {
         wellTyped.append(def);
         resolveInfo.shapeFactory().bonjour(def);
@@ -190,7 +190,7 @@ public record AyaSccTycker(
       case COUNTEREXAMPLE -> {
         var sampleReporter = sampleReporters.getOrPut(decl, BufferReporter::new);
         var problems = sampleReporter.problems().toImmutableSeq();
-        if (problems.isEmpty()) reporter.report(new CounterexampleError(decl.sourcePos, decl.ref()));
+        if (problems.isEmpty()) reporter.report(new CounterexampleError(decl.sourcePos(), decl.ref()));
         if (def instanceof UserDef userDef) userDef.problems = problems;
       }
     }

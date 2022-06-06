@@ -55,8 +55,8 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
     StmtOps.super.visitSignatured(signatured, buffer);
   }
 
-  @Override public void visitDecl(@NotNull Decl decl, @NotNull MutableList<HighlightResult.Symbol> buffer) {
-    visitBind(buffer, decl.bindBlock);
+  @Override public void visitDecl(@NotNull TopLevelDecl decl, @NotNull MutableList<HighlightResult.Symbol> buffer) {
+    visitBind(buffer, decl.bindBlock());
     StmtOps.super.visitDecl(decl, buffer);
   }
 

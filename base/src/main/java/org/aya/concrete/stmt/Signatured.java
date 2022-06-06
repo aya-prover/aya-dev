@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed abstract class Signatured implements OpDecl, GenericDecl permits Decl, Decl.DataCtor, Decl.StructField {
+public sealed abstract class Signatured implements GenericDecl permits Decl, Decl.DataCtor, Decl.StructField {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpInfo opInfo;
@@ -24,6 +24,10 @@ public sealed abstract class Signatured implements OpDecl, GenericDecl permits D
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
   public @Nullable Def.Signature signature;
+
+  @Override public @NotNull BindBlock bindBlock() {
+    return bindBlock;
+  }
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;

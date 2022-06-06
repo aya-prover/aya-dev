@@ -51,7 +51,6 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).def(this);
   }

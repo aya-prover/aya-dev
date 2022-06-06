@@ -78,8 +78,7 @@ public record CompiledAya(
       defs.forEach(this::serDef);
     }
 
-    private void serDef(@NotNull GenericDef def0) {
-      if (!(def0 instanceof Def def)) throw new UnsupportedOperationException("TODO");
+    private void serDef(@NotNull GenericDef def) {
       var serDef = new Serializer(state).serialize(def);
       serDefs.append(serDef);
       serOp(serDef, def);
@@ -92,13 +91,13 @@ public record CompiledAya(
       }
     }
 
-    private void serOp(@NotNull SerDef serDef, @NotNull Def def) {
+    private void serOp(@NotNull SerDef serDef, @NotNull GenericDef def) {
       // TODO: serialize rebind and operator renaming
       var concrete = def.ref().concrete;
-      var opInfo = concrete.opInfo;
+      var opInfo = concrete.opInfo();
       if (opInfo != null) serOps.append(new SerDef.SerOp(
         nameOf(serDef), opInfo.assoc(), opInfo.argc(),
-        serBind(concrete.bindBlock)));
+        serBind(concrete.bindBlock())));
     }
 
     private @NotNull SerDef.SerBind serBind(@NotNull BindBlock bindBlock) {

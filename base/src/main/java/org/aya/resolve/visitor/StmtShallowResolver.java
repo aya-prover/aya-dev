@@ -144,7 +144,7 @@ public record StmtShallowResolver(
     }
   }
 
-  private <D extends Decl, Child extends Signatured> ModuleContext resolveChildren(
+  private <D extends TopLevelDecl, Child extends GenericDecl> ModuleContext resolveChildren(
     @NotNull D decl,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,
@@ -163,28 +163,28 @@ public record StmtShallowResolver(
         MutableHashMap.from(children)),
       decl.sourcePos()
     );
-    decl.ctx = innerCtx;
+    decl.setCtx(innerCtx);
     return innerCtx;
   }
 
-  private void resolveOpInfo(@NotNull Signatured signatured, @NotNull ModuleContext context) {
-    var bind = signatured.bindBlock;
+  private void resolveOpInfo(@NotNull GenericDecl signatured, @NotNull ModuleContext context) {
+    var bind = signatured.bindBlock();
     if (bind != BindBlock.EMPTY) bind.context().value = context;
-    if (signatured.opInfo != null) {
+    if (signatured.opInfo() != null) {
       var ref = signatured.ref();
       ref.opDecl = signatured;
     }
   }
 
-  private @NotNull ModuleContext resolveDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
-    var ctx = switch (decl.personality) {
+  private @NotNull ModuleContext resolveDecl(@NotNull TopLevelDecl decl, @NotNull ModuleContext context) {
+    var ctx = switch (decl.personality()) {
       case NORMAL -> context;
       case EXAMPLE -> exampleContext(context);
       case COUNTEREXAMPLE -> exampleContext(context).derive(decl.ref().name());
     };
-    decl.ctx = ctx;
+    decl.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
-    ctx.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos);
+    ctx.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
     return ctx;
   }
 

@@ -6,8 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Signatured;
+import org.aya.concrete.stmt.*;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
@@ -48,9 +47,9 @@ public record StmtTycker(
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  private <S extends Signatured, D extends Def> D
+  private <S extends GenericDecl, D extends GenericDef> D
   traced(@NotNull S yeah, ExprTycker p, @NotNull BiFunction<S, ExprTycker, D> f) {
-    tracing(builder -> builder.shift(new Trace.DeclT(yeah.ref(), yeah.sourcePos)));
+    tracing(builder -> builder.shift(new Trace.DeclT(yeah.ref(), yeah.sourcePos())));
     var parent = p.localCtx;
     p.localCtx = parent.deriveMap();
     var r = f.apply(yeah, p);
@@ -59,14 +58,15 @@ public record StmtTycker(
     return r;
   }
 
-  public @NotNull Def tyck(@NotNull Decl decl, @NotNull ExprTycker tycker) {
+  public @NotNull GenericDef tyck(@NotNull TopLevelDecl decl, @NotNull ExprTycker tycker) {
     return traced(decl, tycker, this::doTyck);
   }
 
-  private @NotNull Def doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
-    if (predecl.signature == null) tyckHeader(predecl, tycker);
-    var signature = predecl.signature;
+  private @NotNull GenericDef doTyck(@NotNull TopLevelDecl predecl, @NotNull ExprTycker tycker) {
+    if (predecl instanceof Decl decl && decl.signature == null) tyckHeader(decl, tycker);
+    var signature = predecl instanceof Decl decl ? decl.signature : null;
     return switch (predecl) {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case Decl.FnDecl decl -> {
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
@@ -131,16 +131,17 @@ public record StmtTycker(
     return new FnDef(fn.ref, tele, result, fn.modifiers, Either.left(body));
   }
 
-  public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
-    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
+  public void tyckHeader(@NotNull TopLevelDecl decl, @NotNull ExprTycker tycker) {
+    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope")));
     switch (decl) {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case Decl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, -1);
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
         fn.signature = new Def.Signature(resultTele, resultRes);
         if (resultTele.isEmpty() && fn.body.isRight() && fn.body.getRightValue().isEmpty())
-          reporter.report(new NobodyError(decl.sourcePos, fn.ref));
+          reporter.report(new NobodyError(decl.sourcePos(), fn.ref));
       }
       case Decl.DataDecl data -> {
         var pos = data.sourcePos;
@@ -150,7 +151,7 @@ public record StmtTycker(
           : tycker.zonk(tycker.synthesize(data.result)).wellTyped();
         data.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
-        data.ulift = tycker.ensureUniv(decl.result, result);
+        data.ulift = tycker.ensureUniv(decl.result(), result);
       }
       case Decl.StructDecl struct -> {
         var pos = struct.sourcePos;
@@ -158,7 +159,7 @@ public record StmtTycker(
         var result = tycker.zonk(tycker.synthesize(struct.result)).wellTyped();
         struct.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
-        struct.ulift = tycker.ensureUniv(decl.result, result);
+        struct.ulift = tycker.ensureUniv(decl.result(), result);
       }
       case Decl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();

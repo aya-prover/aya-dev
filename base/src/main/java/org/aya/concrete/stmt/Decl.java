@@ -28,7 +28,7 @@ import java.util.EnumSet;
  *
  * @author re-xyr
  */
-public sealed abstract class Decl extends Signatured implements Stmt, TopLevelDecl {
+public sealed abstract class Decl extends Signatured implements TopLevelDecl {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
@@ -40,6 +40,22 @@ public sealed abstract class Decl extends Signatured implements Stmt, TopLevelDe
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;
+  }
+
+  @Override public @Nullable Context getCtx() {
+    return ctx;
+  }
+
+  @Override public void setCtx(@NotNull Context ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override public @NotNull Expr result() {
+    return result;
+  }
+
+  @Override public void setResult(@NotNull Expr result) {
+    this.result = result;
   }
 
   protected Decl(

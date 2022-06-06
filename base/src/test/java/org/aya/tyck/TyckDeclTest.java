@@ -10,6 +10,7 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.resolve.ResolveInfo;
@@ -30,7 +31,7 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TyckDeclTest {
-  public static Def tyck(@NotNull PrimDef.Factory factory, @NotNull Decl decl, Trace.@Nullable Builder builder) {
+  public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull Decl decl, Trace.@Nullable Builder builder) {
     var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
     return tycker.tyck(decl, tycker.newTycker(factory, new AyaShape.Factory()));
   }
@@ -49,7 +50,7 @@ public class TyckDeclTest {
     return primFactory;
   }
 
-  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<Def>> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
+  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
     var res = successDesugarDecls(text);
     return Tuple.of(res._1, res._2.view()
       .map(i -> i instanceof Decl s ? tyck(res._1, s, null) : null)

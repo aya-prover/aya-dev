@@ -15,6 +15,8 @@ public sealed interface GenericDef extends AyaDocile permits ClassDef, Def {
 
   @NotNull Term result();
 
+  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+
   /**
    * @author re-xyr
    */
