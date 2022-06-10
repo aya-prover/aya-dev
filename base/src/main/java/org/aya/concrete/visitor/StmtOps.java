@@ -52,7 +52,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
     if(decl instanceof Decl declWithSig) visitSignatured(declWithSig, pp);
     decl.setResult(visitExpr(decl.result(), pp));
     switch (decl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("TODO");
+      case ClassDecl classDecl -> {}
       case Decl.DataDecl data -> data.body.forEach(ctor -> traced(ctor, pp, this::visitCtor));
       case Decl.StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitField));
       case Decl.FnDecl fn -> fn.body = fn.body.map(
