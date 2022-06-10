@@ -4,6 +4,8 @@ package org.aya.lsp.actions;
 
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
+import org.aya.cli.library.source.LibraryOwner;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
@@ -17,8 +19,28 @@ import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<HighlightResult.Symbol>> {
-  public static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
+  public static @NotNull List<HighlightResult> invoke(@NotNull LibraryOwner owner) {
+    var symbols = MutableList.<HighlightResult>create();
+    highlight(owner, symbols);
+    return symbols.asJava();
+  }
+
+  private static void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {
+    owner.librarySources().forEach(src -> result.append(highlightOne(src)));
+    for (var dep : owner.libraryDeps()) highlight(dep, result);
+  }
+
+  private static @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
+    var symbols = MutableList.<HighlightResult.Symbol>create();
+    var program = source.program().value;
+    if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
+    return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
+  }
+
+  private static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
 
   private @NotNull Range rangeOf(@NotNull Signatured signatured) {
     return LspRange.toRange(signatured.sourcePos());

@@ -151,22 +151,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       sharedPrimFactory.clear();
     }
     reportErrors(reporter, DistillerOptions.pretty());
-    // build highlight
-    var symbols = MutableList.<HighlightResult>create();
-    highlight(owner, symbols);
-    return symbols.asJava();
-  }
-
-  private void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {
-    owner.librarySources().forEach(src -> result.append(highlightOne(src)));
-    for (var dep : owner.libraryDeps()) highlight(dep, result);
-  }
-
-  private @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
-    var symbols = MutableList.<HighlightResult.Symbol>create();
-    var program = source.program().value;
-    if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
-    return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
+    return SyntaxHighlight.invoke(owner);
   }
 
   public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
@@ -323,8 +308,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
+      var currentFile = Option.of(source.file());
       return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
-        .filter(pos -> pos.file().underlying().equals(Option.of(source.file())))
+        // only highlight references in the current file
+        .filter(pos -> pos.file().underlying().equals(currentFile))
         .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
         .stream().toList();
     });
