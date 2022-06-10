@@ -55,6 +55,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   /**
    * When working with LSP, we need to track all previously created Primitives.
    * This is shared among all loaded libraries just like a Global PrimFactory before.
+   *
    * @implNote consider using one shared factory among all mocked libraries, and separate factory for each real library.
    */
   protected final @NotNull PrimDef.Factory sharedPrimFactory = new PrimDef.Factory();
@@ -327,8 +328,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   @Override
-  public CompletableFuture<CodeLens> resolveCodeLens(CodeLens unresolved) {
-    return CompletableFuture.completedFuture(unresolved);
+  public CompletableFuture<CodeLens> resolveCodeLens(CodeLens codeLens) {
+    return CompletableFuture.supplyAsync(() -> LensMaker.resolve(codeLens));
   }
 
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
