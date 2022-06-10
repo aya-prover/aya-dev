@@ -132,7 +132,7 @@ public interface Resolver {
         case Pattern.Bind bind -> check(param, bind.bind(), bind.sourcePos());
         default -> {}
       }
-      return pattern;
+      return StmtOps.super.visitPattern(pattern, param);
     }
   }
 
