@@ -7,7 +7,6 @@ import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.Log;
 import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.*;
 import org.jetbrains.annotations.NotNull;
@@ -22,17 +21,20 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
   private final AyaService service = new AyaService();
 
   @JsonRequest("aya/load")
+  @SuppressWarnings("unused")
   public @NotNull CompletableFuture<@NotNull List<HighlightResult>> load(Object uri) {
     var uriString = (String) uri; // see JavaDoc of JsonRequest
     return CompletableFuture.supplyAsync(() -> service.loadFile(uriString));
   }
 
   @JsonRequest("aya/computeType")
+  @SuppressWarnings("unused")
   public @NotNull CompletableFuture<@NotNull ComputeTermResult> computeType(ComputeTermResult.Params input) {
     return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.type(service.sharedPrimFactory)));
   }
 
   @JsonRequest("aya/computeNF")
+  @SuppressWarnings("unused")
   public @NotNull CompletableFuture<@NotNull ComputeTermResult> computeNF(ComputeTermResult.Params input) {
     return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.nf(service.sharedPrimFactory)));
   }
@@ -45,19 +47,20 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
     return CompletableFuture.supplyAsync(() -> {
       var cap = new ServerCapabilities();
       cap.setTextDocumentSync(TextDocumentSyncKind.None);
-      cap.setCompletionProvider(new CompletionOptions(true, Collections.singletonList(
-        "QWERTYUIOPASDFGHJKLZXCVBNM.qwertyuiopasdfghjklzxcvbnm+-*/_[]:")));
-      cap.setDefinitionProvider(Either.forLeft(true));
       var workCap = new WorkspaceServerCapabilities();
       var workOps = new WorkspaceFoldersOptions();
       workOps.setSupported(true);
       workOps.setChangeNotifications(true);
       workCap.setWorkspaceFolders(workOps);
+      cap.setCompletionProvider(new CompletionOptions(true, Collections.singletonList(
+        "QWERTYUIOPASDFGHJKLZXCVBNM.qwertyuiopasdfghjklzxcvbnm+-*/_[]:")));
       cap.setWorkspace(workCap);
-      cap.setHoverProvider(true);
+      cap.setDefinitionProvider(true);
       cap.setReferencesProvider(true);
+      cap.setHoverProvider(true);
       cap.setRenameProvider(new RenameOptions(true));
       cap.setDocumentHighlightProvider(true);
+      cap.setCodeLensProvider(new CodeLensOptions(true));
 
       var folders = params.getWorkspaceFolders();
       // In case we open a single file, this value will be null, so be careful.

@@ -317,6 +317,20 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
+  @Override
+  public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return LensMaker.invoke(source, libraries.view());
+    });
+  }
+
+  @Override
+  public CompletableFuture<CodeLens> resolveCodeLens(CodeLens unresolved) {
+    return CompletableFuture.completedFuture(unresolved);
+  }
+
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
     var source = find(input.uri);
     if (source == null) return ComputeTermResult.bad(input);

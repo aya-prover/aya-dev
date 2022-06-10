@@ -15,7 +15,6 @@ import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.LspRange;
 import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
-import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,14 +41,10 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   private static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
 
-  private @NotNull Range rangeOf(@NotNull Signatured signatured) {
-    return LspRange.toRange(signatured.sourcePos());
-  }
-
   // region def, data, struct, prim, levels
   @Override
   public void visitSignatured(@NotNull Signatured signatured, @NotNull MutableList<HighlightResult.Symbol> buffer) {
-    buffer.append(new HighlightResult.Symbol(rangeOf(signatured), switch (signatured) {
+    buffer.append(new HighlightResult.Symbol(LspRange.toRange(signatured), switch (signatured) {
       case Decl.DataDecl $ -> HighlightResult.Kind.DataDef;
       case Decl.StructField $ -> HighlightResult.Kind.FieldDef;
       case Decl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
