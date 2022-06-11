@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public final class ComputeTerm implements SyntaxNodeAction {
+public final class ComputeTerm implements SyntaxNodeAction.Cursor {
   private @Nullable WithPos<Term> result = null;
   private final @NotNull LibrarySource source;
   private final @NotNull Kind kind;
@@ -52,14 +52,14 @@ public final class ComputeTerm implements SyntaxNodeAction {
     return result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, result);
   }
 
-  @Override public @NotNull Expr visitExpr(@NotNull Expr expr, XY pp) {
+  @Override public @NotNull Expr visitExpr(@NotNull Expr expr, XY xy) {
     if (expr instanceof Expr.WithTerm withTerm) {
       var sourcePos = withTerm.sourcePos();
-      if (pp.inside(sourcePos)) {
+      if (xy.inside(sourcePos)) {
         var core = withTerm.core();
         if (core != null) result = new WithPos<>(sourcePos, kind.map.apply(core));
       }
     }
-    return SyntaxNodeAction.super.visitExpr(expr, pp);
+    return Cursor.super.visitExpr(expr, xy);
   }
 }

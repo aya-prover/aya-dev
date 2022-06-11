@@ -8,6 +8,8 @@ import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.lsp.utils.XY;
+import org.aya.lsp.utils.XYXY;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,16 +18,32 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @implNote This does not modify the AST.
  */
-public interface SyntaxNodeAction extends StmtOps<XY> {
-  default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, XY xy) {
+public interface SyntaxNodeAction<P> extends StmtOps<P> {
+  boolean accept(@NotNull P xy, @NotNull SourcePos sourcePos);
+
+  default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P xy) {
     stmts.forEach(stmt -> {
-      if (!(stmt instanceof Signatured decl) || xy.inside(decl.entireSourcePos))
+      if (!(stmt instanceof Signatured decl) || accept(xy, decl.entireSourcePos))
         visit(stmt, xy);
     });
   }
 
-  @Override default @NotNull Expr visitExpr(@NotNull Expr expr, XY pp) {
-    if (!pp.inside(expr.sourcePos())) return expr;
-    return StmtOps.super.visitExpr(expr, pp);
+  @Override default @NotNull Expr visitExpr(@NotNull Expr expr, P xy) {
+    if (!accept(xy, expr.sourcePos())) return expr;
+    return StmtOps.super.visitExpr(expr, xy);
+  }
+
+  /** Need to visit the decl/expr placed at the cursor position XY */
+  interface Cursor extends SyntaxNodeAction<XY> {
+    @Override default boolean accept(@NotNull XY xy, @NotNull SourcePos sourcePos) {
+      return xy.inside(sourcePos);
+    }
+  }
+
+  /** Need to visit all decls inside XYXY range */
+  interface Ranged extends SyntaxNodeAction<XYXY> {
+    @Override default boolean accept(@NotNull XYXY xy, @NotNull SourcePos sourcePos) {
+      return xy.contains(sourcePos);
+    }
   }
 }

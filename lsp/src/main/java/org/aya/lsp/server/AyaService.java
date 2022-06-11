@@ -332,6 +332,20 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> LensMaker.resolve(codeLens));
   }
 
+  @Override
+  public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return InlayHintMaker.invoke(source, params.getRange());
+    });
+  }
+
+  @Override
+  public CompletableFuture<InlayHint> resolveInlayHint(InlayHint hint) {
+    return CompletableFuture.completedFuture(hint);
+  }
+
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
     var source = find(input.uri);
     if (source == null) return ComputeTermResult.bad(input);
