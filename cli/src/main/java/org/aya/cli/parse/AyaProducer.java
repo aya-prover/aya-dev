@@ -694,7 +694,7 @@ public record AyaProducer(
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.weakId();
-    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)));
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
 
     return unreachable(ctx);
   }
