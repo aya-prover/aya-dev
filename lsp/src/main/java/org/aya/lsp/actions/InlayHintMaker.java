@@ -7,6 +7,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Pattern;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.XYXY;
+import org.aya.util.distill.DistillerOptions;
 import org.eclipse.lsp4j.InlayHint;
 import org.eclipse.lsp4j.InlayHintKind;
 import org.eclipse.lsp4j.Range;
@@ -16,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public record InlayHintMaker(
-  @NotNull MutableList<InlayHint> hints
-) implements SyntaxNodeAction.Ranged {
+public record InlayHintMaker(@NotNull MutableList<InlayHint> hints) implements SyntaxNodeAction.Ranged {
   public static @NotNull List<InlayHint> invoke(@NotNull LibrarySource source, @NotNull Range range) {
     var program = source.program().value;
     if (program == null) return Collections.emptyList();
@@ -29,9 +28,10 @@ public record InlayHintMaker(
   }
 
   @Override public @NotNull Pattern visitPattern(@NotNull Pattern pattern, XYXY pp) {
-    if (pattern instanceof Pattern.Bind bind) {
+    if (pattern instanceof Pattern.Bind bind && bind.type().value != null) {
+      var type = bind.type().value.toDoc(DistillerOptions.pretty()).commonRender();
       var range = LspRange.toRange(bind.sourcePos());
-      var hint = new InlayHint(range.getEnd(), Either.forLeft(": {?}"));
+      var hint = new InlayHint(range.getEnd(), Either.forLeft(": " + type));
       hint.setKind(InlayHintKind.Type);
       hint.setPaddingLeft(true);
       hints.append(hint);
