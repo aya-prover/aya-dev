@@ -59,7 +59,7 @@ public class ParseTest {
   @Test
   public void issue141() {
     Assertions.assertEquals(parseStmt("module a {}"),
-      ImmutableSeq.of(new Command.Module(SourcePos.NONE, "a", ImmutableSeq.empty())));
+      ImmutableSeq.of(new Command.Module(SourcePos.NONE, SourcePos.NONE, "a", ImmutableSeq.empty())));
   }
 
   @Test public void successCmd() {
