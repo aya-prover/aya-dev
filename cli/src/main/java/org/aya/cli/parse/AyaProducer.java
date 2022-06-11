@@ -859,7 +859,7 @@ public record AyaProducer(
   public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {
     var id = ctx.weakId();
     return new Command.Module(
-      sourcePosOf(id), id.getText(),
+      sourcePosOf(id), sourcePosOf(ctx), id.getText(),
       Seq.wrapJava(ctx.stmt()).flatMap(this::visitStmt)
     );
   }

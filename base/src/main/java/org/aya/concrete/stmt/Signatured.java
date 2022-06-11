@@ -29,6 +29,10 @@ public sealed abstract class Signatured implements OpDecl, GenericDecl permits D
     return sourcePos;
   }
 
+  @Override public @NotNull SourcePos entireSourcePos() {
+    return entireSourcePos;
+  }
+
   protected Signatured(
     @NotNull SourcePos sourcePos,
     @NotNull SourcePos entireSourcePos,

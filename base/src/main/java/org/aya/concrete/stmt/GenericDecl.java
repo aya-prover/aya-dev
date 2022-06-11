@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.ref.DefVar;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourceNode;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface GenericDecl extends SourceNode, TyckUnit permits TopLevelDecl, Signatured {
   @Contract(pure = true) @NotNull DefVar<?, ?> ref();
+
+  @NotNull SourcePos entireSourcePos();
 
   @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     return ref().isInModule(currentMod) && ref().core == null;
