@@ -10,7 +10,10 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.StmtOps;
+import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
+import org.aya.lsp.utils.Resolver;
+import org.aya.ref.DefVar;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.Command;
 import org.jetbrains.annotations.NotNull;
@@ -32,23 +35,34 @@ public record LensMaker(@NotNull SeqView<LibraryOwner> libraries) implements Stm
   }
 
   @Override
-  public void visitDecl(@NotNull Decl decl, @NotNull MutableList<CodeLens> pp) {
-    var refs = FindReferences.findRefs(SeqView.of(decl.ref()), libraries).toImmutableSeq();
+  public void visitDecl(@NotNull Decl maybe, @NotNull MutableList<CodeLens> pp) {
+    Resolver.withChildren(maybe).forEach(defVar -> buildLens(defVar, pp));
+    StmtOps.super.visitDecl(maybe, pp);
+  }
+
+  private void buildLens(@NotNull DefVar<?, ?> defVar, @NotNull MutableList<CodeLens> pp) {
+    if (defVar.concrete == null) {
+      Log.d("LensMaker: concrete is null for %s, skipped", defVar.name());
+      return;
+    }
+
+    var refs = FindReferences.findRefs(SeqView.of(defVar), libraries).toImmutableSeq();
+
     if (refs.size() > 0) {
-      var range = LspRange.toRange(decl);
-      var uri = LspRange.fileUri(decl.sourcePos());
+      var sourcePos = defVar.concrete.sourcePos();
+      var uri = LspRange.fileUri(sourcePos);
+      var range = LspRange.toRange(sourcePos);
+
       // https://code.visualstudio.com/api/references/commands
       // editor.action.showReferences (or vscode.executeReferenceProvider) - Execute all reference providers.
       //   uri - Uri of a text document
       //   position - A position in a text document
       //   (returns) - A promise that resolves to an array of Location-instances.
+      var title = refs.sizeEquals(1) ? "1 usage" : "%d usages".formatted(refs.size());
+      var locations = refs.mapNotNull(LspRange::toLoc).asJava();
       var cmd = uri.isDefined()
-        ? new Command(
-        refs.sizeEquals(1) ? "1 usage" : "%d usages".formatted(refs.size()),
-        "editor.action.showReferences",
-        List.of(uri.get(), range.getEnd(), refs.mapNotNull(LspRange::toLoc).asJava()))
-        : null;
-
+        ? new Command(title, "editor.action.showReferences", List.of(uri.get(), range.getEnd(), locations))
+        : new Command(title, "");
       // the type of variable `cmd` is Command, but it cannot be used as
       // the command of the CodeLens created below, because VSCode cannot parse
       // the argument of the command directly due to some Uri serialization problems.
@@ -63,6 +77,5 @@ public record LensMaker(@NotNull SeqView<LibraryOwner> libraries) implements Stm
       //    to convert Java serialized Uris to vscode.Uri
       pp.append(new CodeLens(range, null, cmd));
     }
-    StmtOps.super.visitDecl(decl, pp);
   }
 }
