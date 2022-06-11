@@ -54,15 +54,13 @@ public final class ProjectSymbol implements SyntaxDeclAction<@NotNull MutableLis
 
   private void collect(@NotNull MutableList<Symbol> pp, @NotNull DefVar<?, ?> dv, @NotNull ImmutableSeq<Symbol> children) {
     var nameLoc = LspRange.toLoc(dv.concrete.sourcePos());
-    if (nameLoc == null) return;
+    var entireLoc = LspRange.toLoc(dv.concrete.entireSourcePos());
+    if (nameLoc == null || entireLoc == null) return;
     var symbol = new Symbol(
       dv.name(),
       ComputeSignature.computeSignature(dv, true).commonRender(),
       SymbolKind.Function, // TODO: refactor kindOf from SyntaxHighlight
-      nameLoc,
-      nameLoc, // TODO: entireSourcePos for GenericDecl
-      children
-    );
+      nameLoc, entireLoc, children);
     pp.append(symbol);
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
@@ -107,6 +107,10 @@ public record SourcePos(
 
   public boolean belongsToSomeFile() {
     return this != SourcePos.NONE && file.isSomeFile();
+  }
+
+  public int linesOfCode() {
+    return endLine - startLine + 1;
   }
 
   @Override public String toString() {
