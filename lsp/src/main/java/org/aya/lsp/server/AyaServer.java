@@ -62,6 +62,8 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
       cap.setDocumentHighlightProvider(true);
       cap.setCodeLensProvider(new CodeLensOptions(true));
       cap.setInlayHintProvider(true);
+      cap.setDocumentSymbolProvider(true);
+      cap.setWorkspaceSymbolProvider(true);
 
       var folders = params.getWorkspaceFolders();
       // In case we open a single file, this value will be null, so be careful.

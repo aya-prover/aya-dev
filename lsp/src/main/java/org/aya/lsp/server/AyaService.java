@@ -96,8 +96,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
-    var sources = owner.librarySources();
-    var found = sources.find(src -> src.file().equals(moduleFile));
+    var found = owner.librarySources().find(src -> src.file().equals(moduleFile));
     if (found.isDefined()) return found.get();
     for (var dep : owner.libraryDeps()) {
       var foundDep = find(dep, moduleFile);
@@ -276,8 +275,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
-  public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
+  @Override public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
@@ -318,8 +316,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
-  public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
+  @Override public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
@@ -327,13 +324,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
-  public CompletableFuture<CodeLens> resolveCodeLens(CodeLens codeLens) {
+  @Override public CompletableFuture<CodeLens> resolveCodeLens(CodeLens codeLens) {
     return CompletableFuture.supplyAsync(() -> LensMaker.resolve(codeLens));
   }
 
-  @Override
-  public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
+  @Override public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
@@ -342,8 +337,22 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   @Override
-  public CompletableFuture<InlayHint> resolveInlayHint(InlayHint hint) {
-    return CompletableFuture.completedFuture(hint);
+  public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return ProjectSymbol.invoke(source)
+        .map(symbol -> Either.<SymbolInformation, DocumentSymbol>forRight(symbol.document()))
+        .asJava();
+    });
+  }
+
+  @Override
+  public CompletableFuture<Either<List<? extends SymbolInformation>, List<? extends WorkspaceSymbol>>> symbol(WorkspaceSymbolParams params) {
+    return CompletableFuture.supplyAsync(() -> Either.forRight(
+      ProjectSymbol.invoke(libraries.view())
+        .map(ProjectSymbol.Symbol::workspace)
+        .asJava()));
   }
 
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {

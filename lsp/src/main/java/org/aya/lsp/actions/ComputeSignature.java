@@ -41,7 +41,8 @@ public interface ComputeSignature {
       default -> Doc.empty();
     };
   }
-  static @NotNull Doc computeSignature(ImmutableSeq<Term.Param> defTele, Term defResult, boolean withResult) {
+
+  static @NotNull Doc computeSignature(@NotNull ImmutableSeq<Term.Param> defTele, @NotNull Term defResult, boolean withResult) {
     var options = DistillerOptions.pretty();
     var distiller = new CoreDistiller(options);
     var tele = distiller.visitTele(defTele, defResult, Term::findUsages);

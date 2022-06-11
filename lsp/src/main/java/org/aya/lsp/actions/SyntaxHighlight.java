@@ -29,7 +29,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   private static void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {
     owner.librarySources().forEach(src -> result.append(highlightOne(src)));
-    for (var dep : owner.libraryDeps()) highlight(dep, result);
+    owner.libraryDeps().forEach(dep -> highlight(dep, result));
   }
 
   private static @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
