@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.Ref;
 import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
@@ -175,7 +175,7 @@ public sealed interface Pat extends AyaDocile {
 
   record Ctor(
     boolean explicit,
-    @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
+    @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> params,
     @NotNull CallTerm.Data type
   ) implements Pat {

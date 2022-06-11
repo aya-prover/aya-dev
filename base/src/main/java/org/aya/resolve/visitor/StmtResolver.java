@@ -42,7 +42,7 @@ public interface StmtResolver {
     switch (stmt) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> resolveStmt(mod.contents(), info);
-      case Decl.DataDecl decl -> {
+      case TelescopicDecl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
@@ -63,7 +63,7 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
-      case Decl.FnDecl decl -> {
+      case TelescopicDecl.FnDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
@@ -74,7 +74,7 @@ public interface StmtResolver {
           pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
         addReferences(info, new TyckOrder.Body(decl), local._1);
       }
-      case Decl.StructDecl decl -> {
+      case TelescopicDecl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
@@ -95,7 +95,7 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
           .concat(decl.fields.map(TyckOrder.Body::new)));
       }
-      case Decl.PrimDecl decl -> {
+      case TelescopicDecl.PrimDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
         addReferences(info, new TyckOrder.Head(decl), resolver);
         addReferences(info, new TyckOrder.Body(decl), SeqView.empty());
@@ -124,7 +124,7 @@ public interface StmtResolver {
   }
 
   private static @NotNull Tuple2<ExprResolver, Context>
-  resolveDeclSignature(@NotNull Decl decl, ExprResolver.@NotNull Options options) {
+  resolveDeclSignature(@NotNull TelescopicDecl decl, ExprResolver.@NotNull Options options) {
     var resolver = new ExprResolver(options);
     resolver.enterHead();
     var local = resolver.resolveParams(decl.telescope, decl.ctx);
@@ -177,18 +177,18 @@ public interface StmtResolver {
     switch (stmt) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> resolveBind(mod.contents(), info);
-      case Decl.DataDecl decl -> {
+      case TelescopicDecl.DataDecl decl -> {
         decl.body.forEach(ctor -> visitBind(ctor.ref, ctor.bindBlock, info));
         visitBind(decl.ref, decl.bindBlock, info);
       }
-      case Decl.StructDecl decl -> {
+      case TelescopicDecl.StructDecl decl -> {
         decl.fields.forEach(field -> visitBind(field.ref, field.bindBlock, info));
         visitBind(decl.ref, decl.bindBlock, info);
       }
-      case Decl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
+      case TelescopicDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
       case Remark remark -> {}
       case Command cmd -> {}
-      case Decl.PrimDecl decl -> {}
+      case TelescopicDecl.PrimDecl decl -> {}
       case Generalize generalize -> {}
     }
   }
@@ -244,8 +244,8 @@ public interface StmtResolver {
     return context.iterate(c -> {
       var maybe = c.getUnqualifiedLocalMaybe(name, namePos);
       if (!(maybe instanceof DefVar<?, ?> defVar)) return null;
-      if (defVar.core instanceof CtorDef || defVar.concrete instanceof Decl.DataCtor) return defVar;
-      if (defVar.core instanceof PrimDef || defVar.concrete instanceof Decl.PrimDecl) return defVar;
+      if (defVar.core instanceof CtorDef || defVar.concrete instanceof TelescopicDecl.DataCtor) return defVar;
+      if (defVar.core instanceof PrimDef || defVar.concrete instanceof TelescopicDecl.PrimDecl) return defVar;
       return null;
     });
   }

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed abstract class Signatured implements GenericDecl permits Decl, Decl.DataCtor, Decl.StructField {
+public sealed abstract class Signatured implements Decl permits TelescopicDecl, TelescopicDecl.DataCtor, TelescopicDecl.StructField {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpInfo opInfo;

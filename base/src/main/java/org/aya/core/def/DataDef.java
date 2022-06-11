@@ -3,24 +3,24 @@
 package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * core data definition, corresponding to {@link Decl.DataDecl}
+ * core data definition, corresponding to {@link TelescopicDecl.DataDecl}
  *
  * @author kiva
  */
 public final class DataDef extends UserDef.Type {
-  public final @NotNull DefVar<DataDef, Decl.DataDecl> ref;
+  public final @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> ref;
   public final @NotNull ImmutableSeq<CtorDef> body;
 
   public DataDef(
-    @NotNull DefVar<DataDef, Decl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
-    int ulift, @NotNull ImmutableSeq<CtorDef> body
+          @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
+          int ulift, @NotNull ImmutableSeq<CtorDef> body
   ) {
     super(telescope, ulift);
     ref.core = this;
@@ -28,7 +28,7 @@ public final class DataDef extends UserDef.Type {
     this.body = body;
   }
 
-  public static @NotNull DefVar<DataDef, Decl.DataDecl> fromCtor(@NotNull DefVar<CtorDef, Decl.DataCtor> conHead) {
+  public static @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> fromCtor(@NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> conHead) {
     if (conHead.core != null) return conHead.core.dataRef;
     else return conHead.concrete.dataRef;
   }
@@ -37,7 +37,7 @@ public final class DataDef extends UserDef.Type {
     return visitor.visitData(this, p);
   }
 
-  public @NotNull DefVar<DataDef, Decl.DataDecl> ref() {
+  public @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> ref() {
     return ref;
   }
 
@@ -48,7 +48,7 @@ public final class DataDef extends UserDef.Type {
     @NotNull ImmutableSeq<Term.Param> dataTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
-    public @NotNull CallTerm.Con toConCall(DefVar<CtorDef, Decl.DataCtor> conVar) {
+    public @NotNull CallTerm.Con toConCall(DefVar<CtorDef, TelescopicDecl.DataCtor> conVar) {
       return new CallTerm.Con(fromCtor(conVar), conVar,
         dataTele.map(Term.Param::toArg),
         0, // TODO: is this correct?

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.core.def.FnDef;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record NobodyError(
   @Override @NotNull SourcePos sourcePos,
-  @NotNull DefVar<FnDef, Decl.FnDecl> var
+  @NotNull DefVar<FnDef, TelescopicDecl.FnDecl> var
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(

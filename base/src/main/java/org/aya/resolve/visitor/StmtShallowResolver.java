@@ -113,21 +113,21 @@ public record StmtShallowResolver(
         for (var variable : variables.variables)
           context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
       }
-      case Decl.DataDecl decl -> {
+      case TelescopicDecl.DataDecl decl -> {
         var ctx = resolveDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, d -> d.body.view(), this::resolveCtor);
         resolveOpInfo(decl, innerCtx);
       }
-      case Decl.StructDecl decl -> {
+      case TelescopicDecl.StructDecl decl -> {
         var ctx = resolveDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, s -> s.fields.view(), this::resolveField);
         resolveOpInfo(decl, innerCtx);
       }
-      case Decl.FnDecl decl -> {
+      case TelescopicDecl.FnDecl decl -> {
         var ctx = resolveDecl(decl, context);
         resolveOpInfo(decl, ctx);
       }
-      case Decl.PrimDecl decl -> {
+      case TelescopicDecl.PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
         var sourcePos = decl.sourcePos;
@@ -144,7 +144,7 @@ public record StmtShallowResolver(
     }
   }
 
-  private <D extends TopLevelDecl, Child extends GenericDecl> ModuleContext resolveChildren(
+  private <D extends TopLevelDecl, Child extends Decl> ModuleContext resolveChildren(
     @NotNull D decl,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,
@@ -167,7 +167,7 @@ public record StmtShallowResolver(
     return innerCtx;
   }
 
-  private void resolveOpInfo(@NotNull GenericDecl signatured, @NotNull ModuleContext context) {
+  private void resolveOpInfo(@NotNull Decl signatured, @NotNull ModuleContext context) {
     var bind = signatured.bindBlock();
     if (bind != BindBlock.EMPTY) bind.context().value = context;
     if (signatured.opInfo() != null) {
@@ -194,13 +194,13 @@ public record StmtShallowResolver(
     else throw new InternalException("Invalid context: " + context);
   }
 
-  private void resolveCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
+  private void resolveCtor(@NotNull TelescopicDecl.DataCtor ctor, @NotNull ModuleContext context) {
     ctor.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
     resolveOpInfo(ctor, context);
   }
 
-  private void resolveField(@NotNull Decl.StructField field, @NotNull ModuleContext context) {
+  private void resolveField(@NotNull TelescopicDecl.StructField field, @NotNull ModuleContext context) {
     field.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
     resolveOpInfo(field, context);

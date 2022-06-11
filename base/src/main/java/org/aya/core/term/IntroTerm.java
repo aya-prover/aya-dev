@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.core.def.FieldDef;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,7 @@ public sealed interface IntroTerm extends Term {
    */
   record New(
     @NotNull CallTerm.Struct struct,
-    @NotNull ImmutableMap<DefVar<FieldDef, Decl.StructField>, Term> params
+    @NotNull ImmutableMap<DefVar<FieldDef, TelescopicDecl.StructField>, Term> params
   ) implements IntroTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNew(this, p);

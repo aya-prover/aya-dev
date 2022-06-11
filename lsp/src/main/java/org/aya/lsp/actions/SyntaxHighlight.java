@@ -45,12 +45,12 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   @Override
   public void visitSignatured(@NotNull Signatured signatured, @NotNull MutableList<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(signatured), switch (signatured) {
-      case Decl.DataDecl $ -> HighlightResult.Kind.DataDef;
-      case Decl.StructField $ -> HighlightResult.Kind.FieldDef;
-      case Decl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
-      case Decl.DataCtor $ -> HighlightResult.Kind.ConDef;
-      case Decl.FnDecl $ -> HighlightResult.Kind.FnDef;
-      case Decl.StructDecl $ -> HighlightResult.Kind.StructDef;
+      case TelescopicDecl.DataDecl $ -> HighlightResult.Kind.DataDef;
+      case TelescopicDecl.StructField $ -> HighlightResult.Kind.FieldDef;
+      case TelescopicDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
+      case TelescopicDecl.DataCtor $ -> HighlightResult.Kind.ConDef;
+      case TelescopicDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
+      case TelescopicDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
     }));
     StmtOps.super.visitSignatured(signatured, buffer);
   }
@@ -121,17 +121,17 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   }
 
   private HighlightResult.@Nullable Kind kindOf(@NotNull DefVar<?, ?> ref) {
-    if (ref.core instanceof FnDef || ref.concrete instanceof Decl.FnDecl)
+    if (ref.core instanceof FnDef || ref.concrete instanceof TelescopicDecl.FnDecl)
       return HighlightResult.Kind.FnCall;
-    else if (ref.core instanceof StructDef || ref.concrete instanceof Decl.StructDecl)
+    else if (ref.core instanceof StructDef || ref.concrete instanceof TelescopicDecl.StructDecl)
       return HighlightResult.Kind.StructCall;
-    else if (ref.core instanceof FieldDef || ref.concrete instanceof Decl.StructField)
+    else if (ref.core instanceof FieldDef || ref.concrete instanceof TelescopicDecl.StructField)
       return HighlightResult.Kind.FieldCall;
-    else if (ref.core instanceof PrimDef || ref.concrete instanceof Decl.PrimDecl)
+    else if (ref.core instanceof PrimDef || ref.concrete instanceof TelescopicDecl.PrimDecl)
       return HighlightResult.Kind.PrimCall;
-    else if (ref.core instanceof DataDef || ref.concrete instanceof Decl.DataDecl)
+    else if (ref.core instanceof DataDef || ref.concrete instanceof TelescopicDecl.DataDecl)
       return HighlightResult.Kind.DataCall;
-    else if (ref.core instanceof CtorDef || ref.concrete instanceof Decl.DataCtor)
+    else if (ref.core instanceof CtorDef || ref.concrete instanceof TelescopicDecl.DataCtor)
       return HighlightResult.Kind.ConCall;
     return null;
   }

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
 import org.intellij.lang.annotations.Language;
@@ -35,7 +35,7 @@ public class TracingTest {
     var decls = res._2;
     var builder = new Trace.Builder();
     decls.forEach(decl -> {
-      if (decl instanceof Decl signatured) TyckDeclTest.tyck(res._1, signatured, builder);
+      if (decl instanceof TelescopicDecl signatured) TyckDeclTest.tyck(res._1, signatured, builder);
     });
     return builder;
   }

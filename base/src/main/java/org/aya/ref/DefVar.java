@@ -4,7 +4,7 @@ package org.aya.ref;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.concrete.stmt.GenericDecl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.Def;
 import org.aya.resolve.ResolveInfo;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.UnknownNullability;
 /**
  * @author ice1000
  */
-public final class DefVar<Core extends GenericDef, Concrete extends GenericDecl> implements Var {
+public final class DefVar<Core extends GenericDef, Concrete extends Decl> implements Var {
   private final @NotNull String name;
   /** Initialized in parsing, so it might be null for deserialized user definitions. */
   public @UnknownNullability Concrete concrete;
@@ -51,7 +51,7 @@ public final class DefVar<Core extends GenericDef, Concrete extends GenericDecl>
   }
 
   /** Used in user definitions. */
-  public static <Core extends GenericDef, Concrete extends GenericDecl>
+  public static <Core extends GenericDef, Concrete extends Decl>
   @NotNull DefVar<Core, Concrete> concrete(@NotNull Concrete concrete, @NotNull String name) {
     return new DefVar<>(concrete, null, name);
   }

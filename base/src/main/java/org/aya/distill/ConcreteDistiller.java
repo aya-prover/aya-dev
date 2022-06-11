@@ -184,7 +184,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
   public @NotNull Doc stmt(@NotNull Stmt prestmt) {
     return switch (prestmt) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
-      case Decl decl -> decl(decl);
+      case TelescopicDecl decl -> decl(decl);
       case Command.Import cmd -> {
         var prelude = MutableList.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
         if (cmd.asName() != null) {
@@ -220,13 +220,13 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     };
   }
 
-  private Stmt.Accessibility defaultAcc(@NotNull Decl.Personality personality) {
-    return personality == Decl.Personality.NORMAL ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
+  private Stmt.Accessibility defaultAcc(@NotNull TelescopicDecl.Personality personality) {
+    return personality == TelescopicDecl.Personality.NORMAL ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
   }
 
-  public @NotNull Doc decl(@NotNull Decl predecl) {
+  public @NotNull Doc decl(@NotNull TelescopicDecl predecl) {
     return switch (predecl) {
-      case Decl.StructDecl decl -> {
+      case TelescopicDecl.StructDecl decl -> {
         var prelude = MutableList.of(
           visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
@@ -240,7 +240,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           visitBindBlock(decl.bindBlock)
         );
       }
-      case Decl.FnDecl decl -> {
+      case TelescopicDecl.FnDecl decl -> {
         var prelude = MutableList.of(
           visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
@@ -255,7 +255,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           visitBindBlock(decl.bindBlock)
         );
       }
-      case Decl.DataDecl decl -> {
+      case TelescopicDecl.DataDecl decl -> {
         var prelude = MutableList.of(
           visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
           visitPersonality(decl.personality),
@@ -269,11 +269,11 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           visitBindBlock(decl.bindBlock)
         );
       }
-      case Decl.PrimDecl decl -> primDoc(decl.ref);
+      case TelescopicDecl.PrimDecl decl -> primDoc(decl.ref);
     };
   }
 
-  public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
+  public @NotNull Doc visitPersonality(@NotNull TelescopicDecl.Personality personality) {
     return switch (personality) {
       case NORMAL -> Doc.empty();
       case EXAMPLE -> Doc.styled(KEYWORD, "example");
@@ -283,8 +283,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
   public @NotNull Doc signatured(@NotNull Signatured signatured) {
     return switch (signatured) {
-      case Decl decl -> decl(decl);
-      case Decl.StructField field -> {
+      case TelescopicDecl decl -> decl(decl);
+      case TelescopicDecl.StructField field -> {
         var doc = MutableList.of(Doc.symbol("|"),
           coe(field.coerce),
           linkDef(field.ref, FIELD_CALL),
@@ -296,7 +296,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         }
         yield Doc.cblock(Doc.sepNonEmpty(doc), 2, visitClauses(field.clauses));
       }
-      case Decl.DataCtor ctor -> {
+      case TelescopicDecl.DataCtor ctor -> {
         var doc = Doc.cblock(Doc.sepNonEmpty(
           coe(ctor.coerce),
           linkDef(ctor.ref, CON_CALL),

@@ -4,7 +4,7 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.core.Matching;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
@@ -19,14 +19,14 @@ import java.util.function.BiFunction;
  */
 public final class FnDef extends UserDef {
   public final @NotNull EnumSet<Modifier> modifiers;
-  public final @NotNull DefVar<FnDef, Decl.FnDecl> ref;
+  public final @NotNull DefVar<FnDef, TelescopicDecl.FnDecl> ref;
   public final @NotNull Either<Term, ImmutableSeq<Matching>> body;
 
   public FnDef(
-    @NotNull DefVar<FnDef, Decl.FnDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull Term result,
-    @NotNull EnumSet<Modifier> modifiers,
-    @NotNull Either<Term, ImmutableSeq<Matching>> body
+          @NotNull DefVar<FnDef, TelescopicDecl.FnDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
+          @NotNull Term result,
+          @NotNull EnumSet<Modifier> modifiers,
+          @NotNull Either<Term, ImmutableSeq<Matching>> body
   ) {
     super(telescope, result);
     this.modifiers = modifiers;
@@ -44,7 +44,7 @@ public final class FnDef extends UserDef {
     return visitor.visitFn(this, p);
   }
 
-  public @NotNull DefVar<FnDef, Decl.FnDecl> ref() {
+  public @NotNull DefVar<FnDef, TelescopicDecl.FnDecl> ref() {
     return ref;
   }
 }

@@ -4,7 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
@@ -48,7 +48,7 @@ public sealed interface CallTerm extends Term {
   }
 
   record Fn(
-    @NotNull DefVar<FnDef, Decl.FnDecl> ref,
+    @NotNull DefVar<FnDef, TelescopicDecl.FnDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
@@ -58,12 +58,12 @@ public sealed interface CallTerm extends Term {
   }
 
   record Prim(
-    @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
+    @NotNull DefVar<PrimDef, TelescopicDecl.PrimDecl> ref,
     @NotNull PrimDef.ID id,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
-    public Prim(@NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref,
+    public Prim(@NotNull DefVar<@NotNull PrimDef, TelescopicDecl.PrimDecl> ref,
                 int ulift,
                 @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
       this(ref, ref.core.id, ulift, args);
@@ -75,7 +75,7 @@ public sealed interface CallTerm extends Term {
   }
 
   record Data(
-    @NotNull DefVar<DataDef, Decl.DataDecl> ref,
+    @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
@@ -83,7 +83,7 @@ public sealed interface CallTerm extends Term {
       return visitor.visitDataCall(this, p);
     }
 
-    public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, Decl.DataCtor> ctorRef) {
+    public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ctorRef) {
       return new ConHead(ref, ctorRef, ulift, args);
     }
   }
@@ -92,7 +92,7 @@ public sealed interface CallTerm extends Term {
    * @author kiva
    */
   record Struct(
-    @NotNull DefVar<StructDef, Decl.StructDecl> ref,
+    @NotNull DefVar<StructDef, TelescopicDecl.StructDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
@@ -102,8 +102,8 @@ public sealed interface CallTerm extends Term {
   }
 
   record ConHead(
-    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-    @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
+    @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> dataRef,
+    @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs
   ) {
@@ -117,8 +117,8 @@ public sealed interface CallTerm extends Term {
     @NotNull ImmutableSeq<Arg<Term>> conArgs
   ) implements CallTerm {
     public Con(
-      @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-      @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
+      @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> dataRef,
+      @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs,
       int ulift,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> conArgs
@@ -126,7 +126,7 @@ public sealed interface CallTerm extends Term {
       this(new ConHead(dataRef, ref, ulift, dataArgs), conArgs);
     }
 
-    @Override public @NotNull DefVar<CtorDef, Decl.DataCtor> ref() {
+    @Override public @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref() {
       return head.ref;
     }
 
@@ -170,7 +170,7 @@ public sealed interface CallTerm extends Term {
    */
   record Access(
     @NotNull Term of,
-    @NotNull DefVar<FieldDef, Decl.StructField> ref,
+    @NotNull DefVar<FieldDef, TelescopicDecl.StructField> ref,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {

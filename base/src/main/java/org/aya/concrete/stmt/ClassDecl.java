@@ -66,7 +66,7 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements TopLevelDecl {
     @Nullable OpDecl.OpInfo opInfo,
     @NotNull BindBlock bindBlock,
     @NotNull Expr result,
-    @NotNull Decl.Personality personality,
+    @NotNull TelescopicDecl.Personality personality,
     @NotNull Accessibility accessibility
   ) {
     this.sourcePos = sourcePos;

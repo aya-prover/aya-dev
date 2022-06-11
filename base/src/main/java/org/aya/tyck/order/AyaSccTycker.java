@@ -9,7 +9,7 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import org.aya.concrete.remark.Remark;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.concrete.stmt.TopLevelDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -117,7 +117,7 @@ public record AyaSccTycker(
   }
 
   private void checkUnit(@NotNull TyckOrder order) {
-    if (order instanceof TyckOrder.Body && order.unit() instanceof Decl.FnDecl fn && fn.body.isLeft()) {
+    if (order instanceof TyckOrder.Body && order.unit() instanceof TelescopicDecl.FnDecl fn && fn.body.isLeft()) {
       checkSimpleFn(order, fn);
     } else {
       check(order);
@@ -145,7 +145,7 @@ public record AyaSccTycker(
     return hasSuc(graph, MutableSet.create(), unit, unit);
   }
 
-  private void checkSimpleFn(@NotNull TyckOrder order, @NotNull Decl.FnDecl fn) {
+  private void checkSimpleFn(@NotNull TyckOrder order, @NotNull TelescopicDecl.FnDecl fn) {
     if (selfReferencing(resolveInfo.depGraph(), order)) {
       reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
@@ -162,9 +162,9 @@ public record AyaSccTycker(
 
   private void checkHeader(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
-      case Decl decl -> tycker.tyckHeader(decl, reuse(decl));
-      case Decl.DataCtor ctor -> tycker.tyckHeader(ctor, reuse(ctor.dataRef.concrete));
-      case Decl.StructField field -> tycker.tyckHeader(field, reuse(field.structRef.concrete));
+      case TelescopicDecl decl -> tycker.tyckHeader(decl, reuse(decl));
+      case TelescopicDecl.DataCtor ctor -> tycker.tyckHeader(ctor, reuse(ctor.dataRef.concrete));
+      case TelescopicDecl.StructField field -> tycker.tyckHeader(field, reuse(field.structRef.concrete));
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
@@ -172,9 +172,9 @@ public record AyaSccTycker(
 
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
-      case Decl decl -> decideTyckResult(decl, tycker.tyck(decl, reuse(decl)));
-      case Decl.DataCtor ctor -> tycker.tyck(ctor, reuse(ctor.dataRef.concrete));
-      case Decl.StructField field -> tycker.tyck(field, reuse(field.structRef.concrete));
+      case TelescopicDecl decl -> decideTyckResult(decl, tycker.tyck(decl, reuse(decl)));
+      case TelescopicDecl.DataCtor ctor -> tycker.tyck(ctor, reuse(ctor.dataRef.concrete));
+      case TelescopicDecl.StructField field -> tycker.tyck(field, reuse(field.structRef.concrete));
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(newExprTycker()));
       default -> {}
     }
@@ -198,7 +198,7 @@ public record AyaSccTycker(
 
   private @NotNull ExprTycker reuse(@NotNull TopLevelDecl decl) {
     // prevent counterexample errors from being reported to the user reporter
-    if (decl.personality() == Decl.Personality.COUNTEREXAMPLE) {
+    if (decl.personality() == TelescopicDecl.Personality.COUNTEREXAMPLE) {
       var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);
       return tyckerReuse.getOrPut(decl, () -> newExprTycker(reporter));
     }
@@ -219,7 +219,7 @@ public record AyaSccTycker(
       .map(TyckOrder::unit);
     if (recDefs.isEmpty()) return;
     // TODO: terck other definitions
-    var fn = recDefs.filterIsInstance(Decl.FnDecl.class)
+    var fn = recDefs.filterIsInstance(TelescopicDecl.FnDecl.class)
       .map(f -> f.ref.core);
     terckRecursiveFn(fn);
   }

@@ -8,7 +8,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.concrete.stmt.Generalize;
 import org.aya.concrete.visitor.ExprTraversal;
 import org.aya.ref.DefVar;
@@ -23,17 +23,17 @@ import org.jetbrains.annotations.NotNull;
 public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit>> {
   public static final @NotNull SigRefFinder HEADER_ONLY = new SigRefFinder();
 
-  private void decl(@NotNull MutableList<TyckUnit> references, @NotNull Decl decl) {
+  private void decl(@NotNull MutableList<TyckUnit> references, @NotNull TelescopicDecl decl) {
     tele(decl.telescope, references);
     visitExpr(decl.result, references);
   }
 
   public void visit(@NotNull TyckUnit sn, @NotNull MutableList<TyckUnit> references) {
     switch (sn) {
-      case Decl decl -> decl(references, decl);
+      case TelescopicDecl decl -> decl(references, decl);
       case ClassDecl decl -> throw new UnsupportedOperationException("TODO");
-      case Decl.DataCtor ctor -> tele(ctor.telescope, references);
-      case Decl.StructField field -> {
+      case TelescopicDecl.DataCtor ctor -> tele(ctor.telescope, references);
+      case TelescopicDecl.StructField field -> {
         tele(field.telescope, references);
         visitExpr(field.result, references);
       }
@@ -53,7 +53,7 @@ public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit
 
   @Override public @NotNull Expr visitExpr(@NotNull Expr expr, @NotNull MutableList<TyckUnit> tyckUnits) {
     if (expr instanceof Expr.RefExpr ref) {
-      if (ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.concrete instanceof Decl decl)
+      if (ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.concrete instanceof TelescopicDecl decl)
         tyckUnits.append(decl);
     }
     return ExprTraversal.super.visitExpr(expr, tyckUnits);

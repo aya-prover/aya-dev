@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author zaoqi
  */
-public sealed interface TopLevelDecl extends GenericDecl, Stmt permits ClassDecl, Decl {
+public sealed interface TopLevelDecl extends Decl, Stmt permits ClassDecl, TelescopicDecl {
   enum Personality {
     NORMAL,
     EXAMPLE,
