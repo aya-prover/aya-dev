@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.Ref;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
+import org.aya.util.ForLSP;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,8 +19,8 @@ public record BindBlock(
   @NotNull Ref<@Nullable Context> context,
   @NotNull ImmutableSeq<QualifiedID> loosers,
   @NotNull ImmutableSeq<QualifiedID> tighters,
-  @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedLoosers,
-  @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedTighters
+  @ForLSP @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedLoosers,
+  @ForLSP @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedTighters
 ) {
   public static final @NotNull BindBlock EMPTY = new BindBlock(SourcePos.NONE, new Ref<>(), ImmutableSeq.empty(), ImmutableSeq.empty(), new Ref<>(), new Ref<>());
 }

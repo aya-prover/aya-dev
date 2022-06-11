@@ -20,6 +20,7 @@ import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.ExprTycker;
+import org.aya.util.ForLSP;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceNode;
@@ -50,7 +51,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     return new ConcreteDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
 
-  sealed interface WithTerm extends Expr {
+  @ForLSP sealed interface WithTerm extends Expr {
     @NotNull Ref<ExprTycker.Result> theCore();
     default @Nullable ExprTycker.Result core() {
       return theCore().value;
@@ -230,7 +231,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull WithPos<String> name,
     @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
     @NotNull Expr body,
-    @NotNull Ref<Var> resolvedField
+    @ForLSP @NotNull Ref<Var> resolvedField
   ) {}
 
   /**
