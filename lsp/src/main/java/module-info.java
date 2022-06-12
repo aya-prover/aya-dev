@@ -2,6 +2,7 @@ module org.aya.lsp {
   requires static org.jetbrains.annotations;
   requires org.aya;
   requires org.aya.cli;
+  requires com.google.gson;
   requires org.eclipse.lsp4j;
   requires org.eclipse.lsp4j.jsonrpc;
   requires info.picocli;

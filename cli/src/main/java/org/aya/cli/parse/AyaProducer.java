@@ -694,7 +694,7 @@ public record AyaProducer(
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.weakId();
-    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)));
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
 
     return unreachable(ctx);
   }
@@ -859,7 +859,7 @@ public record AyaProducer(
   public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {
     var id = ctx.weakId();
     return new Command.Module(
-      sourcePosOf(id), id.getText(),
+      sourcePosOf(id), sourcePosOf(ctx), id.getText(),
       Seq.wrapJava(ctx.stmt()).flatMap(this::visitStmt)
     );
   }

@@ -34,8 +34,15 @@ public interface FindReferences {
     @NotNull SeqView<LibraryOwner> libraries
   ) {
     var vars = Resolver.resolveVar(source, position);
+    return findRefs(vars.map(WithPos::data), libraries);
+  }
+
+  static @NotNull SeqView<SourcePos> findRefs(
+    @NotNull SeqView<Var> vars,
+    @NotNull SeqView<LibraryOwner> libraries
+  ) {
     var resolver = new Resolver.UsageResolver();
-    vars.forEach(var -> libraries.forEach(lib -> resolve(resolver, lib, var.data())));
+    vars.forEach(def -> libraries.forEach(lib -> resolve(resolver, lib, def)));
     return resolver.refs.view();
   }
 

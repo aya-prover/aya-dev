@@ -192,6 +192,7 @@ public final class PatTycker {
       case Pattern.Bind bind -> {
         var v = bind.bind();
         exprTycker.localCtx.put(v, term);
+        bind.type().value = term;
         yield new Pat.Bind(bind.explicit(), v, term);
       }
       case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),

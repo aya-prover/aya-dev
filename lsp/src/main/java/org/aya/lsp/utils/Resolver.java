@@ -11,6 +11,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.StmtOps;
@@ -35,7 +36,7 @@ public interface Resolver {
   ) {
     var mod = resolveModule(owner, module);
     return mod.mapNotNull(m -> m.tycked().value)
-      .map(defs -> defs.flatMap(Resolver::withSubLevel))
+      .map(defs -> defs.flatMap(Resolver::withChildren))
       .flatMap(defs -> defs.find(def -> def.ref().name().equals(name)));
   }
 
@@ -51,7 +52,7 @@ public interface Resolver {
     return resolver.targetVars.view().mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete != null) yield new WithPos<>(pos.sourcePos(), defVar);
-          // defVar is an imported and serialized symbol, so we need to find the original one
+        // defVar is an imported and serialized symbol, so we need to find the original one
         else if (defVar.module != null) {
           yield Resolver.resolveDef(source.owner(), defVar.module, defVar.name())
             .map(target -> new WithPos<Var>(pos.sourcePos(), target.ref()))
@@ -66,11 +67,19 @@ public interface Resolver {
     });
   }
 
-  private static @NotNull SeqView<Def> withSubLevel(@NotNull Def def) {
+  private static @NotNull SeqView<Def> withChildren(@NotNull Def def) {
     return switch (def) {
       case DataDef data -> SeqView.<Def>of(data).appendedAll(data.body);
       case StructDef struct -> SeqView.<Def>of(struct).appendedAll(struct.fields);
       default -> SeqView.of(def);
+    };
+  }
+
+  static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
+    return switch (def) {
+      case Decl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(Decl.DataCtor::ref));
+      case Decl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(Decl.StructField::ref));
+      default -> SeqView.of(def.ref());
     };
   }
 
@@ -132,7 +141,7 @@ public interface Resolver {
         case Pattern.Bind bind -> check(param, bind.bind(), bind.sourcePos());
         default -> {}
       }
-      return pattern;
+      return StmtOps.super.visitPattern(pattern, param);
     }
   }
 

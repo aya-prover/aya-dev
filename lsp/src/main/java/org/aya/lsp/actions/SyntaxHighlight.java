@@ -4,6 +4,8 @@ package org.aya.lsp.actions;
 
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
+import org.aya.cli.library.source.LibraryOwner;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
@@ -13,21 +15,36 @@ import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.LspRange;
 import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
-import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<HighlightResult.Symbol>> {
-  public static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
+import java.util.List;
 
-  private @NotNull Range rangeOf(@NotNull Signatured signatured) {
-    return LspRange.toRange(signatured.sourcePos());
+public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<HighlightResult.Symbol>> {
+  public static @NotNull List<HighlightResult> invoke(@NotNull LibraryOwner owner) {
+    var symbols = MutableList.<HighlightResult>create();
+    highlight(owner, symbols);
+    return symbols.asJava();
   }
+
+  private static void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {
+    owner.librarySources().forEach(src -> result.append(highlightOne(src)));
+    owner.libraryDeps().forEach(dep -> highlight(dep, result));
+  }
+
+  private static @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
+    var symbols = MutableList.<HighlightResult.Symbol>create();
+    var program = source.program().value;
+    if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
+    return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
+  }
+
+  private static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
 
   // region def, data, struct, prim, levels
   @Override
   public void visitSignatured(@NotNull Signatured signatured, @NotNull MutableList<HighlightResult.Symbol> buffer) {
-    buffer.append(new HighlightResult.Symbol(rangeOf(signatured), switch (signatured) {
+    buffer.append(new HighlightResult.Symbol(LspRange.toRange(signatured), switch (signatured) {
       case Decl.DataDecl $ -> HighlightResult.Kind.DataDef;
       case Decl.StructField $ -> HighlightResult.Kind.FieldDef;
       case Decl.PrimDecl $ -> HighlightResult.Kind.PrimDef;

@@ -4,8 +4,9 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.ref.LocalVar;
+import kala.value.Ref;
 import org.aya.concrete.Pattern;
+import org.aya.ref.LocalVar;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -25,7 +26,7 @@ public record PatTree(
 
   public @NotNull Pattern toPattern() {
     var childPatterns = children.isEmpty()
-      ? ImmutableSeq.<Pattern>fill(argsCount, new Pattern.Bind(SourcePos.NONE, true, new LocalVar("_")))
+      ? ImmutableSeq.<Pattern>fill(argsCount, new Pattern.Bind(SourcePos.NONE, true, new LocalVar("_"), new Ref<>()))
       : children.view().map(PatTree::toPattern).toImmutableSeq();
     return new Pattern.Ctor(SourcePos.NONE, explicit, new WithPos<>(SourcePos.NONE, new LocalVar(s)), childPatterns, null);
   }

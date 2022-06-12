@@ -55,6 +55,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   /**
    * When working with LSP, we need to track all previously created Primitives.
    * This is shared among all loaded libraries just like a Global PrimFactory before.
+   *
    * @implNote consider using one shared factory among all mocked libraries, and separate factory for each real library.
    */
   protected final @NotNull PrimDef.Factory sharedPrimFactory = new PrimDef.Factory();
@@ -95,8 +96,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
-    var sources = owner.librarySources();
-    var found = sources.find(src -> src.file().equals(moduleFile));
+    var found = owner.librarySources().find(src -> src.file().equals(moduleFile));
     if (found.isDefined()) return found.get();
     for (var dep : owner.libraryDeps()) {
       var foundDep = find(dep, moduleFile);
@@ -151,22 +151,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       sharedPrimFactory.clear();
     }
     reportErrors(reporter, DistillerOptions.pretty());
-    // build highlight
-    var symbols = MutableList.<HighlightResult>create();
-    highlight(owner, symbols);
-    return symbols.asJava();
-  }
-
-  private void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {
-    owner.librarySources().forEach(src -> result.append(highlightOne(src)));
-    for (var dep : owner.libraryDeps()) highlight(dep, result);
-  }
-
-  private @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
-    var symbols = MutableList.<HighlightResult.Symbol>create();
-    var program = source.program().value;
-    if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
-    return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
+    return SyntaxHighlight.invoke(owner);
   }
 
   public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
@@ -290,8 +275,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
-  public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
+  @Override public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
@@ -323,10 +307,59 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
+      var currentFile = Option.of(source.file());
       return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
-        .filter(pos -> pos.file().underlying().equals(Option.of(source.file())))
+        // only highlight references in the current file
+        .filter(pos -> pos.file().underlying().equals(currentFile))
         .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
         .stream().toList();
+    });
+  }
+
+  @Override public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return LensMaker.invoke(source, libraries.view());
+    });
+  }
+
+  @Override public CompletableFuture<CodeLens> resolveCodeLens(CodeLens codeLens) {
+    return CompletableFuture.supplyAsync(() -> LensMaker.resolve(codeLens));
+  }
+
+  @Override public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return InlayHintMaker.invoke(source, params.getRange());
+    });
+  }
+
+  @Override
+  public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return ProjectSymbol.invoke(source)
+        .map(symbol -> Either.<SymbolInformation, DocumentSymbol>forRight(symbol.document()))
+        .asJava();
+    });
+  }
+
+  @Override
+  public CompletableFuture<Either<List<? extends SymbolInformation>, List<? extends WorkspaceSymbol>>> symbol(WorkspaceSymbolParams params) {
+    return CompletableFuture.supplyAsync(() -> Either.forRight(
+      ProjectSymbol.invoke(libraries.view())
+        .map(ProjectSymbol.Symbol::workspace)
+        .asJava()));
+  }
+
+  @Override public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
+    return CompletableFuture.supplyAsync(() -> {
+      var source = find(params.getTextDocument().getUri());
+      if (source == null) return Collections.emptyList();
+      return Folding.invoke(source);
     });
   }
 

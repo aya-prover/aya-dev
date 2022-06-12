@@ -81,6 +81,7 @@ public sealed interface Command extends Stmt {
    */
   record Module(
     @Override @NotNull SourcePos sourcePos,
+    @NotNull SourcePos entireSourcePos,
     @NotNull String name,
     @NotNull ImmutableSeq<@NotNull Stmt> contents
   ) implements Command {
