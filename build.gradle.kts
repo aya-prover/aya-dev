@@ -126,6 +126,11 @@ subprojects {
     }
   }
 
+  // Gradle module metadata contains Gradle JVM version, disable it
+  tasks.withType<GenerateModuleMetadata>().configureEach {
+    enabled = false
+  }
+
   val proj = this@subprojects
   publishing.publications {
     create<MavenPublication>("maven") {

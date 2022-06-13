@@ -1,4 +1,4 @@
-module org.aya.pretty {
+module aya.pretty {
   requires static org.jetbrains.annotations;
 
   requires kala.base;

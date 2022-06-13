@@ -1,12 +1,11 @@
-module org.aya {
-  requires static org.jetbrains.annotations;
-
-  requires org.commonmark;
-
-  requires transitive org.aya.pretty;
-  requires transitive org.aya.util;
+module aya.base {
+  requires transitive aya.pretty;
+  requires transitive aya.util;
   requires transitive kala.base;
   requires transitive kala.collection;
+
+  requires static org.jetbrains.annotations;
+  requires org.commonmark;
 
   exports org.aya.concrete.desugar;
   exports org.aya.concrete.error;
