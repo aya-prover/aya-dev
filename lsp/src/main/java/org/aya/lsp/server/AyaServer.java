@@ -8,7 +8,9 @@ import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.Log;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
-import org.eclipse.lsp4j.services.*;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.services.LanguageClientAware;
+import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
@@ -84,11 +86,11 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
     Log.i("Goodbye");
   }
 
-  @Override public @NotNull TextDocumentService getTextDocumentService() {
+  @Override public @NotNull AyaService getTextDocumentService() {
     return service;
   }
 
-  @Override public @NotNull WorkspaceService getWorkspaceService() {
+  @Override public @NotNull AyaService getWorkspaceService() {
     return service;
   }
 }
