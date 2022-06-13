@@ -1,8 +1,9 @@
-module org.aya.util {
+module aya.util {
+  requires aya.pretty;
+
   requires static org.jetbrains.annotations;
   requires transitive kala.base;
   requires transitive kala.collection;
-  requires org.aya.pretty;
 
   exports org.aya.util.cancel;
   exports org.aya.util.error;

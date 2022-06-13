@@ -1,10 +1,11 @@
-module org.aya.repl {
+module aya.repl {
+  requires aya.pretty;
+  requires aya.util;
+
   requires static org.jetbrains.annotations;
   requires transitive kala.base;
   requires transitive kala.collection;
   requires org.antlr.antlr4.runtime;
-  requires org.aya.pretty;
-  requires org.aya.util;
   requires org.jline.reader;
   requires org.jline.terminal;
 

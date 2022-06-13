@@ -1,4 +1,8 @@
-module org.aya.cli {
+module aya.cli {
+  requires transitive aya.parser;
+  requires transitive aya.repl;
+  requires transitive aya.base;
+
   requires static org.jetbrains.annotations;
 
   requires com.google.gson;
@@ -10,10 +14,6 @@ module org.aya.cli {
   requires org.jline.terminal.jansi;
   requires org.jline.terminal;
 
-  requires transitive org.aya.parser;
-  requires transitive org.aya.repl;
-  requires transitive org.aya;
-
   exports org.aya.cli.library.json;
   exports org.aya.cli.library.source;
   exports org.aya.cli.library;
@@ -24,5 +24,5 @@ module org.aya.cli {
   exports org.aya.cli;
 
   opens org.aya.cli.library.json to com.google.gson;
-  opens org.aya.cli.repl to org.aya.repl;
+  opens org.aya.cli.repl to aya.repl;
 }
