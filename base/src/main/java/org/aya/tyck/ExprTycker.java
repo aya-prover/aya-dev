@@ -12,7 +12,7 @@ import kala.tuple.Tuple3;
 import kala.value.LazyValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.BaseDecl;
-import org.aya.concrete.stmt.TelescopicDecl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
@@ -44,9 +44,9 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * @apiNote make sure to instantiate this class once for each {@link TelescopicDecl}.
- * Do <em>not</em> use multiple instances in the tycking of one {@link TelescopicDecl}
- * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link TelescopicDecl}s.
+ * @apiNote make sure to instantiate this class once for each {@link TopTeleDecl}.
+ * Do <em>not</em> use multiple instances in the tycking of one {@link TopTeleDecl}
+ * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link TopTeleDecl}s.
  */
 public final class ExprTycker extends Tycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
@@ -113,7 +113,7 @@ public final class ExprTycker extends Tycker {
           Def.defTele(structRef).view().zip(structCall.args())
             .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
 
-        var fields = MutableList.<Tuple2<DefVar<FieldDef, TelescopicDecl.StructField>, Term>>create();
+        var fields = MutableList.<Tuple2<DefVar<FieldDef, TopTeleDecl.StructField>, Term>>create();
         var missing = MutableList.<Var>create();
         var conFields = newExpr.fields();
 
@@ -474,27 +474,27 @@ public final class ExprTycker extends Tycker {
 
   @SuppressWarnings("unchecked")
   private @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var) {
-    if (var.core instanceof FnDef || var.concrete instanceof TelescopicDecl.FnDecl) {
-      return defCall(pos, (DefVar<FnDef, TelescopicDecl.FnDecl>) var, CallTerm.Fn::new);
+    if (var.core instanceof FnDef || var.concrete instanceof TopTeleDecl.FnDecl) {
+      return defCall(pos, (DefVar<FnDef, TopTeleDecl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall(pos, (DefVar<PrimDef, TelescopicDecl.PrimDecl>) var, CallTerm.Prim::new);
-    } else if (var.core instanceof DataDef || var.concrete instanceof TelescopicDecl.DataDecl) {
-      return defCall(pos, (DefVar<DataDef, TelescopicDecl.DataDecl>) var, CallTerm.Data::new);
-    } else if (var.core instanceof StructDef || var.concrete instanceof TelescopicDecl.StructDecl) {
-      return defCall(pos, (DefVar<StructDef, TelescopicDecl.StructDecl>) var, CallTerm.Struct::new);
-    } else if (var.core instanceof CtorDef || var.concrete instanceof TelescopicDecl.DataDecl.DataCtor) {
-      var conVar = (DefVar<CtorDef, TelescopicDecl.DataDecl.DataCtor>) var;
+      return defCall(pos, (DefVar<PrimDef, TopTeleDecl.PrimDecl>) var, CallTerm.Prim::new);
+    } else if (var.core instanceof DataDef || var.concrete instanceof TopTeleDecl.DataDecl) {
+      return defCall(pos, (DefVar<DataDef, TopTeleDecl.DataDecl>) var, CallTerm.Data::new);
+    } else if (var.core instanceof StructDef || var.concrete instanceof TopTeleDecl.StructDecl) {
+      return defCall(pos, (DefVar<StructDef, TopTeleDecl.StructDecl>) var, CallTerm.Struct::new);
+    } else if (var.core instanceof CtorDef || var.concrete instanceof TopTeleDecl.DataDecl.DataCtor) {
+      var conVar = (DefVar<CtorDef, TopTeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
       var type = FormTerm.Pi.make(tele, Def.defResult(conVar));
       var telescopes = CtorDef.telescopes(conVar).rename();
       var body = telescopes.toConCall(conVar);
       return new Result(IntroTerm.Lambda.make(telescopes.params(), body), type);
-    } else if (var.core instanceof FieldDef || var.concrete instanceof TelescopicDecl.StructField) {
+    } else if (var.core instanceof FieldDef || var.concrete instanceof TopTeleDecl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
-      var field = (DefVar<FieldDef, TelescopicDecl.StructField>) var;
+      var field = (DefVar<FieldDef, TopTeleDecl.StructField>) var;
       return new Result(new RefTerm.Field(field, 0), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";

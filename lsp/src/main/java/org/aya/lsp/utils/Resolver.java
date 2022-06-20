@@ -74,8 +74,8 @@ public interface Resolver {
 
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
-      case TelescopicDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TelescopicDecl.DataCtor::ref));
-      case TelescopicDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TelescopicDecl.StructField::ref));
+      case TopTeleDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TopTeleDecl.DataCtor::ref));
+      case TopTeleDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TopTeleDecl.StructField::ref));
       default -> SeqView.of(def.ref());
     };
   }

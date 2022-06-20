@@ -6,7 +6,10 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.ClassDecl;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TopLevelDecl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
@@ -63,11 +66,11 @@ public record StmtTycker(
   }
 
   private @NotNull GenericDef doTyck(@NotNull TopLevelDecl predecl, @NotNull ExprTycker tycker) {
-    if (predecl instanceof TelescopicDecl decl && decl.signature == null) tyckHeader(decl, tycker);
-    var signature = predecl instanceof TelescopicDecl decl ? decl.signature : null;
+    if (predecl instanceof TopTeleDecl decl && decl.signature == null) tyckHeader(decl, tycker);
+    var signature = predecl instanceof TopTeleDecl decl ? decl.signature : null;
     return switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
-      case TelescopicDecl.FnDecl decl -> {
+      case TopTeleDecl.FnDecl decl -> {
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
@@ -99,13 +102,13 @@ public record StmtTycker(
           }
         );
       }
-      case TelescopicDecl.DataDecl decl -> {
+      case TopTeleDecl.DataDecl decl -> {
         assert signature != null;
         var body = decl.body.map(clause -> traced(clause, tycker, this::tyck));
         yield new DataDef(decl.ref, signature.param(), decl.ulift, body);
       }
-      case TelescopicDecl.PrimDecl decl -> decl.ref.core;
-      case TelescopicDecl.StructDecl decl -> {
+      case TopTeleDecl.PrimDecl decl -> decl.ref.core;
+      case TopTeleDecl.StructDecl decl -> {
         assert signature != null;
         var body = decl.fields.map(field -> traced(field, tycker, this::tyck));
         yield new StructDef(decl.ref, signature.param(), decl.ulift, body);
@@ -114,11 +117,11 @@ public record StmtTycker(
   }
 
   // Apply a simple checking strategy for maximal metavar inference.
-  public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, TelescopicDecl.FnDecl fn) {
+  public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, TopTeleDecl.FnDecl fn) {
     return traced(fn, tycker, (o, w) -> doSimpleFn(tycker, fn));
   }
 
-  private @NotNull FnDef doSimpleFn(@NotNull ExprTycker tycker, TelescopicDecl.FnDecl fn) {
+  private @NotNull FnDef doSimpleFn(@NotNull ExprTycker tycker, TopTeleDecl.FnDecl fn) {
     var okTele = checkTele(tycker, fn.telescope, -1);
     var preresult = tycker.synthesize(fn.result).wellTyped();
     var bodyExpr = fn.body.getLeftValue();
@@ -135,7 +138,7 @@ public record StmtTycker(
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope")));
     switch (decl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
-      case TelescopicDecl.FnDecl fn -> {
+      case TopTeleDecl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, -1);
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
@@ -143,7 +146,7 @@ public record StmtTycker(
         if (resultTele.isEmpty() && fn.body.isRight() && fn.body.getRightValue().isEmpty())
           reporter.report(new NobodyError(decl.sourcePos(), fn.ref));
       }
-      case TelescopicDecl.DataDecl data -> {
+      case TopTeleDecl.DataDecl data -> {
         var pos = data.sourcePos;
         var tele = tele(tycker, data.telescope, -1);
         var result = data.result instanceof Expr.HoleExpr ? FormTerm.Univ.ZERO
@@ -153,7 +156,7 @@ public record StmtTycker(
         // [ice]: this line reports error if result is not a universe term, so we're good
         data.ulift = tycker.ensureUniv(decl.result(), result);
       }
-      case TelescopicDecl.StructDecl struct -> {
+      case TopTeleDecl.StructDecl struct -> {
         var pos = struct.sourcePos;
         var tele = tele(tycker, struct.telescope, -1);
         var result = tycker.zonk(tycker.synthesize(struct.result)).wellTyped();
@@ -161,7 +164,7 @@ public record StmtTycker(
         // [ice]: this line reports error if result is not a universe term, so we're good
         struct.ulift = tycker.ensureUniv(decl.result(), result);
       }
-      case TelescopicDecl.PrimDecl prim -> {
+      case TopTeleDecl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
         var core = prim.ref.core;
         var tele = tele(tycker, prim.telescope, -1);
@@ -188,7 +191,7 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  public void tyckHeader(TelescopicDecl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  public void tyckHeader(TopTeleDecl.@NotNull DataCtor ctor, ExprTycker tycker) {
     if (ctor.signature != null) return;
     var dataRef = ctor.dataRef;
     var dataConcrete = dataRef.concrete;
@@ -210,7 +213,7 @@ public record StmtTycker(
     ctor.patternTele = pat.isEmpty() ? dataSig.param().map(Term.Param::implicitify) : Pat.extractTele(pat);
   }
 
-  @NotNull public CtorDef tyck(TelescopicDecl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  @NotNull public CtorDef tyck(TopTeleDecl.@NotNull DataCtor ctor, ExprTycker tycker) {
     // TODO[ice]: remove this hack
     if (ctor.ref.core != null) return ctor.ref.core;
     var dataRef = ctor.dataRef;
@@ -251,7 +254,7 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  public void tyckHeader(TelescopicDecl.@NotNull StructField field, ExprTycker tycker) {
+  public void tyckHeader(TopTeleDecl.@NotNull StructField field, ExprTycker tycker) {
     if (field.signature != null) return;
     var structRef = field.structRef;
     var structSig = structRef.concrete.signature;
@@ -262,7 +265,7 @@ public record StmtTycker(
     field.signature = new Def.Signature(tele, result);
   }
 
-  @NotNull public FieldDef tyck(TelescopicDecl.@NotNull StructField field, ExprTycker tycker) {
+  @NotNull public FieldDef tyck(TopTeleDecl.@NotNull StructField field, ExprTycker tycker) {
     // TODO[ice]: remove this hack
     if (field.ref.core != null) return field.ref.core;
     var structRef = field.structRef;

@@ -4,7 +4,6 @@ package org.aya.concrete.stmt;
 
 import org.aya.concrete.Expr;
 import org.aya.core.def.ClassDef;
-import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
@@ -17,11 +16,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author zaoqi
  */
-public non-sealed/*sealed*/ abstract class ClassDecl implements TopLevelDecl {
-  public final @NotNull SourcePos sourcePos;
-  public final @NotNull SourcePos entireSourcePos;
-  public final @Nullable OpDecl.OpInfo opInfo;
-  public final @NotNull BindBlock bindBlock;
+public non-sealed/*sealed*/ abstract class ClassDecl extends BaseDecl implements TopLevelDecl {
   public @NotNull Expr result;
   public final @NotNull TopLevelDecl.Personality personality;
 
@@ -34,14 +29,6 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements TopLevelDecl {
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;
-  }
-
-  @Override public @NotNull BindBlock bindBlock() {
-    return bindBlock;
-  }
-
-  @Override public @Nullable OpInfo opInfo() {
-    return opInfo;
   }
 
   @Override public @Nullable Context getCtx() {
@@ -66,22 +53,13 @@ public non-sealed/*sealed*/ abstract class ClassDecl implements TopLevelDecl {
     @Nullable OpDecl.OpInfo opInfo,
     @NotNull BindBlock bindBlock,
     @NotNull Expr result,
-    @NotNull TelescopicDecl.Personality personality,
+    @NotNull TopTeleDecl.Personality personality,
     @NotNull Accessibility accessibility
   ) {
-    this.sourcePos = sourcePos;
-    this.entireSourcePos = entireSourcePos;
-    this.opInfo = opInfo;
-    this.bindBlock = bindBlock;
+    super(sourcePos, entireSourcePos, opInfo, bindBlock);
     this.result = result;
     this.personality = personality;
     this.accessibility = accessibility;
-  }
-
-  @Override @NotNull public abstract DefVar<? extends ClassDef, ? extends ClassDecl> ref();
-
-  @Override public @NotNull SourcePos sourcePos() {
-    return sourcePos;
   }
 
   @Override public String toString() {

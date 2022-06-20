@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-import org.aya.concrete.stmt.TelescopicDecl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.def.FieldDef;
 import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
@@ -17,7 +17,7 @@ public record RefTerm(@NotNull LocalVar var, int lift) implements Term {
     return visitor.visitRef(this, p);
   }
 
-  public record Field(@NotNull DefVar<FieldDef, TelescopicDecl.StructField> ref, int lift) implements Term {
+  public record Field(@NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref, int lift) implements Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFieldRef(this, p);
     }

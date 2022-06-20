@@ -6,7 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.BaseDecl;
-import org.aya.concrete.stmt.TelescopicDecl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
@@ -33,7 +33,7 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).param;
   }
-  static @NotNull Seq<CtorDef> dataBody(@NotNull DefVar<? extends DataDef, ? extends TelescopicDecl.DataDecl> defVar) {
+  static @NotNull Seq<CtorDef> dataBody(@NotNull DefVar<? extends DataDef, ? extends TopTeleDecl.DataDecl> defVar) {
     if (defVar.core != null) return defVar.core.body;
       // guaranteed as this is already a core term
     else return defVar.concrete.checkedBody;

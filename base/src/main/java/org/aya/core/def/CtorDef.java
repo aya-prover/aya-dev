@@ -3,7 +3,7 @@
 package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.TelescopicDecl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
@@ -16,15 +16,15 @@ import java.util.Objects;
  * @author ice1000, kiva
  */
 public final class CtorDef extends SubLevelDef {
-  public final @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> dataRef;
-  public final @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref;
+  public final @NotNull DefVar<DataDef, TopTeleDecl.DataDecl> dataRef;
+  public final @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref;
   public final @NotNull ImmutableSeq<Pat> pats;
 
   public CtorDef(
-          @NotNull DefVar<DataDef, TelescopicDecl.DataDecl> dataRef, @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref,
-          @NotNull ImmutableSeq<Pat> pats,
-          @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
-          @NotNull ImmutableSeq<Matching> clauses, @NotNull Term result, boolean coerce
+    @NotNull DefVar<DataDef, TopTeleDecl.DataDecl> dataRef, @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref,
+    @NotNull ImmutableSeq<Pat> pats,
+    @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
+    @NotNull ImmutableSeq<Matching> clauses, @NotNull Term result, boolean coerce
   ) {
     super(ownerTele, selfTele, result, clauses, coerce);
     ref.core = this;
@@ -33,7 +33,7 @@ public final class CtorDef extends SubLevelDef {
     this.pats = pats;
   }
 
-  public static @NotNull ImmutableSeq<Term.Param> conTele(@NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> conVar) {
+  public static @NotNull ImmutableSeq<Term.Param> conTele(@NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> conVar) {
     if (conVar.core != null) return conVar.core.selfTele;
     else return Objects.requireNonNull(conVar.concrete.signature).param();
   }
@@ -42,7 +42,7 @@ public final class CtorDef extends SubLevelDef {
    * @return first component: data's telescope, second component: con telescope
    */
   public static @NotNull DataDef.CtorTelescopes
-  telescopes(@NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> defVar) {
+  telescopes(@NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> defVar) {
     var core = defVar.core;
     if (core != null) return new DataDef.CtorTelescopes(core.ownerTele, core.selfTele);
     var dataSignature = defVar.concrete.patternTele;
@@ -56,7 +56,7 @@ public final class CtorDef extends SubLevelDef {
     return visitor.visitCtor(this, p);
   }
 
-  public @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref() {
+  public @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref() {
     return ref;
   }
 

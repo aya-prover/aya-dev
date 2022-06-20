@@ -16,14 +16,14 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public sealed abstract class BaseDecl implements Decl
-  permits BaseDecl.Telescopic {
+  permits BaseDecl.Telescopic, ClassDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpInfo opInfo;
   public final @NotNull BindBlock bindBlock;
 
   public static sealed abstract class Telescopic extends BaseDecl
-    permits TelescopicDecl, TelescopicDecl.DataCtor, TelescopicDecl.StructField {
+    permits TopTeleDecl, TopTeleDecl.DataCtor, TopTeleDecl.StructField {
     // will change after resolve
     public @NotNull ImmutableSeq<Expr.Param> telescope;
     public @Nullable Def.Signature signature;

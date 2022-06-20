@@ -7,8 +7,8 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.stmt.TelescopicDecl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.repr.AyaShape;
@@ -30,7 +30,7 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TyckDeclTest {
-  public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull TelescopicDecl decl, Trace.@Nullable Builder builder) {
+  public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull TopTeleDecl decl, Trace.@Nullable Builder builder) {
     var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
     return tycker.tyck(decl, tycker.newTycker(factory, new AyaShape.Factory()));
   }
@@ -52,7 +52,7 @@ public class TyckDeclTest {
   public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
     var res = successDesugarDecls(text);
     return Tuple.of(res._1, res._2.view()
-      .map(i -> i instanceof TelescopicDecl s ? tyck(res._1, s, null) : null)
+      .map(i -> i instanceof TopTeleDecl s ? tyck(res._1, s, null) : null)
       .filter(Objects::nonNull).toImmutableSeq());
   }
 }

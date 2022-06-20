@@ -28,7 +28,7 @@ import java.util.EnumSet;
  *
  * @author re-xyr
  */
-public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implements TopLevelDecl {
+public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements TopLevelDecl {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
@@ -58,14 +58,14 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
     this.result = result;
   }
 
-  protected TelescopicDecl(
+  protected TopTeleDecl(
     @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
     @NotNull Accessibility accessibility,
     @Nullable OpInfo opInfo,
     @NotNull BindBlock bindBlock,
     @NotNull ImmutableSeq<Expr.Param> telescope,
     @NotNull Expr result,
-    @NotNull TelescopicDecl.Personality personality
+    @NotNull TopTeleDecl.Personality personality
   ) {
     super(sourcePos, entireSourcePos, opInfo, bindBlock, telescope);
     this.accessibility = accessibility;
@@ -73,7 +73,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
     this.personality = personality;
   }
 
-  @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends TelescopicDecl> ref();
+  @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends TopTeleDecl> ref();
 
   /**
    * @author ice1000
@@ -81,7 +81,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
    * which means it's unspecified in the concrete syntax.
    * @see PrimDef
    */
-  public static final class PrimDecl extends TelescopicDecl {
+  public static final class PrimDecl extends TopTeleDecl {
     public final @NotNull DefVar<PrimDef, PrimDecl> ref;
 
     public PrimDecl(
@@ -104,7 +104,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
   }
 
   public static final class DataCtor extends BaseDecl.Telescopic {
-    public final @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref;
+    public final @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     /** Similar to {@link BaseDecl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
     public ImmutableSeq<Term.Param> patternTele;
@@ -145,7 +145,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
    * @author kiva
    * @see DataDef
    */
-  public static final class DataDecl extends TelescopicDecl {
+  public static final class DataDecl extends TopTeleDecl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public final @NotNull ImmutableSeq<DataCtor> body;
     /** Yet type-checked constructors */
@@ -161,7 +161,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
       @NotNull Expr result,
       @NotNull ImmutableSeq<DataCtor> body,
       @NotNull BindBlock bindBlock,
-      @NotNull TelescopicDecl.Personality personality
+      @NotNull TopTeleDecl.Personality personality
     ) {
       super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.body = body;
@@ -179,7 +179,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
    *
    * @author vont
    */
-  public static final class StructDecl extends TelescopicDecl {
+  public static final class StructDecl extends TopTeleDecl {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
@@ -195,7 +195,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
       // @NotNull ImmutableSeq<String> superClassNames,
       @NotNull ImmutableSeq<StructField> fields,
       @NotNull BindBlock bindBlock,
-      @NotNull TelescopicDecl.Personality personality
+      @NotNull TopTeleDecl.Personality personality
     ) {
       super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.fields = fields;
@@ -209,7 +209,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
   }
 
   public static final class StructField extends BaseDecl.Telescopic {
-    public final @NotNull DefVar<FieldDef, TelescopicDecl.StructField> ref;
+    public final @NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
@@ -247,7 +247,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
    * @author re-xyr
    * @see FnDef
    */
-  public static final class FnDecl extends TelescopicDecl {
+  public static final class FnDecl extends TopTeleDecl {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
@@ -262,7 +262,7 @@ public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implemen
       @NotNull Expr result,
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
       @NotNull BindBlock bindBlock,
-      @NotNull TelescopicDecl.Personality personality
+      @NotNull TopTeleDecl.Personality personality
     ) {
       super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.modifiers = modifiers;
