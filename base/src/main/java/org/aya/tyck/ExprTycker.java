@@ -11,8 +11,8 @@ import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.value.LazyValue;
 import org.aya.concrete.Expr;
+import org.aya.concrete.stmt.BaseDecl;
 import org.aya.concrete.stmt.TelescopicDecl;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
@@ -502,7 +502,7 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
+  private @NotNull <D extends Def, S extends BaseDecl.Telescopic> ExprTycker.Result
   defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(Term.Param::rename);

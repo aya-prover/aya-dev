@@ -4,11 +4,11 @@ package org.aya.ref;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import org.aya.concrete.stmt.BaseDecl;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.core.def.Def;
-import org.aya.resolve.ResolveInfo;
 import org.aya.core.def.GenericDef;
+import org.aya.resolve.ResolveInfo;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
   }
 
   /** Used in the serialization of core and primitive definitions. */
-  public static <Core extends Def, Concrete extends Signatured>
+  public static <Core extends Def, Concrete extends BaseDecl>
   @NotNull DefVar<Core, Concrete> empty(@NotNull String name) {
     return new DefVar<>(null, null, name);
   }

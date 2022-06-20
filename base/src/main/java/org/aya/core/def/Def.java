@@ -5,8 +5,8 @@ package org.aya.core.def;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.stmt.BaseDecl;
 import org.aya.concrete.stmt.TelescopicDecl;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
@@ -24,11 +24,11 @@ import java.util.Objects;
  * @author ice1000
  */
 public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, TopLevelDef {
-  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends BaseDecl.Telescopic> defVar) {
     return FormTerm.Pi.make(defTele(defVar), defResult(defVar));
   }
 
-  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends BaseDecl.Telescopic> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).param;
@@ -38,7 +38,7 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
       // guaranteed as this is already a core term
     else return defVar.concrete.checkedBody;
   }
-  static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+  static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends BaseDecl.Telescopic> defVar) {
     if (defVar.core != null) return defVar.core.result();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).result;
@@ -48,7 +48,7 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
     return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
   }
 
-  @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
+  @Override @NotNull DefVar<? extends Def, ? extends BaseDecl> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

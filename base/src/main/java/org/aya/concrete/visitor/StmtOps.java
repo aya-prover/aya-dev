@@ -25,7 +25,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
   default void traceExit(P p) {
   }
 
-  default void visitSignatured(@NotNull Signatured signatured, P pp) {
+  default void visitTelescopic(@NotNull BaseDecl.Telescopic signatured, P pp) {
     signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> visitExpr(expr, pp)));
   }
 
@@ -49,7 +49,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
   }
 
   default void visitDecl(@NotNull TopLevelDecl decl, P pp) {
-    if(decl instanceof TelescopicDecl declWithSig) visitSignatured(declWithSig, pp);
+    if(decl instanceof TelescopicDecl declWithSig) visitTelescopic(declWithSig, pp);
     decl.setResult(visitExpr(decl.result(), pp));
     switch (decl) {
       case ClassDecl classDecl -> {}
@@ -83,12 +83,12 @@ public interface StmtOps<P> extends ExprTraversal<P> {
   }
 
   default void visitCtor(TelescopicDecl.@NotNull DataCtor ctor, P p) {
-    visitSignatured(ctor, p);
+    visitTelescopic(ctor, p);
     ctor.patterns = ctor.patterns.map(pat -> visitPattern(pat, p));
     ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, p));
   }
   default void visitField(TelescopicDecl.@NotNull StructField field, P p) {
-    visitSignatured(field, p);
+    visitTelescopic(field, p);
     field.result = visitExpr(field.result, p);
     field.clauses = field.clauses.map(clause -> visitClause(clause, p));
     field.body = field.body.map(expr -> visitExpr(expr, p));

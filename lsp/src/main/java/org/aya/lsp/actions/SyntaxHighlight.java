@@ -43,7 +43,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   // region def, data, struct, prim, levels
   @Override
-  public void visitSignatured(@NotNull Signatured signatured, @NotNull MutableList<HighlightResult.Symbol> buffer) {
+  public void visitTelescopic(BaseDecl.@NotNull Telescopic signatured, @NotNull MutableList<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(signatured), switch (signatured) {
       case TelescopicDecl.DataDecl $ -> HighlightResult.Kind.DataDef;
       case TelescopicDecl.StructField $ -> HighlightResult.Kind.FieldDef;
@@ -52,7 +52,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
       case TelescopicDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
       case TelescopicDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
     }));
-    StmtOps.super.visitSignatured(signatured, buffer);
+    StmtOps.super.visitTelescopic(signatured, buffer);
   }
 
   @Override public void visitDecl(@NotNull TopLevelDecl decl, @NotNull MutableList<HighlightResult.Symbol> buffer) {

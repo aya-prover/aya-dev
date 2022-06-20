@@ -281,7 +281,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     };
   }
 
-  public @NotNull Doc signatured(@NotNull Signatured signatured) {
+  public @NotNull Doc signatured(@NotNull BaseDecl signatured) {
     return switch (signatured) {
       case TelescopicDecl decl -> decl(decl);
       case TelescopicDecl.StructField field -> {

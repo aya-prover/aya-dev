@@ -4,8 +4,8 @@ package org.aya.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.stmt.BaseDecl;
 import org.aya.concrete.stmt.TelescopicDecl;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
 import org.aya.generic.Arg;
@@ -23,7 +23,7 @@ public sealed interface CallTerm extends Term {
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
 
   @FunctionalInterface
-  interface Factory<D extends Def, S extends Signatured> {
+  interface Factory<D extends Def, S extends BaseDecl> {
     @Contract(pure = true, value = "_,_,_->new") @NotNull CallTerm make(
       DefVar<D, S> defVar,
       int ulift,

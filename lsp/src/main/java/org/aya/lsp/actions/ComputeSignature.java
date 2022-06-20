@@ -4,7 +4,7 @@ package org.aya.lsp.actions;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.Signatured;
+import org.aya.concrete.stmt.BaseDecl;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
@@ -34,8 +34,8 @@ public interface ComputeSignature {
       case LocalVar localVar -> BaseDistiller.varDoc(localVar);
       case DefVar<?, ?> ref -> {
         // #299: hovering a mouse on a definition whose header is failed to tyck
-        if ((!(ref.core instanceof Def)) && (!(ref.concrete instanceof Signatured concrete) || concrete.signature == null)) yield Doc.empty();
-        var ref0 = (DefVar<? extends Def, ? extends Signatured>) ref;
+        if (!(ref.concrete instanceof BaseDecl.Telescopic concrete) || concrete.signature == null) yield Doc.empty();
+        var ref0 = (DefVar<? extends Def, ? extends BaseDecl.Telescopic>) ref;
         yield computeSignature(Def.defTele(ref0), Def.defResult(ref0), withResult);
       }
       default -> Doc.empty();

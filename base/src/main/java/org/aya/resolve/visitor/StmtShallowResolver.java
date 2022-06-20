@@ -92,9 +92,9 @@ public record StmtShallowResolver(
           var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
           var defVar0 = (DefVar<?, ?>) symbol;
-          assert (defVar0.core instanceof Def) || (defVar0.concrete instanceof Signatured);
+          assert (defVar0.core instanceof Def) || (defVar0.concrete instanceof BaseDecl.Telescopic);
           @SuppressWarnings("unchecked")
-          var defVar = (DefVar<? extends Def, ? extends Signatured>) defVar0;
+          var defVar = (DefVar<? extends Def, ? extends BaseDecl.Telescopic>) defVar0;
           var argc = defVar.core != null
             ? defVar.core.telescope().count(Bind::explicit)
             : defVar.concrete.telescope.count(Expr.Param::explicit);

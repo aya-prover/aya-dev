@@ -28,7 +28,7 @@ import java.util.EnumSet;
  *
  * @author re-xyr
  */
-public sealed abstract class TelescopicDecl extends Signatured implements TopLevelDecl {
+public sealed abstract class TelescopicDecl extends BaseDecl.Telescopic implements TopLevelDecl {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
@@ -103,10 +103,10 @@ public sealed abstract class TelescopicDecl extends Signatured implements TopLev
     }
   }
 
-  public static final class DataCtor extends Signatured {
+  public static final class DataCtor extends BaseDecl.Telescopic {
     public final @NotNull DefVar<CtorDef, TelescopicDecl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
-    /** Similar to {@link Signatured#signature}, but stores the bindings in {@link DataCtor#patterns} */
+    /** Similar to {@link BaseDecl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
     public ImmutableSeq<Term.Param> patternTele;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
@@ -208,7 +208,7 @@ public sealed abstract class TelescopicDecl extends Signatured implements TopLev
     }
   }
 
-  public static final class StructField extends Signatured {
+  public static final class StructField extends BaseDecl.Telescopic {
     public final @NotNull DefVar<FieldDef, TelescopicDecl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;

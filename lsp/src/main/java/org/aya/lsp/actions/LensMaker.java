@@ -8,7 +8,7 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TopLevelDecl;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
 import org.eclipse.lsp4j.CodeLens;
@@ -31,7 +31,7 @@ public record LensMaker(@NotNull SeqView<LibraryOwner> libraries) implements Syn
     return new CodeLens(codeLens.getRange(), cmd, codeLens.getData());
   }
 
-  @Override public void visitDecl(@NotNull Decl maybe, @NotNull MutableList<CodeLens> pp) {
+  @Override public void visitDecl(@NotNull TopLevelDecl maybe, @NotNull MutableList<CodeLens> pp) {
     Resolver.withChildren(maybe).filter(dv -> dv.concrete != null).forEach(dv -> {
       var refs = FindReferences.findRefs(SeqView.of(dv), libraries).toImmutableSeq();
       if (refs.size() > 0) {

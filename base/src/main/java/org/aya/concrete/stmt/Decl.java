@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author zaoqi
  * @see DefVar
  */
-public sealed interface Decl extends OpDecl, SourceNode, TyckUnit permits TopLevelDecl, Signatured {
+public sealed interface Decl extends OpDecl, SourceNode, TyckUnit permits TopLevelDecl, BaseDecl {
   @Contract(pure = true) @NotNull DefVar<?, ?> ref();
   @NotNull BindBlock bindBlock();
 

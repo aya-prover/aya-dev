@@ -10,13 +10,9 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Signatured;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.generic.Constants;
@@ -78,8 +74,8 @@ public interface Resolver {
 
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
-      case Decl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(Decl.DataCtor::ref));
-      case Decl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(Decl.StructField::ref));
+      case TelescopicDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TelescopicDecl.DataCtor::ref));
+      case TelescopicDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TelescopicDecl.StructField::ref));
       default -> SeqView.of(def.ref());
     };
   }
@@ -168,12 +164,12 @@ public interface Resolver {
       super.visitCommand(cmd, pp);
     }
 
-    @Override public void visitSignatured(@NotNull Signatured signatured, XY xy) {
+    @Override public void visitTelescopic(BaseDecl.@NotNull Telescopic signatured, XY xy) {
       signatured.telescope
         .filterNot(tele -> tele.ref().name().startsWith(Constants.ANONYMOUS_PREFIX))
         .forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
       check(xy, signatured.ref(), signatured.sourcePos());
-      super.visitSignatured(signatured, xy);
+      super.visitTelescopic(signatured, xy);
     }
 
     @Override public @NotNull Expr visitExpr(@NotNull Expr expr, XY pp) {
