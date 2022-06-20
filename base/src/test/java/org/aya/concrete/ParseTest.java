@@ -8,8 +8,9 @@ import kala.tuple.Tuple2;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.TopLevelDecl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.Global;
@@ -52,7 +53,7 @@ public class ParseTest {
     return INSTANCE.visitProgram(AyaParserImpl.parser(code).program());
   }
 
-  public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
+  public static @NotNull Tuple2<? extends TopLevelDecl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitDecl(AyaParserImpl.parser(code).decl());
   }
 
@@ -178,11 +179,11 @@ public class ParseTest {
   }
 
   private void parseFn(@Language("TEXT") String code) {
-    assertTrue(parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
+    assertTrue(parseDecl(code)._1 instanceof TopTeleDecl.FnDecl s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseData(@Language("TEXT") String code) {
-    assertTrue(parseDecl(code)._1 instanceof Decl.DataDecl);
+    assertTrue(parseDecl(code)._1 instanceof TopTeleDecl.DataDecl);
   }
 
   @Test

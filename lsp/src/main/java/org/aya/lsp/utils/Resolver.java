@@ -10,13 +10,10 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Signatured;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.generic.Constants;
 import org.aya.ref.DefVar;
@@ -29,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Resolver {
   /** resolve a symbol by its qualified name in the whole library */
-  static @NotNull Option<@NotNull Def> resolveDef(
+  static @NotNull Option<@NotNull GenericDef> resolveDef(
     @NotNull LibraryOwner owner,
     @NotNull ImmutableSeq<String> module,
     @NotNull String name
@@ -67,18 +64,18 @@ public interface Resolver {
     });
   }
 
-  private static @NotNull SeqView<Def> withChildren(@NotNull Def def) {
+  private static @NotNull SeqView<GenericDef> withChildren(@NotNull GenericDef def) {
     return switch (def) {
-      case DataDef data -> SeqView.<Def>of(data).appendedAll(data.body);
-      case StructDef struct -> SeqView.<Def>of(struct).appendedAll(struct.fields);
+      case DataDef data -> SeqView.<GenericDef>of(data).appendedAll(data.body);
+      case StructDef struct -> SeqView.<GenericDef>of(struct).appendedAll(struct.fields);
       default -> SeqView.of(def);
     };
   }
 
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
-      case Decl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(Decl.DataCtor::ref));
-      case Decl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(Decl.StructField::ref));
+      case TopTeleDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TopTeleDecl.DataCtor::ref));
+      case TopTeleDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TopTeleDecl.StructField::ref));
       default -> SeqView.of(def.ref());
     };
   }
@@ -167,12 +164,12 @@ public interface Resolver {
       super.visitCommand(cmd, pp);
     }
 
-    @Override public void visitSignatured(@NotNull Signatured signatured, XY xy) {
+    @Override public void visitTelescopic(BaseDecl.@NotNull Telescopic signatured, XY xy) {
       signatured.telescope
         .filterNot(tele -> tele.ref().name().startsWith(Constants.ANONYMOUS_PREFIX))
         .forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
       check(xy, signatured.ref(), signatured.sourcePos());
-      super.visitSignatured(signatured, xy);
+      super.visitTelescopic(signatured, xy);
     }
 
     @Override public @NotNull Expr visitExpr(@NotNull Expr expr, XY pp) {

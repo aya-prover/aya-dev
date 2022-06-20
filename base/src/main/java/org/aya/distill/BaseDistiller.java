@@ -6,7 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
@@ -241,12 +241,12 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   protected static @Nullable Style chooseStyle(Object concrete) {
     return switch (concrete) {
-      case Decl.FnDecl d -> FN_CALL;
-      case Decl.DataDecl d -> DATA_CALL;
-      case Decl.DataCtor d -> CON_CALL;
-      case Decl.StructDecl d -> STRUCT_CALL;
-      case Decl.StructField d -> FIELD_CALL;
-      case Decl.PrimDecl d -> FN_CALL;
+      case TopTeleDecl.FnDecl d -> FN_CALL;
+      case TopTeleDecl.DataDecl d -> DATA_CALL;
+      case TopTeleDecl.DataCtor d -> CON_CALL;
+      case TopTeleDecl.StructDecl d -> STRUCT_CALL;
+      case TopTeleDecl.StructField d -> FIELD_CALL;
+      case TopTeleDecl.PrimDecl d -> FN_CALL;
       case null, default -> null;
     };
   }

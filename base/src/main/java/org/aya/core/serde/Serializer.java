@@ -21,8 +21,9 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Serializer(@NotNull Serializer.State state) {
-  public @NotNull SerDef serialize(@NotNull Def def) {
+  public @NotNull SerDef serialize(@NotNull GenericDef def) {
     return switch (def) {
+      case ClassDef classDef -> throw new UnsupportedOperationException("TODO");
       case FnDef fn -> new SerDef.Fn(
         state.def(fn.ref),
         serializeParams(fn.telescope),

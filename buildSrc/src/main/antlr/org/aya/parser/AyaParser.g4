@@ -63,12 +63,12 @@ fnModifiers : OPAQUE
             | PATTERN_KW
             ;
 
-structDecl : sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
+structDecl : sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS exprList)? (BAR field)* bindBlock?;
 
 primDecl : PRIM weakId tele* type? ;
 
-field : COERCE? declNameOrInfix tele* type clauses? bindBlock? # fieldDecl
-      | declNameOrInfix tele* type? IMPLIES expr    bindBlock? # fieldImpl
+field : OVERRIDE? COERCE? declNameOrInfix tele* type clauses? bindBlock? # fieldDecl
+      | OVERRIDE? declNameOrInfix tele* type? IMPLIES expr    bindBlock? # fieldImpl
       ;
 
 dataDecl : sampleModifiers? (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* bindBlock?;
@@ -80,6 +80,8 @@ dataBody : (BAR dataCtor)       # dataCtors
 dataCtor : COERCE? declNameOrInfix tele* clauses? bindBlock?;
 
 dataCtorClause : BAR patterns IMPLIES dataCtor;
+
+thisExpr : THIS_KW | THIS_KW AT qualifiedId;
 
 // expressions
 expr : atom                                 # single
@@ -95,6 +97,7 @@ expr : atom                                 # single
      | DO_KW LBRACE? doBlock RBRACE?        # do
      | LIDIOM idiomBlock? RIDIOM            # idiom
      | LARRAY arrayBlock? RARRAY            # array
+     | thisExpr                             # this
      ;
 
 arrayBlock : exprList | expr BAR listComp;

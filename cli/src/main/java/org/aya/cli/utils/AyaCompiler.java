@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedRunnable;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.util.InternalException;
@@ -49,7 +50,7 @@ public class AyaCompiler {
   public static void saveCompiledCore(
     @NotNull Path coreFile,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<Def> defs,
+    @NotNull ImmutableSeq<GenericDef> defs,
     @NotNull Serializer.State state
   ) throws IOException {
     var compiledAya = CompiledAya.from(resolveInfo, defs, state);

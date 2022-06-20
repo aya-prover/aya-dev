@@ -14,18 +14,18 @@ import java.util.function.BiConsumer;
  * TODO: rewrite this class using pattern matching
  */
 public interface StmtOps<P> extends ExprTraversal<P> {
-  default <T extends GenericDecl> void traced(@NotNull T yeah, P p, @NotNull BiConsumer<T, P> f) {
+  default <T extends Decl> void traced(@NotNull T yeah, P p, @NotNull BiConsumer<T, P> f) {
     traceEntrance(yeah, p);
     f.accept(yeah, p);
     traceExit(p);
   }
 
-  default void traceEntrance(@NotNull GenericDecl item, P p) {
+  default void traceEntrance(@NotNull Decl item, P p) {
   }
   default void traceExit(P p) {
   }
 
-  default void visitSignatured(@NotNull Signatured signatured, P pp) {
+  default void visitTelescopic(@NotNull BaseDecl.Telescopic signatured, P pp) {
     signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> visitExpr(expr, pp)));
   }
 
@@ -34,7 +34,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
       case Remark remark -> {
         if (remark.literate != null) remark.literate.modify(expr -> visitExpr(expr, pp));
       }
-      case Decl decl -> visitDecl(decl, pp);
+      case TopTeleDecl decl -> visitDecl(decl, pp);
       case Command cmd -> visitCommand(cmd, pp);
       case Generalize generalize -> generalize.type = visitExpr(generalize.type, pp);
       case ClassDecl cls -> {}
@@ -48,17 +48,18 @@ public interface StmtOps<P> extends ExprTraversal<P> {
     }
   }
 
-  default void visitDecl(@NotNull Decl decl, P pp) {
-    visitSignatured(decl, pp);
-    decl.result = visitExpr(decl.result, pp);
+  default void visitDecl(@NotNull TopLevelDecl decl, P pp) {
+    if(decl instanceof TopTeleDecl declWithSig) visitTelescopic(declWithSig, pp);
+    decl.setResult(visitExpr(decl.result(), pp));
     switch (decl) {
-      case Decl.DataDecl data -> data.body.forEach(ctor -> traced(ctor, pp, this::visitCtor));
-      case Decl.StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitField));
-      case Decl.FnDecl fn -> fn.body = fn.body.map(
+      case ClassDecl classDecl -> {}
+      case TopTeleDecl.DataDecl data -> data.body.forEach(ctor -> traced(ctor, pp, this::visitCtor));
+      case TopTeleDecl.StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitField));
+      case TopTeleDecl.FnDecl fn -> fn.body = fn.body.map(
         expr -> visitExpr(expr, pp),
         clauses -> clauses.map(clause -> visitClause(clause, pp))
       );
-      case Decl.PrimDecl prim -> {}
+      case TopTeleDecl.PrimDecl prim -> {}
     }
   }
 
@@ -81,13 +82,13 @@ public interface StmtOps<P> extends ExprTraversal<P> {
     return new Pattern.BinOpSeq(seq.sourcePos(), seq.seq().map(p -> visitPattern(p, pp)), seq.as(), seq.explicit());
   }
 
-  default void visitCtor(Decl.@NotNull DataCtor ctor, P p) {
-    visitSignatured(ctor, p);
+  default void visitCtor(TopTeleDecl.@NotNull DataCtor ctor, P p) {
+    visitTelescopic(ctor, p);
     ctor.patterns = ctor.patterns.map(pat -> visitPattern(pat, p));
     ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, p));
   }
-  default void visitField(Decl.@NotNull StructField field, P p) {
-    visitSignatured(field, p);
+  default void visitField(TopTeleDecl.@NotNull StructField field, P p) {
+    visitTelescopic(field, p);
     field.result = visitExpr(field.result, p);
     field.clauses = field.clauses.map(clause -> visitClause(clause, p));
     field.body = field.body.map(expr -> visitExpr(expr, p));

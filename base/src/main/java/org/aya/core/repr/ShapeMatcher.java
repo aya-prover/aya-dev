@@ -6,7 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
 import kala.collection.mutable.MutableMap;
-import org.aya.concrete.stmt.Signatured;
+import org.aya.concrete.stmt.BaseDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -25,7 +25,7 @@ import java.util.function.BooleanSupplier;
  * @author kiva
  */
 public record ShapeMatcher(
-  @NotNull MutableLinkedList<DefVar<? extends Def, ? extends Signatured>> def,
+  @NotNull MutableLinkedList<DefVar<? extends Def, ? extends BaseDecl.Telescopic>> def,
   @NotNull MutableMap<Var, Var> teleSubst
 ) {
   public static boolean match(@NotNull CodeShape shape, @NotNull GenericDef def) {
@@ -91,7 +91,7 @@ public record ShapeMatcher(
     return false;
   }
 
-  private boolean matchInside(@NotNull DefVar<? extends Def, ? extends Signatured> defVar, @NotNull BooleanSupplier matcher) {
+  private boolean matchInside(@NotNull DefVar<? extends Def, ? extends BaseDecl.Telescopic> defVar, @NotNull BooleanSupplier matcher) {
     def.push(defVar);
     var result = matcher.getAsBoolean();
     def.pop();

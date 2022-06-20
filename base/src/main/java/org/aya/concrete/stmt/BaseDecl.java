@@ -15,15 +15,34 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed abstract class Signatured implements OpDecl, GenericDecl permits Decl, Decl.DataCtor, Decl.StructField {
+public sealed abstract class BaseDecl implements Decl
+  permits BaseDecl.Telescopic, ClassDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpInfo opInfo;
   public final @NotNull BindBlock bindBlock;
 
-  // will change after resolve
-  public @NotNull ImmutableSeq<Expr.Param> telescope;
-  public @Nullable Def.Signature signature;
+  public static sealed abstract class Telescopic extends BaseDecl
+    permits TopTeleDecl, TopTeleDecl.DataCtor, TopTeleDecl.StructField {
+    // will change after resolve
+    public @NotNull ImmutableSeq<Expr.Param> telescope;
+    public @Nullable Def.Signature signature;
+
+    protected Telescopic(
+      @NotNull SourcePos sourcePos,
+      @NotNull SourcePos entireSourcePos,
+      @Nullable OpDecl.OpInfo opInfo,
+      @NotNull BindBlock bindBlock,
+      @NotNull ImmutableSeq<Expr.Param> telescope
+    ) {
+      super(sourcePos, entireSourcePos, opInfo, bindBlock);
+      this.telescope = telescope;
+    }
+  }
+
+  @Override public @NotNull BindBlock bindBlock() {
+    return bindBlock;
+  }
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
@@ -33,18 +52,16 @@ public sealed abstract class Signatured implements OpDecl, GenericDecl permits D
     return entireSourcePos;
   }
 
-  protected Signatured(
+  protected BaseDecl(
     @NotNull SourcePos sourcePos,
     @NotNull SourcePos entireSourcePos,
     @Nullable OpDecl.OpInfo opInfo,
-    @NotNull BindBlock bindBlock,
-    @NotNull ImmutableSeq<Expr.Param> telescope
+    @NotNull BindBlock bindBlock
   ) {
     this.sourcePos = sourcePos;
     this.entireSourcePos = entireSourcePos;
     this.opInfo = opInfo;
     this.bindBlock = bindBlock;
-    this.telescope = telescope;
   }
 
   @Override public @Nullable OpInfo opInfo() {

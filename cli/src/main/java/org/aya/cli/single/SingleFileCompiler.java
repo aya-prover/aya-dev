@@ -7,7 +7,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.Serializer;
@@ -123,6 +123,6 @@ public record SingleFileCompiler(
 
   @NotNull private String nameOf(int i, AyaDocile item) {
     return item instanceof Def def ? def.ref().name()
-      : item instanceof Decl decl ? decl.ref().name() : String.valueOf(i);
+      : item instanceof TopTeleDecl decl ? decl.ref().name() : String.valueOf(i);
   }
 }

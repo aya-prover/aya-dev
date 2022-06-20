@@ -50,6 +50,8 @@ NEW_KW : 'new';
 PATTERN_KW : 'pattern';
 I: 'I';
 DO_KW : 'do';
+THIS_KW : 'this';
+OVERRIDE : 'override';
 
 // Unimplemented but reserved
 CODATA_KW : 'codata';
@@ -89,6 +91,7 @@ LARRAY : '[';
 RARRAY : ']';
 LGOAL : '{?';
 RGOAL : '?}';
+AT : '@';
 
 // literals
 NUMBER : [0-9]+;

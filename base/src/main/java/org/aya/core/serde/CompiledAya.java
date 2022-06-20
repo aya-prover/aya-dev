@@ -11,6 +11,7 @@ import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.ref.DefVar;
@@ -43,7 +44,7 @@ public record CompiledAya(
   @NotNull ImmutableSeq<SerDef.SerOp> serOps
 ) implements Serializable {
   public static @NotNull CompiledAya from(
-    @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs,
+    @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs,
     @NotNull Serializer.State state
   ) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
@@ -73,11 +74,11 @@ public record CompiledAya(
     @NotNull MutableList<SerDef> serDefs,
     @NotNull MutableList<SerDef.SerOp> serOps
   ) {
-    private void ser(@NotNull ImmutableSeq<Def> defs) {
+    private void ser(@NotNull ImmutableSeq<GenericDef> defs) {
       defs.forEach(this::serDef);
     }
 
-    private void serDef(@NotNull Def def) {
+    private void serDef(@NotNull GenericDef def) {
       var serDef = new Serializer(state).serialize(def);
       serDefs.append(serDef);
       serOp(serDef, def);
@@ -90,13 +91,13 @@ public record CompiledAya(
       }
     }
 
-    private void serOp(@NotNull SerDef serDef, @NotNull Def def) {
+    private void serOp(@NotNull SerDef serDef, @NotNull GenericDef def) {
       // TODO: serialize rebind and operator renaming
       var concrete = def.ref().concrete;
-      var opInfo = concrete.opInfo;
+      var opInfo = concrete.opInfo();
       if (opInfo != null) serOps.append(new SerDef.SerOp(
         nameOf(serDef), opInfo.assoc(), opInfo.argc(),
-        serBind(concrete.bindBlock)));
+        serBind(concrete.bindBlock())));
     }
 
     private @NotNull SerDef.SerBind serBind(@NotNull BindBlock bindBlock) {

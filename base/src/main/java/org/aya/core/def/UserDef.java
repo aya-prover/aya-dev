@@ -3,7 +3,7 @@
 package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.ExprTycker;
@@ -20,7 +20,7 @@ public sealed abstract class UserDef extends TopLevelDef permits FnDef, UserDef.
   /**
    * In case of counterexamples, this field will be assigned.
    *
-   * @see org.aya.tyck.StmtTycker#tyck(Decl, ExprTycker)
+   * @see org.aya.tyck.StmtTycker#tyck(TopTeleDecl, ExprTycker)
    */
   public @Nullable ImmutableSeq<Problem> problems;
 

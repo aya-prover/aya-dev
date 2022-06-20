@@ -4,8 +4,8 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.remark.Remark;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Signatured;
+import org.aya.concrete.stmt.BaseDecl;
+import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.order.TyckUnit;
@@ -23,9 +23,9 @@ public interface TyckOrderProblem extends Problem {
 
   default @NotNull String nameOf(@NotNull TyckUnit stmt) {
     return switch (stmt) {
-      case Decl decl -> decl.ref().name();
+      case TopTeleDecl decl -> decl.ref().name();
       case Remark remark -> "a remark";
-      case Signatured signatured -> signatured.ref().name();
+      case BaseDecl signatured -> signatured.ref().name();
       default -> throw new InternalException("Unexpected stmt seen in SCCTycker: " + stmt);
     };
   }

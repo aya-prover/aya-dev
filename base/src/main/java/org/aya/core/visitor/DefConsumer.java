@@ -10,13 +10,13 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-public interface DefConsumer<P> extends Def.Visitor<P, Unit>, TermConsumer<P> {
+public interface DefConsumer<P> extends GenericDef.Visitor<P, Unit>, TermConsumer<P> {
   private void tele(@NotNull ImmutableSeq<Term.Param> tele, P p) {
     tele.forEach(param -> param.type().accept(this, p));
   }
 
-  private void visitDef(@NotNull Def def, P p) {
-    tele(def.telescope(), p);
+  private void visitDef(@NotNull GenericDef def, P p) {
+    if(def instanceof Def defwithTele) tele(defwithTele.telescope(), p);
     def.result().accept(this, p);
   }
 

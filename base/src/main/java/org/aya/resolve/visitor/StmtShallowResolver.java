@@ -92,9 +92,9 @@ public record StmtShallowResolver(
           var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
           var defVar0 = (DefVar<?, ?>) symbol;
-          assert (defVar0.core instanceof Def) || (defVar0.concrete instanceof Signatured);
+          assert (defVar0.core instanceof Def) || (defVar0.concrete instanceof BaseDecl.Telescopic);
           @SuppressWarnings("unchecked")
-          var defVar = (DefVar<? extends Def, ? extends Signatured>) defVar0;
+          var defVar = (DefVar<? extends Def, ? extends BaseDecl.Telescopic>) defVar0;
           var argc = defVar.core != null
             ? defVar.core.telescope().count(Bind::explicit)
             : defVar.concrete.telescope.count(Expr.Param::explicit);
@@ -113,21 +113,21 @@ public record StmtShallowResolver(
         for (var variable : variables.variables)
           context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
       }
-      case Decl.DataDecl decl -> {
+      case TopTeleDecl.DataDecl decl -> {
         var ctx = resolveDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, d -> d.body.view(), this::resolveCtor);
         resolveOpInfo(decl, innerCtx);
       }
-      case Decl.StructDecl decl -> {
+      case TopTeleDecl.StructDecl decl -> {
         var ctx = resolveDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, s -> s.fields.view(), this::resolveField);
         resolveOpInfo(decl, innerCtx);
       }
-      case Decl.FnDecl decl -> {
+      case TopTeleDecl.FnDecl decl -> {
         var ctx = resolveDecl(decl, context);
         resolveOpInfo(decl, ctx);
       }
-      case Decl.PrimDecl decl -> {
+      case TopTeleDecl.PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
         var sourcePos = decl.sourcePos;
@@ -144,7 +144,7 @@ public record StmtShallowResolver(
     }
   }
 
-  private <D extends Decl, Child extends Signatured> ModuleContext resolveChildren(
+  private <D extends TopLevelDecl, Child extends Decl> ModuleContext resolveChildren(
     @NotNull D decl,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,
@@ -163,28 +163,28 @@ public record StmtShallowResolver(
         MutableHashMap.from(children)),
       decl.sourcePos()
     );
-    decl.ctx = innerCtx;
+    decl.setCtx(innerCtx);
     return innerCtx;
   }
 
-  private void resolveOpInfo(@NotNull Signatured signatured, @NotNull ModuleContext context) {
-    var bind = signatured.bindBlock;
+  private void resolveOpInfo(@NotNull Decl signatured, @NotNull ModuleContext context) {
+    var bind = signatured.bindBlock();
     if (bind != BindBlock.EMPTY) bind.context().value = context;
-    if (signatured.opInfo != null) {
+    if (signatured.opInfo() != null) {
       var ref = signatured.ref();
       ref.opDecl = signatured;
     }
   }
 
-  private @NotNull ModuleContext resolveDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
-    var ctx = switch (decl.personality) {
+  private @NotNull ModuleContext resolveDecl(@NotNull TopLevelDecl decl, @NotNull ModuleContext context) {
+    var ctx = switch (decl.personality()) {
       case NORMAL -> context;
       case EXAMPLE -> exampleContext(context);
       case COUNTEREXAMPLE -> exampleContext(context).derive(decl.ref().name());
     };
-    decl.ctx = ctx;
+    decl.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
-    ctx.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos);
+    ctx.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
     return ctx;
   }
 
@@ -194,13 +194,13 @@ public record StmtShallowResolver(
     else throw new InternalException("Invalid context: " + context);
   }
 
-  private void resolveCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
+  private void resolveCtor(@NotNull TopTeleDecl.DataCtor ctor, @NotNull ModuleContext context) {
     ctor.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
     resolveOpInfo(ctor, context);
   }
 
-  private void resolveField(@NotNull Decl.StructField field, @NotNull ModuleContext context) {
+  private void resolveField(@NotNull TopTeleDecl.StructField field, @NotNull ModuleContext context) {
     field.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
     resolveOpInfo(field, context);
