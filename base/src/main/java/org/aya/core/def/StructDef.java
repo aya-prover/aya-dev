@@ -17,7 +17,8 @@ import org.jetbrains.annotations.NotNull;
  * @author vont
  */
 
-public final class StructDef extends ClassDef {
+public final class StructDef implements ClassDef {
+  public final int resultLevel;
   public final @NotNull DefVar<StructDef, StructDecl> ref;
   // TODO: change to ImmutableSeq<DefVar<StructDef, StructDecl>>
   public final @NotNull ImmutableSeq<StructCall> parents;
@@ -44,10 +45,6 @@ public final class StructDef extends ClassDef {
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitStruct(this, p);
-  }
-
-  public @NotNull DefVar<StructDef, StructDecl> ref() {
-    return ref;
   }
 
   @Override public @NotNull Term result() {

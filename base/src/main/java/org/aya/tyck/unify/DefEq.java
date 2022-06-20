@@ -8,7 +8,6 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.BaseDecl;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;

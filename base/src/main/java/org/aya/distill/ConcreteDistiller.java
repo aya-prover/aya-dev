@@ -229,7 +229,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     return personality == TopTeleDecl.Personality.NORMAL ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
   }
 
-  public @NotNull Doc decl(@NotNull TopTeleDecl predecl) {
+  public @NotNull Doc decl(@NotNull TopLevelDecl predecl) {
     return switch (predecl) {
       case StructDecl decl -> {
         var prelude = MutableList.of(

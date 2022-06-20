@@ -74,7 +74,7 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(decl), local._1);
       }
       case StructDecl decl -> {
-        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        var local = resolveStructDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
         decl.fields.forEach(field -> {

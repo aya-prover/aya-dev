@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.BaseDecl;
 import org.aya.concrete.stmt.TopTeleDecl;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.stmt.StructDecl;
 import org.aya.core.Meta;
 import org.aya.core.def.*;

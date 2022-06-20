@@ -20,7 +20,7 @@ public final class StructDecl extends ClassDecl {
   public final @NotNull DefVar<StructDef, StructDecl> ref;
   public final @NotNull ImmutableSeq<Expr> parents;
   public @NotNull
-  final ImmutableSeq<Decl.StructField> fields;
+  final ImmutableSeq<TopTeleDecl.StructField> fields;
   public int ulift;
 
   public StructDecl(
@@ -31,9 +31,9 @@ public final class StructDecl extends ClassDecl {
     @NotNull Expr result,
     // @NotNull ImmutableSeq<String> superClassNames,
     @NotNull ImmutableSeq<Expr> parents,
-    @NotNull ImmutableSeq<Decl.StructField> fields,
+    @NotNull ImmutableSeq<TopTeleDecl.StructField> fields,
     @NotNull BindBlock bindBlock,
-    @NotNull Decl.Personality personality) {
+    @NotNull Personality personality) {
     super(sourcePos, entireSourcePos, opInfo, bindBlock,result, personality, accessibility);
     this.fields = fields;
     this.ref = DefVar.concrete(this, name);

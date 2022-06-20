@@ -174,40 +174,6 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
     }
   }
 
-  /**
-   * Concrete structure definition
-   *
-   * @author vont
-   */
-  public static final class StructDecl extends TopTeleDecl {
-    public final @NotNull DefVar<StructDef, StructDecl> ref;
-    public @NotNull
-    final ImmutableSeq<StructField> fields;
-    public int ulift;
-
-    public StructDecl(
-      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @NotNull Accessibility accessibility,
-      @Nullable OpInfo opInfo,
-      @NotNull String name,
-      @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result,
-      // @NotNull ImmutableSeq<String> superClassNames,
-      @NotNull ImmutableSeq<StructField> fields,
-      @NotNull BindBlock bindBlock,
-      @NotNull TopTeleDecl.Personality personality
-    ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
-      this.fields = fields;
-      this.ref = DefVar.concrete(this, name);
-      fields.forEach(field -> field.structRef = ref);
-    }
-
-    @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
-      return ref;
-    }
-  }
-
   public static final class StructField extends BaseDecl.Telescopic {
     public final @NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;

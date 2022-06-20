@@ -788,9 +788,9 @@ public record AyaProducer(
     );
   }
 
-  public @NotNull Decl.StructField visitFieldParam(@NotNull Expr.Param param) {
+  public @NotNull TopTeleDecl.StructField visitFieldParam(@NotNull Expr.Param param) {
     // TODO: fix me
-    return new Decl.StructField(
+    return new TopTeleDecl.StructField(
       param.sourcePos(),
       param.sourcePos(),
       null,
