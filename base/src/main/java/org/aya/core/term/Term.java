@@ -94,22 +94,20 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
 
   private @Nullable WithPos<Term> unfoldClauses(
     boolean orderIndependent, SeqLike<Arg<Term>> args,
-    @NotNull ImmutableSeq<Matching> clauses,
-    TyckState state
+    @NotNull ImmutableSeq<Matching> clauses
   ) {
-    return unfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), clauses, state);
+    return unfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), clauses);
   }
 
   private @Nullable WithPos<Term> unfoldClauses(
     boolean orderIndependent, SeqLike<Arg<Term>> args,
-    @NotNull Subst subst, @NotNull ImmutableSeq<Matching> clauses,
-    TyckState state
+    @NotNull Subst subst, @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var match : clauses) {
-      var result = PatMatcher.tryBuildSubstArgs(state.primFactory(), null, match.patterns(), args);
+      var result = PatMatcher.tryBuildSubstArgs(null, match.patterns(), args);
       if (result.isOk()) {
         subst.add(result.get());
-        var body = match.body().view().subst(subst).commit();
+        var body = match.body().subst(subst);
         return new WithPos<>(match.sourcePos(), body);
       } else if (!orderIndependent && result.getErr())
         return null;
@@ -147,7 +145,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
         case CallTerm.Con con -> {
           var def = con.ref().core;
           if (def == null) yield con;
-          var unfolded = unfoldClauses(true, con.conArgs(), def.clauses, state);
+          var unfolded = unfoldClauses(true, con.conArgs(), def.clauses);
           yield unfolded == null ? con : unfolded.data().normalize(state, NormalizeMode.WHNF);
         }
         case CallTerm.Fn fn -> {
@@ -158,7 +156,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
             lamBody -> lamBody.view().subst(buildSubst(def.telescope(), fn.args())).commit().normalize(state, NormalizeMode.WHNF),
             patBody -> {
               var orderIndependent = def.modifiers.contains(Modifier.Overlap);
-              var unfolded = unfoldClauses(orderIndependent, fn.args(), patBody, state);
+              var unfolded = unfoldClauses(orderIndependent, fn.args(), patBody);
               return unfolded == null ? fn : unfolded.data().normalize(state, NormalizeMode.WHNF);
             }
           );
@@ -178,7 +176,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
               var acc = new CallTerm.Access(struct, field.ref, access.structArgs(), fieldArgs);
               subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
             }
-            var unfolded = unfoldClauses(true, access.fieldArgs(), subst, fieldDef.clauses, state);
+            var unfolded = unfoldClauses(true, access.fieldArgs(), subst, fieldDef.clauses);
             yield unfolded == null ? access : unfolded.data().normalize(state, NormalizeMode.WHNF);
           }
         }
