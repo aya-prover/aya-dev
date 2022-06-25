@@ -36,7 +36,9 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
     var symbols = MutableList.<HighlightResult.Symbol>create();
     var program = source.program().value;
     if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
-    return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
+    return new HighlightResult(
+      source.file().toUri().toString(),
+      symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
   private static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
@@ -44,7 +46,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   // region def, data, struct, prim, levels
   @Override
   public void visitTelescopic(@NotNull Decl decl, Decl.@NotNull Telescopic proof, @NotNull MutableList<HighlightResult.Symbol> buffer) {
-    buffer.append(new HighlightResult.Symbol(LspRange.toRange(decl), switch (proof) {
+    buffer.append(new HighlightResult.Symbol(decl.sourcePos(), switch (proof) {
       case TeleDecl.DataDecl $ -> HighlightResult.Kind.DataDef;
       case TeleDecl.StructField $ -> HighlightResult.Kind.FieldDef;
       case TeleDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
@@ -63,7 +65,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   @Override public void visit(@NotNull Stmt stmt, @NotNull MutableList<HighlightResult.Symbol> pp) {
     if (stmt instanceof Generalize generalize) {
       for (var generalized : generalize.variables)
-        pp.append(new HighlightResult.Symbol(LspRange.toRange(generalized.sourcePos),
+        pp.append(new HighlightResult.Symbol(generalized.sourcePos,
           HighlightResult.Kind.Generalize));
     }
     StmtOps.super.visit(stmt, pp);
@@ -91,7 +93,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull MutableList<HighlightResult.Symbol> buffer) {
     var kind = kindOf(ref);
-    if (kind != null) buffer.append(new HighlightResult.Symbol(LspRange.toRange(headPos), kind));
+    if (kind != null) buffer.append(new HighlightResult.Symbol(headPos, kind));
   }
   // endregion
 
@@ -111,11 +113,11 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   @Override public void visitCommand(@NotNull Command cmd, @NotNull MutableList<HighlightResult.Symbol> pp) {
     switch (cmd) {
       case Command.Import imp ->
-        pp.append(new HighlightResult.Symbol(LspRange.toRange(imp.path().sourcePos()), HighlightResult.Kind.ModuleDef));
+        pp.append(new HighlightResult.Symbol(imp.path().sourcePos(), HighlightResult.Kind.ModuleDef));
       case Command.Open open ->
-        pp.append(new HighlightResult.Symbol(LspRange.toRange(open.path().sourcePos()), HighlightResult.Kind.ModuleDef));
+        pp.append(new HighlightResult.Symbol(open.path().sourcePos(), HighlightResult.Kind.ModuleDef));
       case Command.Module mod ->
-        pp.append(new HighlightResult.Symbol(LspRange.toRange(mod.sourcePos()), HighlightResult.Kind.ModuleDef));
+        pp.append(new HighlightResult.Symbol(mod.sourcePos(), HighlightResult.Kind.ModuleDef));
     }
     StmtOps.super.visitCommand(cmd, pp);
   }
@@ -138,7 +140,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   private void visitOperator(@NotNull MutableList<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @Nullable DefVar<?, ?> op) {
     Option.of(op).filter(DefVar::isInfix).mapNotNull(this::kindOf)
-      .forEach(kind -> buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kind)));
+      .forEach(kind -> buffer.append(new HighlightResult.Symbol(sourcePos, kind)));
   }
 
   private void visitBind(@NotNull MutableList<HighlightResult.Symbol> buffer, @NotNull BindBlock bindBlock) {
