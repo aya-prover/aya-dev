@@ -51,11 +51,11 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
   }
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
-    return view().subst(new Subst(var, term)).commit();
+    return subst(new Subst(var, term));
   }
 
   default @NotNull Term subst(@NotNull Subst subst) {
-    return view().subst(subst).commit();
+    return new EndoFunctor.Substituter(subst).act(this);
   }
 
   default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
@@ -63,17 +63,15 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
   }
 
   default @NotNull Term subst(@NotNull Subst subst, int ulift) {
-    return view().subst(subst).lift(ulift).commit();
+    return this.subst(subst).lift(ulift);
   }
 
   default @NotNull Term rename() {
-    return view().rename().commit();
+    return new EndoFunctor.Renamer().act(this);
   }
 
   default int findUsages(@NotNull Var var) {
-    var counter = new VarConsumer.UsageCounter(var);
-    accept(counter, Unit.unit());
-    return counter.usageCount();
+    return new VarConsumer.Usages(var).folded(this);
   }
 
   default VarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
@@ -209,7 +207,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
   default @NotNull Term lift(int ulift) {
-    return subst(Subst.EMPTY, ulift);
+    return new EndoFunctor.Elevator(ulift).act(this);
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return new LittleTyper(state, ctx).term(this);

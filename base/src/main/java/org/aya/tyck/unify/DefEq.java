@@ -14,7 +14,7 @@ import org.aya.core.def.Def;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.Unfolder;
+import org.aya.core.visitor.Expander;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -437,7 +437,7 @@ public final class DefEq {
       reporter.report(new HoleProblem.BadSpineError(lhs, pos));
       return null;
     }
-    var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
+    var subst = Expander.buildSubst(meta.contextTele, lhs.contextArgs());
     // In this case, the solution may not be unique (see #608),
     // so we may delay its resolution to the end of the tycking when we disallow vague unification.
     if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {

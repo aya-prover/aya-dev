@@ -25,7 +25,7 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.TermFixpoint;
-import org.aya.core.visitor.Unfolder;
+import org.aya.core.visitor.Expander;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -402,7 +402,7 @@ public final class PatTycker {
   mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
-    else return Result.ok(Unfolder.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
+    else return Result.ok(Expander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }
 
   private record BodySubstitutor(

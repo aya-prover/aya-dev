@@ -3,7 +3,7 @@
 package org.aya.core.visitor;
 
 import kala.collection.SeqLike;
-import kala.collection.mutable.MutableList;
+import kala.collection.SeqView;
 import kala.tuple.Unit;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
@@ -18,65 +18,65 @@ import org.jetbrains.annotations.NotNull;
  * @see RefFinder#HEADER_AND_BODY
  */
 public record RefFinder(boolean withBody) implements
-  Def.Visitor<@NotNull MutableList<Def>, Unit>,
-  VarConsumer<@NotNull MutableList<Def>> {
+  Def.Visitor<Unit, SeqView<Def>>,
+  MonoidalVarFolder<@NotNull SeqView<Def>> {
   public static final @NotNull RefFinder HEADER_ONLY = new RefFinder(false);
   public static final @NotNull RefFinder HEADER_AND_BODY = new RefFinder(true);
 
-  @Override public void visitVar(Var usage, @NotNull MutableList<Def> defs) {
-    if (usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def) defs.append(def);
+  @Override public SeqView<Def> var(Var usage) {
+    return usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def ? SeqView.of(def) : SeqView.empty();
   }
 
-  @Override public Unit visitFn(@NotNull FnDef fn, @NotNull MutableList<Def> references) {
-    tele(references, fn.telescope());
-    fn.result().accept(this, references);
-    if (withBody) fn.body.map(
-      term -> term.accept(this, references),
-      clauses -> {
-        clauses.forEach(clause -> matchy(clause, references));
-        return Unit.unit();
-      });
-    return Unit.unit();
+  @Override public SeqView<Def> visitFn(@NotNull FnDef fn, Unit unit) {
+    return tele(fn.telescope)
+      .concat(folded(fn.result()))
+      .concat(withBody
+        ? fn.body.fold(this::folded, clauses -> clauses.view().flatMap(this::matchy))
+        : SeqView.empty());
   }
 
-  @Override public Unit visitCtor(@NotNull CtorDef def, @NotNull MutableList<Def> references) {
-    tele(references, def.selfTele);
-    if (withBody) for (var clause : def.clauses) matchy(clause, references);
-    return Unit.unit();
+  @Override public SeqView<Def> visitCtor(@NotNull CtorDef def, Unit unit) {
+    return tele(def.selfTele).concat(withBody ? def.clauses.flatMap(this::matchy) : SeqView.empty());
   }
 
-  @Override public Unit visitStruct(@NotNull StructDef def, @NotNull MutableList<Def> references) {
-    tele(references, def.telescope());
-    def.result().accept(this, references);
-    if (withBody) def.fields.forEach(t -> t.accept(this, references));
-    return Unit.unit();
+  @Override public SeqView<Def> visitStruct(@NotNull StructDef def, Unit unit) {
+    return tele(def.telescope()).concat(withBody ? def.fields.flatMap(f -> visitField(f, unit)) : SeqView.empty());
   }
 
-  @Override public Unit visitField(@NotNull FieldDef def, @NotNull MutableList<Def> references) {
-    tele(references, def.telescope());
-    def.body.forEach(t -> t.accept(this, references));
-    def.result().accept(this, references);
-    if (withBody) for (var clause : def.clauses) clause.body().accept(this, references);
-    return Unit.unit();
+  @Override public SeqView<Def> visitField(@NotNull FieldDef def, Unit unit) {
+    return tele(def.telescope())
+      .concat(def.body.foldLeft(SeqView.empty(), (rs, body) -> folded(body)))
+      .concat(folded(def.result()))
+      .concat(withBody ? def.clauses.flatMap(this::matchy) : SeqView.empty());
   }
 
-  @Override public Unit visitPrim(@NotNull PrimDef def, @NotNull MutableList<Def> defs) {
-    tele(defs, def.telescope());
-    return Unit.unit();
+  @Override public SeqView<Def> visitPrim(@NotNull PrimDef def, Unit unit) {
+    return tele(def.telescope());
   }
 
-  @Override public Unit visitData(@NotNull DataDef def, @NotNull MutableList<Def> references) {
-    tele(references, def.telescope());
-    def.result().accept(this, references);
-    if (withBody) def.body.forEach(t -> t.accept(this, references));
-    return Unit.unit();
+  @Override public SeqView<Def> visitData(@NotNull DataDef def, Unit unit) {
+    return tele(def.telescope())
+      .concat(folded(def.result()))
+      .concat(withBody ? def.body.flatMap(t -> visitCtor(t, unit)) : SeqView.empty());
   }
 
-  public void matchy(@NotNull Matching match, @NotNull MutableList<Def> defs) {
-    match.body().accept(this, defs);
+  private SeqView<Def> matchy(@NotNull Matching match) {
+    return folded(match.body());
   }
 
-  private void tele(@NotNull MutableList<Def> references, @NotNull SeqLike<Term.Param> telescope) {
-    telescope.forEach(param -> param.type().accept(this, references));
+  private SeqView<Def> tele(SeqLike<Term.Param> telescope) {
+    return telescope.view().map(Term.Param::type).flatMap(this::folded);
+  }
+
+  @Override public @NotNull SeqView<Def> e() {
+    return SeqView.empty();
+  }
+
+  @Override public @NotNull SeqView<Def> op(@NotNull SeqView<Def> a, @NotNull SeqView<Def> b) {
+    return a.concat(b);
+  }
+
+  @Override public @NotNull SeqView<Def> ops(@NotNull SeqLike<SeqView<Def>> as) {
+    return as.view().flatMap(a -> a);
   }
 }

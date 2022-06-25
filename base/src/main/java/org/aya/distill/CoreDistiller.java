@@ -5,7 +5,6 @@ package org.aya.distill;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.Unit;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
@@ -170,9 +169,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
     if (arg.explicit() != param.explicit()) return false;
     if (!(arg.term() instanceof RefTerm argRef)) return false;
     if (argRef.var() != param.ref()) return false;
-    var counter = new VarConsumer.UsageCounter(param.ref());
-    args.dropLast(1).forEach(t -> t.term().accept(counter, Unit.unit()));
-    return counter.usageCount() == 0;
+    var counter = new VarConsumer.Usages(param.ref());
+    return args.dropLast(1).allMatch(a -> counter.folded(a.term()) == 0);
   }
 
   private ImmutableSeq<Arg<Term>> visibleArgsOf(CallTerm call) {

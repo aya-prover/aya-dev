@@ -9,7 +9,7 @@ import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record Normalizer(@Nullable TyckState state) implements Unfolder<NormalizeMode> {
+public record Normalizer(@Nullable TyckState state) implements Expander<NormalizeMode> {
   @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {
     var fn = term.of().accept(this, mode);
     if (fn instanceof IntroTerm.Lambda lambda)
@@ -34,22 +34,22 @@ public record Normalizer(@Nullable TyckState state) implements Unfolder<Normaliz
 
   @Override public @NotNull Term visitLam(@NotNull IntroTerm.Lambda term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return Unfolder.super.visitLam(term, mode);
+    else return Expander.super.visitLam(term, mode);
   }
 
   @Override public @NotNull Term visitPi(@NotNull FormTerm.Pi term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return Unfolder.super.visitPi(term, mode);
+    else return Expander.super.visitPi(term, mode);
   }
 
   @Override public @NotNull Term visitSigma(@NotNull FormTerm.Sigma term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return Unfolder.super.visitSigma(term, mode);
+    else return Expander.super.visitSigma(term, mode);
   }
 
   @Override public @NotNull Term visitTup(@NotNull IntroTerm.Tuple term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return Unfolder.super.visitTup(term, mode);
+    else return Expander.super.visitTup(term, mode);
   }
 
   @Override public @NotNull Term visitProj(@NotNull ElimTerm.Proj term, NormalizeMode mode) {
@@ -63,6 +63,6 @@ public record Normalizer(@Nullable TyckState state) implements Unfolder<Normaliz
 
   @Override public @NotNull Term visitDataCall(CallTerm.@NotNull Data dataCall, NormalizeMode normalizeMode) {
     if (normalizeMode == NormalizeMode.WHNF) return dataCall;
-    return Unfolder.super.visitDataCall(dataCall, normalizeMode);
+    return Expander.super.visitDataCall(dataCall, normalizeMode);
   }
 }

@@ -17,7 +17,7 @@ import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.Unfolder;
+import org.aya.core.visitor.Expander;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
@@ -178,8 +178,8 @@ public final class ExprTycker extends Tycker {
               return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
             var fieldRef = field.ref();
 
-            var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
-            var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
+          var structSubst = Expander.buildSubst(structCore.telescope(), structCall.args());
+          var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
             var teleRenamed = tele.map(Term.Param::rename);
             var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
               structCall.args(), teleRenamed.map(Term.Param::toArg));

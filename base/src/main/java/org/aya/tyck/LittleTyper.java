@@ -7,7 +7,7 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.Unfolder;
+import org.aya.core.visitor.Expander;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
@@ -35,8 +35,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
         if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
         var core = access.ref().core;
-        var subst = Unfolder.buildSubst(core.telescope(), access.fieldArgs())
-          .add(Unfolder.buildSubst(call.ref().core.telescope(), access.structArgs()));
+        var subst = Expander.buildSubst(core.telescope(), access.fieldArgs())
+          .add(Expander.buildSubst(call.ref().core.telescope(), access.structArgs()));
         yield core.result().subst(subst);
       }
       case FormTerm.Sigma sigma -> {

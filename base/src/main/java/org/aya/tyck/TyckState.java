@@ -58,9 +58,8 @@ public record TyckState(
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
         eqns.filterInPlace(eqn -> {
-          var usageCounter = new VarConsumer.UsageCounter(activeMeta.data());
-          eqn.accept(usageCounter, Unit.unit());
-          if (usageCounter.usageCount() > 0) {
+          var usageCounter = new VarConsumer.Usages(activeMeta.data());
+          if (usageCounter.folded(eqn.lhs) + usageCounter.folded(eqn.rhs) > 0) {
             solveEqn(reporter, tracer, eqn, true);
             return false;
           } else return true;

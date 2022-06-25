@@ -63,20 +63,17 @@ public interface VarConsumer<P> extends TermConsumer<P> {
    * @author ice1000
    * @see Term#findUsages(Var)
    */
-  final class UsageCounter implements VarConsumer<Unit> {
-    public final @NotNull Var var;
-    private int usageCount = 0;
-
-    @Contract(pure = true) public UsageCounter(@NotNull Var var) {
-      this.var = var;
+  record Usages(Var var) implements MonoidalVarFolder<Integer> {
+    @Override public Integer e() {
+      return 0;
     }
 
-    @Contract(pure = true) public int usageCount() {
-      return usageCount;
+    @Override public Integer op(Integer a, Integer b) {
+      return a + b;
     }
 
-    @Contract(mutates = "this") @Override public void visitVar(Var usage, Unit unit) {
-      if (var == usage) usageCount++;
+    @Override public Integer var(Var v) {
+      return v == var ? 1 : 0;
     }
   }
 
