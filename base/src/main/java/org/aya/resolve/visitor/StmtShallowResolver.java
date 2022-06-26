@@ -6,7 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
-import kala.control.Option;
+import kala.control.primitive.IntOption;
 import kala.tuple.Tuple;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
@@ -160,10 +160,10 @@ public record StmtShallowResolver(
     }
   }
 
-  private @NotNull Option<Integer> computeArgc(@NotNull DefVar<?, ?> defVar) {
-    if (defVar.core instanceof Def def) return Option.some(def.telescope().count(Bind::explicit));
-    if (defVar.concrete instanceof Decl.Telescopic tele) return Option.some(tele.telescope().count(Expr.Param::explicit));
-    return Option.none();
+  private @NotNull IntOption computeArgc(@NotNull DefVar<?, ?> defVar) {
+    if (defVar.core instanceof Def def) return IntOption.some(def.telescope().count(Bind::explicit));
+    if (defVar.concrete instanceof Decl.Telescopic tele) return IntOption.some(tele.telescope().count(Expr.Param::explicit));
+    return IntOption.none();
   }
 
   private <D extends Decl, Child extends Decl> ModuleContext resolveChildren(
