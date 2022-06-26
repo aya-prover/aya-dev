@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
@@ -48,7 +49,7 @@ public record StmtShallowResolver(
 
   public void resolveStmt(@NotNull Stmt stmt, @NotNull ModuleContext context) {
     switch (stmt) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
+      case Decl decl -> resolveDecl(decl, context);
       case Command.Module mod -> {
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
@@ -91,14 +92,13 @@ public record StmtShallowResolver(
           if (use.asAssoc() == Assoc.Invalid) return;
           var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
-          var defVar0 = (DefVar<?, ?>) symbol;
-          assert (defVar0.core instanceof Def) || (defVar0.concrete instanceof BaseDecl.Telescopic);
-          @SuppressWarnings("unchecked")
-          var defVar = (DefVar<? extends Def, ? extends BaseDecl.Telescopic>) defVar0;
-          var argc = defVar.core != null
-            ? defVar.core.telescope().count(Bind::explicit)
-            : defVar.concrete.telescope.count(Expr.Param::explicit);
-          OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc(), argc);
+          var defVar = (DefVar<?, ?>) symbol;
+          var argc = computeArgc(defVar);
+          if (argc.isEmpty()) {
+            // TODO: report a problem that we need a telescope
+            throw new InternalException("not implemented yet");
+          }
+          OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc(), argc.get());
           defVar.opDeclRename.put(resolveInfo.thisModule().moduleName(), rename);
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) {
@@ -113,21 +113,27 @@ public record StmtShallowResolver(
         for (var variable : variables.variables)
           context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
       }
-      case TopTeleDecl.DataDecl decl -> {
-        var ctx = resolveDecl(decl, context);
-        var innerCtx = resolveChildren(decl, ctx, d -> d.body.view(), this::resolveCtor);
+    }
+  }
+
+  private void resolveDecl(@NotNull Decl predecl, @NotNull ModuleContext context) {
+    switch (predecl) {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
+      case TeleDecl.DataDecl decl -> {
+        var ctx = resolveTopLevelDecl(decl, decl, context);
+        var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), this::resolveDecl);
         resolveOpInfo(decl, innerCtx);
       }
-      case TopTeleDecl.StructDecl decl -> {
-        var ctx = resolveDecl(decl, context);
-        var innerCtx = resolveChildren(decl, ctx, s -> s.fields.view(), this::resolveField);
+      case TeleDecl.StructDecl decl -> {
+        var ctx = resolveTopLevelDecl(decl, decl, context);
+        var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), this::resolveDecl);
         resolveOpInfo(decl, innerCtx);
       }
-      case TopTeleDecl.FnDecl decl -> {
-        var ctx = resolveDecl(decl, context);
+      case TeleDecl.FnDecl decl -> {
+        var ctx = resolveTopLevelDecl(decl, decl, context);
         resolveOpInfo(decl, ctx);
       }
-      case TopTeleDecl.PrimDecl decl -> {
+      case TeleDecl.PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
         var sourcePos = decl.sourcePos;
@@ -139,17 +145,35 @@ public record StmtShallowResolver(
         else if (factory.have(primID))
           context.reportAndThrow(new RedefinitionPrimError(name, sourcePos));
         factory.factory(primID, decl.ref);
-        resolveDecl(decl, context);
+        resolveTopLevelDecl(decl, decl, context);
+      }
+      case TeleDecl.DataCtor ctor -> {
+        ctor.ref().module = context.moduleName();
+        context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
+        resolveOpInfo(ctor, context);
+      }
+      case TeleDecl.StructField field -> {
+        field.ref().module = context.moduleName();
+        context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
+        resolveOpInfo(field, context);
       }
     }
   }
 
-  private <D extends TopLevelDecl, Child extends Decl> ModuleContext resolveChildren(
+  private @NotNull Option<Integer> computeArgc(@NotNull DefVar<?, ?> defVar) {
+    if (defVar.core instanceof Def def) return Option.some(def.telescope().count(Bind::explicit));
+    if (defVar.concrete instanceof Decl.Telescopic tele) return Option.some(tele.telescope().count(Expr.Param::explicit));
+    return Option.none();
+  }
+
+  private <D extends Decl, Child extends Decl> ModuleContext resolveChildren(
     @NotNull D decl,
+    @NotNull Decl.TopLevel proof,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,
     @NotNull BiConsumer<Child, ModuleContext> childResolver
   ) {
+    assert decl == proof;
     var innerCtx = context.derive(decl.ref().name());
     var children = childrenGet.apply(decl).map(child -> {
       childResolver.accept(child, innerCtx);
@@ -163,26 +187,27 @@ public record StmtShallowResolver(
         MutableHashMap.from(children)),
       decl.sourcePos()
     );
-    decl.setCtx(innerCtx);
+    proof.setCtx(innerCtx);
     return innerCtx;
   }
 
-  private void resolveOpInfo(@NotNull Decl signatured, @NotNull ModuleContext context) {
-    var bind = signatured.bindBlock();
+  private void resolveOpInfo(@NotNull Decl decl, @NotNull ModuleContext context) {
+    var bind = decl.bindBlock();
     if (bind != BindBlock.EMPTY) bind.context().value = context;
-    if (signatured.opInfo() != null) {
-      var ref = signatured.ref();
-      ref.opDecl = signatured;
+    if (decl.opInfo() != null) {
+      var ref = decl.ref();
+      ref.opDecl = decl;
     }
   }
 
-  private @NotNull ModuleContext resolveDecl(@NotNull TopLevelDecl decl, @NotNull ModuleContext context) {
-    var ctx = switch (decl.personality()) {
+  private @NotNull ModuleContext resolveTopLevelDecl(@NotNull Decl decl, @NotNull Decl.TopLevel proof, @NotNull ModuleContext context) {
+    assert decl == proof;
+    var ctx = switch (proof.personality()) {
       case NORMAL -> context;
       case EXAMPLE -> exampleContext(context);
       case COUNTEREXAMPLE -> exampleContext(context).derive(decl.ref().name());
     };
-    decl.setCtx(ctx);
+    proof.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
     ctx.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
     return ctx;
@@ -192,17 +217,5 @@ public record StmtShallowResolver(
     if (context instanceof PhysicalModuleContext physical)
       return physical.exampleContext();
     else throw new InternalException("Invalid context: " + context);
-  }
-
-  private void resolveCtor(@NotNull TopTeleDecl.DataCtor ctor, @NotNull ModuleContext context) {
-    ctor.ref().module = context.moduleName();
-    context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
-    resolveOpInfo(ctor, context);
-  }
-
-  private void resolveField(@NotNull TopTeleDecl.StructField field, @NotNull ModuleContext context) {
-    field.ref().module = context.moduleName();
-    context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
-    resolveOpInfo(field, context);
   }
 }

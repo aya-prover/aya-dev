@@ -24,22 +24,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 
 /**
- * Concrete definition, corresponding to {@link Def}.
+ * Concrete telescopic definition, corresponding to {@link Def}.
  *
  * @author re-xyr
  */
-public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements TopLevelDecl {
-  public final @NotNull Accessibility accessibility;
+public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telescopic, Decl.TopLevel, Decl.Resulted {
+  public final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
-  public final @NotNull TopLevelDecl.Personality personality;
+  // will change after resolve
+  public @NotNull ImmutableSeq<Expr.Param> telescope;
+  public @Nullable Def.Signature signature;
 
-  @Override public @NotNull TopLevelDecl.Personality personality() {
+  @Override public @NotNull Decl.Personality personality() {
     return personality;
-  }
-
-  @Override public @NotNull Accessibility accessibility() {
-    return accessibility;
   }
 
   @Override public @Nullable Context getCtx() {
@@ -58,22 +56,38 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
     this.result = result;
   }
 
-  protected TopTeleDecl(
+  @Override public @NotNull ImmutableSeq<Expr.Param> telescope() {
+    return telescope;
+  }
+
+  @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
+    this.telescope = telescope;
+  }
+
+  @Override public @Nullable Def.Signature signature() {
+    return signature;
+  }
+
+  @Override public void setSignature(@Nullable Def.Signature signature) {
+    this.signature = signature;
+  }
+
+  protected TeleDecl(
     @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
     @NotNull Accessibility accessibility,
     @Nullable OpInfo opInfo,
     @NotNull BindBlock bindBlock,
     @NotNull ImmutableSeq<Expr.Param> telescope,
     @NotNull Expr result,
-    @NotNull TopTeleDecl.Personality personality
+    @NotNull Decl.Personality personality
   ) {
-    super(sourcePos, entireSourcePos, opInfo, bindBlock, telescope);
-    this.accessibility = accessibility;
+    super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock);
     this.result = result;
     this.personality = personality;
+    this.telescope = telescope;
   }
 
-  @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends TopTeleDecl> ref();
+  @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends TeleDecl> ref();
 
   /**
    * @author ice1000
@@ -81,7 +95,7 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
    * which means it's unspecified in the concrete syntax.
    * @see PrimDef
    */
-  public static final class PrimDecl extends TopTeleDecl {
+  public static final class PrimDecl extends TeleDecl {
     public final @NotNull DefVar<PrimDef, PrimDecl> ref;
 
     public PrimDecl(
@@ -103,10 +117,10 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
     }
   }
 
-  public static final class DataCtor extends BaseDecl.Telescopic {
-    public final @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref;
+  public static final class DataCtor extends CommonDecl implements Decl.Telescopic {
+    public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
-    /** Similar to {@link BaseDecl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
+    /** Similar to {@link Decl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
     public ImmutableSeq<Term.Param> patternTele;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
@@ -116,6 +130,10 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
     public @Nullable ImmutableSeq<Pat> yetTyckedPat;
     /** used when tycking constructor's header */
     public @Nullable PatTycker yetTycker;
+
+    // will change after resolve
+    public @NotNull ImmutableSeq<Expr.Param> telescope;
+    public @Nullable Def.Signature signature;
 
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -127,15 +145,32 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
       boolean coerce,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, opInfo, bindBlock, telescope);
+      super(sourcePos, entireSourcePos, Accessibility.Public, opInfo, bindBlock);
       this.clauses = clauses;
       this.coerce = coerce;
       this.patterns = patterns;
       this.ref = DefVar.concrete(this, name);
+      this.telescope = telescope;
     }
 
     @Override public @NotNull DefVar<CtorDef, DataCtor> ref() {
       return ref;
+    }
+
+    @Override public @NotNull ImmutableSeq<Expr.Param> telescope() {
+      return telescope;
+    }
+
+    @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
+      this.telescope = telescope;
+    }
+
+    @Override public @Nullable Def.Signature signature() {
+      return signature;
+    }
+
+    @Override public void setSignature(Def.@Nullable Signature signature) {
+      this.signature = signature;
     }
   }
 
@@ -145,7 +180,7 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
    * @author kiva
    * @see DataDef
    */
-  public static final class DataDecl extends TopTeleDecl {
+  public static final class DataDecl extends TeleDecl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public final @NotNull ImmutableSeq<DataCtor> body;
     /** Yet type-checked constructors */
@@ -161,7 +196,7 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
       @NotNull Expr result,
       @NotNull ImmutableSeq<DataCtor> body,
       @NotNull BindBlock bindBlock,
-      @NotNull TopTeleDecl.Personality personality
+      @NotNull Decl.Personality personality
     ) {
       super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.body = body;
@@ -179,7 +214,7 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
    *
    * @author vont
    */
-  public static final class StructDecl extends TopTeleDecl {
+  public static final class StructDecl extends TeleDecl {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
@@ -195,7 +230,7 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
       // @NotNull ImmutableSeq<String> superClassNames,
       @NotNull ImmutableSeq<StructField> fields,
       @NotNull BindBlock bindBlock,
-      @NotNull TopTeleDecl.Personality personality
+      @NotNull Decl.Personality personality
     ) {
       super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.fields = fields;
@@ -208,14 +243,17 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
     }
   }
 
-  public static final class StructField extends BaseDecl.Telescopic {
-    public final @NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref;
+  public static final class StructField extends CommonDecl implements Decl.Telescopic, Decl.Resulted {
+    public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
     public @NotNull Option<Expr> body;
-
     public final boolean coerce;
+
+    // will change after resolve
+    public @NotNull ImmutableSeq<Expr.Param> telescope;
+    public @Nullable Def.Signature signature;
 
     public StructField(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -228,16 +266,41 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
       boolean coerce,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, opInfo, bindBlock, telescope);
+      super(sourcePos, entireSourcePos, Accessibility.Public, opInfo, bindBlock);
       this.coerce = coerce;
       this.result = result;
       this.clauses = clauses;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
+      this.telescope = telescope;
     }
 
     @Override public @NotNull DefVar<FieldDef, StructField> ref() {
       return ref;
+    }
+
+    @Override public @NotNull ImmutableSeq<Expr.Param> telescope() {
+      return telescope;
+    }
+
+    @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
+      this.telescope = telescope;
+    }
+
+    @Override public @Nullable Def.Signature signature() {
+      return signature;
+    }
+
+    @Override public void setSignature(Def.@Nullable Signature signature) {
+      this.signature = signature;
+    }
+
+    @Override public @NotNull Expr result() {
+      return result;
+    }
+
+    @Override public void setResult(@NotNull Expr result) {
+      this.result = result;
     }
   }
 
@@ -247,7 +310,7 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
    * @author re-xyr
    * @see FnDef
    */
-  public static final class FnDecl extends TopTeleDecl {
+  public static final class FnDecl extends TeleDecl {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
@@ -262,7 +325,7 @@ public sealed abstract class TopTeleDecl extends BaseDecl.Telescopic implements 
       @NotNull Expr result,
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
       @NotNull BindBlock bindBlock,
-      @NotNull TopTeleDecl.Personality personality
+      @NotNull Decl.Personality personality
     ) {
       super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
       this.modifiers = modifiers;

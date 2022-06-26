@@ -6,7 +6,7 @@ import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
@@ -28,7 +28,7 @@ import java.util.function.Function;
  */
 public final class PrimDef extends TopLevelDef {
   public PrimDef(
-    @NotNull DefVar<@NotNull PrimDef, TopTeleDecl.@NotNull PrimDecl> ref,
+    @NotNull DefVar<@NotNull PrimDef, TeleDecl.@NotNull PrimDecl> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull Term result, @NotNull ID name
   ) {
@@ -38,7 +38,7 @@ public final class PrimDef extends TopLevelDef {
     ref.core = this;
   }
 
-  public PrimDef(@NotNull DefVar<@NotNull PrimDef, TopTeleDecl.@NotNull PrimDecl> ref, @NotNull Term result, @NotNull ID name) {
+  public PrimDef(@NotNull DefVar<@NotNull PrimDef, TeleDecl.@NotNull PrimDecl> ref, @NotNull Term result, @NotNull ID name) {
     this(ref, ImmutableSeq.empty(), result, name);
   }
 
@@ -70,10 +70,10 @@ public final class PrimDef extends TopLevelDef {
   record PrimSeed(
     @NotNull ID name,
     @NotNull BiFunction<CallTerm.@NotNull Prim, @Nullable TyckState, @NotNull Term> unfold,
-    @NotNull Function<@NotNull DefVar<PrimDef, TopTeleDecl.PrimDecl>, @NotNull PrimDef> supplier,
+    @NotNull Function<@NotNull DefVar<PrimDef, TeleDecl.PrimDecl>, @NotNull PrimDef> supplier,
     @NotNull ImmutableSeq<@NotNull ID> dependency
   ) {
-    public @NotNull PrimDef supply(@NotNull DefVar<PrimDef, TopTeleDecl.PrimDecl> ref) {
+    public @NotNull PrimDef supply(@NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
       return supplier.apply(ref);
     }
   }
@@ -201,7 +201,7 @@ public final class PrimDef extends TopLevelDef {
         .toImmutableMap();
     }
 
-    public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, TopTeleDecl.PrimDecl> ref) {
+    public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
       assert !have(name);
       var rst = SEEDS.get(name).supply(ref);
       defs.put(name, rst);
@@ -224,7 +224,7 @@ public final class PrimDef extends TopLevelDef {
       return defs.containsKey(name);
     }
 
-    public @NotNull PrimDef getOrCreate(@NotNull ID name, @NotNull DefVar<PrimDef, TopTeleDecl.PrimDecl> ref) {
+    public @NotNull PrimDef getOrCreate(@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
       return getOption(name).getOrElse(() -> factory(name, ref));
     }
 
@@ -266,10 +266,10 @@ public final class PrimDef extends TopLevelDef {
     }
   }
 
-  public final @NotNull DefVar<@NotNull PrimDef, TopTeleDecl.PrimDecl> ref;
+  public final @NotNull DefVar<@NotNull PrimDef, TeleDecl.PrimDecl> ref;
   public final @NotNull ID id;
 
-  public @NotNull DefVar<@NotNull PrimDef, TopTeleDecl.PrimDecl> ref() {
+  public @NotNull DefVar<@NotNull PrimDef, TeleDecl.PrimDecl> ref() {
     return ref;
   }
 }

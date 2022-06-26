@@ -3,7 +3,7 @@
 package org.aya.lsp.utils;
 
 import kala.control.Option;
-import org.aya.concrete.stmt.BaseDecl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
@@ -24,8 +24,8 @@ public class LspRange {
       new Position(sourcePos.endLine() - 1, sourcePos.endColumn() + 1));
   }
 
-  public static @NotNull Range toRange(@NotNull BaseDecl signatured) {
-    return toRange(signatured.sourcePos());
+  public static @NotNull Range toRange(@NotNull Decl decl) {
+    return toRange(decl.sourcePos());
   }
 
   public static @NotNull Option<String> fileUri(@NotNull SourcePos sourcePos) {

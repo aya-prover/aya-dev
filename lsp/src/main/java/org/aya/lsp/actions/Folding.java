@@ -5,7 +5,7 @@ package org.aya.lsp.actions;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.TopLevelDecl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
 import org.aya.util.error.SourcePos;
@@ -30,7 +30,7 @@ public final class Folding implements SyntaxDeclAction<@NotNull MutableList<Fold
     SyntaxDeclAction.super.visitCommand(cmd, pp);
   }
 
-  @Override public void visitDecl(@NotNull TopLevelDecl maybe, @NotNull MutableList<FoldingRange> pp) {
+  @Override public void visitDecl(@NotNull Decl maybe, @NotNull MutableList<FoldingRange> pp) {
     Resolver.withChildren(maybe).filter(dv -> dv.concrete != null)
       .map(dv -> dv.concrete.entireSourcePos())
       .filter(pos -> pos.linesOfCode() >= 3)

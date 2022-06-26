@@ -9,7 +9,7 @@ import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Generalize;
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.concrete.visitor.ExprTraversal;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -23,17 +23,17 @@ import org.jetbrains.annotations.NotNull;
 public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit>> {
   public static final @NotNull SigRefFinder HEADER_ONLY = new SigRefFinder();
 
-  private void decl(@NotNull MutableList<TyckUnit> references, @NotNull TopTeleDecl decl) {
+  private void decl(@NotNull MutableList<TyckUnit> references, @NotNull TeleDecl decl) {
     tele(decl.telescope, references);
     visitExpr(decl.result, references);
   }
 
   public void visit(@NotNull TyckUnit sn, @NotNull MutableList<TyckUnit> references) {
     switch (sn) {
-      case TopTeleDecl decl -> decl(references, decl);
+      case TeleDecl decl -> decl(references, decl);
       case ClassDecl decl -> throw new UnsupportedOperationException("TODO");
-      case TopTeleDecl.DataCtor ctor -> tele(ctor.telescope, references);
-      case TopTeleDecl.StructField field -> {
+      case TeleDecl.DataCtor ctor -> tele(ctor.telescope, references);
+      case TeleDecl.StructField field -> {
         tele(field.telescope, references);
         visitExpr(field.result, references);
       }
@@ -53,7 +53,7 @@ public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit
 
   @Override public @NotNull Expr visitExpr(@NotNull Expr expr, @NotNull MutableList<TyckUnit> tyckUnits) {
     if (expr instanceof Expr.RefExpr ref) {
-      if (ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.concrete instanceof TopTeleDecl decl)
+      if (ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.concrete instanceof TeleDecl decl)
         tyckUnits.append(decl);
     }
     return ExprTraversal.super.visitExpr(expr, tyckUnits);

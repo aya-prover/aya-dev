@@ -5,8 +5,9 @@ package org.aya.core.def;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.BaseDecl;
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.CommonDecl;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
@@ -24,31 +25,31 @@ import java.util.Objects;
  * @author ice1000
  */
 public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, TopLevelDef {
-  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends BaseDecl.Telescopic> defVar) {
+  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar) {
     return FormTerm.Pi.make(defTele(defVar), defResult(defVar));
   }
 
-  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends BaseDecl.Telescopic> defVar) {
+  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
-    else return Objects.requireNonNull(defVar.concrete.signature).param;
+    else return Objects.requireNonNull(defVar.concrete.signature()).param;
   }
-  static @NotNull Seq<CtorDef> dataBody(@NotNull DefVar<? extends DataDef, ? extends TopTeleDecl.DataDecl> defVar) {
+  static @NotNull Seq<CtorDef> dataBody(@NotNull DefVar<? extends DataDef, ? extends TeleDecl.DataDecl> defVar) {
     if (defVar.core != null) return defVar.core.body;
       // guaranteed as this is already a core term
     else return defVar.concrete.checkedBody;
   }
-  static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends BaseDecl.Telescopic> defVar) {
+  static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar) {
     if (defVar.core != null) return defVar.core.result();
       // guaranteed as this is already a core term
-    else return Objects.requireNonNull(defVar.concrete.signature).result;
+    else return Objects.requireNonNull(defVar.concrete.signature()).result;
   }
   static @NotNull ImmutableSeq<Term.Param>
   substParams(@NotNull SeqLike<Term.@NotNull Param> param, @NotNull Subst subst) {
     return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
   }
 
-  @Override @NotNull DefVar<? extends Def, ? extends BaseDecl> ref();
+  @Override @NotNull DefVar<? extends Def, ? extends CommonDecl> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
