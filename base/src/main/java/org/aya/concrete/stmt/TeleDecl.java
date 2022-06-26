@@ -27,6 +27,7 @@ import java.util.EnumSet;
  * Concrete telescopic definition, corresponding to {@link Def}.
  *
  * @author re-xyr
+ * @see Decl
  */
 public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telescopic, Decl.TopLevel, Decl.Resulted {
   public final @NotNull Decl.Personality personality;

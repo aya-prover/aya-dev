@@ -8,9 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An item in the signature, with telescope and result type.
+ * Common parts of concrete definitions.
  *
  * @author ice1000
+ * @see Decl
  */
 public sealed abstract class CommonDecl implements Decl permits ClassDecl, TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
   public final @NotNull Accessibility accessibility;

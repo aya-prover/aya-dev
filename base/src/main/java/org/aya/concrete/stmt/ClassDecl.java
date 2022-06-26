@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An item in the signature, with fields and result type.
- * Concrete definition, corresponding to {@link ClassDef}.
+ * Concrete classable definitions, corresponding to {@link ClassDef}.
  *
  * @author zaoqi
+ * @see Decl
  */
 public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implements Decl.Resulted, Decl.TopLevel {
   public final @NotNull Decl.Personality personality;
