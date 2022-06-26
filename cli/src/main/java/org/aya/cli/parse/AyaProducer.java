@@ -90,9 +90,9 @@ public record AyaProducer(
       var result = visitDecl(decl);
       var stmts = result._2.view().prepended(result._1);
       if (result._1 instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
-        var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof TeleDecl));
+        var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof Decl));
         if (stmtOption.isDefined()) reporter.report(new BadCounterexampleWarn(stmtOption.get()));
-        return stmts.<Stmt>filterIsInstance(TeleDecl.class).toImmutableSeq();
+        return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
       }
       return stmts;
     }
@@ -585,7 +585,7 @@ public record AyaProducer(
     );
   }
 
-  public @NotNull Tuple2<TeleDecl, ImmutableSeq<Stmt>>
+  public @NotNull Tuple2<TeleDecl.DataDecl, ImmutableSeq<Stmt>>
   visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
@@ -705,7 +705,8 @@ public record AyaProducer(
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 
-  public @NotNull Tuple2<TeleDecl, ImmutableSeq<Stmt>> visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>>
+  visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;

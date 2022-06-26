@@ -161,20 +161,16 @@ public record AyaSccTycker(
   }
 
   private void checkHeader(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
-    switch (stmt) {
-      case TeleDecl decl -> tycker.tyckHeader(decl, reuse(decl));
-      case TeleDecl.DataCtor ctor -> tycker.tyckHeader(ctor, reuse(ctor.dataRef.concrete));
-      case TeleDecl.StructField field -> tycker.tyckHeader(field, reuse(field.structRef.concrete));
-      default -> {}
-    }
+    if (stmt instanceof Decl decl) tycker.tyckHeader(decl, reuse(decl));
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
-      case TeleDecl decl -> decideTyckResult(decl, decl, tycker.tyck(decl, reuse(decl)));
-      case TeleDecl.DataCtor ctor -> tycker.tyck(ctor, reuse(ctor.dataRef.concrete));
-      case TeleDecl.StructField field -> tycker.tyck(field, reuse(field.structRef.concrete));
+      case Decl decl -> {
+        var def = tycker.tyck(decl, reuse(decl));
+        if (decl instanceof Decl.TopLevel topLevel) decideTyckResult(decl, topLevel, def);
+      }
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(newExprTycker()));
       default -> {}
     }
@@ -197,7 +193,16 @@ public record AyaSccTycker(
     }
   }
 
-  private @NotNull ExprTycker reuse(@NotNull Decl.TopLevel decl) {
+  private @NotNull ExprTycker reuse(@NotNull Decl decl) {
+    // IDEA says the match is not exhaustive, but it is.
+    return switch (decl) {
+      case Decl.TopLevel topLevel -> reuseTopLevel(topLevel);
+      case TeleDecl.DataCtor ctor -> reuseTopLevel(ctor.dataRef.concrete);
+      case TeleDecl.StructField field -> reuseTopLevel(field.structRef.concrete);
+    };
+  }
+
+  private @NotNull ExprTycker reuseTopLevel(@NotNull Decl.TopLevel decl) {
     // prevent counterexample errors from being reported to the user reporter
     if (decl.personality() == Decl.Personality.COUNTEREXAMPLE) {
       var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);

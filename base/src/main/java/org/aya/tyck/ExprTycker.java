@@ -44,9 +44,9 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * @apiNote make sure to instantiate this class once for each {@link TeleDecl}.
- * Do <em>not</em> use multiple instances in the tycking of one {@link TeleDecl}
- * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link TeleDecl}s.
+ * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
+ * Do <em>not</em> use multiple instances in the tycking of one {@link Decl.TopLevel}
+ * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
 public final class ExprTycker extends Tycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
