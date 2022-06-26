@@ -232,7 +232,7 @@ public record AyaSccTycker(
     var failed = graph.findNonTerminating();
     if (failed != null) failed.forEach(f -> {
       var ref = f.matrix().domain().ref();
-      reporter.report(new NonTerminating(ref.concrete.sourcePos, ref, f));
+      reporter.report(new NonTerminating(ref.concrete.sourcePos(), ref, f));
     });
   }
 

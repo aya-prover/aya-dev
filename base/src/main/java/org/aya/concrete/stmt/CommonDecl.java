@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * Common parts of concrete definitions.
  *
  * @author ice1000
+ * @apiNote This class should only be used in extends and permits clause. Use {@link Decl} elsewhere instead.
  * @see Decl
  */
 public sealed abstract class CommonDecl implements Decl permits ClassDecl, TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {

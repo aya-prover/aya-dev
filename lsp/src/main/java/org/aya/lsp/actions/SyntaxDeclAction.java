@@ -5,7 +5,6 @@ package org.aya.lsp.actions;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.TeleDecl;
 import org.aya.concrete.visitor.StmtOps;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public interface SyntaxDeclAction<P> extends StmtOps<P> {
   @Override default void visit(@NotNull Stmt stmt, P pp) {
     switch (stmt) {
-      case TeleDecl decl -> visitDecl(decl, pp);
+      case Decl decl -> visitDecl(decl, pp);
       case Command cmd -> visitCommand(cmd, pp);
       case Stmt misc -> {}
     }

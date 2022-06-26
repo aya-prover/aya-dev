@@ -5,7 +5,6 @@ package org.aya.core.def;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.CommonDecl;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.FormTerm;
@@ -49,7 +48,7 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
     return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
   }
 
-  @Override @NotNull DefVar<? extends Def, ? extends CommonDecl> ref();
+  @Override @NotNull DefVar<? extends Def, ? extends Decl> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
