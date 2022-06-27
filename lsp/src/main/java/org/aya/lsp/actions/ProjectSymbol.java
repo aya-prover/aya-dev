@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.TopLevelDecl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
 import org.aya.ref.DefVar;
@@ -43,7 +43,7 @@ public final class ProjectSymbol implements SyntaxDeclAction<@NotNull MutableLis
     if (program != null) program.forEach(decl -> INSTANCE.visit(decl, symbols));
   }
 
-  @Override public void visitDecl(@NotNull TopLevelDecl decl, @NotNull MutableList<Symbol> pp) {
+  @Override public void visitDecl(@NotNull Decl decl, @NotNull MutableList<Symbol> pp) {
     var children = MutableList.<Symbol>create();
     Resolver.withChildren(decl)
       .filter(dv -> dv.concrete != decl && dv.concrete != null)

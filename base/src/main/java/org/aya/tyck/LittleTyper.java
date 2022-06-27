@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
@@ -83,7 +83,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     };
   }
 
-  private @NotNull Term defCall(DefVar<? extends Def, ? extends TopTeleDecl> ref, int ulift) {
+  private @NotNull Term defCall(DefVar<? extends Def, ? extends Decl.Telescopic> ref, int ulift) {
     return Def.defResult(ref).subst(Subst.EMPTY, ulift);
   }
 }

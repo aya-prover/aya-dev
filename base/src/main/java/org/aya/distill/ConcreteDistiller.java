@@ -183,8 +183,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
   public @NotNull Doc stmt(@NotNull Stmt prestmt) {
     return switch (prestmt) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
-      case TopTeleDecl decl -> decl(decl);
+      case Decl decl -> decl(decl);
       case Command.Import cmd -> {
         var prelude = MutableList.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
         if (cmd.asName() != null) {
@@ -220,30 +219,31 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     };
   }
 
-  private Stmt.Accessibility defaultAcc(@NotNull TopTeleDecl.Personality personality) {
-    return personality == TopTeleDecl.Personality.NORMAL ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
+  private Stmt.Accessibility defaultAcc(@NotNull Decl.Personality personality) {
+    return personality == Decl.Personality.NORMAL ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
   }
 
-  public @NotNull Doc decl(@NotNull TopTeleDecl predecl) {
+  public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
-      case TopTeleDecl.StructDecl decl -> {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
+      case TeleDecl.StructDecl decl -> {
         var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
-          visitPersonality(decl.personality),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
+          visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "struct"),
           linkDef(decl.ref, STRUCT_CALL),
           visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-            decl.fields.view().map(this::signatured))))),
+            decl.fields.view().map(this::decl))))),
           visitBindBlock(decl.bindBlock)
         );
       }
-      case TopTeleDecl.FnDecl decl -> {
+      case TeleDecl.FnDecl decl -> {
         var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
-          visitPersonality(decl.personality),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
+          visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "def"));
         prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
         prelude.append(linkDef(decl.ref, FN_CALL));
@@ -255,36 +255,22 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           visitBindBlock(decl.bindBlock)
         );
       }
-      case TopTeleDecl.DataDecl decl -> {
+      case TeleDecl.DataDecl decl -> {
         var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
-          visitPersonality(decl.personality),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
+          visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "data"),
           linkDef(decl.ref, DATA_CALL),
           visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           Doc.emptyIf(decl.body.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-            decl.body.view().map(this::signatured))))),
+            decl.body.view().map(this::decl))))),
           visitBindBlock(decl.bindBlock)
         );
       }
-      case TopTeleDecl.PrimDecl decl -> primDoc(decl.ref);
-    };
-  }
-
-  public @NotNull Doc visitPersonality(@NotNull TopTeleDecl.Personality personality) {
-    return switch (personality) {
-      case NORMAL -> Doc.empty();
-      case EXAMPLE -> Doc.styled(KEYWORD, "example");
-      case COUNTEREXAMPLE -> Doc.styled(KEYWORD, "counterexample");
-    };
-  }
-
-  public @NotNull Doc signatured(@NotNull BaseDecl.Telescopic signatured) {
-    return switch (signatured) {
-      case TopTeleDecl decl -> decl(decl);
-      case TopTeleDecl.StructField field -> {
+      case TeleDecl.PrimDecl decl -> primDoc(decl.ref);
+      case TeleDecl.StructField field -> {
         var doc = MutableList.of(Doc.symbol("|"),
           coe(field.coerce),
           linkDef(field.ref, FIELD_CALL),
@@ -296,7 +282,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         }
         yield Doc.cblock(Doc.sepNonEmpty(doc), 2, visitClauses(field.clauses));
       }
-      case TopTeleDecl.DataCtor ctor -> {
+      case TeleDecl.DataCtor ctor -> {
         var doc = Doc.cblock(Doc.sepNonEmpty(
           coe(ctor.coerce),
           linkDef(ctor.ref, CON_CALL),
@@ -306,6 +292,14 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           yield Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);
         } else yield Doc.sep(Doc.symbol("|"), doc);
       }
+    };
+  }
+
+  public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
+    return switch (personality) {
+      case NORMAL -> Doc.empty();
+      case EXAMPLE -> Doc.styled(KEYWORD, "example");
+      case COUNTEREXAMPLE -> Doc.styled(KEYWORD, "counterexample");
     };
   }
 

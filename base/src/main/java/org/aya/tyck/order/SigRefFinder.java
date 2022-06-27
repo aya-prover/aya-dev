@@ -6,10 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
-import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
-import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.concrete.visitor.ExprTraversal;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -23,19 +22,11 @@ import org.jetbrains.annotations.NotNull;
 public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit>> {
   public static final @NotNull SigRefFinder HEADER_ONLY = new SigRefFinder();
 
-  private void decl(@NotNull MutableList<TyckUnit> references, @NotNull TopTeleDecl decl) {
-    tele(decl.telescope, references);
-    visitExpr(decl.result, references);
-  }
-
   public void visit(@NotNull TyckUnit sn, @NotNull MutableList<TyckUnit> references) {
     switch (sn) {
-      case TopTeleDecl decl -> decl(references, decl);
-      case ClassDecl decl -> throw new UnsupportedOperationException("TODO");
-      case TopTeleDecl.DataCtor ctor -> tele(ctor.telescope, references);
-      case TopTeleDecl.StructField field -> {
-        tele(field.telescope, references);
-        visitExpr(field.result, references);
+      case Decl decl -> {
+        if (decl instanceof Decl.Telescopic proof) tele(proof.telescope(), references);
+        if (decl instanceof Decl.Resulted proof) visitExpr(proof.result(), references);
       }
       case Command.Module module -> {}
       case Command cmd -> {}
@@ -51,11 +42,12 @@ public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit
     tele.mapNotNull(Expr.Param::type).forEach(type -> visitExpr(type, references));
   }
 
-  @Override public @NotNull Expr visitExpr(@NotNull Expr expr, @NotNull MutableList<TyckUnit> tyckUnits) {
-    if (expr instanceof Expr.RefExpr ref) {
-      if (ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.concrete instanceof TopTeleDecl decl)
-        tyckUnits.append(decl);
+  @Override public @NotNull Expr visitExpr(@NotNull Expr expr, @NotNull MutableList<TyckUnit> references) {
+    if (expr instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar) {
+      // in the past when we had Signatured, the Decl class only derives top-level definitions
+      if (defVar.concrete instanceof Decl.TopLevel)
+        references.append(defVar.concrete);
     }
-    return ExprTraversal.super.visitExpr(expr, tyckUnits);
+    return ExprTraversal.super.visitExpr(expr, references);
   }
 }

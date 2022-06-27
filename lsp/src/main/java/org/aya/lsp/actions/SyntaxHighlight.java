@@ -43,19 +43,19 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   // region def, data, struct, prim, levels
   @Override
-  public void visitTelescopic(BaseDecl.@NotNull Telescopic signatured, @NotNull MutableList<HighlightResult.Symbol> buffer) {
-    buffer.append(new HighlightResult.Symbol(LspRange.toRange(signatured), switch (signatured) {
-      case TopTeleDecl.DataDecl $ -> HighlightResult.Kind.DataDef;
-      case TopTeleDecl.StructField $ -> HighlightResult.Kind.FieldDef;
-      case TopTeleDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
-      case TopTeleDecl.DataCtor $ -> HighlightResult.Kind.ConDef;
-      case TopTeleDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
-      case TopTeleDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
+  public void visitTelescopic(@NotNull Decl decl, Decl.@NotNull Telescopic proof, @NotNull MutableList<HighlightResult.Symbol> buffer) {
+    buffer.append(new HighlightResult.Symbol(LspRange.toRange(decl), switch (proof) {
+      case TeleDecl.DataDecl $ -> HighlightResult.Kind.DataDef;
+      case TeleDecl.StructField $ -> HighlightResult.Kind.FieldDef;
+      case TeleDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
+      case TeleDecl.DataCtor $ -> HighlightResult.Kind.ConDef;
+      case TeleDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
+      case TeleDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
     }));
-    StmtOps.super.visitTelescopic(signatured, buffer);
+    StmtOps.super.visitTelescopic(decl, proof, buffer);
   }
 
-  @Override public void visitDecl(@NotNull TopLevelDecl decl, @NotNull MutableList<HighlightResult.Symbol> buffer) {
+  @Override public void visitDecl(@NotNull Decl decl, @NotNull MutableList<HighlightResult.Symbol> buffer) {
     visitBind(buffer, decl.bindBlock());
     StmtOps.super.visitDecl(decl, buffer);
   }
@@ -121,17 +121,17 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   }
 
   private HighlightResult.@Nullable Kind kindOf(@NotNull DefVar<?, ?> ref) {
-    if (ref.core instanceof FnDef || ref.concrete instanceof TopTeleDecl.FnDecl)
+    if (ref.core instanceof FnDef || ref.concrete instanceof TeleDecl.FnDecl)
       return HighlightResult.Kind.FnCall;
-    else if (ref.core instanceof StructDef || ref.concrete instanceof TopTeleDecl.StructDecl)
+    else if (ref.core instanceof StructDef || ref.concrete instanceof TeleDecl.StructDecl)
       return HighlightResult.Kind.StructCall;
-    else if (ref.core instanceof FieldDef || ref.concrete instanceof TopTeleDecl.StructField)
+    else if (ref.core instanceof FieldDef || ref.concrete instanceof TeleDecl.StructField)
       return HighlightResult.Kind.FieldCall;
-    else if (ref.core instanceof PrimDef || ref.concrete instanceof TopTeleDecl.PrimDecl)
+    else if (ref.core instanceof PrimDef || ref.concrete instanceof TeleDecl.PrimDecl)
       return HighlightResult.Kind.PrimCall;
-    else if (ref.core instanceof DataDef || ref.concrete instanceof TopTeleDecl.DataDecl)
+    else if (ref.core instanceof DataDef || ref.concrete instanceof TeleDecl.DataDecl)
       return HighlightResult.Kind.DataCall;
-    else if (ref.core instanceof CtorDef || ref.concrete instanceof TopTeleDecl.DataCtor)
+    else if (ref.core instanceof CtorDef || ref.concrete instanceof TeleDecl.DataCtor)
       return HighlightResult.Kind.ConCall;
     return null;
   }

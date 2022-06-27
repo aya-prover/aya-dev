@@ -9,8 +9,8 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import org.aya.concrete.remark.Remark;
-import org.aya.concrete.stmt.TopLevelDecl;
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.GenericDef;
@@ -49,8 +49,8 @@ public record AyaSccTycker(
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull MutableList<@NotNull GenericDef> wellTyped,
-  @NotNull MutableMap<TopLevelDecl, ExprTycker> tyckerReuse,
-  @NotNull MutableMap<TopLevelDecl, CollectingReporter> sampleReporters
+  @NotNull MutableMap<Decl.TopLevel, ExprTycker> tyckerReuse,
+  @NotNull MutableMap<Decl.TopLevel, CollectingReporter> sampleReporters
 ) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
@@ -117,7 +117,7 @@ public record AyaSccTycker(
   }
 
   private void checkUnit(@NotNull TyckOrder order) {
-    if (order instanceof TyckOrder.Body && order.unit() instanceof TopTeleDecl.FnDecl fn && fn.body.isLeft()) {
+    if (order instanceof TyckOrder.Body && order.unit() instanceof TeleDecl.FnDecl fn && fn.body.isLeft()) {
       checkSimpleFn(order, fn);
     } else {
       check(order);
@@ -145,12 +145,12 @@ public record AyaSccTycker(
     return hasSuc(graph, MutableSet.create(), unit, unit);
   }
 
-  private void checkSimpleFn(@NotNull TyckOrder order, @NotNull TopTeleDecl.FnDecl fn) {
+  private void checkSimpleFn(@NotNull TyckOrder order, @NotNull TeleDecl.FnDecl fn) {
     if (selfReferencing(resolveInfo.depGraph(), order)) {
       reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
-    decideTyckResult(fn, tycker.simpleFn(newExprTycker(), fn));
+    decideTyckResult(fn, fn, tycker.simpleFn(newExprTycker(), fn));
   }
 
   private void check(@NotNull TyckOrder tyckOrder) {
@@ -161,34 +161,31 @@ public record AyaSccTycker(
   }
 
   private void checkHeader(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
-    switch (stmt) {
-      case TopTeleDecl decl -> tycker.tyckHeader(decl, reuse(decl));
-      case TopTeleDecl.DataCtor ctor -> tycker.tyckHeader(ctor, reuse(ctor.dataRef.concrete));
-      case TopTeleDecl.StructField field -> tycker.tyckHeader(field, reuse(field.structRef.concrete));
-      default -> {}
-    }
+    if (stmt instanceof Decl decl) tycker.tyckHeader(decl, reuse(decl));
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     switch (stmt) {
-      case TopTeleDecl decl -> decideTyckResult(decl, tycker.tyck(decl, reuse(decl)));
-      case TopTeleDecl.DataCtor ctor -> tycker.tyck(ctor, reuse(ctor.dataRef.concrete));
-      case TopTeleDecl.StructField field -> tycker.tyck(field, reuse(field.structRef.concrete));
+      case Decl decl -> {
+        var def = tycker.tyck(decl, reuse(decl));
+        if (decl instanceof Decl.TopLevel topLevel) decideTyckResult(decl, topLevel, def);
+      }
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(newExprTycker()));
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
-  private void decideTyckResult(@NotNull TopLevelDecl decl, @NotNull GenericDef def) {
-    switch (decl.personality()) {
+  private void decideTyckResult(@NotNull Decl decl, @NotNull Decl.TopLevel proof, @NotNull GenericDef def) {
+    assert decl == proof;
+    switch (proof.personality()) {
       case NORMAL -> {
         wellTyped.append(def);
         resolveInfo.shapeFactory().bonjour(def);
       }
       case COUNTEREXAMPLE -> {
-        var sampleReporter = sampleReporters.getOrPut(decl, BufferReporter::new);
+        var sampleReporter = sampleReporters.getOrPut(proof, BufferReporter::new);
         var problems = sampleReporter.problems().toImmutableSeq();
         if (problems.isEmpty()) reporter.report(new CounterexampleError(decl.sourcePos(), decl.ref()));
         if (def instanceof UserDef userDef) userDef.problems = problems;
@@ -196,9 +193,18 @@ public record AyaSccTycker(
     }
   }
 
-  private @NotNull ExprTycker reuse(@NotNull TopLevelDecl decl) {
+  private @NotNull ExprTycker reuse(@NotNull Decl decl) {
+    // IDEA says the match is not exhaustive, but it is.
+    return switch (decl) {
+      case Decl.TopLevel topLevel -> reuseTopLevel(topLevel);
+      case TeleDecl.DataCtor ctor -> reuseTopLevel(ctor.dataRef.concrete);
+      case TeleDecl.StructField field -> reuseTopLevel(field.structRef.concrete);
+    };
+  }
+
+  private @NotNull ExprTycker reuseTopLevel(@NotNull Decl.TopLevel decl) {
     // prevent counterexample errors from being reported to the user reporter
-    if (decl.personality() == TopTeleDecl.Personality.COUNTEREXAMPLE) {
+    if (decl.personality() == Decl.Personality.COUNTEREXAMPLE) {
       var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);
       return tyckerReuse.getOrPut(decl, () -> newExprTycker(reporter));
     }
@@ -219,7 +225,7 @@ public record AyaSccTycker(
       .map(TyckOrder::unit);
     if (recDefs.isEmpty()) return;
     // TODO: terck other definitions
-    var fn = recDefs.filterIsInstance(TopTeleDecl.FnDecl.class)
+    var fn = recDefs.filterIsInstance(TeleDecl.FnDecl.class)
       .map(f -> f.ref.core);
     terckRecursiveFn(fn);
   }
@@ -231,7 +237,7 @@ public record AyaSccTycker(
     var failed = graph.findNonTerminating();
     if (failed != null) failed.forEach(f -> {
       var ref = f.matrix().domain().ref();
-      reporter.report(new NonTerminating(ref.concrete.sourcePos, ref, f));
+      reporter.report(new NonTerminating(ref.concrete.sourcePos(), ref, f));
     });
   }
 
