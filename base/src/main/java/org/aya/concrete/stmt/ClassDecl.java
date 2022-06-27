@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @see Decl
  */
 public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implements Decl.Resulted, Decl.TopLevel {
-  public final @NotNull Decl.Personality personality;
+  private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
 

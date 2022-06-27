@@ -228,8 +228,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.StructDecl decl -> {
         var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
-          visitPersonality(decl.personality),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
+          visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "struct"),
           linkDef(decl.ref, STRUCT_CALL),
           visitTele(decl.telescope));
@@ -242,8 +242,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case TeleDecl.FnDecl decl -> {
         var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
-          visitPersonality(decl.personality),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
+          visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "def"));
         prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
         prelude.append(linkDef(decl.ref, FN_CALL));
@@ -257,8 +257,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case TeleDecl.DataDecl decl -> {
         var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality)),
-          visitPersonality(decl.personality),
+          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
+          visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "data"),
           linkDef(decl.ref, DATA_CALL),
           visitTele(decl.telescope));

@@ -30,7 +30,7 @@ import java.util.EnumSet;
  * @see Decl
  */
 public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telescopic, Decl.TopLevel, Decl.Resulted {
-  public final @NotNull Decl.Personality personality;
+  private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
   // will change after resolve
