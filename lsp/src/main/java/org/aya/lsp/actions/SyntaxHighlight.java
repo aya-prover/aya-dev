@@ -51,7 +51,6 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
       case TeleDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
       case TeleDecl.DataCtor $ -> HighlightResult.Kind.ConDef;
       case TeleDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
-      case ClassDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
     }));
     StmtOps.super.visitTelescopic(decl, proof, buffer);
   }

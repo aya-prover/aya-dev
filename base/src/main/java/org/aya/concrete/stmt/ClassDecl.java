@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * @author zaoqi
  * @see Decl
  */
-public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implements Decl.Resulted, Decl.TopLevel {
+public sealed abstract class ClassDecl extends CommonDecl implements Decl.Resulted, Decl.TopLevel {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
@@ -67,10 +67,10 @@ public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implemen
    *
    * @author vont
    */
-  public static final class StructDecl extends TeleDecl {
+  public static final class StructDecl extends ClassDecl {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
-    final ImmutableSeq<StructField> fields;
+    final ImmutableSeq<TeleDecl.StructField> fields;
     public int ulift;
 
     public StructDecl(
@@ -78,14 +78,13 @@ public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implemen
       @NotNull Accessibility accessibility,
       @Nullable OpInfo opInfo,
       @NotNull String name,
-      @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       // @NotNull ImmutableSeq<String> superClassNames,
-      @NotNull ImmutableSeq<StructField> fields,
+      @NotNull ImmutableSeq<TeleDecl.StructField> fields,
       @NotNull BindBlock bindBlock,
       @NotNull Decl.Personality personality
     ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
+      super(sourcePos, entireSourcePos, opInfo, bindBlock, result, personality, accessibility);
       this.fields = fields;
       this.ref = DefVar.concrete(this, name);
       fields.forEach(field -> field.structRef = ref);

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 public record Serializer(@NotNull Serializer.State state) {
   public @NotNull SerDef serialize(@NotNull GenericDef def) {
     return switch (def) {
-      case ClassDef classDef -> throw new UnsupportedOperationException("TODO");
       case FnDef fn -> new SerDef.Fn(
         state.def(fn.ref),
         serializeParams(fn.telescope),
@@ -43,7 +42,6 @@ public record Serializer(@NotNull Serializer.State state) {
       );
       case StructDef struct -> new SerDef.Struct(
         state.def(struct.ref()),
-        serializeParams(struct.telescope),
         struct.resultLevel,
         struct.fields.map(field -> (SerDef.Field) serialize(field))
       );

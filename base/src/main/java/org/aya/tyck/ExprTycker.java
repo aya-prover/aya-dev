@@ -104,6 +104,8 @@ public final class ExprTycker extends Tycker {
         yield new Result(result.wellTyped.lift(levels), result.type.lift(levels));
       }
       case Expr.NewExpr newExpr -> {
+        throw new UnsupportedOperationException("TODO");
+        /*
         var structExpr = newExpr.struct();
         var struct = instImplicits(synthesize(structExpr).wellTyped, structExpr.sourcePos());
         if (!(struct instanceof CallTerm.Struct structCall))
@@ -154,8 +156,11 @@ public final class ExprTycker extends Tycker {
         if (conFields.isNotEmpty())
           yield fail(newExpr, structCall, new FieldProblem.NoSuchFieldError(newExpr.sourcePos(), conFields.map(f -> f.name().data())));
         yield new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
+        */
       }
       case Expr.ProjExpr proj -> {
+        throw new UnsupportedOperationException("TODO");
+        /*
         var struct = proj.tup();
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
@@ -188,6 +193,7 @@ public final class ExprTycker extends Tycker {
               FormTerm.Pi.make(tele, field.result().subst(structSubst)));
           }
         );
+        */
       }
       case Expr.TupExpr tuple -> {
         var items = tuple.items().map(this::synthesize);
@@ -482,7 +488,8 @@ public final class ExprTycker extends Tycker {
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
       return defCall(pos, (DefVar<DataDef, TeleDecl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof ClassDecl.StructDecl) {
-      return defCall(pos, (DefVar<StructDef, ClassDecl.StructDecl>) var, CallTerm.Struct::new);
+      throw new UnsupportedOperationException("TODO");
+      //return defCall(pos, (DefVar<StructDef, ClassDecl.StructDecl>) var, CallTerm.Struct::new);
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);

@@ -53,7 +53,6 @@ public interface StmtOps<P> extends ExprTraversal<P> {
     if (decl instanceof Decl.Telescopic teleDecl) visitTelescopic(decl, teleDecl, pp);
     if (decl instanceof Decl.Resulted resulted) resulted.setResult(visitExpr(resulted.result(), pp));
     switch (decl) {
-      case ClassDecl classDecl -> {}
       case TeleDecl.PrimDecl prim -> {}
       case TeleDecl.DataDecl data -> data.body.forEach(ctor -> traced(ctor, pp, this::visitDecl));
       case ClassDecl.StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitDecl));

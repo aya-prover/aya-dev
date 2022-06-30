@@ -118,7 +118,6 @@ public record StmtShallowResolver(
 
   private void resolveDecl(@NotNull Decl predecl, @NotNull ModuleContext context) {
     switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), this::resolveDecl);

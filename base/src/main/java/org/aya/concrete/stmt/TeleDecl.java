@@ -29,7 +29,7 @@ import java.util.EnumSet;
  * @author re-xyr
  * @see Decl
  */
-public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telescopic, Decl.TopLevel, Decl.Resulted permits ClassDecl.StructDecl, TeleDecl.DataDecl, TeleDecl.FnDecl, TeleDecl.PrimDecl {
+public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telescopic, Decl.TopLevel, Decl.Resulted {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;

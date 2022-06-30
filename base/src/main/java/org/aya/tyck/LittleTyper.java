@@ -24,7 +24,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     return switch (preterm) {
       case RefTerm term -> localCtx.get(term.var());
       case CallTerm.Data dataCall -> defCall(dataCall.ref(), dataCall.ulift());
-      case CallTerm.Struct structCall -> defCall(structCall.ref(), structCall.ulift());
+      case CallTerm.Struct structCall -> throw new UnsupportedOperationException("TODO");//defCall(structCall.ref(), structCall.ulift());
       case CallTerm.Hole hole -> {
         var result = hole.ref().result;
         yield result == null ? ErrorTerm.typeOf(hole) : result;
@@ -33,12 +33,15 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case RefTerm.Field field -> Def.defType(field.ref());
       case RefTerm.Self self -> throw new UnsupportedOperationException("TODO");
       case CallTerm.Access access -> {
+        throw new UnsupportedOperationException("TODO");
+        /*
         var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
         if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
         var core = access.ref().core;
         var subst = Unfolder.buildSubst(core.telescope(), access.fieldArgs())
           .add(Unfolder.buildSubst(call.ref().core.telescope(), access.structArgs()));
         yield core.result().subst(subst);
+        */
       }
       case FormTerm.Sigma sigma -> {
         var univ = sigma.params().view()

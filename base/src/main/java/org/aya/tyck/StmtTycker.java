@@ -68,7 +68,6 @@ public record StmtTycker(
     if (predecl instanceof Decl.Telescopic decl && decl.signature() == null) tyckHeader(predecl, tycker);
     var signature = predecl instanceof Decl.Telescopic decl ? decl.signature() : null;
     return switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl decl -> {
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
@@ -108,9 +107,8 @@ public record StmtTycker(
       }
       case TeleDecl.PrimDecl decl -> decl.ref.core;
       case ClassDecl.StructDecl decl -> {
-        assert signature != null;
         var body = decl.fields.map(field -> (FieldDef) traced(field, tycker, this::tyck));
-        yield new StructDef(decl.ref, signature.param(), decl.ulift, body);
+        yield new StructDef(decl.ref, decl.ulift, body);
       }
       case TeleDecl.DataCtor ctor -> {
         // TODO[ice]: remove this hack
@@ -138,6 +136,8 @@ public record StmtTycker(
         yield elaborated;
       }
       case TeleDecl.StructField field -> {
+        throw new UnsupportedOperationException("TODO");
+        /*
         // TODO[ice]: remove this hack
         if (field.ref.core != null) yield field.ref.core;
         assert signature == field.signature && signature != null; // already handled in the entrance of this method
@@ -153,6 +153,7 @@ public record StmtTycker(
         if (patTycker.noError())
           ensureConfluent(tycker, field.signature, clauses, field.sourcePos, false);
         yield elaborated;
+        */
       }
     };
   }
@@ -178,7 +179,6 @@ public record StmtTycker(
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope")));
     switch (decl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, -1);
         // It might contain unsolved holes, but that's acceptable.
@@ -199,9 +199,7 @@ public record StmtTycker(
       }
       case ClassDecl.StructDecl struct -> {
         var pos = struct.sourcePos;
-        var tele = tele(tycker, struct.telescope, -1);
         var result = tycker.zonk(tycker.synthesize(struct.result)).wellTyped();
-        struct.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
         struct.ulift = tycker.ensureUniv(struct.result, result);
       }
@@ -252,8 +250,6 @@ public record StmtTycker(
       case TeleDecl.StructField field -> {
         if (field.signature != null) return;
         var structRef = field.structRef;
-        var structSig = structRef.concrete.signature;
-        assert structSig != null;
         var structLvl = structRef.concrete.ulift;
         var tele = tele(tycker, field.telescope, structLvl);
         var result = tycker.zonk(tycker.inherit(field.result, new FormTerm.Univ(structLvl))).wellTyped();

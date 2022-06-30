@@ -230,14 +230,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
   public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case ClassDecl.StructDecl decl -> {
         var prelude = MutableList.of(
           visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
           visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "struct"),
-          linkDef(decl.ref, STRUCT_CALL),
-          visitTele(decl.telescope));
+          linkDef(decl.ref, STRUCT_CALL));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(

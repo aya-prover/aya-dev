@@ -57,7 +57,6 @@ public interface StmtResolver {
   /** @apiNote Note that this function MUTATES the decl */
   private static void resolveDecl(@NotNull Decl predecl, @NotNull ResolveInfo info) {
     switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.FnDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
@@ -91,6 +90,8 @@ public interface StmtResolver {
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
       case ClassDecl.StructDecl decl -> {
+        throw new UnsupportedOperationException("TODO");
+        /*
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
@@ -110,6 +111,7 @@ public interface StmtResolver {
         });
         addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
           .concat(decl.fields.map(TyckOrder.Body::new)));
+        */
       }
       case TeleDecl.PrimDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
@@ -186,7 +188,6 @@ public interface StmtResolver {
   static void resolveBind(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
       case Command.Module mod -> resolveBind(mod.contents(), info);
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.DataDecl decl -> {
         decl.body.forEach(ctor -> resolveBind(ctor, info));
         visitBind(decl.ref, decl.bindBlock, info);

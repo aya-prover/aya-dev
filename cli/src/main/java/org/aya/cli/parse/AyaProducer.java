@@ -719,7 +719,7 @@ public record AyaProducer(
       personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      tele,
+      //tele, // TODO
       type(ctx.type(), sourcePosOf(ctx)),
       fields,
       bind == null ? BindBlock.EMPTY : visitBind(bind),

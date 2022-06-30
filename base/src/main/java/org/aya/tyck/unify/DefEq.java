@@ -249,6 +249,8 @@ public final class DefEq {
     var ret = switch (type) {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
       case CallTerm.Struct type1 -> {
+        throw new UnsupportedOperationException("TODO");
+        /*
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
           Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
@@ -264,6 +266,7 @@ public final class DefEq {
           if (!compare(l, r, lr, rl, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
         }
         yield true;
+        */
       }
       case IntroTerm.Lambda $ -> throw new InternalException("LamTerm is never type");
       case CallTerm.Con $ -> throw new InternalException("ConCall is never type");
@@ -368,9 +371,12 @@ public final class DefEq {
         yield args ? FormTerm.Univ.ZERO : null;
       }
       case CallTerm.Struct lhs -> {
+        throw new UnsupportedOperationException("TODO");
+        /*
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         yield args ? FormTerm.Univ.ZERO : null;
+        */
       }
       case CallTerm.Con lhs -> switch (preRhs) {
         case CallTerm.Con rhs -> {

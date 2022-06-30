@@ -14,17 +14,16 @@ import org.jetbrains.annotations.NotNull;
  * @author vont
  */
 
-public final class StructDef extends UserDef.Type {
+public final class StructDef extends ClassDef.Type {
   public final @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref;
   public final @NotNull ImmutableSeq<FieldDef> fields;
 
   public StructDef(
     @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref,
-    @NotNull ImmutableSeq<Term.Param> telescope,
     int ulift,
     @NotNull ImmutableSeq<FieldDef> fields
   ) {
-    super(telescope, ulift);
+    super(ulift);
     ref.core = this;
     this.ref = ref;
     this.fields = fields;
