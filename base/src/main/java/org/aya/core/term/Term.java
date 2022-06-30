@@ -126,7 +126,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     R visitFnCall(CallTerm.@NotNull Fn fnCall, P p);
     R visitDataCall(CallTerm.@NotNull Data dataCall, P p);
     R visitConCall(CallTerm.@NotNull Con conCall, P p);
-    R visitStructCall(CallTerm.@NotNull Struct structCall, P p);
+    R visitStructCall(@NotNull StructCall structCall, P p);
     R visitPrimCall(@NotNull CallTerm.Prim prim, P p);
     R visitTup(@NotNull IntroTerm.Tuple tuple, P p);
     R visitNew(@NotNull IntroTerm.New newTerm, P p);

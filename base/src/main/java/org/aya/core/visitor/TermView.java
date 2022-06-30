@@ -81,7 +81,7 @@ public interface TermView {
         var struct = commit(neu.struct());
         var fields = ImmutableMap.from(neu.params().view().map((k, v) -> Tuple.of(k, commit(v))));
         if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView())) yield neu;
-        yield new IntroTerm.New((CallTerm.Struct) struct, fields);
+        yield new IntroTerm.New((StructCall) struct, fields);
       }
       case ElimTerm.App app -> {
         var function = commit(app.of());
@@ -94,10 +94,10 @@ public interface TermView {
         if (tuple == proj.of()) yield proj;
         yield new ElimTerm.Proj(tuple, proj.ix());
       }
-      case CallTerm.Struct struct -> {
+      case StructCall struct -> {
         var args = struct.args().map(this::commit);
         if (args.sameElements(struct.args(), true)) yield struct;
-        yield new CallTerm.Struct(struct.ref(), struct.ulift(), args);
+        yield new StructCall(struct.ref(), struct.ulift(), args);
       }
       case CallTerm.Data data -> {
         var args = data.args().map(this::commit);

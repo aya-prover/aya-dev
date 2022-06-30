@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @see CallTerm#make(Term, Arg)
  */
-public sealed interface CallTerm extends Term {
+public sealed interface CallTerm extends Term permits CallTerm.Access, CallTerm.Con, CallTerm.Data, CallTerm.Fn, CallTerm.Hole, CallTerm.Prim, StructCall {
   @NotNull Var ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
 
@@ -86,19 +86,6 @@ public sealed interface CallTerm extends Term {
 
     public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> ctorRef) {
       return new ConHead(ref, ctorRef, ulift, args);
-    }
-  }
-
-  /**
-   * @author kiva
-   */
-  record Struct(
-    @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref,
-    int ulift,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-  ) implements CallTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitStructCall(this, p);
     }
   }
 

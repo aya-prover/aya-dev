@@ -123,7 +123,7 @@ public record CallResolver(
     return DefConsumer.super.visitDataCall(dataCall, graph);
   }
 
-  @Override public Unit visitStructCall(CallTerm.@NotNull Struct structCall, CallGraph<Def, Term.Param> graph) {
+  @Override public Unit visitStructCall(@NotNull StructCall structCall, CallGraph<Def, Term.Param> graph) {
     resolveCall(structCall, graph);
     return DefConsumer.super.visitStructCall(structCall, graph);
   }

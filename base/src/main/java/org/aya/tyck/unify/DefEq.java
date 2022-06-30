@@ -6,7 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
@@ -248,7 +247,7 @@ public final class DefEq {
       pos, type.freezeHoles(state)));
     var ret = switch (type) {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
-      case CallTerm.Struct type1 -> {
+      case StructCall type1 -> {
         throw new UnsupportedOperationException("TODO");
         /*
         var fieldSigs = type1.ref().core.fields;
@@ -370,7 +369,7 @@ public final class DefEq {
         // Do not need to be computed precisely because unification won't need this info
         yield args ? FormTerm.Univ.ZERO : null;
       }
-      case CallTerm.Struct lhs -> {
+      case StructCall lhs -> {
         throw new UnsupportedOperationException("TODO");
         /*
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
@@ -394,7 +393,7 @@ public final class DefEq {
       case CallTerm.Access lhs -> {
         if (!(preRhs instanceof CallTerm.Access rhs)) yield null;
         var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(preStructType instanceof CallTerm.Struct structType)) yield null;
+        if (!(preStructType instanceof StructCall structType)) yield null;
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }

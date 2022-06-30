@@ -69,10 +69,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new CallTerm.Con(head, conArgs);
   }
 
-  @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
+  @Override default @NotNull Term visitStructCall(@NotNull StructCall structCall, P p) {
     var args = structCall.args().map(arg -> visitArg(arg, p));
     if (ulift() == 0 && structCall.args().sameElements(args, true)) return structCall;
-    return new CallTerm.Struct(structCall.ref(), ulift() + structCall.ulift(), args);
+    return new StructCall(structCall.ref(), ulift() + structCall.ulift(), args);
   }
 
   private <T> T visitParameterized(
@@ -150,7 +150,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var items = ImmutableMap.from(itemsView);
     // if (struct.params().view().sameElements(items, true)) return struct;
     // Supposed to succeed
-    return new IntroTerm.New((CallTerm.Struct) struct.struct().accept(this, p), items);
+    return new IntroTerm.New((StructCall) struct.struct().accept(this, p), items);
   }
 
   @Override default @NotNull Term visitProj(@NotNull ElimTerm.Proj term, P p) {

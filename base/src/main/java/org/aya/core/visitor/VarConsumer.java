@@ -52,7 +52,7 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     return TermConsumer.super.visitConCall(conCall, p);
   }
 
-  @Override default Unit visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
+  @Override default Unit visitStructCall(@NotNull StructCall structCall, P p) {
     visitVar(structCall.ref(), p);
     return TermConsumer.super.visitStructCall(structCall, p);
   }
