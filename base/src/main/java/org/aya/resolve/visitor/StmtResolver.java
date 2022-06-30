@@ -90,7 +90,7 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
-      case TeleDecl.StructDecl decl -> {
+      case ClassDecl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
@@ -191,7 +191,7 @@ public interface StmtResolver {
         decl.body.forEach(ctor -> resolveBind(ctor, info));
         visitBind(decl.ref, decl.bindBlock, info);
       }
-      case TeleDecl.StructDecl decl -> {
+      case ClassDecl.StructDecl decl -> {
         decl.fields.forEach(field -> resolveBind(field, info));
         visitBind(decl.ref, decl.bindBlock, info);
       }

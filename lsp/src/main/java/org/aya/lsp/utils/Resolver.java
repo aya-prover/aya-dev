@@ -10,10 +10,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
@@ -78,7 +75,7 @@ public interface Resolver {
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
       case TeleDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
-      case TeleDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
+      case ClassDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
       default -> SeqView.of(def.ref());
     };
   }

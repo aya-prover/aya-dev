@@ -3,23 +3,23 @@
 package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * core struct definition, corresponding to {@link TeleDecl.StructDecl}
+ * core struct definition, corresponding to {@link ClassDecl.StructDecl}
  *
  * @author vont
  */
 
 public final class StructDef extends UserDef.Type {
-  public final @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref;
+  public final @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref;
   public final @NotNull ImmutableSeq<FieldDef> fields;
 
   public StructDef(
-    @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref,
+    @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,
     int ulift,
     @NotNull ImmutableSeq<FieldDef> fields
@@ -34,7 +34,7 @@ public final class StructDef extends UserDef.Type {
     return visitor.visitStruct(this, p);
   }
 
-  public @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref() {
+  public @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref() {
     return ref;
   }
 }

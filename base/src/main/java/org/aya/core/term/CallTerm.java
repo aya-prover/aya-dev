@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.Meta;
@@ -92,7 +93,7 @@ public sealed interface CallTerm extends Term {
    * @author kiva
    */
   record Struct(
-    @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref,
+    @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {

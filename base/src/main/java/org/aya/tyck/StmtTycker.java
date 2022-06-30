@@ -107,7 +107,7 @@ public record StmtTycker(
         yield new DataDef(decl.ref, signature.param(), decl.ulift, body);
       }
       case TeleDecl.PrimDecl decl -> decl.ref.core;
-      case TeleDecl.StructDecl decl -> {
+      case ClassDecl.StructDecl decl -> {
         assert signature != null;
         var body = decl.fields.map(field -> (FieldDef) traced(field, tycker, this::tyck));
         yield new StructDef(decl.ref, signature.param(), decl.ulift, body);
@@ -197,7 +197,7 @@ public record StmtTycker(
         // [ice]: this line reports error if result is not a universe term, so we're good
         data.ulift = tycker.ensureUniv(data.result, result);
       }
-      case TeleDecl.StructDecl struct -> {
+      case ClassDecl.StructDecl struct -> {
         var pos = struct.sourcePos;
         var tele = tele(tycker, struct.telescope, -1);
         var result = tycker.zonk(tycker.synthesize(struct.result)).wellTyped();

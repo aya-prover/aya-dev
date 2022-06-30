@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
@@ -244,7 +245,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       case TeleDecl.FnDecl d -> FN_CALL;
       case TeleDecl.DataDecl d -> DATA_CALL;
       case TeleDecl.DataCtor d -> CON_CALL;
-      case TeleDecl.StructDecl d -> STRUCT_CALL;
+      case ClassDecl.StructDecl d -> STRUCT_CALL;
       case TeleDecl.StructField d -> FIELD_CALL;
       case TeleDecl.PrimDecl d -> FN_CALL;
       case null, default -> null;

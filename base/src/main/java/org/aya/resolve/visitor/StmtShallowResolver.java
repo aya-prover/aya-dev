@@ -124,7 +124,7 @@ public record StmtShallowResolver(
         var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), this::resolveDecl);
         resolveOpInfo(decl, innerCtx);
       }
-      case TeleDecl.StructDecl decl -> {
+      case ClassDecl.StructDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), this::resolveDecl);
         resolveOpInfo(decl, innerCtx);

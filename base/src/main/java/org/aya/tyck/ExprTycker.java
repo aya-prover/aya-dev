@@ -11,6 +11,7 @@ import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.value.LazyValue;
 import org.aya.concrete.Expr;
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
@@ -480,8 +481,8 @@ public final class ExprTycker extends Tycker {
       return defCall(pos, (DefVar<PrimDef, TeleDecl.PrimDecl>) var, CallTerm.Prim::new);
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
       return defCall(pos, (DefVar<DataDef, TeleDecl.DataDecl>) var, CallTerm.Data::new);
-    } else if (var.core instanceof StructDef || var.concrete instanceof TeleDecl.StructDecl) {
-      return defCall(pos, (DefVar<StructDef, TeleDecl.StructDecl>) var, CallTerm.Struct::new);
+    } else if (var.core instanceof StructDef || var.concrete instanceof ClassDecl.StructDecl) {
+      return defCall(pos, (DefVar<StructDef, ClassDecl.StructDecl>) var, CallTerm.Struct::new);
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);

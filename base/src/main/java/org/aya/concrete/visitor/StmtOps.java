@@ -56,7 +56,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
       case ClassDecl classDecl -> {}
       case TeleDecl.PrimDecl prim -> {}
       case TeleDecl.DataDecl data -> data.body.forEach(ctor -> traced(ctor, pp, this::visitDecl));
-      case TeleDecl.StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitDecl));
+      case ClassDecl.StructDecl struct -> struct.fields.forEach(field -> traced(field, pp, this::visitDecl));
       case TeleDecl.FnDecl fn -> fn.body = fn.body.map(
         expr -> visitExpr(expr, pp),
         clauses -> clauses.map(clause -> visitClause(clause, pp))

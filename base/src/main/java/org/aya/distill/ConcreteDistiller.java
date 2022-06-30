@@ -226,7 +226,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
   public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
-      case TeleDecl.StructDecl decl -> {
+      case ClassDecl.StructDecl decl -> {
         var prelude = MutableList.of(
           visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
           visitPersonality(decl.personality()),

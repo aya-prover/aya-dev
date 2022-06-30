@@ -29,7 +29,7 @@ import java.util.EnumSet;
  * @author re-xyr
  * @see Decl
  */
-public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telescopic, Decl.TopLevel, Decl.Resulted {
+public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telescopic, Decl.TopLevel, Decl.Resulted permits ClassDecl.StructDecl, TeleDecl.DataDecl, TeleDecl.FnDecl, TeleDecl.PrimDecl {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
@@ -210,43 +210,9 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     }
   }
 
-  /**
-   * Concrete structure definition
-   *
-   * @author vont
-   */
-  public static final class StructDecl extends TeleDecl {
-    public final @NotNull DefVar<StructDef, StructDecl> ref;
-    public @NotNull
-    final ImmutableSeq<StructField> fields;
-    public int ulift;
-
-    public StructDecl(
-      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @NotNull Accessibility accessibility,
-      @Nullable OpInfo opInfo,
-      @NotNull String name,
-      @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result,
-      // @NotNull ImmutableSeq<String> superClassNames,
-      @NotNull ImmutableSeq<StructField> fields,
-      @NotNull BindBlock bindBlock,
-      @NotNull Decl.Personality personality
-    ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
-      this.fields = fields;
-      this.ref = DefVar.concrete(this, name);
-      fields.forEach(field -> field.structRef = ref);
-    }
-
-    @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
-      return ref;
-    }
-  }
-
   public static final class StructField extends CommonDecl implements Decl.Telescopic, Decl.Resulted {
     public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
-    public DefVar<StructDef, StructDecl> structRef;
+    public DefVar<StructDef, ClassDecl.StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
     public @NotNull Option<Expr> body;

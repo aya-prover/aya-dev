@@ -705,7 +705,7 @@ public record AyaProducer(
       Option.ofNullable(ctx.expr()).map(this::visitExpr));
   }
 
-  public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>>
+  public @NotNull Tuple2<ClassDecl.StructDecl, ImmutableSeq<Stmt>>
   visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
@@ -713,7 +713,7 @@ public record AyaProducer(
     var fields = visitFields(ctx.field());
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
-    var struct = new TeleDecl.StructDecl(
+    var struct = new ClassDecl.StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,

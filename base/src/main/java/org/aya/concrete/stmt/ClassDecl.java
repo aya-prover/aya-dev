@@ -2,8 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.core.def.ClassDef;
+import org.aya.core.def.StructDef;
+import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
@@ -57,5 +60,39 @@ public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implemen
 
   @Override public String toString() {
     return getClass().getSimpleName() + "[" + ref().name() + "]";
+  }
+
+  /**
+   * Concrete structure definition
+   *
+   * @author vont
+   */
+  public static final class StructDecl extends TeleDecl {
+    public final @NotNull DefVar<StructDef, StructDecl> ref;
+    public @NotNull
+    final ImmutableSeq<StructField> fields;
+    public int ulift;
+
+    public StructDecl(
+      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
+      @NotNull Accessibility accessibility,
+      @Nullable OpInfo opInfo,
+      @NotNull String name,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
+      @NotNull Expr result,
+      // @NotNull ImmutableSeq<String> superClassNames,
+      @NotNull ImmutableSeq<StructField> fields,
+      @NotNull BindBlock bindBlock,
+      @NotNull Decl.Personality personality
+    ) {
+      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
+      this.fields = fields;
+      this.ref = DefVar.concrete(this, name);
+      fields.forEach(field -> field.structRef = ref);
+    }
+
+    @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
+      return ref;
+    }
   }
 }
