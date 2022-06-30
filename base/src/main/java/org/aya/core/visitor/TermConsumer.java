@@ -89,8 +89,9 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitStructCall(@NotNull StructCall structCall, P p) {
-    visitArgs(p, structCall.args());
-    visitCall(structCall, p);
+    structCall.params().forEach(x -> {
+      visitArg(x._2, p);
+    });
     return Unit.unit();
   }
 

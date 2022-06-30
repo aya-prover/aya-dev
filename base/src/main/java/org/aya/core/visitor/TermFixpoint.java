@@ -70,9 +70,9 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitStructCall(@NotNull StructCall structCall, P p) {
-    var args = structCall.args().map(arg -> visitArg(arg, p));
-    if (ulift() == 0 && structCall.args().sameElements(args, true)) return structCall;
-    return new StructCall(structCall.ref(), ulift() + structCall.ulift(), args);
+    var params = structCall.params().map(x -> Tuple.of(x._1, visitArg(x._2, p)));
+    if (ulift() == 0 && structCall.params().sameElements(params, true)) return structCall;
+    return new StructCall(structCall.ref(), ulift() + structCall.ulift(), params);
   }
 
   private <T> T visitParameterized(

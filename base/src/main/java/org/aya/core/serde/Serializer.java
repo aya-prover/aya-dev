@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
@@ -138,7 +139,7 @@ public record Serializer(@NotNull Serializer.State state) {
   private @NotNull SerTerm.StructCall serializeStructCall(@NotNull StructCall structCall) {
     return new SerTerm.StructCall(
       state.def(structCall.ref()),
-      serializeCall(structCall.ulift(), structCall.args()));
+      structCall.ulift(), structCall.params().map(p -> Tuple2.of(state.def(p._1), serialize(p._2))));
   }
 
   private @NotNull SerPat.Matchy serialize(@NotNull Matching matchy) {

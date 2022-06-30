@@ -3,21 +3,35 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
+import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.ClassDecl;
+import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.def.FieldDef;
 import org.aya.core.def.StructDef;
 import org.aya.generic.Arg;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author kiva
+ * @author zaoqi
  */
 public record StructCall(
   @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref,
   int ulift,
-  @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-) implements CallTerm {
-  @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+  @NotNull ImmutableSeq<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Arg<@NotNull Term>>> params
+) implements Term {
+  @Override
+  public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitStructCall(this, p);
+  }
+
+  public @NotNull Option<DefVar<FieldDef, TeleDecl.StructField>> nextField() {
+    var params = params();
+    return ref().core.fields.findFirst(field -> !params.find(x -> x._1 == field.ref).isDefined()).map(FieldDef::ref);
+  }
+
+  public @NotNull StructCall apply(@NotNull FieldDef field, @NotNull Arg<Term> arg) {
+    return new StructCall(ref, ulift, params.appended(Tuple2.of(field.ref(), arg)));
   }
 }

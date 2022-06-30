@@ -124,7 +124,8 @@ public record CallResolver(
   }
 
   @Override public Unit visitStructCall(@NotNull StructCall structCall, CallGraph<Def, Term.Param> graph) {
-    resolveCall(structCall, graph);
+    // We currently don't support recursive structs.
+    // resolveCall(structCall, graph);
     return DefConsumer.super.visitStructCall(structCall, graph);
   }
 
