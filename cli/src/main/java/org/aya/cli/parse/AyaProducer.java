@@ -710,17 +710,18 @@ public record AyaProducer(
     var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
-    var fields = visitFields(ctx.field());
     var tele = visitTelescope(ctx.tele());
+    var fields = visitFields(tele, ctx.field());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
+    ImmutableSeq<Expr> parents = ctx.exprList() == null ? ImmutableSeq.empty() : ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
     var struct = new ClassDecl.StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      //tele, // TODO
       type(ctx.type(), sourcePosOf(ctx)),
+      parents,
       fields,
       bind == null ? BindBlock.EMPTY : visitBind(bind),
       personality
@@ -736,12 +737,29 @@ public record AyaProducer(
     ));
   }
 
-  private ImmutableSeq<ClassDecl.StructDecl.StructField> visitFields(List<AyaParser.FieldContext> field) {
-    return Seq.wrapJava(field).map(fieldCtx -> {
+  private @NotNull ClassDecl.StructDecl.StructField visitFieldParam(@NotNull Expr.Param param) {
+    return new ClassDecl.StructDecl.StructField(
+      param.sourcePos(),
+      param.sourcePos(),
+      null,
+      param.ref().name(),
+      ImmutableSeq.empty(),
+      param.type(),
+      Option.none(),
+      ImmutableSeq.empty(),
+      false,
+      BindBlock.EMPTY
+    );
+  }
+
+  private ImmutableSeq<ClassDecl.StructDecl.StructField> visitFields(ImmutableSeq<Expr.Param> tele, List<AyaParser.FieldContext> field) {
+    var teleFields = tele.map(this::visitFieldParam);
+    var originFields = Seq.wrapJava(field).map(fieldCtx -> {
       if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
       else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
       else throw new InternalException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
     });
+    return teleFields.concat(originFields);
   }
 
   public ClassDecl.StructDecl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {

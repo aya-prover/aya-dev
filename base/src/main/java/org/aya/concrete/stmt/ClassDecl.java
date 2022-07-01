@@ -75,6 +75,9 @@ public sealed abstract class ClassDecl extends CommonDecl implements Decl.Result
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
+    // `StructCall`s
+    // This will be desugared so StructDef doesn't need to store this.
+    public final @NotNull ImmutableSeq<Expr> parents;
     public int ulift;
 
     public StructDecl(
@@ -83,12 +86,13 @@ public sealed abstract class ClassDecl extends CommonDecl implements Decl.Result
       @Nullable OpInfo opInfo,
       @NotNull String name,
       @NotNull Expr result,
-      // @NotNull ImmutableSeq<String> superClassNames,
+      @NotNull ImmutableSeq<Expr> parents,
       @NotNull ImmutableSeq<StructField> fields,
       @NotNull BindBlock bindBlock,
       @NotNull Decl.Personality personality
     ) {
       super(sourcePos, entireSourcePos, opInfo, bindBlock, result, personality, accessibility);
+      this.parents = parents;
       this.fields = fields;
       this.ref = DefVar.concrete(this, name);
       fields.forEach(field -> field.structRef = ref);
