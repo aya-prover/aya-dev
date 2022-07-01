@@ -273,7 +273,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         );
       }
       case TeleDecl.PrimDecl decl -> primDoc(decl.ref);
-      case TeleDecl.StructField field -> {
+      case ClassDecl.StructDecl.StructField field -> {
         var doc = MutableList.of(Doc.symbol("|"),
           coe(field.coerce),
           linkDef(field.ref, FIELD_CALL),

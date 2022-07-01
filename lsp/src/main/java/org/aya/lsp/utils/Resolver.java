@@ -75,7 +75,7 @@ public interface Resolver {
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
       case TeleDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
-      case ClassDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
+      case ClassDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(ClassDecl.StructDecl.StructField::ref));
       default -> SeqView.of(def.ref());
     };
   }

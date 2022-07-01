@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.Def;
@@ -198,7 +199,7 @@ public record AyaSccTycker(
     return switch (decl) {
       case Decl.TopLevel topLevel -> reuseTopLevel(topLevel);
       case TeleDecl.DataCtor ctor -> reuseTopLevel(ctor.dataRef.concrete);
-      case TeleDecl.StructField field -> reuseTopLevel(field.structRef.concrete);
+      case ClassDecl.StructDecl.StructField field -> reuseTopLevel(field.structRef.concrete);
     };
   }
 

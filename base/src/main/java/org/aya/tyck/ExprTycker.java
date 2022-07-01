@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
@@ -18,7 +17,6 @@ import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
@@ -27,7 +25,6 @@ import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
@@ -497,12 +494,12 @@ public final class ExprTycker extends Tycker {
       var telescopes = CtorDef.telescopes(conVar).rename();
       var body = telescopes.toConCall(conVar);
       return new Result(IntroTerm.Lambda.make(telescopes.params(), body), type);
-    } else if (var.core instanceof FieldDef || var.concrete instanceof TeleDecl.StructField) {
+    } else if (var.core instanceof FieldDef || var.concrete instanceof ClassDecl.StructDecl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
-      var field = (DefVar<FieldDef, TeleDecl.StructField>) var;
+      var field = (DefVar<FieldDef, ClassDecl.StructDecl.StructField>) var;
       return new Result(new RefTerm.Field(field, 0), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";

@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.ClassDecl;
-import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.FieldDef;
 import org.aya.core.def.StructDef;
 import org.aya.generic.Arg;
@@ -19,14 +18,14 @@ import org.jetbrains.annotations.NotNull;
 public record StructCall(
   @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref,
   int ulift,
-  @NotNull ImmutableSeq<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Arg<@NotNull Term>>> params
+  @NotNull ImmutableSeq<Tuple2<DefVar<FieldDef, ClassDecl.StructDecl.StructField>, Arg<@NotNull Term>>> params
 ) implements Term {
   @Override
   public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitStructCall(this, p);
   }
 
-  public @NotNull Option<DefVar<FieldDef, TeleDecl.StructField>> nextField() {
+  public @NotNull Option<DefVar<FieldDef, ClassDecl.StructDecl.StructField>> nextField() {
     var params = params();
     return ref().core.fields.findFirst(field -> !params.find(x -> x._1 == field.ref).isDefined()).map(FieldDef::ref);
   }

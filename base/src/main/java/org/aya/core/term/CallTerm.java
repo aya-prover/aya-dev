@@ -158,7 +158,7 @@ public sealed interface CallTerm extends Term {
    */
   record Access(
     @NotNull Term of,
-    @NotNull DefVar<FieldDef, TeleDecl.StructField> ref,
+    @NotNull DefVar<FieldDef, ClassDecl.StructDecl.StructField> ref,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {

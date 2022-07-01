@@ -47,7 +47,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   public void visitTelescopic(@NotNull Decl decl, Decl.@NotNull Telescopic proof, @NotNull MutableList<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(decl.sourcePos(), switch (proof) {
       case TeleDecl.DataDecl $ -> HighlightResult.Kind.DataDef;
-      case TeleDecl.StructField $ -> HighlightResult.Kind.FieldDef;
+      case ClassDecl.StructDecl.StructField $ -> HighlightResult.Kind.FieldDef;
       case TeleDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
       case TeleDecl.DataCtor $ -> HighlightResult.Kind.ConDef;
       case TeleDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
@@ -125,7 +125,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
       return HighlightResult.Kind.FnCall;
     else if (ref.core instanceof StructDef || ref.concrete instanceof ClassDecl.StructDecl)
       return HighlightResult.Kind.StructCall;
-    else if (ref.core instanceof FieldDef || ref.concrete instanceof TeleDecl.StructField)
+    else if (ref.core instanceof FieldDef || ref.concrete instanceof ClassDecl.StructDecl.StructField)
       return HighlightResult.Kind.FieldCall;
     else if (ref.core instanceof PrimDef || ref.concrete instanceof TeleDecl.PrimDecl)
       return HighlightResult.Kind.PrimCall;

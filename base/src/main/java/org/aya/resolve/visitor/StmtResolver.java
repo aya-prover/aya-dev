@@ -120,7 +120,7 @@ public interface StmtResolver {
       }
       // handled in DataDecl and StructDecl
       case TeleDecl.DataCtor ctor -> {}
-      case TeleDecl.StructField field -> {}
+      case ClassDecl.StructDecl.StructField field -> {}
     }
   }
 
@@ -197,7 +197,7 @@ public interface StmtResolver {
         visitBind(decl.ref, decl.bindBlock, info);
       }
       case TeleDecl.DataCtor ctor -> visitBind(ctor.ref, ctor.bindBlock, info);
-      case TeleDecl.StructField field -> visitBind(field.ref, field.bindBlock, info);
+      case ClassDecl.StructDecl.StructField field -> visitBind(field.ref, field.bindBlock, info);
       case TeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
       case TeleDecl.PrimDecl decl -> {}
       case Remark remark -> {}

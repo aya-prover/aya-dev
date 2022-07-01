@@ -151,7 +151,7 @@ public record StmtShallowResolver(
         context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
         resolveOpInfo(ctor, context);
       }
-      case TeleDecl.StructField field -> {
+      case ClassDecl.StructDecl.StructField field -> {
         field.ref().module = context.moduleName();
         context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
         resolveOpInfo(field, context);

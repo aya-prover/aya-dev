@@ -736,7 +736,7 @@ public record AyaProducer(
     ));
   }
 
-  private ImmutableSeq<TeleDecl.StructField> visitFields(List<AyaParser.FieldContext> field) {
+  private ImmutableSeq<ClassDecl.StructDecl.StructField> visitFields(List<AyaParser.FieldContext> field) {
     return Seq.wrapJava(field).map(fieldCtx -> {
       if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
       else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
@@ -744,11 +744,11 @@ public record AyaProducer(
     });
   }
 
-  public TeleDecl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
+  public ClassDecl.StructDecl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var bind = ctx.bindBlock();
-    return new TeleDecl.StructField(
+    return new ClassDecl.StructDecl.StructField(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       nameOrInfix._2,
@@ -762,11 +762,11 @@ public record AyaProducer(
     );
   }
 
-  public TeleDecl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
+  public ClassDecl.StructDecl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var bind = ctx.bindBlock();
-    return new TeleDecl.StructField(
+    return new ClassDecl.StructDecl.StructField(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       nameOrInfix._2,

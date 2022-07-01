@@ -135,7 +135,7 @@ public record StmtTycker(
           ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
         yield elaborated;
       }
-      case TeleDecl.StructField field -> {
+      case ClassDecl.StructDecl.StructField field -> {
         throw new UnsupportedOperationException("TODO");
         /*
         // TODO[ice]: remove this hack
@@ -247,7 +247,7 @@ public record StmtTycker(
         ctor.yetTyckedPat = pat;
         ctor.patternTele = pat.isEmpty() ? dataSig.param().map(Term.Param::implicitify) : Pat.extractTele(pat);
       }
-      case TeleDecl.StructField field -> {
+      case ClassDecl.StructDecl.StructField field -> {
         if (field.signature != null) return;
         var structRef = field.structRef;
         var structLvl = structRef.concrete.ulift;
