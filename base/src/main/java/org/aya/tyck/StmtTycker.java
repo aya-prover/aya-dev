@@ -14,6 +14,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
+import org.aya.core.term.StructCall;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.tyck.error.NobodyError;
@@ -107,6 +108,11 @@ public record StmtTycker(
       }
       case TeleDecl.PrimDecl decl -> decl.ref.core;
       case ClassDecl.StructDecl decl -> {
+        var parents = decl.parents.map(parent -> {
+          var struct = tycker.synthesize(parent).wellTyped();
+          if (!(struct instanceof StructCall call)) throw new UnsupportedOperationException("TODO");
+          return call;
+        });
         var body = decl.fields.map(field -> (FieldDef) traced(field, tycker, this::tyck));
         yield new StructDef(decl.ref, decl.ulift, body);
       }
