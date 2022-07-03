@@ -521,7 +521,7 @@ public final class ExprTycker extends Tycker {
   }
 
   /** @return null if unified successfully */
-  private DefEq.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
+  public DefEq.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.append(new Trace.UnifyT(lower, upper, pos)));
     var unifier = unifier(pos, Ordering.Lt);
     if (!unifier.compare(lower, upper, null)) return unifier.getFailure();

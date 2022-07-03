@@ -17,6 +17,7 @@ import org.aya.core.term.FormTerm;
 import org.aya.core.term.StructCall;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.tyck.error.BadTypeError;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimProblem;
 import org.aya.tyck.pat.Conquer;
@@ -148,6 +149,16 @@ public record StmtTycker(
         var structRef = field.structRef;
         var tele = signature.param();
         var result = signature.result();
+        if (field.parentRef.isDefined()) {
+          var parentRef = field.parentRef.get();
+          // check inheritance
+          var parentSignature = parentRef.concrete.signature;
+          var comparison = tycker.unifyTy(result, parentRef.core.result(), field.sourcePos());
+          if (comparison != null) {
+            // TODO: report it
+            throw new UnsupportedOperationException("TODO");
+          }
+        }
         var patTycker = new PatTycker(tycker);
         var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature);
         var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
