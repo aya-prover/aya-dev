@@ -191,13 +191,11 @@ public sealed interface SerTerm extends Serializable {
   record Access(
     @NotNull SerTerm of,
     @NotNull SerDef.QName ref,
-    @NotNull ImmutableSeq<@NotNull SerArg> structArgs,
     @NotNull ImmutableSeq<@NotNull SerArg> fieldArgs
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CallTerm.Access(
         of.de(state), state.resolve(ref),
-        structArgs.map(arg -> arg.de(state)),
         fieldArgs.map(arg -> arg.de(state)));
     }
   }

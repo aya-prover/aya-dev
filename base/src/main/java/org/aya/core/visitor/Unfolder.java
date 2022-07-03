@@ -132,21 +132,17 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var args = term.args().map(arg -> visitArg(arg, p));
       var fieldSubst = checkAndBuildSubst(fieldDef.fullTelescope(), args);
       var structDef = fieldDef.structRef.core;
-      var structArgsSize = term.structArgs().size();
       for (var field : structDef.fields) {
         if (field == fieldDef) continue;
         var tele = field.telescope();
-        var access = new CallTerm.Access(nevv, field.ref, args.take(structArgsSize), tele.map(Term.Param::toArg));
+        var access = new CallTerm.Access(nevv, field.ref, tele.map(Term.Param::toArg));
         fieldSubst.add(field.ref, IntroTerm.Lambda.make(tele, access));
       }
-      var dropped = args.drop(structArgsSize);
-      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, 0, fieldDef.clauses);
-      return mischa != null ? mischa.data().subst(fieldSubst) : new CallTerm.Access(nevv, fieldRef,
-        term.structArgs(), dropped);
+      var mischa = tryUnfoldClauses(p, true, args, fieldSubst, 0, fieldDef.clauses);
+      return mischa != null ? mischa.data().subst(fieldSubst) : new CallTerm.Access(nevv, fieldRef, args);
     }
-    var arguments = buildSubst(fieldDef.ownerTele, term.structArgs());
     var fieldBody = term.fieldArgs().foldLeft(n.params().get(fieldRef), CallTerm::make);
-    return fieldBody.subst(arguments).accept(this, p);
+    return fieldBody.accept(this, p);
   }
 
   /**

@@ -232,14 +232,13 @@ public interface TermOps extends TermView {
           if (access.of() instanceof IntroTerm.New n) {
             var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
             yield fieldBody
-              .view().subst(buildSubst(fieldDef.ownerTele, access.structArgs())).commit()
               .view().normalize(state).commit();
           } else {
             var subst = buildSubst(fieldDef.fullTelescope(), access.args());
             for (var field : fieldDef.structRef.core.fields) {
               if (field == fieldDef) continue;
               var fieldArgs = field.telescope().map(Term.Param::toArg);
-              var acc = new CallTerm.Access(access.of(), field.ref, access.structArgs(), fieldArgs);
+              var acc = new CallTerm.Access(access.of(), field.ref, fieldArgs);
               subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
             }
             var unfolded = unfoldClauses(true, access.fieldArgs(), subst, fieldDef.clauses);

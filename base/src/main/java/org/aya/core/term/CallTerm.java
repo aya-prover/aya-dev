@@ -159,7 +159,6 @@ public sealed interface CallTerm extends Term {
   record Access(
     @NotNull Term of,
     @NotNull DefVar<FieldDef, ClassDecl.StructDecl.StructField> ref,
-    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -167,7 +166,7 @@ public sealed interface CallTerm extends Term {
     }
 
     @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> args() {
-      return structArgs.concat(fieldArgs);
+      return fieldArgs;
     }
   }
 }

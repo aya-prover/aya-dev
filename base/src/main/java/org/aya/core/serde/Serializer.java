@@ -92,7 +92,6 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeCall(prim.ulift(), prim.args()));
       case CallTerm.Access access -> new SerTerm.Access(
         serialize(access.of()), state.def(access.ref()),
-        serializeArgs(access.structArgs()),
         serializeArgs(access.fieldArgs()));
       case CallTerm.Fn fnCall -> new SerTerm.FnCall(
         state.def(fnCall.ref()),

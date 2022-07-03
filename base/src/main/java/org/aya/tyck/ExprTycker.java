@@ -156,8 +156,6 @@ public final class ExprTycker extends Tycker {
         */
       }
       case Expr.ProjExpr proj -> {
-        throw new UnsupportedOperationException("TODO");
-        /*
         var struct = proj.tup();
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
@@ -172,7 +170,7 @@ public final class ExprTycker extends Tycker {
             return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
           }, sp -> {
             var fieldName = sp.justName();
-            if (!(projectee.type instanceof CallTerm.Struct structCall))
+            if (!(projectee.type instanceof StructCall structCall) || !(structCall.finished()))
               return fail(struct, ErrorTerm.unexpected(projectee.type), BadTypeError.structAcc(state, struct, fieldName, projectee.type));
             var structCore = structCall.ref().core;
             if (structCore == null) throw new UnsupportedOperationException("TODO");
@@ -181,16 +179,14 @@ public final class ExprTycker extends Tycker {
               return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
             var fieldRef = field.ref();
 
-            var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
-            var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
+            var tele = fieldRef.core.selfTele;
             var teleRenamed = tele.map(Term.Param::rename);
             var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
-              structCall.args(), teleRenamed.map(Term.Param::toArg));
+              teleRenamed.map(Term.Param::toArg));
             return new Result(IntroTerm.Lambda.make(teleRenamed, access),
-              FormTerm.Pi.make(tele, field.result().subst(structSubst)));
+              FormTerm.Pi.make(tele, field.result()));
           }
         );
-        */
       }
       case Expr.TupExpr tuple -> {
         var items = tuple.items().map(this::synthesize);

@@ -30,6 +30,10 @@ public record StructCall(
     return ref().core.fields.findFirst(field -> !params.find(x -> x._1 == field.ref).isDefined()).map(FieldDef::ref);
   }
 
+  public boolean finished() {
+    return nextField().isEmpty();
+  }
+
   public @NotNull StructCall apply(@NotNull FieldDef field, @NotNull Arg<Term> arg) {
     return new StructCall(ref, ulift, params.appended(Tuple2.of(field.ref(), arg)));
   }

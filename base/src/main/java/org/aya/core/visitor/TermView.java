@@ -117,13 +117,11 @@ public interface TermView {
       }
       case CallTerm.Access access -> {
         var struct = commit(access.of());
-        var structArgs = access.structArgs().map(this::commit);
         var fieldArgs = access.fieldArgs().map(this::commit);
         if (struct == access.of()
-          && structArgs.sameElements(access.structArgs(), true)
           && fieldArgs.sameElements(access.fieldArgs(), true))
           yield access;
-        yield new CallTerm.Access(struct, access.ref(), structArgs, fieldArgs);
+        yield new CallTerm.Access(struct, access.ref(), fieldArgs);
       }
       case CallTerm.Prim prim -> {
         var args = prim.args().map(this::commit);
