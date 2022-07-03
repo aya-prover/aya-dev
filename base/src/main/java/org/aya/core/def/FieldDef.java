@@ -17,10 +17,10 @@ public final class FieldDef extends SubLevelDef {
 
   public FieldDef(
     @NotNull DefVar<StructDef, ClassDecl.StructDecl> structRef, @NotNull DefVar<FieldDef, ClassDecl.StructDecl.StructField> ref,
-    @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
+    @NotNull ImmutableSeq<Term.Param> selfTele,
     @NotNull Term result, @NotNull ImmutableSeq<Matching> clauses, @NotNull Option<Term> body, boolean coerce
   ) {
-    super(ownerTele, selfTele, result, clauses, coerce);
+    super(ImmutableSeq.empty()/*TODO: remove this*/, selfTele, result, clauses, coerce);
     ref.core = this;
     this.structRef = structRef;
     this.ref = ref;

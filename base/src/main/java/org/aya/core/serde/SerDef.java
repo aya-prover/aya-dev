@@ -79,7 +79,6 @@ public sealed interface SerDef extends Serializable {
   record Field(
     @NotNull QName struct,
     @NotNull QName self,
-    @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
     @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
     @NotNull SerTerm result,
     @NotNull ImmutableSeq<SerPat.Matchy> clauses,
@@ -91,7 +90,6 @@ public sealed interface SerDef extends Serializable {
       return new FieldDef(
         state.resolve(struct),
         state.newDef(self),
-        ownerTele.map(tele -> tele.de(state)),
         selfTele.map(tele -> tele.de(state)),
         result.de(state),
         clauses.map(matching -> matching.de(state)),

@@ -35,7 +35,6 @@ public record Serializer(@NotNull Serializer.State state) {
         state.def(field.structRef),
         state.def(field.ref),
         serializeParams(field.ownerTele),
-        serializeParams(field.selfTele),
         serialize(field.result),
         field.clauses.map(this::serialize),
         field.body.map(this::serialize),

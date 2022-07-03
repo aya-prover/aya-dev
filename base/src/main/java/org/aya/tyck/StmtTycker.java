@@ -142,24 +142,19 @@ public record StmtTycker(
         yield elaborated;
       }
       case ClassDecl.StructDecl.StructField field -> {
-        throw new UnsupportedOperationException("TODO");
-        /*
         // TODO[ice]: remove this hack
         if (field.ref.core != null) yield field.ref.core;
         assert signature == field.signature && signature != null; // already handled in the entrance of this method
         var structRef = field.structRef;
-        var structSig = structRef.concrete.signature;
-        assert structSig != null;
         var tele = signature.param();
         var result = signature.result();
         var patTycker = new PatTycker(tycker);
         var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature);
         var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
-        var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, clauses.matchings(), body, field.coerce);
+        var elaborated = new FieldDef(structRef, field.ref, tele, result, clauses.matchings(), body, field.coerce);
         if (patTycker.noError())
           ensureConfluent(tycker, field.signature, clauses, field.sourcePos, false);
         yield elaborated;
-        */
       }
     };
   }
