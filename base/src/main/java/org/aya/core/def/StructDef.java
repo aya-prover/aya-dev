@@ -12,6 +12,8 @@ import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.NoSuchElementException;
+
 /**
  * core struct definition, corresponding to {@link ClassDecl.StructDecl}
  *
@@ -46,5 +48,12 @@ public final class StructDef extends ClassDef.Type {
 
   public @NotNull DefVar<StructDef, ClassDecl.StructDecl> ref() {
     return ref;
+  }
+
+  /**
+   * @throws NoSuchElementException if the field is not found
+   */
+  public @NotNull FieldDef lookupField(@NotNull DefVar<FieldDef, ClassDecl.StructDecl.StructField> ref) {
+    return fieldMap.get(ref.concrete.rootRef);
   }
 }
