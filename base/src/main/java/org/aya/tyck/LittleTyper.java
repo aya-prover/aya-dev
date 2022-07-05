@@ -60,7 +60,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield telescope.get(index).type()
           .subst(ElimTerm.Proj.projSubst(proj.of(), index, telescope));
       }
-      case IntroTerm.New neu -> neu.struct();
+      case IntroTerm.New neu -> neu.finishedStructCall();
       case IntroTerm.Tuple tuple -> new FormTerm.Sigma(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
       case CallTerm.Con conCall -> defCall(conCall.head().dataRef(), conCall.ulift());

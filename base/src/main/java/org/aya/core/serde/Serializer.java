@@ -100,8 +100,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case ElimTerm.App app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
       case IntroTerm.Tuple tuple -> new SerTerm.Tup(tuple.items().map(this::serialize));
       case IntroTerm.Lambda lambda -> new SerTerm.Lam(serialize(lambda.param()), serialize(lambda.body()));
-      case IntroTerm.New newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
-        newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
+      case IntroTerm.New newTerm -> new SerTerm.New(serializeStructCall(newTerm.finishedStructCall()));
 
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");

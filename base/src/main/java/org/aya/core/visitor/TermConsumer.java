@@ -105,8 +105,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitNew(@NotNull IntroTerm.New newTerm, P p) {
-    newTerm.struct().accept(this, p);
-    newTerm.params().forEach((k, v) -> v.accept(this, p));
+    newTerm.finishedStructCall().accept(this, p);
     return Unit.unit();
   }
 

@@ -141,7 +141,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var mischa = tryUnfoldClauses(p, true, args, fieldSubst, 0, fieldDef.clauses);
       return mischa != null ? mischa.data().subst(fieldSubst) : new CallTerm.Access(nevv, fieldRef, args);
     }
-    var fieldBody = term.fieldArgs().foldLeft(n.params().get(fieldRef), CallTerm::make);
+    var fieldBody = term.fieldArgs().foldLeft(n.finishedStructCall().paramsMap().get(fieldRef.concrete.rootRef).term(), CallTerm::make);
     return fieldBody.accept(this, p);
   }
 

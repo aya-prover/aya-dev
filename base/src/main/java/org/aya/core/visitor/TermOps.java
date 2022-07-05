@@ -230,7 +230,7 @@ public interface TermOps extends TermView {
         case CallTerm.Access access -> {
           var fieldDef = access.ref().core;
           if (access.of() instanceof IntroTerm.New n) {
-            var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
+            var fieldBody = access.fieldArgs().foldLeft(n.finishedStructCall().paramsMap().get(access.ref().concrete.rootRef).term(), CallTerm::make);
             yield fieldBody
               .view().normalize(state).commit();
           } else {

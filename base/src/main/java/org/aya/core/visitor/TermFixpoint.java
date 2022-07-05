@@ -145,12 +145,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitNew(@NotNull IntroTerm.New struct, P p) {
-    var itemsView = struct.params().view()
-      .map((k, v) -> Tuple.of(k, v.accept(this, p)));
-    var items = ImmutableMap.from(itemsView);
-    // if (struct.params().view().sameElements(items, true)) return struct;
     // Supposed to succeed
-    return new IntroTerm.New((StructCall) struct.struct().accept(this, p), items);
+    return new IntroTerm.New((StructCall) struct.finishedStructCall().accept(this, p));
   }
 
   @Override default @NotNull Term visitProj(@NotNull ElimTerm.Proj term, P p) {

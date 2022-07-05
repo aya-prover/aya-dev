@@ -112,10 +112,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record New(@NotNull StructCall call, @NotNull ImmutableMap<SerDef.QName, SerTerm> map) implements SerTerm {
+  record New(@NotNull StructCall call) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.New(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
-        Tuple.of(state.resolve(k), v.de(state)))));
+      return new IntroTerm.New(call.de(state));
     }
   }
 

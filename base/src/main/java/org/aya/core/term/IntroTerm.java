@@ -43,9 +43,12 @@ public sealed interface IntroTerm extends Term {
    * @author kiva
    */
   record New(
-    @NotNull StructCall struct,
-    @NotNull ImmutableMap<DefVar<FieldDef, ClassDecl.StructDecl.StructField>, Term> params
+    @NotNull StructCall finishedStructCall
   ) implements IntroTerm {
+    public New(@NotNull StructCall finishedStructCall) {
+      assert finishedStructCall.finished();
+      this.finishedStructCall = finishedStructCall;
+    }
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNew(this, p);
     }

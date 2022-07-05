@@ -78,10 +78,9 @@ public interface TermView {
         yield new IntroTerm.Tuple(items);
       }
       case IntroTerm.New neu -> {
-        var struct = commit(neu.struct());
-        var fields = ImmutableMap.from(neu.params().view().map((k, v) -> Tuple.of(k, commit(v))));
-        if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView())) yield neu;
-        yield new IntroTerm.New((StructCall) struct, fields);
+        var struct = commit(neu.finishedStructCall());
+        if (struct == neu.finishedStructCall()) yield neu;
+        yield new IntroTerm.New((StructCall) struct);
       }
       case ElimTerm.App app -> {
         var function = commit(app.of());
