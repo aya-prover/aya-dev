@@ -35,7 +35,7 @@ import org.jetbrains.annotations.TestOnly;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, ErrorTerm, FormTerm, IntroTerm, LitTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, RefTerm.Self, StructCall {
+public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, ErrorTerm, FormTerm, IntroTerm, LitTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, StructCall {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -117,7 +117,6 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     default void traceExit(R r) {
     }
     R visitRef(@NotNull RefTerm ref, P p);
-    R visitSelf(@NotNull RefTerm.Self ref, P p);
     R visitLam(@NotNull IntroTerm.Lambda lambda, P p);
     R visitPi(@NotNull FormTerm.Pi pi, P p);
     R visitSigma(@NotNull FormTerm.Sigma sigma, P p);

@@ -141,7 +141,6 @@ public interface TermView {
       case RefTerm.Field field -> field;
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
-      case RefTerm.Self self -> self;
       case ErrorTerm error -> error;
     };
   }

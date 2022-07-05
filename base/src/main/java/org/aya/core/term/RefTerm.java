@@ -35,14 +35,4 @@ public record RefTerm(@NotNull LocalVar var, int lift) implements Term {
       return sol != null ? sol.toTerm() : this;
     }
   }
-
-  /**
-   *
-   * @author zaoqi
-   */
-  public record Self(@Nullable DefVar<StructDef, ClassDecl.StructDecl> structRef, int lift) implements Term {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitSelf(this, p);
-    }
-  }
 }

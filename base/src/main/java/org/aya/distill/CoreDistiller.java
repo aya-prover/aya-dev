@@ -33,12 +33,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> varDoc(term.var());
-      case RefTerm.Self self -> {
-        if(self.structRef() != null)
-          yield Doc.cat(Doc.styled(KEYWORD, Doc.symbol("this")),
-            Doc.symbol("@"), varDoc(self.structRef()));
-        else yield Doc.symbol("this");
-      }
       case CallTerm.Hole term -> {
         var name = term.ref();
         var inner = varDoc(name);

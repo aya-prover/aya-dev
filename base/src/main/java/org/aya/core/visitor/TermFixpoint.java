@@ -109,10 +109,6 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return term;
   }
 
-  @Override default @NotNull Term visitSelf(@NotNull RefTerm.Self term, P p) {
-    return term;
-  }
-
   default @NotNull Arg<Term> visitArg(@NotNull Arg<Term> arg, P p) {
     var term = arg.term().accept(this, p);
     if (term == arg.term()) return arg;
