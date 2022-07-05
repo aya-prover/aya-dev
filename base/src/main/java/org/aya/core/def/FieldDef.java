@@ -38,4 +38,8 @@ public final class FieldDef extends SubLevelDef {
   public @NotNull DefVar<FieldDef, ClassDecl.StructDecl.StructField> ref() {
     return ref;
   }
+
+  public @NotNull DefVar<FieldDef, ClassDecl.StructDecl.StructField> rootRef() {
+    return ref.concrete.rootRef;
+  }
 }
