@@ -93,16 +93,20 @@ public sealed abstract class ClassDecl extends CommonDecl implements Decl.Result
       MutableHashMap<DefVar<FieldDef, StructField>, StructField> fieldMap = MutableHashMap.create();
       this.fieldMap = fieldMap;
       for(var parent : parents) {
+        var implicitOverrides = parent.params();
+        var implicitFields = implicitOverrides.map(t->new StructField(t._1.concrete, (Expr) (Object) t._2.term())); // TODO: implement this
         parent.ref().concrete.fieldMap.forEach((field, structField) -> {
           var x = fieldMap.put(field.concrete.rootRef, structField);
           if(x.isDefined()) {
             throw new IllegalStateException("Duplicate field: " + field); // TODO: better error
           }
         });
-      }
-      for(var parent : parents) {
-        var implicitOverrides = parent.params();
-        // TODO
+        implicitFields.forEach(field -> {
+          var x = fieldMap.put(field.rootRef, field);
+          if(x.isDefined()) {
+            throw new IllegalStateException("Duplicate field: " + field); // TODO: better error
+          }
+        });
       }
     }
 
@@ -162,6 +166,19 @@ public sealed abstract class ClassDecl extends CommonDecl implements Decl.Result
           this.rootRef = this.ref;
           this.parentRef = Option.none();
           this.telescope = telescope;
+        }
+
+        public StructField(@NotNull StructField parent, @NotNull Expr result) {
+          super(parent.sourcePos, parent.entireSourcePos, Accessibility.Public, parent.opInfo, parent.bindBlock);
+          if(parent.telescope.isNotEmpty() || parent.body.isDefined() || parent.clauses.isNotEmpty() || parent.coerce) throw new UnsupportedOperationException("TODO");
+          this.coerce = parent.coerce;
+          this.result = result;
+          this.clauses = parent.clauses;
+          this.body = parent.body;
+          this.ref = DefVar.concrete(this, parent.ref.name());
+          this.rootRef = parent.rootRef;
+          this.parentRef = Option.some(parent.ref);
+          this.telescope = parent.telescope;
         }
 
         @Override public @NotNull DefVar<FieldDef, StructField> ref() {
