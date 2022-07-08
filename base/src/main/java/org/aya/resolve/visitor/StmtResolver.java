@@ -90,9 +90,7 @@ public interface StmtResolver {
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
       case ClassDecl.StructDecl decl -> {
-        throw new UnsupportedOperationException("TODO");
-        /*
-        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        var local = resolveStructDecl(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
         decl.fields.forEach(field -> {
@@ -111,7 +109,6 @@ public interface StmtResolver {
         });
         addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
           .concat(decl.fields.map(TyckOrder.Body::new)));
-        */
       }
       case TeleDecl.PrimDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
@@ -145,6 +142,10 @@ public interface StmtResolver {
       .toImmutableSeq();
     decl.result = resolver.resolve(decl.result, local._2);
     return Tuple.of(resolver, local._2);
+  }
+
+  private static @NotNull Tuple2<ExprResolver, Context> resolveStructDecl(@NotNull ClassDecl classDecl, ExprResolver.@NotNull Options options) {
+    throw new UnsupportedOperationException("TODO");
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
