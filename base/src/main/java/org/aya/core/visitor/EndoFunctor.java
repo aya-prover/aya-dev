@@ -64,9 +64,24 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
   default Term act(Term term) {
     return post(descent(this::act, pre(term)));
   }
+  default Term.Param act(Term.Param param) {
+    var type = act(param.type());
+    if (type == param.type()) return param;
+    return new Term.Param(param, type);
+  }
+  default Arg<Term> act(Arg<Term> arg) {
+    var term = act(arg.term());
+    if (term == arg.term()) return arg;
+    return new Arg<>(term, arg.explicit());
+  }
+  default CallTerm.ConHead act(CallTerm.ConHead head) {
+    var args = head.dataArgs().map(this::act);
+    if (args.sameElements(head.dataArgs(), true)) return head;
+    return new CallTerm.ConHead(head.dataRef(), head.ref(), head.ulift(), args);
+  }
 
   private Term descent(Function<Term, Term> f, Term term) {
-    return post(switch (term) {
+    return switch (term) {
       case FormTerm.Pi pi -> {
         var param = descent(f, pi.param());
         var body = f.apply(pi.body());
@@ -161,7 +176,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
       case RefTerm.MetaPat metaPat -> metaPat;
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
-    });
+    };
   }
   private Term.Param descent(Function<Term, Term> f, Term.Param param) {
     var type = f.apply(param.type());
@@ -179,6 +194,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
     return new CallTerm.ConHead(head.dataRef(), head.ref(), head.ulift(), args);
   }
 
+  /** Not an IntelliJ Renamer. */
   record Renamer(Subst subst) implements EndoFunctor {
     public Renamer() {
       this(new Subst(MutableMap.create()));
@@ -195,14 +211,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
         case IntroTerm.Lambda lambda -> new IntroTerm.Lambda(handleBinder(lambda.param()), lambda.body());
         case FormTerm.Pi pi -> new FormTerm.Pi(handleBinder(pi.param()), pi.body());
         case FormTerm.Sigma sigma -> new FormTerm.Sigma(sigma.params().map(this::handleBinder));
-        case Term misc -> misc;
-      };
-    }
-
-    @Override public Term post(Term term) {
-      return switch (term) {
         case RefTerm ref -> subst.map().getOrDefault(ref.var(), ref);
-        // [ice]: need to generate "replacements" for 'this' bindings as well?
         case RefTerm.Field field -> subst.map().getOrDefault(field.ref(), field);
         case Term misc -> misc;
       };
@@ -223,6 +232,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
     }
   }
 
+  /** A lift but in American English. */
   record Elevator(int lift, MutableList<Var> boundVars) implements EndoFunctor {
     public Elevator(int lift) {
       this(lift, MutableList.create());

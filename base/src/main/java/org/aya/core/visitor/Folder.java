@@ -1,5 +1,7 @@
 package org.aya.core.visitor;
 
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.core.term.*;
 
 /**

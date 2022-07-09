@@ -90,29 +90,6 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     return subst;
   }
 
-  private @Nullable WithPos<Term> unfoldClauses(
-    boolean orderIndependent, SeqLike<Arg<Term>> args,
-    @NotNull ImmutableSeq<Matching> clauses
-  ) {
-    return unfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), clauses);
-  }
-
-  private @Nullable WithPos<Term> unfoldClauses(
-    boolean orderIndependent, SeqLike<Arg<Term>> args,
-    @NotNull Subst subst, @NotNull ImmutableSeq<Matching> clauses
-  ) {
-    for (var match : clauses) {
-      var result = PatMatcher.tryBuildSubstArgs(null, match.patterns(), args);
-      if (result.isOk()) {
-        subst.add(result.get());
-        var body = match.body().subst(subst);
-        return new WithPos<>(match.sourcePos(), body);
-      } else if (!orderIndependent && result.getErr())
-        return null;
-    }
-    return null;
-  }
-
   /**
    * @param state used for inlining the holes.
    *              Can be null only if we're absolutely sure that holes are frozen,
@@ -121,86 +98,19 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
   default @NotNull Term normalize(@NotNull TyckState state, @NotNull NormalizeMode mode) {
     return switch (mode) {
       case NULL -> this;
-      case NF -> this.view().normalize(state).commit();
-      case WHNF -> switch (this) {
-        case ElimTerm.App app -> {
-          var function = app.of().normalize(state, NormalizeMode.WHNF);
-          if (function instanceof IntroTerm.Lambda lambda) {
-            yield CallTerm.make(lambda, app.arg()).normalize(state, NormalizeMode.WHNF);
-          }
-          yield function == app.of() ? this : CallTerm.make(function, app.arg());
-        }
-        case ElimTerm.Proj proj -> {
-          var tup = proj.of().normalize(state, NormalizeMode.WHNF);
-          var ix = proj.ix();
-          if (tup instanceof IntroTerm.Tuple tuple) {
-            assert tuple.items().sizeGreaterThanOrEquals(ix) && ix > 0
-              : proj.toDoc(DistillerOptions.debug()).debugRender();
-            yield tuple.items().get(ix - 1).normalize(state, NormalizeMode.WHNF);
-          }
-          yield tup == proj.of() ? this : new ElimTerm.Proj(tup, ix);
-        }
-        case CallTerm.Con con -> {
-          var def = con.ref().core;
-          if (def == null) yield con;
-          var unfolded = unfoldClauses(true, con.conArgs(), def.clauses);
-          yield unfolded == null ? con : unfolded.data().normalize(state, NormalizeMode.WHNF);
-        }
-        case CallTerm.Fn fn -> {
-          var def = fn.ref().core;
-          if (def == null) yield fn;
-          if (def.modifiers.contains(Modifier.Opaque)) yield fn;
-          yield def.body.fold(
-            lamBody -> lamBody.view().subst(buildSubst(def.telescope(), fn.args())).commit().normalize(state, NormalizeMode.WHNF),
-            patBody -> {
-              var orderIndependent = def.modifiers.contains(Modifier.Overlap);
-              var unfolded = unfoldClauses(orderIndependent, fn.args(), patBody);
-              return unfolded == null ? fn : unfolded.data().normalize(state, NormalizeMode.WHNF);
-            }
-          );
-        }
-        case CallTerm.Access access -> {
-          // TODO: Normalize args;
-          var struct = access.of().normalize(state, NormalizeMode.WHNF);
-          var fieldDef = access.ref().core;
-          if (struct instanceof IntroTerm.New n) {
-            var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
-            yield fieldBody.view().subst(buildSubst(fieldDef.ownerTele, access.structArgs())).commit().normalize(state, NormalizeMode.WHNF);
-          } else {
-            var subst = buildSubst(fieldDef.fullTelescope(), access.args());
-            for (var field : fieldDef.structRef.core.fields) {
-              if (field == fieldDef) continue;
-              var fieldArgs = field.telescope().map(Term.Param::toArg);
-              var acc = new CallTerm.Access(struct, field.ref, access.structArgs(), fieldArgs);
-              subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
-            }
-            var unfolded = unfoldClauses(true, access.fieldArgs(), subst, fieldDef.clauses);
-            yield unfolded == null ? access : unfolded.data().normalize(state, NormalizeMode.WHNF);
-          }
-        }
-        case CallTerm.Prim prim -> state.primFactory().unfold(prim.id(), prim, state);
-        case CallTerm.Hole hole -> {
-          var def = hole.ref();
-          if (!state.metas().containsKey(def)) yield hole;
-          var body = state.metas().get(def);
-          yield body.view().subst(buildSubst(def.fullTelescope(), hole.fullArgs())).commit().normalize(state, NormalizeMode.WHNF);
-        }
-        case RefTerm.MetaPat metaPat -> metaPat.inline();
-        case Term t -> t;
-      };
+      case NF -> new Expander.Normalizer(state).act(this);
+      case WHNF -> new Expander.WHNFer(state).act(this);
     };
   }
 
   default @NotNull Term freezeHoles(@Nullable TyckState state) {
-    return accept(new TermFixpoint<>() {
-      @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-        if (state == null) return TermFixpoint.super.visitHole(term, unit);
-        var sol = term.ref();
-        var metas = state.metas();
-        if (!metas.containsKey(sol)) return TermFixpoint.super.visitHole(term, unit);
-        return metas.get(sol).accept(this, Unit.unit());
+    return new EndoFunctor() {
+      @Override public Term pre(Term term) {
+        return term instanceof CallTerm.Hole hole && state != null
+          ? state.metas().getOrDefault(hole.ref(), term)
+          : term;
       }
-    }, Unit.unit());
+    }.act(this);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
@@ -320,9 +230,5 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
       params.forEachIndexed((i, param) -> obj.ok = obj.ok && param.explicit() == args.get(i).explicit());
       return obj.ok;
     }
-  }
-
-  default TermView view() {
-    return () -> this;
   }
 }

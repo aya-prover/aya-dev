@@ -11,7 +11,6 @@ import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
-import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -23,9 +22,9 @@ import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.TermFixpoint;
+import org.aya.core.visitor.EndoFunctor;
 import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -233,11 +232,11 @@ public final class PatTycker {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = lhsResult.gamma;
     var patterns = lhsResult.preclause.patterns().map(Pat::inline);
-    var type = lhsResult.type.accept(new TermFixpoint<>() {
-      @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
-        return metaPat.inline();
+    var type = new EndoFunctor() {
+      @Override public Term post(Term term) {
+        return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
       }
-    }, Unit.unit());
+    }.act(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,
