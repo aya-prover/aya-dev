@@ -25,15 +25,12 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: x86-64
-            graalVM: https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/22.2.0-dev-20220517_2107/graalvm-ce-java17-linux-amd64-dev.tar.gz
             binaryExt: ''
           - os: macos-latest
             arch: x86-64
-            graalVM: https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/22.2.0-dev-20220517_2107/graalvm-ce-java17-darwin-amd64-dev.tar.gz
             binaryExt: ''
           - os: windows-latest
             arch: x86-64
-            graalVM: https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/22.2.0-dev-20220517_2107/graalvm-ce-java17-windows-amd64-dev.zip
             binaryExt: '.exe'
     steps:
       - uses: actions/checkout@v2
@@ -56,18 +53,13 @@ jobs:
           dependencies-cache-enabled: true
           arguments: fatjar --info --no-daemon --stacktrace --warning-mode all
 
-      - name: Download GraalVM
-        uses: suisei-cn/actions-download-file@v1
-        id: graalvm-download
+      - uses: graalvm/setup-graalvm@v1
         with:
-          url: ${{ matrix.graalVM }}
-      - name: Setup GraalVM
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'jdkfile'
-          jdkFile: ${{ steps.graalvm-download.outputs.filename }}
+          version: 'dev'
           java-version: '17'
-          architecture: x64
+          components: 'native-image'
+          github-token: ${{ secrets.GH_TOKEN }}
+
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         if: ${{ matrix.os }} == 'windows-latest'
