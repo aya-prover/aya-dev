@@ -4,15 +4,11 @@ package org.aya.cli.library.incremental;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.core.def.GenericDef;
-import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +21,7 @@ import java.nio.file.attribute.FileTime;
 
 public record InMemoryCompilerAdvisor(
   @NotNull MutableMap<Path, FileTime> coreTimestamp,
-  @NotNull MutableMap<ImmutableSeq<String>, Tuple2<Path, CompiledAya>> compiledCore
+  @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> compiledCore
 ) implements CompilerAdvisor {
   public InMemoryCompilerAdvisor() {
     this(MutableMap.create(), MutableMap.create());
@@ -59,10 +55,7 @@ public record InMemoryCompilerAdvisor(
     @NotNull ModuleLoader recurseLoader
   ) {
     // TODO: what if module name clashes?
-    var core = compiledCore.getOrNull(mod);
-    if (core == null) return null;
-    var context = new EmptyContext(reporter, core._1).derive(mod);
-    return core._2.toResolveInfo(recurseLoader, context, deState);
+    return compiledCore.getOrNull(mod);
   }
 
   @Override public void doSaveCompiledCore(
@@ -71,8 +64,7 @@ public record InMemoryCompilerAdvisor(
     @NotNull ResolveInfo resolveInfo,
     @NotNull ImmutableSeq<GenericDef> defs
   ) {
-    var compiledAya = CompiledAya.from(resolveInfo, defs, serState);
     // TODO: what if module name clashes?
-    compiledCore.put(file.moduleName(), Tuple.of(file.file(), compiledAya));
+    compiledCore.put(file.moduleName(), resolveInfo);
   }
 }
