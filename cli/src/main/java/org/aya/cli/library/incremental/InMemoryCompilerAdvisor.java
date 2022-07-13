@@ -3,8 +3,10 @@
 package org.aya.cli.library.incremental;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.cli.utils.AyaCompiler;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.SerTerm;
@@ -12,7 +14,6 @@ import org.aya.core.serde.Serializer;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.util.FileUtil;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,14 +21,22 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 
-public final class DiskCompilerAdvisor implements CompilerAdvisor {
+public record InMemoryCompilerAdvisor(
+  @NotNull MutableMap<Path, FileTime> coreTimestamp,
+  @NotNull MutableMap<ImmutableSeq<String>, Tuple2<Path, CompiledAya>> compiledCore
+) implements CompilerAdvisor {
+  public InMemoryCompilerAdvisor() {
+    this(MutableMap.create(), MutableMap.create());
+  }
+
   @Override public boolean isSourceModified(@NotNull LibrarySource source) {
+    var coreLastModified = coreTimestamp.getOption(source.file());
     try {
-      var core = source.compiledCorePath();
-      if (!Files.exists(core)) return true;
+      if (coreLastModified.isEmpty()) return true;
       return Files.getLastModifiedTime(source.file())
-        .compareTo(Files.getLastModifiedTime(core)) > 0;
+        .compareTo(coreLastModified.get()) > 0;
     } catch (IOException ignore) {
       return true;
     }
@@ -35,37 +44,35 @@ public final class DiskCompilerAdvisor implements CompilerAdvisor {
 
   @Override public void updateLastModified(@NotNull LibrarySource source) {
     try {
-      var core = source.compiledCorePath();
-      Files.setLastModifiedTime(core, Files.getLastModifiedTime(source.file()));
+      coreTimestamp.put(source.file(), Files.getLastModifiedTime(source.file()));
     } catch (IOException ignore) {
     }
   }
 
-  @Override public @Nullable ResolveInfo doLoadCompiledCore(
-    @NotNull SerTerm.DeState deState,
+  @Override
+  public @Nullable ResolveInfo doLoadCompiledCore(
+    SerTerm.@NotNull DeState deState,
     @NotNull Reporter reporter,
     @NotNull ImmutableSeq<String> mod,
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
-  ) throws IOException, ClassNotFoundException {
-    if (corePath == null || sourcePath == null) return null;
-    if (!Files.exists(corePath)) return null;
-
-    var context = new EmptyContext(reporter, sourcePath).derive(mod);
-    try (var inputStream = FileUtil.ois(corePath)) {
-      var compiledAya = (CompiledAya) inputStream.readObject();
-      return compiledAya.toResolveInfo(recurseLoader, context, deState);
-    }
+  ) {
+    // TODO: what if module name clashes?
+    var core = compiledCore.getOrNull(mod);
+    if (core == null) return null;
+    var context = new EmptyContext(reporter, core._1).derive(mod);
+    return core._2.toResolveInfo(recurseLoader, context, deState);
   }
 
   @Override public void doSaveCompiledCore(
-    @NotNull Serializer.State serState,
+    Serializer.@NotNull State serState,
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
     @NotNull ImmutableSeq<GenericDef> defs
-  ) throws IOException {
-    var coreFile = file.compiledCorePath();
-    AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, serState);
+  ) {
+    var compiledAya = CompiledAya.from(resolveInfo, defs, serState);
+    // TODO: what if module name clashes?
+    compiledCore.put(file.moduleName(), Tuple.of(file.file(), compiledAya));
   }
 }

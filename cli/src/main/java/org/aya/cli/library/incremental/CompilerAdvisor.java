@@ -9,6 +9,7 @@ import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.util.InternalException;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -25,15 +26,17 @@ public interface CompilerAdvisor {
     return new DiskCompilerAdvisor();
   }
   static @NotNull CompilerAdvisor inMemory() {
-    throw new UnsupportedOperationException("");
+    return new InMemoryCompilerAdvisor();
   }
 
   boolean isSourceModified(@NotNull LibrarySource source);
   void updateLastModified(@NotNull LibrarySource source);
 
   /**
-   * Try to load the compiled core. Returns null if the core path does not exist
+   * Try to load the compiled core.
+   * For {@link DiskCompilerAdvisor}, returns null if the core path does not exist
    * or either source or core path is null.
+   * For {@link InMemoryCompilerAdvisor}, returns null if the mod does not store in memory.
    */
   @Nullable ResolveInfo doLoadCompiledCore(
     @NotNull SerTerm.DeState deState,
@@ -59,6 +62,7 @@ public interface CompilerAdvisor {
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
   ) {
+    assert recurseLoader instanceof CachedModuleLoader<?>;
     try {
       return doLoadCompiledCore(deState, reporter, mod, sourcePath, corePath, recurseLoader);
     } catch (IOException | ClassNotFoundException e) {

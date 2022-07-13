@@ -51,6 +51,7 @@ record LibraryModuleLoader(
     if (sourcePath == null) {
       // We are loading a module belonging to dependencies, find the compiled core.
       // The compiled core should always exist, otherwise the dependency is not built.
+      // TODO: what if module name clashes?
       var depCorePath = FileUtil.resolveFile(basePaths, mod, Constants.AYAC_POSTFIX);
       var core = loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
       assert core != null : "dependencies not built?";
