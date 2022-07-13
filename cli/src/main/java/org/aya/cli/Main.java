@@ -49,9 +49,10 @@ public class Main extends MainArgs implements Callable<Integer> {
       modulePaths().view().map(Paths::get),
       outputPath);
 
-    if (action.compile.isLibrary || action.compile.isRemake) {
+    if (action.compile.isLibrary || action.compile.isRemake || action.compile.isCheckOnly) {
       // TODO: move to a new tool
-      return LibraryCompiler.compile(new PrimDef.Factory(), reporter, flags, CompilerAdvisor.onDisk(), filePath);
+      var advisor = action.compile.isCheckOnly ? CompilerAdvisor.inMemory() : CompilerAdvisor.onDisk();
+      return LibraryCompiler.compile(new PrimDef.Factory(), reporter, flags, advisor, filePath);
     }
     var traceBuilder = enableTrace ? new Trace.Builder() : null;
     var compiler = new SingleFileCompiler(reporter, null, traceBuilder, distillOptions);

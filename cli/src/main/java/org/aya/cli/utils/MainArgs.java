@@ -31,6 +31,8 @@ public class MainArgs {
     public boolean isLibrary;
     @Option(names = {"--remake"}, description = "Treat input file as a library root and remake all")
     public boolean isRemake;
+    @Option(names = {"--check"}, description = "Treat input file as a library root and check all (no outputs will be saved to disk)")
+    public boolean isCheckOnly;
     @Parameters(paramLabel = "<input-file>", description = "File to compile")
     public String inputFile;
     @Option(names = {"-o", "--output"}, description = "Set output file")
