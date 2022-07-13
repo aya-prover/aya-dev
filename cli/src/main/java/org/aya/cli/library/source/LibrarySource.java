@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.Ref;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.generic.Constants;
 import org.aya.resolve.ResolveInfo;
@@ -56,7 +55,7 @@ public record LibrarySource(
     return new SourceFile(displayPath().toString(), file, sourceCode);
   }
 
-  public @NotNull Path coreFile() {
+  public @NotNull Path compiledCorePath() {
     var mod = moduleName();
     return FileUtil.resolveFile(owner.outDir(), mod, Constants.AYAC_POSTFIX);
   }

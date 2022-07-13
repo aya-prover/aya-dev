@@ -5,6 +5,7 @@ package org.aya.test;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.generic.Constants;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
@@ -65,7 +66,7 @@ public class TestRunner {
     System.out.println(":: Running tests under " + path.toAbsolutePath());
     assertTrue(path.toFile().isDirectory(), "should be a directory");
 
-    var source = FileUtil.collectSource(path, ".aya");
+    var source = FileUtil.collectSource(path, Constants.AYA_POSTFIX);
     assertTrue(source.isNotEmpty(), "should have at least one .aya file");
     source.forEach(file -> runFile(file, expectSuccess));
   }

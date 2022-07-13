@@ -4,6 +4,8 @@ package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
+import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.library.incremental.DiskCompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
@@ -39,10 +41,12 @@ public class LibraryCompiler {
   private final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
   private final @NotNull CountingReporter reporter;
   private final @NotNull CompilerFlags flags;
+  private final @NotNull CompilerAdvisor advisor;
 
   private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull LibraryModuleLoader.United states) {
     var counting = CountingReporter.delegate(reporter);
-    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(counting, owner, states));
+    this.advisor = new DiskCompilerAdvisor();
+    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(counting, owner, advisor, states));
     this.reporter = counting;
     this.flags = flags;
     this.owner = owner;
@@ -183,7 +187,7 @@ public class LibraryCompiler {
     var usage = depGraph.transpose();
     var changed = MutableGraph.<LibrarySource>create();
     depGraph.E().keysView().forEach(s -> {
-      if (Timestamp.sourceModified(s))
+      if (advisor.isSourceModified(s))
         collectChanged(usage, s, changed);
     });
     return changed;
@@ -209,7 +213,7 @@ public class LibraryCompiler {
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
-      for (var f : order) Files.deleteIfExists(f.coreFile());
+      for (var f : order) Files.deleteIfExists(f.compiledCorePath());
       for (var f : order) {
         tyckOne(f);
         if (reporter.anyError()) {
