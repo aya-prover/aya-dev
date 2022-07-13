@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
@@ -146,7 +147,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       CompilerFlags.Message.EMOJI, false, true, null,
       SeqView.empty(), null);
     try {
-      LibraryCompiler.newCompiler(sharedPrimFactory, reporter, flags, owner).start();
+      LibraryCompiler.newCompiler(sharedPrimFactory, reporter, flags, CompilerAdvisor.inMemory(), owner).start();
     } catch (IOException e) {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));

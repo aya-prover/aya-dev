@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.value.Ref;
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
@@ -14,7 +15,6 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
@@ -84,7 +84,7 @@ public class ReplCompiler {
   }
 
   private int loadLibrary(@NotNull Path libraryRoot) throws IOException {
-    var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, libraryRoot);
+    var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
     int result = compiler.start();
     var owner = compiler.libraryOwner();
     importModule(owner);

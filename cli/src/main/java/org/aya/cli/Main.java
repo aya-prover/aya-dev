@@ -3,6 +3,7 @@
 package org.aya.cli;
 
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.single.CliReporter;
@@ -50,7 +51,7 @@ public class Main extends MainArgs implements Callable<Integer> {
 
     if (action.compile.isLibrary || action.compile.isRemake) {
       // TODO: move to a new tool
-      return LibraryCompiler.compile(new PrimDef.Factory(), reporter, flags, filePath);
+      return LibraryCompiler.compile(new PrimDef.Factory(), reporter, flags, CompilerAdvisor.onDisk(), filePath);
     }
     var traceBuilder = enableTrace ? new Trace.Builder() : null;
     var compiler = new SingleFileCompiler(reporter, null, traceBuilder, distillOptions);

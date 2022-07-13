@@ -21,6 +21,13 @@ import java.nio.file.Path;
  * Advises the compiler to be incremental, and support in-memory analysis.
  */
 public interface CompilerAdvisor {
+  static @NotNull CompilerAdvisor onDisk() {
+    return new DiskCompilerAdvisor();
+  }
+  static @NotNull CompilerAdvisor inMemory() {
+    throw new UnsupportedOperationException("");
+  }
+
   boolean isSourceModified(@NotNull LibrarySource source);
   void updateLastModified(@NotNull LibrarySource source);
 
