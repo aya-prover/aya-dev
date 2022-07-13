@@ -3,6 +3,7 @@
 package org.aya.cli.library.incremental;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.core.def.GenericDef;
@@ -39,6 +40,14 @@ public final class DiskCompilerAdvisor implements CompilerAdvisor {
       Files.setLastModifiedTime(core, Files.getLastModifiedTime(source.file()));
     } catch (IOException ignore) {
     }
+  }
+
+  @Override public void prepareLibraryOutput(@NotNull LibraryOwner owner) throws IOException {
+    Files.createDirectories(owner.outDir());
+  }
+
+  @Override public void prepareModuleOutput(@NotNull LibrarySource source) throws IOException {
+    Files.deleteIfExists(source.compiledCorePath());
   }
 
   @Override public @Nullable ResolveInfo doLoadCompiledCore(

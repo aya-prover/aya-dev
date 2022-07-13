@@ -169,8 +169,8 @@ public class LibraryCompiler {
       return true;
     }
 
-    Files.createDirectories(owner.outDir());
-    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader), changed);
+    advisor.prepareLibraryOutput(owner);
+    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader, advisor), changed);
     SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("I dislike the following module(s):");
@@ -208,11 +208,12 @@ public class LibraryCompiler {
 
   record LibrarySccTycker(
     @NotNull CountingReporter reporter,
-    @NotNull ModuleLoader moduleLoader
+    @NotNull ModuleLoader moduleLoader,
+    @NotNull CompilerAdvisor advisor
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
-      for (var f : order) Files.deleteIfExists(f.compiledCorePath());
+      for (var f : order) advisor.prepareModuleOutput(f);
       for (var f : order) {
         tyckOne(f);
         if (reporter.anyError()) {

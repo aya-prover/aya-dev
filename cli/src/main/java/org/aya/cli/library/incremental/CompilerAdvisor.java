@@ -3,6 +3,7 @@
 package org.aya.cli.library.incremental;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.SerTerm;
@@ -31,6 +32,9 @@ public interface CompilerAdvisor {
 
   boolean isSourceModified(@NotNull LibrarySource source);
   void updateLastModified(@NotNull LibrarySource source);
+
+  void prepareLibraryOutput(@NotNull LibraryOwner owner) throws IOException;
+  void prepareModuleOutput(@NotNull LibrarySource source) throws IOException;
 
   /**
    * Try to load the compiled core.

@@ -4,6 +4,7 @@ package org.aya.cli.library.incremental;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.SerTerm;
@@ -43,6 +44,14 @@ public record InMemoryCompilerAdvisor(
       coreTimestamp.put(source.file(), Files.getLastModifiedTime(source.file()));
     } catch (IOException ignore) {
     }
+  }
+
+  @Override public void prepareLibraryOutput(@NotNull LibraryOwner owner) {
+  }
+
+  @Override public void prepareModuleOutput(@NotNull LibrarySource source) {
+    // TODO: what if module name clashes?
+    compiledCore.remove(source.moduleName());
   }
 
   @Override
