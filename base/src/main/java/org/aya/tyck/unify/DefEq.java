@@ -248,24 +248,20 @@ public final class DefEq {
     var ret = switch (type) {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
       case StructCall type1 -> {
-        throw new UnsupportedOperationException("TODO");
-        /*
-        var fieldSigs = type1.ref().core.fields;
-        var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
-          Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
+        // TODO: correctly handle field inheritance
         var fieldSubst = new Subst(MutableHashMap.create());
-        for (var fieldSig : fieldSigs) {
+        for(var field : type1.params()) {
+          var fieldSig = field._1.core;
           var dummyVars = fieldSig.selfTele.map(par ->
             new LocalVar(par.ref().name(), par.ref().definition()));
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
             new Arg<Term>(new RefTerm(vpa._1, 0), vpa._2.explicit()));
-          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.args(), dummy);
-          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.args(), dummy);
+          var l = new CallTerm.Access(lhs, field._1, dummy);
+          var r = new CallTerm.Access(rhs, field._1, dummy);
           fieldSubst.add(fieldSig.ref(), l);
-          if (!compare(l, r, lr, rl, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
+          if (!compare(l, r, lr, rl, fieldSig.result().subst(fieldSubst))) yield false;
         }
         yield true;
-        */
       }
       case IntroTerm.Lambda $ -> throw new InternalException("LamTerm is never type");
       case CallTerm.Con $ -> throw new InternalException("ConCall is never type");
