@@ -10,6 +10,7 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
+import org.aya.concrete.stmt.ClassDecl;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
@@ -200,6 +201,14 @@ public record ExprResolver(
     var newCtx = ctx.bind(first.ref(), first.sourcePos());
     var result = resolveParams(params.view().drop(1), newCtx);
     return Tuple2.of(result._1.prepended(new Expr.Param(first, type)), result._2);
+  }
+
+
+  @Contract(pure = true)
+  public @NotNull Tuple2<SeqView<ClassDecl.StructDecl.@NotNull StructField>, Context>
+  resolveFieldsParams(@NotNull SeqLike<ClassDecl.StructDecl.@NotNull StructField> fields, Context ctx) {
+    // TODO: implement this
+    return Tuple2.of(fields.view(), ctx);
   }
 
   private Expr.@NotNull Field resolveField(Expr.@NotNull Field t, Context context) {

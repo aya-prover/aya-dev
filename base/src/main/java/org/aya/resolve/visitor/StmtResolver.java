@@ -144,8 +144,13 @@ public interface StmtResolver {
     return Tuple.of(resolver, local._2);
   }
 
-  private static @NotNull Tuple2<ExprResolver, Context> resolveStructDecl(@NotNull ClassDecl classDecl, ExprResolver.@NotNull Options options) {
-    throw new UnsupportedOperationException("TODO");
+  private static @NotNull Tuple2<ExprResolver, Context> resolveStructDecl(@NotNull ClassDecl.StructDecl decl, ExprResolver.@NotNull Options options) {
+    var resolver = new ExprResolver(options);
+    resolver.enterHead();
+    var local = resolver.resolveFieldsParams(decl.fields, decl.ctx);
+    // TODO: modify fields
+    decl.result = resolver.resolve(decl.result, local._2);
+    return Tuple.of(resolver, local._2);
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
