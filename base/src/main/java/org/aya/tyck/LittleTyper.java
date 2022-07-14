@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
@@ -23,7 +24,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     return switch (preterm) {
       case RefTerm term -> localCtx.get(term.var());
       case CallTerm.Data dataCall -> defCall(dataCall.ref(), dataCall.ulift());
-      case StructCall structCall -> throw new UnsupportedOperationException("TODO");//defCall(structCall.ref(), structCall.ulift());
+      case StructCall structCall -> defCall(structCall.ref(), structCall.ulift());
       case CallTerm.Hole hole -> {
         var result = hole.ref().result;
         yield result == null ? ErrorTerm.typeOf(hole) : result;
@@ -85,7 +86,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     };
   }
 
-  private @NotNull Term defCall(DefVar<? extends Def, ? extends Decl.Telescopic> ref, int ulift) {
+  private @NotNull Term defCall(DefVar<? extends GenericDef, ? extends Decl> ref, int ulift) {
     return Def.defResult(ref).subst(Subst.EMPTY, ulift);
   }
 }
