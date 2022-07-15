@@ -41,13 +41,13 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
   @JsonRequest("aya/computeType")
   @SuppressWarnings("unused")
   public @NotNull CompletableFuture<@NotNull ComputeTermResult> computeType(ComputeTermResult.Params input) {
-    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.type(service.sharedPrimFactory)));
+    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.type()));
   }
 
   @JsonRequest("aya/computeNF")
   @SuppressWarnings("unused")
   public @NotNull CompletableFuture<@NotNull ComputeTermResult> computeNF(ComputeTermResult.Params input) {
-    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.nf(service.sharedPrimFactory)));
+    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.nf()));
   }
 
   @Override public void connect(@NotNull LanguageClient client) {

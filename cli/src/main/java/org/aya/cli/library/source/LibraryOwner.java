@@ -18,6 +18,7 @@ import java.nio.file.Path;
  *
  * @author ice1000, kiva
  * @see DiskLibraryOwner
+ * @apiNote DO NOT USE this class as Map key, use {@link #underlyingLibrary()} instead.
  */
 @Debug.Renderer(text = "underlyingLibrary().name()")
 public interface LibraryOwner {

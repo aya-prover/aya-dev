@@ -10,6 +10,7 @@ module aya.lsp {
 
   exports org.aya.lsp.models;
   exports org.aya.lsp.server;
+  exports org.aya.lsp.prim;
   exports org.aya.lsp.utils;
   exports org.aya.lsp;
 

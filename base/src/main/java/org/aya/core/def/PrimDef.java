@@ -14,6 +14,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
+import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -222,6 +223,11 @@ public final class PrimDef extends TopLevelDef {
 
     public boolean have(@NotNull ID name) {
       return defs.containsKey(name);
+    }
+
+    /** whether redefinition should be treated as error */
+    @ForLSP public boolean suppressRedefinition() {
+      return false;
     }
 
     public @NotNull PrimDef getOrCreate(@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {

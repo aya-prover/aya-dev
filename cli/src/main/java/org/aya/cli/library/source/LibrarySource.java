@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
  * @param program     initialized after parse
  * @param resolveInfo initialized after resolve
  * @param tycked      initialized after tyck
+ * @apiNote DO NOT USE this class as Map key. Use {@link #file()} instead.
  */
 @Debug.Renderer(text = "file")
 public record LibrarySource(

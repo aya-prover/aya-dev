@@ -5,22 +5,24 @@ package org.aya.lsp.server;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
+import org.aya.lsp.prim.LspPrimFactory;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.pretty.doc.Doc;
@@ -51,15 +53,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
+  private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
+
   private final BufferReporter reporter = new BufferReporter();
   private final @NotNull MutableList<LibraryOwner> libraries = MutableList.create();
   /**
    * When working with LSP, we need to track all previously created Primitives.
-   * This is shared among all loaded libraries just like a Global PrimFactory before.
-   *
-   * @implNote consider using one shared factory among all mocked libraries, and separate factory for each real library.
+   * This is shared per library.
    */
-  protected final @NotNull PrimDef.Factory sharedPrimFactory = new PrimDef.Factory();
+  protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private @NotNull Set<Path> lastErrorReportedFiles = Collections.emptySet();
   private final @NotNull CompilerAdvisor advisor;
 
@@ -155,17 +157,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public @NotNull List<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
     // start compiling
     reporter.clear();
-    var flags = new CompilerFlags(
-      CompilerFlags.Message.EMOJI, false, false, null,
-      SeqView.empty(), null);
+    var primFactory = primFactory(owner);
     try {
-      LibraryCompiler.newCompiler(sharedPrimFactory, reporter, flags, advisor, owner).start();
+      LibraryCompiler.newCompiler(primFactory, reporter, FLAGS, advisor, owner).start();
     } catch (IOException e) {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
       Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
-    } finally {
-      sharedPrimFactory.clear();
     }
     reportErrors(reporter, DistillerOptions.pretty());
     return SyntaxHighlight.invoke(owner);
@@ -383,7 +381,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
     var source = find(input.uri);
     if (source == null) return ComputeTermResult.bad(input);
-    return new ComputeTerm(source, type).invoke(input);
+    return new ComputeTerm(source, type, primFactory(source.owner())).invoke(input);
+  }
+
+  private @NotNull LspPrimFactory primFactory(@NotNull LibraryOwner owner) {
+    return primFactories.getOrPut(owner.underlyingLibrary(), LspPrimFactory::new);
   }
 
   public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {

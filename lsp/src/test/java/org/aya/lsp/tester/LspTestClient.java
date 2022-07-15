@@ -10,10 +10,7 @@ import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Resolver;
-import org.eclipse.lsp4j.MessageActionItem;
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.ShowMessageRequestParams;
+import org.eclipse.lsp4j.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 
@@ -27,6 +24,7 @@ public final class LspTestClient implements AyaLanguageClient {
   public LspTestClient() {
     var server = new AyaServer(advisor);
     service = server.getTextDocumentService();
+    server.connect(this);
   }
 
   public void registerLibrary(@NotNull Path libraryRoot) {
@@ -71,6 +69,12 @@ public final class LspTestClient implements AyaLanguageClient {
   }
 
   @Override public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
+    var errors = diagnostics.getDiagnostics().stream()
+      .filter(d -> d.getSeverity() == DiagnosticSeverity.Error)
+      .collect(ImmutableSeq.factory());
+    Assertions.assertTrue(errors.isEmpty(),
+      "Unexpected compiler errors: " +
+        errors.joinToString("\n", Diagnostic::getMessage));
   }
 
   @Override public void showMessage(MessageParams messageParams) {
