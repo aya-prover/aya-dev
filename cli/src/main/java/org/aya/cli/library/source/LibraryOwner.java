@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.util.error.SourceFileLocator;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.nio.file.Path;
  * @author ice1000, kiva
  * @see DiskLibraryOwner
  */
+@Debug.Renderer(text = "underlyingLibrary().name()")
 public interface LibraryOwner {
   int DEFAULT_INDENT = 2;
   /** @return Source dirs of this module, out dirs of all dependencies. */

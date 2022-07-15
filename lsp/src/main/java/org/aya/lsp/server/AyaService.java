@@ -67,6 +67,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     if (!tryAyaLibrary(path)) mockLibraries(path);
   }
 
+  public @NotNull SeqView<LibraryOwner> libraries() {
+    return libraries.view();
+  }
+
   private boolean tryAyaLibrary(@Nullable Path path) {
     if (path == null) return false;
     var ayaJson = path.resolve(Constants.AYA_JSON);
@@ -85,8 +89,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   private void mockLibraries(@NotNull Path path) {
-    libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1).map(
-      aya -> WsLibrary.mock(FileUtil.canonicalize(aya))));
+    libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1)
+      .map(WsLibrary::mock));
   }
 
   private @Nullable LibraryOwner findOwner(@Nullable Path path) {
@@ -140,7 +144,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var owner = source.owner();
     Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
       owner.underlyingLibrary().name(), owner.underlyingLibrary().libraryRoot());
+    return loadLibrary(owner);
+  }
 
+  public @NotNull List<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
     // start compiling
     reporter.clear();
     var flags = new CompilerFlags(

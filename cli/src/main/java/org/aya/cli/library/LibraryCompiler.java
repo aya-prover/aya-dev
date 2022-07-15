@@ -51,17 +51,35 @@ public class LibraryCompiler {
     this.owner = owner;
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull CompilerAdvisor advisor, @NotNull LibraryOwner owner) {
+  public static @NotNull LibraryCompiler newCompiler(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull LibraryOwner owner
+  ) {
     return new LibraryCompiler(reporter, flags, owner, advisor, new LibraryModuleLoader.United(primFactory));
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull CompilerAdvisor advisor, @NotNull Path libraryRoot) throws IOException {
-    var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
+  public static @NotNull LibraryCompiler newCompiler(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull Path libraryRoot
+  ) throws IOException {
+    var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
     var owner = DiskLibraryOwner.from(config);
     return newCompiler(primFactory, reporter, flags, advisor, owner);
   }
 
-  public static int compile(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull CompilerAdvisor advisor, @NotNull Path libraryRoot) throws IOException {
+  public static int compile(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull Path libraryRoot
+  ) throws IOException {
     if (!Files.exists(libraryRoot)) {
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;

@@ -9,6 +9,7 @@ import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.prelude.GeneratedVersion;
+import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFileLocator;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,11 +27,12 @@ public record WsLibrary(
   @NotNull Path workspace
 ) implements LibraryOwner {
   public static @NotNull WsLibrary mock(@NotNull Path ayaSource) {
-    var parent = ayaSource.getParent();
+    var canonicalPath = FileUtil.canonicalize(ayaSource);
+    var parent = canonicalPath.getParent();
     var mockConfig = mockConfig(parent);
     var locator = new SourceFileLocator.Module(SeqView.of(parent));
     var owner = new WsLibrary(locator, MutableList.create(), mockConfig, parent);
-    owner.sources.append(new LibrarySource(owner, ayaSource));
+    owner.sources.append(new LibrarySource(owner, canonicalPath));
     return owner;
   }
 
