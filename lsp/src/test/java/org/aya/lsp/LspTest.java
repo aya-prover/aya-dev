@@ -33,7 +33,7 @@ public class LspTest {
     launch(TEST_LIB).execute(
       compile((a, e) -> {}),
       mutate("StringPrims"),
-      compile((a, e) -> assertRemake(a, "StringPrims", "HelloWorld"))
+      compile((a, e) -> assertRemake(a, e, "StringPrims", "HelloWorld"))
     );
   }
 
@@ -41,15 +41,20 @@ public class LspTest {
     launch(TEST_LIB).execute(
       compile((a, e) -> {}),
       mutate("HelloWorld"),
-      compile((a, e) -> assertRemake(a, "HelloWorld")),
+      compile((a, e) -> assertRemake(a, e, "HelloWorld")),
       mutate("Nat"),
-      compile((a, e) -> assertRemake(a, "Nat", "HelloWorld")),
+      compile((a, e) -> assertRemake(a, e, "Nat", "HelloWorld")),
       mutate("PathPrims"),
-      compile((a, e) -> assertRemake(a, "PathPrims", "Path", "HelloWorld"))
+      compile((a, e) -> assertRemake(a, e, "PathPrims", "Path", "HelloWorld"))
     );
   }
 
-  private void assertRemake(@NotNull LspTestCompilerAdvisor advisor, @NotNull String... modules) {
+  private void logTime(long time) {
+    System.out.println("Remake changed modules took: " + time + "ms");
+  }
+
+  private void assertRemake(@NotNull LspTestCompilerAdvisor advisor, long time, @NotNull String... modules) {
+    logTime(time);
     assertNotNull(advisor.lastJob);
     var actualInDep = advisor.newlyCompiled.view()
       .map(r -> r.thisModule().moduleName().joinToString(Constants.SCOPE_SEPARATOR))
