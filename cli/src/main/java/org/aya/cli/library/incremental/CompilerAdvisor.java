@@ -20,7 +20,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Advises the compiler to be incremental, and support in-memory analysis.
+ * Advises the compiler to be incremental, helps in-memory analysis,
+ * and behaves as the bridge between the library compiler and its caller.
+ *
+ * @author kiva
  */
 public interface CompilerAdvisor {
   static @NotNull CompilerAdvisor onDisk() {
@@ -35,6 +38,15 @@ public interface CompilerAdvisor {
 
   void prepareLibraryOutput(@NotNull LibraryOwner owner) throws IOException;
   void prepareModuleOutput(@NotNull LibrarySource source) throws IOException;
+
+  /**
+   * Called when all modified sources are detected
+   *
+   * @param SCCs SCC of modified sources.
+   * @apiNote the SCC is ordered, but DO NOT RELY on it.
+   */
+  default void notifyIncrementalJob(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> SCCs) {
+  }
 
   /**
    * Try to load the compiled core.

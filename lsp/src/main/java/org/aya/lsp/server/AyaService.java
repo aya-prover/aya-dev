@@ -61,14 +61,19 @@ public class AyaService implements WorkspaceService, TextDocumentService {
    */
   protected final @NotNull PrimDef.Factory sharedPrimFactory = new PrimDef.Factory();
   private @NotNull Set<Path> lastErrorReportedFiles = Collections.emptySet();
+  private final @NotNull CompilerAdvisor advisor;
 
-  public void registerLibrary(@NotNull Path path) {
-    Log.i("Adding library path %s", path);
-    if (!tryAyaLibrary(path)) mockLibraries(path);
+  public AyaService(@NotNull CompilerAdvisor advisor) {
+    this.advisor = advisor;
   }
 
   public @NotNull SeqView<LibraryOwner> libraries() {
     return libraries.view();
+  }
+
+  public void registerLibrary(@NotNull Path path) {
+    Log.i("Adding library path %s", path);
+    if (!tryAyaLibrary(path)) mockLibraries(path);
   }
 
   private boolean tryAyaLibrary(@Nullable Path path) {
@@ -151,10 +156,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     // start compiling
     reporter.clear();
     var flags = new CompilerFlags(
-      CompilerFlags.Message.EMOJI, false, true, null,
+      CompilerFlags.Message.EMOJI, false, false, null,
       SeqView.empty(), null);
     try {
-      LibraryCompiler.newCompiler(sharedPrimFactory, reporter, flags, CompilerAdvisor.inMemory(), owner).start();
+      LibraryCompiler.newCompiler(sharedPrimFactory, reporter, flags, advisor, owner).start();
     } catch (IOException e) {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));

@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public final class DiskCompilerAdvisor implements CompilerAdvisor {
+public class DiskCompilerAdvisor implements CompilerAdvisor {
   @Override public boolean isSourceModified(@NotNull LibrarySource source) {
     try {
       var core = source.compiledCorePath();

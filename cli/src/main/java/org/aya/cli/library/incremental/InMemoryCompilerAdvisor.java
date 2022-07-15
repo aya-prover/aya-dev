@@ -20,19 +20,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 
-public record InMemoryCompilerAdvisor(
-  @NotNull MutableMap<Path, FileTime> coreTimestamp,
-  @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> compiledCore
-) implements CompilerAdvisor {
-  public InMemoryCompilerAdvisor() {
-    this(MutableMap.create(), MutableMap.create());
+public class InMemoryCompilerAdvisor implements CompilerAdvisor {
+  protected final @NotNull MutableMap<Path, FileTime> coreTimestamp = MutableMap.create();
+  protected final @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> compiledCore = MutableMap.create();
+  
+  protected @NotNull Path timestampKey(@NotNull LibrarySource source) {
+    return source.file();
   }
 
   @Override public boolean isSourceModified(@NotNull LibrarySource source) {
-    var coreLastModified = coreTimestamp.getOption(source.file());
+    var coreLastModified = coreTimestamp.getOption(timestampKey(source));
     try {
       if (coreLastModified.isEmpty()) return true;
-      return Files.getLastModifiedTime(source.file())
+      return Files.getLastModifiedTime(timestampKey(source))
         .compareTo(coreLastModified.get()) > 0;
     } catch (IOException ignore) {
       return true;
@@ -41,7 +41,7 @@ public record InMemoryCompilerAdvisor(
 
   @Override public void updateLastModified(@NotNull LibrarySource source) {
     try {
-      coreTimestamp.put(source.file(), Files.getLastModifiedTime(source.file()));
+      coreTimestamp.put(timestampKey(source), Files.getLastModifiedTime(timestampKey(source)));
     } catch (IOException ignore) {
     }
   }

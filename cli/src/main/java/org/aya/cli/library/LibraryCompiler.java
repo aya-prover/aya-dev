@@ -188,6 +188,8 @@ public class LibraryCompiler {
     }
 
     advisor.prepareLibraryOutput(owner);
+    advisor.notifyIncrementalJob(SCCs);
+
     var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader, advisor), changed);
     SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
