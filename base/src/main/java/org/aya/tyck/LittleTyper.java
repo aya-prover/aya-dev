@@ -8,6 +8,7 @@ import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
+import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
@@ -32,15 +33,11 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case ErrorTerm term -> ErrorTerm.typeOf(term);
       case RefTerm.Field field -> Def.defType(field.ref());
       case CallTerm.Access access -> {
-        throw new UnsupportedOperationException("TODO");
-        /*
         var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
-        if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
+        if (!(callRaw instanceof StructCall call)) yield ErrorTerm.typeOf(access);
         var core = access.ref().core;
-        var subst = Unfolder.buildSubst(core.telescope(), access.fieldArgs())
-          .add(Unfolder.buildSubst(call.ref().core.telescope(), access.structArgs()));
+        var subst = Unfolder.buildSubst(core.telescope(), access.fieldArgs());
         yield core.result().subst(subst);
-        */
       }
       case FormTerm.Sigma sigma -> {
         var univ = sigma.params().view()
