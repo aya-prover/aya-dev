@@ -481,8 +481,8 @@ public final class ExprTycker extends Tycker {
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
       return defCall(pos, (DefVar<DataDef, TeleDecl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof ClassDecl.StructDecl) {
-      throw new UnsupportedOperationException("TODO");
-      //return defCall(pos, (DefVar<StructDef, ClassDecl.StructDecl>) var, CallTerm.Struct::new);
+      var ref = (DefVar<StructDef, ClassDecl.StructDecl>) var;
+      return new Result(new StructCall(ref, 0, ImmutableSeq.empty()), new StructCall(ref, 0, ImmutableSeq.empty())); // TODO: What's the type of this thing?
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
