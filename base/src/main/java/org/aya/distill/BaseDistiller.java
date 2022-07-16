@@ -8,6 +8,7 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.term.StructCall;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;

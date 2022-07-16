@@ -151,7 +151,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case StructCall structCall -> throw new UnsupportedOperationException("TODO"); // visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
+      case StructCall structCall -> Doc.cblock(linkRef(structCall.ref(), STRUCT_CALL), 2,
+        Doc.vcat(structCall.paramsMap().view()
+          .map((k, v) -> Doc.sep(Doc.symbol("|"),
+            linkRef(k, FIELD_CALL),
+            Doc.symbol("=>"), term(Outer.Free, v.term())))
+          .toImmutableSeq()));
       case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
       case LitTerm.ShapedInt shaped -> options.map.get(DistillerOptions.Key.ShowLiterals)
         ? Doc.plain(String.valueOf(shaped.repr()))
