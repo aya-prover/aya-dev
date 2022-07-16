@@ -39,10 +39,14 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
     else return defVar.concrete.checkedBody;
   }
   static @NotNull Term defResult(@NotNull DefVar<? extends GenericDef, ? extends Decl> defVar) {
-    if (defVar.core != null) return defVar.core.result();
+    if (defVar.core != null) {
+      return defVar.core.result();
+    } else if (defVar.concrete instanceof Decl.Telescopic concrete) {
       // guaranteed as this is already a core term
-    else if(defVar.concrete instanceof Decl.Telescopic concrete) return Objects.requireNonNull(concrete.signature()).result;
-    else throw new IllegalArgumentException("defResult called on non-core term");
+      return Objects.requireNonNull(concrete.signature()).result;
+    } else {
+      throw new IllegalArgumentException("defResult called on non-core term");
+    }
   }
   static @NotNull ImmutableSeq<Term.Param>
   substParams(@NotNull SeqLike<Term.@NotNull Param> param, @NotNull Subst subst) {
