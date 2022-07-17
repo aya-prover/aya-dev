@@ -142,7 +142,7 @@ public record StmtShallowResolver(
         var lack = factory.checkDependency(primID);
         if (lack.isNotEmpty() && lack.get().isNotEmpty())
           context.reportAndThrow(new PrimDependencyError(name, lack.get(), sourcePos));
-        else if (factory.have(primID))
+        else if (factory.have(primID) && !factory.suppressRedefinition())
           context.reportAndThrow(new RedefinitionPrimError(name, sourcePos));
         factory.factory(primID, decl.ref);
         resolveTopLevelDecl(decl, decl, context);

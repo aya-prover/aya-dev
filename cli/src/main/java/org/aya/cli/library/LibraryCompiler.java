@@ -4,6 +4,7 @@ package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
+import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
@@ -39,31 +40,51 @@ public class LibraryCompiler {
   private final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
   private final @NotNull CountingReporter reporter;
   private final @NotNull CompilerFlags flags;
+  private final @NotNull CompilerAdvisor advisor;
 
-  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull LibraryModuleLoader.United states) {
+  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull CompilerAdvisor advisor, @NotNull LibraryModuleLoader.United states) {
     var counting = CountingReporter.delegate(reporter);
-    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(counting, owner, states));
+    this.advisor = advisor;
+    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(counting, owner, advisor, states));
     this.reporter = counting;
     this.flags = flags;
     this.owner = owner;
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner) {
-    return new LibraryCompiler(reporter, flags, owner, new LibraryModuleLoader.United(primFactory));
+  public static @NotNull LibraryCompiler newCompiler(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull LibraryOwner owner
+  ) {
+    return new LibraryCompiler(reporter, flags, owner, advisor, new LibraryModuleLoader.United(primFactory));
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
-    var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
+  public static @NotNull LibraryCompiler newCompiler(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull Path libraryRoot
+  ) throws IOException {
+    var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
     var owner = DiskLibraryOwner.from(config);
-    return newCompiler(primFactory, reporter, flags, owner);
+    return newCompiler(primFactory, reporter, flags, advisor, owner);
   }
 
-  public static int compile(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
+  public static int compile(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull Path libraryRoot
+  ) throws IOException {
     if (!Files.exists(libraryRoot)) {
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
-    return newCompiler(primFactory, reporter, flags, libraryRoot).start();
+    return newCompiler(primFactory, reporter, flags, advisor, libraryRoot).start();
   }
 
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
@@ -120,7 +141,7 @@ public class LibraryCompiler {
     var library = owner.underlyingLibrary();
     var anyDepChanged = false;
     for (var dep : owner.libraryDeps()) {
-      var depCompiler = new LibraryCompiler(reporter, flags, dep, moduleLoader.loader.states());
+      var depCompiler = new LibraryCompiler(reporter, flags, dep, advisor, moduleLoader.loader.states());
       var upToDate = depCompiler.make();
       anyDepChanged = anyDepChanged || !upToDate;
       owner.addModulePath(dep.outDir());
@@ -166,8 +187,10 @@ public class LibraryCompiler {
       return true;
     }
 
-    Files.createDirectories(owner.outDir());
-    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader), changed);
+    advisor.prepareLibraryOutput(owner);
+    advisor.notifyIncrementalJob(SCCs);
+
+    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader, advisor), changed);
     SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("I dislike the following module(s):");
@@ -183,7 +206,7 @@ public class LibraryCompiler {
     var usage = depGraph.transpose();
     var changed = MutableGraph.<LibrarySource>create();
     depGraph.E().keysView().forEach(s -> {
-      if (Timestamp.sourceModified(s))
+      if (advisor.isSourceModified(s))
         collectChanged(usage, s, changed);
     });
     return changed;
@@ -205,11 +228,12 @@ public class LibraryCompiler {
 
   record LibrarySccTycker(
     @NotNull CountingReporter reporter,
-    @NotNull ModuleLoader moduleLoader
+    @NotNull ModuleLoader moduleLoader,
+    @NotNull CompilerAdvisor advisor
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
-      for (var f : order) Files.deleteIfExists(f.coreFile());
+      for (var f : order) advisor.prepareModuleOutput(f);
       for (var f : order) {
         tyckOne(f);
         if (reporter.anyError()) {

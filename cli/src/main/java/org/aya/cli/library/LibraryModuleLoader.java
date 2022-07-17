@@ -3,28 +3,23 @@
 package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.cli.utils.AyaCompiler;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
-import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.Constants;
-import org.aya.generic.util.InternalException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.FileUtil;
 import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -46,28 +41,21 @@ import java.nio.file.Path;
 record LibraryModuleLoader(
   @NotNull CountingReporter reporter,
   @NotNull LibraryOwner owner,
+  @NotNull CompilerAdvisor advisor,
   @NotNull LibraryModuleLoader.United states
-  ) implements ModuleLoader {
-  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs) {
-    try {
-      var coreFile = file.coreFile();
-      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states.ser);
-      Timestamp.update(file);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
+) implements ModuleLoader {
   @Override public @NotNull ResolveInfo
   load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
     var basePaths = owner.modulePath();
-    var sourcePath = FileUtil.resolveFile(basePaths, mod, ".aya");
+    var sourcePath = FileUtil.resolveFile(basePaths, mod, Constants.AYA_POSTFIX);
     if (sourcePath == null) {
       // We are loading a module belonging to dependencies, find the compiled core.
       // The compiled core should always exist, otherwise the dependency is not built.
+      // TODO: what if module name clashes?
       var depCorePath = FileUtil.resolveFile(basePaths, mod, Constants.AYAC_POSTFIX);
-      assert depCorePath != null : "dependencies not built?";
-      return loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
+      var core = loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
+      assert core != null : "dependencies not built?";
+      return core;
     }
 
     var source = owner.findModule(mod);
@@ -75,9 +63,11 @@ record LibraryModuleLoader(
 
     // we are loading a module belonging to this library, try finding compiled core first.
     // If found, check modifications and decide whether to proceed with compiled core.
-    var corePath = FileUtil.resolveFile(owner.outDir(), mod, Constants.AYAC_POSTFIX);
-    if (Files.exists(corePath)) {
-      return source.resolveInfo().value = loadCompiledCore(mod, corePath, sourcePath, recurseLoader);
+    var corePath = source.compiledCorePath();
+    var tryCore = loadCompiledCore(mod, sourcePath, corePath, recurseLoader);
+    if (tryCore != null) {
+      // the core file was found and up-to-date.
+      return source.resolveInfo().value = tryCore;
     }
 
     // No compiled core is found, or source file is modified, compile it from source.
@@ -92,18 +82,19 @@ record LibraryModuleLoader(
     });
   }
 
-  private @NotNull ResolveInfo loadCompiledCore(
-    @NotNull ImmutableSeq<String> mod, @NotNull Path corePath,
-    @NotNull Path sourcePath, @NotNull ModuleLoader recurseLoader
+  private @Nullable ResolveInfo loadCompiledCore(
+    @NotNull ImmutableSeq<String> mod, @Nullable Path sourcePath,
+    @Nullable Path corePath, @NotNull ModuleLoader recurseLoader
   ) {
-    assert recurseLoader instanceof CachedModuleLoader<?>;
-    var context = new EmptyContext(reporter(), sourcePath).derive(mod);
-    try (var inputStream = FileUtil.ois(corePath)) {
-      var compiledAya = (CompiledAya) inputStream.readObject();
-      return compiledAya.toResolveInfo(recurseLoader, context, states().de());
-    } catch (IOException | ClassNotFoundException e) {
-      throw new InternalException("Compiled aya found but cannot be loaded", e);
-    }
+    return advisor.loadCompiledCore(states.de, reporter, mod, sourcePath, corePath, recurseLoader);
+  }
+
+  private void saveCompiledCore(
+    @NotNull LibrarySource file,
+    @NotNull ResolveInfo resolveInfo,
+    @NotNull ImmutableSeq<GenericDef> defs
+  ) {
+    advisor.saveCompiledCore(states.ser, file, resolveInfo, defs);
   }
 
   record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser, @NotNull PrimDef.Factory primFactory) {

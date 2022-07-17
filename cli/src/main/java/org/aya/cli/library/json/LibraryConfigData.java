@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.json;
 
@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Constants;
+import org.aya.util.FileUtil;
 import org.aya.util.Version;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public final class LibraryConfigData {
   }
 
   private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot, @NotNull Function<String, Path> buildRootGen) {
-    var buildRoot = buildRootGen.apply(version);
+    var buildRoot = FileUtil.canonicalize(buildRootGen.apply(version));
     return new LibraryConfig(
       Version.create(ayaVersion),
       name,
@@ -69,10 +70,12 @@ public final class LibraryConfigData {
   }
 
   public static @NotNull LibraryConfig fromLibraryRoot(@NotNull Path libraryRoot) throws IOException, JsonParseException {
-    return of(libraryRoot).asConfig(libraryRoot.normalize());
+    var canonicalPath = FileUtil.canonicalize(libraryRoot);
+    return of(canonicalPath).asConfig(canonicalPath);
   }
 
   public static @NotNull LibraryConfig fromDependencyRoot(@NotNull Path dependencyRoot, @NotNull Function<String, Path> buildRoot) throws IOException, JsonParseException {
-    return of(dependencyRoot).asConfig(dependencyRoot.normalize(), buildRoot);
+    var canonicalPath = FileUtil.canonicalize(dependencyRoot);
+    return of(canonicalPath).asConfig(canonicalPath, buildRoot);
   }
 }
