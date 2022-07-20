@@ -4,6 +4,7 @@ package org.aya.tyck.unify;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Decl;
@@ -366,12 +367,16 @@ public final class DefEq {
         yield args ? FormTerm.Univ.ZERO : null;
       }
       case StructCall lhs -> {
-        throw new UnsupportedOperationException("TODO");
-        /*
-        if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
-        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
+        if (!(preRhs instanceof StructCall rhs) || lhs.ref() != rhs.ref()) yield null;
+        if (lhs.params().size() != rhs.params().size()) yield null;
+        var lhsFields = lhs.params().view().map(p -> p._1);
+        var rhsFields = rhs.params().view().map(p -> p._1);
+        if (!lhsFields.containsAll(rhsFields)) yield null;
+        var lhsArgs = lhs.params().view().map(p -> p._2);
+        var rhsMap = rhs.paramsMap();
+        var rhsArgs = lhs.params().view().map(p -> rhsMap.get(p._1));
+        var args = visitArgs(lhsArgs, rhsArgs, lr, rl, ImmutableSeq.empty());
         yield args ? FormTerm.Univ.ZERO : null;
-        */
       }
       case CallTerm.Con lhs -> switch (preRhs) {
         case CallTerm.Con rhs -> {
