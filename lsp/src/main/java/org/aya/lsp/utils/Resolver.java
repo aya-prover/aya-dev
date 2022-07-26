@@ -126,9 +126,10 @@ public interface Resolver {
           }
         }
         case Expr.NewExpr neo -> neo.fields().forEach(field -> {
+          field.bindings().forEach(binding ->
+            check(pp, binding.data(), binding.sourcePos()));
           var fieldRef = field.resolvedField().value;
-          if (fieldRef != null)
-            check(pp, fieldRef, field.name().sourcePos());
+          if (fieldRef != null) check(pp, fieldRef, field.name().sourcePos());
         });
         default -> {}
       }
@@ -137,7 +138,11 @@ public interface Resolver {
 
     @Override public @NotNull Pattern visitPattern(@NotNull Pattern pattern, P param) {
       switch (pattern) {
-        case Pattern.Ctor ctor -> check(param, ctor.resolved().data(), ctor.resolved().sourcePos());
+        case Pattern.Ctor ctor -> {
+          check(param, ctor.resolved().data(), ctor.resolved().sourcePos());
+          var as = ctor.as();
+          if (as != null) check(param, as, as.definition());
+        }
         case Pattern.Bind bind -> check(param, bind.bind(), bind.sourcePos());
         default -> {}
       }
@@ -173,16 +178,6 @@ public interface Resolver {
         .forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
       check(xy, decl.ref(), decl.sourcePos());
       super.visitTelescopic(decl, proof, xy);
-    }
-
-    @Override public @NotNull Expr visitExpr(@NotNull Expr expr, XY pp) {
-      if (expr instanceof Expr.NewExpr neo) neo.fields().forEach(field -> {
-        field.bindings().forEach(binding ->
-          check(pp, binding.data(), binding.sourcePos()));
-        var fieldRef = field.resolvedField().value;
-        if (fieldRef != null) check(pp, fieldRef, field.name().sourcePos());
-      });
-      return super.visitExpr(expr, pp);
     }
 
     @Override protected void check(@NotNull XY xy, @NotNull Var var, @NotNull SourcePos sourcePos) {
