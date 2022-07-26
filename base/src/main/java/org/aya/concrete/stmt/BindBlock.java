@@ -3,7 +3,7 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.ForLSP;
@@ -16,11 +16,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public record BindBlock(
   @Override @NotNull SourcePos sourcePos,
-  @NotNull Ref<@Nullable Context> context,
+  @NotNull MutableValue<@Nullable Context> context,
   @NotNull ImmutableSeq<QualifiedID> loosers,
   @NotNull ImmutableSeq<QualifiedID> tighters,
-  @ForLSP @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedLoosers,
-  @ForLSP @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedTighters
+  @ForLSP @NotNull MutableValue<ImmutableSeq<DefVar<?, ?>>> resolvedLoosers,
+  @ForLSP @NotNull MutableValue<ImmutableSeq<DefVar<?, ?>>> resolvedTighters
 ) {
-  public static final @NotNull BindBlock EMPTY = new BindBlock(SourcePos.NONE, new Ref<>(), ImmutableSeq.empty(), ImmutableSeq.empty(), new Ref<>(), new Ref<>());
+  public static final @NotNull BindBlock EMPTY = new BindBlock(SourcePos.NONE, MutableValue.create(), ImmutableSeq.empty(), ImmutableSeq.empty(), MutableValue.create(), MutableValue.create());
 }

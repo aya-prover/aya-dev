@@ -19,7 +19,7 @@ import java.util.List;
 
 public record InlayHintMaker(@NotNull MutableList<InlayHint> hints) implements SyntaxNodeAction.Ranged {
   public static @NotNull List<InlayHint> invoke(@NotNull LibrarySource source, @NotNull Range range) {
-    var program = source.program().value;
+    var program = source.program().get();
     if (program == null) return Collections.emptyList();
     var xyxy = new XYXY(range);
     var maker = new InlayHintMaker(MutableList.create());
@@ -28,8 +28,8 @@ public record InlayHintMaker(@NotNull MutableList<InlayHint> hints) implements S
   }
 
   @Override public @NotNull Pattern visitPattern(@NotNull Pattern pattern, XYXY pp) {
-    if (pattern instanceof Pattern.Bind bind && bind.type().value != null) {
-      var type = bind.type().value.toDoc(DistillerOptions.pretty()).commonRender();
+    if (pattern instanceof Pattern.Bind bind && bind.type().get() != null) {
+      var type = bind.type().get().toDoc(DistillerOptions.pretty()).commonRender();
       var range = LspRange.toRange(bind.sourcePos());
       var hint = new InlayHint(range.getEnd(), Either.forLeft(": " + type));
       hint.setKind(InlayHintKind.Type);

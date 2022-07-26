@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.error;
 
@@ -105,7 +105,7 @@ public record PrettyError(
   }
 
   private Doc renderLine(String line, int lineNo, int linenoWidth) {
-    return renderLine(line, Option.of(lineNo), linenoWidth);
+    return renderLine(line, Option.ofNullable(lineNo), linenoWidth);
   }
 
   private Doc renderLine(String line, Option<Integer> lineNo, int linenoWidth) {

@@ -132,7 +132,7 @@ public final class ExprTycker extends Tycker {
             continue;
           }
           var conField = conFieldOpt.get();
-          conField.resolvedField().value = fieldRef;
+          conField.resolvedField().set(fieldRef);
           conFields = conFields.dropWhile(t -> t == conField);
           var type = Def.defType(fieldRef).subst(subst, structCall.ulift());
           var telescope = fieldRef.core.selfTele.map(term -> term.subst(subst, structCall.ulift()));
@@ -317,7 +317,7 @@ public final class ExprTycker extends Tycker {
       case Expr.HoleExpr hole -> {
         // TODO[ice]: deal with unit type
         var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
-        if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().value));
+        if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new Result(freshHole._2, term);
       }
       case Expr.UnivExpr univExpr -> {

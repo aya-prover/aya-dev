@@ -323,7 +323,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
-      var currentFile = Option.of(source.file());
+      var currentFile = Option.ofNullable(source.file());
       return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
         // only highlight references in the current file
         .filter(pos -> pos.file().underlying().equals(currentFile))
@@ -352,7 +352,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
+  @SuppressWarnings("deprecation") @Override
   public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
@@ -363,7 +363,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
+  @SuppressWarnings("deprecation") @Override
   public CompletableFuture<Either<List<? extends SymbolInformation>, List<? extends WorkspaceSymbol>>> symbol(WorkspaceSymbolParams params) {
     return CompletableFuture.supplyAsync(() -> Either.forRight(
       ProjectSymbol.invoke(libraries.view())

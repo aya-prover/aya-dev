@@ -88,10 +88,10 @@ public class LibraryCompiler {
   }
 
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
-    if (source.program().value != null) return; // already parsed
+    if (source.program().get() != null) return; // already parsed
     var owner = source.owner();
     var program = new AyaParserImpl(reporter).program(owner.locator(), source.file());
-    source.program().value = program;
+    source.program().set(program);
     var finder = new ImportResolver((mod, sourcePos) -> {
       var file = owner.findModule(mod);
       if (file == null) {
@@ -163,9 +163,9 @@ public class LibraryCompiler {
 
   private void cleanReused() throws IOException {
     owner.librarySources().forEach(src -> {
-      src.program().value = null;
-      src.tycked().value = null;
-      src.resolveInfo().value = null;
+      src.program().set(null);
+      src.tycked().set(null);
+      src.resolveInfo().set(null);
     });
     FileUtil.deleteRecursively(owner.outDir());
   }
@@ -247,7 +247,7 @@ public class LibraryCompiler {
     private void tyckOne(@NotNull LibrarySource file) {
       var moduleName = file.moduleName();
       var mod = moduleLoader.load(moduleName);
-      if (mod == null || file.resolveInfo().value == null)
+      if (mod == null || file.resolveInfo().get() == null)
         throw new InternalException("Unable to load module: " + moduleName);
       reporter.reportNest("[Tyck] %s (%s)".formatted(
         QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);

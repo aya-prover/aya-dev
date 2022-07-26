@@ -12,7 +12,7 @@ import kala.control.Option;
 import kala.function.BooleanFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -118,15 +118,15 @@ public record AyaProducer(
   }
 
   public @NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
-    if (ctx.LOOSER() != null) return new BindBlock(sourcePosOf(ctx), new Ref<>(),
+    if (ctx.LOOSER() != null) return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
       visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()), ImmutableSeq.empty(),
-      new Ref<>(), new Ref<>());
-    else if (ctx.TIGHTER() != null) return new BindBlock(sourcePosOf(ctx), new Ref<>(),
+      MutableValue.create(), MutableValue.create());
+    else if (ctx.TIGHTER() != null) return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
       ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()),
-      new Ref<>(), new Ref<>());
-    else return new BindBlock(sourcePosOf(ctx), new Ref<>(),
+      MutableValue.create(), MutableValue.create());
+    else return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
         visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()),
-        new Ref<>(), new Ref<>());
+        MutableValue.create(), MutableValue.create());
   }
 
   public @NotNull ImmutableSeq<QualifiedID> visitLoosers(List<AyaParser.LoosersContext> ctx) {
@@ -364,7 +364,7 @@ public record AyaProducer(
       }
       case AyaParser.NewContext n -> new Expr.NewExpr(
         sourcePosOf(n), visitExpr(n.expr()),
-        Option.of(n.newBody()).map(b -> Seq.wrapJava(b.newArg()).map(this::visitField))
+        Option.ofNullable(n.newBody()).map(b -> Seq.wrapJava(b.newArg()).map(this::visitField))
           .getOrDefault(ImmutableSeq.empty()));
       case AyaParser.ForallContext forall -> buildPi(
         sourcePosOf(forall), false,
@@ -492,7 +492,7 @@ public record AyaProducer(
     var weakId = na.weakId();
     return new Expr.Field(new WithPos<>(sourcePosOf(weakId), weakId.getText()), visitIds(na.ids())
       .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
-      .collect(ImmutableSeq.factory()), visitExpr(na.expr()), new Ref<>());
+      .collect(ImmutableSeq.factory()), visitExpr(na.expr()), MutableValue.create());
   }
 
   public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {
@@ -689,7 +689,7 @@ public record AyaProducer(
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.weakId();
-    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), MutableValue.create());
 
     return unreachable(ctx);
   }
@@ -702,7 +702,7 @@ public record AyaProducer(
 
   public @NotNull Pattern.Clause visitClause(AyaParser.ClauseContext ctx) {
     return new Pattern.Clause(sourcePosOf(ctx), visitPatterns(ctx.patterns()),
-      Option.of(ctx.expr()).map(this::visitExpr));
+      Option.ofNullable(ctx.expr()).map(this::visitExpr));
   }
 
   public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>>
@@ -755,7 +755,7 @@ public record AyaProducer(
       nameOrInfix._1.data(),
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
-      Option.of(ctx.expr()).map(this::visitExpr),
+      Option.ofNullable(ctx.expr()).map(this::visitExpr),
       ImmutableSeq.empty(),
       false,
       bind == null ? BindBlock.EMPTY : visitBind(bind)

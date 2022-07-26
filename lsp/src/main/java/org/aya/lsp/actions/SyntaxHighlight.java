@@ -33,7 +33,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   private static @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
     var symbols = MutableList.<HighlightResult.Symbol>create();
-    var program = source.program().value;
+    var program = source.program().get();
     if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
     return new HighlightResult(
       source.file().toUri().toString(),
@@ -82,7 +82,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
           visitCall(defVar, proj.ix().getRightValue().sourcePos(), pp);
       }
       case Expr.NewExpr neo -> neo.fields().forEach(field -> {
-        if (field.resolvedField().value instanceof DefVar<?, ?> defVar)
+        if (field.resolvedField().get() instanceof DefVar<?, ?> defVar)
           visitCall(defVar, field.name().sourcePos(), pp);
       });
       default -> {}
@@ -138,14 +138,14 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   }
 
   private void visitOperator(@NotNull MutableList<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @Nullable DefVar<?, ?> op) {
-    Option.of(op).filter(DefVar::isInfix).mapNotNull(this::kindOf)
+    Option.ofNullable(op).filter(DefVar::isInfix).mapNotNull(this::kindOf)
       .forEach(kind -> buffer.append(new HighlightResult.Symbol(sourcePos, kind)));
   }
 
   private void visitBind(@NotNull MutableList<HighlightResult.Symbol> buffer, @NotNull BindBlock bindBlock) {
     if (bindBlock == BindBlock.EMPTY) return;
-    var loosers = bindBlock.resolvedLoosers().value;
-    var tighters = bindBlock.resolvedTighters().value;
+    var loosers = bindBlock.resolvedLoosers().get();
+    var tighters = bindBlock.resolvedTighters().get();
     if (loosers != null) bindBlock.loosers().view().zip(loosers.view())
       .forEach(tup -> visitOperator(buffer, tup._1.sourcePos(), tup._2));
     if (tighters != null) bindBlock.tighters().view().zip(tighters.view())

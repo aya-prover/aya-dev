@@ -6,7 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.error.OperatorProblem;
@@ -76,9 +76,9 @@ public interface StmtResolver {
         decl.body.forEach(ctor -> {
           var bodyResolver = local._1.member(decl);
           bodyResolver.enterHead();
-          var localCtxWithPat = new Ref<>(local._2);
+          var localCtxWithPat = MutableValue.create(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
-          var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
+          var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.get());
           ctor.telescope = ctorLocal._1.toImmutableSeq();
           addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));
@@ -157,10 +157,10 @@ public interface StmtResolver {
 
   private static void bind(@NotNull BindBlock bindBlock, AyaBinOpSet opSet, OpDecl self) {
     if (bindBlock == BindBlock.EMPTY) return;
-    var ctx = bindBlock.context().value;
+    var ctx = bindBlock.context().get();
     assert ctx != null : "no shallow resolver?";
-    bindBlock.resolvedLoosers().value = bindBlock.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
-    bindBlock.resolvedTighters().value = bindBlock.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
+    bindBlock.resolvedLoosers().set(bindBlock.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser)));
+    bindBlock.resolvedTighters().set(bindBlock.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter)));
   }
 
   private static @NotNull DefVar<?, ?> bind(
@@ -210,15 +210,15 @@ public interface StmtResolver {
     @NotNull Context context,
     @NotNull ExprResolver bodyResolver
   ) {
-    var ctx = new Ref<>(context);
+    var ctx = MutableValue.create(context);
     var pats = match.patterns.map(pat -> subpatterns(ctx, pat));
     return new Pattern.Clause(match.sourcePos, pats,
-      match.expr.map(e -> bodyResolver.resolve(e, ctx.value)));
+      match.expr.map(e -> bodyResolver.resolve(e, ctx.get())));
   }
 
-  static @NotNull Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
-    var res = resolve(pat, ctx.value);
-    ctx.value = res._1;
+  static @NotNull Pattern subpatterns(@NotNull MutableValue<Context> ctx, Pattern pat) {
+    var res = resolve(pat, ctx.get());
+    ctx.set(res._1);
     return res._2;
   }
 
@@ -229,10 +229,10 @@ public interface StmtResolver {
   static Tuple2<Context, Pattern> resolve(@NotNull Pattern pattern, Context context) {
     return switch (pattern) {
       case Pattern.Tuple tuple -> {
-        var newCtx = new Ref<>(context);
+        var newCtx = MutableValue.create(context);
         var patterns = tuple.patterns().map(p -> subpatterns(newCtx, p));
         yield Tuple.of(
-          bindAs(tuple.as(), newCtx.value, tuple.sourcePos()),
+          bindAs(tuple.as(), newCtx.get(), tuple.sourcePos()),
           new Pattern.Tuple(tuple.sourcePos(), tuple.explicit(), patterns, tuple.as()));
       }
       case Pattern.Bind bind -> {
@@ -242,10 +242,10 @@ public interface StmtResolver {
       }
       // We will never have Ctor instances before desugar.
       case Pattern.BinOpSeq seq -> {
-        var newCtx = new Ref<>(context);
+        var newCtx = MutableValue.create(context);
         var pats = seq.seq().map(p -> subpatterns(newCtx, p));
         yield Tuple.of(
-          bindAs(seq.as(), newCtx.value, seq.sourcePos()),
+          bindAs(seq.as(), newCtx.get(), seq.sourcePos()),
           new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.as(), seq.explicit()));
       }
       default -> Tuple.of(context, pattern);

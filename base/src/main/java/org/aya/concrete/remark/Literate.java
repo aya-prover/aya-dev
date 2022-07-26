@@ -3,7 +3,7 @@
 package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.visitor.ExprTraversal;
 import org.aya.core.def.UserDef;
@@ -71,15 +71,15 @@ public sealed interface Literate extends Docile {
     }
   }
 
-  record Err(@NotNull Ref<Var> def, @Override @NotNull SourcePos sourcePos) implements Literate {
+  record Err(@NotNull MutableValue<Var> def, @Override @NotNull SourcePos sourcePos) implements Literate {
     @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
-      def.set(context.getUnqualified(def.value.name(), sourcePos));
+      def.set(context.getUnqualified(def.get().name(), sourcePos));
       // TODO: add to dependency?
       return ImmutableSeq.empty();
     }
 
     @Override public @NotNull Doc toDoc() {
-      if (def.value instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef userDef) {
+      if (def.get() instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef userDef) {
         var problems = userDef.problems;
         if (problems == null) return Doc.styled(Style.bold(), Doc.english("No error message."));
         return Doc.vcat(problems.map(problem -> problem.brief(DistillerOptions.informative())));

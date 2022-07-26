@@ -12,7 +12,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprOps;
@@ -192,10 +192,10 @@ public final class PatTycker {
       case Pattern.Bind bind -> {
         var v = bind.bind();
         exprTycker.localCtx.put(v, term);
-        bind.type().value = term;
+        bind.type().set(term);
         yield new Pat.Bind(bind.explicit(), v, term);
       }
-      case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
+      case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), MutableValue.create(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
       case Pattern.Number num -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
@@ -329,7 +329,7 @@ public final class PatTycker {
     Pat bind;
     var freshVar = new LocalVar(ref.name(), ref.definition());
     if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)
-      bind = new Pat.Meta(false, new Ref<>(), freshVar, dataCall);
+      bind = new Pat.Meta(false, MutableValue.create(), freshVar, dataCall);
     else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());

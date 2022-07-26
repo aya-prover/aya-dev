@@ -19,7 +19,7 @@ public final class Folding implements SyntaxDeclAction<@NotNull MutableList<Fold
   public static @NotNull List<FoldingRange> invoke(@NotNull LibrarySource source) {
     var ranges = MutableList.<FoldingRange>create();
     var folder = new Folding();
-    var program = source.program().value;
+    var program = source.program().get();
     if (program != null) program.forEach(decl -> folder.visit(decl, ranges));
     return ranges.asJava();
   }

@@ -39,7 +39,7 @@ public final class ProjectSymbol implements SyntaxDeclAction<@NotNull MutableLis
   }
 
   private static void collect(@NotNull LibrarySource src, @NotNull MutableList<Symbol> symbols) {
-    var program = src.program().value;
+    var program = src.program().get();
     if (program != null) program.forEach(decl -> INSTANCE.visit(decl, symbols));
   }
 

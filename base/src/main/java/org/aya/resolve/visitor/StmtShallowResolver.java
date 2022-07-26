@@ -102,7 +102,7 @@ public record StmtShallowResolver(
           defVar.opDeclRename.put(resolveInfo.thisModule().moduleName(), rename);
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) {
-            bind.context().value = ctx;
+            bind.context().set(ctx);
             resolveInfo.bindBlockRename().put(rename, bind);
           }
         });
@@ -193,7 +193,7 @@ public record StmtShallowResolver(
 
   private void resolveOpInfo(@NotNull Decl decl, @NotNull ModuleContext context) {
     var bind = decl.bindBlock();
-    if (bind != BindBlock.EMPTY) bind.context().value = context;
+    if (bind != BindBlock.EMPTY) bind.context().set(context);
     if (decl.opInfo() != null) {
       var ref = decl.ref();
       ref.opDecl = decl;

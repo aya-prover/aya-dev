@@ -5,7 +5,7 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.pat.Pat;
@@ -52,9 +52,9 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   }
 
   @ForLSP sealed interface WithTerm extends Expr {
-    @NotNull Ref<ExprTycker.Result> theCore();
+    @NotNull MutableValue<ExprTycker.Result> theCore();
     default @Nullable ExprTycker.Result core() {
-      return theCore().value;
+      return theCore().get();
     }
   }
 
@@ -85,10 +85,10 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @Override @NotNull SourcePos sourcePos,
     boolean explicit,
     @Nullable Expr filling,
-    Ref<ImmutableSeq<LocalVar>> accessibleLocal
+    MutableValue<ImmutableSeq<LocalVar>> accessibleLocal
   ) implements Expr {
     public HoleExpr(@NotNull SourcePos sourcePos, boolean explicit, @Nullable Expr filling) {
-      this(sourcePos, explicit, filling, new Ref<>());
+      this(sourcePos, explicit, filling, MutableValue.create());
     }
 
   }
@@ -171,10 +171,10 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record RefExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Var resolvedVar,
-    @NotNull Ref<ExprTycker.Result> theCore
+    @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public RefExpr(@NotNull SourcePos sourcePos, @NotNull Var resolvedVar) {
-      this(sourcePos, resolvedVar, new Ref<>());
+      this(sourcePos, resolvedVar, MutableValue.create());
     }
 
   }
@@ -207,13 +207,13 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull Expr tup,
     @NotNull Either<Integer, QualifiedID> ix,
     @Nullable Var resolvedIx,
-    @NotNull Ref<ExprTycker.Result> theCore
+    @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public ProjExpr(
       @NotNull SourcePos sourcePos, @NotNull Expr tup,
       @NotNull Either<Integer, QualifiedID> ix
     ) {
-      this(sourcePos, tup, ix, null, new Ref<>());
+      this(sourcePos, tup, ix, null, MutableValue.create());
     }
 
   }
@@ -231,7 +231,7 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull WithPos<String> name,
     @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
     @NotNull Expr body,
-    @ForLSP @NotNull Ref<Var> resolvedField
+    @ForLSP @NotNull MutableValue<Var> resolvedField
   ) {}
 
   /**

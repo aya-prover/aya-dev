@@ -35,7 +35,7 @@ public interface Resolver {
     @NotNull String name
   ) {
     var mod = resolveModule(owner, module);
-    return mod.mapNotNull(m -> m.tycked().value)
+    return mod.mapNotNull(m -> m.tycked().get())
       .map(defs -> defs.flatMap(Resolver::withChildren))
       .flatMap(defs -> defs.find(def -> def.ref().name().equals(name)));
   }
@@ -45,7 +45,7 @@ public interface Resolver {
     @NotNull LibrarySource source,
     @NotNull Position position
   ) {
-    var program = source.program().value;
+    var program = source.program().get();
     if (program == null) return SeqView.empty();
     var resolver = new PositionResolver();
     resolver.visitAll(program, new XY(position));
@@ -87,7 +87,7 @@ public interface Resolver {
   static @NotNull Option<LibrarySource> resolveModule(@NotNull LibraryOwner owner, @NotNull ImmutableSeq<String> module) {
     if (module.isEmpty()) return Option.none();
     var mod = owner.findModule(module);
-    return mod != null ? Option.of(mod) : resolveModule(owner, module.dropLast(1));
+    return mod != null ? Option.some(mod) : resolveModule(owner, module.dropLast(1));
   }
 
   /** resolve a top-level module by its qualified name */
@@ -128,7 +128,7 @@ public interface Resolver {
         case Expr.NewExpr neo -> neo.fields().forEach(field -> {
           field.bindings().forEach(binding ->
             check(pp, binding.data(), binding.sourcePos()));
-          var fieldRef = field.resolvedField().value;
+          var fieldRef = field.resolvedField().get();
           if (fieldRef != null) check(pp, fieldRef, field.name().sourcePos());
         });
         default -> {}
