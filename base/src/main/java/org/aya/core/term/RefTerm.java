@@ -29,7 +29,7 @@ public record RefTerm(@NotNull LocalVar var, int lift) implements Term {
     }
 
     public @NotNull Term inline() {
-      var sol = ref.solution().value;
+      var sol = ref.solution().get();
       return sol != null ? sol.toTerm() : this;
     }
   }

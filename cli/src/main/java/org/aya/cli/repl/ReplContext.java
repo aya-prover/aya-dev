@@ -6,7 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.Var;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ReplContext extends PhysicalModuleContext implements RepoLike<ReplContext> {
-  private final @NotNull Ref<@Nullable ReplContext> downstream = new Ref<>();
+  private final @NotNull MutableValue<@Nullable ReplContext> downstream = MutableValue.create();
 
   public ReplContext(@NotNull Context parent, @NotNull ImmutableSeq<String> name) {
     super(parent, name);
@@ -45,7 +45,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     return new ReplContext(this, this.moduleName().appended(extraName));
   }
 
-  @Override public @NotNull Ref<ReplContext> downstream() {
+  @Override public @NotNull MutableValue<ReplContext> downstream() {
     return downstream;
   }
 

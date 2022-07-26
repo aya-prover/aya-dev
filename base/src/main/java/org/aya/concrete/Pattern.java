@@ -4,7 +4,7 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
@@ -64,7 +64,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @NotNull SourcePos sourcePos,
     boolean explicit,
     @NotNull LocalVar bind,
-    @ForLSP @NotNull Ref<@Nullable Term> type
+    @ForLSP @NotNull MutableValue<@Nullable Term> type
   ) implements Pattern {
   }
 

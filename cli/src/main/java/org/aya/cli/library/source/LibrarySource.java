@@ -4,7 +4,7 @@ package org.aya.cli.library.source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.GenericDef;
 import org.aya.generic.Constants;
@@ -31,16 +31,17 @@ public record LibrarySource(
   @NotNull LibraryOwner owner,
   @NotNull Path file,
   @NotNull MutableList<LibrarySource> imports,
-  @NotNull Ref<ImmutableSeq<Stmt>> program,
-  @NotNull Ref<ImmutableSeq<GenericDef>> tycked,
-  @NotNull Ref<ResolveInfo> resolveInfo
+  @NotNull MutableValue<ImmutableSeq<Stmt>> program,
+  @NotNull MutableValue<ImmutableSeq<GenericDef>> tycked,
+  @NotNull MutableValue<ResolveInfo> resolveInfo
 ) {
   public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {
-    this(owner, FileUtil.canonicalize(file), MutableList.create(), new Ref<>(), new Ref<>(), new Ref<>());
+    this(owner, FileUtil.canonicalize(file), MutableList.create(), MutableValue.create(), MutableValue.create(), MutableValue.create());
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {
-    if (resolveInfo.value != null) return resolveInfo.value.thisModule().moduleName();
+    var info = resolveInfo.get();
+    if (info != null) return info.thisModule().moduleName();
     var display = displayPath();
     var displayNoExt = display.resolveSibling(display.getFileName().toString().replaceAll("\\.aya", ""));
     return IntStream.range(0, displayNoExt.getNameCount())

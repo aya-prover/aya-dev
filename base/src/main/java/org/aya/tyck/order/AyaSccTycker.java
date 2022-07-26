@@ -171,7 +171,7 @@ public record AyaSccTycker(
         var def = tycker.tyck(decl, reuse(decl));
         if (decl instanceof Decl.TopLevel topLevel) decideTyckResult(decl, topLevel, def);
       }
-      case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(newExprTycker()));
+      case Remark remark -> Option.ofNullable(remark.literate).forEach(l -> l.tyck(newExprTycker()));
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));

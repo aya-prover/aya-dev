@@ -218,7 +218,7 @@ public final class PrimDef extends TopLevelDef {
     }
 
     public @NotNull Option<PrimDef> getOption(@NotNull ID name) {
-      return Option.of(defs.get(name));
+      return Option.ofNullable(defs.get(name));
     }
 
     public boolean have(@NotNull ID name) {

@@ -3,7 +3,7 @@
 package org.aya.lsp.models;
 
 import kala.collection.SeqLike;
-import org.aya.lsp.utils.ForIDEA;
+import kala.value.TransientVar;
 import org.aya.lsp.utils.LspRange;
 import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Range;
@@ -30,10 +30,10 @@ public record HighlightResult(
   public record Symbol(
     @NotNull Range range,
     @NotNull HighlightResult.Kind kind,
-    @NotNull ForIDEA<SourcePos> sourcePos
+    @NotNull TransientVar<SourcePos> sourcePos
   ) {
     public Symbol(@NotNull SourcePos sourcePos, @NotNull HighlightResult.Kind kind) {
-      this(LspRange.toRange(sourcePos), kind, new ForIDEA<>(sourcePos));
+      this(LspRange.toRange(sourcePos), kind, new TransientVar<>(sourcePos));
     }
   }
 }

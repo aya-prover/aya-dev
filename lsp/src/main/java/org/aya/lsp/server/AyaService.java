@@ -4,6 +4,7 @@ package org.aya.lsp.server;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
@@ -117,7 +118,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return null;
   }
 
-  private @Nullable LibrarySource find(@NotNull Path moduleFile) {
+  public @Nullable LibrarySource find(@NotNull Path moduleFile) {
     for (var lib : libraries) {
       var found = find(lib, moduleFile);
       if (found != null) return found;
@@ -125,7 +126,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return null;
   }
 
-  private @Nullable LibrarySource find(@NotNull String uri) {
+  public @Nullable LibrarySource find(@NotNull String uri) {
     var path = toPath(uri);
     return find(path);
   }
@@ -137,16 +138,16 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public @NotNull List<HighlightResult> loadFile(@NotNull String uri) {
     Log.d("Loading vscode uri: %s", uri);
     var path = FileUtil.canonicalize(Path.of(URI.create(uri)));
-    return loadFile(path);
+    return loadFile(path).asJava();
   }
 
-  public @NotNull List<HighlightResult> loadFile(@NotNull Path path) {
+  public @NotNull ImmutableSeq<HighlightResult> loadFile(@NotNull Path path) {
     if (libraries.isEmpty()) registerLibrary(path.getParent());
     // find the owner library
     var source = find(path);
     if (source == null) {
       Log.w("Cannot find source");
-      return Collections.emptyList();
+      return ImmutableSeq.empty();
     }
     var owner = source.owner();
     Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
@@ -154,7 +155,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return loadLibrary(owner);
   }
 
-  public @NotNull List<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
+  public @NotNull ImmutableSeq<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
     // start compiling
     reporter.clear();
     var primFactory = primFactory(owner);
@@ -322,7 +323,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
-      var currentFile = Option.of(source.file());
+      var currentFile = Option.ofNullable(source.file());
       return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
         // only highlight references in the current file
         .filter(pos -> pos.file().underlying().equals(currentFile))
@@ -351,7 +352,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
+  @SuppressWarnings("deprecation") @Override
   public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
@@ -362,7 +363,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
+  @SuppressWarnings("deprecation") @Override
   public CompletableFuture<Either<List<? extends SymbolInformation>, List<? extends WorkspaceSymbol>>> symbol(WorkspaceSymbolParams params) {
     return CompletableFuture.supplyAsync(() -> Either.forRight(
       ProjectSymbol.invoke(libraries.view())

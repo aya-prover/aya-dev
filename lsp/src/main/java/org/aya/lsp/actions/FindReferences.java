@@ -58,7 +58,7 @@ public interface FindReferences {
 
   private static void resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner, @NotNull Var var) {
     owner.librarySources().forEach(src -> {
-      var program = src.program().value;
+      var program = src.program().get();
       if (program != null) resolver.visitAll(program, var);
     });
     owner.libraryDeps().forEach(dep -> resolve(resolver, dep, var));

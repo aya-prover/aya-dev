@@ -4,7 +4,7 @@ package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.cli.utils.RepoLike;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplShapeFactory extends AyaShape.Factory implements RepoLike<ReplShapeFactory> {
-  private final @NotNull Ref<@Nullable ReplShapeFactory> downstream = new Ref<>();
+  private final @NotNull MutableValue<@Nullable ReplShapeFactory> downstream = MutableValue.create();
   private final @Nullable ReplShapeFactory parent;
 
   public ReplShapeFactory(@Nullable ReplShapeFactory parent) {
@@ -32,7 +32,7 @@ public class ReplShapeFactory extends AyaShape.Factory implements RepoLike<ReplS
     return parent == null ? Option.none() : parent.find(def);
   }
 
-  @Override public @NotNull Ref<ReplShapeFactory> downstream() {
+  @Override public @NotNull MutableValue<ReplShapeFactory> downstream() {
     return downstream;
   }
 

@@ -319,8 +319,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
   public Doc visitBindBlock(@NotNull BindBlock bindBlock) {
     if (bindBlock == BindBlock.EMPTY) return Doc.empty();
-    var loosers = bindBlock.resolvedLoosers().value;
-    var tighters = bindBlock.resolvedTighters().value;
+    var loosers = bindBlock.resolvedLoosers().get();
+    var tighters = bindBlock.resolvedTighters().get();
     if (loosers.isEmpty() && tighters.isEmpty()) return Doc.empty();
 
     if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(

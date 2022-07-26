@@ -67,17 +67,18 @@ record LibraryModuleLoader(
     var tryCore = loadCompiledCore(mod, sourcePath, corePath, recurseLoader);
     if (tryCore != null) {
       // the core file was found and up-to-date.
-      return source.resolveInfo().value = tryCore;
+      source.resolveInfo().set(tryCore);
+      return tryCore;
     }
 
     // No compiled core is found, or source file is modified, compile it from source.
-    var program = source.program().value;
+    var program = source.program().get();
     assert program != null;
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
-    source.resolveInfo().value = resolveInfo;
+    source.resolveInfo().set(resolveInfo);
     return tyckModule(null, resolveInfo, (moduleResolve, defs) -> {
-      source.tycked().value = defs;
+      source.tycked().set(defs);
       if (reporter().noError()) saveCompiledCore(source, moduleResolve, defs);
     });
   }

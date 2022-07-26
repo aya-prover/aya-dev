@@ -5,7 +5,7 @@ package org.aya.core.pat;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.Matching;
@@ -92,7 +92,7 @@ public sealed interface Pat extends AyaDocile {
 
   record Meta(
     boolean explicit,
-    @NotNull Ref<Pat> solution,
+    @NotNull MutableValue<Pat> solution,
     @NotNull LocalVar fakeBind,
     @NotNull Term type
   ) implements Pat {
@@ -111,8 +111,12 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat inline() {
-      var value = solution.value;
-      if (value == null) return solution.value = new Bind(explicit, fakeBind, type);
+      var value = solution.get();
+      if (value == null) {
+        var bind = new Bind(explicit, fakeBind, type);
+        solution.set(bind);
+        return bind;
+      }
       else return value;
     }
 

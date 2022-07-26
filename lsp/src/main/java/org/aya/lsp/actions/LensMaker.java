@@ -21,7 +21,7 @@ public record LensMaker(@NotNull SeqView<LibraryOwner> libraries) implements Syn
   public static @NotNull List<CodeLens> invoke(@NotNull LibrarySource source, @NotNull SeqView<LibraryOwner> libraries) {
     var lens = MutableList.<CodeLens>create();
     var maker = new LensMaker(libraries);
-    var program = source.program().value;
+    var program = source.program().get();
     if (program != null) program.forEach(decl -> maker.visit(decl, lens));
     return lens.asJava();
   }

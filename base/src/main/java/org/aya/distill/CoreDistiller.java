@@ -112,7 +112,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case RefTerm.MetaPat metaPat -> {
         var ref = metaPat.ref();
-        if (ref.solution().value == null) yield varDoc(ref.fakeBind());
+        if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
         yield pat(ref, outer);
       }
       case ErrorTerm term -> {
@@ -189,7 +189,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
   public @NotNull Doc pat(@NotNull Pat pat, Outer outer) {
     return switch (pat) {
       case Pat.Meta meta -> {
-        var sol = meta.solution().value;
+        var sol = meta.solution().get();
         yield sol != null ? pat(sol, outer) : Doc.bracedUnless(linkDef(meta.fakeBind()), meta.explicit());
       }
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());

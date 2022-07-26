@@ -9,7 +9,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
@@ -62,15 +62,15 @@ public record PatClassifier(
     var classification = classifier.classifySub(telescope.view(), clauses.view()
       .mapIndexed((index, clause) -> new MCT.SubPats<>(clause.patterns().view(), index))
       .toImmutableSeq(), coverage, 5);
-    var errRef = new Ref<MCT.Error<Term, PatErr>>();
+    var errRef = MutableValue.<MCT.Error<Term, PatErr>>create();
     classification.forEach(pats -> {
-      if (errRef.value == null && pats instanceof MCT.Error<Term, PatErr> error) {
+      if (errRef.get() == null && pats instanceof MCT.Error<Term, PatErr> error) {
         reporter.report(new ClausesProblem.MissingCase(pos, error.errorMessage()));
-        errRef.value = error;
+        errRef.set(error);
       }
     });
     // Return empty case tree on error
-    return errRef.value != null ? errRef.value : classification;
+    return errRef.get() != null ? errRef.get() : classification;
   }
 
   public static int[] firstMatchDomination(
