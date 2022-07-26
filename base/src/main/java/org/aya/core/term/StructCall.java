@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.Map;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
@@ -44,5 +45,11 @@ public record StructCall(
 
   public @NotNull StructCall apply(@NotNull FieldDef field, @NotNull Arg<Term> arg) {
     return new StructCall(ref, ulift, params.appended(Tuple2.of(field.rootRef(), arg)));
+  }
+
+  public @NotNull StructCall apply(@NotNull ImmutableMap<DefVar<FieldDef, ClassDecl.StructDecl.StructField>, Term> map) {
+    final StructCall[] result = {this};
+    map.forEach((key, value) -> result[0] = result[0].apply(key.core, new Arg<>(value, true)));
+    return result[0];
   }
 }

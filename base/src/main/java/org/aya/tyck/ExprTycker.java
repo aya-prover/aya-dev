@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
@@ -25,6 +26,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
@@ -101,19 +103,15 @@ public final class ExprTycker extends Tycker {
         yield new Result(result.wellTyped.lift(levels), result.type.lift(levels));
       }
       case Expr.NewExpr newExpr -> {
-        throw new UnsupportedOperationException("TODO");
-        /*
         var structExpr = newExpr.struct();
         var struct = instImplicits(synthesize(structExpr).wellTyped, structExpr.sourcePos());
-        if (!(struct instanceof CallTerm.Struct structCall))
+        if (!(struct instanceof StructCall structCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, newExpr, struct));
         var structRef = structCall.ref();
 
-        var subst = new Subst(MutableMap.from(
-          Def.defTele(structRef).view().zip(structCall.args())
-            .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
+        var subst = new Subst(MutableMap.create());
 
-        var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Term>>create();
+        var fields = MutableList.<Tuple2<DefVar<FieldDef, ClassDecl.StructDecl.StructField>, Term>>create();
         var missing = MutableList.<Var>create();
         var conFields = newExpr.fields();
 
@@ -152,8 +150,7 @@ public final class ExprTycker extends Tycker {
           yield fail(newExpr, structCall, new FieldProblem.MissingFieldError(newExpr.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
           yield fail(newExpr, structCall, new FieldProblem.NoSuchFieldError(newExpr.sourcePos(), conFields.map(f -> f.name().data())));
-        yield new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
-        */
+        yield new Result(new IntroTerm.New(structCall.apply(ImmutableMap.from(fields))), structCall);
       }
       case Expr.ProjExpr proj -> {
         var struct = proj.tup();
