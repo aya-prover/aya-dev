@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.library.source.LibraryOwner;
@@ -18,13 +19,11 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<HighlightResult.Symbol>> {
-  public static @NotNull List<HighlightResult> invoke(@NotNull LibraryOwner owner) {
+  public static @NotNull ImmutableSeq<HighlightResult> invoke(@NotNull LibraryOwner owner) {
     var symbols = MutableList.<HighlightResult>create();
     highlight(owner, symbols);
-    return symbols.asJava();
+    return symbols.toImmutableSeq();
   }
 
   private static void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {
