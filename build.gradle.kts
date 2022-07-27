@@ -1,7 +1,7 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.aya.gradle.StripPreview
+import org.aya.gradle.BuildUtil
 import java.util.*
 
 plugins {
@@ -81,7 +81,7 @@ subprojects {
       tree.include("**/*.class")
       tree.exclude("module-info.class")
       val root = project.buildDir.toPath().resolve("classes/java/main")
-      tree.forEach { StripPreview.stripPreview(root, it.toPath(), true) }
+      tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
     }
   }
 
@@ -172,6 +172,8 @@ subprojects {
           dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
           dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
           dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
+          dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
+          dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
         }
         scm {
           connection.set("scm:git:$githubUrl")
