@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import java.util.*
 
@@ -46,6 +46,7 @@ dependencies {
   val deps = Properties()
   deps.load(rootDir.resolve("gradle/deps.properties").reader())
   antlr("org.antlr", "antlr4", deps.getProperty("version.antlr"))
+  api("org.aya-prover.upstream", "build-util", deps.getProperty("version.build-util"))
 
   // The following is required for
   // - extracting common parts inside `graalvmNative` block

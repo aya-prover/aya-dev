@@ -1,7 +1,7 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.aya.gradle.StripPreview
+import org.aya.gradle.BuildUtil
 import java.util.*
 
 plugins {
@@ -81,7 +81,7 @@ subprojects {
       tree.include("**/*.class")
       tree.exclude("module-info.class")
       val root = project.buildDir.toPath().resolve("classes/java/main")
-      tree.forEach { StripPreview.stripPreview(root, it.toPath(), true) }
+      tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
     }
   }
 
