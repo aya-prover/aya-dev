@@ -50,7 +50,9 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
   }
 
   @Override public void connect(@NotNull LanguageClient client) {
-    Log.init(((AyaLanguageClient) client));
+    var c = (AyaLanguageClient) client;
+    Log.init(c);
+    service.connect(c);
   }
 
   @Override public @NotNull CompletableFuture<InitializeResult> initialize(InitializeParams params) {

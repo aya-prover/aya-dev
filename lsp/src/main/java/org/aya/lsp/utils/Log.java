@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.utils;
 
@@ -6,7 +6,6 @@ import org.aya.generic.util.InternalException;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.intellij.lang.annotations.PrintFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +19,7 @@ import java.nio.file.StandardOpenOption;
 
 public class Log {
   private static final @NotNull Path LOG_FILE = Paths.get("aya-last-startup.log").toAbsolutePath();
-  private static @Nullable AyaLanguageClient CLIENT = null;
+  private static volatile @Nullable AyaLanguageClient CLIENT = null;
 
   public static void init(@NotNull AyaLanguageClient client) {
     if (CLIENT == null) synchronized (Log.class) {
@@ -29,10 +28,6 @@ public class Log {
       else throw new InternalException("double initialization occurred");
     }
     i("Log file: %s", LOG_FILE);
-  }
-
-  public static void publishProblems(PublishDiagnosticsParams params) {
-    if (CLIENT != null) CLIENT.publishDiagnostics(params);
   }
 
   public static void i(@NotNull @PrintFormat String fmt, Object... args) {
@@ -54,7 +49,8 @@ public class Log {
   public static void log(@NotNull MessageType type, @NotNull String fmt, Object... args) {
     var format = fmt.formatted(args);
     logConsole(type, format);
-    if (CLIENT != null) CLIENT.logMessage(new MessageParams(type, format));
+    var client = CLIENT;
+    if (client != null) client.logMessage(new MessageParams(type, format));
   }
 
   public static void logConsole(@NotNull MessageType type, @NotNull String content) {

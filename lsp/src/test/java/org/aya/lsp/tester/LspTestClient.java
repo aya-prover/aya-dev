@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.tester;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.generic.Constants;
-import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
@@ -60,9 +59,6 @@ public final class LspTestClient implements AyaLanguageClient {
         c.checker().check(advisor, elapsed);
       }
     }
-  }
-
-  @Override public void publishSyntaxHighlight(HighlightResult highlight) {
   }
 
   @Override public void telemetryEvent(Object object) {
