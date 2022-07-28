@@ -11,6 +11,7 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.library.incremental.DelegateCompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
@@ -48,7 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,11 +63,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
    * This is shared per library.
    */
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
-  private @NotNull Set<Path> lastErrorReportedFiles = Collections.emptySet();
   private final @NotNull CompilerAdvisor advisor;
 
   public AyaService(@NotNull CompilerAdvisor advisor) {
-    this.advisor = advisor;
+    this.advisor = new CallbackAdvisor(this, advisor);
   }
 
   public @NotNull SeqView<LibraryOwner> libraries() {
@@ -156,8 +155,6 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
-    lastErrorReportedFiles.forEach(f ->
-      Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d("%s", p.describe(options).debugRender()))
@@ -181,7 +178,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
         problems
       ));
     }
-    lastErrorReportedFiles = diags.keySet();
+  }
+
+  private void clearErrors(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+    affected.forEach(a -> a.forEach(f -> Log.publishProblems(new PublishDiagnosticsParams(
+      f.file().toUri().toString(), Collections.emptyList()))));
   }
 
   private @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {
@@ -389,6 +390,21 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
     @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {
       return describe(DistillerOptions.pretty());
+    }
+  }
+
+  private static final class CallbackAdvisor extends DelegateCompilerAdvisor {
+    private final @NotNull AyaService service;
+
+    public CallbackAdvisor(@NotNull AyaService service, @NotNull CompilerAdvisor delegate) {
+      super(delegate);
+      this.service = service;
+    }
+
+    @Override
+    public void notifyIncrementalJob(@NotNull ImmutableSeq<LibrarySource> modified, @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+      super.notifyIncrementalJob(modified, affected);
+      service.clearErrors(affected);
     }
   }
 }
