@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
@@ -37,15 +37,20 @@ public interface CompilerAdvisor {
   void updateLastModified(@NotNull LibrarySource source);
 
   void prepareLibraryOutput(@NotNull LibraryOwner owner) throws IOException;
-  void prepareModuleOutput(@NotNull LibrarySource source) throws IOException;
+  void clearLibraryOutput(@NotNull LibraryOwner owner) throws IOException;
+  void clearModuleOutput(@NotNull LibrarySource source) throws IOException;
 
   /**
    * Called when all modified sources are detected
    *
-   * @param SCCs SCC of modified sources.
+   * @param modified User directly modified source files.
+   * @param affected SCC of modified sources.
    * @apiNote the SCC is ordered, but DO NOT RELY on it.
    */
-  default void notifyIncrementalJob(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> SCCs) {
+  default void notifyIncrementalJob(
+    @NotNull ImmutableSeq<LibrarySource> modified,
+    @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected
+  ) {
   }
 
   /**

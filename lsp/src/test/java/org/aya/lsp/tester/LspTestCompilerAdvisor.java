@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.tester;
 
@@ -25,8 +25,9 @@ public class LspTestCompilerAdvisor extends InMemoryCompilerAdvisor {
     newlyCompiled.clear();
   }
 
-  @Override public void notifyIncrementalJob(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> SCCs) {
-    this.lastJob = SCCs;
+  @Override
+  public void notifyIncrementalJob(@NotNull ImmutableSeq<LibrarySource> modified, @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+    this.lastJob = affected;
   }
 
   @Override

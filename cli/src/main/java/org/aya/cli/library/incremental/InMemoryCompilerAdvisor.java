@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
@@ -49,7 +49,10 @@ public class InMemoryCompilerAdvisor implements CompilerAdvisor {
   @Override public void prepareLibraryOutput(@NotNull LibraryOwner owner) {
   }
 
-  @Override public void prepareModuleOutput(@NotNull LibrarySource source) {
+  @Override public void clearLibraryOutput(@NotNull LibraryOwner owner) {
+  }
+
+  @Override public void clearModuleOutput(@NotNull LibrarySource source) {
     // TODO: what if module name clashes?
     compiledCore.remove(source.moduleName());
   }

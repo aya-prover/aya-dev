@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
@@ -46,7 +46,11 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     Files.createDirectories(owner.outDir());
   }
 
-  @Override public void prepareModuleOutput(@NotNull LibrarySource source) throws IOException {
+  @Override public void clearLibraryOutput(@NotNull LibraryOwner owner) throws IOException {
+    FileUtil.deleteRecursively(owner.outDir());
+  }
+
+  @Override public void clearModuleOutput(@NotNull LibrarySource source) throws IOException {
     Files.deleteIfExists(source.compiledCorePath());
   }
 
