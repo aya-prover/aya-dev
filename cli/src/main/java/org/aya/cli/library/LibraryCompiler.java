@@ -108,11 +108,7 @@ public class LibraryCompiler {
    * The graph is used to generate incremental build list according to files'
    * last modified time.
    */
-  private void resolveImportsIfNeeded(
-    @NotNull MutableSet<LibrarySource> book,
-    @NotNull MutableGraph<LibrarySource> depGraph,
-    @NotNull LibrarySource source
-  ) throws IOException {
+  private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException {
     if (parseIfNeeded(source)) return; // already resolved
     var finder = new ImportResolver((mod, sourcePos) -> {
       var recurse = owner.findModule(mod);
@@ -120,26 +116,18 @@ public class LibraryCompiler {
         reporter.report(new ModNotFoundError(mod, sourcePos));
         throw new Context.ResolvingInterruptedException();
       }
-      // TODO: do not resolve source files from dependencies
-      //  because they are usually unmodifiable.
-      resolveImportsIfNeeded(book, depGraph, recurse);
       return recurse;
     }, source);
     finder.resolveStmt(source.program().get());
-    depGraph.sucMut(source).appendAll(source.imports());
-    book.add(source);
   }
 
   private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException {
     var depGraph = MutableGraph.<LibrarySource>create();
-    var book = MutableSet.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
     var startTime = System.currentTimeMillis();
     owner.librarySources().forEachChecked(src -> {
-      resolveImportsIfNeeded(book, depGraph, src);
-      if (!book.contains(src)) {
-        depGraph.sucMut(src).appendAll(src.imports());
-      }
+      resolveImportsIfNeeded(src);
+      depGraph.sucMut(src).appendAll(src.imports());
     });
     reporter.reportNest("Done in " + StringUtil.timeToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
