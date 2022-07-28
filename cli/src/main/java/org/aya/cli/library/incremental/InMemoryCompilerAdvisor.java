@@ -50,6 +50,10 @@ public class InMemoryCompilerAdvisor implements CompilerAdvisor {
   }
 
   @Override public void clearLibraryOutput(@NotNull LibraryOwner owner) {
+    owner.librarySources().forEach(src -> {
+      coreTimestamp.remove(timestampKey(src));
+      clearModuleOutput(src);
+    });
   }
 
   @Override public void clearModuleOutput(@NotNull LibrarySource source) {

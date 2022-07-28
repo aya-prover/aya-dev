@@ -156,11 +156,6 @@ public class LibraryCompiler {
     return AyaCompiler.catching(reporter, flags, this::make);
   }
 
-  private void clearAll() throws IOException {
-    owner.librarySources().forEach(this::clearModified);
-    advisor.clearLibraryOutput(owner);
-  }
-
   /**
    * Incrementally compiles a library without handling compilation errors.
    *
@@ -179,7 +174,10 @@ public class LibraryCompiler {
 
     reporter.reportString("Compiling " + library.name());
     var startTime = System.currentTimeMillis();
-    if (anyDepChanged || flags.remake()) clearAll();
+    if (anyDepChanged || flags.remake()) {
+      owner.librarySources().forEach(this::clearModified);
+      advisor.clearLibraryOutput(owner);
+    }
 
     var srcRoot = library.librarySrcRoot();
     owner.addModulePath(srcRoot);

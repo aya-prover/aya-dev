@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
@@ -135,27 +135,12 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return FileUtil.canonicalize(Path.of(URI.create(uri)));
   }
 
-  public @NotNull List<HighlightResult> loadFile(@NotNull String uri) {
-    Log.d("Loading vscode uri: %s", uri);
-    var path = FileUtil.canonicalize(Path.of(URI.create(uri)));
-    return loadFile(path).asJava();
-  }
-
-  public @NotNull ImmutableSeq<HighlightResult> loadFile(@NotNull Path path) {
-    if (libraries.isEmpty()) registerLibrary(path.getParent());
-    // find the owner library
-    var source = find(path);
-    if (source == null) {
-      Log.w("Cannot find source");
-      return ImmutableSeq.empty();
-    }
-    var owner = source.owner();
-    Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
-      owner.underlyingLibrary().name(), owner.underlyingLibrary().libraryRoot());
-    return loadLibrary(owner);
+  public @NotNull ImmutableSeq<HighlightResult> reload() {
+    return libraries().flatMap(this::loadLibrary).toImmutableSeq();
   }
 
   public @NotNull ImmutableSeq<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
+    Log.i("Loading library %s", owner.underlyingLibrary().name());
     // start compiling
     reporter.clear();
     var primFactory = primFactory(owner);
