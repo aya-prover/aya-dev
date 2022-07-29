@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -298,7 +298,8 @@ public record PatClassifier(
               .map(ImmutableSeq::from)
               .<MCT<Term, PatErr>>map(subPats -> new MCT.Leaf<>(subPats.map(MCT.SubPats::ix).concat(bindsIx)))
               .collect(ImmutableSeq.factory());
-            classified = new MCT.Node<>(dataCall, lits);
+            MCT<Term, PatErr> bindsLeaf = new MCT.Leaf<>(bindsIx);
+            classified = new MCT.Node<>(dataCall, lits.appended(bindsLeaf));
           } else {
             classified = classifySub(conTele2.view(), matches, coverage, fuel);
           }
