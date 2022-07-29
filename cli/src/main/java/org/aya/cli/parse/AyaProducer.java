@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -607,7 +607,7 @@ public record AyaProducer(
     );
     return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
-        nameOrInfix._1.sourcePos(),
+        sourcePosOf(ctx.OPEN()),
         openAccessibility,
         new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
         Command.Open.UseHide.EMPTY,
@@ -727,7 +727,7 @@ public record AyaProducer(
     );
     return Tuple2.of(struct, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
-        nameOrInfix._1.sourcePos(),
+        sourcePosOf(ctx.OPEN()),
         openAccessibility,
         new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
         Command.Open.UseHide.EMPTY,
