@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -24,7 +24,6 @@ import java.util.stream.IntStream;
  * @param program     initialized after parse
  * @param resolveInfo initialized after resolve
  * @param tycked      initialized after tyck
- * @apiNote DO NOT USE this class as Map key. Use {@link #file()} instead.
  */
 @Debug.Renderer(text = "file")
 public record LibrarySource(

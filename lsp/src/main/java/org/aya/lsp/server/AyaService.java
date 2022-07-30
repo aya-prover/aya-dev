@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
-import kala.collection.Seq;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
@@ -11,6 +11,7 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.library.incremental.DelegateCompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
@@ -48,7 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,11 +63,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
    * This is shared per library.
    */
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
-  private @NotNull Set<Path> lastErrorReportedFiles = Collections.emptySet();
   private final @NotNull CompilerAdvisor advisor;
+  private @Nullable AyaLanguageClient client;
 
   public AyaService(@NotNull CompilerAdvisor advisor) {
-    this.advisor = advisor;
+    this.advisor = new CallbackAdvisor(this, advisor);
   }
 
   public @NotNull SeqView<LibraryOwner> libraries() {
@@ -99,6 +99,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   private void mockLibraries(@NotNull Path path) {
     libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1)
       .map(WsLibrary::mock));
+  }
+
+  public void connect(@NotNull AyaLanguageClient client) {
+    this.client = client;
   }
 
   private @Nullable LibraryOwner findOwner(@Nullable Path path) {
@@ -135,27 +139,12 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return FileUtil.canonicalize(Path.of(URI.create(uri)));
   }
 
-  public @NotNull List<HighlightResult> loadFile(@NotNull String uri) {
-    Log.d("Loading vscode uri: %s", uri);
-    var path = FileUtil.canonicalize(Path.of(URI.create(uri)));
-    return loadFile(path).asJava();
-  }
-
-  public @NotNull ImmutableSeq<HighlightResult> loadFile(@NotNull Path path) {
-    if (libraries.isEmpty()) registerLibrary(path.getParent());
-    // find the owner library
-    var source = find(path);
-    if (source == null) {
-      Log.w("Cannot find source");
-      return ImmutableSeq.empty();
-    }
-    var owner = source.owner();
-    Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
-      owner.underlyingLibrary().name(), owner.underlyingLibrary().libraryRoot());
-    return loadLibrary(owner);
+  public @NotNull ImmutableSeq<HighlightResult> reload() {
+    return libraries().flatMap(this::loadLibrary).toImmutableSeq();
   }
 
   public @NotNull ImmutableSeq<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
+    Log.i("Loading library %s", owner.underlyingLibrary().name());
     // start compiling
     reporter.clear();
     var primFactory = primFactory(owner);
@@ -166,13 +155,12 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       e.printStackTrace(new PrintWriter(s));
       Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
     }
-    reportErrors(reporter, DistillerOptions.pretty());
+    publishProblems(reporter, DistillerOptions.pretty());
     return SyntaxHighlight.invoke(owner);
   }
 
-  public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
-    lastErrorReportedFiles.forEach(f ->
-      Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
+  public void publishProblems(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
+    if (client == null) return;
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d("%s", p.describe(options).debugRender()))
@@ -180,44 +168,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
         t -> t._1,
-        Collectors.mapping(t -> t._2, Seq.factory())
+        Collectors.mapping(t -> t._2, ImmutableSeq.factory())
       ));
-
-    for (var diag : diags.entrySet()) {
-      var filePath = diag.getKey();
-      Log.d("Found %d issues in %s", diag.getValue().size(), filePath);
-      var problems = diag.getValue()
-        .collect(Collectors.groupingBy(Problem::sourcePos, Seq.factory()))
-        .entrySet().stream()
-        .map(kv -> toDiagnostic(kv.getKey(), kv.getValue(), options))
-        .collect(Collectors.toList());
-      Log.publishProblems(new PublishDiagnosticsParams(
-        filePath.toUri().toString(),
-        problems
-      ));
-    }
-    lastErrorReportedFiles = diags.keySet();
+    client.publishAyaProblems(ImmutableMap.from(diags), options);
   }
 
-  private @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {
-    var msgBuilder = new StringBuilder();
-    var severity = DiagnosticSeverity.Hint;
-    for (var p : problems) {
-      msgBuilder.append(p.brief(options).debugRender()).append('\n');
-      var ps = severityOf(p);
-      if (ps.getValue() < severity.getValue()) severity = ps;
-    }
-    return new Diagnostic(LspRange.toRange(sourcePos),
-      msgBuilder.toString(), severity, "Aya");
-  }
-
-  private DiagnosticSeverity severityOf(@NotNull Problem problem) {
-    return switch (problem.level()) {
-      case WARN -> DiagnosticSeverity.Warning;
-      case ERROR -> DiagnosticSeverity.Error;
-      case INFO -> DiagnosticSeverity.Information;
-      case GOAL -> DiagnosticSeverity.Hint;
-    };
+  private void clearProblems(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+    if (client == null) return;
+    var files = affected.flatMap(i -> i.map(LibrarySource::file));
+    client.clearAyaProblems(files);
   }
 
   @Override public void didChangeWatchedFiles(@NotNull DidChangeWatchedFilesParams params) {
@@ -404,6 +363,21 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
     @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {
       return describe(DistillerOptions.pretty());
+    }
+  }
+
+  private static final class CallbackAdvisor extends DelegateCompilerAdvisor {
+    private final @NotNull AyaService service;
+
+    public CallbackAdvisor(@NotNull AyaService service, @NotNull CompilerAdvisor delegate) {
+      super(delegate);
+      this.service = service;
+    }
+
+    @Override
+    public void notifyIncrementalJob(@NotNull ImmutableSeq<LibrarySource> modified, @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+      super.notifyIncrementalJob(modified, affected);
+      service.clearProblems(affected);
     }
   }
 }

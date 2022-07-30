@@ -1,7 +1,7 @@
-In file $FILE:1:25 ->
+In file $FILE:1:15 ->
 
   1 | counterexample open data Nat | suc Nat | zero
-                               ^-^
+                     ^--^
 
 Warning: Ignoring the following statement, which is not a counterexample:
          open Nat hiding ()

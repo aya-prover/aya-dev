@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
@@ -34,8 +34,7 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
   @JsonRequest("aya/load")
   @SuppressWarnings("unused")
   public @NotNull CompletableFuture<@NotNull List<HighlightResult>> load(Object uri) {
-    var uriString = (String) uri; // see JavaDoc of JsonRequest
-    return CompletableFuture.supplyAsync(() -> service.loadFile(uriString));
+    return CompletableFuture.supplyAsync(() -> service.reload().asJava());
   }
 
   @JsonRequest("aya/computeType")
@@ -51,7 +50,9 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
   }
 
   @Override public void connect(@NotNull LanguageClient client) {
-    Log.init(((AyaLanguageClient) client));
+    var c = (AyaLanguageClient) client;
+    Log.init(c);
+    service.connect(c);
   }
 
   @Override public @NotNull CompletableFuture<InitializeResult> initialize(InitializeParams params) {
