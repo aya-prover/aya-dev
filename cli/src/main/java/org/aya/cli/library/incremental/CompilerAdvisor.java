@@ -13,6 +13,7 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.reporter.Reporter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +76,7 @@ public interface CompilerAdvisor {
     @NotNull ImmutableSeq<GenericDef> defs
   ) throws IOException;
 
+  @ApiStatus.NonExtendable
   default @Nullable ResolveInfo loadCompiledCore(
     @NotNull SerTerm.DeState deState,
     @NotNull Reporter reporter,
@@ -91,6 +93,7 @@ public interface CompilerAdvisor {
     }
   }
 
+  @ApiStatus.NonExtendable
   default void saveCompiledCore(
     @NotNull Serializer.State serState,
     @NotNull LibrarySource file,

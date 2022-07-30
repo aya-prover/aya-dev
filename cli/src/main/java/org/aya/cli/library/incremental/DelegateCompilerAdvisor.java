@@ -58,14 +58,4 @@ public class DelegateCompilerAdvisor implements CompilerAdvisor {
   public void doSaveCompiledCore(Serializer.@NotNull State serState, @NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs) throws IOException {
     delegate.doSaveCompiledCore(serState, file, resolveInfo, defs);
   }
-
-  @Override
-  public @Nullable ResolveInfo loadCompiledCore(SerTerm.@NotNull DeState deState, @NotNull Reporter reporter, @NotNull ImmutableSeq<String> mod, @Nullable Path sourcePath, @Nullable Path corePath, @NotNull ModuleLoader recurseLoader) {
-    return delegate.loadCompiledCore(deState, reporter, mod, sourcePath, corePath, recurseLoader);
-  }
-
-  @Override
-  public void saveCompiledCore(Serializer.@NotNull State serState, @NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs) {
-    delegate.saveCompiledCore(serState, file, resolveInfo, defs);
-  }
 }
