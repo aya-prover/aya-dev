@@ -114,6 +114,7 @@ public record StmtTycker(
           if (!(struct instanceof StructCall call)) throw new UnsupportedOperationException("TODO");
           return call;
         });
+        decl.calculateFieldMap(parents);
         var body = decl.fields.map(field -> (FieldDef) traced(field, tycker, this::tyck));
         yield new StructDef(decl.ref, decl.ulift, body);
       }
