@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -97,7 +97,7 @@ public record ExprResolver(
         hole.accessibleLocal().set(ctx.collect(MutableList.create()).toImmutableSeq());
         var h = hole.filling() != null ? resolve(hole.filling(), ctx) : null;
         if (h == hole.filling()) yield hole;
-        yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h);
+        yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h, hole.accessibleLocal());
       }
       case Expr.UnresolvedExpr unresolved -> {
         var sourcePos = unresolved.sourcePos();
