@@ -7,7 +7,6 @@ In file $FILE:9:17 ->
 
 Error: Unsolved meta A'
        in `Option A'`
-       in `Option A'`
 
 In file $FILE:9:17 ->
 

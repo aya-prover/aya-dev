@@ -64,21 +64,6 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
   default Term act(Term term) {
     return post(descent(this::act, pre(term)));
   }
-  default Term.Param act(Term.Param param) {
-    var type = act(param.type());
-    if (type == param.type()) return param;
-    return new Term.Param(param, type);
-  }
-  default Arg<Term> act(Arg<Term> arg) {
-    var term = act(arg.term());
-    if (term == arg.term()) return arg;
-    return new Arg<>(term, arg.explicit());
-  }
-  default CallTerm.ConHead act(CallTerm.ConHead head) {
-    var args = head.dataArgs().map(this::act);
-    if (args.sameElements(head.dataArgs(), true)) return head;
-    return new CallTerm.ConHead(head.dataRef(), head.ref(), head.ulift(), args);
-  }
 
   private Term descent(Function<Term, Term> f, Term term) {
     return switch (term) {
@@ -104,7 +89,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
         yield new IntroTerm.Lambda(param, body);
       }
       case IntroTerm.Tuple tuple -> {
-        var items = tuple.items().map(item -> descent(f, item));
+        var items = tuple.items().map(f);
         if (items.sameElements(tuple.items(), true)) yield tuple;
         yield new IntroTerm.Tuple(items);
       }

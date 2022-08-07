@@ -7,174 +7,165 @@ import kala.collection.Set;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import kala.tuple.Unit;
+import kala.control.Option;
+import kala.tuple.Tuple;
 import org.aya.core.Matching;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.PatMatcher;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ice1000
- */
-public interface Expander<P> extends TermFixpoint<P> {
-  @Nullable TyckState state();
-  @Contract(pure = true) static @NotNull Subst buildSubst(
-    @NotNull SeqLike<Term.@NotNull Param> self,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
-  ) {
-    var subst = new Subst(MutableMap.create());
-    self.view().zip(args).forEach(t -> subst.add(t._1.ref(), t._2.term()));
-    return subst;
+public interface Expander extends EndoFunctor {
+  TyckState state();
+
+  static Subst buildSubst(SeqLike<Term.Param> self, SeqLike<Arg<Term>> args) {
+    var entries = self.view().zip(args).map(t -> Tuple.of(t._1.ref(), t._2.term()));
+    return new Subst(MutableMap.from(entries));
   }
 
-  @Override @NotNull default Term visitConCall(CallTerm.@NotNull Con conCall, P p) {
-    var def = conCall.ref().core;
-    // Not yet type checked
-    if (def == null) return conCall;
-    var args = conCall.args().map(arg -> visitArg(arg, p));
-    var ulift = ulift() + conCall.ulift();
-    var dropped = args.drop(conCall.head().dataArgs().size());
-    var volynskaya = tryUnfoldClauses(p, true, dropped, ulift, def.clauses);
-    return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped);
+  @Override default Term post(Term term) {
+    return switch (term) {
+      case CallTerm.Con con -> {
+        var def = con.ref().core;
+        if (def == null) yield con;
+        yield tryUnfoldClauses(true, con.conArgs(), con.ulift(), def.clauses)
+          .map(un -> act(un.data())).getOrDefault(con);
+      }
+      case CallTerm.Fn fn -> {
+        var def = fn.ref().core;
+        if (def == null || def.modifiers.contains(Modifier.Opaque)) yield fn;
+        yield def.body.fold(
+          lamBody -> act(lamBody.rename().subst(buildSubst(def.telescope(), fn.args())).lift(fn.ulift())),
+          clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
+            .map(unfolded -> act(unfolded.data())).getOrDefault(fn));
+      }
+      case CallTerm.Prim prim -> {
+        var state = state();
+        if (state == null) throw new InternalException("unfolding prims without TyckState");
+        yield state.primFactory().unfold(prim.id(), prim, state());
+      }
+      case CallTerm.Hole hole && state() != null -> {
+        var def = hole.ref();
+        yield state().metas().getOption(def)
+          .map(body -> act(body.subst(buildSubst(def.fullTelescope(), hole.fullArgs()))))
+          .getOrDefault(hole);
+      }
+      case CallTerm.Access access -> {
+        var fieldDef = access.ref().core;
+        if (access.of() instanceof IntroTerm.New n) {
+          var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
+          yield act(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
+        } else {
+          var subst = buildSubst(fieldDef.fullTelescope(), access.args());
+          for (var field : fieldDef.structRef.core.fields) {
+            if (field == fieldDef) continue;
+            var fieldArgs = field.telescope().map(Term.Param::toArg);
+            var acc = new CallTerm.Access(access.of(), field.ref, access.structArgs(), fieldArgs);
+            subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
+          }
+          yield tryUnfoldClauses(true, access.fieldArgs(), subst, 0, fieldDef.clauses)
+            .map(unfolded -> act(unfolded.data())).getOrDefault(access);
+        }
+      }
+      case RefTerm.MetaPat metaPat -> metaPat.inline();
+      default -> term;
+    };
   }
 
-  @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
-    var def = fnCall.ref().core;
-    // Not yet type checked
-    if (def == null) return fnCall;
-    var args = fnCall.args().map(arg -> visitArg(arg, p));
-    var ulift = ulift() + fnCall.ulift();
-    if (def.modifiers.contains(Modifier.Opaque)) return new CallTerm.Fn(fnCall.ref(), ulift, args);
-    var body = def.body;
-    if (body.isLeft()) {
-      var termSubst = checkAndBuildSubst(def.telescope(), args);
-      return body.getLeftValue().subst(termSubst, ulift).accept(this, p).rename();
-    }
-    var orderIndependent = def.modifiers.contains(Modifier.Overlap);
-    var volynskaya = tryUnfoldClauses(p, orderIndependent, args, ulift, body.getRightValue());
-    return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), ulift, args);
-  }
-  private @NotNull Subst
-  checkAndBuildSubst(SeqLike<Term.Param> telescope, SeqLike<Arg<Term>> args) {
-    // assert args.sizeEquals(telescope);
-    // assert Term.Param.checkSubst(telescope, args);
-    return buildSubst(telescope, args);
-  }
-
-  @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
-    var state = state();
-    if (state == null) throw new InternalException("unfolding prims without TyckState");
-    return state.primFactory().unfold(prim.id(), prim, state());
-  }
-
-  default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
-    var def = hole.ref();
-    // Not yet type checked
-    var state = state();
-    if (state == null) return hole;
-    var metas = state.metas();
-    if (!metas.containsKey(def)) return hole;
-    var body = metas.get(def);
-    var args = hole.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
-    var subst = checkAndBuildSubst(def.fullTelescope(), args);
-    return body.subst(subst).accept(this, p);
-  }
-
-  default @Nullable WithPos<Term> tryUnfoldClauses(
-    P p, boolean orderIndependent, SeqLike<Arg<Term>> args,
-    int ulift, @NotNull ImmutableSeq<Matching> clauses
-  ) {
-    return tryUnfoldClauses(p, orderIndependent, args,
-      new Subst(MutableMap.create()), ulift, clauses);
-  }
-
-  default @Nullable WithPos<Term> tryUnfoldClauses(
-    P p, boolean orderIndependent, SeqLike<Arg<Term>> args,
-    @NotNull Subst subst, int ulift,
-    @NotNull ImmutableSeq<Matching> clauses
+  default Option<WithPos<Term>> tryUnfoldClauses(
+    boolean orderIndependent, SeqLike<Arg<Term>> args,
+    Subst subst, int ulift, ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
-        var newBody = matchy.body().view()
-          .rename()
-          .subst(subst)
-          .lift(ulift)
-          .commit()
-          .accept(this, p);
-        return new WithPos<>(matchy.sourcePos(), newBody);
-      } else if (!orderIndependent && termSubst.getErr()) return null;
-      // ^ if we have an order-dependent clause and the pattern matching is blocked,
-      // we refuse to unfold the clauses (first-match semantics)
+        var newBody = matchy.body().rename().subst(subst).lift(ulift);
+        return Option.some(new WithPos<>(matchy.sourcePos(), newBody));
+      } else if (!orderIndependent && termSubst.getErr()) return Option.none();
     }
-    // Unfold failed
-    return null;
+    return Option.none();
+  }
+  default Option<WithPos<Term>> tryUnfoldClauses(
+    boolean orderIndependent, SeqLike<Arg<Term>> args,
+    int ulift, ImmutableSeq<Matching> clauses
+  ) {
+    return tryUnfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), ulift, clauses);
   }
 
-  default @NotNull Term visitAccess(CallTerm.@NotNull Access term, P p) {
-    var nevv = term.of().accept(this, p);
-    var fieldRef = term.ref();
-    var fieldDef = fieldRef.core;
-    // This is wrong, but we're gonna remove records w/ conditions anyway :wink:
-    if (!(nevv instanceof IntroTerm.New n)) {
-      var args = term.args().map(arg -> visitArg(arg, p));
-      var fieldSubst = checkAndBuildSubst(fieldDef.fullTelescope(), args);
-      var structDef = fieldDef.structRef.core;
-      var structArgsSize = term.structArgs().size();
-      for (var field : structDef.fields) {
-        if (field == fieldDef) continue;
-        var tele = field.telescope();
-        var access = new CallTerm.Access(nevv, field.ref, args.take(structArgsSize), tele.map(Term.Param::toArg));
-        fieldSubst.add(field.ref, IntroTerm.Lambda.make(tele, access));
-      }
-      var dropped = args.drop(structArgsSize);
-      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, 0, fieldDef.clauses);
-      return mischa != null ? mischa.data().subst(fieldSubst) : new CallTerm.Access(nevv, fieldRef,
-        term.structArgs(), dropped);
+  record Normalizer(TyckState state) implements Expander {
+    @Override public Term post(Term term) {
+      return switch (term) {
+        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> act(CallTerm.make(lam, app.arg()));
+        case ElimTerm.App app -> CallTerm.make(app.of(), app.arg());
+        case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
+          var ix = proj.ix();
+          assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
+          yield act(tup.items().get(ix - 1));
+        }
+        default -> Expander.super.post(term);
+      };
     }
-    var arguments = buildSubst(fieldDef.ownerTele, term.structArgs());
-    var fieldBody = term.fieldArgs().foldLeft(n.params().get(fieldRef), CallTerm::make);
-    return fieldBody.subst(arguments).accept(this, p);
   }
 
-  /**
-   * For tactics.
-   *
-   * @author ice1000
-   */
+  record WHNFer(TyckState state) implements Expander {
+    @Override public Term post(Term term) {
+      return switch (term) {
+        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda ->
+          act(CallTerm.make(lambda, app.arg()));
+        case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
+          var ix = proj.ix();
+          assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
+          yield act(tup.items().get(ix - 1));
+        }
+        default -> Expander.super.post(term);
+      };
+    }
+
+    @Override public Term act(Term term) {
+      return switch (term) {
+        case IntroTerm.Lambda lambda -> lambda;
+        case IntroTerm.Tuple tuple -> tuple;
+        case FormTerm.Pi pi -> pi;
+        case FormTerm.Sigma sigma -> sigma;
+        case CallTerm.Data data -> data;
+        default -> Expander.super.act(term);
+      };
+    }
+  }
+
   record Tracked(
     @NotNull Set<@NotNull Var> unfolding,
     @NotNull MutableSet<@NotNull Var> unfolded,
     @Nullable TyckState state,
     @NotNull PrimDef.Factory factory
-  ) implements Expander<Unit> {
-    @Override public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit unit) {
-      if (!unfolding.contains(fnCall.ref())) return fnCall;
-      unfolded.add(fnCall.ref());
-      return Expander.super.visitFnCall(fnCall, unit);
-    }
-
-    @Override public @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
-      if (!unfolding.contains(conCall.ref())) return conCall;
-      unfolded.add(conCall.ref());
-      return Expander.super.visitConCall(conCall, unit);
-    }
-
-    @Override public @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
-      // TODO[kiva]: Q: is OK to use `state`? so we don't need this override.
-      return factory.unfold(prim.id(), prim, state());
+  ) implements Expander {
+    @Override public Term act(Term term) {
+      return switch (term) {
+        case CallTerm.Fn fn -> {
+          if (!unfolding.contains(fn.ref())) yield fn;
+          unfolded.add(fn.ref());
+          yield Expander.super.act(fn);
+        }
+        case CallTerm.Con con -> {
+          if (!unfolding.contains(con.ref())) yield con;
+          unfolded.add(con.ref());
+          yield Expander.super.act(con);
+        }
+        case CallTerm.Prim prim -> {
+          // TODO[kiva]: Q: is OK to use `state`? so we don't need this override.
+          yield factory.unfold(prim.id(), prim, state);
+        }
+        default -> Expander.super.act(term);
+      };
     }
   }
 }

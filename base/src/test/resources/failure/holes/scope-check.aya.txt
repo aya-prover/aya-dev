@@ -27,7 +27,6 @@ In file $FILE:12:14 ->
                      ^^
 
 Error: Unsolved meta _
-       in `_`
        in `Eq {_} a b`
 
 3 error(s), 0 warning(s).

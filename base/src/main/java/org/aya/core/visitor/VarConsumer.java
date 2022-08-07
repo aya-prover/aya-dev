@@ -59,24 +59,6 @@ public interface VarConsumer<P> extends TermConsumer<P> {
 
   @Contract(mutates = "this,param2") void visitVar(Var usage, P p);
 
-  /**
-   * @author ice1000
-   * @see Term#findUsages(Var)
-   */
-  record Usages(Var var) implements MonoidalVarFolder<Integer> {
-    @Override public Integer e() {
-      return 0;
-    }
-
-    @Override public Integer op(Integer a, Integer b) {
-      return a + b;
-    }
-
-    @Override public Integer var(Var v) {
-      return v == var ? 1 : 0;
-    }
-  }
-
   final class ScopeChecker implements VarConsumer<Unit> {
     public final @NotNull ImmutableSeq<LocalVar> allowed;
     public final @NotNull MutableList<LocalVar> invalid;

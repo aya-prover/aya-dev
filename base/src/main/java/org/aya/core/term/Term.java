@@ -3,20 +3,16 @@
 package org.aya.core.term;
 
 import kala.collection.Map;
-import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
-import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
-import org.aya.core.pat.PatMatcher;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
-import org.aya.generic.Modifier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
@@ -28,11 +24,9 @@ import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.util.distill.DistillerOptions;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 /**
  * A well-typed and terminating term.
@@ -71,7 +65,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
   }
 
   default int findUsages(@NotNull Var var) {
-    return new VarConsumer.Usages(var).folded(this);
+    return new MonoidalVarFolder.Usages(var).folded(this);
   }
 
   default VarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
@@ -79,15 +73,6 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     accept(checker, Unit.unit());
     assert checker.isCleared() : "The scope checker is not properly cleared up";
     return checker;
-  }
-
-  static private @NotNull Subst buildSubst(
-    @NotNull SeqLike<Term.@NotNull Param> params,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
-  ) {
-    var subst = new Subst(MutableMap.create());
-    params.view().zip(args).forEach(t -> subst.add(t._1.ref(), t._2.term()));
-    return subst;
   }
 
   /**
@@ -220,15 +205,6 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
 
     public @NotNull Param subst(@NotNull Subst subst, int ulift) {
       return new Param(ref, type.subst(subst, ulift), pattern, explicit);
-    }
-
-    @TestOnly @Contract(pure = true)
-    public static boolean checkSubst(@NotNull SeqLike<@NotNull Param> params, @NotNull SeqLike<Arg<Term>> args) {
-      var obj = new Object() {
-        boolean ok = true;
-      };
-      params.forEachIndexed((i, param) -> obj.ok = obj.ok && param.explicit() == args.get(i).explicit());
-      return obj.ok;
     }
   }
 }

@@ -2,15 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import org.aya.concrete.stmt.TopTeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
-import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.ref.DefVar;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,8 +20,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
   public @NotNull Term term(@NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> localCtx.get(term.var());
-      case CallTerm.Data dataCall -> defCall(dataCall.ref(), dataCall.ulift());
-      case CallTerm.Struct structCall -> defCall(structCall.ref(), structCall.ulift());
+      case CallTerm.Data dataCall -> Def.defResult(dataCall.ref()).lift(dataCall.ulift());
+      case CallTerm.Struct structCall -> Def.defResult(structCall.ref()).lift(structCall.ulift());
       case CallTerm.Hole hole -> {
         var result = hole.ref().result;
         yield result == null ? ErrorTerm.typeOf(hole) : result;
@@ -60,9 +57,9 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case IntroTerm.New neu -> neu.struct();
       case IntroTerm.Tuple tuple -> new FormTerm.Sigma(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
-      case CallTerm.Con conCall -> defCall(conCall.head().dataRef(), conCall.ulift());
-      case CallTerm.Prim prim -> defCall(prim.ref(), prim.ulift());
-      case CallTerm.Fn fnCall -> defCall(fnCall.ref(), fnCall.ulift());
+      case CallTerm.Con conCall -> Def.defResult(conCall.head().dataRef()).lift(conCall.ulift());
+      case CallTerm.Prim prim -> Def.defResult(prim.ref()).lift(prim.ulift());
+      case CallTerm.Fn fnCall -> Def.defResult(fnCall.ref()).lift(fnCall.ulift());
       case RefTerm.MetaPat metaPat -> metaPat.ref().type();
       case FormTerm.Pi pi -> {
         var paramTyRaw = term(pi.param().type()).normalize(state, NormalizeMode.WHNF);
@@ -81,9 +78,5 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
       case LitTerm.ShapedInt shaped -> shaped.type();
     };
-  }
-
-  private @NotNull Term defCall(DefVar<? extends Def, ? extends TopTeleDecl> ref, int ulift) {
-    return Def.defResult(ref).subst(Subst.EMPTY, ulift);
   }
 }

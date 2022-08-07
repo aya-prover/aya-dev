@@ -4,15 +4,13 @@ package org.aya.tyck;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
-import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.TermConsumer;
-import org.aya.core.visitor.VarConsumer;
+import org.aya.core.term.Tm;
+import org.aya.core.visitor.MonoidalVarFolder;
+import org.aya.core.visitor.TerminalFolder;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
@@ -58,7 +56,7 @@ public record TyckState(
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
         eqns.filterInPlace(eqn -> {
-          var usageCounter = new VarConsumer.Usages(activeMeta.data());
+          var usageCounter = new MonoidalVarFolder.Usages(activeMeta.data());
           if (usageCounter.folded(eqn.lhs) + usageCounter.folded(eqn.rhs) > 0) {
             solveEqn(reporter, tracer, eqn, true);
             return false;
@@ -87,14 +85,15 @@ public record TyckState(
   public void addEqn(@NotNull Eqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
-    eqn.accept(new TermConsumer<>() {
-      @Override public Unit visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-        var ref = term.ref();
-        if (!metas.containsKey(ref))
-          activeMetas.append(new WithPos<>(eqn.pos, ref));
-        return unit;
+    var consumer = new TerminalFolder() {
+      @Override public Unit fold(Tm<Unit> tm) {
+        if (tm instanceof Tm.Hole<Unit> hole && !metas.containsKey(hole.ref()))
+            activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
+        return TerminalFolder.super.fold(tm);
       }
-    }, Unit.unit());
+    };
+    consumer.folded(eqn.lhs);
+    consumer.folded(eqn.rhs);
     assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 
@@ -104,10 +103,6 @@ public record TyckState(
     @NotNull LocalCtx localCtx,
     @NotNull DefEq.Sub lr, @NotNull DefEq.Sub rl
   ) implements AyaDocile {
-    public <P, R> Tuple2<R, R> accept(@NotNull Term.Visitor<P, R> visitor, P p) {
-      return Tuple.of(lhs.accept(visitor, p), rhs.accept(visitor, p));
-    }
-
     public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
     }

@@ -35,7 +35,6 @@ public record Zonker(
   }
 
   @Override public @NotNull Term pre(@NotNull Term term) {
-    stack.push(term);
     return switch (term) {
       case CallTerm.Hole hole -> {
         var sol = hole.ref();
@@ -54,9 +53,11 @@ public record Zonker(
     };
   }
 
-  @Override public @NotNull Term post(@NotNull Term term) {
+  @Override public Term act(Term term) {
+    stack.push(term);
+    var result = EndoFunctor.super.act(term);
     stack.pop();
-    return term;
+    return result;
   }
 
   public record UnsolvedMeta(

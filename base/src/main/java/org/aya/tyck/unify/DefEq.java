@@ -420,7 +420,7 @@ public final class DefEq {
         if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
         holeTy = holePi.substBody(arg._1.term());
       }
-      return holeTy.subst(Subst.EMPTY, lhs.ulift());
+      return holeTy.lift(lhs.ulift());
     }
     // Long time ago I wrote this to generate more unification equations,
     // which solves more universe levels. However, with latest version Aya (0.13),
@@ -429,8 +429,7 @@ public final class DefEq {
     var resultTy = preRhs.computeType(state, ctx);
     // resultTy might be an ErrorTerm, what to do?
     if (meta.result != null) {
-      var liftedType = meta.result.subst(Subst.EMPTY, lhs.ulift());
-      compareUntyped(resultTy, liftedType, rl, lr);
+      compareUntyped(resultTy, meta.result.lift(lhs.ulift()), rl, lr);
     }
     var argSubst = extract(lhs, preRhs, meta);
     if (argSubst == null) {

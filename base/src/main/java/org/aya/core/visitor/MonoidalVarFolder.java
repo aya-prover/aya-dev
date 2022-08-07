@@ -26,4 +26,18 @@ public interface MonoidalVarFolder<R> extends MonoidalFolder<R> {
       case Tm<R> t -> MonoidalFolder.super.fold(t);
     };
   }
+
+  record Usages(Var var) implements MonoidalVarFolder<Integer> {
+    @Override public Integer e() {
+      return 0;
+    }
+
+    @Override public Integer op(Integer a, Integer b) {
+      return a + b;
+    }
+
+    @Override public Integer var(Var v) {
+      return v == var ? 1 : 0;
+    }
+  }
 }
