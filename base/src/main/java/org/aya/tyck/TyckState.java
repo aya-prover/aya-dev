@@ -55,9 +55,9 @@ public record TyckState(
     var removingMetas = MutableList.<WithPos<Meta>>create();
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
+        var usageCounter = new MonoidalVarFolder.Usages(activeMeta.data());
         eqns.filterInPlace(eqn -> {
-          var usageCounter = new MonoidalVarFolder.Usages(activeMeta.data());
-          if (usageCounter.folded(eqn.lhs) + usageCounter.folded(eqn.rhs) > 0) {
+          if (usageCounter.apply(eqn.lhs) + usageCounter.apply(eqn.rhs) > 0) {
             solveEqn(reporter, tracer, eqn, true);
             return false;
           } else return true;
@@ -92,8 +92,8 @@ public record TyckState(
         return TerminalFolder.super.fold(tm);
       }
     };
-    consumer.folded(eqn.lhs);
-    consumer.folded(eqn.rhs);
+    consumer.apply(eqn.lhs);
+    consumer.apply(eqn.rhs);
     assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 

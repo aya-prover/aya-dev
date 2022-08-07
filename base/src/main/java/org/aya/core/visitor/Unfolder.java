@@ -4,6 +4,8 @@ package org.aya.core.visitor;
 
 import org.aya.core.term.*;
 
+import java.util.function.Function;
+
 /**
  * An `Unfolder<R>` provides a function `R -> Term` given an incremental unfolding function `R -> Tm<R>`.
  * Sometimes directly implementing this interface can be tedious and repetitive,
@@ -11,10 +13,10 @@ import org.aya.core.term.*;
  *
  * @author wsx
  */
-public interface Unfolder<R> {
+public interface Unfolder<R> extends Function<R, Term> {
   Tm<R> unfold(R r);
 
-  default Term unfolded(R r) {
-    return Tm.cast(unfold(r).map(this::unfolded));
+  default Term apply(R r) {
+    return Tm.cast(unfold(r).map(this));
   }
 }

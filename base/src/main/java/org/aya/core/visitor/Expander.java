@@ -37,15 +37,15 @@ public interface Expander extends EndoFunctor {
         var def = con.ref().core;
         if (def == null) yield con;
         yield tryUnfoldClauses(true, con.conArgs(), con.ulift(), def.clauses)
-          .map(un -> act(un.data())).getOrDefault(con);
+          .map(un -> apply(un.data())).getOrDefault(con);
       }
       case CallTerm.Fn fn -> {
         var def = fn.ref().core;
         if (def == null || def.modifiers.contains(Modifier.Opaque)) yield fn;
         yield def.body.fold(
-          lamBody -> act(lamBody.rename().subst(buildSubst(def.telescope(), fn.args())).lift(fn.ulift())),
+          lamBody -> apply(lamBody.rename().subst(buildSubst(def.telescope(), fn.args())).lift(fn.ulift())),
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
-            .map(unfolded -> act(unfolded.data())).getOrDefault(fn));
+            .map(unfolded -> apply(unfolded.data())).getOrDefault(fn));
       }
       case CallTerm.Prim prim -> {
         var state = state();
@@ -55,14 +55,14 @@ public interface Expander extends EndoFunctor {
       case CallTerm.Hole hole && state() != null -> {
         var def = hole.ref();
         yield state().metas().getOption(def)
-          .map(body -> act(body.subst(buildSubst(def.fullTelescope(), hole.fullArgs()))))
+          .map(body -> apply(body.subst(buildSubst(def.fullTelescope(), hole.fullArgs()))))
           .getOrDefault(hole);
       }
       case CallTerm.Access access -> {
         var fieldDef = access.ref().core;
         if (access.of() instanceof IntroTerm.New n) {
           var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
-          yield act(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
+          yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
         } else {
           var subst = buildSubst(fieldDef.fullTelescope(), access.args());
           for (var field : fieldDef.structRef.core.fields) {
@@ -72,7 +72,7 @@ public interface Expander extends EndoFunctor {
             subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
           }
           yield tryUnfoldClauses(true, access.fieldArgs(), subst, 0, fieldDef.clauses)
-            .map(unfolded -> act(unfolded.data())).getOrDefault(access);
+            .map(unfolded -> apply(unfolded.data())).getOrDefault(access);
         }
       }
       case RefTerm.MetaPat metaPat -> metaPat.inline();
@@ -104,12 +104,12 @@ public interface Expander extends EndoFunctor {
   record Normalizer(TyckState state) implements Expander {
     @Override public Term post(Term term) {
       return switch (term) {
-        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> act(CallTerm.make(lam, app.arg()));
+        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> apply(CallTerm.make(lam, app.arg()));
         case ElimTerm.App app -> CallTerm.make(app.of(), app.arg());
         case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
           var ix = proj.ix();
           assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
-          yield act(tup.items().get(ix - 1));
+          yield apply(tup.items().get(ix - 1));
         }
         default -> Expander.super.post(term);
       };
@@ -120,24 +120,24 @@ public interface Expander extends EndoFunctor {
     @Override public Term post(Term term) {
       return switch (term) {
         case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda ->
-          act(CallTerm.make(lambda, app.arg()));
+          apply(CallTerm.make(lambda, app.arg()));
         case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
           var ix = proj.ix();
           assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
-          yield act(tup.items().get(ix - 1));
+          yield apply(tup.items().get(ix - 1));
         }
         default -> Expander.super.post(term);
       };
     }
 
-    @Override public Term act(Term term) {
+    @Override public Term apply(Term term) {
       return switch (term) {
         case IntroTerm.Lambda lambda -> lambda;
         case IntroTerm.Tuple tuple -> tuple;
         case FormTerm.Pi pi -> pi;
         case FormTerm.Sigma sigma -> sigma;
         case CallTerm.Data data -> data;
-        default -> Expander.super.act(term);
+        default -> Expander.super.apply(term);
       };
     }
   }
@@ -148,23 +148,23 @@ public interface Expander extends EndoFunctor {
     @Nullable TyckState state,
     @NotNull PrimDef.Factory factory
   ) implements Expander {
-    @Override public Term act(Term term) {
+    @Override public Term apply(Term term) {
       return switch (term) {
         case CallTerm.Fn fn -> {
           if (!unfolding.contains(fn.ref())) yield fn;
           unfolded.add(fn.ref());
-          yield Expander.super.act(fn);
+          yield Expander.super.apply(fn);
         }
         case CallTerm.Con con -> {
           if (!unfolding.contains(con.ref())) yield con;
           unfolded.add(con.ref());
-          yield Expander.super.act(con);
+          yield Expander.super.apply(con);
         }
         case CallTerm.Prim prim -> {
           // TODO[kiva]: Q: is OK to use `state`? so we don't need this override.
           yield factory.unfold(prim.id(), prim, state);
         }
-        default -> Expander.super.act(term);
+        default -> Expander.super.apply(term);
       };
     }
   }

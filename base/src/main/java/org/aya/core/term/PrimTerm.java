@@ -15,19 +15,12 @@ public sealed interface PrimTerm extends Term {
       this.isRight = isRight;
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitEnd(this, p);
-    }
-
-    public boolean isRight() {
+      public boolean isRight() {
       return isRight;
     }
   }
 
   record Str(@NotNull String string) implements PrimTerm {
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitStr(this, p);
-    }
   }
 }

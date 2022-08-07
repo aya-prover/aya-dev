@@ -236,7 +236,7 @@ public final class PatTycker {
       @Override public Term post(Term term) {
         return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
       }
-    }.act(lhsResult.type);
+    }.apply(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,

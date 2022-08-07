@@ -13,20 +13,11 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record RefTerm(@NotNull LocalVar var, int lift) implements Term {
-  @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitRef(this, p);
-  }
 
   public record Field(@NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref, int lift) implements Term {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitFieldRef(this, p);
-    }
   }
 
   public record MetaPat(@NotNull Pat.Meta ref, int lift) implements Term {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitMetaPat(this, p);
-    }
 
     public @NotNull Term inline() {
       var sol = ref.solution().value;

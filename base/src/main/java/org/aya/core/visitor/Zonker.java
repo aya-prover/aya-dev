@@ -53,9 +53,9 @@ public record Zonker(
     };
   }
 
-  @Override public Term act(Term term) {
+  @Override public Term apply(Term term) {
     stack.push(term);
-    var result = EndoFunctor.super.act(term);
+    var result = EndoFunctor.super.apply(term);
     stack.pop();
     return result;
   }

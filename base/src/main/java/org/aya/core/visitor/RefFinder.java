@@ -29,9 +29,9 @@ public record RefFinder(boolean withBody) implements
 
   @Override public SeqView<Def> visitFn(@NotNull FnDef fn, Unit unit) {
     return tele(fn.telescope)
-      .concat(folded(fn.result()))
+      .concat(apply(fn.result()))
       .concat(withBody
-        ? fn.body.fold(this::folded, clauses -> clauses.view().flatMap(this::matchy))
+        ? fn.body.fold(this, clauses -> clauses.view().flatMap(this::matchy))
         : SeqView.empty());
   }
 
@@ -45,8 +45,8 @@ public record RefFinder(boolean withBody) implements
 
   @Override public SeqView<Def> visitField(@NotNull FieldDef def, Unit unit) {
     return tele(def.telescope())
-      .concat(def.body.foldLeft(SeqView.empty(), (rs, body) -> folded(body)))
-      .concat(folded(def.result()))
+      .concat(def.body.foldLeft(SeqView.empty(), (rs, body) -> apply(body)))
+      .concat(apply(def.result()))
       .concat(withBody ? def.clauses.flatMap(this::matchy) : SeqView.empty());
   }
 
@@ -56,16 +56,16 @@ public record RefFinder(boolean withBody) implements
 
   @Override public SeqView<Def> visitData(@NotNull DataDef def, Unit unit) {
     return tele(def.telescope())
-      .concat(folded(def.result()))
+      .concat(apply(def.result()))
       .concat(withBody ? def.body.flatMap(t -> visitCtor(t, unit)) : SeqView.empty());
   }
 
   private SeqView<Def> matchy(@NotNull Matching match) {
-    return folded(match.body());
+    return apply(match.body());
   }
 
   private SeqView<Def> tele(SeqLike<Term.Param> telescope) {
-    return telescope.view().map(Term.Param::type).flatMap(this::folded);
+    return telescope.view().map(Term.Param::type).flatMap(this);
   }
 
   @Override public @NotNull SeqView<Def> e() {

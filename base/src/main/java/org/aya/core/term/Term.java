@@ -3,11 +3,12 @@
 package org.aya.core.term;
 
 import kala.collection.Map;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple3;
-import kala.tuple.Unit;
 import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * A well-typed and terminating term.
  *
@@ -35,13 +38,104 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, ErrorTerm,
         FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, LitTerm {
-  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    visitor.traceEntrance(this, p);
-    var ret = doAccept(visitor, p);
-    visitor.traceExit(ret);
-    return ret;
+  default @NotNull Term descent(Function<Term, Term> f) {
+    return switch (this) {
+      case FormTerm.Pi pi -> {
+        var param = pi.param().descent(f);
+        var body = f.apply(pi.body());
+        if (param == pi.param() && body == pi.body()) yield pi;
+        yield new FormTerm.Pi(param, body);
+      }
+      case FormTerm.Sigma sigma -> {
+        var params = sigma.params().map(param -> param.descent(f));
+        if (params.sameElements(sigma.params(), true)) yield sigma;
+        yield new FormTerm.Sigma(params);
+      }
+      case FormTerm.Univ univ -> univ;
+      case FormTerm.Interval interval -> interval;
+      case PrimTerm.End end -> end;
+      case PrimTerm.Str str -> str;
+      case IntroTerm.Lambda lambda -> {
+        var param = lambda.param().descent(f);
+        var body = f.apply(lambda.body());
+        if (param == lambda.param() && body == lambda.body()) yield lambda;
+        yield new IntroTerm.Lambda(param, body);
+      }
+      case IntroTerm.Tuple tuple -> {
+        var items = tuple.items().map(f);
+        if (items.sameElements(tuple.items(), true)) yield tuple;
+        yield new IntroTerm.Tuple(items);
+      }
+      case IntroTerm.New neu -> {
+        var struct = f.apply(neu.struct());
+        var fields = ImmutableMap.from(neu.params().view().map((k, v) -> Tuple.of(k, f.apply(v))));
+        if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView())) yield neu;
+        yield new IntroTerm.New((CallTerm.Struct) struct, fields);
+      }
+      case ElimTerm.App app -> {
+        var function = f.apply(app.of());
+        var arg = app.arg().descent(f);
+        if (function == app.of() && arg == app.arg()) yield app;
+        yield CallTerm.make(function, arg);
+      }
+      case ElimTerm.Proj proj -> {
+        var tuple = f.apply(proj.of());
+        if (tuple == proj.of()) yield proj;
+        yield new ElimTerm.Proj(tuple, proj.ix());
+      }
+      case CallTerm.Struct struct -> {
+        var args = struct.args().map(arg -> arg.descent(f));
+        if (args.sameElements(struct.args(), true)) yield struct;
+        yield new CallTerm.Struct(struct.ref(), struct.ulift(), args);
+      }
+      case CallTerm.Data data -> {
+        var args = data.args().map(arg -> arg.descent(f));
+        if (args.sameElements(data.args(), true)) yield data;
+        yield new CallTerm.Data(data.ref(), data.ulift(), args);
+      }
+      case CallTerm.Con con -> {
+        var head = con.head().descent(f);
+        var args = con.conArgs().map(arg -> arg.descent(f));
+        if (head == con.head() && args.sameElements(con.conArgs(), true)) yield con;
+        yield new CallTerm.Con(head, args);
+      }
+      case CallTerm.Fn fn -> {
+        var args = fn.args().map(arg -> arg.descent(f));
+        if (args.sameElements(fn.args(), true)) yield fn;
+        yield new CallTerm.Fn(fn.ref(), fn.ulift(), args);
+      }
+      case CallTerm.Access access -> {
+        var struct = f.apply(access.of());
+        var structArgs = access.structArgs().map(arg -> arg.descent(f));
+        var fieldArgs = access.fieldArgs().map(arg -> arg.descent(f));
+        if (struct == access.of()
+          && structArgs.sameElements(access.structArgs(), true)
+          && fieldArgs.sameElements(access.fieldArgs(), true))
+          yield access;
+        yield new CallTerm.Access(struct, access.ref(), structArgs, fieldArgs);
+      }
+      case CallTerm.Prim prim -> {
+        var args = prim.args().map(arg -> arg.descent(f));
+        if (args.sameElements(prim.args(), true)) yield prim;
+        yield new CallTerm.Prim(prim.ref(), prim.ulift(), args);
+      }
+      case CallTerm.Hole hole -> {
+        var contextArgs = hole.contextArgs().map(arg -> arg.descent(f));
+        var args = hole.args().map(arg -> arg.descent(f));
+        if (contextArgs.sameElements(hole.contextArgs(), true) && args.sameElements(hole.args(), true)) yield hole;
+        yield new CallTerm.Hole(hole.ref(), hole.ulift(), contextArgs, args);
+      }
+      case LitTerm.ShapedInt shaped -> {
+        var type = f.apply(shaped.type());
+        if (type == shaped.type()) yield shaped;
+        yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
+      }
+      case RefTerm ref -> ref;
+      case RefTerm.MetaPat metaPat -> metaPat;
+      case RefTerm.Field field -> field;
+      case ErrorTerm error -> error;
+    };
   }
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
@@ -49,7 +143,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
   }
 
   default @NotNull Term subst(@NotNull Subst subst) {
-    return new EndoFunctor.Substituter(subst).act(this);
+    return new EndoFunctor.Substituter(subst).apply(this);
   }
 
   default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
@@ -61,16 +155,16 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
   }
 
   default @NotNull Term rename() {
-    return new EndoFunctor.Renamer().act(this);
+    return new EndoFunctor.Renamer().apply(this);
   }
 
   default int findUsages(@NotNull Var var) {
-    return new MonoidalVarFolder.Usages(var).folded(this);
+    return new MonoidalVarFolder.Usages(var).apply(this);
   }
 
-  default VarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
-    var checker = new VarConsumer.ScopeChecker(allowed);
-    accept(checker, Unit.unit());
+  default EndoVarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
+    var checker = new EndoVarConsumer.ScopeChecker(allowed);
+    checker.accept(this);
     assert checker.isCleared() : "The scope checker is not properly cleared up";
     return checker;
   }
@@ -83,8 +177,8 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
   default @NotNull Term normalize(@NotNull TyckState state, @NotNull NormalizeMode mode) {
     return switch (mode) {
       case NULL -> this;
-      case NF -> new Expander.Normalizer(state).act(this);
-      case WHNF -> new Expander.WHNFer(state).act(this);
+      case NF -> new Expander.Normalizer(state).apply(this);
+      case WHNF -> new Expander.WHNFer(state).apply(this);
     };
   }
 
@@ -95,47 +189,17 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
           ? state.metas().getOrDefault(hole.ref(), term)
           : term;
       }
-    }.act(this);
+    }.apply(this);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
   default @NotNull Term lift(int ulift) {
-    return new EndoFunctor.Elevator(ulift).act(this);
+    return new EndoFunctor.Elevator(ulift).apply(this);
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return new LittleTyper(state, ctx).term(this);
-  }
-
-  interface Visitor<P, R> {
-    default void traceEntrance(@NotNull Term term, P p) {
-    }
-    default void traceExit(R r) {
-    }
-    R visitRef(@NotNull RefTerm ref, P p);
-    R visitLam(@NotNull IntroTerm.Lambda lambda, P p);
-    R visitPi(@NotNull FormTerm.Pi pi, P p);
-    R visitSigma(@NotNull FormTerm.Sigma sigma, P p);
-    R visitUniv(@NotNull FormTerm.Univ univ, P p);
-    R visitApp(@NotNull ElimTerm.App app, P p);
-    R visitFnCall(CallTerm.@NotNull Fn fnCall, P p);
-    R visitDataCall(CallTerm.@NotNull Data dataCall, P p);
-    R visitConCall(CallTerm.@NotNull Con conCall, P p);
-    R visitStructCall(CallTerm.@NotNull Struct structCall, P p);
-    R visitPrimCall(@NotNull CallTerm.Prim prim, P p);
-    R visitTup(@NotNull IntroTerm.Tuple tuple, P p);
-    R visitNew(@NotNull IntroTerm.New newTerm, P p);
-    R visitProj(@NotNull ElimTerm.Proj proj, P p);
-    R visitAccess(@NotNull CallTerm.Access access, P p);
-    R visitHole(@NotNull CallTerm.Hole hole, P p);
-    R visitFieldRef(@NotNull RefTerm.Field field, P p);
-    R visitError(@NotNull ErrorTerm error, P p);
-    R visitMetaPat(@NotNull RefTerm.MetaPat metaPat, P p);
-    R visitInterval(@NotNull FormTerm.Interval interval, P p);
-    R visitEnd(@NotNull PrimTerm.End end, P p);
-    R visitStr(@NotNull PrimTerm.Str str, P p);
-    R visitShapedLit(@NotNull LitTerm.ShapedInt shaped, P p);
   }
 
   /**
@@ -157,6 +221,12 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
 
     public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(MutableList<Tuple3<LocalVar, Boolean, Term>> buf) {
       return buf.view().map(tup -> new Param(tup._1, tup._3, false, tup._2)).toImmutableSeq();
+    }
+
+    public Term.Param descent(Function<Term, Term> f) {
+      var type = f.apply(type());
+      if (type == type()) return this;
+      return new Term.Param(this, type);
     }
 
     @Contract(" -> new") public @NotNull Param implicitify() {

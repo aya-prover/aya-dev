@@ -17,6 +17,6 @@ public abstract class Tycker {
   }
 
   public @NotNull Term zonk(@NotNull Term term) {
-    return Zonker.make(this).act(term);
+    return Zonker.make(this).apply(term);
   }
 }

@@ -3,7 +3,6 @@
 package org.aya.terck;
 
 import kala.collection.mutable.MutableSet;
-import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
@@ -24,13 +23,14 @@ import org.jetbrains.annotations.NotNull;
 public record CallResolver(
   @NotNull FnDef caller,
   @NotNull MutableSet<Def> targets,
-  @NotNull Ref<Matching> currentMatching
-) implements DefConsumer<CallGraph<Def, Term.Param>> {
-  public CallResolver(@NotNull FnDef fn, @NotNull MutableSet<Def> targets) {
-    this(fn, targets, new Ref<>());
+  @NotNull Ref<Matching> currentMatching,
+  @NotNull CallGraph<Def, Term.Param> graph
+) implements DefConsumer {
+  public CallResolver(@NotNull FnDef fn, @NotNull MutableSet<Def> targets, @NotNull CallGraph<Def, Term.Param> graph) {
+    this(fn, targets, new Ref<>(), graph);
   }
 
-  private void resolveCall(@NotNull CallTerm callTerm, CallGraph<Def, Term.Param> graph) {
+  private void resolveCall(@NotNull CallTerm callTerm) {
     if (!(callTerm.ref() instanceof DefVar<?, ?> defVar)) return;
     var callee = ((Def) defVar.core);
     if (!targets.contains(callee)) return;
@@ -102,39 +102,16 @@ public record CallResolver(
     };
   }
 
-  @Override public void visitMatching(@NotNull Matching matching, CallGraph<Def, Term.Param> graph) {
+  @Override public void visitMatching(@NotNull Matching matching) {
     this.currentMatching.value = matching;
-    DefConsumer.super.visitMatching(matching, graph);
+    DefConsumer.super.visitMatching(matching);
     this.currentMatching.value = null;
   }
 
-  @Override public Unit visitFnCall(CallTerm.@NotNull Fn fnCall, CallGraph<Def, Term.Param> graph) {
-    resolveCall(fnCall, graph);
-    return DefConsumer.super.visitFnCall(fnCall, graph);
-  }
-
-  @Override public Unit visitConCall(CallTerm.@NotNull Con conCall, CallGraph<Def, Term.Param> graph) {
-    resolveCall(conCall, graph);
-    return DefConsumer.super.visitConCall(conCall, graph);
-  }
-
-  @Override public Unit visitDataCall(CallTerm.@NotNull Data dataCall, CallGraph<Def, Term.Param> graph) {
-    resolveCall(dataCall, graph);
-    return DefConsumer.super.visitDataCall(dataCall, graph);
-  }
-
-  @Override public Unit visitStructCall(CallTerm.@NotNull Struct structCall, CallGraph<Def, Term.Param> graph) {
-    resolveCall(structCall, graph);
-    return DefConsumer.super.visitStructCall(structCall, graph);
-  }
-
-  @Override public Unit visitAccess(CallTerm.@NotNull Access term, CallGraph<Def, Term.Param> defCallGraph) {
-    resolveCall(term, defCallGraph);
-    return DefConsumer.super.visitAccess(term, defCallGraph);
-  }
-
-  @Override public Unit visitPrimCall(@NotNull CallTerm.Prim prim, CallGraph<Def, Term.Param> graph) {
-    resolveCall(prim, graph);
-    return DefConsumer.super.visitPrimCall(prim, graph);
+  @Override public void pre(Term term) {
+    if (term instanceof CallTerm call) {
+      resolveCall(call);
+    }
+    DefConsumer.super.pre(term);
   }
 }

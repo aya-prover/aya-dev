@@ -169,7 +169,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
     if (!(arg.term() instanceof RefTerm argRef)) return false;
     if (argRef.var() != param.ref()) return false;
     var counter = new MonoidalVarFolder.Usages(param.ref());
-    return args.dropLast(1).allMatch(a -> counter.folded(a.term()) == 0);
+    return args.dropLast(1).allMatch(a -> counter.apply(a.term()) == 0);
   }
 
   private ImmutableSeq<Arg<Term>> visibleArgsOf(CallTerm call) {

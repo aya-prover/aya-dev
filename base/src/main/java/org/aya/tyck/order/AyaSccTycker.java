@@ -227,7 +227,7 @@ public record AyaSccTycker(
   private void terckRecursiveFn(@NotNull SeqView<FnDef> fn) {
     var targets = MutableSet.<Def>from(fn);
     var graph = CallGraph.<Def, Term.Param>create();
-    fn.forEach(def -> def.accept(new CallResolver(def, targets), graph));
+    fn.forEach(def -> new CallResolver(def, targets, graph).accept(def));
     var failed = graph.findNonTerminating();
     if (failed != null) failed.forEach(f -> {
       var ref = f.matrix().domain().ref();

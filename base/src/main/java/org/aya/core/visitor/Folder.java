@@ -1,6 +1,10 @@
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
 import org.aya.core.term.*;
+
+import java.util.function.Function;
 
 /**
  * A `Folder<R>` provides a function `Term -> R` given an incremental folding function `Tm<R> -> R`.
@@ -9,10 +13,10 @@ import org.aya.core.term.*;
  *
  * @author wsx
  */
-interface Folder<R> {
+interface Folder<R> extends Function<Term, R> {
   R fold(Tm<R> tm);
 
-  default R folded(Term term) {
-    return fold(Tm.cast(term).map(this::folded));
+  default R apply(Term term) {
+    return fold(Tm.cast(term).map(this));
   }
 }

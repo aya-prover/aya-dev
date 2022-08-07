@@ -3,11 +3,9 @@
 package org.aya.core.visitor;
 
 import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
 import org.aya.core.Matching;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
@@ -43,7 +41,7 @@ import java.util.function.Function;
  *
  * @author wsx
  */
-public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
+public interface EndoFunctor extends Function<Term, Term> {
   default Term pre(Term term) {
     return term;
   }
@@ -52,131 +50,8 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
     return term;
   }
 
-  default Term fold(Tm<Term> tm) {
-    return post(Tm.cast(tm));
-  }
-
-  default Tm<Term> unfold(Term term) {
-    return Tm.cast(pre(term));
-  }
-
-  // fold(unfold(term).map(this::act))
-  default Term act(Term term) {
-    return post(descent(this::act, pre(term)));
-  }
-
-  private Term descent(Function<Term, Term> f, Term term) {
-    return switch (term) {
-      case FormTerm.Pi pi -> {
-        var param = descent(f, pi.param());
-        var body = f.apply(pi.body());
-        if (param == pi.param() && body == pi.body()) yield pi;
-        yield new FormTerm.Pi(param, body);
-      }
-      case FormTerm.Sigma sigma -> {
-        var params = sigma.params().map(param -> descent(f, param));
-        if (params.sameElements(sigma.params(), true)) yield sigma;
-        yield new FormTerm.Sigma(params);
-      }
-      case FormTerm.Univ univ -> univ;
-      case FormTerm.Interval interval -> interval;
-      case PrimTerm.End end -> end;
-      case PrimTerm.Str str -> str;
-      case IntroTerm.Lambda lambda -> {
-        var param = descent(f, lambda.param());
-        var body = f.apply(lambda.body());
-        if (param == lambda.param() && body == lambda.body()) yield lambda;
-        yield new IntroTerm.Lambda(param, body);
-      }
-      case IntroTerm.Tuple tuple -> {
-        var items = tuple.items().map(f);
-        if (items.sameElements(tuple.items(), true)) yield tuple;
-        yield new IntroTerm.Tuple(items);
-      }
-      case IntroTerm.New neu -> {
-        var struct = f.apply(neu.struct());
-        var fields = ImmutableMap.from(neu.params().view().map((k, v) -> Tuple.of(k, f.apply(v))));
-        if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView())) yield neu;
-        yield new IntroTerm.New((CallTerm.Struct) struct, fields);
-      }
-      case ElimTerm.App app -> {
-        var function = f.apply(app.of());
-        var arg = descent(f, app.arg());
-        if (function == app.of() && arg == app.arg()) yield app;
-        yield CallTerm.make(function, arg);
-      }
-      case ElimTerm.Proj proj -> {
-        var tuple = f.apply(proj.of());
-        if (tuple == proj.of()) yield proj;
-        yield new ElimTerm.Proj(tuple, proj.ix());
-      }
-      case CallTerm.Struct struct -> {
-        var args = struct.args().map(arg -> descent(f, arg));
-        if (args.sameElements(struct.args(), true)) yield struct;
-        yield new CallTerm.Struct(struct.ref(), struct.ulift(), args);
-      }
-      case CallTerm.Data data -> {
-        var args = data.args().map(arg -> descent(f, arg));
-        if (args.sameElements(data.args(), true)) yield data;
-        yield new CallTerm.Data(data.ref(), data.ulift(), args);
-      }
-      case CallTerm.Con con -> {
-        var head = descent(f, con.head());
-        var args = con.conArgs().map(arg -> descent(f, arg));
-        if (head == con.head() && args.sameElements(con.conArgs(), true)) yield con;
-        yield new CallTerm.Con(head, args);
-      }
-      case CallTerm.Fn fn -> {
-        var args = fn.args().map(arg -> descent(f, arg));
-        if (args.sameElements(fn.args(), true)) yield fn;
-        yield new CallTerm.Fn(fn.ref(), fn.ulift(), args);
-      }
-      case CallTerm.Access access -> {
-        var struct = f.apply(access.of());
-        var structArgs = access.structArgs().map(arg -> descent(f, arg));
-        var fieldArgs = access.fieldArgs().map(arg -> descent(f, arg));
-        if (struct == access.of()
-          && structArgs.sameElements(access.structArgs(), true)
-          && fieldArgs.sameElements(access.fieldArgs(), true))
-          yield access;
-        yield new CallTerm.Access(struct, access.ref(), structArgs, fieldArgs);
-      }
-      case CallTerm.Prim prim -> {
-        var args = prim.args().map(arg -> descent(f, arg));
-        if (args.sameElements(prim.args(), true)) yield prim;
-        yield new CallTerm.Prim(prim.ref(), prim.ulift(), args);
-      }
-      case CallTerm.Hole hole -> {
-        var contextArgs = hole.contextArgs().map(arg -> descent(f, arg));
-        var args = hole.args().map(arg -> descent(f, arg));
-        if (contextArgs.sameElements(hole.contextArgs(), true) && args.sameElements(hole.args(), true)) yield hole;
-        yield new CallTerm.Hole(hole.ref(), hole.ulift(), contextArgs, args);
-      }
-      case LitTerm.ShapedInt shaped -> {
-        var type = f.apply(shaped.type());
-        if (type == shaped.type()) yield shaped;
-        yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
-      }
-      case RefTerm ref -> ref;
-      case RefTerm.MetaPat metaPat -> metaPat;
-      case RefTerm.Field field -> field;
-      case ErrorTerm error -> error;
-    };
-  }
-  private Term.Param descent(Function<Term, Term> f, Term.Param param) {
-    var type = f.apply(param.type());
-    if (type == param.type()) return param;
-    return new Term.Param(param, type);
-  }
-  private Arg<Term> descent(Function<Term, Term> f, Arg<Term> arg) {
-    var term = f.apply(arg.term());
-    if (term == arg.term()) return arg;
-    return new Arg<>(term, arg.explicit());
-  }
-  private CallTerm.ConHead descent(Function<Term, Term> f, CallTerm.ConHead head) {
-    var args = head.dataArgs().map(arg -> descent(f, arg));
-    if (args.sameElements(head.dataArgs(), true)) return head;
-    return new CallTerm.ConHead(head.dataRef(), head.ref(), head.ulift(), args);
+  default Term apply(Term term) {
+    return post(pre(term).descent(this));
   }
 
   /** Not an IntelliJ Renamer. */
@@ -258,7 +133,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
   record Normalizer(TyckState state) implements EndoFunctor {
     @Override public Term post(Term term) {
       return switch (term) {
-        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda -> act(CallTerm.make(lambda, app.arg()));
+        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda -> apply(CallTerm.make(lambda, app.arg()));
         case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tuple -> {
           var ix = proj.ix();
           assert tuple.items().sizeGreaterThanOrEquals(ix) && ix > 0
@@ -269,17 +144,17 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
           var def = con.ref().core;
           if (def == null) yield con;
           var unfolded = unfoldClauses(true, con.conArgs(), def.clauses);
-          yield unfolded != null ? act(unfolded.data()) : con;
+          yield unfolded != null ? apply(unfolded.data()) : con;
         }
         case CallTerm.Fn fn -> {
           var def = fn.ref().core;
           if (def == null) yield fn;
           if (def.modifiers.contains(Modifier.Opaque)) yield fn;
           yield def.body.fold(
-            lamBody -> act(lamBody.subst(buildSubst(def.telescope(), fn.args()))),
+            lamBody -> apply(lamBody.subst(buildSubst(def.telescope(), fn.args()))),
             patBody -> {
               var unfolded = unfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), patBody);
-              return unfolded != null ? act(unfolded.data()) : fn;
+              return unfolded != null ? apply(unfolded.data()) : fn;
             }
           );
         }
@@ -287,7 +162,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
           var fieldDef = access.ref().core;
           if (access.of() instanceof IntroTerm.New n) {
             var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
-            yield act(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
+            yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
           } else {
             var subst = buildSubst(fieldDef.fullTelescope(), access.args());
             for (var field : fieldDef.structRef.core.fields) {
@@ -297,7 +172,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
               subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
             }
             var unfolded = unfoldClauses(true, access.fieldArgs(), subst, fieldDef.clauses);
-            yield unfolded != null ? act(unfolded.data()) : access;
+            yield unfolded != null ? apply(unfolded.data()) : access;
           }
         }
         case CallTerm.Prim prim -> state.primFactory().unfold(prim.id(), prim, state);
@@ -305,7 +180,7 @@ public interface EndoFunctor extends Folder<Term>, Unfolder<Term> {
           var def = hole.ref();
           if (!state.metas().containsKey(def)) yield hole;
           var body = state.metas().get(def);
-          yield act(body.subst(buildSubst(def.fullTelescope(), hole.fullArgs())));
+          yield apply(body.subst(buildSubst(def.fullTelescope(), hole.fullArgs())));
         }
         case RefTerm.MetaPat metaPat -> metaPat.inline();
         case Term t -> t;

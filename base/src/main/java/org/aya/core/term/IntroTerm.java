@@ -22,11 +22,8 @@ public sealed interface IntroTerm extends Term {
    * @author ice1000
    */
   record Lambda(@NotNull Param param, @NotNull Term body) implements IntroTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLam(this, p);
-    }
 
-    public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
+      public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
       while (term instanceof Lambda lambda) {
         params.accept(lambda.param);
         term = lambda.body;
@@ -46,17 +43,11 @@ public sealed interface IntroTerm extends Term {
     @NotNull CallTerm.Struct struct,
     @NotNull ImmutableMap<DefVar<FieldDef, TopTeleDecl.StructField>, Term> params
   ) implements IntroTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitNew(this, p);
-    }
   }
 
   /**
    * @author re-xyr
    */
   record Tuple(@NotNull ImmutableSeq<Term> items) implements IntroTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTup(this, p);
-    }
   }
 }
