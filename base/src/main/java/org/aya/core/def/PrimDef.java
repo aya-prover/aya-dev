@@ -42,14 +42,6 @@ public final class PrimDef extends TopLevelDef {
     this(ref, ImmutableSeq.empty(), result, name);
   }
 
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitPrim(this, p);
-  }
-
-  public @NotNull Term unfold(@NotNull CallTerm.Prim primCall, @Nullable TyckState state) {
-    return Objects.requireNonNull(state).primFactory().unfold(Objects.requireNonNull(ID.find(ref.name())), primCall, state);
-  }
-
   public @NotNull ImmutableSeq<Term.Param> telescope() {
     if (telescope.isEmpty()) return telescope;
     if (ref.concrete != null) {

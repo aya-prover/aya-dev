@@ -4,13 +4,12 @@ package org.aya.tyck;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Unit;
 import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.core.term.Tm;
+import org.aya.core.visitor.EndoConsumer;
 import org.aya.core.visitor.MonoidalVarFolder;
-import org.aya.core.visitor.TerminalFolder;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
@@ -85,15 +84,15 @@ public record TyckState(
   public void addEqn(@NotNull Eqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
-    var consumer = new TerminalFolder() {
-      @Override public Unit fold(Tm<Unit> tm) {
-        if (tm instanceof Tm.Hole<Unit> hole && !metas.containsKey(hole.ref()))
+    var consumer = new EndoConsumer() {
+      @Override public void pre(Term tm) {
+        if (tm instanceof CallTerm.Hole hole && !metas.containsKey(hole.ref()))
             activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
-        return TerminalFolder.super.fold(tm);
+        EndoConsumer.super.pre(tm);
       }
     };
-    consumer.apply(eqn.lhs);
-    consumer.apply(eqn.rhs);
+    consumer.accept(eqn.lhs);
+    consumer.accept(eqn.rhs);
     assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 

@@ -3,9 +3,6 @@
 package org.aya.core;
 
 import kala.collection.Seq;
-import kala.collection.mutable.MutableList;
-import kala.tuple.Unit;
-import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.visitor.RefFinder;
 import org.aya.ref.LocalVar;
@@ -26,8 +23,8 @@ public class UsagesTest {
        | neg n => n
       open data Fin (n : Nat) : Type | suc m => fzero | suc m => fsuc (Fin m)
       """)._2.forEach(def -> {
-      assertFalse(def.accept(RefFinder.HEADER_AND_BODY, Unit.unit()).isEmpty());
-      var of = def.accept(RefFinder.HEADER_ONLY, Unit.unit());
+      assertFalse(RefFinder.HEADER_AND_BODY.apply(def).isEmpty());
+      var of = RefFinder.HEADER_ONLY.apply(def);
       if (Seq.of("Nat", "Int").contains(def.ref().name())) assertTrue(of.isEmpty());
       else assertFalse(of.isEmpty());
       if (def instanceof FnDef fn && fn.body.isLeft())

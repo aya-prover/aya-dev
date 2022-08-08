@@ -33,10 +33,6 @@ public final class DataDef extends UserDef.Type {
     else return conHead.concrete.dataRef;
   }
 
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitData(this, p);
-  }
-
   public @NotNull DefVar<DataDef, TopTeleDecl.DataDecl> ref() {
     return ref;
   }

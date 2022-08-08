@@ -174,7 +174,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
    *              Can be null only if we're absolutely sure that holes are frozen,
    *              like in the error messages.
    */
-  default @NotNull Term normalize(@NotNull TyckState state, @NotNull NormalizeMode mode) {
+  default @NotNull Term normalize(@Nullable TyckState state, @NotNull NormalizeMode mode) {
     return switch (mode) {
       case NULL -> this;
       case NF -> new Expander.Normalizer(state).apply(this);

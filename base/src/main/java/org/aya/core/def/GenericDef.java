@@ -14,18 +14,4 @@ public sealed interface GenericDef extends AyaDocile permits ClassDef, Def {
   @NotNull DefVar<?, ?> ref();
 
   @NotNull Term result();
-
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-
-  /**
-   * @author re-xyr
-   */
-  interface Visitor<P, R> {
-    R visitFn(@NotNull FnDef def, P p);
-    R visitData(@NotNull DataDef def, P p);
-    R visitCtor(@NotNull CtorDef def, P p);
-    R visitStruct(@NotNull StructDef def, P p);
-    R visitField(@NotNull FieldDef def, P p);
-    R visitPrim(@NotNull PrimDef def, P p);
-  }
 }

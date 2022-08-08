@@ -52,11 +52,7 @@ public final class CtorDef extends SubLevelDef {
     return new DataDef.CtorTelescopes(dataSignature, conSignature.param());
   }
 
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitCtor(this, p);
-  }
-
-  public @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref() {
+    public @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref() {
     return ref;
   }
 
