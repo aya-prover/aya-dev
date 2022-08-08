@@ -4,7 +4,7 @@ package org.aya.lsp.actions;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.BaseDecl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.lsp.utils.XY;
@@ -23,7 +23,7 @@ public interface SyntaxNodeAction<P> extends StmtOps<P> {
 
   default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P xy) {
     stmts.forEach(stmt -> {
-      if (!(stmt instanceof BaseDecl decl) || accept(xy, decl.entireSourcePos))
+      if (!(stmt instanceof Decl decl) || accept(xy, decl.entireSourcePos()))
         visit(stmt, xy);
     });
   }

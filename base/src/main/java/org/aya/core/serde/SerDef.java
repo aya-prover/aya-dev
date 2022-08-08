@@ -5,7 +5,7 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.generic.Constants;
@@ -123,7 +123,7 @@ public sealed interface SerDef extends Serializable {
   ) implements SerDef {
     @Override
     public @NotNull Def de(SerTerm.@NotNull DeState state) {
-      var defVar = DefVar.<PrimDef, TopTeleDecl.PrimDecl>empty(name.id);
+      var defVar = DefVar.<PrimDef, TeleDecl.PrimDecl>empty(name.id);
       var def = state.primFactory().getOrCreate(name, defVar);
       state.putPrim(module, name, def.ref);
       return def;

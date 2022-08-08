@@ -4,8 +4,9 @@ package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
@@ -14,7 +15,6 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
@@ -84,7 +84,7 @@ public class ReplCompiler {
   }
 
   private int loadLibrary(@NotNull Path libraryRoot) throws IOException {
-    var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, libraryRoot);
+    var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
     int result = compiler.start();
     var owner = compiler.libraryOwner();
     importModule(owner);
@@ -93,7 +93,7 @@ public class ReplCompiler {
 
   private void importModule(@NotNull LibraryOwner owner) {
     owner.librarySources()
-      .map(src -> src.resolveInfo().value.thisModule())
+      .map(src -> src.resolveInfo().get().thisModule())
       .filterIsInstance(PhysicalModuleContext.class)
       .forEach(mod -> mod.exports.forEach((name, contents) -> context.importModule(
         Stmt.Accessibility.Public,
@@ -124,7 +124,7 @@ public class ReplCompiler {
         new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
       return programOrExpr.map(
         program -> {
-          var newDefs = new Ref<ImmutableSeq<GenericDef>>();
+          var newDefs = MutableValue.<ImmutableSeq<GenericDef>>create();
           var resolveInfo = loader.resolveModule(primFactory, context.fork(), program, loader);
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(null, resolveInfo, ((moduleResolve, defs) -> newDefs.set(defs)));

@@ -16,6 +16,7 @@ module aya.cli {
 
   exports org.aya.cli.library.json;
   exports org.aya.cli.library.source;
+  exports org.aya.cli.library.incremental;
   exports org.aya.cli.library;
   exports org.aya.cli.parse;
   exports org.aya.cli.repl;

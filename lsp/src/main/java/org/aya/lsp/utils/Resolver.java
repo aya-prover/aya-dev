@@ -10,7 +10,10 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
@@ -32,7 +35,7 @@ public interface Resolver {
     @NotNull String name
   ) {
     var mod = resolveModule(owner, module);
-    return mod.mapNotNull(m -> m.tycked().value)
+    return mod.mapNotNull(m -> m.tycked().get())
       .map(defs -> defs.flatMap(Resolver::withChildren))
       .flatMap(defs -> defs.find(def -> def.ref().name().equals(name)));
   }
@@ -42,7 +45,7 @@ public interface Resolver {
     @NotNull LibrarySource source,
     @NotNull Position position
   ) {
-    var program = source.program().value;
+    var program = source.program().get();
     if (program == null) return SeqView.empty();
     var resolver = new PositionResolver();
     resolver.visitAll(program, new XY(position));
@@ -74,8 +77,8 @@ public interface Resolver {
 
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
-      case TopTeleDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TopTeleDecl.DataCtor::ref));
-      case TopTeleDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TopTeleDecl.StructField::ref));
+      case TeleDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
+      case TeleDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
       default -> SeqView.of(def.ref());
     };
   }
@@ -84,7 +87,7 @@ public interface Resolver {
   static @NotNull Option<LibrarySource> resolveModule(@NotNull LibraryOwner owner, @NotNull ImmutableSeq<String> module) {
     if (module.isEmpty()) return Option.none();
     var mod = owner.findModule(module);
-    return mod != null ? Option.of(mod) : resolveModule(owner, module.dropLast(1));
+    return mod != null ? Option.some(mod) : resolveModule(owner, module.dropLast(1));
   }
 
   /** resolve a top-level module by its qualified name */
@@ -123,9 +126,10 @@ public interface Resolver {
           }
         }
         case Expr.NewExpr neo -> neo.fields().forEach(field -> {
-          var fieldRef = field.resolvedField().value;
-          if (fieldRef != null)
-            check(pp, fieldRef, field.name().sourcePos());
+          field.bindings().forEach(binding ->
+            check(pp, binding.data(), binding.sourcePos()));
+          var fieldRef = field.resolvedField().get();
+          if (fieldRef != null) check(pp, fieldRef, field.name().sourcePos());
         });
         default -> {}
       }
@@ -134,7 +138,11 @@ public interface Resolver {
 
     @Override public @NotNull Pattern visitPattern(@NotNull Pattern pattern, P param) {
       switch (pattern) {
-        case Pattern.Ctor ctor -> check(param, ctor.resolved().data(), ctor.resolved().sourcePos());
+        case Pattern.Ctor ctor -> {
+          check(param, ctor.resolved().data(), ctor.resolved().sourcePos());
+          var as = ctor.as();
+          if (as != null) check(param, as, as.definition());
+        }
         case Pattern.Bind bind -> check(param, bind.bind(), bind.sourcePos());
         default -> {}
       }
@@ -164,22 +172,12 @@ public interface Resolver {
       super.visitCommand(cmd, pp);
     }
 
-    @Override public void visitTelescopic(BaseDecl.@NotNull Telescopic signatured, XY xy) {
-      signatured.telescope
+    @Override public void visitTelescopic(@NotNull Decl decl, Decl.@NotNull Telescopic proof, XY xy) {
+      proof.telescope()
         .filterNot(tele -> tele.ref().name().startsWith(Constants.ANONYMOUS_PREFIX))
         .forEach(tele -> check(xy, tele.ref(), tele.sourcePos()));
-      check(xy, signatured.ref(), signatured.sourcePos());
-      super.visitTelescopic(signatured, xy);
-    }
-
-    @Override public @NotNull Expr visitExpr(@NotNull Expr expr, XY pp) {
-      if (expr instanceof Expr.NewExpr neo) neo.fields().forEach(field -> {
-        field.bindings().forEach(binding ->
-          check(pp, binding.data(), binding.sourcePos()));
-        var fieldRef = field.resolvedField().value;
-        if (fieldRef != null) check(pp, fieldRef, field.name().sourcePos());
-      });
-      return super.visitExpr(expr, pp);
+      check(xy, decl.ref(), decl.sourcePos());
+      super.visitTelescopic(decl, proof, xy);
     }
 
     @Override protected void check(@NotNull XY xy, @NotNull Var var, @NotNull SourcePos sourcePos) {

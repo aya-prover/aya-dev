@@ -1,25 +1,30 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
-import kala.collection.Seq;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.library.incremental.DelegateCompilerAdvisor;
+import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
+import org.aya.lsp.prim.LspPrimFactory;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.pretty.doc.Doc;
@@ -44,22 +49,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
+  private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
+
   private final BufferReporter reporter = new BufferReporter();
   private final @NotNull MutableList<LibraryOwner> libraries = MutableList.create();
   /**
    * When working with LSP, we need to track all previously created Primitives.
-   * This is shared among all loaded libraries just like a Global PrimFactory before.
-   *
-   * @implNote consider using one shared factory among all mocked libraries, and separate factory for each real library.
+   * This is shared per library.
    */
-  protected final @NotNull PrimDef.Factory sharedPrimFactory = new PrimDef.Factory();
-  private @NotNull Set<Path> lastErrorReportedFiles = Collections.emptySet();
+  protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
+  private final @NotNull CompilerAdvisor advisor;
+  private @Nullable AyaLanguageClient client;
+
+  public AyaService(@NotNull CompilerAdvisor advisor) {
+    this.advisor = new CallbackAdvisor(this, advisor);
+  }
+
+  public @NotNull SeqView<LibraryOwner> libraries() {
+    return libraries.view();
+  }
 
   public void registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
@@ -84,8 +97,12 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   private void mockLibraries(@NotNull Path path) {
-    libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1).map(
-      aya -> WsLibrary.mock(FileUtil.canonicalize(aya))));
+    libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1)
+      .map(WsLibrary::mock));
+  }
+
+  public void connect(@NotNull AyaLanguageClient client) {
+    this.client = client;
   }
 
   private @Nullable LibraryOwner findOwner(@Nullable Path path) {
@@ -105,7 +122,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return null;
   }
 
-  private @Nullable LibrarySource find(@NotNull Path moduleFile) {
+  public @Nullable LibrarySource find(@NotNull Path moduleFile) {
     for (var lib : libraries) {
       var found = find(lib, moduleFile);
       if (found != null) return found;
@@ -113,7 +130,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return null;
   }
 
-  private @Nullable LibrarySource find(@NotNull String uri) {
+  public @Nullable LibrarySource find(@NotNull String uri) {
     var path = toPath(uri);
     return find(path);
   }
@@ -122,41 +139,28 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return FileUtil.canonicalize(Path.of(URI.create(uri)));
   }
 
-  public @NotNull List<HighlightResult> loadFile(@NotNull String uri) {
-    Log.d("Loading vscode uri: %s", uri);
-    var path = FileUtil.canonicalize(Path.of(URI.create(uri)));
-    if (libraries.isEmpty()) registerLibrary(path.getParent());
-    // find the owner library
-    var source = find(path);
-    if (source == null) {
-      Log.w("Cannot find source");
-      return Collections.emptyList();
-    }
-    var owner = source.owner();
-    Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
-      owner.underlyingLibrary().name(), owner.underlyingLibrary().libraryRoot());
+  public @NotNull ImmutableSeq<HighlightResult> reload() {
+    return libraries().flatMap(this::loadLibrary).toImmutableSeq();
+  }
 
+  public @NotNull ImmutableSeq<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
+    Log.i("Loading library %s", owner.underlyingLibrary().name());
     // start compiling
     reporter.clear();
-    var flags = new CompilerFlags(
-      CompilerFlags.Message.EMOJI, false, true, null,
-      SeqView.empty(), null);
+    var primFactory = primFactory(owner);
     try {
-      LibraryCompiler.newCompiler(sharedPrimFactory, reporter, flags, owner).start();
+      LibraryCompiler.newCompiler(primFactory, reporter, FLAGS, advisor, owner).start();
     } catch (IOException e) {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
       Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
-    } finally {
-      sharedPrimFactory.clear();
     }
-    reportErrors(reporter, DistillerOptions.pretty());
+    publishProblems(reporter, DistillerOptions.pretty());
     return SyntaxHighlight.invoke(owner);
   }
 
-  public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
-    lastErrorReportedFiles.forEach(f ->
-      Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
+  public void publishProblems(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
+    if (client == null) return;
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d("%s", p.describe(options).debugRender()))
@@ -164,44 +168,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
         t -> t._1,
-        Collectors.mapping(t -> t._2, Seq.factory())
+        Collectors.mapping(t -> t._2, ImmutableSeq.factory())
       ));
-
-    for (var diag : diags.entrySet()) {
-      var filePath = diag.getKey();
-      Log.d("Found %d issues in %s", diag.getValue().size(), filePath);
-      var problems = diag.getValue()
-        .collect(Collectors.groupingBy(Problem::sourcePos, Seq.factory()))
-        .entrySet().stream()
-        .map(kv -> toDiagnostic(kv.getKey(), kv.getValue(), options))
-        .collect(Collectors.toList());
-      Log.publishProblems(new PublishDiagnosticsParams(
-        filePath.toUri().toString(),
-        problems
-      ));
-    }
-    lastErrorReportedFiles = diags.keySet();
+    client.publishAyaProblems(ImmutableMap.from(diags), options);
   }
 
-  private @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {
-    var msgBuilder = new StringBuilder();
-    var severity = DiagnosticSeverity.Hint;
-    for (var p : problems) {
-      msgBuilder.append(p.brief(options).debugRender()).append('\n');
-      var ps = severityOf(p);
-      if (ps.getValue() < severity.getValue()) severity = ps;
-    }
-    return new Diagnostic(LspRange.toRange(sourcePos),
-      msgBuilder.toString(), severity, "Aya");
-  }
-
-  private DiagnosticSeverity severityOf(@NotNull Problem problem) {
-    return switch (problem.level()) {
-      case WARN -> DiagnosticSeverity.Warning;
-      case ERROR -> DiagnosticSeverity.Error;
-      case INFO -> DiagnosticSeverity.Information;
-      case GOAL -> DiagnosticSeverity.Hint;
-    };
+  private void clearProblems(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+    if (client == null) return;
+    var files = affected.flatMap(i -> i.map(LibrarySource::file));
+    client.clearAyaProblems(files);
   }
 
   @Override public void didChangeWatchedFiles(@NotNull DidChangeWatchedFilesParams params) {
@@ -307,7 +282,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
-      var currentFile = Option.of(source.file());
+      var currentFile = Option.ofNullable(source.file());
       return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
         // only highlight references in the current file
         .filter(pos -> pos.file().underlying().equals(currentFile))
@@ -336,7 +311,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
+  @SuppressWarnings("deprecation") @Override
   public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
@@ -347,7 +322,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override
+  @SuppressWarnings("deprecation") @Override
   public CompletableFuture<Either<List<? extends SymbolInformation>, List<? extends WorkspaceSymbol>>> symbol(WorkspaceSymbolParams params) {
     return CompletableFuture.supplyAsync(() -> Either.forRight(
       ProjectSymbol.invoke(libraries.view())
@@ -366,7 +341,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
     var source = find(input.uri);
     if (source == null) return ComputeTermResult.bad(input);
-    return new ComputeTerm(source, type).invoke(input);
+    return new ComputeTerm(source, type, primFactory(source.owner())).invoke(input);
+  }
+
+  private @NotNull LspPrimFactory primFactory(@NotNull LibraryOwner owner) {
+    return primFactories.getOrPut(owner.underlyingLibrary(), LspPrimFactory::new);
   }
 
   public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {
@@ -384,6 +363,21 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
     @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {
       return describe(DistillerOptions.pretty());
+    }
+  }
+
+  private static final class CallbackAdvisor extends DelegateCompilerAdvisor {
+    private final @NotNull AyaService service;
+
+    public CallbackAdvisor(@NotNull AyaService service, @NotNull CompilerAdvisor delegate) {
+      super(delegate);
+      this.service = service;
+    }
+
+    @Override
+    public void notifyIncrementalJob(@NotNull ImmutableSeq<LibrarySource> modified, @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+      super.notifyIncrementalJob(modified, affected);
+      service.clearProblems(affected);
     }
   }
 }

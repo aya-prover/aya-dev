@@ -3,7 +3,7 @@
 package org.aya.terck;
 
 import kala.collection.mutable.MutableSet;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -23,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
 public record CallResolver(
   @NotNull FnDef caller,
   @NotNull MutableSet<Def> targets,
-  @NotNull Ref<Matching> currentMatching,
+  @NotNull MutableValue<Matching> currentMatching,
   @NotNull CallGraph<Def, Term.Param> graph
 ) implements DefConsumer {
   public CallResolver(@NotNull FnDef fn, @NotNull MutableSet<Def> targets, @NotNull CallGraph<Def, Term.Param> graph) {
-    this(fn, targets, new Ref<>(), graph);
+    this(fn, targets, MutableValue.create(), graph);
   }
 
   private void resolveCall(@NotNull CallTerm callTerm) {
@@ -41,7 +41,7 @@ public record CallResolver(
   }
 
   private void fillMatrix(@NotNull CallTerm callTerm, @NotNull Def callee, CallMatrix<Def, Term.Param> matrix) {
-    var matching = currentMatching.value;
+    var matching = currentMatching.get();
     if (matching == null) return;
     for (var domThing : matching.patterns().zipView(caller.telescope)) {
       for (var codomThing : callTerm.args().zipView(callee.telescope())) {
@@ -103,9 +103,9 @@ public record CallResolver(
   }
 
   @Override public void visitMatching(@NotNull Matching matching) {
-    this.currentMatching.value = matching;
+    this.currentMatching.set(matching);
     DefConsumer.super.visitMatching(matching);
-    this.currentMatching.value = null;
+    this.currentMatching.set(null);
   }
 
   @Override public void pre(Term term) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -64,8 +64,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       return v == var ? 1 : 0;
     }
 
-    @Override
-    public Integer merge(SeqView<Integer> integers) {
+    @Override public Integer merge(SeqView<Integer> integers) {
       return integers.fold(0, Integer::sum);
     }
   }

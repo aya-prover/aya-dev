@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.FieldDef;
 import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
@@ -14,13 +14,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public record RefTerm(@NotNull LocalVar var, int lift) implements Term {
 
-  public record Field(@NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref, int lift) implements Term {
+  public record Field(@NotNull DefVar<FieldDef, TeleDecl.StructField> ref, int lift) implements Term {
   }
 
   public record MetaPat(@NotNull Pat.Meta ref, int lift) implements Term {
 
     public @NotNull Term inline() {
-      var sol = ref.solution().value;
+      var sol = ref.solution().get();
       return sol != null ? sol.toTerm() : this;
     }
   }

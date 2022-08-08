@@ -6,7 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.error.OperatorProblem;
@@ -40,18 +40,45 @@ public interface StmtResolver {
   /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
   static void resolveStmt(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
+      case Decl decl -> resolveDecl(decl, info);
       case Command.Module mod -> resolveStmt(mod.contents(), info);
-      case TopTeleDecl.DataDecl decl -> {
+      case Remark remark -> info.depGraph().sucMut(new TyckOrder.Body(remark)).appendAll(remark.doResolve(info));
+      case Command cmd -> {}
+      case Generalize variables -> {
+        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
+        resolver.enterBody();
+        assert variables.ctx != null;
+        variables.type = resolver.resolve(variables.type, variables.ctx);
+        addReferences(info, new TyckOrder.Body(variables), resolver);
+      }
+    }
+  }
+
+  /** @apiNote Note that this function MUTATES the decl */
+  private static void resolveDecl(@NotNull Decl predecl, @NotNull ResolveInfo info) {
+    switch (predecl) {
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
+      case TeleDecl.FnDecl decl -> {
+        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        addReferences(info, new TyckOrder.Head(decl), local._1);
+        local._1.enterBody();
+        var bodyResolver = local._1.body();
+        bodyResolver.enterBody();
+        decl.body = decl.body.map(
+          expr -> bodyResolver.resolve(expr, local._2),
+          pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
+        addReferences(info, new TyckOrder.Body(decl), local._1);
+      }
+      case TeleDecl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
         decl.body.forEach(ctor -> {
           var bodyResolver = local._1.member(decl);
           bodyResolver.enterHead();
-          var localCtxWithPat = new Ref<>(local._2);
+          var localCtxWithPat = MutableValue.create(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
-          var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
+          var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.get());
           ctor.telescope = ctorLocal._1.toImmutableSeq();
           addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));
@@ -63,18 +90,7 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
-      case TopTeleDecl.FnDecl decl -> {
-        var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), local._1);
-        local._1.enterBody();
-        var bodyResolver = local._1.body();
-        bodyResolver.enterBody();
-        decl.body = decl.body.map(
-          expr -> bodyResolver.resolve(expr, local._2),
-          pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
-        addReferences(info, new TyckOrder.Body(decl), local._1);
-      }
-      case TopTeleDecl.StructDecl decl -> {
+      case TeleDecl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         addReferences(info, new TyckOrder.Head(decl), local._1);
         local._1.enterBody();
@@ -95,20 +111,14 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
           .concat(decl.fields.map(TyckOrder.Body::new)));
       }
-      case TopTeleDecl.PrimDecl decl -> {
+      case TeleDecl.PrimDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
         addReferences(info, new TyckOrder.Head(decl), resolver);
         addReferences(info, new TyckOrder.Body(decl), SeqView.empty());
       }
-      case Remark remark -> info.depGraph().sucMut(new TyckOrder.Body(remark)).appendAll(remark.doResolve(info));
-      case Command cmd -> {}
-      case Generalize variables -> {
-        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
-        resolver.enterBody();
-        assert variables.ctx != null;
-        variables.type = resolver.resolve(variables.type, variables.ctx);
-        addReferences(info, new TyckOrder.Body(variables), resolver);
-      }
+      // handled in DataDecl and StructDecl
+      case TeleDecl.DataCtor ctor -> {}
+      case TeleDecl.StructField field -> {}
     }
   }
 
@@ -124,7 +134,7 @@ public interface StmtResolver {
   }
 
   private static @NotNull Tuple2<ExprResolver, Context>
-  resolveDeclSignature(@NotNull TopTeleDecl decl, ExprResolver.@NotNull Options options) {
+  resolveDeclSignature(@NotNull TeleDecl decl, ExprResolver.@NotNull Options options) {
     var resolver = new ExprResolver(options);
     resolver.enterHead();
     var local = resolver.resolveParams(decl.telescope, decl.ctx);
@@ -147,10 +157,10 @@ public interface StmtResolver {
 
   private static void bind(@NotNull BindBlock bindBlock, AyaBinOpSet opSet, OpDecl self) {
     if (bindBlock == BindBlock.EMPTY) return;
-    var ctx = bindBlock.context().value;
+    var ctx = bindBlock.context().get();
     assert ctx != null : "no shallow resolver?";
-    bindBlock.resolvedLoosers().value = bindBlock.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
-    bindBlock.resolvedTighters().value = bindBlock.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
+    bindBlock.resolvedLoosers().set(bindBlock.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser)));
+    bindBlock.resolvedTighters().set(bindBlock.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter)));
   }
 
   private static @NotNull DefVar<?, ?> bind(
@@ -175,20 +185,22 @@ public interface StmtResolver {
 
   static void resolveBind(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case Command.Module mod -> resolveBind(mod.contents(), info);
-      case TopTeleDecl.DataDecl decl -> {
-        decl.body.forEach(ctor -> visitBind(ctor.ref, ctor.bindBlock, info));
+      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
+      case TeleDecl.DataDecl decl -> {
+        decl.body.forEach(ctor -> resolveBind(ctor, info));
         visitBind(decl.ref, decl.bindBlock, info);
       }
-      case TopTeleDecl.StructDecl decl -> {
-        decl.fields.forEach(field -> visitBind(field.ref, field.bindBlock, info));
+      case TeleDecl.StructDecl decl -> {
+        decl.fields.forEach(field -> resolveBind(field, info));
         visitBind(decl.ref, decl.bindBlock, info);
       }
-      case TopTeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
+      case TeleDecl.DataCtor ctor -> visitBind(ctor.ref, ctor.bindBlock, info);
+      case TeleDecl.StructField field -> visitBind(field.ref, field.bindBlock, info);
+      case TeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
+      case TeleDecl.PrimDecl decl -> {}
       case Remark remark -> {}
       case Command cmd -> {}
-      case TopTeleDecl.PrimDecl decl -> {}
       case Generalize generalize -> {}
     }
   }
@@ -198,15 +210,15 @@ public interface StmtResolver {
     @NotNull Context context,
     @NotNull ExprResolver bodyResolver
   ) {
-    var ctx = new Ref<>(context);
+    var ctx = MutableValue.create(context);
     var pats = match.patterns.map(pat -> subpatterns(ctx, pat));
     return new Pattern.Clause(match.sourcePos, pats,
-      match.expr.map(e -> bodyResolver.resolve(e, ctx.value)));
+      match.expr.map(e -> bodyResolver.resolve(e, ctx.get())));
   }
 
-  static @NotNull Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
-    var res = resolve(pat, ctx.value);
-    ctx.value = res._1;
+  static @NotNull Pattern subpatterns(@NotNull MutableValue<Context> ctx, Pattern pat) {
+    var res = resolve(pat, ctx.get());
+    ctx.set(res._1);
     return res._2;
   }
 
@@ -217,10 +229,10 @@ public interface StmtResolver {
   static Tuple2<Context, Pattern> resolve(@NotNull Pattern pattern, Context context) {
     return switch (pattern) {
       case Pattern.Tuple tuple -> {
-        var newCtx = new Ref<>(context);
+        var newCtx = MutableValue.create(context);
         var patterns = tuple.patterns().map(p -> subpatterns(newCtx, p));
         yield Tuple.of(
-          bindAs(tuple.as(), newCtx.value, tuple.sourcePos()),
+          bindAs(tuple.as(), newCtx.get(), tuple.sourcePos()),
           new Pattern.Tuple(tuple.sourcePos(), tuple.explicit(), patterns, tuple.as()));
       }
       case Pattern.Bind bind -> {
@@ -230,10 +242,10 @@ public interface StmtResolver {
       }
       // We will never have Ctor instances before desugar.
       case Pattern.BinOpSeq seq -> {
-        var newCtx = new Ref<>(context);
+        var newCtx = MutableValue.create(context);
         var pats = seq.seq().map(p -> subpatterns(newCtx, p));
         yield Tuple.of(
-          bindAs(seq.as(), newCtx.value, seq.sourcePos()),
+          bindAs(seq.as(), newCtx.get(), seq.sourcePos()),
           new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.as(), seq.explicit()));
       }
       default -> Tuple.of(context, pattern);
@@ -244,8 +256,8 @@ public interface StmtResolver {
     return context.iterate(c -> {
       var maybe = c.getUnqualifiedLocalMaybe(name, namePos);
       if (!(maybe instanceof DefVar<?, ?> defVar)) return null;
-      if (defVar.core instanceof CtorDef || defVar.concrete instanceof TopTeleDecl.DataCtor) return defVar;
-      if (defVar.core instanceof PrimDef || defVar.concrete instanceof TopTeleDecl.PrimDecl) return defVar;
+      if (defVar.core instanceof CtorDef || defVar.concrete instanceof TeleDecl.DataCtor) return defVar;
+      if (defVar.core instanceof PrimDef || defVar.concrete instanceof TeleDecl.PrimDecl) return defVar;
       return null;
     });
   }

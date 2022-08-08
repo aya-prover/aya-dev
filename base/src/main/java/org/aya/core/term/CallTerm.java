@@ -4,8 +4,8 @@ package org.aya.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.BaseDecl;
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
 import org.aya.generic.Arg;
@@ -25,7 +25,7 @@ public sealed interface CallTerm extends Term {
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
 
   @FunctionalInterface
-  interface Factory<D extends Def, S extends BaseDecl> {
+  interface Factory<D extends Def, S extends Decl> {
     @Contract(pure = true, value = "_,_,_->new") @NotNull CallTerm make(
       DefVar<D, S> defVar,
       int ulift,
@@ -50,19 +50,19 @@ public sealed interface CallTerm extends Term {
   }
 
   record Fn(
-    @NotNull DefVar<FnDef, TopTeleDecl.FnDecl> ref,
+    @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
   }
 
   record Prim(
-    @NotNull DefVar<PrimDef, TopTeleDecl.PrimDecl> ref,
+    @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref,
     @NotNull PrimDef.ID id,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
-    public Prim(@NotNull DefVar<@NotNull PrimDef, TopTeleDecl.PrimDecl> ref,
+    public Prim(@NotNull DefVar<@NotNull PrimDef, TeleDecl.PrimDecl> ref,
                 int ulift,
                 @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
       this(ref, ref.core.id, ulift, args);
@@ -71,12 +71,12 @@ public sealed interface CallTerm extends Term {
   }
 
   record Data(
-    @NotNull DefVar<DataDef, TopTeleDecl.DataDecl> ref,
+    @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
 
-    public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ctorRef) {
+    public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> ctorRef) {
       return new ConHead(ref, ctorRef, ulift, args);
     }
   }
@@ -85,15 +85,15 @@ public sealed interface CallTerm extends Term {
    * @author kiva
    */
   record Struct(
-    @NotNull DefVar<StructDef, TopTeleDecl.StructDecl> ref,
+    @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
   }
 
   record ConHead(
-    @NotNull DefVar<DataDef, TopTeleDecl.DataDecl> dataRef,
-    @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref,
+    @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef,
+    @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs
   ) {
@@ -113,8 +113,8 @@ public sealed interface CallTerm extends Term {
     @NotNull ImmutableSeq<Arg<Term>> conArgs
   ) implements CallTerm {
     public Con(
-      @NotNull DefVar<DataDef, TopTeleDecl.DataDecl> dataRef,
-      @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref,
+      @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef,
+      @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs,
       int ulift,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> conArgs
@@ -122,7 +122,7 @@ public sealed interface CallTerm extends Term {
       this(new ConHead(dataRef, ref, ulift, dataArgs), conArgs);
     }
 
-    @Override public @NotNull DefVar<CtorDef, TopTeleDecl.DataCtor> ref() {
+    @Override public @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref() {
       return head.ref;
     }
 
@@ -159,7 +159,7 @@ public sealed interface CallTerm extends Term {
    */
   record Access(
     @NotNull Term of,
-    @NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref,
+    @NotNull DefVar<FieldDef, TeleDecl.StructField> ref,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {

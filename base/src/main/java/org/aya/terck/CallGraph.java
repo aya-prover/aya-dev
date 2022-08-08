@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import kala.value.Ref;
+import kala.value.Var;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,13 +46,13 @@ public record CallGraph<T, P>(
 
   /** the completion of a call graph is finding its transitive closure */
   private static <T, P> @NotNull CallGraph<T, P> complete(@NotNull CallGraph<T, P> start) {
-    var oldGraph = new Ref<>(start);
-    var newEdge = new Ref<>(1);
+    var oldGraph = new Var<>(start);
+    var newEdge = new Var<>(1);
     // TODO: do we really need this fuel since we are just looking for a fixpoint?
     var fuel = start.graph.size() + 1;
     while (newEdge.value != 0 && fuel-- > 0) {
       newEdge.value = 0;
-      var newGraph = new Ref<>(CallGraph.<T, P>create());
+      var newGraph = new Var<>(CallGraph.<T, P>create());
       oldGraph.value.graph.forEach((domain, codomains) -> {
         var out = codomains.getOrNull(domain);
         if (out != null) out.forEach(matrix -> newGraph.value.put(matrix));

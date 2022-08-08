@@ -15,38 +15,40 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 public final class ComputeTerm implements SyntaxNodeAction.Cursor {
   private @Nullable WithPos<Term> result = null;
   private final @NotNull LibrarySource source;
   private final @NotNull Kind kind;
+  private final @NotNull PrimDef.Factory primFactory;
 
-  public record Kind(@NotNull PrimDef.Factory primFactory, @NotNull Function<ExprTycker.Result, Term> map) {
-    public static @NotNull Kind type(@NotNull PrimDef.Factory primFactory) {
-      return new Kind(primFactory, ExprTycker.Result::type);
+  public record Kind(@NotNull BiFunction<PrimDef.Factory, ExprTycker.Result, Term> map) {
+    public static @NotNull Kind type() {
+      return new Kind((fac, term) -> term.type());
     }
 
-    public static @NotNull Kind id(@NotNull PrimDef.Factory primFactory) {
-      return new Kind(primFactory, ExprTycker.Result::wellTyped);
+    public static @NotNull Kind id() {
+      return new Kind((fac, term) -> term.wellTyped());
     }
 
-    public static @NotNull Kind nf(@NotNull PrimDef.Factory primFactory) {
-      return new Kind(primFactory, term -> term.wellTyped().normalize(new TyckState(primFactory), NormalizeMode.NF));
+    public static @NotNull Kind nf() {
+      return new Kind((fac, term) -> term.wellTyped().normalize(new TyckState(fac), NormalizeMode.NF));
     }
 
-    public static @NotNull Kind whnf(@NotNull PrimDef.Factory primFactory) {
-      return new Kind(primFactory, term -> term.wellTyped().normalize(new TyckState(primFactory), NormalizeMode.WHNF));
+    public static @NotNull Kind whnf() {
+      return new Kind((fac, term)  -> term.wellTyped().normalize(new TyckState(fac), NormalizeMode.WHNF));
     }
   }
 
-  public ComputeTerm(@NotNull LibrarySource source, @NotNull Kind kind) {
+  public ComputeTerm(@NotNull LibrarySource source, @NotNull Kind kind, @NotNull PrimDef.Factory primFactory) {
     this.source = source;
     this.kind = kind;
+    this.primFactory = primFactory;
   }
 
   public @NotNull ComputeTermResult invoke(ComputeTermResult.Params params) {
-    var program = source.program().value;
+    var program = source.program().get();
     if (program == null) return ComputeTermResult.bad(params);
     visitAll(program, new XY(params.position));
     return result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, result);
@@ -57,7 +59,7 @@ public final class ComputeTerm implements SyntaxNodeAction.Cursor {
       var sourcePos = withTerm.sourcePos();
       if (xy.inside(sourcePos)) {
         var core = withTerm.core();
-        if (core != null) result = new WithPos<>(sourcePos, kind.map.apply(core));
+        if (core != null) result = new WithPos<>(sourcePos, kind.map.apply(primFactory, core));
       }
     }
     return Cursor.super.visitExpr(expr, xy);

@@ -21,8 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-public sealed interface Stmt extends AyaDocile, TyckUnit
-  permits Remark, TopLevelDecl, Command, Generalize {
+public sealed interface Stmt extends AyaDocile, TyckUnit permits Remark, Decl, Command, Generalize {
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 

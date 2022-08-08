@@ -74,7 +74,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
         }
       }
       case Pat.Meta meta -> {
-        var sol = meta.solution().value;
+        var sol = meta.solution().get();
         assert sol != null : "Unsolved pattern " + meta;
         match(sol, term);
       }
@@ -101,11 +101,11 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
   private void solve(@NotNull Pat pat, @NotNull RefTerm.MetaPat metaPat) throws Mismatch {
     var referee = metaPat.ref();
     var todo = referee.solution();
-    if (todo.value != null) throw new UnsupportedOperationException(
+    if (todo.get() != null) throw new UnsupportedOperationException(
       "unsure what to do, please file an issue with reproduction if you see this!");
     // In case this pattern matching is not from `PatTycker#mischa`, just block the evaluation.
     if (localCtx == null) throw new Mismatch(true);
-    todo.value = pat.rename(subst, localCtx, referee.explicit());
+    todo.set(pat.rename(subst, localCtx, referee.explicit()));
   }
 
   private void visitList(ImmutableSeq<Pat> lpats, SeqLike<Term> terms) throws Mismatch {

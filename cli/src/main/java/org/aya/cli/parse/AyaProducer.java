@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -12,7 +12,7 @@ import kala.control.Option;
 import kala.function.BooleanFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -54,11 +54,6 @@ public record AyaProducer(
   @NotNull Either<SourceFile, SourcePos> source,
   @NotNull Reporter reporter
 ) {
-  public AyaProducer(@NotNull Either<SourceFile, SourcePos> source, @NotNull Reporter reporter) {
-    this.source = source;
-    this.reporter = reporter;
-  }
-
   public Either<ImmutableSeq<Stmt>, Expr> visitRepl(AyaParser.ReplContext ctx) {
     var expr = ctx.expr();
     if (expr != null) return Either.right(visitExpr(expr));
@@ -69,12 +64,12 @@ public record AyaProducer(
     return Seq.wrapJava(ctx.stmt()).flatMap(this::visitStmt);
   }
 
-  public TopTeleDecl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
+  public TeleDecl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
     var id = ctx.weakId();
     var name = id.getText();
     var sourcePos = sourcePosOf(id);
     var type = ctx.type();
-    return new TopTeleDecl.PrimDecl(
+    return new TeleDecl.PrimDecl(
       sourcePos,
       sourcePosOf(ctx),
       name,
@@ -94,10 +89,10 @@ public record AyaProducer(
     if (decl != null) {
       var result = visitDecl(decl);
       var stmts = result._2.view().prepended(result._1);
-      if (result._1.personality() == TopTeleDecl.Personality.COUNTEREXAMPLE) {
-        var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof TopTeleDecl));
+      if (result._1 instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
+        var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof Decl));
         if (stmtOption.isDefined()) reporter.report(new BadCounterexampleWarn(stmtOption.get()));
-        return stmts.<Stmt>filterIsInstance(TopTeleDecl.class).toImmutableSeq();
+        return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
       }
       return stmts;
     }
@@ -123,15 +118,15 @@ public record AyaProducer(
   }
 
   public @NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
-    if (ctx.LOOSER() != null) return new BindBlock(sourcePosOf(ctx), new Ref<>(),
+    if (ctx.LOOSER() != null) return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
       visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()), ImmutableSeq.empty(),
-      new Ref<>(), new Ref<>());
-    else if (ctx.TIGHTER() != null) return new BindBlock(sourcePosOf(ctx), new Ref<>(),
+      MutableValue.create(), MutableValue.create());
+    else if (ctx.TIGHTER() != null) return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
       ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()),
-      new Ref<>(), new Ref<>());
-    else return new BindBlock(sourcePosOf(ctx), new Ref<>(),
+      MutableValue.create(), MutableValue.create());
+    else return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
         visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()),
-        new Ref<>(), new Ref<>());
+        MutableValue.create(), MutableValue.create());
   }
 
   public @NotNull ImmutableSeq<QualifiedID> visitLoosers(List<AyaParser.LoosersContext> ctx) {
@@ -150,7 +145,7 @@ public record AyaProducer(
     throw new InternalException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  public @NotNull Tuple2<? extends TopLevelDecl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
+  public @NotNull Tuple2<? extends Decl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
     var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
     if (fnDecl != null) return Tuple.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.empty());
@@ -184,7 +179,7 @@ public record AyaProducer(
     return tele.count(Expr.Param::explicit);
   }
 
-  public TopTeleDecl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
+  public TeleDecl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
     var personality = visitSampleModifiers(ctx.sampleModifiers());
     var modifiers = Seq.from(ctx.fnModifiers()).view()
       .map(fn -> Tuple.of(fn, visitFnModifiers(fn)))
@@ -205,10 +200,10 @@ public record AyaProducer(
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin._1), gelatin._2));
     }
-    return new TopTeleDecl.FnDecl(
+    return new TeleDecl.FnDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
-      personality == TopTeleDecl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
+      personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
         () -> EnumSet.noneOf(Modifier.class))),
       nameOrInfix._2,
@@ -221,10 +216,10 @@ public record AyaProducer(
     );
   }
 
-  public @NotNull TopTeleDecl.Personality visitSampleModifiers(AyaParser.SampleModifiersContext ctx) {
-    if (ctx == null) return TopTeleDecl.Personality.NORMAL;
-    if (ctx.EXAMPLE() != null) return TopTeleDecl.Personality.EXAMPLE;
-    return TopTeleDecl.Personality.COUNTEREXAMPLE;
+  public @NotNull Decl.Personality visitSampleModifiers(AyaParser.SampleModifiersContext ctx) {
+    if (ctx == null) return Decl.Personality.NORMAL;
+    if (ctx.EXAMPLE() != null) return Decl.Personality.EXAMPLE;
+    return Decl.Personality.COUNTEREXAMPLE;
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(List<AyaParser.TeleContext> telescope) {
@@ -369,7 +364,7 @@ public record AyaProducer(
       }
       case AyaParser.NewContext n -> new Expr.NewExpr(
         sourcePosOf(n), visitExpr(n.expr()),
-        Option.of(n.newBody()).map(b -> Seq.wrapJava(b.newArg()).map(this::visitField))
+        Option.ofNullable(n.newBody()).map(b -> Seq.wrapJava(b.newArg()).map(this::visitField))
           .getOrDefault(ImmutableSeq.empty()));
       case AyaParser.ForallContext forall -> buildPi(
         sourcePosOf(forall), false,
@@ -497,7 +492,7 @@ public record AyaProducer(
     var weakId = na.weakId();
     return new Expr.Field(new WithPos<>(sourcePosOf(weakId), weakId.getText()), visitIds(na.ids())
       .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
-      .collect(ImmutableSeq.factory()), visitExpr(na.expr()), new Ref<>());
+      .collect(ImmutableSeq.factory()), visitExpr(na.expr()), MutableValue.create());
   }
 
   public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {
@@ -590,7 +585,7 @@ public record AyaProducer(
     );
   }
 
-  public @NotNull Tuple2<TopTeleDecl, ImmutableSeq<Stmt>>
+  public @NotNull Tuple2<TeleDecl.DataDecl, ImmutableSeq<Stmt>>
   visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
@@ -598,10 +593,10 @@ public record AyaProducer(
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
-    var data = new TopTeleDecl.DataDecl(
+    var data = new TeleDecl.DataDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
-      personality == TopTeleDecl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
+      personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
@@ -612,11 +607,11 @@ public record AyaProducer(
     );
     return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
-        nameOrInfix._1.sourcePos(),
+        sourcePosOf(ctx.OPEN()),
         openAccessibility,
         new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
         Command.Open.UseHide.EMPTY,
-        personality == TopTeleDecl.Personality.EXAMPLE
+        personality == Decl.Personality.EXAMPLE
       )
     ));
   }
@@ -627,17 +622,17 @@ public record AyaProducer(
       : visitType(typeCtx);
   }
 
-  private @NotNull TopTeleDecl.DataCtor visitDataBody(AyaParser.DataBodyContext ctx) {
+  private @NotNull TeleDecl.DataCtor visitDataBody(AyaParser.DataBodyContext ctx) {
     if (ctx instanceof AyaParser.DataCtorsContext dcc) return visitDataCtor(ImmutableSeq.empty(), dcc.dataCtor());
     if (ctx instanceof AyaParser.DataClausesContext dcc) return visitDataCtorClause(dcc.dataCtorClause());
     return unreachable(ctx);
   }
 
-  public TopTeleDecl.DataCtor visitDataCtor(@NotNull ImmutableSeq<Pattern> patterns, AyaParser.DataCtorContext ctx) {
+  public TeleDecl.DataCtor visitDataCtor(@NotNull ImmutableSeq<Pattern> patterns, AyaParser.DataCtorContext ctx) {
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var bind = ctx.bindBlock();
-    return new TopTeleDecl.DataCtor(
+    return new TeleDecl.DataCtor(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       nameOrInfix._2,
@@ -655,7 +650,7 @@ public record AyaProducer(
     return Seq.wrapJava(ctx.clause()).map(this::visitClause);
   }
 
-  public @NotNull TopTeleDecl.DataCtor visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
+  public @NotNull TeleDecl.DataCtor visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
     return visitDataCtor(visitPatterns(ctx.patterns()), ctx.dataCtor());
   }
 
@@ -694,7 +689,7 @@ public record AyaProducer(
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.weakId();
-    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), MutableValue.create());
 
     return unreachable(ctx);
   }
@@ -707,20 +702,21 @@ public record AyaProducer(
 
   public @NotNull Pattern.Clause visitClause(AyaParser.ClauseContext ctx) {
     return new Pattern.Clause(sourcePosOf(ctx), visitPatterns(ctx.patterns()),
-      Option.of(ctx.expr()).map(this::visitExpr));
+      Option.ofNullable(ctx.expr()).map(this::visitExpr));
   }
 
-  public @NotNull Tuple2<TopTeleDecl, ImmutableSeq<Stmt>> visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>>
+  visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var personality = visitSampleModifiers(ctx.sampleModifiers());
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fields = visitFields(ctx.field());
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
-    var struct = new TopTeleDecl.StructDecl(
+    var struct = new TeleDecl.StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
-      personality == TopTeleDecl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
+      personality == Decl.Personality.NORMAL ? accessibility : Stmt.Accessibility.Private,
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
@@ -731,16 +727,16 @@ public record AyaProducer(
     );
     return Tuple2.of(struct, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
-        nameOrInfix._1.sourcePos(),
+        sourcePosOf(ctx.OPEN()),
         openAccessibility,
         new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
         Command.Open.UseHide.EMPTY,
-        personality == TopTeleDecl.Personality.EXAMPLE
+        personality == Decl.Personality.EXAMPLE
       )
     ));
   }
 
-  private ImmutableSeq<TopTeleDecl.StructField> visitFields(List<AyaParser.FieldContext> field) {
+  private ImmutableSeq<TeleDecl.StructField> visitFields(List<AyaParser.FieldContext> field) {
     return Seq.wrapJava(field).map(fieldCtx -> {
       if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
       else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
@@ -748,29 +744,29 @@ public record AyaProducer(
     });
   }
 
-  public TopTeleDecl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
+  public TeleDecl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var bind = ctx.bindBlock();
-    return new TopTeleDecl.StructField(
+    return new TeleDecl.StructField(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
-      Option.of(ctx.expr()).map(this::visitExpr),
+      Option.ofNullable(ctx.expr()).map(this::visitExpr),
       ImmutableSeq.empty(),
       false,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
   }
 
-  public TopTeleDecl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
+  public TeleDecl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
     var tele = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var bind = ctx.bindBlock();
-    return new TopTeleDecl.StructField(
+    return new TeleDecl.StructField(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       nameOrInfix._2,

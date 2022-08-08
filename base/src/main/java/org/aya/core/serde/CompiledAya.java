@@ -10,7 +10,6 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.repr.AyaShape;
@@ -102,8 +101,8 @@ public record CompiledAya(
 
     private @NotNull SerDef.SerBind serBind(@NotNull BindBlock bindBlock) {
       if (bindBlock == BindBlock.EMPTY) return SerDef.SerBind.EMPTY;
-      var loosers = bindBlock.resolvedLoosers().value.map(state::def);
-      var tighters = bindBlock.resolvedTighters().value.map(state::def);
+      var loosers = bindBlock.resolvedLoosers().get().map(state::def);
+      var tighters = bindBlock.resolvedTighters().get().map(state::def);
       return new SerDef.SerBind(loosers, tighters);
     }
   }

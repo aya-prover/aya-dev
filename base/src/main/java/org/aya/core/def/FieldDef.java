@@ -4,19 +4,19 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import org.aya.concrete.stmt.TopTeleDecl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.Matching;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 public final class FieldDef extends SubLevelDef {
-  public final @NotNull DefVar<StructDef, TopTeleDecl.StructDecl> structRef;
-  public final @NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref;
+  public final @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef;
+  public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
   public final @NotNull Option<Term> body;
 
   public FieldDef(
-    @NotNull DefVar<StructDef, TopTeleDecl.StructDecl> structRef, @NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref,
+    @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef, @NotNull DefVar<FieldDef, TeleDecl.StructField> ref,
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
     @NotNull Term result, @NotNull ImmutableSeq<Matching> clauses, @NotNull Option<Term> body, boolean coerce
   ) {
@@ -31,7 +31,7 @@ public final class FieldDef extends SubLevelDef {
     return selfTele;
   }
 
-  public @NotNull DefVar<FieldDef, TopTeleDecl.StructField> ref() {
+  public @NotNull DefVar<FieldDef, TeleDecl.StructField> ref() {
     return ref;
   }
 }

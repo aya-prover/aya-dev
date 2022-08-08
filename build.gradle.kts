@@ -1,7 +1,7 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.aya.gradle.StripPreview
+import org.aya.gradle.BuildUtil
 import java.util.*
 
 plugins {
@@ -27,7 +27,16 @@ allprojects {
 @Suppress("unsupported")
 val useJacoco = ["base", "pretty", "cli"]
 
+/** gradle.properties or environmental variables */
+fun propOrEnv(name: String): String =
+  if (hasProperty(name)) property(name).toString()
+  else (System.getenv(name) ?: "")
+
 subprojects {
+  val proj = this@subprojects
+  val isSnapshot = proj.version.toString().endsWith("SNAPSHOT")
+  if (!isSnapshot) setProperty("release", true)
+
   apply {
     plugin("java")
     plugin("idea")
@@ -72,7 +81,7 @@ subprojects {
       tree.include("**/*.class")
       tree.exclude("module-info.class")
       val root = project.buildDir.toPath().resolve("classes/java/main")
-      tree.forEach { StripPreview.stripPreview(root, it.toPath(), true) }
+      tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
     }
   }
 
@@ -116,12 +125,18 @@ subprojects {
     enableAssertions = true
   }
 
-  if (hasProperty("ossrhUsername")) publishing.repositories {
-    maven("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2") {
+  val ossrhUsername = propOrEnv("ossrhUsername")
+  val ossrhPassword = propOrEnv("ossrhPassword")
+
+  if (ossrhUsername.isNotEmpty()) publishing.repositories {
+    maven {
+      val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
+      val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+      url = if (hasProperty("release")) releasesRepoUrl else snapshotsRepoUrl
       name = "MavenCentral"
       credentials {
-        username = property("ossrhUsername").toString()
-        password = property("ossrhPassword").toString()
+        username = ossrhUsername
+        password = ossrhPassword
       }
     }
   }
@@ -131,7 +146,6 @@ subprojects {
     enabled = false
   }
 
-  val proj = this@subprojects
   publishing.publications {
     create<MavenPublication>("maven") {
       val githubUrl = "https://github.com/aya-prover/aya-dev"
@@ -153,11 +167,13 @@ subprojects {
           fun dev(i: String, n: String, u: String) = developer {
             id.set(i)
             name.set(n)
-            url.set(u)
+            email.set(u)
           }
           dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
           dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
           dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
+          dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
+          dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
         }
         scm {
           connection.set("scm:git:$githubUrl")
@@ -167,7 +183,8 @@ subprojects {
     }
   }
 
-  if (hasProperty("signing.keyId")) signing {
+  if (hasProperty("signing.keyId") && hasProperty("release")) signing {
+    useGpgCmd()
     sign(publishing.publications["maven"])
   }
 }

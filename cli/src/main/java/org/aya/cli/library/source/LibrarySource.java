@@ -1,12 +1,11 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.value.Ref;
+import kala.value.MutableValue;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.generic.Constants;
 import org.aya.resolve.ResolveInfo;
@@ -31,16 +30,17 @@ public record LibrarySource(
   @NotNull LibraryOwner owner,
   @NotNull Path file,
   @NotNull MutableList<LibrarySource> imports,
-  @NotNull Ref<ImmutableSeq<Stmt>> program,
-  @NotNull Ref<ImmutableSeq<GenericDef>> tycked,
-  @NotNull Ref<ResolveInfo> resolveInfo
+  @NotNull MutableValue<ImmutableSeq<Stmt>> program,
+  @NotNull MutableValue<ImmutableSeq<GenericDef>> tycked,
+  @NotNull MutableValue<ResolveInfo> resolveInfo
 ) {
   public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {
-    this(owner, FileUtil.canonicalize(file), MutableList.create(), new Ref<>(), new Ref<>(), new Ref<>());
+    this(owner, FileUtil.canonicalize(file), MutableList.create(), MutableValue.create(), MutableValue.create(), MutableValue.create());
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {
-    if (resolveInfo.value != null) return resolveInfo.value.thisModule().moduleName();
+    var info = resolveInfo.get();
+    if (info != null) return info.thisModule().moduleName();
     var display = displayPath();
     var displayNoExt = display.resolveSibling(display.getFileName().toString().replaceAll("\\.aya", ""));
     return IntStream.range(0, displayNoExt.getNameCount())
@@ -56,7 +56,7 @@ public record LibrarySource(
     return new SourceFile(displayPath().toString(), file, sourceCode);
   }
 
-  public @NotNull Path coreFile() {
+  public @NotNull Path compiledCorePath() {
     var mod = moduleName();
     return FileUtil.resolveFile(owner.outDir(), mod, Constants.AYAC_POSTFIX);
   }

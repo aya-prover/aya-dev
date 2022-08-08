@@ -11,24 +11,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An item in the signature, with fields and result type.
- * Concrete definition, corresponding to {@link ClassDef}.
+ * Concrete classable definitions, corresponding to {@link ClassDef}.
  *
  * @author zaoqi
+ * @see Decl
  */
-public non-sealed/*sealed*/ abstract class ClassDecl extends BaseDecl implements TopLevelDecl {
-  public @NotNull Expr result;
-  public final @NotNull TopLevelDecl.Personality personality;
-
+public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implements Decl.Resulted, Decl.TopLevel {
+  private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
-  public final @NotNull Accessibility accessibility;
+  public @NotNull Expr result;
 
-  @Override public @NotNull TopLevelDecl.Personality personality() {
+  @Override public @NotNull Decl.Personality personality() {
     return personality;
-  }
-
-  @Override public @NotNull Accessibility accessibility() {
-    return accessibility;
   }
 
   @Override public @Nullable Context getCtx() {
@@ -53,13 +47,12 @@ public non-sealed/*sealed*/ abstract class ClassDecl extends BaseDecl implements
     @Nullable OpDecl.OpInfo opInfo,
     @NotNull BindBlock bindBlock,
     @NotNull Expr result,
-    @NotNull TopTeleDecl.Personality personality,
+    @NotNull Decl.Personality personality,
     @NotNull Accessibility accessibility
   ) {
-    super(sourcePos, entireSourcePos, opInfo, bindBlock);
+    super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock);
     this.result = result;
     this.personality = personality;
-    this.accessibility = accessibility;
   }
 
   @Override public String toString() {

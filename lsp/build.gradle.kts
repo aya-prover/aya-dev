@@ -12,6 +12,8 @@ dependencies {
   api("org.eclipse.lsp4j", "org.eclipse.lsp4j", version = lsp4jVersion)
   api("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc", version = lsp4jVersion)
   annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
+  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
+  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
 }
 
 plugins {
@@ -22,6 +24,12 @@ tasks.withType<JavaCompile>().configureEach {
   doFirst {
     options.compilerArgs.addAll(listOf("--module-path", classpath.asPath))
   }
+}
+
+tasks.named<Test>("test") {
+  testLogging.showStandardStreams = true
+  testLogging.showCauses = true
+  inputs.dir(projectDir.resolve("src/test/resources"))
 }
 
 jlink {

@@ -3,6 +3,9 @@
 package org.aya.lsp.models;
 
 import kala.collection.SeqLike;
+import kala.value.TransientVar;
+import org.aya.lsp.utils.LspRange;
+import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +29,11 @@ public record HighlightResult(
 
   public record Symbol(
     @NotNull Range range,
-    @NotNull HighlightResult.Kind kind
-  ) {}
+    @NotNull HighlightResult.Kind kind,
+    @NotNull TransientVar<SourcePos> sourcePos
+  ) {
+    public Symbol(@NotNull SourcePos sourcePos, @NotNull HighlightResult.Kind kind) {
+      this(LspRange.toRange(sourcePos), kind, new TransientVar<>(sourcePos));
+    }
+  }
 }

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.library.source.LibraryOwner;
@@ -18,13 +19,11 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<HighlightResult.Symbol>> {
-  public static @NotNull List<HighlightResult> invoke(@NotNull LibraryOwner owner) {
+  public static @NotNull ImmutableSeq<HighlightResult> invoke(@NotNull LibraryOwner owner) {
     var symbols = MutableList.<HighlightResult>create();
     highlight(owner, symbols);
-    return symbols.asJava();
+    return symbols.toImmutableSeq();
   }
 
   private static void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {
@@ -34,28 +33,30 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   private static @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
     var symbols = MutableList.<HighlightResult.Symbol>create();
-    var program = source.program().value;
+    var program = source.program().get();
     if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
-    return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
+    return new HighlightResult(
+      source.file().toUri().toString(),
+      symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
   private static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
 
   // region def, data, struct, prim, levels
   @Override
-  public void visitTelescopic(BaseDecl.@NotNull Telescopic signatured, @NotNull MutableList<HighlightResult.Symbol> buffer) {
-    buffer.append(new HighlightResult.Symbol(LspRange.toRange(signatured), switch (signatured) {
-      case TopTeleDecl.DataDecl $ -> HighlightResult.Kind.DataDef;
-      case TopTeleDecl.StructField $ -> HighlightResult.Kind.FieldDef;
-      case TopTeleDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
-      case TopTeleDecl.DataCtor $ -> HighlightResult.Kind.ConDef;
-      case TopTeleDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
-      case TopTeleDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
+  public void visitTelescopic(@NotNull Decl decl, Decl.@NotNull Telescopic proof, @NotNull MutableList<HighlightResult.Symbol> buffer) {
+    buffer.append(new HighlightResult.Symbol(decl.sourcePos(), switch (proof) {
+      case TeleDecl.DataDecl $ -> HighlightResult.Kind.DataDef;
+      case TeleDecl.StructField $ -> HighlightResult.Kind.FieldDef;
+      case TeleDecl.PrimDecl $ -> HighlightResult.Kind.PrimDef;
+      case TeleDecl.DataCtor $ -> HighlightResult.Kind.ConDef;
+      case TeleDecl.FnDecl $ -> HighlightResult.Kind.FnDef;
+      case TeleDecl.StructDecl $ -> HighlightResult.Kind.StructDef;
     }));
-    StmtOps.super.visitTelescopic(signatured, buffer);
+    StmtOps.super.visitTelescopic(decl, proof, buffer);
   }
 
-  @Override public void visitDecl(@NotNull TopLevelDecl decl, @NotNull MutableList<HighlightResult.Symbol> buffer) {
+  @Override public void visitDecl(@NotNull Decl decl, @NotNull MutableList<HighlightResult.Symbol> buffer) {
     visitBind(buffer, decl.bindBlock());
     StmtOps.super.visitDecl(decl, buffer);
   }
@@ -63,7 +64,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   @Override public void visit(@NotNull Stmt stmt, @NotNull MutableList<HighlightResult.Symbol> pp) {
     if (stmt instanceof Generalize generalize) {
       for (var generalized : generalize.variables)
-        pp.append(new HighlightResult.Symbol(LspRange.toRange(generalized.sourcePos),
+        pp.append(new HighlightResult.Symbol(generalized.sourcePos,
           HighlightResult.Kind.Generalize));
     }
     StmtOps.super.visit(stmt, pp);
@@ -81,7 +82,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
           visitCall(defVar, proj.ix().getRightValue().sourcePos(), pp);
       }
       case Expr.NewExpr neo -> neo.fields().forEach(field -> {
-        if (field.resolvedField().value instanceof DefVar<?, ?> defVar)
+        if (field.resolvedField().get() instanceof DefVar<?, ?> defVar)
           visitCall(defVar, field.name().sourcePos(), pp);
       });
       default -> {}
@@ -91,7 +92,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
 
   private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull MutableList<HighlightResult.Symbol> buffer) {
     var kind = kindOf(ref);
-    if (kind != null) buffer.append(new HighlightResult.Symbol(LspRange.toRange(headPos), kind));
+    if (kind != null) buffer.append(new HighlightResult.Symbol(headPos, kind));
   }
   // endregion
 
@@ -111,40 +112,40 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   @Override public void visitCommand(@NotNull Command cmd, @NotNull MutableList<HighlightResult.Symbol> pp) {
     switch (cmd) {
       case Command.Import imp ->
-        pp.append(new HighlightResult.Symbol(LspRange.toRange(imp.path().sourcePos()), HighlightResult.Kind.ModuleDef));
+        pp.append(new HighlightResult.Symbol(imp.path().sourcePos(), HighlightResult.Kind.ModuleDef));
       case Command.Open open ->
-        pp.append(new HighlightResult.Symbol(LspRange.toRange(open.path().sourcePos()), HighlightResult.Kind.ModuleDef));
+        pp.append(new HighlightResult.Symbol(open.path().sourcePos(), HighlightResult.Kind.ModuleDef));
       case Command.Module mod ->
-        pp.append(new HighlightResult.Symbol(LspRange.toRange(mod.sourcePos()), HighlightResult.Kind.ModuleDef));
+        pp.append(new HighlightResult.Symbol(mod.sourcePos(), HighlightResult.Kind.ModuleDef));
     }
     StmtOps.super.visitCommand(cmd, pp);
   }
 
   private HighlightResult.@Nullable Kind kindOf(@NotNull DefVar<?, ?> ref) {
-    if (ref.core instanceof FnDef || ref.concrete instanceof TopTeleDecl.FnDecl)
+    if (ref.core instanceof FnDef || ref.concrete instanceof TeleDecl.FnDecl)
       return HighlightResult.Kind.FnCall;
-    else if (ref.core instanceof StructDef || ref.concrete instanceof TopTeleDecl.StructDecl)
+    else if (ref.core instanceof StructDef || ref.concrete instanceof TeleDecl.StructDecl)
       return HighlightResult.Kind.StructCall;
-    else if (ref.core instanceof FieldDef || ref.concrete instanceof TopTeleDecl.StructField)
+    else if (ref.core instanceof FieldDef || ref.concrete instanceof TeleDecl.StructField)
       return HighlightResult.Kind.FieldCall;
-    else if (ref.core instanceof PrimDef || ref.concrete instanceof TopTeleDecl.PrimDecl)
+    else if (ref.core instanceof PrimDef || ref.concrete instanceof TeleDecl.PrimDecl)
       return HighlightResult.Kind.PrimCall;
-    else if (ref.core instanceof DataDef || ref.concrete instanceof TopTeleDecl.DataDecl)
+    else if (ref.core instanceof DataDef || ref.concrete instanceof TeleDecl.DataDecl)
       return HighlightResult.Kind.DataCall;
-    else if (ref.core instanceof CtorDef || ref.concrete instanceof TopTeleDecl.DataCtor)
+    else if (ref.core instanceof CtorDef || ref.concrete instanceof TeleDecl.DataCtor)
       return HighlightResult.Kind.ConCall;
     return null;
   }
 
   private void visitOperator(@NotNull MutableList<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @Nullable DefVar<?, ?> op) {
-    Option.of(op).filter(DefVar::isInfix).mapNotNull(this::kindOf)
-      .forEach(kind -> buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kind)));
+    Option.ofNullable(op).filter(DefVar::isInfix).mapNotNull(this::kindOf)
+      .forEach(kind -> buffer.append(new HighlightResult.Symbol(sourcePos, kind)));
   }
 
   private void visitBind(@NotNull MutableList<HighlightResult.Symbol> buffer, @NotNull BindBlock bindBlock) {
     if (bindBlock == BindBlock.EMPTY) return;
-    var loosers = bindBlock.resolvedLoosers().value;
-    var tighters = bindBlock.resolvedTighters().value;
+    var loosers = bindBlock.resolvedLoosers().get();
+    var tighters = bindBlock.resolvedTighters().get();
     if (loosers != null) bindBlock.loosers().view().zip(loosers.view())
       .forEach(tup -> visitOperator(buffer, tup._1.sourcePos(), tup._2));
     if (tighters != null) bindBlock.tighters().view().zip(tighters.view())

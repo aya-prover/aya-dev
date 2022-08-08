@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
+import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
@@ -11,14 +12,16 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
+import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.ModNotFoundError;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.util.FileUtil;
 import org.aya.util.MutableGraph;
 import org.aya.util.StringUtil;
 import org.aya.util.reporter.CountingReporter;
@@ -26,6 +29,7 @@ import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.OrgaTycker;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,65 +43,95 @@ public class LibraryCompiler {
   private final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
   private final @NotNull CountingReporter reporter;
   private final @NotNull CompilerFlags flags;
+  private final @NotNull CompilerAdvisor advisor;
 
-  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull LibraryModuleLoader.United states) {
+  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull CompilerAdvisor advisor, @NotNull LibraryModuleLoader.United states) {
     var counting = CountingReporter.delegate(reporter);
-    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(counting, owner, states));
+    this.advisor = advisor;
+    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(counting, owner, advisor, states));
     this.reporter = counting;
     this.flags = flags;
     this.owner = owner;
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner) {
-    return new LibraryCompiler(reporter, flags, owner, new LibraryModuleLoader.United(primFactory));
+  public static @NotNull LibraryCompiler newCompiler(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull LibraryOwner owner
+  ) {
+    return new LibraryCompiler(reporter, flags, owner, advisor, new LibraryModuleLoader.United(primFactory));
   }
 
-  public static @NotNull LibraryCompiler newCompiler(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
-    var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
+  public static @NotNull LibraryCompiler newCompiler(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull Path libraryRoot
+  ) throws IOException {
+    var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
     var owner = DiskLibraryOwner.from(config);
-    return newCompiler(primFactory, reporter, flags, owner);
+    return newCompiler(primFactory, reporter, flags, advisor, owner);
   }
 
-  public static int compile(@NotNull PrimDef.Factory primFactory, @NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
+  public static int compile(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull Reporter reporter,
+    @NotNull CompilerFlags flags,
+    @NotNull CompilerAdvisor advisor,
+    @NotNull Path libraryRoot
+  ) throws IOException {
     if (!Files.exists(libraryRoot)) {
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
-    return newCompiler(primFactory, reporter, flags, libraryRoot).start();
+    return newCompiler(primFactory, reporter, flags, advisor, libraryRoot).start();
   }
 
-  private void resolveImports(@NotNull LibrarySource source) throws IOException {
-    if (source.program().value != null) return; // already parsed
+  private void parse(@NotNull LibrarySource source) throws IOException {
     var owner = source.owner();
     var program = new AyaParserImpl(reporter).program(owner.locator(), source.file());
-    source.program().value = program;
+    source.program().set(program);
+  }
+
+  /** @return whether the source file is already parsed. */
+  private boolean parseIfNeeded(@NotNull LibrarySource source) throws IOException {
+    if (source.program().get() != null) return true; // already parsed
+    parse(source);
+    return false;
+  }
+
+  /**
+   * Traverse the source file's import statements and build its dependency graph.
+   * The graph is used to generate incremental build list according to files'
+   * last modified time.
+   */
+  private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException {
+    if (parseIfNeeded(source)) return; // already resolved
     var finder = new ImportResolver((mod, sourcePos) -> {
-      var file = owner.findModule(mod);
-      if (file == null) {
+      var recurse = owner.findModule(mod);
+      if (recurse == null) {
         reporter.report(new ModNotFoundError(mod, sourcePos));
         throw new Context.ResolvingInterruptedException();
       }
-      try {
-        resolveImports(file);
-      } catch (IOException e) {
-        throw new RuntimeException("Cannot load imported module " + mod, e);
-      }
-      return file;
+      return recurse;
     }, source);
-    finder.resolveStmt(program);
+    finder.resolveStmt(source.program().get());
   }
 
-  private @NotNull MutableGraph<LibrarySource> resolveLibraryImports() throws IOException {
-    var graph = MutableGraph.<LibrarySource>create();
+  private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException {
+    var depGraph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
     var startTime = System.currentTimeMillis();
-    for (var file : owner.librarySources()) {
-      resolveImports(file);
-      collectDep(graph, file);
-    }
+    owner.librarySources().forEachChecked(src -> {
+      resolveImportsIfNeeded(src);
+      depGraph.sucMut(src).appendAll(src.imports());
+    });
     reporter.reportNest("Done in " + StringUtil.timeToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
-    return graph;
+    return depGraph;
   }
 
   public int start() throws IOException {
@@ -120,7 +154,7 @@ public class LibraryCompiler {
     var library = owner.underlyingLibrary();
     var anyDepChanged = false;
     for (var dep : owner.libraryDeps()) {
-      var depCompiler = new LibraryCompiler(reporter, flags, dep, moduleLoader.loader.states());
+      var depCompiler = new LibraryCompiler(reporter, flags, dep, advisor, moduleLoader.loader.states());
       var upToDate = depCompiler.make();
       anyDepChanged = anyDepChanged || !upToDate;
       owner.addModulePath(dep.outDir());
@@ -128,46 +162,50 @@ public class LibraryCompiler {
 
     reporter.reportString("Compiling " + library.name());
     var startTime = System.currentTimeMillis();
-    if (anyDepChanged || flags.remake()) cleanReused();
+    if (anyDepChanged || flags.remake()) {
+      owner.librarySources().forEach(this::clearModified);
+      advisor.clearLibraryOutput(owner);
+    }
 
     var srcRoot = library.librarySrcRoot();
     owner.addModulePath(srcRoot);
 
-    var depGraph = resolveLibraryImports();
-    var make = make(depGraph);
+    var modified = collectModified();
+    if (modified.isEmpty()) {
+      reportNest("[Info] No changes detected, no need to remake");
+      return true;
+    }
+
+    var make = make(modified);
     reporter.reportNest("Library loaded in " + StringUtil.timeToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return make;
   }
 
-  private void cleanReused() throws IOException {
-    owner.librarySources().forEach(src -> {
-      src.program().value = null;
-      src.tycked().value = null;
-      src.resolveInfo().value = null;
-    });
-    FileUtil.deleteRecursively(owner.outDir());
-  }
-
   /**
    * @return whether the library is up-to-date.
    */
-  private boolean make(@NotNull MutableGraph<LibrarySource> depGraph) throws IOException {
-    var changed = buildIncremental(depGraph);
-    var SCCs = changed.topologicalOrder().view()
+  private boolean make(@NotNull ImmutableSeq<LibrarySource> modified) throws IOException {
+    // modified sources need reparse
+    modified.forEach(this::clearModified);
+    var depGraph = resolveImports();
+    var affected = collectAffected(modified, depGraph);
+    var SCCs = affected.topologicalOrder().view()
       .reversed().toImmutableSeq();
-    // ^ top order generated from usage graph should be reversed
+    // ^ top order generated from usage graph should be reversed.
     // Only here we generate top order from usage graph just for efficiency
     // (transposing a graph is slower than reversing a list).
     // in other cases we always generate top order from dependency graphs
     // because usage graphs are never needed.
-    if (SCCs.isEmpty()) {
-      reportNest("[Info] No changes detected, no need to remake");
-      return true;
-    }
 
-    Files.createDirectories(owner.outDir());
-    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader), changed);
+    // clear some info instead of reparse? No we can't, because
+    // the StmtResolver mutates the concrete tree.
+    SCCs.forEachChecked(i -> i.forEachChecked(this::reparseAffected));
+
+    advisor.prepareLibraryOutput(owner);
+    advisor.notifyIncrementalJob(modified, SCCs);
+
+    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader, advisor), affected);
     SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("I dislike the following module(s):");
@@ -179,14 +217,66 @@ public class LibraryCompiler {
     return false;
   }
 
-  private @NotNull MutableGraph<LibrarySource> buildIncremental(@NotNull MutableGraph<LibrarySource> depGraph) {
-    var usage = depGraph.transpose();
-    var changed = MutableGraph.<LibrarySource>create();
-    depGraph.E().keysView().forEach(s -> {
-      if (Timestamp.sourceModified(s))
-        collectChanged(usage, s, changed);
-    });
-    return changed;
+  private void reparseAffected(@NotNull LibrarySource src) throws IOException {
+    if (src.tycked().get() == null) return;
+    src.tycked().set(null);
+    src.resolveInfo().set(null);
+    clearPrimitives(src.program().get());
+    parse(src);
+  }
+
+  private void clearModified(@NotNull LibrarySource src) {
+    clearPrimitives(src.program().get());
+    src.program().set(null);
+    src.tycked().set(null);
+    src.resolveInfo().set(null);
+    src.imports().clear();
+  }
+
+  /** collect usages of directly modified source files */
+  private static @NotNull MutableGraph<LibrarySource> collectAffected(
+    @NotNull ImmutableSeq<LibrarySource> modified,
+    @NotNull MutableGraph<LibrarySource> depGraph
+  ) {
+    var usageGraph = depGraph.transpose();
+    var affectedUsage = MutableGraph.<LibrarySource>create();
+    modified.forEach(aff -> collectAffected(usageGraph, aff, affectedUsage));
+    return affectedUsage;
+  }
+
+  private static void collectAffected(
+    @NotNull MutableGraph<LibrarySource> usageGraph,
+    @NotNull LibrarySource affected,
+    @NotNull MutableGraph<LibrarySource> affectedUsage
+  ) {
+    if (affectedUsage.E().containsKey(affected)) return;
+    var suc = usageGraph.suc(affected);
+    affectedUsage.sucMut(affected).appendAll(suc);
+    suc.forEach(dep -> collectAffected(usageGraph, dep, affectedUsage));
+  }
+
+  /** collect source files that are directly modified by user */
+  private @NotNull ImmutableSeq<LibrarySource> collectModified() {
+    return owner.librarySources().filter(advisor::isSourceModified).toImmutableSeq();
+  }
+
+  private void clearPrimitives(@Nullable ImmutableSeq<Stmt> stmts) {
+    if (stmts == null) return;
+    PrimitiveCleaner.clear(moduleLoader.loader.states().primFactory(), stmts);
+  }
+
+  interface PrimitiveCleaner {
+    static void clear(@NotNull PrimDef.Factory factory, @NotNull ImmutableSeq<Stmt> stmts) {
+      stmts.forEach(s -> clear(factory, s));
+    }
+
+    static void clear(@NotNull PrimDef.Factory factory, @NotNull Stmt stmt) {
+      switch (stmt) {
+        case Command.Module mod -> clear(factory, mod.contents());
+        case TeleDecl.PrimDecl decl && decl.ref.core != null -> factory.clear(decl.ref.core.id);
+        default -> {}
+      }
+    }
   }
 
   record LibraryOrgaTycker(
@@ -205,11 +295,12 @@ public class LibraryCompiler {
 
   record LibrarySccTycker(
     @NotNull CountingReporter reporter,
-    @NotNull ModuleLoader moduleLoader
+    @NotNull ModuleLoader moduleLoader,
+    @NotNull CompilerAdvisor advisor
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
-      for (var f : order) Files.deleteIfExists(f.coreFile());
+      for (var f : order) advisor.clearModuleOutput(f);
       for (var f : order) {
         tyckOne(f);
         if (reporter.anyError()) {
@@ -223,7 +314,7 @@ public class LibraryCompiler {
     private void tyckOne(@NotNull LibrarySource file) {
       var moduleName = file.moduleName();
       var mod = moduleLoader.load(moduleName);
-      if (mod == null || file.resolveInfo().value == null)
+      if (mod == null || file.resolveInfo().get() == null)
         throw new InternalException("Unable to load module: " + moduleName);
       reporter.reportNest("[Tyck] %s (%s)".formatted(
         QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
@@ -234,23 +325,7 @@ public class LibraryCompiler {
     reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT);
   }
 
-  private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {
-    dep.sucMut(info).appendAll(info.imports());
-    info.imports().forEach(i -> collectDep(dep, i));
-  }
-
   public @NotNull LibraryOwner libraryOwner() {
     return owner;
-  }
-
-  private static void collectChanged(
-    @NotNull MutableGraph<LibrarySource> usage,
-    @NotNull LibrarySource changed,
-    @NotNull MutableGraph<LibrarySource> changedGraph
-  ) {
-    if (changedGraph.E().containsKey(changed)) return;
-    var suc = usage.suc(changed);
-    changedGraph.sucMut(changed).appendAll(suc);
-    suc.forEach(dep -> collectChanged(usage, dep, changedGraph));
   }
 }
