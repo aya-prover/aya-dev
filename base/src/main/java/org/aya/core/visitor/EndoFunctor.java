@@ -2,12 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -43,7 +41,7 @@ public interface EndoFunctor extends Function<Term, Term> {
 
     private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {
       var v = param.renameVar();
-      subst.addDirectly(param.ref(), new RefTerm(v, 0));
+      subst.addDirectly(param.ref(), new RefTerm(v));
       return new Term.Param(v, param.type(), param.pattern(), param.explicit());
     }
 
@@ -60,7 +58,7 @@ public interface EndoFunctor extends Function<Term, Term> {
   }
 
   /**
-   * Performes capture-avoiding substitution.
+   * Performs capture-avoiding substitution.
    */
   record Substituter(@NotNull Subst subst) implements EndoFunctor {
     @Override public @NotNull Term post(@NotNull Term term) {
@@ -74,21 +72,7 @@ public interface EndoFunctor extends Function<Term, Term> {
   }
 
   /** A lift but in American English. */
-  record Elevator(int lift, @NotNull MutableList<Var> boundVars) implements EndoFunctor {
-    public Elevator(int lift) {
-      this(lift, MutableList.create());
-    }
-
-    @Override public @NotNull Term pre(@NotNull Term term) {
-      switch (term) {
-        case FormTerm.Pi pi -> boundVars.append(pi.param().ref());
-        case FormTerm.Sigma sigma -> boundVars.appendAll(sigma.params().map(Term.Param::ref));
-        case IntroTerm.Lambda lambda -> boundVars.append(lambda.param().ref());
-        default -> {}
-      }
-      return term;
-    }
-
+  record Elevator(int lift) implements EndoFunctor {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + lift);
@@ -102,10 +86,6 @@ public interface EndoFunctor extends Function<Term, Term> {
         case CallTerm.Fn fn -> new CallTerm.Fn(fn.ref(), fn.ulift() + lift, fn.args());
         case CallTerm.Prim prim -> new CallTerm.Prim(prim.ref(), prim.ulift() + lift, prim.args());
         case CallTerm.Hole hole -> new CallTerm.Hole(hole.ref(), hole.ulift() + lift, hole.contextArgs(), hole.args());
-        case RefTerm ref -> boundVars.contains(ref.var())
-          ? ref : new RefTerm(ref.var(), ref.lift() + lift);
-        case RefTerm.Field field -> boundVars.contains(field.ref())
-          ? field : new RefTerm.Field(field.ref(), field.lift() + lift);
         case Term misc -> misc;
       };
     }

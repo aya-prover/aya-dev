@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -12,13 +12,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public record RefTerm(@NotNull LocalVar var, int lift) implements Term {
-
-  public record Field(@NotNull DefVar<FieldDef, TeleDecl.StructField> ref, int lift) implements Term {
+public record RefTerm(@NotNull LocalVar var) implements Term {
+  public record Field(@NotNull DefVar<FieldDef, TeleDecl.StructField> ref) implements Term {
   }
 
-  public record MetaPat(@NotNull Pat.Meta ref, int lift) implements Term {
-
+  public record MetaPat(@NotNull Pat.Meta ref) implements Term {
     public @NotNull Term inline() {
       var sol = ref.solution().get();
       return sol != null ? sol.toTerm() : this;
