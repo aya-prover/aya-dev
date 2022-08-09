@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.experiments;
 
@@ -34,7 +34,7 @@ public class NormalizeHugeChurch {
     var last = ((FnDef) decls.last()).body.getLeftValue();
     println("Tyck: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
-    var nf = last.normalize(null, NormalizeMode.NF);
+    var nf = last.normalize(state, NormalizeMode.NF);
     println("Normalize: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var doc = nf.toDoc(DistillerOptions.informative());

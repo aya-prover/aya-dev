@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
 public interface VarConsumer extends TermConsumer {
-  default void var(Var var) {}
+  void var(Var var);
 
   @Override default void accept(@NotNull Term term) {
     switch (term) {

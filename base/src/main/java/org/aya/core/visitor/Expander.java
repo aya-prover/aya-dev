@@ -21,7 +21,6 @@ import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface Expander extends EndoFunctor {
   TyckState state();
@@ -101,7 +100,7 @@ public interface Expander extends EndoFunctor {
     return tryUnfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), ulift, clauses);
   }
 
-  record Normalizer(TyckState state) implements Expander {
+  record Normalizer(@NotNull TyckState state) implements Expander {
     @Override public Term post(Term term) {
       return switch (term) {
         case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> apply(CallTerm.make(lam, app.arg()));
@@ -119,8 +118,7 @@ public interface Expander extends EndoFunctor {
   record WHNFer(TyckState state) implements Expander {
     @Override public Term post(Term term) {
       return switch (term) {
-        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda ->
-          apply(CallTerm.make(lambda, app.arg()));
+        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda -> apply(CallTerm.make(lambda, app.arg()));
         case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
           var ix = proj.ix();
           assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
@@ -145,7 +143,7 @@ public interface Expander extends EndoFunctor {
   record Tracked(
     @NotNull Set<@NotNull Var> unfolding,
     @NotNull MutableSet<@NotNull Var> unfolded,
-    @Nullable TyckState state,
+    @NotNull TyckState state,
     @NotNull PrimDef.Factory factory
   ) implements Expander {
     @Override public Term apply(Term term) {
@@ -160,10 +158,7 @@ public interface Expander extends EndoFunctor {
           unfolded.add(con.ref());
           yield Expander.super.apply(con);
         }
-        case CallTerm.Prim prim -> {
-          // TODO[kiva]: Q: is OK to use `state`? so we don't need this override.
-          yield factory.unfold(prim.id(), prim, state);
-        }
+        case CallTerm.Prim prim -> factory.unfold(prim.id(), prim, state);
         default -> Expander.super.apply(term);
       };
     }

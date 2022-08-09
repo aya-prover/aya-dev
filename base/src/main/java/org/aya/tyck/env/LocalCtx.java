@@ -15,7 +15,6 @@ import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -42,18 +41,17 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   void remove(@NotNull SeqView<LocalVar> vars);
   default void forward(@NotNull LocalCtx dest, @NotNull Term term, @NotNull TyckState state) {
-    new VarConsumer() {
-      @Override public void var(Var var) {
-        switch (var) {
-          case LocalVar localVar -> dest.put(localVar, get(localVar));
-          case Meta meta -> {
-            var sol = state.metas().getOrNull(meta);
-            if (sol != null) forward(dest, sol, state);
-          }
-          case null, default -> {}
+    VarConsumer f = var -> {
+      switch (var) {
+        case LocalVar localVar -> dest.put(localVar, get(localVar));
+        case Meta meta -> {
+          var sol = state.metas().getOrNull(meta);
+          if (sol != null) forward(dest, sol, state);
         }
+        case null, default -> {}
       }
-    }.accept(term);
+    };
+    f.accept(term);
   }
   default <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
     put(var, type);
