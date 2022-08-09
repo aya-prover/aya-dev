@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -88,7 +88,7 @@ public record StmtShallowResolver(
           resolveInfo.shapeFactory().importAll(modResolveInfo.shapeFactory());
         }
         // renaming as infix
-        if (useHide.strategy() == Command.Open.UseHide.Strategy.Using) useHide.list().forEach(use -> {
+        if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
           var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
