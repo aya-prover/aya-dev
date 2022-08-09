@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
@@ -11,7 +11,7 @@ import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.EndoVarConsumer;
+import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.LocalVar;
@@ -42,7 +42,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   void remove(@NotNull SeqView<LocalVar> vars);
   default void forward(@NotNull LocalCtx dest, @NotNull Term term, @NotNull TyckState state) {
-    new EndoVarConsumer() {
+    new VarConsumer() {
       @Override public void var(Var var) {
         switch (var) {
           case LocalVar localVar -> dest.put(localVar, get(localVar));

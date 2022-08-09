@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -23,21 +23,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 /**
- * A convenient interface to obtain an endofunction on `Term`.
- * Either the operation of folding to a term, or that of unfolding from a term can be regarded as an endofunction.
- * Composing the above two operations also gives an endofunction,
- * and this is in fact what this interface provides by implementing both `Folder<Term>` and `Unfolder<Term>`.
- * In this spirit, the user can provide `fold : Tm<Term> -> Term` and `unfold : Term -> Tm<Term>`.
- * But since `Tm<Term>` and `Term` are isomorphic,
- * we instead ask for `pre : Term -> Term` and `post : Term -> Term`,
- * as this would allow a specialized implementation eliminating unnecessary casting,
- * and dealing with purely `Term`s can be more convenient.
- * <p>
- * The `act : Term -> Term` method should be called for the final composed action on `Term`.
- * Although it is essentially the composition of the derived `unfolded` and `folded` functions,
- * `act` has better performance by eliminating casting completely,
- * and attempts to preserve object identity when possible.
- * The implementation of `pre` and `post` can also take advantage of this behavior.
+ * A convenient interface to obtain an endomorphism on `Term`.
+ * This is desirable when you need to transform a `Term` into another `Term`.
+ * One can specify the `pre` and `post` method which represents a recursive step in pre- and post-order respectively.
+ * The overall operation is obtained by recursively transforming the term in pre-order followed by a post-order transformation.
+ * Note that the derived `accept` attempts to preserve object identity when possible,
+ * hence the implementation of `pre` and `post` can take advantage of this behavior.
  *
  * @author wsx
  */
@@ -187,7 +178,7 @@ public interface EndoFunctor extends Function<Term, Term> {
       };
     }
 
-    static private Subst buildSubst(SeqLike<Term.Param> params, SeqLike<Arg<Term>> args) {
+    static private @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> params, SeqLike<Arg<Term>> args) {
       var subst = new Subst(MutableMap.create());
       params.view().zip(args).forEach(t -> subst.add(t._1.ref(), t._2.term()));
       return subst;
@@ -202,7 +193,7 @@ public interface EndoFunctor extends Function<Term, Term> {
 
     private @Nullable WithPos<Term> unfoldClauses(
       boolean orderIndependent, SeqLike<Arg<Term>> args,
-      Subst subst, ImmutableSeq<Matching> clauses
+      Subst subst, @NotNull ImmutableSeq<Matching> clauses
     ) {
       for (var match : clauses) {
         var result = PatMatcher.tryBuildSubstArgs(null, match.patterns(), args);

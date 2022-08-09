@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public interface Expander extends EndoFunctor {
   TyckState state();
 
-  static Subst buildSubst(SeqLike<Term.Param> self, SeqLike<Arg<Term>> args) {
+  static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, SeqLike<Arg<Term>> args) {
     var entries = self.view().zip(args).map(t -> Tuple.of(t._1.ref(), t._2.term()));
     return new Subst(MutableMap.from(entries));
   }
@@ -82,7 +82,7 @@ public interface Expander extends EndoFunctor {
 
   default Option<WithPos<Term>> tryUnfoldClauses(
     boolean orderIndependent, SeqLike<Arg<Term>> args,
-    Subst subst, int ulift, ImmutableSeq<Matching> clauses
+    Subst subst, int ulift, @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);

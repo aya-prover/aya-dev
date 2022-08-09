@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -12,10 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
-public interface EndoVarConsumer extends EndoConsumer {
+public interface VarConsumer extends TermConsumer {
   default void var(Var var) {}
 
-  @Override default void accept(Term term) {
+  @Override default void accept(@NotNull Term term) {
     switch (term) {
       case RefTerm ref -> var(ref.var());
       case RefTerm.Field field -> var(field.ref());
@@ -27,10 +27,10 @@ public interface EndoVarConsumer extends EndoConsumer {
       case CallTerm.Struct struct -> var(struct.ref());
       default -> {}
     }
-    EndoConsumer.super.accept(term);
+    TermConsumer.super.accept(term);
   }
 
-  final class ScopeChecker implements EndoVarConsumer {
+  final class ScopeChecker implements VarConsumer {
     public final @NotNull ImmutableSeq<LocalVar> allowed;
     public final @NotNull MutableList<LocalVar> invalid;
     public final @NotNull MutableList<LocalVar> confused;
@@ -55,16 +55,16 @@ public interface EndoVarConsumer extends EndoConsumer {
       return bound.isEmpty();
     }
 
-    @Override public void accept(Term term) {
+    @Override public void accept(@NotNull Term term) {
       switch (term) {
         case IntroTerm.Lambda lambda -> {
           bound.append(lambda.param().ref());
-          EndoVarConsumer.super.accept(lambda);
+          VarConsumer.super.accept(lambda);
           bound.removeAt(bound.size() - 1);
         }
         case FormTerm.Pi pi -> {
           bound.append(pi.param().ref());
-          EndoVarConsumer.super.accept(pi);
+          VarConsumer.super.accept(pi);
           bound.removeAt(bound.size() - 1);
         }
         case FormTerm.Sigma sigma -> {
@@ -80,7 +80,7 @@ public interface EndoVarConsumer extends EndoConsumer {
           hole.contextArgs().forEach(arg -> checker.accept(arg.term()));
           hole.args().forEach(arg -> this.accept(arg.term()));
         }
-        default -> EndoVarConsumer.super.accept(term);
+        default -> VarConsumer.super.accept(term);
       }
     }
 

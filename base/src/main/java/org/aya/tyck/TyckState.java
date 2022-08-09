@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -8,7 +8,7 @@ import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.EndoConsumer;
+import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
@@ -84,11 +84,11 @@ public record TyckState(
   public void addEqn(@NotNull Eqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
-    var consumer = new EndoConsumer() {
+    var consumer = new TermConsumer() {
       @Override public void pre(Term tm) {
         if (tm instanceof CallTerm.Hole hole && !metas.containsKey(hole.ref()))
             activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
-        EndoConsumer.super.pre(tm);
+        TermConsumer.super.pre(tm);
       }
     };
     consumer.accept(eqn.lhs);

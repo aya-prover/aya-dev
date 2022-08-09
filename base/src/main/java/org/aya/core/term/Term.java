@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -162,8 +162,8 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     return new MonoidalVarFolder.Usages(var).apply(this);
   }
 
-  default EndoVarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
-    var checker = new EndoVarConsumer.ScopeChecker(allowed);
+  default VarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
+    var checker = new VarConsumer.ScopeChecker(allowed);
     checker.accept(this);
     assert checker.isCleared() : "The scope checker is not properly cleared up";
     return checker;
@@ -219,11 +219,11 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
       this(param.ref(), type, param.pattern(), param.explicit());
     }
 
-    public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(MutableList<Tuple3<LocalVar, Boolean, Term>> buf) {
+    public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(@NotNull MutableList<Tuple3<LocalVar, Boolean, Term>> buf) {
       return buf.view().map(tup -> new Param(tup._1, tup._3, false, tup._2)).toImmutableSeq();
     }
 
-    public Term.Param descent(Function<Term, Term> f) {
+    public Term.Param descent(@NotNull Function<Term, Term> f) {
       var type = f.apply(type());
       if (type == type()) return this;
       return new Term.Param(this, type);
