@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
 public interface VarConsumer extends TermConsumer {
-  void var(Var var);
+  void var(@NotNull Var var);
 
   @Override default void accept(@NotNull Term term) {
     switch (term) {
@@ -84,7 +84,7 @@ public interface VarConsumer extends TermConsumer {
       }
     }
 
-    @Contract(mutates = "this") @Override public void var(Var v) {
+    @Contract(mutates = "this") @Override public void var(@NotNull Var v) {
       if (v instanceof LocalVar local
         && !(allowed.contains(local) || bound.contains(local))
         && !invalid.contains(local)

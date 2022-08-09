@@ -3,6 +3,7 @@
 package org.aya.core.visitor;
 
 import org.aya.core.term.Term;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
@@ -15,11 +16,11 @@ import java.util.function.Consumer;
  * @author wsx
  */
 public interface TermConsumer extends Consumer<Term> {
-  default void pre(Term term) {}
+  default void pre(@NotNull Term term) {}
 
-  default void post(Term term) {}
+  default void post(@NotNull Term term) {}
 
-  default void accept(Term term) {
+  default void accept(@NotNull Term term) {
     pre(term);
     term.descent(t -> {
       accept(t);

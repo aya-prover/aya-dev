@@ -15,7 +15,7 @@ public interface DefConsumer extends TermConsumer {
   }
 
   private void visitDef(@NotNull GenericDef def) {
-    if(def instanceof Def defwithTele) tele(defwithTele.telescope());
+    if (def instanceof Def defwithTele) tele(defwithTele.telescope());
     this.accept(def.result());
   }
 

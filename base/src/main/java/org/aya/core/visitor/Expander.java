@@ -15,7 +15,6 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
-import org.aya.generic.util.InternalException;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
@@ -23,14 +22,14 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 public interface Expander extends EndoFunctor {
-  TyckState state();
+  @NotNull TyckState state();
 
-  static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, SeqLike<Arg<Term>> args) {
+  static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, @NotNull SeqLike<Arg<Term>> args) {
     var entries = self.view().zip(args).map(t -> Tuple.of(t._1.ref(), t._2.term()));
     return new Subst(MutableMap.from(entries));
   }
 
-  @Override default Term post(Term term) {
+  @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
       case CallTerm.Con con -> {
         var def = con.ref().core;
@@ -46,12 +45,8 @@ public interface Expander extends EndoFunctor {
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
             .map(unfolded -> apply(unfolded.data())).getOrDefault(fn));
       }
-      case CallTerm.Prim prim -> {
-        var state = state();
-        if (state == null) throw new InternalException("unfolding prims without TyckState");
-        yield state.primFactory().unfold(prim.id(), prim, state());
-      }
-      case CallTerm.Hole hole && state() != null -> {
+      case CallTerm.Prim prim -> state().primFactory().unfold(prim.id(), prim, state());
+      case CallTerm.Hole hole -> {
         var def = hole.ref();
         yield state().metas().getOption(def)
           .map(body -> apply(body.subst(buildSubst(def.fullTelescope(), hole.fullArgs()))))
@@ -79,9 +74,9 @@ public interface Expander extends EndoFunctor {
     };
   }
 
-  default Option<WithPos<Term>> tryUnfoldClauses(
-    boolean orderIndependent, SeqLike<Arg<Term>> args,
-    Subst subst, int ulift, @NotNull ImmutableSeq<Matching> clauses
+  default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
+    boolean orderIndependent, @NotNull SeqLike<Arg<Term>> args,
+    @NotNull Subst subst, int ulift, @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
@@ -93,15 +88,15 @@ public interface Expander extends EndoFunctor {
     }
     return Option.none();
   }
-  default Option<WithPos<Term>> tryUnfoldClauses(
-    boolean orderIndependent, SeqLike<Arg<Term>> args,
-    int ulift, ImmutableSeq<Matching> clauses
+  default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
+    boolean orderIndependent, @NotNull SeqLike<Arg<Term>> args,
+    int ulift, @NotNull ImmutableSeq<Matching> clauses
   ) {
     return tryUnfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), ulift, clauses);
   }
 
   record Normalizer(@NotNull TyckState state) implements Expander {
-    @Override public Term post(Term term) {
+    @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> apply(CallTerm.make(lam, app.arg()));
         case ElimTerm.App app -> CallTerm.make(app.of(), app.arg());
@@ -115,8 +110,8 @@ public interface Expander extends EndoFunctor {
     }
   }
 
-  record WHNFer(TyckState state) implements Expander {
-    @Override public Term post(Term term) {
+  record WHNFer(@NotNull TyckState state) implements Expander {
+    @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda -> apply(CallTerm.make(lambda, app.arg()));
         case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
@@ -128,7 +123,7 @@ public interface Expander extends EndoFunctor {
       };
     }
 
-    @Override public Term apply(Term term) {
+    @Override public @NotNull Term apply(@NotNull Term term) {
       return switch (term) {
         case IntroTerm.Lambda lambda -> lambda;
         case IntroTerm.Tuple tuple -> tuple;
@@ -146,7 +141,7 @@ public interface Expander extends EndoFunctor {
     @NotNull TyckState state,
     @NotNull PrimDef.Factory factory
   ) implements Expander {
-    @Override public Term apply(Term term) {
+    @Override public @NotNull Term apply(@NotNull Term term) {
       return switch (term) {
         case CallTerm.Fn fn -> {
           if (!unfolding.contains(fn.ref())) yield fn;

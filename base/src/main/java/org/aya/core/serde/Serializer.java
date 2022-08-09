@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -72,7 +72,8 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
-      case LitTerm.ShapedInt lit -> new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
+      case LitTerm.ShapedInt lit ->
+        new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
       case PrimTerm.End end -> new SerTerm.End(end.isRight());
       case PrimTerm.Str str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()), ref.lift());

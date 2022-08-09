@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
@@ -52,7 +52,7 @@ public final class CtorDef extends SubLevelDef {
     return new DataDef.CtorTelescopes(dataSignature, conSignature.param());
   }
 
-    public @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref() {
+  public @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref() {
     return ref;
   }
 

@@ -16,11 +16,11 @@ import java.util.function.Function;
 
 public interface MonoidalVarFolder<R> extends Function<Term, R> {
   // TODO: Do we need to visit variables in `access` and `new` as well?
-  R var(Var var);
+  @NotNull R var(@NotNull Var var);
 
-  R merge(SeqView<R> rs);
+  @NotNull R merge(@NotNull SeqView<R> rs);
 
-  private SeqView<R> trace(Term term) {
+  private @NotNull SeqView<R> trace(@NotNull Term term) {
     return switch (term) {
       case FormTerm.Pi pi -> trace(pi.param()).concat(trace(pi.body()));
       case FormTerm.Sigma sigma -> sigma.params().view().flatMap(this::trace);
@@ -48,23 +48,23 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       default -> SeqView.empty();
     };
   }
-  private SeqView<R> trace(@NotNull Term.Param param) {
+  private @NotNull SeqView<R> trace(@NotNull Term.Param param) {
     return trace(param.type());
   }
-  private SeqView<R> trace(@NotNull Arg<Term> arg) {
+  private @NotNull SeqView<R> trace(@NotNull Arg<Term> arg) {
     return trace(arg.term());
   }
 
-  @Override default R apply(Term term) {
+  @Override default @NotNull R apply(@NotNull Term term) {
     return merge(trace(term));
   }
 
-  record Usages(Var var) implements MonoidalVarFolder<Integer> {
-    @Override public Integer var(Var v) {
+  record Usages(@NotNull Var var) implements MonoidalVarFolder<Integer> {
+    @Override public @NotNull Integer var(@NotNull Var v) {
       return v == var ? 1 : 0;
     }
 
-    @Override public Integer merge(SeqView<Integer> integers) {
+    @Override public @NotNull Integer merge(@NotNull SeqView<Integer> integers) {
       return integers.fold(0, Integer::sum);
     }
   }
@@ -79,7 +79,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
     public static final @NotNull MonoidalVarFolder.RefFinder HEADER_ONLY = new RefFinder(false);
     public static final @NotNull MonoidalVarFolder.RefFinder HEADER_AND_BODY = new RefFinder(true);
 
-    @Override public SeqView<Def> var(Var usage) {
+    @Override public @NotNull SeqView<Def> var(@NotNull Var usage) {
       return usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def ? SeqView.of(def) : SeqView.empty();
     }
 
@@ -87,7 +87,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       return as.view().flatMap(a -> a);
     }
 
-    public SeqView<Def> apply(@NotNull GenericDef def) {
+    public @NotNull SeqView<Def> apply(@NotNull GenericDef def) {
       return switch (def) {
         case FnDef fn -> tele(fn.telescope)
           .concat(apply(fn.result))
@@ -99,9 +99,9 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
         case StructDef struct ->
           tele(struct.telescope).concat(withBody ? struct.fields.flatMap(this::apply) : SeqView.empty());
         case FieldDef field -> tele(field.telescope())
-            .concat(field.body.foldLeft(SeqView.empty(), (rs, body) -> apply(body)))
-            .concat(apply(field.result))
-            .concat(withBody ? field.clauses.flatMap(this::matchy) : SeqView.empty());
+          .concat(field.body.foldLeft(SeqView.empty(), (rs, body) -> apply(body)))
+          .concat(apply(field.result))
+          .concat(withBody ? field.clauses.flatMap(this::matchy) : SeqView.empty());
         case PrimDef prim -> tele(prim.telescope);
         case DataDef data -> tele(data.telescope)
           .concat(apply(data.result))
@@ -114,7 +114,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       return apply(match.body());
     }
 
-    private SeqView<Def> tele(SeqLike<Term.Param> telescope) {
+    private SeqView<Def> tele(@NotNull SeqLike<Term.Param> telescope) {
       return telescope.view().map(Term.Param::type).flatMap(this);
     }
   }

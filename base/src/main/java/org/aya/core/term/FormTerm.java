@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -18,7 +18,7 @@ public sealed interface FormTerm extends Term {
    */
   record Pi(@NotNull Term.Param param, @NotNull Term body) implements FormTerm {
 
-      public @NotNull Term substBody(@NotNull Term term) {
+    public @NotNull Term substBody(@NotNull Term term) {
       return body.subst(param.ref(), term);
     }
 

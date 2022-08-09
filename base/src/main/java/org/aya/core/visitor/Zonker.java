@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -53,7 +53,7 @@ public record Zonker(
     };
   }
 
-  @Override public Term apply(Term term) {
+  @Override public @NotNull Term apply(@NotNull Term term) {
     stack.push(term);
     var result = EndoFunctor.super.apply(term);
     stack.pop();

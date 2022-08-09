@@ -37,9 +37,9 @@ import java.util.function.Function;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, ErrorTerm,
-        FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, LitTerm {
+  FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, LitTerm {
 
-  default @NotNull Term descent(Function<Term, Term> f) {
+  default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
     return switch (this) {
       case FormTerm.Pi pi -> {
         var param = pi.param().descent(f);
@@ -184,7 +184,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
 
   default @NotNull Term freezeHoles(@Nullable TyckState state) {
     return new EndoFunctor() {
-      @Override public Term pre(Term term) {
+      @Override public @NotNull Term pre(@NotNull Term term) {
         return term instanceof CallTerm.Hole hole && state != null
           ? state.metas().getOrDefault(hole.ref(), term)
           : term;
@@ -223,10 +223,10 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
       return buf.view().map(tup -> new Param(tup._1, tup._3, false, tup._2)).toImmutableSeq();
     }
 
-    public Term.Param descent(@NotNull Function<Term, Term> f) {
+    public @NotNull Param descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
       var type = f.apply(type());
       if (type == type()) return this;
-      return new Term.Param(this, type);
+      return new Param(this, type);
     }
 
     @Contract(" -> new") public @NotNull Param implicitify() {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -23,7 +23,7 @@ public sealed interface IntroTerm extends Term {
    */
   record Lambda(@NotNull Param param, @NotNull Term body) implements IntroTerm {
 
-      public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
+    public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
       while (term instanceof Lambda lambda) {
         params.accept(lambda.param);
         term = lambda.body;

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
@@ -22,7 +22,7 @@ public record Arg<T extends AyaDocile>(@NotNull T term, boolean explicit) implem
     return Doc.bracedUnless(term.toDoc(options), explicit);
   }
 
-  public Arg<T> descent(Function<T, T> f) {
+  public @NotNull Arg<T> descent(@NotNull Function<@NotNull T, @NotNull T> f) {
     var term = f.apply(term());
     if (term == term()) return this;
     return new Arg<>(term, explicit());

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -178,8 +178,8 @@ public final class ExprTycker extends Tycker {
               return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
             var fieldRef = field.ref();
 
-          var structSubst = Expander.buildSubst(structCore.telescope(), structCall.args());
-          var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
+            var structSubst = Expander.buildSubst(structCore.telescope(), structCall.args());
+            var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
             var teleRenamed = tele.map(Term.Param::rename);
             var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
               structCall.args(), teleRenamed.map(Term.Param::toArg));

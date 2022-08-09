@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -233,7 +233,7 @@ public final class PatTycker {
     exprTycker.localCtx = lhsResult.gamma;
     var patterns = lhsResult.preclause.patterns().map(Pat::inline);
     var type = new EndoFunctor() {
-      @Override public Term post(Term term) {
+      @Override public @NotNull Term post(@NotNull Term term) {
         return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
       }
     }.apply(lhsResult.type);

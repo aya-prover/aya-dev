@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -16,7 +16,7 @@ public sealed interface LitTerm extends Term {
     @Override @NotNull Term type
   ) implements LitTerm, Shaped.Inductively<Term> {
 
-      @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
+    @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
       return new CallTerm.Con(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
     }
 

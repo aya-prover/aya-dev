@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -101,7 +101,7 @@ public sealed interface CallTerm extends Term {
       return new Data(dataRef, ulift, dataArgs);
     }
 
-    public ConHead descent(Function<Term, Term> f) {
+    public @NotNull ConHead descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
       var args = dataArgs().map(arg -> arg.descent(f));
       if (args.sameElements(dataArgs(), true)) return this;
       return new CallTerm.ConHead(dataRef(), ref(), ulift(), args);

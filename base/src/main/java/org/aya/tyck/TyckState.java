@@ -85,7 +85,7 @@ public record TyckState(
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
     var consumer = new TermConsumer() {
-      @Override public void pre(Term tm) {
+      @Override public void pre(@NotNull Term tm) {
         if (tm instanceof CallTerm.Hole hole && !metas.containsKey(hole.ref()))
             activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
         TermConsumer.super.pre(tm);
