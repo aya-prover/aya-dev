@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -29,10 +29,10 @@ public class EtaTest {
   // \ x -> f x
   @Test public void oneLambdaUneta() {
     var xParamTerm = new Term.Param(X, FormTerm.Univ.ZERO, false);
-    var xRefTerm = new RefTerm(X, 0);
+    var xRefTerm = new RefTerm(X);
     // It's rather tedious to construct a Fn here
     // So let's be lazy here as the type of f doesn't really matter
-    var fRefTerm = new RefTerm(new LocalVar("f"), 0);
+    var fRefTerm = new RefTerm(new LocalVar("f"));
     var lambda = IntroTerm.Lambda.make(
       // Params
       ImmutableSeq.of(xParamTerm),
@@ -46,9 +46,9 @@ public class EtaTest {
   @Test public void twoLambdaUneta() {
     var xParamTerm = new Term.Param(X, FormTerm.Univ.ZERO, false);
     var yParamTerm = new Term.Param(Y, FormTerm.Univ.ZERO, false);
-    var xRefTerm = new RefTerm(X, 0);
-    var yRefTerm = new RefTerm(Y, 0);
-    var fRefTerm = new RefTerm(new LocalVar("f"), 0);
+    var xRefTerm = new RefTerm(X);
+    var yRefTerm = new RefTerm(Y);
+    var fRefTerm = new RefTerm(new LocalVar("f"));
     var lambda = IntroTerm.Lambda.make(
       // Params
       ImmutableSeq.of(xParamTerm, yParamTerm),
@@ -62,7 +62,7 @@ public class EtaTest {
 
   // (x.1, x.2)
   @Test public void tupleUneta() {
-    var xRefTerm = new RefTerm(X, 0);
+    var xRefTerm = new RefTerm(X);
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
@@ -71,7 +71,7 @@ public class EtaTest {
 
   // (x.1, (x.1, x.2).2)
   @Test public void nestTupleUneta() {
-    var xRefTerm = new RefTerm(X, 0);
+    var xRefTerm = new RefTerm(X);
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
@@ -82,8 +82,8 @@ public class EtaTest {
   // \x -> f (x.1, x.2)
   @Test public void tupleAndLambdaUneta() {
     var xParamTerm = new Term.Param(X, SIGMA, false);
-    var xRefTerm = new RefTerm(X, 0);
-    var fRefTerm = new RefTerm(new LocalVar("f"), 0);
+    var xRefTerm = new RefTerm(X);
+    var fRefTerm = new RefTerm(new LocalVar("f"));
     // construct lambda body: tuple term
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);

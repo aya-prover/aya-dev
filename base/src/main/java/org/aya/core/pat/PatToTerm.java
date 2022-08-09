@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
@@ -20,9 +20,9 @@ public class PatToTerm {
   public Term visit(@NotNull Pat pat) {
     return switch (pat) {
       // [ice]: this code is reachable (to substitute a telescope), but the telescope will be dropped anyway.
-      case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"), 0);
+      case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"));
       case Pat.Ctor ctor -> visitCtor(ctor);
-      case Pat.Bind bind -> new RefTerm(bind.bind(), 0);
+      case Pat.Bind bind -> new RefTerm(bind.bind());
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new RefTerm.MetaPat(meta, 0);
       case Pat.End end -> end.isRight() ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT;

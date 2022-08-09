@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -101,7 +101,7 @@ public sealed interface SerTerm extends Serializable {
 
   record Ref(@NotNull SimpVar var, int ulift) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new RefTerm(state.var(var), ulift);
+      return new RefTerm(state.var(var));
     }
   }
 

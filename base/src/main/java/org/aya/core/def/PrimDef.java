@@ -97,7 +97,7 @@ public final class PrimDef extends TopLevelDef {
         var paramI = new LocalVar("i");
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
-        var aRef = new RefTerm(paramA, 0);
+        var aRef = new RefTerm(paramA);
         var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(PrimTerm.End.LEFT, true));
         return new PrimDef(
           ref,
@@ -106,7 +106,7 @@ public final class PrimDef extends TopLevelDef {
             new Term.Param(new LocalVar("base"), baseAtLeft, true),
             new Term.Param(paramI, FormTerm.Interval.INSTANCE, true)
           ),
-          new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, 0), true)),
+          new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI), true)),
           ID.ARCOE
         );
       }, ImmutableSeq.empty());

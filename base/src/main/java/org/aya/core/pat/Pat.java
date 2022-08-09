@@ -76,7 +76,7 @@ public sealed interface Pat extends AyaDocile {
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var newName = new LocalVar(bind.name(), bind.definition());
       var newBind = new Bind(explicit, newName, type.subst(subst));
-      subst.addDirectly(bind, new RefTerm(newName, 0));
+      subst.addDirectly(bind, new RefTerm(newName));
       localCtx.put(newName, type);
       return newBind;
     }
