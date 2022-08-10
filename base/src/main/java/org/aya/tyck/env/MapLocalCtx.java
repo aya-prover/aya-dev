@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
 import kala.collection.SeqView;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;

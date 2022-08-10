@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -11,7 +11,6 @@ import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
-import kala.tuple.Unit;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -23,9 +22,9 @@ import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
+import org.aya.core.visitor.EndoFunctor;
+import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.TermFixpoint;
-import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -233,11 +232,11 @@ public final class PatTycker {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = lhsResult.gamma;
     var patterns = lhsResult.preclause.patterns().map(Pat::inline);
-    var type = lhsResult.type.accept(new TermFixpoint<>() {
-      @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
-        return metaPat.inline();
+    var type = new EndoFunctor() {
+      @Override public @NotNull Term post(@NotNull Term term) {
+        return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
       }
-    }, Unit.unit());
+    }.apply(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,
@@ -402,7 +401,7 @@ public final class PatTycker {
   mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
-    else return Result.ok(Unfolder.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
+    else return Result.ok(Expander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }
 
   private record BodySubstitutor(

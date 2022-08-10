@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -13,6 +13,8 @@ import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 /**
  * @author ice1000
@@ -52,9 +54,6 @@ public sealed interface CallTerm extends Term {
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitFnCall(this, p);
-    }
   }
 
   record Prim(
@@ -69,9 +68,6 @@ public sealed interface CallTerm extends Term {
       this(ref, ref.core.id, ulift, args);
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitPrimCall(this, p);
-    }
   }
 
   record Data(
@@ -79,9 +75,6 @@ public sealed interface CallTerm extends Term {
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitDataCall(this, p);
-    }
 
     public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> ctorRef) {
       return new ConHead(ref, ctorRef, ulift, args);
@@ -96,9 +89,6 @@ public sealed interface CallTerm extends Term {
     int ulift,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitStructCall(this, p);
-    }
   }
 
   record ConHead(
@@ -109,6 +99,12 @@ public sealed interface CallTerm extends Term {
   ) {
     public @NotNull Data underlyingDataCall() {
       return new Data(dataRef, ulift, dataArgs);
+    }
+
+    public @NotNull ConHead descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+      var args = dataArgs().map(arg -> arg.descent(f));
+      if (args.sameElements(dataArgs(), true)) return this;
+      return new CallTerm.ConHead(dataRef(), ref(), ulift(), args);
     }
   }
 
@@ -134,10 +130,6 @@ public sealed interface CallTerm extends Term {
       return head.ulift;
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitConCall(this, p);
-    }
-
     @Override public @NotNull ImmutableSeq<Arg<@NotNull Term>> args() {
       return head.dataArgs.view().concat(conArgs).toImmutableSeq();
     }
@@ -160,9 +152,6 @@ public sealed interface CallTerm extends Term {
       return contextArgs.view().concat(args);
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitHole(this, p);
-    }
   }
 
   /**
@@ -174,9 +163,6 @@ public sealed interface CallTerm extends Term {
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitAccess(this, p);
-    }
 
     @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> args() {
       return structArgs.concat(fieldArgs);

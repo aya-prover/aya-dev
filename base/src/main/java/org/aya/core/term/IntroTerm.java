@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -22,9 +22,6 @@ public sealed interface IntroTerm extends Term {
    * @author ice1000
    */
   record Lambda(@NotNull Param param, @NotNull Term body) implements IntroTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLam(this, p);
-    }
 
     public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
       while (term instanceof Lambda lambda) {
@@ -46,17 +43,11 @@ public sealed interface IntroTerm extends Term {
     @NotNull CallTerm.Struct struct,
     @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.StructField>, Term> params
   ) implements IntroTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitNew(this, p);
-    }
   }
 
   /**
    * @author re-xyr
    */
   record Tuple(@NotNull ImmutableSeq<Term> items) implements IntroTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTup(this, p);
-    }
   }
 }

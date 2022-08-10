@@ -10,6 +10,7 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
 import org.aya.concrete.visitor.ExprTraversal;
+import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * Concrete version of RefFinder but only header is searched.
  *
  * @author kiva
- * @see org.aya.core.visitor.RefFinder
+ * @see MonoidalVarFolder.RefFinder
  */
 public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit>> {
   public static final @NotNull SigRefFinder HEADER_ONLY = new SigRefFinder();

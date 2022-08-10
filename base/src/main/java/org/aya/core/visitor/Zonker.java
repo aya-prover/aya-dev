@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -27,17 +27,15 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Zonker(
-  @NotNull @Override TermView view,
   @NotNull Tycker tycker,
   @NotNull MutableSinglyLinkedList<Term> stack
-) implements TermOps {
-  public static @NotNull Zonker make(@NotNull Term term, @NotNull Tycker tycker) {
-    return new Zonker(term.view(), tycker, MutableSinglyLinkedList.create());
+) implements EndoFunctor {
+  public static @NotNull Zonker make(@NotNull Tycker tycker) {
+    return new Zonker(tycker, MutableSinglyLinkedList.create());
   }
 
   @Override public @NotNull Term pre(@NotNull Term term) {
-    stack.push(term);
-    return switch (view.pre(term)) {
+    return switch (term) {
       case CallTerm.Hole hole -> {
         var sol = hole.ref();
         var metas = tycker.state.metas();
@@ -55,13 +53,11 @@ public record Zonker(
     };
   }
 
-  @Override public @NotNull Term post(@NotNull Term term) {
+  @Override public @NotNull Term apply(@NotNull Term term) {
+    stack.push(term);
+    var result = EndoFunctor.super.apply(term);
     stack.pop();
-    return view.post(term);
-  }
-
-  @Override public @NotNull Term initial() {
-    return view.initial();
+    return result;
   }
 
   public record UnsolvedMeta(

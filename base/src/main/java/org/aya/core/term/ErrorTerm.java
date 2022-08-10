@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -26,10 +26,6 @@ public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) i
 
   public ErrorTerm(@NotNull Doc description, boolean isReallyError) {
     this(options -> description, isReallyError);
-  }
-
-  @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitError(this, p);
   }
 
   public static @NotNull ErrorTerm typeOf(@NotNull Term origin) {

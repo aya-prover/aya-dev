@@ -1,18 +1,15 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
-import kala.tuple.Unit;
 import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.core.visitor.TermConsumer;
-import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
@@ -57,10 +54,9 @@ public record TyckState(
     var removingMetas = MutableList.<WithPos<Meta>>create();
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
+        var usageCounter = new MonoidalVarFolder.Usages(activeMeta.data());
         eqns.filterInPlace(eqn -> {
-          var usageCounter = new VarConsumer.UsageCounter(activeMeta.data());
-          eqn.accept(usageCounter, Unit.unit());
-          if (usageCounter.usageCount() > 0) {
+          if (usageCounter.apply(eqn.lhs) + usageCounter.apply(eqn.rhs) > 0) {
             solveEqn(reporter, tracer, eqn, true);
             return false;
           } else return true;
@@ -88,14 +84,15 @@ public record TyckState(
   public void addEqn(@NotNull Eqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
-    eqn.accept(new TermConsumer<>() {
-      @Override public Unit visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-        var ref = term.ref();
-        if (!metas.containsKey(ref))
-          activeMetas.append(new WithPos<>(eqn.pos, ref));
-        return unit;
+    var consumer = new TermConsumer() {
+      @Override public void pre(@NotNull Term tm) {
+        if (tm instanceof CallTerm.Hole hole && !metas.containsKey(hole.ref()))
+            activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
+        TermConsumer.super.pre(tm);
       }
-    }, Unit.unit());
+    };
+    consumer.accept(eqn.lhs);
+    consumer.accept(eqn.rhs);
     assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 
@@ -105,10 +102,6 @@ public record TyckState(
     @NotNull LocalCtx localCtx,
     @NotNull DefEq.Sub lr, @NotNull DefEq.Sub rl
   ) implements AyaDocile {
-    public <P, R> Tuple2<R, R> accept(@NotNull Term.Visitor<P, R> visitor, P p) {
-      return Tuple.of(lhs.accept(visitor, p), rhs.accept(visitor, p));
-    }
-
     public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
     }

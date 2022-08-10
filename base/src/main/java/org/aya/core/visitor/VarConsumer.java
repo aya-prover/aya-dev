@@ -1,10 +1,9 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.Unit;
 import org.aya.core.term.*;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -13,74 +12,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
-/**
- * @author ice1000
- */
-public interface VarConsumer<P> extends TermConsumer<P> {
-  @Override default Unit visitRef(@NotNull RefTerm term, P p) {
-    visitVar(term.var(), p);
-    return Unit.unit();
-  }
+public interface VarConsumer extends TermConsumer {
+  void var(@NotNull Var var);
 
-  @Override default Unit visitFieldRef(@NotNull RefTerm.Field term, P p) {
-    visitVar(term.ref(), p);
-    return Unit.unit();
-  }
-
-  @Override default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
-    visitVar(term.ref(), p);
-    return TermConsumer.super.visitHole(term, p);
-  }
-
-  @Override default Unit visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
-    visitVar(fnCall.ref(), p);
-    return TermConsumer.super.visitFnCall(fnCall, p);
-  }
-
-  @Override default Unit visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
-    visitVar(prim.ref(), p);
-    return TermConsumer.super.visitPrimCall(prim, p);
-  }
-
-  @Override default Unit visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
-    visitVar(dataCall.ref(), p);
-    return TermConsumer.super.visitDataCall(dataCall, p);
-  }
-
-  @Override default Unit visitConCall(@NotNull CallTerm.Con conCall, P p) {
-    visitVar(conCall.ref(), p);
-    return TermConsumer.super.visitConCall(conCall, p);
-  }
-
-  @Override default Unit visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
-    visitVar(structCall.ref(), p);
-    return TermConsumer.super.visitStructCall(structCall, p);
-  }
-
-  @Contract(mutates = "this,param2") void visitVar(Var usage, P p);
-
-  /**
-   * @author ice1000
-   * @see Term#findUsages(Var)
-   */
-  final class UsageCounter implements VarConsumer<Unit> {
-    public final @NotNull Var var;
-    private int usageCount = 0;
-
-    @Contract(pure = true) public UsageCounter(@NotNull Var var) {
-      this.var = var;
+  @Override default void accept(@NotNull Term term) {
+    switch (term) {
+      case RefTerm ref -> var(ref.var());
+      case RefTerm.Field field -> var(field.ref());
+      case CallTerm.Hole hole -> var(hole.ref());
+      case CallTerm.Fn fn -> var(fn.ref());
+      case CallTerm.Prim prim -> var(prim.ref());
+      case CallTerm.Data data -> var(data.ref());
+      case CallTerm.Con con -> var(con.ref());
+      case CallTerm.Struct struct -> var(struct.ref());
+      default -> {}
     }
-
-    @Contract(pure = true) public int usageCount() {
-      return usageCount;
-    }
-
-    @Contract(mutates = "this") @Override public void visitVar(Var usage, Unit unit) {
-      if (var == usage) usageCount++;
-    }
+    TermConsumer.super.accept(term);
   }
 
-  final class ScopeChecker implements VarConsumer<Unit> {
+  final class ScopeChecker implements VarConsumer {
     public final @NotNull ImmutableSeq<LocalVar> allowed;
     public final @NotNull MutableList<LocalVar> invalid;
     public final @NotNull MutableList<LocalVar> confused;
@@ -105,42 +55,41 @@ public interface VarConsumer<P> extends TermConsumer<P> {
       return bound.isEmpty();
     }
 
-    @Override public Unit visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
-      bound.append(term.param().ref());
-      VarConsumer.super.visitLam(term, unit);
-      bound.removeAt(bound.size() - 1);
-      return unit;
+    @Override public void accept(@NotNull Term term) {
+      switch (term) {
+        case IntroTerm.Lambda lambda -> {
+          bound.append(lambda.param().ref());
+          VarConsumer.super.accept(lambda);
+          bound.removeAt(bound.size() - 1);
+        }
+        case FormTerm.Pi pi -> {
+          bound.append(pi.param().ref());
+          VarConsumer.super.accept(pi);
+          bound.removeAt(bound.size() - 1);
+        }
+        case FormTerm.Sigma sigma -> {
+          var start = bound.size();
+          sigma.params().forEach(param -> {
+            bound.append(param.ref());
+            this.accept(param.type());
+          });
+          bound.removeInRange(start, start + sigma.params().size());
+        }
+        case CallTerm.Hole hole -> {
+          var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);
+          hole.contextArgs().forEach(arg -> checker.accept(arg.term()));
+          hole.args().forEach(arg -> this.accept(arg.term()));
+        }
+        default -> VarConsumer.super.accept(term);
+      }
     }
 
-    @Override public Unit visitPi(FormTerm.@NotNull Pi term, Unit unit) {
-      bound.append(term.param().ref());
-      VarConsumer.super.visitPi(term, unit);
-      bound.removeAt(bound.size() - 1);
-      return unit;
-    }
-
-    @Override public Unit visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
-      var start = bound.size();
-      term.params().forEach(param -> {
-        bound.append(param.ref());
-        param.type().accept(this, Unit.unit());
-      });
-      bound.removeInRange(start, start + term.params().size());
-      return unit;
-    }
-
-    @Override public Unit visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-      new ScopeChecker(allowed.appendedAll(bound), confused, confused)
-        .visitArgs(unit, term.contextArgs());
-      visitArgs(unit, term.args());
-      return unit;
-    }
-
-    @Contract(mutates = "this") @Override public void visitVar(Var v, Unit unit) {
+    @Contract(mutates = "this") @Override public void var(@NotNull Var v) {
       if (v instanceof LocalVar local
         && !(allowed.contains(local) || bound.contains(local))
         && !invalid.contains(local)
       ) invalid.append(local);
     }
   }
+
 }

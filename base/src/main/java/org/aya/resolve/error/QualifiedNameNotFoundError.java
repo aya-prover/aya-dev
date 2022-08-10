@@ -1,13 +1,13 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.error;
 
 import kala.collection.Seq;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

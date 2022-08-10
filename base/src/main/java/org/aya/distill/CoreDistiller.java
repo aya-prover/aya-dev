@@ -5,12 +5,11 @@ package org.aya.distill;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.Unit;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.aya.core.visitor.VarConsumer;
+import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
@@ -64,7 +63,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
         if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {
           var args = visibleArgsOf(call).view();
           while (params.isNotEmpty() && args.isNotEmpty()) {
-            var param = params.last();
             if (checkUneta(args, params.last())) {
               args = args.dropLast(1);
               params.removeLast();
@@ -170,9 +168,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
     if (arg.explicit() != param.explicit()) return false;
     if (!(arg.term() instanceof RefTerm argRef)) return false;
     if (argRef.var() != param.ref()) return false;
-    var counter = new VarConsumer.UsageCounter(param.ref());
-    args.dropLast(1).forEach(t -> t.term().accept(counter, Unit.unit()));
-    return counter.usageCount() == 0;
+    var counter = new MonoidalVarFolder.Usages(param.ref());
+    return args.dropLast(1).allMatch(a -> counter.apply(a.term()) == 0);
   }
 
   private ImmutableSeq<Arg<Term>> visibleArgsOf(CallTerm call) {

@@ -27,10 +27,6 @@ public final class FieldDef extends SubLevelDef {
     this.body = body;
   }
 
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitField(this, p);
-  }
-
   @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
     return selfTele;
   }

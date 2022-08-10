@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
@@ -40,7 +40,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
         }
       }
       case Pat.End end -> {
-        if(!(rhs instanceof Pat.End rhsEnd)) reportError(lhs, rhs);
+        if (!(rhs instanceof Pat.End rhsEnd)) reportError(lhs, rhs);
       }
       case Pat.ShapedInt lhsInt -> {
         switch (rhs) {

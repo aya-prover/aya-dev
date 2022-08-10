@@ -30,10 +30,6 @@ public final class StructDef extends UserDef.Type {
     this.fields = fields;
   }
 
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitStruct(this, p);
-  }
-
   public @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref() {
     return ref;
   }

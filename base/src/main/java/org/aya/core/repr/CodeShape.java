@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.repr;
 
@@ -36,7 +36,9 @@ public sealed interface CodeShape {
    */
   sealed interface TermShape {
     record Any() implements TermShape {}
+
     record Call(int superLevel) implements TermShape {}
+
     record TeleRef(int superLevel, int nth) implements TermShape {}
   }
 

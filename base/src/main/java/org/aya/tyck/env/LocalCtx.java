@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
-import kala.tuple.Unit;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
@@ -42,8 +41,8 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   void remove(@NotNull SeqView<LocalVar> vars);
   default void forward(@NotNull LocalCtx dest, @NotNull Term term, @NotNull TyckState state) {
-    term.accept((VarConsumer<Unit>) (usage, o) -> {
-      switch (usage) {
+    VarConsumer f = var -> {
+      switch (var) {
         case LocalVar localVar -> dest.put(localVar, get(localVar));
         case Meta meta -> {
           var sol = state.metas().getOrNull(meta);
@@ -51,7 +50,8 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
         }
         case null, default -> {}
       }
-    }, Unit.unit());
+    };
+    f.accept(term);
   }
   default <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
     put(var, type);

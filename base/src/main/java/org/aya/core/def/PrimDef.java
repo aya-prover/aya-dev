@@ -43,14 +43,6 @@ public final class PrimDef extends TopLevelDef {
     this(ref, ImmutableSeq.empty(), result, name);
   }
 
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitPrim(this, p);
-  }
-
-  public @NotNull Term unfold(@NotNull CallTerm.Prim primCall, @Nullable TyckState state) {
-    return Objects.requireNonNull(state).primFactory().unfold(Objects.requireNonNull(ID.find(ref.name())), primCall, state);
-  }
-
   public @NotNull ImmutableSeq<Term.Param> telescope() {
     if (telescope.isEmpty()) return telescope;
     if (ref.concrete != null) {
@@ -70,7 +62,7 @@ public final class PrimDef extends TopLevelDef {
 
   record PrimSeed(
     @NotNull ID name,
-    @NotNull BiFunction<CallTerm.@NotNull Prim, @Nullable TyckState, @NotNull Term> unfold,
+    @NotNull BiFunction<CallTerm.@NotNull Prim, @NotNull TyckState, @NotNull Term> unfold,
     @NotNull Function<@NotNull DefVar<PrimDef, TeleDecl.PrimDecl>, @NotNull PrimDef> supplier,
     @NotNull ImmutableSeq<@NotNull ID> dependency
   ) {
@@ -82,7 +74,7 @@ public final class PrimDef extends TopLevelDef {
   public static class Factory {
     private final class Initializer {
       /** Arend's coe */
-      private @NotNull Term arcoe(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
+      private @NotNull Term arcoe(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
         var args = prim.args();
         var argBase = args.get(1);
         var argI = args.get(2);
@@ -120,7 +112,7 @@ public final class PrimDef extends TopLevelDef {
       }, ImmutableSeq.empty());
 
       /** Involution, ~ in Cubical Agda */
-      private @NotNull Term invol(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
+      private @NotNull Term invol(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
         var arg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         if (arg instanceof PrimTerm.End end) {
           return end.isRight() ? PrimTerm.End.LEFT : PrimTerm.End.RIGHT;
@@ -137,7 +129,7 @@ public final class PrimDef extends TopLevelDef {
       ), ImmutableSeq.empty());
 
       /** <code>/\</code> in CCHM, <code>I.squeeze</code> in Arend */
-      private @NotNull Term squeezeLeft(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
+      private @NotNull Term squeezeLeft(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
         var lhsArg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var rhsArg = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
         if (lhsArg instanceof PrimTerm.End lhsEnd) {
@@ -174,7 +166,7 @@ public final class PrimDef extends TopLevelDef {
           ID.STRCONCAT
         ), ImmutableSeq.of(ID.STR));
 
-      private @NotNull Term concat(CallTerm.@NotNull Prim prim, @Nullable TyckState state) {
+      private @NotNull Term concat(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
         var first = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var second = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
 
@@ -238,7 +230,7 @@ public final class PrimDef extends TopLevelDef {
       return SEEDS.getOption(name).map(seed -> seed.dependency().filterNot(this::have));
     }
 
-    public @NotNull Term unfold(@NotNull ID name, @NotNull CallTerm.Prim primCall, @Nullable TyckState state) {
+    public @NotNull Term unfold(@NotNull ID name, @NotNull CallTerm.Prim primCall, @NotNull TyckState state) {
       return SEEDS.get(name).unfold.apply(primCall, state);
     }
 

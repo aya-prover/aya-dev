@@ -610,7 +610,7 @@ public record AyaProducer(
         sourcePosOf(ctx.OPEN()),
         openAccessibility,
         new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
-        Command.Open.UseHide.EMPTY,
+        UseHide.EMPTY,
         personality == Decl.Personality.EXAMPLE
       )
     ));
@@ -730,7 +730,7 @@ public record AyaProducer(
         sourcePosOf(ctx.OPEN()),
         openAccessibility,
         new QualifiedID(sourcePosOf(ctx), nameOrInfix._1.data()),
-        Command.Open.UseHide.EMPTY,
+        UseHide.EMPTY,
         personality == Decl.Personality.EXAMPLE
       )
     ));
@@ -805,7 +805,7 @@ public record AyaProducer(
       namePos,
       accessibility,
       modName,
-      useHide != null ? visitUseHide(useHide) : Command.Open.UseHide.EMPTY,
+      useHide != null ? visitUseHide(useHide) : UseHide.EMPTY,
       false
     );
     if (ctx.IMPORT() != null) return ImmutableSeq.of(
@@ -815,41 +815,41 @@ public record AyaProducer(
     else return ImmutableSeq.of(open);
   }
 
-  public Command.Open.UseHide hideList(List<AyaParser.HideListContext> ctxs, Command.Open.UseHide.Strategy strategy) {
-    return new Command.Open.UseHide(
+  public UseHide hideList(List<AyaParser.HideListContext> ctxs, UseHide.Strategy strategy) {
+    return new UseHide(
       ctxs.stream()
         .map(AyaParser.HideListContext::idsComma)
         .flatMap(this::visitIdsComma)
-        .map(id -> new Command.Open.UseHideName(id, id, Assoc.Invalid, BindBlock.EMPTY))
+        .map(id -> new UseHide.Name(id, id, Assoc.Invalid, BindBlock.EMPTY))
         .collect(ImmutableSeq.factory()),
       strategy);
   }
 
-  public Command.Open.UseHide useList(List<AyaParser.UseListContext> ctxs, Command.Open.UseHide.Strategy strategy) {
-    return new Command.Open.UseHide(ctxs.stream()
+  public UseHide useList(List<AyaParser.UseListContext> ctxs, UseHide.Strategy strategy) {
+    return new UseHide(ctxs.stream()
       .map(AyaParser.UseListContext::useIdsComma)
       .flatMap(this::visitUseIdsComma)
       .collect(ImmutableSeq.factory()),
       strategy);
   }
 
-  public Stream<Command.Open.UseHideName> visitUseIdsComma(@NotNull AyaParser.UseIdsCommaContext ctx) {
+  public Stream<UseHide.Name> visitUseIdsComma(@NotNull AyaParser.UseIdsCommaContext ctx) {
     return ctx.useId().stream().map(id -> {
       var name = id.weakId().getText();
       var useAs = id.useAs();
-      if (useAs == null) return new Command.Open.UseHideName(name, name, Assoc.Invalid, BindBlock.EMPTY);
+      if (useAs == null) return new UseHide.Name(name, name, Assoc.Invalid, BindBlock.EMPTY);
       var asId = useAs.weakId().getText();
       var asAssoc = useAs.assoc();
       var asBind = useAs.bindBlock();
-      return new Command.Open.UseHideName(name, asId,
+      return new UseHide.Name(name, asId,
         asAssoc != null ? visitAssoc(asAssoc) : Assoc.Invalid,
         asBind != null ? visitBind(asBind) : BindBlock.EMPTY);
     });
   }
 
-  public @NotNull Command.Open.UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
-    if (ctx.HIDING() != null) return hideList(ctx.hideList(), Command.Open.UseHide.Strategy.Hiding);
-    return useList(ctx.useList(), Command.Open.UseHide.Strategy.Using);
+  public @NotNull UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
+    if (ctx.HIDING() != null) return hideList(ctx.hideList(), UseHide.Strategy.Hiding);
+    return useList(ctx.useList(), UseHide.Strategy.Using);
   }
 
   public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {

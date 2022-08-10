@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -17,9 +17,6 @@ public sealed interface FormTerm extends Term {
    * @author re-xyr, kiva, ice1000
    */
   record Pi(@NotNull Term.Param param, @NotNull Term body) implements FormTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitPi(this, p);
-    }
 
     public @NotNull Term substBody(@NotNull Term term) {
       return body.subst(param.ref(), term);
@@ -52,9 +49,6 @@ public sealed interface FormTerm extends Term {
    * @author re-xyr
    */
   record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitSigma(this, p);
-    }
   }
 
   /**
@@ -63,9 +57,6 @@ public sealed interface FormTerm extends Term {
   record Univ(int lift) implements FormTerm {
     public static final @NotNull FormTerm.Univ ZERO = new Univ(0);
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitUniv(this, p);
-    }
   }
 
   final class Interval implements FormTerm {
@@ -74,8 +65,5 @@ public sealed interface FormTerm extends Term {
     private Interval() {
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitInterval(this, p);
-    }
   }
 }

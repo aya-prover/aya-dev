@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -15,10 +15,6 @@ public sealed interface PrimTerm extends Term {
       this.isRight = isRight;
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitEnd(this, p);
-    }
-
     public boolean isRight() {
       return isRight;
     }
@@ -26,8 +22,5 @@ public sealed interface PrimTerm extends Term {
 
   record Str(@NotNull String string) implements PrimTerm {
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitStr(this, p);
-    }
   }
 }

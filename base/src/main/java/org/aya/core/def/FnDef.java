@@ -40,10 +40,6 @@ public final class FnDef extends UserDef {
     return function;
   }
 
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitFn(this, p);
-  }
-
   public @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref() {
     return ref;
   }
