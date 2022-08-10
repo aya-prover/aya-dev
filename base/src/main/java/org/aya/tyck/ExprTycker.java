@@ -65,7 +65,7 @@ public final class ExprTycker extends Tycker {
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
-          yield new Result(new RefTerm(loc, 0), ty);
+          yield new Result(new RefTerm(loc), ty);
         }
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
@@ -495,7 +495,7 @@ public final class ExprTycker extends Tycker {
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
       var field = (DefVar<FieldDef, TeleDecl.StructField>) var;
-      return new Result(new RefTerm.Field(field, 0), Def.defType(field));
+      return new Result(new RefTerm.Field(field), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new InternalException(msg);

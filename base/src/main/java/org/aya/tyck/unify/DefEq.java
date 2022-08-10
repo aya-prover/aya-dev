@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
@@ -257,7 +257,7 @@ public final class DefEq {
           var dummyVars = fieldSig.selfTele.map(par ->
             new LocalVar(par.ref().name(), par.ref().definition()));
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
-            new Arg<Term>(new RefTerm(vpa._1, 0), vpa._2.explicit()));
+            new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
           var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.args(), dummy);
           var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);

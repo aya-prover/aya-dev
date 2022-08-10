@@ -246,7 +246,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     }
 
     @Contract(" -> new") public @NotNull RefTerm toTerm() {
-      return new RefTerm(ref, 0);
+      return new RefTerm(ref);
     }
 
     public @NotNull Pat toPat() {

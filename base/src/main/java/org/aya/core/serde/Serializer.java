@@ -76,8 +76,8 @@ public record Serializer(@NotNull Serializer.State state) {
         new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
       case PrimTerm.End end -> new SerTerm.End(end.isRight());
       case PrimTerm.Str str -> new SerTerm.Str(str.string());
-      case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()), ref.lift());
-      case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()), ref.lift());
+      case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
+      case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()));
       case FormTerm.Interval interval -> new SerTerm.Interval();
       case FormTerm.Pi pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
       case FormTerm.Sigma sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
