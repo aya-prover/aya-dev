@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -67,7 +67,7 @@ public interface ExprView {
         var filling = hole.filling();
         var committed = filling != null ? commit(filling) : null;
         if (committed == filling) yield hole;
-        yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), committed);
+        yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), committed, hole.accessibleLocal());
       }
       case Expr.TupExpr tup -> {
         var items = tup.items().map(this::commit);
