@@ -35,7 +35,7 @@ fun propOrEnv(name: String): String =
 subprojects {
   val proj = this@subprojects
   val isSnapshot = proj.version.toString().endsWith("SNAPSHOT")
-  if (!isSnapshot) setProperty("release", true)
+  val isRelease = !isSnapshot
 
   apply {
     plugin("java")
@@ -49,7 +49,7 @@ subprojects {
   val javaVersion = 18
   java {
     withSourcesJar()
-    if (hasProperty("release")) withJavadocJar()
+    if (isRelease) withJavadocJar()
     sourceCompatibility = JavaVersion.VERSION_18
     targetCompatibility = JavaVersion.VERSION_18
     toolchain {
@@ -101,7 +101,7 @@ subprojects {
 
   artifacts {
     add("archives", tasks.named("sourcesJar"))
-    if (hasProperty("release")) add("archives", tasks.named("javadocJar"))
+    if (isRelease) add("archives", tasks.named("javadocJar"))
   }
 
   if (name in useJacoco) tasks.jacocoTestReport {
@@ -132,7 +132,7 @@ subprojects {
     maven {
       val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
       val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-      url = if (hasProperty("release")) releasesRepoUrl else snapshotsRepoUrl
+      url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
       name = "MavenCentral"
       credentials {
         username = ossrhUsername
@@ -183,7 +183,7 @@ subprojects {
     }
   }
 
-  if (hasProperty("signing.keyId") && hasProperty("release")) signing {
+  if (hasProperty("signing.keyId") && isRelease) signing {
     useGpgCmd()
     sign(publishing.publications["maven"])
   }

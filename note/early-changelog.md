@@ -2,6 +2,9 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.19
+
+
 ## 0.18
 
 Implemented full normalization with TermView,
