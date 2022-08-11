@@ -2,6 +2,27 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.19
+
+Updated to jdk 18, rewrote major version of classes to 61,
+used `graalvm/setup-graalvm@v1` in github actions script, updated kala to 0.44.0,
+shrank strip preview messages, improved publishing and versioning, published snapshots automatically,
+updated Tesla's name in copyright and developers list,
+rewrote Serializer with pattern matching,
+added repl, Serialization, Distiller, Test of literals of java integer backed literals,
+added string literal with primitive concatenation,
+normalizer re-committed lambda application, substed before normalizing,
+implemented do notations, array syntax and list comprehension, and idiom brackets with parse time desugar,
+moved `AyaDocile` to base, optimized `PatClassifier` for literals, especially for big integer literals,
+upgrade lsp4j to 0.14 and added some new features to lsp, added inlay type hints for bind patterns, definition usages count, code folding and search everywhere for symbols in VSCode, improved JPMS and build script,
+improved classable api and flatted concrete definitions, changed lsp to a pure analyzer,
+added a new check-only mode option for libraries, made some lsp api public,
+fixed false-positive first match domination warning by putting bind patterns in separate leaf nodes,
+fixed primitive reload and polished some error messages, reduced expensive graph operations and needless lsp protocol calls,
+fixed a problem where distilling `{? expr ?}` may cause NPE by passing `accessibleLocal`,
+implemented new `Term` traversal api.
+
+
 ## 0.18
 
 Implemented full normalization with TermView,
