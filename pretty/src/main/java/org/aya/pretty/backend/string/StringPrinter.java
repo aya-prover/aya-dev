@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -97,7 +97,11 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     Tuple.of("\\/", "\u2228"),
     Tuple.of("=>", "\u21D2"),
     Tuple.of("ulift", "\u2191"),
-    Tuple.of("->", "\u2192")
+    Tuple.of("->", "\u2192"),
+    Tuple.of("(|", "\u2987"),
+    Tuple.of("|)", "\u2988"),
+    Tuple.of("{|", "\u2983"),
+    Tuple.of("|}", "\u2984")
   );
 
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {

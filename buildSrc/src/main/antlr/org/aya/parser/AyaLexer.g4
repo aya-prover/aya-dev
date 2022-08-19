@@ -91,6 +91,8 @@ LARRAY : '[';
 RARRAY : ']';
 LGOAL : '{?';
 RGOAL : '?}';
+LPARTIAL : '{|' | '\u2983';
+RPARTIAL : '|}' | '\u2984';
 AT : '@';
 
 // literals
