@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -34,7 +34,7 @@ public final class Generalize implements Stmt {
   }
 
   public @NotNull Expr.Param toExpr(boolean explicit, @NotNull LocalVar ref) {
-    return new Expr.Param(sourcePos, ref, type, false, explicit);
+    return new Expr.Param(sourcePos, ref, type, explicit);
   }
 
   public @NotNull ImmutableSeq<Expr.Param> toExpr() {

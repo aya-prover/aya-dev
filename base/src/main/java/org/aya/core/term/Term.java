@@ -208,19 +208,14 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
   record Param(
     @NotNull LocalVar ref,
     @NotNull Term type,
-    boolean pattern,
     boolean explicit
   ) implements Bind, ParamLike<Term> {
-    public Param(@NotNull LocalVar ref, @NotNull Term type, boolean explicit) {
-      this(ref, type, false, explicit);
-    }
-
     public Param(@NotNull ParamLike<?> param, @NotNull Term type) {
-      this(param.ref(), type, param.pattern(), param.explicit());
+      this(param.ref(), type, param.explicit());
     }
 
     public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(@NotNull MutableList<Tuple3<LocalVar, Boolean, Term>> buf) {
-      return buf.view().map(tup -> new Param(tup._1, tup._3, false, tup._2)).toImmutableSeq();
+      return buf.view().map(tup -> new Param(tup._1, tup._3, tup._2)).toImmutableSeq();
     }
 
     public @NotNull Param descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
@@ -230,11 +225,11 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     }
 
     @Contract(" -> new") public @NotNull Param implicitify() {
-      return new Param(ref, type, pattern, false);
+      return new Param(ref, type, false);
     }
 
     @Contract(" -> new") public @NotNull Param rename() {
-      return new Param(renameVar(), type, pattern, explicit);
+      return new Param(renameVar(), type, explicit);
     }
 
     @Contract(" -> new") public @NotNull LocalVar renameVar() {
@@ -274,7 +269,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
     }
 
     public @NotNull Param subst(@NotNull Subst subst, int ulift) {
-      return new Param(ref, type.subst(subst, ulift), pattern, explicit);
+      return new Param(ref, type.subst(subst, ulift), explicit);
     }
   }
 }

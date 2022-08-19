@@ -294,8 +294,8 @@ public record AyaProducer(
     if (literal != null) {
       var pos = sourcePosOf(ctx);
       return ImmutableSeq.of(isParamLiteral
-        ? new Expr.Param(pos, visitParamLiteral(literal), type(null, pos), false, true)
-        : new Expr.Param(pos, Constants.randomlyNamed(pos), visitLiteral(literal), false, true)
+        ? new Expr.Param(pos, visitParamLiteral(literal), type(null, pos), true)
+        : new Expr.Param(pos, Constants.randomlyNamed(pos), visitLiteral(literal), true)
       );
     }
     var teleBinder = ctx.teleBinder();
@@ -304,7 +304,7 @@ public record AyaProducer(
       var type = teleBinder.expr();
       if (type != null) {
         var pos = sourcePosOf(ctx);
-        return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(type), false, true));
+        return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(type), true));
       }
       teleMaybeTypedExpr = teleBinder.teleMaybeTypedExpr();
     }
@@ -317,9 +317,8 @@ public record AyaProducer(
   visitTeleMaybeTypedExpr(AyaParser.TeleMaybeTypedExprContext ctx) {
     var ids = ctx.ids();
     var type = type(ctx.type(), sourcePosOf(ids));
-    var pattern = ctx.PATTERN_KW() != null;
     return explicit -> visitIds(ids)
-      .map(v -> new Expr.Param(v.sourcePos(), LocalVar.from(v), type, pattern, explicit))
+      .map(v -> new Expr.Param(v.sourcePos(), LocalVar.from(v), type, explicit))
       .collect(ImmutableSeq.factory());
   }
 
@@ -341,10 +340,7 @@ public record AyaProducer(
         visitExpr(pi.expr()));
       case AyaParser.SigmaContext sig -> new Expr.SigmaExpr(
         sourcePosOf(sig), false,
-        visitTelescope(sig.tele()).appended(new Expr.Param(
-          visitExpr(sig.expr()).sourcePos(),
-          LocalVar.IGNORED,
-          visitExpr(sig.expr()), false, true)));
+        visitTelescope(sig.tele()).appended(new Expr.Param(visitExpr(sig.expr()).sourcePos(), LocalVar.IGNORED, visitExpr(sig.expr()), true)));
       case AyaParser.LamContext lam -> {
         Expr result;
         var bodyExpr = lam.expr();
@@ -359,7 +355,7 @@ public record AyaProducer(
         var expr0 = arr.expr(0);
         var to = visitExpr(arr.expr(1));
         var pos = sourcePosOf(expr0);
-        var param = new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(expr0), false, true);
+        var param = new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(expr0), true);
         yield new Expr.PiExpr(sourcePosOf(arr), false, param, to);
       }
       case AyaParser.NewContext n -> new Expr.NewExpr(
@@ -872,7 +868,6 @@ public record AyaProducer(
     if (ctx.OPAQUE() != null) return Modifier.Opaque;
     if (ctx.INLINE() != null) return Modifier.Inline;
     if (ctx.OVERLAP() != null) return Modifier.Overlap;
-    /*if (ctx.PATTERN_KW() != null)*/
     return Modifier.Pattern;
   }
 

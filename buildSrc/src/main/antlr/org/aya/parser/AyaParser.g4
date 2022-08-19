@@ -60,7 +60,6 @@ fnBody : IMPLIES expr
 fnModifiers : OPAQUE
             | INLINE
             | OVERLAP
-            | PATTERN_KW
             ;
 
 structDecl : sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS exprList)? (BAR field)* bindBlock?;
@@ -160,8 +159,7 @@ tele : literal
 teleBinder : expr
            | teleMaybeTypedExpr ;
 
-teleMaybeTypedExpr : PATTERN_KW? ids type?;
-
+teleMaybeTypedExpr : ids type?;
 
 // utilities
 exprList : (expr COMMA)* expr;

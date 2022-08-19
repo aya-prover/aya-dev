@@ -170,7 +170,7 @@ public record Serializer(@NotNull Serializer.State state) {
   }
 
   @Contract("_ -> new") private SerTerm.SerParam serialize(Term.@NotNull Param param) {
-    return new SerTerm.SerParam(param.explicit(), param.pattern(), state.local(param.ref()), serialize(param.type()));
+    return new SerTerm.SerParam(param.explicit(), state.local(param.ref()), serialize(param.type()));
   }
 
   private @NotNull ImmutableSeq<SerTerm.SerParam> serializeParams(ImmutableSeq<Term.@NotNull Param> params) {

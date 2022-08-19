@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -258,19 +258,18 @@ public sealed interface Expr extends AyaDocile, SourceNode {
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar ref,
     @NotNull Expr type,
-    boolean pattern,
     boolean explicit
   ) implements ParamLike<Expr> {
     public Param(@NotNull Param param, @NotNull Expr type) {
-      this(param.sourcePos, param.ref, type, param.pattern, param.explicit);
+      this(param.sourcePos, param.ref, type, param.explicit);
     }
 
     public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
-      this(sourcePos, var, new HoleExpr(sourcePos, false, null), false, explicit);
+      this(sourcePos, var, new HoleExpr(sourcePos, false, null), explicit);
     }
 
     public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @NotNull Expr> mapper) {
-      return new Param(sourcePos, ref, mapper.apply(type), pattern, explicit);
+      return new Param(sourcePos, ref, mapper.apply(type), explicit);
     }
   }
 
