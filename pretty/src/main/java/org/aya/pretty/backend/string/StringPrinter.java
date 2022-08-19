@@ -98,6 +98,8 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     Tuple.of("=>", "\u21D2"),
     Tuple.of("ulift", "\u2191"),
     Tuple.of("->", "\u2192"),
+    Tuple.of("_|_", "\u22A5"),
+    Tuple.of("top", "\u22A4"),
     Tuple.of("(|", "\u2987"),
     Tuple.of("|)", "\u2988"),
     Tuple.of("{|", "\u2983"),

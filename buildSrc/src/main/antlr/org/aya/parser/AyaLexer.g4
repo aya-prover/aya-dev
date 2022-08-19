@@ -93,6 +93,8 @@ LGOAL : '{?';
 RGOAL : '?}';
 LPARTIAL : '{|' | '\u2983';
 RPARTIAL : '|}' | '\u2984';
+BOTTOM : '_|_' | '\u22A5';
+TOP : 'top' | '\u22A4';
 AT : '@';
 
 // literals
