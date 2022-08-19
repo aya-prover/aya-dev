@@ -20,8 +20,7 @@ added a new check-only mode option for libraries, made some lsp api public,
 fixed false-positive first match domination warning by putting bind patterns in separate leaf nodes,
 fixed primitive reload and polished some error messages, reduced expensive graph operations and needless lsp protocol calls,
 fixed a problem where distilling `{? expr ?}` may cause NPE by passing `accessibleLocal`,
-implemented new `Term` traversal api.
-
+implemented new `Term` traversal api, disallowed universe lifting for local bindings.
 
 ## 0.18
 

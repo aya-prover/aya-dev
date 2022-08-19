@@ -74,10 +74,9 @@ public sealed interface SerTerm extends Serializable {
 
   @NotNull Term de(@NotNull DeState state);
 
-  record SerParam(boolean explicit, boolean pattern, @NotNull SimpVar var,
-                  @NotNull SerTerm term) implements Serializable {
+  record SerParam(boolean explicit, @NotNull SimpVar var, @NotNull SerTerm term) implements Serializable {
     public @NotNull Term.Param de(@NotNull DeState state) {
-      return new Term.Param(state.var(var), term.de(state), pattern, explicit);
+      return new Term.Param(state.var(var), term.de(state), explicit);
     }
   }
 

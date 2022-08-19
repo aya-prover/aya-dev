@@ -42,7 +42,7 @@ public interface EndoFunctor extends Function<Term, Term> {
     private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {
       var v = param.renameVar();
       subst.addDirectly(param.ref(), new RefTerm(v));
-      return new Term.Param(v, param.type(), param.pattern(), param.explicit());
+      return new Term.Param(v, param.type(), param.explicit());
     }
 
     @Override public @NotNull Term pre(@NotNull Term term) {

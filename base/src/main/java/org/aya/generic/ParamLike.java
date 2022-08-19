@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
   boolean explicit();
-  boolean pattern();
   @NotNull LocalVar ref();
   @NotNull Expr type();
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
@@ -28,7 +27,6 @@ public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
   default @NotNull Doc toDoc(@NotNull Doc names, @NotNull DistillerOptions options) {
     var type = type();
     var docs = MutableList.of(names);
-    if (pattern()) docs.insert(0, Doc.styled(BaseDistiller.KEYWORD, "pattern"));
     docs.append(Doc.symbol(":"));
     docs.append(type.toDoc(options));
     return Doc.licit(explicit(), Doc.sep(docs));
