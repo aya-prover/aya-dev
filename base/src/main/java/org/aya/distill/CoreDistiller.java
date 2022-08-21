@@ -100,7 +100,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         );
       }
       case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
-      case FormTerm.Face face -> Doc.styled(KEYWORD, "F");
+      case FormTerm.Face face -> Doc.styled(KEYWORD, "Face");
       case PrimTerm.End end -> Doc.styled(KEYWORD, end.isRight() ? "1" : "0");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()

@@ -113,7 +113,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawUnivExpr e -> Doc.styled(KEYWORD, "Type");
       case Expr.IntervalExpr e -> Doc.styled(KEYWORD, "I");
-      case Expr.FaceExpr e -> Doc.styled(KEYWORD, "F");
+      case Expr.FaceExpr e -> Doc.styled(KEYWORD, "Face");
       case Expr.NewExpr expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
