@@ -1,6 +1,7 @@
 module aya.base {
   requires transitive aya.pretty;
   requires transitive aya.util;
+  requires transitive aya.guest.cubical;
   requires transitive kala.base;
   requires transitive kala.collection;
 
