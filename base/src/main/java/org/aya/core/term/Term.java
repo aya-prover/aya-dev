@@ -164,10 +164,6 @@ public sealed interface Term extends AyaDocile, AyaTermLike<Term> permits CallTe
     return new EndoFunctor.Substituter(subst).apply(this);
   }
 
-  default @NotNull Term subst(@NotNull IntervalSubst subst) {
-    return subst(subst.map());
-  }
-
   default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
     return subst(new Subst(MutableMap.from(subst)));
   }

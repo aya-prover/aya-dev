@@ -18,7 +18,6 @@ import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
-import org.aya.core.visitor.IntervalSubst;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
@@ -288,7 +287,7 @@ public final class ExprTycker extends Tycker {
       var lhs = clauses.get(i);
       for (int j = 0; j < i; j++) {
         var rhs = clauses.get(j);
-        CofThy.conv(lhs.cof().and(rhs.cof()), new IntervalSubst(), subst -> {
+        CofThy.conv(lhs.cof().and(rhs.cof()), intervalCtx(), subst -> {
           unifyTyReported(lhs.u().subst(subst), rhs.u().subst(subst), loc);
           return true;
         });
@@ -301,13 +300,17 @@ public final class ExprTycker extends Tycker {
     @NotNull Restr.Side<Expr> clause, @NotNull Term type
   ) {
     var cofib = new Restr.Cofib<>(clause.cof().ands().map(this::condition));
-    var u = CofThy.vdash(cofib, new IntervalSubst(), subst -> inherit(clause.u(), type.subst(subst)).wellTyped);
+    var u = CofThy.vdash(cofib, intervalCtx(), subst -> inherit(clause.u(), type.subst(subst)).wellTyped);
     if (u.isDefined() && u.get() == null) {
       // ^ some `inst` in `cofib.ands()` are ErrorTerms.
       // Q: report error again?
       return Option.some(new Restr.Side<>(cofib, ErrorTerm.typeOf(type)));
     }
     return u.map(uu -> new Restr.Side<>(cofib, uu));
+  }
+
+  private @NotNull Subst intervalCtx() {
+    return new Subst(MutableMap.create());
   }
 
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
@@ -438,12 +441,11 @@ public final class ExprTycker extends Tycker {
           yield Result.error(opt -> Doc.plain("Partial type contains error"));
         var clauses = elaborateClauses(el, el.clauses(), ty.type());
         var face = new Restr.Vary<>(clauses.map(Restr.Side::cof));
-        if (!CofThy.conv(cof.restr(), new IntervalSubst(), subst -> {
+        if (!CofThy.conv(cof.restr(), intervalCtx(), subst -> {
           var faceSubst = face.fmap(t -> t.subst(subst));
           var restr = new Expander.Normalizer(state).restr(faceSubst);
           return CofThy.satisfied(restr);
-        }))
-          yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
+        })) yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
         yield new Result(new IntroTerm.PartEl(clauses), ty);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
