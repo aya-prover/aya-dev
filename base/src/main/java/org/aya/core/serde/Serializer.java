@@ -106,6 +106,11 @@ public record Serializer(@NotNull Serializer.State state) {
       case IntroTerm.New newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
+      case FormTerm.Face face -> throw new UnsupportedOperationException("TODO");
+      case IntroTerm.PartEl el -> throw new UnsupportedOperationException("TODO");
+      case FormTerm.PartTy ty -> throw new UnsupportedOperationException("TODO");
+      case PrimTerm.Cof cof -> throw new UnsupportedOperationException("TODO");
+
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");

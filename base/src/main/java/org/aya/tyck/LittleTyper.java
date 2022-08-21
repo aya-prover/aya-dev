@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -77,6 +77,10 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case PrimTerm.End end -> FormTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
       case LitTerm.ShapedInt shaped -> shaped.type();
+      case FormTerm.Face face -> ErrorTerm.typeOf(face);
+      case FormTerm.PartTy partTy -> new FormTerm.Univ(0);
+      case IntroTerm.PartEl partEl -> throw new UnsupportedOperationException("TODO");
+      case PrimTerm.Cof cof -> FormTerm.Face.INSTANCE;
     };
   }
 }
