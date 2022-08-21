@@ -15,6 +15,8 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
+import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
@@ -106,6 +108,13 @@ public interface Expander extends EndoFunctor {
           yield apply(tup.items().get(ix - 1));
         }
         default -> Expander.super.post(term);
+      };
+    }
+
+    public @NotNull Restr<Term> restr(@NotNull Restr<Term> restr) {
+      return switch (restr.fmap(this::post)) {
+        case Restr.Vary<Term> vary -> CofThy.normalizeRestr(vary);
+        case Restr.Const<Term> c -> c;
       };
     }
   }

@@ -56,7 +56,6 @@ public sealed interface FormTerm extends Term {
    */
   record Univ(int lift) implements FormTerm {
     public static final @NotNull FormTerm.Univ ZERO = new Univ(0);
-
   }
 
   final class Interval implements FormTerm {
@@ -64,6 +63,15 @@ public sealed interface FormTerm extends Term {
 
     private Interval() {
     }
-
   }
+
+  final class Face implements FormTerm {
+    public static Face INSTANCE = new Face();
+
+    private Face() {
+    }
+  }
+
+  /** partial type */
+  record PartTy(@NotNull Term type, @NotNull Term restr) implements FormTerm {}
 }

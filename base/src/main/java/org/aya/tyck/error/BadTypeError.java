@@ -103,4 +103,12 @@ public record BadTypeError(
       paramType,
       state);
   }
+
+  public static @NotNull BadTypeError partTy(@NotNull TyckState state, @NotNull Expr expr, @NotNull Term actualType) {
+    return new BadTypeError(expr, actualType,
+      Doc.plain("fill the shape composed by"),
+      Doc.english("of the partial element"),
+      options -> Doc.english("Partial type"),
+      state);
+  }
 }

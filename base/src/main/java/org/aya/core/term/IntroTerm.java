@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.FieldDef;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,4 +51,7 @@ public sealed interface IntroTerm extends Term {
    */
   record Tuple(@NotNull ImmutableSeq<Term> items) implements IntroTerm {
   }
+
+  /** partial element */
+  record PartEl(@NotNull ImmutableSeq<Restr.Side<Term>> clauses) implements IntroTerm {}
 }

@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -17,6 +18,7 @@ import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.IntervalSubst;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
@@ -24,6 +26,9 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Restr;
+import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -62,6 +67,7 @@ public final class ExprTycker extends Tycker {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> new Result(new FormTerm.Univ(univ.lift()), new FormTerm.Univ(univ.lift() + 1));
       case Expr.IntervalExpr interval -> new Result(FormTerm.Interval.INSTANCE, new FormTerm.Univ(0));
+      case Expr.FaceExpr face -> new Result(FormTerm.Face.INSTANCE, new FormTerm.Univ(0));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
@@ -249,8 +255,59 @@ public final class ExprTycker extends Tycker {
 
         yield new Result(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STR));
       }
+      case Expr.Cof cof -> new Result(new PrimTerm.Cof(cof.data().mapCond(this::condition)), FormTerm.Face.INSTANCE);
+      case Expr.PartTy par -> new Result(
+        new FormTerm.PartTy(inherit(par.type(), FormTerm.Univ.ZERO).wellTyped, cof(par.restr())),
+        FormTerm.Univ.ZERO);
       default -> fail(expr, new NoRuleError(expr, null));
     };
+  }
+
+  private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
+    // forall i. (c_i is valid)
+    return new Restr.Cond<>(inherit(c.inst(), FormTerm.Interval.INSTANCE).wellTyped, c.isLeft());
+    // ^ note: `inst` may be ErrorTerm!
+  }
+
+  private @NotNull Term cof(@NotNull Expr.Cof restr) {
+    var term = inherit(restr, FormTerm.Face.INSTANCE).wellTyped;
+    if (term instanceof PrimTerm.Cof cof) return cof;
+    return ErrorTerm.unexpected(term);
+  }
+
+  private ImmutableSeq<Restr.Side<Term>> elaborateClauses(
+    @NotNull Expr loc, @NotNull ImmutableSeq<Restr.Side<Expr>> clauses, @NotNull Term ty
+  ) {
+    var sides = clauses.flatMap(cl -> clause(loc, cl, ty));
+    confluence(sides, loc);
+    return sides;
+  }
+
+  private void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc) {
+    for (int i = 1; i < clauses.size(); i++) {
+      var lhs = clauses.get(i);
+      for (int j = 0; j < i; j++) {
+        var rhs = clauses.get(j);
+        CofThy.conv(lhs.cof().and(rhs.cof()), new IntervalSubst(), subst -> {
+          unifyTyReported(lhs.u().subst(subst), rhs.u().subst(subst), loc);
+          return true;
+        });
+      }
+    }
+  }
+
+  private @NotNull Option<Restr.Side<Term>> clause(
+    @NotNull Expr loc,
+    @NotNull Restr.Side<Expr> clause, @NotNull Term type
+  ) {
+    var cofib = new Restr.Cofib<>(clause.cof().ands().map(this::condition));
+    var u = CofThy.vdash(cofib, new IntervalSubst(), subst -> inherit(clause.u(), type.subst(subst)).wellTyped);
+    if (u.isDefined() && u.get() == null) {
+      // ^ some `inst` in `cofib.ands()` are ErrorTerms.
+      // Q: report error again?
+      return Option.some(new Restr.Side<>(cofib, ErrorTerm.typeOf(type)));
+    }
+    return u.map(uu -> new Restr.Side<>(cofib, uu));
   }
 
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
@@ -373,6 +430,21 @@ public final class ExprTycker extends Tycker {
           yield new Result(new LitTerm.ShapedInt(lit.integer(), AyaShape.NAT_SHAPE, hole), term);
         }
         yield unifyTyMaybeInsert(term, synthesize(expr), expr);
+      }
+      case Expr.PartEl el -> {
+        if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.PartTy ty))
+          yield fail(el, term, BadTypeError.partTy(state, el, term));
+        if (!(ty.restr() instanceof PrimTerm.Cof cof))
+          yield Result.error(opt -> Doc.plain("Partial type contains error"));
+        var clauses = elaborateClauses(el, el.clauses(), ty.type());
+        var face = new Restr.Vary<>(clauses.map(Restr.Side::cof));
+        if (!CofThy.conv(cof.restr(), new IntervalSubst(), subst -> {
+          var faceSubst = face.fmap(t -> t.subst(subst));
+          var restr = new Expander.Normalizer(state).restr(faceSubst);
+          return CofThy.satisfied(restr);
+        }))
+          yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
+        yield new Result(new IntroTerm.PartEl(clauses), ty);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };

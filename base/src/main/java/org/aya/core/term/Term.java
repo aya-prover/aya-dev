@@ -15,6 +15,7 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.AyaTermLike;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
@@ -36,7 +37,7 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, ErrorTerm,
+public sealed interface Term extends AyaDocile, AyaTermLike<Term> permits CallTerm, ElimTerm, ErrorTerm,
   FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, LitTerm {
 
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
@@ -54,6 +55,7 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
       }
       case FormTerm.Univ univ -> univ;
       case FormTerm.Interval interval -> interval;
+      case FormTerm.Face face -> face;
       case PrimTerm.End end -> end;
       case PrimTerm.Str str -> str;
       case IntroTerm.Lambda lambda -> {
@@ -131,6 +133,22 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
         if (type == shaped.type()) yield shaped;
         yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
       }
+      case PrimTerm.Cof cof -> {
+        var restr = cof.restr().fmap(f);
+        if (restr == cof.restr()) yield cof;
+        yield new PrimTerm.Cof(restr);
+      }
+      case FormTerm.PartTy ty -> {
+        var type = f.apply(ty.type());
+        var restr = (PrimTerm.Cof) f.apply(ty.restr());
+        if (type == ty.type() && restr == ty.restr()) yield ty;
+        yield new FormTerm.PartTy(type, restr);
+      }
+      case IntroTerm.PartEl el -> {
+        var clauses = el.clauses().map(c -> c.rename(f));
+        if (clauses.sameElements(el.clauses(), true)) yield el;
+        yield new IntroTerm.PartEl(clauses);
+      }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
       case RefTerm.Field field -> field;
@@ -144,6 +162,10 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
 
   default @NotNull Term subst(@NotNull Subst subst) {
     return new EndoFunctor.Substituter(subst).apply(this);
+  }
+
+  default @NotNull Term subst(@NotNull IntervalSubst subst) {
+    return subst(subst.map());
   }
 
   default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
