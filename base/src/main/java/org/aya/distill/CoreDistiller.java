@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
@@ -11,6 +11,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.generic.Arg;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.StringEscapeUtil;
@@ -99,6 +100,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         );
       }
       case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
+      case FormTerm.Face face -> Doc.styled(KEYWORD, "F");
       case PrimTerm.End end -> Doc.styled(KEYWORD, end.isRight() ? "1" : "0");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
@@ -159,6 +161,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
           : linkLit(shaped.repr(), suc.ref, CON_CALL),
         () -> Doc.plain(String.valueOf(shaped.repr())));
       case PrimTerm.Str str -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(str.string()) + "\"");
+      case FormTerm.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
+        ty.type().toDoc(options), Doc.braced(ty.restr().toDoc(options)));
+      case IntroTerm.PartEl el -> Doc.sep(Doc.symbol("{|"),
+        Doc.join(Doc.symbol("|"), el.clauses().map(Restr.Side::toDoc)),
+        Doc.symbol("|}"));
+      case PrimTerm.Cof cof -> cof.restr().toDoc();
     };
   }
 

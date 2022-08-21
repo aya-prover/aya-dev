@@ -27,10 +27,12 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.repl.antlr.AntlrUtil;
+import org.aya.tyck.error.NotAnIntervalError;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -253,6 +255,7 @@ public record AyaProducer(
     if (id != null) return new Expr.UnresolvedExpr(pos, visitQualifiedId(id));
     if (ctx.TYPE() != null) return new Expr.RawUnivExpr(pos);
     if (ctx.I() != null) return new Expr.IntervalExpr(pos);
+    if (ctx.FACE() != null) return new Expr.FaceExpr(pos);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
@@ -380,9 +383,40 @@ public record AyaProducer(
         else
           yield visitListComprehension(arrCtx.arrayBlock());
       }
+      case AyaParser.CofExprContext cofCtx -> visitRestr(cofCtx.restr());
+      case AyaParser.PartTyContext tyCtx -> new Expr.PartTy(sourcePosOf(tyCtx),
+        visitExpr(tyCtx.expr()),
+        visitRestr(tyCtx.restr()));
+      case AyaParser.PartElContext elCtx -> new Expr.PartEl(sourcePosOf(elCtx), visitPartial(elCtx.partial()));
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
+  }
+
+  private @NotNull Expr.Cof visitRestr(AyaParser.RestrContext ctx) {
+    if (ctx.TOP() != null) return new Expr.Cof(sourcePosOf(ctx), new Restr.Const<>(true));
+    if (ctx.BOTTOM() != null) return new Expr.Cof(sourcePosOf(ctx), new Restr.Const<>(false));
+    return new Expr.Cof(sourcePosOf(ctx), new Restr.Vary<>(Seq.wrapJava(ctx.cof()).map(this::visitCof)));
+  }
+
+  private @NotNull Restr.Cofib<Expr> visitCof(AyaParser.CofContext ctx) {
+    return new Restr.Cofib<>(Seq.wrapJava(ctx.cond()).map(this::visitCond));
+  }
+
+  private @NotNull Restr.Cond<Expr> visitCond(AyaParser.CondContext ctx) {
+    var num = Integer.parseInt(ctx.NUMBER().getText());
+    if (num != 0 && num != 1) {
+      reporter.report(new NotAnIntervalError(sourcePosOf(ctx.NUMBER()), num));
+      throw new ParsingInterruptedException();
+    }
+    var weakId = ctx.weakId();
+    return new Restr.Cond<>(new Expr.UnresolvedExpr(sourcePosOf(weakId), weakId.getText()), num == 0);
+  }
+
+  private @NotNull ImmutableSeq<Restr.Side<Expr>> visitPartial(AyaParser.PartialContext ctx) {
+    return Seq.wrapJava(ctx.subSystem()).map(ss -> new Restr.Side<>(
+      visitCof(ss.cof()),
+      visitExpr(ss.expr())));
   }
 
   private @NotNull Expr visitListComprehension(AyaParser.ArrayBlockContext ctx) {
@@ -685,7 +719,8 @@ public record AyaProducer(
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.weakId();
-    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), MutableValue.create());
+    if (id != null)
+      return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), MutableValue.create());
 
     return unreachable(ctx);
   }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
@@ -17,6 +17,7 @@ import org.aya.concrete.visitor.ExprTraversal;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.StringEscapeUtil;
@@ -112,6 +113,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawUnivExpr e -> Doc.styled(KEYWORD, "Type");
       case Expr.IntervalExpr e -> Doc.styled(KEYWORD, "I");
+      case Expr.FaceExpr e -> Doc.styled(KEYWORD, "F");
       case Expr.NewExpr expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
@@ -137,6 +139,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
+      case Expr.Cof cof -> cof.data().toDoc();
+      case Expr.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
+        ty.type().toDoc(options), Doc.braced(ty.restr().toDoc(options)));
+      case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
+        Doc.join(Doc.symbol("|"), el.clauses().map(Restr.Side::toDoc)),
+        Doc.symbol("|}"));
     };
   }
 

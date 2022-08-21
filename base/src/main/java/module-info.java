@@ -38,4 +38,6 @@ module aya.base {
   exports org.aya.tyck.trace;
   exports org.aya.tyck.unify;
   exports org.aya.tyck;
+  // Needed by AyaProducer for reporting NotAnIntervalError
+  exports org.aya.tyck.error;
 }
