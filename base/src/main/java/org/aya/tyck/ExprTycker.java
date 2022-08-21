@@ -274,22 +274,26 @@ public final class ExprTycker extends Tycker {
     return ErrorTerm.unexpected(term);
   }
 
-  private ImmutableSeq<Restr.Side<Term>> elaborateClauses(
-    @NotNull Expr loc, @NotNull ImmutableSeq<Restr.Side<Expr>> clauses, @NotNull Term ty
+  private @NotNull ImmutableSeq<Restr.Side<Term>> elaborateClauses(
+    @NotNull Expr loc, @NotNull ImmutableSeq<Restr.Side<Expr>> clauses, @NotNull Term type
   ) {
-    var sides = clauses.flatMap(cl -> clause(loc, cl, ty));
-    confluence(sides, loc);
+    var sides = clauses.flatMap(cl -> clause(loc, cl, type));
+    confluence(sides, loc, type);
     return sides;
   }
 
-  private void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc) {
+  private void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc, @NotNull Term type) {
     for (int i = 1; i < clauses.size(); i++) {
       var lhs = clauses.get(i);
       for (int j = 0; j < i; j++) {
         var rhs = clauses.get(j);
-        CofThy.conv(lhs.cof().and(rhs.cof()), intervalCtx(), subst -> {
-          unifyTyReported(lhs.u().subst(subst), rhs.u().subst(subst), loc);
-          return true;
+        CofThy.conv(lhs.cof().and(rhs.cof()), new Subst(), subst -> {
+          var lu = lhs.u().subst(subst);
+          var ru = rhs.u().subst(subst);
+          var unifier = unifier(loc.sourcePos(), Ordering.Eq);
+          var happy = unifier.compare(lu, ru, type.subst(subst));
+          if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lu, ru, unifier.getFailure()));
+          return happy;
         });
       }
     }
@@ -300,17 +304,13 @@ public final class ExprTycker extends Tycker {
     @NotNull Restr.Side<Expr> clause, @NotNull Term type
   ) {
     var cofib = new Restr.Cofib<>(clause.cof().ands().map(this::condition));
-    var u = CofThy.vdash(cofib, intervalCtx(), subst -> inherit(clause.u(), type.subst(subst)).wellTyped);
+    var u = CofThy.vdash(cofib, new Subst(), subst -> inherit(clause.u(), type.subst(subst)).wellTyped);
     if (u.isDefined() && u.get() == null) {
       // ^ some `inst` in `cofib.ands()` are ErrorTerms.
       // Q: report error again?
       return Option.some(new Restr.Side<>(cofib, ErrorTerm.typeOf(type)));
     }
     return u.map(uu -> new Restr.Side<>(cofib, uu));
-  }
-
-  private @NotNull Subst intervalCtx() {
-    return new Subst(MutableMap.create());
   }
 
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
@@ -441,7 +441,7 @@ public final class ExprTycker extends Tycker {
           yield Result.error(opt -> Doc.plain("Partial type contains error"));
         var clauses = elaborateClauses(el, el.clauses(), ty.type());
         var face = new Restr.Vary<>(clauses.map(Restr.Side::cof));
-        if (!CofThy.conv(cof.restr(), intervalCtx(), subst -> {
+        if (!CofThy.conv(cof.restr(), new Subst(), subst -> {
           var faceSubst = face.fmap(t -> t.subst(subst));
           var restr = new Expander.Normalizer(state).restr(faceSubst);
           return CofThy.satisfied(restr);

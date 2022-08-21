@@ -35,6 +35,10 @@ public record Subst(
     throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
   }));
 
+  public Subst() {
+    this(MutableMap.create());
+  }
+
   public Subst(@NotNull Var var, @NotNull Term term) {
     this(MutableHashMap.of(var, term));
   }
@@ -81,7 +85,10 @@ public record Subst(
   @Override public boolean contradicts(LocalVar i, boolean newIsLeft) {
     // TODO: formula
     // In an and-only cofibration, every variable appears uniquely in a cond.
-    return map.containsKey(i);
+    if (!map.containsKey(i)) return false;
+    // check whether if the cond is self-contradictory
+    if (!(map.get(i) instanceof PrimTerm.End end)) return false;
+    return end.isRight() == newIsLeft;
   }
 
   @Override public @Nullable LocalVar asRef(@NotNull Term term) {

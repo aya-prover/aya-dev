@@ -164,7 +164,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case FormTerm.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
         ty.type().toDoc(options), Doc.braced(ty.restr().toDoc(options)));
       case IntroTerm.PartEl el -> Doc.sep(Doc.symbol("{|"),
-        Doc.join(Doc.symbol("|"), el.clauses().map(Restr.Side::toDoc)),
+        Doc.join(Doc.symbol(" | "), el.clauses().map(Restr.Side::toDoc)),
         Doc.symbol("|}"));
       case PrimTerm.Cof cof -> cof.restr().toDoc();
     };

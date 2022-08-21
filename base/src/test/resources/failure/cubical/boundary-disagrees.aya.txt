@@ -1,0 +1,17 @@
+In file $FILE:2:2 ->
+
+  1 | def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial A { i 0 /\ j 0 } =>
+  2 |   {| i 0 := u | i 0 /\ j 0 := v |}
+        ^------------------------------^
+
+Error: The boundary
+         v
+       disagrees with
+         u
+       In particular, we failed to unify
+         v
+       with
+         u
+
+1 error(s), 0 warning(s).
+What are you doing?
