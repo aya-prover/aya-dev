@@ -8,10 +8,6 @@ Error: The boundary
          v
        disagrees with
          u
-       In particular, we failed to unify
-         v
-       with
-         u
 
 1 error(s), 0 warning(s).
 What are you doing?

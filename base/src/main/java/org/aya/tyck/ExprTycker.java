@@ -292,7 +292,7 @@ public final class ExprTycker extends Tycker {
           var ru = subst.term(state, rhs.u());
           var unifier = unifier(loc.sourcePos(), Ordering.Eq);
           var happy = unifier.compare(lu, ru, subst.term(state, type));
-          if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lu, ru, unifier.getFailure()));
+          if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lu, ru, unifier.getFailure(), state));
           return happy;
         });
       }
@@ -608,7 +608,7 @@ public final class ExprTycker extends Tycker {
    */
   void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (unification != null) reporter.report(new UnifyError(loc, upper, lower, unification, state));
+    if (unification != null) reporter.report(new UnifyError.Type(loc, upper, lower, unification, state));
   }
 
   /**
@@ -628,7 +628,7 @@ public final class ExprTycker extends Tycker {
     }
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return new Result(term, lower);
-    return fail(term.freezeHoles(state), upper, new UnifyError(loc,
+    return fail(term.freezeHoles(state), upper, new UnifyError.Type(loc,
       upper.freezeHoles(state), lower.freezeHoles(state), failureData, state));
   }
 

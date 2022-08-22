@@ -8,6 +8,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.DefEq;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
@@ -21,17 +22,12 @@ public sealed interface CubicalProblem extends ExprProblem {
     @NotNull Expr expr,
     @NotNull Term lhs,
     @NotNull Term rhs,
-    @NotNull DefEq.FailureData failure
-  ) implements CubicalProblem {
+    @NotNull DefEq.FailureData failureData,
+    @NotNull TyckState state
+  ) implements CubicalProblem, UnifyError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.vcat(Doc.english("The boundary"),
-        Doc.par(1, lhs.toDoc(options)),
-        Doc.english("disagrees with"),
-        Doc.par(1, rhs.toDoc(options)),
-        Doc.english("In particular, we failed to unify"),
-        Doc.par(1, failure.lhs().toDoc(options)),
-        Doc.english("with"),
-        Doc.par(1, failure.rhs().toDoc(options)));
+      return describeUnify(options, Doc.english("The boundary"), lhs,
+        Doc.english("disagrees with"), rhs);
     }
   }
 

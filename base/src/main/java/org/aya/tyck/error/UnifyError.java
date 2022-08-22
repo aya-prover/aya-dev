@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -11,32 +11,32 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.DefEq;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public record UnifyError(
-  @Override @NotNull Expr expr,
-  @NotNull Term expected,
-  @NotNull Term actual,
-  @NotNull DefEq.FailureData failureData,
-  @NotNull TyckState state
-) implements ExprProblem {
-  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+public interface UnifyError extends Problem {
+  @NotNull TyckState state();
+  @NotNull DefEq.FailureData failureData();
+
+  default @NotNull Doc describeUnify(
+    @NotNull DistillerOptions options,
+    @NotNull Doc prologue,
+    @NotNull Term actual,
+    @NotNull Doc epilogue,
+    @NotNull Term expected
+  ) {
     var actualDoc = actual.toDoc(options);
-    var buf = MutableList.of(
-      Doc.english("Cannot check the expression"),
-      Doc.par(1, expr.toDoc(options)),
-      Doc.english("of type"),
-      Doc.par(1, actualDoc));
-    var actualNFDoc = actual.normalize(state, NormalizeMode.NF).toDoc(options);
+    var buf = MutableList.of(prologue, Doc.par(1, actualDoc));
+    var actualNFDoc = actual.normalize(state(), NormalizeMode.NF).toDoc(options);
     if (!actualNFDoc.equals(actualDoc))
       buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualNFDoc))));
     var expectedDoc = expected.toDoc(options);
-    buf.append(Doc.english("against the type"));
+    buf.append(epilogue);
     buf.append(Doc.par(1, expectedDoc));
-    var expectedNFDoc = expected.normalize(state, NormalizeMode.NF).toDoc(options);
+    var expectedNFDoc = expected.normalize(state(), NormalizeMode.NF).toDoc(options);
     if (!expectedNFDoc.equals(expectedDoc))
       buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expectedNFDoc))));
-    var failureLhs = failureData.lhs().toDoc(options);
+    var failureLhs = failureData().lhs().toDoc(options);
     if (!failureLhs.equals(actualDoc)
       && !failureLhs.equals(expectedDoc)
       && !failureLhs.equals(actualNFDoc)
@@ -45,12 +45,28 @@ public record UnifyError(
       Doc.english("In particular, we failed to unify"),
       Doc.par(1, failureLhs),
       Doc.english("with"),
-      Doc.par(1, failureData.rhs().toDoc(options))
+      Doc.par(1, failureData().rhs().toDoc(options))
     });
     return Doc.vcat(buf);
   }
 
-  @Override public @NotNull Severity level() {
-    return Severity.ERROR;
+  record Type(
+    @Override @NotNull Expr expr,
+    @NotNull Term expected,
+    @NotNull Term actual,
+    @NotNull DefEq.FailureData failureData,
+    @NotNull TyckState state
+  ) implements ExprProblem, UnifyError {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      var prologue = Doc.vcat(
+        Doc.english("Cannot check the expression"),
+        Doc.par(1, expr.toDoc(options)),
+        Doc.english("of type"));
+      return describeUnify(options, prologue, actual, Doc.english("against the type"), expected);
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
   }
 }
