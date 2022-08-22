@@ -14,10 +14,13 @@ public sealed interface PrimTerm extends Term {
       return new Mula(new Formula.Inv<>(term));
     }
     public static @NotNull Mula and(@NotNull Term lhs, @NotNull Term rhs) {
-      return new Mula(new Formula.Conn<>(true, lhs, rhs));
+      return conn(true, lhs, rhs);
     }
     public static @NotNull Mula or(@NotNull Term lhs, @NotNull Term rhs) {
-      return new Mula(new Formula.Conn<>(false, lhs, rhs));
+      return conn(false, lhs, rhs);
+    }
+    public static @NotNull Mula conn(boolean isAnd, @NotNull Term lhs, @NotNull Term rhs) {
+      return new Mula(new Formula.Conn<>(isAnd, lhs, rhs));
     }
   }
 
