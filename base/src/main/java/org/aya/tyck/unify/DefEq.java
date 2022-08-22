@@ -19,6 +19,7 @@ import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -387,8 +388,19 @@ public final class DefEq {
       }
       case FormTerm.Interval lhs -> preRhs instanceof FormTerm.Interval ? FormTerm.Univ.ZERO : null;
       case FormTerm.Face lhs -> preRhs instanceof FormTerm.Face ? FormTerm.Univ.ZERO : null;
-      case PrimTerm.End lhs -> preRhs instanceof PrimTerm.End rhs && lhs.isRight() == rhs.isRight()
-        ? FormTerm.Interval.INSTANCE : null;
+      case PrimTerm.Mula lhs -> {
+        if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
+        var happy = switch (lhs.asFormula()) {
+          case Formula.Lit<Term> ll && rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isLeft() == rr.isLeft();
+          case Formula.Inv<Term> ll && rhs.asFormula() instanceof Formula.Inv<Term> rr ->
+            compare(ll.i(), rr.i(), lr, rl, null);
+          case Formula.Conn<Term> ll && rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()
+            && compare(ll.l(), rr.l(), lr, rl, null)
+            && compare(ll.r(), rr.r(), lr, rl, null);
+          default -> false;
+        };
+        yield happy ? FormTerm.Interval.INSTANCE : null;
+      }
       case PrimTerm.Cof lhs -> {
         if (!(preRhs instanceof PrimTerm.Cof rhs)) yield null;
         var subst = new Subst();

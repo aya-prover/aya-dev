@@ -1,5 +1,3 @@
-prim squeezeL (i : I) (j : I) : I
 prim arcoe (A : I -> Type) (A 0) (i : I) : A i
-prim invol (i : I) : I
 prim String: Type
 prim strcat (str1 str2: String) : String

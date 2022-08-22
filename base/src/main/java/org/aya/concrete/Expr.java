@@ -14,6 +14,7 @@ import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.AyaTermLike;
 import org.aya.generic.ParamLike;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -53,7 +54,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, AyaTermLike<Expr> {
     return new ConcreteDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
 
-  @ForLSP sealed interface WithTerm extends Expr {
+  @ForLSP
+  sealed interface WithTerm extends Expr {
     @NotNull MutableValue<ExprTycker.Result> theCore();
     default @Nullable ExprTycker.Result core() {
       return theCore().get();
@@ -273,6 +275,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, AyaTermLike<Expr> {
     @NotNull SourcePos sourcePos,
     @NotNull Restr<Expr> data
   ) implements Expr {}
+
+  /** @implNote {@link Formula.Lit} is {@link LitIntExpr} in concrete */
+  record Mula(
+    @NotNull SourcePos sourcePos,
+    @NotNull Formula<Expr> asFormula
+  ) implements Expr {
+  }
 
   /**
    * @author re-xyr

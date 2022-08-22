@@ -419,7 +419,7 @@ public final class ExprTycker extends Tycker {
         var ty = term.normalize(state, NormalizeMode.WHNF);
         if (ty instanceof FormTerm.Interval) {
           var end = lit.integer();
-          if (end == 0 || end == 1) yield new Result(end == 1 ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT, term);
+          if (end == 0 || end == 1) yield new Result(end == 0 ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT, ty);
           else yield fail(expr, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
         }
         if (ty instanceof CallTerm.Data dataCall) {

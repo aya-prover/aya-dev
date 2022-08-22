@@ -56,7 +56,11 @@ public sealed interface Term extends AyaDocile, AyaTermLike<Term> permits CallTe
       case FormTerm.Univ univ -> univ;
       case FormTerm.Interval interval -> interval;
       case FormTerm.Face face -> face;
-      case PrimTerm.End end -> end;
+      case PrimTerm.Mula mula -> {
+        var formula = mula.asFormula().fmap(f);
+        if (formula == mula.asFormula()) yield mula;
+        yield new PrimTerm.Mula(formula);
+      }
       case PrimTerm.Str str -> str;
       case IntroTerm.Lambda lambda -> {
         var param = lambda.param().descent(f);

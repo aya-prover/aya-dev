@@ -21,6 +21,7 @@ import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -208,9 +209,10 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  record End(boolean isRight, boolean explicit) implements Pat {
+  record End(boolean isLeft, boolean explicit) implements Pat {
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.LitIntExpr(pos, isRight ? 1 : 0);
+      // create Expr.Mula instead of Expr.LitIntExpr since we know the type.
+      return new Expr.Mula(pos, new Formula.Lit<>(isLeft));
     }
 
     @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
@@ -12,6 +12,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
         match(sol, term);
       }
       case Pat.End end -> {
-        if (!(term instanceof PrimTerm.End termEnd && termEnd.isRight() == end.isRight())) {
+        if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isLeft() == end.isLeft())) {
           throw new Mismatch(true);
         }
       }

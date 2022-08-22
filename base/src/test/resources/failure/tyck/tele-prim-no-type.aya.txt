@@ -1,9 +1,10 @@
-In file $FILE:1:5 ->
+In file $FILE:2:5 ->
 
-  1 | prim invol (i : I)
-           ^---^
+  1 | prim String
+  2 | prim strcat (str1 str2: String)
+           ^----^
 
-Error: prim invol is expected to have a type
+Error: prim strcat is expected to have a type
 
 1 error(s), 0 warning(s).
 What are you doing?

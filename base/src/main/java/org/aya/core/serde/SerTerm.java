@@ -11,6 +11,7 @@ import kala.tuple.Tuple;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
@@ -212,10 +213,24 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record End(boolean isRight) implements SerTerm {
+  record Mula(@NotNull SerMula formula) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return isRight ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT;
+      return formula.de(state);
     }
+  }
+
+  sealed interface SerMula extends Serializable {
+    default @NotNull Term de(@NotNull DeState state) {
+      return switch (this) {
+        case Conn cnn -> new PrimTerm.Mula(new Formula.Conn<>(
+          cnn.isAnd(), cnn.l().de(state), cnn.r().de(state)));
+        case Inv inv -> new PrimTerm.Mula(new Formula.Inv<>(inv.i().de(state)));
+        case Lit lit -> lit.isLeft() ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT;
+      };
+    }
+    record Conn(boolean isAnd, @NotNull SerTerm l, @NotNull SerTerm r) implements SerMula {}
+    record Inv(@NotNull SerTerm i) implements SerMula {}
+    record Lit(boolean isLeft) implements SerMula {}
   }
 
   record ShapedInt(

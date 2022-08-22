@@ -1,3 +1,2 @@
-prim squeezeL (i : I) (j : I) : I
 prim arcoe (A : I -> Type) (A 0) (i : I) : A i
 

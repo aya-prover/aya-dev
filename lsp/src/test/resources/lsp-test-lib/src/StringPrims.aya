@@ -1,2 +1,1 @@
 prim String: Type
-prim strcat (str1 str2: String) : String

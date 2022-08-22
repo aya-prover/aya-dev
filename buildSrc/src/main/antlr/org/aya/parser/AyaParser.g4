@@ -100,6 +100,8 @@ expr : atom                                 # single
      | restr                                # cofExpr
      | PARTIAL_KW expr LBRACE restr RBRACE  # partTy
      | partial                              # partEl
+     | expr (LAND | LOR) expr               # formulaConn
+     | LINV expr                            # formulaInv
      ;
 
 restr : (cof (LOR cof)* | TOP | BOTTOM);

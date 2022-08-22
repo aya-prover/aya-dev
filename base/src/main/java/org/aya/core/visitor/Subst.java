@@ -13,6 +13,7 @@ import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -82,16 +83,15 @@ public record Subst(
   }
 
   @Override public void put(LocalVar i, boolean isLeft) {
-    map.put(i, isLeft ? PrimTerm.End.LEFT : PrimTerm.End.RIGHT);
+    map.put(i, isLeft ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT);
   }
 
   @Override public boolean contradicts(LocalVar i, boolean newIsLeft) {
-    // TODO: formula
     // In an and-only cofibration, every variable appears uniquely in a cond.
     if (!map.containsKey(i)) return false;
     // check whether if the cond is self-contradictory
-    if (!(map.get(i) instanceof PrimTerm.End end)) return false;
-    return end.isRight() == newIsLeft;
+    if (!(map.get(i).asFormula() instanceof Formula.Lit<Term> end)) return false;
+    return end.isLeft() != newIsLeft;
   }
 
   @Override public @Nullable LocalVar asRef(@NotNull Term term) {

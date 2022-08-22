@@ -77,7 +77,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
       case FormTerm.Interval interval -> FormTerm.Univ.ZERO;
-      case PrimTerm.End end -> FormTerm.Interval.INSTANCE;
+      case PrimTerm.Mula end -> FormTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
       case LitTerm.ShapedInt shaped -> shaped.type();
       case FormTerm.Face face -> ErrorTerm.typeOf(face);

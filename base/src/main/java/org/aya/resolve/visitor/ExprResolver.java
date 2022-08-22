@@ -115,6 +115,11 @@ public record ExprResolver(
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new Expr.PartTy(ty.sourcePos(), type, restr);
       }
+      case Expr.Mula mula -> {
+        var formula = mula.asFormula().fmap(f -> resolve(f, ctx));
+        if (formula == mula.asFormula()) yield mula;
+        yield new Expr.Mula(mula.sourcePos(), formula);
+      }
       case Expr.UnresolvedExpr unresolved -> {
         var sourcePos = unresolved.sourcePos();
         yield switch (ctx.get(unresolved.name())) {

@@ -145,6 +145,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
         Doc.join(Doc.symbol(" | "), el.clauses().map(Restr.Side::toDoc)),
         Doc.symbol("|}"));
+      case Expr.Mula mula -> formula(options, mula.asFormula());
     };
   }
 

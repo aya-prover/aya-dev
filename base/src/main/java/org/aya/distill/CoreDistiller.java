@@ -101,7 +101,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
       case FormTerm.Face face -> Doc.styled(KEYWORD, "Face");
-      case PrimTerm.End end -> Doc.styled(KEYWORD, end.isRight() ? "1" : "0");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
@@ -167,6 +166,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         Doc.join(Doc.symbol(" | "), el.clauses().map(Restr.Side::toDoc)),
         Doc.symbol("|}"));
       case PrimTerm.Cof cof -> cof.restr().toDoc();
+      case PrimTerm.Mula mula -> formula(options, mula.asFormula());
     };
   }
 
@@ -206,7 +206,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
-      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0" : "1"), end.explicit());
+      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, end.isLeft() ? "0" : "1"), end.explicit());
       case Pat.ShapedInt lit -> options.map.get(DistillerOptions.Key.ShowLiterals)
         ? Doc.plain(String.valueOf(lit.repr()))
         : Doc.bracedUnless(lit.with(
