@@ -11,10 +11,13 @@ import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
+import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +100,15 @@ public record Subst(
 
   @Override public @NotNull Subst derive() {
     return new Subst(MutableMap.from(map));
+  }
+
+  public @NotNull Restr<Term> restr(@NotNull TyckState state, @NotNull Restr<Term> restr) {
+    var restrSubst = restr.fmap(t -> t.subst(this));
+    return new Expander.Normalizer(state).restr(restrSubst);
+  }
+
+  public @NotNull Term term(@NotNull TyckState state, @NotNull Term term) {
+    return term.subst(this).normalize(state, NormalizeMode.NF);
   }
 
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {

@@ -277,7 +277,7 @@ public final class ExprTycker extends Tycker {
   private @NotNull ImmutableSeq<Restr.Side<Term>> elaborateClauses(
     @NotNull Expr loc, @NotNull ImmutableSeq<Restr.Side<Expr>> clauses, @NotNull Term type
   ) {
-    var sides = clauses.flatMap(cl -> clause(loc, cl, type));
+    var sides = clauses.flatMap(cl -> clause(cl, type));
     confluence(sides, loc, type);
     return sides;
   }
@@ -288,10 +288,10 @@ public final class ExprTycker extends Tycker {
       for (int j = 0; j < i; j++) {
         var rhs = clauses.get(j);
         CofThy.conv(lhs.cof().and(rhs.cof()), new Subst(), subst -> {
-          var lu = lhs.u().subst(subst);
-          var ru = rhs.u().subst(subst);
+          var lu = subst.term(state, lhs.u());
+          var ru = subst.term(state, rhs.u());
           var unifier = unifier(loc.sourcePos(), Ordering.Eq);
-          var happy = unifier.compare(lu, ru, type.subst(subst));
+          var happy = unifier.compare(lu, ru, subst.term(state, type));
           if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lu, ru, unifier.getFailure()));
           return happy;
         });
@@ -299,12 +299,10 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private @NotNull Option<Restr.Side<Term>> clause(
-    @NotNull Expr loc,
-    @NotNull Restr.Side<Expr> clause, @NotNull Term type
-  ) {
+  private @NotNull Option<Restr.Side<Term>> clause(@NotNull Restr.Side<Expr> clause, @NotNull Term type) {
     var cofib = new Restr.Cofib<>(clause.cof().ands().map(this::condition));
-    var u = CofThy.vdash(cofib, new Subst(), subst -> inherit(clause.u(), type.subst(subst)).wellTyped);
+    var u = CofThy.vdash(cofib, new Subst(), subst ->
+      inherit(clause.u(), subst.term(state, type)).wellTyped);
     if (u.isDefined() && u.get() == null) {
       // ^ some `inst` in `cofib.ands()` are ErrorTerms.
       // Q: report error again?
@@ -441,11 +439,8 @@ public final class ExprTycker extends Tycker {
           yield Result.error(opt -> Doc.plain("Partial type contains error"));
         var clauses = elaborateClauses(el, el.clauses(), ty.type());
         var face = new Restr.Vary<>(clauses.map(Restr.Side::cof));
-        if (!CofThy.conv(cof.restr(), new Subst(), subst -> {
-          var faceSubst = face.fmap(t -> t.subst(subst));
-          var restr = new Expander.Normalizer(state).restr(faceSubst);
-          return CofThy.satisfied(restr);
-        })) yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
+        if (!CofThy.conv(cof.restr(), new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
+          yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
         yield new Result(new IntroTerm.PartEl(clauses), ty);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
