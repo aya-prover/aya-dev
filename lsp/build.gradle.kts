@@ -49,7 +49,7 @@ jlink {
     this as org.beryx.jlink.data.SecondaryLauncherData
     name = "aya"
     mainClass = "org.aya.cli.Main"
-    moduleName = "org.aya.cli"
+    moduleName = "aya.cli"
     jvmArgs = mutableListOf("--enable-preview")
   }
 }
@@ -57,7 +57,7 @@ jlink {
 val jlinkTask = tasks.named("jlink")
 val imageDir = buildDir.resolve("image")
 jlinkTask.configure {
-  doLast {
+  doFirst {
     file("aya.bat").copyTo(imageDir.resolve("bin/aya.bat"), overwrite = true)
     file("aya-lsp.bat").copyTo(imageDir.resolve("bin/aya-lsp.bat"), overwrite = true)
 
@@ -65,13 +65,18 @@ jlinkTask.configure {
     file("aya-lsp.sh").copyTo(imageDir.resolve("bin/aya-lsp"), overwrite = true).setExecutable(true)
   }
 }
+val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
+prepareMergedJarsDirTask.configure {
+  dependsOn(":cli:jar")
+  dependsOn(":base:jar")
+}
 
 tasks.withType<AbstractCopyTask>().configureEach {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
-  dependsOn(jlinkTask)
+  dependsOn(jlinkTask, prepareMergedJarsDirTask)
   from(imageDir)
   into(file(rootProject.property("installDir")!!))
 }
