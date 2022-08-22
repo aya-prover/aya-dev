@@ -141,7 +141,7 @@ public interface Expander extends EndoFunctor {
     }
 
     public @NotNull Restr<Term> restr(@NotNull Restr<Term> restr) {
-      return switch (restr.fmap(this::post)) {
+      return switch (restr.fmap(this)) {
         case Restr.Vary<Term> vary -> CofThy.normalizeRestr(vary);
         case Restr.Const<Term> c -> c;
       };
