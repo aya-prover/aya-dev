@@ -2,7 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
-CommonTasks.fatJar(project, "org.aya.cli.Main")
+val mainClassQName = "org.aya.cli.Main"
+CommonTasks.fatJar(project, mainClassQName)
 CommonTasks.nativeImageConfig(project)
 
 dependencies {
@@ -41,7 +42,7 @@ graalvmNative {
   binaries {
     named("main") {
       imageName.set("aya")
-      mainClass.set("org.aya.cli.Main")
+      mainClass.set(mainClassQName)
       debug.set(System.getenv("CI") == null)
     }
   }

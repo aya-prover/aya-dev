@@ -7,7 +7,7 @@
 
 # CHANGE ME IF THERE IS NEW SCRIPT
 ###################################
-AYA_MODULE="org.aya.cli"
+AYA_MODULE="aya.cli"
 AYA_MAIN="org.aya.cli.Main"
 AYA_NAME="Aya"
 AYA_JVM_OPTS='"--enable-preview"'
