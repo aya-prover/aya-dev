@@ -18,6 +18,8 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -296,6 +298,27 @@ public final class DefEq {
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
+      case FormTerm.PartTy ty -> {
+        if (!(lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel)) yield false;
+        // lhs = {| LC_i := a_i, ... |}
+        // rhs = {| RC_i := b_i, ... |}
+        var restr = ty.restr();
+        var A = ty.type();
+        // TODO: correct?
+        //  1. Disjunction of all LC_i = restr
+        //  2. disjunction of all RC_i = restr
+        //  3. forall i, j. LC_i /\ RC_j \vdash a_i = b_j : A
+        var LC = new PrimTerm.Cof(new Restr.Vary<>(lel.clauses().map(Restr.Side::cof)));
+        var RC = new PrimTerm.Cof(new Restr.Vary<>(rel.clauses().map(Restr.Side::cof)));
+        if (!compare(LC, restr, lr, rl, null)) yield false;
+        if (!compare(RC, restr, lr, rl, null)) yield false;
+        yield lel.clauses().allMatch(lc -> rel.clauses().allMatch(rc ->
+          CofThy.conv(lc.cof().and(rc.cof()), new Subst(), subst -> {
+            var lu = subst.term(state, lc.u());
+            var ru = subst.term(state, rc.u());
+            return compare(lu, ru, lr, rl, subst.term(state, A));
+          })));
+      }
     };
     traceExit();
     return ret;
@@ -356,9 +379,25 @@ public final class DefEq {
         if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
         yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
       }
-      case FormTerm.Interval lhs -> preRhs instanceof FormTerm.Interval rhs ? new FormTerm.Univ(0) : null;
-      case PrimTerm.End lhs ->
-              preRhs instanceof PrimTerm.End rhs && lhs.isRight() == rhs.isRight() ? FormTerm.Interval.INSTANCE : null;
+      case FormTerm.PartTy lhs -> {
+        if (!(preRhs instanceof FormTerm.PartTy rhs)) yield null;
+        var happy = compareUntyped(lhs.type(), rhs.type(), lr, rl) != null
+          && compareUntyped(lhs.restr(), rhs.restr(), lr, rl) != null;
+        yield happy ? FormTerm.Univ.ZERO : null;
+      }
+      case FormTerm.Interval lhs -> preRhs instanceof FormTerm.Interval ? FormTerm.Univ.ZERO : null;
+      case FormTerm.Face lhs -> preRhs instanceof FormTerm.Face ? FormTerm.Univ.ZERO : null;
+      case PrimTerm.End lhs -> preRhs instanceof PrimTerm.End rhs && lhs.isRight() == rhs.isRight()
+        ? FormTerm.Interval.INSTANCE : null;
+      case PrimTerm.Cof lhs -> {
+        if (!(preRhs instanceof PrimTerm.Cof rhs)) yield null;
+        var subst = new Subst();
+        var lc = lhs.restr();
+        var rc = rhs.restr();
+        var happy = CofThy.conv(lc, subst, s -> CofThy.satisfied(s.restr(state, rc)))
+          && CofThy.conv(rc, subst, s -> CofThy.satisfied(s.restr(state, lc)));
+        yield happy ? FormTerm.Face.INSTANCE : null;
+      }
       // See compareApprox for why we don't compare these
       case CallTerm.Fn lhs -> null;
       case CallTerm.Data lhs -> {

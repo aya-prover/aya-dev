@@ -6,8 +6,11 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,13 +76,20 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
-      case FormTerm.Interval interval -> new FormTerm.Univ(0);
+      case FormTerm.Interval interval -> FormTerm.Univ.ZERO;
       case PrimTerm.End end -> FormTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
       case LitTerm.ShapedInt shaped -> shaped.type();
       case FormTerm.Face face -> ErrorTerm.typeOf(face);
-      case FormTerm.PartTy partTy -> new FormTerm.Univ(0);
-      case IntroTerm.PartEl partEl -> throw new UnsupportedOperationException("TODO");
+      case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
+      case IntroTerm.PartEl el -> {
+        var first = el.clauses().firstOption();
+        var A = first.flatMap(clause -> CofThy.vdash(clause.cof(), new Subst(), subst ->
+          term(subst.term(state, clause.u()))));
+        if (A.isDefined() && A.get() == null) yield ErrorTerm.typeOf(el);
+        var restr = new Restr.Vary<>(el.clauses().map(Restr.Side::cof));
+        yield new FormTerm.PartTy(A.get(), new PrimTerm.Cof(restr));
+      }
       case PrimTerm.Cof cof -> FormTerm.Face.INSTANCE;
     };
   }
