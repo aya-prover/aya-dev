@@ -1,10 +1,11 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.tyck;
+package org.aya.cubical;
 
+import org.aya.tyck.TyckDeclTest;
 import org.junit.jupiter.api.Test;
 
-public class CubicalTest {
+public class PartialTest {
   @Test public void partial() {
     TyckDeclTest.successTyckDecls("""
       def t (A : Type) (i : I) (a : A) : Partial A { i 0 }

@@ -399,7 +399,7 @@ public record AyaProducer(
     };
   }
 
-  private @NotNull Expr.Cof visitRestr(AyaParser.RestrContext ctx) {
+  public @NotNull Expr.Cof visitRestr(AyaParser.RestrContext ctx) {
     if (ctx.TOP() != null) return new Expr.Cof(sourcePosOf(ctx), new Restr.Const<>(true));
     if (ctx.BOTTOM() != null) return new Expr.Cof(sourcePosOf(ctx), new Restr.Const<>(false));
     return new Expr.Cof(sourcePosOf(ctx), new Restr.Vary<>(Seq.wrapJava(ctx.cof()).map(this::visitCof)));
