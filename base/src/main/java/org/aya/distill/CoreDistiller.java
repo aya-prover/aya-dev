@@ -162,9 +162,10 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case PrimTerm.Str str -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
         ty.type().toDoc(options), Doc.braced(ty.restr().toDoc(options)));
-      case IntroTerm.PartEl el -> Doc.sep(Doc.symbol("{|"),
+      case IntroTerm.HappyPartEl el -> Doc.sep(Doc.symbol("{|"),
         Doc.join(Doc.symbol(" | "), el.clauses().map(Restr.Side::toDoc)),
         Doc.symbol("|}"));
+      case IntroTerm.SadPartEl el -> Doc.sep(Doc.symbol("{|"), el.u().toDoc(options), Doc.symbol("|}"));
       case PrimTerm.Cof cof -> cof.restr().toDoc();
       case PrimTerm.Mula mula -> formula(options, mula.asFormula());
     };

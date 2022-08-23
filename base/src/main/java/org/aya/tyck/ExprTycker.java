@@ -452,10 +452,11 @@ public final class ExprTycker extends Tycker {
         if (!(ty.restr() instanceof PrimTerm.Cof cof))
           yield Result.error(opt -> Doc.plain("Partial type contains error"));
         var clauses = elaborateClauses(el, el.clauses(), ty.type());
-        var face = new Restr.Vary<>(clauses.map(Restr.Side::cof));
+        var staged = new IntroTerm.HappyPartEl(clauses);
+        var face = staged.restr();
         if (!CofThy.conv(cof.restr(), new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
           yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
-        yield new Result(new IntroTerm.PartEl(clauses), ty);
+        yield new Result(staged, ty);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };

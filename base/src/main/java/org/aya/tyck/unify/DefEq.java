@@ -20,7 +20,6 @@ import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Formula;
-import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -309,20 +308,39 @@ public final class DefEq {
         //  1. Disjunction of all LC_i = restr
         //  2. disjunction of all RC_i = restr
         //  3. forall i, j. LC_i /\ RC_j \vdash a_i = b_j : A
-        var LC = new PrimTerm.Cof(new Restr.Vary<>(lel.clauses().map(Restr.Side::cof)));
-        var RC = new PrimTerm.Cof(new Restr.Vary<>(rel.clauses().map(Restr.Side::cof)));
+        var LC = new PrimTerm.Cof(lel.restr());
+        var RC = new PrimTerm.Cof(rel.restr());
         if (!compare(LC, restr, lr, rl, null)) yield false;
         if (!compare(RC, restr, lr, rl, null)) yield false;
-        yield lel.clauses().allMatch(lc -> rel.clauses().allMatch(rc ->
-          CofThy.conv(lc.cof().and(rc.cof()), new Subst(), subst -> {
-            var lu = subst.term(state, lc.u());
-            var ru = subst.term(state, rc.u());
-            return compare(lu, ru, lr, rl, subst.term(state, A));
-          })));
+        yield switch (lel) {
+          case IntroTerm.SadPartEl lp && rel instanceof IntroTerm.SadPartEl rp ->
+            compare(lp.u(), rp.u(), lr, rl, A);
+          case IntroTerm.HappyPartEl lp && rel instanceof IntroTerm.HappyPartEl rp ->
+            lp.clauses().allMatch(lc -> rp.clauses().allMatch(rc ->
+              CofThy.conv(lc.cof().and(rc.cof()), new Subst(), subst -> {
+                var lu = subst.term(state, lc.u());
+                var ru = subst.term(state, rc.u());
+                return compare(lu, ru, lr, rl, subst.term(state, A));
+              })));
+          case IntroTerm.HappyPartEl lp && rel instanceof IntroTerm.SadPartEl rp ->
+            unifyPartial(lp, rp, lr, rl, A);
+          case IntroTerm.SadPartEl lp && rel instanceof IntroTerm.HappyPartEl rp ->
+            unifyPartial(rp, lp, rl, lr, A);
+          // ^ should swap lr and rl?
+          default -> false;
+        };
       }
     };
     traceExit();
     return ret;
+  }
+
+  private boolean unifyPartial(@NotNull IntroTerm.HappyPartEl lhs, @NotNull IntroTerm.SadPartEl rhs, Sub lr, Sub rl, @NotNull Term type) {
+    return lhs.clauses().allMatch(lc -> CofThy.conv(lc.cof(), new Subst(), subst -> {
+      var lu = subst.term(state, lc.u());
+      var ru = subst.term(state, rhs.u());
+      return compare(lu, ru, lr, rl, subst.term(state, type));
+    }));
   }
 
   private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs, Sub lr, Sub rl) {
@@ -393,10 +411,10 @@ public final class DefEq {
         var happy = switch (lhs.asFormula()) {
           case Formula.Lit<Term> ll && rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isLeft() == rr.isLeft();
           case Formula.Inv<Term> ll && rhs.asFormula() instanceof Formula.Inv<Term> rr ->
-            compare(ll.i(), rr.i(), lr, rl, null);
+            compareUntyped(ll.i(), rr.i(), lr, rl) != null;
           case Formula.Conn<Term> ll && rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()
-            && compare(ll.l(), rr.l(), lr, rl, null)
-            && compare(ll.r(), rr.r(), lr, rl, null);
+            && compareUntyped(ll.l(), rr.l(), lr, rl) != null
+            && compareUntyped(ll.r(), rr.r(), lr, rl) != null;
           default -> false;
         };
         yield happy ? FormTerm.Interval.INSTANCE : null;

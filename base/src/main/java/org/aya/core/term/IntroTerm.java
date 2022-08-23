@@ -53,5 +53,22 @@ public sealed interface IntroTerm extends Term {
   }
 
   /** partial element */
-  record PartEl(@NotNull ImmutableSeq<Restr.Side<Term>> clauses) implements IntroTerm {}
+  sealed interface PartEl extends IntroTerm {
+    /** faces filled by this partial element */
+    @NotNull Restr<Term> restr();
+  }
+
+  /** I am happy because I have cofibration. Same as ReallyPartial in guest0x0 */
+  record HappyPartEl(@NotNull ImmutableSeq<Restr.Side<Term>> clauses) implements PartEl {
+    @Override public @NotNull Restr<Term> restr() {
+      return new Restr.Vary<>(clauses.map(Restr.Side::cof));
+    }
+  }
+
+  /** I am sad because I am not partial. Same as SomewhatPartial in guest0x0 */
+  record SadPartEl(@NotNull Term u) implements PartEl {
+    @Override public @NotNull Restr<Term> restr() {
+      return new Restr.Const<>(true);
+    }
+  }
 }

@@ -144,14 +144,19 @@ public sealed interface Term extends AyaDocile, AyaTermLike<Term> permits CallTe
       }
       case FormTerm.PartTy ty -> {
         var type = f.apply(ty.type());
-        var restr = (PrimTerm.Cof) f.apply(ty.restr());
+        var restr = f.apply(ty.restr());
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new FormTerm.PartTy(type, restr);
       }
-      case IntroTerm.PartEl el -> {
+      case IntroTerm.SadPartEl el -> {
+        var u = f.apply(el.u());
+        if (u == el.u()) yield el;
+        yield new IntroTerm.SadPartEl(u);
+      }
+      case IntroTerm.HappyPartEl el -> {
         var clauses = el.clauses().map(c -> c.rename(f));
         if (clauses.sameElements(el.clauses(), true)) yield el;
-        yield new IntroTerm.PartEl(clauses);
+        yield new IntroTerm.HappyPartEl(clauses);
       }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
