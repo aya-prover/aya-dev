@@ -273,7 +273,7 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  public @NotNull Restr<Term> restr(@NotNull  Restr<Expr> restr) {
+  public @NotNull Restr<Term> restr(@NotNull Restr<Expr> restr) {
     return restr.mapCond(this::condition);
   }
 
