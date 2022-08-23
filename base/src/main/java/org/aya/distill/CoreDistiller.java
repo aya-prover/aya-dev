@@ -100,7 +100,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
         );
       }
       case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
-      case FormTerm.Face face -> Doc.styled(KEYWORD, "Face");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
@@ -161,12 +160,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
         () -> Doc.plain(String.valueOf(shaped.repr())));
       case PrimTerm.Str str -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
-        ty.type().toDoc(options), Doc.braced(ty.restr().toDoc(options)));
+        ty.type().toDoc(options), Doc.braced(ty.restr().toDoc()));
       case IntroTerm.HappyPartEl el -> Doc.sep(Doc.symbol("{|"),
         Doc.join(Doc.symbol(" | "), el.clauses().map(Restr.Side::toDoc)),
         Doc.symbol("|}"));
       case IntroTerm.SadPartEl el -> Doc.sep(Doc.symbol("{|"), el.u().toDoc(options), Doc.symbol("|}"));
-      case PrimTerm.Cof cof -> cof.restr().toDoc();
       case PrimTerm.Mula mula -> formula(options, mula.asFormula());
     };
   }

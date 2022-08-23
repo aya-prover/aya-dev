@@ -3,7 +3,6 @@
 package org.aya.tyck.error;
 
 import org.aya.concrete.Expr;
-import org.aya.core.term.PrimTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
 import org.aya.guest0x0.cubical.Restr;
@@ -34,14 +33,14 @@ public sealed interface CubicalProblem extends ExprProblem {
   record FaceMismatch(
     @NotNull Expr expr,
     @NotNull Restr<Term> face,
-    @NotNull PrimTerm.Cof cof
+    @NotNull Restr<Term> cof
   ) implements CubicalProblem {
     @Override
     public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(Doc.english("The face(s) in the partial element:"),
         Doc.par(1, face.toDoc()),
         Doc.english("must cover the face(s) specified in type:"),
-        Doc.par(1, cof.toDoc(options)));
+        Doc.par(1, cof.toDoc()));
     }
   }
 }

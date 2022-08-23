@@ -55,7 +55,6 @@ public sealed interface Term extends AyaDocile, AyaTermLike<Term> permits CallTe
       }
       case FormTerm.Univ univ -> univ;
       case FormTerm.Interval interval -> interval;
-      case FormTerm.Face face -> face;
       case PrimTerm.Mula mula -> {
         var formula = mula.asFormula().fmap(f);
         if (formula == mula.asFormula()) yield mula;
@@ -137,14 +136,9 @@ public sealed interface Term extends AyaDocile, AyaTermLike<Term> permits CallTe
         if (type == shaped.type()) yield shaped;
         yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
       }
-      case PrimTerm.Cof cof -> {
-        var restr = cof.restr().fmap(f);
-        if (restr == cof.restr()) yield cof;
-        yield new PrimTerm.Cof(restr);
-      }
       case FormTerm.PartTy ty -> {
         var type = f.apply(ty.type());
-        var restr = f.apply(ty.restr());
+        var restr = ty.restr().fmap(f);
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new FormTerm.PartTy(type, restr);
       }

@@ -255,8 +255,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, AyaTermLike<Expr> {
     @NotNull ImmutableSeq<NamedArg> seq
   ) implements Expr {}
 
-  record FaceExpr(@NotNull SourcePos sourcePos) implements Expr {}
-
   /** partial element */
   record PartEl(
     @NotNull SourcePos sourcePos,
@@ -267,13 +265,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, AyaTermLike<Expr> {
   record PartTy(
     @NotNull SourcePos sourcePos,
     @NotNull Expr type,
-    @NotNull Expr.Cof restr
-  ) implements Expr {}
-
-  /** the face (restr) being specified in partial types */
-  record Cof(
-    @NotNull SourcePos sourcePos,
-    @NotNull Restr<Expr> data
+    @NotNull Restr<Expr> restr
   ) implements Expr {}
 
   /** @implNote {@link Formula.Lit} is {@link LitIntExpr} in concrete */

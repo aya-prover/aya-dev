@@ -28,7 +28,6 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -67,7 +66,6 @@ public final class ExprTycker extends Tycker {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> new Result(new FormTerm.Univ(univ.lift()), new FormTerm.Univ(univ.lift() + 1));
       case Expr.IntervalExpr interval -> new Result(FormTerm.Interval.INSTANCE, new FormTerm.Univ(0));
-      case Expr.FaceExpr face -> new Result(FormTerm.Face.INSTANCE, new FormTerm.Univ(0));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
@@ -255,9 +253,8 @@ public final class ExprTycker extends Tycker {
 
         yield new Result(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STR));
       }
-      case Expr.Cof cof -> new Result(new PrimTerm.Cof(cof.data().mapCond(this::condition)), FormTerm.Face.INSTANCE);
       case Expr.PartTy par -> new Result(
-        new FormTerm.PartTy(inherit(par.type(), FormTerm.Univ.ZERO).wellTyped, cof(par.restr())),
+        new FormTerm.PartTy(inherit(par.type(), FormTerm.Univ.ZERO).wellTyped, restr(par.restr())),
         FormTerm.Univ.ZERO);
       case Expr.Mula mula -> switch (mula.asFormula()) {
         case Formula.Conn<Expr> cnn -> new Result(
@@ -276,16 +273,14 @@ public final class ExprTycker extends Tycker {
     };
   }
 
+  public @NotNull Restr<Term> restr(@NotNull  Restr<Expr> restr) {
+    return restr.mapCond(this::condition);
+  }
+
   private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
     // forall i. (c_i is valid)
     return new Restr.Cond<>(inherit(c.inst(), FormTerm.Interval.INSTANCE).wellTyped, c.isLeft());
     // ^ note: `inst` may be ErrorTerm!
-  }
-
-  private @NotNull Term cof(@NotNull Expr.Cof restr) {
-    var term = inherit(restr, FormTerm.Face.INSTANCE).wellTyped;
-    if (term instanceof PrimTerm.Cof cof) return cof;
-    return ErrorTerm.unexpected(term);
   }
 
   private @NotNull ImmutableSeq<Restr.Side<Term>> elaborateClauses(
@@ -449,12 +444,11 @@ public final class ExprTycker extends Tycker {
       case Expr.PartEl el -> {
         if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.PartTy ty))
           yield fail(el, term, BadTypeError.partTy(state, el, term));
-        if (!(ty.restr() instanceof PrimTerm.Cof cof))
-          yield Result.error(opt -> Doc.plain("Partial type contains error"));
+        var cof = ty.restr();
         var clauses = elaborateClauses(el, el.clauses(), ty.type());
         var staged = new IntroTerm.HappyPartEl(clauses);
         var face = staged.restr();
-        if (!CofThy.conv(cof.restr(), new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
+        if (!CofThy.conv(cof, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
           yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
         yield new Result(staged, ty);
       }

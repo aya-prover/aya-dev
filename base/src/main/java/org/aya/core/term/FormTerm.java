@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -65,13 +66,6 @@ public sealed interface FormTerm extends Term {
     }
   }
 
-  final class Face implements FormTerm {
-    public static Face INSTANCE = new Face();
-
-    private Face() {
-    }
-  }
-
   /** partial type */
-  record PartTy(@NotNull Term type, @NotNull Term restr) implements FormTerm {}
+  record PartTy(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {}
 }

@@ -97,7 +97,6 @@ expr : atom                                 # single
      | LIDIOM idiomBlock? RIDIOM            # idiom
      | LARRAY arrayBlock? RARRAY            # array
      | thisExpr                             # this
-     | restr                                # cofExpr
      | PARTIAL_KW expr LBRACE restr RBRACE  # partTy
      | partial                              # partEl
      | expr (LAND | LOR) expr               # formulaConn
@@ -159,7 +158,6 @@ literal : qualifiedId
         | STRING
         | TYPE
         | I
-        | FACE
         ;
 
 tele : literal

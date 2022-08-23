@@ -137,14 +137,13 @@ public interface Expander extends EndoFunctor {
           assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
           yield apply(tup.items().get(ix - 1));
         }
-        case PrimTerm.Cof cof -> new PrimTerm.Cof(postRestr(cof.restr()));
         case IntroTerm.PartEl el -> postPartial(el);
         default -> Expander.super.post(term);
       };
     }
 
-    private @NotNull Restr<Term> postRestr(@NotNull Restr<Term> restr) {
-      return switch (restr) {
+    public @NotNull Restr<Term> applyRestr(@NotNull Restr<Term> restr) {
+      return switch (restr.fmap(this)) {
         case Restr.Vary<Term> vary -> CofThy.normalizeRestr(vary);
         case Restr.Const<Term> c -> c;
       };

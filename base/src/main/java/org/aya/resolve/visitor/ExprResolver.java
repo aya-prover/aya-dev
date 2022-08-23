@@ -99,11 +99,6 @@ public record ExprResolver(
         if (h == hole.filling()) yield hole;
         yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h, hole.accessibleLocal());
       }
-      case Expr.Cof cof -> {
-        var data = cof.data().fmap(r -> resolve(r, ctx));
-        if (data == cof.data()) yield cof;
-        yield new Expr.Cof(cof.sourcePos(), data);
-      }
       case Expr.PartEl el -> {
         var clauses = el.clauses().map(c -> c.rename(e -> resolve(e, ctx)));
         if (clauses.sameElements(el.clauses(), true)) yield el;
@@ -111,7 +106,7 @@ public record ExprResolver(
       }
       case Expr.PartTy ty -> {
         var type = resolve(ty.type(), ctx);
-        var restr = (Expr.Cof) resolve(ty.restr(), ctx);
+        var restr = ty.restr().fmap(r -> resolve(r, ctx));
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new Expr.PartTy(ty.sourcePos(), type, restr);
       }

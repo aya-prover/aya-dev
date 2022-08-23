@@ -113,7 +113,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawUnivExpr e -> Doc.styled(KEYWORD, "Type");
       case Expr.IntervalExpr e -> Doc.styled(KEYWORD, "I");
-      case Expr.FaceExpr e -> Doc.styled(KEYWORD, "Face");
       case Expr.NewExpr expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
@@ -139,9 +138,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
-      case Expr.Cof cof -> cof.data().toDoc();
       case Expr.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
-        ty.type().toDoc(options), Doc.braced(ty.restr().toDoc(options)));
+        ty.type().toDoc(options), Doc.braced(ty.restr().toDoc()));
       case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
         Doc.join(Doc.symbol(" | "), el.clauses().map(Restr.Side::toDoc)),
         Doc.symbol("|}"));

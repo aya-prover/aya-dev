@@ -55,7 +55,6 @@ public interface ExprView {
       }
       case Expr.RawUnivExpr rawUniv -> rawUniv;
       case Expr.IntervalExpr interval -> interval;
-      case Expr.FaceExpr face -> face;
       case Expr.LiftExpr lift -> lift; // do this for now
       case Expr.UnivExpr univ -> univ;
       case Expr.AppExpr app -> {
@@ -87,11 +86,6 @@ public interface ExprView {
         if (struct == neu.struct() && fields.sameElements(neu.fields(), true)) yield neu;
         yield new Expr.NewExpr(neu.sourcePos(), struct, fields);
       }
-      case Expr.Cof cof -> {
-        var data = cof.data().fmap(this::commit);
-        if (data == cof.data()) yield cof;
-        yield new Expr.Cof(cof.sourcePos(), data);
-      }
       case Expr.PartEl el -> {
         var clauses = el.clauses().map(c -> c.rename(this::commit));
         if (clauses.sameElements(el.clauses(), true)) yield el;
@@ -99,7 +93,7 @@ public interface ExprView {
       }
       case Expr.PartTy ty -> {
         var type = commit(ty.type());
-        var restr = (Expr.Cof) commit(ty.restr());
+        var restr = ty.restr().fmap(this::commit);
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new Expr.PartTy(ty.sourcePos(), type, restr);
       }

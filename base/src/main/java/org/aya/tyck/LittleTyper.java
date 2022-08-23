@@ -79,7 +79,6 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case PrimTerm.Mula end -> FormTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
       case LitTerm.ShapedInt shaped -> shaped.type();
-      case FormTerm.Face face -> ErrorTerm.typeOf(face);
       case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
       case IntroTerm.HappyPartEl el -> {
         var first = el.clauses().firstOption();
@@ -87,10 +86,9 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           term(subst.term(state, clause.u()))));
         if (A.isDefined() && A.get() == null) yield ErrorTerm.typeOf(el);
         var restr = el.restr();
-        yield new FormTerm.PartTy(A.get(), new PrimTerm.Cof(restr));
+        yield new FormTerm.PartTy(A.get(), restr);
       }
-      case IntroTerm.SadPartEl el -> new FormTerm.PartTy(term(el), new PrimTerm.Cof(el.restr()));
-      case PrimTerm.Cof cof -> FormTerm.Face.INSTANCE;
+      case IntroTerm.SadPartEl el -> new FormTerm.PartTy(term(el), el.restr());
     };
   }
 }

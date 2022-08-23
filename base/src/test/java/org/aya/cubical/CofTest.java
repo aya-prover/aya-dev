@@ -14,7 +14,6 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.FormTerm;
-import org.aya.core.term.PrimTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.guest0x0.cubical.Restr;
@@ -36,32 +35,32 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CofTest {
-  private @NotNull Tuple3<LocalVar, PrimTerm.Cof, Term> tyck(
+  private @NotNull Tuple3<LocalVar, Restr<Term>, Term> tyck(
     @Language("TEXT") String cof,
     @Language("TEXT") String to,
     @NotNull String i,
     @NotNull String... vars
   ) {
     var producer = new AyaProducer(Either.left(SourceFile.NONE), ThrowingReporter.INSTANCE);
-    var cofE = producer.visitRestr(AyaParserImpl.parser(cof).restr()); // TODO: use expr()
+    var cofE = producer.visitRestr(AyaParserImpl.parser(cof).restr());
     var toE = producer.visitExpr(AyaParserImpl.parser(to).expr());
     var localVars = Arrays.stream(vars).map(LocalVar::new).collect(ImmutableSeq.factory());
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource"))
       .derive("TestModule");
     localVars.forEach(v -> ctx.addGlobalSimple(Stmt.Accessibility.Public, v, SourcePos.NONE));
-    return tyck(localVars, (Expr.Cof) cofE.resolve(ctx), toE.resolve(ctx))
+    return tyck(localVars, cofE.fmap(e -> e.resolve(ctx)), toE.resolve(ctx))
       .cons(localVars.first(v -> v.name().equals(i)));
   }
 
-  private @NotNull Tuple2<PrimTerm.Cof, Term> tyck(
+  private @NotNull Tuple2<Restr<Term>, Term> tyck(
     @NotNull ImmutableSeq<LocalVar> localVars,
-    @NotNull Expr.Cof cof, @NotNull Expr subst
+    @NotNull Restr<Expr> cof, @NotNull Expr subst
   ) {
     var primFactory = new PrimDef.Factory();
     var shapeFactory = new AyaShape.Factory();
     var exprTycker = new ExprTycker(primFactory, shapeFactory, ThrowingReporter.INSTANCE, null);
     localVars.forEach(v -> exprTycker.localCtx.put(v, FormTerm.Interval.INSTANCE));
-    var restr = (PrimTerm.Cof) exprTycker.inherit(cof, FormTerm.Face.INSTANCE).wellTyped();
+    var restr = exprTycker.restr(cof);
     var term = exprTycker.inherit(subst, FormTerm.Interval.INSTANCE).wellTyped();
     return Tuple.of(restr, term);
   }
@@ -69,8 +68,7 @@ public class CofTest {
   public @NotNull Restr<Term> substCof(@Language("TEXT") String cof, String i, @Language("TEXT") String to, String... vars) {
     var tup = tyck(cof, to, i, vars);
     var subst = new Subst(tup._1, tup._3);
-    var restr = tup._2.restr();
-    return subst.restr(new TyckState(new PrimDef.Factory()), restr);
+    return subst.restr(new TyckState(new PrimDef.Factory()), tup._2);
   }
 
   private static void assertDoc(@Language("TEXT") String expected, Docile actual) {

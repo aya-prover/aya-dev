@@ -256,7 +256,6 @@ public record AyaProducer(
     if (id != null) return new Expr.UnresolvedExpr(pos, visitQualifiedId(id));
     if (ctx.TYPE() != null) return new Expr.RawUnivExpr(pos);
     if (ctx.I() != null) return new Expr.IntervalExpr(pos);
-    if (ctx.FACE() != null) return new Expr.FaceExpr(pos);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
@@ -384,7 +383,6 @@ public record AyaProducer(
         else
           yield visitListComprehension(arrCtx.arrayBlock());
       }
-      case AyaParser.CofExprContext cofCtx -> visitRestr(cofCtx.restr());
       case AyaParser.PartTyContext tyCtx -> new Expr.PartTy(sourcePosOf(tyCtx),
         visitExpr(tyCtx.expr()),
         visitRestr(tyCtx.restr()));
@@ -399,10 +397,10 @@ public record AyaProducer(
     };
   }
 
-  public @NotNull Expr.Cof visitRestr(AyaParser.RestrContext ctx) {
-    if (ctx.TOP() != null) return new Expr.Cof(sourcePosOf(ctx), new Restr.Const<>(true));
-    if (ctx.BOTTOM() != null) return new Expr.Cof(sourcePosOf(ctx), new Restr.Const<>(false));
-    return new Expr.Cof(sourcePosOf(ctx), new Restr.Vary<>(Seq.wrapJava(ctx.cof()).map(this::visitCof)));
+  public @NotNull Restr<Expr> visitRestr(AyaParser.RestrContext ctx) {
+    if (ctx.TOP() != null) return new Restr.Const<>(true);
+    if (ctx.BOTTOM() != null) return new Restr.Const<>(false);
+    return new Restr.Vary<>(Seq.wrapJava(ctx.cof()).map(this::visitCof));
   }
 
   private @NotNull Restr.Cofib<Expr> visitCof(AyaParser.CofContext ctx) {
