@@ -5,6 +5,7 @@ package org.aya.core.visitor;
 import kala.collection.SeqLike;
 import kala.collection.Set;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
@@ -136,14 +137,32 @@ public interface Expander extends EndoFunctor {
           assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
           yield apply(tup.items().get(ix - 1));
         }
+        case PrimTerm.Cof cof -> new PrimTerm.Cof(postRestr(cof.restr()));
+        case IntroTerm.PartEl el -> postPartial(el);
         default -> Expander.super.post(term);
       };
     }
 
-    public @NotNull Restr<Term> restr(@NotNull Restr<Term> restr) {
-      return switch (restr.fmap(this)) {
+    private @NotNull Restr<Term> postRestr(@NotNull Restr<Term> restr) {
+      return switch (restr) {
         case Restr.Vary<Term> vary -> CofThy.normalizeRestr(vary);
         case Restr.Const<Term> c -> c;
+      };
+    }
+
+    private @NotNull IntroTerm.PartEl postPartial(@NotNull IntroTerm.PartEl el) {
+      return switch (el) {
+        case IntroTerm.SadPartEl par -> new IntroTerm.SadPartEl(par.u());
+        case IntroTerm.HappyPartEl par -> {
+          var clauses = MutableList.<Restr.Side<Term>>create();
+          for (var clause : par.clauses()) {
+            var u = clause.u();
+            if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
+              yield new IntroTerm.SadPartEl(u);
+            }
+          }
+          yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq());
+        }
       };
     }
   }

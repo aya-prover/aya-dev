@@ -103,8 +103,8 @@ public record Subst(
   }
 
   public @NotNull Restr<Term> restr(@NotNull TyckState state, @NotNull Restr<Term> restr) {
-    var restrSubst = restr.fmap(t -> t.subst(this));
-    return new Expander.Normalizer(state).restr(restrSubst);
+    var cof = (PrimTerm.Cof) term(state, new PrimTerm.Cof(restr));
+    return cof.restr();
   }
 
   public @NotNull Term term(@NotNull TyckState state, @NotNull Term term) {
