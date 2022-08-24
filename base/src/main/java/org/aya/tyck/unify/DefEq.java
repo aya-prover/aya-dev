@@ -342,9 +342,7 @@ public final class DefEq {
   }
 
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
-    var subst = new Subst();
-    return CofThy.conv(lhs, subst, s -> CofThy.satisfied(s.restr(state, rhs)))
-      && CofThy.conv(rhs, subst, s -> CofThy.satisfied(s.restr(state, lhs)));
+    return CofThy.propExt(new Subst(), lhs, rhs, (sub, term) -> sub.restr(state, term));
   }
 
   private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs, Sub lr, Sub rl) {
