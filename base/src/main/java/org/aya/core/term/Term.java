@@ -165,6 +165,11 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (cube == path.cube()) yield path;
         yield new FormTerm.Path(cube);
       }
+      case IntroTerm.PathLam lam -> {
+        var body = f.apply(lam.body());
+        if (body == lam.body()) yield lam;
+        yield new IntroTerm.PathLam(lam.params(), body);
+      }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
       case RefTerm.Field field -> field;

@@ -114,6 +114,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case IntroTerm.PartEl el -> throw new UnsupportedOperationException("TODO");
       case FormTerm.PartTy ty -> throw new UnsupportedOperationException("TODO");
       case FormTerm.Path path -> throw new UnsupportedOperationException("TODO");
+      case IntroTerm.PathLam path -> throw new UnsupportedOperationException("TODO");
 
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");

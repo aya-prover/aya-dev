@@ -395,28 +395,60 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
-        if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
-          yield fail(lam, term, BadTypeError.pi(state, lam, term));
-        }
-        var param = lam.param();
-        if (param.explicit() != dt.param().explicit()) {
-          yield fail(lam, dt, new LicitProblem.LicitMismatchError(lam, dt));
-        }
-        var var = param.ref();
-        var lamParam = param.type();
-        var type = dt.param().type();
-        var result = synthesize(lamParam).wellTyped;
-        var comparison = unifyTy(result, type, lamParam.sourcePos());
-        if (comparison != null) {
-          // TODO: maybe also report this unification failure?
-          yield fail(lam, dt, BadTypeError.lamParam(state, lam, type, result));
-        } else type = result;
-        var resultParam = new Term.Param(var, type, param.explicit());
-        var body = dt.substBody(resultParam.toTerm());
-        yield localCtx.with(resultParam, () -> {
-          var rec = inherit(lam.body(), body);
-          return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
-        });
+        yield switch (term.normalize(state, NormalizeMode.WHNF)) {
+          case FormTerm.Pi dt -> {
+            var param = lam.param();
+            if (param.explicit() != dt.param().explicit()) {
+              yield fail(lam, dt, new LicitProblem.LicitMismatchError(lam, dt));
+            }
+            var var = param.ref();
+            var lamParam = param.type();
+            var type = dt.param().type();
+            var result = synthesize(lamParam).wellTyped;
+            var comparison = unifyTy(result, type, lamParam.sourcePos());
+            if (comparison != null) {
+              // TODO: maybe also report this unification failure?
+              yield fail(lam, dt, BadTypeError.lamParam(state, lam, type, result));
+            } else type = result;
+            var resultParam = new Term.Param(var, type, param.explicit());
+            var body = dt.substBody(resultParam.toTerm());
+            yield localCtx.with(resultParam, () -> {
+              var rec = inherit(lam.body(), body);
+              return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
+            });
+          }
+          // Path lambda!
+          case FormTerm.Path path -> {
+            var cubeParams = path.cube().params();
+            var plam = Expr.pathLam(lam, cubeParams.size());
+            if (!plam._1.sizeEquals(cubeParams))
+              yield fail(lam, term, new CubicalProblem.DimensionMismatch(lam, cubeParams.size(), plam._1.size()));
+            var params = plam._1.map(p -> new Term.Param(p, FormTerm.Interval.INSTANCE, true));
+            yield localCtx.with(params.view(), () -> {
+              // \params. body => (params : I) -> A
+              var A = path.cube().type();
+              var body = inherit(plam._2, A).wellTyped;
+              var subst = new Subst(cubeParams, plam._1);
+              // body matches every given face
+              var happy = path.cube().clauses().allMatch(c -> {
+                var cof = c.cof().fmap(t -> subst.term(state, t));
+                return CofThy.conv(cof, subst, s -> {
+                  var u = s.term(state, c.u());
+                  var t = s.term(state, A);
+                  var unifier = unifier(plam._2.sourcePos(), Ordering.Eq);
+                  var h = unifier.compare(body, u, t);
+                  if (!h) reporter.report(new CubicalProblem.BoundaryDisagree(
+                    plam._2, body, u, unifier.getFailure(), state
+                  ));
+                  return h;
+                });
+              });
+              return happy ? new Result(new IntroTerm.PathLam(plam._1, body), path)
+                : new Result(ErrorTerm.typeOf(term), term);
+            });
+          }
+          default -> fail(lam, term, BadTypeError.pi(state, lam, term));
+        };
       }
       case Expr.LitIntExpr lit -> {
         var ty = term.normalize(state, NormalizeMode.WHNF);
@@ -446,6 +478,7 @@ public final class ExprTycker extends Tycker {
           yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
         yield new Result(staged, ty);
       }
+      // TODO: turn definition into path lambda
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
   }

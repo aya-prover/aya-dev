@@ -164,6 +164,10 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case IntroTerm.SadPartEl el -> Doc.sep(Doc.symbol("{|"), term(Outer.Free, el.u()), Doc.symbol("|}"));
       case PrimTerm.Mula mula -> formula(options, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());
+      case IntroTerm.PathLam lam -> Doc.sep(Doc.styled(KEYWORD, "\\"),
+        Doc.sep(lam.params().map(BaseDistiller::linkDef)),
+        Doc.symbol("=>"),
+        lam.body().toDoc(options));
     };
   }
 

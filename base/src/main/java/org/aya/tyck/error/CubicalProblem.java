@@ -18,6 +18,19 @@ public sealed interface CubicalProblem extends ExprProblem {
     return Severity.ERROR;
   }
 
+  record DimensionMismatch(
+    @NotNull Expr expr,
+    int expectedDim,
+    int actualDim
+  ) implements CubicalProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(Doc.english("This path lambda expects"),
+        Doc.plain(String.valueOf(expectedDim)),
+        Doc.english("dimension(s), but it has"),
+        Doc.plain(String.valueOf(actualDim)));
+    }
+  }
+
   record BoundaryDisagree(
     @NotNull Expr expr,
     @NotNull Term lhs,

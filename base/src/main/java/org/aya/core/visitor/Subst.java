@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
+import kala.tuple.Tuple;
 import org.aya.core.term.PrimTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
@@ -44,6 +45,10 @@ public record Subst(
 
   public Subst(@NotNull Var var, @NotNull Term term) {
     this(MutableHashMap.of(var, term));
+  }
+
+  public Subst(@NotNull ImmutableSeq<LocalVar> from, @NotNull ImmutableSeq<LocalVar> to) {
+    this(MutableMap.from(from.zipView(to).map(t -> Tuple.of(t._1, new RefTerm(t._2)))));
   }
 
   public void subst(@NotNull Subst subst) {

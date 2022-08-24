@@ -85,6 +85,12 @@ public interface VarConsumer extends TermConsumer {
           });
           bound.removeInRange(start, start + path.cube().params().size());
         }
+        case IntroTerm.PathLam lam -> {
+          var start = bound.size();
+          lam.params().forEach(bound::append);
+          accept(lam.body());
+          bound.removeInRange(start, start + lam.params().size());
+        }
         case CallTerm.Hole hole -> {
           var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);
           hole.contextArgs().forEach(arg -> checker.accept(arg.term()));

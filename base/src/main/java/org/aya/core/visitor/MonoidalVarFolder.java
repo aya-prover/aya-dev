@@ -52,6 +52,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       case IntroTerm.SadPartEl el -> trace(el.u());
       case PrimTerm.Mula mula -> mula.view().flatMap(this::trace);
       case FormTerm.Path path -> trace(path.cube().type()).concat(clauses(path.cube().clauses()));
+      case IntroTerm.PathLam lam -> trace(lam.body());
       default -> SeqView.empty();
     };
   }

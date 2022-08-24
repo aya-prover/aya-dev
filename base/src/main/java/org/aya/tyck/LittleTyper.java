@@ -2,11 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
 import org.aya.generic.Constants;
+import org.aya.generic.Cube;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +83,11 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case IntroTerm.HappyPartEl el -> new FormTerm.PartTy(el.rhsType(), el.restr());
       case IntroTerm.SadPartEl el -> new FormTerm.PartTy(term(el), el.restr());
       case FormTerm.Path path -> FormTerm.Univ.ZERO;
+      case IntroTerm.PathLam lam -> new FormTerm.Path(new Cube<>(
+        lam.params(),
+        term(lam.body()),
+        ImmutableSeq.empty() // TODO: clauses???
+      ));
     };
   }
 }

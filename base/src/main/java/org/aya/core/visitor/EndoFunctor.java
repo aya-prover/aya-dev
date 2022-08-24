@@ -64,6 +64,9 @@ public interface EndoFunctor extends Function<Term, Term> {
           path.cube().params().map(this::handleBinder),
           path.cube().type(),
           path.cube().clauses()));
+        case IntroTerm.PathLam lam -> new IntroTerm.PathLam(
+          lam.params().map(this::handleBinder),
+          lam.body());
         case Term misc -> misc;
       };
     }

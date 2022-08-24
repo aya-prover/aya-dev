@@ -5,6 +5,8 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.visitor.ExprView;
@@ -111,6 +113,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
     if (args != null) args.reverse();
     return expr;
+  }
+  static @NotNull Tuple2<ImmutableSeq<LocalVar>, Expr> pathLam(@NotNull Expr expr, int maxUn) {
+    var params = MutableList.<LocalVar>create();
+    while (expr instanceof LamExpr lam && maxUn-- > 0) {
+      params.append(lam.param.ref);
+      expr = lam.body;
+    }
+    return Tuple.of(params.toImmutableSeq(), expr);
   }
 
   /**
