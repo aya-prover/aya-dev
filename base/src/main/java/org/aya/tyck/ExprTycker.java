@@ -19,10 +19,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
-import org.aya.generic.AyaDocile;
-import org.aya.generic.Constants;
-import org.aya.generic.Modifier;
+import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -255,6 +252,16 @@ public final class ExprTycker extends Tycker {
       case Expr.PartTy par -> {
         var ty = synthesize(par.type());
         yield new Result(new FormTerm.PartTy(ty.wellTyped, restr(par.restr())), ty.type);
+      }
+      case Expr.Path path -> {
+        var params = path.cube().params().view()
+          .map(n -> new Term.Param(n, FormTerm.Interval.INSTANCE, true));
+        yield localCtx.with(params, () -> {
+          var type = synthesize(path.cube().type());
+          var clauses = elaborateClauses(path, path.cube().clauses(), type.wellTyped);
+          var cube = new Cube<>(path.cube().params(), type.wellTyped, clauses);
+          return new Result(new FormTerm.Path(cube), type.type);
+        });
       }
       default -> fail(expr, new NoRuleError(expr, null));
     };

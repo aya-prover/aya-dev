@@ -4,10 +4,12 @@ package org.aya.core.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +47,18 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       case LitTerm.ShapedInt shaped -> trace(shaped.type());
       case RefTerm ref -> SeqView.of(var(ref.var()));
       case RefTerm.Field field -> SeqView.of(var(field.ref()));
+      case FormTerm.PartTy ty -> trace(ty.type()).concat(ty.restr().instView().flatMap(this::trace));
+      case IntroTerm.HappyPartEl el -> el.restr().instView().flatMap(this::trace).concat(clauses(el.clauses()));
+      case IntroTerm.SadPartEl el -> trace(el.u());
+      case PrimTerm.Mula mula -> mula.view().flatMap(this::trace);
+      case FormTerm.Path path -> trace(path.cube().type()).concat(clauses(path.cube().clauses()));
       default -> SeqView.empty();
     };
   }
+  @NotNull private ImmutableSeq<R> clauses(@NotNull ImmutableSeq<Restr.Side<Term>> clauses) {
+    return clauses.flatMap(c -> c.cof().view().flatMap(this::trace).concat(trace(c.u())));
+  }
+
   private @NotNull SeqView<R> trace(@NotNull Term.Param param) {
     return trace(param.type());
   }
@@ -84,7 +95,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
     }
 
     @Override public @NotNull SeqView<Def> merge(@NotNull SeqView<SeqView<Def>> as) {
-      return as.view().flatMap(a -> a);
+      return as.flatMap(a -> a);
     }
 
     public @NotNull SeqView<Def> apply(@NotNull GenericDef def) {
