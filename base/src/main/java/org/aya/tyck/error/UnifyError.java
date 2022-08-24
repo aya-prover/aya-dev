@@ -54,8 +54,8 @@ public interface UnifyError extends Problem {
     @Override @NotNull Expr expr,
     @NotNull Term expected,
     @NotNull Term actual,
-    @NotNull DefEq.FailureData failureData,
-    @NotNull TyckState state
+    @Override @NotNull DefEq.FailureData failureData,
+    @Override @NotNull TyckState state
   ) implements ExprProblem, UnifyError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       var prologue = Doc.vcat(

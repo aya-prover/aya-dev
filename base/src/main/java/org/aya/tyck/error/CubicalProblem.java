@@ -21,8 +21,8 @@ public sealed interface CubicalProblem extends ExprProblem {
     @NotNull Expr expr,
     @NotNull Term lhs,
     @NotNull Term rhs,
-    @NotNull DefEq.FailureData failureData,
-    @NotNull TyckState state
+    @Override @NotNull DefEq.FailureData failureData,
+    @Override @NotNull TyckState state
   ) implements CubicalProblem, UnifyError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return describeUnify(options, Doc.english("The boundary"), lhs,
