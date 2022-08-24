@@ -1,8 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
+import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprTraversal<P> {
@@ -32,9 +34,25 @@ public interface ExprTraversal<P> {
         visitParam(pi.param(), p);
         visitExpr(pi.last(), p);
       }
+      case Expr.PartEl el -> clauses(el.clauses(), p);
+      case Expr.PartTy ty -> {
+        ty.restr().instView().forEach(e -> visitExpr(e, p));
+        visitExpr(ty.type(), p);
+      }
+      case Expr.Path path -> {
+        visitExpr(path.cube().type(), p);
+        clauses(path.cube().clauses(), p);
+      }
       default -> {}
     }
     return expr;
+  }
+
+  private void clauses(@NotNull ImmutableSeq<Restr.Side<Expr>> clauses, P p) {
+    clauses.forEach(c -> {
+      c.cof().view().forEach(e -> visitExpr(e, p));
+      visitExpr(c.u(), p);
+    });
   }
 
   default @NotNull Expr visitParam(Expr.Param e, P pp) {
