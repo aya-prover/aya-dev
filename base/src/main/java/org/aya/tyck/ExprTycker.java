@@ -253,9 +253,10 @@ public final class ExprTycker extends Tycker {
 
         yield new Result(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STR));
       }
-      case Expr.PartTy par -> new Result(
-        new FormTerm.PartTy(inherit(par.type(), FormTerm.Univ.ZERO).wellTyped, restr(par.restr())),
-        FormTerm.Univ.ZERO);
+      case Expr.PartTy par -> {
+        var ty = synthesize(par.type());
+        yield new Result(new FormTerm.PartTy(ty.wellTyped, restr(par.restr())), ty.type);
+      }
       case Expr.Mula mula -> switch (mula.asFormula()) {
         case Formula.Conn<Expr> cnn -> new Result(
           PrimTerm.Mula.conn(cnn.isAnd(),
@@ -462,27 +463,8 @@ public final class ExprTycker extends Tycker {
       builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
       builder.reduce();
     });
-    // assert validate(result.wellTyped);
-    // assert validate(result.type);
     if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(frozen.get());
   }
-
-  /*
-  @TestOnly @Contract(pure = true) private boolean validate(Term term) {
-    var visitor = new TermConsumer<Unit>() {
-      boolean ok = true;
-
-      @Override public void visitSort(@NotNull Sort sort, Unit unit) {
-        for (var level : sort.levels())
-          if (level instanceof Level.Reference<Sort.LvlVar> r && !r.ref().free() &&
-            !(r.ref() == universe || levelMapping.valuesView().contains(r.ref())))
-            ok = false;
-      }
-    };
-    term.accept(visitor, Unit.unit());
-    return visitor.ok;
-  }
-  */
 
   public ExprTycker(
     @NotNull PrimDef.Factory primFactory,
