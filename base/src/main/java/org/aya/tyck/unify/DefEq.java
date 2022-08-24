@@ -299,35 +299,8 @@ public final class DefEq {
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
-      case FormTerm.PartTy ty -> {
-        if (!(lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel)) yield false;
-        // lhs = {| LC_i := a_i, ... |}
-        // rhs = {| RC_i := b_i, ... |}
-        var restr = ty.restr();
-        var A = ty.type();
-        // TODO: correct?
-        //  1. Disjunction of all LC_i = restr
-        //  2. disjunction of all RC_i = restr
-        //  3. forall i, j. LC_i /\ RC_j \vdash a_i = b_j : A
-        var LC = lel.restr();
-        var RC = rel.restr();
-        if (!compareRestr(LC, restr)) yield false;
-        if (!compareRestr(RC, restr)) yield false;
-        yield switch (lel) {
-          case IntroTerm.SadPartEl lp && rel instanceof IntroTerm.SadPartEl rp -> compare(lp.u(), rp.u(), lr, rl, A);
-          case IntroTerm.HappyPartEl lp && rel instanceof IntroTerm.HappyPartEl rp ->
-            lp.clauses().allMatch(lc -> rp.clauses().allMatch(rc ->
-              CofThy.conv(lc.cof().and(rc.cof()), new Subst(), subst -> {
-                var lu = subst.term(state, lc.u());
-                var ru = subst.term(state, rc.u());
-                return compare(lu, ru, lr, rl, subst.term(state, A));
-              })));
-          case IntroTerm.HappyPartEl lp && rel instanceof IntroTerm.SadPartEl rp -> comparePartial(lp, rp, lr, rl, A);
-          case IntroTerm.SadPartEl lp && rel instanceof IntroTerm.HappyPartEl rp -> comparePartial(rp, lp, rl, lr, A);
-          // ^ should swap lr and rl?
-          default -> false;
-        };
-      }
+      case FormTerm.PartTy ty -> CofThy.conv(ty.restr(), new Subst(),
+        subst -> doCompareTyped(ty.type(), lhs, rhs, lr, rl));
     };
     traceExit();
     return ret;
