@@ -299,8 +299,12 @@ public final class DefEq {
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
-      case FormTerm.PartTy ty -> CofThy.conv(ty.restr(), new Subst(),
-        subst -> doCompareTyped(ty.type(), lhs, rhs, lr, rl));
+      case FormTerm.PartTy ty && lhs instanceof IntroTerm.SadPartEl ll
+        && rhs instanceof IntroTerm.SadPartEl rr -> doCompareTyped(ty.type(), ll.u(), rr.u(), lr, rl);
+      case FormTerm.PartTy ty
+        && !(lhs instanceof IntroTerm.SadPartEl)
+        && !(rhs instanceof IntroTerm.SadPartEl) -> CofThy.conv(ty.restr(), new Subst(),
+        subst -> doCompareTyped(ty.subst(subst), lhs.subst(subst), rhs.subst(subst), lr, rl));
     };
     traceExit();
     return ret;
