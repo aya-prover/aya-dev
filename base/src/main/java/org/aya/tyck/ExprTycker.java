@@ -426,17 +426,16 @@ public final class ExprTycker extends Tycker {
             var params = plam._1.map(p -> new Term.Param(p, FormTerm.Interval.INSTANCE, true));
             yield localCtx.with(params.view(), () -> {
               // \params. body => (params : I) -> A
-              var A = path.cube().type();
-              var body = inherit(plam._2, A).wellTyped;
               var subst = new Subst(cubeParams, plam._1);
+              var A = subst.term(state, path.cube().type());
+              var body = inherit(plam._2, A).wellTyped;
               // body matches every given face
               var happy = path.cube().clauses().allMatch(c -> {
                 var cof = c.cof().fmap(t -> subst.term(state, t));
                 return CofThy.conv(cof, subst, s -> {
                   var u = s.term(state, c.u());
-                  var t = s.term(state, A);
                   var unifier = unifier(plam._2.sourcePos(), Ordering.Eq);
-                  var h = unifier.compare(body, u, t);
+                  var h = unifier.compare(body, u, subst.term(state, A));
                   if (!h) reporter.report(new CubicalProblem.BoundaryDisagree(
                     plam._2, body, u, unifier.getFailure(), state
                   ));
