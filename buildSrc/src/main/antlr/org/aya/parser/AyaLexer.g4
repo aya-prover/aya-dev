@@ -67,7 +67,6 @@ PI : 'Pi' | '\u03A0';
 FORALL : 'forall' | '\u2200';
 LAND : '/\\' | '\u2227';
 LOR : '\\/' | '\u2228';
-LINV : '~';
 
 // ---- AyaLexer end: Keywords
 

@@ -112,6 +112,25 @@ public final class PrimDef extends TopLevelDef {
         );
       }, ImmutableSeq.empty());
 
+      /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
+      public final @NotNull PrimDef.PrimSeed IMIN = formula(ID.IMIN, "i", "j");
+      /** \/ in Cubical Agda, should elaborate to {@link Formula.Conn} */
+      public final @NotNull PrimDef.PrimSeed IMAX = formula(ID.IMAX, "i", "j");
+      /** ~ in Cubical Agda, should elaborate to {@link Formula.Inv} */
+      public final @NotNull PrimDef.PrimSeed INVOL = formula(ID.INVOL, "i");
+
+      private @NotNull PrimSeed formula(ID id, String... tele) {
+        return new PrimSeed(id, (prim, state) -> {
+          // Consider throwing an error since we convert them to special ASTs during elaboration.
+          return prim;
+        }, ref -> new PrimDef(
+          ref,
+          ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), FormTerm.Interval.INSTANCE, true)),
+          FormTerm.Interval.INSTANCE,
+          id
+        ), ImmutableSeq.empty());
+      }
+
       public final @NotNull PrimDef.PrimSeed STR =
         new PrimSeed(ID.STR,
           ((prim, tyckState) -> prim),
@@ -147,6 +166,9 @@ public final class PrimDef extends TopLevelDef {
       var init = new Initializer();
       SEEDS = ImmutableSeq.of(
           init.ARCOE,
+          init.IMIN,
+          init.IMAX,
+          init.INVOL,
           init.STR,
           init.STRCONCAT
         ).map(seed -> Tuple.of(seed.name, seed))
@@ -205,6 +227,9 @@ public final class PrimDef extends TopLevelDef {
   public enum ID {
     /** Short for <em>Arend coe</em>. */
     ARCOE("arcoe"),
+    IMIN("intervalMin"),
+    IMAX("intervalMax"),
+    INVOL("invol"),
     STR("String"),
     STRCONCAT("strcat");
 

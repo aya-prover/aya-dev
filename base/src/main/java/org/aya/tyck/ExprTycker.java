@@ -26,7 +26,6 @@ import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
-import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -257,19 +256,6 @@ public final class ExprTycker extends Tycker {
         var ty = synthesize(par.type());
         yield new Result(new FormTerm.PartTy(ty.wellTyped, restr(par.restr())), ty.type);
       }
-      case Expr.Mula mula -> switch (mula.asFormula()) {
-        case Formula.Conn<Expr> cnn -> new Result(
-          PrimTerm.Mula.conn(cnn.isAnd(),
-            inherit(cnn.l(), FormTerm.Interval.INSTANCE).wellTyped,
-            inherit(cnn.r(), FormTerm.Interval.INSTANCE).wellTyped),
-          FormTerm.Interval.INSTANCE);
-        case Formula.Inv<Expr> inv -> new Result(
-          PrimTerm.Mula.inv(inherit(inv.i(), FormTerm.Interval.INSTANCE).wellTyped),
-          FormTerm.Interval.INSTANCE);
-        case Formula.Lit<Expr> lit -> new Result(
-          lit.isLeft() ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT,
-          FormTerm.Interval.INSTANCE);
-      };
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }

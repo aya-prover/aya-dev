@@ -99,8 +99,6 @@ expr : atom                                 # single
      | thisExpr                             # this
      | PARTIAL_KW expr LBRACE restr RBRACE  # partTy
      | partial                              # partEl
-     | expr (LAND | LOR) expr               # formulaConn
-     | LINV expr                            # formulaInv
      ;
 
 restr : (cof (LOR cof)* | TOP | BOTTOM);
@@ -181,4 +179,4 @@ type : COLON expr;
 doBindingExpr : weakId LARROW expr;
 
 qualifiedId : weakId (COLON2 weakId)*;
-weakId : ID | REPL_COMMAND;
+weakId : ID | REPL_COMMAND | LAND | LOR;

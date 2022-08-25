@@ -27,7 +27,6 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
-import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
@@ -387,11 +386,6 @@ public record AyaProducer(
         visitExpr(tyCtx.expr()),
         visitRestr(tyCtx.restr()));
       case AyaParser.PartElContext elCtx -> new Expr.PartEl(sourcePosOf(elCtx), visitPartial(elCtx.partial()));
-      case AyaParser.FormulaInvContext inv -> new Expr.Mula(sourcePosOf(inv), new Formula.Inv<>(visitExpr(inv.expr())));
-      case AyaParser.FormulaConnContext cnn -> new Expr.Mula(sourcePosOf(cnn), new Formula.Conn<>(
-        cnn.LAND() != null,
-        visitExpr(cnn.expr(0)),
-        visitExpr(cnn.expr(1))));
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
@@ -723,8 +717,7 @@ public record AyaProducer(
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.weakId();
-    if (id != null)
-      return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), MutableValue.create());
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), MutableValue.create());
 
     return unreachable(ctx);
   }

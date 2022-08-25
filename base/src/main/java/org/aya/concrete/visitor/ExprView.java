@@ -97,11 +97,6 @@ public interface ExprView {
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new Expr.PartTy(ty.sourcePos(), type, restr);
       }
-      case Expr.Mula mula -> {
-        var formula = mula.asFormula().fmap(this::commit);
-        if (formula == mula.asFormula()) yield mula;
-        yield new Expr.Mula(mula.sourcePos(), formula);
-      }
       case Expr.LitIntExpr litInt -> litInt;
       case Expr.LitStringExpr litStr -> litStr;
       case Expr.BinOpSeq binOpSeq -> {

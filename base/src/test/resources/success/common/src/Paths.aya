@@ -14,7 +14,7 @@ def infix = (a b : A) : Type => Path (\ i => A) a b
 def idp {a : A} : a = a => path (\ i => a)
 
 def psqueeze {a b : A} (p : a = b) (i : I)
- : a = p.at i => path (\j => p.at (i /\ j))
+ : a = p.at i => path (\j => p.at (intervalMin i j))
 
 def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b p =>
