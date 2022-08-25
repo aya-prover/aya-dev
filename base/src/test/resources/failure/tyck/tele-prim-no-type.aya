@@ -1,2 +1,1 @@
-prim String
-prim strcat (str1 str2: String)
+prim invol (i : I)
