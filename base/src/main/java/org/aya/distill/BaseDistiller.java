@@ -253,13 +253,15 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     };
   }
 
-  public static <T extends AyaTermLike<T>> @NotNull Doc partial(@NotNull DistillerOptions options, @NotNull ImmutableSeq<Restr.Side<T>> clauses) {
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  partial(@NotNull DistillerOptions options, @NotNull ImmutableSeq<Restr.Side<T>> clauses) {
     return Doc.sep(Doc.symbol("{|"),
       Doc.join(Doc.spaced(Doc.symbol("|")), clauses.map(s -> side(options, s))),
       Doc.symbol("|}"));
   }
 
-  public static <T extends AyaTermLike<T>> @NotNull Doc restr(@NotNull DistillerOptions options, @NotNull Restr<T> restr) {
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  restr(@NotNull DistillerOptions options, @NotNull Restr<T> restr) {
     return switch (restr) {
       case Restr.Const<T> con -> con.isTrue() ? Doc.symbol("top") : Doc.symbol("_|_");
       case Restr.Vary<T> v -> Doc.join(Doc.spaced(Doc.symbol("\\/")),
@@ -269,11 +271,13 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     };
   }
 
-  public static <T extends AyaTermLike<T>> @NotNull Doc side(@NotNull DistillerOptions options, @NotNull Restr.Side<T> side) {
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  side(@NotNull DistillerOptions options, @NotNull Restr.Side<T> side) {
     return Doc.sep(cofib(options, side.cof()), Doc.symbol(":="), side.u().toDoc(options));
   }
 
-  public static <T extends AyaTermLike<T>> @NotNull Doc cofib(@NotNull DistillerOptions options, @NotNull Restr.Cofib<T> cofib) {
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  cofib(@NotNull DistillerOptions options, @NotNull Restr.Cofib<T> cofib) {
     return Doc.join(Doc.spaced(Doc.symbol("/\\")), cofib.ands().view().map(and ->
       Doc.sep(and.inst().toDoc(options), Doc.symbol(and.isLeft() ? "0" : "1"))));
   }
