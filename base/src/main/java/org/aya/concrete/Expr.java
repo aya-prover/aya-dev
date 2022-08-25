@@ -12,6 +12,7 @@ import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Cube;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
@@ -264,6 +265,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr type,
     @NotNull Restr<Expr> restr
   ) implements Expr {}
+
+  /** generalized path type */
+  record Path(
+    @NotNull SourcePos sourcePos,
+    @NotNull Cube<Expr> cube
+  ) implements Expr {
+  }
 
   /**
    * @author re-xyr

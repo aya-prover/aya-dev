@@ -140,6 +140,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.braced(restr(options, ty.restr())));
       case Expr.PartEl el -> partial(options, el.clauses());
+      case Expr.Path path -> cube(options, path.cube());
     };
   }
 

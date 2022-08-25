@@ -24,6 +24,7 @@ import org.aya.concrete.error.ParseError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
+import org.aya.generic.Cube;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
@@ -386,6 +387,11 @@ public record AyaProducer(
         visitExpr(tyCtx.expr()),
         visitRestr(tyCtx.restr()));
       case AyaParser.PartElContext elCtx -> new Expr.PartEl(sourcePosOf(elCtx), visitPartial(elCtx.partial()));
+      case AyaParser.PathContext path->new Expr.Path(sourcePosOf(path), new Cube<>(
+        Seq.wrapJava(path.weakId()).map(w -> new LocalVar(w.getText(), sourcePosOf(w))),
+        visitExpr(path.expr()),
+        visitPartial(path.partial())
+      ));
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };

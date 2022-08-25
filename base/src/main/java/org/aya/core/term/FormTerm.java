@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.generic.Cube;
 import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,4 +69,7 @@ public sealed interface FormTerm extends Term {
 
   /** partial type */
   record PartTy(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {}
+
+  /** generalized path type */
+  record Path(@NotNull Cube<Term> cube) implements FormTerm {}
 }

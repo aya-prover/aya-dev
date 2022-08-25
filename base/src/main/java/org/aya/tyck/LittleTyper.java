@@ -80,6 +80,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
       case IntroTerm.HappyPartEl el -> new FormTerm.PartTy(el.rhsType(), el.restr());
       case IntroTerm.SadPartEl el -> new FormTerm.PartTy(term(el), el.restr());
+      case FormTerm.Path path -> FormTerm.Univ.ZERO;
     };
   }
 }

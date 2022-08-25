@@ -97,6 +97,11 @@ public interface ExprView {
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new Expr.PartTy(ty.sourcePos(), type, restr);
       }
+      case Expr.Path path -> {
+        var cube = path.cube().map(this::commit);
+        if (cube == path.cube()) yield path;
+        yield new Expr.Path(path.sourcePos(), cube);
+      }
       case Expr.LitIntExpr litInt -> litInt;
       case Expr.LitStringExpr litStr -> litStr;
       case Expr.BinOpSeq binOpSeq -> {

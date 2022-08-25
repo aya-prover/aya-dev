@@ -4,6 +4,7 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
@@ -13,6 +14,7 @@ import org.aya.concrete.Expr;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
@@ -110,6 +112,12 @@ public record ExprResolver(
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new Expr.PartTy(ty.sourcePos(), type, restr);
       }
+      case Expr.Path path -> {
+        var newCtx = resolveCubeParams(path.cube().params(), ctx);
+        var cube = path.cube().map(e -> resolve(e, newCtx));
+        if (cube == path.cube()) yield path;
+        yield new Expr.Path(path.sourcePos(), cube);
+      }
       case Expr.UnresolvedExpr unresolved -> {
         var sourcePos = unresolved.sourcePos();
         yield switch (ctx.get(unresolved.name())) {
@@ -200,6 +208,10 @@ public record ExprResolver(
   private @NotNull Tuple2<Expr.Param, Context> resolveParam(@NotNull Expr.Param param, Context ctx) {
     var type = resolve(param.type(), ctx);
     return Tuple2.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
+  }
+
+  private @NotNull Context resolveCubeParams(@NotNull ImmutableSeq<LocalVar> params, Context ctx) {
+    return params.foldLeft(ctx, (c, x) -> c.bind(x, x.definition()));
   }
 
   @Contract(pure = true)

@@ -10,6 +10,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Cube;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
@@ -240,6 +241,17 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   public static @NotNull Doc defVar(DefVar<?, ?> ref) {
     var style = chooseStyle(ref.concrete);
     return style != null ? linkDef(ref, style) : varDoc(ref);
+  }
+
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  cube(@NotNull DistillerOptions options, @NotNull Cube<T> cube) {
+    return Doc.sep(
+      Doc.symbol("[|"),
+      Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
+      Doc.symbol("|]"),
+      cube.type().toDoc(options),
+      partial(options, cube.clauses())
+    );
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
