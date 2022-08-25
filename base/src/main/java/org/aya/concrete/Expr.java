@@ -53,8 +53,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     return new ConcreteDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
 
-  @ForLSP
-  sealed interface WithTerm extends Expr {
+  @ForLSP sealed interface WithTerm extends Expr {
     @NotNull MutableValue<ExprTycker.Result> theCore();
     default @Nullable ExprTycker.Result core() {
       return theCore().get();
