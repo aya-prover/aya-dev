@@ -12,7 +12,6 @@ import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.AyaTermLike;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
@@ -38,7 +37,7 @@ import java.util.function.Function;
 /**
  * @author re-xyr
  */
-public sealed interface Expr extends AyaDocile, SourceNode, AyaTermLike<Expr> {
+public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr> {
   /**
    * @see org.aya.concrete.stmt.Stmt#resolve
    * @see StmtShallowResolver

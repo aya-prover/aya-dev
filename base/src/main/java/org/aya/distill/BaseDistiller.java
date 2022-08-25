@@ -9,9 +9,9 @@ import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.AyaTermLike;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.DefVar;
@@ -241,7 +241,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return style != null ? linkDef(ref, style) : varDoc(ref);
   }
 
-  public static <T extends AyaTermLike<T>> @NotNull Doc formula(@NotNull DistillerOptions options, @NotNull Formula<T> formula) {
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  formula(@NotNull DistillerOptions options, @NotNull Formula<T> formula) {
     return switch (formula) {
       case Formula.Conn<T> cnn -> Doc.sep(cnn.l().toDoc(options),
         cnn.isAnd() ? Doc.symbol("/\\") : Doc.symbol("\\/"),

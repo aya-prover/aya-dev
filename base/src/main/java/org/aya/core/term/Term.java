@@ -15,9 +15,9 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.AyaTermLike;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.Bind;
 import org.aya.ref.LocalVar;
@@ -37,7 +37,7 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, AyaTermLike<Term> permits CallTerm, ElimTerm, ErrorTerm,
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, ElimTerm, ErrorTerm,
   FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, LitTerm {
 
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
