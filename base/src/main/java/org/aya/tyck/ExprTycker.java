@@ -521,6 +521,15 @@ public final class ExprTycker extends Tycker {
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var res = doSynthesize(expr);
+    if (res.type.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Path path) {
+      // TODO: generate Pi type for path lambda
+      var xi = path.cube().params().map(x -> new Term.Param(x, FormTerm.Interval.INSTANCE, true));
+      var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);
+      var elim = (Term) new ElimTerm.PathApp(res.wellTyped, path.cube()); // this should reduce to a term of type A
+      // ^ the cast is necessary, see https://gist.github.com/imkiva/8db13b6e578e473c1c9b977086bfe898
+      var lam = xi.foldRight(elim, IntroTerm.Lambda::new);
+      return new Result(lam, pi);
+    }
     traceExit(res, expr);
     return res;
   }
