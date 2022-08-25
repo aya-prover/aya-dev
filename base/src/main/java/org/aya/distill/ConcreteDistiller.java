@@ -17,7 +17,6 @@ import org.aya.concrete.visitor.ExprTraversal;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
-import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.StringEscapeUtil;
@@ -139,10 +138,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
       case Expr.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
-        ty.type().toDoc(options), Doc.braced(ty.restr().toDoc()));
-      case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
-        Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(Restr.Side::toDoc)),
-        Doc.symbol("|}"));
+        ty.type().toDoc(options), Doc.braced(restr(options, ty.restr())));
+      case Expr.PartEl el -> partial(options, el.clauses());
       case Expr.Mula mula -> formula(options, mula.asFormula());
     };
   }

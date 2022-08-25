@@ -11,7 +11,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.generic.Arg;
-import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.StringEscapeUtil;
@@ -160,10 +159,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         () -> Doc.plain(String.valueOf(shaped.repr())));
       case PrimTerm.Str str -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
-        term(Outer.AppSpine, ty.type()), Doc.braced(ty.restr().toDoc()));
-      case IntroTerm.HappyPartEl el -> Doc.sep(Doc.symbol("{|"),
-        Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(Restr.Side::toDoc)),
-        Doc.symbol("|}"));
+        term(Outer.AppSpine, ty.type()), Doc.braced(restr(options, ty.restr())));
+      case IntroTerm.HappyPartEl el -> partial(options, el.clauses());
       case IntroTerm.SadPartEl el -> Doc.sep(Doc.symbol("{|"), term(Outer.Free, el.u()), Doc.symbol("|}"));
       case PrimTerm.Mula mula -> formula(options, mula.asFormula());
     };

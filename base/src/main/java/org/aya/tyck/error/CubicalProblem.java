@@ -4,6 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
+import org.aya.distill.BaseDistiller;
 import org.aya.generic.ExprProblem;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
@@ -38,9 +39,9 @@ public sealed interface CubicalProblem extends ExprProblem {
     @Override
     public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(Doc.english("The face(s) in the partial element:"),
-        Doc.par(1, face.toDoc()),
+        Doc.par(1, BaseDistiller.restr(options, face)),
         Doc.english("must cover the face(s) specified in type:"),
-        Doc.par(1, cof.toDoc()));
+        Doc.par(1, BaseDistiller.restr(options, cof)));
     }
   }
 }

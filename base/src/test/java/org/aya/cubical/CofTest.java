@@ -16,12 +16,13 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
+import org.aya.distill.BaseDistiller;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.pretty.doc.Docile;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.ThrowingReporter;
@@ -71,43 +72,43 @@ public class CofTest {
     return subst.restr(new TyckState(new PrimDef.Factory()), tup._2);
   }
 
-  private static void assertDoc(@Language("TEXT") String expected, Docile actual) {
-    assertEquals(expected, actual.toDoc().commonRender());
+  private static void assertDoc(@Language("TEXT") String expected, Restr<Term> actual) {
+    assertEquals(expected, BaseDistiller.restr(DistillerOptions.debug(), actual).commonRender());
   }
 
   @Test public void simpleSubst() {
     var cof = substCof("i 0 ∨ j 1", "i", "k", "i", "j", "k");
-    assertDoc("k = 0 ∨ j = 1", cof);
+    assertDoc("k 0 ∨ j 1", cof);
   }
 
   @Test public void substWithMax() {
     // (i 1 \/ j 1) [i |-> k \/ l]
-    assertDoc("k = 1 ∨ l = 1 ∨ j = 1", substCof(
+    assertDoc("k 1 ∨ l 1 ∨ j 1", substCof(
       "i 1 ∨ j 1", "i", "k ∨ l", "i", "j", "k", "l"));
     // (i 0 \/ j 1) [i |-> k \/ l]
-    assertDoc("j = 1 ∧ l = 0 ∧ k = 0", substCof(
+    assertDoc("j 1 ∧ l 0 ∧ k 0", substCof(
       "i 0 ∧ j 1", "i", "k ∨ l", "i", "j", "k", "l"));
     // Counter-intuitive for people unfamiliar with lattice theory:
     // (i 1 \/ j 1) [i |-> k \/ l]
-    assertDoc("(k = 1 ∧ j = 1) ∨ (l = 1 ∧ j = 1)", substCof(
+    assertDoc("(k 1 ∧ j 1) ∨ (l 1 ∧ j 1)", substCof(
       "i 1 ∧ j 1", "i", "k ∨ l", "i", "j", "k", "l"));
     // (i 0 \/ j 1) [i |-> k \/ l]
-    assertDoc("(l = 0 ∧ k = 0) ∨ j = 1", substCof(
+    assertDoc("(l 0 ∧ k 0) ∨ j 1", substCof(
       "i 0 ∨ j 1", "i", "k ∨ l", "i", "j", "k", "l"));
   }
 
   @Test public void substWithMin() {
     // (i 1 \/ j 1) [i |-> k /\ l]
-    assertDoc("(l = 1 ∧ k = 1) ∨ j = 1", substCof(
+    assertDoc("(l 1 ∧ k 1) ∨ j 1", substCof(
       "i 1 ∨ j 1", "i", "k ∧ l", "i", "j", "k", "l"));
     // (i 0 \/ j 1) [i |-> k /\ l]
-    assertDoc("(k = 0 ∧ j = 1) ∨ (l = 0 ∧ j = 1)", substCof(
+    assertDoc("(k 0 ∧ j 1) ∨ (l 0 ∧ j 1)", substCof(
       "i 0 ∧ j 1", "i", "k ∧ l", "i", "j", "k", "l"));
     // (i 1 \/ j 1) [i |-> k /\ l]
-    assertDoc("j = 1 ∧ l = 1 ∧ k = 1", substCof(
+    assertDoc("j 1 ∧ l 1 ∧ k 1", substCof(
       "i 1 ∧ j 1", "i", "k ∧ l", "i", "j", "k", "l"));
     // (i 0 \/ j 1) [i |-> k /\ l]
-    assertDoc("k = 0 ∨ l = 0 ∨ j = 1", substCof(
+    assertDoc("k 0 ∨ l 0 ∨ j 1", substCof(
       "i 0 ∨ j 1", "i", "k ∧ l", "i", "j", "k", "l"));
   }
 }
