@@ -6,6 +6,7 @@ import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.LocalVar;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -58,11 +59,17 @@ public interface EndoFunctor extends Function<Term, Term> {
   }
 
   /**
-   * Performs capture-avoiding substitution.
+   * Performs capture-avoiding substitution and applies beta reduction.
    */
   record Substituter(@NotNull Subst subst) implements EndoFunctor {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
+        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> apply(CallTerm.make(lam, app.arg()));
+        case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
+          var ix = proj.ix();
+          assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
+          yield apply(tup.items().get(ix - 1));
+        }
         case RefTerm ref && ref.var() == LocalVar.IGNORED -> throw new InternalException("found usage of ignored var");
         case RefTerm ref -> subst.map().getOption(ref.var()).map(Term::rename).getOrDefault(ref);
         case RefTerm.Field field -> subst.map().getOption(field.ref()).map(Term::rename).getOrDefault(field);
