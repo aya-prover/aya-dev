@@ -4,6 +4,7 @@ package org.aya.gradle
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
@@ -13,10 +14,11 @@ class GenerateVersionTask extends DefaultTask {
     group = "build setup"
   }
 
+  final @InputDirectory File inputDir = project.rootProject.file(".git")
   @OutputDirectory File outputDir
   @Input String className
   @Input def basePackage = project.group
-  @Input def taskVersion = project.version
+  @Input final def taskVersion = project.version
 
   @TaskAction def run() {
     def stdout = BuildUtil.gitRev(project.rootDir)
@@ -32,7 +34,11 @@ class GenerateVersionTask extends DefaultTask {
       }""".stripIndent()
     outputDir.mkdirs()
     def outFile = new File(outputDir, "${className}.java")
-    if (!outFile.exists()) assert outFile.createNewFile()
+    if (!outFile.exists()) {
+      // Side effects
+      def result = outFile.createNewFile()
+      assert result
+    }
     outFile.write(code)
   }
 }
