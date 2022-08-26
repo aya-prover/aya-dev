@@ -31,6 +31,7 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -304,18 +305,11 @@ public final class DefEq {
       case FormTerm.PartTy ty
         && !(lhs instanceof IntroTerm.SadPartEl)
         && !(rhs instanceof IntroTerm.SadPartEl) -> CofThy.conv(ty.restr(), new Subst(),
-        subst -> doCompareTyped(ty.subst(subst), lhs.subst(subst), rhs.subst(subst), lr, rl));
+        subst -> doCompareTyped(subst.term(state, ty), subst.term(state, lhs), subst.term(state, rhs), lr, rl));
+      case FormTerm.PartTy ty -> false;
     };
     traceExit();
     return ret;
-  }
-
-  private boolean comparePartial(@NotNull IntroTerm.HappyPartEl lhs, @NotNull IntroTerm.SadPartEl rhs, Sub lr, Sub rl, @NotNull Term type) {
-    return lhs.clauses().allMatch(lc -> CofThy.conv(lc.cof(), new Subst(), subst -> {
-      var lu = subst.term(state, lc.u());
-      var ru = subst.term(state, rhs.u());
-      return compare(lu, ru, lr, rl, subst.term(state, type));
-    }));
   }
 
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
@@ -326,7 +320,8 @@ public final class DefEq {
     traceEntrance(new Trace.UnifyT(type.freezeHoles(state),
       preRhs.freezeHoles(state), this.pos));
     var ret = switch (type) {
-      default -> throw new InternalException(type.getClass() + ": " + type);
+      default ->
+        throw new InternalException(type.getClass() + ": " + type.toDoc(DistillerOptions.debug()).debugRender());
       case RefTerm.MetaPat metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
