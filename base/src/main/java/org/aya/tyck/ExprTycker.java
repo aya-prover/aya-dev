@@ -529,7 +529,7 @@ public final class ExprTycker extends Tycker {
       var elim = new ElimTerm.PathApp(
         res.wellTyped,
         xi.map(Term.Param::toArg),
-        new IntroTerm.HappyPartEl(path.cube().clauses())); // this should reduce to a term of type path.cube().type()
+        path.cube()); // this should reduce to a term of type path.cube().type()
       var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
       // ^ the cast is necessary, see https://gist.github.com/imkiva/8db13b6e578e473c1c9b977086bfe898
       var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);

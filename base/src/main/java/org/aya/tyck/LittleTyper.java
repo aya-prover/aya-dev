@@ -7,6 +7,8 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.Subst;
+import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Cube;
 import org.aya.generic.util.NormalizeMode;
@@ -88,7 +90,12 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         term(lam.body()),
         ImmutableSeq.empty() // TODO: clauses???
       ));
-      case ElimTerm.PathApp app -> throw new UnsupportedOperationException("TODO");
+      case ElimTerm.PathApp app -> {
+        // v @ ui : A[ui/xi]
+        var xi = app.cube().params();
+        var ui = app.args().map(Arg::term);
+        yield app.cube().type().subst(new Subst(xi, ui));
+      }
     };
   }
 }

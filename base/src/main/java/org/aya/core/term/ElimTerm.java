@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
+import org.aya.generic.Cube;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public sealed interface ElimTerm extends Term {
   record PathApp(
     @NotNull Term of,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args,
-    @NotNull IntroTerm.PartEl partEl
+    @NotNull Cube<Term> cube
   ) implements ElimTerm {
   }
 

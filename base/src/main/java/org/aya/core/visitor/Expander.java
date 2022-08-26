@@ -15,6 +15,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.generic.Cube;
 import org.aya.generic.Modifier;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Restr;
@@ -122,8 +123,9 @@ public interface Expander extends EndoFunctor {
             var subst = new Subst(xi, ui);
             yield apply(lam.body().subst(subst));
           }
-          yield switch (postPartial(app.partEl())) {
-            case IntroTerm.HappyPartEl el -> new ElimTerm.PathApp(app.of(), app.args(), el);
+          yield switch (postPartial(new IntroTerm.HappyPartEl(app.cube().clauses()))) {
+            case IntroTerm.HappyPartEl el -> new ElimTerm.PathApp(app.of(), app.args(), new Cube<>(
+              app.cube().params(), app.cube().type(), el.clauses()));
             case IntroTerm.SadPartEl el -> el.u();
           };
         }

@@ -173,10 +173,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       case ElimTerm.PathApp app -> {
         var of = f.apply(app.of());
         var refs = app.args().map(a -> a.descent(f));
-        var partial = (IntroTerm.PartEl) f.apply(app.partEl());
-        if (of == app.of() && partial == app.partEl() && refs.sameElements(app.args(), true))
+        var cube = app.cube().map(f);
+        if (of == app.of() && cube == app.cube() && refs.sameElements(app.args(), true))
           yield app;
-        yield new ElimTerm.PathApp(of, refs, partial);
+        yield new ElimTerm.PathApp(of, refs, cube);
       }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
