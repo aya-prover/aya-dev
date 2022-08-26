@@ -529,12 +529,9 @@ public final class ExprTycker extends Tycker {
     var res = doSynthesize(expr);
     if (res.type.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Path path) {
       var xi = path.cube().params().map(x -> new Term.Param(x, FormTerm.Interval.INSTANCE, true));
-      var elim = new ElimTerm.PathApp(
-        res.wellTyped,
-        xi.map(Term.Param::toArg),
-        path.cube()); // this should reduce to a term of type path.cube().type()
+      var elim = new ElimTerm.PathApp(res.wellTyped, xi.map(Term.Param::toArg), path.cube());
       var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
-      // ^ the cast is necessary, see https://gist.github.com/imkiva/8db13b6e578e473c1c9b977086bfe898
+      // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
       var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);
       return new Result(lam, pi);
     }

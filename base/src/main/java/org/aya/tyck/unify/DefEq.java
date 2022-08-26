@@ -300,6 +300,8 @@ public final class DefEq {
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
+      // TODO: path lambda conversion
+      case FormTerm.Path path -> throw new UnsupportedOperationException("TODO");
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.SadPartEl ll
         && rhs instanceof IntroTerm.SadPartEl rr -> doCompareTyped(ty.type(), ll.u(), rr.u(), lr, rl);
       case FormTerm.PartTy ty
@@ -337,6 +339,14 @@ public final class DefEq {
         if (!(preFnType instanceof FormTerm.Pi fnType)) yield null;
         if (!compare(lhs.arg().term(), rhs.arg().term(), lr, rl, fnType.param().type())) yield null;
         yield fnType.substBody(lhs.arg().term());
+      }
+      case ElimTerm.PathApp lhs -> {
+        if (!(preRhs instanceof ElimTerm.PathApp rhs)) yield null;
+        var prePathType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
+        if (!(prePathType instanceof FormTerm.Path path)) yield null;
+        var happy =  lhs.args().zipView(rhs.args()).allMatch(t ->
+          compareUntyped(t._1.term(), t._2.term(), lr, rl) != null);
+        yield happy ? path.cube().type() : null;
       }
       case ElimTerm.Proj lhs -> {
         if (!(preRhs instanceof ElimTerm.Proj rhs)) yield null;
