@@ -20,15 +20,17 @@ import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 public interface Expander extends EndoFunctor {
   @NotNull TyckState state();
 
   static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, @NotNull SeqLike<Arg<Term>> args) {
-    var entries = self.view().zip(args).map(t -> Tuple.of(t._1.ref(), t._2.term()));
+    var entries = self.view().zip(args)
+      .map(t -> Tuple.of(t._1.ref(), t._2.term()));
     return new Subst(MutableMap.from(entries));
   }
 
@@ -73,9 +75,12 @@ public interface Expander extends EndoFunctor {
         }
       }
       case RefTerm.MetaPat metaPat -> metaPat.inline();
-      case PrimTerm.Mula mula -> Restr.formulae(mula.asFormula(), PrimTerm.Mula::new);
+      case PrimTerm.Mula mula -> simplFormula(mula);
       default -> term;
     };
+  }
+  static @NotNull Term simplFormula(@NotNull PrimTerm.Mula mula) {
+    return Restr.formulae(mula.asFormula(), PrimTerm.Mula::new);
   }
 
   default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
@@ -99,17 +104,17 @@ public interface Expander extends EndoFunctor {
     return tryUnfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), ulift, clauses);
   }
 
+  default <T extends Term> @NotNull Term applyThoroughly(@NotNull Function<T, Term> f, @NotNull T term) {
+    var applied = f.apply(term);
+    return applied != term ? apply(applied) : applied;
+  }
+
   record Normalizer(@NotNull TyckState state) implements Expander {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> apply(CallTerm.make(lam, app.arg()));
-        case ElimTerm.App app -> CallTerm.make(app.of(), app.arg());
-        case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
-          var ix = proj.ix();
-          assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
-          yield apply(tup.items().get(ix - 1));
-        }
-        case IntroTerm.PartEl el -> postPartial(el);
+        case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
+        case ElimTerm.Proj proj -> ElimTerm.proj(proj);
+        case IntroTerm.PartEl el -> partial(el);
         default -> Expander.super.post(term);
       };
     }
@@ -121,32 +126,28 @@ public interface Expander extends EndoFunctor {
       };
     }
 
-    private @NotNull IntroTerm.PartEl postPartial(@NotNull IntroTerm.PartEl el) {
-      return switch (el) {
-        case IntroTerm.SadPartEl par -> new IntroTerm.SadPartEl(par.u());
-        case IntroTerm.HappyPartEl par -> {
-          var clauses = MutableList.<Restr.Side<Term>>create();
-          for (var clause : par.clauses()) {
-            var u = clause.u();
-            if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
-              yield new IntroTerm.SadPartEl(u);
-            }
+  }
+  static @NotNull IntroTerm.PartEl partial(@NotNull IntroTerm.PartEl el) {
+    return switch (el) {
+      case IntroTerm.SadPartEl par -> new IntroTerm.SadPartEl(par.u());
+      case IntroTerm.HappyPartEl par -> {
+        var clauses = MutableList.<Restr.Side<Term>>create();
+        for (var clause : par.clauses()) {
+          var u = clause.u();
+          if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
+            yield new IntroTerm.SadPartEl(u);
           }
-          yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq(), par.rhsType());
         }
-      };
-    }
+        yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq(), par.rhsType());
+      }
+    };
   }
 
   record WHNFer(@NotNull TyckState state) implements Expander {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda -> apply(CallTerm.make(lambda, app.arg()));
-        case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
-          var ix = proj.ix();
-          assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
-          yield apply(tup.items().get(ix - 1));
-        }
+        case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
+        case ElimTerm.Proj proj -> ElimTerm.proj(proj);
         default -> Expander.super.post(term);
       };
     }

@@ -284,10 +284,10 @@ public final class ExprTycker extends Tycker {
       for (int j = 0; j < i; j++) {
         var rhs = clauses.get(j);
         CofThy.conv(lhs.cof().and(rhs.cof()), new Subst(), subst -> {
-          var lu = subst.term(state, lhs.u());
-          var ru = subst.term(state, rhs.u());
+          var lu = lhs.u().subst(subst);
+          var ru = rhs.u().subst(subst);
           var unifier = unifier(loc.sourcePos(), Ordering.Eq);
-          var happy = unifier.compare(lu, ru, subst.term(state, type));
+          var happy = unifier.compare(lu, ru, type.subst(subst));
           if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lu, ru, unifier.getFailure(), state));
           return happy;
         });
@@ -298,7 +298,7 @@ public final class ExprTycker extends Tycker {
   private @NotNull Option<Restr.Side<Term>> clause(@NotNull Restr.Side<Expr> clause, @NotNull Term type) {
     var cofib = new Restr.Cofib<>(clause.cof().ands().map(this::condition));
     var u = CofThy.vdash(cofib, new Subst(), subst ->
-      inherit(clause.u(), subst.term(state, type)).wellTyped);
+      inherit(clause.u(), type.subst(subst).normalize(state, NormalizeMode.WHNF)).wellTyped);
     if (u.isDefined() && u.get() == null) {
       // ^ some `inst` in `cofib.ands()` are ErrorTerms.
       // Q: report error again?
