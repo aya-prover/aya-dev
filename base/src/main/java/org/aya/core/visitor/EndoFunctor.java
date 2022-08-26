@@ -6,6 +6,7 @@ import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.LocalVar;
+import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -64,10 +65,15 @@ public interface EndoFunctor extends Function<Term, Term> {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case RefTerm ref && ref.var() == LocalVar.IGNORED -> throw new InternalException("found usage of ignored var");
-        case RefTerm ref -> subst.map().getOption(ref.var()).map(Term::rename).getOrDefault(ref);
-        case RefTerm.Field field -> subst.map().getOption(field.ref()).map(Term::rename).getOrDefault(field);
+        case RefTerm ref -> replacement(ref, ref.var());
+        case RefTerm.Field field -> replacement(field, field.ref());
+        case PrimTerm.Mula mula -> Expander.simplFormula(mula);
         case Term misc -> misc;
       };
+    }
+
+    private Term replacement(Term field, @NotNull Var ref) {
+      return subst.map().getOption(ref).map(Term::rename).getOrDefault(field);
     }
   }
 

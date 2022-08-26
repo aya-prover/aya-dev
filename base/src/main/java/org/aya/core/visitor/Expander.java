@@ -28,7 +28,8 @@ public interface Expander extends EndoFunctor {
   @NotNull TyckState state();
 
   static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, @NotNull SeqLike<Arg<Term>> args) {
-    var entries = self.view().zip(args).map(t -> Tuple.of(t._1.ref(), t._2.term()));
+    var entries = self.view().zip(args)
+      .map(t -> Tuple.of(t._1.ref(), t._2.term()));
     return new Subst(MutableMap.from(entries));
   }
 
@@ -73,9 +74,12 @@ public interface Expander extends EndoFunctor {
         }
       }
       case RefTerm.MetaPat metaPat -> metaPat.inline();
-      case PrimTerm.Mula mula -> Restr.formulae(mula.asFormula(), PrimTerm.Mula::new);
+      case PrimTerm.Mula mula -> simplFormula(mula);
       default -> term;
     };
+  }
+  static @NotNull Term simplFormula(@NotNull PrimTerm.Mula mula) {
+    return Restr.formulae(mula.asFormula(), PrimTerm.Mula::new);
   }
 
   default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
