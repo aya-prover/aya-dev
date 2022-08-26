@@ -123,7 +123,7 @@ public interface Expander extends EndoFunctor {
             var subst = new Subst(xi, ui);
             yield apply(lam.body().subst(subst));
           }
-          yield switch (postPartial(new IntroTerm.HappyPartEl(app.cube().clauses()))) {
+          yield switch (Expander.partial(new IntroTerm.HappyPartEl(app.cube().clauses(), app.cube().type()))) {
             case IntroTerm.HappyPartEl el -> new ElimTerm.PathApp(app.of(), app.args(), new Cube<>(
               app.cube().params(), app.cube().type(), el.clauses()));
             case IntroTerm.SadPartEl el -> el.u();
