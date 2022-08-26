@@ -67,7 +67,8 @@ jlinkTask.configure {
 }
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
 prepareMergedJarsDirTask.configure {
-  listOf(":cli:jar", ":base:jar").mapNotNull(tasks::findByPath).forEach {
+  val libs = listOf("cli", "base", "pretty", "tools", "tools-repl", "parser")
+  libs.map { ":$it:jar" }.mapNotNull(tasks::findByPath).forEach {
     dependsOn(it)
     inputs.files(it.outputs.files)
   }

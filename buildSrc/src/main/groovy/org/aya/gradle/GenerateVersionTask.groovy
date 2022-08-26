@@ -17,7 +17,7 @@ class GenerateVersionTask extends DefaultTask {
   final @InputDirectory File inputDir = project.rootProject.file(".git")
   @OutputDirectory File outputDir
   @Input String className
-  @Input final def basePackage = project.group
+  @Input def basePackage = project.group
   @Input final def taskVersion = project.version
 
   @TaskAction def run() {
