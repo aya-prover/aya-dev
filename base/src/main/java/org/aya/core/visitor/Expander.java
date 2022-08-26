@@ -130,14 +130,7 @@ public interface Expander extends EndoFunctor {
   record Normalizer(@NotNull TyckState state) implements Expander {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> apply(CallTerm.make(lam, app.arg()));
         case ElimTerm.App app -> CallTerm.make(app.of(), app.arg());
-        case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
-          var ix = proj.ix();
-          assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
-          yield apply(tup.items().get(ix - 1));
-        }
-        case IntroTerm.PartEl el -> postPartial(el);
         default -> Expander.super.post(term);
       };
     }
