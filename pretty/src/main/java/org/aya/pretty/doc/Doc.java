@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
@@ -329,7 +329,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("_, _ -> new")
   static @NotNull Doc nest(int indent, @NotNull Doc doc) {
-    return indent == 0 ? doc : new Nest(indent, doc);
+    return indent == 0 || doc.isEmpty() ? doc : new Nest(indent, doc);
   }
 
   /**
