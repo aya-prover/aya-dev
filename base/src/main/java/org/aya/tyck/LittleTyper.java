@@ -88,7 +88,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         term(lam.body()),
         ImmutableSeq.empty() // TODO: clauses???
       ));
-      case ElimTerm.PathApp app -> app.cube().type(); // TODO: instantiate with interval
+      case ElimTerm.PathApp app -> throw new UnsupportedOperationException("TODO");
     };
   }
 }

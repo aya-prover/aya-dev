@@ -423,19 +423,22 @@ public final class ExprTycker extends Tycker {
             var plam = Expr.pathLam(lam, cubeParams.size());
             if (!plam._1.sizeEquals(cubeParams))
               yield fail(lam, term, new CubicalProblem.DimensionMismatch(lam, cubeParams.size(), plam._1.size()));
-            var params = plam._1.map(p -> new Term.Param(p, FormTerm.Interval.INSTANCE, true));
-            yield localCtx.with(params.view(), () -> {
+            // TODO: check if plam._1 was all Interval type
+            var params = plam._1.view().map(p -> new Term.Param(p, FormTerm.Interval.INSTANCE, true));
+            yield localCtx.with(params, () -> {
               // \params. body => (params : I) -> A
-              var subst = new Subst(cubeParams, plam._1);
+              var subst = new Subst(cubeParams, plam._1.map(RefTerm::new));
               var A = subst.term(state, path.cube().type());
               var body = inherit(plam._2, A).wellTyped;
               // body matches every given face
               var happy = path.cube().clauses().allMatch(c -> {
                 var cof = c.cof().fmap(t -> subst.term(state, t));
                 return CofThy.conv(cof, subst, s -> {
+                  var v = s.term(state, body);
                   var u = s.term(state, c.u());
+                  var type = s.term(state, A);
                   var unifier = unifier(plam._2.sourcePos(), Ordering.Eq);
-                  var h = unifier.compare(body, u, subst.term(state, A));
+                  var h = unifier.compare(v, u, type);
                   if (!h) reporter.report(new CubicalProblem.BoundaryDisagree(
                     plam._2, body, u, unifier.getFailure(), state
                   ));
@@ -523,11 +526,15 @@ public final class ExprTycker extends Tycker {
     var res = doSynthesize(expr);
     if (res.type.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Path path) {
       // TODO: generate Pi type for path lambda
-      var xi = path.cube().params().map(x -> new Term.Param(x, FormTerm.Interval.INSTANCE, true));
-      var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);
-      var elim = (Term) new ElimTerm.PathApp(res.wellTyped, path.cube()); // this should reduce to a term of type A
+      var cubeParams = path.cube().params();
+      var xi = cubeParams.map(x -> new Term.Param(x, FormTerm.Interval.INSTANCE, true));
+      var elim = new ElimTerm.PathApp(
+        res.wellTyped,
+        cubeParams.map(RefTerm::new),
+        new IntroTerm.HappyPartEl(path.cube().clauses())); // this should reduce to a term of type path.cube().type()
+      var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
       // ^ the cast is necessary, see https://gist.github.com/imkiva/8db13b6e578e473c1c9b977086bfe898
-      var lam = xi.foldRight(elim, IntroTerm.Lambda::new);
+      var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);
       return new Result(lam, pi);
     }
     traceExit(res, expr);

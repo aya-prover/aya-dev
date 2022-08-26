@@ -115,6 +115,18 @@ public interface Expander extends EndoFunctor {
         case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
         case ElimTerm.Proj proj -> ElimTerm.proj(proj);
         case IntroTerm.PartEl el -> partial(el);
+        case ElimTerm.PathApp app -> {
+          if (app.of() instanceof IntroTerm.PathLam lam) {
+            var xi = lam.params();
+            var ui = app.args();
+            var subst = new Subst(xi, ui);
+            yield apply(lam.body().subst(subst));
+          }
+          yield switch (postPartial(app.partEl())) {
+            case IntroTerm.HappyPartEl el -> new ElimTerm.PathApp(app.of(), app.args(), el);
+            case IntroTerm.SadPartEl el -> el.u();
+          };
+        }
         default -> Expander.super.post(term);
       };
     }
