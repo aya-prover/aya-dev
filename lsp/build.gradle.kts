@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.CommonTasks
 
@@ -67,8 +67,10 @@ jlinkTask.configure {
 }
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
 prepareMergedJarsDirTask.configure {
-  dependsOn(":cli:jar")
-  dependsOn(":base:jar")
+  listOf(":cli:jar", ":base:jar").mapNotNull(tasks::findByPath).forEach {
+    dependsOn(it)
+    inputs.files(it.outputs.files)
+  }
 }
 
 tasks.withType<AbstractCopyTask>().configureEach {
