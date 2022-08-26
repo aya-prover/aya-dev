@@ -114,10 +114,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     if (args != null) args.reverse();
     return expr;
   }
-  static @NotNull Tuple2<ImmutableSeq<LocalVar>, Expr> pathLam(@NotNull Expr expr, int maxUn) {
-    var params = MutableList.<LocalVar>create();
+  static @NotNull Tuple2<ImmutableSeq<Expr.Param>, Expr> unPathLam(@NotNull Expr expr, int maxUn) {
+    var params = MutableList.<Expr.Param>create();
     while (expr instanceof LamExpr lam && maxUn-- > 0) {
-      params.append(lam.param.ref);
+      params.append(lam.param);
       expr = lam.body;
     }
     return Tuple.of(params.toImmutableSeq(), expr);

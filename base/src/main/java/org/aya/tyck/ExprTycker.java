@@ -420,14 +420,17 @@ public final class ExprTycker extends Tycker {
           // Path lambda!
           case FormTerm.Path path -> {
             var cubeParams = path.cube().params();
-            var plam = Expr.pathLam(lam, cubeParams.size());
+            var plam = Expr.unPathLam(lam, cubeParams.size());
             if (!plam._1.sizeEquals(cubeParams))
               yield fail(lam, term, new CubicalProblem.DimensionMismatch(lam, cubeParams.size(), plam._1.size()));
-            // TODO: check if plam._1 was all Interval type
-            var params = plam._1.view().map(p -> new Term.Param(p, FormTerm.Interval.INSTANCE, true));
-            yield localCtx.with(params, () -> {
+            // we allow lambda params to be typed explicitly --- check them against I.
+            var params = plam._1.map(p -> {
+              var interval = inherit(p.type(), FormTerm.Interval.INSTANCE).wellTyped;
+              return new Term.Param(p, interval);
+            });
+            yield localCtx.with(params.view(), () -> {
               // \params. body => (params : I) -> A
-              var subst = new Subst(cubeParams, plam._1.map(RefTerm::new));
+              var subst = new Subst(cubeParams, params.map(Term.Param::toTerm));
               var A = subst.term(state, path.cube().type());
               var body = inherit(plam._2, A).wellTyped;
               // body matches every given face
@@ -445,7 +448,7 @@ public final class ExprTycker extends Tycker {
                   return h;
                 });
               });
-              return happy ? new Result(new IntroTerm.PathLam(plam._1, body), path)
+              return happy ? new Result(new IntroTerm.PathLam(params, body), path)
                 : new Result(ErrorTerm.typeOf(term), term);
             });
           }

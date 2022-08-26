@@ -165,7 +165,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case PrimTerm.Mula mula -> formula(options, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());
       case IntroTerm.PathLam lam -> Doc.sep(Doc.styled(KEYWORD, "\\"),
-        Doc.sep(lam.params().map(BaseDistiller::linkDef)),
+        Doc.sep(lam.params().map(this::lambdaParam)),
         Doc.symbol("=>"),
         lam.body().toDoc(options));
       case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
