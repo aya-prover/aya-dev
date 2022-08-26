@@ -38,7 +38,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
     var buf = MutableList.of(plus, Doc.symbol("\u22A2"), Doc.styled(Style.code(), t.expr().toDoc(options)));
     if (t.term() != null) {
       buf.append(colon);
-      buf.append(t.term().toDoc(options));
+      buf.append(Doc.styled(Style.code(), t.term().toDoc(options)));
     }
     return Doc.vcatNonEmpty(Doc.sep(buf), indentedChildren(t.children()));
   }
@@ -46,12 +46,12 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   @Override public Doc visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
     var buf = MutableList.of(plus,
       Doc.symbol("\u22A2"),
-      t.lhs().toDoc(options),
+      Doc.styled(Style.code(), t.lhs().toDoc(options)),
       Doc.symbol("\u2261"),
       t.rhs().toDoc(options));
     if (t.type() != null) {
       buf.append(colon);
-      buf.append(t.type().toDoc(options));
+      buf.append(Doc.styled(Style.code(), t.type().toDoc(options)));
     }
     return Doc.vcatNonEmpty(Doc.sep(buf), indentedChildren(t.children()));
   }
@@ -60,13 +60,13 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
     assert t.children().isEmpty();
     return Doc.sep(plus, Doc.plain("result"), Doc.symbol("\u22A2"),
       Doc.styled(Style.code(), t.term().toDoc(options)), Doc.symbol("\u2191"),
-      t.type().toDoc(options));
+      Doc.styled(Style.code(), t.type().toDoc(options)));
   }
 
   @Override public Doc visitPat(Trace.@NotNull PatT t, Unit unit) {
     return Doc.vcat(Doc.sep(plus, Doc.plain("pat"), Doc.symbol("\u22A2"),
         Doc.styled(Style.code(), t.pat().toDoc(options)), colon,
-        t.term().toDoc(options)),
+        Doc.styled(Style.code(), t.term().toDoc(options))),
       indentedChildren(t.children()));
   }
 
