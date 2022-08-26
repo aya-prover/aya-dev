@@ -200,7 +200,7 @@ public final class PatTycker {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
         if (ty instanceof FormTerm.Interval) {
           var end = num.number();
-          if (end == 0 || end == 1) yield new Pat.End(num.number() == 1, num.explicit());
+          if (end == 0 || end == 1) yield new Pat.End(num.number() == 0, num.explicit());
           yield withError(new NotAnIntervalError(num.sourcePos(), end), num, term);
         }
         if (ty instanceof CallTerm.Data dataCall) {

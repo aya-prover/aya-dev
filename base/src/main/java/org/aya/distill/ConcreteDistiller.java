@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
@@ -137,6 +137,9 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
+      case Expr.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
+        term(Outer.AppSpine, ty.type()), Doc.braced(restr(options, ty.restr())));
+      case Expr.PartEl el -> partial(options, el.clauses());
     };
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -73,10 +73,13 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
-      case FormTerm.Interval interval -> new FormTerm.Univ(0);
-      case PrimTerm.End end -> FormTerm.Interval.INSTANCE;
+      case FormTerm.Interval interval -> FormTerm.Univ.ZERO;
+      case PrimTerm.Mula end -> FormTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
       case LitTerm.ShapedInt shaped -> shaped.type();
+      case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
+      case IntroTerm.HappyPartEl el -> new FormTerm.PartTy(el.rhsType(), el.restr());
+      case IntroTerm.SadPartEl el -> new FormTerm.PartTy(term(el), el.restr());
     };
   }
 }

@@ -99,6 +99,17 @@ public record ExprResolver(
         if (h == hole.filling()) yield hole;
         yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h, hole.accessibleLocal());
       }
+      case Expr.PartEl el -> {
+        var clauses = el.clauses().map(c -> c.rename(e -> resolve(e, ctx)));
+        if (clauses.sameElements(el.clauses(), true)) yield el;
+        yield new Expr.PartEl(el.sourcePos(), clauses);
+      }
+      case Expr.PartTy ty -> {
+        var type = resolve(ty.type(), ctx);
+        var restr = ty.restr().fmap(r -> resolve(r, ctx));
+        if (type == ty.type() && restr == ty.restr()) yield ty;
+        yield new Expr.PartTy(ty.sourcePos(), type, restr);
+      }
       case Expr.UnresolvedExpr unresolved -> {
         var sourcePos = unresolved.sourcePos();
         yield switch (ctx.get(unresolved.name())) {

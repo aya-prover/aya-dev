@@ -18,6 +18,7 @@ import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
@@ -198,8 +199,8 @@ public record PatClassifier(
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
 
           for (var item : ImmutableSeq.of(
-            Tuple.of(PrimTerm.End.LEFT, "0"),
-            Tuple.of(PrimTerm.End.RIGHT, "1")
+            Tuple.of(PrimTerm.Mula.LEFT, "0"),
+            Tuple.of(PrimTerm.Mula.RIGHT, "1")
           )) {
             builder.append(new PatTree(item._2, explicit, 0));
             var patClass = new MCT.Leaf<>(subPatsSeq.view()
@@ -323,9 +324,11 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, PrimTerm.End end) {
+  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, PrimTerm.Mula end) {
     var head = head(subPats);
-    return head instanceof Pat.End headEnd && headEnd.isRight() == end.isRight() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
+    return head instanceof Pat.End headEnd
+      && end.asFormula() instanceof Formula.Lit<Term> endF
+      && headEnd.isLeft() == endF.isLeft() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
   }
 
   private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {

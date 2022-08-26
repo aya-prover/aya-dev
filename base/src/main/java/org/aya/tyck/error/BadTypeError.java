@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -101,6 +101,14 @@ public record BadTypeError(
       Doc.english("apply or construct"),
       Doc.english("of the lambda parameter"),
       paramType,
+      state);
+  }
+
+  public static @NotNull BadTypeError partTy(@NotNull TyckState state, @NotNull Expr expr, @NotNull Term actualType) {
+    return new BadTypeError(expr, actualType,
+      Doc.plain("fill the shape composed by"),
+      Doc.english("of the partial element"),
+      options -> Doc.english("Partial type"),
       state);
   }
 }

@@ -12,6 +12,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.Contract;
@@ -74,7 +75,11 @@ public record Serializer(@NotNull Serializer.State state) {
     return switch (term) {
       case LitTerm.ShapedInt lit ->
         new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
-      case PrimTerm.End end -> new SerTerm.End(end.isRight());
+      case PrimTerm.Mula end -> new SerTerm.Mula(switch (end.asFormula()) {
+        case Formula.Conn<Term> cnn -> new SerTerm.SerMula.Conn(cnn.isAnd(), serialize(cnn.l()), serialize(cnn.r()));
+        case Formula.Inv<Term> inv -> new SerTerm.SerMula.Inv(serialize(inv.i()));
+        case Formula.Lit<Term> lit -> new SerTerm.SerMula.Lit(lit.isLeft());
+      });
       case PrimTerm.Str str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
       case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()));
@@ -106,6 +111,9 @@ public record Serializer(@NotNull Serializer.State state) {
       case IntroTerm.New newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
+      case IntroTerm.PartEl el -> throw new UnsupportedOperationException("TODO");
+      case FormTerm.PartTy ty -> throw new UnsupportedOperationException("TODO");
+
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
@@ -122,7 +130,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeDataCall(ctor.type()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(), serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
-      case Pat.End end -> new SerPat.End(end.isRight(), end.explicit());
+      case Pat.End end -> new SerPat.End(end.isLeft(), end.explicit());
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
       case Pat.ShapedInt lit -> new SerPat.ShapedInt(
         lit.repr(), lit.explicit(),

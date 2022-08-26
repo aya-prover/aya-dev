@@ -11,6 +11,7 @@ import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
@@ -78,7 +79,7 @@ public final class PrimDef extends TopLevelDef {
         var args = prim.args();
         var argBase = args.get(1);
         var argI = args.get(2);
-        if (argI.term() instanceof PrimTerm.End end && !end.isRight())
+        if (argI.term().asFormula() instanceof Formula.Lit<Term> end && end.isLeft())
           return argBase.term();
         var argA = args.get(0).term();
 
@@ -98,7 +99,7 @@ public final class PrimDef extends TopLevelDef {
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA);
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(PrimTerm.End.LEFT, true));
+        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(PrimTerm.Mula.LEFT, true));
         return new PrimDef(
           ref,
           ImmutableSeq.of(
@@ -111,45 +112,24 @@ public final class PrimDef extends TopLevelDef {
         );
       }, ImmutableSeq.empty());
 
-      /** Involution, ~ in Cubical Agda */
-      private @NotNull Term invol(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
-        var arg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
-        if (arg instanceof PrimTerm.End end) {
-          return end.isRight() ? PrimTerm.End.LEFT : PrimTerm.End.RIGHT;
-        } else {
-          return new CallTerm.Prim(prim.ref(), 0, ImmutableSeq.of(new Arg<>(arg, true)));
-        }
-      }
+      /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
+      public final @NotNull PrimDef.PrimSeed IMIN = formula(ID.IMIN, "i", "j");
+      /** \/ in Cubical Agda, should elaborate to {@link Formula.Conn} */
+      public final @NotNull PrimDef.PrimSeed IMAX = formula(ID.IMAX, "i", "j");
+      /** ~ in Cubical Agda, should elaborate to {@link Formula.Inv} */
+      public final @NotNull PrimDef.PrimSeed INVOL = formula(ID.INVOL, "i");
 
-      public final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(ID.INVOL, this::invol, ref -> new PrimDef(
-        ref,
-        ImmutableSeq.of(new Term.Param(new LocalVar("i"), FormTerm.Interval.INSTANCE, true)),
-        FormTerm.Interval.INSTANCE,
-        ID.INVOL
-      ), ImmutableSeq.empty());
-
-      /** <code>/\</code> in CCHM, <code>I.squeeze</code> in Arend */
-      private @NotNull Term squeezeLeft(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
-        var lhsArg = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
-        var rhsArg = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
-        if (lhsArg instanceof PrimTerm.End lhsEnd) {
-          return lhsEnd.isRight() ? rhsArg : lhsEnd;
-        } else if (rhsArg instanceof PrimTerm.End rhsEnd) {
-          return rhsEnd.isRight() ? lhsArg : rhsEnd;
-        }
-
-        return prim;
-      }
-
-      public final @NotNull PrimDef.PrimSeed SQUEEZE_LEFT =
-        new PrimSeed(ID.SQUEEZE_LEFT, this::squeezeLeft, ref -> new PrimDef(
+      private @NotNull PrimSeed formula(ID id, String... tele) {
+        return new PrimSeed(id, (prim, state) -> {
+          // Consider throwing an error since we convert them to special ASTs during elaboration.
+          return prim;
+        }, ref -> new PrimDef(
           ref,
-          ImmutableSeq.of(
-            new Term.Param(new LocalVar("i"), FormTerm.Interval.INSTANCE, true),
-            new Term.Param(new LocalVar("j"), FormTerm.Interval.INSTANCE, true)
-          ), FormTerm.Interval.INSTANCE,
-          ID.SQUEEZE_LEFT
+          ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), FormTerm.Interval.INSTANCE, true)),
+          FormTerm.Interval.INSTANCE,
+          id
         ), ImmutableSeq.empty());
+      }
 
       public final @NotNull PrimDef.PrimSeed STR =
         new PrimSeed(ID.STR,
@@ -186,7 +166,8 @@ public final class PrimDef extends TopLevelDef {
       var init = new Initializer();
       SEEDS = ImmutableSeq.of(
           init.ARCOE,
-          init.SQUEEZE_LEFT,
+          init.IMIN,
+          init.IMAX,
           init.INVOL,
           init.STR,
           init.STRCONCAT
@@ -246,7 +227,8 @@ public final class PrimDef extends TopLevelDef {
   public enum ID {
     /** Short for <em>Arend coe</em>. */
     ARCOE("arcoe"),
-    SQUEEZE_LEFT("squeezeL"),
+    IMIN("intervalMin"),
+    IMAX("intervalMax"),
     INVOL("invol"),
     STR("String"),
     STRCONCAT("strcat");

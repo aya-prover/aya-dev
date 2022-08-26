@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -24,6 +25,8 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -249,8 +252,59 @@ public final class ExprTycker extends Tycker {
 
         yield new Result(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STR));
       }
+      case Expr.PartTy par -> {
+        var ty = synthesize(par.type());
+        yield new Result(new FormTerm.PartTy(ty.wellTyped, restr(par.restr())), ty.type);
+      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
+  }
+
+  public @NotNull Restr<Term> restr(@NotNull Restr<Expr> restr) {
+    return restr.mapCond(this::condition);
+  }
+
+  private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
+    // forall i. (c_i is valid)
+    return new Restr.Cond<>(inherit(c.inst(), FormTerm.Interval.INSTANCE).wellTyped, c.isLeft());
+    // ^ note: `inst` may be ErrorTerm!
+  }
+
+  private @NotNull ImmutableSeq<Restr.Side<Term>> elaborateClauses(
+    @NotNull Expr loc, @NotNull ImmutableSeq<Restr.Side<Expr>> clauses, @NotNull Term type
+  ) {
+    var sides = clauses.flatMap(cl -> clause(cl, type));
+    confluence(sides, loc, type);
+    return sides;
+  }
+
+  private void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc, @NotNull Term type) {
+    for (int i = 1; i < clauses.size(); i++) {
+      var lhs = clauses.get(i);
+      for (int j = 0; j < i; j++) {
+        var rhs = clauses.get(j);
+        CofThy.conv(lhs.cof().and(rhs.cof()), new Subst(), subst -> {
+          var lu = subst.term(state, lhs.u());
+          var ru = subst.term(state, rhs.u());
+          var unifier = unifier(loc.sourcePos(), Ordering.Eq);
+          var happy = unifier.compare(lu, ru, subst.term(state, type));
+          if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lu, ru, unifier.getFailure(), state));
+          return happy;
+        });
+      }
+    }
+  }
+
+  private @NotNull Option<Restr.Side<Term>> clause(@NotNull Restr.Side<Expr> clause, @NotNull Term type) {
+    var cofib = new Restr.Cofib<>(clause.cof().ands().map(this::condition));
+    var u = CofThy.vdash(cofib, new Subst(), subst ->
+      inherit(clause.u(), subst.term(state, type)).wellTyped);
+    if (u.isDefined() && u.get() == null) {
+      // ^ some `inst` in `cofib.ands()` are ErrorTerms.
+      // Q: report error again?
+      return Option.some(new Restr.Side<>(cofib, ErrorTerm.typeOf(type)));
+    }
+    return u.map(uu -> new Restr.Side<>(cofib, uu));
   }
 
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
@@ -361,7 +415,7 @@ public final class ExprTycker extends Tycker {
         var ty = term.normalize(state, NormalizeMode.WHNF);
         if (ty instanceof FormTerm.Interval) {
           var end = lit.integer();
-          if (end == 0 || end == 1) yield new Result(end == 1 ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT, term);
+          if (end == 0 || end == 1) yield new Result(end == 0 ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT, ty);
           else yield fail(expr, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
         }
         if (ty instanceof CallTerm.Data dataCall) {
@@ -374,6 +428,17 @@ public final class ExprTycker extends Tycker {
         }
         yield unifyTyMaybeInsert(term, synthesize(expr), expr);
       }
+      case Expr.PartEl el -> {
+        if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.PartTy ty))
+          yield fail(el, term, BadTypeError.partTy(state, el, term));
+        var cof = ty.restr();
+        var clauses = elaborateClauses(el, el.clauses(), ty.type());
+        var staged = new IntroTerm.HappyPartEl(clauses, ty.type());
+        var face = staged.restr();
+        if (!CofThy.conv(cof, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
+          yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
+        yield new Result(staged, ty);
+      }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
   }
@@ -384,27 +449,8 @@ public final class ExprTycker extends Tycker {
       builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
       builder.reduce();
     });
-    // assert validate(result.wellTyped);
-    // assert validate(result.type);
     if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(frozen.get());
   }
-
-  /*
-  @TestOnly @Contract(pure = true) private boolean validate(Term term) {
-    var visitor = new TermConsumer<Unit>() {
-      boolean ok = true;
-
-      @Override public void visitSort(@NotNull Sort sort, Unit unit) {
-        for (var level : sort.levels())
-          if (level instanceof Level.Reference<Sort.LvlVar> r && !r.ref().free() &&
-            !(r.ref() == universe || levelMapping.valuesView().contains(r.ref())))
-            ok = false;
-      }
-    };
-    term.accept(visitor, Unit.unit());
-    return visitor.ok;
-  }
-  */
 
   public ExprTycker(
     @NotNull PrimDef.Factory primFactory,
@@ -539,7 +585,7 @@ public final class ExprTycker extends Tycker {
    */
   void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (unification != null) reporter.report(new UnifyError(loc, upper, lower, unification, state));
+    if (unification != null) reporter.report(new UnifyError.Type(loc, upper, lower, unification, state));
   }
 
   /**
@@ -559,7 +605,7 @@ public final class ExprTycker extends Tycker {
     }
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return new Result(term, lower);
-    return fail(term.freezeHoles(state), upper, new UnifyError(loc,
+    return fail(term.freezeHoles(state), upper, new UnifyError.Type(loc,
       upper.freezeHoles(state), lower.freezeHoles(state), failureData, state));
   }
 

@@ -76,7 +76,10 @@ org.aya.core.serde.SerTerm$Tup
 org.aya.core.serde.SerTerm$Access
 org.aya.core.serde.SerTerm$FieldRef
 org.aya.core.serde.SerTerm$Interval
-org.aya.core.serde.SerTerm$End
+org.aya.core.serde.SerTerm$Mula
+org.aya.core.serde.SerTerm$SerMula$Conn
+org.aya.core.serde.SerTerm$SerMula$Inv
+org.aya.core.serde.SerTerm$SerMula$Lit
 org.aya.core.serde.SerTerm$ShapedInt
 org.aya.core.serde.SerTerm$Str
 org.aya.core.serde.SerPat$Matchy

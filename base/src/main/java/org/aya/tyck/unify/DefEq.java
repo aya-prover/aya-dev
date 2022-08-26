@@ -18,6 +18,9 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -28,6 +31,7 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -296,16 +300,28 @@ public final class DefEq {
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
+      case FormTerm.PartTy ty && lhs instanceof IntroTerm.SadPartEl ll
+        && rhs instanceof IntroTerm.SadPartEl rr -> doCompareTyped(ty.type(), ll.u(), rr.u(), lr, rl);
+      case FormTerm.PartTy ty
+        && !(lhs instanceof IntroTerm.SadPartEl)
+        && !(rhs instanceof IntroTerm.SadPartEl) -> CofThy.conv(ty.restr(), new Subst(),
+        subst -> doCompareTyped(subst.term(state, ty), subst.term(state, lhs), subst.term(state, rhs), lr, rl));
+      case FormTerm.PartTy ty -> false;
     };
     traceExit();
     return ret;
+  }
+
+  private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
+    return CofThy.propExt(new Subst(), lhs, rhs, (sub, term) -> sub.restr(state, term));
   }
 
   private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs, Sub lr, Sub rl) {
     traceEntrance(new Trace.UnifyT(type.freezeHoles(state),
       preRhs.freezeHoles(state), this.pos));
     var ret = switch (type) {
-      default -> throw new InternalException(type.getClass() + ": " + type);
+      default ->
+        throw new InternalException(type.getClass() + ": " + type.toDoc(DistillerOptions.debug()).debugRender());
       case RefTerm.MetaPat metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
@@ -356,9 +372,26 @@ public final class DefEq {
         if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
         yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
       }
-      case FormTerm.Interval lhs -> preRhs instanceof FormTerm.Interval rhs ? new FormTerm.Univ(0) : null;
-      case PrimTerm.End lhs ->
-              preRhs instanceof PrimTerm.End rhs && lhs.isRight() == rhs.isRight() ? FormTerm.Interval.INSTANCE : null;
+      case FormTerm.PartTy lhs -> {
+        if (!(preRhs instanceof FormTerm.PartTy rhs)) yield null;
+        var happy = compareUntyped(lhs.type(), rhs.type(), lr, rl) != null
+          && compareRestr(lhs.restr(), rhs.restr());
+        yield happy ? FormTerm.Univ.ZERO : null;
+      }
+      case FormTerm.Interval lhs -> preRhs instanceof FormTerm.Interval ? FormTerm.Univ.ZERO : null;
+      case PrimTerm.Mula lhs -> {
+        if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
+        var happy = switch (lhs.asFormula()) {
+          case Formula.Lit<Term> ll && rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isLeft() == rr.isLeft();
+          case Formula.Inv<Term> ll && rhs.asFormula() instanceof Formula.Inv<Term> rr ->
+            compareUntyped(ll.i(), rr.i(), lr, rl) != null;
+          case Formula.Conn<Term> ll && rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()
+            && compareUntyped(ll.l(), rr.l(), lr, rl) != null
+            && compareUntyped(ll.r(), rr.r(), lr, rl) != null;
+          default -> false;
+        };
+        yield happy ? FormTerm.Interval.INSTANCE : null;
+      }
       // See compareApprox for why we don't compare these
       case CallTerm.Fn lhs -> null;
       case CallTerm.Data lhs -> {

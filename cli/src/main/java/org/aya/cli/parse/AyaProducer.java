@@ -27,10 +27,12 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.repl.antlr.AntlrUtil;
+import org.aya.tyck.error.NotAnIntervalError;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -380,9 +382,39 @@ public record AyaProducer(
         else
           yield visitListComprehension(arrCtx.arrayBlock());
       }
+      case AyaParser.PartTyContext tyCtx -> new Expr.PartTy(sourcePosOf(tyCtx),
+        visitExpr(tyCtx.expr()),
+        visitRestr(tyCtx.restr()));
+      case AyaParser.PartElContext elCtx -> new Expr.PartEl(sourcePosOf(elCtx), visitPartial(elCtx.partial()));
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
+  }
+
+  public @NotNull Restr<Expr> visitRestr(AyaParser.RestrContext ctx) {
+    if (ctx.TOP() != null) return new Restr.Const<>(true);
+    if (ctx.BOTTOM() != null) return new Restr.Const<>(false);
+    return new Restr.Vary<>(Seq.wrapJava(ctx.cof()).map(this::visitCof));
+  }
+
+  private @NotNull Restr.Cofib<Expr> visitCof(AyaParser.CofContext ctx) {
+    return new Restr.Cofib<>(Seq.wrapJava(ctx.cond()).map(this::visitCond));
+  }
+
+  private @NotNull Restr.Cond<Expr> visitCond(AyaParser.CondContext ctx) {
+    var num = Integer.parseInt(ctx.NUMBER().getText());
+    if (num != 0 && num != 1) {
+      reporter.report(new NotAnIntervalError(sourcePosOf(ctx.NUMBER()), num));
+      throw new ParsingInterruptedException();
+    }
+    var weakId = ctx.weakId();
+    return new Restr.Cond<>(new Expr.UnresolvedExpr(sourcePosOf(weakId), weakId.getText()), num == 0);
+  }
+
+  private @NotNull ImmutableSeq<Restr.Side<Expr>> visitPartial(AyaParser.PartialContext ctx) {
+    return Seq.wrapJava(ctx.subSystem()).map(ss -> new Restr.Side<>(
+      visitCof(ss.cof()),
+      visitExpr(ss.expr())));
   }
 
   private @NotNull Expr visitListComprehension(AyaParser.ArrayBlockContext ctx) {

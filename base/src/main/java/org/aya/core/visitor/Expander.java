@@ -5,6 +5,7 @@ package org.aya.core.visitor;
 import kala.collection.SeqLike;
 import kala.collection.Set;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
@@ -15,6 +16,9 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
+import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
@@ -70,7 +74,35 @@ public interface Expander extends EndoFunctor {
         }
       }
       case RefTerm.MetaPat metaPat -> metaPat.inline();
+      case PrimTerm.Mula mula -> deMorgan(mula.asFormula());
       default -> term;
+    };
+  }
+
+  // https://github.com/ice1000/guest0x0/blob/ba31c5c9867486d9917007dbd2a41c1ba423e301/base/src/main/java/org/aya/guest0x0/tyck/Normalizer.java#L178
+  default @NotNull Term deMorgan(@NotNull Formula<Term> formula) {
+    return switch (formula) { // de Morgan laws
+      // ~ 1 = 0, ~ 0 = 1
+      case Formula.Inv<Term> inv && inv.i().asFormula() instanceof Formula.Lit<Term> lit ->
+        lit.isLeft() ? PrimTerm.Mula.RIGHT : PrimTerm.Mula.LEFT;
+      // ~ (~ a) = a
+      case Formula.Inv<Term> inv && inv.i().asFormula() instanceof Formula.Inv<Term> ii -> ii.i(); // DNE!! :fear:
+      // ~ (a /\ b) = (~ a \/ ~ b), ~ (a \/ b) = (~ a /\ ~ b)
+      case Formula.Inv<Term> inv && inv.i().asFormula() instanceof Formula.Conn<Term> conn ->
+        new PrimTerm.Mula(new Formula.Conn<>(!conn.isAnd(),
+          deMorgan(new Formula.Inv<>(conn.l())),
+          deMorgan(new Formula.Inv<>(conn.r()))));
+      // 0 /\ a = 0, 1 /\ a = a, 0 \/ a = a, 1 \/ a = 1
+      case Formula.Conn<Term> conn && conn.l() instanceof PrimTerm.Mula lf
+        && lf.asFormula() instanceof Formula.Lit<Term> l -> l.isLeft()
+        ? (conn.isAnd() ? lf : conn.r())
+        : (conn.isAnd() ? conn.r() : lf);
+      // a /\ 0 = 0, a /\ 1 = a, a \/ 0 = a, a \/ 1 = 1
+      case Formula.Conn<Term> conn && conn.r() instanceof PrimTerm.Mula rf
+        && rf.asFormula() instanceof Formula.Lit<Term> r -> r.isLeft()
+        ? (conn.isAnd() ? rf : conn.l())
+        : (conn.isAnd() ? conn.l() : rf);
+      default -> new PrimTerm.Mula(formula);
     };
   }
 
@@ -105,7 +137,31 @@ public interface Expander extends EndoFunctor {
           assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
           yield apply(tup.items().get(ix - 1));
         }
+        case IntroTerm.PartEl el -> postPartial(el);
         default -> Expander.super.post(term);
+      };
+    }
+
+    public @NotNull Restr<Term> applyRestr(@NotNull Restr<Term> restr) {
+      return switch (restr.fmap(this)) {
+        case Restr.Vary<Term> vary -> CofThy.normalizeRestr(vary);
+        case Restr.Const<Term> c -> c;
+      };
+    }
+
+    private @NotNull IntroTerm.PartEl postPartial(@NotNull IntroTerm.PartEl el) {
+      return switch (el) {
+        case IntroTerm.SadPartEl par -> new IntroTerm.SadPartEl(par.u());
+        case IntroTerm.HappyPartEl par -> {
+          var clauses = MutableList.<Restr.Side<Term>>create();
+          for (var clause : par.clauses()) {
+            var u = clause.u();
+            if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
+              yield new IntroTerm.SadPartEl(u);
+            }
+          }
+          yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq(), par.rhsType());
+        }
       };
     }
   }

@@ -97,7 +97,15 @@ expr : atom                                 # single
      | LIDIOM idiomBlock? RIDIOM            # idiom
      | LARRAY arrayBlock? RARRAY            # array
      | thisExpr                             # this
+     | PARTIAL_KW expr LBRACE restr RBRACE  # partTy
+     | partial                              # partEl
      ;
+
+restr : (cof (LOR cof)* | TOP | BOTTOM);
+partial : LPARTIAL BAR? subSystem (BAR subSystem)* RPARTIAL;
+subSystem : cof DEFINE_AS expr;
+cof : cond (LAND cond)*;
+cond : weakId NUMBER;
 
 arrayBlock : exprList | expr BAR listComp;
 
@@ -171,4 +179,4 @@ type : COLON expr;
 doBindingExpr : weakId LARROW expr;
 
 qualifiedId : weakId (COLON2 weakId)*;
-weakId : ID | REPL_COMMAND;
+weakId : ID | REPL_COMMAND | LAND | LOR;

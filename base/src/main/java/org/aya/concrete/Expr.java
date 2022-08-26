@@ -13,6 +13,7 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -35,7 +36,7 @@ import java.util.function.Function;
 /**
  * @author re-xyr
  */
-public sealed interface Expr extends AyaDocile, SourceNode {
+public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr> {
   /**
    * @see org.aya.concrete.stmt.Stmt#resolve
    * @see StmtShallowResolver
@@ -249,6 +250,19 @@ public sealed interface Expr extends AyaDocile, SourceNode {
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<NamedArg> seq
+  ) implements Expr {}
+
+  /** partial element */
+  record PartEl(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<Restr.Side<Expr>> clauses
+  ) implements Expr {}
+
+  /** partial type */
+  record PartTy(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr type,
+    @NotNull Restr<Expr> restr
   ) implements Expr {}
 
   /**

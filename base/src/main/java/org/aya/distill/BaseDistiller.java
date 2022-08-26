@@ -1,15 +1,18 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
+import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.DefVar;
@@ -237,6 +240,46 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   public static @NotNull Doc defVar(DefVar<?, ?> ref) {
     var style = chooseStyle(ref.concrete);
     return style != null ? linkDef(ref, style) : varDoc(ref);
+  }
+
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  formula(@NotNull DistillerOptions options, @NotNull Formula<T> formula) {
+    return switch (formula) {
+      case Formula.Conn<T> cnn -> Doc.sep(cnn.l().toDoc(options),
+        cnn.isAnd() ? Doc.symbol("/\\") : Doc.symbol("\\/"),
+        cnn.r().toDoc(options));
+      case Formula.Inv<T> inv -> Doc.sep(Doc.symbol("~"), inv.i().toDoc(options));
+      case Formula.Lit<T> lit -> Doc.plain(lit.isLeft() ? "0" : "1");
+    };
+  }
+
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  partial(@NotNull DistillerOptions options, @NotNull ImmutableSeq<Restr.Side<T>> clauses) {
+    return Doc.sep(Doc.symbol("{|"),
+      Doc.join(Doc.spaced(Doc.symbol("|")), clauses.map(s -> side(options, s))),
+      Doc.symbol("|}"));
+  }
+
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  restr(@NotNull DistillerOptions options, @NotNull Restr<T> restr) {
+    return switch (restr) {
+      case Restr.Const<T> con -> con.isTrue() ? Doc.symbol("top") : Doc.symbol("_|_");
+      case Restr.Vary<T> v -> Doc.join(Doc.spaced(Doc.symbol("\\/")),
+        v.orz().view().map(or -> or.ands().sizeGreaterThan(1) && v.orz().sizeGreaterThan(1)
+          ? Doc.parened(cofib(options, or))
+          : cofib(options, or)));
+    };
+  }
+
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  side(@NotNull DistillerOptions options, @NotNull Restr.Side<T> side) {
+    return Doc.sep(cofib(options, side.cof()), Doc.symbol(":="), side.u().toDoc(options));
+  }
+
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  cofib(@NotNull DistillerOptions options, @NotNull Restr.Cofib<T> cofib) {
+    return Doc.join(Doc.spaced(Doc.symbol("/\\")), cofib.ands().view().map(and ->
+      Doc.sep(and.inst().toDoc(options), Doc.symbol(and.isLeft() ? "0" : "1"))));
   }
 
   protected static @Nullable Style chooseStyle(Object concrete) {

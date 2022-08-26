@@ -17,6 +17,7 @@ import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.Bind;
 import org.aya.ref.LocalVar;
@@ -36,7 +37,7 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, ErrorTerm,
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, ElimTerm, ErrorTerm,
   FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, LitTerm {
 
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
@@ -54,7 +55,11 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
       }
       case FormTerm.Univ univ -> univ;
       case FormTerm.Interval interval -> interval;
-      case PrimTerm.End end -> end;
+      case PrimTerm.Mula mula -> {
+        var formula = mula.asFormula().fmap(f);
+        if (formula == mula.asFormula()) yield mula;
+        yield new PrimTerm.Mula(formula);
+      }
       case PrimTerm.Str str -> str;
       case IntroTerm.Lambda lambda -> {
         var param = lambda.param().descent(f);
@@ -117,8 +122,15 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
       }
       case CallTerm.Prim prim -> {
         var args = prim.args().map(arg -> arg.descent(f));
-        if (args.sameElements(prim.args(), true)) yield prim;
-        yield new CallTerm.Prim(prim.ref(), prim.ulift(), args);
+        yield switch (prim.id()) {
+          case IMIN -> PrimTerm.Mula.and(args.first().term(), args.last().term());
+          case IMAX -> PrimTerm.Mula.or(args.first().term(), args.last().term());
+          case INVOL -> PrimTerm.Mula.inv(args.first().term());
+          default -> {
+            if (args.sameElements(prim.args(), true)) yield prim;
+            yield new CallTerm.Prim(prim.ref(), prim.ulift(), args);
+          }
+        };
       }
       case CallTerm.Hole hole -> {
         var contextArgs = hole.contextArgs().map(arg -> arg.descent(f));
@@ -130,6 +142,23 @@ public sealed interface Term extends AyaDocile permits CallTerm, ElimTerm, Error
         var type = f.apply(shaped.type());
         if (type == shaped.type()) yield shaped;
         yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
+      }
+      case FormTerm.PartTy ty -> {
+        var type = f.apply(ty.type());
+        var restr = ty.restr().fmap(f);
+        if (type == ty.type() && restr == ty.restr()) yield ty;
+        yield new FormTerm.PartTy(type, restr);
+      }
+      case IntroTerm.SadPartEl el -> {
+        var u = f.apply(el.u());
+        if (u == el.u()) yield el;
+        yield new IntroTerm.SadPartEl(u);
+      }
+      case IntroTerm.HappyPartEl el -> {
+        var type = f.apply(el.rhsType());
+        var clauses = el.clauses().map(c -> c.rename(f));
+        if (type == el.rhsType() && clauses.sameElements(el.clauses(), true)) yield el;
+        yield new IntroTerm.HappyPartEl(clauses, type);
       }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;

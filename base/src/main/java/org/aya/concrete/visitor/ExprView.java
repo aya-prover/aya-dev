@@ -86,6 +86,17 @@ public interface ExprView {
         if (struct == neu.struct() && fields.sameElements(neu.fields(), true)) yield neu;
         yield new Expr.NewExpr(neu.sourcePos(), struct, fields);
       }
+      case Expr.PartEl el -> {
+        var clauses = el.clauses().map(c -> c.rename(this::commit));
+        if (clauses.sameElements(el.clauses(), true)) yield el;
+        yield new Expr.PartEl(el.sourcePos(), clauses);
+      }
+      case Expr.PartTy ty -> {
+        var type = commit(ty.type());
+        var restr = ty.restr().fmap(this::commit);
+        if (type == ty.type() && restr == ty.restr()) yield ty;
+        yield new Expr.PartTy(ty.sourcePos(), type, restr);
+      }
       case Expr.LitIntExpr litInt -> litInt;
       case Expr.LitStringExpr litStr -> litStr;
       case Expr.BinOpSeq binOpSeq -> {

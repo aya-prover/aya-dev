@@ -1,6 +1,7 @@
 module aya.base {
   requires transitive aya.pretty;
   requires transitive aya.util;
+  requires transitive aya.guest.cubical;
   requires transitive kala.base;
   requires transitive kala.collection;
 
@@ -37,4 +38,6 @@ module aya.base {
   exports org.aya.tyck.trace;
   exports org.aya.tyck.unify;
   exports org.aya.tyck;
+  // Needed by AyaProducer for reporting NotAnIntervalError
+  exports org.aya.tyck.error;
 }

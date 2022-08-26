@@ -52,6 +52,7 @@ I: 'I';
 DO_KW : 'do';
 THIS_KW : 'this';
 OVERRIDE : 'override';
+PARTIAL_KW : 'Partial';
 
 // Unimplemented but reserved
 CODATA_KW : 'codata';
@@ -91,6 +92,10 @@ LARRAY : '[';
 RARRAY : ']';
 LGOAL : '{?';
 RGOAL : '?}';
+LPARTIAL : '{|' | '\u2983';
+RPARTIAL : '|}' | '\u2984';
+BOTTOM : '_|_' | '\u22A5';
+TOP : 'top' | '\u22A4';
 AT : '@';
 
 // literals

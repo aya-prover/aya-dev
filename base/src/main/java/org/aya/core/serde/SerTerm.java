@@ -212,10 +212,23 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record End(boolean isRight) implements SerTerm {
+  record Mula(@NotNull SerMula formula) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return isRight ? PrimTerm.End.RIGHT : PrimTerm.End.LEFT;
+      return formula.de(state);
     }
+  }
+
+  sealed interface SerMula extends Serializable {
+    default @NotNull Term de(@NotNull DeState state) {
+      return switch (this) {
+        case Conn cnn -> PrimTerm.Mula.conn(cnn.isAnd(), cnn.l().de(state), cnn.r().de(state));
+        case Inv inv -> PrimTerm.Mula.inv(inv.i().de(state));
+        case Lit lit -> lit.isLeft() ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT;
+      };
+    }
+    record Conn(boolean isAnd, @NotNull SerTerm l, @NotNull SerTerm r) implements SerMula {}
+    record Inv(@NotNull SerTerm i) implements SerMula {}
+    record Lit(boolean isLeft) implements SerMula {}
   }
 
   record ShapedInt(

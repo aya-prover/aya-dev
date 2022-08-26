@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
@@ -99,7 +99,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
         );
       }
       case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
-      case PrimTerm.End end -> Doc.styled(KEYWORD, end.isRight() ? "1" : "0");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
@@ -159,6 +158,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
           : linkLit(shaped.repr(), suc.ref, CON_CALL),
         () -> Doc.plain(String.valueOf(shaped.repr())));
       case PrimTerm.Str str -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(str.string()) + "\"");
+      case FormTerm.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
+        term(Outer.AppSpine, ty.type()), Doc.braced(restr(options, ty.restr())));
+      case IntroTerm.HappyPartEl el -> partial(options, el.clauses());
+      case IntroTerm.SadPartEl el -> Doc.sep(Doc.symbol("{|"), term(Outer.Free, el.u()), Doc.symbol("|}"));
+      case PrimTerm.Mula mula -> formula(options, mula.asFormula());
     };
   }
 
@@ -198,7 +202,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
-      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, !end.isRight() ? "0" : "1"), end.explicit());
+      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, end.isLeft() ? "0" : "1"), end.explicit());
       case Pat.ShapedInt lit -> options.map.get(DistillerOptions.Key.ShowLiterals)
         ? Doc.plain(String.valueOf(lit.repr()))
         : Doc.bracedUnless(lit.with(

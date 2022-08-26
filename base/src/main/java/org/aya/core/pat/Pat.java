@@ -208,9 +208,9 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  record End(boolean isRight, boolean explicit) implements Pat {
+  record End(boolean isLeft, boolean explicit) implements Pat {
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.LitIntExpr(pos, isRight ? 1 : 0);
+      return new Expr.LitIntExpr(pos, isLeft ? 0 : 1);
     }
 
     @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
