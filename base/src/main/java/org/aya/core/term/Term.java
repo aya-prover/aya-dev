@@ -155,9 +155,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         yield new IntroTerm.SadPartEl(u);
       }
       case IntroTerm.HappyPartEl el -> {
+        var type = f.apply(el.rhsType());
         var clauses = el.clauses().map(c -> c.rename(f));
-        if (clauses.sameElements(el.clauses(), true)) yield el;
-        yield new IntroTerm.HappyPartEl(clauses);
+        if (type == el.rhsType() && clauses.sameElements(el.clauses(), true)) yield el;
+        yield new IntroTerm.HappyPartEl(clauses, type);
       }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;

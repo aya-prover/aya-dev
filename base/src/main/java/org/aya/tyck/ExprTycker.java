@@ -433,7 +433,7 @@ public final class ExprTycker extends Tycker {
           yield fail(el, term, BadTypeError.partTy(state, el, term));
         var cof = ty.restr();
         var clauses = elaborateClauses(el, el.clauses(), ty.type());
-        var staged = new IntroTerm.HappyPartEl(clauses);
+        var staged = new IntroTerm.HappyPartEl(clauses, ty.type());
         var face = staged.restr();
         if (!CofThy.conv(cof, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
           yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));

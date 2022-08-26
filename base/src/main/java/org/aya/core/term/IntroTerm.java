@@ -59,7 +59,7 @@ public sealed interface IntroTerm extends Term {
   }
 
   /** I am happy because I have (might be) missing faces. Same as <code>ReallyPartial</code> in guest0x0 */
-  record HappyPartEl(@NotNull ImmutableSeq<Restr.Side<Term>> clauses) implements PartEl {
+  record HappyPartEl(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Term rhsType) implements PartEl {
     @Override public @NotNull Restr<Term> restr() {
       return new Restr.Vary<>(clauses.map(Restr.Side::cof));
     }

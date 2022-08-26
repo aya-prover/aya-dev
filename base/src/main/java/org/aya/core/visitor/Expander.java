@@ -160,7 +160,7 @@ public interface Expander extends EndoFunctor {
               yield new IntroTerm.SadPartEl(u);
             }
           }
-          yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq());
+          yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq(), par.rhsType());
         }
       };
     }
