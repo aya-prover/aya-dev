@@ -24,6 +24,8 @@ import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 public interface Expander extends EndoFunctor {
   @NotNull TyckState state();
 
@@ -103,16 +105,16 @@ public interface Expander extends EndoFunctor {
     return tryUnfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), ulift, clauses);
   }
 
+  default <T extends Term> @NotNull Term applyThoroughly(@NotNull Function<T, Term> f, @NotNull T term) {
+    var applied = f.apply(term);
+    return applied != term ? apply(applied) : applied;
+  }
+
   record Normalizer(@NotNull TyckState state) implements Expander {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lam -> apply(CallTerm.make(lam, app.arg()));
-        case ElimTerm.App app -> CallTerm.make(app.of(), app.arg());
-        case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
-          var ix = proj.ix();
-          assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
-          yield apply(tup.items().get(ix - 1));
-        }
+        case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
+        case ElimTerm.Proj proj -> applyThoroughly(ElimTerm::proj, proj);
         case IntroTerm.PartEl el -> postPartial(el);
         default -> Expander.super.post(term);
       };

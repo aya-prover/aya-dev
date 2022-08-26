@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 /**
  * @author ice1000
- * @see CallTerm#make(Term, Arg)
+ * @see CallTerm#make(ElimTerm.App)
  */
 public sealed interface CallTerm extends Term {
   @NotNull Var ref();
@@ -35,12 +35,16 @@ public sealed interface CallTerm extends Term {
 
   @Contract(pure = true) static @NotNull Term
   make(@NotNull Term f, @NotNull Arg<Term> arg) {
-    if (f instanceof Hole hole) {
+    return make(new ElimTerm.App(f, arg));
+  }
+
+  @Contract(pure = true) static @NotNull Term make(@NotNull ElimTerm.App app) {
+    if (app.of() instanceof Hole hole) {
       if (hole.args.sizeLessThan(hole.ref.telescope))
-        return new Hole(hole.ref, hole.ulift, hole.contextArgs, hole.args.appended(arg));
+        return new Hole(hole.ref, hole.ulift, hole.contextArgs, hole.args.appended(app.arg()));
     }
-    if (f instanceof IntroTerm.Lambda lam) return make(lam, arg);
-    return new ElimTerm.App(f, arg);
+    if (app.of() instanceof IntroTerm.Lambda lam) return make(lam, app.arg());
+    return app;
   }
 
   static @NotNull Term make(IntroTerm.Lambda lam, @NotNull Arg<Term> arg) {

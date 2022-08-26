@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -31,16 +31,19 @@ public sealed interface ElimTerm extends Term {
         subst.add(param.ref(), new Proj(term, i + 1)));
       return subst;
     }
-
   }
 
   @Contract(pure = true) static @NotNull Term
   proj(@NotNull Term of, int ix) {
-    if (of instanceof IntroTerm.Tuple tup) {
-      assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : of.toDoc(DistillerOptions.debug()).debugRender();
-      return tup.items().get(ix - 1);
+    return proj(new Proj(of, ix));
+  }
+
+  @Contract(pure = true) static @NotNull Term proj(@NotNull Proj proj) {
+    if (proj.of instanceof IntroTerm.Tuple tup) {
+      assert tup.items().sizeGreaterThanOrEquals(proj.ix) && proj.ix > 0 : proj.of.toDoc(DistillerOptions.debug()).debugRender();
+      return tup.items().get(proj.ix - 1);
     }
-    return new ElimTerm.Proj(of, ix);
+    return proj;
   }
 
   record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
