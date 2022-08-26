@@ -20,7 +20,6 @@ import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,8 +113,8 @@ public interface Expander extends EndoFunctor {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
-        case ElimTerm.Proj proj -> applyThoroughly(ElimTerm::proj, proj);
-        case IntroTerm.PartEl el -> postPartial(el);
+        case ElimTerm.Proj proj -> ElimTerm.proj(proj);
+        case IntroTerm.PartEl el -> partial(el);
         default -> Expander.super.post(term);
       };
     }
@@ -127,32 +126,28 @@ public interface Expander extends EndoFunctor {
       };
     }
 
-    private @NotNull IntroTerm.PartEl postPartial(@NotNull IntroTerm.PartEl el) {
-      return switch (el) {
-        case IntroTerm.SadPartEl par -> new IntroTerm.SadPartEl(par.u());
-        case IntroTerm.HappyPartEl par -> {
-          var clauses = MutableList.<Restr.Side<Term>>create();
-          for (var clause : par.clauses()) {
-            var u = clause.u();
-            if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
-              yield new IntroTerm.SadPartEl(u);
-            }
+  }
+  static @NotNull IntroTerm.PartEl partial(@NotNull IntroTerm.PartEl el) {
+    return switch (el) {
+      case IntroTerm.SadPartEl par -> new IntroTerm.SadPartEl(par.u());
+      case IntroTerm.HappyPartEl par -> {
+        var clauses = MutableList.<Restr.Side<Term>>create();
+        for (var clause : par.clauses()) {
+          var u = clause.u();
+          if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
+            yield new IntroTerm.SadPartEl(u);
           }
-          yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq(), par.rhsType());
         }
-      };
-    }
+        yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq(), par.rhsType());
+      }
+    };
   }
 
   record WHNFer(@NotNull TyckState state) implements Expander {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case ElimTerm.App app && app.of() instanceof IntroTerm.Lambda lambda -> apply(CallTerm.make(lambda, app.arg()));
-        case ElimTerm.Proj proj && proj.of() instanceof IntroTerm.Tuple tup -> {
-          var ix = proj.ix();
-          assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : proj.toDoc(DistillerOptions.debug()).debugRender();
-          yield apply(tup.items().get(ix - 1));
-        }
+        case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
+        case ElimTerm.Proj proj -> ElimTerm.proj(proj);
         default -> Expander.super.post(term);
       };
     }

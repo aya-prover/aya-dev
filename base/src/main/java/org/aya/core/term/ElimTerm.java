@@ -33,8 +33,7 @@ public sealed interface ElimTerm extends Term {
     }
   }
 
-  @Contract(pure = true) static @NotNull Term
-  proj(@NotNull Term of, int ix) {
+  @Contract(pure = true) static @NotNull Term proj(@NotNull Term of, int ix) {
     return proj(new Proj(of, ix));
   }
 

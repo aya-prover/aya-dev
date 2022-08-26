@@ -69,6 +69,7 @@ public interface EndoFunctor extends Function<Term, Term> {
         case RefTerm.Field field -> replacement(field, field.ref());
         case ElimTerm.Proj proj -> ElimTerm.proj(proj);
         case PrimTerm.Mula mula -> Expander.simplFormula(mula);
+        case IntroTerm.PartEl par -> Expander.partial(par);
         case Term misc -> misc;
       };
     }
