@@ -9,7 +9,6 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
-import org.aya.generic.Cube;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +48,11 @@ public sealed interface ElimTerm extends Term {
   record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
   }
 
-  record PathApp(@NotNull Term of, @NotNull Cube<Term> cube) implements ElimTerm {
+  record PathApp(
+    @NotNull Term of,
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> args,
+    @NotNull IntroTerm.PartEl partEl
+  ) implements ElimTerm {
   }
 
   static @NotNull Term unapp(@NotNull Term term, MutableList<Arg<@NotNull Term>> args) {

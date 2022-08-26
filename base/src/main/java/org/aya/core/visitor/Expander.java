@@ -118,7 +118,7 @@ public interface Expander extends EndoFunctor {
         case ElimTerm.PathApp app -> {
           if (app.of() instanceof IntroTerm.PathLam lam) {
             var xi = lam.params();
-            var ui = app.args();
+            var ui = app.args().map(Arg::term);
             var subst = new Subst(xi, ui);
             yield apply(lam.body().subst(subst));
           }

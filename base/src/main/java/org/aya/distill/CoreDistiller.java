@@ -168,8 +168,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         Doc.sep(lam.params().map(BaseDistiller::linkDef)),
         Doc.symbol("=>"),
         lam.body().toDoc(options));
-      case ElimTerm.PathApp app -> Doc.sep(term(Outer.AppHead, app.of()),
-        Doc.sep(app.args().map(r -> term(Outer.AppSpine, r))));
+      case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
+        app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
     };
   }
 

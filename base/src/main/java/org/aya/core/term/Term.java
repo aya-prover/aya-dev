@@ -172,7 +172,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       }
       case ElimTerm.PathApp app -> {
         var of = f.apply(app.of());
-        var refs = app.args().map(f);
+        var refs = app.args().map(a -> a.descent(f));
         var partial = (IntroTerm.PartEl) f.apply(app.partEl());
         if (of == app.of() && partial == app.partEl() && refs.sameElements(app.args(), true))
           yield app;
