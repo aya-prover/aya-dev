@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -176,7 +176,7 @@ public record StmtTycker(
   }
 
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
-    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope")));
+    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope of " + decl.ref().name())));
     switch (decl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl fn -> {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.trace;
 
@@ -26,7 +26,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   }
 
   @Override public Doc visitDecl(Trace.@NotNull DeclT t, Unit unit) {
-    return Doc.vcat(Doc.sep(plus, BaseDistiller.varDoc(t.var())),
+    return Doc.vcatNonEmpty(Doc.sep(plus, BaseDistiller.varDoc(t.var())),
       indentedChildren(t.children()));
   }
 
@@ -40,7 +40,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
       buf.append(colon);
       buf.append(t.term().toDoc(options));
     }
-    return Doc.vcat(Doc.sep(buf), indentedChildren(t.children()));
+    return Doc.vcatNonEmpty(Doc.sep(buf), indentedChildren(t.children()));
   }
 
   @Override public Doc visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
@@ -53,7 +53,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
       buf.append(colon);
       buf.append(t.type().toDoc(options));
     }
-    return Doc.vcat(Doc.sep(buf), indentedChildren(t.children()));
+    return Doc.vcatNonEmpty(Doc.sep(buf), indentedChildren(t.children()));
   }
 
   @Override public Doc visitTyck(Trace.@NotNull TyckT t, Unit unit) {
@@ -71,10 +71,10 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   }
 
   @Override public Doc visitLabel(Trace.@NotNull LabelT t, Unit unit) {
-    return Doc.vcat(Doc.sep(plus, Doc.english(t.label())), indentedChildren(t.children()));
+    return Doc.vcatNonEmpty(Doc.sep(plus, Doc.english(t.label())), indentedChildren(t.children()));
   }
 
   public @NotNull Doc docify(Trace.@NotNull Builder traceBuilder) {
-    return Doc.vcat(traceBuilder.root().view().map(e -> e.accept(this, Unit.unit())));
+    return Doc.vcatNonEmpty(traceBuilder.root().view().map(e -> e.accept(this, Unit.unit())));
   }
 }
