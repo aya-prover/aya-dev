@@ -277,10 +277,10 @@ public final class DefEq {
       case FormTerm.Sigma sigma -> {
         var params = sigma.params().view();
         for (int i = 1, size = sigma.params().size(); i <= size; i++) {
-          var l = new ElimTerm.Proj(lhs, i);
+          var l = ElimTerm.proj(lhs, i);
           var currentParam = params.first();
           ctx.put(currentParam);
-          if (!compare(l, new ElimTerm.Proj(rhs, i), lr, rl, currentParam.type())) yield false;
+          if (!compare(l, ElimTerm.proj(rhs, i), lr, rl, currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
         ctx.remove(sigma.params().view().map(Term.Param::ref));
@@ -346,7 +346,7 @@ public final class DefEq {
         var params = tupType.params().view();
         var subst = new Subst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
-          var l = new ElimTerm.Proj(lhs, i);
+          var l = ElimTerm.proj(lhs, i);
           var currentParam = params.first();
           subst.add(currentParam.ref(), l);
           params = params.drop(1);
