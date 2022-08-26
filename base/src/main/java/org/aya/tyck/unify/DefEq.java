@@ -305,7 +305,7 @@ public final class DefEq {
       case FormTerm.PartTy ty
         && !(lhs instanceof IntroTerm.SadPartEl)
         && !(rhs instanceof IntroTerm.SadPartEl) -> CofThy.conv(ty.restr(), new Subst(),
-        subst -> doCompareTyped(subst.term(state, ty), subst.term(state, lhs), subst.term(state, rhs), lr, rl));
+        subst -> doCompareTyped(ty.subst(subst), lhs.subst(subst), rhs.subst(subst), lr, rl));
       case FormTerm.PartTy ty -> false;
     };
     traceExit();
