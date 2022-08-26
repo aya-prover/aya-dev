@@ -7,6 +7,8 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
+import org.aya.util.distill.DistillerOptions;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +32,15 @@ public sealed interface ElimTerm extends Term {
       return subst;
     }
 
+  }
+
+  @Contract(pure = true) static @NotNull Term
+  proj(@NotNull Term of, int ix) {
+    if (of instanceof IntroTerm.Tuple tup) {
+      assert tup.items().sizeGreaterThanOrEquals(ix) && ix > 0 : of.toDoc(DistillerOptions.debug()).debugRender();
+      return tup.items().get(ix - 1);
+    }
+    return new ElimTerm.Proj(of, ix);
   }
 
   record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
