@@ -138,10 +138,10 @@ public interface StmtResolver {
     var resolver = new ExprResolver(options);
     resolver.enterHead();
     var local = resolver.resolveParams(decl.telescope, decl.ctx);
+    decl.result = resolver.resolve(decl.result, local._2);
     decl.telescope = local._1
       .prependedAll(resolver.allowedGeneralizes().valuesView())
       .toImmutableSeq();
-    decl.result = resolver.resolve(decl.result, local._2);
     return Tuple.of(resolver, local._2);
   }
 
