@@ -1,0 +1,8 @@
+open data Unit : Type | unit
+
+open struct Wrapped (A : Type) : Type
+
+variable B : Type
+
+def test Unit : Wrapped B -> Unit
+  | unit => \(x : Wrapped B) => unit
