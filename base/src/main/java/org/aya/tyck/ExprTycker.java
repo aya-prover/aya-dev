@@ -291,10 +291,11 @@ public final class ExprTycker extends Tycker {
       for (int j = 0; j < i; j++) {
         var rhs = clauses.get(j);
         CofThy.conv(lhs.cof().and(rhs.cof()), new Subst(), subst -> {
-          var lu = lhs.u().subst(subst);
-          var ru = rhs.u().subst(subst);
+          var lu = lhs.u().subst(subst).normalize(state, NormalizeMode.WHNF);
+          var ru = rhs.u().subst(subst).normalize(state, NormalizeMode.WHNF);
+          var ty = type.subst(subst).normalize(state, NormalizeMode.WHNF);
           var unifier = unifier(loc.sourcePos(), Ordering.Eq);
-          var happy = unifier.compare(lu, ru, type.subst(subst));
+          var happy = unifier.compare(lu, ru, ty);
           if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lu, ru, unifier.getFailure(), state));
           return happy;
         });
@@ -437,9 +438,9 @@ public final class ExprTycker extends Tycker {
               var happy = path.cube().clauses().allMatch(c -> {
                 var cof = c.cof().fmap(t -> t.subst(subst));
                 return CofThy.conv(cof, subst, s -> {
-                  var v = body.subst(subst).normalize(state, NormalizeMode.WHNF);
-                  var u = c.u().subst(subst).normalize(state, NormalizeMode.WHNF);
-                  var type = A.subst(subst).normalize(state, NormalizeMode.WHNF);
+                  var v = body.subst(s).normalize(state, NormalizeMode.WHNF);
+                  var u = c.u().subst(s).normalize(state, NormalizeMode.WHNF);
+                  var type = A.subst(s).normalize(state, NormalizeMode.WHNF);
                   var unifier = unifier(plam._2.sourcePos(), Ordering.Eq);
                   var h = unifier.compare(v, u, type);
                   if (!h) reporter.report(new CubicalProblem.BoundaryDisagree(
