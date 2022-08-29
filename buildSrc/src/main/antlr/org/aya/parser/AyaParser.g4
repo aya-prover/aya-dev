@@ -100,7 +100,7 @@ expr : atom                                 # single
      | LPATH weakId+ RPATH expr partial     # path
      ;
 
-restr : (cof (LOR cof)* | TOP | BOTTOM);
+restr : cof (LOR cof)* | TOP | BOTTOM;
 partial : LPARTIAL BAR? subSystem (BAR subSystem)* RPARTIAL;
 subSystem : cof DEFINE_AS expr;
 cof : cond (LAND cond)*;
