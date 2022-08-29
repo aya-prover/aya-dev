@@ -4,6 +4,7 @@ package org.aya.core.visitor;
 
 import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
+import org.aya.generic.Cube;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.LocalVar;
 import org.aya.ref.Var;
@@ -46,6 +47,12 @@ public interface EndoFunctor extends Function<Term, Term> {
       return new Term.Param(v, param.type(), param.explicit());
     }
 
+    private @NotNull LocalVar handleBinder(@NotNull LocalVar localVar) {
+      var v = new LocalVar(localVar.name(), localVar.definition());
+      subst.addDirectly(localVar, new RefTerm(v));
+      return v;
+    }
+
     @Override public @NotNull Term pre(@NotNull Term term) {
       return switch (term) {
         case IntroTerm.Lambda lambda -> new IntroTerm.Lambda(handleBinder(lambda.param()), lambda.body());
@@ -53,6 +60,13 @@ public interface EndoFunctor extends Function<Term, Term> {
         case FormTerm.Sigma sigma -> new FormTerm.Sigma(sigma.params().map(this::handleBinder));
         case RefTerm ref -> subst.map().getOrDefault(ref.var(), ref);
         case RefTerm.Field field -> subst.map().getOrDefault(field.ref(), field);
+        case FormTerm.Path path -> new FormTerm.Path(new Cube<>(
+          path.cube().params().map(this::handleBinder),
+          path.cube().type(),
+          path.cube().partial()));
+        case IntroTerm.PathLam lam -> new IntroTerm.PathLam(
+          lam.params().map(this::handleBinder),
+          lam.body());
         case Term misc -> misc;
       };
     }
@@ -70,6 +84,7 @@ public interface EndoFunctor extends Function<Term, Term> {
         case ElimTerm.Proj proj -> ElimTerm.proj(proj);
         case PrimTerm.Mula mula -> Expander.simplFormula(mula);
         case IntroTerm.PartEl par -> Expander.partial(par);
+        case ElimTerm.PathApp app -> Expander.pathApp(app, Function.identity());
         case Term misc -> misc;
       };
     }

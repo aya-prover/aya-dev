@@ -15,7 +15,9 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.generic.Cube;
 import org.aya.generic.Modifier;
+import org.aya.generic.Partial;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.Var;
@@ -115,6 +117,7 @@ public interface Expander extends EndoFunctor {
         case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
         case ElimTerm.Proj proj -> ElimTerm.proj(proj);
         case IntroTerm.PartEl el -> partial(el);
+        case ElimTerm.PathApp app -> pathApp(app, this);
         default -> Expander.super.post(term);
       };
     }
@@ -125,21 +128,39 @@ public interface Expander extends EndoFunctor {
         case Restr.Const<Term> c -> c;
       };
     }
-
   }
+
   static @NotNull IntroTerm.PartEl partial(@NotNull IntroTerm.PartEl el) {
-    return switch (el) {
-      case IntroTerm.SadPartEl par -> new IntroTerm.SadPartEl(par.u());
-      case IntroTerm.HappyPartEl par -> {
+    return new IntroTerm.PartEl(partial(el.partial()), el.rhsType());
+  }
+
+  private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
+    return switch (partial) {
+      case Partial.Sad<Term> par -> new Partial.Sad<>(par.u());
+      case Partial.Happy<Term> par -> {
         var clauses = MutableList.<Restr.Side<Term>>create();
         for (var clause : par.clauses()) {
           var u = clause.u();
           if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
-            yield new IntroTerm.SadPartEl(u);
+            yield new Partial.Sad<>(u);
           }
         }
-        yield new IntroTerm.HappyPartEl(clauses.toImmutableSeq(), par.rhsType());
+        yield new Partial.Happy<>(clauses.toImmutableSeq());
       }
+    };
+  }
+
+  static @NotNull Term pathApp(@NotNull ElimTerm.PathApp app, @NotNull Function<Term, Term> next) {
+    if (app.of() instanceof IntroTerm.PathLam lam) {
+      var xi = lam.params().map(Term.Param::ref);
+      var ui = app.args().map(Arg::term);
+      var subst = new Subst(xi, ui);
+      return next.apply(lam.body().subst(subst));
+    }
+    return switch (Expander.partial(app.cube().partial())) {
+      case Partial.Happy<Term> hap -> new ElimTerm.PathApp(app.of(), app.args(), new Cube<>(
+        app.cube().params(), app.cube().type(), hap));
+      case Partial.Sad<Term> sad -> sad.u();
     };
   }
 

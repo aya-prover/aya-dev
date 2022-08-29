@@ -60,25 +60,38 @@ public interface VarConsumer extends TermConsumer {
         case IntroTerm.Lambda lambda -> {
           bound.append(lambda.param().ref());
           VarConsumer.super.accept(lambda);
-          bound.removeAt(bound.size() - 1);
+          bound.removeLast();
         }
         case FormTerm.Pi pi -> {
           bound.append(pi.param().ref());
           VarConsumer.super.accept(pi);
-          bound.removeAt(bound.size() - 1);
+          bound.removeLast();
         }
         case FormTerm.Sigma sigma -> {
           var start = bound.size();
           sigma.params().forEach(param -> {
             bound.append(param.ref());
-            this.accept(param.type());
+            accept(param.type());
           });
           bound.removeInRange(start, start + sigma.params().size());
+        }
+        case FormTerm.Path path -> {
+          var start = bound.size();
+          path.cube().params().forEach(bound::append);
+          accept(path.cube().type());
+          path.cube().partial().forEach(this);
+          bound.removeInRange(start, start + path.cube().params().size());
+        }
+        case IntroTerm.PathLam lam -> {
+          var start = bound.size();
+          lam.params().forEach(p -> bound.append(p.ref()));
+          accept(lam.body());
+          bound.removeInRange(start, start + lam.params().size());
         }
         case CallTerm.Hole hole -> {
           var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);
           hole.contextArgs().forEach(arg -> checker.accept(arg.term()));
-          hole.args().forEach(arg -> this.accept(arg.term()));
+          hole.args().forEach(arg -> accept(arg.term()));
         }
         default -> VarConsumer.super.accept(term);
       }

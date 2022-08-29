@@ -103,7 +103,9 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     Tuple.of("(|", "\u2987"),
     Tuple.of("|)", "\u2988"),
     Tuple.of("{|", "\u2983"),
-    Tuple.of("|}", "\u2984")
+    Tuple.of("|}", "\u2984"),
+    Tuple.of("[|", "\u27E6"),
+    Tuple.of("|]", "\u27E7")
   );
 
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {

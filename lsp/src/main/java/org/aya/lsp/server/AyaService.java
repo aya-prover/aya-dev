@@ -170,13 +170,23 @@ public class AyaService implements WorkspaceService, TextDocumentService {
         t -> t._1,
         Collectors.mapping(t -> t._2, ImmutableSeq.factory())
       ));
-    client.publishAyaProblems(ImmutableMap.from(diags), options);
+    var from = ImmutableMap.from(diags);
+    try {
+      client.publishAyaProblems(from, options);
+    } catch (Exception e) {
+      System.out.println(client.getClass());
+      System.out.println(from.getClass());
+    }
   }
 
   private void clearProblems(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
     if (client == null) return;
     var files = affected.flatMap(i -> i.map(LibrarySource::file));
-    client.clearAyaProblems(files);
+    try {
+      client.clearAyaProblems(files);
+    } catch (Exception e) {
+      System.out.println(client.getClass());
+    }
   }
 
   @Override public void didChangeWatchedFiles(@NotNull DidChangeWatchedFilesParams params) {

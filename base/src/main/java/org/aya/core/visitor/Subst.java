@@ -46,6 +46,10 @@ public record Subst(
     this(MutableHashMap.of(var, term));
   }
 
+  public Subst(@NotNull ImmutableSeq<LocalVar> from, @NotNull ImmutableSeq<Term> to) {
+    this(MutableMap.from(from.zipView(to)));
+  }
+
   public void subst(@NotNull Subst subst) {
     if (map.isEmpty()) return;
     map.replaceAll((var, term) -> term.subst(subst));

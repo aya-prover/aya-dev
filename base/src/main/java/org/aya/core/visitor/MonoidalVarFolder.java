@@ -8,6 +8,7 @@ import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.generic.Partial;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,19 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       case LitTerm.ShapedInt shaped -> trace(shaped.type());
       case RefTerm ref -> SeqView.of(var(ref.var()));
       case RefTerm.Field field -> SeqView.of(var(field.ref()));
+      case FormTerm.PartTy ty -> trace(ty.type()).concat(ty.restr().instView().flatMap(this::trace));
+      case IntroTerm.PartEl el -> trace(el.partial());
+      case PrimTerm.Mula mula -> mula.view().flatMap(this::trace);
+      case FormTerm.Path path -> trace(path.cube().type()).concat(trace(path.cube().partial()));
+      case IntroTerm.PathLam lam -> trace(lam.body());
+      case ElimTerm.PathApp app -> trace(app.of()).concat(app.args().flatMap(this::trace));
       default -> SeqView.empty();
+    };
+  }
+  @NotNull private SeqView<R> trace(@NotNull Partial<Term> partial) {
+    return switch (partial) {
+      case Partial.Happy<Term> hap -> hap.clauses().view().flatMap(c -> c.cof().view().flatMap(this::trace).concat(trace(c.u())));
+      case Partial.Sad<Term> sad -> trace(sad.u());
     };
   }
   private @NotNull SeqView<R> trace(@NotNull Term.Param param) {
@@ -84,7 +97,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
     }
 
     @Override public @NotNull SeqView<Def> merge(@NotNull SeqView<SeqView<Def>> as) {
-      return as.view().flatMap(a -> a);
+      return as.flatMap(a -> a);
     }
 
     public @NotNull SeqView<Def> apply(@NotNull GenericDef def) {

@@ -39,6 +39,10 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   default <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
     return with(param.ref(), param.type(), action);
   }
+  default <T> T with(@NotNull SeqView<Term.Param> params, @NotNull Supplier<T> action) {
+    if (params.isEmpty()) return action.get();
+    return with(params.first(), () -> with(params.drop(1), action));
+  }
   void remove(@NotNull SeqView<LocalVar> vars);
   default void forward(@NotNull LocalCtx dest, @NotNull Term term, @NotNull TyckState state) {
     VarConsumer f = var -> {

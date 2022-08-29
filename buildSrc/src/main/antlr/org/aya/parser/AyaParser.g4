@@ -80,8 +80,6 @@ dataCtor : COERCE? declNameOrInfix tele* clauses? bindBlock?;
 
 dataCtorClause : BAR patterns IMPLIES dataCtor;
 
-thisExpr : THIS_KW | THIS_KW AT qualifiedId;
-
 // expressions
 expr : atom                                 # single
      | expr argument+                       # app
@@ -96,12 +94,13 @@ expr : atom                                 # single
      | DO_KW LBRACE? doBlock RBRACE?        # do
      | LIDIOM idiomBlock? RIDIOM            # idiom
      | LARRAY arrayBlock? RARRAY            # array
-     | thisExpr                             # this
+     | THIS_KW (AT qualifiedId)?            # this
      | PARTIAL_KW expr LBRACE restr RBRACE  # partTy
      | partial                              # partEl
+     | LPATH weakId+ RPATH expr partial     # path
      ;
 
-restr : (cof (LOR cof)* | TOP | BOTTOM);
+restr : cof (LOR cof)* | TOP | BOTTOM;
 partial : LPARTIAL BAR? subSystem (BAR subSystem)* RPARTIAL;
 subSystem : cof DEFINE_AS expr;
 cof : cond (LAND cond)*;

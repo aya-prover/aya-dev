@@ -139,7 +139,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
       case Expr.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.braced(restr(options, ty.restr())));
-      case Expr.PartEl el -> partial(options, el.clauses());
+      case Expr.PartEl el -> partial(options, el.partial());
+      case Expr.Path path -> cube(options, path.cube());
     };
   }
 

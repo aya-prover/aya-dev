@@ -19,10 +19,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
-import org.aya.generic.AyaDocile;
-import org.aya.generic.Constants;
-import org.aya.generic.Modifier;
+import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -256,6 +253,16 @@ public final class ExprTycker extends Tycker {
         var ty = synthesize(par.type());
         yield new Result(new FormTerm.PartTy(ty.wellTyped, restr(par.restr())), ty.type);
       }
+      case Expr.Path path -> {
+        var params = path.cube().params().view()
+          .map(n -> new Term.Param(n, FormTerm.Interval.INSTANCE, true));
+        yield localCtx.with(params, () -> {
+          var type = synthesize(path.cube().type());
+          var partial = elaboratePartial(path, path.cube().partial(), type.wellTyped);
+          var cube = new Cube<>(path.cube().params(), type.wellTyped, partial);
+          return new Result(new FormTerm.Path(cube), type.type);
+        });
+      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -270,12 +277,17 @@ public final class ExprTycker extends Tycker {
     // ^ note: `inst` may be ErrorTerm!
   }
 
-  private @NotNull ImmutableSeq<Restr.Side<Term>> elaborateClauses(
-    @NotNull Expr loc, @NotNull ImmutableSeq<Restr.Side<Expr>> clauses, @NotNull Term type
+  private @NotNull Partial<Term> elaboratePartial(
+    @NotNull Expr loc, @NotNull Partial<Expr> partial, @NotNull Term type
   ) {
-    var sides = clauses.flatMap(cl -> clause(cl, type));
-    confluence(sides, loc, type);
-    return sides;
+    return switch (partial) {
+      case Partial.Happy<Expr> hap -> {
+        var sides = hap.clauses().flatMap(cl -> clause(cl, type));
+        confluence(sides, loc, type);
+        yield new Partial.Happy<>(sides);
+      }
+      case Partial.Sad<Expr> sad -> new Partial.Sad<>(inherit(sad.u(), type).wellTyped);
+    };
   }
 
   private void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc, @NotNull Term type) {
@@ -283,16 +295,20 @@ public final class ExprTycker extends Tycker {
       var lhs = clauses.get(i);
       for (int j = 0; j < i; j++) {
         var rhs = clauses.get(j);
-        CofThy.conv(lhs.cof().and(rhs.cof()), new Subst(), subst -> {
-          var lu = lhs.u().subst(subst);
-          var ru = rhs.u().subst(subst);
-          var unifier = unifier(loc.sourcePos(), Ordering.Eq);
-          var happy = unifier.compare(lu, ru, type.subst(subst));
-          if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lu, ru, unifier.getFailure(), state));
-          return happy;
-        });
+        CofThy.conv(lhs.cof().and(rhs.cof()), new Subst(), subst ->
+          boundary(loc, lhs.u(), rhs.u(), type, subst));
       }
     }
+  }
+
+  private boolean boundary(@NotNull Expr loc, @NotNull Term lhs, @NotNull Term rhs, @NotNull Term type, Subst subst) {
+    var l = lhs.subst(subst).normalize(state, NormalizeMode.WHNF);
+    var r = rhs.subst(subst).normalize(state, NormalizeMode.WHNF);
+    var t = type.subst(subst).normalize(state, NormalizeMode.WHNF);
+    var unifier = unifier(loc.sourcePos(), Ordering.Eq);
+    var happy = unifier.compare(l, r, t);
+    if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lhs, rhs, unifier.getFailure(), state));
+    return happy;
   }
 
   private @NotNull Option<Restr.Side<Term>> clause(@NotNull Restr.Side<Expr> clause, @NotNull Term type) {
@@ -388,28 +404,64 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
-        if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
-          yield fail(lam, term, BadTypeError.pi(state, lam, term));
-        }
-        var param = lam.param();
-        if (param.explicit() != dt.param().explicit()) {
-          yield fail(lam, dt, new LicitProblem.LicitMismatchError(lam, dt));
-        }
-        var var = param.ref();
-        var lamParam = param.type();
-        var type = dt.param().type();
-        var result = synthesize(lamParam).wellTyped;
-        var comparison = unifyTy(result, type, lamParam.sourcePos());
-        if (comparison != null) {
-          // TODO: maybe also report this unification failure?
-          yield fail(lam, dt, BadTypeError.lamParam(state, lam, type, result));
-        } else type = result;
-        var resultParam = new Term.Param(var, type, param.explicit());
-        var body = dt.substBody(resultParam.toTerm());
-        yield localCtx.with(resultParam, () -> {
-          var rec = inherit(lam.body(), body);
-          return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
-        });
+        yield switch (term.normalize(state, NormalizeMode.WHNF)) {
+          case FormTerm.Pi dt -> {
+            var param = lam.param();
+            if (param.explicit() != dt.param().explicit()) {
+              yield fail(lam, dt, new LicitProblem.LicitMismatchError(lam, dt));
+            }
+            var var = param.ref();
+            var lamParam = param.type();
+            var type = dt.param().type();
+            var result = synthesize(lamParam).wellTyped;
+            var comparison = unifyTy(result, type, lamParam.sourcePos());
+            if (comparison != null) {
+              // TODO: maybe also report this unification failure?
+              yield fail(lam, dt, BadTypeError.lamParam(state, lam, type, result));
+            } else type = result;
+            var resultParam = new Term.Param(var, type, param.explicit());
+            var body = dt.substBody(resultParam.toTerm());
+            yield localCtx.with(resultParam, () -> {
+              var rec = inherit(lam.body(), body);
+              return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
+            });
+          }
+          // Path lambda!
+          case FormTerm.Path path -> {
+            var cubeParams = path.cube().params();
+            var plam = Expr.unPathLam(lam, cubeParams.size());
+            if (!plam._1.sizeEquals(cubeParams))
+              yield fail(lam, term, new CubicalProblem.DimensionMismatch(lam, cubeParams.size(), plam._1.size()));
+            // we allow lambda params to be typed explicitly --- check them against I.
+            var params = plam._1.map(p -> {
+              var i = synthesize(p.type());
+              unifyTyReported(FormTerm.Interval.INSTANCE, i.wellTyped,
+                new Expr.RefExpr(p.sourcePos(), p.ref()));
+              return new Term.Param(p, i.wellTyped);
+            });
+            yield localCtx.with(params.view(), () -> {
+              // \params. body => (params : I) -> A
+              var subst = new Subst(cubeParams, params.map(Term.Param::toTerm));
+              var A = path.cube().type().subst(subst).normalize(state, NormalizeMode.WHNF);
+              var body = inherit(plam._2, A).wellTyped;
+              // body matches every given face
+              var happy = switch (path.cube().partial()) {
+                case Partial.Sad<Term> sad -> {
+                  var s = subst.derive();
+                  params.forEach(p -> s.put(p.ref(), false));
+                  yield boundary(plam._2, body, sad.u(), A, s);
+                }
+                case Partial.Happy<Term> hap -> hap.clauses().allMatch(c -> {
+                  var cof = c.cof().fmap(t -> t.subst(subst));
+                  return CofThy.conv(cof, subst, s -> boundary(plam._2, body, c.u(), A, s));
+                });
+              };
+              return happy ? new Result(new IntroTerm.PathLam(params, body), path)
+                : new Result(ErrorTerm.typeOf(term), term);
+            });
+          }
+          default -> fail(lam, term, BadTypeError.pi(state, lam, term));
+        };
       }
       case Expr.LitIntExpr lit -> {
         var ty = term.normalize(state, NormalizeMode.WHNF);
@@ -432,13 +484,14 @@ public final class ExprTycker extends Tycker {
         if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.PartTy ty))
           yield fail(el, term, BadTypeError.partTy(state, el, term));
         var cof = ty.restr();
-        var clauses = elaborateClauses(el, el.clauses(), ty.type());
-        var staged = new IntroTerm.HappyPartEl(clauses, ty.type());
-        var face = staged.restr();
+        var rhsType = ty.type();
+        var partial = elaboratePartial(el, el.partial(), rhsType);
+        var face = partial.restr();
         if (!CofThy.conv(cof, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
           yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
-        yield new Result(staged, ty);
+        yield new Result(new IntroTerm.PartEl(partial, rhsType), ty);
       }
+      // TODO: turn definition into path lambda
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
   }
@@ -482,6 +535,14 @@ public final class ExprTycker extends Tycker {
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var res = doSynthesize(expr);
+    if (res.type.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Path path) {
+      var xi = path.cube().params().map(x -> new Term.Param(x, FormTerm.Interval.INSTANCE, true));
+      var elim = new ElimTerm.PathApp(res.wellTyped, xi.map(Term.Param::toArg), path.cube());
+      var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
+      // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
+      var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);
+      return new Result(lam, pi);
+    }
     traceExit(res, expr);
     return res;
   }

@@ -5,12 +5,9 @@ package org.aya.distill;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.generic.Arg;
-import org.aya.generic.AyaDocile;
-import org.aya.generic.ParamLike;
+import org.aya.generic.*;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
@@ -243,6 +240,17 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
+  cube(@NotNull DistillerOptions options, @NotNull Cube<T> cube) {
+    return Doc.sep(
+      Doc.symbol("[|"),
+      Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
+      Doc.symbol("|]"),
+      cube.type().toDoc(options),
+      partial(options, cube.partial())
+    );
+  }
+
+  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
   formula(@NotNull DistillerOptions options, @NotNull Formula<T> formula) {
     return switch (formula) {
       case Formula.Conn<T> cnn -> Doc.sep(cnn.l().toDoc(options),
@@ -254,10 +262,13 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  partial(@NotNull DistillerOptions options, @NotNull ImmutableSeq<Restr.Side<T>> clauses) {
-    return Doc.sep(Doc.symbol("{|"),
-      Doc.join(Doc.spaced(Doc.symbol("|")), clauses.map(s -> side(options, s))),
-      Doc.symbol("|}"));
+  partial(@NotNull DistillerOptions options, @NotNull Partial<T> partial) {
+    return switch (partial) {
+      case Partial.Sad<T> sad -> Doc.sep(Doc.symbol("{|"), sad.u().toDoc(options), Doc.symbol("|}"));
+      case Partial.Happy<T> hap -> Doc.sep(Doc.symbol("{|"),
+        Doc.join(Doc.spaced(Doc.symbol("|")), hap.clauses().map(s -> side(options, s))),
+        Doc.symbol("|}"));
+    };
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc

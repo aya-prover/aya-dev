@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -31,6 +31,15 @@ public interface ExprTraversal<P> {
       case Expr.PiExpr pi -> {
         visitParam(pi.param(), p);
         visitExpr(pi.last(), p);
+      }
+      case Expr.PartEl el -> el.partial().forEach(e -> visitExpr(e, p));
+      case Expr.PartTy ty -> {
+        ty.restr().instView().forEach(e -> visitExpr(e, p));
+        visitExpr(ty.type(), p);
+      }
+      case Expr.Path path -> {
+        visitExpr(path.cube().type(), p);
+        path.cube().partial().forEach(e -> visitExpr(e, p));
       }
       default -> {}
     }

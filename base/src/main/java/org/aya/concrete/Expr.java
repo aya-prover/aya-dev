@@ -5,6 +5,8 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.visitor.ExprView;
@@ -12,7 +14,9 @@ import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Cube;
 import org.aya.generic.ParamLike;
+import org.aya.generic.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -110,6 +114,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
     if (args != null) args.reverse();
     return expr;
+  }
+  static @NotNull Tuple2<ImmutableSeq<Expr.Param>, Expr> unPathLam(@NotNull Expr expr, int maxUn) {
+    var params = MutableList.<Expr.Param>create();
+    while (expr instanceof LamExpr lam && maxUn-- > 0) {
+      params.append(lam.param);
+      expr = lam.body;
+    }
+    return Tuple.of(params.toImmutableSeq(), expr);
   }
 
   /**
@@ -255,7 +267,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /** partial element */
   record PartEl(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Restr.Side<Expr>> clauses
+    @NotNull Partial<Expr> partial
   ) implements Expr {}
 
   /** partial type */
@@ -264,6 +276,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr type,
     @NotNull Restr<Expr> restr
   ) implements Expr {}
+
+  /** generalized path type */
+  record Path(
+    @NotNull SourcePos sourcePos,
+    @NotNull Cube<Expr> cube
+  ) implements Expr {
+  }
 
   /**
    * @author re-xyr

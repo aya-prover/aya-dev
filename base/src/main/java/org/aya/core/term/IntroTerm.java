@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.FieldDef;
-import org.aya.guest0x0.cubical.Restr;
+import org.aya.generic.Partial;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,22 +53,11 @@ public sealed interface IntroTerm extends Term {
   }
 
   /** partial element */
-  sealed interface PartEl extends IntroTerm {
-    /** faces filled by this partial element */
-    @NotNull Restr<Term> restr();
+  record PartEl(@NotNull Partial<Term> partial, @NotNull Term rhsType) implements IntroTerm {
   }
 
-  /** I am happy because I have (might be) missing faces. Same as <code>ReallyPartial</code> in guest0x0 */
-  record HappyPartEl(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Term rhsType) implements PartEl {
-    @Override public @NotNull Restr<Term> restr() {
-      return new Restr.Vary<>(clauses.map(Restr.Side::cof));
-    }
-  }
-
-  /** I am sad because I am not partial. Same as <code>SomewhatPartial</code> in guest0x0 */
-  record SadPartEl(@NotNull Term u) implements PartEl {
-    @Override public @NotNull Restr<Term> restr() {
-      return new Restr.Const<>(true);
-    }
-  }
+  record PathLam(
+    @NotNull ImmutableSeq<Term.Param> params,
+    @NotNull Term body
+  ) implements IntroTerm {}
 }

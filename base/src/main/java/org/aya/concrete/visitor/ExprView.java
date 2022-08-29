@@ -87,15 +87,20 @@ public interface ExprView {
         yield new Expr.NewExpr(neu.sourcePos(), struct, fields);
       }
       case Expr.PartEl el -> {
-        var clauses = el.clauses().map(c -> c.rename(this::commit));
-        if (clauses.sameElements(el.clauses(), true)) yield el;
-        yield new Expr.PartEl(el.sourcePos(), clauses);
+        var partial = el.partial().map(this::commit);
+        if (partial == el.partial()) yield el;
+        yield new Expr.PartEl(el.sourcePos(), partial);
       }
       case Expr.PartTy ty -> {
         var type = commit(ty.type());
         var restr = ty.restr().fmap(this::commit);
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new Expr.PartTy(ty.sourcePos(), type, restr);
+      }
+      case Expr.Path path -> {
+        var cube = path.cube().map(this::commit);
+        if (cube == path.cube()) yield path;
+        yield new Expr.Path(path.sourcePos(), cube);
       }
       case Expr.LitIntExpr litInt -> litInt;
       case Expr.LitStringExpr litStr -> litStr;

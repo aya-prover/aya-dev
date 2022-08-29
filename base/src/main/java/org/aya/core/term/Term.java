@@ -149,16 +149,29 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new FormTerm.PartTy(type, restr);
       }
-      case IntroTerm.SadPartEl el -> {
-        var u = f.apply(el.u());
-        if (u == el.u()) yield el;
-        yield new IntroTerm.SadPartEl(u);
+      case IntroTerm.PartEl el -> {
+        var partial = el.partial().map(f);
+        if (partial == el.partial()) yield el;
+        yield new IntroTerm.PartEl(partial, el.rhsType()); // Q: map `rhsType` as well?
       }
-      case IntroTerm.HappyPartEl el -> {
-        var type = f.apply(el.rhsType());
-        var clauses = el.clauses().map(c -> c.rename(f));
-        if (type == el.rhsType() && clauses.sameElements(el.clauses(), true)) yield el;
-        yield new IntroTerm.HappyPartEl(clauses, type);
+      case FormTerm.Path path -> {
+        var cube = path.cube().map(f);
+        if (cube == path.cube()) yield path;
+        yield new FormTerm.Path(cube);
+      }
+      case IntroTerm.PathLam lam -> {
+        var params = lam.params().map(p -> p.descent(f));
+        var body = f.apply(lam.body());
+        if (body == lam.body() && params.sameElements(lam.params(), true)) yield lam;
+        yield new IntroTerm.PathLam(params, body);
+      }
+      case ElimTerm.PathApp app -> {
+        var of = f.apply(app.of());
+        var refs = app.args().map(a -> a.descent(f));
+        var cube = app.cube().map(f);
+        if (of == app.of() && cube == app.cube() && refs.sameElements(app.args(), true))
+          yield app;
+        yield new ElimTerm.PathApp(of, refs, cube);
       }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
