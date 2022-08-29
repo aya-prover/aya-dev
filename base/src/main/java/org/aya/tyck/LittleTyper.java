@@ -87,7 +87,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case IntroTerm.PathLam lam -> new FormTerm.Path(new Cube<>(
         lam.params().map(Term.Param::ref),
         term(lam.body()),
-        new Partial.Sad<>(ErrorTerm.typeOf(lam)) // TODO: partial???
+        new Partial.Sad<>(term(lam.body()))
       ));
       case ElimTerm.PathApp app -> {
         // v @ ui : A[ui/xi]

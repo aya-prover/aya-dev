@@ -434,8 +434,10 @@ public final class ExprTycker extends Tycker {
               yield fail(lam, term, new CubicalProblem.DimensionMismatch(lam, cubeParams.size(), plam._1.size()));
             // we allow lambda params to be typed explicitly --- check them against I.
             var params = plam._1.map(p -> {
-              inherit(p.type(), FormTerm.Interval.INSTANCE);
-              return new Term.Param(p, FormTerm.Interval.INSTANCE);
+              var i = synthesize(p.type());
+              unifyTyReported(FormTerm.Interval.INSTANCE, i.wellTyped,
+                new Expr.RefExpr(p.sourcePos(), p.ref()));
+              return new Term.Param(p, i.wellTyped);
             });
             yield localCtx.with(params.view(), () -> {
               // \params. body => (params : I) -> A

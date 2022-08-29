@@ -160,9 +160,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         yield new FormTerm.Path(cube);
       }
       case IntroTerm.PathLam lam -> {
+        var params = lam.params().map(p -> p.descent(f));
         var body = f.apply(lam.body());
-        if (body == lam.body()) yield lam;
-        yield new IntroTerm.PathLam(lam.params(), body);
+        if (body == lam.body() && params.sameElements(lam.params(), true)) yield lam;
+        yield new IntroTerm.PathLam(params, body);
       }
       case ElimTerm.PathApp app -> {
         var of = f.apply(app.of());
