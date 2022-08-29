@@ -5,7 +5,7 @@ In file $FILE:8:5 ->
   8 |   => \i => p2 A x i
            ^------------^
 
-Error: This path lambda expects 2 dimension(s), but it has only 1
+Error: This path lambda expects 2 parameters, but it has only 1
 
 1 error(s), 0 warning(s).
 What are you doing?
