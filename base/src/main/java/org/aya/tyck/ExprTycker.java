@@ -258,8 +258,8 @@ public final class ExprTycker extends Tycker {
           .map(n -> new Term.Param(n, FormTerm.Interval.INSTANCE, true));
         yield localCtx.with(params, () -> {
           var type = synthesize(path.cube().type());
-          var clauses = elaboratePartial(path, path.cube().partial(), type.wellTyped);
-          var cube = new Cube<>(path.cube().params(), type.wellTyped, clauses);
+          var partial = elaboratePartial(path, path.cube().partial(), type.wellTyped);
+          var cube = new Cube<>(path.cube().params(), type.wellTyped, partial);
           return new Result(new FormTerm.Path(cube), type.type);
         });
       }
