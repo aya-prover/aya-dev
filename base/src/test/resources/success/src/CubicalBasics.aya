@@ -15,3 +15,15 @@ def sym {A : Type} {a b : A} (p : a = b) : b = a => \i => p (~ i)
 
 def par1 (A : Type) (u : A) (i : I) : Partial A {i 0} =>
   {| i 0 := u |}
+
+-- By @imkiva, in PR
+def p1 (A : Type) (a : A) (i : I) : Partial A {i 0} =>
+  {| i 0 := a |}
+def p2 (A : Type) (b : A) (j : I) : Partial A {j 0} =>
+  {| j 0 := b |}
+def p1=p2 (A : Type) (a : A) (i : I) : p1 A a i = p2 A a i =>
+  idp
+
+def cmp {A : Type} (x : A)
+  : [| i j |] (Partial A {j 0}) {| i 0 := p1 A x j |}
+  => \i => \j => p2 A x j
