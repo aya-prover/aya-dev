@@ -26,6 +26,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Cube;
 import org.aya.generic.Modifier;
+import org.aya.generic.Partial;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Restr;
@@ -387,7 +388,7 @@ public record AyaProducer(
         visitExpr(tyCtx.expr()),
         visitRestr(tyCtx.restr()));
       case AyaParser.PartElContext elCtx -> new Expr.PartEl(sourcePosOf(elCtx), visitPartial(elCtx.partial()));
-      case AyaParser.PathContext path->new Expr.Path(sourcePosOf(path), new Cube<>(
+      case AyaParser.PathContext path -> new Expr.Path(sourcePosOf(path), new Cube<>(
         Seq.wrapJava(path.weakId()).map(w -> new LocalVar(w.getText(), sourcePosOf(w))),
         visitExpr(path.expr()),
         visitPartial(path.partial())
@@ -417,10 +418,11 @@ public record AyaProducer(
     return new Restr.Cond<>(new Expr.UnresolvedExpr(sourcePosOf(weakId), weakId.getText()), num == 0);
   }
 
-  private @NotNull ImmutableSeq<Restr.Side<Expr>> visitPartial(AyaParser.PartialContext ctx) {
-    return Seq.wrapJava(ctx.subSystem()).map(ss -> new Restr.Side<>(
+  private @NotNull Partial<Expr> visitPartial(AyaParser.PartialContext ctx) {
+    return new Partial.Happy<>(Seq.wrapJava(ctx.subSystem()).map(ss -> new Restr.Side<>(
       visitCof(ss.cof()),
-      visitExpr(ss.expr())));
+      visitExpr(ss.expr()))));
+    // TODO: sad partial elements literal?
   }
 
   private @NotNull Expr visitListComprehension(AyaParser.ArrayBlockContext ctx) {
@@ -723,7 +725,8 @@ public record AyaProducer(
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.weakId();
-    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), MutableValue.create());
+    if (id != null)
+      return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), MutableValue.create());
 
     return unreachable(ctx);
   }

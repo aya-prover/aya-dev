@@ -16,6 +16,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
+import org.aya.generic.Partial;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -302,11 +303,12 @@ public final class DefEq {
       });
       // TODO: path lambda conversion
       case FormTerm.Path path -> throw new UnsupportedOperationException("TODO");
-      case FormTerm.PartTy ty && lhs instanceof IntroTerm.SadPartEl ll
-        && rhs instanceof IntroTerm.SadPartEl rr -> doCompareTyped(ty.type(), ll.u(), rr.u(), lr, rl);
-      case FormTerm.PartTy ty
-        && !(lhs instanceof IntroTerm.SadPartEl)
-        && !(rhs instanceof IntroTerm.SadPartEl) -> CofThy.conv(ty.restr(), new Subst(),
+      case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel
+        && lel.partial() instanceof Partial.Sad<Term> ll
+        && rel.partial() instanceof Partial.Sad<Term> rr -> doCompareTyped(ty.type(), ll.u(), rr.u(), lr, rl);
+      case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel
+        && !(lel.partial() instanceof Partial.Sad<Term>)
+        && !(rel.partial() instanceof Partial.Sad<Term>) -> CofThy.conv(ty.restr(), new Subst(),
         subst -> doCompareTyped(ty.subst(subst), lhs.subst(subst), rhs.subst(subst), lr, rl));
       case FormTerm.PartTy ty -> false;
     };
@@ -344,7 +346,7 @@ public final class DefEq {
         if (!(preRhs instanceof ElimTerm.PathApp rhs)) yield null;
         var prePathType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
         if (!(prePathType instanceof FormTerm.Path path)) yield null;
-        var happy =  lhs.args().zipView(rhs.args()).allMatch(t ->
+        var happy = lhs.args().zipView(rhs.args()).allMatch(t ->
           compareUntyped(t._1.term(), t._2.term(), lr, rl) != null);
         yield happy ? path.cube().type() : null;
       }

@@ -149,16 +149,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new FormTerm.PartTy(type, restr);
       }
-      case IntroTerm.SadPartEl el -> {
-        var u = f.apply(el.u());
-        if (u == el.u()) yield el;
-        yield new IntroTerm.SadPartEl(u);
-      }
-      case IntroTerm.HappyPartEl el -> {
-        var type = f.apply(el.rhsType());
-        var clauses = el.clauses().map(c -> c.rename(f));
-        if (type == el.rhsType() && clauses.sameElements(el.clauses(), true)) yield el;
-        yield new IntroTerm.HappyPartEl(clauses, type);
+      case IntroTerm.PartEl el -> {
+        var partial = el.partial().map(f);
+        if (partial == el.partial()) yield el;
+        yield new IntroTerm.PartEl(partial, el.rhsType()); // Q: map `rhsType` as well?
       }
       case FormTerm.Path path -> {
         var cube = path.cube().map(f);

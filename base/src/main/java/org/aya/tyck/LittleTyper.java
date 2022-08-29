@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
@@ -11,6 +10,7 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Cube;
+import org.aya.generic.Partial;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
@@ -82,13 +82,12 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
       case LitTerm.ShapedInt shaped -> shaped.type();
       case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
-      case IntroTerm.HappyPartEl el -> new FormTerm.PartTy(el.rhsType(), el.restr());
-      case IntroTerm.SadPartEl el -> new FormTerm.PartTy(term(el), el.restr());
+      case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
       case FormTerm.Path path -> FormTerm.Univ.ZERO;
       case IntroTerm.PathLam lam -> new FormTerm.Path(new Cube<>(
         lam.params().map(Term.Param::ref),
         term(lam.body()),
-        ImmutableSeq.empty() // TODO: clauses???
+        new Partial.Sad<>(ErrorTerm.typeOf(lam)) // TODO: partial???
       ));
       case ElimTerm.PathApp app -> {
         // v @ ui : A[ui/xi]

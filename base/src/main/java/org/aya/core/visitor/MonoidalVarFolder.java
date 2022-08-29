@@ -4,12 +4,11 @@ package org.aya.core.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
-import org.aya.guest0x0.cubical.Restr;
+import org.aya.generic.Partial;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
@@ -48,19 +47,20 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       case RefTerm ref -> SeqView.of(var(ref.var()));
       case RefTerm.Field field -> SeqView.of(var(field.ref()));
       case FormTerm.PartTy ty -> trace(ty.type()).concat(ty.restr().instView().flatMap(this::trace));
-      case IntroTerm.HappyPartEl el -> el.restr().instView().flatMap(this::trace).concat(clauses(el.clauses()));
-      case IntroTerm.SadPartEl el -> trace(el.u());
+      case IntroTerm.PartEl el -> trace(el.partial());
       case PrimTerm.Mula mula -> mula.view().flatMap(this::trace);
-      case FormTerm.Path path -> trace(path.cube().type()).concat(clauses(path.cube().clauses()));
+      case FormTerm.Path path -> trace(path.cube().type()).concat(trace(path.cube().partial()));
       case IntroTerm.PathLam lam -> trace(lam.body());
       case ElimTerm.PathApp app -> trace(app.of()).concat(app.args().flatMap(this::trace));
       default -> SeqView.empty();
     };
   }
-  @NotNull private ImmutableSeq<R> clauses(@NotNull ImmutableSeq<Restr.Side<Term>> clauses) {
-    return clauses.flatMap(c -> c.cof().view().flatMap(this::trace).concat(trace(c.u())));
+  @NotNull private SeqView<R> trace(@NotNull Partial<Term> partial) {
+    return switch (partial) {
+      case Partial.Happy<Term> hap -> hap.clauses().view().flatMap(c -> c.cof().view().flatMap(this::trace).concat(trace(c.u())));
+      case Partial.Sad<Term> sad -> trace(sad.u());
+    };
   }
-
   private @NotNull SeqView<R> trace(@NotNull Term.Param param) {
     return trace(param.type());
   }

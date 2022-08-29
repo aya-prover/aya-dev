@@ -16,6 +16,7 @@ import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Cube;
 import org.aya.generic.ParamLike;
+import org.aya.generic.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -266,7 +267,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /** partial element */
   record PartEl(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Restr.Side<Expr>> clauses
+    @NotNull Partial<Expr> partial
   ) implements Expr {}
 
   /** partial type */

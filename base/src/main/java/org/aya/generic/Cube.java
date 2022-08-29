@@ -13,20 +13,20 @@ import java.util.function.Function;
  * Generalized 'generalized path' syntax.
  *
  * @param params  Dimension parameters.
- * @param clauses Partial element carried by this path.
+ * @param partial Partial element carried by this path.
  * @see org.aya.concrete.Expr.Path
  * @see org.aya.core.term.FormTerm.Path
  */
 public record Cube<Term extends Restr.TermLike<Term> & AyaDocile>(
   @NotNull ImmutableSeq<LocalVar> params,
   @NotNull Term type,
-  @NotNull ImmutableSeq<Restr.Side<Term>> clauses
+  @NotNull Partial<Term> partial
 ) {
   public @NotNull Cube<Term> map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
     var type = mapper.apply(this.type);
-    var clauses = this.clauses.map(c -> c.rename(mapper));
-    if (type == this.type && clauses.sameElements(this.clauses, true)) return this;
-    return new Cube<>(params, type, clauses);
+    var partial = this.partial.map(mapper);
+    if (type == this.type && partial == this.partial) return this;
+    return new Cube<>(params, type, partial);
   }
 
   public @NotNull Cube<Term> map(@NotNull Function<Term, Term> mapper) {

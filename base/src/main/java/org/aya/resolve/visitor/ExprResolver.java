@@ -102,9 +102,9 @@ public record ExprResolver(
         yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h, hole.accessibleLocal());
       }
       case Expr.PartEl el -> {
-        var clauses = el.clauses().map(c -> c.rename(e -> resolve(e, ctx)));
-        if (clauses.sameElements(el.clauses(), true)) yield el;
-        yield new Expr.PartEl(el.sourcePos(), clauses);
+        var partial = el.partial().map(e -> resolve(e, ctx));
+        if (partial == el.partial()) yield el;
+        yield new Expr.PartEl(el.sourcePos(), partial);
       }
       case Expr.PartTy ty -> {
         var type = resolve(ty.type(), ctx);

@@ -63,7 +63,7 @@ public interface EndoFunctor extends Function<Term, Term> {
         case FormTerm.Path path -> new FormTerm.Path(new Cube<>(
           path.cube().params().map(this::handleBinder),
           path.cube().type(),
-          path.cube().clauses()));
+          path.cube().partial()));
         case IntroTerm.PathLam lam -> new IntroTerm.PathLam(
           lam.params().map(this::handleBinder),
           lam.body());
