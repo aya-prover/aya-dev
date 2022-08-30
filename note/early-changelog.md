@@ -2,6 +2,11 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+Initial support for cubical type theory (based on [Guest0x0]),
+with partial elements and the generalized path type ("extension type").
+
+[Guest0x0]: https://github.com/ice1000/Guest0x0
+
 ## 0.19
 
 Updated to jdk 18, rewrote major version of classes to 61,
@@ -21,6 +26,8 @@ fixed false-positive first match domination warning by putting bind patterns in 
 fixed primitive reload and polished some error messages, reduced expensive graph operations and needless lsp protocol calls,
 fixed a problem where distilling `{? expr ?}` may cause NPE by passing `accessibleLocal`,
 implemented new `Term` traversal api, disallowed universe lifting for local bindings.
+
+Deleted core visitors (and all the other visitors)!
 
 ## 0.18
 
