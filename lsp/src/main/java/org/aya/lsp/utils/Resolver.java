@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.utils;
 
@@ -26,6 +26,8 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public interface Resolver {
   /** resolve a symbol by its qualified name in the whole library */
@@ -198,9 +200,7 @@ public interface Resolver {
       // for imported serialized definitions, let's compare by qualified name
       return var instanceof DefVar<?, ?> defVar
         && check instanceof DefVar<?, ?> checkDef
-        && defVar.module != null
-        && checkDef.module != null
-        && defVar.module.equals(checkDef.module)
+        && Objects.equals(defVar.module, checkDef.module)
         && defVar.name().equals(checkDef.name());
     }
   }
