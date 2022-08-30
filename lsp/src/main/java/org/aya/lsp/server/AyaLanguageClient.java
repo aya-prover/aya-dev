@@ -21,29 +21,31 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public interface AyaLanguageClient extends LanguageClient {
-  default void publishAyaProblems(
+  static void publishAyaProblems(
+    @NotNull AyaLanguageClient self,
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
     @NotNull DistillerOptions options
   ) {
     problems.forEach((filePath, value) -> {
-      Log.d("Found %d issues in %s", value.size(), filePath);
+      Log.i("Found %d issues in %s", value.size(), filePath);
       var param = new PublishDiagnosticsParams(
         filePath.toUri().toString(),
         value
           .collect(Collectors.groupingBy(Problem::sourcePos, ImmutableSeq.factory()))
           .entrySet().stream()
           .map(kv -> toDiagnostic(kv.getKey(), kv.getValue(), options))
-          .collect(Collectors.toList())
+          .toList()
       );
-      publishDiagnostics(param);
+      self.publishDiagnostics(param);
     });
   }
 
-  default void clearAyaProblems(@NotNull ImmutableSeq<Path> files) {
-    files.forEach(f -> {
-      var param = new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList());
-      publishDiagnostics(param);
-    });
+  static void clearAyaProblems(
+    @NotNull AyaLanguageClient self,
+    @NotNull ImmutableSeq<Path> files
+  ) {
+    files.forEach(f -> self.publishDiagnostics(
+      new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
   }
 
   private static @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {

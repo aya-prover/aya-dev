@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
@@ -99,6 +99,10 @@ public record SourcePos(
 
   public boolean contains(int line, int column) {
     return line >= startLine && line <= endLine && column >= startColumn && column <= endColumn;
+  }
+
+  public boolean containsVisually(int line, int column) {
+    return line >= startLine && line <= endLine && column >= startColumn - 1 && column <= endColumn;
   }
 
   public boolean contains(int pos) {
