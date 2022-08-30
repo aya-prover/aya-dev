@@ -2,6 +2,11 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+Initial support for cubical type theory (based on [Guest0x0]),
+with partial elements and the generalized path type ("extension type").
+
+[Guest0x0]: https://github.com/ice1000/Guest0x0
+
 ## 0.19
 
 Updated to jdk 18, rewrote major version of classes to 61,
