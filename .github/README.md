@@ -5,6 +5,8 @@
 [![tokei]](https://github.com/XAMPPRocky/tokei)
 [![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
 
+[Website](https://www.aya-prover.org) contains development blogs which are written for general audience.
+
 ## Download
 
 You may download the latest build of Aya from [GitHub Releases].
@@ -22,10 +24,9 @@ However, we can share some cool stuffs here:
 
 + Dependent types, including pi-types, sigma types, etc.
   You could write a [type-safe interpreter][gadt].
-+ Arend-ish interval type which is used to define the HoTT [path type][oop]
-  and prove [regularity by computation][regularity] thanks to Arend's type theory.
-  We also have the classic cubical-flavored [funExt].
-  + We are considering moving to cubical type theory.
++ De Morgan cubical type theory with generalized path types
+  similar to a bounded cubical subtype.
+  + Implementation prototype: [Guest0x0].
 + Pattern matching with first-match semantics.
   We can implement [redblack tree][rbtree] (without deletion) elegantly.
 + Overlapping and order-independent patterns.
@@ -101,6 +102,7 @@ check out [how to][proxy] let gradle use a proxy.
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
 [mutual]: ../base/src/test/resources/success/src/Order.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
+[Guest0x0]: https://github.com/ice1000/Guest0x0
 
 ## Use as a library
 
