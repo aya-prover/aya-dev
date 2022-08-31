@@ -26,9 +26,9 @@ import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Cube;
 import org.aya.generic.Modifier;
-import org.aya.generic.Partial;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
@@ -419,7 +419,7 @@ public record AyaProducer(
   }
 
   private @NotNull Partial<Expr> visitPartial(AyaParser.PartialContext ctx) {
-    return new Partial.Happy<>(Seq.wrapJava(ctx.subSystem()).map(ss -> new Restr.Side<>(
+    return new Partial.Split<>(Seq.wrapJava(ctx.subSystem()).map(ss -> new Restr.Side<>(
       visitCof(ss.cof()),
       visitExpr(ss.expr()))));
     // TODO: sad partial elements literal?

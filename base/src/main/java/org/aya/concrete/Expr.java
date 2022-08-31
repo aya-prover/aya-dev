@@ -16,7 +16,7 @@ import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Cube;
 import org.aya.generic.ParamLike;
-import org.aya.generic.Partial;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;

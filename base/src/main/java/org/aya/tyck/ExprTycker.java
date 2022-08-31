@@ -23,6 +23,7 @@ import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -281,12 +282,12 @@ public final class ExprTycker extends Tycker {
     @NotNull Expr loc, @NotNull Partial<Expr> partial, @NotNull Term type
   ) {
     return switch (partial) {
-      case Partial.Happy<Expr> hap -> {
+      case Partial.Split<Expr> hap -> {
         var sides = hap.clauses().flatMap(cl -> clause(cl, type));
         confluence(sides, loc, type);
-        yield new Partial.Happy<>(sides);
+        yield new Partial.Split<>(sides);
       }
-      case Partial.Sad<Expr> sad -> new Partial.Sad<>(inherit(sad.u(), type).wellTyped);
+      case Partial.Const<Expr> sad -> new Partial.Const<>(inherit(sad.u(), type).wellTyped);
     };
   }
 
@@ -446,12 +447,12 @@ public final class ExprTycker extends Tycker {
               var body = inherit(plam._2, A).wellTyped;
               // body matches every given face
               var happy = switch (path.cube().partial()) {
-                case Partial.Sad<Term> sad -> {
+                case Partial.Const<Term> sad -> {
                   var s = subst.derive();
                   params.forEach(p -> s.put(p.ref(), false));
                   yield boundary(plam._2, body, sad.u(), A, s);
                 }
-                case Partial.Happy<Term> hap -> hap.clauses().allMatch(c -> {
+                case Partial.Split<Term> hap -> hap.clauses().allMatch(c -> {
                   var cof = c.cof().fmap(t -> t.subst(subst));
                   return CofThy.conv(cof, subst, s -> boundary(plam._2, body, c.u(), A, s));
                 });

@@ -37,6 +37,7 @@ import org.aya.util.reporter.BufferReporter;
 import org.aya.util.reporter.Problem;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.jetbrains.annotations.NotNull;
@@ -269,13 +270,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override public CompletableFuture<Either<Range, PrepareRenameResult>> prepareRename(PrepareRenameParams params) {
+  @Override public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> prepareRename(PrepareRenameParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return null;
       var begin = Rename.prepare(source, params.getPosition());
       if (begin == null) return null;
-      return Either.forRight(new PrepareRenameResult(LspRange.toRange(begin.sourcePos()), begin.data()));
+      return Either3.forSecond(new PrepareRenameResult(LspRange.toRange(begin.sourcePos()), begin.data()));
     });
   }
 

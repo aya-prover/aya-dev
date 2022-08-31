@@ -8,7 +8,7 @@ import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
-import org.aya.generic.Partial;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +57,8 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
   }
   @NotNull private SeqView<R> trace(@NotNull Partial<Term> partial) {
     return switch (partial) {
-      case Partial.Happy<Term> hap -> hap.clauses().view().flatMap(c -> c.cof().view().flatMap(this::trace).concat(trace(c.u())));
-      case Partial.Sad<Term> sad -> trace(sad.u());
+      case Partial.Split<Term> hap -> hap.clauses().view().flatMap(c -> c.cof().view().flatMap(this::trace).concat(trace(c.u())));
+      case Partial.Const<Term> sad -> trace(sad.u());
     };
   }
   private @NotNull SeqView<R> trace(@NotNull Term.Param param) {

@@ -7,8 +7,12 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.generic.*;
+import org.aya.generic.Arg;
+import org.aya.generic.AyaDocile;
+import org.aya.generic.Cube;
+import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -264,8 +268,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
   partial(@NotNull DistillerOptions options, @NotNull Partial<T> partial) {
     return switch (partial) {
-      case Partial.Sad<T> sad -> Doc.sep(Doc.symbol("{|"), sad.u().toDoc(options), Doc.symbol("|}"));
-      case Partial.Happy<T> hap -> Doc.sep(Doc.symbol("{|"),
+      case Partial.Const<T> sad -> Doc.sep(Doc.symbol("{|"), sad.u().toDoc(options), Doc.symbol("|}"));
+      case Partial.Split<T> hap -> Doc.sep(Doc.symbol("{|"),
         Doc.join(Doc.spaced(Doc.symbol("|")), hap.clauses().map(s -> side(options, s))),
         Doc.symbol("|}"));
     };
