@@ -30,9 +30,9 @@ public sealed interface Partial<Term extends Restr.TermLike<Term>> {
     }
 
     @Override public @NotNull Happy<Term> map(@NotNull Function<Term, Term> mapper) {
-      var clauses = this.clauses.map(c -> c.rename(mapper));
-      if (clauses.sameElements(this.clauses, true)) return this;
-      return new Happy<>(clauses);
+      var cl = clauses.map(c -> c.rename(mapper));
+      if (cl.sameElements(clauses, true)) return this;
+      return new Happy<>(cl);
     }
 
     @Override public void forEach(@NotNull Consumer<Term> consumer) {
