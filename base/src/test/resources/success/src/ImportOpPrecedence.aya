@@ -1,0 +1,7 @@
+open import Paths
+
+open import Primitives using (
+  intervalMin as infix /\        ,
+  intervalMax as infix \/        ,
+  invol as infix ~ bind tighter =, \/, /\,
+)
