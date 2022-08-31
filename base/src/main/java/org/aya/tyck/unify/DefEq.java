@@ -523,19 +523,20 @@ public final class DefEq {
   }
 
   private boolean compareLevel(int l, int r) {
+    var valid = l != FormTerm.Univ.UNKNOWN_LIFT && r != FormTerm.Univ.UNKNOWN_LIFT;
     switch (cmp) {
       case Eq:
-        if (l != r) {
+        if (valid && l != r) {
           reporter.report(new LevelError(pos, l, r, true));
           return false;
         }
       case Gt:
-        if (l < r) {
+        if (valid && l < r || r == FormTerm.Univ.UNKNOWN_LIFT) {
           reporter.report(new LevelError(pos, l, r, false));
           return false;
         }
       case Lt:
-        if (l > r) {
+        if (valid && l > r || l == FormTerm.Univ.UNKNOWN_LIFT) {
           reporter.report(new LevelError(pos, r, l, false));
           return false;
         }

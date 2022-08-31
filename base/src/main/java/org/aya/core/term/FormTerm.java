@@ -58,6 +58,10 @@ public sealed interface FormTerm extends Term {
    */
   record Univ(int lift) implements FormTerm {
     public static final @NotNull FormTerm.Univ ZERO = new Univ(0);
+
+    // Only used in comparison. Invalid in other places.
+    public static final int UNKNOWN_LIFT = Integer.MIN_VALUE;
+    public static final @NotNull FormTerm.Univ UNKNOWN = new Univ(UNKNOWN_LIFT);
   }
 
   final class Interval implements FormTerm {

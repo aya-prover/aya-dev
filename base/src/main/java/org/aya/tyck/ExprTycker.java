@@ -674,8 +674,7 @@ public final class ExprTycker extends Tycker {
     return switch (term.normalize(state, NormalizeMode.WHNF)) {
       case FormTerm.Univ univ -> univ.lift();
       case CallTerm.Hole hole -> {
-        // TODO[lift-meta]: should be able to solve a lifted meta
-        unifyTyReported(hole, FormTerm.Univ.ZERO, expr);
+        unifyTyReported(hole, FormTerm.Univ.UNKNOWN, expr);
         yield hole.ulift();
       }
       default -> {
