@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
@@ -9,11 +9,15 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 public interface Constants {
   @NotNull @NonNls String ANONYMOUS_PREFIX = "_";
   @NotNull @NonNls String GENERATED_POSTFIX = "'";
   @NotNull @NonNls String SCOPE_SEPARATOR = "::";
   @NotNull @NonNls String AYA_POSTFIX = ".aya";
+  @NotNull @NonNls String AYA_LITERATE_POSTFIX = ".aya.md"; // TODO: better name like `.laya`
+  @NotNull @NonNls Pattern AYA_POSTFIX_PATTERN = Pattern.compile("(\\.aya$)|(\\.aya\\.md$)");
   @NotNull @NonNls String AYAC_POSTFIX = ".ayac";
   @NotNull @NonNls String AYA_JSON = "aya.json";
 

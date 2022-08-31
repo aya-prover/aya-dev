@@ -1,13 +1,12 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.generic.Constants;
+import org.aya.generic.util.AyaFiles;
 import org.aya.prelude.GeneratedVersion;
-import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.CountingReporter;
@@ -66,7 +65,7 @@ public class TestRunner {
     System.out.println(":: Running tests under " + path.toAbsolutePath());
     assertTrue(path.toFile().isDirectory(), "should be a directory");
 
-    var source = FileUtil.collectSource(path, Constants.AYA_POSTFIX);
+    var source = AyaFiles.collectAyaSourceFiles(path);
     assertTrue(source.isNotEmpty(), "should have at least one .aya file");
     source.forEach(file -> runFile(file, expectSuccess));
   }

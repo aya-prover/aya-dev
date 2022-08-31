@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -10,12 +10,11 @@ import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
-import org.aya.generic.Constants;
+import org.aya.generic.util.AyaFiles;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.util.FileUtil;
 import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,12 +46,12 @@ record LibraryModuleLoader(
   @Override public @NotNull ResolveInfo
   load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
     var basePaths = owner.modulePath();
-    var sourcePath = FileUtil.resolveFile(basePaths, mod, Constants.AYA_POSTFIX);
+    var sourcePath = AyaFiles.resolveAyaSourceFile(basePaths, mod);
     if (sourcePath == null) {
       // We are loading a module belonging to dependencies, find the compiled core.
       // The compiled core should always exist, otherwise the dependency is not built.
       // TODO: what if module name clashes?
-      var depCorePath = FileUtil.resolveFile(basePaths, mod, Constants.AYAC_POSTFIX);
+      var depCorePath = AyaFiles.resolveAyaCompiledFile(basePaths, mod);
       var core = loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
       assert core != null : "dependencies not built?";
       return core;
