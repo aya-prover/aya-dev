@@ -168,7 +168,7 @@ public interface StmtResolver {
     @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
   ) throws Context.ResolvingInterruptedException {
     if (ctx.get(id) instanceof DefVar<?, ?> defVar) {
-      var opDecl = defVar.opDecl;
+      var opDecl = defVar.opDeclRename.getOrDefault(ctx.moduleName(), defVar.opDecl);
       if (opDecl != null) {
         opSet.bind(self, pred, opDecl, id.sourcePos());
         return defVar;
