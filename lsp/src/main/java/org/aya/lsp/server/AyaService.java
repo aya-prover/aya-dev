@@ -20,6 +20,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
+import org.aya.generic.util.AyaFiles;
 import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
@@ -97,7 +98,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   private void mockLibraries(@NotNull Path path) {
-    libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1)
+    libraries.appendAll(AyaFiles.collectAyaSourceFiles(path, 1)
       .map(WsLibrary::mock));
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -7,8 +7,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
-import org.aya.generic.Constants;
-import org.aya.util.FileUtil;
+import org.aya.generic.util.AyaFiles;
 import org.aya.util.error.SourceFileLocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +43,7 @@ public record DiskLibraryOwner(
     var locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
     var owner = new DiskLibraryOwner(locator, MutableList.of(),
       MutableList.of(), MutableList.of(), config);
-    owner.librarySourcesMut.appendAll(FileUtil.collectSource(srcRoot, Constants.AYA_POSTFIX)
+    owner.librarySourcesMut.appendAll(AyaFiles.collectAyaSourceFiles(srcRoot)
       .map(p -> new LibrarySource(owner, p)));
     for (var dep : config.deps()) {
       var depConfig = depConfig(config, dep);

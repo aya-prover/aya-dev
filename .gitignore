@@ -17,6 +17,7 @@ gradle.properties
 .DS_Store
 lombok.config
 /test.aya
+/test.aya.md
 /test.html
 /highlight-hover.js
 

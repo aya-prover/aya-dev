@@ -7,7 +7,7 @@ import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.GenericDef;
-import org.aya.generic.Constants;
+import org.aya.generic.util.AyaFiles;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
@@ -42,7 +42,7 @@ public record LibrarySource(
     var info = resolveInfo.get();
     if (info != null) return info.thisModule().moduleName();
     var display = displayPath();
-    var displayNoExt = display.resolveSibling(display.getFileName().toString().replaceAll("\\.aya", ""));
+    var displayNoExt = display.resolveSibling(AyaFiles.stripAyaSourcePostfix(display.getFileName().toString()));
     return IntStream.range(0, displayNoExt.getNameCount())
       .mapToObj(i -> displayNoExt.getName(i).toString())
       .collect(ImmutableSeq.factory());
@@ -58,7 +58,7 @@ public record LibrarySource(
 
   public @NotNull Path compiledCorePath() {
     var mod = moduleName();
-    return FileUtil.resolveFile(owner.outDir(), mod, Constants.AYAC_POSTFIX);
+    return AyaFiles.resolveAyaCompiledFile(owner.outDir(), mod);
   }
 
   @Override public String toString() {
