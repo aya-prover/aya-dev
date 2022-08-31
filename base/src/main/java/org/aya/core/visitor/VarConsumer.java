@@ -79,7 +79,7 @@ public interface VarConsumer extends TermConsumer {
           var start = bound.size();
           path.cube().params().forEach(bound::append);
           accept(path.cube().type());
-          path.cube().partial().forEach(this);
+          path.cube().partial().termsView().forEach(this);
           bound.removeInRange(start, start + path.cube().params().size());
         }
         case IntroTerm.PathLam lam -> {

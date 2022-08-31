@@ -10,8 +10,8 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Cube;
-import org.aya.generic.Partial;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,7 +87,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case IntroTerm.PathLam lam -> new FormTerm.Path(new Cube<>(
         lam.params().map(Term.Param::ref),
         term(lam.body()),
-        new Partial.Sad<>(term(lam.body()))
+        new Partial.Const<>(term(lam.body()))
       ));
       case ElimTerm.PathApp app -> {
         // v @ ui : A[ui/xi]

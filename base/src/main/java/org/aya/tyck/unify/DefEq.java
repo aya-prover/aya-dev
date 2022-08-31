@@ -16,11 +16,11 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
-import org.aya.generic.Partial;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -304,11 +304,11 @@ public final class DefEq {
       // TODO: path lambda conversion
       case FormTerm.Path path -> throw new UnsupportedOperationException("TODO");
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel
-        && lel.partial() instanceof Partial.Sad<Term> ll
-        && rel.partial() instanceof Partial.Sad<Term> rr -> doCompareTyped(ty.type(), ll.u(), rr.u(), lr, rl);
+        && lel.partial() instanceof Partial.Const<Term> ll
+        && rel.partial() instanceof Partial.Const<Term> rr -> doCompareTyped(ty.type(), ll.u(), rr.u(), lr, rl);
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel
-        && !(lel.partial() instanceof Partial.Sad<Term>)
-        && !(rel.partial() instanceof Partial.Sad<Term>) -> CofThy.conv(ty.restr(), new Subst(),
+        && !(lel.partial() instanceof Partial.Const<Term>)
+        && !(rel.partial() instanceof Partial.Const<Term>) -> CofThy.conv(ty.restr(), new Subst(),
         subst -> doCompareTyped(ty.subst(subst), lhs.subst(subst), rhs.subst(subst), lr, rl));
       case FormTerm.PartTy ty -> false;
     };

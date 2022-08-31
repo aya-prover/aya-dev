@@ -3,6 +3,7 @@
 package org.aya.generic;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +24,10 @@ public record Cube<Term extends Restr.TermLike<Term> & AyaDocile>(
   @NotNull Partial<Term> partial
 ) {
   public @NotNull Cube<Term> map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
-    var type = mapper.apply(this.type);
-    var partial = this.partial.map(mapper);
-    if (type == this.type && partial == this.partial) return this;
-    return new Cube<>(params, type, partial);
+    var ty = mapper.apply(type);
+    var par = partial.map(mapper);
+    if (ty == type && par == partial) return this;
+    return new Cube<>(params, ty, par);
   }
 
   public @NotNull Cube<Term> map(@NotNull Function<Term, Term> mapper) {

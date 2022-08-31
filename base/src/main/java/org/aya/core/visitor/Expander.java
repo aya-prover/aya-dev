@@ -17,8 +17,8 @@ import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Cube;
 import org.aya.generic.Modifier;
-import org.aya.generic.Partial;
 import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
@@ -136,16 +136,16 @@ public interface Expander extends EndoFunctor {
 
   private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
     return switch (partial) {
-      case Partial.Sad<Term> par -> new Partial.Sad<>(par.u());
-      case Partial.Happy<Term> par -> {
+      case Partial.Const<Term> par -> new Partial.Const<>(par.u());
+      case Partial.Split<Term> par -> {
         var clauses = MutableList.<Restr.Side<Term>>create();
         for (var clause : par.clauses()) {
           var u = clause.u();
           if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
-            yield new Partial.Sad<>(u);
+            yield new Partial.Const<>(u);
           }
         }
-        yield new Partial.Happy<>(clauses.toImmutableSeq());
+        yield new Partial.Split<>(clauses.toImmutableSeq());
       }
     };
   }
@@ -158,9 +158,9 @@ public interface Expander extends EndoFunctor {
       return next.apply(lam.body().subst(subst));
     }
     return switch (Expander.partial(app.cube().partial())) {
-      case Partial.Happy<Term> hap -> new ElimTerm.PathApp(app.of(), app.args(), new Cube<>(
+      case Partial.Split<Term> hap -> new ElimTerm.PathApp(app.of(), app.args(), new Cube<>(
         app.cube().params(), app.cube().type(), hap));
-      case Partial.Sad<Term> sad -> sad.u();
+      case Partial.Const<Term> sad -> sad.u();
     };
   }
 
