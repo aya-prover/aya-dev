@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
@@ -12,8 +12,8 @@ import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.ref.Var;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.visitor.ExprResolver;
@@ -71,7 +71,7 @@ public sealed interface Literate extends Docile {
     }
   }
 
-  record Err(@NotNull MutableValue<Var> def, @Override @NotNull SourcePos sourcePos) implements Literate {
+  record Err(@NotNull MutableValue<AnyVar> def, @Override @NotNull SourcePos sourcePos) implements Literate {
     @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       def.set(context.getUnqualified(def.get().name(), sourcePos));
       // TODO: add to dependency?

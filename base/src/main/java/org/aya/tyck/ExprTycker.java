@@ -25,9 +25,9 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
@@ -115,7 +115,7 @@ public final class ExprTycker extends Tycker {
             .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Term>>create();
-        var missing = MutableList.<Var>create();
+        var missing = MutableList.<AnyVar>create();
         var conFields = newExpr.fields();
 
         for (var defField : structRef.core.fields) {

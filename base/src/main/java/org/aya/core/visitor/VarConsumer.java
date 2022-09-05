@@ -5,15 +5,15 @@ package org.aya.core.visitor;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.core.term.*;
+import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
 public interface VarConsumer extends TermConsumer {
-  void var(@NotNull Var var);
+  void var(@NotNull AnyVar var);
 
   @Override default void accept(@NotNull Term term) {
     switch (term) {
@@ -97,7 +97,7 @@ public interface VarConsumer extends TermConsumer {
       }
     }
 
-    @Contract(mutates = "this") @Override public void var(@NotNull Var v) {
+    @Contract(mutates = "this") @Override public void var(@NotNull AnyVar v) {
       if (v instanceof LocalVar local
         && !(allowed.contains(local) || bound.contains(local))
         && !invalid.contains(local)

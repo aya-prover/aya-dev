@@ -9,15 +9,15 @@ import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
 public interface MonoidalVarFolder<R> extends Function<Term, R> {
   // TODO: Do we need to visit variables in `access` and `new` as well?
-  @NotNull R var(@NotNull Var var);
+  @NotNull R var(@NotNull AnyVar var);
 
   @NotNull R merge(@NotNull SeqView<R> rs);
 
@@ -72,8 +72,8 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
     return merge(trace(term));
   }
 
-  record Usages(@NotNull Var var) implements MonoidalVarFolder<Integer> {
-    @Override public @NotNull Integer var(@NotNull Var v) {
+  record Usages(@NotNull AnyVar var) implements MonoidalVarFolder<Integer> {
+    @Override public @NotNull Integer var(@NotNull AnyVar v) {
       return v == var ? 1 : 0;
     }
 
@@ -92,7 +92,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
     public static final @NotNull MonoidalVarFolder.RefFinder HEADER_ONLY = new RefFinder(false);
     public static final @NotNull MonoidalVarFolder.RefFinder HEADER_AND_BODY = new RefFinder(true);
 
-    @Override public @NotNull SeqView<Def> var(@NotNull Var usage) {
+    @Override public @NotNull SeqView<Def> var(@NotNull AnyVar usage) {
       return usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def ? SeqView.of(def) : SeqView.empty();
     }
 

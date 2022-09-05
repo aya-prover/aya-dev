@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -10,8 +10,8 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.util.ForLSP;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
@@ -71,11 +71,11 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
   record Ctor(
     @Override @NotNull SourcePos sourcePos,
     boolean explicit,
-    @NotNull WithPos<@NotNull Var> resolved,
+    @NotNull WithPos<@NotNull AnyVar> resolved,
     @NotNull ImmutableSeq<Pattern> params,
     @Nullable LocalVar as
   ) implements Pattern {
-    public Ctor(@NotNull Pattern.Bind bind, @NotNull Var maybe) {
+    public Ctor(@NotNull Pattern.Bind bind, @NotNull AnyVar maybe) {
       this(bind.sourcePos(), bind.explicit(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty(), null);
     }
   }

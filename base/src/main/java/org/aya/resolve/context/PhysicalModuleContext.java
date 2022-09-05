@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.aya.resolve.error.DuplicateExportError;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +18,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions = MutableHashMap.create();
-  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create());
-  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create());
+  public final @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions = MutableHashMap.create();
+  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create());
+  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create());
 
   private final @NotNull ImmutableSeq<String> moduleName;
 
@@ -40,7 +40,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     ImmutableSeq<String> componentName,
-    MutableMap<String, Var> mod
+    MutableMap<String, AnyVar> mod
   ) {
     ModuleContext.super.importModule(accessibility, sourcePos, componentName, mod);
     if (accessibility == Stmt.Accessibility.Public) exports.set(componentName, mod);
@@ -50,7 +50,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     @NotNull ImmutableSeq<String> modName,
     @NotNull String name,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull Var ref,
+    @NotNull AnyVar ref,
     @NotNull SourcePos sourcePos
   ) {
     ModuleContext.super.addGlobal(modName, name, accessibility, ref, sourcePos);
@@ -70,11 +70,11 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return parent;
   }
 
-  @Override public @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions() {
+  @Override public @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions() {
     return definitions;
   }
 
-  @Override public @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules() {
+  @Override public @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> modules() {
     return modules;
   }
 }

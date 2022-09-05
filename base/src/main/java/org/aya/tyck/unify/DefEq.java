@@ -22,9 +22,9 @@ import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
@@ -47,7 +47,7 @@ import java.util.function.Supplier;
  * we will consider it a unification failure, so be careful when returning null.
  */
 public final class DefEq {
-  public record Sub(@NotNull MutableMap<@NotNull Var, @NotNull RefTerm> map) implements Cloneable {
+  public record Sub(@NotNull MutableMap<@NotNull AnyVar, @NotNull RefTerm> map) implements Cloneable {
     public Sub() {
       this(MutableMap.create());
     }
@@ -217,7 +217,7 @@ public final class DefEq {
   }
 
   private @NotNull Term getType(@NotNull CallTerm lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
-    var substMap = MutableMap.<Var, Term>create();
+    var substMap = MutableMap.<AnyVar, Term>create();
     for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
@@ -256,7 +256,7 @@ public final class DefEq {
       case CallTerm.Struct type1 -> {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
-          Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
+          Tuple2.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
         var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
           var dummyVars = fieldSig.selfTele.map(par ->

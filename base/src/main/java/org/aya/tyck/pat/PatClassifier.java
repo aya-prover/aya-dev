@@ -19,7 +19,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
@@ -331,7 +331,7 @@ public record PatClassifier(
       && headEnd.isLeft() == endF.isLeft() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
   }
 
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {
+  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, AnyVar ctorRef) {
     var head = head(subPats);
     // Literals are matched against constructor patterns
     if (head instanceof Pat.ShapedInt lit) head = lit.constructorForm();

@@ -13,9 +13,9 @@ import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.tyck.error.FieldProblem;
@@ -145,7 +145,7 @@ public record ExprResolver(
             }
             yield new Expr.RefExpr(sourcePos, ref);
           }
-          case Var var -> new Expr.RefExpr(sourcePos, var);
+          case AnyVar var -> new Expr.RefExpr(sourcePos, var);
         };
       }
       default -> expr;
@@ -200,7 +200,7 @@ public record ExprResolver(
       this::addReference);
   }
 
-  private void generalizedUnavailable(Context ctx, SourcePos refExpr, Var var) {
+  private void generalizedUnavailable(Context ctx, SourcePos refExpr, AnyVar var) {
     ctx.reporter().report(new GeneralizedNotAvailableError(refExpr, var));
     throw new Context.ResolvingInterruptedException();
   }

@@ -6,8 +6,8 @@ import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
 import org.aya.generic.Cube;
 import org.aya.generic.util.InternalException;
+import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -89,7 +89,7 @@ public interface EndoFunctor extends Function<Term, Term> {
       };
     }
 
-    private Term replacement(Term field, @NotNull Var ref) {
+    private Term replacement(Term field, @NotNull AnyVar ref) {
       return subst.map().getOption(ref).map(Term::rename).getOrDefault(field);
     }
   }

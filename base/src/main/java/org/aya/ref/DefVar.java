@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ref;
 
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.UnknownNullability;
 /**
  * @author ice1000
  */
-public final class DefVar<Core extends GenericDef, Concrete extends Decl> implements Var {
+public final class DefVar<Core extends GenericDef, Concrete extends Decl> implements AnyVar {
   private final @NotNull String name;
   /** Initialized in parsing, so it might be null for deserialized user definitions. */
   public @UnknownNullability Concrete concrete;

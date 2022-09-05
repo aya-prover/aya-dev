@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.ReplCompiler;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.aya.util.reporter.IgnoringReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public class ReplCompilerTest {
     assertNull(findContext("a"));
   }
 
-  private @Nullable Var findContext(@NotNull String name) {
+  private @Nullable AnyVar findContext(@NotNull String name) {
     var ctx = compiler.getContext();
     var def = ctx.definitions.getOrNull(name);
     if (def == null) return null;

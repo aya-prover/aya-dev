@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -12,7 +12,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @apiNote The object identity of this class is used at runtime
  * @implNote Do not override equals or hashCode
  */
-public final class Meta implements Var {
+public final class Meta implements AnyVar {
   public final @NotNull ImmutableSeq<Term.Param> contextTele;
   public final @NotNull ImmutableSeq<Term.Param> telescope;
   public final @NotNull String name;
