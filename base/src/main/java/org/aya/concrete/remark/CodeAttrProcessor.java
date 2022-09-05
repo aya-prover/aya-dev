@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
@@ -11,11 +11,15 @@ import org.commonmark.parser.delimiter.DelimiterProcessor;
 import org.commonmark.parser.delimiter.DelimiterRun;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 /**
- * https://github.com/commonmark/commonmark-java/blob/main/commonmark-ext-image-attributes/src/main/java/org/commonmark/ext/image/attributes/internal/ImageAttributesDelimiterProcessor.java
+ * <a href="https://github.com/commonmark/commonmark-java/blob/main/commonmark-ext-image-attributes/src/main/java/org/commonmark/ext/image/attributes/internal/ImageAttributesDelimiterProcessor.java">...</a>
  */
 public class CodeAttrProcessor implements DelimiterProcessor {
   public static final @NotNull CodeAttrProcessor INSTANCE = new CodeAttrProcessor();
+  private static final @NotNull Pattern DELIM = Pattern.compile("[\\s,;]+");
+  private static final @NotNull Pattern EQ = Pattern.compile("=");
 
   private CodeAttrProcessor() {}
 
@@ -72,8 +76,8 @@ public class CodeAttrProcessor implements DelimiterProcessor {
     var dist = new DistillerOptions();
     var mode = NormalizeMode.NULL;
     var show = CodeOptions.ShowCode.Core;
-    for (var s : content.toString().split("[\\s,;]+")) {
-      var attribute = s.split("=", 2);
+    for (var s : DELIM.split(content.toString())) {
+      var attribute = EQ.split(s, 2);
       if (attribute.length > 1) {
         var key = attribute[0];
         var val = attribute[1];
