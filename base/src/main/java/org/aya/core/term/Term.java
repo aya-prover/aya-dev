@@ -19,9 +19,9 @@ import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.AnyVar;
 import org.aya.ref.Bind;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
@@ -180,7 +180,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
     };
   }
 
-  default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
+  default @NotNull Term subst(@NotNull AnyVar var, @NotNull Term term) {
     return subst(new Subst(var, term));
   }
 
@@ -188,7 +188,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
     return new EndoFunctor.Substituter(subst).apply(this);
   }
 
-  default @NotNull Term subst(@NotNull Map<Var, ? extends Term> subst) {
+  default @NotNull Term subst(@NotNull Map<AnyVar, ? extends Term> subst) {
     return subst(new Subst(MutableMap.from(subst)));
   }
 
@@ -200,7 +200,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
     return new EndoFunctor.Renamer().apply(this);
   }
 
-  default int findUsages(@NotNull Var var) {
+  default int findUsages(@NotNull AnyVar var) {
     return new MonoidalVarFolder.Usages(var).apply(this);
   }
 
@@ -290,7 +290,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       return new Pat.Bind(explicit, ref, type);
     }
 
-    public @NotNull Param subst(@NotNull Var var, @NotNull Term term) {
+    public @NotNull Param subst(@NotNull AnyVar var, @NotNull Term term) {
       return subst(new Subst(var, term));
     }
 

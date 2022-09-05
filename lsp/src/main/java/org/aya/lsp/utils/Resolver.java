@@ -19,9 +19,9 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.generic.Constants;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
@@ -43,7 +43,7 @@ public interface Resolver {
   }
 
   /** resolve the position to its referring target */
-  static @NotNull SeqView<WithPos<@NotNull Var>> resolveVar(
+  static @NotNull SeqView<WithPos<@NotNull AnyVar>> resolveVar(
     @NotNull LibrarySource source,
     @NotNull Position position
   ) {
@@ -57,7 +57,7 @@ public interface Resolver {
         // defVar is an imported and serialized symbol, so we need to find the original one
         else if (defVar.module != null) {
           yield Resolver.resolveDef(source.owner(), defVar.module, defVar.name())
-            .map(target -> new WithPos<Var>(pos.sourcePos(), target.ref()))
+            .map(target -> new WithPos<AnyVar>(pos.sourcePos(), target.ref()))
             .getOrNull();
         }
         // defVar is from a skipped module (see OrgaTycker), we can do nothing
@@ -105,7 +105,7 @@ public interface Resolver {
    * Traverse all referring terms including:
    * {@link Expr.RefExpr}, {@link Expr.ProjExpr}, {@link Expr.NewExpr}
    * and {@link Pattern} and check against a given condition implemented in
-   * {@link ReferringResolver#check(P, Var, SourcePos)}
+   * {@link ReferringResolver#check(P, AnyVar, SourcePos)}
    */
   abstract class ReferringResolver<P> implements StmtOps<P> {
     public void visitAll(ImmutableSeq<Stmt> program, P xy) {
@@ -116,7 +116,7 @@ public interface Resolver {
      * check whether a referable term's referring variable satisfies the parameter
      * at given source pos.
      */
-    protected abstract void check(@NotNull P param, @NotNull Var var, @NotNull SourcePos sourcePos);
+    protected abstract void check(@NotNull P param, @NotNull AnyVar var, @NotNull SourcePos sourcePos);
 
     @Override public @NotNull Expr visitExpr(@NotNull Expr expr, P pp) {
       switch (expr) {
@@ -163,7 +163,7 @@ public interface Resolver {
    * @author ice1000, kiva
    */
   class PositionResolver extends ReferringResolver<XY> {
-    public final @NotNull MutableList<WithPos<Var>> targetVars = MutableList.create();
+    public final @NotNull MutableList<WithPos<AnyVar>> targetVars = MutableList.create();
 
     @Override public void visitCommand(@NotNull Command cmd, XY pp) {
       switch (cmd) {
@@ -182,20 +182,20 @@ public interface Resolver {
       super.visitTelescopic(decl, proof, xy);
     }
 
-    @Override protected void check(@NotNull XY xy, @NotNull Var var, @NotNull SourcePos sourcePos) {
+    @Override protected void check(@NotNull XY xy, @NotNull AnyVar var, @NotNull SourcePos sourcePos) {
       if (xy.inside(sourcePos)) targetVars.append(new WithPos<>(sourcePos, var));
     }
   }
 
   /** find usages of a variable */
-  class UsageResolver extends ReferringResolver<Var> {
+  class UsageResolver extends ReferringResolver<AnyVar> {
     public final @NotNull MutableList<SourcePos> refs = MutableList.create();
 
-    @Override protected void check(@NotNull Var var, @NotNull Var check, @NotNull SourcePos sourcePos) {
+    @Override protected void check(@NotNull AnyVar var, @NotNull AnyVar check, @NotNull SourcePos sourcePos) {
       if (isUsage(var, check)) refs.append(sourcePos);
     }
 
-    private boolean isUsage(@NotNull Var var, @NotNull Var check) {
+    private boolean isUsage(@NotNull AnyVar var, @NotNull AnyVar check) {
       if (check == var) return true;
       // for imported serialized definitions, let's compare by qualified name
       return var instanceof DefVar<?, ?> defVar

@@ -19,8 +19,8 @@ import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
@@ -183,10 +183,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record RefExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Var resolvedVar,
+    @NotNull AnyVar resolvedVar,
     @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
-    public RefExpr(@NotNull SourcePos sourcePos, @NotNull Var resolvedVar) {
+    public RefExpr(@NotNull SourcePos sourcePos, @NotNull AnyVar resolvedVar) {
       this(sourcePos, resolvedVar, MutableValue.create());
     }
 
@@ -219,7 +219,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
     @NotNull Either<Integer, QualifiedID> ix,
-    @Nullable Var resolvedIx,
+    @Nullable AnyVar resolvedIx,
     @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public ProjExpr(
@@ -244,7 +244,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull WithPos<String> name,
     @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
     @NotNull Expr body,
-    @ForLSP @NotNull MutableValue<Var> resolvedField
+    @ForLSP @NotNull MutableValue<AnyVar> resolvedField
   ) {}
 
   /**

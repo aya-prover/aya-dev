@@ -29,8 +29,8 @@ import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
@@ -53,7 +53,7 @@ import java.util.function.Supplier;
 public final class PatTycker {
   public final @NotNull ExprTycker exprTycker;
   private final @NotNull Subst typeSubst;
-  private final @NotNull MutableMap<Var, Expr> bodySubst;
+  private final @NotNull MutableMap<AnyVar, Expr> bodySubst;
   private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
   private Pattern.Clause currentClause = null;
@@ -65,7 +65,7 @@ public final class PatTycker {
   public PatTycker(
     @NotNull ExprTycker exprTycker,
     @NotNull Subst typeSubst,
-    @NotNull MutableMap<Var, Expr> bodySubst, @Nullable Trace.Builder traceBuilder
+    @NotNull MutableMap<AnyVar, Expr> bodySubst, @Nullable Trace.Builder traceBuilder
   ) {
     this.exprTycker = exprTycker;
     this.typeSubst = typeSubst;
@@ -99,7 +99,7 @@ public final class PatTycker {
    * After checking a pattern, we need to replace the references of the
    * corresponding telescope binding with the pattern.
    */
-  private void addPatSubst(@NotNull Var var, @NotNull Pat pat, @NotNull SourcePos pos) {
+  private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull SourcePos pos) {
     typeSubst.addDirectly(var, pat.toTerm());
     bodySubst.put(var, pat.toExpr(pos));
   }
@@ -222,7 +222,7 @@ public final class PatTycker {
   public record LhsResult(
     @NotNull LocalCtx gamma,
     @NotNull Term type,
-    @NotNull ImmutableMap<Var, Expr> bodySubst,
+    @NotNull ImmutableMap<AnyVar, Expr> bodySubst,
     boolean hasError,
     @NotNull Pat.Preclause<Expr> preclause
   ) {
@@ -357,7 +357,7 @@ public final class PatTycker {
    * @return null means selection failed
    */
   private @Nullable Tuple3<CallTerm.Data, Subst, CallTerm.ConHead>
-  selectCtor(Term param, @Nullable Var name, @NotNull Pattern pos) {
+  selectCtor(Term param, @Nullable AnyVar name, @NotNull Pattern pos) {
     if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pos, param));
       return null;
@@ -406,7 +406,7 @@ public final class PatTycker {
 
   private record BodySubstitutor(
     @Override @NotNull ExprView view,
-    @NotNull ImmutableMap<Var, Expr> bodySubst
+    @NotNull ImmutableMap<AnyVar, Expr> bodySubst
   ) implements ExprOps {
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {

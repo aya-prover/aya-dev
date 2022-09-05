@@ -15,9 +15,10 @@ public interface Constants {
   @NotNull @NonNls String ANONYMOUS_PREFIX = "_";
   @NotNull @NonNls String GENERATED_POSTFIX = "'";
   @NotNull @NonNls String SCOPE_SEPARATOR = "::";
+  @NotNull Pattern SCOPE_SEPARATOR_PATTERN = Pattern.compile(SCOPE_SEPARATOR);
   @NotNull @NonNls String AYA_POSTFIX = ".aya";
   @NotNull @NonNls String AYA_LITERATE_POSTFIX = ".aya.md"; // TODO: better name like `.laya`
-  @NotNull @NonNls Pattern AYA_POSTFIX_PATTERN = Pattern.compile("(\\.aya$)|(\\.aya\\.md$)");
+  @NotNull Pattern AYA_POSTFIX_PATTERN = Pattern.compile("(\\.aya$)|(\\.aya\\.md$)");
   @NotNull @NonNls String AYAC_POSTFIX = ".ayac";
   @NotNull @NonNls String AYA_JSON = "aya.json";
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.repr;
 
@@ -14,8 +14,8 @@ import org.aya.core.def.GenericDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.ref.Var;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
@@ -26,7 +26,7 @@ import java.util.function.BooleanSupplier;
  */
 public record ShapeMatcher(
   @NotNull MutableLinkedList<DefVar<? extends Def, ? extends Decl.Telescopic>> def,
-  @NotNull MutableMap<Var, Var> teleSubst
+  @NotNull MutableMap<AnyVar, AnyVar> teleSubst
 ) {
   public static boolean match(@NotNull CodeShape shape, @NotNull GenericDef def) {
     if (shape instanceof CodeShape.DataShape dataShape && def instanceof DataDef data)

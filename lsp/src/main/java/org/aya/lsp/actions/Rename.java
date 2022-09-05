@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -8,7 +8,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextEdit;
@@ -23,7 +23,7 @@ public interface Rename {
   static @Nullable WithPos<String> prepare(@NotNull LibrarySource source, @NotNull Position position) {
     var vars = Resolver.resolveVar(source, position);
     if (vars.isEmpty()) return null;
-    return vars.first().map(Var::name);
+    return vars.first().map(AnyVar::name);
   }
 
   static Map<String, List<TextEdit>> rename(

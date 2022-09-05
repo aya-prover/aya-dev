@@ -10,7 +10,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.Constants;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.aya.resolve.error.*;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -31,10 +31,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   @Override default @NotNull Path underlyingFile() {
     return parent().underlyingFile();
   }
-  @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions();
-  @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules();
+  @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions();
+  @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> modules();
 
-  @Override default @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = definitions().getOrNull(name);
     if (result == null) return null;
     else if (result.size() == 1) return result.iterator().next().getValue();
@@ -45,7 +45,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     }
   }
 
-  @Override default @Nullable Var
+  @Override default @Nullable AnyVar
   getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var mod = modules().getOrNull(modName);
     if (mod == null) return null;
@@ -54,14 +54,14 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     return ref;
   }
 
-  @Override default @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
+  @Override default @Nullable MutableMap<String, AnyVar> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
     return modules().getOrNull(modName);
   }
 
   default void importModules(
     @NotNull ImmutableSeq<String> modName,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> module,
+    @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> module,
     @NotNull SourcePos sourcePos
   ) {
     module.forEach((name, mod) -> importModule(accessibility, sourcePos, modName.concat(name), mod));
@@ -71,7 +71,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     ImmutableSeq<String> componentName,
-    MutableMap<String, Var> mod
+    MutableMap<String, AnyVar> mod
   ) {
     var modules = modules();
     if (modules.containsKey(componentName)) {
@@ -100,7 +100,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     });
   }
 
-  default void addGlobalSimple(@NotNull Stmt.Accessibility acc, @NotNull Var ref, @NotNull SourcePos sourcePos) {
+  default void addGlobalSimple(@NotNull Stmt.Accessibility acc, @NotNull AnyVar ref, @NotNull SourcePos sourcePos) {
     addGlobal(TOP_LEVEL_MOD_NAME, ref.name(), acc, ref, sourcePos);
   }
 
@@ -108,7 +108,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ImmutableSeq<String> modName,
     @NotNull String name,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull Var ref,
+    @NotNull AnyVar ref,
     @NotNull SourcePos sourcePos
   ) {
     var definitions = definitions();

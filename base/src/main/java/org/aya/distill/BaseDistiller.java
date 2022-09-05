@@ -16,9 +16,9 @@ import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,7 +166,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    */
   public @NotNull Doc visitTele(
     @NotNull Seq<? extends ParamLike<Term>> telescope,
-    @Nullable Term body, @NotNull ToIntBiFunction<Term, Var> altF7
+    @Nullable Term body, @NotNull ToIntBiFunction<Term, AnyVar> altF7
   ) {
     if (telescope.isEmpty()) return Doc.empty();
     var last = telescope.first();
@@ -209,7 +209,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       : Doc.bracedUnless(param.nameDoc(), param.explicit());
   }
 
-  public static @NotNull Doc varDoc(@NotNull Var ref) {
+  public static @NotNull Doc varDoc(@NotNull AnyVar ref) {
     if (ref == LocalVar.IGNORED) return Doc.plain("_");
     else return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
   }
@@ -218,23 +218,23 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return coerce ? Doc.styled(KEYWORD, "coerce") : Doc.empty();
   }
 
-  static @NotNull Doc primDoc(Var ref) {
+  static @NotNull Doc primDoc(AnyVar ref) {
     return Doc.sep(Doc.styled(KEYWORD, "prim"), linkDef(ref, FN_CALL));
   }
 
-  public static @NotNull Doc linkDef(@NotNull Var ref, @NotNull Style color) {
+  public static @NotNull Doc linkDef(@NotNull AnyVar ref, @NotNull Style color) {
     return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
-  public static @NotNull Doc linkRef(@NotNull Var ref, @NotNull Style color) {
+  public static @NotNull Doc linkRef(@NotNull AnyVar ref, @NotNull Style color) {
     return Doc.linkRef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
-  public static @NotNull Doc linkLit(int literal, @NotNull Var ref, @NotNull Style color) {
+  public static @NotNull Doc linkLit(int literal, @NotNull AnyVar ref, @NotNull Style color) {
     return Doc.linkRef(Doc.styled(color, Doc.plain(String.valueOf(literal))), ref.hashCode());
   }
 
-  public static @NotNull Doc linkDef(@NotNull Var ref) {
+  public static @NotNull Doc linkDef(@NotNull AnyVar ref) {
     return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
   }
 

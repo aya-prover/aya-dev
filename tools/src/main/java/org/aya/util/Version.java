@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.regex.Pattern;
 
 /**
  * @author ice1000
@@ -16,9 +17,10 @@ public record Version(
   @NotNull BigInteger minor,
   @NotNull BigInteger patch
 ) implements Comparable<Version>, Serializable {
+  private static final @NotNull Pattern DOT = Pattern.compile("\\.");
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull Version create(@NotNull String version) {
-    var split = version.trim().split("\\.");
+    var split = DOT.split(version.trim());
     return switch (split.length) {
       case 0 -> throw new IllegalArgumentException("Invalid version: " + version);
       case 1 -> new Version(new BigInteger(split[0]), BigInteger.ZERO, BigInteger.ZERO);

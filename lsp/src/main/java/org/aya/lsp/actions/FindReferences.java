@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -7,7 +7,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Location;
@@ -38,7 +38,7 @@ public interface FindReferences {
   }
 
   static @NotNull SeqView<SourcePos> findRefs(
-    @NotNull SeqView<Var> vars,
+    @NotNull SeqView<AnyVar> vars,
     @NotNull SeqView<LibraryOwner> libraries
   ) {
     var resolver = new Resolver.UsageResolver();
@@ -56,7 +56,7 @@ public interface FindReferences {
     return defs.concat(refs);
   }
 
-  private static void resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner, @NotNull Var var) {
+  private static void resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner, @NotNull AnyVar var) {
     owner.librarySources().forEach(src -> {
       var program = src.program().get();
       if (program != null) resolver.visitAll(program, var);

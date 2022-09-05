@@ -47,7 +47,7 @@ public final class LspTestClient implements AyaLanguageClient {
   private void executeOne(@NotNull TestCommand cmd) {
     switch (cmd) {
       case TestCommand.Mutate m -> {
-        var modName = ImmutableSeq.from(m.moduleName().split(Constants.SCOPE_SEPARATOR));
+        var modName = ImmutableSeq.from(Constants.SCOPE_SEPARATOR_PATTERN.split(m.moduleName()));
         var source = Resolver.resolveModule(service.libraries(), modName);
         Assertions.assertTrue(source.isDefined(), "Cannot mutate module " + m.moduleName());
         advisor.mutate(source.get());

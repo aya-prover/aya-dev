@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -13,8 +13,8 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.repr.AyaShape;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.ref.Var;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.PhysicalModuleContext;
@@ -217,11 +217,11 @@ public record CompiledAya(
     export(context, qname.mod().drop(dropMod), qname.name(), ref);
   }
 
-  private void export(@NotNull PhysicalModuleContext context, @NotNull String name, @NotNull Var var) {
+  private void export(@NotNull PhysicalModuleContext context, @NotNull String name, @NotNull AnyVar var) {
     export(context, ImmutableSeq.empty(), name, var);
   }
 
-  private void export(@NotNull PhysicalModuleContext context, @NotNull ImmutableSeq<String> mod, @NotNull String name, @NotNull Var var) {
+  private void export(@NotNull PhysicalModuleContext context, @NotNull ImmutableSeq<String> mod, @NotNull String name, @NotNull AnyVar var) {
     context.exports.getOrPut(ImmutableSeq.empty(), MutableMap::create).put(name, var);
     context.exports.getOrPut(mod, MutableMap::create).put(name, var);
   }

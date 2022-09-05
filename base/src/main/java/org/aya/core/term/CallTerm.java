@@ -9,8 +9,8 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
 import org.aya.generic.Arg;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.ref.Var;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,7 @@ import java.util.function.Function;
  * @see CallTerm#make(ElimTerm.App)
  */
 public sealed interface CallTerm extends Term {
-  @NotNull Var ref();
+  @NotNull AnyVar ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
 
   @FunctionalInterface

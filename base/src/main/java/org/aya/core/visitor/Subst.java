@@ -15,8 +15,8 @@ import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.ref.Var;
 import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Debug;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
   childrenArray = "map.asJava().entrySet().toArray()",
   hasChildren = "map.isNotEmpty()")
 public record Subst(
-  @NotNull MutableMap<@NotNull Var, @NotNull Term> map
+  @NotNull MutableMap<@NotNull AnyVar, @NotNull Term> map
 ) implements AyaDocile, CofThy.SubstObj<Term, LocalVar, Subst> {
   public static final @NotNull Subst EMPTY = new Subst(MutableTreeMap.of((o1, o2) -> {
     throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
@@ -42,7 +42,7 @@ public record Subst(
     this(MutableMap.create());
   }
 
-  public Subst(@NotNull Var var, @NotNull Term term) {
+  public Subst(@NotNull AnyVar var, @NotNull Term term) {
     this(MutableHashMap.of(var, term));
   }
 
@@ -55,17 +55,17 @@ public record Subst(
     map.replaceAll((var, term) -> term.subst(subst));
   }
 
-  public ImmutableSeq<Var> overlap(@NotNull Subst subst) {
+  public ImmutableSeq<AnyVar> overlap(@NotNull Subst subst) {
     if (subst.map.isEmpty() || map.isEmpty()) return ImmutableSeq.empty();
     return map.keysView().filter(subst.map::containsKey).toImmutableSeq();
   }
 
-  public @NotNull Subst addDirectly(@NotNull Var var, @NotNull Term term) {
+  public @NotNull Subst addDirectly(@NotNull AnyVar var, @NotNull Term term) {
     map.put(var, term);
     return this;
   }
 
-  public @NotNull Subst add(@NotNull Var var, @NotNull Term term) {
+  public @NotNull Subst add(@NotNull AnyVar var, @NotNull Term term) {
     subst(new Subst(var, term));
     return addDirectly(var, term);
   }

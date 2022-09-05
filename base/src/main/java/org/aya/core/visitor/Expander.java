@@ -20,7 +20,7 @@ import org.aya.generic.Modifier;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -186,8 +186,8 @@ public interface Expander extends EndoFunctor {
   }
 
   record Tracked(
-    @NotNull Set<@NotNull Var> unfolding,
-    @NotNull MutableSet<@NotNull Var> unfolded,
+    @NotNull Set<@NotNull AnyVar> unfolding,
+    @NotNull MutableSet<@NotNull AnyVar> unfolded,
     @NotNull TyckState state,
     @NotNull PrimDef.Factory factory
   ) implements Expander {

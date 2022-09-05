@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
@@ -6,7 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import org.aya.ref.Var;
+import org.aya.ref.AnyVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -17,8 +17,8 @@ import java.nio.file.Path;
  */
 public record NoExportContext(
   @NotNull PhysicalModuleContext parent,
-  @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions,
-  @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules
+  @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions,
+  @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> modules
 ) implements ModuleContext {
   @Override
   public @NotNull ImmutableSeq<String> moduleName() {
