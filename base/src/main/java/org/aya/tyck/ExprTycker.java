@@ -497,6 +497,28 @@ public final class ExprTycker extends Tycker {
     };
   }
 
+  private @NotNull Result doInheritUniv(@NotNull Expr expr) {
+    Term univ = FormTerm.Univ.ZERO;
+    return switch (expr) {
+      case Expr.TupExpr tuple -> fail(tuple, univ, BadTypeError.sigmaCon(state, tuple, univ));
+      case Expr.HoleExpr hole -> {
+        // TODO[lift-meta]: should be able to solve a lifted meta
+        var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
+        if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
+        yield new Result(freshHole._2, univ);
+      }
+      case Expr.UnivExpr univExpr -> new Result(new FormTerm.Univ(univExpr.lift()), new FormTerm.Univ(univExpr.lift() + 1));
+      case Expr.LamExpr lam -> fail(lam, univ, BadTypeError.pi(state, lam, univ));
+      case Expr.PartEl el -> fail(el, univ, BadTypeError.partTy(state, el, univ));
+      default -> {
+        Result result = synthesize(expr);
+        var lower = result.type;
+        var term = result.wellTyped;
+        yield new Result(term, new FormTerm.Univ(ensureUniv(expr, lower)));
+      }
+    };
+  }
+
   private void traceExit(Result result, @NotNull Expr expr) {
     var frozen = LazyValue.of(() -> result.freezeHoles(state));
     tracing(builder -> {
@@ -546,6 +568,13 @@ public final class ExprTycker extends Tycker {
     }
     traceExit(res, expr);
     return res;
+  }
+
+  public @NotNull Result inheritUniv(@NotNull Expr expr) {
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
+    Result result = doInheritUniv(expr);
+    traceExit(result, expr);
+    return result;
   }
 
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
