@@ -61,6 +61,10 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
     return new DefVar<>(null, null, name);
   }
 
+  public @Nullable OpDecl resolveOpDecl(@NotNull ImmutableSeq<String> moduleName){
+    return opDeclRename.getOrDefault(moduleName, opDecl);
+  }
+
   @Override public boolean equals(Object o) {
     return this == o;
   }

@@ -58,7 +58,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     var expr = elem.expr();
     while (expr instanceof Expr.LiftExpr lift) expr = lift.expr();
     return expr instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar
-      ? defVar.opDeclRename.getOrDefault(resolveInfo.thisModule().moduleName(), defVar.opDecl)
+      ? defVar.resolveOpDecl(resolveInfo.thisModule().moduleName())
       : null;
   }
 
