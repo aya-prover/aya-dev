@@ -88,6 +88,18 @@ public class DistillerTest {
     assertEquals("(Pi (A : Type 0) -> A) = X", test2.toDoc(DistillerOptions.informative()).debugRender());
   }
 
+  @Test public void binop() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      open data Nat | zero | suc Nat
+      open data D   | infix · Nat Nat
+
+      def g (h : Nat -> D) : Nat => zero
+      def t (n : Nat) => g (n ·)
+      """)._2;
+    var t = ((FnDef) decls.get(3)).body.getLeftValue();
+    assertEquals("g (n ·)", t.toDoc(DistillerOptions.informative()).debugRender());
+  }
+
   private @NotNull Doc declDoc(@Language("TEXT") String text) {
     return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(DistillerOptions.debug())));
   }
