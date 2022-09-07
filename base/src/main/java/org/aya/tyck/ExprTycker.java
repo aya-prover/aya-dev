@@ -504,7 +504,6 @@ public final class ExprTycker extends Tycker {
     return switch (expr) {
       case Expr.TupExpr tuple -> fail(tuple, univ, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.HoleExpr hole -> {
-        // TODO[lift-meta]: should be able to solve a lifted meta
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new Result(freshHole._2, univ);
