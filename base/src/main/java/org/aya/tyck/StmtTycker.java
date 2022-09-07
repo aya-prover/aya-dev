@@ -17,6 +17,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.tyck.error.BadTypeError;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimProblem;
 import org.aya.tyck.pat.Conquer;
@@ -257,13 +258,14 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     tracing(TreeBuilder::reduce);
   }
 
-  private static IntObjTuple2<Term> resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
+  private IntObjTuple2<Term> resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
     Term ret = FormTerm.Univ.ZERO;
     int lift = 0;
     if (!(data.result instanceof Expr.HoleExpr)) {
       var result = tycker.universe(data.result);
       ret = tycker.zonk(result.wellTyped());
       lift = result.lift() - 1;
+      if (lift < 0) reporter.report(BadTypeError.univ(tycker.state, data.result, ret));
     }
     return IntObjTuple2.of(lift, ret);
   }
