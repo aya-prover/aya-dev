@@ -497,7 +497,8 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private @NotNull Result doUniverse(@NotNull Expr expr) {
+  private @NotNull Result doUniverse(@NotNull Expr expr, @NotNull Option<Integer> upperBound) {
+    if (upperBound.isDefined()) assert (upperBound.get() >= 0);
     Term univ = FormTerm.Univ.ZERO;
     return switch (expr) {
       case Expr.TupExpr tuple -> fail(tuple, univ, BadTypeError.sigmaCon(state, tuple, univ));
@@ -507,14 +508,18 @@ public final class ExprTycker extends Tycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new Result(freshHole._2, univ);
       }
-      case Expr.UnivExpr univExpr -> new Result(new FormTerm.Univ(univExpr.lift()), new FormTerm.Univ(univExpr.lift() + 1));
+      case Expr.UnivExpr univExpr ->
+        new Result(new FormTerm.Univ(univExpr.lift()), new FormTerm.Univ(univExpr.lift() + 1));
       case Expr.LamExpr lam -> fail(lam, univ, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> fail(el, univ, BadTypeError.partTy(state, el, univ));
       default -> {
         Result result = synthesize(expr);
         var lower = result.type;
         var term = result.wellTyped;
-        yield new Result(term, new FormTerm.Univ(ensureUniv(expr, lower)));
+        var lvl = ensureUniv(expr, lower);
+        if (upperBound.isDefined() && !(lvl <= upperBound.get()))
+          yield fail(expr, lower, new LevelError(expr.sourcePos(), upperBound.get(), lvl, true));
+        yield new Result(term, new FormTerm.Univ(lvl));
       }
     };
   }
@@ -571,8 +576,16 @@ public final class ExprTycker extends Tycker {
   }
 
   public @NotNull Result universe(@NotNull Expr expr) {
+    return universe(expr, Option.none());
+  }
+
+  public @NotNull Result universe(@NotNull Expr expr, int upperBound) {
+    return universe(expr, Option.some(upperBound));
+  }
+
+  public @NotNull Result universe(@NotNull Expr expr, @NotNull Option<Integer> upperBound) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    Result result = doUniverse(expr);
+    Result result = doUniverse(expr, upperBound);
     traceExit(result, expr);
     return result;
   }
