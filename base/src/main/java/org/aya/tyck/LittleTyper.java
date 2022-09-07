@@ -24,8 +24,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
   public @NotNull Term term(@NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> localCtx.get(term.var());
-      case CallTerm.Data dataCall -> Def.defResult(dataCall.ref()).lift(dataCall.ulift());
-      case CallTerm.Struct structCall -> Def.defResult(structCall.ref()).lift(structCall.ulift());
+      case CallTerm.Con conCall -> conCall.head().underlyingDataCall();
+      case CallTerm.DefCall call -> defCall(call);
       case CallTerm.Hole hole -> {
         var result = hole.ref().result;
         yield result == null ? ErrorTerm.typeOf(hole) : result;
@@ -61,9 +61,6 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case IntroTerm.New neu -> neu.struct();
       case IntroTerm.Tuple tuple -> new FormTerm.Sigma(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
-      case CallTerm.Con conCall -> Def.defResult(conCall.head().dataRef()).lift(conCall.ulift());
-      case CallTerm.Prim prim -> Def.defResult(prim.ref()).lift(prim.ulift());
-      case CallTerm.Fn fnCall -> Def.defResult(fnCall.ref()).lift(fnCall.ulift());
       case RefTerm.MetaPat metaPat -> metaPat.ref().type();
       case FormTerm.Pi pi -> {
         var paramTyRaw = term(pi.param().type()).normalize(state, NormalizeMode.WHNF);
@@ -96,5 +93,11 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield app.cube().type().subst(new Subst(xi, ui));
       }
     };
+  }
+
+  private @NotNull Term defCall(@NotNull CallTerm.DefCall call) {
+    return Def.defResult(call.ref())
+      .subst(Expander.buildSubst(Def.defTele(call.ref()), call.args()))
+      .lift(call.ulift());
   }
 }

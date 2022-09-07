@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedRunnable;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;

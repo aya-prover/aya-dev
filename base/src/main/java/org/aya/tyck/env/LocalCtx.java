@@ -52,7 +52,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
           var sol = state.metas().getOrNull(meta);
           if (sol != null) forward(dest, sol, state);
         }
-        case null, default -> {}
+        case default -> {}
       }
     };
     f.accept(term);

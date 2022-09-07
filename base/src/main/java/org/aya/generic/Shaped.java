@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
@@ -33,7 +33,7 @@ public interface Shaped<T> {
 
     private <O> boolean sameEncoding(@Nullable TyckState state, @NotNull Shaped<O> other) {
       if (shape() != other.shape()) return false;
-      if (!(other instanceof Inductively otherData)) return false;
+      if (!(other instanceof Inductively<?> otherData)) return false;
       var type = type();
       var otherType = otherData.type();
       return switch (type) {

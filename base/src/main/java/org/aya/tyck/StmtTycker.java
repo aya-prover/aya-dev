@@ -5,6 +5,7 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.tuple.primitive.IntObjTuple2;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Decl;
@@ -16,6 +17,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.tyck.error.BadTypeError;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimProblem;
 import org.aya.tyck.pat.Conquer;
@@ -37,10 +39,7 @@ import java.util.function.Consumer;
  * but use the one passed to it. {@link StmtTycker#newTycker(PrimDef.Factory, AyaShape.Factory)} creates instances
  * of expr tyckers.
  */
-public record StmtTycker(
-  @NotNull Reporter reporter,
-  Trace.@Nullable Builder traceBuilder
-) {
+public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
   public @NotNull ExprTycker newTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory literalShapes) {
     return new ExprTycker(primFactory, literalShapes, reporter, traceBuilder);
   }
@@ -93,7 +92,7 @@ public record StmtTycker(
                 ensureConfluent(tycker, signature, result, pos, true);
             } else {
               // First-match semantics.
-              var result = patTycker.elabClausesClassified(clauses, signature, decl.result.sourcePos(), pos);
+              var result = patTycker.elabClausesClassified(clauses, signature, pos);
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (patTycker.noError()) Conquer.against(result.matchings(), true, tycker, pos, signature);
             }
@@ -190,20 +189,16 @@ public record StmtTycker(
       case TeleDecl.DataDecl data -> {
         var pos = data.sourcePos;
         var tele = tele(tycker, data.telescope, -1);
-        var result = data.result instanceof Expr.HoleExpr ? FormTerm.Univ.ZERO
-          // ^ probably omitted
-          : tycker.zonk(tycker.synthesize(data.result)).wellTyped();
-        data.signature = new Def.Signature(tele, result);
-        // [ice]: this line reports error if result is not a universe term, so we're good
-        data.ulift = tycker.ensureUniv(data.result, result);
+        var resultTy = resultTy(tycker, data);
+        data.ulift = resultTy._1;
+        data.signature = new Def.Signature(tele, resultTy._2);
       }
       case TeleDecl.StructDecl struct -> {
         var pos = struct.sourcePos;
         var tele = tele(tycker, struct.telescope, -1);
-        var result = tycker.zonk(tycker.synthesize(struct.result)).wellTyped();
-        struct.signature = new Def.Signature(tele, result);
-        // [ice]: this line reports error if result is not a universe term, so we're good
-        struct.ulift = tycker.ensureUniv(struct.result, result);
+        var result = resultTy(tycker, struct);
+        struct.signature = new Def.Signature(tele, result._2);
+        struct.ulift = result._1;
       }
       case TeleDecl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
@@ -261,6 +256,18 @@ public record StmtTycker(
       }
     }
     tracing(TreeBuilder::reduce);
+  }
+
+  private IntObjTuple2<Term> resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
+    Term ret = FormTerm.Univ.ZERO;
+    int lift = 0;
+    if (!(data.result instanceof Expr.HoleExpr)) {
+      var result = tycker.universe(data.result);
+      ret = tycker.zonk(result.wellTyped());
+      lift = result.lift() - 1;
+      if (lift < 0) reporter.report(BadTypeError.univ(tycker.state, data.result, ret));
+    }
+    return IntObjTuple2.of(lift, ret);
   }
 
   private void ensureConfluent(

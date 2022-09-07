@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -10,8 +10,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DistillerTest {
   @Test public void fn() {
@@ -79,11 +78,15 @@ public class DistillerTest {
   @Test public void nestedPi() {
     var decls = TyckDeclTest.successTyckDecls("""
       def infix = (A B : Type) => A
+      def infix == (A B : Type) => A bind looser =
+      def infix <= (A B : Type) => A bind tighter =
       def test1 (X : Type) => Pi (A : Type) -> A ulift = X
       def test2 (X : Type) => (Pi (A : Type) -> A) ulift = X
       """)._2;
-    var test1 = ((FnDef) decls.get(1)).body.getLeftValue();
-    var test2 = ((FnDef) decls.get(2)).body.getLeftValue();
+    var test1 = ((FnDef) decls.get(3)).body.getLeftValue();
+    var test2 = ((FnDef) decls.get(4)).body.getLeftValue();
+    assertNotNull(decls.get(1).ref().concrete.toDoc(DistillerOptions.informative()));
+    assertNotNull(decls.get(2).ref().concrete.toDoc(DistillerOptions.informative()));
     assertEquals("Pi (A : Type 0) -> A = X", test1.toDoc(DistillerOptions.informative()).debugRender());
     assertEquals("(Pi (A : Type 0) -> A) = X", test2.toDoc(DistillerOptions.informative()).debugRender());
   }

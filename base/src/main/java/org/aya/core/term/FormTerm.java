@@ -61,7 +61,7 @@ public sealed interface FormTerm extends Term {
   }
 
   final class Interval implements FormTerm {
-    public static Interval INSTANCE = new Interval();
+    public static final Interval INSTANCE = new Interval();
 
     private Interval() {
     }

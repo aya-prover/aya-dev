@@ -15,7 +15,7 @@ import java.io.IOException;
 public record ImportResolver(@NotNull ImportLoader loader, @NotNull LibrarySource librarySource) {
   @FunctionalInterface
   public interface ImportLoader {
-    @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod, @NotNull SourcePos sourcePos) throws IOException;
+    @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod, @NotNull SourcePos sourcePos);
   }
 
   public void resolveStmt(@NotNull SeqLike<Stmt> stmts) throws IOException {

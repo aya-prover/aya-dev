@@ -475,7 +475,7 @@ public final class ExprTycker extends Tycker {
   private @NotNull UnivResult doUniverse(@NotNull Expr expr) {
     var univ = FormTerm.Univ.ZERO;
     return switch (expr) {
-      case Expr.TupExpr tuple -> failUniv(tuple, univ, BadTypeError.sigmaCon(state, tuple, univ));
+      case Expr.TupExpr tuple -> failUniv(tuple, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.HoleExpr hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
@@ -483,8 +483,8 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.UnivExpr univExpr ->
         new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift() + 1);
-      case Expr.LamExpr lam -> failUniv(lam, univ, BadTypeError.pi(state, lam, univ));
-      case Expr.PartEl el -> failUniv(el, univ, BadTypeError.partTy(state, el, univ));
+      case Expr.LamExpr lam -> failUniv(lam, BadTypeError.pi(state, lam, univ));
+      case Expr.PartEl el -> failUniv(el, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {
         var param = pi.param();
         final var var = param.ref();
@@ -500,8 +500,7 @@ public final class ExprTycker extends Tycker {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
         var maxLevel = 0;
         for (var tuple : sigma.params()) {
-          final var type = tuple.type();
-          var result = universe(type);
+          var result = universe(tuple.type());
           maxLevel = Math.max(maxLevel, result.lift());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
@@ -511,11 +510,20 @@ public final class ExprTycker extends Tycker {
         yield new UnivResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxLevel);
       }
       default -> {
-        Result result = synthesize(expr);
+        var result = synthesize(expr);
         var lower = result.type();
-        var term = result.wellTyped();
-        var lvl = ensureUniv(expr, lower);
-        yield new UnivResult(term, lvl);
+        var lvl = switch (lower.normalize(state, NormalizeMode.WHNF)) {
+          case FormTerm.Univ u -> u.lift();
+          case CallTerm.Hole hole -> {
+            unifyTyReported(hole, FormTerm.Univ.ZERO, expr);
+            yield 0;
+          }
+          default -> {
+            reporter.report(BadTypeError.univ(state, expr, lower));
+            yield 0;
+          }
+        };
+        yield new UnivResult(result.wellTyped(), lvl);
       }
     };
   }
@@ -577,8 +585,8 @@ public final class ExprTycker extends Tycker {
 
   public @NotNull UnivResult universe(@NotNull Expr expr, int upperBound) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    UnivResult result = doUniverse(expr);
-    if (upperBound != -1 && !(result.lift() <= upperBound))
+    var result = doUniverse(expr);
+    if (upperBound != -1 && upperBound < result.lift())
       reporter.report(new LevelError(expr.sourcePos(), upperBound, result.lift(), true));
     traceExit(result, expr);
     return result;
@@ -616,7 +624,7 @@ public final class ExprTycker extends Tycker {
     return new TermResult(new ErrorTerm(expr), term);
   }
 
-  private @NotNull UnivResult failUniv(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
+  private @NotNull UnivResult failUniv(@NotNull AyaDocile expr, @NotNull Problem prob) {
     reporter.report(prob);
     return new UnivResult(new ErrorTerm(expr), 0);
   }
@@ -712,21 +720,6 @@ public final class ExprTycker extends Tycker {
       upper.freezeHoles(state), lower.freezeHoles(state), failureData, state));
   }
 
-  public int ensureUniv(@NotNull Expr expr, @NotNull Term term) {
-    return switch (term.normalize(state, NormalizeMode.WHNF)) {
-      case FormTerm.Univ univ -> univ.lift();
-      case CallTerm.Hole hole -> {
-        // TODO[lift-meta]: should be able to solve a lifted meta
-        unifyTyReported(hole, FormTerm.Univ.ZERO, expr);
-        yield hole.ulift();
-      }
-      default -> {
-        reporter.report(BadTypeError.univ(state, expr, term));
-        yield 0;
-      }
-    };
-  }
-
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
     // TODO: maybe we should create a concrete hole and check it against the type
     //  in case we can synthesize this term via its type only
@@ -736,16 +729,6 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Arg<Term> mockArg(Term.Param param, SourcePos pos) {
     return new Arg<>(mockTerm(param, pos), param.explicit());
-  }
-
-  public static class TyckerException extends InternalException {
-    @Override public void printHint() {
-      System.err.println("A type error was discovered during type checking.");
-    }
-
-    @Override public int exitCode() {
-      return 2;
-    }
   }
 
   public interface Result {
