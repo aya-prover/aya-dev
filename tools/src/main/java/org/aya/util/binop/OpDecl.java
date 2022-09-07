@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.binop;
 
@@ -7,14 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface OpDecl {
   enum BindPred {
-    Tighter("tighter"),
-    Looser("looser");
-
-    public final @NotNull String keyword;
-
-    BindPred(@NotNull String keyword) {
-      this.keyword = keyword;
-    }
+    Tighter, Looser
   }
 
   @Nullable OpInfo opInfo();

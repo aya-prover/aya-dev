@@ -114,7 +114,7 @@ public final class PatTycker {
   public @NotNull PatResult elabClausesClassified(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature signature,
-    @NotNull SourcePos resultPos, @NotNull SourcePos overallPos
+    @NotNull SourcePos overallPos
   ) {
     var lhsResults = checkAllLhs(clauses, signature);
     if (noError()) {

@@ -215,11 +215,11 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc styled(@NotNull Styles builder, @NotNull Doc doc) {
-    return new Styled(builder.styles, doc);
+    return new Styled(builder.styles(), doc);
   }
 
   static @NotNull Doc styled(@NotNull Styles builder, @NotNull String plain) {
-    return new Styled(builder.styles, plain(plain));
+    return new Styled(builder.styles(), plain(plain));
   }
 
   static @NotNull Doc licit(boolean explicit, Doc doc) {
@@ -488,7 +488,8 @@ public sealed interface Doc extends Docile {
   /**
    * fillSep concatenates the documents {@param docs} horizontally with a space
    * as long as it fits the page, then inserts a 'line' and continues doing that
-   * for all documents in {@param docs}. ('line' means that if 'group'ed, the documents
+   * for all documents in {@param docs}.
+   * 'line' means that if 'group'-ed, the documents
    * are separated with a 'space' instead of newlines. Use {@link Doc#cat}
    * if you do not want a 'space'.
    * <p>
