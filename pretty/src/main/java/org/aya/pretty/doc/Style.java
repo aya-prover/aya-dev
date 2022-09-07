@@ -1,7 +1,8 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
+import kala.collection.mutable.MutableList;
 import org.aya.pretty.printer.ColorScheme;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,7 @@ import java.io.Serializable;
  */
 public sealed interface Style extends Serializable {
   default Styles and() {
-    return new Styles(this);
+    return new Styles(MutableList.of(this));
   }
 
   enum Attr implements Style {

@@ -23,6 +23,10 @@ import java.util.function.Function;
 public sealed interface CallTerm extends Term {
   @NotNull AnyVar ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
+  sealed interface DefCall extends CallTerm {
+    @Override @NotNull DefVar<? extends Def, ? extends Decl.Telescopic> ref();
+    int ulift();
+  }
 
   @FunctionalInterface
   interface Factory<D extends Def, S extends Decl> {
@@ -54,31 +58,30 @@ public sealed interface CallTerm extends Term {
   }
 
   record Fn(
-    @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
-    int ulift,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-  ) implements CallTerm {
+    @Override @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
+    @Override int ulift,
+    @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+  ) implements DefCall {
   }
 
   record Prim(
-    @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref,
+    @Override @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref,
     @NotNull PrimDef.ID id,
-    int ulift,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-  ) implements CallTerm {
+    @Override int ulift,
+    @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+  ) implements DefCall {
     public Prim(@NotNull DefVar<@NotNull PrimDef, TeleDecl.PrimDecl> ref,
-                int ulift,
-                @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
+                int ulift, @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
       this(ref, ref.core.id, ulift, args);
     }
 
   }
 
   record Data(
-    @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref,
-    int ulift,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-  ) implements CallTerm {
+    @Override @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref,
+    @Override int ulift,
+    @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+  ) implements DefCall {
 
     public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> ctorRef) {
       return new ConHead(ref, ctorRef, ulift, args);
@@ -89,10 +92,10 @@ public sealed interface CallTerm extends Term {
    * @author kiva
    */
   record Struct(
-    @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref,
-    int ulift,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-  ) implements CallTerm {
+    @Override @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref,
+    @Override int ulift,
+    @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+  ) implements DefCall {
   }
 
   record ConHead(
@@ -115,7 +118,7 @@ public sealed interface CallTerm extends Term {
   record Con(
     @NotNull ConHead head,
     @NotNull ImmutableSeq<Arg<Term>> conArgs
-  ) implements CallTerm {
+  ) implements DefCall {
     public Con(
       @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef,
       @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
@@ -130,7 +133,7 @@ public sealed interface CallTerm extends Term {
       return head.ref;
     }
 
-    public int ulift() {
+    @Override public int ulift() {
       return head.ulift;
     }
 

@@ -1,17 +1,11 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
 import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
 
-public class Styles {
-  public MutableList<Style> styles;
-
-  Styles(Style style) {
-    this.styles = MutableList.of(style);
-  }
-
+public record Styles(MutableList<Style> styles) {
   public @NotNull Styles italic() {
     styles.append(Style.Attr.Italic);
     return this;
