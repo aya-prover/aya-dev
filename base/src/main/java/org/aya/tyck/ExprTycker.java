@@ -497,29 +497,29 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private @NotNull Result doUniverse(@NotNull Expr expr, int upperBound) {
+  private @NotNull UnivResult doUniverse(@NotNull Expr expr, int upperBound) {
     var upperBoundValid = upperBound != -1;
     if (upperBoundValid) assert (upperBound >= 0);
-    Term univ = FormTerm.Univ.ZERO;
+    var univ = FormTerm.Univ.ZERO;
     return switch (expr) {
-      case Expr.TupExpr tuple -> fail(tuple, univ, BadTypeError.sigmaCon(state, tuple, univ));
+      case Expr.TupExpr tuple -> failUniv(tuple, univ, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.HoleExpr hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield new TermResult(freshHole._2, univ);
+        yield new UnivResult(freshHole._2, univ.lift());
       }
       case Expr.UnivExpr univExpr ->
-        new TermResult(new FormTerm.Univ(univExpr.lift()), new FormTerm.Univ(univExpr.lift() + 1));
-      case Expr.LamExpr lam -> fail(lam, univ, BadTypeError.pi(state, lam, univ));
-      case Expr.PartEl el -> fail(el, univ, BadTypeError.partTy(state, el, univ));
+        new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift());
+      case Expr.LamExpr lam -> failUniv(lam, univ, BadTypeError.pi(state, lam, univ));
+      case Expr.PartEl el -> failUniv(el, univ, BadTypeError.partTy(state, el, univ));
       default -> {
         Result result = synthesize(expr);
         var lower = result.type();
         var term = result.wellTyped();
         var lvl = ensureUniv(expr, lower);
         if (upperBoundValid && !(lvl <= upperBound))
-          yield fail(expr, lower, new LevelError(expr.sourcePos(), upperBound, lvl, true));
-        yield new TermResult(term, new FormTerm.Univ(lvl));
+          yield failUniv(expr, lower, new LevelError(expr.sourcePos(), upperBound, lvl, true));
+        yield new UnivResult(term, lvl);
       }
     };
   }
@@ -575,13 +575,13 @@ public final class ExprTycker extends Tycker {
     return res;
   }
 
-  public @NotNull Result universe(@NotNull Expr expr) {
+  public @NotNull UnivResult universe(@NotNull Expr expr) {
     return universe(expr, -1);
   }
 
-  public @NotNull Result universe(@NotNull Expr expr, int upperBound) {
+  public @NotNull UnivResult universe(@NotNull Expr expr, int upperBound) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    Result result = doUniverse(expr, upperBound);
+    UnivResult result = doUniverse(expr, upperBound);
     traceExit(result, expr);
     return result;
   }
@@ -616,6 +616,11 @@ public final class ExprTycker extends Tycker {
   private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
     reporter.report(prob);
     return new TermResult(new ErrorTerm(expr), term);
+  }
+
+  private @NotNull UnivResult failUniv(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
+    reporter.report(prob);
+    return new UnivResult(new ErrorTerm(expr), 0);
   }
 
   @SuppressWarnings("unchecked")
@@ -768,6 +773,16 @@ public final class ExprTycker extends Tycker {
 
     @Override public @NotNull TermResult freezeHoles(@NotNull TyckState state) {
       return new TermResult(wellTyped.freezeHoles(state), type.freezeHoles(state));
+    }
+  }
+
+  public record UnivResult(@Override @NotNull Term wellTyped, int lift) implements Result {
+    @Override public @NotNull Term type() {
+      return new FormTerm.Univ(lift);
+    }
+
+    @Override public @NotNull UnivResult freezeHoles(@NotNull TyckState state) {
+      return new UnivResult(wellTyped.freezeHoles(state), lift);
     }
   }
 }
