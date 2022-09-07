@@ -2,6 +2,15 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.20
+
+This is going to be the last release before we switch to IntelliJ parsing infrastructure.
+
+Bumped many dependencies, added `universe` for checking types, support
+changing precedences of imported operators, fixed LSP crashes,
+fixed `./gradlew jlink` does not respect dependency updates,
+improved tracing, refactored code based on IDEA inspections.
+
 Initial support for cubical type theory (based on [Guest0x0]),
 with partial elements and the generalized path type ("extension type").
 
