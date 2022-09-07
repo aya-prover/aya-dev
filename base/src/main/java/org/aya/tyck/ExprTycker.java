@@ -497,7 +497,7 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private @NotNull Result doInheritUniv(@NotNull Expr expr) {
+  private @NotNull Result doUniverse(@NotNull Expr expr) {
     Term univ = FormTerm.Univ.ZERO;
     return switch (expr) {
       case Expr.TupExpr tuple -> fail(tuple, univ, BadTypeError.sigmaCon(state, tuple, univ));
@@ -570,9 +570,9 @@ public final class ExprTycker extends Tycker {
     return res;
   }
 
-  public @NotNull Result inheritUniv(@NotNull Expr expr) {
+  public @NotNull Result universe(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    Result result = doInheritUniv(expr);
+    Result result = doUniverse(expr);
     traceExit(result, expr);
     return result;
   }
