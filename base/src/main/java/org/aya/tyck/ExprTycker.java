@@ -497,8 +497,9 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private @NotNull Result doUniverse(@NotNull Expr expr, @NotNull Option<Integer> upperBound) {
-    if (upperBound.isDefined()) assert (upperBound.get() >= 0);
+  private @NotNull Result doUniverse(@NotNull Expr expr, int upperBound) {
+    var upperBoundValid = upperBound != -1;
+    if (upperBoundValid) assert (upperBound >= 0);
     Term univ = FormTerm.Univ.ZERO;
     return switch (expr) {
       case Expr.TupExpr tuple -> fail(tuple, univ, BadTypeError.sigmaCon(state, tuple, univ));
@@ -517,8 +518,8 @@ public final class ExprTycker extends Tycker {
         var lower = result.type;
         var term = result.wellTyped;
         var lvl = ensureUniv(expr, lower);
-        if (upperBound.isDefined() && !(lvl <= upperBound.get()))
-          yield fail(expr, lower, new LevelError(expr.sourcePos(), upperBound.get(), lvl, true));
+        if (upperBoundValid && !(lvl <= upperBound))
+          yield fail(expr, lower, new LevelError(expr.sourcePos(), upperBound, lvl, true));
         yield new Result(term, new FormTerm.Univ(lvl));
       }
     };
@@ -576,14 +577,10 @@ public final class ExprTycker extends Tycker {
   }
 
   public @NotNull Result universe(@NotNull Expr expr) {
-    return universe(expr, Option.none());
+    return universe(expr, -1);
   }
 
   public @NotNull Result universe(@NotNull Expr expr, int upperBound) {
-    return universe(expr, Option.some(upperBound));
-  }
-
-  public @NotNull Result universe(@NotNull Expr expr, @NotNull Option<Integer> upperBound) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     Result result = doUniverse(expr, upperBound);
     traceExit(result, expr);
