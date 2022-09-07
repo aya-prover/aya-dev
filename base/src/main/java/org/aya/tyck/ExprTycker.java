@@ -71,31 +71,8 @@ public final class ExprTycker extends Tycker {
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
-      case Expr.PiExpr pi -> {
-        var param = pi.param();
-        final var var = param.ref();
-        var domTy = param.type();
-        var domRes = universe(domTy);
-        var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
-        yield localCtx.with(resultParam, () -> {
-          var cod = universe(pi.last());
-          return new TermResult(new FormTerm.Pi(resultParam, cod.wellTyped()), new FormTerm.Univ(Math.max(domRes.lift(), cod.lift())));
-        });
-      }
-      case Expr.SigmaExpr sigma -> {
-        var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
-        var maxLevel = 0;
-        for (var tuple : sigma.params()) {
-          final var type = tuple.type();
-          var result = universe(type);
-          maxLevel = Math.max(maxLevel, result.lift());
-          var ref = tuple.ref();
-          localCtx.put(ref, result.wellTyped());
-          resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
-        }
-        localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new TermResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), new FormTerm.Univ(maxLevel));
-      }
+      case Expr.PiExpr pi -> universe(pi);
+      case Expr.SigmaExpr sigma -> universe(sigma);
       case Expr.LiftExpr lift -> {
         var result = synthesize(lift.expr());
         var levels = lift.lift();
@@ -510,6 +487,31 @@ public final class ExprTycker extends Tycker {
         new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift());
       case Expr.LamExpr lam -> failUniv(lam, univ, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failUniv(el, univ, BadTypeError.partTy(state, el, univ));
+      case Expr.PiExpr pi -> {
+        var param = pi.param();
+        final var var = param.ref();
+        var domTy = param.type();
+        var domRes = universe(domTy);
+        var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
+        yield localCtx.with(resultParam, () -> {
+          var cod = universe(pi.last());
+          return new UnivResult(new FormTerm.Pi(resultParam, cod.wellTyped()), Math.max(domRes.lift(), cod.lift()));
+        });
+      }
+      case Expr.SigmaExpr sigma -> {
+        var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
+        var maxLevel = 0;
+        for (var tuple : sigma.params()) {
+          final var type = tuple.type();
+          var result = universe(type);
+          maxLevel = Math.max(maxLevel, result.lift());
+          var ref = tuple.ref();
+          localCtx.put(ref, result.wellTyped());
+          resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
+        }
+        localCtx.remove(sigma.params().view().map(Expr.Param::ref));
+        yield new UnivResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxLevel);
+      }
       default -> {
         Result result = synthesize(expr);
         var lower = result.type();
