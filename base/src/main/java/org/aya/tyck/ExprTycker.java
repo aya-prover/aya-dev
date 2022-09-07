@@ -61,7 +61,7 @@ public final class ExprTycker extends Tycker {
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
-      case Expr.UnivExpr univ -> new TermResult(new FormTerm.Univ(univ.lift()), new FormTerm.Univ(univ.lift() + 1));
+      case Expr.UnivExpr univ -> universe(univ);
       case Expr.IntervalExpr interval -> new TermResult(FormTerm.Interval.INSTANCE, new FormTerm.Univ(0));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
@@ -482,7 +482,7 @@ public final class ExprTycker extends Tycker {
         yield new UnivResult(freshHole._2, univ.lift());
       }
       case Expr.UnivExpr univExpr ->
-        new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift());
+        new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift() + 1);
       case Expr.LamExpr lam -> failUniv(lam, univ, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failUniv(el, univ, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {
