@@ -75,13 +75,11 @@ public final class ExprTycker extends Tycker {
         var param = pi.param();
         final var var = param.ref();
         var domTy = param.type();
-        var domRes = synthesize(domTy);
-        var domLvl = ensureUniv(domTy, domRes.type());
+        var domRes = universe(domTy);
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
-          var cod = synthesize(pi.last());
-          var codLvl = ensureUniv(pi.last(), cod.type());
-          return new TermResult(new FormTerm.Pi(resultParam, cod.wellTyped()), new FormTerm.Univ(Math.max(domLvl, codLvl)));
+          var cod = universe(pi.last());
+          return new TermResult(new FormTerm.Pi(resultParam, cod.wellTyped()), new FormTerm.Univ(Math.max(domRes.lift(), cod.lift())));
         });
       }
       case Expr.SigmaExpr sigma -> {
@@ -89,8 +87,8 @@ public final class ExprTycker extends Tycker {
         var maxLevel = 0;
         for (var tuple : sigma.params()) {
           final var type = tuple.type();
-          var result = synthesize(type);
-          maxLevel = Math.max(maxLevel, ensureUniv(type, result.type()));
+          var result = universe(type);
+          maxLevel = Math.max(maxLevel, result.lift());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
