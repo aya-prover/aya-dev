@@ -16,6 +16,8 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.generic.util.NormalizeMode;
+import org.aya.tyck.error.BadTypeError;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimProblem;
 import org.aya.tyck.pat.Conquer;
@@ -195,7 +197,18 @@ public record StmtTycker(
           : tycker.zonk(tycker.synthesize(data.result)).wellTyped();
         data.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
-        data.ulift = tycker.ensureUniv(data.result, result);
+        data.ulift = switch (result.normalize(tycker.state, NormalizeMode.WHNF)) {
+          case FormTerm.Univ univ -> univ.lift();
+          case CallTerm.Hole hole -> {
+            // TODO[lift-meta]: should be able to solve a lifted meta
+            tycker.unifyTyReported(hole, FormTerm.Univ.ZERO, data.result);
+            yield hole.ulift();
+          }
+          default -> {
+            tycker.reporter.report(BadTypeError.univ(tycker.state, data.result, result));
+            yield 0;
+          }
+        };
       }
       case TeleDecl.StructDecl struct -> {
         var pos = struct.sourcePos;
@@ -203,7 +216,18 @@ public record StmtTycker(
         var result = tycker.zonk(tycker.synthesize(struct.result)).wellTyped();
         struct.signature = new Def.Signature(tele, result);
         // [ice]: this line reports error if result is not a universe term, so we're good
-        struct.ulift = tycker.ensureUniv(struct.result, result);
+        struct.ulift = switch (result.normalize(tycker.state, NormalizeMode.WHNF)) {
+          case FormTerm.Univ univ -> univ.lift();
+          case CallTerm.Hole hole -> {
+            // TODO[lift-meta]: should be able to solve a lifted meta
+            tycker.unifyTyReported(hole, FormTerm.Univ.ZERO, struct.result);
+            yield hole.ulift();
+          }
+          default -> {
+            tycker.reporter.report(BadTypeError.univ(tycker.state, struct.result, result));
+            yield 0;
+          }
+        };
       }
       case TeleDecl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
