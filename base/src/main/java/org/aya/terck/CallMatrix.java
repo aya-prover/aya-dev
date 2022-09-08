@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
@@ -8,7 +8,9 @@ import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.ArrayUtil;
+import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  * @see Relation
  */
+@Debug.Renderer(text = "toDoc().debugRender()")
 public record CallMatrix<Def, Param>(
   @NotNull CallTerm callTerm,
   @NotNull Def domain, @NotNull Def codomain,
@@ -35,7 +38,7 @@ public record CallMatrix<Def, Param>(
     // TODO: sparse matrix?
     this(callTerm, domain, codomain, domainTele, codomainTele,
       new Relation[codomainTele.size()][domainTele.size()]);
-    ArrayUtil.fill(matrix, Relation.Unknown);
+    ArrayUtil.fill(matrix, Relation.unk());
   }
 
   public int rows() {
@@ -58,16 +61,16 @@ public record CallMatrix<Def, Param>(
    * A call matrix `A` is smaller than another call matrix `B` iff:
    * each relation in `A` is less than or equal to the corresponding relation in `B`.
    */
-  public @NotNull Relation compare(@NotNull CallMatrix<Def, Param> other) {
+  public @NotNull Ordering compare(@NotNull CallMatrix<Def, Param> other) {
     if (this.domain != other.domain || this.codomain != other.codomain)
       throw new IllegalArgumentException("Cannot compare unrelated call matrices");
-    if (this == other) return Relation.Equal;
+    if (this == other) return Ordering.Eq;
     for (int i = 0; i < rows(); i++)
       for (int j = 0; j < cols(); j++) {
         if (!this.matrix[i][j].lessThanOrEqual(other.matrix[i][j]))
-          return Relation.Unknown;
+          return Ordering.Gt;
       }
-    return Relation.LessThan;
+    return Ordering.Lt;
   }
 
   /**
@@ -93,8 +96,8 @@ public record CallMatrix<Def, Param>(
   }
 
   public @NotNull Doc toDoc() {
-    return Doc.vcat(ImmutableSeq.from(matrix).map(
-      row -> Doc.stickySep(ImmutableSeq.from(row)
-        .map(col -> Doc.plain(col.text)))));
+    var lines = ImmutableSeq.from(matrix)
+      .map(row -> Doc.stickySep(ImmutableSeq.from(row).map(Relation::toDoc)));
+    return Doc.vcat(lines);
   }
 }

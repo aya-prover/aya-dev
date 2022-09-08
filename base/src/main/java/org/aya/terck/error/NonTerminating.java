@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck.error;
 
@@ -33,7 +33,7 @@ public record NonTerminating(
       Doc.english("In particular, the problematic call is:"),
       Doc.nest(2, matrix.callTerm().toDoc(options)),
       Doc.english("whose call matrix is:"),
-      Doc.nest(2, matrix.toDoc()));
+      matrix.toDoc());
     if (diag.matrix().rows() > 1) {
       buffer.append(Doc.english("whose diagonal is:"));
       buffer.append(Doc.nest(2, diag.toDoc()));

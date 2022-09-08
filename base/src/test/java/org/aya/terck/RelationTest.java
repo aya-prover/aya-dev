@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
@@ -9,15 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class RelationTest {
   @Test
   public void ring() {
-    assertEquals(Relation.Unknown, Relation.Unknown.mul(Relation.LessThan));
-    assertEquals(Relation.Unknown, Relation.Unknown.mul(Relation.Equal));
-    assertEquals(Relation.Unknown, Relation.Equal.mul(Relation.Unknown));
-    assertEquals(Relation.LessThan, Relation.Equal.mul(Relation.LessThan));
-    assertEquals(Relation.Equal, Relation.Equal.mul(Relation.Equal));
+    assertEquals(Relation.unk(), Relation.unk().mul(Relation.lt()));
+    assertEquals(Relation.unk(), Relation.unk().mul(Relation.eq()));
+    assertEquals(Relation.unk(), Relation.eq().mul(Relation.unk()));
+    assertEquals(Relation.lt(), Relation.eq().mul(Relation.lt()));
+    assertEquals(Relation.eq(), Relation.eq().mul(Relation.eq()));
 
-    assertEquals(Relation.LessThan, Relation.LessThan.add(Relation.Equal));
-    assertEquals(Relation.Equal, Relation.Equal.add(Relation.Equal));
-    assertEquals(Relation.Equal, Relation.Unknown.add(Relation.Equal));
-    assertEquals(Relation.LessThan, Relation.Unknown.add(Relation.LessThan));
+    assertEquals(Relation.lt(), Relation.lt().add(Relation.eq()));
+    assertEquals(Relation.eq(), Relation.eq().add(Relation.eq()));
+    assertEquals(Relation.eq(), Relation.unk().add(Relation.eq()));
+    assertEquals(Relation.lt(), Relation.unk().add(Relation.lt()));
   }
 }

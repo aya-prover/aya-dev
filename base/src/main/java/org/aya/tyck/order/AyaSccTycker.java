@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
@@ -232,6 +232,7 @@ public record AyaSccTycker(
 
   private void terckRecursiveFn(@NotNull SeqView<FnDef> fn) {
     var targets = MutableSet.<Def>from(fn);
+    if (targets.isEmpty()) return;
     var graph = CallGraph.<Def, Term.Param>create();
     fn.forEach(def -> new CallResolver(def, targets, graph).accept(def));
     var failed = graph.findNonTerminating();
