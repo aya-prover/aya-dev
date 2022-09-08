@@ -36,7 +36,7 @@ public record NonTerminating(
       matrix.toDoc());
     if (diag.matrix().rows() > 1) {
       buffer.append(Doc.english("whose diagonal is:"));
-      buffer.append(Doc.nest(2, diag.toDoc()));
+      buffer.append(diag.toDoc());
     }
     return Doc.vcat(buffer);
   }
