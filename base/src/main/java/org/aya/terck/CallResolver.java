@@ -56,37 +56,35 @@ public record CallResolver(
     return switch (pat) {
       case Pat.Ctor ctor -> switch (term) {
         case CallTerm.Con con -> {
-          if (con.ref() != ctor.ref()) yield Relation.Unknown;
-          if (ctor.params().isEmpty()) yield Relation.Equal;
-          var subCompare = con.conArgs()
-            .zipView(ctor.params())
+          if (con.ref() != ctor.ref() || !con.conArgs().sizeEquals(ctor.params())) yield Relation.unk();
+          var subCompare = con.conArgs().zipView(ctor.params())
             .map(sub -> compare(sub._1.term(), sub._2));
-          yield subCompare.anyMatch(r -> r != Relation.Unknown) ? Relation.Equal : Relation.Unknown;
+          yield subCompare.foldLeft(Relation.eq(), Relation::mul);
         }
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
         case LitTerm.ShapedInt lit -> compare(lit.constructorForm(), ctor);
         default -> {
           var subCompare = ctor.params().view().map(sub -> compare(term, sub));
-          yield subCompare.anyMatch(r -> r != Relation.Unknown) ? Relation.LessThan : Relation.Unknown;
+          yield subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.lt() : Relation.unk();
         }
       };
       case Pat.Bind bind -> {
         if (term instanceof RefTerm ref)
-          yield ref.var() == bind.bind() ? Relation.Equal : Relation.Unknown;
+          yield ref.var() == bind.bind() ? Relation.eq() : Relation.unk();
         if (headOf(term) instanceof RefTerm ref)
-          yield ref.var() == bind.bind() ? Relation.LessThan : Relation.Unknown;
-        yield Relation.Unknown;
+          yield ref.var() == bind.bind() ? Relation.lt() : Relation.unk();
+        yield Relation.unk();
       }
       case Pat.ShapedInt intPat -> switch (term) {
         case LitTerm.ShapedInt intTerm -> {
-          if (intTerm.shape() != intPat.shape()) yield Relation.Unknown;
+          if (intTerm.shape() != intPat.shape()) yield Relation.unk();
           yield Relation.fromCompare(Integer.compare(intTerm.repr(), intPat.repr()));
         }
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
         case CallTerm.Con con -> compare(con, intPat.constructorForm());
         default -> compare(term, intPat.constructorForm());
       };
-      default -> Relation.Unknown;
+      default -> Relation.unk();
     };
   }
 

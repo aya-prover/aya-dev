@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
@@ -32,7 +32,7 @@ public record Behavior<T, P>(
     }
 
     public @NotNull Doc toDoc() {
-      return Doc.stickySep(diagonal.view().map(i -> Doc.plain(i.toString())));
+      return Doc.stickySep(diagonal.view().map(Relation::toDoc));
     }
   }
 }

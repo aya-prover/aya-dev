@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.value.Var;
+import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +38,9 @@ public record CallGraph<T, P>(
     var set = graph.getOrPut(caller, MutableLinkedHashMap::of)
       .getOrPut(callee, MutableSet::create);
     if (set.contains(matrix)) return false;
-    var unknown = set.anyMatch(arrow -> arrow.compare(matrix) != Relation.Unknown);
+    var unknown = set.anyMatch(arrow -> arrow.compare(matrix) != Ordering.Gt);
     if (unknown) return false; // got stuck, fail early
-    set.removeAll(existing -> matrix.compare(existing) == Relation.LessThan);
+    set.removeAll(existing -> matrix.compare(existing) == Ordering.Lt);
     set.add(matrix);
     return true;
   }
@@ -82,7 +83,7 @@ public record CallGraph<T, P>(
       // size-change termination check (every idempotent call must have decrease), see links below:
       // https://github.com/agda/agda/blob/master/src/full/Agda/Termination/Termination.hs
       var notDecreasing = behavior.diagonals()
-        .filterNot(diag -> diag.diagonal().contains(Relation.LessThan));
+        .filterNot(diag -> diag.diagonal().anyMatch(Relation::isDecreasing));
       if (notDecreasing.isNotEmpty()) return notDecreasing;
     }
     return null;
