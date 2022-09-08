@@ -37,8 +37,6 @@ However, we can share some cool stuffs here:
   (instead of a number, such as in Haskell or Agda)
   which is useful for [equation reasoning][assoc].
 + Termination checker inspired from foetus.
-  We adapted some code from Agda's implementation to accept
-  [more definitions][foetus] (which are rejected by, e.g. Arend).
 + Inference of type checking order. That is to say,
   no syntax for forward-declarations is needed for [mutual recursions][mutual].
 
@@ -99,7 +97,6 @@ check out [how to][proxy] let gradle use a proxy.
 [funExt]: ../base/src/test/resources/success/common/src/Paths.aya
 [rbtree]: ../base/src/test/resources/success/common/src/Data/RedBlack.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
-[foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
 [mutual]: ../base/src/test/resources/success/src/Order.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 [Guest0x0]: https://github.com/ice1000/Guest0x0

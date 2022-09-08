@@ -61,9 +61,7 @@ public record CallResolver(
           var subCompare = con.conArgs()
             .zipView(ctor.params())
             .map(sub -> compare(sub._1.term(), sub._2));
-          // compare one level deeper for sub-ctor-patterns like `cons (suc x) xs`, see FoetusLimitation.aya
-          // return subCompare.anyMatch(r -> r != Relation.Unknown) ? Relation.Equal : Relation.Unknown;
-          yield subCompare.max();
+          yield subCompare.anyMatch(r -> r != Relation.Unknown) ? Relation.Equal : Relation.Unknown;
         }
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
         case LitTerm.ShapedInt lit -> compare(lit.constructorForm(), ctor);
