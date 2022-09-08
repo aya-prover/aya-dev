@@ -56,12 +56,10 @@ public record CallResolver(
     return switch (pat) {
       case Pat.Ctor ctor -> switch (term) {
         case CallTerm.Con con -> {
-          if (con.ref() != ctor.ref()) yield Relation.unk();
-          if (ctor.params().isEmpty()) yield Relation.eq();
-          var subCompare = con.conArgs()
-            .zipView(ctor.params())
+          if (con.ref() != ctor.ref() || !con.conArgs().sizeEquals(ctor.params())) yield Relation.unk();
+          var subCompare = con.conArgs().zipView(ctor.params())
             .map(sub -> compare(sub._1.term(), sub._2));
-          yield subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.eq() : Relation.unk();
+          yield subCompare.foldLeft(Relation.eq(), Relation::mul);
         }
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
         case LitTerm.ShapedInt lit -> compare(lit.constructorForm(), ctor);
