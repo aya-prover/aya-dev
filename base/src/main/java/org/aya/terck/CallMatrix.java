@@ -57,15 +57,15 @@ public record CallMatrix<Def, Param>(
   }
 
   /** Compare two call matrices by their decrease amount. */
-  @Override public Selector.@NotNull PartialOrd compare(@NotNull CallMatrix<Def, Param> other) {
-    if (this.domain != other.domain || this.codomain != other.codomain) return Selector.PartialOrd.Unk;
-    var rel = Selector.PartialOrd.Eq;
+  @Override public @NotNull Selector.DecrOrd compare(@NotNull CallMatrix<Def, Param> other) {
+    if (this.domain != other.domain || this.codomain != other.codomain) return Selector.DecrOrd.Unk;
+    var rel = Selector.DecrOrd.Eq;
     for (int i = 0; i < rows(); i++)
       for (int j = 0; j < cols(); j++) {
         var m = this.matrix[i][j];
         var n = other.matrix[i][j];
         var cmp = m.compare(n);
-        rel = rel.and(cmp);
+        rel = rel.mul(cmp);
       }
     return rel;
   }

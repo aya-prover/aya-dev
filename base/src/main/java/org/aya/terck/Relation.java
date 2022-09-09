@@ -11,9 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Relations between size of formal function parameter and function argument
- * in one recursive call. Together with the two operations {@link Relation#add(Relation)}
- * and {@link Relation#mul(Relation)} the relation set forms a commutative semi-ring
- * with zero {@link Relation#unk()} and unit {@link Relation#eq()}.
+ * in one recursive call.
+ * A semi-ring with zero = {@link #unk()}, one = {@link #eq()}.
  *
  * @author kiva
  */
@@ -62,20 +61,20 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   /**
    * Compare two relations by their decrease amount.
    *
-   * @return {@link org.aya.terck.Selector.PartialOrd#Lt} if this decreases less than the other,
-   * {@link org.aya.terck.Selector.PartialOrd#Gt} if this decreases more.
+   * @return {@link Selector.DecrOrd#Lt} if this decreases less than the other,
+   * {@link Selector.DecrOrd#Gt} if this decreases more.
    */
-  @Override default Selector.@NotNull PartialOrd compare(@NotNull Relation other) {
-    if (this.isUnknown() && other.isUnknown()) return Selector.PartialOrd.Eq;
+  @Override default @NotNull Selector.DecrOrd compare(@NotNull Relation other) {
+    if (this.isUnknown() && other.isUnknown()) return Selector.DecrOrd.Eq;
     // Unknown means no decrease, so it's always less than any decrease
-    if (this.isUnknown() && !other.isUnknown()) return Selector.PartialOrd.Lt;
-    if (!this.isUnknown() && other.isUnknown()) return Selector.PartialOrd.Gt;
+    if (this.isUnknown() && !other.isUnknown()) return Selector.DecrOrd.Lt;
+    if (!this.isUnknown() && other.isUnknown()) return Selector.DecrOrd.Gt;
     var ldec = (Decrease) this;
     var rdec = (Decrease) other;
     // Usable decreases are always greater than unusable ones, or
     // the larger the size is, the more the argument decreases.
-    return Selector.PartialOrd.compareBool(ldec.usable, rdec.usable)
-      .or(Selector.PartialOrd.compareInt(ldec.size, rdec.size));
+    return Selector.DecrOrd.compareBool(ldec.usable, rdec.usable)
+      .add(Selector.DecrOrd.compareInt(ldec.size, rdec.size));
   }
 
   default boolean isUnknown() {

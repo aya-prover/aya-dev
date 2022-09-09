@@ -23,6 +23,12 @@ public interface Selector {
     if (had.isEmpty()) return new Evolve<>(SeqView.empty(), SeqView.empty());
     var b = had.first();
     var bs = had.drop(1);
+    // The code below looks confusing on "what is better?".
+    // In Relation class, we say `a` is better than `b` if a decreases more.
+    // Here we say `a` is better than `b` if `a` contains less information (namely decrease less)
+    // because we are in the context of completing a call graph which is to find the
+    // worst call matrix (combining two call matrices always loses some information on argument size change)
+    // and use it to check termination (because it signifies the worst case of the recursion).
     return switch (a.compare(b)) {
       // `a` is not strictly better than b, dropping `a`
       case Eq, Gt -> new Useless<>(b);
@@ -56,22 +62,23 @@ public interface Selector {
     return Tuple.of(winners.toImmutableSeq(), old.value.toImmutableSeq());
   }
 
-  enum PartialOrd {
+  /** A weaker {@link Relation} used in decrease amount (speed) comparison */
+  enum DecrOrd {
     Lt, Eq, Gt, Unk;
 
-    public static @NotNull Selector.PartialOrd compareBool(boolean l, boolean r) {
-      if (!l && r) return Selector.PartialOrd.Lt;
-      if (l && !r) return Selector.PartialOrd.Gt;
-      return Selector.PartialOrd.Eq;
+    public static @NotNull DecrOrd compareBool(boolean l, boolean r) {
+      if (!l && r) return DecrOrd.Lt;
+      if (l && !r) return DecrOrd.Gt;
+      return DecrOrd.Eq;
     }
 
-    public static @NotNull Selector.PartialOrd compareInt(int l, int r) {
-      if (l < r) return Selector.PartialOrd.Lt;
-      if (l > r) return Selector.PartialOrd.Gt;
-      return Selector.PartialOrd.Eq;
+    public static @NotNull DecrOrd compareInt(int l, int r) {
+      if (l < r) return DecrOrd.Lt;
+      if (l > r) return DecrOrd.Gt;
+      return DecrOrd.Eq;
     }
 
-    public @NotNull PartialOrd or(@NotNull PartialOrd rhs) {
+    public @NotNull DecrOrd add(@NotNull DecrOrd rhs) {
       if (this == Unk) return rhs;
 
       if (this == Lt && rhs == Lt) return Lt;
@@ -87,7 +94,7 @@ public interface Selector {
       return Unk;
     }
 
-    public @NotNull PartialOrd and(@NotNull PartialOrd rhs) {
+    public @NotNull DecrOrd mul(@NotNull DecrOrd rhs) {
       if (this == Unk) return Unk;
       if (this == Eq) return rhs;
 
@@ -103,7 +110,7 @@ public interface Selector {
 
   interface Candidate<T> {
     /** Compare elements by their decrease amount. */
-    @NotNull Selector.PartialOrd compare(@NotNull T other);
+    @NotNull DecrOrd compare(@NotNull T other);
     default boolean notWorseThan(@NotNull T other) {
       // If `this` is not worse than `other`, `this` should decrease more or equal to `other`.
       return switch (compare(other)) {
