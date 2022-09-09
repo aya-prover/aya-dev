@@ -1,9 +1,10 @@
-In file $FILE:2:0 ->
+In file $FILE:3:0 ->
 
-  1 | prim arcoe
-  2 | --| test `arcoe`
+  1 | prim I
+  2 | prim arcoe
+  3 | --| test `arcoe`
       ^-------------------^
-  3 | --| test `unresolved`
+  4 | --| test `unresolved`
 
 Error: The name `unresolved` is not defined in the current scope
 

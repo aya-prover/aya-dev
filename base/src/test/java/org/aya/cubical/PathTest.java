@@ -68,6 +68,7 @@ public class PathTest {
 
   @Test public void partialConv() {
     TyckDeclTest.successTyckDecls("""
+      prim I
       def infix = {A : Type} (a b : A) : Type =>
         [| i |] A {| i 0 := a | i 1 := b |}
           

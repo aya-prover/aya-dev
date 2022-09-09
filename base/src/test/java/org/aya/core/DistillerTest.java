@@ -40,6 +40,7 @@ public class DistillerTest {
 
   @Test public void neo() {
     assertFalse(declDoc("""
+      prim I
       struct Pair (A : Type) (B : Type) : Type
         | fst : A
         | snd : B
@@ -57,6 +58,7 @@ public class DistillerTest {
 
   @Test public void path() {
     @Language("TEXT") var code = """
+      prim I : Type
       struct Path (A : Pi I -> Type) (a : A 0) (b : A 1) : Type
        | at (i : I) : A i {
          | 0 => a

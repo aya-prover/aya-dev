@@ -1,7 +1,8 @@
-In file $FILE:2:5 ->
+In file $FILE:3:5 ->
 
-  1 | prim arcoe
+  1 | prim I
   2 | prim arcoe
+  3 | prim arcoe
            ^---^
 
 Error: Redefinition of primitive `arcoe`

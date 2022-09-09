@@ -1,3 +1,4 @@
+prim I
 def p1 (A : Type) (a : A) (i : I) : Partial A {i 0} =>
   {| i 0 := a |}
 def p2 (A : Type) (b : A) (j : I) : Partial A {j 0} =>

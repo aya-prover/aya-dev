@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PartialTest {
   @Test public void partial() {
     var res = TyckDeclTest.successTyckDecls("""
+      prim I
+            
       def t (A : Type) (i : I) (a : A) : Partial A { i 0 }
         => {| i 0 := a |}
           
@@ -32,6 +34,6 @@ public class PartialTest {
     IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
     assertEquals("""
       def t (A : Type 0) (i : I) (a : A) : Partial A {i 0} => {| i 0 := a |}
-      """.strip(), distiller.apply(0).debugRender());
+      """.strip(), distiller.apply(1).debugRender());
   }
 }

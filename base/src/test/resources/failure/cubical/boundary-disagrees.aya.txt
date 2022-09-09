@@ -1,7 +1,8 @@
-In file $FILE:2:2 ->
+In file $FILE:3:2 ->
 
-  1 | def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial A { i 0 /\ j 0 } =>
-  2 |   {| i 0 := u | i 0 /\ j 0 := v |}
+  1 | prim I
+  2 | def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial A { i 0 /\ j 0 } =>
+  3 |   {| i 0 := u | i 0 /\ j 0 := v |}
         ^------------------------------^
 
 Error: The boundary

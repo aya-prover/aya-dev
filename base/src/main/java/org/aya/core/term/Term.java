@@ -54,7 +54,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         yield new FormTerm.Sigma(params);
       }
       case FormTerm.Univ univ -> univ;
-      case FormTerm.Interval interval -> interval;
+      case PrimTerm.Interval interval -> interval;
       case PrimTerm.Mula mula -> {
         var formula = mula.asFormula().fmap(f);
         if (formula == mula.asFormula()) yield mula;

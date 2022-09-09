@@ -49,7 +49,7 @@ PRIM : 'prim';
 EXTENDS : 'extends';
 NEW_KW : 'new';
 PATTERN_KW : 'pattern';
-I: 'I';
+//I: 'I';
 DO_KW : 'do';
 THIS_KW : 'this';
 OVERRIDE : 'override';

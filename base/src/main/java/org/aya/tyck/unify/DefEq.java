@@ -423,7 +423,7 @@ public final class DefEq {
         if (!(preRhs instanceof FormTerm.Path rhs)) yield null;
         yield compareCube(lhs.cube(), rhs.cube(), lr, rl) ? FormTerm.Univ.ZERO : null;
       }
-      case FormTerm.Interval lhs -> preRhs instanceof FormTerm.Interval ? FormTerm.Univ.ZERO : null;
+      case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Univ.ZERO : null;
       case PrimTerm.Mula lhs -> {
         if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
         var happy = switch (lhs.asFormula()) {
@@ -435,7 +435,7 @@ public final class DefEq {
             && compareUntyped(ll.r(), rr.r(), lr, rl) != null;
           default -> false;
         };
-        yield happy ? FormTerm.Interval.INSTANCE : null;
+        yield happy ? PrimTerm.Interval.INSTANCE : null;
       }
       // See compareApprox for why we don't compare these
       case CallTerm.Fn lhs -> null;

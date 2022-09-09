@@ -74,6 +74,8 @@ public final class PrimDef extends TopLevelDef {
 
   public static class Factory {
     private final class Initializer {
+
+
       /** Arend's coe */
       private @NotNull Term arcoe(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
         var args = prim.args();
@@ -94,7 +96,7 @@ public final class PrimDef extends TopLevelDef {
 
       public final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, this::arcoe, ref -> {
         var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(LocalVar.IGNORED, FormTerm.Interval.INSTANCE, true);
+        var paramIToATy = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
         var paramI = new LocalVar("i");
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
@@ -105,12 +107,12 @@ public final class PrimDef extends TopLevelDef {
           ImmutableSeq.of(
             new Term.Param(paramA, paramATy, true),
             new Term.Param(new LocalVar("base"), baseAtLeft, true),
-            new Term.Param(paramI, FormTerm.Interval.INSTANCE, true)
+            new Term.Param(paramI, PrimTerm.Interval.INSTANCE, true)
           ),
           new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI), true)),
           ID.ARCOE
         );
-      }, ImmutableSeq.empty());
+      }, ImmutableSeq.of(ID.I));
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed IMIN = formula(ID.IMIN, "i", "j");
@@ -125,10 +127,10 @@ public final class PrimDef extends TopLevelDef {
           return prim;
         }, ref -> new PrimDef(
           ref,
-          ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), FormTerm.Interval.INSTANCE, true)),
-          FormTerm.Interval.INSTANCE,
+          ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), PrimTerm.Interval.INSTANCE, true)),
+          PrimTerm.Interval.INSTANCE,
           id
-        ), ImmutableSeq.empty());
+        ), ImmutableSeq.of(ID.I));
       }
 
       public final @NotNull PrimDef.PrimSeed STR =
@@ -156,6 +158,32 @@ public final class PrimDef extends TopLevelDef {
 
         throw new InternalException("Expected strings but found " + first + " and " + second);
       }
+
+      public final @NotNull PrimDef.PrimSeed I =
+        new PrimSeed(ID.I,
+          ((prim, tyckState) -> PrimTerm.Interval.INSTANCE),
+          ref -> new PrimDef(ref, FormTerm.Univ.ZERO, ID.I),
+          ImmutableSeq.empty());
+
+      public final @NotNull PrimDef.PrimSeed PARTIAL =
+        new PrimSeed(ID.PARTIAL,
+          ((prim, state) -> {
+            var ty = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
+            var iExp = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
+
+            if (iExp instanceof PrimTerm.Mula formula) {
+              return new FormTerm.PartTy(ty, formula.toRestr());
+            }
+            throw new InternalException("TODO: make an error about illegal formula");
+          }),
+          ref -> new PrimDef(
+            ref,
+            ImmutableSeq.of(
+              new Term.Param(new LocalVar("ty"), FormTerm.Univ.ZERO, true),
+              new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true)
+            ),
+            FormTerm.Univ.ZERO, ID.PARTIAL),
+          ImmutableSeq.of(ID.I));
     }
 
     private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
@@ -170,7 +198,9 @@ public final class PrimDef extends TopLevelDef {
           init.IMAX,
           init.INVOL,
           init.STR,
-          init.STRCONCAT
+          init.STRCONCAT,
+          init.I,
+          init.PARTIAL
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
@@ -231,7 +261,9 @@ public final class PrimDef extends TopLevelDef {
     IMAX("intervalMax"),
     INVOL("invol"),
     STR("String"),
-    STRCONCAT("strcat");
+    STRCONCAT("strcat"),
+    I("I"),
+    PARTIAL("Partial");
 
     public final @NotNull @NonNls String id;
 
