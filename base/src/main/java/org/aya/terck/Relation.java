@@ -53,9 +53,9 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   /** @return the side that decreases more */
   @Contract(pure = true) default @NotNull Relation add(@NotNull Relation rhs) {
     return switch (this.compare(rhs)) {
-      case Lt, Le -> rhs;   // rhs decreases more
-      case Eq -> this;      // randomly pick one
-      case Ge, Gt -> this;  // this decreases more
+      case Lt -> rhs;   // rhs decreases more
+      case Eq -> this;  // randomly pick one
+      case Gt -> this;  // this decreases more
       case Unk -> throw new InternalException("unreachable");
     };
   }

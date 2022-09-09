@@ -25,9 +25,9 @@ public interface Selector {
     var bs = had.drop(1);
     return switch (a.compare(b)) {
       // `a` is not strictly better than b, dropping `a`
-      case Eq, Ge, Gt -> new Useless<>(b);
+      case Eq, Gt -> new Useless<>(b);
       // `a` is strictly better than b, dropping `b`
-      case Lt, Le -> switch (select(a, bs)) {
+      case Lt -> switch (select(a, bs)) {
         case Evolve<A> e -> new Evolve<>(e.junks.appended(b), e.betters);
         case Useless<A> u -> u;
       };
@@ -57,7 +57,7 @@ public interface Selector {
   }
 
   enum PartialOrd {
-    Lt, Le, Eq, Ge, Gt, Unk;
+    Lt, Eq, Gt, Unk;
 
     public static @NotNull Selector.PartialOrd compareBool(boolean l, boolean r) {
       if (!l && r) return Selector.PartialOrd.Lt;
@@ -75,25 +75,13 @@ public interface Selector {
       if (this == Unk) return rhs;
 
       if (this == Lt && rhs == Lt) return Lt;
-      if (this == Lt && rhs == Le) return Le;
-      if (this == Lt && rhs == Eq) return Le;
+      if (this == Lt && rhs == Eq) return Eq;
 
-      if (this == Le && rhs == Lt) return Le;
-      if (this == Le && rhs == Le) return Le;
-      if (this == Le && rhs == Eq) return Le;
-
-      if (this == Eq && rhs == Lt) return Le;
-      if (this == Eq && rhs == Le) return Le;
+      if (this == Eq && rhs == Lt) return Eq;
       if (this == Eq && rhs == Eq) return Eq;
-      if (this == Eq && rhs == Ge) return Ge;
-      if (this == Eq && rhs == Gt) return Ge;
+      if (this == Eq && rhs == Gt) return Eq;
 
-      if (this == Ge && rhs == Eq) return Ge;
-      if (this == Ge && rhs == Ge) return Ge;
-      if (this == Ge && rhs == Gt) return Ge;
-
-      if (this == Gt && rhs == Eq) return Ge;
-      if (this == Gt && rhs == Ge) return Ge;
+      if (this == Gt && rhs == Eq) return Eq;
       if (this == Gt && rhs == Gt) return Gt;
 
       return Unk;
@@ -104,19 +92,9 @@ public interface Selector {
       if (this == Eq) return rhs;
 
       if (this == Lt && rhs == Lt) return Lt;
-      if (this == Lt && rhs == Le) return Lt;
       if (this == Lt && rhs == Eq) return Lt;
 
-      if (this == Le && rhs == Lt) return Lt;
-      if (this == Le && rhs == Le) return Le;
-      if (this == Le && rhs == Eq) return Le;
-
-      if (this == Ge && rhs == Eq) return Ge;
-      if (this == Ge && rhs == Ge) return Ge;
-      if (this == Ge && rhs == Gt) return Gt;
-
       if (this == Gt && rhs == Eq) return Gt;
-      if (this == Gt && rhs == Ge) return Gt;
       if (this == Gt && rhs == Gt) return Gt;
 
       return Unk;
@@ -129,8 +107,8 @@ public interface Selector {
     default boolean notWorseThan(@NotNull T other) {
       // If `this` is not worse than `other`, `this` should decrease more or equal to `other`.
       return switch (compare(other)) {
-        case Lt, Le, Unk -> false;
-        case Eq, Ge, Gt -> true;
+        case Lt, Unk -> false;
+        case Eq, Gt -> true;
       };
     }
   }
