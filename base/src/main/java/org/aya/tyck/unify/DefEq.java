@@ -401,29 +401,29 @@ public final class DefEq {
         yield checkParam(lhs.param(), rhs.param(), null, lr, rl, () -> null, () -> {
           var bodyIsOk = compare(lhs.body(), rhs.body(), lr, rl, null);
           if (!bodyIsOk) return null;
-          return FormTerm.Univ.ZERO;
+          return FormTerm.Type.ZERO;
         });
       }
       case FormTerm.Sigma lhs -> {
         if (!(preRhs instanceof FormTerm.Sigma rhs)) yield null;
-        yield checkParams(lhs.params().view(), rhs.params().view(), lr, rl, () -> null, () -> FormTerm.Univ.ZERO);
+        yield checkParams(lhs.params().view(), rhs.params().view(), lr, rl, () -> null, () -> FormTerm.Type.ZERO);
       }
       case FormTerm.Univ lhs -> {
         if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
         if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
-        yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
+        yield new FormTerm.Type((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
       }
       case FormTerm.PartTy lhs -> {
         if (!(preRhs instanceof FormTerm.PartTy rhs)) yield null;
         var happy = compareUntyped(lhs.type(), rhs.type(), lr, rl) != null
           && compareRestr(lhs.restr(), rhs.restr());
-        yield happy ? FormTerm.Univ.ZERO : null;
+        yield happy ? FormTerm.Type.ZERO : null;
       }
       case FormTerm.Path lhs -> {
         if (!(preRhs instanceof FormTerm.Path rhs)) yield null;
-        yield compareCube(lhs.cube(), rhs.cube(), lr, rl) ? FormTerm.Univ.ZERO : null;
+        yield compareCube(lhs.cube(), rhs.cube(), lr, rl) ? FormTerm.Type.ZERO : null;
       }
-      case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Univ.ZERO : null;
+      case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Type.ZERO : null;
       case PrimTerm.Mula lhs -> {
         if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
         var happy = switch (lhs.asFormula()) {
@@ -443,12 +443,12 @@ public final class DefEq {
         if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         // Do not need to be computed precisely because unification won't need this info
-        yield args ? FormTerm.Univ.ZERO : null;
+        yield args ? FormTerm.Type.ZERO : null;
       }
       case CallTerm.Struct lhs -> {
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
-        yield args ? FormTerm.Univ.ZERO : null;
+        yield args ? FormTerm.Type.ZERO : null;
       }
       case CallTerm.Con lhs -> switch (preRhs) {
         case CallTerm.Con rhs -> {

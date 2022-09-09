@@ -56,8 +56,12 @@ public sealed interface FormTerm extends Term {
   /**
    * @author ice1000
    */
-  record Univ(int lift) implements FormTerm, StableWHNF {
-    public static final @NotNull FormTerm.Univ ZERO = new Univ(0);
+  sealed interface Univ extends FormTerm, StableWHNF {
+    int lift();
+  }
+
+  record Type(@Override int lift) implements Univ {
+    public static final @NotNull FormTerm.Type ZERO = new Type(0);
   }
 
   /** partial type */

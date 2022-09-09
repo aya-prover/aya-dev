@@ -94,7 +94,7 @@ public sealed interface SerTerm extends Serializable {
 
   record Univ(int ulift) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Univ(ulift);
+      return new FormTerm.Type(ulift);
     }
   }
 

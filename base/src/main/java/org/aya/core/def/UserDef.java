@@ -32,7 +32,7 @@ public sealed abstract class UserDef extends TopLevelDef permits FnDef, UserDef.
     public final int resultLevel;
 
     protected Type(@NotNull ImmutableSeq<Term.Param> telescope, int resultLevel) {
-      super(telescope, new FormTerm.Univ(resultLevel));
+      super(telescope, new FormTerm.Type(resultLevel));
       this.resultLevel = resultLevel;
     }
   }

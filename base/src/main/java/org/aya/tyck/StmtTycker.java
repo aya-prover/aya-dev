@@ -251,7 +251,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
         var tele = tele(tycker, field.telescope, structLvl);
-        var result = tycker.zonk(tycker.inherit(field.result, new FormTerm.Univ(structLvl))).wellTyped();
+        var result = tycker.zonk(tycker.inherit(field.result, new FormTerm.Type(structLvl))).wellTyped();
         field.signature = new Def.Signature(tele, result);
       }
     }
@@ -259,7 +259,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private IntObjTuple2<Term> resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
-    Term ret = FormTerm.Univ.ZERO;
+    Term ret = FormTerm.Type.ZERO;
     int lift = 0;
     if (!(data.result instanceof Expr.HoleExpr)) {
       var result = tycker.universe(data.result);
@@ -303,7 +303,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, int sort) {
     return tele.map(param -> {
       var paramTyped = (sort >= 0
-        ? exprTycker.inherit(param.type(), new FormTerm.Univ(sort))
+        ? exprTycker.inherit(param.type(), new FormTerm.Type(sort))
         : exprTycker.synthesize(param.type())
       ).wellTyped();
       var newParam = new Term.Param(param, paramTyped);

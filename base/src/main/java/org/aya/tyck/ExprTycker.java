@@ -62,7 +62,7 @@ public final class ExprTycker extends Tycker {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> universe(univ);
-      case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, new FormTerm.Univ(0));
+      case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, new FormTerm.Type(0));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
@@ -371,12 +371,12 @@ public final class ExprTycker extends Tycker {
         if (normTerm instanceof FormTerm.Univ univ) {
           if (univExpr.lift() + 1 > univ.lift()) reporter.report(
             new LevelError(univExpr.sourcePos(), univ.lift(), univExpr.lift() + 1, false));
-          yield new TermResult(new FormTerm.Univ(univExpr.lift()), univ);
+          yield new TermResult(new FormTerm.Type(univExpr.lift()), univ);
         } else {
-          var succ = new FormTerm.Univ(univExpr.lift());
+          var succ = new FormTerm.Type(univExpr.lift());
           unifyTyReported(normTerm, succ, univExpr);
         }
-        yield new TermResult(new FormTerm.Univ(univExpr.lift()), term);
+        yield new TermResult(new FormTerm.Type(univExpr.lift()), term);
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
@@ -474,7 +474,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull UnivResult doUniverse(@NotNull Expr expr) {
-    var univ = FormTerm.Univ.ZERO;
+    var univ = FormTerm.Type.ZERO;
     return switch (expr) {
       case Expr.TupExpr tuple -> failUniv(tuple, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.HoleExpr hole -> {
@@ -482,7 +482,8 @@ public final class ExprTycker extends Tycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new UnivResult(freshHole._2, univ.lift());
       }
-      case Expr.UnivExpr univExpr -> new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift() + 1);
+      case Expr.UnivExpr univExpr ->
+        new UnivResult(new FormTerm.Type(univExpr.lift()), univExpr.lift() + 1);
       case Expr.LamExpr lam -> failUniv(lam, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failUniv(el, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {
@@ -515,7 +516,7 @@ public final class ExprTycker extends Tycker {
         var lvl = switch (lower.normalize(state, NormalizeMode.WHNF)) {
           case FormTerm.Univ u -> u.lift();
           case CallTerm.Hole hole -> {
-            unifyTyReported(hole, FormTerm.Univ.ZERO, expr);
+            unifyTyReported(hole, FormTerm.Type.ZERO, expr);
             yield 0;
           }
           default -> {
@@ -610,8 +611,8 @@ public final class ExprTycker extends Tycker {
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
     var genName = name + Constants.GENERATED_POSTFIX;
     // [ice]: unsure if ZERO is good enough
-    var domain = localCtx.freshHole(FormTerm.Univ.ZERO, genName + "ty", pos)._2;
-    var codomain = localCtx.freshHole(FormTerm.Univ.ZERO, pos)._2;
+    var domain = localCtx.freshHole(FormTerm.Type.ZERO, genName + "ty", pos)._2;
+    var codomain = localCtx.freshHole(FormTerm.Type.ZERO, pos)._2;
     return new FormTerm.Pi(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
   }
 
@@ -760,7 +761,7 @@ public final class ExprTycker extends Tycker {
 
   public record UnivResult(@Override @NotNull Term wellTyped, int lift) implements Result {
     @Override public @NotNull Term type() {
-      return new FormTerm.Univ(lift);
+      return new FormTerm.Type(lift);
     }
 
     @Override public @NotNull UnivResult freezeHoles(@NotNull TyckState state) {
