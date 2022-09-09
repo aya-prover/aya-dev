@@ -366,17 +366,17 @@ public final class ExprTycker extends Tycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new TermResult(freshHole._2, term);
       }
-      case Expr.UnivExpr univExpr -> {
+      case Expr.TypeExpr typeExpr -> {
         var normTerm = term.normalize(state, NormalizeMode.WHNF);
         if (normTerm instanceof FormTerm.Univ univ) {
-          if (univExpr.lift() + 1 > univ.lift()) reporter.report(
-            new LevelError(univExpr.sourcePos(), univ.lift(), univExpr.lift() + 1, false));
-          yield new TermResult(new FormTerm.Type(univExpr.lift()), univ);
+          if (typeExpr.lift() + 1 > univ.lift()) reporter.report(
+            new LevelError(typeExpr.sourcePos(), univ.lift(), typeExpr.lift() + 1, false));
+          yield new TermResult(new FormTerm.Type(typeExpr.lift()), univ);
         } else {
-          var succ = new FormTerm.Type(univExpr.lift());
-          unifyTyReported(normTerm, succ, univExpr);
+          var succ = new FormTerm.Type(typeExpr.lift());
+          unifyTyReported(normTerm, succ, typeExpr);
         }
-        yield new TermResult(new FormTerm.Type(univExpr.lift()), term);
+        yield new TermResult(new FormTerm.Type(typeExpr.lift()), term);
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
@@ -482,8 +482,8 @@ public final class ExprTycker extends Tycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new UnivResult(freshHole._2, univ.lift());
       }
-      case Expr.UnivExpr univExpr ->
-        new UnivResult(new FormTerm.Type(univExpr.lift()), univExpr.lift() + 1);
+      case Expr.TypeExpr typeExpr ->
+        new UnivResult(new FormTerm.Type(typeExpr.lift()), typeExpr.lift() + 1);
       case Expr.LamExpr lam -> failUniv(lam, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failUniv(el, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {

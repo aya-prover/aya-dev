@@ -23,6 +23,9 @@ COUNTEREXAMPLE : 'counterexample';
 // universe
 ULIFT : 'ulift' | '\u2191';
 TYPE : 'Type';
+SET_KW : 'Set';
+PROP : 'Prop';
+ISET : 'ISet';
 
 // other keywords
 // principal: add `_KW` suffix to avoid conflict with a potential rule name.

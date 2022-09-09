@@ -5,7 +5,7 @@ In file $FILE:3:26 ->
   3 |              (p : Sig A  B) : C
                                 ^^
 
-Error: Parser error: extraneous input ')' expecting {'Type', LAND, LOR, '**', '{', '(', '{?', NUMBER, '_', STRING, REPL_COMMAND, ID, I}
+Error: Parser error: extraneous input ')' expecting {'Type', 'Set', 'Prop', 'ISet', LAND, LOR, '**', '{', '(', '{?', NUMBER, '_', STRING, REPL_COMMAND, ID, I}
 
 Parsing interrupted due to:
 1 error(s), 0 warning(s).

@@ -197,11 +197,29 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author re-xyr, ice1000
    */
-  record RawUnivExpr(@NotNull SourcePos sourcePos) implements Expr {}
+  record RawTypeExpr(@NotNull SourcePos sourcePos) implements Expr {}
+  record RawSetExpr(@NotNull SourcePos sourcePos) implements Expr {}
+  record RawPropExpr(@NotNull SourcePos sourcePos) implements Expr {}
+  record RawISetExpr(@NotNull SourcePos sourcePos) implements Expr {}
 
   record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {}
 
-  record UnivExpr(@NotNull SourcePos sourcePos, int lift) implements Expr {}
+  sealed interface UnivExpr extends Expr {
+    @NotNull SourcePos sourcePos();
+    int lift();
+  }
+  record TypeExpr(@Override @NotNull SourcePos sourcePos, @Override int lift) implements UnivExpr {}
+  record SetExpr(@Override @NotNull SourcePos sourcePos, @Override int lift) implements UnivExpr {}
+  record PropExpr(@Override @NotNull SourcePos sourcePos) implements UnivExpr {
+    @Override public int lift() {
+      return 0;
+    }
+  }
+  record ISetExpr(@Override @NotNull SourcePos sourcePos) implements UnivExpr {
+    @Override public int lift() {
+      return 0;
+    }
+  }
 
   /**
    * @author re-xyr

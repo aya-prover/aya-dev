@@ -247,7 +247,10 @@ public record AyaProducer(
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(pos, false, null);
     var id = ctx.qualifiedId();
     if (id != null) return new Expr.UnresolvedExpr(pos, visitQualifiedId(id));
-    if (ctx.TYPE() != null) return new Expr.RawUnivExpr(pos);
+    if (ctx.TYPE() != null) return new Expr.RawTypeExpr(pos);
+    if (ctx.SET_KW() != null) return new Expr.RawSetExpr(pos);
+    if (ctx.PROP() != null) return new Expr.RawPropExpr(pos);
+    if (ctx.ISET() != null) return new Expr.RawISetExpr(pos);
     if (ctx.I() != null) return new Expr.IntervalExpr(pos);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();

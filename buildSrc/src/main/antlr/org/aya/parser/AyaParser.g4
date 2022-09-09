@@ -153,6 +153,9 @@ literal : qualifiedId
         | NUMBER
         | STRING
         | TYPE
+        | SET_KW
+        | PROP
+        | ISET
         | I
         ;
 

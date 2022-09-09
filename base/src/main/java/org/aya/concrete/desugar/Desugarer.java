@@ -30,14 +30,17 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
 
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
-        case Expr.AppExpr app && app.function() instanceof Expr.RawUnivExpr univ -> {
+        case Expr.AppExpr app && app.function() instanceof Expr.RawTypeExpr univ -> {
           try {
-            yield new Expr.UnivExpr(univ.sourcePos(), levelVar(app.argument().expr()));
+            yield new Expr.TypeExpr(univ.sourcePos(), levelVar(app.argument().expr()));
           } catch (DesugarInterruption e) {
             yield new Expr.ErrorExpr(((Expr) app).sourcePos(), app);
           }
         }
-        case Expr.RawUnivExpr univ -> new Expr.UnivExpr(univ.sourcePos(), 0);
+        case Expr.RawTypeExpr univ -> new Expr.TypeExpr(univ.sourcePos(), 0);
+        case Expr.RawSetExpr univ -> new Expr.SetExpr(univ.sourcePos(), 0);
+        case Expr.RawPropExpr univ -> new Expr.PropExpr(univ.sourcePos());
+        case Expr.RawISetExpr univ -> new Expr.ISetExpr(univ.sourcePos());
         case Expr.BinOpSeq binOpSeq -> {
           var seq = binOpSeq.seq();
           assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
