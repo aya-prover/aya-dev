@@ -8,7 +8,6 @@ import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.ArrayUtil;
-import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ public record CallMatrix<Def, Param>(
   @NotNull ImmutableSeq<Param> domainTele,
   @NotNull ImmutableSeq<Param> codomainTele,
   @NotNull Relation[][] matrix
-) implements Docile {
+) implements Docile, Selector.Candidate<CallMatrix<Def, Param>> {
   public CallMatrix(
     @NotNull CallTerm callTerm,
     @NotNull Def domain, @NotNull Def codomain,
@@ -57,20 +56,18 @@ public record CallMatrix<Def, Param>(
     matrix[row][col] = relation;
   }
 
-  /**
-   * A call matrix `A` is smaller than another call matrix `B` iff:
-   * each relation in `A` is less than or equal to the corresponding relation in `B`.
-   */
-  public @NotNull Ordering compare(@NotNull CallMatrix<Def, Param> other) {
-    if (this.domain != other.domain || this.codomain != other.codomain)
-      throw new IllegalArgumentException("Cannot compare unrelated call matrices");
-    if (this == other) return Ordering.Eq;
+  /** Compare two call matrices by their decrease amount. */
+  @Override public Selector.@NotNull PartialOrd compare(@NotNull CallMatrix<Def, Param> other) {
+    if (this.domain != other.domain || this.codomain != other.codomain) return Selector.PartialOrd.Unk;
+    var rel = Selector.PartialOrd.Eq;
     for (int i = 0; i < rows(); i++)
       for (int j = 0; j < cols(); j++) {
-        if (!this.matrix[i][j].lessThanOrEqual(other.matrix[i][j]))
-          return Ordering.Gt;
+        var m = this.matrix[i][j];
+        var n = other.matrix[i][j];
+        var cmp = m.compare(n);
+        rel = rel.and(cmp);
       }
-    return Ordering.Lt;
+    return rel;
   }
 
   /**

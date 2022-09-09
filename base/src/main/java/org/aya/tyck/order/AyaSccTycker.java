@@ -20,7 +20,7 @@ import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.terck.CallGraph;
 import org.aya.terck.CallResolver;
-import org.aya.terck.error.NonTerminating;
+import org.aya.terck.error.BadRecursion;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CounterexampleError;
@@ -147,7 +147,7 @@ public record AyaSccTycker(
 
   private void checkSimpleFn(@NotNull TyckOrder order, @NotNull TeleDecl.FnDecl fn) {
     if (selfReferencing(resolveInfo.depGraph(), order)) {
-      reporter.report(new NonTerminating(fn.sourcePos, fn.ref, null));
+      reporter.report(new BadRecursion(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
     decideTyckResult(fn, fn, tycker.simpleFn(newExprTycker(), fn));
@@ -235,10 +235,10 @@ public record AyaSccTycker(
     if (targets.isEmpty()) return;
     var graph = CallGraph.<Def, Term.Param>create();
     fn.forEach(def -> new CallResolver(def, targets, graph).accept(def));
-    var failed = graph.findNonTerminating();
+    var failed = graph.findBadRecursion();
     if (failed != null) failed.forEach(f -> {
       var ref = f.matrix().domain().ref();
-      reporter.report(new NonTerminating(ref.concrete.sourcePos(), ref, f));
+      reporter.report(new BadRecursion(ref.concrete.sourcePos(), ref, f));
     });
   }
 

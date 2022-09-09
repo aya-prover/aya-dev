@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 @Debug.Renderer(text = "toDoc().debugRender()")
-public sealed interface Relation extends Docile {
+public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   /** increase or unrelated of callee argument wrt. caller parameter. */
   record Unknown() implements Relation {
     public static final @NotNull Unknown INSTANCE = new Unknown();
@@ -50,23 +50,36 @@ public sealed interface Relation extends Docile {
     };
   }
 
+  /** @return the side that decreases more */
   @Contract(pure = true) default @NotNull Relation add(@NotNull Relation rhs) {
-    return this.lessThanOrEqual(rhs) ? rhs : this;
+    return switch (this.compare(rhs)) {
+      case Lt, Le -> rhs;   // rhs decreases more
+      case Eq -> this;      // randomly pick one
+      case Ge, Gt -> this;  // this decreases more
+      case Unk -> throw new InternalException("unreachable");
+    };
+  }
+  /**
+   * Compare two relations by their decrease amount.
+   *
+   * @return {@link org.aya.terck.Selector.PartialOrd#Lt} if this decreases less than the other,
+   * {@link org.aya.terck.Selector.PartialOrd#Gt} if this decreases more.
+   */
+  @Override default Selector.@NotNull PartialOrd compare(@NotNull Relation other) {
+    if (this.isUnknown() && other.isUnknown()) return Selector.PartialOrd.Eq;
+    // Unknown means no decrease, so it's always less than any decrease
+    if (this.isUnknown() && !other.isUnknown()) return Selector.PartialOrd.Lt;
+    if (!this.isUnknown() && other.isUnknown()) return Selector.PartialOrd.Gt;
+    var ldec = (Decrease) this;
+    var rdec = (Decrease) other;
+    // Usable decreases are always greater than unusable ones, or
+    // the larger the size is, the more the argument decreases.
+    return Selector.PartialOrd.compareBool(ldec.usable, rdec.usable)
+      .or(Selector.PartialOrd.compareInt(ldec.size, rdec.size));
   }
 
-  /**
-   * A relation <code>A</code> is less than another relation <code>B</code> iff:
-   * <code>A</code> contains more uncertainty than <code>B</code>.
-   */
-  default boolean lessThanOrEqual(@NotNull Relation rhs) {
-    return switch (this) {
-      case Decrease l && rhs instanceof Decrease r && !l.usable && r.usable && r.size > 0 -> true;
-      case Decrease l && rhs instanceof Decrease r && l.usable && !r.usable && l.size > 0 -> false;
-      case Decrease l && rhs instanceof Decrease r -> r.size >= l.size;
-      case Unknown l -> true;
-      case Relation l && rhs instanceof Unknown -> false;
-      default -> throw new InternalException("unreachable");
-    };
+  default boolean isUnknown() {
+    return this instanceof Unknown;
   }
 
   default boolean isDecreasing() {

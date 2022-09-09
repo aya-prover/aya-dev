@@ -9,16 +9,16 @@ import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.DefVar;
-import org.aya.terck.Behavior;
+import org.aya.terck.Diagonal;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record NonTerminating(
+public record BadRecursion(
   @Override @NotNull SourcePos sourcePos, @NotNull DefVar<?, ?> name,
-  @Nullable Behavior.Diag<Def, Term.Param> diag
+  @Nullable Diagonal<Def, Term.Param> diag
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(Doc.english("The recursive definition"),
