@@ -92,9 +92,27 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Univ(int ulift) implements SerTerm {
+  record Type(int ulift) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new FormTerm.Type(ulift);
+    }
+  }
+
+  record Set(int ulift) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new FormTerm.Set(ulift);
+    }
+  }
+
+  record Prop() implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new FormTerm.Prop();
+    }
+  }
+
+  record ISet() implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new FormTerm.ISet();
     }
   }
 

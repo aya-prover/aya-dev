@@ -86,7 +86,10 @@ public record Serializer(@NotNull Serializer.State state) {
       case PrimTerm.Interval interval -> new SerTerm.Interval();
       case FormTerm.Pi pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
       case FormTerm.Sigma sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
-      case FormTerm.Univ univ -> new SerTerm.Univ(univ.lift());
+      case FormTerm.Type ty -> new SerTerm.Type(ty.lift());
+      case FormTerm.Set set -> new SerTerm.Set(set.lift());
+      case FormTerm.Prop prop -> new SerTerm.Prop();
+      case FormTerm.ISet iset -> new SerTerm.ISet();
       case CallTerm.Con conCall -> new SerTerm.ConCall(
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
@@ -112,11 +115,11 @@ public record Serializer(@NotNull Serializer.State state) {
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
       // TODO: implement these
-      case IntroTerm.PartEl el -> new SerTerm.Univ(114514);
-      case FormTerm.PartTy ty -> new SerTerm.Univ(114514);
-      case FormTerm.Path path -> new SerTerm.Univ(114514);
-      case IntroTerm.PathLam path -> new SerTerm.Univ(114514);
-      case ElimTerm.PathApp app -> new SerTerm.Univ(114514);
+      case IntroTerm.PartEl el -> new SerTerm.Type(114514);
+      case FormTerm.PartTy ty -> new SerTerm.Type(114514);
+      case FormTerm.Path path -> new SerTerm.Type(114514);
+      case IntroTerm.PathLam path -> new SerTerm.Type(114514);
+      case ElimTerm.PathApp app -> new SerTerm.Type(114514);
 
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");

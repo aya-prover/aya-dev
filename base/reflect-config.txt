@@ -59,7 +59,10 @@ org.aya.core.serde.SerTerm$SimpVar
 org.aya.core.serde.SerTerm$SerParam
 org.aya.core.serde.SerTerm$Pi
 org.aya.core.serde.SerTerm$Sigma
-org.aya.core.serde.SerTerm$Univ
+org.aya.core.serde.SerTerm$Type
+org.aya.core.serde.SerTerm$Set
+org.aya.core.serde.SerTerm$Prop
+org.aya.core.serde.SerTerm$ISet
 org.aya.core.serde.SerTerm$Ref
 org.aya.core.serde.SerTerm$Lam
 org.aya.core.serde.SerTerm$New

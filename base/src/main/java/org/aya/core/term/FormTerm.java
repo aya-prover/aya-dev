@@ -64,6 +64,20 @@ public sealed interface FormTerm extends Term {
     public static final @NotNull FormTerm.Type ZERO = new Type(0);
   }
 
+  record Set(@Override int lift) implements Univ {}
+
+  record Prop() implements Univ {
+    @Override public int lift() {
+      return 0;
+    }
+  }
+
+  record ISet() implements Univ {
+    @Override public int lift() {
+      return 0;
+    }
+  }
+
   /** partial type */
   record PartTy(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {}
 
