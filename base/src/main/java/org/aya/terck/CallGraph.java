@@ -119,10 +119,14 @@ public record CallGraph<T, P>(
     @NotNull MutableMap<K, V> b,
     @NotNull BiFunction<V, V, V> combine
   ) {
-    return MutableLinkedHashMap.from(a.view().map((k, av) -> {
-      var bv = b.getOrNull(k);
-      return Tuple.of(k, bv == null ? av : combine.apply(av, bv));
-    }));
+    var union = MutableLinkedHashMap.<K, V>of();
+    a.forEach(union::put);
+    b.forEach((k, v) -> {
+      var both = union.getOrNull(k);
+      if (both == null) union.put(k, v);
+      else union.put(k, combine.apply(both, v));
+    });
+    return union;
   }
 
   public @Nullable ImmutableSeq<Diagonal<T, P>> findBadRecursion() {
