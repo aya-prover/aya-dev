@@ -40,20 +40,20 @@ public interface Selector {
   }
 
   static <A extends Candidate<A>> @NotNull Tuple2<ImmutableSeq<A>, ImmutableSeq<A>>
-  select(@NotNull ImmutableSeq<A> new_, @NotNull ImmutableSeq<A> old_) {
+  select(@NotNull SeqView<A> new_, @NotNull SeqView<A> old_) {
     var old = new Var<>(old_);
     var winners = MutableList.<A>create();
     new_.forEach(a -> {
-      switch (select(a, old.value.view())) {
+      switch (select(a, old.value)) {
         case Evolve<A> e -> {
           winners.append(a);
           // dropping elements worse than `a`
-          old.value = e.betters.toImmutableSeq();
+          old.value = e.betters;
         }
         case Useless<A> u -> {}
       }
     });
-    return Tuple.of(winners.toImmutableSeq(), old.value);
+    return Tuple.of(winners.toImmutableSeq(), old.value.toImmutableSeq());
   }
 
   enum PartialOrd {

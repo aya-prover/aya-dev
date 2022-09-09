@@ -4,8 +4,8 @@ package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableSet;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,7 @@ import java.util.function.Function;
  * @see CallMatrix
  */
 public record CallGraph<T, P>(
-  @NotNull MutableMap<T, @NotNull MutableMap<T, MutableSet<@NotNull CallMatrix<T, P>>>> graph
+  @NotNull MutableMap<T, @NotNull MutableMap<T, MutableList<@NotNull CallMatrix<T, P>>>> graph
 ) {
   public static <T, P> @NotNull CallGraph<T, P> create() {
     return new CallGraph<>(MutableLinkedHashMap.of());
@@ -32,9 +32,9 @@ public record CallGraph<T, P>(
   public void put(@NotNull CallMatrix<T, P> matrix) {
     var caller = matrix.domain();
     var callee = matrix.codomain();
-    var set = graph.getOrPut(caller, MutableLinkedHashMap::of)
-      .getOrPut(callee, MutableSet::create);
-    set.add(matrix);
+    var calls = graph.getOrPut(caller, MutableLinkedHashMap::of)
+      .getOrPut(callee, MutableList::create);
+    calls.append(matrix);
   }
 
   /** @return true if there's no edge */
@@ -70,14 +70,14 @@ public record CallGraph<T, P>(
   private static <T, P> @NotNull Tuple2<CallGraph<T, P>, CallGraph<T, P>> merge(
     @NotNull CallGraph<T, P> comb, @NotNull CallGraph<T, P> cs
   ) {
-    var new_ = mapGraph(comb.graph, a -> Tuple.of(a, MutableSet.<CallMatrix<T, P>>create()));
-    var old_ = mapGraph(cs.graph, a -> Tuple.of(MutableSet.<CallMatrix<T, P>>create(), a));
+    var new_ = mapGraph(comb.graph, a -> Tuple.of(a, MutableList.<CallMatrix<T, P>>create()));
+    var old_ = mapGraph(cs.graph, a -> Tuple.of(MutableList.<CallMatrix<T, P>>create(), a));
     var u = unionGraphWith(new_, old_, (n, o) -> {
       var new1 = n._1;
       var new2 = o._1;
       var old2 = o._2;
-      var sub = Selector.select(new1.toImmutableSeq(), old2.toImmutableSeq());
-      return Tuple.of(MutableSet.from(sub._1.appendedAll(new2)), MutableSet.from(sub._1.appendedAll(sub._2)));
+      var sub = Selector.select(new1.view(), old2.view());
+      return Tuple.of(MutableList.from(sub._1.appendedAll(new2)), MutableList.from(sub._1.appendedAll(sub._2)));
     });
     var o = unzipGraph(u);
     return Tuple.of(new CallGraph<>(o._1), new CallGraph<>(o._2));
