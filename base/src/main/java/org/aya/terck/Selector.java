@@ -126,5 +126,12 @@ public interface Selector {
   interface Candidate<T> {
     /** Compare elements by their decrease amount. */
     @NotNull Selector.PartialOrd compare(@NotNull T other);
+    default boolean notWorseThan(@NotNull T other) {
+      // If `this` is not worse than `other`, `this` should decrease more or equal to `other`.
+      return switch (compare(other)) {
+        case Lt, Le, Unk -> false;
+        case Eq, Ge, Gt -> true;
+      };
+    }
   }
 }

@@ -35,6 +35,7 @@ import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.function.Function;
 
 /**
@@ -235,11 +236,13 @@ public record AyaSccTycker(
     if (targets.isEmpty()) return;
     var graph = CallGraph.<Def, Term.Param>create();
     fn.forEach(def -> new CallResolver(def, targets, graph).accept(def));
-    var failed = graph.findBadRecursion();
-    if (failed != null) failed.forEach(f -> {
-      var ref = f.matrix().domain().ref();
-      reporter.report(new BadRecursion(ref.concrete.sourcePos(), ref, f));
-    });
+    var bads = graph.findBadRecursion();
+    bads.view()
+      .sorted(Comparator.comparing(a -> a.matrix().domain().ref().concrete.sourcePos()))
+      .forEach(f -> {
+        var ref = f.matrix().domain().ref();
+        reporter.report(new BadRecursion(ref.concrete.sourcePos(), ref, f));
+      });
   }
 
   public static class SCCTyckingFailed extends InterruptException {

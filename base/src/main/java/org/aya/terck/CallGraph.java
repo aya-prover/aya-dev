@@ -9,7 +9,6 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -129,16 +128,23 @@ public record CallGraph<T, P>(
     return union;
   }
 
-  public @Nullable ImmutableSeq<Diagonal<T, P>> findBadRecursion() {
+  /** find bad recursive calls in current SCC */
+  public @NotNull ImmutableSeq<Diagonal<T, P>> findBadRecursion() {
     var complete = complete(this);
+    var bads = MutableList.<Diagonal<T, P>>create();
     for (var key : complete.graph.keysView()) {
       var matrix = complete.graph.getOption(key)
         .flatMap(g -> g.getOption(key));
       if (matrix.isEmpty()) continue;
-      var ds = matrix.get().view().map(Diagonal::create).toImmutableSeq();
-      var bad = ds.filterNot(diag -> diag.diagonal().anyMatch(Relation::isDecreasing));
-      if (bad.isNotEmpty()) return bad;
+      // idempotent calls can never get worse after completion --- they are already at the bottom.
+      var idempotent = matrix.get().view()
+        .filter(m -> CallMatrix.combine(m, m).notWorseThan(m));
+      var bad = idempotent
+        .map(Diagonal::create)
+        .filterNot(diag -> diag.diagonal().anyMatch(Relation::isDecreasing))
+        .toImmutableSeq();
+      if (bad.isNotEmpty()) bads.appendAll(bad);
     }
-    return null;
+    return bads.toImmutableSeq();
   }
 }
