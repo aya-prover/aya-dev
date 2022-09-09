@@ -37,12 +37,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = definitions().getOrNull(name);
     if (result == null) return null;
-    else if (result.size() == 1) return result.iterator().next().getValue();
-    else {
-      var disamb = MutableList.<Seq<String>>create();
-      result.forEach((k, v) -> disamb.append(k));
-      return reportAndThrow(new AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
-    }
+    if (result.size() == 1) return result.iterator().next().getValue();
+    var disamb = MutableList.<Seq<String>>create();
+    result.forEach((k, v) -> disamb.append(k));
+    return reportAndThrow(new AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
   }
 
   @Override default @Nullable AnyVar
