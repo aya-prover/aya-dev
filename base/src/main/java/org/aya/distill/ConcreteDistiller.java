@@ -129,7 +129,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         Doc.symbol("**"),
         term(Outer.Codomain, expr.params().last().type())), Outer.BinOp);
       // ^ Same as Pi
-      case Expr.UnivExpr expr -> {
+      case Expr.SortExpr expr -> {
         var fn = Doc.styled(KEYWORD, expr.kind().toString());
         if (!expr.kind().hasLevel() || !options.map.get(DistillerOptions.Key.ShowLevels)) yield fn;
         yield visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,

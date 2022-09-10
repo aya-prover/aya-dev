@@ -53,7 +53,7 @@ public sealed interface FormTerm extends Term {
   record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm, StableWHNF {
   }
 
-  enum UnivKind {
+  enum SortKind {
     Type, Set, Prop, ISet;
 
     @Override public String toString() {
@@ -68,42 +68,42 @@ public sealed interface FormTerm extends Term {
   /**
    * @author ice1000
    */
-  sealed interface Univ extends FormTerm, StableWHNF {
+  sealed interface Sort extends FormTerm, StableWHNF {
     int lift();
-    @NotNull UnivKind kind();
+    @NotNull FormTerm.SortKind kind();
   }
 
-  record Type(@Override int lift) implements Univ {
+  record Type(@Override int lift) implements Sort {
     public static final @NotNull FormTerm.Type ZERO = new Type(0);
 
-    @Override public @NotNull UnivKind kind() {
-      return UnivKind.Type;
+    @Override public @NotNull FormTerm.SortKind kind() {
+      return SortKind.Type;
     }
   }
 
-  record Set(@Override int lift) implements Univ {
-    @Override public @NotNull UnivKind kind() {
-      return UnivKind.Set;
+  record Set(@Override int lift) implements Sort {
+    @Override public @NotNull FormTerm.SortKind kind() {
+      return SortKind.Set;
     }
   }
 
-  record Prop() implements Univ {
+  record Prop() implements Sort {
     @Override public int lift() {
       return 0;
     }
 
-    @Override public @NotNull UnivKind kind() {
-      return UnivKind.Prop;
+    @Override public @NotNull FormTerm.SortKind kind() {
+      return SortKind.Prop;
     }
   }
 
-  record ISet() implements Univ {
+  record ISet() implements Sort {
     @Override public int lift() {
       return 0;
     }
 
-    @Override public @NotNull UnivKind kind() {
-      return UnivKind.ISet;
+    @Override public @NotNull FormTerm.SortKind kind() {
+      return SortKind.ISet;
     }
   }
 

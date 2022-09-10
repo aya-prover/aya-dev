@@ -94,7 +94,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         // Add paren when it's in a spine
         yield checkParen(outer, doc, Outer.AppSpine);
       }
-      case FormTerm.Univ term -> {
+      case FormTerm.Sort term -> {
         var fn = Doc.styled(KEYWORD, term.kind().toString());
         if (!term.kind().hasLevel() || !options.map.get(DistillerOptions.Key.ShowLevels)) yield fn;
         yield visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,

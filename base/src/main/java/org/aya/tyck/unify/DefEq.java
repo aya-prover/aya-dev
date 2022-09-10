@@ -408,8 +408,8 @@ public final class DefEq {
         if (!(preRhs instanceof FormTerm.Sigma rhs)) yield null;
         yield checkParams(lhs.params().view(), rhs.params().view(), lr, rl, () -> null, () -> FormTerm.Type.ZERO);
       }
-      case FormTerm.Univ lhs -> {
-        if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
+      case FormTerm.Sort lhs -> {
+        if (!(preRhs instanceof FormTerm.Sort rhs)) yield null;
         if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
         yield new FormTerm.Type((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
       }

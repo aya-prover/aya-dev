@@ -205,37 +205,37 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
   record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {}
 
-  sealed interface UnivExpr extends Expr {
+  sealed interface SortExpr extends Expr {
     int lift();
 
-    FormTerm.UnivKind kind();
+    FormTerm.SortKind kind();
   }
-  record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements UnivExpr {
-    @Override public FormTerm.UnivKind kind() {
-      return FormTerm.UnivKind.Type;
+  record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
+    @Override public FormTerm.SortKind kind() {
+      return FormTerm.SortKind.Type;
     }
   }
-  record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements UnivExpr {
-    @Override public FormTerm.UnivKind kind() {
-      return FormTerm.UnivKind.Set;
+  record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
+    @Override public FormTerm.SortKind kind() {
+      return FormTerm.SortKind.Set;
     }
   }
-  record PropExpr(@NotNull SourcePos sourcePos) implements UnivExpr {
+  record PropExpr(@NotNull SourcePos sourcePos) implements SortExpr {
     @Override public int lift() {
       return 0;
     }
 
-    @Override public FormTerm.UnivKind kind() {
-      return FormTerm.UnivKind.Prop;
+    @Override public FormTerm.SortKind kind() {
+      return FormTerm.SortKind.Prop;
     }
   }
-  record ISetExpr(@NotNull SourcePos sourcePos) implements UnivExpr {
+  record ISetExpr(@NotNull SourcePos sourcePos) implements SortExpr {
     @Override public int lift() {
       return 0;
     }
 
-    @Override public FormTerm.UnivKind kind() {
-      return FormTerm.UnivKind.ISet;
+    @Override public FormTerm.SortKind kind() {
+      return FormTerm.SortKind.ISet;
     }
   }
 

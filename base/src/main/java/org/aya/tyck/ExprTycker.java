@@ -61,7 +61,7 @@ public final class ExprTycker extends Tycker {
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
-      case Expr.UnivExpr univ -> universe(univ);
+      case Expr.SortExpr sort -> sort(sort);
       case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, new FormTerm.Type(0));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
@@ -71,8 +71,8 @@ public final class ExprTycker extends Tycker {
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
-      case Expr.PiExpr pi -> universe(pi);
-      case Expr.SigmaExpr sigma -> universe(sigma);
+      case Expr.PiExpr pi -> sort(pi);
+      case Expr.SigmaExpr sigma -> sort(sigma);
       case Expr.LiftExpr lift -> {
         var result = synthesize(lift.expr());
         var levels = lift.lift();
@@ -368,10 +368,10 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.TypeExpr typeExpr -> {
         var normTerm = term.normalize(state, NormalizeMode.WHNF);
-        if (normTerm instanceof FormTerm.Univ univ) {
-          if (typeExpr.lift() + 1 > univ.lift()) reporter.report(
-            new LevelError(typeExpr.sourcePos(), univ.lift(), typeExpr.lift() + 1, false));
-          yield new TermResult(new FormTerm.Type(typeExpr.lift()), univ);
+        if (normTerm instanceof FormTerm.Sort sort) {
+          if (typeExpr.lift() + 1 > sort.lift()) reporter.report(
+            new LevelError(typeExpr.sourcePos(), sort.lift(), typeExpr.lift() + 1, false));
+          yield new TermResult(new FormTerm.Type(typeExpr.lift()), sort);
         } else {
           var succ = new FormTerm.Type(typeExpr.lift());
           unifyTyReported(normTerm, succ, typeExpr);
@@ -473,48 +473,48 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private @NotNull UnivResult doUniverse(@NotNull Expr expr) {
+  private @NotNull SortResult doSort(@NotNull Expr expr) {
     var univ = FormTerm.Type.ZERO;
     return switch (expr) {
-      case Expr.TupExpr tuple -> failUniv(tuple, BadTypeError.sigmaCon(state, tuple, univ));
+      case Expr.TupExpr tuple -> failSort(tuple, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.HoleExpr hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield new UnivResult(freshHole._2, univ.lift());
+        yield new SortResult(freshHole._2, univ.lift());
       }
       case Expr.TypeExpr typeExpr ->
-        new UnivResult(new FormTerm.Type(typeExpr.lift()), typeExpr.lift() + 1);
-      case Expr.LamExpr lam -> failUniv(lam, BadTypeError.pi(state, lam, univ));
-      case Expr.PartEl el -> failUniv(el, BadTypeError.partTy(state, el, univ));
+        new SortResult(new FormTerm.Type(typeExpr.lift()), typeExpr.lift() + 1);
+      case Expr.LamExpr lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
+      case Expr.PartEl el -> failSort(el, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {
         var param = pi.param();
         final var var = param.ref();
         var domTy = param.type();
-        var domRes = universe(domTy);
+        var domRes = sort(domTy);
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
-          var cod = universe(pi.last());
-          return new UnivResult(new FormTerm.Pi(resultParam, cod.wellTyped()), Math.max(domRes.lift(), cod.lift()));
+          var cod = sort(pi.last());
+          return new SortResult(new FormTerm.Pi(resultParam, cod.wellTyped()), Math.max(domRes.lift(), cod.lift()));
         });
       }
       case Expr.SigmaExpr sigma -> {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
         var maxLevel = 0;
         for (var tuple : sigma.params()) {
-          var result = universe(tuple.type());
+          var result = sort(tuple.type());
           maxLevel = Math.max(maxLevel, result.lift());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new UnivResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxLevel);
+        yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxLevel);
       }
       default -> {
         var result = synthesize(expr);
         var lower = result.type();
         var lvl = switch (lower.normalize(state, NormalizeMode.WHNF)) {
-          case FormTerm.Univ u -> u.lift();
+          case FormTerm.Sort u -> u.lift();
           case CallTerm.Hole hole -> {
             unifyTyReported(hole, FormTerm.Type.ZERO, expr);
             yield 0;
@@ -524,7 +524,7 @@ public final class ExprTycker extends Tycker {
             yield 0;
           }
         };
-        yield new UnivResult(result.wellTyped(), lvl);
+        yield new SortResult(result.wellTyped(), lvl);
       }
     };
   }
@@ -580,13 +580,13 @@ public final class ExprTycker extends Tycker {
     return res;
   }
 
-  public @NotNull UnivResult universe(@NotNull Expr expr) {
-    return universe(expr, -1);
+  public @NotNull SortResult sort(@NotNull Expr expr) {
+    return sort(expr, -1);
   }
 
-  public @NotNull UnivResult universe(@NotNull Expr expr, int upperBound) {
+  public @NotNull SortResult sort(@NotNull Expr expr, int upperBound) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var result = doUniverse(expr);
+    var result = doSort(expr);
     if (upperBound != -1 && upperBound < result.lift())
       reporter.report(new LevelError(expr.sourcePos(), upperBound, result.lift(), true));
     traceExit(result, expr);
@@ -625,9 +625,9 @@ public final class ExprTycker extends Tycker {
     return new TermResult(new ErrorTerm(expr), term);
   }
 
-  private @NotNull UnivResult failUniv(@NotNull AyaDocile expr, @NotNull Problem prob) {
+  private @NotNull SortResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
     reporter.report(prob);
-    return new UnivResult(new ErrorTerm(expr), 0);
+    return new SortResult(new ErrorTerm(expr), 0);
   }
 
   @SuppressWarnings("unchecked")
@@ -759,13 +759,13 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  public record UnivResult(@Override @NotNull Term wellTyped, int lift) implements Result {
+  public record SortResult(@Override @NotNull Term wellTyped, int lift) implements Result {
     @Override public @NotNull Term type() {
       return new FormTerm.Type(lift);
     }
 
-    @Override public @NotNull UnivResult freezeHoles(@NotNull TyckState state) {
-      return new UnivResult(wellTyped.freezeHoles(state), lift);
+    @Override public @NotNull SortResult freezeHoles(@NotNull TyckState state) {
+      return new SortResult(wellTyped.freezeHoles(state), lift);
     }
   }
 }
