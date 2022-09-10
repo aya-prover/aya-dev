@@ -16,6 +16,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
+import org.aya.generic.Cube;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -303,17 +304,45 @@ public final class DefEq {
       });
       // TODO: path lambda conversion
       case FormTerm.Path path -> throw new UnsupportedOperationException("TODO");
-      case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel
-        && lel.partial() instanceof Partial.Const<Term> ll
-        && rel.partial() instanceof Partial.Const<Term> rr -> doCompareTyped(ty.type(), ll.u(), rr.u(), lr, rl);
-      case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel
-        && !(lel.partial() instanceof Partial.Const<Term>)
-        && !(rel.partial() instanceof Partial.Const<Term>) -> CofThy.conv(ty.restr(), new Subst(),
-        subst -> doCompareTyped(ty.subst(subst), lhs.subst(subst), rhs.subst(subst), lr, rl));
+      case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
+        comparePartial(lel, rel, ty, lr, rl);
       case FormTerm.PartTy ty -> false;
     };
     traceExit();
     return ret;
+  }
+
+  private boolean comparePartial(
+    @NotNull IntroTerm.PartEl lhs, @NotNull IntroTerm.PartEl rhs,
+    @Nullable FormTerm.PartTy type, Sub lr, Sub rl
+  ) {
+    return switch (lhs.partial()) {
+      case Partial.Const<Term> ll && rhs.partial() instanceof Partial.Const<Term> rr ->
+        compare(ll.u(), rr.u(), lr, rl, type == null ? null : type.type());
+      case Partial.Split<Term> ll && rhs.partial() instanceof Partial.Split<Term> rr ->
+        CofThy.conv(type == null ? ll.restr() : type.restr(), new Subst(),
+          subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type == null ? null : type.subst(subst)));
+      default -> false;
+    };
+  }
+
+  private boolean compareCube(@NotNull Cube<Term> lhs, @NotNull Cube<Term> rhs, Sub lr, Sub rl) {
+    lhs.params().zipView(rhs.params()).forEach(x -> {
+      lr.map.put(x._1, new RefTerm(x._2));
+      rl.map.put(x._2, new RefTerm(x._1));
+    });
+    // TODO: let CofThy.propExt uses lr and rl?
+    var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type().subst(lr.map)).subst(lr.map);
+    var rPar = (IntroTerm.PartEl) new IntroTerm.PartEl(rhs.partial(), rhs.type());
+    var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
+    var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
+    if (compareUntyped(lType, rType, lr, rl) == null) return false;
+    var cmp = comparePartial(lPar, rPar, lType, lr, rl);
+    lhs.params().zipView(rhs.params()).forEach(x -> {
+      lr.map.remove(x._1);
+      rl.map.remove(x._2);
+    });
+    return cmp;
   }
 
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
@@ -389,6 +418,10 @@ public final class DefEq {
         var happy = compareUntyped(lhs.type(), rhs.type(), lr, rl) != null
           && compareRestr(lhs.restr(), rhs.restr());
         yield happy ? FormTerm.Univ.ZERO : null;
+      }
+      case FormTerm.Path lhs -> {
+        if (!(preRhs instanceof FormTerm.Path rhs)) yield null;
+        yield compareCube(lhs.cube(), rhs.cube(), lr, rl) ? FormTerm.Univ.ZERO : null;
       }
       case FormTerm.Interval lhs -> preRhs instanceof FormTerm.Interval ? FormTerm.Univ.ZERO : null;
       case PrimTerm.Mula lhs -> {
