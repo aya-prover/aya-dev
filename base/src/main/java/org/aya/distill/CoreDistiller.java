@@ -95,8 +95,15 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield checkParen(outer, doc, Outer.AppSpine);
       }
       case FormTerm.Univ term -> {
-        var fn = Doc.styled(KEYWORD, "Type");
-        if (!options.map.get(DistillerOptions.Key.ShowLevels)) yield fn;
+        var name = switch (term) {
+          case FormTerm.Type ignored -> "Type";
+          case FormTerm.Set ignored -> "Set";
+          case FormTerm.Prop ignored -> "Prop";
+          case FormTerm.ISet ignored -> "ISet";
+        };
+        var hasLevel = term instanceof FormTerm.Type || term instanceof FormTerm.Set;
+        var fn = Doc.styled(KEYWORD, name);
+        if (!hasLevel || !options.map.get(DistillerOptions.Key.ShowLevels)) yield fn;
         yield visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,
           SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(term.lift())), true)),
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
