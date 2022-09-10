@@ -410,8 +410,7 @@ public final class DefEq {
       }
       case FormTerm.Sort lhs -> {
         if (!(preRhs instanceof FormTerm.Sort rhs)) yield null;
-        if(lhs.kind() != rhs.kind()) yield null;
-        if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
+        if (!compareSort(lhs, rhs)) yield null;
         yield (cmp == Ordering.Lt ? lhs : rhs).succ();
       }
       case FormTerm.PartTy lhs -> {
@@ -491,7 +490,7 @@ public final class DefEq {
       // If we do not know the type, then we do not perform the comparison
       if (meta.result == null) return null;
       // Is this going to produce a readable error message?
-      compareLevel(lhs.ulift(), rcall.ulift());
+      compareSort(new FormTerm.Type(lhs.ulift()), new FormTerm.Type(rcall.ulift()));
       var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
       for (var arg : lhs.args().view().zip(rcall.args())) {
         if (!(holeTy instanceof FormTerm.Pi holePi))
@@ -556,25 +555,49 @@ public final class DefEq {
     return resultTy;
   }
 
-  private boolean compareLevel(int l, int r) {
-    switch (cmp) {
-      case Eq:
-        if (l != r) {
-          reporter.report(new LevelError(pos, l, r, true));
-          return false;
-        }
-      case Gt:
-        if (l < r) {
-          reporter.report(new LevelError(pos, l, r, false));
-          return false;
-        }
-      case Lt:
-        if (l > r) {
-          reporter.report(new LevelError(pos, r, l, false));
-          return false;
-        }
+  private static boolean sortLt(FormTerm.Sort l, FormTerm.Sort r) {
+    return switch(l) {
+      case FormTerm.Type lt -> switch(r) {
+        case FormTerm.Type rt -> lt.lift() <= rt.lift();
+        case FormTerm.Set rt -> lt.lift() <= rt.lift();
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop -> false;
+      };
+      case FormTerm.ISet iSet -> switch(r) {
+        case FormTerm.ISet set -> true;
+        case FormTerm.Prop prop -> false;
+        case FormTerm.Set set -> true;
+        case FormTerm.Type type -> false;
+      };
+      case FormTerm.Prop prop -> switch (r) {
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop1 -> true;
+        case FormTerm.Set set -> false;
+        case FormTerm.Type type -> false;
+      };
+      case FormTerm.Set lt -> switch (r) {
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop -> false;
+        case FormTerm.Set rt -> lt.lift() <= rt.lift();
+        case FormTerm.Type rt -> false;
+      };
+    };
+  }
+
+  private boolean compareSort(FormTerm.Sort l, FormTerm.Sort r) {
+    var result = switch(cmp) {
+      case Gt -> sortLt(r, l);
+      case Eq -> l.kind() == r.kind() && l.lift() == r.lift();
+      case Lt -> sortLt(l, r);
+    };
+    if(!result) {
+      switch(cmp) {
+        case Eq -> reporter.report(new LevelError(pos, l, r, true));
+        case Gt -> reporter.report(new LevelError(pos, l, r, false));
+        case Lt -> reporter.report(new LevelError(pos, r, l, false));
+      }
     }
-    return true;
+    return result;
   }
 
   public void checkEqn(@NotNull TyckState.Eqn eqn) {

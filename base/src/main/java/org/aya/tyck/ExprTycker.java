@@ -378,7 +378,7 @@ public final class ExprTycker extends Tycker {
           var succ = self.succ();
           // TODO: update error message
           if (succ.kind() != sort.kind() || succ.lift() > sort.lift()) reporter.report(
-            new LevelError(sortExpr.sourcePos(), sort.lift(), sortExpr.lift() + 1, false));
+            new LevelError(sortExpr.sourcePos(), sort, succ, false));
           yield new TermResult(self, sort);
         } else {
           unifyTyReported(normTerm, self, sortExpr);
@@ -595,7 +595,7 @@ public final class ExprTycker extends Tycker {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var result = doSort(expr);
     if (upperBound != -1 && upperBound < result.type().lift())
-      reporter.report(new LevelError(expr.sourcePos(), upperBound, result.type().lift(), true));
+      reporter.report(new LevelError(expr.sourcePos(), new FormTerm.Type(upperBound), result.type(), true));
     traceExit(result, expr);
     return result;
   }
