@@ -366,17 +366,24 @@ public final class ExprTycker extends Tycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new TermResult(freshHole._2, term);
       }
-      case Expr.TypeExpr typeExpr -> {
+      case Expr.SortExpr sortExpr -> {
+        var self = switch(sortExpr) {
+          case Expr.TypeExpr ty -> new FormTerm.Type(ty.lift());
+          case Expr.SetExpr set -> new FormTerm.Set(set.lift());
+          case Expr.PropExpr prop -> FormTerm.Prop.INSTANCE;
+          case Expr.ISetExpr iset -> FormTerm.ISet.INSTANCE;
+        };
         var normTerm = term.normalize(state, NormalizeMode.WHNF);
         if (normTerm instanceof FormTerm.Sort sort) {
-          if (typeExpr.lift() + 1 > sort.lift()) reporter.report(
-            new LevelError(typeExpr.sourcePos(), sort.lift(), typeExpr.lift() + 1, false));
-          yield new TermResult(new FormTerm.Type(typeExpr.lift()), sort);
+          var succ = self.succ();
+          // TODO: update error message
+          if (succ.kind() != sort.kind() || succ.lift() > sort.lift()) reporter.report(
+            new LevelError(sortExpr.sourcePos(), sort.lift(), sortExpr.lift() + 1, false));
+          yield new TermResult(self, sort);
         } else {
-          var succ = new FormTerm.Type(typeExpr.lift());
-          unifyTyReported(normTerm, succ, typeExpr);
+          unifyTyReported(normTerm, self, sortExpr);
         }
-        yield new TermResult(new FormTerm.Type(typeExpr.lift()), term);
+        yield new TermResult(self, term);
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
