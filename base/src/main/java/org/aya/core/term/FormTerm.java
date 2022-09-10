@@ -53,28 +53,57 @@ public sealed interface FormTerm extends Term {
   record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm, StableWHNF {
   }
 
+  enum UnivKind {
+    Type, Set, Prop, ISet;
+
+    @Override public String toString() {
+      return this.name();
+    }
+
+    public boolean hasLevel() {
+      return this == Type || this == Set;
+    }
+  }
+
   /**
    * @author ice1000
    */
   sealed interface Univ extends FormTerm, StableWHNF {
     int lift();
+    @NotNull UnivKind kind();
   }
 
   record Type(@Override int lift) implements Univ {
     public static final @NotNull FormTerm.Type ZERO = new Type(0);
+
+    @Override public @NotNull UnivKind kind() {
+      return UnivKind.Type;
+    }
   }
 
-  record Set(@Override int lift) implements Univ {}
+  record Set(@Override int lift) implements Univ {
+    @Override public @NotNull UnivKind kind() {
+      return UnivKind.Set;
+    }
+  }
 
   record Prop() implements Univ {
     @Override public int lift() {
       return 0;
+    }
+
+    @Override public @NotNull UnivKind kind() {
+      return UnivKind.Prop;
     }
   }
 
   record ISet() implements Univ {
     @Override public int lift() {
       return 0;
+    }
+
+    @Override public @NotNull UnivKind kind() {
+      return UnivKind.ISet;
     }
   }
 

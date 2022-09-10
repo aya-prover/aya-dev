@@ -11,6 +11,7 @@ import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.pat.Pat;
+import org.aya.core.term.FormTerm;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
@@ -205,19 +206,36 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {}
 
   sealed interface UnivExpr extends Expr {
-    @NotNull SourcePos sourcePos();
     int lift();
+
+    FormTerm.UnivKind kind();
   }
-  record TypeExpr(@Override @NotNull SourcePos sourcePos, @Override int lift) implements UnivExpr {}
-  record SetExpr(@Override @NotNull SourcePos sourcePos, @Override int lift) implements UnivExpr {}
-  record PropExpr(@Override @NotNull SourcePos sourcePos) implements UnivExpr {
+  record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements UnivExpr {
+    @Override public FormTerm.UnivKind kind() {
+      return FormTerm.UnivKind.Type;
+    }
+  }
+  record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements UnivExpr {
+    @Override public FormTerm.UnivKind kind() {
+      return FormTerm.UnivKind.Set;
+    }
+  }
+  record PropExpr(@NotNull SourcePos sourcePos) implements UnivExpr {
     @Override public int lift() {
       return 0;
     }
+
+    @Override public FormTerm.UnivKind kind() {
+      return FormTerm.UnivKind.Prop;
+    }
   }
-  record ISetExpr(@Override @NotNull SourcePos sourcePos) implements UnivExpr {
+  record ISetExpr(@NotNull SourcePos sourcePos) implements UnivExpr {
     @Override public int lift() {
       return 0;
+    }
+
+    @Override public FormTerm.UnivKind kind() {
+      return FormTerm.UnivKind.ISet;
     }
   }
 
