@@ -11,5 +11,18 @@ note: In particular, the problematic call is:
       whose call matrix is:
         ?
 
-1 error(s), 0 warning(s).
+In file $FILE:10:6 ->
+
+   8 | 
+   9 | module Bug {
+  10 |   def f D : Nat
+             ^^
+
+Error: The recursive definition `f` is not structurally recursive
+note: In particular, the problematic call is:
+        f (suc n · m)
+      whose call matrix is:
+        ?
+
+2 error(s), 0 warning(s).
 What are you doing?

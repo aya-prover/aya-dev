@@ -11,14 +11,13 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Relations between size of formal function parameter and function argument
- * in one recursive call. Together with the two operations {@link Relation#add(Relation)}
- * and {@link Relation#mul(Relation)} the relation set forms a commutative semi-ring
- * with zero {@link Relation#unk()} and unit {@link Relation#eq()}.
+ * in one recursive call.
+ * A semi-ring with zero = {@link #unk()}, one = {@link #eq()}.
  *
  * @author kiva
  */
 @Debug.Renderer(text = "toDoc().debugRender()")
-public sealed interface Relation extends Docile {
+public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   /** increase or unrelated of callee argument wrt. caller parameter. */
   record Unknown() implements Relation {
     public static final @NotNull Unknown INSTANCE = new Unknown();
@@ -50,23 +49,36 @@ public sealed interface Relation extends Docile {
     };
   }
 
+  /** @return the side that decreases more */
   @Contract(pure = true) default @NotNull Relation add(@NotNull Relation rhs) {
-    return this.lessThanOrEqual(rhs) ? rhs : this;
+    return switch (this.compare(rhs)) {
+      case Lt -> rhs;   // rhs decreases more
+      case Eq -> this;  // randomly pick one
+      case Gt -> this;  // this decreases more
+      case Unk -> throw new InternalException("unreachable");
+    };
+  }
+  /**
+   * Compare two relations by their decrease amount.
+   *
+   * @return {@link Selector.DecrOrd#Lt} if this decreases less than the other,
+   * {@link Selector.DecrOrd#Gt} if this decreases more.
+   */
+  @Override default @NotNull Selector.DecrOrd compare(@NotNull Relation other) {
+    if (this.isUnknown() && other.isUnknown()) return Selector.DecrOrd.Eq;
+    // Unknown means no decrease, so it's always less than any decrease
+    if (this.isUnknown() && !other.isUnknown()) return Selector.DecrOrd.Lt;
+    if (!this.isUnknown() && other.isUnknown()) return Selector.DecrOrd.Gt;
+    var ldec = (Decrease) this;
+    var rdec = (Decrease) other;
+    // Usable decreases are always greater than unusable ones, or
+    // the larger the size is, the more the argument decreases.
+    return Selector.DecrOrd.compareBool(ldec.usable, rdec.usable)
+      .add(Selector.DecrOrd.compareInt(ldec.size, rdec.size));
   }
 
-  /**
-   * A relation <code>A</code> is less than another relation <code>B</code> iff:
-   * <code>A</code> contains more uncertainty than <code>B</code>.
-   */
-  default boolean lessThanOrEqual(@NotNull Relation rhs) {
-    return switch (this) {
-      case Decrease l && rhs instanceof Decrease r && !l.usable && r.usable && r.size > 0 -> true;
-      case Decrease l && rhs instanceof Decrease r && l.usable && !r.usable && l.size > 0 -> false;
-      case Decrease l && rhs instanceof Decrease r -> r.size >= l.size;
-      case Unknown l -> true;
-      case Relation l && rhs instanceof Unknown -> false;
-      default -> throw new InternalException("unreachable");
-    };
+  default boolean isUnknown() {
+    return this instanceof Unknown;
   }
 
   default boolean isDecreasing() {
