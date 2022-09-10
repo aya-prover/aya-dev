@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
@@ -6,6 +6,8 @@ import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +81,7 @@ public class DocHtmlPrinter extends StringPrinter<DocHtmlPrinter.Config> {
     public final boolean withHeader;
 
     public Config(boolean withHeader) {
-      super(new Html5Stylist(), INFINITE_SIZE, true);
+      super(new Html5Stylist(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT), INFINITE_SIZE, true);
       this.withHeader = withHeader;
     }
   }
