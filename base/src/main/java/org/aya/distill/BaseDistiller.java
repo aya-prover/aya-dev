@@ -36,6 +36,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
+  public static final @NotNull Style PRIM_CALL = Style.preset("aya:PrimCall");
   public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
   public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
   public static final @NotNull Style STRUCT_CALL = Style.preset("aya:StructCall");

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.style;
 
@@ -10,10 +10,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * The colors are from Emacs.
  */
-public record EmacsColorScheme(
+public record AyaColorScheme(
   @NotNull MutableMap<String, Integer> definedColors
 ) implements ColorScheme {
-  public static final EmacsColorScheme INSTANCE = new EmacsColorScheme(MutableMap.ofEntries(
+  public static final AyaColorScheme EMACS = new AyaColorScheme(MutableMap.ofEntries(
     Tuple.of("aya:Keyword", ColorScheme.colorOf(1.0f, 0.43f, 0)),
     Tuple.of("aya:FnCall", ColorScheme.colorOf(0, 0, 1f)),
     Tuple.of("aya:Generalized", ColorScheme.colorOf(0, 0, 1f)),
