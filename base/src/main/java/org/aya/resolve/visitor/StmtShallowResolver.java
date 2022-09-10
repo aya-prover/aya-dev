@@ -6,15 +6,11 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
-import kala.control.primitive.IntOption;
 import kala.tuple.Tuple;
-import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
-import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
-import org.aya.ref.Bind;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
@@ -93,12 +89,7 @@ public record StmtShallowResolver(
           var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
           var defVar = (DefVar<?, ?>) symbol;
-          var argc = computeArgc(defVar);
-          if (argc.isEmpty()) {
-            // TODO: report a problem that we need a telescope
-            throw new InternalException("not implemented yet");
-          }
-          OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc(), argc.get());
+          OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc());
           defVar.opDeclRename.put(resolveInfo.thisModule().moduleName(), rename);
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) {
@@ -158,12 +149,6 @@ public record StmtShallowResolver(
         resolveOpInfo(field, context);
       }
     }
-  }
-
-  private @NotNull IntOption computeArgc(@NotNull DefVar<?, ?> defVar) {
-    if (defVar.core instanceof Def def) return IntOption.some(def.telescope().count(Bind::explicit));
-    if (defVar.concrete instanceof Decl.Telescopic tele) return IntOption.some(tele.telescope().count(Expr.Param::explicit));
-    return IntOption.none();
   }
 
   private <D extends Decl, Child extends Decl> ModuleContext resolveChildren(

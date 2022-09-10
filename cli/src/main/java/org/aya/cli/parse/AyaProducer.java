@@ -162,13 +162,13 @@ public record AyaProducer(
     return unreachable(ctx);
   }
 
-  public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx, int argc) {
+  public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx) {
     var assoc = ctx.assoc();
     var id = ctx.weakId();
     var txt = id.getText();
     var pos = sourcePosOf(id);
     if (assoc == null) return Tuple.of(new WithPos<>(pos, txt), null);
-    var infix = new OpDecl.OpInfo(txt, visitAssoc(assoc), argc);
+    var infix = new OpDecl.OpInfo(txt, visitAssoc(assoc));
     return Tuple.of(new WithPos<>(pos, infix.name()), infix);
   }
 
@@ -176,11 +176,9 @@ public record AyaProducer(
     if (assoc.INFIX() != null) return Assoc.Infix;
     if (assoc.INFIXL() != null) return Assoc.InfixL;
     if (assoc.INFIXR() != null) return Assoc.InfixR;
+    if (assoc.FIXL() != null) return Assoc.FixL;
+    if (assoc.FIXR() != null) return Assoc.FixR;
     throw new InternalException("Unknown assoc: " + assoc.getText());
-  }
-
-  private int countExplicit(@NotNull ImmutableSeq<Expr.Param> tele) {
-    return tele.count(Expr.Param::explicit);
   }
 
   public TeleDecl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
@@ -197,7 +195,7 @@ public record AyaProducer(
 
     var tele = visitTelescope(ctx.tele());
     var bind = ctx.bindBlock();
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
 
     var dynamite = visitFnBody(ctx.fnBody());
     if (dynamite.isRight() && inline.isDefined()) {
@@ -628,7 +626,7 @@ public record AyaProducer(
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
     var tele = visitTelescope(ctx.tele());
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
     var data = new TeleDecl.DataDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
@@ -666,7 +664,7 @@ public record AyaProducer(
 
   public TeleDecl.DataCtor visitDataCtor(@NotNull ImmutableSeq<Pattern> patterns, AyaParser.DataCtorContext ctx) {
     var tele = visitTelescope(ctx.tele());
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
     var bind = ctx.bindBlock();
     return new TeleDecl.DataCtor(
       nameOrInfix._1.sourcePos(),
@@ -749,7 +747,7 @@ public record AyaProducer(
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fields = visitFields(ctx.field());
     var tele = visitTelescope(ctx.tele());
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
     var struct = new TeleDecl.StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
@@ -783,7 +781,7 @@ public record AyaProducer(
 
   public TeleDecl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
     var tele = visitTelescope(ctx.tele());
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
     var bind = ctx.bindBlock();
     return new TeleDecl.StructField(
       nameOrInfix._1.sourcePos(),
@@ -801,7 +799,7 @@ public record AyaProducer(
 
   public TeleDecl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
     var tele = visitTelescope(ctx.tele());
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
     var bind = ctx.bindBlock();
     return new TeleDecl.StructField(
       nameOrInfix._1.sourcePos(),

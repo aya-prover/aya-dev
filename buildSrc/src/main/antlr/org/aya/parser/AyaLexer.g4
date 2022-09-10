@@ -9,6 +9,8 @@ lexer grammar AyaLexer;
 INFIX  : 'infix';
 INFIXL : 'infixl';
 INFIXR : 'infixr';
+FIXL : 'fixl';
+FIXR : 'fixr';
 
 // operator precedence
 TIGHTER : 'tighter';

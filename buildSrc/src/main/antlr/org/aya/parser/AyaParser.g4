@@ -43,7 +43,7 @@ decl : PRIVATE?
      | primDecl
      );
 
-assoc : INFIX | INFIXL | INFIXR;
+assoc : INFIX | INFIXL | INFIXR | FIXL | FIXR;
 
 declNameOrInfix : weakId | assoc weakId;
 

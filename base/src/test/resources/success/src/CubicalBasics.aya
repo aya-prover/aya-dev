@@ -1,5 +1,5 @@
 open import Primitives using
-  ( invol as ~
+  ( invol as fixl ~
   , intervalMin as infix /\
   , intervalMax as infix \/
   )
