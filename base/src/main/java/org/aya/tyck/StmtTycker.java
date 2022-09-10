@@ -262,10 +262,9 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     Term ret = FormTerm.Type.ZERO;
     int lift = 0;
     if (!(data.result instanceof Expr.HoleExpr)) {
-      var result = tycker.sort(data.result);
+      var result = tycker.ty(data.result);
       ret = tycker.zonk(result.wellTyped());
-      lift = result.type().lift() - 1;
-      if (lift < 0) reporter.report(BadTypeError.univ(tycker.state, data.result, ret));
+      lift = result.wellTyped().lift();
     }
     return IntObjTuple2.of(lift, ret);
   }

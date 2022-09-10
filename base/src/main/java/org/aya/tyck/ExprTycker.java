@@ -522,20 +522,30 @@ public final class ExprTycker extends Tycker {
       default -> {
         var result = synthesize(expr);
         var lower = result.type();
-        var ty = switch (lower.normalize(state, NormalizeMode.WHNF)) {
-          case FormTerm.Sort u -> u;
-          case CallTerm.Hole hole -> {
-            unifyTyReported(hole, FormTerm.Type.ZERO, expr);
-            yield FormTerm.Type.ZERO;
-          }
-          default -> {
-            reporter.report(BadTypeError.univ(state, expr, lower));
-            yield FormTerm.Type.ZERO;
-          }
-        };
+        var ty = ty(expr, lower);
         yield new SortResult(result.wellTyped(), ty);
       }
     };
+  }
+
+  public @NotNull TyResult ty(@NotNull Expr expr) {
+    var result = sort(expr);
+    return new TyResult(ty(expr, result.wellTyped()));
+  }
+
+  private @NotNull FormTerm.Sort ty(@NotNull Expr expr, @NotNull Term lower) {
+    var ty = switch (lower.normalize(state, NormalizeMode.WHNF)) {
+      case FormTerm.Sort u -> u;
+      case CallTerm.Hole hole -> {
+        unifyTyReported(hole, FormTerm.Type.ZERO, expr);
+        yield FormTerm.Type.ZERO;
+      }
+      default -> {
+        reporter.report(BadTypeError.univ(state, expr, lower));
+        yield FormTerm.Type.ZERO;
+      }
+    };
+    return ty;
   }
 
   private void traceExit(Result result, @NotNull Expr expr) {
@@ -805,6 +815,16 @@ public final class ExprTycker extends Tycker {
   public record SortResult(@Override @NotNull Term wellTyped, @Override @NotNull FormTerm.Sort type) implements Result {
     @Override public @NotNull SortResult freezeHoles(@NotNull TyckState state) {
       return new SortResult(wellTyped.freezeHoles(state), type);
+    }
+  }
+
+  public record TyResult(@Override @NotNull FormTerm.Sort wellTyped) implements Result {
+    @Override public @NotNull FormTerm.Sort type() {
+      return wellTyped.succ();
+    }
+
+    @Override public @NotNull TyResult freezeHoles(@NotNull TyckState state) {
+      return this;
     }
   }
 }
