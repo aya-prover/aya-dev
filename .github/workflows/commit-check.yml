@@ -1,7 +1,7 @@
 name: commit message
 on:
   push:
-    branches: [main, staging, trying]
+    branches: [staging, trying]
   pull_request:
     branches: [main]
 jobs:
