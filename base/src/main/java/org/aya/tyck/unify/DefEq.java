@@ -410,8 +410,9 @@ public final class DefEq {
       }
       case FormTerm.Sort lhs -> {
         if (!(preRhs instanceof FormTerm.Sort rhs)) yield null;
+        if(lhs.kind() != rhs.kind()) yield null;
         if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
-        yield new FormTerm.Type((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
+        yield (cmp == Ordering.Lt ? lhs : rhs).succ();
       }
       case FormTerm.PartTy lhs -> {
         if (!(preRhs instanceof FormTerm.PartTy rhs)) yield null;

@@ -480,10 +480,10 @@ public final class ExprTycker extends Tycker {
       case Expr.HoleExpr hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield new SortResult(freshHole._2, univ.lift());
+        yield new SortResult(freshHole._2, univ);
       }
       case Expr.TypeExpr typeExpr ->
-        new SortResult(new FormTerm.Type(typeExpr.lift()), typeExpr.lift() + 1);
+        new SortResult(new FormTerm.Type(typeExpr.lift()), new FormTerm.Type(typeExpr.lift() + 1));
       case Expr.LamExpr lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failSort(el, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {
@@ -494,7 +494,7 @@ public final class ExprTycker extends Tycker {
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
           var cod = sort(pi.last());
-          return new SortResult(new FormTerm.Pi(resultParam, cod.wellTyped()), Math.max(domRes.lift(), cod.lift()));
+          return new SortResult(new FormTerm.Pi(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
         });
       }
       case Expr.SigmaExpr sigma -> {
@@ -502,29 +502,29 @@ public final class ExprTycker extends Tycker {
         var maxLevel = 0;
         for (var tuple : sigma.params()) {
           var result = sort(tuple.type());
-          maxLevel = Math.max(maxLevel, result.lift());
+          maxLevel = Math.max(maxLevel, result.type().lift());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxLevel);
+        yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), new FormTerm.Type(maxLevel)); // TODO
       }
       default -> {
         var result = synthesize(expr);
         var lower = result.type();
-        var lvl = switch (lower.normalize(state, NormalizeMode.WHNF)) {
-          case FormTerm.Sort u -> u.lift();
+        var ty = switch (lower.normalize(state, NormalizeMode.WHNF)) {
+          case FormTerm.Sort u -> u;
           case CallTerm.Hole hole -> {
             unifyTyReported(hole, FormTerm.Type.ZERO, expr);
-            yield 0;
+            yield FormTerm.Type.ZERO;
           }
           default -> {
             reporter.report(BadTypeError.univ(state, expr, lower));
-            yield 0;
+            yield FormTerm.Type.ZERO;
           }
         };
-        yield new SortResult(result.wellTyped(), lvl);
+        yield new SortResult(result.wellTyped(), ty);
       }
     };
   }
@@ -587,8 +587,8 @@ public final class ExprTycker extends Tycker {
   public @NotNull SortResult sort(@NotNull Expr expr, int upperBound) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var result = doSort(expr);
-    if (upperBound != -1 && upperBound < result.lift())
-      reporter.report(new LevelError(expr.sourcePos(), upperBound, result.lift(), true));
+    if (upperBound != -1 && upperBound < result.type().lift())
+      reporter.report(new LevelError(expr.sourcePos(), upperBound, result.type().lift(), true));
     traceExit(result, expr);
     return result;
   }
@@ -661,7 +661,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull SortResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
     reporter.report(prob);
-    return new SortResult(new ErrorTerm(expr), 0);
+    return new SortResult(new ErrorTerm(expr), FormTerm.Type.ZERO);
   }
 
   @SuppressWarnings("unchecked")
@@ -793,13 +793,9 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  public record SortResult(@Override @NotNull Term wellTyped, int lift) implements Result {
-    @Override public @NotNull Term type() {
-      return new FormTerm.Type(lift);
-    }
-
+  public record SortResult(@Override @NotNull Term wellTyped, @Override @NotNull FormTerm.Sort type) implements Result {
     @Override public @NotNull SortResult freezeHoles(@NotNull TyckState state) {
-      return new SortResult(wellTyped.freezeHoles(state), lift);
+      return new SortResult(wellTyped.freezeHoles(state), type);
     }
   }
 }

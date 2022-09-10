@@ -73,7 +73,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         var piRaw = term(app.of()).normalize(state, NormalizeMode.WHNF);
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
-      case FormTerm.Sort sort -> new FormTerm.Type(sort.lift() + 1);
+      case FormTerm.Sort sort -> sort.succ();
       case PrimTerm.Interval interval -> FormTerm.Type.ZERO;
       case PrimTerm.Mula end -> PrimTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);

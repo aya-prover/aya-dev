@@ -71,6 +71,7 @@ public sealed interface FormTerm extends Term {
   sealed interface Sort extends FormTerm, StableWHNF {
     int lift();
     @NotNull FormTerm.SortKind kind();
+    @NotNull FormTerm.Sort succ();
   }
 
   record Type(@Override int lift) implements Sort {
@@ -79,6 +80,10 @@ public sealed interface FormTerm extends Term {
     @Override public @NotNull FormTerm.SortKind kind() {
       return SortKind.Type;
     }
+
+    @Override public @NotNull FormTerm.Type succ() {
+      return new FormTerm.Type(lift + 1);
+    }
   }
 
   record Set(@Override int lift) implements Sort {
@@ -86,6 +91,11 @@ public sealed interface FormTerm extends Term {
 
     @Override public @NotNull FormTerm.SortKind kind() {
       return SortKind.Set;
+    }
+
+    @Override
+    public @NotNull FormTerm.Set succ() {
+      return new FormTerm.Set(lift + 1);
     }
   }
 
@@ -102,6 +112,10 @@ public sealed interface FormTerm extends Term {
     @Override public @NotNull FormTerm.SortKind kind() {
       return SortKind.Prop;
     }
+
+    @Override public @NotNull FormTerm.Type succ() {
+      return new FormTerm.Type(1);
+    }
   }
 
   final class ISet implements Sort {
@@ -117,6 +131,10 @@ public sealed interface FormTerm extends Term {
 
     @Override public @NotNull FormTerm.SortKind kind() {
       return SortKind.ISet;
+    }
+
+    @Override public @NotNull FormTerm.Set succ() {
+      return new FormTerm.Set(1);
     }
   }
 
