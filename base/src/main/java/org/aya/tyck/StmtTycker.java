@@ -162,7 +162,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull FnDef doSimpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn) {
-    var okTele = checkTele(tycker, fn.telescope, -1);
+    var okTele = checkTele(tycker, fn.telescope, null);
     var preresult = tycker.synthesize(fn.result).wellTyped();
     var bodyExpr = fn.body.getLeftValue();
     var prebody = tycker.inherit(bodyExpr, preresult).wellTyped();
@@ -179,7 +179,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     switch (decl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl fn -> {
-        var resultTele = tele(tycker, fn.telescope, -1);
+        var resultTele = tele(tycker, fn.telescope, null);
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
         fn.signature = new Def.Signature(resultTele, resultRes);
@@ -188,22 +188,22 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       }
       case TeleDecl.DataDecl data -> {
         var pos = data.sourcePos;
-        var tele = tele(tycker, data.telescope, -1);
+        var tele = tele(tycker, data.telescope, null);
         var resultTy = resultTy(tycker, data);
-        data.ulift = resultTy._1;
-        data.signature = new Def.Signature(tele, resultTy._2);
+        data.ulift = resultTy;
+        data.signature = new Def.Signature(tele, resultTy);
       }
       case TeleDecl.StructDecl struct -> {
         var pos = struct.sourcePos;
-        var tele = tele(tycker, struct.telescope, -1);
+        var tele = tele(tycker, struct.telescope, null);
         var result = resultTy(tycker, struct);
-        struct.signature = new Def.Signature(tele, result._2);
-        struct.ulift = result._1;
+        struct.signature = new Def.Signature(tele, result);
+        struct.ulift = result;
       }
       case TeleDecl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
         var core = prim.ref.core;
-        var tele = tele(tycker, prim.telescope, -1);
+        var tele = tele(tycker, prim.telescope, null);
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
           if (prim.result instanceof Expr.ErrorExpr) {
@@ -251,22 +251,20 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
         var tele = tele(tycker, field.telescope, structLvl);
-        var result = tycker.zonk(tycker.inherit(field.result, new FormTerm.Type(structLvl))).wellTyped();
+        var result = tycker.zonk(tycker.inherit(field.result, structLvl)).wellTyped();
         field.signature = new Def.Signature(tele, result);
       }
     }
     tracing(TreeBuilder::reduce);
   }
 
-  private IntObjTuple2<Term> resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
-    Term ret = FormTerm.Type.ZERO;
-    int lift = 0;
+  private FormTerm.Sort resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
+    FormTerm.Sort ret = FormTerm.Type.ZERO;
     if (!(data.result instanceof Expr.HoleExpr)) {
       var result = tycker.ty(data.result);
-      ret = tycker.zonk(result.wellTyped());
-      lift = result.wellTyped().lift();
+      ret = (FormTerm.Sort) tycker.zonk(result.wellTyped());
     }
-    return IntObjTuple2.of(lift, ret);
+    return ret;
   }
 
   private void ensureConfluent(
@@ -287,7 +285,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
    * @param sort If < 0, apply "synthesize" to the types.
    */
   private @NotNull ImmutableSeq<Term.Param>
-  tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, int sort) {
+  tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable FormTerm.Sort sort) {
     var okTele = checkTele(tycker, tele, sort);
     tycker.solveMetas();
     return zonkTele(tycker, okTele);
@@ -296,13 +294,13 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
   /**
-   * @param sort If < 0, apply "synthesize" to the types.
+   * @param sort If == null, apply "synthesize" to the types.
    */
   private @NotNull ImmutableSeq<TeleResult>
-  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, int sort) {
+  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable FormTerm.Sort sort) {
     return tele.map(param -> {
-      var paramTyped = (sort >= 0
-        ? exprTycker.inherit(param.type(), new FormTerm.Type(sort))
+      var paramTyped = (sort != null
+        ? exprTycker.inherit(param.type(), sort)
         : exprTycker.synthesize(param.type())
       ).wellTyped();
       var newParam = new Term.Param(param, paramTyped);

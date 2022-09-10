@@ -92,26 +92,30 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Type(int ulift) implements SerTerm {
-    @Override public @NotNull Term de(@NotNull DeState state) {
+  sealed interface Sort extends SerTerm {
+    @Override @NotNull FormTerm.Sort de(@NotNull DeState state);
+  }
+
+  record Type(int ulift) implements Sort {
+    @Override public @NotNull FormTerm.Type de(@NotNull DeState state) {
       return new FormTerm.Type(ulift);
     }
   }
 
-  record Set(int ulift) implements SerTerm {
-    @Override public @NotNull Term de(@NotNull DeState state) {
+  record Set(int ulift) implements Sort {
+    @Override public @NotNull FormTerm.Set de(@NotNull DeState state) {
       return new FormTerm.Set(ulift);
     }
   }
 
-  record Prop() implements SerTerm {
-    @Override public @NotNull Term de(@NotNull DeState state) {
+  record Prop() implements Sort {
+    @Override public @NotNull FormTerm.Prop de(@NotNull DeState state) {
       return FormTerm.Prop.INSTANCE;
     }
   }
 
-  record ISet() implements SerTerm {
-    @Override public @NotNull Term de(@NotNull DeState state) {
+  record ISet() implements Sort {
+    @Override public @NotNull FormTerm.ISet de(@NotNull DeState state) {
       return FormTerm.ISet.INSTANCE;
     }
   }

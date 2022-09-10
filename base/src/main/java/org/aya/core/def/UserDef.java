@@ -29,10 +29,10 @@ public sealed abstract class UserDef extends TopLevelDef permits FnDef, UserDef.
   }
 
   public static abstract sealed class Type extends UserDef permits DataDef, StructDef {
-    public final int resultLevel;
+    public final FormTerm.Sort resultLevel;
 
-    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, int resultLevel) {
-      super(telescope, new FormTerm.Type(resultLevel));
+    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, FormTerm.Sort resultLevel) {
+      super(telescope, resultLevel);
       this.resultLevel = resultLevel;
     }
   }

@@ -45,13 +45,13 @@ public record Serializer(@NotNull Serializer.State state) {
       case StructDef struct -> new SerDef.Struct(
         state.def(struct.ref()),
         serializeParams(struct.telescope),
-        struct.resultLevel,
+        (SerTerm.Sort) serialize(struct.resultLevel),
         struct.fields.map(field -> (SerDef.Field) serialize(field))
       );
       case DataDef data -> new SerDef.Data(
         state.def(data.ref),
         serializeParams(data.telescope),
-        data.resultLevel,
+        (SerTerm.Sort) serialize(data.resultLevel),
         data.body.map(ctor -> (SerDef.Ctor) serialize(ctor))
       );
       case PrimDef prim -> {
