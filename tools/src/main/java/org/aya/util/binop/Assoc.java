@@ -8,9 +8,9 @@ package org.aya.util.binop;
 public enum Assoc {
   /** infix */
   Infix,
-  /** infix, but associates leftly */
+  /** infix, left-associative */
   InfixL,
-  /** infix, but associates rightly */
+  /** infix, right-associative */
   InfixR,
   /** prefix operators */
   FixL,

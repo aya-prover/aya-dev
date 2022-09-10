@@ -333,7 +333,7 @@ public final class DefEq {
     });
     // TODO: let CofThy.propExt uses lr and rl?
     var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type().subst(lr.map)).subst(lr.map);
-    var rPar = (IntroTerm.PartEl) new IntroTerm.PartEl(rhs.partial(), rhs.type());
+    var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
     var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
     var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
     if (compareUntyped(lType, rType, lr, rl) == null) return false;
