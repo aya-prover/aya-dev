@@ -584,7 +584,7 @@ public final class DefEq {
     };
   }
 
-  private boolean compareSort(FormTerm.Sort l, FormTerm.Sort r) {
+  public boolean compareSort(FormTerm.Sort l, FormTerm.Sort r) {
     var result = switch(cmp) {
       case Gt -> sortLt(r, l);
       case Eq -> l.kind() == r.kind() && l.lift() == r.lift();
