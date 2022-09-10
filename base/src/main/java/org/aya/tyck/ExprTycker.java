@@ -593,6 +593,40 @@ public final class ExprTycker extends Tycker {
     return result;
   }
 
+  public @NotNull FormTerm.Sort sortPi(@NotNull Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+    var result = switch (domain) {
+      case FormTerm.Type a -> switch (codomain) {
+        case FormTerm.Type b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
+        case FormTerm.Set b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
+        case FormTerm.ISet b -> new FormTerm.Set(a.lift());
+        default -> null;
+      };
+      case FormTerm.ISet a -> switch (codomain) {
+        case FormTerm.ISet b -> FormTerm.Set.ZERO;
+        case FormTerm.Set b -> b;
+        case FormTerm.Type b -> b;
+        default -> null;
+      };
+      case FormTerm.Set a -> switch (codomain) {
+        case FormTerm.Set b -> new FormTerm.Set(Math.max(a.lift(), b.lift()));
+        case FormTerm.Type b -> new FormTerm.Set(Math.max(a.lift(), b.lift()));
+        case FormTerm.ISet b -> new FormTerm.Set(a.lift());
+        default -> null;
+      };
+      case FormTerm.Prop a -> switch (codomain) {
+        case FormTerm.Prop b -> FormTerm.Prop.INSTANCE;
+        case FormTerm.Type b -> b;
+        default -> null;
+      };
+    };
+    if (result == null) {
+      reporter.report(new SortPiError(expr.sourcePos(), domain, codomain));
+      return FormTerm.Type.ZERO;
+    } else {
+      return result;
+    }
+  }
+
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
     return expr instanceof Expr.LamExpr ex && ex.param().explicit()
       || !(expr instanceof Expr.LamExpr);

@@ -106,13 +106,13 @@ public sealed interface SerTerm extends Serializable {
 
   record Prop() implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Prop();
+      return FormTerm.Prop.INSTANCE;
     }
   }
 
   record ISet() implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.ISet();
+      return FormTerm.ISet.INSTANCE;
     }
   }
 

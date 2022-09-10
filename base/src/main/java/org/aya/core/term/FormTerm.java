@@ -82,12 +82,19 @@ public sealed interface FormTerm extends Term {
   }
 
   record Set(@Override int lift) implements Sort {
+    public static final @NotNull FormTerm.Set ZERO = new Set(0);
+
     @Override public @NotNull FormTerm.SortKind kind() {
       return SortKind.Set;
     }
   }
 
-  record Prop() implements Sort {
+  final class Prop implements Sort {
+    public static final @NotNull Prop INSTANCE = new Prop();
+
+    private Prop() {
+    }
+
     @Override public int lift() {
       return 0;
     }
@@ -97,7 +104,13 @@ public sealed interface FormTerm extends Term {
     }
   }
 
-  record ISet() implements Sort {
+  final class ISet implements Sort {
+    public static final @NotNull ISet INSTANCE = new ISet();
+
+    private ISet() {
+
+    }
+
     @Override public int lift() {
       return 0;
     }
