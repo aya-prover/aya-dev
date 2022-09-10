@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.binop;
 
@@ -84,8 +84,7 @@ public abstract class BinOpSet {
     @NotNull SourcePos firstBind,
     @NotNull OpDecl op,
     @NotNull String name,
-    @NotNull Assoc assoc,
-    int argc
+    @NotNull Assoc assoc
   ) {
     private static @NotNull OpDecl.OpInfo ensureOperator(@NotNull OpDecl opDecl) {
       var op = opDecl.opInfo();
@@ -95,7 +94,7 @@ public abstract class BinOpSet {
 
     private static @NotNull BinOpSet.BinOP from(@NotNull SourcePos sourcePos, @NotNull OpDecl opDecl) {
       var op = ensureOperator(opDecl);
-      return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc(), op.argc());
+      return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc());
     }
 
     @Override public String toString() {
