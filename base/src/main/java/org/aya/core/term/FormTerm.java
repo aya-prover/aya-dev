@@ -63,6 +63,13 @@ public sealed interface FormTerm extends Term {
     public boolean hasLevel() {
       return this == Type || this == Set;
     }
+
+    public @NotNull SortKind max(@NotNull SortKind other) {
+      if (this == Set || other == Set) return Set;
+      if (this == Type || other == Type) return Type;
+      // Prop or ISet
+      return this == other ? this : Type;
+    }
   }
 
   /**
@@ -72,6 +79,19 @@ public sealed interface FormTerm extends Term {
     int lift();
     @NotNull FormTerm.SortKind kind();
     @NotNull FormTerm.Sort succ();
+
+    static @NotNull Sort create(@NotNull FormTerm.SortKind kind, int lift) {
+      return switch (kind) {
+        case Type -> new Type(lift);
+        case Set -> new Set(lift);
+        case Prop -> Prop.INSTANCE;
+        case ISet -> ISet.INSTANCE;
+      };
+    }
+
+    default @NotNull Sort max(@NotNull Sort other) {
+      return Sort.create(this.kind().max(other.kind()), Math.max(this.lift(), other.lift()));
+    }
   }
 
   record Type(@Override int lift) implements Sort {

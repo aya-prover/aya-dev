@@ -505,16 +505,19 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.SigmaExpr sigma -> {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
-        var maxLevel = 0;
+        var resultTypes = MutableList.<FormTerm.Sort>create();
         for (var tuple : sigma.params()) {
           var result = sort(tuple.type());
-          maxLevel = Math.max(maxLevel, result.type().lift());
+          resultTypes.append(result.type());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
+        var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
+        var maxSort = resultTypes.reduce(FormTerm.Sort::max);
+        resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), new FormTerm.Type(maxLevel)); // TODO
+        yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxSort);
       }
       default -> {
         var result = synthesize(expr);
