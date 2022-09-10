@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.latex;
 
@@ -7,6 +7,8 @@ import kala.tuple.Tuple;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -60,7 +62,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
    */
   public static class Config extends StringPrinterConfig {
     public Config() {
-      super(new TeXStylist(), INFINITE_SIZE, false);
+      super(new TeXStylist(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT), INFINITE_SIZE, false);
     }
   }
 }

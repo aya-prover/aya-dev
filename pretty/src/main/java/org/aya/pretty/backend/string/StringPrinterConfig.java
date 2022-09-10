@@ -1,30 +1,28 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
 import org.aya.pretty.backend.string.style.UnixTermStylist;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.pretty.printer.StyleFamily;
+import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 
 public class StringPrinterConfig extends PrinterConfig.Basic {
-  public final @NotNull StringStylist stylist;
   public final boolean unicode;
 
   public StringPrinterConfig(@NotNull StringStylist stylist, int pageWidth, boolean unicode) {
-    super(pageWidth, INFINITE_SIZE);
-    this.stylist = stylist;
+    super(pageWidth, INFINITE_SIZE, stylist);
     this.unicode = unicode;
   }
 
-  @Override
-  public @NotNull StringStylist getStylist() {
-    return stylist;
+  @Override public @NotNull StringStylist getStylist() {
+    return (StringStylist) super.getStylist();
   }
 
   public static @NotNull StringPrinterConfig unixTerminal(@NotNull StyleFamily styleFamily, int pageWidth, boolean unicode) {
-    return new StringPrinterConfig(new UnixTermStylist(styleFamily), pageWidth, unicode);
+    return new StringPrinterConfig(new UnixTermStylist(AyaColorScheme.EMACS, styleFamily), pageWidth, unicode);
   }
 
   public static @NotNull StringPrinterConfig unixTerminal(int pageWidth) {

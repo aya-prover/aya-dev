@@ -8,11 +8,17 @@ import kala.control.Option;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
+import org.aya.pretty.printer.ColorScheme;
+import org.aya.pretty.printer.StyleFamily;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
 public abstract class ClosingStylist extends StringStylist {
+  public ClosingStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
+    super(colorScheme, styleFamily);
+  }
+
   public record StyleToken(@NotNull CharSequence start, @NotNull CharSequence end, boolean visible) {
     public static final @NotNull StyleToken NULL = new StyleToken("", "", false);
 

@@ -36,6 +36,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
+  public static final @NotNull Style PRIM_CALL = Style.preset("aya:PrimCall");
   public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
   public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
   public static final @NotNull Style STRUCT_CALL = Style.preset("aya:StructCall");
@@ -219,7 +220,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   static @NotNull Doc primDoc(AnyVar ref) {
-    return Doc.sep(Doc.styled(KEYWORD, "prim"), linkDef(ref, FN_CALL));
+    return Doc.sep(Doc.styled(KEYWORD, "prim"), linkDef(ref, PRIM_CALL));
   }
 
   public static @NotNull Doc linkDef(@NotNull AnyVar ref, @NotNull Style color) {
@@ -304,7 +305,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       case TeleDecl.DataCtor d -> CON_CALL;
       case TeleDecl.StructDecl d -> STRUCT_CALL;
       case TeleDecl.StructField d -> FIELD_CALL;
-      case TeleDecl.PrimDecl d -> FN_CALL;
+      case TeleDecl.PrimDecl d -> PRIM_CALL;
       case null, default -> null;
     };
   }
