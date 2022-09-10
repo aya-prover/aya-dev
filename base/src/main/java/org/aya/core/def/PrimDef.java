@@ -167,7 +167,7 @@ public final class PrimDef extends TopLevelDef {
 
       public final @NotNull PrimDef.PrimSeed PARTIAL =
         new PrimSeed(ID.PARTIAL,
-          ((prim, state) -> {
+          (prim, state) -> {
             var ty = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
             var iExp = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
 
@@ -175,12 +175,12 @@ public final class PrimDef extends TopLevelDef {
               return new FormTerm.PartTy(ty, formula.toRestr());
             }
             throw new InternalException("TODO: make an error about illegal formula");
-          }),
+          },
           ref -> new PrimDef(
             ref,
             ImmutableSeq.of(
-              new Term.Param(new LocalVar("ty"), FormTerm.Univ.ZERO, true),
-              new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true)
+              new Term.Param(new LocalVar("phi"), PrimTerm.Interval.INSTANCE, true),
+              new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, true)
             ),
             FormTerm.Univ.ZERO, ID.PARTIAL),
           ImmutableSeq.of(ID.I));
