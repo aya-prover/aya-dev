@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.printer;
 
@@ -39,10 +39,7 @@ public interface PrinterConfig {
     return INFINITE_SIZE;
   }
 
-  default @NotNull Stylist getStylist() {
-    return new Stylist() {
-    };
-  }
+  @NotNull Stylist getStylist();
 
   /**
    * Basic configure for other configs to easily extend config flags.
@@ -50,19 +47,23 @@ public interface PrinterConfig {
   class Basic implements PrinterConfig {
     private final int pageWidth;
     private final int pageHeight;
+    private final @NotNull Stylist stylist;
 
-    public Basic(int pageWidth, int pageHeight) {
+    public Basic(int pageWidth, int pageHeight, @NotNull Stylist stylist) {
       this.pageWidth = pageWidth;
       this.pageHeight = pageHeight;
+      this.stylist = stylist;
     }
 
-    @Override
-    public int getPageWidth() {
+    @Override public @NotNull Stylist getStylist() {
+      return stylist;
+    }
+
+    @Override public int getPageWidth() {
       return pageWidth;
     }
 
-    @Override
-    public int getPageHeight() {
+    @Override public int getPageHeight() {
       return pageHeight;
     }
   }
