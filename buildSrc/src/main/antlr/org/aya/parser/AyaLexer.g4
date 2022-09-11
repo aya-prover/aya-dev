@@ -39,7 +39,6 @@ OPAQUE : 'opaque';
 INLINE : 'inline';
 OVERLAP : 'overlap';
 MODULE_KW : 'module';
-BIND_KW : 'bind';
 MATCH : 'match';
 // ABSURD : 'impossible';
 VARIABLE : 'variable';

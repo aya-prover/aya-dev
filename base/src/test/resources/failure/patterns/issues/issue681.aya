@@ -20,7 +20,7 @@ def overlap infix + (n m : Nat) : Nat
   | n, zero => n
   | suc m, n => suc (m + n)
   | m, suc n => suc (m + n)
-  bind tighter =
+  tighter =
 
 def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
   | zero, y, z => idp

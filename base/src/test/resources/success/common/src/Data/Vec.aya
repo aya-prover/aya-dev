@@ -18,7 +18,7 @@ def overlap infix ++v (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 | vnil, ys => ys
 | xs, vnil => xs
 | x :> xs, ys => x :> (xs ++v ys)
-bind tighter =
+tighter =
 
 def overlap ++v-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
   : Path (\i => Vec A (+-assoc.at i)) ((xs ++v ys) ++v zs) (xs ++v (ys ++v zs))

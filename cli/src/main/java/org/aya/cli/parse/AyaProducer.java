@@ -122,15 +122,9 @@ public record AyaProducer(
   }
 
   public @NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
-    if (ctx.LOOSER() != null) return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
-      visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()), ImmutableSeq.empty(),
+    return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
+      visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()),
       MutableValue.create(), MutableValue.create());
-    else if (ctx.TIGHTER() != null) return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
-      ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()),
-      MutableValue.create(), MutableValue.create());
-    else return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
-        visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()),
-        MutableValue.create(), MutableValue.create());
   }
 
   public @NotNull ImmutableSeq<QualifiedID> visitLoosers(List<AyaParser.LoosersContext> ctx) {

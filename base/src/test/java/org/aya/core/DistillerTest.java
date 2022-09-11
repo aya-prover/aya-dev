@@ -78,8 +78,8 @@ public class DistillerTest {
   @Test public void nestedPi() {
     var decls = TyckDeclTest.successTyckDecls("""
       def infix = (A B : Type) => A
-      def infix == (A B : Type) => A bind looser =
-      def infix <= (A B : Type) => A bind tighter =
+      def infix == (A B : Type) => A looser =
+      def infix <= (A B : Type) => A tighter =
       def test1 (X : Type) => Pi (A : Type) -> A ulift = X
       def test2 (X : Type) => (Pi (A : Type) -> A) ulift = X
       """)._2;
