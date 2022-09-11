@@ -171,7 +171,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         Doc.sep(lam.params().map(this::lambdaParam)),
         Doc.symbol("=>"),
         lam.body().toDoc(options));
-      case ElimTerm.PathApp app -> visitCalls(infix(app.of()), term(Outer.AppHead, app.of()),
+      case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
     };
   }

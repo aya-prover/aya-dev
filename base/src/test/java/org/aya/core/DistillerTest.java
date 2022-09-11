@@ -103,6 +103,18 @@ public class DistillerTest {
     assertEquals("g (n ·)", t.toDoc(DistillerOptions.informative()).debugRender());
   }
 
+  @Test public void elimBinOP() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      def Eq (A : Type) (a b : A) : Type => [| i |] A {| i 0 := a | i 1 := b |}
+      def infix = {A : Type} => Eq A
+      open data Nat | zero | suc Nat
+      def test => zero = zero
+      """)._2;
+    var t = ((FnDef) decls.get(3)).body.getLeftValue();
+    assertEquals("(=) {Nat} zero zero", t.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("zero (=) zero", t.toDoc(DistillerOptions.pretty()).debugRender());
+  }
+
   private @NotNull Doc declDoc(@Language("TEXT") String text) {
     return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(DistillerOptions.debug())));
   }
