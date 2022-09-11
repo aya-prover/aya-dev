@@ -43,12 +43,11 @@ decl : PRIVATE?
      | primDecl
      );
 
-assoc : INFIX | INFIXL | INFIXR;
+assoc : INFIX | INFIXL | INFIXR | FIXL | FIXR;
 
 declNameOrInfix : weakId | assoc weakId;
 
-bindBlock : BIND_KW (TIGHTER | LOOSER) qIdsComma
-          | BIND_KW LBRACE (tighters | loosers)* RBRACE ;
+bindBlock : (tighters | loosers)+;
 tighters : TIGHTER qIdsComma;
 loosers : LOOSER qIdsComma;
 

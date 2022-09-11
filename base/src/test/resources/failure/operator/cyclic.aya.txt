@@ -1,9 +1,9 @@
-In file $FILE:6:15 ->
+In file $FILE:6:10 ->
 
-  4 |   bind tighter c
+  4 |   tighter c
   5 | def infix c => c
-  6 |   bind tighter d
-                     ^^
+  6 |   tighter d
+                ^^
 
 Error: Circular precedence found between b, c, d
 

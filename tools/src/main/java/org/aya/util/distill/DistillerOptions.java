@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.distill;
 
@@ -29,7 +29,6 @@ public final class DistillerOptions {
     ShowImplicitPats,
     ShowLambdaTypes,
     ShowLevels,
-    ShowLiterals,
   }
 
   @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions debug() {
@@ -48,7 +47,6 @@ public final class DistillerOptions {
     var map = new DistillerOptions();
     map.map.put(Key.ShowImplicitPats, true);
     map.map.put(Key.ShowLevels, true);
-    map.map.put(Key.ShowLiterals, true);
     return map;
   }
 }

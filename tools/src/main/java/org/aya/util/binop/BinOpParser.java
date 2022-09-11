@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.binop;
 
@@ -44,10 +44,10 @@ public abstract class BinOpParser<
       var first = seq.get(0);
       var second = seq.get(1);
       // case 1: `+ f` becomes `\lam _ => _ + f`
-      if (opSet.assocOf(underlyingOpDecl(first)).infix && toSetElem(first, opSet).argc() == 2)
+      if (opSet.assocOf(underlyingOpDecl(first)).isBinary())
         return makeSectionApp(sourcePos, first, elem -> replicate(seq.prepended(elem)).build(sourcePos)).expr();
       // case 2: `f +` becomes `\lam _ => f + _`
-      if (opSet.assocOf(underlyingOpDecl(second)).infix && toSetElem(second, opSet).argc() == 2)
+      if (opSet.assocOf(underlyingOpDecl(second)).isBinary())
         return makeSectionApp(sourcePos, second, elem -> replicate(seq.appended(elem)).build(sourcePos)).expr();
     }
     return convertToPrefix(sourcePos);
@@ -78,11 +78,11 @@ public abstract class BinOpParser<
             // the same precedence. Or a parse error should be reported.
             var topAssoc = top._2.assoc();
             var currentAssoc = currentOp.assoc();
-            if (topAssoc != currentAssoc || topAssoc == Assoc.Infix) {
+            if (Assoc.assocAmbitious(topAssoc, currentAssoc)) {
               reportFixityError(topAssoc, currentAssoc, top._2.name(), currentOp.name(), top._1.sourcePos());
               return createErrorExpr(sourcePos);
             }
-            if (topAssoc == Assoc.InfixL) foldLhsFor(expr);
+            if (topAssoc.leftAssoc()) foldLhsFor(expr);
             else break;
           } else if (cmp == BinOpSet.PredCmp.Looser) {
             break;
@@ -139,11 +139,11 @@ public abstract class BinOpParser<
   }
 
   private @NotNull Arg makeBinApp(@NotNull Arg op) {
-    int argc = toSetElem(op, opSet).argc();
-    if (argc == 1) {
+    var assoc = toSetElem(op, opSet).assoc();
+    if (assoc.isUnary()) {
       var operand = prefixes.dequeue();
       return makeArg(union(operand, op), op.expr(), operand, op.explicit());
-    } else if (argc == 2) {
+    } else if (assoc.isBinary()) {
       if (prefixes.sizeGreaterThanOrEquals(2)) {
         var rhs = prefixes.dequeue();
         var lhs = prefixes.dequeue();
@@ -152,7 +152,8 @@ public abstract class BinOpParser<
         // BinOP section
         var sides = getAppliedSides(op);
         var applied = prefixes.dequeue();
-        var side = sides.elementAt(0);
+        var side = sides.isEmpty() ? AppliedSide.Lhs : sides.elementAt(0);
+        // ^ a unary operator is used as binary section, report here or in type checker?
         return makeSectionApp(union(op, applied), op, elem -> (switch (side) {
           case Lhs -> makeBinApp(op, elem, applied);
           case Rhs -> makeBinApp(op, applied, elem);
@@ -160,7 +161,7 @@ public abstract class BinOpParser<
       }
     }
 
-    throw new UnsupportedOperationException("TODO?");
+    throw new InternalError("unreachable");
   }
 
   private @NotNull Arg makeBinApp(@NotNull Arg op, @NotNull Arg rhs, @NotNull Arg lhs) {

@@ -78,8 +78,8 @@ public class DistillerTest {
   @Test public void nestedPi() {
     var decls = TyckDeclTest.successTyckDecls("""
       def infix = (A B : Type) => A
-      def infix == (A B : Type) => A bind looser =
-      def infix <= (A B : Type) => A bind tighter =
+      def infix == (A B : Type) => A looser =
+      def infix <= (A B : Type) => A tighter =
       def test1 (X : Type) => Pi (A : Type) -> A ulift = X
       def test2 (X : Type) => (Pi (A : Type) -> A) ulift = X
       """)._2;
@@ -101,6 +101,50 @@ public class DistillerTest {
       """)._2;
     var t = ((FnDef) decls.get(3)).body.getLeftValue();
     assertEquals("g (n ·)", t.toDoc(DistillerOptions.informative()).debugRender());
+  }
+
+  @Test public void elimBinOP() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      def Eq (A : Type) (a b : A) : Type => [| i |] A {| i 0 := a | i 1 := b |}
+      def infix = {A : Type} => Eq A
+      open data Nat | zero | suc Nat
+      def test => zero = zero
+      """)._2;
+    var t = ((FnDef) decls.get(3)).body.getLeftValue();
+    assertEquals("(=) {Nat} zero zero", t.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("zero (=) zero", t.toDoc(DistillerOptions.pretty()).debugRender());
+  }
+
+  @Test public void pathApp() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      def infix = {A : Type} (a b : A) : Type => [| i |] A {| i 0 := a | i 1 := b |}
+      def idp {A : Type} {a : A} : a = a => \\i => a
+      def test {A : Type} {a b : A} (p : a = b) : a = b => \\i => p i
+      """)._2;
+    var t = ((FnDef) decls.get(2)).body.getLeftValue();
+    assertEquals("\\ i => p i", t.toDoc(DistillerOptions.informative()).debugRender());
+  }
+
+  @Test public void literals() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      open data Nat | zero | suc Nat
+      def test1 : Nat => 0
+      def test2 : Nat => 114514
+      def test3 Nat : Nat
+        | 0 => 1
+        | 1 => 2
+        | a => suc a
+      """)._2;
+    var t1 = ((FnDef) decls.get(1)).body.getLeftValue();
+    var t2 = ((FnDef) decls.get(2)).body.getLeftValue();
+    var t3 = ((FnDef) decls.get(3));
+    assertEquals("0", t1.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("114514", t2.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("""
+      def test3 (_7 : Nat) : Nat
+        |  0 => 1
+        |  1 => 2
+        |  a => suc a""", t3.toDoc(DistillerOptions.informative()).debugRender());
   }
 
   private @NotNull Doc declDoc(@Language("TEXT") String text) {

@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
 import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.repr.AyaShape;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
 import org.intellij.lang.annotations.Language;
@@ -31,11 +32,12 @@ public class TracingTest {
   }
 
   @NotNull private Trace.Builder mkBuilder(@Language("TEXT") String code) {
-    var res =  TyckDeclTest.successDesugarDecls(code);
+    var res = TyckDeclTest.successDesugarDecls(code);
     var decls = res._2;
     var builder = new Trace.Builder();
+    var shapes = new AyaShape.Factory();
     decls.forEach(decl -> {
-      if (decl instanceof TeleDecl signatured) TyckDeclTest.tyck(res._1, signatured, builder);
+      if (decl instanceof TeleDecl signatured) TyckDeclTest.tyck(res._1, signatured, builder, shapes);
     });
     return builder;
   }

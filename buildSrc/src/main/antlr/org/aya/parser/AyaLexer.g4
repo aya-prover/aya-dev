@@ -9,6 +9,8 @@ lexer grammar AyaLexer;
 INFIX  : 'infix';
 INFIXL : 'infixl';
 INFIXR : 'infixr';
+FIXL : 'fixl';
+FIXR : 'fixr';
 
 // operator precedence
 TIGHTER : 'tighter';
@@ -37,7 +39,6 @@ OPAQUE : 'opaque';
 INLINE : 'inline';
 OVERLAP : 'overlap';
 MODULE_KW : 'module';
-BIND_KW : 'bind';
 MATCH : 'match';
 // ABSURD : 'impossible';
 VARIABLE : 'variable';

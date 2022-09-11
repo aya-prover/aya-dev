@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.error;
 
@@ -81,8 +81,8 @@ public final class OperatorProblem {
 
     @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.plain("Use"),
-        Doc.styled(BaseDistiller.KEYWORD.and().code(), Doc.plain("bind")),
-        Doc.english("statement or insert parentheses to make it clear."));
+        Doc.styled(BaseDistiller.KEYWORD.and().code(), Doc.plain("tighter/looser")),
+        Doc.english("clause or insert parentheses to make it clear."));
     }
   }
 

@@ -12,8 +12,8 @@ public interface OpDecl {
 
   @Nullable OpInfo opInfo();
 
-  record OpInfo(@NotNull String name, @NotNull Assoc assoc, int argc) {
+  record OpInfo(@NotNull String name, @NotNull Assoc assoc) {
   }
 
-  @NotNull OpDecl APPLICATION = () -> new OpInfo("application", Assoc.InfixL, 2);
+  @NotNull OpDecl APPLICATION = () -> new OpInfo("application", Assoc.InfixL);
 }

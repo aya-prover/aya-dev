@@ -26,17 +26,17 @@ def test2 : term2 = term2Ast => idp
 -----------------------------------------
 
 def infixr >== {A : Type} {a b c : A} (p : a = b) (q : b = c) => p <==> q
-  bind looser qed, ==<
+  looser qed, ==<
 def infix  ==< {A : Type} (a : A) {b : A} (p : a = b) => p
 
-def infix qed {A : Type} (a : A) : a = a => idp {A} {a}
+def fixr qed {A : Type} (a : A) : a = a => idp {A} {a}
 
 -----------------------------------------
 
 def overlap infix +' (a b : Nat) : Nat
  | a, 0 => a
  | a, suc b => suc (a +' b)
- bind tighter =, ==<, qed
+ tighter =, ==<, qed
 
 def +'-comm (a b : Nat) : a +' b = b +' a
   | 0, 0 => idp
@@ -56,7 +56,7 @@ def +'-comm (a b : Nat) : a +' b = b +' a
 -----------------------------------------
 
 def a (b : Nat) : Nat => suc b
-def infix suc' (a : Nat) : Term => Atom a
+def fixl suc' (a : Nat) : Term => Atom a
 
 def what-if-they're-prefixed : (suc' a 0) = (suc' (a 0))  => idp
 def what-if-they're-prefixed' : (suc' a 0) = (Atom (suc 0))  => idp

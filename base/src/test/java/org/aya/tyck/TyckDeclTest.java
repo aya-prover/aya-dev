@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -30,9 +30,11 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TyckDeclTest {
-  public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull TeleDecl decl, Trace.@Nullable Builder builder) {
+  public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull TeleDecl decl, Trace.@Nullable Builder builder, @NotNull AyaShape.Factory shapes) {
     var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
-    return tycker.tyck(decl, tycker.newTycker(factory, new AyaShape.Factory()));
+    var def = tycker.tyck(decl, tycker.newTycker(factory, shapes));
+    shapes.bonjour(def);
+    return def;
   }
 
   public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<Stmt>> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
@@ -51,8 +53,9 @@ public class TyckDeclTest {
 
   public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
     var res = successDesugarDecls(text);
+    var shapes = new AyaShape.Factory();
     return Tuple.of(res._1, res._2.view()
-      .map(i -> i instanceof TeleDecl s ? tyck(res._1, s, null) : null)
+      .map(i -> i instanceof TeleDecl s ? tyck(res._1, s, null, shapes) : null)
       .filter(Objects::nonNull).toImmutableSeq());
   }
 }

@@ -1,11 +1,11 @@
 open import Primitives using
-  ( invol as ~
+  ( invol as fixl ~
   , intervalMin as infix /\
   , intervalMax as infix \/
   )
 
 def Eq (A : Type) (a b : A) : Type => [| i |] A {| i 0 := a | i 1 := b |}
-def infix = {A : Type} (a b : A) => Eq A a b
+def infix = {A : Type} => Eq A
 def idp {A : Type} {a : A} : a = a => \i => a
 def funExt {A B : Type} (f g : A -> B)
      (p : Pi (a : A) -> f a = g a) : f = g => \i a => p a i

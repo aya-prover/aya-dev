@@ -9,7 +9,7 @@ def overlap infixl + (a b : Nat) : Nat
 | a, 0 => a
 | suc a, b => suc (a + b)
 | a, suc b => suc (a + b)
-bind tighter =
+tighter =
 
 def overlap +-assoc-lemma (a b c : Nat) : (a + b) + c = a + (b + c)
 | 0, b, c => idp
@@ -30,13 +30,13 @@ def overlap infixl *' (m n : Nat) : Nat
 | 0, n => 0
 | m, 0 => 0
 | suc m, suc n => suc (m + n + m *' n)
-bind tighter +
+tighter +
 
 def overlap infixl * (m n : Nat) : Nat
 | 0, n => 0
 | m, 0 => 0
 | suc m, n => n + m * n
-bind tighter +
+tighter +
 
 def *-suc (m n : Nat) : m * suc n = m + m * n
 | 0, n => idp

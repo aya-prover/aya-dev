@@ -95,8 +95,7 @@ public record CompiledAya(
       var concrete = def.ref().concrete;
       var opInfo = concrete.opInfo();
       if (opInfo != null) serOps.append(new SerDef.SerOp(
-        nameOf(serDef), opInfo.assoc(), opInfo.argc(),
-        serBind(concrete.bindBlock())));
+        nameOf(serDef), opInfo.assoc(), serBind(concrete.bindBlock())));
     }
 
     private @NotNull SerDef.SerBind serBind(@NotNull BindBlock bindBlock) {
@@ -150,7 +149,7 @@ public record CompiledAya(
   private void deOp(@NotNull SerTerm.DeState state, @NotNull AyaBinOpSet opSet) {
     serOps.forEach(serOp -> {
       var defVar = state.resolve(serOp.name());
-      var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc(), serOp.argc());
+      var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc());
       defVar.opDecl = new SerDef.SerOpDecl(opInfo);
     });
     serOps.view().forEach(serOp -> {
