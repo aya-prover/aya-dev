@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -10,11 +10,7 @@ import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record NoRuleError(@Override @NotNull Expr expr, @Nullable Term term) implements ExprProblem {
-  @Override public @NotNull Severity level() {
-    return Severity.ERROR;
-  }
-
+public record NoRuleError(@Override @NotNull Expr expr, @Nullable Term term) implements ExprProblem, TyckError {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     if (term != null)
       return Doc.sep(Doc.english("No rule for checking the expression"),

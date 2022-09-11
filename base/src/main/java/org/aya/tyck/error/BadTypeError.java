@@ -23,11 +23,7 @@ public record BadTypeError(
   @NotNull Term actualType, @NotNull Doc action,
   @NotNull Doc thing, @NotNull AyaDocile desired,
   @NotNull TyckState state
-) implements ExprProblem {
-  @Override public @NotNull Severity level() {
-    return Severity.ERROR;
-  }
-
+) implements ExprProblem, TyckError {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.vcat(
       Doc.sep(Doc.english("Unable to"), action, Doc.english("the expression")),

@@ -115,7 +115,7 @@ public final class ExprTycker extends Tycker {
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
-            yield fail(newExpr, structCall, new FieldProblem.ArgMismatchError(newExpr.sourcePos(), defField, bindings.size()));
+            yield fail(newExpr, structCall, new FieldError.ArgMismatch(newExpr.sourcePos(), defField, bindings.size()));
           }
           var fieldExpr = bindings.zip(telescope).foldRight(conField.body(), (pair, lamExpr) ->
             new Expr.LamExpr(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
@@ -125,9 +125,9 @@ public final class ExprTycker extends Tycker {
         }
 
         if (missing.isNotEmpty())
-          yield fail(newExpr, structCall, new FieldProblem.MissingFieldError(newExpr.sourcePos(), missing.toImmutableSeq()));
+          yield fail(newExpr, structCall, new FieldError.MissingField(newExpr.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
-          yield fail(newExpr, structCall, new FieldProblem.NoSuchFieldError(newExpr.sourcePos(), conFields.map(f -> f.name().data())));
+          yield fail(newExpr, structCall, new FieldError.NoSuchField(newExpr.sourcePos(), conFields.map(f -> f.name().data())));
         yield new TermResult(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
       }
       case Expr.ProjExpr proj -> {
@@ -139,7 +139,7 @@ public final class ExprTycker extends Tycker {
             var telescope = sigma.params();
             var index = ix - 1;
             if (index < 0 || index >= telescope.size())
-              return fail(proj, new ProjIxError(proj, ix, telescope.size()));
+              return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
             var type = telescope.get(index).type();
             var subst = ElimTerm.Proj.projSubst(projectee.wellTyped(), index, telescope);
             return new TermResult(new ElimTerm.Proj(projectee.wellTyped(), ix), type.subst(subst));
@@ -151,7 +151,7 @@ public final class ExprTycker extends Tycker {
             if (structCore == null) throw new UnsupportedOperationException("TODO");
             // TODO[ice]: instantiate the type
             if (!(proj.resolvedIx() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
-              return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
+              return fail(proj, new FieldError.UnknownField(proj, fieldName));
             var fieldRef = field.ref();
 
             var structSubst = Expander.buildSubst(structCore.telescope(), structCall.args());
@@ -196,7 +196,7 @@ public final class ExprTycker extends Tycker {
               app = CallTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
               pi = ensurePiOrThrow(pi.body());
-            } else yield fail(appE, new ErrorTerm(pi.body()), new LicitProblem.UnexpectedImplicitArgError(argument));
+            } else yield fail(appE, new ErrorTerm(pi.body()), new LicitError.UnexpectedImplicitArg(argument));
           }
           pi = ensurePiOrThrow(pi.subst(subst));
         } catch (NotPi notPi) {
@@ -215,7 +215,7 @@ public final class ExprTycker extends Tycker {
         // TODO[literal]: int literals. Currently the parser does not allow negative literals.
         var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
-        if (defs.sizeGreaterThan(1)) yield fail(expr, new AmbiguousLitError(expr, defs));
+        if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs));
         var type = new CallTerm.Data(((DataDef) defs.first()).ref, 0, ImmutableSeq.empty());
         yield new TermResult(new LitTerm.ShapedInt(integer, AyaShape.NAT_SHAPE, type), type);
       }
@@ -283,7 +283,7 @@ public final class ExprTycker extends Tycker {
     var t = type.subst(subst).normalize(state, NormalizeMode.WHNF);
     var unifier = unifier(loc.sourcePos(), Ordering.Eq);
     var happy = unifier.compare(l, r, t);
-    if (!happy) reporter.report(new CubicalProblem.BoundaryDisagree(loc, lhs, rhs, unifier.getFailure(), state));
+    if (!happy) reporter.report(new CubicalError.BoundaryDisagree(loc, lhs, rhs, unifier.getFailure(), state));
     return happy;
   }
 
@@ -354,7 +354,7 @@ public final class ExprTycker extends Tycker {
           againstTele = againstTele.drop(1);
           if (againstTele.isNotEmpty()) subst.add(ref, result.wellTyped());
           else if (iter.hasNext()) {
-            yield fail(tuple, term, new TupleProblem.ElemMismatchError(tuple.sourcePos(), dt.params().size(), tuple.items().size()));
+            yield fail(tuple, term, new TupleError.ElemMismatchError(tuple.sourcePos(), dt.params().size(), tuple.items().size()));
           } else items.append(inherit(item, last.subst(subst)).wellTyped());
         }
         var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
@@ -384,7 +384,7 @@ public final class ExprTycker extends Tycker {
           case FormTerm.Pi dt -> {
             var param = lam.param();
             if (param.explicit() != dt.param().explicit()) {
-              yield fail(lam, dt, new LicitProblem.LicitMismatchError(lam, dt));
+              yield fail(lam, dt, new LicitError.LicitMismatch(lam, dt));
             }
             var var = param.ref();
             var lamParam = param.type();
@@ -407,7 +407,7 @@ public final class ExprTycker extends Tycker {
             var cubeParams = path.cube().params();
             var plam = Expr.unPathLam(lam, cubeParams.size());
             if (!plam._1.sizeEquals(cubeParams))
-              yield fail(lam, term, new CubicalProblem.DimensionMismatch(lam, cubeParams.size(), plam._1.size()));
+              yield fail(lam, term, new CubicalError.DimensionMismatch(lam, cubeParams.size(), plam._1.size()));
             // we allow lambda params to be typed explicitly --- check them against I.
             var params = plam._1.map(p -> {
               var i = synthesize(p.type());
@@ -444,7 +444,7 @@ public final class ExprTycker extends Tycker {
         if (ty instanceof FormTerm.Interval) {
           var end = lit.integer();
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT, ty);
-          else yield fail(expr, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
+          else yield fail(expr, new PrimError.BadInterval(lit.sourcePos(), lit.integer()));
         }
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
@@ -464,7 +464,7 @@ public final class ExprTycker extends Tycker {
         var partial = elaboratePartial(el, el.partial(), rhsType);
         var face = partial.restr();
         if (!CofThy.conv(cof, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
-          yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
+          yield fail(el, new CubicalError.FaceMismatch(el, face, cof));
         yield new TermResult(new IntroTerm.PartEl(partial, rhsType), ty);
       }
       // TODO: turn definition into path lambda

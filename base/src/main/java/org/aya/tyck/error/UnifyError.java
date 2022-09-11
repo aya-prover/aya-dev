@@ -11,10 +11,9 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.DefEq;
 import org.aya.util.distill.DistillerOptions;
-import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public interface UnifyError extends Problem {
+public interface UnifyError extends TyckError {
   @NotNull TyckState state();
   @NotNull DefEq.FailureData failureData();
 
@@ -63,10 +62,6 @@ public interface UnifyError extends Problem {
         Doc.par(1, expr.toDoc(options)),
         Doc.english("of type"));
       return describeUnify(options, prologue, actual, Doc.english("against the type"), expected);
-    }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
     }
   }
 }

@@ -20,6 +20,10 @@ public record BadRecursion(
   @Override @NotNull SourcePos sourcePos, @NotNull DefVar<?, ?> name,
   @Nullable Diagonal<Def, Term.Param> diag
 ) implements Problem {
+  @Override public @NotNull Severity level() {return Severity.ERROR;}
+
+  @Override public @NotNull Stage stage() {return Stage.TERCK;}
+
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(Doc.english("The recursive definition"),
       Doc.styled(Style.code(), BaseDistiller.defVar(name)),
@@ -39,9 +43,5 @@ public record BadRecursion(
       buffer.append(diag.toDoc());
     }
     return Doc.vcat(buffer);
-  }
-
-  @Override public @NotNull Severity level() {
-    return Severity.ERROR;
   }
 }

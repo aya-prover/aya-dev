@@ -22,7 +22,7 @@
   + Agda 中叫做 `Abstract`
   + Arend 中叫做 `Concrete`
 + `Decl` -- 语法正确、类型尚且不知道正不正确的全局定义，或者说包含 `Expr` 的全局定义
-+ `TermSubst` -- binding 到表达式的映射，又叫替换
++ `Subst` -- binding 到表达式的映射，又叫替换
   + Arend 中叫 `ExprSubstitution`
   + Agda 中叫 `Substitution`
 + `Tele` -- 函数式风格的列表存储的一组 binding，后面的 binding 的类型可以引用前面的 binding 的值。

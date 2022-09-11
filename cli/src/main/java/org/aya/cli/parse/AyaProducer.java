@@ -26,7 +26,6 @@ import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Cube;
 import org.aya.generic.Modifier;
-import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -34,7 +33,7 @@ import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.repl.antlr.AntlrUtil;
-import org.aya.tyck.error.NotAnIntervalError;
+import org.aya.tyck.error.PrimError;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -403,7 +402,7 @@ public record AyaProducer(
   private @NotNull Restr.Cond<Expr> visitCond(AyaParser.CondContext ctx) {
     var num = Integer.parseInt(ctx.NUMBER().getText());
     if (num != 0 && num != 1) {
-      reporter.report(new NotAnIntervalError(sourcePosOf(ctx.NUMBER()), num));
+      reporter.report(new PrimError.BadInterval(sourcePosOf(ctx.NUMBER()), num));
       throw new ParsingInterruptedException();
     }
     var weakId = ctx.weakId();
@@ -901,7 +900,7 @@ public record AyaProducer(
     if (ctx.OPAQUE() != null) return Modifier.Opaque;
     if (ctx.INLINE() != null) return Modifier.Inline;
     if (ctx.OVERLAP() != null) return Modifier.Overlap;
-    return Modifier.Pattern;
+    return unreachable(ctx);
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {

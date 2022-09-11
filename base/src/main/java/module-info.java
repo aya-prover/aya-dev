@@ -23,7 +23,6 @@ module aya.base {
   exports org.aya.core.visitor;
   exports org.aya.core;
   exports org.aya.distill;
-  exports org.aya.generic.ref;
   exports org.aya.generic.util;
   exports org.aya.generic;
   exports org.aya.prelude;

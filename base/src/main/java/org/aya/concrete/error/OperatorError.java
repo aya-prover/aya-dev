@@ -15,22 +15,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public final class OperatorProblem {
-  public record NotOperator(@NotNull SourcePos sourcePos, @NotNull String op) implements Problem {
+public interface OperatorError extends Problem {
+  @Override default @NotNull Problem.Severity level() {return Problem.Severity.ERROR;}
+  @Override default @NotNull Stage stage() {return Stage.PARSE;}
+
+  record BadBindBlock(@NotNull SourcePos sourcePos, @NotNull String op) implements OperatorError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.plain(op), Doc.english("is not an operator. It cannot have bind block."));
     }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
   }
 
-  public record FixityError(
+  record Fixity(
     @NotNull String op1, @NotNull Assoc assoc1,
     @NotNull String op2, @NotNull Assoc assoc2,
     @Override @NotNull SourcePos sourcePos
-  ) implements Problem {
+  ) implements OperatorError {
     @Override
     public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
@@ -50,26 +49,16 @@ public final class OperatorProblem {
         : Doc.english("share the same precedence but don't share the same associativity.");
     }
 
-    @Override
-    public @NotNull Doc hint(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
       return Doc.english("Make them both left/right-associative to resolve this problem.");
-    }
-
-    @Override
-    public @NotNull Severity level() {
-      return Severity.ERROR;
     }
   }
 
-  public record AmbiguousPredError(
+  record Precedence(
     @NotNull String op1,
     @NotNull String op2,
     @Override @NotNull SourcePos sourcePos
-  ) implements Problem {
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
-
+  ) implements OperatorError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Ambiguous operator precedence detected between"),
@@ -86,19 +75,15 @@ public final class OperatorProblem {
     }
   }
 
-  public record BindSelfError(@Override @NotNull SourcePos sourcePos) implements Problem {
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
-
+  record SelfBind(@Override @NotNull SourcePos sourcePos) implements OperatorError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.english("Self bind is not allowed");
     }
   }
 
-  public record Circular(
+  record Circular(
     @NotNull ImmutableSeq<BinOpSet.BinOP> items
-  ) implements Problem {
+  ) implements OperatorError {
     @Override public @NotNull SourcePos sourcePos() {
       return items.view().map(BinOpSet.BinOP::firstBind)
         .max(Comparator.comparingInt(SourcePos::endLine));
@@ -110,10 +95,6 @@ public final class OperatorProblem {
         Doc.commaList(items.view().map(BinOpSet.BinOP::name).toImmutableSeq()
           .sorted().view().map(Doc::plain))
       );
-    }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
     }
   }
 }
