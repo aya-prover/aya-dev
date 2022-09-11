@@ -1,3 +1,15 @@
 prim I
-def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial A {i 0 \/ i 1} =>
+prim Partial
+prim intervalMin
+prim intervalMax
+prim invol
+
+def infix /\ => intervalMin
+tighter \/
+
+def infix \/ => intervalMax
+
+def ~ => invol
+
+def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial (~ i \/ i) A =>
   {| i 0 := u | i 1 /\ j 0 := v |}

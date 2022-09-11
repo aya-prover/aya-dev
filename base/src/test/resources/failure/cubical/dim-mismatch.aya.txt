@@ -1,9 +1,9 @@
-In file $FILE:9:5 ->
+In file $FILE:21:5 ->
 
-  7 | def cmp {A : Type} (x : A)
-  8 |   : [| i j |] (Partial A {j 0}) {| i 0 := p1 A x j |}
-  9 |   => \i => p2 A x i
-           ^------------^
+  19 | def cmp {A : Type} (x : A)
+  20 |   : [| i j |] (Partial (~ j) A) {| i 0 := p1 A x j |}
+  21 |   => \i => p2 A x i
+            ^------------^
 
 Error: This path lambda expects 2 parameters, but it has only 1
 

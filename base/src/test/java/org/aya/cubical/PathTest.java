@@ -69,21 +69,26 @@ public class PathTest {
   @Test public void partialConv() {
     TyckDeclTest.successTyckDecls("""
       prim I
+      prim Partial
+      prim invol
+            
+      def ~ => invol
+            
       def infix = {A : Type} (a b : A) : Type =>
         [| i |] A {| i 0 := a | i 1 := b |}
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
         
-      def p1 (A : Type) (a : A) (i : I) : Partial A {i 0} =>
+      def p1 (A : Type) (a : A) (i : I) : Partial (~ i) A =>
         {| i 0 := a |}
-      def p2 (A : Type) (b : A) (j : I) : Partial A {j 0} =>
+      def p2 (A : Type) (b : A) (j : I) : Partial (~ j) A =>
         {| j 0 := b |}
       def p1=p2 (A : Type) (a : A) (i : I) : p1 A a i = p2 A a i =>
         idp
           
       def cmp {A : Type} (x : A)
-        : [| i j |] (Partial A {j 0}) {| i 0 := p1 A x j |}
+        : [| i j |] (Partial (~ j) A) {| i 0 := p1 A x j |}
         => \\i j => p2 A x j
       """);
   }

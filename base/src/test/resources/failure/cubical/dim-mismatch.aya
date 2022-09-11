@@ -1,9 +1,21 @@
 prim I
-def p1 (A : Type) (a : A) (i : I) : Partial A {i 0} =>
+prim Partial
+prim intervalMin
+prim intervalMax
+prim invol
+
+def infix /\ => intervalMin
+tighter \/
+
+def infix \/ => intervalMax
+
+def ~ => invol
+
+def p1 (A : Type) (a : A) (i : I) : Partial (~ i) A =>
   {| i 0 := a |}
-def p2 (A : Type) (b : A) (j : I) : Partial A {j 0} =>
+def p2 (A : Type) (b : A) (j : I) : Partial (~ j) A =>
   {| j 0 := b |}
 
 def cmp {A : Type} (x : A)
-  : [| i j |] (Partial A {j 0}) {| i 0 := p1 A x j |}
+  : [| i j |] (Partial (~ j) A) {| i 0 := p1 A x j |}
   => \i => p2 A x i

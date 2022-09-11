@@ -170,8 +170,8 @@ public final class PrimDef extends TopLevelDef {
       public final @NotNull PrimDef.PrimSeed PARTIAL =
         new PrimSeed(ID.PARTIAL,
           (prim, state) -> {
-            var ty = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
-            var iExp = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
+            var iExp = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
+            var ty = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
 
             return new FormTerm.PartTy(ty, isOne(iExp));
           },

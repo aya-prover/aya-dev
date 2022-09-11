@@ -1,9 +1,9 @@
-In file $FILE:3:2 ->
+In file $FILE:15:2 ->
 
-  1 | prim I
-  2 | def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial A {i 0 \/ i 1} =>
-  3 |   {| i 0 := u | i 1 /\ j 0 := v |}
-        ^------------------------------^
+  13 | 
+  14 | def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial (~ i \/ i) A =>
+  15 |   {| i 0 := u | i 1 /\ j 0 := v |}
+         ^------------------------------^
 
 Error: The face(s) in the partial element:
          i 0 \/ (i 1 /\ j 0)
