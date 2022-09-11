@@ -84,18 +84,17 @@ public final class ExprTycker extends Tycker {
         if (!(struct instanceof CallTerm.Struct structCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, newExpr, struct));
         var structRef = structCall.ref();
-
-        var subst = new Subst(MutableMap.from(
-          Def.defTele(structRef).view().zip(structCall.args())
-            .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
+        var subst = new Subst(
+          Def.defTele(structRef).map(Term.Param::ref),
+          structCall.args().map(Arg::term));
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Term>>create();
         var missing = MutableList.<AnyVar>create();
-        var conFields = newExpr.fields();
+        var conFields = MutableMap.from(newExpr.fields().view().map(t -> Tuple.of(t.name().data(), t)));
 
         for (var defField : structRef.core.fields) {
           var fieldRef = defField.ref();
-          var conFieldOpt = conFields.find(t -> t.name().data().equals(fieldRef.name()));
+          var conFieldOpt = conFields.remove(fieldRef.name());
           if (conFieldOpt.isEmpty()) {
             if (defField.body.isEmpty())
               missing.append(fieldRef); // no value available, skip and prepare error reporting
@@ -109,15 +108,14 @@ public final class ExprTycker extends Tycker {
           }
           var conField = conFieldOpt.get();
           conField.resolvedField().set(fieldRef);
-          conFields = conFields.dropWhile(t -> t == conField);
           var type = Def.defType(fieldRef).subst(subst, structCall.ulift());
-          var telescope = fieldRef.core.selfTele.map(term -> term.subst(subst, structCall.ulift()));
+          var telescope = Term.Param.subst(fieldRef.core.selfTele, subst, structCall.ulift());
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
             yield fail(newExpr, structCall, new FieldError.ArgMismatch(newExpr.sourcePos(), defField, bindings.size()));
           }
-          var fieldExpr = bindings.zip(telescope).foldRight(conField.body(), (pair, lamExpr) ->
+          var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) ->
             new Expr.LamExpr(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
           var field = inherit(fieldExpr, type).wellTyped();
           fields.append(Tuple.of(fieldRef, field));
@@ -127,7 +125,7 @@ public final class ExprTycker extends Tycker {
         if (missing.isNotEmpty())
           yield fail(newExpr, structCall, new FieldError.MissingField(newExpr.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
-          yield fail(newExpr, structCall, new FieldError.NoSuchField(newExpr.sourcePos(), conFields.map(f -> f.name().data())));
+          yield fail(newExpr, structCall, new FieldError.NoSuchField(newExpr.sourcePos(), conFields.keysView().toImmutableSeq()));
         yield new TermResult(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
       }
       case Expr.ProjExpr proj -> {
