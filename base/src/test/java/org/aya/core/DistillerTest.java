@@ -115,6 +115,38 @@ public class DistillerTest {
     assertEquals("zero (=) zero", t.toDoc(DistillerOptions.pretty()).debugRender());
   }
 
+  @Test public void pathApp() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      def infix = {A : Type} (a b : A) : Type => [| i |] A {| i 0 := a | i 1 := b |}
+      def idp {A : Type} {a : A} : a = a => \\i => a
+      def test {A : Type} {a b : A} (p : a = b) : a = b => \\i => p i
+      """)._2;
+    var t = ((FnDef) decls.get(2)).body.getLeftValue();
+    assertEquals("\\ i => p i", t.toDoc(DistillerOptions.informative()).debugRender());
+  }
+
+  @Test public void literals() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      open data Nat | zero | suc Nat
+      def test1 : Nat => 0
+      def test2 : Nat => 114514
+      def test3 Nat : Nat
+        | 0 => 1
+        | 1 => 2
+        | a => suc a
+      """)._2;
+    var t1 = ((FnDef) decls.get(1)).body.getLeftValue();
+    var t2 = ((FnDef) decls.get(2)).body.getLeftValue();
+    var t3 = ((FnDef) decls.get(3));
+    assertEquals("0", t1.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("114514", t2.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("""
+      def test3 (_7 : Nat) : Nat
+        |  0 => 1
+        |  1 => 2
+        |  a => suc a""", t3.toDoc(DistillerOptions.informative()).debugRender());
+  }
+
   private @NotNull Doc declDoc(@Language("TEXT") String text) {
     return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(DistillerOptions.debug())));
   }
