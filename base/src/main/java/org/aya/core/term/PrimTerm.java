@@ -3,9 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.SeqView;
-import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Formula;
-import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface PrimTerm extends Term {
@@ -32,10 +30,6 @@ public sealed interface PrimTerm extends Term {
         case Formula.Inv<Term> inv -> SeqView.of(inv.i());
         case Formula.Lit<Term> lit -> SeqView.empty();
       };
-    }
-
-    public Restr<Term> toRestr() {
-      throw new InternalException("toRestr() is not yet implemented");
     }
   }
 

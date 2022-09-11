@@ -25,6 +25,8 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static org.aya.guest0x0.cubical.CofThy.isOne;
+
 /**
  * @author ice1000
  */
@@ -171,10 +173,7 @@ public final class PrimDef extends TopLevelDef {
             var ty = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
             var iExp = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
 
-            if (iExp instanceof PrimTerm.Mula formula) {
-              return new FormTerm.PartTy(ty, formula.toRestr());
-            }
-            throw new InternalException("TODO: make an error about illegal formula");
+            return new FormTerm.PartTy(ty, isOne(iExp));
           },
           ref -> new PrimDef(
             ref,
