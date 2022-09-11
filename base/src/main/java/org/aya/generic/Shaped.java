@@ -28,7 +28,6 @@ public interface Shaped<T> {
     @NotNull T makeZero(@NotNull CtorDef zero);
     @NotNull T makeSuc(@NotNull CtorDef suc, @NotNull T t);
     @NotNull T destruct(int repr);
-    @NotNull T self();
     int repr();
 
     private <O> boolean sameEncoding(@Nullable TyckState state, @NotNull Shaped<O> other) {
