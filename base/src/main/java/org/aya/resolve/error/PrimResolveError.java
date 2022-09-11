@@ -21,7 +21,7 @@ public interface PrimResolveError extends Problem {
   ) implements PrimResolveError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
-        Doc.plain("Unknown primitive"),
+        Doc.english("Unknown primitive"),
         Doc.styled(Style.code(), Doc.plain(name)));
     }
   }
