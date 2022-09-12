@@ -20,12 +20,12 @@ public class PartialTest {
       prim intervalMax
       prim invol
             
-      def infix /\\ => intervalMin
+      def inline infix /\\ => intervalMin
       tighter \\/
 
-      def infix \\/ => intervalMax
+      def inline infix \\/ => intervalMax
 
-      def ~ => invol
+      def inline ~ => invol
 
       def t (A : Type) (i : I) (a : A) : Partial (~ i) A
         => {| i 0 := a |}
