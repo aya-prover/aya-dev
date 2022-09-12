@@ -18,24 +18,8 @@ import java.util.function.Function;
  * @see DeltaExpander
  */
 public interface BetaExpander extends EndoFunctor {
-  static @NotNull IntroTerm.PartEl partial(@NotNull IntroTerm.PartEl el) {
-    return new IntroTerm.PartEl(partial(el.partial()), el.rhsType());
-  }
   private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
     return partial.flatMap(Function.identity());
-  }
-  static @NotNull Term pathApp(@NotNull ElimTerm.PathApp app, @NotNull Function<Term, Term> next) {
-    if (app.of() instanceof IntroTerm.PathLam lam) {
-      var xi = lam.params().map(Term.Param::ref);
-      var ui = app.args().map(Arg::term);
-      var subst = new Subst(xi, ui);
-      return next.apply(lam.body().subst(subst));
-    }
-    return switch (partial(app.cube().partial())) {
-      case Partial.Split<Term> hap -> new ElimTerm.PathApp(app.of(), app.args(), new Cube<>(
-        app.cube().params(), app.cube().type(), hap));
-      case Partial.Const<Term> sad -> sad.u();
-    };
   }
   static @NotNull Term simplFormula(@NotNull PrimTerm.Mula mula) {
     return Restr.formulae(mula.asFormula(), PrimTerm.Mula::new);
@@ -53,8 +37,20 @@ public interface BetaExpander extends EndoFunctor {
         yield result == term ? result : apply(result);
       }
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
-      case ElimTerm.PathApp app -> pathApp(app, this);
-      case IntroTerm.PartEl partial -> partial(partial);
+      case ElimTerm.PathApp app -> {
+        if (app.of() instanceof IntroTerm.PathLam lam) {
+          var xi = lam.params().map(Term.Param::ref);
+          var ui = app.args().map(Arg::term);
+          var subst = new Subst(xi, ui);
+          yield apply(lam.body().subst(subst));
+        }
+        yield switch (partial(app.cube().partial())) {
+          case Partial.Split<Term> hap -> new ElimTerm.PathApp(app.of(), app.args(), new Cube<>(
+            app.cube().params(), app.cube().type(), hap));
+          case Partial.Const<Term> sad -> sad.u();
+        };
+      }
+      case IntroTerm.PartEl partial -> new IntroTerm.PartEl(partial(partial.partial()), partial.rhsType());
       default -> term;
     };
   }
