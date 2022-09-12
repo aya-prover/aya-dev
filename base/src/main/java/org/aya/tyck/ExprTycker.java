@@ -482,8 +482,7 @@ public final class ExprTycker extends Tycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new UnivResult(freshHole._2, univ.lift());
       }
-      case Expr.UnivExpr univExpr ->
-        new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift() + 1);
+      case Expr.UnivExpr univExpr -> new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift() + 1);
       case Expr.LamExpr lam -> failUniv(lam, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failUniv(el, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {
@@ -667,7 +666,8 @@ public final class ExprTycker extends Tycker {
     // unbound these abstracted variables
     Term body = function.make(defVar, 0, teleRenamed.map(Term.Param::toArg));
     var type = FormTerm.Pi.make(tele, Def.defResult(defVar));
-    if (defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) {
+    if ((defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline))
+      || defVar.core instanceof PrimDef) {
       body = body.normalize(state, NormalizeMode.WHNF);
     }
     return new TermResult(IntroTerm.Lambda.make(teleRenamed, body), type);

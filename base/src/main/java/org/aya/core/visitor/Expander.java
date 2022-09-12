@@ -169,6 +169,7 @@ public interface Expander extends EndoFunctor {
       return switch (term) {
         case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
         case ElimTerm.Proj proj -> ElimTerm.proj(proj);
+        case PrimTerm.Mula mula -> simplFormula(mula);
         default -> Expander.super.post(term);
       };
     }

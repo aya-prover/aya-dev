@@ -122,15 +122,8 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       }
       case CallTerm.Prim prim -> {
         var args = prim.args().map(arg -> arg.descent(f));
-        yield switch (prim.id()) {
-          case IMIN -> PrimTerm.Mula.and(args.first().term(), args.last().term());
-          case IMAX -> PrimTerm.Mula.or(args.first().term(), args.last().term());
-          case INVOL -> PrimTerm.Mula.inv(args.first().term());
-          default -> {
-            if (args.sameElements(prim.args(), true)) yield prim;
-            yield new CallTerm.Prim(prim.ref(), prim.ulift(), args);
-          }
-        };
+        if (args.sameElements(prim.args(), true)) yield prim;
+        yield new CallTerm.Prim(prim.ref(), prim.ulift(), args);
       }
       case CallTerm.Hole hole -> {
         var contextArgs = hole.contextArgs().map(arg -> arg.descent(f));
