@@ -11,6 +11,7 @@ import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
@@ -106,7 +107,7 @@ public record Subst(
   }
 
   public @NotNull Restr<Term> restr(@NotNull TyckState state, @NotNull Restr<Term> restr) {
-    return Expander.restr(restr.fmap(t -> t.subst(this)));
+    return Expander.restr(restr.fmap(t -> t.subst(this).normalize(state, NormalizeMode.WHNF)));
   }
 
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
