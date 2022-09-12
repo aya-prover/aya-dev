@@ -22,7 +22,7 @@ public class PathTest {
       """);
     IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
     assertEquals("""
-      def = {A : Type 0} (a b : A) : Type 0 => [| i |] A {| i 0 := a | i 1 := b |}
+      def = {A : Type 0} (a b : A) : Type 0 => [| i |] A {| ~ i := a | i := b |}
       """.strip(), distiller.apply(0).debugRender());
     assertEquals("""
       def idp {A : Type 0} {a : A} : (=) {A} a a => \\ (i : I) => a

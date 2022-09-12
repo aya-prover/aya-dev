@@ -6,9 +6,9 @@ In file $FILE:15:2 ->
          ^------------------------------^
 
 Error: The face(s) in the partial element:
-         i 0 \/ (i 1 /\ j 0)
+         ~ i \/ (i /\ ~ j)
        must cover the face(s) specified in type:
-         i 0 \/ i 1
+         ~ i \/ i
 
 1 error(s), 0 warning(s).
 What are you doing?
