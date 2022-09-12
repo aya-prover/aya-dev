@@ -7,6 +7,7 @@ import org.aya.guest0x0.cubical.Formula;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface PrimTerm extends Term {
+
   record Mula(@NotNull Formula<Term> asFormula) implements PrimTerm {
     public static final @NotNull Mula LEFT = new Mula(new Formula.Lit<>(true));
     public static final @NotNull Mula RIGHT = new Mula(new Formula.Lit<>(false));
@@ -32,6 +33,13 @@ public sealed interface PrimTerm extends Term {
     }
   }
 
-  record Str(@NotNull String string) implements PrimTerm {
+  record Str(@NotNull String string) implements PrimTerm {}
+
+  final class Interval implements PrimTerm {
+    public static final PrimTerm.Interval INSTANCE = new Interval();
+
+    private Interval() {
+
+    }
   }
 }

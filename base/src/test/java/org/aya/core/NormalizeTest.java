@@ -46,6 +46,7 @@ public class NormalizeTest {
 
   @Test public void unfoldPrim() {
     var res = TyckDeclTest.successTyckDecls("""
+      prim I
       data Nat : Type 0 | zero | suc Nat
       prim arcoe
       def xyr : Nat => arcoe (\\ i => Nat) Nat::zero 0
@@ -53,10 +54,10 @@ public class NormalizeTest {
     var state = new TyckState(res._1);
     var defs = res._2;
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
-    assertTrue(normalizer.apply(2) instanceof CallTerm.Con conCall
+    assertTrue(normalizer.apply(3) instanceof CallTerm.Con conCall
       && Objects.equals(conCall.ref().name(), "zero")
       && conCall.conArgs().isEmpty());
-    assertTrue(normalizer.apply(3) instanceof CallTerm.Con conCall
+    assertTrue(normalizer.apply(4) instanceof CallTerm.Con conCall
       && Objects.equals(conCall.ref().name(), "suc"));
   }
 

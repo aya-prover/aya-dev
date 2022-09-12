@@ -28,6 +28,7 @@ public sealed interface CallTerm extends Term {
     int ulift();
   }
 
+  /** This exists solely for simplifying code in the tycker. */
   @FunctionalInterface
   interface Factory<D extends Def, S extends Decl> {
     @Contract(pure = true, value = "_,_,_->new") @NotNull CallTerm make(

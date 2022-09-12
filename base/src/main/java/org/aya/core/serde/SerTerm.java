@@ -208,7 +208,7 @@ public sealed interface SerTerm extends Serializable {
 
   record Interval() implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return FormTerm.Interval.INSTANCE;
+      return PrimTerm.Interval.INSTANCE;
     }
   }
 

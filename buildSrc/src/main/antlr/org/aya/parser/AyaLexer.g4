@@ -49,11 +49,9 @@ PRIM : 'prim';
 EXTENDS : 'extends';
 NEW_KW : 'new';
 PATTERN_KW : 'pattern';
-I: 'I';
 DO_KW : 'do';
 THIS_KW : 'this';
 OVERRIDE : 'override';
-PARTIAL_KW : 'Partial';
 
 // Unimplemented but reserved
 CODATA_KW : 'codata';

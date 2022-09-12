@@ -1,6 +1,7 @@
-In file $FILE:1:5 ->
+In file $FILE:2:5 ->
 
-  1 | prim invol (i : I)
+  1 | prim I
+  2 | prim invol (i : I)
            ^---^
 
 Error: prim invol is expected to have a type

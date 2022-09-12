@@ -1,18 +1,18 @@
-In file $FILE:2:4 ->
+In file $FILE:3:4 ->
 
-  1 | def test(i: I): I
-  2 |   | 3 => 0
+  1 | prim I
+  2 | def test(i: I): I
+  3 |   | 3 => 0
           ^^
-  3 |   | 4 => 1
 
 Error: The point `3` does not live in interval
 note: Did you mean:  `0` or `1`
 
-In file $FILE:3:4 ->
+In file $FILE:4:4 ->
 
-  1 | def test(i: I): I
-  2 |   | 3 => 0
-  3 |   | 4 => 1
+  2 | def test(i: I): I
+  3 |   | 3 => 0
+  4 |   | 4 => 1
           ^^
 
 Error: The point `4` does not live in interval

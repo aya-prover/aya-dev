@@ -1,4 +1,4 @@
-import PathPrims
+public open import PathPrims
 
 public open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
   | at (i : I) : A i {
