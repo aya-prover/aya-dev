@@ -2,13 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ElimTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Cube;
 import org.aya.guest0x0.cubical.Partial;
+import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -33,8 +31,17 @@ public interface BetaExpander extends EndoFunctor {
       case Partial.Const<Term> sad -> sad.u();
     };
   }
+  static @NotNull Term simplFormula(@NotNull PrimTerm.Mula mula) {
+    return Restr.formulae(mula.asFormula(), PrimTerm.Mula::new);
+  }
+  static @NotNull FormTerm.PartTy partialType(@NotNull FormTerm.PartTy ty) {
+    return new FormTerm.PartTy(ty.type(), ty.restr().normalize());
+  }
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
+      case PrimTerm.Mula mula -> simplFormula(mula);
+      case FormTerm.PartTy ty -> partialType(ty);
+      case RefTerm.MetaPat metaPat -> metaPat.inline();
       case ElimTerm.App app -> {
         var result = CallTerm.make(app);
         yield result == term ? result : apply(result);
@@ -45,6 +52,4 @@ public interface BetaExpander extends EndoFunctor {
       default -> term;
     };
   }
-
-  record Simplifier() implements BetaExpander {}
 }

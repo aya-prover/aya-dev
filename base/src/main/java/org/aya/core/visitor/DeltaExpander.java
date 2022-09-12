@@ -9,10 +9,11 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.core.Matching;
 import org.aya.core.pat.PatMatcher;
-import org.aya.core.term.*;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.IntroTerm;
+import org.aya.core.term.Term;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
-import org.aya.guest0x0.cubical.Restr;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -66,19 +67,8 @@ public interface DeltaExpander extends EndoFunctor {
             .map(unfolded -> apply(unfolded.data())).getOrDefault(access);
         }
       }
-      case RefTerm.MetaPat metaPat -> metaPat.inline();
-      case PrimTerm.Mula mula -> simplFormula(mula);
-      case FormTerm.PartTy ty -> partialType(ty);
       default -> term;
     };
-  }
-
-  static @NotNull Term simplFormula(@NotNull PrimTerm.Mula mula) {
-    return Restr.formulae(mula.asFormula(), PrimTerm.Mula::new);
-  }
-
-  static @NotNull FormTerm.PartTy partialType(@NotNull FormTerm.PartTy ty) {
-    return new FormTerm.PartTy(ty.type(), ty.restr().normalize());
   }
 
   default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
