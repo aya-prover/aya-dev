@@ -143,7 +143,7 @@ public record PatClassifier(
   private static @NotNull Pat head(@NotNull MCT.SubPats<Pat> subPats) {
     var head = subPats.head();
     // This 'inline' is actually a 'dereference'
-    return head.inline();
+    return head.inline(null);
   }
 
   /**

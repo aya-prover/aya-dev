@@ -231,7 +231,6 @@ public final class PatTycker {
   private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = lhsResult.gamma;
-    var patterns = lhsResult.preclause.patterns().map(Pat::inline);
     var type = new EndoFunctor() {
       @Override public @NotNull Term post(@NotNull Term term) {
         return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
@@ -245,7 +244,7 @@ public final class PatTycker {
       ? new ErrorTerm(e, false)
       : exprTycker.inherit(new BodySubstitutor(e.view(), lhsResult.bodySubst).commit(), type).wellTyped());
     exprTycker.localCtx = parent;
-    return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), patterns, term);
+    return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
   }
 
   private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
@@ -253,8 +252,9 @@ public final class PatTycker {
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
     var step0 = visitPatterns(signature, match.patterns.view());
+    var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx));
     var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.toImmutableMap(), match.hasError,
-      new Pat.Preclause<>(match.sourcePos, step0._1, match.expr));
+      new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
     typeSubst.clear();
     bodySubst.clear();
@@ -265,13 +265,13 @@ public final class PatTycker {
   visitPatterns(Def.Signature sig, SeqView<Pattern> stream) {
     var results = MutableList.<Pat>create();
     if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.toImmutableSeq(), sig.result());
-    Pattern last_pat = stream.last();
+    var lastPat = stream.last();
     while (sig.param().isNotEmpty()) {
       var param = sig.param().first();
       Pattern pat;
       if (param.explicit()) {
         if (stream.isEmpty()) {
-          foundError(new PatternProblem.InsufficientPattern(last_pat, param));
+          foundError(new PatternProblem.InsufficientPattern(lastPat, param));
           return Tuple.of(results.toImmutableSeq(), sig.result());
         }
         pat = stream.first();
@@ -411,7 +411,7 @@ public final class PatTycker {
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
         case Expr.RefExpr ref && bodySubst.containsKey(ref.resolvedVar()) -> pre(bodySubst.get(ref.resolvedVar()));
-        case Expr.MetaPat metaPat -> pre(metaPat.meta().inline().toExpr(metaPat.sourcePos()));
+        case Expr.MetaPat metaPat -> pre(metaPat.meta().inline(null).toExpr(metaPat.sourcePos()));
         case Expr misc -> misc;
       };
     }
