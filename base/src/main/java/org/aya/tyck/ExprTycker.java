@@ -573,7 +573,7 @@ public final class ExprTycker extends Tycker {
       var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
       // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
       var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);
-      return new TermResult(lam, pi);
+      res = new TermResult(lam, pi); // we need `traceExit`
     }
     traceExit(res, expr);
     return res;
