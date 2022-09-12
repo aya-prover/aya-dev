@@ -17,7 +17,7 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
@@ -154,7 +154,7 @@ public final class ExprTycker extends Tycker {
               return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
             var fieldRef = field.ref();
 
-            var structSubst = Expander.buildSubst(structCore.telescope(), structCall.args());
+            var structSubst = DeltaExpander.buildSubst(structCore.telescope(), structCall.args());
             var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
             var teleRenamed = tele.map(Term.Param::rename);
             var access = new CallTerm.Access(projectee.wellTyped(), fieldRef,

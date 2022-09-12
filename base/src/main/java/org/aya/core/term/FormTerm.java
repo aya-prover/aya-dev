@@ -18,7 +18,7 @@ public sealed interface FormTerm extends Term {
   /**
    * @author re-xyr, kiva, ice1000
    */
-  record Pi(@NotNull Term.Param param, @NotNull Term body) implements FormTerm {
+  record Pi(@NotNull Term.Param param, @NotNull Term body) implements FormTerm, StableWHNF {
 
     public @NotNull Term substBody(@NotNull Term term) {
       return body.subst(param.ref(), term);
@@ -50,13 +50,13 @@ public sealed interface FormTerm extends Term {
   /**
    * @author re-xyr
    */
-  record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm {
+  record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm, StableWHNF {
   }
 
   /**
    * @author ice1000
    */
-  record Univ(int lift) implements FormTerm {
+  record Univ(int lift) implements FormTerm, StableWHNF {
     public static final @NotNull FormTerm.Univ ZERO = new Univ(0);
   }
 
@@ -64,5 +64,5 @@ public sealed interface FormTerm extends Term {
   record PartTy(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {}
 
   /** generalized path type */
-  record Path(@NotNull Cube<Term> cube) implements FormTerm {}
+  record Path(@NotNull Cube<Term> cube) implements FormTerm, StableWHNF {}
 }
