@@ -1,8 +1,8 @@
-In file $FILE:5:4 ->
+In file $FILE:6:4 ->
 
-  3 |  | suc Nat
-  4 | 
-  5 | def addN (a : I) : Nat
+  4 |  | suc Nat
+  5 | 
+  6 | def addN (a : I) : Nat
           ^--^
 
 Error: Cannot perform pattern matching `0`

@@ -198,7 +198,7 @@ public final class PatTycker {
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
       case Pattern.Number num -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
-        if (ty instanceof FormTerm.Interval) {
+        if (ty instanceof PrimTerm.Interval) {
           var end = num.number();
           if (end == 0 || end == 1) yield new Pat.End(num.number() == 0, num.explicit());
           yield withError(new NotAnIntervalError(num.sourcePos(), end), num, term);

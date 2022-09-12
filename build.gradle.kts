@@ -174,6 +174,7 @@ subprojects {
           dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
           dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
           dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
+          dev("lunalunaa", "Luna Xin", "luna.xin@outlook.com")
         }
         scm {
           connection.set("scm:git:$githubUrl")

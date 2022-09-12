@@ -60,13 +60,6 @@ public sealed interface FormTerm extends Term {
     public static final @NotNull FormTerm.Univ ZERO = new Univ(0);
   }
 
-  final class Interval implements FormTerm {
-    public static final Interval INSTANCE = new Interval();
-
-    private Interval() {
-    }
-  }
-
   /** partial type */
   record PartTy(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {}
 

@@ -295,7 +295,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
   cofib(@NotNull DistillerOptions options, @NotNull Restr.Cofib<T> cofib) {
     return Doc.join(Doc.spaced(Doc.symbol("/\\")), cofib.ands().view().map(and ->
-      Doc.sep(and.inst().toDoc(options), Doc.symbol(and.isLeft() ? "0" : "1"))));
+      Doc.sepNonEmpty(and.isLeft() ? Doc.symbol("~") : Doc.empty(), and.inst().toDoc(options))));
   }
 
   protected static @Nullable Style chooseStyle(Object concrete) {

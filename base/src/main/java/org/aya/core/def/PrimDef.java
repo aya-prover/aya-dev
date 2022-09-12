@@ -9,7 +9,6 @@ import kala.tuple.Tuple;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
-import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.DefVar;
@@ -24,6 +23,8 @@ import java.util.EnumMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import static org.aya.guest0x0.cubical.CofThy.isOne;
 
 /**
  * @author ice1000
@@ -61,9 +62,13 @@ public final class PrimDef extends TopLevelDef {
     return result;
   }
 
+  @FunctionalInterface
+  interface Unfolder extends BiFunction<CallTerm.@NotNull Prim, @NotNull TyckState, @NotNull Term> {
+  }
+
   record PrimSeed(
     @NotNull ID name,
-    @NotNull BiFunction<CallTerm.@NotNull Prim, @NotNull TyckState, @NotNull Term> unfold,
+    @NotNull Unfolder unfold,
     @NotNull Function<@NotNull DefVar<PrimDef, TeleDecl.PrimDecl>, @NotNull PrimDef> supplier,
     @NotNull ImmutableSeq<@NotNull ID> dependency
   ) {
@@ -74,6 +79,8 @@ public final class PrimDef extends TopLevelDef {
 
   public static class Factory {
     private final class Initializer {
+
+
       /** Arend's coe */
       private @NotNull Term arcoe(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
         var args = prim.args();
@@ -94,7 +101,7 @@ public final class PrimDef extends TopLevelDef {
 
       public final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, this::arcoe, ref -> {
         var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(LocalVar.IGNORED, FormTerm.Interval.INSTANCE, true);
+        var paramIToATy = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
         var paramI = new LocalVar("i");
         var result = new FormTerm.Univ(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
@@ -105,30 +112,37 @@ public final class PrimDef extends TopLevelDef {
           ImmutableSeq.of(
             new Term.Param(paramA, paramATy, true),
             new Term.Param(new LocalVar("base"), baseAtLeft, true),
-            new Term.Param(paramI, FormTerm.Interval.INSTANCE, true)
+            new Term.Param(paramI, PrimTerm.Interval.INSTANCE, true)
           ),
           new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI), true)),
           ID.ARCOE
         );
-      }, ImmutableSeq.empty());
+      }, ImmutableSeq.of(ID.I));
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
-      public final @NotNull PrimDef.PrimSeed IMIN = formula(ID.IMIN, "i", "j");
+      public final @NotNull PrimDef.PrimSeed IMIN = formula(ID.IMIN, prim -> {
+        var args = prim.args();
+        return PrimTerm.Mula.and(args.first().term(), args.last().term());
+      }, "i", "j");
       /** \/ in Cubical Agda, should elaborate to {@link Formula.Conn} */
-      public final @NotNull PrimDef.PrimSeed IMAX = formula(ID.IMAX, "i", "j");
+      public final @NotNull PrimDef.PrimSeed IMAX = formula(ID.IMAX, prim -> {
+        var args = prim.args();
+        return PrimTerm.Mula.or(args.first().term(), args.last().term());
+      }, "i", "j");
       /** ~ in Cubical Agda, should elaborate to {@link Formula.Inv} */
-      public final @NotNull PrimDef.PrimSeed INVOL = formula(ID.INVOL, "i");
+      public final @NotNull PrimDef.PrimSeed INVOL = formula(ID.INVOL, prim ->
+          PrimTerm.Mula.inv(prim.args().first().term()), "i");
 
-      private @NotNull PrimSeed formula(ID id, String... tele) {
-        return new PrimSeed(id, (prim, state) -> {
-          // Consider throwing an error since we convert them to special ASTs during elaboration.
-          return prim;
-        }, ref -> new PrimDef(
+      private @NotNull PrimSeed formula(
+        ID id, Function<CallTerm.Prim, Term> unfold,
+        String... tele
+      ) {
+        return new PrimSeed(id, (prim, state) -> unfold.apply(prim), ref -> new PrimDef(
           ref,
-          ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), FormTerm.Interval.INSTANCE, true)),
-          FormTerm.Interval.INSTANCE,
+          ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), PrimTerm.Interval.INSTANCE, true)),
+          PrimTerm.Interval.INSTANCE,
           id
-        ), ImmutableSeq.empty());
+        ), ImmutableSeq.of(ID.I));
       }
 
       public final @NotNull PrimDef.PrimSeed STR =
@@ -136,7 +150,7 @@ public final class PrimDef extends TopLevelDef {
           ((prim, tyckState) -> prim),
           ref -> new PrimDef(ref, FormTerm.Univ.ZERO, ID.STR), ImmutableSeq.empty());
       public final @NotNull PrimDef.PrimSeed STRCONCAT =
-        new PrimSeed(ID.STRCONCAT, this::concat, ref -> new PrimDef(
+        new PrimSeed(ID.STRCONCAT, Initializer::concat, ref -> new PrimDef(
           ref,
           ImmutableSeq.of(
             new Term.Param(new LocalVar("str1"), getCall(ID.STR, ImmutableSeq.empty()), true),
@@ -146,7 +160,7 @@ public final class PrimDef extends TopLevelDef {
           ID.STRCONCAT
         ), ImmutableSeq.of(ID.STR));
 
-      private @NotNull Term concat(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
+      private static @NotNull Term concat(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
         var first = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var second = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
 
@@ -154,8 +168,32 @@ public final class PrimDef extends TopLevelDef {
           return new PrimTerm.Str(str1.string() + str2.string());
         }
 
-        throw new InternalException("Expected strings but found " + first + " and " + second);
+        return new CallTerm.Prim(prim.ref(), prim.ulift(), ImmutableSeq.of(
+          new Arg<>(first, true), new Arg<>(second, true)));
       }
+
+      public final @NotNull PrimDef.PrimSeed I =
+        new PrimSeed(ID.I,
+          ((prim, state) -> PrimTerm.Interval.INSTANCE),
+          ref -> new PrimDef(ref, FormTerm.Univ.ZERO, ID.I),
+          ImmutableSeq.empty());
+
+      public final @NotNull PrimDef.PrimSeed PARTIAL =
+        new PrimSeed(ID.PARTIAL,
+          (prim, state) -> {
+            var iExp = prim.args().get(0).term();
+            var ty = prim.args().get(1).term();
+
+            return new FormTerm.PartTy(ty, isOne(iExp));
+          },
+          ref -> new PrimDef(
+            ref,
+            ImmutableSeq.of(
+              new Term.Param(new LocalVar("phi"), PrimTerm.Interval.INSTANCE, true),
+              new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, true)
+            ),
+            FormTerm.Univ.ZERO, ID.PARTIAL),
+          ImmutableSeq.of(ID.I));
     }
 
     private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
@@ -170,7 +208,9 @@ public final class PrimDef extends TopLevelDef {
           init.IMAX,
           init.INVOL,
           init.STR,
-          init.STRCONCAT
+          init.STRCONCAT,
+          init.I,
+          init.PARTIAL
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
@@ -231,7 +271,9 @@ public final class PrimDef extends TopLevelDef {
     IMAX("intervalMax"),
     INVOL("invol"),
     STR("String"),
-    STRCONCAT("strcat");
+    STRCONCAT("strcat"),
+    I("I"),
+    PARTIAL("Partial");
 
     public final @NotNull @NonNls String id;
 

@@ -102,7 +102,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case FormTerm.Interval term -> Doc.styled(KEYWORD, "I");
+      case PrimTerm.Interval term -> Doc.styled(KEYWORD, "I");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
@@ -161,7 +161,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         () -> Doc.plain(String.valueOf(shaped.repr())));
       case PrimTerm.Str str -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
-        term(Outer.AppSpine, ty.type()), Doc.braced(restr(options, ty.restr())));
+        term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr())));
       case IntroTerm.PartEl el -> partial(options, el.partial());
       case PrimTerm.Mula mula -> formula(options, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());

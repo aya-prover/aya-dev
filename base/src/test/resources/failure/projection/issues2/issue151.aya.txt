@@ -1,8 +1,8 @@
-In file $FILE:21:38 ->
+In file $FILE:22:38 ->
 
-  19 |   | assoc (a b c : Nat) : Eq (op (op a b) c) (op a (op b c))
-  20 | 
-  21 | def l-id (M : Monoid) (a : Nat) : Eq (M.add zero a) a => refl
+  20 |   | assoc (a b c : Nat) : Eq (op (op a b) c) (op a (op b c))
+  21 | 
+  22 | def l-id (M : Monoid) (a : Nat) : Eq (M.add zero a) a => refl
                                              ^---^
 
 Error: Unknown field `add` projected

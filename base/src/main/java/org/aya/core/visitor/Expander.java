@@ -78,6 +78,7 @@ public interface Expander extends EndoFunctor {
       }
       case RefTerm.MetaPat metaPat -> metaPat.inline();
       case PrimTerm.Mula mula -> simplFormula(mula);
+      case FormTerm.PartTy ty -> partialType(ty);
       default -> term;
     };
   }
@@ -121,17 +122,21 @@ public interface Expander extends EndoFunctor {
         default -> Expander.super.post(term);
       };
     }
-
-    public @NotNull Restr<Term> applyRestr(@NotNull Restr<Term> restr) {
-      return switch (restr.fmap(this)) {
-        case Restr.Vary<Term> vary -> CofThy.normalizeRestr(vary);
-        case Restr.Const<Term> c -> c;
-      };
-    }
   }
 
   static @NotNull IntroTerm.PartEl partial(@NotNull IntroTerm.PartEl el) {
     return new IntroTerm.PartEl(partial(el.partial()), el.rhsType());
+  }
+
+  static @NotNull FormTerm.PartTy partialType(@NotNull FormTerm.PartTy ty) {
+    return new FormTerm.PartTy(ty.type(), restr(ty.restr()));
+  }
+
+  static @NotNull Restr<Term> restr(@NotNull Restr<Term> restr) {
+    return switch (restr) {
+      case Restr.Vary<Term> vary -> CofThy.normalizeRestr(vary);
+      case Restr.Const<Term> c -> c;
+    };
   }
 
   private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
@@ -169,6 +174,7 @@ public interface Expander extends EndoFunctor {
       return switch (term) {
         case ElimTerm.App app -> applyThoroughly(CallTerm::make, app);
         case ElimTerm.Proj proj -> ElimTerm.proj(proj);
+        case PrimTerm.Mula mula -> simplFormula(mula);
         default -> Expander.super.post(term);
       };
     }

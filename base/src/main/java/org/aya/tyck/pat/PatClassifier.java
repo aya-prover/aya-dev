@@ -189,7 +189,7 @@ public record PatClassifier(
             classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats<Pat>::drop), coverage, fuelCopy)));
         }
       }
-      case FormTerm.Interval interval -> {
+      case PrimTerm.Interval interval -> {
         var lrSplit = subPatsSeq
           .mapNotNull(subPats -> head(subPats) instanceof Pat.End end ? end : null)
           .firstOption();

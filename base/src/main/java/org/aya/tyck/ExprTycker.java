@@ -62,7 +62,7 @@ public final class ExprTycker extends Tycker {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> universe(univ);
-      case Expr.IntervalExpr interval -> new TermResult(FormTerm.Interval.INSTANCE, new FormTerm.Univ(0));
+      case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, new FormTerm.Univ(0));
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
@@ -231,7 +231,7 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.Path path -> {
         var params = path.cube().params().view()
-          .map(n -> new Term.Param(n, FormTerm.Interval.INSTANCE, true));
+          .map(n -> new Term.Param(n, PrimTerm.Interval.INSTANCE, true));
         yield localCtx.with(params, () -> {
           var type = synthesize(path.cube().type());
           var partial = elaboratePartial(path, path.cube().partial(), type.wellTyped());
@@ -249,7 +249,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
     // forall i. (c_i is valid)
-    return new Restr.Cond<>(inherit(c.inst(), FormTerm.Interval.INSTANCE).wellTyped(), c.isLeft());
+    return new Restr.Cond<>(inherit(c.inst(), PrimTerm.Interval.INSTANCE).wellTyped(), c.isLeft());
     // ^ note: `inst` may be ErrorTerm!
   }
 
@@ -411,7 +411,7 @@ public final class ExprTycker extends Tycker {
             // we allow lambda params to be typed explicitly --- check them against I.
             var params = plam._1.map(p -> {
               var i = synthesize(p.type());
-              unifyTyReported(FormTerm.Interval.INSTANCE, i.wellTyped(),
+              unifyTyReported(PrimTerm.Interval.INSTANCE, i.wellTyped(),
                 new Expr.RefExpr(p.sourcePos(), p.ref()));
               return new Term.Param(p, i.wellTyped());
             });
@@ -441,7 +441,7 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.LitIntExpr lit -> {
         var ty = term.normalize(state, NormalizeMode.WHNF);
-        if (ty instanceof FormTerm.Interval) {
+        if (ty instanceof PrimTerm.Interval) {
           var end = lit.integer();
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT, ty);
           else yield fail(expr, new NotAnIntervalError(lit.sourcePos(), lit.integer()));
@@ -449,7 +449,8 @@ public final class ExprTycker extends Tycker {
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
           var shape = shapeFactory.find(data);
-          if (shape.isDefined()) yield new TermResult(new LitTerm.ShapedInt(lit.integer(), shape.get(), dataCall), term);
+          if (shape.isDefined())
+            yield new TermResult(new LitTerm.ShapedInt(lit.integer(), shape.get(), dataCall), term);
         }
         if (ty instanceof CallTerm.Hole hole) {
           yield new TermResult(new LitTerm.ShapedInt(lit.integer(), AyaShape.NAT_SHAPE, hole), term);
@@ -481,8 +482,7 @@ public final class ExprTycker extends Tycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new UnivResult(freshHole._2, univ.lift());
       }
-      case Expr.UnivExpr univExpr ->
-        new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift() + 1);
+      case Expr.UnivExpr univExpr -> new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift() + 1);
       case Expr.LamExpr lam -> failUniv(lam, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failUniv(el, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {
@@ -568,12 +568,12 @@ public final class ExprTycker extends Tycker {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var res = doSynthesize(expr);
     if (res.type().normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Path path) {
-      var xi = path.cube().params().map(x -> new Term.Param(x, FormTerm.Interval.INSTANCE, true));
+      var xi = path.cube().params().map(x -> new Term.Param(x, PrimTerm.Interval.INSTANCE, true));
       var elim = new ElimTerm.PathApp(res.wellTyped(), xi.map(Term.Param::toArg), path.cube());
       var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
       // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
       var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);
-      return new TermResult(lam, pi);
+      res = new TermResult(lam, pi); // we need `traceExit`
     }
     traceExit(res, expr);
     return res;
@@ -666,7 +666,8 @@ public final class ExprTycker extends Tycker {
     // unbound these abstracted variables
     Term body = function.make(defVar, 0, teleRenamed.map(Term.Param::toArg));
     var type = FormTerm.Pi.make(tele, Def.defResult(defVar));
-    if (defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) {
+    if ((defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline))
+      || defVar.core instanceof PrimDef) {
       body = body.normalize(state, NormalizeMode.WHNF);
     }
     return new TermResult(IntroTerm.Lambda.make(teleRenamed, body), type);

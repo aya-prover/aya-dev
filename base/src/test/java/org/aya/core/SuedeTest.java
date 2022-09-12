@@ -41,6 +41,7 @@ public class SuedeTest {
 
   @Test public void path() {
     suedeAll("""
+      prim I
       open struct Path (A : Pi I -> Type) (a : A 0) (b : A 1) : Type
        | at (i : I) : A i {
          | 0 => a

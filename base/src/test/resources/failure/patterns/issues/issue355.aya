@@ -1,3 +1,4 @@
+prim I
 open data Nat : Type 0
  | zero
  | suc Nat

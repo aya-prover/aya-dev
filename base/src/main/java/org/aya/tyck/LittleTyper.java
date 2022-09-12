@@ -74,8 +74,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
-      case FormTerm.Interval interval -> FormTerm.Univ.ZERO;
-      case PrimTerm.Mula end -> FormTerm.Interval.INSTANCE;
+      case PrimTerm.Interval interval -> FormTerm.Univ.ZERO;
+      case PrimTerm.Mula end -> PrimTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
       case LitTerm.ShapedInt shaped -> shaped.type();
       case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
