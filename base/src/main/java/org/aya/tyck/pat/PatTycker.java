@@ -164,7 +164,7 @@ public final class PatTycker {
         var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view())._1);
+        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view())._1.toImmutableSeq());
         if (as != null) {
           exprTycker.localCtx.put(as, sigma);
           addPatSubst(as, ret, tuple.sourcePos());
@@ -179,7 +179,7 @@ public final class PatTycker {
         var ctorCore = ctorRef.core;
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
-        var patterns = visitPatterns(sig, ctor.params().view())._1;
+        var patterns = visitPatterns(sig, ctor.params().view())._1.toImmutableSeq();
         var as = ctor.as();
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
@@ -252,7 +252,7 @@ public final class PatTycker {
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
     var step0 = visitPatterns(signature, match.patterns.view());
-    var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx));
+    var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
     var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.toImmutableMap(), match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
@@ -261,10 +261,10 @@ public final class PatTycker {
     return step1;
   }
 
-  public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
+  public @NotNull Tuple2<SeqView<Pat>, Term>
   visitPatterns(Def.Signature sig, SeqView<Pattern> stream) {
     var results = MutableList.<Pat>create();
-    if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.toImmutableSeq(), sig.result());
+    if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.view(), sig.result());
     var lastPat = stream.last();
     while (sig.param().isNotEmpty()) {
       var param = sig.param().first();
@@ -272,13 +272,13 @@ public final class PatTycker {
       if (param.explicit()) {
         if (stream.isEmpty()) {
           foundError(new PatternProblem.InsufficientPattern(lastPat, param));
-          return Tuple.of(results.toImmutableSeq(), sig.result());
+          return Tuple.of(results.view(), sig.result());
         }
         pat = stream.first();
         stream = stream.drop(1);
         if (!pat.explicit()) {
           foundError(new PatternProblem.TooManyImplicitPattern(pat, param));
-          return Tuple.of(results.toImmutableSeq(), sig.result());
+          return Tuple.of(results.view(), sig.result());
         }
       } else {
         // Type is implicit, so....?
@@ -300,7 +300,7 @@ public final class PatTycker {
       foundError(new PatternProblem
         .TooManyPattern(stream.first(), sig.result().freezeHoles(exprTycker.state)));
     }
-    return Tuple.of(results.toImmutableSeq(), sig.result());
+    return Tuple.of(results.view(), sig.result());
   }
 
   private record PatData(
