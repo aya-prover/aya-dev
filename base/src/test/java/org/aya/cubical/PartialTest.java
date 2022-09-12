@@ -44,7 +44,7 @@ public class PartialTest {
       """);
     IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
     assertEquals("""
-      def t (A : Type 0) (i : I) (a : A) : Partial (~ i) A => {| i 0 := a |}
+      def t (A : Type 0) (i : I) (a : A) : Partial A (~ i) => {| ~ i := a |}
       """.strip(), distiller.apply(8).debugRender());
   }
 }
