@@ -106,7 +106,7 @@ public record Subst(
   }
 
   public @NotNull Restr<Term> restr(@NotNull TyckState state, @NotNull Restr<Term> restr) {
-    return new Expander.Normalizer(state).applyRestr(restr.fmap(t -> t.subst(this)));
+    return Expander.restr(restr.fmap(t -> t.subst(this)));
   }
 
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
