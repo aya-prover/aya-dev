@@ -22,7 +22,7 @@ public sealed interface IntroTerm extends Term {
   /**
    * @author ice1000
    */
-  record Lambda(@NotNull Param param, @NotNull Term body) implements IntroTerm {
+  record Lambda(@NotNull Param param, @NotNull Term body) implements IntroTerm, StableWHNF {
 
     public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
       while (term instanceof Lambda lambda) {
@@ -43,13 +43,13 @@ public sealed interface IntroTerm extends Term {
   record New(
     @NotNull CallTerm.Struct struct,
     @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.StructField>, Term> params
-  ) implements IntroTerm {
+  ) implements IntroTerm, StableWHNF {
   }
 
   /**
    * @author re-xyr
    */
-  record Tuple(@NotNull ImmutableSeq<Term> items) implements IntroTerm {
+  record Tuple(@NotNull ImmutableSeq<Term> items) implements IntroTerm, StableWHNF {
   }
 
   /** partial element */
@@ -59,5 +59,5 @@ public sealed interface IntroTerm extends Term {
   record PathLam(
     @NotNull ImmutableSeq<Term.Param> params,
     @NotNull Term body
-  ) implements IntroTerm {}
+  ) implements IntroTerm, StableWHNF {}
 }

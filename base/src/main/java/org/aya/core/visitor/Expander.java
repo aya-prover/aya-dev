@@ -5,7 +5,9 @@ package org.aya.core.visitor;
 import kala.collection.Set;
 import kala.collection.mutable.MutableSet;
 import org.aya.core.def.PrimDef;
-import org.aya.core.term.*;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.StableWHNF;
+import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
@@ -20,11 +22,7 @@ public interface Expander extends DeltaExpander, BetaExpander {
   record WHNFer(@NotNull TyckState state) implements Expander {
     @Override public @NotNull Term apply(@NotNull Term term) {
       return switch (term) {
-        case IntroTerm intro -> intro;
-        case FormTerm.Pi pi -> pi;
-        case FormTerm.Sigma sigma -> sigma;
-        case CallTerm.Data data -> data;
-        case CallTerm.Struct struct -> struct;
+        case StableWHNF whnf -> term;
         case CallTerm.Con con && (con.ref().core == null || con.ref().core.clauses.isEmpty()) -> con;
         default -> Expander.super.apply(term);
       };

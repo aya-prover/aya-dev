@@ -82,7 +82,7 @@ public sealed interface CallTerm extends Term {
     @Override @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref,
     @Override int ulift,
     @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-  ) implements DefCall {
+  ) implements DefCall, StableWHNF {
 
     public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> ctorRef) {
       return new ConHead(ref, ctorRef, ulift, args);
@@ -96,7 +96,7 @@ public sealed interface CallTerm extends Term {
     @Override @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref,
     @Override int ulift,
     @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-  ) implements DefCall {
+  ) implements DefCall, StableWHNF {
   }
 
   record ConHead(
