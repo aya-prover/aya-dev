@@ -32,6 +32,7 @@ import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kiva, ice1000
@@ -51,8 +52,12 @@ public sealed interface Pat extends AyaDocile {
   }
   @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit);
   @NotNull Pat zonk(@NotNull Tycker tycker);
-  @NotNull Pat inline();
-  void storeBindings(@NotNull LocalCtx localCtx);
+  /**
+   * @param ctx when null, the solutions will not be inlined
+   * @return inlined patterns
+   */
+  @NotNull Pat inline(@Nullable LocalCtx ctx);
+  void storeBindings(@NotNull LocalCtx ctx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
     var localCtx = new SeqLocalCtx();
     for (var pat : pats) pat.storeBindings(localCtx);
@@ -64,8 +69,8 @@ public sealed interface Pat extends AyaDocile {
     @NotNull LocalVar bind,
     @NotNull Term type
   ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      localCtx.put(bind, type);
+    @Override public void storeBindings(@NotNull LocalCtx ctx) {
+      ctx.put(bind, type);
     }
 
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
@@ -85,7 +90,7 @@ public sealed interface Pat extends AyaDocile {
       return new Bind(explicit, bind, tycker.zonk(type));
     }
 
-    @Override public @NotNull Pat inline() {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       return this;
     }
   }
@@ -96,7 +101,7 @@ public sealed interface Pat extends AyaDocile {
     @NotNull LocalVar fakeBind,
     @NotNull Term type
   ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+    @Override public void storeBindings(@NotNull LocalCtx ctx) {
       // Do nothing
       // This is safe because storeBindings is called only in extractTele which is
       // only used for constructor ownerTele extraction for simpler indexed types
@@ -110,11 +115,13 @@ public sealed interface Pat extends AyaDocile {
       throw new InternalException("unreachable");
     }
 
-    @Override public @NotNull Pat inline() {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var value = solution.get();
       if (value == null) {
         var bind = new Bind(explicit, fakeBind, type);
+        assert ctx != null : "Pre-inline patterns must be inlined with ctx";
         solution.set(bind);
+        ctx.put(fakeBind, type);
         return bind;
       } else return value;
     }
@@ -126,7 +133,7 @@ public sealed interface Pat extends AyaDocile {
   }
 
   record Absurd(boolean explicit) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+    @Override public void storeBindings(@NotNull LocalCtx ctx) {
       throw new InternalException("unreachable");
     }
 
@@ -144,7 +151,7 @@ public sealed interface Pat extends AyaDocile {
       return this;
     }
 
-    @Override public @NotNull Pat inline() {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       return this;
     }
   }
@@ -153,8 +160,8 @@ public sealed interface Pat extends AyaDocile {
     boolean explicit,
     @NotNull ImmutableSeq<Pat> pats
   ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      pats.forEach(pat -> pat.storeBindings(localCtx));
+    @Override public void storeBindings(@NotNull LocalCtx ctx) {
+      pats.forEach(pat -> pat.storeBindings(ctx));
     }
 
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
@@ -171,8 +178,8 @@ public sealed interface Pat extends AyaDocile {
       return new Tuple(explicit, pats.map(pat -> pat.zonk(tycker)));
     }
 
-    @Override public @NotNull Pat inline() {
-      return new Tuple(explicit, pats.map(Pat::inline));
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
+      return new Tuple(explicit, pats.map(p -> p.inline(ctx)));
     }
   }
 
@@ -182,8 +189,8 @@ public sealed interface Pat extends AyaDocile {
     @NotNull ImmutableSeq<Pat> params,
     @NotNull CallTerm.Data type
   ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      params.forEach(pat -> pat.storeBindings(localCtx));
+    @Override public void storeBindings(@NotNull LocalCtx ctx) {
+      params.forEach(pat -> pat.storeBindings(ctx));
     }
 
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
@@ -203,8 +210,8 @@ public sealed interface Pat extends AyaDocile {
       // The cast must succeed
     }
 
-    @Override public @NotNull Pat inline() {
-      return new Ctor(explicit, ref, params.map(Pat::inline), type);
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
+      return new Ctor(explicit, ref, params.map(p -> p.inline(ctx)), type);
     }
   }
 
@@ -222,11 +229,11 @@ public sealed interface Pat extends AyaDocile {
       return this;
     }
 
-    @Override public @NotNull Pat inline() {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       return this;
     }
 
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+    @Override public void storeBindings(@NotNull LocalCtx ctx) {
       // do nothing
     }
   }
@@ -234,9 +241,9 @@ public sealed interface Pat extends AyaDocile {
   /**
    * TODO[literal]: literal type needs meta-solving for first-class patterns. Possible changes:
    *  - Make {@link ShapedInt#type} a {@link Term} instead of {@link CallTerm.Data}
-   *  - Call {@link ShapedInt#constructorForm()} with a {@link org.aya.tyck.TyckState}
-   *  - Call {@link ShapedInt#sameValue(TyckState, Shaped)} with a {@link org.aya.tyck.TyckState}
-   *  see https://github.com/aya-prover/aya-dev/pull/400#discussion_r862371935
+   *  - Call {@link ShapedInt#constructorForm()} with a {@link TyckState}
+   *  - Call {@link ShapedInt#sameValue(TyckState, Shaped)} with a {@link TyckState}
+   *  see <a href="https://github.com/aya-prover/aya-dev/pull/400#discussion_r862371935">discussion</a>
    */
   record ShapedInt(
     @Override int repr,
@@ -257,11 +264,11 @@ public sealed interface Pat extends AyaDocile {
       return new Pat.ShapedInt(repr, shape, (CallTerm.Data) tycker.zonk(type), explicit);
     }
 
-    @Override public @NotNull Pat inline() {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       return this;
     }
 
-    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+    @Override public void storeBindings(@NotNull LocalCtx ctx) {
       // do nothing
     }
 
