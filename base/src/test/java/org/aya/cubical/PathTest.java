@@ -21,12 +21,10 @@ public class PathTest {
         \\i => a
       """);
     IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
-    assertEquals("""
-      def = {A : Type 0} (a b : A) : Type 0 => [| i |] A {| ~ i := a | i := b |}
-      """.strip(), distiller.apply(0).debugRender());
-    assertEquals("""
-      def idp {A : Type 0} {a : A} : (=) {A} a a => \\ (i : I) => a
-      """.strip(), distiller.apply(1).debugRender());
+    assertEquals("def = {A : Type 0} (a b : A) : Type 0 => [| i |] A {| ~ i := a | i := b |}",
+      distiller.apply(0).debugRender());
+    assertEquals("def idp {A : Type 0} {a : A} : (=) {A} a a => \\ (i : I) => a",
+      distiller.apply(1).debugRender());
   }
 
   @Test public void cong() {
