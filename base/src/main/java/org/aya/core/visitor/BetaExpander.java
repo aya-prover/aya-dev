@@ -11,6 +11,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
+/**
+ * We think of all cubical reductions as beta reductions.
+ *
+ * @author wsx
+ * @see DeltaExpander
+ */
 public interface BetaExpander extends EndoFunctor {
   static @NotNull IntroTerm.PartEl partial(@NotNull IntroTerm.PartEl el) {
     return new IntroTerm.PartEl(partial(el.partial()), el.rhsType());

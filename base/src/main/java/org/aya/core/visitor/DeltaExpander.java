@@ -18,6 +18,10 @@ import org.aya.tyck.TyckState;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author wsx
+ * @see BetaExpander
+ */
 public interface DeltaExpander extends EndoFunctor {
   @NotNull TyckState state();
 
