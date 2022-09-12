@@ -107,7 +107,7 @@ public record Subst(
   }
 
   public @NotNull Restr<Term> restr(@NotNull TyckState state, @NotNull Restr<Term> restr) {
-    return DeltaExpander.restr(restr.fmap(t -> t.subst(this).normalize(state, NormalizeMode.WHNF)));
+    return restr.fmap(t -> t.subst(this).normalize(state, NormalizeMode.WHNF)).normalize();
   }
 
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {

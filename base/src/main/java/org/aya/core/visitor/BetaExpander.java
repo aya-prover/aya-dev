@@ -2,16 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
-import kala.collection.mutable.MutableList;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ElimTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
 import org.aya.generic.Cube;
-import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
-import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -21,19 +18,7 @@ public interface BetaExpander extends EndoFunctor {
     return new IntroTerm.PartEl(partial(el.partial()), el.rhsType());
   }
   private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
-    return switch (partial) {
-      case Partial.Const<Term> par -> new Partial.Const<>(par.u());
-      case Partial.Split<Term> par -> {
-        var clauses = MutableList.<Restr.Side<Term>>create();
-        for (var clause : par.clauses()) {
-          var u = clause.u();
-          if (CofThy.normalizeCof(clause.cof(), clauses, cofib -> new Restr.Side<>(cofib, u))) {
-            yield new Partial.Const<>(u);
-          }
-        }
-        yield new Partial.Split<>(clauses.toImmutableSeq());
-      }
-    };
+    return partial.flatMap(Function.identity());
   }
   static @NotNull Term pathApp(@NotNull ElimTerm.PathApp app, @NotNull Function<Term, Term> next) {
     if (app.of() instanceof IntroTerm.PathLam lam) {

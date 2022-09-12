@@ -12,7 +12,6 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
-import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.WithPos;
@@ -79,14 +78,7 @@ public interface DeltaExpander extends EndoFunctor {
   }
 
   static @NotNull FormTerm.PartTy partialType(@NotNull FormTerm.PartTy ty) {
-    return new FormTerm.PartTy(ty.type(), restr(ty.restr()));
-  }
-
-  static @NotNull Restr<Term> restr(@NotNull Restr<Term> restr) {
-    return switch (restr) {
-      case Restr.Vary<Term> vary -> CofThy.normalizeRestr(vary);
-      case Restr.Const<Term> c -> c;
-    };
+    return new FormTerm.PartTy(ty.type(), ty.restr().normalize());
   }
 
   default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
