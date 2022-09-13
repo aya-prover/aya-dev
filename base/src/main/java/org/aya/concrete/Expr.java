@@ -14,9 +14,7 @@ import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.Cube;
 import org.aya.generic.ParamLike;
-import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
@@ -263,24 +261,18 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<NamedArg> seq
   ) implements Expr {}
-
   /** partial element */
   record PartEl(
     @NotNull SourcePos sourcePos,
-    @NotNull Partial<Expr> partial
-  ) implements Expr {}
-
-  /** partial type */
-  record PartTy(
-    @NotNull SourcePos sourcePos,
-    @NotNull Expr type,
-    @NotNull Restr<Expr> restr
+    @NotNull ImmutableSeq<Tuple2<Expr, Expr>> subSystems
   ) implements Expr {}
 
   /** generalized path type */
   record Path(
     @NotNull SourcePos sourcePos,
-    @NotNull Cube<Expr> cube
+    @NotNull ImmutableSeq<LocalVar> params,
+    @NotNull Expr type,
+    @NotNull PartEl partial
   ) implements Expr {
   }
 
