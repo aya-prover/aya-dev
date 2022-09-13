@@ -37,6 +37,13 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             yield new Expr.ErrorExpr(((Expr) app).sourcePos(), app);
           }
         }
+        case Expr.AppExpr app && app.function() instanceof Expr.RawSetExpr univ -> {
+          try {
+            yield new Expr.SetExpr(univ.sourcePos(), levelVar(app.argument().expr()));
+          } catch (DesugarInterruption e) {
+            yield new Expr.ErrorExpr(((Expr) app).sourcePos(), app);
+          }
+        }
         case Expr.RawTypeExpr univ -> new Expr.TypeExpr(univ.sourcePos(), 0);
         case Expr.RawSetExpr univ -> new Expr.SetExpr(univ.sourcePos(), 0);
         case Expr.RawPropExpr univ -> new Expr.PropExpr(univ.sourcePos());

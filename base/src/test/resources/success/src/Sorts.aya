@@ -1,0 +1,2 @@
+def a: Type 1 => Type 0
+def b: Set 1 => a
