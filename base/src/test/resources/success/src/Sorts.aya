@@ -1,2 +1,7 @@
+public open data Unit | unit
+
 def a: Type 1 => Type 0
 def b: Set 1 => a
+def c: Set 1 => ISet
+def e: Set 2 => Unit -> Set 1
+def d: e => \u => ISet
