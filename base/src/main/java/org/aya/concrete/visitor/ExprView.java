@@ -91,12 +91,6 @@ public interface ExprView {
         if (partial == el.partial()) yield el;
         yield new Expr.PartEl(el.sourcePos(), partial);
       }
-      case Expr.PartTy ty -> {
-        var type = commit(ty.type());
-        var restr = ty.restr().fmap(this::commit);
-        if (type == ty.type() && restr == ty.restr()) yield ty;
-        yield new Expr.PartTy(ty.sourcePos(), type, restr);
-      }
       case Expr.Path path -> {
         var cube = path.cube().map(this::commit);
         if (cube == path.cube()) yield path;
