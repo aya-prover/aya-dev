@@ -225,17 +225,13 @@ public final class ExprTycker extends Tycker {
 
         yield new TermResult(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STR));
       }
-      case Expr.PartTy par -> {
-        var ty = synthesize(par.type());
-        yield new TermResult(new FormTerm.PartTy(ty.wellTyped(), restr(par.restr())), ty.type());
-      }
       case Expr.Path path -> {
-        var params = path.cube().params().view()
+        var params = path.params().view()
           .map(n -> new Term.Param(n, PrimTerm.Interval.INSTANCE, true));
         yield localCtx.with(params, () -> {
-          var type = synthesize(path.cube().type());
-          var partial = elaboratePartial(path, path.cube().partial(), type.wellTyped());
-          var cube = new Cube<>(path.cube().params(), type.wellTyped(), partial);
+          var type = synthesize(path.type());
+          var partial = elaboratePartial(path.partial(), type.wellTyped());
+          var cube = new Cube<>(path.params(), type.wellTyped(), partial);
           return new TermResult(new FormTerm.Path(cube), type.type());
         });
       }
@@ -254,16 +250,11 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull Partial<Term> elaboratePartial(
-    @NotNull Expr loc, @NotNull Partial<Expr> partial, @NotNull Term type
+    @NotNull Expr.PartEl partial, @NotNull Term type
   ) {
-    return switch (partial) {
-      case Partial.Split<Expr> hap -> {
-        var sides = hap.clauses().flatMap(cl -> clause(cl, type));
-        confluence(sides, loc, type);
-        yield new Partial.Split<>(sides);
-      }
-      case Partial.Const<Expr> sad -> new Partial.Const<>(inherit(sad.u(), type).wellTyped());
-    };
+    var sides = partial.clauses().flatMap(sys -> clause(sys.component1(), sys.component2(), type));
+    confluence(sides, partial, type);
+    return new Partial.Split<>(sides);
   }
 
   private void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc, @NotNull Term type) {
@@ -287,14 +278,15 @@ public final class ExprTycker extends Tycker {
     return happy;
   }
 
-  private @NotNull Option<Restr.Side<Term>> clause(@NotNull Restr.Side<Expr> clause, @NotNull Term type) {
-    var cofib = new Restr.Cofib<>(clause.cof().ands().map(this::condition));
+  private @NotNull Option<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType) {
+    var intervalTerm = inherit(lhs, PrimTerm.Interval.INSTANCE).wellTyped();
+    var cofib = new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(intervalTerm, true)));
     var u = CofThy.vdash(cofib, new Subst(), subst ->
-      inherit(clause.u(), type.subst(subst).normalize(state, NormalizeMode.WHNF)).wellTyped());
+      inherit(rhs, rhsType.subst(subst).normalize(state, NormalizeMode.WHNF)).wellTyped());
     if (u.isDefined() && u.get() == null) {
       // ^ some `inst` in `cofib.ands()` are ErrorTerms.
       // Q: report error again?
-      return Option.some(new Restr.Side<>(cofib, ErrorTerm.typeOf(type)));
+      return Option.some(new Restr.Side<>(cofib, ErrorTerm.typeOf(rhsType)));
     }
     return u.map(uu -> new Restr.Side<>(cofib, uu));
   }
@@ -460,12 +452,12 @@ public final class ExprTycker extends Tycker {
       case Expr.PartEl el -> {
         if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.PartTy ty))
           yield fail(el, term, BadTypeError.partTy(state, el, term));
-        var cof = ty.restr();
+        var cofTy = ty.restr();
         var rhsType = ty.type();
-        var partial = elaboratePartial(el, el.partial(), rhsType);
+        var partial = elaboratePartial(el, rhsType);
         var face = partial.restr();
-        if (!CofThy.conv(cof, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
-          yield fail(el, new CubicalProblem.FaceMismatch(el, face, cof));
+        if (!CofThy.conv(cofTy, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
+          yield fail(el, new CubicalProblem.FaceMismatch(el, face, cofTy));
         yield new TermResult(new IntroTerm.PartEl(partial, rhsType), ty);
       }
       // TODO: turn definition into path lambda

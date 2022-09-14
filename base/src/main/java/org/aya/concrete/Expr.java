@@ -264,7 +264,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /** partial element */
   record PartEl(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Tuple2<Expr, Expr>> subSystems
+    @NotNull ImmutableSeq<Tuple2<Expr, Expr>> clauses
   ) implements Expr {}
 
   /** generalized path type */
