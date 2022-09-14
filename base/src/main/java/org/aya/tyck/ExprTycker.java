@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -252,8 +252,11 @@ public final class ExprTycker extends Tycker {
   private @NotNull Partial<Term> elaboratePartial(
     @NotNull Expr.PartEl partial, @NotNull Term type
   ) {
-    var sides = partial.clauses().flatMap(sys -> clause(sys.component1(), sys.component2(), type));
+    var s = new ClauseTyckState();
+    var sides = partial.clauses().flatMap(sys -> clause(sys._1, sys._2, type, s));
     confluence(sides, partial, type);
+    if (s.isConstantFalse) return new Partial.Split<>(ImmutableSeq.empty());
+    if (s.truthValue != null) return new Partial.Const<>(s.truthValue);
     return new Partial.Split<>(sides);
   }
 
@@ -278,17 +281,38 @@ public final class ExprTycker extends Tycker {
     return happy;
   }
 
-  private @NotNull Option<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType) {
-    var intervalTerm = inherit(lhs, PrimTerm.Interval.INSTANCE).wellTyped();
-    var cofib = new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(intervalTerm, true)));
-    var u = CofThy.vdash(cofib, new Subst(), subst ->
-      inherit(rhs, rhsType.subst(subst).normalize(state, NormalizeMode.WHNF)).wellTyped());
-    if (u.isDefined() && u.get() == null) {
-      // ^ some `inst` in `cofib.ands()` are ErrorTerms.
-      // Q: report error again?
-      return Option.some(new Restr.Side<>(cofib, ErrorTerm.typeOf(rhsType)));
-    }
-    return u.map(uu -> new Restr.Side<>(cofib, uu));
+  private static class ClauseTyckState {
+    public boolean isConstantFalse = false;
+    public @Nullable Term truthValue;
+  }
+
+  private @NotNull SeqView<Restr.Side<Term>> clause(
+    @NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType,
+    @NotNull ClauseTyckState clauseState
+  ) {
+    return switch (CofThy.isOne(inherit(lhs, PrimTerm.Interval.INSTANCE).wellTyped())) {
+      case Restr.Vary<Term> restr -> {
+        var list = MutableList.<Restr.Side<Term>>create();
+        for (var cof : restr.orz()) {
+          var u = CofThy.vdash(cof, new Subst(), subst ->
+            inherit(rhs, rhsType.subst(subst).normalize(state, NormalizeMode.WHNF)).wellTyped());
+          if (u.isDefined()) {
+            if (u.get() == null) {
+              // ^ some `inst` in `cofib.ands()` are ErrorTerms, or we have bugs.
+              // Q: report error again?
+              yield SeqView.empty();
+            } else continue;
+          }
+          list.append(new Restr.Side<>(cof, u.get()));
+        }
+        yield list.view();
+      }
+      case Restr.Const<Term> c -> {
+        if (c.isTrue()) clauseState.truthValue = inherit(rhs, rhsType).wellTyped();
+        else clauseState.isConstantFalse = true;
+        yield SeqView.empty();
+      }
+    };
   }
 
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
