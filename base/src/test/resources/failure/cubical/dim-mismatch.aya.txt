@@ -1,7 +1,7 @@
 In file $FILE:21:5 ->
 
   19 | def cmp {A : Type} (x : A)
-  20 |   : [| i j |] (Partial (~ j) A) {| i 0 := p1 A x j |}
+  20 |   : [| i j |] (Partial (~ j) A) {| ~ i := p1 A x j |}
   21 |   => \i => p2 A x i
             ^------------^
 

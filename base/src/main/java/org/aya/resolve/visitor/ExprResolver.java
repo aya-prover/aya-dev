@@ -105,7 +105,7 @@ public record ExprResolver(
       case Expr.PartEl el -> partial(ctx, el);
       case Expr.Path path -> {
         var newCtx = resolveCubeParams(path.params(), ctx);
-        var par = partial(ctx, path.partial());
+        var par = partial(newCtx, path.partial());
         var type = resolve(path.type(), newCtx);
         if (type == path.type() && par == path.partial()) yield path;
         yield new Expr.Path(path.sourcePos(), path.params(), type, par);

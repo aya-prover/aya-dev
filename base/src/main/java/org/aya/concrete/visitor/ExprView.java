@@ -96,9 +96,8 @@ public interface ExprView {
       case Expr.PartEl el -> commit(el);
       case Expr.Path path -> {
         var partial = commit(path.partial());
-        if (partial == path.partial()) yield path;
         var type = commit(path.type());
-        if (type == path.type()) yield path;
+        if (partial == path.partial() && type == path.type()) yield path;
         yield new Expr.Path(path.sourcePos(), path.params(), type, partial);
       }
       case Expr.LitIntExpr litInt -> litInt;
