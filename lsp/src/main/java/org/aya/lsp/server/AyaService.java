@@ -38,6 +38,7 @@ import org.aya.util.reporter.Problem;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.Either3;
+import org.eclipse.lsp4j.services.NotebookDocumentService;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class AyaService implements WorkspaceService, TextDocumentService {
+public class AyaService implements WorkspaceService, TextDocumentService, NotebookDocumentService {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
 
   private final BufferReporter reporter = new BufferReporter();
@@ -214,20 +215,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  @Override public void didOpen(DidOpenTextDocumentParams params) {
-  }
-
-  @Override public void didChange(DidChangeTextDocumentParams params) {
-  }
-
-  @Override public void didClose(DidCloseTextDocumentParams params) {
-  }
-
-  @Override public void didSave(DidSaveTextDocumentParams params) {
-  }
-
-  @Override public void didChangeConfiguration(DidChangeConfigurationParams params) {
-  }
+  @Override public void didOpen(DidOpenTextDocumentParams params) {}
+  @Override public void didChange(DidChangeTextDocumentParams params) {}
+  @Override public void didClose(DidCloseTextDocumentParams params) {}
+  @Override public void didSave(DidSaveTextDocumentParams params) {}
+  @Override public void didChangeConfiguration(DidChangeConfigurationParams params) {}
+  @Override public void didOpen(DidOpenNotebookDocumentParams params) {}
+  @Override public void didChange(DidChangeNotebookDocumentParams params) {}
+  @Override public void didSave(DidSaveNotebookDocumentParams params) {}
+  @Override public void didClose(DidCloseNotebookDocumentParams params) {}
 
   @Override
   public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
