@@ -5,11 +5,10 @@ package org.aya.tyck;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
-import org.aya.generic.Cube;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.LocalCtx;
@@ -36,8 +35,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
         if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
         var core = access.ref().core;
-        var subst = Expander.buildSubst(core.telescope(), access.fieldArgs())
-          .add(Expander.buildSubst(call.ref().core.telescope(), access.structArgs()));
+        var subst = DeltaExpander.buildSubst(core.telescope(), access.fieldArgs())
+          .add(DeltaExpander.buildSubst(call.ref().core.telescope(), access.structArgs()));
         yield core.result().subst(subst);
       }
       case FormTerm.Sigma sigma -> {
@@ -81,7 +80,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
       case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
       case FormTerm.Path path -> FormTerm.Univ.ZERO;
-      case IntroTerm.PathLam lam -> new FormTerm.Path(new Cube<>(
+      case IntroTerm.PathLam lam -> new FormTerm.Path(new FormTerm.Cube(
         lam.params().map(Term.Param::ref),
         term(lam.body()),
         new Partial.Const<>(term(lam.body()))
@@ -97,7 +96,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
 
   private @NotNull Term defCall(@NotNull CallTerm.DefCall call) {
     return Def.defResult(call.ref())
-      .subst(Expander.buildSubst(Def.defTele(call.ref()), call.args()))
+      .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
       .lift(call.ulift());
   }
 }

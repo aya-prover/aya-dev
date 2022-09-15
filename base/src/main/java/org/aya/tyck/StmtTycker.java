@@ -235,7 +235,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
         var pat = ctor.patterns.isNotEmpty()
-          ? patTycker.visitPatterns(sig, ctor.patterns.view())._1
+          ? patTycker.visitPatterns(sig, ctor.patterns.view())._1.toImmutableSeq()
           // No patterns, leave it blank
           : ImmutableSeq.<Pat>empty();
         var tele = tele(tycker, ctor.telescope, dataConcrete.ulift);

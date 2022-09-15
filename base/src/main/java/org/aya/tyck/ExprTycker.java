@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -17,7 +17,7 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
@@ -152,7 +152,7 @@ public final class ExprTycker extends Tycker {
               return fail(proj, new FieldError.UnknownField(proj, fieldName));
             var fieldRef = field.ref();
 
-            var structSubst = Expander.buildSubst(structCore.telescope(), structCall.args());
+            var structSubst = DeltaExpander.buildSubst(structCore.telescope(), structCall.args());
             var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
             var teleRenamed = tele.map(Term.Param::rename);
             var access = new CallTerm.Access(projectee.wellTyped(), fieldRef,
@@ -223,17 +223,13 @@ public final class ExprTycker extends Tycker {
 
         yield new TermResult(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STR));
       }
-      case Expr.PartTy par -> {
-        var ty = synthesize(par.type());
-        yield new TermResult(new FormTerm.PartTy(ty.wellTyped(), restr(par.restr())), ty.type());
-      }
       case Expr.Path path -> {
-        var params = path.cube().params().view()
+        var params = path.params().view()
           .map(n -> new Term.Param(n, PrimTerm.Interval.INSTANCE, true));
         yield localCtx.with(params, () -> {
-          var type = synthesize(path.cube().type());
-          var partial = elaboratePartial(path, path.cube().partial(), type.wellTyped());
-          var cube = new Cube<>(path.cube().params(), type.wellTyped(), partial);
+          var type = synthesize(path.type());
+          var partial = elaboratePartial(path.partial(), type.wellTyped());
+          var cube = new FormTerm.Cube(path.params(), type.wellTyped(), partial);
           return new TermResult(new FormTerm.Path(cube), type.type());
         });
       }
@@ -252,16 +248,16 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull Partial<Term> elaboratePartial(
-    @NotNull Expr loc, @NotNull Partial<Expr> partial, @NotNull Term type
+    @NotNull Expr.PartEl partial, @NotNull Term type
   ) {
-    return switch (partial) {
-      case Partial.Split<Expr> hap -> {
-        var sides = hap.clauses().flatMap(cl -> clause(cl, type));
-        confluence(sides, loc, type);
-        yield new Partial.Split<>(sides);
-      }
-      case Partial.Const<Expr> sad -> new Partial.Const<>(inherit(sad.u(), type).wellTyped());
-    };
+    var s = new ClauseTyckState();
+    var sides = partial.clauses().flatMap(sys ->
+      clause(sys._1, sys._2, type, s)
+    );
+    confluence(sides, partial, type);
+    if (s.isConstantFalse) return new Partial.Split<>(ImmutableSeq.empty());
+    if (s.truthValue != null) return new Partial.Const<>(s.truthValue);
+    return new Partial.Split<>(sides);
   }
 
   private void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc, @NotNull Term type) {
@@ -285,16 +281,42 @@ public final class ExprTycker extends Tycker {
     return happy;
   }
 
-  private @NotNull Option<Restr.Side<Term>> clause(@NotNull Restr.Side<Expr> clause, @NotNull Term type) {
-    var cofib = new Restr.Cofib<>(clause.cof().ands().map(this::condition));
-    var u = CofThy.vdash(cofib, new Subst(), subst ->
-      inherit(clause.u(), type.subst(subst).normalize(state, NormalizeMode.WHNF)).wellTyped());
-    if (u.isDefined() && u.get() == null) {
-      // ^ some `inst` in `cofib.ands()` are ErrorTerms.
-      // Q: report error again?
-      return Option.some(new Restr.Side<>(cofib, ErrorTerm.typeOf(type)));
-    }
-    return u.map(uu -> new Restr.Side<>(cofib, uu));
+  private static class ClauseTyckState {
+    public boolean isConstantFalse = false;
+    public @Nullable Term truthValue;
+  }
+
+  private @NotNull SeqView<Restr.Side<Term>> clause(
+    @NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType,
+    @NotNull ClauseTyckState clauseState
+  ) {
+    return switch (CofThy.isOne(inherit(lhs, PrimTerm.Interval.INSTANCE)
+      .wellTyped()
+      .normalize(state, NormalizeMode.WHNF))
+      ) {
+      case Restr.Vary<Term> restr -> {
+        var list = MutableList.<Restr.Side<Term>>create();
+        for (var cof : restr.orz()) {
+          var u = CofThy.vdash(cof, new Subst(), subst ->
+            inherit(rhs, rhsType.subst(subst).normalize(state, NormalizeMode.WHNF)).wellTyped());
+          if (u.isDefined()) {
+            if (u.get() == null) {
+              // ^ some `inst` in `cofib.ands()` are ErrorTerms, or we have bugs.
+              // Q: report error again?
+              yield SeqView.empty();
+            } else {
+              list.append(new Restr.Side<>(cof, u.get()));
+            }
+          }
+        }
+        yield list.view();
+      }
+      case Restr.Const<Term> c -> {
+        if (c.isTrue()) clauseState.truthValue = inherit(rhs, rhsType).wellTyped();
+        else clauseState.isConstantFalse = true;
+        yield SeqView.empty();
+      }
+    };
   }
 
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
@@ -458,12 +480,12 @@ public final class ExprTycker extends Tycker {
       case Expr.PartEl el -> {
         if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.PartTy ty))
           yield fail(el, term, BadTypeError.partTy(state, el, term));
-        var cof = ty.restr();
+        var cofTy = ty.restr();
         var rhsType = ty.type();
-        var partial = elaboratePartial(el, el.partial(), rhsType);
+        var partial = elaboratePartial(el, rhsType);
         var face = partial.restr();
-        if (!CofThy.conv(cof, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
-          yield fail(el, new CubicalError.FaceMismatch(el, face, cof));
+        if (!CofThy.conv(cofTy, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
+          yield fail(el, new CubicalError.FaceMismatch(el, face, cofTy));
         yield new TermResult(new IntroTerm.PartEl(partial, rhsType), ty);
       }
       // TODO: turn definition into path lambda

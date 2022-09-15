@@ -4,7 +4,6 @@ package org.aya.core.visitor;
 
 import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
-import org.aya.generic.Cube;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
@@ -60,7 +59,7 @@ public interface EndoFunctor extends Function<Term, Term> {
         case FormTerm.Sigma sigma -> new FormTerm.Sigma(sigma.params().map(this::handleBinder));
         case RefTerm ref -> subst.map().getOrDefault(ref.var(), ref);
         case RefTerm.Field field -> subst.map().getOrDefault(field.ref(), field);
-        case FormTerm.Path path -> new FormTerm.Path(new Cube<>(
+        case FormTerm.Path path -> new FormTerm.Path(new FormTerm.Cube(
           path.cube().params().map(this::handleBinder),
           path.cube().type(),
           path.cube().partial()));
@@ -75,18 +74,13 @@ public interface EndoFunctor extends Function<Term, Term> {
   /**
    * Performs capture-avoiding substitution.
    */
-  record Substituter(@NotNull Subst subst) implements EndoFunctor {
+  record Substituter(@NotNull Subst subst) implements BetaExpander {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case RefTerm ref && ref.var() == LocalVar.IGNORED -> throw new InternalException("found usage of ignored var");
         case RefTerm ref -> replacement(ref, ref.var());
         case RefTerm.Field field -> replacement(field, field.ref());
-        case ElimTerm.Proj proj -> ElimTerm.proj(proj);
-        case PrimTerm.Mula mula -> Expander.simplFormula(mula);
-        case IntroTerm.PartEl par -> Expander.partial(par);
-        case ElimTerm.PathApp app -> Expander.pathApp(app, Function.identity());
-        case FormTerm.PartTy ty -> Expander.partialType(ty);
-        case Term misc -> misc;
+        case Term misc -> BetaExpander.super.post(misc);
       };
     }
 

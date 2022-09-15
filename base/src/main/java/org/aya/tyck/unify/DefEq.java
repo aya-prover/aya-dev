@@ -13,10 +13,9 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
-import org.aya.generic.Cube;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -326,7 +325,7 @@ public final class DefEq {
     };
   }
 
-  private boolean compareCube(@NotNull Cube<Term> lhs, @NotNull Cube<Term> rhs, Sub lr, Sub rl) {
+  private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
     lhs.params().zipView(rhs.params()).forEach(x -> {
       lr.map.put(x._1, new RefTerm(x._2));
       rl.map.put(x._2, new RefTerm(x._1));
@@ -514,7 +513,7 @@ public final class DefEq {
       reporter.report(new HoleProblem.BadSpineError(lhs, pos));
       return null;
     }
-    var subst = Expander.buildSubst(meta.contextTele, lhs.contextArgs());
+    var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
     // In this case, the solution may not be unique (see #608),
     // so we may delay its resolution to the end of the tycking when we disallow vague unification.
     if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {
