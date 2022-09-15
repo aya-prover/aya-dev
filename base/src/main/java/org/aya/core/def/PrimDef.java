@@ -119,6 +119,28 @@ public final class PrimDef extends TopLevelDef {
         );
       }, ImmutableSeq.of(ID.I));
 
+      public final @NotNull PrimDef.PrimSeed COE = new PrimSeed(ID.COE, this::coeToDo, ref -> {
+        var varA = new LocalVar("A");
+        var paramI = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
+        var paramA = new Term.Param(new LocalVar("A"), new FormTerm.Pi(paramI, new FormTerm.Univ(0)), true);
+        var paramRestr = new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true);
+        var result = new FormTerm.Pi(
+          new Term.Param(LocalVar.IGNORED, new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
+          new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.RIGHT, true)));
+
+        return new PrimDef(
+          ref,
+          ImmutableSeq.of(paramA, paramRestr),
+          result,
+          ID.COE
+        );
+      }, ImmutableSeq.of(ID.I));
+
+      private Term coeToDo(CallTerm.Prim prim, @NotNull TyckState tyckState) {
+        return prim;
+      }
+
+
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed IMIN = formula(ID.IMIN, prim -> {
         var args = prim.args();
@@ -210,7 +232,8 @@ public final class PrimDef extends TopLevelDef {
           init.STR,
           init.STRCONCAT,
           init.I,
-          init.PARTIAL
+          init.PARTIAL,
+          init.COE
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
@@ -273,7 +296,8 @@ public final class PrimDef extends TopLevelDef {
     STR("String"),
     STRCONCAT("strcat"),
     I("I"),
-    PARTIAL("Partial");
+    PARTIAL("Partial"),
+    COE("coe");
 
     public final @NotNull @NonNls String id;
 
