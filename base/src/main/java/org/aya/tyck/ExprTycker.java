@@ -62,7 +62,7 @@ public final class ExprTycker extends Tycker {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.SortExpr sort -> sort(sort);
-      case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, new FormTerm.Set(0));
+      case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, FormTerm.ISet.INSTANCE);
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);

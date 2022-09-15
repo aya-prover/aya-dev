@@ -175,7 +175,7 @@ public final class PrimDef extends TopLevelDef {
       public final @NotNull PrimDef.PrimSeed I =
         new PrimSeed(ID.I,
           ((prim, state) -> PrimTerm.Interval.INSTANCE),
-          ref -> new PrimDef(ref, FormTerm.Type.ZERO, ID.I),
+          ref -> new PrimDef(ref, FormTerm.ISet.INSTANCE, ID.I),
           ImmutableSeq.empty());
 
       public final @NotNull PrimDef.PrimSeed PARTIAL =
