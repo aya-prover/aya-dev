@@ -32,14 +32,13 @@ public interface ExprTraversal<P> {
         visitParam(pi.param(), p);
         visitExpr(pi.last(), p);
       }
-      case Expr.PartEl el -> el.partial().termsView().forEach(e -> visitExpr(e, p));
-      case Expr.PartTy ty -> {
-        ty.restr().instView().forEach(e -> visitExpr(e, p));
-        visitExpr(ty.type(), p);
-      }
+      case Expr.PartEl el -> el.clauses().forEach(cl -> {
+        visitExpr(cl._1, p);
+        visitExpr(cl._2, p);
+      });
       case Expr.Path path -> {
-        visitExpr(path.cube().type(), p);
-        path.cube().partial().termsView().forEach(e -> visitExpr(e, p));
+        visitExpr(path.type(), p);
+        visitExpr(path.partial(), p);
       }
       default -> {}
     }

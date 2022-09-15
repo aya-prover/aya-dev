@@ -5,9 +5,12 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.generic.Cube;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 /**
  * Formation rules.
@@ -64,5 +67,30 @@ public sealed interface FormTerm extends Term {
   record PartTy(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {}
 
   /** generalized path type */
-  record Path(@NotNull Cube<Term> cube) implements FormTerm, StableWHNF {}
+  record Path(@NotNull Cube cube) implements FormTerm, StableWHNF {}
+
+  /**
+   * Generalized 'generalized path' syntax.
+   *
+   * @param params  Dimension parameters.
+   * @param partial Partial element carried by this path.
+   * @see org.aya.concrete.Expr.Path
+   * @see Path
+   */
+  record Cube(
+    @NotNull ImmutableSeq<LocalVar> params,
+    @NotNull Term type,
+    @NotNull Partial<Term> partial
+  ) {
+    public @NotNull FormTerm.Cube map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
+      var ty = mapper.apply(type);
+      var par = partial.map(mapper);
+      if (ty == type && par == partial) return this;
+      return new Cube(params, ty, par);
+    }
+
+    public @NotNull FormTerm.Cube map(@NotNull Function<Term, Term> mapper) {
+      return map(params, mapper);
+    }
+  }
 }
