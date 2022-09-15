@@ -137,8 +137,18 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
-      case Expr.PartEl el -> partial(options, el.partial());
-      case Expr.Path path -> cube(options, path.cube());
+      case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
+        Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(cl -> Doc.sep(
+          cl._1.toDoc(options), Doc.symbol(":="), cl._2.toDoc(options))
+        )),
+        Doc.symbol("|}"));
+      case Expr.Path path -> Doc.sep(
+        Doc.symbol("[|"),
+        Doc.commaList(path.params().map(BaseDistiller::linkDef)),
+        Doc.symbol("|]"),
+        path.type().toDoc(options),
+        path.partial().toDoc(options)
+      );
     };
   }
 
