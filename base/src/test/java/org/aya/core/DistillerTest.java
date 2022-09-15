@@ -46,9 +46,6 @@ public class DistillerTest {
         | snd : B
         | we-are-together : Sig A ** B => (fst, snd)
 
-      def test-nat-pair : Pair I I =>
-        new Pair I I { | fst => 0 | snd => 1 }
-
       def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
         new Pair A B { | fst => a | snd => b }
       def sigPat (A B : Type) (x : Sig A ** B) : Sig B ** A
@@ -58,7 +55,7 @@ public class DistillerTest {
 
   @Test public void path() {
     @Language("TEXT") var code = """
-      prim I : Type
+      prim I
       struct Path (A : Pi I -> Type) (a : A 0) (b : A 1) : Type
        | at (i : I) : A i {
          | 0 => a
