@@ -24,6 +24,7 @@ import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Ordering;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -293,6 +294,23 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
+  // similiar to `ExprTycker.sortPi`. `tele` is the domain.
+  private @NotNull ExprTycker.Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull FormTerm.Sort sort) {
+    var result = exprTycker.sort(tele);
+    var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
+    switch (result.type()) {
+      case FormTerm.Type ty -> unifier.compareSort(ty, sort);
+      case FormTerm.Set ty -> unifier.compareSort(ty, sort);
+      case FormTerm.Prop ty -> {
+        if (!(sort instanceof FormTerm.Type)) unifier.compareSort(ty, sort);
+      }
+      case FormTerm.ISet ty -> {
+        if (!(sort instanceof FormTerm.Type || sort instanceof FormTerm.Set)) unifier.compareSort(ty, sort);
+      }
+    }
+    return result;
+  }
+
   /**
    * @param sort If == null, apply "synthesize" to the types.
    */
@@ -300,7 +318,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable FormTerm.Sort sort) {
     return tele.map(param -> {
       var paramTyped = (sort != null
-        ? exprTycker.inherit(param.type(), sort)
+        ? checkTele(exprTycker, param.type(), sort)
         : exprTycker.synthesize(param.type())
       ).wellTyped();
       var newParam = new Term.Param(param, paramTyped);
