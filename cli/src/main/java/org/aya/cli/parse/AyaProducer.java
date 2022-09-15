@@ -25,12 +25,12 @@ import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
-import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.repl.antlr.AntlrUtil;
+import org.aya.tyck.error.PrimError;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -876,7 +876,7 @@ public record AyaProducer(
     if (ctx.OPAQUE() != null) return Modifier.Opaque;
     if (ctx.INLINE() != null) return Modifier.Inline;
     if (ctx.OVERLAP() != null) return Modifier.Overlap;
-    return Modifier.Pattern;
+    return unreachable(ctx);
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {

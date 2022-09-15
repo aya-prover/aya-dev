@@ -5,7 +5,6 @@ module aya.util {
   requires transitive kala.base;
   requires transitive kala.collection;
 
-  exports org.aya.util.cancel;
   exports org.aya.util.error;
   exports org.aya.util.binop;
   exports org.aya.util.reporter;

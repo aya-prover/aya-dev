@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
@@ -20,7 +20,6 @@ public record CodeOptions(
     new CodeOptions(NormalizeMode.NULL, DistillerOptions.pretty(), ShowCode.Core);
 
   public static @NotNull Literate.Code analyze(@NotNull Code code, @NotNull Expr expr) {
-    var distillOpts = new DistillerOptions();
     if (code.getFirstChild() instanceof CodeAttrProcessor.Attr attr) {
       return new Literate.Code(expr, attr.options);
     } else return new Literate.Code(expr, DEFAULT);

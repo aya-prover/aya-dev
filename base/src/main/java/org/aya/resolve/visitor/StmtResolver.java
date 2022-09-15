@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -9,7 +9,7 @@ import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.error.OperatorProblem;
+import org.aya.concrete.error.OperatorError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.CtorDef;
@@ -18,7 +18,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
-import org.aya.resolve.error.UnknownOperatorError;
+import org.aya.resolve.error.NameProblem;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
@@ -149,7 +149,7 @@ public interface StmtResolver {
     var opSet = info.opSet();
     var self = selfDef.opDecl;
     if (self == null && bind != BindBlock.EMPTY) {
-      opSet.reporter.report(new OperatorProblem.NotOperator(selfDef.concrete.sourcePos(), selfDef.name()));
+      opSet.reporter.report(new OperatorError.BadBindBlock(selfDef.concrete.sourcePos(), selfDef.name()));
       throw new Context.ResolvingInterruptedException();
     }
     bind(bind, opSet, self);
@@ -174,7 +174,7 @@ public interface StmtResolver {
         return defVar;
       }
     }
-    opSet.reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
+    opSet.reporter.report(new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
     throw new Context.ResolvingInterruptedException();
   }
 

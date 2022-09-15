@@ -11,7 +11,7 @@ import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
-import org.aya.resolve.error.*;
+import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     if (result.size() == 1) return result.iterator().next().getValue();
     var disamb = MutableList.<Seq<String>>create();
     result.forEach((k, v) -> disamb.append(k));
-    return reportAndThrow(new AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
+    return reportAndThrow(new NameProblem.AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
   }
 
   @Override default @Nullable AnyVar
@@ -48,7 +48,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var mod = modules().getOrNull(modName);
     if (mod == null) return null;
     var ref = mod.getOrNull(name);
-    if (ref == null) reportAndThrow(new QualifiedNameNotFoundError(modName, name, sourcePos));
+    if (ref == null) reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
     return ref;
   }
 
@@ -73,10 +73,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   ) {
     var modules = modules();
     if (modules.containsKey(componentName)) {
-      reportAndThrow(new DuplicateModNameError(componentName, sourcePos));
+      reportAndThrow(new NameProblem.DuplicateModNameError(componentName, sourcePos));
     }
     if (getModuleMaybe(componentName) != null) {
-      reporter().report(new ModShadowingWarn(componentName, sourcePos));
+      reporter().report(new NameProblem.ModShadowingWarn(componentName, sourcePos));
     }
     modules.set(componentName, mod);
   }
@@ -89,7 +89,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull SourcePos sourcePos
   ) {
     var mod = getModuleMaybe(modName);
-    if (mod == null) reportAndThrow(new ModNameNotFoundError(modName, sourcePos));
+    if (mod == null) reportAndThrow(new NameProblem.ModNameNotFoundError(modName, sourcePos));
     mod.forEach((name, ref) -> {
       if (using.apply(name)) {
         var newName = rename.getOrDefault(name, name);
@@ -112,13 +112,13 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var definitions = definitions();
     if (!definitions.containsKey(name)) {
       if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
-        reporter().report(new ShadowingWarn(name, sourcePos));
+        reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
       definitions.set(name, MutableHashMap.create());
     } else if (definitions.get(name).containsKey(modName)) {
-      reportAndThrow(new DuplicateNameError(name, ref, sourcePos));
+      reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
     } else {
-      reporter().report(new AmbiguousNameWarn(name, sourcePos));
+      reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
     definitions.get(name).set(modName, ref);
     if (modName.equals(TOP_LEVEL_MOD_NAME)) {

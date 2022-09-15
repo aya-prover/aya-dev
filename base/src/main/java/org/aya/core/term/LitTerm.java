@@ -28,9 +28,5 @@ public sealed interface LitTerm extends Term {
     @Override public @NotNull Term destruct(int repr) {
       return new LitTerm.ShapedInt(repr, this.shape, this.type);
     }
-
-    @Override public @NotNull Term self() {
-      return this;
-    }
   }
 }

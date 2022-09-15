@@ -12,14 +12,14 @@ import kala.collection.mutable.MutableStack;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
-import org.aya.generic.ref.GeneralizedVar;
+import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
-import org.aya.tyck.error.FieldProblem;
+import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourcePos;
@@ -79,7 +79,7 @@ public record ExprResolver(
           yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
         var projName = proj.ix().getRightValue();
         var resolvedIx = ctx.getMaybe(projName);
-        if (resolvedIx == null) ctx.reportAndThrow(new FieldProblem.UnknownField(proj, projName.join()));
+        if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(proj, projName.join()));
         yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), resolvedIx, proj.theCore());
       }
       case Expr.LamExpr lam -> {

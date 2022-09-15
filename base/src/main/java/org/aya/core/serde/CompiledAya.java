@@ -18,8 +18,7 @@ import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.error.ModNotFoundError;
-import org.aya.resolve.error.UnknownOperatorError;
+import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.visitor.StmtResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
@@ -129,7 +128,7 @@ public record CompiledAya(
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var modName : imports) {
       var success = loader.load(modName);
-      if (success == null) thisResolve.thisModule().reportAndThrow(new ModNotFoundError(modName, SourcePos.SER));
+      if (success == null) thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(success.thisModule().moduleName(), success);
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
@@ -172,7 +171,7 @@ public record CompiledAya(
   private @NotNull OpDecl resolveOp(@NotNull AyaBinOpSet opSet, @NotNull SerTerm.DeState state, @NotNull SerDef.QName name) {
     var opDecl = state.resolve(name).opDecl;
     if (opDecl != null) return opDecl;
-    opSet.reporter.report(new UnknownOperatorError(SourcePos.SER, name.name()));
+    opSet.reporter.report(new NameProblem.OperatorNameNotFound(SourcePos.SER, name.name()));
     throw new Context.ResolvingInterruptedException();
   }
 

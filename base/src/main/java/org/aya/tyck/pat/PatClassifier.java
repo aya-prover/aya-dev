@@ -23,7 +23,7 @@ import org.aya.ref.AnyVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
-import org.aya.tyck.error.NotYetTyckedError;
+import org.aya.tyck.error.TyckOrderError;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -235,7 +235,7 @@ public record PatClassifier(
         var buffer = MutableList.<MCT<Term, PatErr>>create();
         var data = dataCall.ref();
         var body = Def.dataBody(data);
-        if (coverage && data.core == null) reporter.report(new NotYetTyckedError(pos, data));
+        if (coverage && data.core == null) reporter.report(new TyckOrderError.NotYetTyckedError(pos, data));
         // For all constructors,
         for (var ctor : body) {
           var conTele = ctor.selfTele.view();
