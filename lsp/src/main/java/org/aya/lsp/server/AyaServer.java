@@ -103,4 +103,8 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
   @Override public @NotNull AyaService getWorkspaceService() {
     return service;
   }
+
+  @Override public @NotNull AyaService getNotebookDocumentService() {
+    return service;
+  }
 }
