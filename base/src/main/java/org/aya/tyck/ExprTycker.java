@@ -253,7 +253,9 @@ public final class ExprTycker extends Tycker {
     @NotNull Expr.PartEl partial, @NotNull Term type
   ) {
     var s = new ClauseTyckState();
-    var sides = partial.clauses().flatMap(sys -> clause(sys._1, sys._2, type, s));
+    var sides = partial.clauses().flatMap(sys ->
+      clause(sys._1, sys._2, type, s)
+    );
     confluence(sides, partial, type);
     if (s.isConstantFalse) return new Partial.Split<>(ImmutableSeq.empty());
     if (s.truthValue != null) return new Partial.Const<>(s.truthValue);
@@ -290,7 +292,10 @@ public final class ExprTycker extends Tycker {
     @NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType,
     @NotNull ClauseTyckState clauseState
   ) {
-    return switch (CofThy.isOne(inherit(lhs, PrimTerm.Interval.INSTANCE).wellTyped())) {
+    return switch (CofThy.isOne(inherit(lhs, PrimTerm.Interval.INSTANCE)
+      .wellTyped()
+      .normalize(state, NormalizeMode.WHNF))
+      ) {
       case Restr.Vary<Term> restr -> {
         var list = MutableList.<Restr.Side<Term>>create();
         for (var cof : restr.orz()) {
@@ -301,9 +306,10 @@ public final class ExprTycker extends Tycker {
               // ^ some `inst` in `cofib.ands()` are ErrorTerms, or we have bugs.
               // Q: report error again?
               yield SeqView.empty();
-            } else continue;
+            } else {
+              list.append(new Restr.Side<>(cof, u.get()));
+            }
           }
-          list.append(new Restr.Side<>(cof, u.get()));
         }
         yield list.view();
       }
