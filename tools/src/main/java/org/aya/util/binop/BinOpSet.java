@@ -4,8 +4,8 @@ package org.aya.util.binop;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
-import org.aya.util.MutableGraph;
 import org.aya.util.error.SourcePos;
+import org.aya.util.terck.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
