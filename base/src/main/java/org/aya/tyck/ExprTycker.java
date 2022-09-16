@@ -56,7 +56,6 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.RawSortExpr x -> throw new InternalException("synth: " + x.toString());
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.SortExpr sort -> sort(sort);
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
@@ -596,7 +595,6 @@ public final class ExprTycker extends Tycker {
         case FormTerm.Set b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
         case FormTerm.ISet b -> new FormTerm.Set(a.lift());
         case FormTerm.Prop prop -> FormTerm.Prop.INSTANCE;
-        default -> null;
       };
       case FormTerm.ISet a -> switch (codomain) {
         case FormTerm.ISet b -> FormTerm.Set.ZERO;

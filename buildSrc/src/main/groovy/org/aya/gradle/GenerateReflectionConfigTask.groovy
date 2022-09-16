@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.gradle
 
@@ -39,7 +39,7 @@ class GenerateReflectionConfigTask extends DefaultTask {
     Files.writeString(outputDir.toPath().resolve("serialization-config.json"), serializeConfig)
   }
 
-  def List<String> expand(String line) {
+  List<String> expand(String line) {
     var matcher = pattern.matcher(line)
     if (!matcher.find()) return List.of(line)
     int start = matcher.group(1) as int
@@ -50,7 +50,7 @@ class GenerateReflectionConfigTask extends DefaultTask {
       .toList()
   }
 
-  def String generateReflectConfig(String className) {
+  static String generateReflectConfig(String className) {
     return """\
     {
       "name": "$className",
@@ -63,7 +63,7 @@ class GenerateReflectionConfigTask extends DefaultTask {
     """.stripIndent()
   }
 
-  def String generateSerializeConfig(String className) {
+  static String generateSerializeConfig(String className) {
     return """{"name": "$className"}"""
   }
 }
