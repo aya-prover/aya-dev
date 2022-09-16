@@ -68,9 +68,9 @@ public class PathTest {
     TyckDeclTest.successTyckDecls("""
       prim I
       prim Partial
-      prim invol
+      prim intervalInv
             
-      def ~ => invol
+      def ~ => intervalInv
             
       def infix = {A : Type} (a b : A) : Type =>
         [| i |] A {| i 0 := a | i 1 := b |}

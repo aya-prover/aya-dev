@@ -6,7 +6,7 @@ def two => S Z add S Z
 def two-is-two : two = S (S Z) => idp
 
 open import Primitives using (
-  invol as fixl ~ tighter =,
+  intervalInv as fixl ~ tighter =,
   intervalMin as infix /\        ,
   intervalMax as infix \/        ,
 )

@@ -1,7 +1,7 @@
 prim I
 prim Partial
 prim arcoe (A : I -> Type) (A 0) (i : I) : A i
-prim invol (i : I) : I
+prim intervalInv (i : I) : I
 prim intervalMin (i j : I) : I
 prim intervalMax (i j : I) : I
 prim String: Type

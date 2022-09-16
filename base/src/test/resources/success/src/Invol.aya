@@ -1,6 +1,6 @@
 open import Paths
 
-def test : invol 0 = 1 => idp
+def test : intervalInv 0 = 1 => idp
 
 def path' {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p 0) (p 1) { | at => \ i => p i }

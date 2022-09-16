@@ -1,7 +1,7 @@
 open import Primitives using
   ( I
   , Partial
-  , invol as fixl ~
+  , intervalInv as fixl ~
   , intervalMin as infix /\
   , intervalMax as infix \/
   )

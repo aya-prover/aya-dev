@@ -220,10 +220,10 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new LitTerm.ShapedInt(integer, AyaShape.NAT_SHAPE, type), type);
       }
       case Expr.LitStringExpr litStr -> {
-        if (!state.primFactory().have(PrimDef.ID.STR))
+        if (!state.primFactory().have(PrimDef.ID.STRING))
           yield fail(expr, new NoRuleError(expr, null));
 
-        yield new TermResult(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STR));
+        yield new TermResult(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
       case Expr.PartTy par -> {
         var ty = synthesize(par.type());
