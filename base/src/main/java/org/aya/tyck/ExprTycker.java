@@ -595,6 +595,7 @@ public final class ExprTycker extends Tycker {
         case FormTerm.Type b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
         case FormTerm.Set b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
         case FormTerm.ISet b -> new FormTerm.Set(a.lift());
+        case FormTerm.Prop prop -> FormTerm.Prop.INSTANCE;
         default -> null;
       };
       case FormTerm.ISet a -> switch (codomain) {
