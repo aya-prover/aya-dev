@@ -56,6 +56,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
+      case Expr.RawSortExpr x -> throw new InternalException("synth: " + x.toString());
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.SortExpr sort -> sort(sort);
       case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, FormTerm.ISet.INSTANCE);
@@ -473,7 +474,7 @@ public final class ExprTycker extends Tycker {
         yield new SortResult(freshHole._2, univ);
       }
       case Expr.SortExpr sortExpr -> {
-        var self = switch(sortExpr) {
+        var self = switch (sortExpr) {
           case Expr.TypeExpr ty -> new FormTerm.Type(ty.lift());
           case Expr.SetExpr set -> new FormTerm.Set(set.lift());
           case Expr.PropExpr prop -> FormTerm.Prop.INSTANCE;
