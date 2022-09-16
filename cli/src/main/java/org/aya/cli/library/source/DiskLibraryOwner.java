@@ -41,8 +41,8 @@ public record DiskLibraryOwner(
   public static @NotNull DiskLibraryOwner from(@NotNull LibraryConfig config) throws IOException {
     var srcRoot = config.librarySrcRoot();
     var locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
-    var owner = new DiskLibraryOwner(locator, MutableList.of(),
-      MutableList.of(), MutableList.of(), config);
+    var owner = new DiskLibraryOwner(locator, MutableList.create(),
+      MutableList.create(), MutableList.create(), config);
     owner.librarySourcesMut.appendAll(AyaFiles.collectAyaSourceFiles(srcRoot)
       .map(p -> new LibrarySource(owner, p)));
     for (var dep : config.deps()) {

@@ -95,7 +95,6 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
    *
    * @param lhsSubst the substitutions that would turn the lhs pattern to the rhs one.
    * @param rhsSubst the substitutions that would turn the rhs pattern to the lhs one.
-   * @param ctx
    * @return a ctx that contains all variables that are not unified.
    * @throws IllegalArgumentException if failed
    * @see PatUnify#visitAs(LocalVar, org.aya.core.pat.Pat)

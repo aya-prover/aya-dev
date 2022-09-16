@@ -247,7 +247,6 @@ public record AyaProducer(
     if (ctx.SET_KW() != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Set);
     if (ctx.PROP() != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Prop);
     if (ctx.ISET() != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.ISet);
-    if (ctx.I() != null) return new Expr.IntervalExpr(pos);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
