@@ -15,8 +15,8 @@ public class PathTest {
   @Test public void refl() {
     var res = TyckDeclTest.successTyckDecls("""
       prim I
-      prim invol
-      def inline ~ => invol
+      prim intervalInv
+      def inline ~ => intervalInv
       def infix = {A : Type} (a b : A) : Type =>
         [| i |] A {| ~ i := a | i := b |}
           
@@ -33,8 +33,8 @@ public class PathTest {
   @Test public void cong() {
     TyckDeclTest.successTyckDecls("""
       prim I
-      prim invol
-      def ~ => invol
+      prim intervalInv
+      def ~ => intervalInv
             
       def infix = {A : Type} (a b : A) : Type =>
       [| i |] A {| ~ i := a | i := b |}
@@ -56,9 +56,9 @@ public class PathTest {
   @Test public void funExt() {
     TyckDeclTest.successTyckDecls("""
       prim I
-      prim invol
+      prim intervalInv
             
-      def ~ => invol
+      def ~ => intervalInv
       def infix = {A : Type} (a b : A) : Type =>
       [| i |] A {| ~ i := a | i := b |}
           
