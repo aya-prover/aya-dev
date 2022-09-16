@@ -198,8 +198,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull FormTerm.SortKind kind) implements Expr {}
 
-  record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {}
-
   sealed interface SortExpr extends Expr {
     int lift();
 

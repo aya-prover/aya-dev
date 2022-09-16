@@ -61,7 +61,6 @@ public interface ExprView {
         yield new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), params);
       }
       case Expr.RawSortExpr rawType -> rawType;
-      case Expr.IntervalExpr interval -> interval;
       case Expr.LiftExpr lift -> {
         var inner = commit(lift.expr());
         if (inner == lift.expr()) yield lift;

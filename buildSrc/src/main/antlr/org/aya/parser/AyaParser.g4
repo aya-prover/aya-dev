@@ -152,7 +152,6 @@ literal : qualifiedId
         | SET_KW
         | PROP
         | ISET
-        | I
         ;
 
 tele : literal
