@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
@@ -17,7 +17,7 @@ import java.util.function.BiFunction;
 /**
  * @author ice1000
  */
-public final class FnDef extends UserDef {
+public final class FnDef extends UserDef<Term> {
   public final @NotNull EnumSet<Modifier> modifiers;
   public final @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref;
   public final @NotNull Either<Term, ImmutableSeq<Matching>> body;

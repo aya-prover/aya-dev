@@ -137,7 +137,7 @@ public sealed interface FormTerm extends Term {
     }
 
     @Override public @NotNull FormTerm.Type succ() {
-      return new FormTerm.Type(1);
+      return new FormTerm.Type(0);
     }
   }
 

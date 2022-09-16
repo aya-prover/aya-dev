@@ -45,13 +45,13 @@ public record Serializer(@NotNull Serializer.State state) {
       case StructDef struct -> new SerDef.Struct(
         state.def(struct.ref()),
         serializeParams(struct.telescope),
-        (SerTerm.Sort) serialize(struct.resultLevel),
+        serialize(struct.result),
         struct.fields.map(field -> (SerDef.Field) serialize(field))
       );
       case DataDef data -> new SerDef.Data(
         state.def(data.ref),
         serializeParams(data.telescope),
-        (SerTerm.Sort) serialize(data.resultLevel),
+        serialize(data.result),
         data.body.map(ctor -> (SerDef.Ctor) serialize(ctor))
       );
       case PrimDef prim -> {
@@ -71,6 +71,15 @@ public record Serializer(@NotNull Serializer.State state) {
     };
   }
 
+  private @NotNull SerTerm.Sort serialize(@NotNull FormTerm.Sort term) {
+    return switch (term) {
+      case FormTerm.Type ty -> new SerTerm.Type(ty.lift());
+      case FormTerm.Set set -> new SerTerm.Set(set.lift());
+      case FormTerm.Prop prop -> new SerTerm.Prop();
+      case FormTerm.ISet iset -> new SerTerm.ISet();
+    };
+  }
+
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
       case LitTerm.ShapedInt lit ->
@@ -86,10 +95,6 @@ public record Serializer(@NotNull Serializer.State state) {
       case PrimTerm.Interval interval -> new SerTerm.Interval();
       case FormTerm.Pi pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
       case FormTerm.Sigma sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
-      case FormTerm.Type ty -> new SerTerm.Type(ty.lift());
-      case FormTerm.Set set -> new SerTerm.Set(set.lift());
-      case FormTerm.Prop prop -> new SerTerm.Prop();
-      case FormTerm.ISet iset -> new SerTerm.ISet();
       case CallTerm.Con conCall -> new SerTerm.ConCall(
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
@@ -125,6 +130,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
+      case FormTerm.Sort sort -> serialize(sort);
     };
   }
 

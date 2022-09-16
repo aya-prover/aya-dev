@@ -29,7 +29,7 @@ import static org.aya.guest0x0.cubical.CofThy.isOne;
 /**
  * @author ice1000
  */
-public final class PrimDef extends TopLevelDef {
+public final class PrimDef extends TopLevelDef<Term> {
   public PrimDef(
     @NotNull DefVar<@NotNull PrimDef, TeleDecl.@NotNull PrimDecl> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,

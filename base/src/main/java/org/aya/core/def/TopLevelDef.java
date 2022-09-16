@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
@@ -11,13 +11,13 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author ice1000
  */
-public sealed abstract class TopLevelDef implements Def permits UserDef, PrimDef {
+public sealed abstract class TopLevelDef<Ret extends Term> implements Def permits UserDef, PrimDef {
   public final @NotNull ImmutableSeq<Term.Param> telescope;
-  public final @NotNull Term result;
+  public final @NotNull Ret result;
 
   protected TopLevelDef(
     @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull Term result
+    @NotNull Ret result
   ) {
     this.telescope = telescope;
     this.result = result;
@@ -27,7 +27,7 @@ public sealed abstract class TopLevelDef implements Def permits UserDef, PrimDef
     return telescope;
   }
 
-  @Override public @NotNull Term result() {
+  @Override public @NotNull Ret result() {
     return result;
   }
 }

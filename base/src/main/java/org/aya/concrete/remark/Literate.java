@@ -79,7 +79,7 @@ public sealed interface Literate extends Docile {
     }
 
     @Override public @NotNull Doc toDoc() {
-      if (def.get() instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef userDef) {
+      if (def.get() instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef<?> userDef) {
         var problems = userDef.problems;
         if (problems == null) return Doc.styled(Style.bold(), Doc.english("No error message."));
         return Doc.vcat(problems.map(problem -> problem.brief(DistillerOptions.informative())));

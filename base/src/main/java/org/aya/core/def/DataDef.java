@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
@@ -21,9 +21,9 @@ public final class DataDef extends UserDef.Type {
 
   public DataDef(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
-    FormTerm.Sort ulift, @NotNull ImmutableSeq<CtorDef> body
+    FormTerm.Sort result, @NotNull ImmutableSeq<CtorDef> body
   ) {
-    super(telescope, ulift);
+    super(telescope, result);
     ref.core = this;
     this.ref = ref;
     this.body = body;

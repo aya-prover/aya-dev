@@ -189,7 +189,7 @@ public record AyaSccTycker(
         var sampleReporter = sampleReporters.getOrPut(proof, BufferReporter::new);
         var problems = sampleReporter.problems().toImmutableSeq();
         if (problems.isEmpty()) reporter.report(new CounterexampleError(decl.sourcePos(), decl.ref()));
-        if (def instanceof UserDef userDef) userDef.problems = problems;
+        if (def instanceof UserDef<?> userDef) userDef.problems = problems;
       }
     }
   }
