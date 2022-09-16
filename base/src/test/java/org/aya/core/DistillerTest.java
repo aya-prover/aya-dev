@@ -81,13 +81,18 @@ public class DistillerTest {
       def infix <= (A B : Type) => A tighter =
       def test1 (X : Type) => Pi (A : Type) -> A ulift = X
       def test2 (X : Type) => (Pi (A : Type) -> A) ulift = X
+
+      def infix ?= : Type -> Type -> Type => \\ (A B : Type) => A
+      def use (A B : Type) => A ?= B
       """)._2;
     var test1 = ((FnDef) decls.get(3)).body.getLeftValue();
     var test2 = ((FnDef) decls.get(4)).body.getLeftValue();
+    var use = ((FnDef) decls.get(6)).body.getLeftValue();
     assertNotNull(decls.get(1).ref().concrete.toDoc(DistillerOptions.informative()));
     assertNotNull(decls.get(2).ref().concrete.toDoc(DistillerOptions.informative()));
     assertEquals("Pi (A : Type 0) -> A = X", test1.toDoc(DistillerOptions.informative()).debugRender());
     assertEquals("(Pi (A : Type 0) -> A) = X", test2.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("A ?= B", use.toDoc(DistillerOptions.informative()).debugRender());
   }
 
   @Test public void binop() {
@@ -114,7 +119,7 @@ public class DistillerTest {
       """)._2;
     var t = ((FnDef) decls.get(6)).body.getLeftValue();
     assertEquals("(=) {Nat} zero zero", t.toDoc(DistillerOptions.informative()).debugRender());
-    assertEquals("zero (=) zero", t.toDoc(DistillerOptions.pretty()).debugRender());
+    assertEquals("zero = zero", t.toDoc(DistillerOptions.pretty()).debugRender());
   }
 
   @Test public void pathApp() {

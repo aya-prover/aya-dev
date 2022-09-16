@@ -62,11 +62,12 @@ public interface ExprView {
       }
       case Expr.RawSortExpr rawType -> rawType;
       case Expr.IntervalExpr interval -> interval;
-      case Expr.LiftExpr lift -> lift; // do this for now
-      case Expr.TypeExpr univ -> univ;
-      case Expr.SetExpr univ -> univ;
-      case Expr.PropExpr univ -> univ;
-      case Expr.ISetExpr univ -> univ;
+      case Expr.LiftExpr lift -> {
+        var inner = commit(lift.expr());
+        if (inner == lift.expr()) yield lift;
+        yield new Expr.LiftExpr(lift.sourcePos(), inner, lift.lift());
+      }
+      case Expr.SortExpr univ -> univ;
       case Expr.AppExpr app -> {
         var func = commit(app.function());
         var arg = commit(app.argument());
