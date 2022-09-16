@@ -22,7 +22,7 @@ def psqueeze {a b : A} (p : a = b) (i : I)
 
 def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b (\i => p i) =>
-      coe (\ i => B (p i) (p /\ i)) r
+      coe (\ i => B (p i) (\j => p (j /\ i))) 0 r
 
 def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
   => J (\b' p' => B b') x p
@@ -42,6 +42,7 @@ def pmapd' {A : I -> Type} (B : Pi (i : I) (A i) -> Type)
     {a : A 0} {b : A 1} (p : Path A a b)
   : Path (\i => B i (p i)) (f 0 a) (f 1 b) => \ i => f i (p i)
 
+-- TODO: eta
 def hcomp2d
   {a b c d : A}
   (p : a = b)
@@ -49,5 +50,6 @@ def hcomp2d
   (r : a = c) : c = d
   => \i => coe (\ k => r k = q k) 1 (\j => p j) i
 
+-- TODO: eta
 def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c =>
   \k => hcomp2d (\i => p i) (\i => q i) idp k

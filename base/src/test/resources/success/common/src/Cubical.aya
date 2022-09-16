@@ -8,41 +8,39 @@ open import Paths
 -- |              |
 -- |              |
 -- a ---- ab ---- b
-struct HeteroSquare {A : Pi (i j : I) -> Type}
+def HeteroSquare {A : Pi (i j : I) -> Type}
   {a : A 0 0} {b : A 0 1}
   {c : A 1 0} {d : A 1 1}
   (ab : Path (A 0) a b)
   (cd : Path (A 1) c d)
   (ac : Path (\x => A x 0) a c)
   (bd : Path (\x => A x 1) b d) : Type
-| at2 (i j : I) : A i j {
-  | 0, i => ab.at i
-  | 1, i => cd.at i
-  | i, 0 => ac.at i
-  | i, 1 => bd.at i
-}
+  => [| i j |] A i j {|
+    | ~ i := ab j
+    | i := cd j
+    | ~ j := ac i
+    | j := bd i
+  |}
 
-def heteroSquare {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j) =>
-  new HeteroSquare {A}
-    (path {A 0} (p 0)) (path {A 1} (p 1))
-    (path {\x => A x 0} (\x => p x 0))
-    (path {\x => A x 1} (\x => p x 1)) {
-      | at2 => p
-    }
+-- TODO: eta
+def heteroSquare {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j)
+  : HeteroSquare {A} (\i => p 0 i) (\i => p 1 i)
+    (\x => p x 0)
+    (\x => p x 1) => \i j => p i j
 
-open struct ConnectedPaths (A : Type) : Type
-| p I : A
-| q I : A {
-  | 0 => p 1
-}
+-- open struct ConnectedPaths (A : Type) : Type
+-- | p I : A
+-- | q I : A {
+--   | 0 => p 1
+-- }
 
-def connectPaths (A : Type) (c : ConnectedPaths A) : c.p 0 = c.q 1 =>
-  path c.p <==> path c.q
+-- def connectPaths (A : Type) (c : ConnectedPaths A) : c.p 0 = c.q 1 =>
+--   path c.p <==> path c.q
 
-struct ConnectedSquares (A : Type) : Type
-| p I I : A
-| q I I : A {
-  | 0, i => p 1 i
-}
+-- struct ConnectedSquares (A : Type) : Type
+-- | p I I : A
+-- | q I I : A {
+--   | 0, i => p 1 i
+-- }
 
 -- def connectSquares (A : Type) (c : ConnectedSquares A) =>
