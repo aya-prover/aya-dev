@@ -57,8 +57,8 @@ public final class ExprTycker extends Tycker {
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
-      case Expr.UnivExpr univ -> universe(univ);
-      case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, new FormTerm.Univ(0));
+      case Expr.SortExpr sort -> sort(sort);
+      case Expr.IntervalExpr interval -> new TermResult(PrimTerm.Interval.INSTANCE, FormTerm.ISet.INSTANCE);
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
@@ -67,8 +67,8 @@ public final class ExprTycker extends Tycker {
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
-      case Expr.PiExpr pi -> universe(pi);
-      case Expr.SigmaExpr sigma -> universe(sigma);
+      case Expr.PiExpr pi -> sort(pi);
+      case Expr.SigmaExpr sigma -> sort(sigma);
       case Expr.LiftExpr lift -> {
         var result = synthesize(lift.expr());
         var levels = lift.lift();
@@ -360,17 +360,16 @@ public final class ExprTycker extends Tycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new TermResult(freshHole._2, term);
       }
-      case Expr.UnivExpr univExpr -> {
+      case Expr.SortExpr sortExpr -> {
+        var result = sort(sortExpr);
         var normTerm = whnf(term);
-        if (normTerm instanceof FormTerm.Univ univ) {
-          if (univExpr.lift() + 1 > univ.lift())
-            reporter.report(new LevelError(univExpr.sourcePos(), univ.lift(), univExpr.lift() + 1, false));
-          yield new TermResult(new FormTerm.Univ(univExpr.lift()), univ);
+        if (normTerm instanceof FormTerm.Sort sort) {
+          var unifier = unifier(sortExpr.sourcePos(), Ordering.Lt);
+          unifier.compareSort(result.type(), sort);
         } else {
-          var succ = new FormTerm.Univ(univExpr.lift());
-          unifyTyReported(normTerm, succ, univExpr);
+          unifyTyReported(result.type(), normTerm, sortExpr);
         }
-        yield new TermResult(new FormTerm.Univ(univExpr.lift()), term);
+        yield new TermResult(result.wellTyped(), normTerm);
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
@@ -464,57 +463,74 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private @NotNull UnivResult doUniverse(@NotNull Expr expr) {
-    var univ = FormTerm.Univ.ZERO;
+  private @NotNull SortResult doSort(@NotNull Expr expr) {
+    var univ = FormTerm.Type.ZERO;
     return switch (expr) {
-      case Expr.TupExpr tuple -> failUniv(tuple, BadTypeError.sigmaCon(state, tuple, univ));
+      case Expr.TupExpr tuple -> failSort(tuple, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.HoleExpr hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield new UnivResult(freshHole._2, univ.lift());
+        yield new SortResult(freshHole._2, univ);
       }
-      case Expr.UnivExpr univExpr -> new UnivResult(new FormTerm.Univ(univExpr.lift()), univExpr.lift() + 1);
-      case Expr.LamExpr lam -> failUniv(lam, BadTypeError.pi(state, lam, univ));
-      case Expr.PartEl el -> failUniv(el, BadTypeError.partTy(state, el, univ));
+      case Expr.SortExpr sortExpr -> {
+        var self = switch(sortExpr) {
+          case Expr.TypeExpr ty -> new FormTerm.Type(ty.lift());
+          case Expr.SetExpr set -> new FormTerm.Set(set.lift());
+          case Expr.PropExpr prop -> FormTerm.Prop.INSTANCE;
+          case Expr.ISetExpr iset -> FormTerm.ISet.INSTANCE;
+        };
+        yield new SortResult(self, self.succ());
+      }
+      case Expr.LamExpr lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
+      case Expr.PartEl el -> failSort(el, BadTypeError.partTy(state, el, univ));
       case Expr.PiExpr pi -> {
         var param = pi.param();
         final var var = param.ref();
         var domTy = param.type();
-        var domRes = universe(domTy);
+        var domRes = sort(domTy);
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
-          var cod = universe(pi.last());
-          return new UnivResult(new FormTerm.Pi(resultParam, cod.wellTyped()), Math.max(domRes.lift(), cod.lift()));
+          var cod = sort(pi.last());
+          return new SortResult(new FormTerm.Pi(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
         });
       }
       case Expr.SigmaExpr sigma -> {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
-        var maxLevel = 0;
+        var resultTypes = MutableList.<FormTerm.Sort>create();
         for (var tuple : sigma.params()) {
-          var result = universe(tuple.type());
-          maxLevel = Math.max(maxLevel, result.lift());
+          var result = sort(tuple.type());
+          resultTypes.append(result.type());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
+        var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
+        var maxSort = resultTypes.reduce(FormTerm.Sort::max);
+        resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new UnivResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxLevel);
+        yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxSort);
       }
       default -> {
         var result = synthesize(expr);
-        var lower = result.type();
-        var lvl = switch (whnf(lower)) {
-          case FormTerm.Univ u -> u.lift();
-          case CallTerm.Hole hole -> {
-            unifyTyReported(hole, FormTerm.Univ.ZERO, expr);
-            yield 0;
-          }
-          default -> {
-            reporter.report(BadTypeError.univ(state, expr, lower));
-            yield 0;
-          }
-        };
-        yield new UnivResult(result.wellTyped(), lvl);
+        yield new SortResult(result.wellTyped(), ty(expr, result.type()));
+      }
+    };
+  }
+
+  public @NotNull TyResult ty(@NotNull Expr expr) {
+    return new TyResult(ty(expr, sort(expr).wellTyped()));
+  }
+
+  private @NotNull FormTerm.Sort ty(@NotNull Expr errorMsg, @NotNull Term term) {
+    return switch (whnf(term)) {
+      case FormTerm.Sort u -> u;
+      case CallTerm.Hole hole -> {
+        unifyTyReported(hole, FormTerm.Type.ZERO, errorMsg);
+        yield FormTerm.Type.ZERO;
+      }
+      default -> {
+        reporter.report(BadTypeError.univ(state, errorMsg, term));
+        yield FormTerm.Type.ZERO;
       }
     };
   }
@@ -560,17 +576,52 @@ public final class ExprTycker extends Tycker {
     return res;
   }
 
-  public @NotNull UnivResult universe(@NotNull Expr expr) {
-    return universe(expr, -1);
+  public @NotNull SortResult sort(@NotNull Expr expr) {
+    return sort(expr, -1);
   }
 
-  public @NotNull UnivResult universe(@NotNull Expr expr, int upperBound) {
+  public @NotNull SortResult sort(@NotNull Expr expr, int upperBound) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var result = doUniverse(expr);
-    if (upperBound != -1 && upperBound < result.lift())
-      reporter.report(new LevelError(expr.sourcePos(), upperBound, result.lift(), true));
+    var result = doSort(expr);
+    if (upperBound != -1 && upperBound < result.type().lift())
+      reporter.report(new LevelError(expr.sourcePos(), new FormTerm.Type(upperBound), result.type(), true));
     traceExit(result, expr);
     return result;
+  }
+
+  public @NotNull FormTerm.Sort sortPi(@NotNull Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+    var result = switch (domain) {
+      case FormTerm.Type a -> switch (codomain) {
+        case FormTerm.Type b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
+        case FormTerm.Set b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
+        case FormTerm.ISet b -> new FormTerm.Set(a.lift());
+        case FormTerm.Prop prop -> FormTerm.Prop.INSTANCE;
+        default -> null;
+      };
+      case FormTerm.ISet a -> switch (codomain) {
+        case FormTerm.ISet b -> FormTerm.Set.ZERO;
+        case FormTerm.Set b -> b;
+        case FormTerm.Type b -> b;
+        default -> null;
+      };
+      case FormTerm.Set a -> switch (codomain) {
+        case FormTerm.Set b -> new FormTerm.Set(Math.max(a.lift(), b.lift()));
+        case FormTerm.Type b -> new FormTerm.Set(Math.max(a.lift(), b.lift()));
+        case FormTerm.ISet b -> new FormTerm.Set(a.lift());
+        default -> null;
+      };
+      case FormTerm.Prop a -> switch (codomain) {
+        case FormTerm.Prop b -> FormTerm.Prop.INSTANCE;
+        case FormTerm.Type b -> b;
+        default -> null;
+      };
+    };
+    if (result == null) {
+      reporter.report(new SortPiError(expr.sourcePos(), domain, codomain));
+      return FormTerm.Type.ZERO;
+    } else {
+      return result;
+    }
   }
 
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
@@ -590,8 +641,8 @@ public final class ExprTycker extends Tycker {
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
     var genName = name + Constants.GENERATED_POSTFIX;
     // [ice]: unsure if ZERO is good enough
-    var domain = localCtx.freshHole(FormTerm.Univ.ZERO, genName + "ty", pos)._2;
-    var codomain = localCtx.freshHole(FormTerm.Univ.ZERO, pos)._2;
+    var domain = localCtx.freshHole(FormTerm.Type.ZERO, genName + "ty", pos)._2;
+    var codomain = localCtx.freshHole(FormTerm.Type.ZERO, pos)._2;
     return new FormTerm.Pi(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
   }
 
@@ -604,9 +655,9 @@ public final class ExprTycker extends Tycker {
     return new TermResult(new ErrorTerm(expr), term);
   }
 
-  private @NotNull UnivResult failUniv(@NotNull AyaDocile expr, @NotNull Problem prob) {
+  private @NotNull SortResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
     reporter.report(prob);
-    return new UnivResult(new ErrorTerm(expr), 0);
+    return new SortResult(new ErrorTerm(expr), FormTerm.Type.ZERO);
   }
 
   @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var) {
@@ -730,13 +781,19 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  public record UnivResult(@Override @NotNull Term wellTyped, int lift) implements Result {
-    @Override public @NotNull Term type() {
-      return new FormTerm.Univ(lift);
+  public record SortResult(@Override @NotNull Term wellTyped, @Override @NotNull FormTerm.Sort type) implements Result {
+    @Override public @NotNull SortResult freezeHoles(@NotNull TyckState state) {
+      return new SortResult(wellTyped.freezeHoles(state), type);
+    }
+  }
+
+  public record TyResult(@Override @NotNull FormTerm.Sort wellTyped) implements Result {
+    @Override public @NotNull FormTerm.Sort type() {
+      return wellTyped.succ();
     }
 
-    @Override public @NotNull UnivResult freezeHoles(@NotNull TyckState state) {
-      return new UnivResult(wellTyped.freezeHoles(state), lift);
+    @Override public @NotNull TyResult freezeHoles(@NotNull TyckState state) {
+      return this;
     }
   }
 }

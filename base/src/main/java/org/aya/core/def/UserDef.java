@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
@@ -16,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed abstract class UserDef extends TopLevelDef permits FnDef, UserDef.Type {
+public sealed abstract class UserDef<Ret extends Term>
+  extends TopLevelDef<Ret> permits FnDef, UserDef.Type {
   /**
    * In case of counterexamples, this field will be assigned.
    *
@@ -24,16 +25,14 @@ public sealed abstract class UserDef extends TopLevelDef permits FnDef, UserDef.
    */
   public @Nullable ImmutableSeq<Problem> problems;
 
-  protected UserDef(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result) {
+  protected UserDef(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Ret result) {
     super(telescope, result);
   }
 
-  public static abstract sealed class Type extends UserDef permits DataDef, StructDef {
-    public final int resultLevel;
+  public static abstract sealed class Type extends UserDef<FormTerm.Sort> permits DataDef, StructDef {
 
-    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, int resultLevel) {
-      super(telescope, new FormTerm.Univ(resultLevel));
-      this.resultLevel = resultLevel;
+    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, FormTerm.Sort result) {
+      super(telescope, result);
     }
   }
 }

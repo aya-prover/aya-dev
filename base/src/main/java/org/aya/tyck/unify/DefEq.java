@@ -400,29 +400,29 @@ public final class DefEq {
         yield checkParam(lhs.param(), rhs.param(), null, lr, rl, () -> null, () -> {
           var bodyIsOk = compare(lhs.body(), rhs.body(), lr, rl, null);
           if (!bodyIsOk) return null;
-          return FormTerm.Univ.ZERO;
+          return FormTerm.Type.ZERO;
         });
       }
       case FormTerm.Sigma lhs -> {
         if (!(preRhs instanceof FormTerm.Sigma rhs)) yield null;
-        yield checkParams(lhs.params().view(), rhs.params().view(), lr, rl, () -> null, () -> FormTerm.Univ.ZERO);
+        yield checkParams(lhs.params().view(), rhs.params().view(), lr, rl, () -> null, () -> FormTerm.Type.ZERO);
       }
-      case FormTerm.Univ lhs -> {
-        if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
-        if (!compareLevel(lhs.lift(), rhs.lift())) yield null;
-        yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).lift() + 1);
+      case FormTerm.Sort lhs -> {
+        if (!(preRhs instanceof FormTerm.Sort rhs)) yield null;
+        if (!compareSort(lhs, rhs)) yield null;
+        yield (cmp == Ordering.Lt ? lhs : rhs).succ();
       }
       case FormTerm.PartTy lhs -> {
         if (!(preRhs instanceof FormTerm.PartTy rhs)) yield null;
         var happy = compareUntyped(lhs.type(), rhs.type(), lr, rl) != null
           && compareRestr(lhs.restr(), rhs.restr());
-        yield happy ? FormTerm.Univ.ZERO : null;
+        yield happy ? FormTerm.Type.ZERO : null;
       }
       case FormTerm.Path lhs -> {
         if (!(preRhs instanceof FormTerm.Path rhs)) yield null;
-        yield compareCube(lhs.cube(), rhs.cube(), lr, rl) ? FormTerm.Univ.ZERO : null;
+        yield compareCube(lhs.cube(), rhs.cube(), lr, rl) ? FormTerm.Type.ZERO : null;
       }
-      case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Univ.ZERO : null;
+      case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Type.ZERO : null;
       case PrimTerm.Mula lhs -> {
         if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
         var happy = switch (lhs.asFormula()) {
@@ -442,12 +442,12 @@ public final class DefEq {
         if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         // Do not need to be computed precisely because unification won't need this info
-        yield args ? FormTerm.Univ.ZERO : null;
+        yield args ? FormTerm.Type.ZERO : null;
       }
       case CallTerm.Struct lhs -> {
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
-        yield args ? FormTerm.Univ.ZERO : null;
+        yield args ? FormTerm.Type.ZERO : null;
       }
       case CallTerm.Con lhs -> switch (preRhs) {
         case CallTerm.Con rhs -> {
@@ -489,7 +489,7 @@ public final class DefEq {
       // If we do not know the type, then we do not perform the comparison
       if (meta.result == null) return null;
       // Is this going to produce a readable error message?
-      compareLevel(lhs.ulift(), rcall.ulift());
+      compareSort(new FormTerm.Type(lhs.ulift()), new FormTerm.Type(rcall.ulift()));
       var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
       for (var arg : lhs.args().view().zip(rcall.args())) {
         if (!(holeTy instanceof FormTerm.Pi holePi))
@@ -554,25 +554,49 @@ public final class DefEq {
     return resultTy;
   }
 
-  private boolean compareLevel(int l, int r) {
-    switch (cmp) {
-      case Eq:
-        if (l != r) {
-          reporter.report(new LevelError(pos, l, r, true));
-          return false;
-        }
-      case Gt:
-        if (l < r) {
-          reporter.report(new LevelError(pos, l, r, false));
-          return false;
-        }
-      case Lt:
-        if (l > r) {
-          reporter.report(new LevelError(pos, r, l, false));
-          return false;
-        }
+  private static boolean sortLt(FormTerm.Sort l, FormTerm.Sort r) {
+    return switch(l) {
+      case FormTerm.Type lt -> switch(r) {
+        case FormTerm.Type rt -> lt.lift() <= rt.lift();
+        case FormTerm.Set rt -> lt.lift() <= rt.lift();
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop -> false;
+      };
+      case FormTerm.ISet iSet -> switch(r) {
+        case FormTerm.ISet set -> true;
+        case FormTerm.Prop prop -> false;
+        case FormTerm.Set set -> true;
+        case FormTerm.Type type -> false;
+      };
+      case FormTerm.Prop prop -> switch (r) {
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop1 -> true;
+        case FormTerm.Set set -> false;
+        case FormTerm.Type type -> false;
+      };
+      case FormTerm.Set lt -> switch (r) {
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop -> false;
+        case FormTerm.Set rt -> lt.lift() <= rt.lift();
+        case FormTerm.Type rt -> false;
+      };
+    };
+  }
+
+  public boolean compareSort(FormTerm.Sort l, FormTerm.Sort r) {
+    var result = switch(cmp) {
+      case Gt -> sortLt(r, l);
+      case Eq -> l.kind() == r.kind() && l.lift() == r.lift();
+      case Lt -> sortLt(l, r);
+    };
+    if(!result) {
+      switch(cmp) {
+        case Eq -> reporter.report(new LevelError(pos, l, r, true));
+        case Gt -> reporter.report(new LevelError(pos, l, r, false));
+        case Lt -> reporter.report(new LevelError(pos, r, l, false));
+      }
     }
-    return true;
+    return result;
   }
 
   public void checkEqn(@NotNull TyckState.Eqn eqn) {

@@ -66,13 +66,13 @@ public sealed interface SerDef extends Serializable {
   record Data(
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    int resultLift,
+    @NotNull SerTerm.Sort resultLift,
     @NotNull ImmutableSeq<Ctor> bodies
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new DataDef(
         state.newDef(name), telescope.map(tele -> tele.de(state)),
-        resultLift, bodies.map(body -> body.de(state)));
+        resultLift.de(state), bodies.map(body -> body.de(state)));
     }
   }
 
@@ -104,14 +104,14 @@ public sealed interface SerDef extends Serializable {
   record Struct(
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    int resultLift,
+    @NotNull SerTerm.Sort resultLift,
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new StructDef(
         state.newDef(name),
         telescope.map(tele -> tele.de(state)),
-        resultLift,
+        resultLift.de(state),
         fields.map(field -> field.de(state))
       );
     }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
@@ -9,6 +9,7 @@ import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.concrete.visitor.StmtOps;
+import org.aya.core.term.FormTerm;
 import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,14 +31,27 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
 
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
-        case Expr.AppExpr app && app.function() instanceof Expr.RawUnivExpr univ -> {
+        // TODO: java 19
+        case Expr.AppExpr app && app.function() instanceof Expr.RawSortExpr univ && univ.kind() == FormTerm.SortKind.Type -> {
           try {
-            yield new Expr.UnivExpr(univ.sourcePos(), levelVar(app.argument().expr()));
+            yield new Expr.TypeExpr(univ.sourcePos(), levelVar(app.argument().expr()));
           } catch (DesugarInterruption e) {
             yield new Expr.ErrorExpr(((Expr) app).sourcePos(), app);
           }
         }
-        case Expr.RawUnivExpr univ -> new Expr.UnivExpr(univ.sourcePos(), 0);
+        case Expr.AppExpr app && app.function() instanceof Expr.RawSortExpr univ && univ.kind() == FormTerm.SortKind.Set -> {
+          try {
+            yield new Expr.SetExpr(univ.sourcePos(), levelVar(app.argument().expr()));
+          } catch (DesugarInterruption e) {
+            yield new Expr.ErrorExpr(((Expr) app).sourcePos(), app);
+          }
+        }
+        case Expr.RawSortExpr univ -> switch (univ.kind()) {
+          case Type -> new Expr.TypeExpr(univ.sourcePos(), 0);
+          case Set -> new Expr.SetExpr(univ.sourcePos(), 0);
+          case Prop -> new Expr.PropExpr(univ.sourcePos());
+          case ISet -> new Expr.ISetExpr(univ.sourcePos());
+        };
         case Expr.BinOpSeq binOpSeq -> {
           var seq = binOpSeq.seq();
           assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();

@@ -60,10 +60,13 @@ public interface ExprView {
         if (params.sameElements(sigma.params(), true)) yield sigma;
         yield new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), params);
       }
-      case Expr.RawUnivExpr rawUniv -> rawUniv;
+      case Expr.RawSortExpr rawType -> rawType;
       case Expr.IntervalExpr interval -> interval;
       case Expr.LiftExpr lift -> lift; // do this for now
-      case Expr.UnivExpr univ -> univ;
+      case Expr.TypeExpr univ -> univ;
+      case Expr.SetExpr univ -> univ;
+      case Expr.PropExpr univ -> univ;
+      case Expr.ISetExpr univ -> univ;
       case Expr.AppExpr app -> {
         var func = commit(app.function());
         var arg = commit(app.argument());

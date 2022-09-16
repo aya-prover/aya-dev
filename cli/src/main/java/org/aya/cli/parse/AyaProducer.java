@@ -23,6 +23,7 @@ import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
+import org.aya.core.term.FormTerm;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
@@ -30,7 +31,6 @@ import org.aya.parser.AyaParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.repl.antlr.AntlrUtil;
-import org.aya.tyck.error.PrimError;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -243,7 +243,10 @@ public record AyaProducer(
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(pos, false, null);
     var id = ctx.qualifiedId();
     if (id != null) return new Expr.UnresolvedExpr(pos, visitQualifiedId(id));
-    if (ctx.TYPE() != null) return new Expr.RawUnivExpr(pos);
+    if (ctx.TYPE() != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Type);
+    if (ctx.SET_KW() != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Set);
+    if (ctx.PROP() != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Prop);
+    if (ctx.ISET() != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.ISet);
     if (ctx.I() != null) return new Expr.IntervalExpr(pos);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();

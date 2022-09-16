@@ -29,7 +29,7 @@ import static org.aya.guest0x0.cubical.CofThy.isOne;
 /**
  * @author ice1000
  */
-public final class PrimDef extends TopLevelDef {
+public final class PrimDef extends TopLevelDef<Term> {
   public PrimDef(
     @NotNull DefVar<@NotNull PrimDef, TeleDecl.@NotNull PrimDecl> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,
@@ -103,7 +103,7 @@ public final class PrimDef extends TopLevelDef {
         var paramA = new LocalVar("A");
         var paramIToATy = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
         var paramI = new LocalVar("i");
-        var result = new FormTerm.Univ(0);
+        var result = new FormTerm.Type(0);
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA);
         var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(PrimTerm.Mula.LEFT, true));
@@ -122,7 +122,7 @@ public final class PrimDef extends TopLevelDef {
       public final @NotNull PrimDef.PrimSeed coerce = new PrimSeed(ID.COE, this::coe, ref -> {
         var varA = new LocalVar("A");
         var paramI = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
-        var paramA = new Term.Param(varA, new FormTerm.Pi(paramI, new FormTerm.Univ(0)), true);
+        var paramA = new Term.Param(varA, new FormTerm.Pi(paramI, new FormTerm.Type(0)), true);
         var paramRestr = new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true);
         var result = new FormTerm.Pi(
           new Term.Param(LocalVar.IGNORED, new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
@@ -172,7 +172,7 @@ public final class PrimDef extends TopLevelDef {
       public final @NotNull PrimDef.PrimSeed stringType =
         new PrimSeed(ID.STRING,
           ((prim, tyckState) -> prim),
-          ref -> new PrimDef(ref, FormTerm.Univ.ZERO, ID.STRING), ImmutableSeq.empty());
+          ref -> new PrimDef(ref, FormTerm.Type.ZERO, ID.STRING), ImmutableSeq.empty());
       public final @NotNull PrimDef.PrimSeed stringConcat =
         new PrimSeed(ID.STRCONCAT, Initializer::concat, ref -> new PrimDef(
           ref,
@@ -199,7 +199,7 @@ public final class PrimDef extends TopLevelDef {
       public final @NotNull PrimDef.PrimSeed intervalType =
         new PrimSeed(ID.I,
           ((prim, state) -> PrimTerm.Interval.INSTANCE),
-          ref -> new PrimDef(ref, FormTerm.Univ.ZERO, ID.I),
+          ref -> new PrimDef(ref, FormTerm.ISet.INSTANCE, ID.I),
           ImmutableSeq.empty());
 
       public final @NotNull PrimDef.PrimSeed partialType =
@@ -214,9 +214,9 @@ public final class PrimDef extends TopLevelDef {
             ref,
             ImmutableSeq.of(
               new Term.Param(new LocalVar("phi"), PrimTerm.Interval.INSTANCE, true),
-              new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, true)
+              new Term.Param(new LocalVar("A"), FormTerm.Type.ZERO, true)
             ),
-            FormTerm.Univ.ZERO, ID.PARTIAL),
+            FormTerm.Type.ZERO, ID.PARTIAL),
           ImmutableSeq.of(ID.I));
     }
 

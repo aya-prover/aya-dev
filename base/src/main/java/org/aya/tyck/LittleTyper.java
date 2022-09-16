@@ -43,10 +43,10 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case FormTerm.Sigma sigma -> {
         var univ = sigma.params().view()
           .map(param -> term(param.type()).normalize(state, NormalizeMode.WHNF))
-          .filterIsInstance(FormTerm.Univ.class)
+          .filterIsInstance(FormTerm.Sort.class)
           .toImmutableSeq();
         if (univ.sizeEquals(sigma.params().size()))
-          yield new FormTerm.Univ(univ.view().map(FormTerm.Univ::lift).max());
+          yield new FormTerm.Type(univ.view().map(FormTerm.Sort::lift).max());
         else yield ErrorTerm.typeOf(sigma);
       }
       case IntroTerm.Lambda lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
@@ -65,22 +65,22 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case FormTerm.Pi pi -> {
         var paramTyRaw = term(pi.param().type()).normalize(state, NormalizeMode.WHNF);
         var retTyRaw = term(pi.body()).normalize(state, NormalizeMode.WHNF);
-        if (paramTyRaw instanceof FormTerm.Univ paramTy && retTyRaw instanceof FormTerm.Univ retTy)
-          yield new FormTerm.Univ(Math.max(paramTy.lift(), retTy.lift()));
+        if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy)
+          yield new FormTerm.Type(Math.max(paramTy.lift(), retTy.lift()));
         else yield ErrorTerm.typeOf(pi);
       }
       case ElimTerm.App app -> {
         var piRaw = term(app.of()).normalize(state, NormalizeMode.WHNF);
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
-      case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
-      case PrimTerm.Interval interval -> FormTerm.Univ.ZERO;
+      case FormTerm.Sort sort -> sort.succ();
+      case PrimTerm.Interval interval -> FormTerm.Type.ZERO;
       case PrimTerm.Mula end -> PrimTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STRING);
       case LitTerm.ShapedInt shaped -> shaped.type();
-      case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
+      case FormTerm.PartTy ty -> FormTerm.Type.ZERO;
       case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
-      case FormTerm.Path path -> FormTerm.Univ.ZERO;
+      case FormTerm.Path path -> FormTerm.Type.ZERO;
       case IntroTerm.PathLam lam -> new FormTerm.Path(new FormTerm.Cube(
         lam.params().map(Term.Param::ref),
         term(lam.body()),

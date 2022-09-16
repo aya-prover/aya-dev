@@ -11,6 +11,7 @@ import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.pat.Pat;
+import org.aya.core.term.FormTerm;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
@@ -193,13 +194,45 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {}
 
   /**
-   * @author re-xyr, ice1000
+   * @author tsao-chi
    */
-  record RawUnivExpr(@NotNull SourcePos sourcePos) implements Expr {}
+  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull FormTerm.SortKind kind) implements Expr {}
 
   record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {}
 
-  record UnivExpr(@NotNull SourcePos sourcePos, int lift) implements Expr {}
+  sealed interface SortExpr extends Expr {
+    int lift();
+
+    FormTerm.SortKind kind();
+  }
+  record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
+    @Override public FormTerm.SortKind kind() {
+      return FormTerm.SortKind.Type;
+    }
+  }
+  record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
+    @Override public FormTerm.SortKind kind() {
+      return FormTerm.SortKind.Set;
+    }
+  }
+  record PropExpr(@NotNull SourcePos sourcePos) implements SortExpr {
+    @Override public int lift() {
+      return 0;
+    }
+
+    @Override public FormTerm.SortKind kind() {
+      return FormTerm.SortKind.Prop;
+    }
+  }
+  record ISetExpr(@NotNull SourcePos sourcePos) implements SortExpr {
+    @Override public int lift() {
+      return 0;
+    }
+
+    @Override public FormTerm.SortKind kind() {
+      return FormTerm.SortKind.ISet;
+    }
+  }
 
   /**
    * @author re-xyr

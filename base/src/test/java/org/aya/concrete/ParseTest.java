@@ -74,7 +74,7 @@ public class ParseTest {
 
   @Test public void successLiteral() {
     assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
-    assertTrue(parseExpr("Type") instanceof Expr.RawUnivExpr);
+    assertTrue(parseExpr("Type") instanceof Expr.RawSortExpr);
   }
 
   @Test public void successDecl() {

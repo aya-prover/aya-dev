@@ -1,0 +1,29 @@
+public open data Unit | unit
+
+def a: Type 1 => Type 0
+def b: Set 1 => a
+def c: Set 1 => ISet
+def e: Set 2 => Unit -> Set 1
+def d: e => \u => ISet
+
+open data Rua : Set | rua
+open import Paths
+def II : ISet => Sig I ** I
+def test : II => (0 , 0)
+
+open data Disj (A B : Prop) : Prop
+| inl (a : A)
+| inr (b : B)
+
+def bad (u : Unit)
+  | _ => u
+
+variable A : Type
+
+-- Leibniz equality using impredicative universe of propositions
+def Leibniz (x y : A) : Prop
+  => Pi (P : A → Prop) → P x → P y
+
+def refl (a : A) : Leibniz a a => \p x => x
+def sym {x y : A} (p : Leibniz x y)
+  : Leibniz y x => p (λ y => Leibniz y x) (refl _)
