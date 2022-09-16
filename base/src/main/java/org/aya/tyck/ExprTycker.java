@@ -512,31 +512,27 @@ public final class ExprTycker extends Tycker {
       }
       default -> {
         var result = synthesize(expr);
-        var lower = result.type();
-        var ty = ty(expr, lower);
-        yield new SortResult(result.wellTyped(), ty);
+        yield new SortResult(result.wellTyped(), ty(expr, result.type()));
       }
     };
   }
 
   public @NotNull TyResult ty(@NotNull Expr expr) {
-    var result = sort(expr);
-    return new TyResult(ty(expr, result.wellTyped()));
+    return new TyResult(ty(expr, sort(expr).wellTyped()));
   }
 
-  private @NotNull FormTerm.Sort ty(@NotNull Expr expr, @NotNull Term lower) {
-    var ty = switch (whnf(lower)) {
+  private @NotNull FormTerm.Sort ty(@NotNull Expr errorMsg, @NotNull Term term) {
+    return switch (whnf(term)) {
       case FormTerm.Sort u -> u;
       case CallTerm.Hole hole -> {
-        unifyTyReported(hole, FormTerm.Type.ZERO, expr);
+        unifyTyReported(hole, FormTerm.Type.ZERO, errorMsg);
         yield FormTerm.Type.ZERO;
       }
       default -> {
-        reporter.report(BadTypeError.univ(state, expr, lower));
+        reporter.report(BadTypeError.univ(state, errorMsg, term));
         yield FormTerm.Type.ZERO;
       }
     };
-    return ty;
   }
 
   private void traceExit(Result result, @NotNull Expr expr) {

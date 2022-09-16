@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
@@ -20,8 +20,7 @@ import java.util.concurrent.Callable;
 
 public class Main extends MainArgs implements Callable<Integer> {
   public static void main(String... args) {
-    int exitCode = new CommandLine(new Main()).execute(args);
-    System.exit(exitCode);
+    System.exit(new CommandLine(new Main()).execute(args));
   }
 
   @Override public Integer call() throws Exception {

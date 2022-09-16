@@ -59,10 +59,6 @@ public sealed interface FormTerm extends Term {
   enum SortKind {
     Type, Set, Prop, ISet;
 
-    @Override public String toString() {
-      return this.name();
-    }
-
     public boolean hasLevel() {
       return this == Type || this == Set;
     }
