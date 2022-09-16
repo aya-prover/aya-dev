@@ -101,13 +101,13 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       }
       case TeleDecl.DataDecl decl -> {
         assert signature != null;
-        var body = decl.body.map(clause -> (CtorDef) traced(clause, tycker, this::tyck));
+        var body = decl.body.map(clause -> (CtorDef) tyck(clause, tycker));
         yield new DataDef(decl.ref, signature.param(), decl.ulift, body);
       }
       case TeleDecl.PrimDecl decl -> decl.ref.core;
       case TeleDecl.StructDecl decl -> {
         assert signature != null;
-        var body = decl.fields.map(field -> (FieldDef) traced(field, tycker, this::tyck));
+        var body = decl.fields.map(field -> (FieldDef) tyck(field, tycker));
         yield new StructDef(decl.ref, signature.param(), decl.ulift, body);
       }
       case TeleDecl.DataCtor ctor -> {
