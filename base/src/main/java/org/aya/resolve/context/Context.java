@@ -11,9 +11,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.util.InterruptException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.resolve.error.QualifiedNameNotFoundError;
-import org.aya.resolve.error.ShadowingWarn;
-import org.aya.resolve.error.UnqualifiedNameNotFoundError;
+import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -80,7 +78,7 @@ public interface Context {
 
   default @NotNull AnyVar getUnqualified(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getUnqualifiedMaybe(name, sourcePos);
-    if (result == null) reportAndThrow(new UnqualifiedNameNotFoundError(name, sourcePos));
+    if (result == null) reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(name, sourcePos));
     return result;
   }
 
@@ -97,7 +95,7 @@ public interface Context {
 
   default @NotNull AnyVar getQualified(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getQualifiedMaybe(modName, name, sourcePos);
-    if (result == null) reportAndThrow(new QualifiedNameNotFoundError(modName, name, sourcePos));
+    if (result == null) reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
     return result;
   }
 
@@ -132,7 +130,7 @@ public interface Context {
     // do not bind ignored var, and users should not try to use it
     if (ref == LocalVar.IGNORED) return this;
     if (toWarn.test(getUnqualifiedMaybe(name, sourcePos)) && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
-      reporter().report(new ShadowingWarn(name, sourcePos));
+      reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
     }
     return new BindContext(this, name, ref);
   }

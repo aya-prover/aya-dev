@@ -14,23 +14,30 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PathTest {
   @Test public void refl() {
     var res = TyckDeclTest.successTyckDecls("""
+      prim I
+      prim invol
+      def inline ~ => invol
       def infix = {A : Type} (a b : A) : Type =>
-        [| i |] A {| i 0 := a | i 1 := b |}
+        [| i |] A {| ~ i := a | i := b |}
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
       """);
     IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
     assertEquals("def = {A : Type 0} (a b : A) : Type 0 => [| i |] A {| ~ i := a | i := b |}",
-      distiller.apply(0).debugRender());
+      distiller.apply(3).debugRender());
     assertEquals("def idp {A : Type 0} {a : A} : (=) {A} a a => \\ (i : I) => a",
-      distiller.apply(1).debugRender());
+      distiller.apply(4).debugRender());
   }
 
   @Test public void cong() {
     TyckDeclTest.successTyckDecls("""
+      prim I
+      prim invol
+      def ~ => invol
+            
       def infix = {A : Type} (a b : A) : Type =>
-      [| i |] A {| i 0 := a | i 1 := b |}
+      [| i |] A {| ~ i := a | i := b |}
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
@@ -48,8 +55,12 @@ public class PathTest {
 
   @Test public void funExt() {
     TyckDeclTest.successTyckDecls("""
+      prim I
+      prim invol
+            
+      def ~ => invol
       def infix = {A : Type} (a b : A) : Type =>
-      [| i |] A {| i 0 := a | i 1 := b |}
+      [| i |] A {| ~ i := a | i := b |}
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
@@ -73,20 +84,20 @@ public class PathTest {
       def ~ => intervalInv
             
       def infix = {A : Type} (a b : A) : Type =>
-        [| i |] A {| i 0 := a | i 1 := b |}
+        [| i |] A {| ~ i := a | i := b |}
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
         
       def p1 (A : Type) (a : A) (i : I) : Partial (~ i) A =>
-        {| i 0 := a |}
+        {| ~ i := a |}
       def p2 (A : Type) (b : A) (j : I) : Partial (~ j) A =>
-        {| j 0 := b |}
+        {| ~ j := b |}
       def p1=p2 (A : Type) (a : A) (i : I) : p1 A a i = p2 A a i =>
         idp
           
       def cmp {A : Type} (x : A)
-        : [| i j |] (Partial (~ j) A) {| i 0 := p1 A x j |}
+        : [| i j |] (Partial (~ j) A) {| ~ i := p1 A x j |}
         => \\i j => p2 A x j
       """);
   }

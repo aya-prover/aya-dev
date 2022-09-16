@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.Unit;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
@@ -29,7 +28,7 @@ import java.util.Objects;
  * @see org.aya.tyck.trace.MdUnicodeTrace
  */
 @SuppressWarnings("AccessStaticViaInstance")
-public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
+public class ImGuiTrace {
   public static final float SCALE_FACTOR = 1.6f;
 
   private record Color(int red, int green, int blue, @NotNull MutableJImVec4 vec4) {
@@ -75,7 +74,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
         imGui.end();
       }
       if (imGui.begin("Trace")) {
-        root.forEach(e -> e.accept(this, imGui));
+        root.forEach(e -> visit(e, imGui));
         imGui.end();
       }
       imGui.render();
@@ -108,15 +107,6 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     }
   }
 
-  @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
-    var term = t.term();
-    var s = new StringBuilder().append(t.expr().toDoc(options).debugRender());
-    if (term != null) s.append(" : ").append(term.toDoc(options).debugRender());
-    var color = term == null ? Color.CYAN : Color.YELLOW;
-    visitSub(s.toString(), color, imGui, t.children(), () -> pos = t.expr().sourcePos(), Objects.hashCode(t));
-    return Unit.unit();
-  }
-
   private void visitSub(
     String s, Color color, JImGui imGui,
     MutableList<@NotNull Trace> subtraces,
@@ -129,49 +119,49 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     else node = imGui.treeNode(s + "##" + hashCode);
     if (imGui.isItemHovered()) callback.run();
     if (node) {
-      subtraces.forEach(e -> e.accept(this, imGui));
+      subtraces.forEach(e -> visit(e, imGui));
       imGui.treePop();
     }
     imGui.popStyleColor();
   }
 
-  @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
-    var s = new StringBuilder().append(t.lhs().toDoc(options).debugRender())
-      .append(" = ").append(t.rhs().toDoc(options).debugRender());
-    if (t.type() != null) s.append(" : ").append(t.type().toDoc(options).debugRender());
-    visitSub(s.toString(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
-    return Unit.unit();
-  }
-
-  @Override public Unit visitDecl(Trace.@NotNull DeclT t, JImGui imGui) {
-    visitSub(t.var().name(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
-    return Unit.unit();
-  }
-
-  @Override public Unit visitTyck(Trace.@NotNull TyckT t, JImGui imGui) {
-    var term = t.term();
-    var type = t.type();
-    var s = term.toDoc(options).debugRender() +
-      " : " +
-      type.toDoc(options).debugRender();
-    imGui.text("-".repeat(s.length() + 4));
-    visitSub(s, Color.YELLOW, imGui, MutableList.create(), () -> pos = t.pos(), Objects.hashCode(t));
-    return Unit.unit();
-  }
-
-  @Override public Unit visitLabel(Trace.@NotNull LabelT t, JImGui imGui) {
-    visitSub(t.label(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
-    return Unit.unit();
-  }
-
-  @Override public Unit visitPat(Trace.@NotNull PatT t, JImGui imGui) {
-    var type = t.term();
-    var pat = t.pat();
-    var s = pat.toDoc(options).debugRender() +
-      " : " +
-      type.toDoc(options).debugRender();
-    visitSub(s, Color.PINK, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
-    return Unit.unit();
+  public void visit(@NotNull Trace trace, JImGui imGui) {
+    switch (trace) {
+      case Trace.DeclT t ->
+        visitSub(t.var().name(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
+      case Trace.ExprT t -> {
+        var term = t.term();
+        var s = new StringBuilder().append(t.expr().toDoc(options).debugRender());
+        if (term != null) s.append(" : ").append(term.toDoc(options).debugRender());
+        var color = term == null ? Color.CYAN : Color.YELLOW;
+        visitSub(s.toString(), color, imGui, t.children(), () -> pos = t.expr().sourcePos(), Objects.hashCode(t));
+      }
+      case Trace.LabelT t ->
+        visitSub(t.label(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
+      case Trace.PatT t -> {
+        var type = t.type();
+        var pat = t.pat();
+        var s = pat.toDoc(options).debugRender() +
+          " : " +
+          type.toDoc(options).debugRender();
+        visitSub(s, Color.PINK, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
+      }
+      case Trace.TyckT t -> {
+        var term = t.term();
+        var type = t.type();
+        var s = term.toDoc(options).debugRender() +
+          " : " +
+          type.toDoc(options).debugRender();
+        imGui.text("-".repeat(s.length() + 4));
+        visitSub(s, Color.YELLOW, imGui, MutableList.create(), () -> pos = t.pos(), Objects.hashCode(t));
+      }
+      case Trace.UnifyT t -> {
+        var s = new StringBuilder().append(t.lhs().toDoc(options).debugRender())
+          .append(" = ").append(t.rhs().toDoc(options).debugRender());
+        if (t.type() != null) s.append(" : ").append(t.type().toDoc(options).debugRender());
+        visitSub(s.toString(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
+      }
+    }
   }
 
   public static void main(String[] args) throws IOException {

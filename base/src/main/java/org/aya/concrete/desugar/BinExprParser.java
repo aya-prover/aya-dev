@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
 import kala.collection.SeqView;
 import org.aya.concrete.Expr;
-import org.aya.concrete.error.OperatorProblem;
+import org.aya.concrete.error.OperatorError;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
@@ -43,7 +43,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
   }
 
   @Override protected void reportAmbiguousPred(String op1, String op2, SourcePos pos) {
-    opSet.reporter.report(new OperatorProblem.AmbiguousPredError(op1, op2, pos));
+    opSet.reporter.report(new OperatorError.Precedence(op1, op2, pos));
   }
 
   @Override protected @NotNull Expr createErrorExpr(@NotNull SourcePos sourcePos) {
@@ -51,7 +51,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
   }
 
   @Override protected void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos) {
-    opSet.reporter.report(new OperatorProblem.FixityError(currentOp, current, topOp, top, pos));
+    opSet.reporter.report(new OperatorError.Fixity(currentOp, current, topOp, top, pos));
   }
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {

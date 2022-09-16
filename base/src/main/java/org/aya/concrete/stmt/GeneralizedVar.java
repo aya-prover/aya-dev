@@ -1,8 +1,7 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.generic.ref;
+package org.aya.concrete.stmt;
 
-import org.aya.concrete.stmt.Generalize;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;

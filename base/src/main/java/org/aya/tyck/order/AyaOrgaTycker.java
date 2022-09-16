@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
 import kala.collection.mutable.MutableSet;
 import org.aya.resolve.ResolveInfo;
-import org.aya.util.MutableGraph;
+import org.aya.util.terck.MutableGraph;
 import org.aya.util.tyck.OrgaTycker;
 import org.jetbrains.annotations.NotNull;
 

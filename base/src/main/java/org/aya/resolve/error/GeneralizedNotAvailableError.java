@@ -8,20 +8,21 @@ import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
 public record GeneralizedNotAvailableError(
   @Override @NotNull SourcePos sourcePos, @NotNull AnyVar var
-) implements ResolveProblem {
+) implements Problem {
+  @Override public @NotNull Severity level() {return Severity.ERROR;}
+
+  @Override public @NotNull Stage stage() {return Stage.RESOLVE;}
+
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The generalized variable"),
       Doc.styled(Style.code(), BaseDistiller.varDoc(var)),
       Doc.english("is not available here")
     );
-  }
-
-  @Override public @NotNull Severity level() {
-    return Severity.ERROR;
   }
 }

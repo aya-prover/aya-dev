@@ -283,10 +283,6 @@ public sealed interface Pat extends AyaDocile {
     @Override public @NotNull Pat destruct(int repr) {
       return new Pat.ShapedInt(repr, this.shape, this.type, true);
     }
-
-    @Override public @NotNull Pat self() {
-      return this;
-    }
   }
 
   /**

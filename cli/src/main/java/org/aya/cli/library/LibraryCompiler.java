@@ -19,13 +19,13 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
 import org.aya.resolve.context.Context;
-import org.aya.resolve.error.ModNotFoundError;
+import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.util.MutableGraph;
 import org.aya.util.StringUtil;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.terck.MutableGraph;
 import org.aya.util.tyck.OrgaTycker;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +113,7 @@ public class LibraryCompiler {
     var finder = new ImportResolver((mod, sourcePos) -> {
       var recurse = owner.findModule(mod);
       if (recurse == null) {
-        reporter.report(new ModNotFoundError(mod, sourcePos));
+        reporter.report(new NameProblem.ModNotFoundError(mod, sourcePos));
         throw new Context.ResolvingInterruptedException();
       }
       return recurse;

@@ -28,19 +28,19 @@ public class PartialTest {
       def inline ~ => intervalInv
 
       def t (A : Type) (i : I) (a : A) : Partial (~ i) A
-        => {| i 0 := a |}
+        => {| ~ i := a |}
 
       def t2 (A : Type) (a : A) (i : I) : Partial (~ i) A
-        => {| i 0 := a | i 1 := a |}
+        => {| ~ i := a | i := a |}
           
       def t3 (A : Type) (i : I) (a : A) (b : A) : Partial (~ i \\/ i) A =>
-        {| i 0 := a | i 1 := b |}
+        {| ~ i := a | i := b |}
           
       def t4 (A : Type) (i : I) (j : I) (a : A) (b : A) : Partial (~ i \\/ i /\\ ~ j) A =>
-        {| i 0 := a | i 1 /\\ j 0 := b |}
+        {| ~ i := a | i /\\ ~ j := b |}
           
       def t5 (A : Type) (i : I) (j : I) (a : A) (b : A) : Partial (~ i \\/ i /\\ ~ j) A =>
-        {| i 0 := a | i 1 := b |}
+        {| ~ i := a | i := b |}
       """);
     IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
     assertEquals("""
