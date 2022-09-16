@@ -122,7 +122,7 @@ public final class PrimDef extends TopLevelDef {
       public final @NotNull PrimDef.PrimSeed coerce = new PrimSeed(ID.COE, this::coe, ref -> {
         var varA = new LocalVar("A");
         var paramI = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
-        var paramA = new Term.Param(new LocalVar("A"), new FormTerm.Pi(paramI, new FormTerm.Univ(0)), true);
+        var paramA = new Term.Param(varA, new FormTerm.Pi(paramI, new FormTerm.Univ(0)), true);
         var paramRestr = new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true);
         var result = new FormTerm.Pi(
           new Term.Param(LocalVar.IGNORED, new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
