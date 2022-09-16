@@ -99,7 +99,7 @@ public final class PrimDef extends TopLevelDef {
         return prim;
       }
 
-      public final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, this::arcoe, ref -> {
+      public final @NotNull PrimDef.PrimSeed arendCoerce = new PrimSeed(ID.ARCOE, this::arcoe, ref -> {
         var paramA = new LocalVar("A");
         var paramIToATy = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
         var paramI = new LocalVar("i");
@@ -119,19 +119,43 @@ public final class PrimDef extends TopLevelDef {
         );
       }, ImmutableSeq.of(ID.I));
 
+      public final @NotNull PrimDef.PrimSeed coerce = new PrimSeed(ID.COE, this::coe, ref -> {
+        var varA = new LocalVar("A");
+        var paramI = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
+        var paramA = new Term.Param(varA, new FormTerm.Pi(paramI, new FormTerm.Type(0)), true);
+        var paramRestr = new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true);
+        var result = new FormTerm.Pi(
+          new Term.Param(LocalVar.IGNORED, new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
+          new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.RIGHT, true)));
+
+        return new PrimDef(
+          ref,
+          ImmutableSeq.of(paramA, paramRestr),
+          result,
+          ID.COE
+        );
+      }, ImmutableSeq.of(ID.I));
+
+      private Term coe(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+        var type = prim.args().get(0).term();
+        var restr = prim.args().get(1).term();
+        return new PrimTerm.Coe(type, isOne(restr));
+      }
+
+
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
-      public final @NotNull PrimDef.PrimSeed IMIN = formula(ID.IMIN, prim -> {
+      public final @NotNull PrimDef.PrimSeed intervalMin = formula(ID.IMIN, prim -> {
         var args = prim.args();
         return PrimTerm.Mula.and(args.first().term(), args.last().term());
       }, "i", "j");
       /** \/ in Cubical Agda, should elaborate to {@link Formula.Conn} */
-      public final @NotNull PrimDef.PrimSeed IMAX = formula(ID.IMAX, prim -> {
+      public final @NotNull PrimDef.PrimSeed intervalMax = formula(ID.IMAX, prim -> {
         var args = prim.args();
         return PrimTerm.Mula.or(args.first().term(), args.last().term());
       }, "i", "j");
       /** ~ in Cubical Agda, should elaborate to {@link Formula.Inv} */
-      public final @NotNull PrimDef.PrimSeed INVOL = formula(ID.INVOL, prim ->
-          PrimTerm.Mula.inv(prim.args().first().term()), "i");
+      public final @NotNull PrimDef.PrimSeed intervalInv = formula(ID.INVOL, prim ->
+        PrimTerm.Mula.inv(prim.args().first().term()), "i");
 
       private @NotNull PrimSeed formula(
         ID id, Function<CallTerm.Prim, Term> unfold,
@@ -145,20 +169,20 @@ public final class PrimDef extends TopLevelDef {
         ), ImmutableSeq.of(ID.I));
       }
 
-      public final @NotNull PrimDef.PrimSeed STR =
-        new PrimSeed(ID.STR,
+      public final @NotNull PrimDef.PrimSeed stringType =
+        new PrimSeed(ID.STRING,
           ((prim, tyckState) -> prim),
-          ref -> new PrimDef(ref, FormTerm.Type.ZERO, ID.STR), ImmutableSeq.empty());
-      public final @NotNull PrimDef.PrimSeed STRCONCAT =
+          ref -> new PrimDef(ref, FormTerm.Type.ZERO, ID.STRING), ImmutableSeq.empty());
+      public final @NotNull PrimDef.PrimSeed stringConcat =
         new PrimSeed(ID.STRCONCAT, Initializer::concat, ref -> new PrimDef(
           ref,
           ImmutableSeq.of(
-            new Term.Param(new LocalVar("str1"), getCall(ID.STR, ImmutableSeq.empty()), true),
-            new Term.Param(new LocalVar("str2"), getCall(ID.STR, ImmutableSeq.empty()), true)
+            new Term.Param(new LocalVar("str1"), getCall(ID.STRING, ImmutableSeq.empty()), true),
+            new Term.Param(new LocalVar("str2"), getCall(ID.STRING, ImmutableSeq.empty()), true)
           ),
-          getCall(ID.STR, ImmutableSeq.empty()),
+          getCall(ID.STRING, ImmutableSeq.empty()),
           ID.STRCONCAT
-        ), ImmutableSeq.of(ID.STR));
+        ), ImmutableSeq.of(ID.STRING));
 
       private static @NotNull Term concat(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
         var first = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
@@ -172,13 +196,13 @@ public final class PrimDef extends TopLevelDef {
           new Arg<>(first, true), new Arg<>(second, true)));
       }
 
-      public final @NotNull PrimDef.PrimSeed I =
+      public final @NotNull PrimDef.PrimSeed intervalType =
         new PrimSeed(ID.I,
           ((prim, state) -> PrimTerm.Interval.INSTANCE),
           ref -> new PrimDef(ref, FormTerm.ISet.INSTANCE, ID.I),
           ImmutableSeq.empty());
 
-      public final @NotNull PrimDef.PrimSeed PARTIAL =
+      public final @NotNull PrimDef.PrimSeed partialType =
         new PrimSeed(ID.PARTIAL,
           (prim, state) -> {
             var iExp = prim.args().get(0).term();
@@ -198,26 +222,27 @@ public final class PrimDef extends TopLevelDef {
 
     private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
 
-    private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> SEEDS;
+    private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
 
     public Factory() {
       var init = new Initializer();
-      SEEDS = ImmutableSeq.of(
-          init.ARCOE,
-          init.IMIN,
-          init.IMAX,
-          init.INVOL,
-          init.STR,
-          init.STRCONCAT,
-          init.I,
-          init.PARTIAL
+      seeds = ImmutableSeq.of(
+          init.arendCoerce,
+          init.intervalMin,
+          init.intervalMax,
+          init.intervalInv,
+          init.stringType,
+          init.stringConcat,
+          init.intervalType,
+          init.partialType,
+          init.coerce
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
 
     public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
       assert !have(name);
-      var rst = SEEDS.get(name).supply(ref);
+      var rst = seeds.get(name).supply(ref);
       defs.put(name, rst);
       return rst;
     }
@@ -248,11 +273,11 @@ public final class PrimDef extends TopLevelDef {
     }
 
     public @NotNull Option<ImmutableSeq<@NotNull ID>> checkDependency(@NotNull ID name) {
-      return SEEDS.getOption(name).map(seed -> seed.dependency().filterNot(this::have));
+      return seeds.getOption(name).map(seed -> seed.dependency().filterNot(this::have));
     }
 
     public @NotNull Term unfold(@NotNull ID name, @NotNull CallTerm.Prim primCall, @NotNull TyckState state) {
-      return SEEDS.get(name).unfold.apply(primCall, state);
+      return seeds.get(name).unfold.apply(primCall, state);
     }
 
     public void clear() {
@@ -269,11 +294,12 @@ public final class PrimDef extends TopLevelDef {
     ARCOE("arcoe"),
     IMIN("intervalMin"),
     IMAX("intervalMax"),
-    INVOL("invol"),
-    STR("String"),
+    INVOL("intervalInv"),
+    STRING("String"),
     STRCONCAT("strcat"),
     I("I"),
-    PARTIAL("Partial");
+    PARTIAL("Partial"),
+    COE("coe");
 
     public final @NotNull @NonNls String id;
 

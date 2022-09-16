@@ -2,14 +2,14 @@ prim I
 prim Partial
 prim intervalMin
 prim intervalMax
-prim invol
+prim intervalInv
 
 def infix /\ => intervalMin
 tighter \/
 
 def infix \/ => intervalMax
 
-def ~ => invol
+def ~ => intervalInv
 
 def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial (~ i \/ i) A =>
   {| ~ i  := u | i /\ j := v |}

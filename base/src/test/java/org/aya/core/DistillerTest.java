@@ -105,8 +105,8 @@ public class DistillerTest {
   @Test public void elimBinOP() {
     var decls = TyckDeclTest.successTyckDecls("""
       prim I
-      prim invol
-      def inline ~ => invol
+      prim intervalInv
+      def inline ~ => intervalInv
       def Eq (A : Type) (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
       def infix = {A : Type} => Eq A
       open data Nat | zero | suc Nat
@@ -120,8 +120,8 @@ public class DistillerTest {
   @Test public void pathApp() {
     var decls = TyckDeclTest.successTyckDecls("""
       prim I
-      prim invol
-      def inline ~ => invol
+      prim intervalInv
+      def inline ~ => intervalInv
       def infix = {A : Type} (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
       def idp {A : Type} {a : A} : a = a => \\i => a
       def test {A : Type} {a b : A} (p : a = b) : a = b => \\i => p i
