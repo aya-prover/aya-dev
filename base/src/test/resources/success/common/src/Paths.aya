@@ -1,24 +1,28 @@
-public open import Primitives
-
-public open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
-  | at (i : I) : A i {
-    | 0 => a
-    | 1 => b
-  }
-def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p 0) (p 1) { | at i => p i }
+public open import Primitives using
+  ( I
+  , Partial
+  , intervalInv as fixl ~
+  , intervalMin as infix /\
+  , intervalMax as infix \/
+  , coe
+  )
 
 variable A B C D : Type
 
-def infix = (a b : A) : Type => Path (\ i => A) a b
-def idp {a : A} : a = a => path (\ i => a)
+def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
+def infix = {A : Type} => Eq A
+def idp {a : A} : a = a => \i => a
+def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g => \i a => p a i
+def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => \i => f (p i)
+def sym {a b : A} (p : a = b) : b = a => \i => p (~ i)
 
 def psqueeze {a b : A} (p : a = b) (i : I)
- : a = p.at i => path (\j => p.at (intervalMin i j))
+ : a = p i => \j => p (i /\ j)
 
 def J {a : A} (B : Pi (b : A) -> a = b -> Type)
-      (r : B a idp) {b : A} (p : a = b) : B b p =>
-      arcoe (\ i => B (p.at i) (psqueeze p i)) r 1
+      (r : B a idp) {b : A} (p : a = b) : B b (\i => p i) =>
+      coe (\ i => B (p i) (p /\ i)) r
 
 def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
   => J (\b' p' => B b') x p
@@ -26,36 +30,24 @@ def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
 def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
         (r : B a idp) : J B r idp = r => idp
 
-def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
-  => path (\ i x => (p x).at i)
-
 def funExt2 (f g : A -> B -> C) (p : forall a b -> f a b = g a b) : f = g
-  => path (\ i a b => (p a b).at i)
+  => \ i a b => p a b i
 
 def funExt3 (f g : A -> B -> C -> D) (p : forall a b c -> f a b c = g a b c) : f = g
-  => path (\ i a b c => (p a b c).at i)
+  => \ i a b c => p a b c i
 
 -- The most general path mapping
 def pmapd' {A : I -> Type} (B : Pi (i : I) (A i) -> Type)
     (f : Pi (i : I) (a : A i) -> B i a)
     {a : A 0} {b : A 1} (p : Path A a b)
-  : Path (\i => B i (p.at i)) (f 0 a) (f 1 b) => path (\ i => f i (p.at i))
+  : Path (\i => B i (p i)) (f 0 a) (f 1 b) => \ i => f i (p i)
 
-def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => pmapd' _ (\ i => f) p
-
-def hfill2d
-  {a b c d : A}
-  (p : a = b)
-  (q : b = d)
-  (r : a = c)
-  (i j : I) : A
-  => (arcoe (\ k => r.at k = q.at k) p i).at j
 def hcomp2d
   {a b c d : A}
   (p : a = b)
   (q : b = d)
   (r : a = c) : c = d
-  => path (hfill2d p q r 1)
+  => \i => coe (\ k => r k = q k) 1 (\j => p j) i
 
-def sym {a b : A} (p : a = b) : b = a => hcomp2d idp idp p
-def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q idp
+def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c =>
+  \k => hcomp2d (\i => p i) (\i => q i) idp k
