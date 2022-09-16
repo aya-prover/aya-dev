@@ -51,7 +51,7 @@ public sealed interface MCT<Term, Err> {
     forEach(buffer::append);
     return buffer.toImmutableSeq();
   }
-  SeqView<PatClass<Term, Err>> view();
+  @NotNull SeqView<PatClass<Term, Err>> view();
   default void forEach(@NotNull Consumer<PatClass<Term, Err>> f) {
     view().forEach(f);
   }
