@@ -194,12 +194,9 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {}
 
   /**
-   * @author re-xyr, ice1000
+   * @author tsao-chi
    */
-  record RawTypeExpr(@NotNull SourcePos sourcePos) implements Expr {}
-  record RawSetExpr(@NotNull SourcePos sourcePos) implements Expr {}
-  record RawPropExpr(@NotNull SourcePos sourcePos) implements Expr {}
-  record RawISetExpr(@NotNull SourcePos sourcePos) implements Expr {}
+  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull FormTerm.SortKind kind) implements Expr {}
 
   record IntervalExpr(@NotNull SourcePos sourcePos) implements Expr {}
 

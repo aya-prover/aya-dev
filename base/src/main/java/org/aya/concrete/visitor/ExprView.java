@@ -60,10 +60,7 @@ public interface ExprView {
         if (params.sameElements(sigma.params(), true)) yield sigma;
         yield new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), params);
       }
-      case Expr.RawTypeExpr rawType -> rawType;
-      case Expr.RawSetExpr rawSet -> rawSet;
-      case Expr.RawPropExpr rawProp -> rawProp;
-      case Expr.RawISetExpr rawISet -> rawISet;
+      case Expr.RawSortExpr rawType -> rawType;
       case Expr.IntervalExpr interval -> interval;
       case Expr.LiftExpr lift -> lift; // do this for now
       case Expr.TypeExpr univ -> univ;

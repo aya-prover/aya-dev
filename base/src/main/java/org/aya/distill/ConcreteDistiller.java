@@ -110,10 +110,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         else yield varDoc(ref);
       }
       case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
-      case Expr.RawTypeExpr e -> Doc.styled(KEYWORD, "Type");
-      case Expr.RawSetExpr e -> Doc.styled(KEYWORD, "Set");
-      case Expr.RawPropExpr e -> Doc.styled(KEYWORD, "Prop");
-      case Expr.RawISetExpr e -> Doc.styled(KEYWORD, "ISet");
+      case Expr.RawSortExpr e -> Doc.styled(KEYWORD, e.kind().name());
       case Expr.IntervalExpr e -> Doc.styled(KEYWORD, "I");
       case Expr.NewExpr expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
