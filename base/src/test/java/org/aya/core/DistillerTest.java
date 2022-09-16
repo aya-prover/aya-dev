@@ -104,23 +104,29 @@ public class DistillerTest {
 
   @Test public void elimBinOP() {
     var decls = TyckDeclTest.successTyckDecls("""
-      def Eq (A : Type) (a b : A) : Type => [| i |] A {| i 0 := a | i 1 := b |}
+      prim I
+      prim invol
+      def inline ~ => invol
+      def Eq (A : Type) (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
       def infix = {A : Type} => Eq A
       open data Nat | zero | suc Nat
       def test => zero = zero
       """)._2;
-    var t = ((FnDef) decls.get(3)).body.getLeftValue();
+    var t = ((FnDef) decls.get(6)).body.getLeftValue();
     assertEquals("(=) {Nat} zero zero", t.toDoc(DistillerOptions.informative()).debugRender());
     assertEquals("zero (=) zero", t.toDoc(DistillerOptions.pretty()).debugRender());
   }
 
   @Test public void pathApp() {
     var decls = TyckDeclTest.successTyckDecls("""
-      def infix = {A : Type} (a b : A) : Type => [| i |] A {| i 0 := a | i 1 := b |}
+      prim I
+      prim invol
+      def inline ~ => invol
+      def infix = {A : Type} (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
       def idp {A : Type} {a : A} : a = a => \\i => a
       def test {A : Type} {a b : A} (p : a = b) : a = b => \\i => p i
       """)._2;
-    var t = ((FnDef) decls.get(2)).body.getLeftValue();
+    var t = ((FnDef) decls.get(5)).body.getLeftValue();
     assertEquals("\\ i => p i", t.toDoc(DistillerOptions.informative()).debugRender());
   }
 

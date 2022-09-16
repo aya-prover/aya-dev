@@ -4,7 +4,6 @@ package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
-import org.aya.generic.ref.GeneralizedVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.error.SourcePos;

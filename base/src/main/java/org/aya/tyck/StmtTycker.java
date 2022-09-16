@@ -19,7 +19,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.tyck.error.BadTypeError;
 import org.aya.tyck.error.NobodyError;
-import org.aya.tyck.error.PrimProblem;
+import org.aya.tyck.error.PrimError;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
@@ -208,7 +208,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
           if (prim.result instanceof Expr.ErrorExpr) {
-            reporter.report(new PrimProblem.NoResultTypeError(prim));
+            reporter.report(new PrimError.NoResultType(prim));
             return;
           }
           var result = tycker.synthesize(prim.result).wellTyped();

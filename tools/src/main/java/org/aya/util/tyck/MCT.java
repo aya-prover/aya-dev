@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck;
 
@@ -51,7 +51,10 @@ public sealed interface MCT<Term, Err> {
     forEach(buffer::append);
     return buffer.toImmutableSeq();
   }
-  void forEach(@NotNull Consumer<PatClass<Term, Err>> f);
+  @NotNull SeqView<PatClass<Term, Err>> view();
+  default void forEach(@NotNull Consumer<PatClass<Term, Err>> f) {
+    view().forEach(f);
+  }
   @NotNull MCT<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f);
   @NotNull MCT<Term, Err> flatMap(@NotNull Function<PatClass<Term, Err>, MCT<Term, Err>> f);
 
@@ -60,14 +63,13 @@ public sealed interface MCT<Term, Err> {
 
     @NotNull MCT<Term, Err> propagate(@NotNull MCT<Term, Err> mct);
 
-    @Override default void forEach(@NotNull Consumer<PatClass<Term, Err>> f) {
-      f.accept(this);
-    }
-
     @Override default @NotNull PatClass<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f) {
       return f.apply(this);
     }
 
+    @Override default SeqView<PatClass<Term, Err>> view() {
+      return SeqView.of(this);
+    }
     @Override default @NotNull MCT<Term, Err> flatMap(@NotNull Function<PatClass<Term, Err>, MCT<Term, Err>> f) {
       return f.apply(this);
     }
@@ -89,8 +91,8 @@ public sealed interface MCT<Term, Err> {
   }
 
   record Node<Term, Err>(@NotNull Term type, @NotNull ImmutableSeq<MCT<Term, Err>> children) implements MCT<Term, Err> {
-    @Override public void forEach(@NotNull Consumer<PatClass<Term, Err>> f) {
-      children.forEach(child -> child.forEach(f));
+    @Override public SeqView<PatClass<Term, Err>> view() {
+      return children.view().flatMap(MCT::view);
     }
 
     @Override public @NotNull Node<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f) {

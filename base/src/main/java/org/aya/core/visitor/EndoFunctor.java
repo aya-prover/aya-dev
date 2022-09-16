@@ -4,7 +4,6 @@ package org.aya.core.visitor;
 
 import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
-import org.aya.generic.Cube;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
@@ -60,7 +59,7 @@ public interface EndoFunctor extends Function<Term, Term> {
         case FormTerm.Sigma sigma -> new FormTerm.Sigma(sigma.params().map(this::handleBinder));
         case RefTerm ref -> subst.map().getOrDefault(ref.var(), ref);
         case RefTerm.Field field -> subst.map().getOrDefault(field.ref(), field);
-        case FormTerm.Path path -> new FormTerm.Path(new Cube<>(
+        case FormTerm.Path path -> new FormTerm.Path(new FormTerm.Cube(
           path.cube().params().map(this::handleBinder),
           path.cube().type(),
           path.cube().partial()));

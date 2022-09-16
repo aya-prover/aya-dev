@@ -1,9 +1,8 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.utils;
 
 import kala.control.Option;
-import org.aya.concrete.stmt.Decl;
 import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
@@ -22,10 +21,6 @@ public class LspRange {
     if (sourcePos == SourcePos.NONE) return NONE;
     return new Range(new Position(sourcePos.startLine() - 1, sourcePos.startColumn()),
       new Position(sourcePos.endLine() - 1, sourcePos.endColumn() + 1));
-  }
-
-  public static @NotNull Range toRange(@NotNull Decl decl) {
-    return toRange(decl.sourcePos());
   }
 
   public static @NotNull Option<String> fileUri(@NotNull SourcePos sourcePos) {

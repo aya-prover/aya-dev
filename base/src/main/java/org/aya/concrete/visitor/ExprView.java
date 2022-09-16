@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
+import kala.tuple.Tuple;
 import org.aya.concrete.Expr;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,12 @@ public interface ExprView {
     var expr = commit(arg.expr());
     if (expr == arg.expr()) return arg;
     return new Expr.NamedArg(arg.explicit(), expr);
+  }
+
+  private Expr.@NotNull PartEl commit(Expr.@NotNull PartEl partial) {
+    var clauses = partial.clauses().map(cls -> Tuple.of(commit(cls._1), commit(cls._2)));
+    if (clauses == partial.clauses()) return partial;
+    return new Expr.PartEl(partial.sourcePos(), clauses);
   }
 
   private @NotNull Expr traverse(@NotNull Expr expr) {
@@ -92,21 +99,12 @@ public interface ExprView {
         if (struct == neu.struct() && fields.sameElements(neu.fields(), true)) yield neu;
         yield new Expr.NewExpr(neu.sourcePos(), struct, fields);
       }
-      case Expr.PartEl el -> {
-        var partial = el.partial().map(this::commit);
-        if (partial == el.partial()) yield el;
-        yield new Expr.PartEl(el.sourcePos(), partial);
-      }
-      case Expr.PartTy ty -> {
-        var type = commit(ty.type());
-        var restr = ty.restr().fmap(this::commit);
-        if (type == ty.type() && restr == ty.restr()) yield ty;
-        yield new Expr.PartTy(ty.sourcePos(), type, restr);
-      }
+      case Expr.PartEl el -> commit(el);
       case Expr.Path path -> {
-        var cube = path.cube().map(this::commit);
-        if (cube == path.cube()) yield path;
-        yield new Expr.Path(path.sourcePos(), cube);
+        var partial = commit(path.partial());
+        var type = commit(path.type());
+        if (partial == path.partial() && type == path.type()) yield path;
+        yield new Expr.Path(path.sourcePos(), path.params(), type, partial);
       }
       case Expr.LitIntExpr litInt -> litInt;
       case Expr.LitStringExpr litStr -> litStr;

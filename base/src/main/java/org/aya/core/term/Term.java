@@ -20,7 +20,6 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
-import org.aya.ref.Bind;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
@@ -244,7 +243,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
     @NotNull LocalVar ref,
     @NotNull Term type,
     boolean explicit
-  ) implements Bind, ParamLike<Term> {
+  ) implements ParamLike<Term> {
     public Param(@NotNull ParamLike<?> param, @NotNull Term type) {
       this(param.ref(), type, param.explicit());
     }
@@ -271,7 +270,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       return new LocalVar(ref.name(), ref.definition());
     }
 
-    @Override @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
+    @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
       return new Arg<>(toTerm(), explicit);
     }
 

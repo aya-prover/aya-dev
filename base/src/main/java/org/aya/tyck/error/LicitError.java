@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -12,12 +12,11 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface LicitProblem extends Problem {
-  @Override default @NotNull Severity level() {
-    return Severity.ERROR;
-  }
+public sealed interface LicitError extends Problem {
+  @Override default @NotNull Severity level() {return Severity.ERROR;}
+  @Override default @NotNull Stage stage() {return Stage.TYCK;}
 
-  record LicitMismatchError(@Override @NotNull Expr expr, @NotNull Term type) implements LicitProblem, ExprProblem {
+  record LicitMismatch(@Override @NotNull Expr expr, @NotNull Term type) implements LicitError, ExprProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Cannot check"),
@@ -28,7 +27,7 @@ public sealed interface LicitProblem extends Problem {
     }
   }
 
-  record UnexpectedImplicitArgError(@Override @NotNull Expr.NamedArg expr) implements LicitProblem {
+  record UnexpectedImplicitArg(@Override @NotNull Expr.NamedArg expr) implements LicitError {
     @Override public @NotNull SourcePos sourcePos() {
       return expr.expr().sourcePos();
     }

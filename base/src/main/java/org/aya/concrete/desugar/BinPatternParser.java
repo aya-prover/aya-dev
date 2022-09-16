@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
 import kala.collection.SeqView;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.error.OperatorProblem;
+import org.aya.concrete.error.OperatorError;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
@@ -51,11 +51,11 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
   }
 
   @Override protected void reportAmbiguousPred(String op1, String op2, SourcePos pos) {
-    opSet.reporter.report(new OperatorProblem.AmbiguousPredError(op1, op2, pos));
+    opSet.reporter.report(new OperatorError.Precedence(op1, op2, pos));
   }
 
   @Override protected void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos) {
-    opSet.reporter.report(new OperatorProblem.FixityError(currentOp, current, topOp, top, pos));
+    opSet.reporter.report(new OperatorError.Fixity(currentOp, current, topOp, top, pos));
   }
 
   @Override protected @NotNull Pattern createErrorExpr(@NotNull SourcePos sourcePos) {

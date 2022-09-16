@@ -4,7 +4,6 @@ package org.aya.core.visitor;
 
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
-import org.aya.generic.Cube;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ public interface BetaExpander extends EndoFunctor {
           yield apply(lam.body().subst(subst));
         }
         yield switch (partial(app.cube().partial())) {
-          case Partial.Split<Term> hap -> new ElimTerm.PathApp(app.of(), app.args(), new Cube<>(
+          case Partial.Split<Term> hap -> new ElimTerm.PathApp(app.of(), app.args(), new FormTerm.Cube(
             app.cube().params(), app.cube().type(), hap));
           case Partial.Const<Term> sad -> sad.u();
         };

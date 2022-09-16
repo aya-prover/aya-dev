@@ -16,7 +16,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
-import org.aya.generic.Cube;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -326,7 +325,7 @@ public final class DefEq {
     };
   }
 
-  private boolean compareCube(@NotNull Cube<Term> lhs, @NotNull Cube<Term> rhs, Sub lr, Sub rl) {
+  private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
     lhs.params().zipView(rhs.params()).forEach(x -> {
       lr.map.put(x._1, new RefTerm(x._2));
       rl.map.put(x._2, new RefTerm(x._1));

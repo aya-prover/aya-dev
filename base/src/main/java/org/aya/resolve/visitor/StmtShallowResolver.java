@@ -17,10 +17,8 @@ import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.error.ModNotFoundError;
-import org.aya.resolve.error.PrimDependencyError;
-import org.aya.resolve.error.RedefinitionPrimError;
-import org.aya.resolve.error.UnknownPrimError;
+import org.aya.resolve.error.NameProblem;
+import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -54,7 +52,7 @@ public record StmtShallowResolver(
       case Command.Import cmd -> {
         var ids = cmd.path().ids();
         var success = loader.load(ids);
-        if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
+        if (success == null) context.reportAndThrow(new NameProblem.ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
         var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
         var as = cmd.asName();
         var importedName = as != null ? ImmutableSeq.of(as) : ids;
@@ -129,12 +127,12 @@ public record StmtShallowResolver(
         var name = decl.ref.name();
         var sourcePos = decl.sourcePos;
         var primID = PrimDef.ID.find(name);
-        if (primID == null) context.reportAndThrow(new UnknownPrimError(sourcePos, name));
+        if (primID == null) context.reportAndThrow(new PrimResolveError.UnknownPrim(sourcePos, name));
         var lack = factory.checkDependency(primID);
         if (lack.isNotEmpty() && lack.get().isNotEmpty())
-          context.reportAndThrow(new PrimDependencyError(name, lack.get(), sourcePos));
+          context.reportAndThrow(new PrimResolveError.Dependency(name, lack.get(), sourcePos));
         else if (factory.have(primID) && !factory.suppressRedefinition())
-          context.reportAndThrow(new RedefinitionPrimError(name, sourcePos));
+          context.reportAndThrow(new PrimResolveError.Redefinition(name, sourcePos));
         factory.factory(primID, decl.ref);
         resolveTopLevelDecl(decl, decl, context);
       }

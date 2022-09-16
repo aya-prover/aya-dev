@@ -12,8 +12,6 @@ import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 public abstract class ClosingStylist extends StringStylist {
   public ClosingStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
     super(colorScheme, styleFamily);
@@ -21,10 +19,6 @@ public abstract class ClosingStylist extends StringStylist {
 
   public record StyleToken(@NotNull CharSequence start, @NotNull CharSequence end, boolean visible) {
     public static final @NotNull StyleToken NULL = new StyleToken("", "", false);
-
-    public @NotNull StyleToken map(@NotNull Function<CharSequence, CharSequence> f) {
-      return new StyleToken(f.apply(start), f.apply(end), visible);
-    }
   }
 
   @Override

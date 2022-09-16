@@ -9,16 +9,17 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
-import org.aya.generic.ref.GeneralizedVar;
+import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
-import org.aya.tyck.error.FieldProblem;
+import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourcePos;
@@ -78,7 +79,7 @@ public record ExprResolver(
           yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
         var projName = proj.ix().getRightValue();
         var resolvedIx = ctx.getMaybe(projName);
-        if (resolvedIx == null) ctx.reportAndThrow(new FieldProblem.UnknownField(proj, projName.join()));
+        if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(proj, projName.join()));
         yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), resolvedIx, proj.theCore());
       }
       case Expr.LamExpr lam -> {
@@ -101,22 +102,13 @@ public record ExprResolver(
         if (h == hole.filling()) yield hole;
         yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h, hole.accessibleLocal());
       }
-      case Expr.PartEl el -> {
-        var partial = el.partial().map(e -> resolve(e, ctx));
-        if (partial == el.partial()) yield el;
-        yield new Expr.PartEl(el.sourcePos(), partial);
-      }
-      case Expr.PartTy ty -> {
-        var type = resolve(ty.type(), ctx);
-        var restr = ty.restr().fmap(r -> resolve(r, ctx));
-        if (type == ty.type() && restr == ty.restr()) yield ty;
-        yield new Expr.PartTy(ty.sourcePos(), type, restr);
-      }
+      case Expr.PartEl el -> partial(ctx, el);
       case Expr.Path path -> {
-        var newCtx = resolveCubeParams(path.cube().params(), ctx);
-        var cube = path.cube().map(e -> resolve(e, newCtx));
-        if (cube == path.cube()) yield path;
-        yield new Expr.Path(path.sourcePos(), cube);
+        var newCtx = resolveCubeParams(path.params(), ctx);
+        var par = partial(newCtx, path.partial());
+        var type = resolve(path.type(), newCtx);
+        if (type == path.type() && par == path.partial()) yield path;
+        yield new Expr.Path(path.sourcePos(), path.params(), type, par);
       }
       case Expr.UnresolvedExpr unresolved -> {
         var sourcePos = unresolved.sourcePos();
@@ -150,6 +142,14 @@ public record ExprResolver(
       }
       default -> expr;
     };
+  }
+
+  private @NotNull Expr.PartEl partial(@NotNull Context ctx, Expr.PartEl el) {
+    var partial = el.clauses().map(e ->
+      Tuple.of(resolve(e._1, ctx), resolve(e._2, ctx)));
+    if (partial.zipView(el.clauses())
+      .allMatch(p -> p._1._1 == p._2._1 && p._1._2 == p._2._2)) return el;
+    return new Expr.PartEl(el.sourcePos(), partial);
   }
 
   enum Where {

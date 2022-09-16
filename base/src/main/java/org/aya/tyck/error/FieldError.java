@@ -12,28 +12,23 @@ import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
-import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface FieldProblem extends Problem {
-  record MissingFieldError(
+public sealed interface FieldError extends TyckError {
+  record MissingField(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<AnyVar> missing
-  ) implements FieldProblem {
+  ) implements FieldError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Missing field(s):"), Doc.commaList(missing.view()
         .map(BaseDistiller::varDoc)
         .map(m -> Doc.styled(Style.code(), m))));
     }
   }
-
-  @Override default @NotNull Severity level() {
-    return Severity.ERROR;
-  }
-  record NoSuchFieldError(
+  record NoSuchField(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<String> notFound
-  ) implements FieldProblem {
+  ) implements FieldError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("No such field(s):"),
         Doc.commaList(notFound.view()
@@ -45,7 +40,7 @@ public sealed interface FieldProblem extends Problem {
   record UnknownField(
     @Override @NotNull Expr.ProjExpr expr,
     @NotNull String name
-  ) implements FieldProblem, ExprProblem {
+  ) implements FieldError, ExprProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Unknown field"),
@@ -55,11 +50,11 @@ public sealed interface FieldProblem extends Problem {
     }
   }
 
-  record ArgMismatchError(
+  record ArgMismatch(
     @Override @NotNull SourcePos sourcePos,
     @NotNull FieldDef fieldDef,
     int supplied
-  ) implements FieldProblem {
+  ) implements FieldError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Expected"),
         Doc.plain(String.valueOf(fieldDef.ref.core.selfTele.size())),

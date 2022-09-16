@@ -7,18 +7,13 @@ import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
-import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public record CounterexampleError(@Override @NotNull SourcePos sourcePos, @NotNull AnyVar var) implements Problem {
+public record CounterexampleError(@Override @NotNull SourcePos sourcePos, @NotNull AnyVar var) implements TyckError {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The counterexample"),
       BaseDistiller.varDoc(var),
       Doc.english("does not raise any type error"));
-  }
-
-  @Override public @NotNull Severity level() {
-    return Severity.ERROR;
   }
 }

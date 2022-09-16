@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
-import org.aya.resolve.error.DuplicateExportError;
+import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     ModuleContext.super.addGlobal(modName, name, accessibility, ref, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
       if (exports.get(TOP_LEVEL_MOD_NAME).containsKey(name)) {
-        reportAndThrow(new DuplicateExportError(name, sourcePos));
+        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
       } else exports.get(TOP_LEVEL_MOD_NAME).set(name, ref);
     }
   }

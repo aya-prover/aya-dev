@@ -13,16 +13,12 @@ import org.aya.tyck.unify.DefEq;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface CubicalProblem extends ExprProblem {
-  default @Override @NotNull Severity level() {
-    return Severity.ERROR;
-  }
-
+public sealed interface CubicalError extends ExprProblem, TyckError {
   record DimensionMismatch(
     @NotNull Expr expr,
     int expectedDim,
     int actualDim
-  ) implements CubicalProblem {
+  ) implements CubicalError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("This path lambda expects"),
         Doc.plain(String.valueOf(expectedDim)),
@@ -38,7 +34,7 @@ public sealed interface CubicalProblem extends ExprProblem {
     @NotNull Term rhs,
     @Override @NotNull DefEq.FailureData failureData,
     @Override @NotNull TyckState state
-  ) implements CubicalProblem, UnifyError {
+  ) implements CubicalError, UnifyError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return describeUnify(options, Doc.english("The boundary"), lhs,
         Doc.english("disagrees with"), rhs);
@@ -49,7 +45,7 @@ public sealed interface CubicalProblem extends ExprProblem {
     @NotNull Expr expr,
     @NotNull Restr<Term> face,
     @NotNull Restr<Term> cof
-  ) implements CubicalProblem {
+  ) implements CubicalError {
     @Override
     public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(Doc.english("The face(s) in the partial element:"),

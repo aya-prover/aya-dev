@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.error;
 
@@ -8,16 +8,6 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public record RangeSpan(@NotNull String input, int start, int end) implements Span {
-  public static @NotNull RangeSpan from(@NotNull String input, int start, int end) {
-    if (start < 0 || end < 0
-      || end >= input.length()
-      || end < start) {
-      throw new IndexOutOfBoundsException();
-    }
-
-    return new RangeSpan(input, start, end);
-  }
-
   private boolean isVariationSelector(int code) {
     return code >= (int) '\uFE00' && code <= (int) '\uFE0F';
   }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -47,10 +47,6 @@ public class ParseTest {
 
   public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitStmt(AyaParserImpl.parser(code).stmt()).toImmutableSeq();
-  }
-
-  public static @NotNull ImmutableSeq<Stmt> parseManyStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitProgram(AyaParserImpl.parser(code).program());
   }
 
   public static @NotNull Tuple2<? extends Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {

@@ -34,9 +34,9 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.error.BadLiteralPatternError;
-import org.aya.tyck.error.NotAnIntervalError;
-import org.aya.tyck.error.NotYetTyckedError;
+import org.aya.tyck.error.LiteralError;
+import org.aya.tyck.error.PrimError;
+import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
@@ -201,14 +201,14 @@ public final class PatTycker {
         if (ty instanceof PrimTerm.Interval) {
           var end = num.number();
           if (end == 0 || end == 1) yield new Pat.End(num.number() == 0, num.explicit());
-          yield withError(new NotAnIntervalError(num.sourcePos(), end), num, term);
+          yield withError(new PrimError.BadInterval(num.sourcePos(), end), num, term);
         }
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined()) yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
         }
-        yield withError(new BadLiteralPatternError(num.sourcePos(), num.number(), term), num, term);
+        yield withError(new LiteralError.BadLitPattern(num.sourcePos(), num.number(), term), num, term);
       }
       case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
@@ -366,7 +366,7 @@ public final class PatTycker {
     // We are checking an absurd pattern, but the data is not yet fully checked
     var core = dataRef.core;
     if (core == null && name == null) {
-      foundError(new NotYetTyckedError(pos.sourcePos(), dataRef));
+      foundError(new TyckOrderError.NotYetTyckedError(pos.sourcePos(), dataRef));
       return null;
     }
     var body = Def.dataBody(dataRef);
@@ -391,7 +391,7 @@ public final class PatTycker {
     }
     // Here, name != null, and is not in the list of checked body
     if (core == null) {
-      foundError(new NotYetTyckedError(pos.sourcePos(), name));
+      foundError(new TyckOrderError.NotYetTyckedError(pos.sourcePos(), name));
       return null;
     }
     return null;

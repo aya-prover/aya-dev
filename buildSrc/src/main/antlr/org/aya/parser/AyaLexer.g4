@@ -67,8 +67,6 @@ SIGMA : 'Sig' | '\u03A3';
 LAMBDA : '\\' | '\u03BB';
 PI : 'Pi' | '\u03A0';
 FORALL : 'forall' | '\u2200';
-LAND : '/\\' | '\u2227';
-LOR : '\\/' | '\u2228';
 
 // ---- AyaLexer end: Keywords
 
@@ -98,8 +96,6 @@ LPARTIAL : '{|' | '\u2983';
 RPARTIAL : '|}' | '\u2984';
 LPATH : '[|' | '\u27E6';
 RPATH : '|]' | '\u27E7';
-BOTTOM : '_|_' | '\u22A5';
-TOP : 'top' | '\u22A4';
 AT : '@';
 
 // literals
@@ -119,7 +115,7 @@ fragment AYA_UNICODE : [\u0080-\uFEFE] | [\uFF00-\u{10FFFF}]; // exclude U+FEFF 
 fragment AYA_LETTER : AYA_SIMPLE_LETTER | AYA_UNICODE;
 fragment AYA_LETTER_FOLLOW : AYA_LETTER | [0-9'-];
 REPL_COMMAND : ':' AYA_LETTER_FOLLOW+;
-ID : AYA_LETTER AYA_LETTER_FOLLOW* | '-' AYA_LETTER AYA_LETTER_FOLLOW*;
+ID : AYA_LETTER AYA_LETTER_FOLLOW* | '-' AYA_LETTER AYA_LETTER_FOLLOW* | '\\/' | '/\\';
 
 // whitespaces
 WS : [ \t\r\n]+ -> channel(HIDDEN);
