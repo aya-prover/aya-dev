@@ -119,7 +119,7 @@ public class DistillerTest {
       """)._2;
     var t = ((FnDef) decls.get(6)).body.getLeftValue();
     assertEquals("(=) {Nat} zero zero", t.toDoc(DistillerOptions.informative()).debugRender());
-    assertEquals("zero (=) zero", t.toDoc(DistillerOptions.pretty()).debugRender());
+    assertEquals("zero = zero", t.toDoc(DistillerOptions.pretty()).debugRender());
   }
 
   @Test public void pathApp() {
