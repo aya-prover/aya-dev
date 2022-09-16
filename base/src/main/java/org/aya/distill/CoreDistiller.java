@@ -160,8 +160,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
           : linkLit(shaped.repr(), suc.ref, CON_CALL),
         () -> Doc.plain(String.valueOf(shaped.repr())));
       case PrimTerm.Str str -> Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(str.string()) + "\"");
-      case FormTerm.PartTy ty -> Doc.sep(Doc.styled(KEYWORD, "Partial"),
-        term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr())));
+      case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
+        term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
       case IntroTerm.PartEl el -> partial(options, el.partial());
       case PrimTerm.Mula mula -> formula(options, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());
@@ -171,6 +171,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         lam.body().toDoc(options));
       case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+      case PrimTerm.Coe coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
+        term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
     };
   }
 

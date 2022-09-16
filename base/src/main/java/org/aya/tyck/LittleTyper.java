@@ -11,6 +11,7 @@ import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +76,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case FormTerm.Univ univ -> new FormTerm.Univ(univ.lift() + 1);
       case PrimTerm.Interval interval -> FormTerm.Univ.ZERO;
       case PrimTerm.Mula end -> PrimTerm.Interval.INSTANCE;
-      case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STR);
+      case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STRING);
       case LitTerm.ShapedInt shaped -> shaped.type();
       case FormTerm.PartTy ty -> FormTerm.Univ.ZERO;
       case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
@@ -90,6 +91,12 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         var xi = app.cube().params();
         var ui = app.args().map(Arg::term);
         yield app.cube().type().subst(new Subst(xi, ui));
+      }
+      case PrimTerm.Coe coe -> {
+        var type = coe.type();
+        yield new FormTerm.Pi(
+          new Term.Param(LocalVar.IGNORED, new ElimTerm.App(type, new Arg<>(PrimTerm.Mula.LEFT, true)), true),
+          new ElimTerm.App(type, new Arg<>(PrimTerm.Mula.RIGHT, true)));
       }
     };
   }

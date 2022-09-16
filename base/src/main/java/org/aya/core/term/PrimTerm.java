@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.SeqView;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface PrimTerm extends Term {
@@ -42,4 +43,6 @@ public sealed interface PrimTerm extends Term {
 
     }
   }
+
+  record Coe(@NotNull Term type, @NotNull Restr<Term> restr) implements PrimTerm {}
 }

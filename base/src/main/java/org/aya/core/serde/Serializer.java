@@ -117,6 +117,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case FormTerm.Path path -> new SerTerm.Univ(114514);
       case IntroTerm.PathLam path -> new SerTerm.Univ(114514);
       case ElimTerm.PathApp app -> new SerTerm.Univ(114514);
+      case PrimTerm.Coe coe -> new SerTerm.Univ(114514);
 
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
