@@ -12,6 +12,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.Cube;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,6 +92,12 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         var xi = app.cube().params();
         var ui = app.args().map(Arg::term);
         yield app.cube().type().subst(new Subst(xi, ui));
+      }
+      case PrimTerm.Coe coe -> {
+        var type = coe.type();
+        yield new FormTerm.Pi(
+          new Term.Param(LocalVar.IGNORED, new ElimTerm.App(type, new Arg<>(PrimTerm.Mula.LEFT, true)), true),
+          new ElimTerm.App(type, new Arg<>(PrimTerm.Mula.RIGHT, true)));
       }
     };
   }

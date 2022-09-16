@@ -137,8 +137,9 @@ public final class PrimDef extends TopLevelDef {
       }, ImmutableSeq.of(ID.I));
 
       private Term coe(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
-        // TODO: coe reduction
-        return prim;
+        var type = prim.args().get(0).term();
+        var restr = prim.args().get(1).term();
+        return new PrimTerm.Coe(type, isOne(restr));
       }
 
 
@@ -154,7 +155,7 @@ public final class PrimDef extends TopLevelDef {
       }, "i", "j");
       /** ~ in Cubical Agda, should elaborate to {@link Formula.Inv} */
       public final @NotNull PrimDef.PrimSeed intervalInv = formula(ID.INVOL, prim ->
-          PrimTerm.Mula.inv(prim.args().first().term()), "i");
+        PrimTerm.Mula.inv(prim.args().first().term()), "i");
 
       private @NotNull PrimSeed formula(
         ID id, Function<CallTerm.Prim, Term> unfold,
