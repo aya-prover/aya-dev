@@ -11,11 +11,11 @@ def test-nat-pair : Pair Nat Nat =>
 def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
   new Pair A B { | fst => a | snd => b }
 
-open struct Pos1 (A : Type) : Type
+struct Pos1 (A : Type) : Type
   | x : A
   | y : Nat
 
-open struct Pos2 (B : Nat -> Type) : Type
+struct Pos2 (B : Nat -> Type) : Type
   | x : Nat
   | y : B 0
 
