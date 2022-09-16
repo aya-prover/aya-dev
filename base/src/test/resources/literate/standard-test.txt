@@ -1,7 +1,7 @@
 Some preload definitions:
 data Nat : Type 0
   | zero
-  | suc (_7 : Nat)
+  | suc (_ : Nat)
 open Nat hiding ()
 data Unit : Type 0
   | unit
@@ -21,7 +21,7 @@ Observe the elaborated term of `test1`: `wow A B a b`
 Consider another example:
 def test2 {A B : Type 0} {a : A} {b : B} => wow A B a a
 Observe the elaborated term of `test2`: `wow A B a a`
-Showing the implicit arguments: `wow {Type 0} {\ _7 => A} A B a a`
+Showing the implicit arguments: `wow {Type 0} {\ _ => A} A B a a`
 Showing the implicit patterns: `\ {A} {B} {a} {b} => wow A B a a`
-Showing the lambda types: `wow {Type 0} {\ (_7 : Type 0) => A} A B a a`
+Showing the lambda types: `wow {Type 0} {\ (_ : Type 0) => A} A B a a`
 Default: `wow A B a a`
