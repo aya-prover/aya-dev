@@ -11,4 +11,5 @@ module aya.util {
   exports org.aya.util.distill;
   exports org.aya.util.tyck;
   exports org.aya.util;
+  exports org.aya.util.terck;
 }

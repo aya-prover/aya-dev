@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve;
 
@@ -13,8 +13,8 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.CodeShape;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.tyck.order.TyckOrder;
-import org.aya.util.MutableGraph;
 import org.aya.util.binop.OpDecl;
+import org.aya.util.terck.MutableGraph;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
