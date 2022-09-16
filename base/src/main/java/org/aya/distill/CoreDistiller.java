@@ -29,10 +29,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
     super(options);
   }
 
-  public boolean infix(@NotNull Term term) {
-    return term instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar && defVar.isInfix();
-  }
-
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> varDoc(term.var());
@@ -125,7 +121,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var head = ElimTerm.unapp(term.of(), args);
         if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
         var implicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
-        yield visitCalls(!implicits && infix(head), term(Outer.AppHead, head), args.view(), outer, implicits);
+        // Infix def-calls
+        if (head instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> var && var.isInfix()) {
+          yield visitCalls(true, defVar(var),
+            call.args().view().appendedAll(args), outer, implicits);
+        }
+        yield visitCalls(false, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
       case CallTerm.Prim prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
