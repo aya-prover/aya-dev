@@ -348,12 +348,12 @@ public final class DefEq {
     return CofThy.propExt(new Subst(), lhs, rhs, (sub, term) -> sub.restr(state, term));
   }
 
-  private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs, Sub lr, Sub rl) {
-    traceEntrance(new Trace.UnifyT(type.freezeHoles(state),
+  private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
+    traceEntrance(new Trace.UnifyT(preLhs.freezeHoles(state),
       preRhs.freezeHoles(state), this.pos));
-    var ret = switch (type) {
+    var ret = switch (preLhs) {
       default ->
-        throw new InternalException(type.getClass() + ": " + type.toDoc(DistillerOptions.debug()).debugRender());
+        throw new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(DistillerOptions.debug()).debugRender());
       case RefTerm.MetaPat metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
