@@ -216,14 +216,12 @@ public final class ExprTycker extends Tycker {
 
         yield new TermResult(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
-      case Expr.Path path -> {
-        path.params().forEach(x -> localCtx.put(x, PrimTerm.Interval.INSTANCE));
+      case Expr.Path path -> localCtx.withIntervals(path.params().view(), () -> {
         var type = synthesize(path.type());
         var partial = elaboratePartial(path.partial(), type.wellTyped());
         var cube = new FormTerm.Cube(path.params(), type.wellTyped(), partial);
-        localCtx.remove(path.params().view());
-        yield new TermResult(new FormTerm.Path(cube), type.type());
-      }
+        return new TermResult(new FormTerm.Path(cube), type.type());
+      });
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
