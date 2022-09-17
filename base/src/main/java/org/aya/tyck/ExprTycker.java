@@ -441,15 +441,15 @@ public final class ExprTycker extends Tycker {
   private TermResult checkBoundaries(Expr expr, FormTerm.Path path, Subst subst, Term lambda) {
     var cube = path.cube();
     var applied = cube.applyDimsTo(lambda);
-    cube.params().forEach(x -> localCtx.put(x, PrimTerm.Interval.INSTANCE));
-    var happy = switch (cube.partial()) {
-      case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), cube.type(), subst);
-      case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
-        CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), cube.type(), s)));
-    };
-    localCtx.remove(cube.params().view());
-    return happy ? new TermResult(new IntroTerm.PathLam(cube.params(), applied), path)
-      : new TermResult(ErrorTerm.unexpected(expr), path);
+    return localCtx.withIntervals(cube.params().view(), () -> {
+      var happy = switch (cube.partial()) {
+        case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), cube.type(), subst);
+        case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
+          CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), cube.type(), s)));
+      };
+      return happy ? new TermResult(new IntroTerm.PathLam(cube.params(), applied), path)
+        : new TermResult(ErrorTerm.unexpected(expr), path);
+    });
   }
 
   private @NotNull SortResult doSort(@NotNull Expr expr) {

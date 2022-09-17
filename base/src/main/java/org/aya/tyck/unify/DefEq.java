@@ -302,10 +302,23 @@ public final class DefEq {
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
       // In this case, both sides have the same type (I hope)
-      case FormTerm.Path path -> compare(
-        path.cube().applyDimsTo(lhs),
-        path.cube().applyDimsTo(rhs),
-        lr, rl, path.cube().computePi());
+      case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
+        if (lhs instanceof IntroTerm.PathLam lambda) return ctx.withIntervals(lambda.params().view(), () -> {
+          if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () -> {
+            for (var conv : lambda.params().zipView(rambda.params())) {
+              lr.map.put(conv._1, new RefTerm(conv._2));
+              rl.map.put(conv._2, new RefTerm(conv._1));
+            }
+            return compare(lambda.body(), rambda.body(), lr, rl, path.cube().type());
+          });
+          // return compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, path.cube().type());
+          return false;
+        });
+        // if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
+        //   compare(CallTerm.make(lhs, rambda.param().toArg()), rambda.body(), lr, rl, path.cube().type()));
+        // Question: do we need a unification for Pi.body?
+        return compareUntyped(lhs, rhs, lr, rl) != null;
+      });
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
         comparePartial(lel, rel, ty, lr, rl);
       case FormTerm.PartTy ty -> false;
@@ -557,14 +570,14 @@ public final class DefEq {
   }
 
   private static boolean sortLt(FormTerm.Sort l, FormTerm.Sort r) {
-    return switch(l) {
-      case FormTerm.Type lt -> switch(r) {
+    return switch (l) {
+      case FormTerm.Type lt -> switch (r) {
         case FormTerm.Type rt -> lt.lift() <= rt.lift();
         case FormTerm.Set rt -> lt.lift() <= rt.lift();
         case FormTerm.ISet iSet -> false;
         case FormTerm.Prop prop -> false;
       };
-      case FormTerm.ISet iSet -> switch(r) {
+      case FormTerm.ISet iSet -> switch (r) {
         case FormTerm.ISet set -> true;
         case FormTerm.Prop prop -> false;
         case FormTerm.Set set -> true;
@@ -586,13 +599,13 @@ public final class DefEq {
   }
 
   public boolean compareSort(FormTerm.Sort l, FormTerm.Sort r) {
-    var result = switch(cmp) {
+    var result = switch (cmp) {
       case Gt -> sortLt(r, l);
       case Eq -> l.kind() == r.kind() && l.lift() == r.lift();
       case Lt -> sortLt(l, r);
     };
-    if(!result) {
-      switch(cmp) {
+    if (!result) {
+      switch (cmp) {
         case Eq -> reporter.report(new LevelError(pos, l, r, true));
         case Gt -> reporter.report(new LevelError(pos, l, r, false));
         case Lt -> reporter.report(new LevelError(pos, r, l, false));
