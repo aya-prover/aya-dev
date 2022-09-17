@@ -432,17 +432,11 @@ public final class ExprTycker extends Tycker {
       default -> {
         var synth = synthesize(expr);
         var whnfTy = whnf(term);
-        if (whnfTy instanceof FormTerm.Path path) {
-          var lam = synth.wellTyped();
-          var type = synth.type();
-          while (lam instanceof IntroTerm.Lambda l && type instanceof FormTerm.Pi pi && !l.param().explicit()) {
-            var mock = mockArg(l.param(), expr.sourcePos());
-            lam = CallTerm.make(lam, mock);
-            type = pi.substBody(mock.term());
-          }
-          var lamType = whnf(type) instanceof FormTerm.Path p ? p.cube().computePi() : type;
-          unifyTyReported(path.cube().computePi(), lamType, expr);
-          yield checkBoundaries(expr, path, new Subst(), whnf(lam));
+        // If the synthesized term is a path, it should be elaborated into a function whose
+        // cube reduction rules are stored inside the path-applications.
+        if (whnfTy instanceof FormTerm.Path path && synth.type() instanceof FormTerm.Pi pi) {
+          unifyTyReported(path.cube().computePi(), pi, expr);
+          yield checkBoundaries(expr, path, new Subst(), synth.wellTyped());
         }
         yield unifyTyMaybeInsert(whnfTy, synth, expr);
       }
