@@ -1,9 +1,10 @@
-open import Paths hiding (coe)
+open import Paths using (coe as primCoe, =, idp)
 
 public open data Unit | unit
 
+-- TODO: eta
 def coe {a b : Type} (eq : a ↑ = b) (x : a) : b
-  => ↑ arcoe eq.at x 1
+  => ↑ ↑ ↑ primCoe (\y => eq y) 0 x
 
 -- *** Types
 

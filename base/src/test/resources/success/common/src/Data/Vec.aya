@@ -21,12 +21,12 @@ def overlap infix ++v (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 tighter =
 
 def overlap ++v-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
-  : Path (\i => Vec A (+-assoc.at i)) ((xs ++v ys) ++v zs) (xs ++v (ys ++v zs))
+  : Path (\i => Vec A (+-assoc i)) ((xs ++v ys) ++v zs) (xs ++v (ys ++v zs))
 | vnil, ys, zs => idp
 | xs, vnil, zs => idp
 | xs, ys, vnil => idp
 -- | x :> xs, ys, zs => pmapd (Vec _) (x :>) (++v-assoc xs ys zs)
-| x :> xs, ys, zs => path (\i => x :> (++v-assoc xs ys zs).at i)
+| x :> xs, ys, zs => \i => x :> (++v-assoc xs ys zs) i
 
 def infix !!v (l : Vec A n) (i : Fin n) : A
 | a :> l, fzero => a

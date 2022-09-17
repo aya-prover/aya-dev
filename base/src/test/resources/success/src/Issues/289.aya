@@ -5,17 +5,11 @@ open N using (+ as add, zero as Z, suc as S)
 def two => S Z add S Z
 def two-is-two : two = S (S Z) => idp
 
-open import Primitives using (
-  intervalInv as fixl ~ tighter =,
-  intervalMin as infix /\        ,
-  intervalMax as infix \/        ,
-)
-
-def invol-prefix : ~ 0 = 1 => idp
+def invol-prefix : (~ 0) = 1 => idp
 
 def psqueeze-infix {A : Type} {a b : A} (p : a = b) (i : I)
- : a = p.at i => path (\j => p.at (i /\ j))
+ : a = p i => \j => p (i /\ j)
 
 def psqueeze-infix' {A : Type} {a b : A} (p : a = b) (i : I)
- : a = p.at i => path (\j => p.at (~((~ i) \/ (~ j))))
+ : a = p i => \j => p (~((~ i) \/ (~ j)))
 

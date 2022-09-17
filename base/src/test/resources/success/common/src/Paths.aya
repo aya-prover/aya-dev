@@ -27,8 +27,9 @@ def J {a : A} (B : Pi (b : A) -> a = b -> Type)
 def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
   => J (\b' p' => B b') x p
 
-def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
-        (r : B a idp) : J B r idp = r => idp
+-- Bye, regularity!
+-- def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
+--         (r : B a idp) : J B r idp = r => idp
 
 def funExt2 (f g : A -> B -> C) (p : forall a b -> f a b = g a b) : f = g
   => \ i a b => p a b i
