@@ -26,7 +26,7 @@ public class PathTest {
     IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
     assertEquals("def = {A : Type 0} (a b : A) : Type 0 => [| i |] A {| ~ i := a | i := b |}",
       distiller.apply(3).debugRender());
-    assertEquals("def idp {A : Type 0} {a : A} : (=) {A} a a => \\ (i : I) => a",
+    assertEquals("def idp {A : Type 0} {a : A} : (=) {A} a a => \\ i => a",
       distiller.apply(4).debugRender());
   }
 
