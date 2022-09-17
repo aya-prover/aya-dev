@@ -193,8 +193,8 @@ public final class ExprTycker extends Tycker {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
         var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped();
-        if (cube == null) app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
-        else app = cube.makeApp(app, elabArg);
+        var arg = new Arg<>(elabArg, argLicit);
+        app = cube != null ? cube.makeApp(app, arg) : CallTerm.make(app, arg);
         subst.addDirectly(pi.param().ref(), elabArg);
         yield new TermResult(app, pi.body().subst(subst));
       }
