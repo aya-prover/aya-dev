@@ -428,18 +428,7 @@ public final class ExprTycker extends Tycker {
           yield fail(el, new CubicalError.FaceMismatch(el, face, cofTy));
         yield new TermResult(new IntroTerm.PartEl(partial, rhsType), ty);
       }
-      // TODO: turn definition into path lambda
-      default -> {
-        var synth = synthesize(expr);
-        var whnfTy = whnf(term);
-        // If the synthesized term is a path, it should be elaborated into a function whose
-        // cube reduction rules are stored inside the path-applications.
-        if (whnfTy instanceof FormTerm.Path path && synth.type() instanceof FormTerm.Pi pi) {
-          unifyTyReported(path.cube().computePi(), pi, expr);
-          yield checkBoundaries(expr, path, new Subst(), synth.wellTyped());
-        }
-        yield unifyTyMaybeInsert(whnfTy, synth, expr);
-      }
+      default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
   }
 
@@ -556,14 +545,6 @@ public final class ExprTycker extends Tycker {
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var res = doSynthesize(expr);
-    if (whnf(res.type()) instanceof FormTerm.Path path) {
-      var xi = path.cube().params().map(x -> new Term.Param(x, PrimTerm.Interval.INSTANCE, true));
-      var elim = new ElimTerm.PathApp(res.wellTyped(), xi.map(Term.Param::toArg), path.cube());
-      var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
-      // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
-      var pi = xi.foldRight(path.cube().type(), FormTerm.Pi::new);
-      res = new TermResult(lam, pi); // we need `traceExit`
-    }
     traceExit(res, expr);
     return res;
   }
