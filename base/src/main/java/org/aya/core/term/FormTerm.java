@@ -179,9 +179,9 @@ public sealed interface FormTerm extends Term {
     @NotNull Term type,
     @NotNull Partial<Term> partial
   ) {
-    public @NotNull Term computePi() {
+    public @NotNull Pi computePi() {
       var iTele = params().view().map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
-      return Pi.make(iTele, type());
+      return (Pi) Pi.make(iTele, type());
     }
 
     public @NotNull Term applyDimsTo(@NotNull Term innerMost) {

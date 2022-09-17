@@ -324,11 +324,12 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private Tuple2<FormTerm.Pi, FormTerm.Cube> ensurePiOrPath(@NotNull Term term) throws NotPi {
+  private Tuple2<FormTerm.Pi, FormTerm.@Nullable Cube>
+  ensurePiOrPath(@NotNull Term term) throws NotPi {
     term = whnf(term);
     if (term instanceof FormTerm.Pi pi) return Tuple.of(pi, null);
-    if (term instanceof FormTerm.Path path && path.cube().computePi() instanceof FormTerm.Pi pi)
-      return Tuple.of(pi, path.cube());
+    if (term instanceof FormTerm.Path path)
+      return Tuple.of(path.cube().computePi(), path.cube());
     else throw new NotPi(term);
   }
 
