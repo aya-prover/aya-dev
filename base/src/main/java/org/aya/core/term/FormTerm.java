@@ -191,7 +191,7 @@ public sealed interface FormTerm extends Term {
         return lam.body().subst(new Subst(lam.params(), args));
       }
       var newArgs = args.map(x -> new Arg<Term>(x, true));
-      if (innerMost instanceof IntroTerm.Lambda lambda) {
+      if (innerMost instanceof IntroTerm.Lambda) {
         return newArgs.foldLeft(innerMost, CallTerm::make);
       }
       return new ElimTerm.PathApp(innerMost, newArgs.toImmutableSeq(), this);
