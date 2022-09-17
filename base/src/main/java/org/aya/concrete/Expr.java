@@ -5,7 +5,6 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
-import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
@@ -113,14 +112,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
     if (args != null) args.reverse();
     return expr;
-  }
-  static @NotNull Tuple2<ImmutableSeq<Expr.Param>, Expr> unPathLam(@NotNull Expr expr, int maxUn) {
-    var params = MutableList.<Expr.Param>create();
-    while (expr instanceof LamExpr lam && maxUn-- > 0) {
-      params.append(lam.param);
-      expr = lam.body;
-    }
-    return Tuple.of(params.toImmutableSeq(), expr);
   }
 
   /**

@@ -14,20 +14,6 @@ import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface CubicalError extends ExprProblem, TyckError {
-  record DimensionMismatch(
-    @NotNull Expr expr,
-    int expectedDim,
-    int actualDim
-  ) implements CubicalError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.sep(Doc.english("This path lambda expects"),
-        Doc.plain(String.valueOf(expectedDim)),
-        Doc.english(expectedDim == 1 ? "parameter," : "parameters,"),
-        Doc.english("but it has" + (actualDim < expectedDim ? " only" : "")),
-        Doc.plain(String.valueOf(actualDim)));
-    }
-  }
-
   record BoundaryDisagree(
     @NotNull Expr expr,
     @NotNull Term lhs,

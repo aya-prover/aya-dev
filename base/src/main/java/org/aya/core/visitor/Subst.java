@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
@@ -47,7 +48,7 @@ public record Subst(
     this(MutableHashMap.of(var, term));
   }
 
-  public Subst(@NotNull ImmutableSeq<LocalVar> from, @NotNull ImmutableSeq<Term> to) {
+  public Subst(@NotNull SeqLike<LocalVar> from, @NotNull SeqLike<? extends Term> to) {
     this(MutableMap.from(from.zipView(to)));
   }
 

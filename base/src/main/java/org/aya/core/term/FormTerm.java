@@ -5,6 +5,8 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.core.visitor.Subst;
+import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
@@ -161,7 +163,8 @@ public sealed interface FormTerm extends Term {
   record PartTy(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {}
 
   /** generalized path type */
-  record Path(@NotNull Cube cube) implements FormTerm, StableWHNF {}
+  record Path(@NotNull Cube cube) implements FormTerm, StableWHNF {
+  }
 
   /**
    * Generalized 'generalized path' syntax.
@@ -176,6 +179,24 @@ public sealed interface FormTerm extends Term {
     @NotNull Term type,
     @NotNull Partial<Term> partial
   ) {
+    public @NotNull Term computePi() {
+      var iTele = params().view().map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
+      return Pi.make(iTele, type());
+    }
+
+    public @NotNull Term applyDimsTo(@NotNull Term innerMost) {
+      var args = params.view().map(RefTerm::new);
+      if (innerMost instanceof IntroTerm.PathLam lam) {
+        assert lam.params().sizeEquals(params());
+        return lam.body().subst(new Subst(lam.params(), args));
+      }
+      var newArgs = args.map(x -> new Arg<Term>(x, true));
+      if (innerMost instanceof IntroTerm.Lambda) {
+        return newArgs.foldLeft(innerMost, CallTerm::make);
+      }
+      return new ElimTerm.PathApp(innerMost, newArgs.toImmutableSeq(), this);
+    }
+
     public @NotNull FormTerm.Cube map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
       var ty = mapper.apply(type);
       var par = partial.map(mapper);
@@ -185,6 +206,14 @@ public sealed interface FormTerm extends Term {
 
     public @NotNull FormTerm.Cube map(@NotNull Function<Term, Term> mapper) {
       return map(params, mapper);
+    }
+
+    public Term makeApp(@NotNull Term app, @NotNull Term elabArg) {
+      var xi = params().map(x -> new Term.Param(x, PrimTerm.Interval.INSTANCE, true));
+      var elim = new ElimTerm.PathApp(app, xi.map(Term.Param::toArg), this);
+      // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
+      var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
+      return CallTerm.make(lam, new Arg<>(elabArg, true));
     }
   }
 }

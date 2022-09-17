@@ -9,6 +9,7 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.FieldDef;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -57,7 +58,7 @@ public sealed interface IntroTerm extends Term {
   }
 
   record PathLam(
-    @NotNull ImmutableSeq<Term.Param> params,
+    @NotNull ImmutableSeq<LocalVar> params,
     @NotNull Term body
   ) implements IntroTerm, StableWHNF {}
 }

@@ -82,7 +82,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
       case FormTerm.Path path -> FormTerm.Type.ZERO;
       case IntroTerm.PathLam lam -> new FormTerm.Path(new FormTerm.Cube(
-        lam.params().map(Term.Param::ref),
+        lam.params(),
         term(lam.body()),
         new Partial.Const<>(term(lam.body()))
       ));

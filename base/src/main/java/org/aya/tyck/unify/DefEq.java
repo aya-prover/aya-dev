@@ -301,8 +301,11 @@ public final class DefEq {
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
-      // TODO: path lambda conversion
-      case FormTerm.Path path -> throw new UnsupportedOperationException("TODO");
+      // In this case, both sides have the same type (I hope)
+      case FormTerm.Path path -> compare(
+        path.cube().applyDimsTo(lhs),
+        path.cube().applyDimsTo(rhs),
+        lr, rl, path.cube().computePi());
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
         comparePartial(lel, rel, ty, lr, rl);
       case FormTerm.PartTy ty -> false;
@@ -348,12 +351,12 @@ public final class DefEq {
     return CofThy.propExt(new Subst(), lhs, rhs, (sub, term) -> sub.restr(state, term));
   }
 
-  private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs, Sub lr, Sub rl) {
-    traceEntrance(new Trace.UnifyT(type.freezeHoles(state),
+  private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
+    traceEntrance(new Trace.UnifyT(preLhs.freezeHoles(state),
       preRhs.freezeHoles(state), this.pos));
-    var ret = switch (type) {
+    var ret = switch (preLhs) {
       default ->
-        throw new InternalException(type.getClass() + ": " + type.toDoc(DistillerOptions.debug()).debugRender());
+        throw new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(DistillerOptions.debug()).debugRender());
       case RefTerm.MetaPat metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
@@ -526,7 +529,6 @@ public final class DefEq {
     // TODO: what's the TODO above? I don't know what's TODO? ????
     rl.map.forEach(subst::add);
     assert !state.metas().containsKey(meta);
-    // TODO: report error if unlifting makes < 0 levels
     var solved = preRhs.freezeHoles(state).subst(subst, -lhs.ulift());
     var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
     var scopeCheck = solved.scopeCheck(allowedVars);
