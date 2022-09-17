@@ -148,6 +148,7 @@ public sealed interface CallTerm extends Term {
    */
   record Hole(
     @NotNull Meta ref,
+    // TODO[ice]: remove this below
     int ulift,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args

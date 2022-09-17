@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -184,9 +185,12 @@ public sealed interface FormTerm extends Term {
     }
 
     public @NotNull Term applyDimsTo(@NotNull Term innerMost) {
-      return params.view()
-        .map(x -> new Arg<Term>(new RefTerm(x), true))
-        .foldLeft(innerMost, CallTerm::make);
+      var args = params.view().map(RefTerm::new);
+      if (innerMost instanceof IntroTerm.PathLam lam) {
+        assert lam.params().sizeEquals(params());
+        return lam.body().subst(new Subst(lam.params(), args));
+      }
+      return args.map(x -> new Arg<Term>(x, true)).foldLeft(innerMost, CallTerm::make);
     }
 
     public @NotNull FormTerm.Cube map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {

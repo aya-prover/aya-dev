@@ -302,7 +302,10 @@ public final class DefEq {
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
       // In this case, both sides have the same type (I hope)
-      case FormTerm.Path path -> compare(lhs, rhs, lr, rl, path.cube().computePi());
+      case FormTerm.Path path -> compare(
+        path.cube().applyDimsTo(lhs),
+        path.cube().applyDimsTo(rhs),
+        lr, rl, path.cube().computePi());
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
         comparePartial(lel, rel, ty, lr, rl);
       case FormTerm.PartTy ty -> false;
@@ -526,7 +529,6 @@ public final class DefEq {
     // TODO: what's the TODO above? I don't know what's TODO? ????
     rl.map.forEach(subst::add);
     assert !state.metas().containsKey(meta);
-    // TODO: report error if unlifting makes < 0 levels
     var solved = preRhs.freezeHoles(state).subst(subst, -lhs.ulift());
     var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
     var scopeCheck = solved.scopeCheck(allowedVars);
