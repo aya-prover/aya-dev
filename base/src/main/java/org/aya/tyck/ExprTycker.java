@@ -433,8 +433,16 @@ public final class ExprTycker extends Tycker {
         var synth = synthesize(expr);
         var whnfTy = whnf(term);
         if (whnfTy instanceof FormTerm.Path path) {
-          unifyTyReported(path.cube().computePi(), synth.type(), expr);
-          yield checkBoundaries(expr, path, new Subst(), synth.wellTyped());
+          var lam = synth.wellTyped();
+          var type = synth.type();
+          while (lam instanceof IntroTerm.Lambda l && type instanceof FormTerm.Pi pi && !l.param().explicit()) {
+            var mock = mockArg(l.param(), expr.sourcePos());
+            lam = CallTerm.make(lam, mock);
+            type = pi.substBody(mock.term());
+          }
+          var lamType = whnf(type) instanceof FormTerm.Path p ? p.cube().computePi() : type;
+          unifyTyReported(path.cube().computePi(), lamType, expr);
+          yield checkBoundaries(expr, path, new Subst(), whnf(lam));
         }
         yield unifyTyMaybeInsert(whnfTy, synth, expr);
       }
