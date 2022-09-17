@@ -190,7 +190,11 @@ public sealed interface FormTerm extends Term {
         assert lam.params().sizeEquals(params());
         return lam.body().subst(new Subst(lam.params(), args));
       }
-      return args.map(x -> new Arg<Term>(x, true)).foldLeft(innerMost, CallTerm::make);
+      var newArgs = args.map(x -> new Arg<Term>(x, true));
+      if (innerMost instanceof IntroTerm.Lambda lambda) {
+        return newArgs.foldLeft(innerMost, CallTerm::make);
+      }
+      return new ElimTerm.PathApp(innerMost, newArgs.toImmutableSeq(), this);
     }
 
     public @NotNull FormTerm.Cube map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
@@ -202,6 +206,14 @@ public sealed interface FormTerm extends Term {
 
     public @NotNull FormTerm.Cube map(@NotNull Function<Term, Term> mapper) {
       return map(params, mapper);
+    }
+
+    public Term makeApp(@NotNull Term app, @NotNull Term elabArg) {
+      var xi = params().map(x -> new Term.Param(x, PrimTerm.Interval.INSTANCE, true));
+      var elim = new ElimTerm.PathApp(app, xi.map(Term.Param::toArg), this);
+      // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
+      var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
+      return CallTerm.make(lam, new Arg<>(elabArg, true));
     }
   }
 }

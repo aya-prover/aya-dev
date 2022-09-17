@@ -169,7 +169,13 @@ public final class ExprTycker extends Tycker {
           unifier(appE.sourcePos(), Ordering.Eq).compare(fTy, pi, null);
           fTy = whnf(fTy);
         }
-        if (!(fTy instanceof FormTerm.Pi piTerm)) yield fail(appE, f.type(), BadTypeError.pi(state, appE, f.type()));
+        FormTerm.Cube cube = null;
+        if (fTy instanceof FormTerm.Path path) {
+          cube = path.cube();
+          fTy = cube.computePi();
+        }
+        if (!(fTy instanceof FormTerm.Pi piTerm))
+          yield fail(appE, f.type(), BadTypeError.pi(state, appE, f.type()));
         var pi = piTerm;
         var subst = new Subst(MutableMap.create());
         try {
@@ -187,7 +193,8 @@ public final class ExprTycker extends Tycker {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
         var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped();
-        app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
+        if (cube == null) app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
+        else app = cube.makeApp(app, elabArg);
         subst.addDirectly(pi.param().ref(), elabArg);
         yield new TermResult(app, pi.body().subst(subst));
       }
