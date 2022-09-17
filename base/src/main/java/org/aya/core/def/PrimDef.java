@@ -11,10 +11,13 @@ import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Partial;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,12 +96,58 @@ public final class PrimDef extends TopLevelDef<Term> {
         );
       }, ImmutableSeq.of(ID.I));
 
-      private Term coe(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+      @Contract("_, _ -> new")
+      private @NotNull Term coe(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
         var type = prim.args().get(0).term();
         var restr = prim.args().get(1).term();
         return new PrimTerm.Coe(type, isOne(restr));
       }
 
+      // transpfill (A: I -> Type) (phi: I) (u0: A 0) : Path A u (coe A phi u)
+      public final @NotNull PrimDef.PrimSeed coercefill = new PrimSeed(ID.COEFILL, this::coefill, ref -> {
+        var varA = new LocalVar("A");
+        var typeA = new FormTerm.Pi(new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true), new FormTerm.Type(0));
+        var paramA = new Term.Param(varA, typeA, true);
+        var varPhi = new LocalVar("phi");
+        var paramPhi = new Term.Param(varPhi, PrimTerm.Interval.INSTANCE, true);
+        var varU0 = new LocalVar("u0");
+        var typeU0 = new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true));
+        var paramU0 = new Term.Param(varU0, typeU0, true);
+        var varX = new LocalVar("x");
+        var refX = new RefTerm(varX);
+        var coe = new PrimTerm.Coe(new RefTerm(varA), isOne(new RefTerm(varPhi)));
+        var coerced = new ElimTerm.App(coe, new Arg<>(new RefTerm(varU0), true));
+
+        var result = new FormTerm.Path(new FormTerm.Cube(
+          ImmutableSeq.of(varX),
+          new RefTerm(varA),
+          new Partial.Split<>(
+            ImmutableSeq.of(
+              new Restr.Side<>(new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(refX, true))), new RefTerm(varU0)),
+              new Restr.Side<>(new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(refX, false))), coerced)))
+        ));
+
+        return new PrimDef(
+          ref,
+          ImmutableSeq.of(paramA, paramPhi, paramU0),
+          result,
+          ID.COEFILL);
+      }, ImmutableSeq.of(ID.COE));
+
+      private @NotNull Term coefill(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+        var type = prim.args().get(0).term();
+        var phi = prim.args().get(1).term();
+        var u0 = prim.args().get(2).term();
+
+        var varX = new LocalVar("x");
+
+        var cofib = PrimTerm.Mula.and(phi, PrimTerm.Mula.inv(new RefTerm(varX)));
+
+        var coe = new PrimTerm.Coe(type, isOne(cofib));
+        var coerced = new ElimTerm.App(coe, new Arg<>(u0, true));
+
+        return new IntroTerm.PathLam(ImmutableSeq.of(new Term.Param(varX, PrimTerm.Interval.INSTANCE, true)), coerced);
+      }
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMin = formula(ID.IMIN, prim -> {
@@ -191,7 +240,8 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.stringConcat,
           init.intervalType,
           init.partialType,
-          init.coerce
+          init.coerce,
+          init.coercefill
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
@@ -264,7 +314,8 @@ public final class PrimDef extends TopLevelDef<Term> {
     STRCONCAT("strcat"),
     I("I"),
     PARTIAL("Partial"),
-    COE("coe");
+    COE("coe"),
+    COEFILL("coefill");
 
     public final @NotNull @NonNls String id;
 
