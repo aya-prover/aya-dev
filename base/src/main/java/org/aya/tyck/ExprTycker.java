@@ -395,37 +395,8 @@ public final class ExprTycker extends Tycker {
             });
           }
           // Path lambda!
-          case FormTerm.Path path -> {
-            var cubeParams = path.cube().params();
-            var plam = Expr.unPathLam(lam, cubeParams.size());
-            if (!plam._1.sizeEquals(cubeParams))
-              yield fail(lam, term, new CubicalError.DimensionMismatch(lam, cubeParams.size(), plam._1.size()));
-            // we allow lambda params to be typed explicitly --- check them against I.
-            var params = plam._1.map(p -> {
-              var i = synthesize(p.type());
-              unifyTyReported(PrimTerm.Interval.INSTANCE, i.wellTyped(), new Expr.RefExpr(p.sourcePos(), p.ref()));
-              return new Term.Param(p, i.wellTyped());
-            });
-            yield localCtx.with(params.view(), () -> {
-              // \params. body => (params : I) -> A
-              var subst = new Subst(cubeParams, params.map(Term.Param::toTerm));
-              var A = whnf(path.cube().type().subst(subst));
-              var body = inherit(plam._2, A).wellTyped();
-              // body matches every given face
-              var happy = switch (path.cube().partial()) {
-                case Partial.Const<Term> sad -> {
-                  var s = subst.derive();
-                  params.forEach(p -> s.put(p.ref(), false));
-                  yield boundary(plam._2, body, sad.u(), A, s);
-                }
-                case Partial.Split<Term> hap -> hap.clauses().allMatch(c -> {
-                  var cof = c.cof().fmap(t -> t.subst(subst));
-                  return CofThy.conv(cof, subst, s -> boundary(plam._2, body, c.u(), A, s));
-                });
-              };
-              return happy ? new TermResult(new IntroTerm.PathLam(params, body), path) : new TermResult(ErrorTerm.typeOf(term), term);
-            });
-          }
+          case FormTerm.Path path -> checkBoundaries(expr, path, new Subst(),
+            inherit(expr, path.cube().computePi()).wellTyped());
           default -> fail(lam, term, BadTypeError.pi(state, lam, term));
         };
       }
@@ -458,8 +429,28 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new IntroTerm.PartEl(partial, rhsType), ty);
       }
       // TODO: turn definition into path lambda
-      default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
+      default -> {
+        var synth = synthesize(expr);
+        var whnfTy = whnf(term);
+        if (whnfTy instanceof FormTerm.Path path) {
+          unifyTyReported(path.cube().computePi(), synth.type(), expr);
+          yield checkBoundaries(expr, path, new Subst(), synth.wellTyped());
+        }
+        yield unifyTyMaybeInsert(whnfTy, synth, expr);
+      }
     };
+  }
+
+  private TermResult checkBoundaries(Expr expr, FormTerm.Path path, Subst subst, Term lambda) {
+    var cube = path.cube();
+    var applied = cube.applyDimsTo(lambda);
+    var happy = switch (cube.partial()) {
+      case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), cube.type(), subst);
+      case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
+        CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), cube.type(), s)));
+    };
+    return happy ? new TermResult(new IntroTerm.PathLam(cube.params(), applied), path)
+      : new TermResult(ErrorTerm.unexpected(expr), path);
   }
 
   private @NotNull SortResult doSort(@NotNull Expr expr) {

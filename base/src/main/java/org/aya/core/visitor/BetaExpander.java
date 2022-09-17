@@ -38,9 +38,8 @@ public interface BetaExpander extends EndoFunctor {
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
       case ElimTerm.PathApp app -> {
         if (app.of() instanceof IntroTerm.PathLam lam) {
-          var xi = lam.params().map(Term.Param::ref);
           var ui = app.args().map(Arg::term);
-          var subst = new Subst(xi, ui);
+          var subst = new Subst(lam.params(), ui);
           yield apply(lam.body().subst(subst));
         }
         yield switch (partial(app.cube().partial())) {

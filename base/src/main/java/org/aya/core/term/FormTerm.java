@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
@@ -161,7 +162,8 @@ public sealed interface FormTerm extends Term {
   record PartTy(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {}
 
   /** generalized path type */
-  record Path(@NotNull Cube cube) implements FormTerm, StableWHNF {}
+  record Path(@NotNull Cube cube) implements FormTerm, StableWHNF {
+  }
 
   /**
    * Generalized 'generalized path' syntax.
@@ -176,6 +178,17 @@ public sealed interface FormTerm extends Term {
     @NotNull Term type,
     @NotNull Partial<Term> partial
   ) {
+    public @NotNull Term computePi() {
+      var iTele = params().view().map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
+      return Pi.make(iTele, type());
+    }
+
+    public @NotNull Term applyDimsTo(@NotNull Term innerMost) {
+      return params.view()
+        .map(x -> new Arg<Term>(new RefTerm(x), true))
+        .foldLeft(innerMost, CallTerm::make);
+    }
+
     public @NotNull FormTerm.Cube map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
       var ty = mapper.apply(type);
       var par = partial.map(mapper);

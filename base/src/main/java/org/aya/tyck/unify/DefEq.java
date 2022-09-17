@@ -301,12 +301,8 @@ public final class DefEq {
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
-      case FormTerm.Path path -> {
-        // In this case, both sides have the same type (I hope)
-        var iTele = path.cube().params().view().map(x -> new Term.Param(x, PrimTerm.Interval.INSTANCE, true));
-        var ty = FormTerm.Pi.make(iTele, path.cube().type());
-        yield compare(lhs, rhs, lr, rl, ty);
-      }
+      // In this case, both sides have the same type (I hope)
+      case FormTerm.Path path -> compare(lhs, rhs, lr, rl, path.cube().computePi());
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
         comparePartial(lel, rel, ty, lr, rl);
       case FormTerm.PartTy ty -> false;
