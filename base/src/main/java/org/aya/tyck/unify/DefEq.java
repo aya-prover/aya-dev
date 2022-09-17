@@ -4,6 +4,7 @@ package org.aya.tyck.unify;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
@@ -292,12 +293,15 @@ public final class DefEq {
           if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(), () -> {
             lr.map.put(lambda.param().ref(), rambda.param().toTerm());
             rl.map.put(rambda.param().ref(), lambda.param().toTerm());
-            return compare(lambda.body(), rambda.body(), lr, rl, pi.body());
+            var res = compare(lambda.body(), rambda.body(), lr, rl, pi.body());
+            lr.map.remove(lambda.param().ref());
+            rl.map.remove(rambda.param().ref());
+            return res;
           });
-          return compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body());
+          return compareLambdaBody(rhs, lr, rl, lambda, pi);
         });
         if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(),
-          () -> compare(CallTerm.make(lhs, rambda.param().toArg()), rambda.body(), lr, rl, pi.body()));
+          () -> compareLambdaBody(lhs, rl, lr, rambda, pi));
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
@@ -305,17 +309,20 @@ public final class DefEq {
       case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
         if (lhs instanceof IntroTerm.PathLam lambda) return ctx.withIntervals(lambda.params().view(), () -> {
           if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () -> {
+            assert lambda.params().sizeEquals(rambda.params());
             for (var conv : lambda.params().zipView(rambda.params())) {
               lr.map.put(conv._1, new RefTerm(conv._2));
               rl.map.put(conv._2, new RefTerm(conv._1));
             }
-            return compare(lambda.body(), rambda.body(), lr, rl, path.cube().type());
+            var res = compare(lambda.body(), rambda.body(), lr, rl, path.cube().type());
+            lambda.params().forEach(lr.map::remove);
+            rambda.params().forEach(rl.map::remove);
+            return res;
           });
-          // return compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, path.cube().type());
-          return false;
+          return comparePathLamBody(rhs, lr, rl, lambda, path.cube());
         });
-        // if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
-        //   compare(CallTerm.make(lhs, rambda.param().toArg()), rambda.body(), lr, rl, path.cube().type()));
+        if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
+          comparePathLamBody(lhs, rl, lr, rambda, path.cube()));
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
@@ -325,6 +332,19 @@ public final class DefEq {
     };
     traceExit();
     return ret;
+  }
+
+  private boolean compareLambdaBody(Term rhs, Sub lr, Sub rl, IntroTerm.Lambda lambda, FormTerm.Pi pi) {
+    return ctx.with(lambda.param(), () ->
+      compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body()));
+  }
+
+  private boolean comparePathLamBody(Term rhs, Sub lr, Sub rl, IntroTerm.PathLam lambda, FormTerm.Cube cube) {
+    // This is not necessarily correct, but we don't need to generate a precise cube
+    // as conversion for PathApp does not compare cubes (it doesn't have to)
+    var constructed = new FormTerm.Cube(lambda.params(), cube.type(), new Partial.Split<>(ImmutableSeq.empty()));
+    return ctx.withIntervals(lambda.params().view(), () ->
+      compare(lambda.body(), constructed.applyDimsTo(rhs), lr, rl, cube.type()));
   }
 
   private boolean comparePartial(
