@@ -308,17 +308,9 @@ public final class DefEq {
       // In this case, both sides have the same type (I hope)
       case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
         if (lhs instanceof IntroTerm.PathLam lambda) return ctx.withIntervals(lambda.params().view(), () -> {
-          if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () -> {
-            assert lambda.params().sizeEquals(rambda.params());
-            for (var conv : lambda.params().zipView(rambda.params())) {
-              lr.map.put(conv._1, new RefTerm(conv._2));
-              rl.map.put(conv._2, new RefTerm(conv._1));
-            }
-            var res = compare(lambda.body(), rambda.body(), lr, rl, path.cube().type());
-            lambda.params().forEach(lr.map::remove);
-            rambda.params().forEach(rl.map::remove);
-            return res;
-          });
+          if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
+            withIntervals(lambda.params().view(), rambda.params().view(), lr, rl, () ->
+              compare(lambda.body(), rambda.body(), lr, rl, path.cube().type())));
           return comparePathLamBody(rhs, lr, rl, lambda, path.cube());
         });
         if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
@@ -361,23 +353,28 @@ public final class DefEq {
     };
   }
 
+  public static <E> E withIntervals(SeqView<LocalVar> l, SeqView<LocalVar> r, Sub lr, Sub rl, Supplier<E> supplier) {
+    assert l.sizeEquals(r);
+    for (var conv : l.zipView(r)) {
+      lr.map.put(conv._1, new RefTerm(conv._2));
+      rl.map.put(conv._2, new RefTerm(conv._1));
+    }
+    var res = supplier.get();
+    l.forEach(lr.map::remove);
+    r.forEach(rl.map::remove);
+    return res;
+  }
+
   private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
-    lhs.params().zipView(rhs.params()).forEach(x -> {
-      lr.map.put(x._1, new RefTerm(x._2));
-      rl.map.put(x._2, new RefTerm(x._1));
+    return withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
+      // TODO: let CofThy.propExt uses lr and rl?
+      var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type().subst(lr.map)).subst(lr.map);
+      var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
+      var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
+      var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
+      if (compareUntyped(lType, rType, lr, rl) == null) return false;
+      return comparePartial(lPar, rPar, lType, lr, rl);
     });
-    // TODO: let CofThy.propExt uses lr and rl?
-    var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type().subst(lr.map)).subst(lr.map);
-    var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
-    var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
-    var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
-    if (compareUntyped(lType, rType, lr, rl) == null) return false;
-    var cmp = comparePartial(lPar, rPar, lType, lr, rl);
-    lhs.params().zipView(rhs.params()).forEach(x -> {
-      lr.map.remove(x._1);
-      rl.map.remove(x._2);
-    });
-    return cmp;
   }
 
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
