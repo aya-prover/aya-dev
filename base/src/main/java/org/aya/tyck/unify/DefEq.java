@@ -408,7 +408,7 @@ public final class DefEq {
         var prePathType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
         if (!(prePathType instanceof FormTerm.Path path)) yield null;
         var happy = lhs.args().zipView(rhs.args()).allMatch(t ->
-          compareUntyped(t._1.term(), t._2.term(), lr, rl) != null);
+          compare(t._1.term(), t._2.term(), lr, rl, null));
         yield happy ? path.cube().type() : null;
       }
       case ElimTerm.Proj lhs -> {
@@ -447,7 +447,7 @@ public final class DefEq {
       }
       case FormTerm.PartTy lhs -> {
         if (!(preRhs instanceof FormTerm.PartTy rhs)) yield null;
-        var happy = compareUntyped(lhs.type(), rhs.type(), lr, rl) != null
+        var happy = compare(lhs.type(), rhs.type(), lr, rl, null)
           && compareRestr(lhs.restr(), rhs.restr());
         yield happy ? FormTerm.Type.ZERO : null;
       }
@@ -461,10 +461,10 @@ public final class DefEq {
         var happy = switch (lhs.asFormula()) {
           case Formula.Lit<Term> ll && rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isLeft() == rr.isLeft();
           case Formula.Inv<Term> ll && rhs.asFormula() instanceof Formula.Inv<Term> rr ->
-            compareUntyped(ll.i(), rr.i(), lr, rl) != null;
+            compare(ll.i(), rr.i(), lr, rl, null);
           case Formula.Conn<Term> ll && rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()
-            && compareUntyped(ll.l(), rr.l(), lr, rl) != null
-            && compareUntyped(ll.r(), rr.r(), lr, rl) != null;
+            && compare(ll.l(), rr.l(), lr, rl, null)
+            && compare(ll.r(), rr.r(), lr, rl, null);
           default -> false;
         };
         yield happy ? PrimTerm.Interval.INSTANCE : null;
