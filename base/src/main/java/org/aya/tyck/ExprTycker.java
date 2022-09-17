@@ -217,13 +217,12 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
       case Expr.Path path -> {
-        var params = path.params().view().map(n -> new Term.Param(n, PrimTerm.Interval.INSTANCE, true));
-        yield localCtx.with(params, () -> {
-          var type = synthesize(path.type());
-          var partial = elaboratePartial(path.partial(), type.wellTyped());
-          var cube = new FormTerm.Cube(path.params(), type.wellTyped(), partial);
-          return new TermResult(new FormTerm.Path(cube), type.type());
-        });
+        path.params().forEach(x -> localCtx.put(x, PrimTerm.Interval.INSTANCE));
+        var type = synthesize(path.type());
+        var partial = elaboratePartial(path.partial(), type.wellTyped());
+        var cube = new FormTerm.Cube(path.params(), type.wellTyped(), partial);
+        localCtx.remove(path.params().view());
+        yield new TermResult(new FormTerm.Path(cube), type.type());
       }
       default -> fail(expr, new NoRuleError(expr, null));
     };
@@ -442,11 +441,13 @@ public final class ExprTycker extends Tycker {
   private TermResult checkBoundaries(Expr expr, FormTerm.Path path, Subst subst, Term lambda) {
     var cube = path.cube();
     var applied = cube.applyDimsTo(lambda);
+    cube.params().forEach(x -> localCtx.put(x, PrimTerm.Interval.INSTANCE));
     var happy = switch (cube.partial()) {
       case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), cube.type(), subst);
       case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
         CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), cube.type(), s)));
     };
+    localCtx.remove(cube.params().view());
     return happy ? new TermResult(new IntroTerm.PathLam(cube.params(), applied), path)
       : new TermResult(ErrorTerm.unexpected(expr), path);
   }
