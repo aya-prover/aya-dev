@@ -169,26 +169,27 @@ public final class ExprTycker extends Tycker {
           unifier(appE.sourcePos(), Ordering.Eq).compare(fTy, pi, null);
           fTy = whnf(fTy);
         }
-        FormTerm.Cube cube = null;
-        if (fTy instanceof FormTerm.Path path) {
-          cube = path.cube();
-          fTy = cube.computePi();
-        }
-        if (!(fTy instanceof FormTerm.Pi piTerm))
-          yield fail(appE, f.type(), BadTypeError.pi(state, appE, f.type()));
-        var pi = piTerm;
+        FormTerm.Cube cube;
+        FormTerm.Pi pi;
         var subst = new Subst(MutableMap.create());
         try {
+          var tup = ensurePiOrPath(fTy);
+          pi = tup._1;
+          cube = tup._2;
           while (pi.param().explicit() != argLicit || argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
               var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
               app = CallTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
-              pi = ensurePiOrThrow(pi.body());
+              tup = ensurePiOrPath(pi.body());
+              pi = tup._1;
+              if (tup._2 != null) cube = tup._2;
             } else yield fail(appE, new ErrorTerm(pi.body()), new LicitError.UnexpectedImplicitArg(argument));
           }
-          pi = ensurePiOrThrow(pi.subst(subst));
+          tup = ensurePiOrPath(pi.subst(subst));
+          pi = tup._1;
+          if (tup._2 != null) cube = tup._2;
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
@@ -323,9 +324,11 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private FormTerm.@NotNull Pi ensurePiOrThrow(@NotNull Term term) throws NotPi {
+  private Tuple2<FormTerm.Pi, FormTerm.Cube> ensurePiOrPath(@NotNull Term term) throws NotPi {
     term = whnf(term);
-    if (term instanceof FormTerm.Pi pi) return pi;
+    if (term instanceof FormTerm.Pi pi) return Tuple.of(pi, null);
+    if (term instanceof FormTerm.Path path && path.cube().computePi() instanceof FormTerm.Pi pi)
+      return Tuple.of(pi, path.cube());
     else throw new NotPi(term);
   }
 
