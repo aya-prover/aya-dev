@@ -719,15 +719,11 @@ public final class ExprTycker extends Tycker {
    * @see ExprTycker#unifyTyReported(Term, Term, Expr)
    */
   private Result unifyTyMaybeInsert(@NotNull Term upper, @NotNull Result result, Expr loc) {
-    var lower = result.type();
-    var term = result.wellTyped();
-    while (whnf(lower) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
-      var mock = mockArg(pi.param(), loc.sourcePos());
-      term = CallTerm.make(term, mock);
-      lower = pi.substBody(mock.term());
-    }
+    var inst = instImplicits(result, loc.sourcePos());
+    var lower = inst.type();
+    var term = inst.wellTyped();
     var failureData = unifyTy(upper, lower, loc.sourcePos());
-    if (failureData == null) return new TermResult(term, lower);
+    if (failureData == null) return inst;
     return fail(term.freezeHoles(state), upper, new UnifyError.Type(loc, upper.freezeHoles(state), lower.freezeHoles(state), failureData, state));
   }
 
