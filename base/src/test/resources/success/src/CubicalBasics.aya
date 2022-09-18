@@ -1,12 +1,5 @@
 open import Paths
 
--- workaround #518, #519
-public open import Primitives using
-  ( intervalInv as fixl ~
-  , intervalMin as infix /\
-  , intervalMax as infix \/
-  )
-
 def par1 (A : Type) (u : A) (i : I) : Partial (~ i) A =>
   {| ~ i := u |}
 

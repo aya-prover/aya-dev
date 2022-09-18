@@ -1,12 +1,5 @@
 open import Paths
 
--- workaround #518, #519
-public open import Primitives using
-  ( intervalInv as fixl ~ tighter =
-  , intervalMin as infix /\
-  , intervalMax as infix \/
-  )
-
 def test : ~ 0 = 1 => idp
 
 def path' {A : I -> Type} (p : Pi (i : I) -> A i)

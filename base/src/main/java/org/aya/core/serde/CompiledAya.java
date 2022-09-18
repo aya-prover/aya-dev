@@ -61,7 +61,7 @@ public record CompiledAya(
 
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
     return new CompiledAya(imports, exports,
-      resolveInfo.reExports().toImmutableSeq(),
+      resolveInfo.reExports().keysView().toImmutableSeq(),
       serialization.serDefs.toImmutableSeq(),
       serialization.serOps.toImmutableSeq()
     );

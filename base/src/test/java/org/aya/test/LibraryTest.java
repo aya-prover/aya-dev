@@ -50,17 +50,16 @@ public class LibraryTest {
     var delegated = new DelegateCompilerAdvisor(intercept);
 
     var owner = DiskLibraryOwner.from(LibraryConfigData.fromLibraryRoot(DIR));
-    // TODO: #518, #519
     // Full rebuild
-    // assertEquals(0, compile(factory, delegated, owner));
+    assertEquals(0, compile(factory, delegated, owner));
     // The second time should load the all sources related to Primitives.aya
-    // advisor.clearPrimitiveAya();
-    // assertEquals(0, compile(factory, delegated, owner));
+    advisor.clearPrimitiveAya();
+    assertEquals(0, compile(factory, delegated, owner));
     // The third time should do nothing.
-    // assertEquals(0, compile(factory, delegated, owner));
+    assertEquals(0, compile(factory, delegated, owner));
 
     // Test delegate advisor delegates all methods to real advisor.
-    // data.assertDelegate();
+    data.assertDelegate();
   }
 
   private static final class TestAdvisor extends InMemoryCompilerAdvisor {
