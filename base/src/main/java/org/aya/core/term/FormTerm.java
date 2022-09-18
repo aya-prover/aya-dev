@@ -167,9 +167,9 @@ public sealed interface FormTerm extends Term {
   }
 
   /**
-   * Generalized 'generalized path' syntax.
+   * 'Generalized path' syntax.
    *
-   * @param params  Dimension parameters.
+   * @param params  Dimension parameters, never empty.
    * @param partial Partial element carried by this path.
    * @see org.aya.concrete.Expr.Path
    * @see Path
