@@ -40,7 +40,8 @@ public record CompiledAya(
   @NotNull ImmutableSeq<SerDef.QName> exports,
   @NotNull ImmutableMap<ImmutableSeq<String>, ImmutableMap<String, String>> reExports,
   @NotNull ImmutableSeq<SerDef> serDefs,
-  @NotNull ImmutableSeq<SerDef.SerOp> serOps
+  @NotNull ImmutableSeq<SerDef.SerOp> serOps,
+  @NotNull ImmutableMap<SerDef.QName, SerDef.SerRenamedOp> opRename
 ) implements Serializable {
   public static @NotNull CompiledAya from(
     @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs,
@@ -66,7 +67,13 @@ public record CompiledAya(
         .map((k, v) -> Tuple.of(k, v.renaming()))
         .toImmutableMap(),
       serialization.serDefs.toImmutableSeq(),
-      serialization.serOps.toImmutableSeq()
+      serialization.serOps.toImmutableSeq(),
+      resolveInfo.opRename().view().map((k, v) -> {
+        var name = state.def(k);
+        var info = v._1.opInfo();
+        var renamed = new SerDef.SerRenamedOp(info.name(), info.assoc(), serialization.serBind(v._2));
+        return Tuple.of(name, renamed);
+      }).toImmutableMap()
     );
   }
 
@@ -123,7 +130,7 @@ public record CompiledAya(
     var resolveInfo = new ResolveInfo(state.primFactory(), context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
     shallowResolve(loader, resolveInfo);
     serDefs.forEach(serDef -> de(resolveInfo.shapeFactory(), context, serDef, state));
-    deOp(state, resolveInfo.opSet());
+    deOp(state, resolveInfo);
     return resolveInfo;
   }
 
@@ -148,7 +155,9 @@ public record CompiledAya(
   }
 
   /** like {@link StmtResolver} but only resolve operator */
-  private void deOp(@NotNull SerTerm.DeState state, @NotNull AyaBinOpSet opSet) {
+  private void deOp(@NotNull SerTerm.DeState state, @NotNull ResolveInfo resolveInfo) {
+    var opSet = resolveInfo.opSet();
+    // deserialize defined operator and their bindings
     serOps.forEach(serOp -> {
       var defVar = state.resolve(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc());
@@ -158,16 +167,36 @@ public record CompiledAya(
       var defVar = state.resolve(serOp.name());
       var opDecl = defVar.opDecl;
       assert opDecl != null; // just initialized above
-      var bind = serOp.bind();
-      opSet.ensureHasElem(opDecl);
-      bind.loosers().forEach(looser -> {
-        var target = resolveOp(opSet, state, looser);
-        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
-      });
-      bind.tighters().forEach(tighter -> {
-        var target = resolveOp(opSet, state, tighter);
-        opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
-      });
+      deBindDontCare(resolveInfo, state, opDecl, serOp.bind());
+    });
+    // deserialize renamed operator and their bindings
+    opRename.view().forEach((name, serOp) -> {
+      var defVar = state.resolve(name);
+      var asName = serOp.name();
+      var asBind = serOp.bind();
+      var asAssoc = serOp.assoc();
+      var opDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, asAssoc));
+      deBindDontCare(resolveInfo, state, opDecl, asBind);
+      resolveInfo.renameOp(defVar, opDecl, BindBlock.EMPTY);
+      // ^ always use empty bind block bc we already resolved the bind here!
+    });
+  }
+
+  private void deBindDontCare(
+    @NotNull ResolveInfo resolveInfo,
+    @NotNull SerTerm.DeState state,
+    @NotNull OpDecl opDecl,
+    @NotNull SerDef.SerBind bind
+  ) {
+    var opSet = resolveInfo.opSet();
+    opSet.ensureHasElem(opDecl);
+    bind.loosers().forEach(looser -> {
+      var target = resolveOp(opSet, state, looser);
+      opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
+    });
+    bind.tighters().forEach(tighter -> {
+      var target = resolveOp(opSet, state, tighter);
+      opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
     });
   }
 

@@ -38,7 +38,7 @@ public record ResolveInfo(
   @NotNull PrimDef.Factory primFactory,
   @NotNull AyaShape.Factory shapeFactory,
   @NotNull AyaBinOpSet opSet,
-  @NotNull MutableMap<DefVar<?, ?>, Tuple2<OpDecl, BindBlock>> opRename,
+  @NotNull MutableMap<DefVar<?, ?>, Tuple2<RenamedOpDecl, BindBlock>> opRename,
   @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> imports,
   @NotNull MutableMap<ImmutableSeq<String>, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
@@ -49,7 +49,7 @@ public record ResolveInfo(
       MutableMap.create(), MutableGraph.create());
   }
 
-  public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull OpDecl renamed, @NotNull BindBlock bind) {
+  public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull RenamedOpDecl renamed, @NotNull BindBlock bind) {
     defVar.opDeclRename.put(thisModule().moduleName(), renamed);
     opRename.put(defVar, Tuple2.of(renamed, bind));
   }
@@ -68,5 +68,8 @@ public record ResolveInfo(
         renameOp(defVar, tuple._1, tuple._2);
       } else defVar.opDeclRename.put(thisModule().moduleName(), tuple._1);
     });
+  }
+
+  public record RenamedOpDecl(@NotNull OpInfo opInfo) implements OpDecl {
   }
 }

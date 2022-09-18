@@ -84,10 +84,10 @@ public record StmtShallowResolver(
           var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
           var defVar = (DefVar<?, ?>) symbol;
-          OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc());
+          var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(use.asName(), use.asAssoc()));
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) bind.context().set(ctx);
-          resolveInfo.renameOp(defVar, rename, bind);
+          resolveInfo.renameOp(defVar, renamedOpDecl, bind);
         });
       }
       case Remark remark -> remark.ctx = context;
