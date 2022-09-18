@@ -2,10 +2,17 @@ open import Paths
 import Arith::Nat as N
 open N using (+ as add, zero as Z, suc as S)
 
+-- workaround #518, #519
+public open import Primitives using
+  ( intervalInv as fixl ~ tighter =
+  , intervalMin as infix /\
+  , intervalMax as infix \/
+  )
+
 def two => S Z add S Z
 def two-is-two : two = S (S Z) => idp
 
-def invol-prefix : (~ 0) = 1 => idp
+def invol-prefix : ~ 0 = 1 => idp
 
 def psqueeze-infix {A : Type} {a b : A} (p : a = b) (i : I)
  : a = p i => \j => p (i /\ j)
