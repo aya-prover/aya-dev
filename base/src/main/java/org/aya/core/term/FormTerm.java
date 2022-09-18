@@ -208,12 +208,15 @@ public sealed interface FormTerm extends Term {
       return map(params, mapper);
     }
 
-    public Term makeApp(@NotNull Term app, @NotNull Arg<Term> arg) {
-      var xi = params().map(x -> new Term.Param(x, PrimTerm.Interval.INSTANCE, true));
-      var elim = new ElimTerm.PathApp(app, xi.map(Term.Param::toArg), this);
-      var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
+    public @NotNull Term makeApp(@NotNull Term app, @NotNull Arg<Term> arg) {
+      return CallTerm.make(makeLam(app), arg);
+    }
+
+    public @NotNull Term makeLam(@NotNull Term app) {
+      var xi = params().map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
+      var elim = new ElimTerm.PathApp(app, xi.map(Param::toArg), this);
+      return xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
       // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
-      return CallTerm.make(lam, arg);
     }
   }
 }
