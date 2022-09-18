@@ -180,7 +180,7 @@ public final class ExprTycker extends Tycker {
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
               var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
-              app = CallTerm.make(app, holeApp);
+              app = CallTerm.make(app, holeApp); // TODO: cube.makeApp? possible?
               subst.addDirectly(pi.param().ref(), holeApp.term());
               tup = ensurePiOrPath(pi.body());
               pi = tup._1;
@@ -194,10 +194,15 @@ public final class ExprTycker extends Tycker {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
         var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped();
-        var arg = new Arg<>(elabArg, argLicit);
-        app = cube != null ? cube.makeApp(app, arg) : CallTerm.make(app, arg);
         subst.addDirectly(pi.param().ref(), elabArg);
-        yield new TermResult(app, pi.body().subst(subst));
+        var arg = new Arg<>(elabArg, argLicit);
+        var newApp = cube == null
+          ? CallTerm.make(app, arg)
+          : cube.makeApp(app, arg).subst(subst);
+        // ^ instantiate inserted implicits to the partial element in `Cube`.
+        // It is better to `cube.subst().makeApp()`, but we don't have a `subst` method for `Cube`.
+        // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
+        yield new TermResult(newApp, pi.body().subst(subst));
       }
       case Expr.HoleExpr hole ->
         inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
