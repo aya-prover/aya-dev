@@ -4,6 +4,7 @@ package org.aya.tyck.unify;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
@@ -292,26 +293,50 @@ public final class DefEq {
           if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(), () -> {
             lr.map.put(lambda.param().ref(), rambda.param().toTerm());
             rl.map.put(rambda.param().ref(), lambda.param().toTerm());
-            return compare(lambda.body(), rambda.body(), lr, rl, pi.body());
+            var res = compare(lambda.body(), rambda.body(), lr, rl, pi.body());
+            lr.map.remove(lambda.param().ref());
+            rl.map.remove(rambda.param().ref());
+            return res;
           });
-          return compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body());
+          return compareLambdaBody(rhs, lr, rl, lambda, pi);
         });
         if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(),
-          () -> compare(CallTerm.make(lhs, rambda.param().toArg()), rambda.body(), lr, rl, pi.body()));
+          () -> compareLambdaBody(lhs, rl, lr, rambda, pi));
         // Question: do we need a unification for Pi.body?
         return compareUntyped(lhs, rhs, lr, rl) != null;
       });
       // In this case, both sides have the same type (I hope)
-      case FormTerm.Path path -> compare(
-        path.cube().applyDimsTo(lhs),
-        path.cube().applyDimsTo(rhs),
-        lr, rl, path.cube().computePi());
+      case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
+        if (lhs instanceof IntroTerm.PathLam lambda) return ctx.withIntervals(lambda.params().view(), () -> {
+          if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
+            withIntervals(lambda.params().view(), rambda.params().view(), lr, rl, () ->
+              compare(lambda.body(), rambda.body(), lr, rl, path.cube().type())));
+          return comparePathLamBody(rhs, lr, rl, lambda, path.cube());
+        });
+        if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
+          comparePathLamBody(lhs, rl, lr, rambda, path.cube()));
+        // Question: do we need a unification for Pi.body?
+        return compareUntyped(lhs, rhs, lr, rl) != null;
+      });
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
         comparePartial(lel, rel, ty, lr, rl);
       case FormTerm.PartTy ty -> false;
     };
     traceExit();
     return ret;
+  }
+
+  private boolean compareLambdaBody(Term rhs, Sub lr, Sub rl, IntroTerm.Lambda lambda, FormTerm.Pi pi) {
+    return ctx.with(lambda.param(), () ->
+      compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body()));
+  }
+
+  private boolean comparePathLamBody(Term rhs, Sub lr, Sub rl, IntroTerm.PathLam lambda, FormTerm.Cube cube) {
+    // This is not necessarily correct, but we don't need to generate a precise cube
+    // as conversion for PathApp does not compare cubes (it doesn't have to)
+    var constructed = new FormTerm.Cube(lambda.params(), cube.type(), new Partial.Split<>(ImmutableSeq.empty()));
+    return ctx.withIntervals(lambda.params().view(), () ->
+      compare(lambda.body(), constructed.applyDimsTo(rhs), lr, rl, cube.type()));
   }
 
   private boolean comparePartial(
@@ -328,23 +353,28 @@ public final class DefEq {
     };
   }
 
+  public static <E> E withIntervals(SeqView<LocalVar> l, SeqView<LocalVar> r, Sub lr, Sub rl, Supplier<E> supplier) {
+    assert l.sizeEquals(r);
+    for (var conv : l.zipView(r)) {
+      lr.map.put(conv._1, new RefTerm(conv._2));
+      rl.map.put(conv._2, new RefTerm(conv._1));
+    }
+    var res = supplier.get();
+    l.forEach(lr.map::remove);
+    r.forEach(rl.map::remove);
+    return res;
+  }
+
   private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
-    lhs.params().zipView(rhs.params()).forEach(x -> {
-      lr.map.put(x._1, new RefTerm(x._2));
-      rl.map.put(x._2, new RefTerm(x._1));
+    return withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
+      // TODO: let CofThy.propExt uses lr and rl?
+      var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type().subst(lr.map)).subst(lr.map);
+      var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
+      var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
+      var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
+      if (compareUntyped(lType, rType, lr, rl) == null) return false;
+      return comparePartial(lPar, rPar, lType, lr, rl);
     });
-    // TODO: let CofThy.propExt uses lr and rl?
-    var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type().subst(lr.map)).subst(lr.map);
-    var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
-    var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
-    var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
-    if (compareUntyped(lType, rType, lr, rl) == null) return false;
-    var cmp = comparePartial(lPar, rPar, lType, lr, rl);
-    lhs.params().zipView(rhs.params()).forEach(x -> {
-      lr.map.remove(x._1);
-      rl.map.remove(x._2);
-    });
-    return cmp;
   }
 
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
@@ -378,7 +408,7 @@ public final class DefEq {
         var prePathType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
         if (!(prePathType instanceof FormTerm.Path path)) yield null;
         var happy = lhs.args().zipView(rhs.args()).allMatch(t ->
-          compareUntyped(t._1.term(), t._2.term(), lr, rl) != null);
+          compare(t._1.term(), t._2.term(), lr, rl, null));
         yield happy ? path.cube().type() : null;
       }
       case ElimTerm.Proj lhs -> {
@@ -417,7 +447,7 @@ public final class DefEq {
       }
       case FormTerm.PartTy lhs -> {
         if (!(preRhs instanceof FormTerm.PartTy rhs)) yield null;
-        var happy = compareUntyped(lhs.type(), rhs.type(), lr, rl) != null
+        var happy = compare(lhs.type(), rhs.type(), lr, rl, null)
           && compareRestr(lhs.restr(), rhs.restr());
         yield happy ? FormTerm.Type.ZERO : null;
       }
@@ -431,10 +461,10 @@ public final class DefEq {
         var happy = switch (lhs.asFormula()) {
           case Formula.Lit<Term> ll && rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isLeft() == rr.isLeft();
           case Formula.Inv<Term> ll && rhs.asFormula() instanceof Formula.Inv<Term> rr ->
-            compareUntyped(ll.i(), rr.i(), lr, rl) != null;
+            compare(ll.i(), rr.i(), lr, rl, null);
           case Formula.Conn<Term> ll && rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()
-            && compareUntyped(ll.l(), rr.l(), lr, rl) != null
-            && compareUntyped(ll.r(), rr.r(), lr, rl) != null;
+            && compare(ll.l(), rr.l(), lr, rl, null)
+            && compare(ll.r(), rr.r(), lr, rl, null);
           default -> false;
         };
         yield happy ? PrimTerm.Interval.INSTANCE : null;
@@ -557,14 +587,14 @@ public final class DefEq {
   }
 
   private static boolean sortLt(FormTerm.Sort l, FormTerm.Sort r) {
-    return switch(l) {
-      case FormTerm.Type lt -> switch(r) {
+    return switch (l) {
+      case FormTerm.Type lt -> switch (r) {
         case FormTerm.Type rt -> lt.lift() <= rt.lift();
         case FormTerm.Set rt -> lt.lift() <= rt.lift();
         case FormTerm.ISet iSet -> false;
         case FormTerm.Prop prop -> false;
       };
-      case FormTerm.ISet iSet -> switch(r) {
+      case FormTerm.ISet iSet -> switch (r) {
         case FormTerm.ISet set -> true;
         case FormTerm.Prop prop -> false;
         case FormTerm.Set set -> true;
@@ -586,13 +616,13 @@ public final class DefEq {
   }
 
   public boolean compareSort(FormTerm.Sort l, FormTerm.Sort r) {
-    var result = switch(cmp) {
+    var result = switch (cmp) {
       case Gt -> sortLt(r, l);
       case Eq -> l.kind() == r.kind() && l.lift() == r.lift();
       case Lt -> sortLt(l, r);
     };
-    if(!result) {
-      switch(cmp) {
+    if (!result) {
+      switch (cmp) {
         case Eq -> reporter.report(new LevelError(pos, l, r, true));
         case Gt -> reporter.report(new LevelError(pos, l, r, false));
         case Lt -> reporter.report(new LevelError(pos, r, l, false));

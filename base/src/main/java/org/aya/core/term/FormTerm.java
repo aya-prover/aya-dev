@@ -167,9 +167,9 @@ public sealed interface FormTerm extends Term {
   }
 
   /**
-   * Generalized 'generalized path' syntax.
+   * 'Generalized path' syntax.
    *
-   * @param params  Dimension parameters.
+   * @param params  Dimension parameters, never empty.
    * @param partial Partial element carried by this path.
    * @see org.aya.concrete.Expr.Path
    * @see Path
@@ -179,9 +179,9 @@ public sealed interface FormTerm extends Term {
     @NotNull Term type,
     @NotNull Partial<Term> partial
   ) {
-    public @NotNull Term computePi() {
+    public @NotNull Pi computePi() {
       var iTele = params().view().map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
-      return Pi.make(iTele, type());
+      return (Pi) Pi.make(iTele, type());
     }
 
     public @NotNull Term applyDimsTo(@NotNull Term innerMost) {
@@ -208,12 +208,12 @@ public sealed interface FormTerm extends Term {
       return map(params, mapper);
     }
 
-    public Term makeApp(@NotNull Term app, @NotNull Term elabArg) {
+    public Term makeApp(@NotNull Term app, @NotNull Arg<Term> arg) {
       var xi = params().map(x -> new Term.Param(x, PrimTerm.Interval.INSTANCE, true));
       var elim = new ElimTerm.PathApp(app, xi.map(Term.Param::toArg), this);
-      // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
       var lam = xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
-      return CallTerm.make(lam, new Arg<>(elabArg, true));
+      // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
+      return CallTerm.make(lam, arg);
     }
   }
 }

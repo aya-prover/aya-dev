@@ -10,6 +10,7 @@ import kala.tuple.Tuple2;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
+import org.aya.core.term.PrimTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
@@ -39,9 +40,14 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   default <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
     return with(param.ref(), param.type(), action);
   }
-  default <T> T with(@NotNull SeqView<Term.Param> params, @NotNull Supplier<T> action) {
+  default <T> T withIntervals(@NotNull SeqView<LocalVar> params, @NotNull Supplier<T> action) {
     if (params.isEmpty()) return action.get();
-    return with(params.first(), () -> with(params.drop(1), action));
+    params.forEach(x -> put(x, PrimTerm.Interval.INSTANCE));
+    try {
+      return action.get();
+    } finally {
+      remove(params);
+    }
   }
   void remove(@NotNull SeqView<LocalVar> vars);
   default void forward(@NotNull LocalCtx dest, @NotNull Term term, @NotNull TyckState state) {

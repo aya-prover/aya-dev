@@ -169,32 +169,33 @@ public final class ExprTycker extends Tycker {
           unifier(appE.sourcePos(), Ordering.Eq).compare(fTy, pi, null);
           fTy = whnf(fTy);
         }
-        FormTerm.Cube cube = null;
-        if (fTy instanceof FormTerm.Path path) {
-          cube = path.cube();
-          fTy = cube.computePi();
-        }
-        if (!(fTy instanceof FormTerm.Pi piTerm))
-          yield fail(appE, f.type(), BadTypeError.pi(state, appE, f.type()));
-        var pi = piTerm;
+        FormTerm.Cube cube;
+        FormTerm.Pi pi;
         var subst = new Subst(MutableMap.create());
         try {
+          var tup = ensurePiOrPath(fTy);
+          pi = tup._1;
+          cube = tup._2;
           while (pi.param().explicit() != argLicit || argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
               var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
               app = CallTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
-              pi = ensurePiOrThrow(pi.body());
+              tup = ensurePiOrPath(pi.body());
+              pi = tup._1;
+              if (tup._2 != null) cube = tup._2;
             } else yield fail(appE, new ErrorTerm(pi.body()), new LicitError.UnexpectedImplicitArg(argument));
           }
-          pi = ensurePiOrThrow(pi.subst(subst));
+          tup = ensurePiOrPath(pi.subst(subst));
+          pi = tup._1;
+          if (tup._2 != null) cube = tup._2;
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
         var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped();
-        if (cube == null) app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
-        else app = cube.makeApp(app, elabArg);
+        var arg = new Arg<>(elabArg, argLicit);
+        app = cube != null ? cube.makeApp(app, arg) : CallTerm.make(app, arg);
         subst.addDirectly(pi.param().ref(), elabArg);
         yield new TermResult(app, pi.body().subst(subst));
       }
@@ -216,15 +217,12 @@ public final class ExprTycker extends Tycker {
 
         yield new TermResult(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
-      case Expr.Path path -> {
-        var params = path.params().view().map(n -> new Term.Param(n, PrimTerm.Interval.INSTANCE, true));
-        yield localCtx.with(params, () -> {
-          var type = synthesize(path.type());
-          var partial = elaboratePartial(path.partial(), type.wellTyped());
-          var cube = new FormTerm.Cube(path.params(), type.wellTyped(), partial);
-          return new TermResult(new FormTerm.Path(cube), type.type());
-        });
-      }
+      case Expr.Path path -> localCtx.withIntervals(path.params().view(), () -> {
+        var type = synthesize(path.type());
+        var partial = elaboratePartial(path.partial(), type.wellTyped());
+        var cube = new FormTerm.Cube(path.params(), type.wellTyped(), partial);
+        return new TermResult(new FormTerm.Path(cube), type.type());
+      });
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -326,9 +324,12 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private FormTerm.@NotNull Pi ensurePiOrThrow(@NotNull Term term) throws NotPi {
+  private Tuple2<FormTerm.Pi, FormTerm.@Nullable Cube>
+  ensurePiOrPath(@NotNull Term term) throws NotPi {
     term = whnf(term);
-    if (term instanceof FormTerm.Pi pi) return pi;
+    if (term instanceof FormTerm.Pi pi) return Tuple.of(pi, null);
+    if (term instanceof FormTerm.Path path)
+      return Tuple.of(path.cube().computePi(), path.cube());
     else throw new NotPi(term);
   }
 
@@ -442,13 +443,15 @@ public final class ExprTycker extends Tycker {
   private TermResult checkBoundaries(Expr expr, FormTerm.Path path, Subst subst, Term lambda) {
     var cube = path.cube();
     var applied = cube.applyDimsTo(lambda);
-    var happy = switch (cube.partial()) {
-      case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), cube.type(), subst);
-      case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
-        CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), cube.type(), s)));
-    };
-    return happy ? new TermResult(new IntroTerm.PathLam(cube.params(), applied), path)
-      : new TermResult(ErrorTerm.unexpected(expr), path);
+    return localCtx.withIntervals(cube.params().view(), () -> {
+      var happy = switch (cube.partial()) {
+        case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), cube.type(), subst);
+        case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
+          CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), cube.type(), s)));
+      };
+      return happy ? new TermResult(new IntroTerm.PathLam(cube.params(), applied), path)
+        : new TermResult(ErrorTerm.unexpected(expr), path);
+    });
   }
 
   private @NotNull SortResult doSort(@NotNull Expr expr) {

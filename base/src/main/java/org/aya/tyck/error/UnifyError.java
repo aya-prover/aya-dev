@@ -35,7 +35,7 @@ public interface UnifyError extends TyckError {
     var expectedNFDoc = expected.normalize(state(), NormalizeMode.NF).toDoc(options);
     if (!expectedNFDoc.equals(expectedDoc))
       buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expectedNFDoc))));
-    var failureLhs = failureData().lhs().toDoc(options);
+    var failureLhs = failureData().lhs().freezeHoles(state()).toDoc(options);
     if (!failureLhs.equals(actualDoc)
       && !failureLhs.equals(expectedDoc)
       && !failureLhs.equals(actualNFDoc)
@@ -44,7 +44,7 @@ public interface UnifyError extends TyckError {
       Doc.english("In particular, we failed to unify"),
       Doc.par(1, failureLhs),
       Doc.english("with"),
-      Doc.par(1, failureData().rhs().toDoc(options))
+      Doc.par(1, failureData().rhs().freezeHoles(state()).toDoc(options))
     });
     return Doc.vcat(buf);
   }
