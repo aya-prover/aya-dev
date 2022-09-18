@@ -30,7 +30,7 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
   /**
    * Binary operators can be renamed in other modules.
    * Initialized in the resolver or core deserialization.
-   * see {@link ResolveInfo#bindBlockRename()}
+   * see {@link ResolveInfo#opRename()}
    */
   public @NotNull MutableMap<ImmutableSeq<String>, OpDecl> opDeclRename = MutableMap.create();
 

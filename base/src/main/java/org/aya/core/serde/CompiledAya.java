@@ -2,10 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
@@ -37,7 +38,7 @@ import java.util.function.Function;
 public record CompiledAya(
   @NotNull ImmutableSeq<ImmutableSeq<String>> imports,
   @NotNull ImmutableSeq<SerDef.QName> exports,
-  @NotNull ImmutableSeq<ImmutableSeq<String>> reExports,
+  @NotNull ImmutableMap<ImmutableSeq<String>, ImmutableMap<String, String>> reExports,
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps
 ) implements Serializable {
@@ -61,7 +62,9 @@ public record CompiledAya(
 
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
     return new CompiledAya(imports, exports,
-      resolveInfo.reExports().keysView().toImmutableSeq(),
+      resolveInfo.reExports().view()
+        .map((k, v) -> Tuple.of(k, v.renaming()))
+        .toImmutableMap(),
       serialization.serDefs.toImmutableSeq(),
       serialization.serOps.toImmutableSeq()
     );
@@ -128,17 +131,17 @@ public record CompiledAya(
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var modName : imports) {
       var success = loader.load(modName);
-      if (success == null) thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
+      if (success == null)
+        thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(success.thisModule().moduleName(), success);
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
-      // TODO: more public open (re-export) info
-      // TODO: handle renaming
-      if (reExports.contains(modName)) thisResolve.thisModule().openModule(modName,
+      // TODO: use list and hide list?
+      reExports.getOption(modName).forEach(rename -> thisResolve.thisModule().openModule(modName,
         Stmt.Accessibility.Public,
         s -> true,
-        MutableHashMap.create(),
-        SourcePos.SER);
+        rename,
+        SourcePos.SER));
       thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
       thisResolve.shapeFactory().importAll(success.shapeFactory());
     }
