@@ -79,26 +79,6 @@ public final class PrimDef extends TopLevelDef<Term> {
 
   public static class Factory {
     private final class Initializer {
-
-
-      /** Arend's coe */
-      private @NotNull Term arcoe(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
-        var args = prim.args();
-        var argBase = args.get(1);
-        var argI = args.get(2);
-        if (argI.term().asFormula() instanceof Formula.Lit<Term> end && end.isLeft())
-          return argBase.term();
-        var argA = args.get(0).term();
-
-        if (argA instanceof IntroTerm.Lambda lambda) {
-          var normalize = lambda.body().normalize(state, NormalizeMode.NF);
-          if (normalize.findUsages(lambda.param().ref()) == 0) return argBase.term();
-          else return new CallTerm.Prim(prim.ref(), prim.ulift(), ImmutableSeq.of(
-            new Arg<>(new IntroTerm.Lambda(lambda.param(), normalize), true), argBase, argI));
-        }
-        return prim;
-      }
-
       public final @NotNull PrimDef.PrimSeed coerce = new PrimSeed(ID.COE, this::coe, ref -> {
         var varA = new LocalVar("A");
         var paramA = new Term.Param(varA, intervalToA(), true);
