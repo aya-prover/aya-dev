@@ -105,7 +105,6 @@ public interface StmtResolver {
 
           bodyResolver.enterBody();
           field.body = field.body.map(e -> bodyResolver.resolve(e, fieldLocal._2));
-          field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
           addReferences(info, new TyckOrder.Body(field), bodyResolver);
         });
         addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()

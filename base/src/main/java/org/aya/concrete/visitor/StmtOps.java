@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -66,7 +66,6 @@ public interface StmtOps<P> extends ExprTraversal<P> {
         ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, pp));
       }
       case TeleDecl.StructField field -> {
-        field.clauses = field.clauses.map(clause -> visitClause(clause, pp));
         field.body = field.body.map(expr -> visitExpr(expr, pp));
       }
     }

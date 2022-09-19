@@ -762,7 +762,6 @@ public record AyaProducer(
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.ofNullable(ctx.expr()).map(this::visitExpr),
-      ImmutableSeq.empty(),
       false,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
@@ -780,7 +779,6 @@ public record AyaProducer(
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.none(),
-      ImmutableSeq.empty(),
       ctx.COERCE() != null,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
