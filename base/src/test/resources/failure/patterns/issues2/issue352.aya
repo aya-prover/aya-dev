@@ -1,13 +1,10 @@
 prim I
-open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
-  | at (i : I) : A i {
-    | 0 => a
-    | 1 => b
-  }
-def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p 0) (p 1) { | at i => p i }
+prim intervalInv
+def inline ~ => intervalInv
+prim coe
+def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
+def infix = {A : Type} => Eq A
 
 variable A B : Type
-def infix = (a b : A) => Path (\x => A) a b
-def idp {a : A} : a = a => path (\x => a)
 def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
