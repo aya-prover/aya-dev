@@ -45,8 +45,6 @@ module Example-SV {
   def proof-john-runs-event : Event (new EventT { | AgentT => Entity })
     => new Event (new EventT { | AgentT => Entity }) { | agent => johnImpl }
 
-  -- TODO: prove regularity manually
-  -- need p : johnImpl = coe (\ y => Entity) (0) johnImpl
   def proof-john-runs : john-runs
    => (proof-john-runs-event, run1, (coeFill, unit))
 }

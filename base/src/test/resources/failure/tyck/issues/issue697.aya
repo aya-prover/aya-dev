@@ -1,27 +1,17 @@
 prim I
-prim arcoe
-open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
-  | at (i : I) : A i {
-    | 0 => a
-    | 1 => b
-  }
-def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p 0) (p 1) { | at i => p i }
-def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
-def idp {A : Type} {a : A} : a = a => path (\ i => a)
-
-def hfill2d {A : Type}
-  {a b c d : A}
-  (p : a = b)
-  (q : b = d)
-  (r : a = c)
-  (i j : I) : A
-  => (arcoe (\ k => (r.at k) = (q.at k)) p i).at j
-def hcomp2d {A : Type}
+prim coe
+prim intervalInv
+def inline ~ => intervalInv
+def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
+variable A : Type
+def infix = {A : Type} => Eq A
+def hcomp2d
   {a b c d : A}
   (p : a = b)
   (q : b = d)
   (r : a = c) : c = d
-  => path (hfill2d p q r 1)
+  => \i => coe (\ k => r k = q k) 0 p i
+def idp {a : A} : a = a => \i => a
 
 def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
