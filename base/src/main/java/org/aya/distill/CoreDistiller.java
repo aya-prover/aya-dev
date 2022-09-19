@@ -87,8 +87,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         list.append(Doc.symbol("=>"));
         list.append(bodyDoc);
         var doc = Doc.sep(list);
-        // Add paren when it's in a spine
-        yield checkParen(outer, doc, Outer.AppSpine);
+        yield checkParen(outer, doc, Outer.AppHead);
       }
       case FormTerm.Sort term -> {
         var fn = Doc.styled(KEYWORD, term.kind().name());

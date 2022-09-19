@@ -3,7 +3,10 @@
 package org.aya.core;
 
 import org.aya.core.def.FnDef;
+import org.aya.core.term.*;
+import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.util.distill.DistillerOptions;
 import org.intellij.lang.annotations.Language;
@@ -140,6 +143,14 @@ public class DistillerTest {
     var t2 = ((FnDef) decls.get(10)).body.getLeftValue();
     assertEquals("p ((i \\/ j \\/ k) /\\ (k \\/ j \\/ i))", t1.toDoc(DistillerOptions.informative()).debugRender());
     assertEquals("p (i /\\ j /\\ k \\/ k /\\ j /\\ i)", t2.toDoc(DistillerOptions.informative()).debugRender());
+  }
+
+  @Test public void lambdaApp() {
+    var a = new LocalVar("a");
+    var A = new LocalVar("A");
+    var x = new LocalVar("x");
+    var t = new ElimTerm.App(new IntroTerm.Lambda(new Term.Param(a, new RefTerm(A), true), new RefTerm(a)), new Arg<>(new RefTerm(x), true));
+    assertEquals("(\\ a => a) x", t.toDoc(DistillerOptions.informative()).debugRender());
   }
 
   @Test public void pathApp() {
