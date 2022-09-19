@@ -1,12 +1,30 @@
-In file $FILE:26:18 ->
+In file $FILE:26:4 ->
 
   24 | 
   25 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  26 |   | zero, y, z => idp
-                         ^-^
+  26 |   | zero, y, z => refl
+           ^--^
 
-Error: The name `idp` is not defined in the current scope
+Error: There is no parameter for the pattern
+         zero
+       to match against, given the return type
+         Pi (x y z : Nat) -> (=) {Nat} (x + (y + z)) ((x + y) + z)
+       (and in case it's a function type, you may want to move its parameters before
+       the `:` in the signature)
 
-Resolving interrupted due to:
-1 error(s), 0 warning(s).
+In file $FILE:27:4 ->
+
+  25 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  26 |   | zero, y, z => refl
+  27 |   | suc x, y, z => pmap suc (+-assoc x y z)
+           ^---^
+
+Error: There is no parameter for the pattern
+         suc x
+       to match against, given the return type
+         Pi (x y z : Nat) -> (=) {Nat} (x + (y + z)) ((x + y) + z)
+       (and in case it's a function type, you may want to move its parameters before
+       the `:` in the signature)
+
+2 error(s), 0 warning(s).
 What are you doing?

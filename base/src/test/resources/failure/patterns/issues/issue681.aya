@@ -23,5 +23,5 @@ def overlap infix + (n m : Nat) : Nat
   tighter =
 
 def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  | zero, y, z => idp
+  | zero, y, z => refl
   | suc x, y, z => pmap suc (+-assoc x y z)
