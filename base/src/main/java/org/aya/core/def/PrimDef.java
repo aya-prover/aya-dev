@@ -121,12 +121,9 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       public final @NotNull PrimDef.PrimSeed coerce = new PrimSeed(ID.COE, this::coe, ref -> {
         var varA = new LocalVar("A");
-        var paramI = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
-        var paramA = new Term.Param(varA, new FormTerm.Pi(paramI, new FormTerm.Type(0)), true);
+        var paramA = new Term.Param(varA, intervalToA(), true);
         var paramRestr = new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true);
-        var result = new FormTerm.Pi(
-          new Term.Param(LocalVar.IGNORED, new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
-          new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.RIGHT, true)));
+        var result = familyLeftToRight(new RefTerm(varA));
 
         return new PrimDef(
           ref,
@@ -287,6 +284,17 @@ public final class PrimDef extends TopLevelDef<Term> {
     public void clear(@NotNull ID name) {
       defs.remove(name);
     }
+  }
+
+  public static @NotNull FormTerm.Pi familyLeftToRight(Term term) {
+    return new FormTerm.Pi(
+      new Term.Param(LocalVar.IGNORED, new ElimTerm.App(term, new Arg<>(PrimTerm.Mula.LEFT, true)), true),
+      new ElimTerm.App(term, new Arg<>(PrimTerm.Mula.RIGHT, true)));
+  }
+
+  public static @NotNull Term intervalToA() {
+    var paramI = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
+    return new FormTerm.Pi(paramI, new FormTerm.Type(0));
   }
 
   public enum ID {

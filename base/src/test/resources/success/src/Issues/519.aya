@@ -1,9 +1,7 @@
-open import Paths
-import Arith::Nat as N
-open N using (+ as add, zero as Z, suc as S)
+open import Issues::For519
 
-def two => S Z add S Z
-def two-is-two : two = S (S Z) => idp
+
+-- The following are copied from 289.aya
 
 def invol-prefix : ~ 0 = 1 => idp
 

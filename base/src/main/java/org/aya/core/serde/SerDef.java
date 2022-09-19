@@ -138,6 +138,10 @@ public sealed interface SerDef extends Serializable {
   record SerOp(@NotNull QName name, @NotNull Assoc assoc, @NotNull SerBind bind) implements Serializable {
   }
 
+  /** Serialized version of {@link org.aya.resolve.ResolveInfo.RenamedOpDecl} */
+  record SerRenamedOp(@NotNull String name, @NotNull Assoc assoc, @NotNull SerBind bind) implements Serializable {
+  }
+
   /** Serialized version of {@link org.aya.concrete.stmt.BindBlock} */
   record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
     public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());

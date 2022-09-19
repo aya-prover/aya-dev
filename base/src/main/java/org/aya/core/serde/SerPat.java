@@ -36,7 +36,7 @@ public sealed interface SerPat extends Serializable {
 
   record Bind(boolean explicit, @NotNull SerTerm.SimpVar var, @NotNull SerTerm ty) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Bind(explicit, state.var(var), ty.de(state));
+      return new Pat.Bind(explicit, var.de(state), ty.de(state));
     }
   }
 

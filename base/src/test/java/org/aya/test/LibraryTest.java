@@ -33,8 +33,8 @@ public class LibraryTest {
     FileUtil.deleteRecursively(DIR.resolve("build"));
     // Full rebuild
     assertEquals(0, compile());
-    FileUtil.deleteRecursively(DIR.resolve("build").resolve("out"));
     // The second time should load the cache of 'common'.
+    FileUtil.deleteRecursively(DIR.resolve("build").resolve("out"));
     assertEquals(0, compile());
     // The third time should do nothing.
     assertEquals(0, compile());

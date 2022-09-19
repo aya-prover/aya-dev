@@ -25,5 +25,5 @@ def Leibniz (x y : A) : Prop
   => Pi (P : A → Prop) → P x → P y
 
 def refl (a : A) : Leibniz a a => \p x => x
-def sym {x y : A} (p : Leibniz x y)
-  : Leibniz y x => p (λ y => Leibniz y x) (refl _)
+def symm {x y : A} (p : Leibniz x y)
+  : Leibniz y x => p (λ y' => Leibniz y' x) (refl _)

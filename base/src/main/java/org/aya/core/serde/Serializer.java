@@ -12,7 +12,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
-import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.Contract;
@@ -84,11 +83,7 @@ public record Serializer(@NotNull Serializer.State state) {
     return switch (term) {
       case LitTerm.ShapedInt lit ->
         new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
-      case PrimTerm.Mula end -> new SerTerm.Mula(switch (end.asFormula()) {
-        case Formula.Conn<Term> cnn -> new SerTerm.SerMula.Conn(cnn.isAnd(), serialize(cnn.l()), serialize(cnn.r()));
-        case Formula.Inv<Term> inv -> new SerTerm.SerMula.Inv(serialize(inv.i()));
-        case Formula.Lit<Term> lit -> new SerTerm.SerMula.Lit(lit.isLeft());
-      });
+      case PrimTerm.Mula end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case PrimTerm.Str str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
       case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()));
@@ -119,13 +114,13 @@ public record Serializer(@NotNull Serializer.State state) {
       case IntroTerm.New newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
-      // TODO: implement these
-      case IntroTerm.PartEl el -> new SerTerm.Type(114514);
-      case FormTerm.PartTy ty -> new SerTerm.Type(114514);
-      case FormTerm.Path path -> new SerTerm.Type(114514);
-      case IntroTerm.PathLam path -> new SerTerm.Type(114514);
-      case ElimTerm.PathApp app -> new SerTerm.Type(114514);
-      case PrimTerm.Coe coe -> new SerTerm.Type(114514);
+      case IntroTerm.PartEl el -> new SerTerm.PartEl(el.partial().fmap(this::serialize), serialize(el.rhsType()));
+      case FormTerm.PartTy ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
+      case FormTerm.Path path -> new SerTerm.Path(serialize(path.cube()));
+      case IntroTerm.PathLam path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
+      case ElimTerm.PathApp app -> new SerTerm.PathApp(serialize(app.of()),
+        serializeArgs(app.args()), serialize(app.cube()));
+      case PrimTerm.Coe coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
 
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
@@ -151,6 +146,13 @@ public record Serializer(@NotNull Serializer.State state) {
         SerDef.SerAyaShape.serialize(lit.shape()),
         serializeDataCall(lit.type()));
     };
+  }
+
+  private @NotNull SerTerm.SerCube serialize(@NotNull FormTerm.Cube cube) {
+    return new SerTerm.SerCube(
+      serializeIntervals(cube.params()),
+      serialize(cube.type()),
+      cube.partial().fmap(this::serialize));
   }
 
   private @NotNull SerTerm.DataCall serializeDataCall(CallTerm.@NotNull Data dataCall) {
@@ -192,10 +194,18 @@ public record Serializer(@NotNull Serializer.State state) {
   }
 
   @Contract("_ -> new") private SerTerm.SerParam serialize(Term.@NotNull Param param) {
-    return new SerTerm.SerParam(param.explicit(), state.local(param.ref()), serialize(param.type()));
+    return new SerTerm.SerParam(param.explicit(), serialize(param.ref()), serialize(param.type()));
+  }
+
+  private @NotNull SerTerm.SimpVar serialize(@NotNull LocalVar localVar) {
+    return state.local(localVar);
   }
 
   private @NotNull ImmutableSeq<SerTerm.SerParam> serializeParams(ImmutableSeq<Term.@NotNull Param> params) {
+    return params.map(this::serialize);
+  }
+
+  private @NotNull ImmutableSeq<SerTerm.SimpVar> serializeIntervals(ImmutableSeq<LocalVar> params) {
     return params.map(this::serialize);
   }
 

@@ -2,10 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
@@ -37,9 +38,10 @@ import java.util.function.Function;
 public record CompiledAya(
   @NotNull ImmutableSeq<ImmutableSeq<String>> imports,
   @NotNull ImmutableSeq<SerDef.QName> exports,
-  @NotNull ImmutableSeq<ImmutableSeq<String>> reExports,
+  @NotNull ImmutableMap<ImmutableSeq<String>, ImmutableMap<String, String>> reExports,
   @NotNull ImmutableSeq<SerDef> serDefs,
-  @NotNull ImmutableSeq<SerDef.SerOp> serOps
+  @NotNull ImmutableSeq<SerDef.SerOp> serOps,
+  @NotNull ImmutableMap<SerDef.QName, SerDef.SerRenamedOp> opRename
 ) implements Serializable {
   public static @NotNull CompiledAya from(
     @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs,
@@ -61,9 +63,17 @@ public record CompiledAya(
 
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
     return new CompiledAya(imports, exports,
-      resolveInfo.reExports().toImmutableSeq(),
+      resolveInfo.reExports().view()
+        .map((k, v) -> Tuple.of(k, v.renaming()))
+        .toImmutableMap(),
       serialization.serDefs.toImmutableSeq(),
-      serialization.serOps.toImmutableSeq()
+      serialization.serOps.toImmutableSeq(),
+      resolveInfo.opRename().view().map((k, v) -> {
+        var name = state.def(k);
+        var info = v._1.opInfo();
+        var renamed = new SerDef.SerRenamedOp(info.name(), info.assoc(), serialization.serBind(v._2));
+        return Tuple.of(name, renamed);
+      }).toImmutableMap()
     );
   }
 
@@ -120,7 +130,7 @@ public record CompiledAya(
     var resolveInfo = new ResolveInfo(state.primFactory(), context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
     shallowResolve(loader, resolveInfo);
     serDefs.forEach(serDef -> de(resolveInfo.shapeFactory(), context, serDef, state));
-    deOp(state, resolveInfo.opSet());
+    deOp(state, resolveInfo);
     return resolveInfo;
   }
 
@@ -128,24 +138,26 @@ public record CompiledAya(
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var modName : imports) {
       var success = loader.load(modName);
-      if (success == null) thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
+      if (success == null)
+        thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(success.thisModule().moduleName(), success);
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
-      // TODO: more public open (re-export) info
-      // TODO: handle renaming
-      if (reExports.contains(modName)) thisResolve.thisModule().openModule(modName,
+      // TODO: use list and hide list?
+      reExports.getOption(modName).forEach(rename -> thisResolve.thisModule().openModule(modName,
         Stmt.Accessibility.Public,
         s -> true,
-        MutableHashMap.create(),
-        SourcePos.SER);
+        rename,
+        SourcePos.SER));
       thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
       thisResolve.shapeFactory().importAll(success.shapeFactory());
     }
   }
 
   /** like {@link StmtResolver} but only resolve operator */
-  private void deOp(@NotNull SerTerm.DeState state, @NotNull AyaBinOpSet opSet) {
+  private void deOp(@NotNull SerTerm.DeState state, @NotNull ResolveInfo resolveInfo) {
+    var opSet = resolveInfo.opSet();
+    // deserialize defined operator and their bindings
     serOps.forEach(serOp -> {
       var defVar = state.resolve(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc());
@@ -155,16 +167,36 @@ public record CompiledAya(
       var defVar = state.resolve(serOp.name());
       var opDecl = defVar.opDecl;
       assert opDecl != null; // just initialized above
-      var bind = serOp.bind();
-      opSet.ensureHasElem(opDecl);
-      bind.loosers().forEach(looser -> {
-        var target = resolveOp(opSet, state, looser);
-        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
-      });
-      bind.tighters().forEach(tighter -> {
-        var target = resolveOp(opSet, state, tighter);
-        opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
-      });
+      deBindDontCare(resolveInfo, state, opDecl, serOp.bind());
+    });
+    // deserialize renamed operator and their bindings
+    opRename.view().forEach((name, serOp) -> {
+      var defVar = state.resolve(name);
+      var asName = serOp.name();
+      var asBind = serOp.bind();
+      var asAssoc = serOp.assoc();
+      var opDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, asAssoc));
+      deBindDontCare(resolveInfo, state, opDecl, asBind);
+      resolveInfo.renameOp(defVar, opDecl, BindBlock.EMPTY);
+      // ^ always use empty bind block bc we already resolved the bind here!
+    });
+  }
+
+  private void deBindDontCare(
+    @NotNull ResolveInfo resolveInfo,
+    @NotNull SerTerm.DeState state,
+    @NotNull OpDecl opDecl,
+    @NotNull SerDef.SerBind bind
+  ) {
+    var opSet = resolveInfo.opSet();
+    opSet.ensureHasElem(opDecl);
+    bind.loosers().forEach(looser -> {
+      var target = resolveOp(opSet, state, looser);
+      opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
+    });
+    bind.tighters().forEach(tighter -> {
+      var target = resolveOp(opSet, state, tighter);
+      opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
     });
   }
 

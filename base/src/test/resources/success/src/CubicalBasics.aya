@@ -1,19 +1,4 @@
-open import Primitives using
-  ( I
-  , Partial
-  , intervalInv as fixl ~
-  , intervalMin as infix /\
-  , intervalMax as infix \/
-  )
-
-def Eq (A : Type) (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
-def infix = {A : Type} => Eq A
-def idp {A : Type} {a : A} : a = a => \i => a
-def funExt {A B : Type} (f g : A -> B)
-     (p : Pi (a : A) -> f a = g a) : f = g => \i a => p a i
-def pmap {A B : Type} (f : A -> B) {a b : A}
-     (p : a = b) : f a = f b => \i => f (p i)
-def sym {A : Type} {a b : A} (p : a = b) : b = a => \i => p (~ i)
+open import Paths
 
 def par1 (A : Type) (u : A) (i : I) : Partial (~ i) A =>
   {| ~ i := u |}

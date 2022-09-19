@@ -12,6 +12,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
@@ -303,7 +304,7 @@ public final class DefEq {
         if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(),
           () -> compareLambdaBody(lhs, rl, lr, rambda, pi));
         // Question: do we need a unification for Pi.body?
-        return compareUntyped(lhs, rhs, lr, rl) != null;
+        return compare(lhs, rhs, lr, rl, null);
       });
       // In this case, both sides have the same type (I hope)
       case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
@@ -316,7 +317,7 @@ public final class DefEq {
         if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
           comparePathLamBody(lhs, rl, lr, rambda, path.cube()));
         // Question: do we need a unification for Pi.body?
-        return compareUntyped(lhs, rhs, lr, rl) != null;
+        return compare(lhs, rhs, lr, rl, null);
       });
       case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
         comparePartial(lel, rel, ty, lr, rl);
@@ -372,7 +373,7 @@ public final class DefEq {
       var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
       var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
       var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
-      if (compareUntyped(lType, rType, lr, rl) == null) return false;
+      if (!compare(lType, rType, lr, rl, null)) return false;
       return comparePartial(lPar, rPar, lType, lr, rl);
     });
   }
@@ -481,6 +482,12 @@ public final class DefEq {
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         yield args ? FormTerm.Type.ZERO : null;
+      }
+      case PrimTerm.Coe lhs -> {
+        if (!(preRhs instanceof PrimTerm.Coe rhs)) yield null;
+        if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
+        yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
+          PrimDef.familyLeftToRight(lhs.type()) : null;
       }
       case CallTerm.Con lhs -> switch (preRhs) {
         case CallTerm.Con rhs -> {

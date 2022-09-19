@@ -137,7 +137,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       }
       case FormTerm.PartTy ty -> {
         var type = f.apply(ty.type());
-        var restr = ty.restr().fmap(f);
+        var restr = ty.restr().map(f);
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new FormTerm.PartTy(type, restr);
       }
@@ -166,7 +166,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       }
       case PrimTerm.Coe coe -> {
         var type = f.apply(coe.type());
-        var restr = coe.restr().fmap(f);
+        var restr = coe.restr().map(f).normalize();
         if (type == coe.type() && restr == coe.restr()) yield coe;
         yield new PrimTerm.Coe(type, restr);
       }

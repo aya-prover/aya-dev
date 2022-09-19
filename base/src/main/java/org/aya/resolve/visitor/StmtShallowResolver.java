@@ -74,12 +74,9 @@ public record StmtShallowResolver(
         // because the module itself and its submodules share the same ResolveInfo
         var modInfo = resolveInfo.imports().getOption(mod);
         if (modInfo.isDefined()) {
-          if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().append(mod);
+          if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
           var modResolveInfo = modInfo.get();
-          // open operator precedence bindings
-          resolveInfo.opSet().importBind(modResolveInfo.opSet(), cmd.sourcePos());
-          // open discovered shapes as well
-          resolveInfo.shapeFactory().importAll(modResolveInfo.shapeFactory());
+          resolveInfo.open(modResolveInfo, cmd.sourcePos(), acc);
         }
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
@@ -87,13 +84,10 @@ public record StmtShallowResolver(
           var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
           assert symbol instanceof DefVar<?, ?>;
           var defVar = (DefVar<?, ?>) symbol;
-          OpDecl rename = () -> new OpDecl.OpInfo(use.asName(), use.asAssoc());
-          defVar.opDeclRename.put(resolveInfo.thisModule().moduleName(), rename);
+          var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(use.asName(), use.asAssoc()));
           var bind = use.asBind();
-          if (bind != BindBlock.EMPTY) {
-            bind.context().set(ctx);
-            resolveInfo.bindBlockRename().put(rename, bind);
-          }
+          if (bind != BindBlock.EMPTY) bind.context().set(ctx);
+          resolveInfo.renameOp(defVar, renamedOpDecl, bind);
         });
       }
       case Remark remark -> remark.ctx = context;
