@@ -1,33 +1,35 @@
-In file $FILE:13:46 ->
+In file $FILE:12:45 ->
 
-  11 | 
-  12 | -- https://cstheory.stackexchange.com/a/49160/50892
-  13 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
-                                                     ^^
+  10 | 
+  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  12 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
+                                                    ^^
 
 Error: The solution
          B
        is not well-scoped
        In particular, these variables are not in scope: `B`
 
-In file $FILE:13:14 ->
+In file $FILE:12:14 ->
 
-  11 | 
-  12 | -- https://cstheory.stackexchange.com/a/49160/50892
-  13 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
+  10 | 
+  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  12 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
                      ^^
 
 Error: Unsolved meta _
 
-In file $FILE:13:14 ->
+In file $FILE:12:14 ->
 
-  11 | 
-  12 | -- https://cstheory.stackexchange.com/a/49160/50892
-  13 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
+  10 | 
+  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  12 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
                      ^^
 
 Error: Unsolved meta _
-       in `Eq {_} a b`
+       in `(=) {_}`
+       in `(=) {_} a`
+       in `(=) {_} a b`
 
 3 error(s), 0 warning(s).
 What are you doing?

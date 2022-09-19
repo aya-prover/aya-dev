@@ -780,7 +780,7 @@ public record AyaProducer(
       tele,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.none(),
-      visitClauses(ctx.clauses()),
+      ImmutableSeq.empty(),
       ctx.COERCE() != null,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
     );

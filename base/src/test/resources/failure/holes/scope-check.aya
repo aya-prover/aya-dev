@@ -1,13 +1,12 @@
 prim I
-open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
- | at (i : I) : A i {
-   | 0 => a
-   | 1 => b
- }
-def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p 0) (p 1) { | at i => p i }
-def Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
-def idp {A : Type} {a : A} : Eq a a => path (\ i => a)
+prim intervalInv
+def inline ~ => intervalInv
+prim coe
+def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
+variable A : Type
+def infix = {A : Type} => Eq A
+def refl {a : A} : a = a => \i => a
 
 -- https://cstheory.stackexchange.com/a/49160/50892
-def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => 0
+def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
