@@ -82,7 +82,6 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
     @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
     @NotNull SerTerm result,
-    @NotNull ImmutableSeq<SerPat.Matchy> clauses,
     @NotNull Option<SerTerm> body,
     boolean coerce
   ) implements SerDef {
@@ -94,7 +93,6 @@ public sealed interface SerDef extends Serializable {
         ownerTele.map(tele -> tele.de(state)),
         selfTele.map(tele -> tele.de(state)),
         result.de(state),
-        clauses.map(matching -> matching.de(state)),
         body.map(serTerm -> serTerm.de(state)),
         coerce
       );

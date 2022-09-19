@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.Matching;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +17,9 @@ public final class FieldDef extends SubLevelDef {
   public FieldDef(
     @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef, @NotNull DefVar<FieldDef, TeleDecl.StructField> ref,
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
-    @NotNull Term result, @NotNull ImmutableSeq<Matching> clauses, @NotNull Option<Term> body, boolean coerce
+    @NotNull Term result, @NotNull Option<Term> body, boolean coerce
   ) {
-    super(ownerTele, selfTele, result, clauses, coerce);
+    super(ownerTele, selfTele, result, coerce);
     ref.core = this;
     this.structRef = structRef;
     this.ref = ref;

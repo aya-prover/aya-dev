@@ -37,7 +37,6 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeParams(field.ownerTele),
         serializeParams(field.selfTele),
         serialize(field.result),
-        field.clauses.map(this::serialize),
         field.body.map(this::serialize),
         field.coerce
       );

@@ -59,17 +59,8 @@ public interface DeltaExpander extends EndoFunctor {
         if (access.of() instanceof IntroTerm.New n) {
           var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
           yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
-        } else {
-          var subst = buildSubst(fieldDef.fullTelescope(), access.args());
-          for (var field : fieldDef.structRef.core.fields) {
-            if (field == fieldDef) continue;
-            var fieldArgs = field.telescope().map(Term.Param::toArg);
-            var acc = new CallTerm.Access(access.of(), field.ref, access.structArgs(), fieldArgs);
-            subst.add(field.ref, IntroTerm.Lambda.make(field.telescope(), acc));
-          }
-          yield tryUnfoldClauses(true, access.fieldArgs(), subst, 0, fieldDef.clauses)
-            .map(unfolded -> apply(unfolded.data())).getOrDefault(access);
         }
+        yield access;
       }
       default -> term;
     };

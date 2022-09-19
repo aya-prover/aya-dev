@@ -57,7 +57,6 @@ public interface DefConsumer extends TermConsumer {
       case FieldDef field -> {
         tele(field.selfTele);
         this.accept(field.result);
-        field.clauses.forEach(this::visitMatching);
         field.body.forEach(this);
       }
       case PrimDef prim -> visitDef(prim);

@@ -18,6 +18,7 @@ import java.util.Objects;
 public final class CtorDef extends SubLevelDef {
   public final @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef;
   public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
+  public final @NotNull ImmutableSeq<Matching> clauses;
   public final @NotNull ImmutableSeq<Pat> pats;
 
   public CtorDef(
@@ -26,9 +27,10 @@ public final class CtorDef extends SubLevelDef {
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
     @NotNull ImmutableSeq<Matching> clauses, @NotNull Term result, boolean coerce
   ) {
-    super(ownerTele, selfTele, result, clauses, coerce);
+    super(ownerTele, selfTele, result, coerce);
     ref.core = this;
     this.dataRef = dataRef;
+    this.clauses = clauses;
     this.ref = ref;
     this.pats = pats;
   }
