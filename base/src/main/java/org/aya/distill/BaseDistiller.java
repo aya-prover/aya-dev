@@ -124,6 +124,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static @NotNull Doc checkParen(@NotNull Outer outer, @NotNull Doc binApp, @NotNull Outer binOp) {
+    if (outer == binOp && (outer == Outer.IMin || outer == Outer.IMax)) return binApp;
     return outer.ordinal() >= binOp.ordinal() ? Doc.parened(binApp) : binApp;
   }
 
@@ -256,11 +257,14 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   public @NotNull Doc formula(@NotNull Outer outer, @NotNull Formula<Term> formula) {
     return switch (formula) {
-      case Formula.Conn<Term> cnn -> checkParen(outer, Doc.sep(
-          term(Outer.BinOp, cnn.l()),
-          cnn.isAnd() ? Doc.symbol("/\\") : Doc.symbol("\\/"),
-          term(Outer.BinOp, cnn.r())),
-        Outer.BinOp);
+      case Formula.Conn<Term> cnn -> {
+        var binding = cnn.isAnd() ? Outer.IMin : Outer.IMax;
+        yield checkParen(outer, Doc.sep(
+            term(binding, cnn.l()),
+            cnn.isAnd() ? Doc.symbol("/\\") : Doc.symbol("\\/"),
+            term(binding, cnn.r())),
+          binding);
+      }
       case Formula.Inv<Term> inv -> Doc.sep(Doc.symbol("~"), term(Outer.AppSpine, inv.i()));
       case Formula.Lit<Term> lit -> Doc.plain(lit.isLeft() ? "0" : "1");
     };
@@ -325,6 +329,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     Free,
     Codomain,
     BinOp,
+    IMax,
+    IMin,
     AppHead,
     AppSpine,
     ProjHead,
