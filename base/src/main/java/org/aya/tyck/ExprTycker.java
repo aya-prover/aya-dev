@@ -180,7 +180,8 @@ public final class ExprTycker extends Tycker {
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
               var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
-              app = CallTerm.make(app, holeApp); // TODO: cube.makeApp? possible?
+              // path types are always explicit
+              app = CallTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
               tup = ensurePiOrPath(pi.body());
               pi = tup._1;

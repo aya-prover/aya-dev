@@ -12,6 +12,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
@@ -481,6 +482,12 @@ public final class DefEq {
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         yield args ? FormTerm.Type.ZERO : null;
+      }
+      case PrimTerm.Coe lhs -> {
+        if (!(preRhs instanceof PrimTerm.Coe rhs)) yield null;
+        if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
+        yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
+          PrimDef.familyLeftToRight(lhs.type()) : null;
       }
       case CallTerm.Con lhs -> switch (preRhs) {
         case CallTerm.Con rhs -> {

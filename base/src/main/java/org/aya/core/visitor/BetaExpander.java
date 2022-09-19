@@ -6,6 +6,7 @@ import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -49,6 +50,15 @@ public interface BetaExpander extends EndoFunctor {
         };
       }
       case IntroTerm.PartEl partial -> new IntroTerm.PartEl(partial(partial.partial()), partial.rhsType());
+      case PrimTerm.Coe coe -> {
+        if (coe.restr() instanceof Restr.Const<Term> c && c.isTrue()) {
+          var var = new LocalVar("x");
+          var param = new Term.Param(var, CallTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true);
+          yield new IntroTerm.Lambda(param, new RefTerm(var));
+        }
+        // TODO: coe computation
+        yield coe;
+      }
       default -> term;
     };
   }
