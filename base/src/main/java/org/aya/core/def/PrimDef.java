@@ -99,26 +99,6 @@ public final class PrimDef extends TopLevelDef<Term> {
         return prim;
       }
 
-      public final @NotNull PrimDef.PrimSeed arendCoerce = new PrimSeed(ID.ARCOE, this::arcoe, ref -> {
-        var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
-        var paramI = new LocalVar("i");
-        var result = new FormTerm.Type(0);
-        var paramATy = new FormTerm.Pi(paramIToATy, result);
-        var aRef = new RefTerm(paramA);
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(PrimTerm.Mula.LEFT, true));
-        return new PrimDef(
-          ref,
-          ImmutableSeq.of(
-            new Term.Param(paramA, paramATy, true),
-            new Term.Param(new LocalVar("base"), baseAtLeft, true),
-            new Term.Param(paramI, PrimTerm.Interval.INSTANCE, true)
-          ),
-          new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI), true)),
-          ID.ARCOE
-        );
-      }, ImmutableSeq.of(ID.I));
-
       public final @NotNull PrimDef.PrimSeed coerce = new PrimSeed(ID.COE, this::coe, ref -> {
         var varA = new LocalVar("A");
         var paramA = new Term.Param(varA, intervalToA(), true);
@@ -224,7 +204,6 @@ public final class PrimDef extends TopLevelDef<Term> {
     public Factory() {
       var init = new Initializer();
       seeds = ImmutableSeq.of(
-          init.arendCoerce,
           init.intervalMin,
           init.intervalMax,
           init.intervalInv,
@@ -298,8 +277,6 @@ public final class PrimDef extends TopLevelDef<Term> {
   }
 
   public enum ID {
-    /** Short for <em>Arend coe</em>. */
-    ARCOE("arcoe"),
     IMIN("intervalMin"),
     IMAX("intervalMax"),
     INVOL("intervalInv"),
