@@ -4,6 +4,7 @@ package org.aya.cli;
 
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.plct.PLCTReport;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.single.CliReporter;
@@ -32,6 +33,8 @@ public class Main extends MainArgs implements Callable<Integer> {
     }
     if (action.repl != null)
       return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
+    if (action.plct != null)
+      return new PLCTReport().run(action.plct);
     assert action.compile != null;
     return doCompile(action.compile);
   }
