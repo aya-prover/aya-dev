@@ -9,4 +9,4 @@ def hello1 : Nat => 114
 def hello2 : Nat => 514
 def hello3 : String => "1919" ++ "810"
 
-prim intervalInv (i : I) : I
+prim intervalMax

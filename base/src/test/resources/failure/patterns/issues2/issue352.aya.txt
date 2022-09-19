@@ -1,8 +1,8 @@
-In file $FILE:13:4 ->
+In file $FILE:10:4 ->
 
-  11 | def infix = (a b : A) => Path (\x => A) a b
-  12 | def idp {a : A} : a = a => path (\x => a)
-  13 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+   8 | 
+   9 | variable A B : Type
+  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
            ^----^
 
 Error: The parameter:
@@ -10,11 +10,11 @@ Error: The parameter:
          (Normalized: Type 0)
        requires a binding in the patterns
 
-In file $FILE:13:4 ->
+In file $FILE:10:4 ->
 
-  11 | def infix = (a b : A) => Path (\x => A) a b
-  12 | def idp {a : A} : a = a => path (\x => a)
-  13 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+   8 | 
+   9 | variable A B : Type
+  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
            ^----^
 
 Error: The parameter:
@@ -22,11 +22,11 @@ Error: The parameter:
          (Normalized: Type 0)
        requires a binding in the patterns
 
-In file $FILE:13:4 ->
+In file $FILE:10:4 ->
 
-  11 | def infix = (a b : A) => Path (\x => A) a b
-  12 | def idp {a : A} : a = a => path (\x => a)
-  13 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+   8 | 
+   9 | variable A B : Type
+  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
            ^----^
 
 Error: The parameter:
@@ -34,11 +34,11 @@ Error: The parameter:
          (Normalized: A -> B)
        requires a binding in the patterns
 
-In file $FILE:13:4 ->
+In file $FILE:10:4 ->
 
-  11 | def infix = (a b : A) => Path (\x => A) a b
-  12 | def idp {a : A} : a = a => path (\x => a)
-  13 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+   8 | 
+   9 | variable A B : Type
+  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
            ^----^
 
 Error: The parameter:
@@ -46,11 +46,11 @@ Error: The parameter:
          (Normalized: A -> B)
        requires a binding in the patterns
 
-In file $FILE:13:4 ->
+In file $FILE:10:4 ->
 
-  11 | def infix = (a b : A) => Path (\x => A) a b
-  12 | def idp {a : A} : a = a => path (\x => a)
-  13 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+   8 | 
+   9 | variable A B : Type
+  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
            ^----^
 
 Error: The parameter:

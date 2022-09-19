@@ -291,7 +291,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           doc.append(Doc.symbol("=>"));
           doc.append(term(Outer.Free, field.body.get()));
         }
-        yield Doc.cblock(Doc.sepNonEmpty(doc), 2, visitClauses(field.clauses));
+        yield Doc.sepNonEmpty(doc);
       }
       case TeleDecl.DataCtor ctor -> {
         var doc = Doc.cblock(Doc.sepNonEmpty(

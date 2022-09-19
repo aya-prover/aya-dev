@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -47,10 +47,10 @@ public class NormalizeTest {
   @Test public void unfoldPrim() {
     var res = TyckDeclTest.successTyckDecls("""
       prim I
-      data Nat : Type 0 | zero | suc Nat
-      prim arcoe
-      def xyr : Nat => arcoe (\\ i => Nat) Nat::zero 0
-      def kiva : Nat => arcoe (\\ i => Nat) (Nat::suc Nat::zero) 1""");
+      open data Nat : Type | zero | suc Nat
+      prim coe
+      def xyr : Nat => coe (\\ i => Nat) 1 zero
+      def kiva : Nat => coe (\\ i => Nat) 1 (suc zero)""");
     var state = new TyckState(res._1);
     var defs = res._2;
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);

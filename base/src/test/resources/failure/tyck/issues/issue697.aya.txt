@@ -1,15 +1,53 @@
-In file $FILE:27:61 ->
+In file $FILE:17:65 ->
 
-  25 |   => path (hfill2d p q r 1)
-  26 | 
-  27 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-                                                                    ^---^
+  15 | def idp {a : A} : a = a => \i => a
+  16 | 
+  17 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+                                                                        ^^
 
-Error: Unable to apply the expression
-         idp a
-       because the type of what you applied is not a Pi type, but instead:
-         Path (\ i => A) a a
-         (Normalized: Path (\ i => A) a a)
+Error: Cannot check the expression
+         a
+       of type
+         A
+       against the type
+         I
 
-1 error(s), 0 warning(s).
+In file $FILE:17:65 ->
+
+  15 | def idp {a : A} : a = a => \i => a
+  16 | 
+  17 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+                                                                        ^^
+
+Error: Unsolved meta a'
+       in `idp {[| i |] A' {| ~ i := a | i := a' |}} {a'}`
+       in `idp {[| i |] A' {| ~ i := a | i := a' |}} {a'} <a>`
+       in `hcomp2d {A'} {a} {a'} {b} {a'} (idp {[| i |] A' {| ~ i := a | i := a'
+        |}} {a'} <a>) (idp {A} {a}) p`
+
+In file $FILE:17:65 ->
+
+  15 | def idp {a : A} : a = a => \i => a
+  16 | 
+  17 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+                                                                        ^^
+
+Error: Unsolved meta a'
+       in `idp {[| i |] A' {| ~ i := a | i := a' |}} {a'} <a>`
+       in `hcomp2d {A'} {a} {a'} {b} {a'} (idp {[| i |] A' {| ~ i := a | i := a'
+        |}} {a'} <a>) (idp {A} {a}) p`
+
+In file $FILE:17:65 ->
+
+  15 | def idp {a : A} : a = a => \i => a
+  16 | 
+  17 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+                                                                        ^^
+
+Error: Unsolved meta a'
+       in `idp {[| i |] A' {| ~ i := a | i := a' |}} {a'} <a>`
+       in `hcomp2d {A'} {a} {a'} {b} {a'} (idp {[| i |] A' {| ~ i := a | i := a'
+        |}} {a'} <a>) (idp {A} {a}) p`
+
+4 error(s), 0 warning(s).
 What are you doing?

@@ -61,12 +61,15 @@ fnModifiers : OPAQUE
             | OVERLAP
             ;
 
-structDecl : sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS exprList)? (BAR field)* bindBlock?;
+structDecl
+ : sampleModifiers? (PUBLIC? OPEN)?
+   STRUCT declNameOrInfix tele* type? (EXTENDS exprList)?
+   (BAR field)* bindBlock?;
 
 primDecl : PRIM weakId tele* type? ;
 
-field : OVERRIDE? COERCE? declNameOrInfix tele* type clauses? bindBlock? # fieldDecl
-      | OVERRIDE? declNameOrInfix tele* type? IMPLIES expr    bindBlock? # fieldImpl
+field : OVERRIDE? COERCE? declNameOrInfix tele* type bindBlock?       # fieldDecl
+      | OVERRIDE? declNameOrInfix tele* type? IMPLIES expr bindBlock? # fieldImpl
       ;
 
 dataDecl : sampleModifiers? (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* bindBlock?;

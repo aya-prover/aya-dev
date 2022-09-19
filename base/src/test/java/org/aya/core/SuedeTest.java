@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -42,17 +42,17 @@ public class SuedeTest {
   @Test public void path() {
     suedeAll("""
       prim I
-      open struct Path (A : Pi I -> Type) (a : A 0) (b : A 1) : Type
-       | at (i : I) : A i {
-         | 0 => a
-         | 1 => b
-       }
-      def infix = {A : Type} (a b : A) : Type => Path (\\ i => A) a b
-      prim arcoe
-      def hfill2d {A : Type} {a b c d : A}
-        (p : a = b) (q : b = d) (r : a = c)
-        (i j : I) : A
-        => (arcoe (\\ k => (r.at k) = (q.at k)) p i).at j
+      prim intervalInv
+      def inline ~ => intervalInv
+      def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+      def Eq (A : Type) (a b : A) : Type => Path (\\ i => A) a b
+      variable A : Type
+      def infix = {A : Type} => Eq A
+      def refl {a : A} : a = a => \\i => a
+      prim coe
+      def hcomp2d {a b c d : A}
+        (p : a = b) (q : b = d) (r : a = c) : c = d
+        => \\i => coe (\\ k => r k = q k) 0 p i
       struct Monoid {A : Type} (op : A -> A -> A): Type
         | id : A
         | assoc (a b c : A) : op (op a b) c = op a (op b c)

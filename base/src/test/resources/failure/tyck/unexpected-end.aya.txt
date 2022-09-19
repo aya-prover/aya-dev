@@ -1,22 +1,11 @@
-In file $FILE:8:19 ->
+In file $FILE:2:54 ->
 
-  6 |   }
-  7 | def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  8 |   => new Path A (p 3) (p 4) { | at i => p i }
-                         ^^
+  1 | prim I
+  2 | def path {A : I -> Type} (p : Pi (i : I) -> A i) => p 3
+                                                            ^^
 
 Error: The point `3` does not live in interval
 note: Did you mean:  `0` or `1`
 
-In file $FILE:8:25 ->
-
-  6 |   }
-  7 | def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  8 |   => new Path A (p 3) (p 4) { | at i => p i }
-                               ^^
-
-Error: The point `4` does not live in interval
-note: Did you mean:  `0` or `1`
-
-2 error(s), 0 warning(s).
+1 error(s), 0 warning(s).
 What are you doing?

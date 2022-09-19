@@ -48,7 +48,7 @@ def hcomp2d
   (p : a = b)
   (q : b = d)
   (r : a = c) : c = d
-  => \i => coe (\ k => r k = q k) 1 p i
+  => \i => coe (\ k => r k = q k) 0 p i
 
 def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c =>
   \k => hcomp2d p q idp k

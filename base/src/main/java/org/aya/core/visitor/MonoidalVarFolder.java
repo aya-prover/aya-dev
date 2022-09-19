@@ -57,7 +57,8 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
   }
   @NotNull private SeqView<R> trace(@NotNull Partial<Term> partial) {
     return switch (partial) {
-      case Partial.Split<Term> hap -> hap.clauses().view().flatMap(c -> c.cof().view().flatMap(this::trace).concat(trace(c.u())));
+      case Partial.Split<Term> hap ->
+        hap.clauses().view().flatMap(c -> c.cof().view().flatMap(this::trace).concat(trace(c.u())));
       case Partial.Const<Term> sad -> trace(sad.u());
     };
   }
@@ -112,9 +113,8 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
         case StructDef struct ->
           tele(struct.telescope).concat(withBody ? struct.fields.flatMap(this::apply) : SeqView.empty());
         case FieldDef field -> tele(field.telescope())
-          .concat(field.body.foldLeft(SeqView.empty(), (rs, body) -> apply(body)))
-          .concat(apply(field.result))
-          .concat(withBody ? field.clauses.flatMap(this::matchy) : SeqView.empty());
+          .concat(field.body.map(this).getOrDefault(SeqView.empty()))
+          .concat(apply(field.result));
         case PrimDef prim -> tele(prim.telescope);
         case DataDef data -> tele(data.telescope)
           .concat(apply(data.result))

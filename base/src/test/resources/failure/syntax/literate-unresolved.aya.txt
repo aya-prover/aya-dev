@@ -1,8 +1,8 @@
 In file $FILE:3:0 ->
 
   1 | prim I
-  2 | prim arcoe
-  3 | --| test `arcoe`
+  2 | prim coe
+  3 | --| test `coe`
       ^-------------------^
   4 | --| test `unresolved`
 

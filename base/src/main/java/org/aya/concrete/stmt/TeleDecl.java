@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -248,7 +248,6 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
   public static final class StructField extends CommonDecl implements Decl.Telescopic, Decl.Resulted {
     public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
-    public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
     public @NotNull Option<Expr> body;
     public final boolean coerce;
@@ -264,14 +263,12 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull Option<Expr> body,
-      @NotNull ImmutableSeq<Pattern.Clause> clauses,
       boolean coerce,
       @NotNull BindBlock bindBlock
     ) {
       super(sourcePos, entireSourcePos, Accessibility.Public, opInfo, bindBlock);
       this.coerce = coerce;
       this.result = result;
-      this.clauses = clauses;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
       this.telescope = telescope;

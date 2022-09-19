@@ -1,7 +1,10 @@
-public open import PathPrims
+public open import PathPrims using (intervalInv as ~, I, coe)
 
-public open struct Path (A : I -> Type) (a : A 0) (b : A 1) : Type
-  | at (i : I) : A i {
-    | 0 => a
-    | 1 => b
-  }
+def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
+variable A : Type
+def infix = {A : Type} => Eq A
+def refl {a : A} : a = a => \i => a
+
+def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
+  : f a = f b => \ i => f (p i)

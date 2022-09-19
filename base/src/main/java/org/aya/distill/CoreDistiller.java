@@ -239,12 +239,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
           term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term(Outer.Free, term)),
           clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
       }
-      case FieldDef field -> Doc.cblock(Doc.sepNonEmpty(Doc.symbol("|"),
+      case FieldDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         coe(field.coerce),
         linkDef(field.ref(), FIELD_CALL),
         visitTele(field.selfTele),
         Doc.symbol(":"),
-        term(Outer.Free, field.result)), 2, visitClauses(field.clauses));
+        term(Outer.Free, field.result));
       case PrimDef def -> primDoc(def.ref());
       case CtorDef ctor -> {
         var doc = Doc.sepNonEmpty(coe(ctor.coerce),

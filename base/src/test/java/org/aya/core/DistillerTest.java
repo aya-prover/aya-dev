@@ -56,14 +56,14 @@ public class DistillerTest {
   @Test public void path() {
     @Language("TEXT") var code = """
       prim I
-      struct Path (A : Pi I -> Type) (a : A 0) (b : A 1) : Type
-       | at (i : I) : A i {
-         | 0 => a
-         | 1 => b
-       }
-      def path {A : Pi I -> Type} (p : Pi (i : I) -> A i)
-        => new Path A (p 0) (p 1) { | at i => p i }
-      def infix = {A : Type} (a b : A) : Type => Path (\\ i => A) a b
+      prim coe
+      prim intervalInv
+      def inline ~ => intervalInv
+      def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+      def Eq (A : Type) (a b : A) : Type => Path (\\ i => A) a b
+      variable A : Type
+      def infix = {A : Type} => Eq A
+      def refl {a : A} : a = a => \\i => a
       struct Monoid {A : Type} (op : A -> A -> A): Type
         | id : A
         | assoc (a b c : A) : op (op a b) c = op a (op b c)
