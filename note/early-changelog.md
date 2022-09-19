@@ -2,6 +2,25 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.21
+
+Considered size-change in termination checker and reimplemented call graph completion,
+fixed a termination checker bug and supported interleaved arguments on recursion,
+disabled commit-check on main, updated bors message to lowercase, updated guest,
+added IntelliJ theme, added `fixl`, `fixr`, distinguished unary from binary, removed `bind` keyword,
+made `I` and `Partial` primitives instead of keywords, separated delta and beta reduction, added `DeltaExpander` and `BetaExpander`,
+added Pat inline with context, replaced cofibration syntax with interval expressions,
+reorganized problems by their type, removed more visitors, cleaned up unused classes & methods,
+added some utilities to `Tycker`, added workaround for a lsp4j bug, removed planned pattern synonym,
+enhanced generalized path type (fixed many bugs), introduced a sort system, overhauled the library
+with path type, deleted the old coe function from Arend, deleted records-with-conditions.
+
+The sort system consists of:
+
++ An impredicative universe of strict propositions `Prop`
++ A predicative universe of external strict sets `Set` (in the sense of 2ltt)
++ A universe for the interval type `ISet` similar to Agda's `IUniv`
+
 ## 0.20
 
 This is going to be the last release before we switch to IntelliJ parsing infrastructure.

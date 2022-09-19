@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.util.reporter.Problem;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -22,16 +23,19 @@ public class MainArgs {
   public static class ReplAction {
     @Option(names = {"--repl", "--interactive", "-i"}, description = "Start an interactive REPL.", required = true)
     public boolean repl;
-    @Option(names = {"--repl-type", "--interactive-type"}, description = "Specify the type of the interactive REPL." + CANDIDATES, defaultValue = "jline")
+    @Option(names = {"--repl-type", "--interactive-type"}, defaultValue = "jline", description =
+      "Specify the type of the interactive REPL." + CANDIDATES)
     public ReplType replType;
   }
 
   public static class CompileAction {
     @Option(names = {"--make"}, description = "Treat input file as a library root")
     public boolean isLibrary;
-    @Option(names = {"--remake"}, description = "Treat input file as a library root and remake all")
+    @Option(names = {"--remake"}, description =
+      "Treat input file as a library root and remake all")
     public boolean isRemake;
-    @Option(names = {"--no-code"}, description = "Treat input file as a library root (no outputs will be saved to disk)")
+    @Option(names = {"--no-code"}, description =
+      "Treat input file as a library root (no outputs will be saved to disk)")
     public boolean isNoCode;
     @Parameters(paramLabel = "<input-file>", description = "File to compile")
     public String inputFile;
@@ -39,13 +43,29 @@ public class MainArgs {
     public String outputFile;
   }
 
+  public static class PlctAction {
+    @Option(names = {"--plct-report"}, description = "Generate a PLCT monthly report")
+    public boolean plctReport;
+
+    @Option(names = {"--plct-report-since"}, description =
+      "Override the PLCT report start date", paramLabel = "number of days ago")
+    public int reportSince;
+
+    @Option(names = {"--plct-report-repo"}, description =
+      "Override the GitHub repository to generate a report for", paramLabel = "owner/repo")
+    public String repoName;
+  }
+
   /** Either `repl` or `compile` is not null */
   public static class Action {
-    @CommandLine.ArgGroup(exclusive = false, heading = "REPL arguments:%n")
-    public ReplAction repl;
+    @CommandLine.ArgGroup(heading = "REPL arguments:%n")
+    public @Nullable ReplAction repl;
 
-    @CommandLine.ArgGroup(exclusive = false, heading = "Compiler arguments:%n")
-    public CompileAction compile;
+    @CommandLine.ArgGroup(heading = "Compiler arguments:%n")
+    public @Nullable CompileAction compile;
+
+    @CommandLine.ArgGroup(heading = "PLCT report arguments:%n")
+    public @Nullable PlctAction plct;
   }
 
   @Option(names = {"--interrupted-trace"}, hidden = true)
