@@ -1,10 +1,13 @@
-open import Paths using (coe as primCoe, =, idp)
+open import Paths using (coe as primCoe, =, idp, I, ~)
 
 public open data Unit | unit
 
--- TODO: eta
-def coe {a b : Type} (eq : a ↑ = b) (x : a) : b
+-- we cannot eta-contract this, same problem as Cubical Agda
+def coe {A B : Type} (eq : A ↑ = B) (x : A) : B
   => ↑ ↑ ↑ primCoe (\y => eq y) 0 x
+
+def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
+  => λ i => ↑ ↑ ↑ primCoe (λ j => A) (~ i) x
 
 -- *** Types
 
