@@ -14,7 +14,7 @@ module aya.cli {
   requires org.jline.terminal.jansi;
   requires org.jline.terminal;
   requires java.net.http;
-  requires java.base;
+  requires jdk.crypto.ec;
 
   exports org.aya.cli.library.incremental;
   exports org.aya.cli.library.json;
