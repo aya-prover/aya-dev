@@ -32,6 +32,24 @@ public final class PLCTReport {
   public static final @NotNull @Nls String SHRUG = "\ud83e\udd37";
   private final @NotNull HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
 
+  private Doc pullRequest(GsonClasses.PR i) {
+    return Doc.sepNonEmpty(
+      Doc.symbol("+"),
+      i.milestone != null ? link(i.milestone.title, i.milestone.url) : Doc.empty(),
+      Doc.english(i.title),
+      link("PR-%d".formatted(i.number), i.url),
+      Doc.english("opened by"),
+      link(i.user.login, i.user.url)
+    );
+  }
+
+  @NotNull private static Doc link(String text, String addr) {
+    return Doc.cat(
+      Doc.wrap("[", "]", Doc.plain(text)),
+      Doc.parened(Doc.plain(addr))
+    );
+  }
+
   public int run(@NotNull MainArgs.PlctAction args) throws Exception {
     if (!args.plctReport) {
       System.out.println(SHRUG);
@@ -62,23 +80,19 @@ public final class PLCTReport {
       .uri(URI.create("https://api.github.com/repos/" + repo + "/pulls?state=closed&sort=updated&direction=desc&per_page=100"))
       .build();
 
-    return parse(client.send(req, HttpResponse.BodyHandlers.ofInputStream()).body())
+    var seq = parse(client.send(req, HttpResponse.BodyHandlers.ofInputStream()).body())
       .view()
       .filter(i -> i.updatedAt.isAfter(since))
-      .map(i -> Doc.stickySep(
-        Doc.symbol("+"),
-        Doc.english(i.title),
-        Doc.cat(
-          Doc.plain("[PR-%d]".formatted(i.number)),
-          Doc.parened(Doc.plain(i.url))
-        )
-      ))
-      .map(d -> Doc.hang(2, d))
+      .toImmutableSeq();
+    if (seq.isEmpty()) return Doc.empty();
+    return Doc.vcat(seq.view()
+      .map(this::pullRequest)
+      .prepended(Doc.empty())
       .prepended(Doc.cat(
         Doc.plain("[Watch %s]".formatted(name)),
         Doc.parened(Doc.plain("https://github.com/%s".formatted(repo)))
       ))
-      .foldLeft(Doc.empty(), Doc::vcat);
+      .prepended(Doc.empty()));
   }
 
   public static @NotNull LocalDate sinceDate() {
