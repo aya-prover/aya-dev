@@ -8,24 +8,24 @@ import java.time.LocalDateTime;
 
 public interface GsonClasses {
   final class Milestone {
-    String title;
+    public String title;
     @SerializedName("html_url")
-    String url;
+    public String url;
   }
 
   final class User {
-    String login;
-    String url;
+    public String login;
+    public String url;
   }
 
   final class PR {
-    int number;
-    String title;
+    public int number;
+    public String title;
     @SerializedName("html_url")
-    String url;
+    public String url;
     @SerializedName("updated_at")
-    LocalDateTime updatedAt;
-    User user;
-    Milestone milestone;
+    public LocalDateTime updatedAt;
+    public User user;
+    public Milestone milestone;
   }
 }
