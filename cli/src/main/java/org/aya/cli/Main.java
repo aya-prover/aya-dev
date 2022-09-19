@@ -13,8 +13,10 @@ import org.aya.cli.utils.MainArgs;
 import org.aya.core.def.PrimDef;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
+import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
@@ -28,12 +30,18 @@ public class Main extends MainArgs implements Callable<Integer> {
       System.err.println("Try `aya --help` to see available commands");
       return 1;
     }
-    if (action.repl != null) return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
+    if (action.repl != null)
+      return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
+    assert action.compile != null;
+    return doCompile(action.compile);
+  }
+
+  private int doCompile(@NotNull CompileAction compile) throws IOException {
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
-    var inputFile = action.compile.inputFile;
-    var outputFile = action.compile.outputFile;
+    var inputFile = compile.inputFile;
+    var outputFile = compile.outputFile;
     var filePath = Paths.get(inputFile);
     var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var distillOptions = ReplConfig.loadFromDefault().distillerOptions;
@@ -44,13 +52,13 @@ public class Main extends MainArgs implements Callable<Integer> {
       Paths.get(prettyDir != null ? prettyDir : ".")
     ) : null;
     var flags = new CompilerFlags(message, interruptedTrace,
-      action.compile.isRemake, distillation,
+      compile.isRemake, distillation,
       modulePaths().view().map(Paths::get),
       outputPath);
 
-    if (action.compile.isLibrary || action.compile.isRemake || action.compile.isNoCode) {
+    if (compile.isLibrary || compile.isRemake || compile.isNoCode) {
       // TODO: move to a new tool
-      var advisor = action.compile.isNoCode ? CompilerAdvisor.inMemory() : CompilerAdvisor.onDisk();
+      var advisor = compile.isNoCode ? CompilerAdvisor.inMemory() : CompilerAdvisor.onDisk();
       return LibraryCompiler.compile(new PrimDef.Factory(), reporter, flags, advisor, filePath);
     }
     var traceBuilder = enableTrace ? new Trace.Builder() : null;

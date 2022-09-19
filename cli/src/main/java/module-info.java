@@ -13,6 +13,8 @@ module aya.cli {
   requires org.jline.reader;
   requires org.jline.terminal.jansi;
   requires org.jline.terminal;
+  requires java.net.http;
+  requires java.base;
 
   exports org.aya.cli.library.json;
   exports org.aya.cli.library.source;
