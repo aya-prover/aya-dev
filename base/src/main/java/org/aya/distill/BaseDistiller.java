@@ -254,14 +254,18 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     );
   }
 
-  public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  formula(@NotNull DistillerOptions options, @NotNull Formula<T> formula) {
+  public @NotNull Doc formula(@NotNull Outer outer, @NotNull Formula<Term> formula) {
     return switch (formula) {
-      case Formula.Conn<T> cnn -> Doc.sep(cnn.l().toDoc(options),
-        cnn.isAnd() ? Doc.symbol("/\\") : Doc.symbol("\\/"),
-        cnn.r().toDoc(options));
-      case Formula.Inv<T> inv -> Doc.sep(Doc.symbol("~"), inv.i().toDoc(options));
-      case Formula.Lit<T> lit -> Doc.plain(lit.isLeft() ? "0" : "1");
+      case Formula.Conn<Term> cnn -> {
+        var here = cnn.isAnd() ? Outer.IMin : Outer.IMax;
+        yield checkParen(outer, Doc.sep(
+            term(here, cnn.l()),
+            cnn.isAnd() ? Doc.symbol("/\\") : Doc.symbol("\\/"),
+            term(here, cnn.r())),
+          cnn.isAnd() ? Outer.AppHead : Outer.IMin);
+      }
+      case Formula.Inv<Term> inv -> Doc.sep(Doc.symbol("~"), term(Outer.AppSpine, inv.i()));
+      case Formula.Lit<Term> lit -> Doc.plain(lit.isLeft() ? "0" : "1");
     };
   }
 
@@ -324,6 +328,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     Free,
     Codomain,
     BinOp,
+    IMax,
+    IMin,
     AppHead,
     AppSpine,
     ProjHead,

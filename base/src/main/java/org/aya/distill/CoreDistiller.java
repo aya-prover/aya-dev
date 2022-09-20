@@ -87,8 +87,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         list.append(Doc.symbol("=>"));
         list.append(bodyDoc);
         var doc = Doc.sep(list);
-        // Add paren when it's in a spine
-        yield checkParen(outer, doc, Outer.AppSpine);
+        yield checkParen(outer, doc, Outer.AppHead);
       }
       case FormTerm.Sort term -> {
         var fn = Doc.styled(KEYWORD, term.kind().name());
@@ -164,7 +163,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
       case IntroTerm.PartEl el -> partial(options, el.partial());
-      case PrimTerm.Mula mula -> formula(options, mula.asFormula());
+      case PrimTerm.Mula mula -> formula(outer, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());
       case IntroTerm.PathLam lam -> Doc.sep(Doc.styled(KEYWORD, "\\"),
         Doc.sep(lam.params().map(BaseDistiller::varDoc)),
