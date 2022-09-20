@@ -146,7 +146,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var coe = new PrimTerm.Coe(type, isOne(cofib));
         var coerced = new ElimTerm.App(coe, new Arg<>(u0, true));
 
-        return new IntroTerm.PathLam(ImmutableSeq.of(new Term.Param(varX, PrimTerm.Interval.INSTANCE, true)), coerced);
+        return new IntroTerm.PathLam(ImmutableSeq.of(varX), coerced);
       }
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
