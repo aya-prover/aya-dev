@@ -102,7 +102,7 @@ expr : atom                                 # single
      ;
 
 subSystem : expr DEFINE_AS expr;
-partial : LPARTIAL BAR? subSystem (BAR subSystem)* RPARTIAL;
+partial : LPARTIAL (BAR? subSystem (BAR subSystem)*)? RPARTIAL;
 
 arrayBlock : exprList | expr BAR listComp;
 
