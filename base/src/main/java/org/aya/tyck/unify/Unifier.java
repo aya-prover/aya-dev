@@ -23,11 +23,13 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * This class implements pattern unification with delayed constraints solving.
+ * It is extracted from {@link TermComparator} for modularity and readability.
  *
  * @implNote in case {@link Unifier#compareUntyped(Term, Term, Sub, Sub)} returns null,
  * we will consider it a unification failure, so be careful when returning null.
  * @see Eta Eta-contraction
  * @see TermComparator bidirectional conversion check
+ * @see Unifier#compare(Term, Term, Term) the only intended API for conversion checking
  */
 public final class Unifier extends TermComparator {
   final boolean allowVague;
