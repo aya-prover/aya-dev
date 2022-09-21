@@ -9,7 +9,7 @@ import org.aya.generic.ExprProblem;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.unify.DefEq;
+import org.aya.tyck.unify.Unifier;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
     @NotNull Expr expr,
     @NotNull Term lhs,
     @NotNull Term rhs,
-    @Override @NotNull DefEq.FailureData failureData,
+    @Override @NotNull Unifier.FailureData failureData,
     @Override @NotNull TyckState state
   ) implements CubicalError, UnifyError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {

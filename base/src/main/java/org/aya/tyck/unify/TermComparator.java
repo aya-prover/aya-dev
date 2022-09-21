@@ -9,13 +9,10 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
-import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
-import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
@@ -29,8 +26,6 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.env.MapLocalCtx;
-import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
@@ -45,57 +40,82 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * @implNote in case {@link DefEq#compareUntyped(Term, Term, Sub, Sub)} returns null,
- * we will consider it a unification failure, so be careful when returning null.
+ * Bidirectional unification of terms, with abstract {@link TermComparator#solveMeta}.
+ * This class is not called <code>Comparator</code> because there is already {@link java.util.Comparator}.
+ *
+ * @see Unifier Pattern unification implementation
+ * @see TermComparator#compareUntyped(Term, Term, Sub, Sub) the "synthesize" direction
+ * @see TermComparator#compare(Term, Term, Sub, Sub, Term) the "inherit" direction
  */
-public final class DefEq {
-  public record Sub(@NotNull MutableMap<@NotNull AnyVar, @NotNull RefTerm> map) implements Cloneable {
-    public Sub() {
-      this(MutableMap.create());
-    }
-
-    @SuppressWarnings("MethodDoesntCallSuperMethod") public @NotNull Sub clone() {
-      return new Sub(MutableMap.from(map));
-    }
-  }
-
-  public record FailureData(@NotNull Term lhs, @NotNull Term rhs) {
-  }
-
-  private final @Nullable Trace.Builder traceBuilder;
-  final boolean allowVague;
-  final boolean allowConfused;
-  private final @NotNull TyckState state;
-  private final @NotNull Reporter reporter;
-  private final @NotNull SourcePos pos;
-  private final @NotNull Ordering cmp;
-  private final @NotNull LocalCtx ctx;
-  private final @NotNull Eta uneta;
+public sealed abstract class TermComparator permits Unifier {
+  protected final @Nullable Trace.Builder traceBuilder;
+  protected final @NotNull TyckState state;
+  protected final @NotNull Reporter reporter;
+  protected final @NotNull SourcePos pos;
+  protected final @NotNull Ordering cmp;
+  protected final @NotNull LocalCtx ctx;
   private FailureData failure;
+
+  public TermComparator(@Nullable Trace.Builder traceBuilder, @NotNull TyckState state, @NotNull Reporter reporter, @NotNull SourcePos pos, @NotNull Ordering cmp, @NotNull LocalCtx ctx) {
+    this.traceBuilder = traceBuilder;
+    this.state = state;
+    this.reporter = reporter;
+    this.pos = pos;
+    this.cmp = cmp;
+    this.ctx = ctx;
+  }
+
+  private static boolean isCall(@NotNull Term term) {
+    return term instanceof CallTerm.Fn || term instanceof CallTerm.Con || term instanceof CallTerm.Prim;
+  }
+
+  public static <E> E withIntervals(SeqView<LocalVar> l, SeqView<LocalVar> r, Sub lr, Sub rl, Supplier<E> supplier) {
+    assert l.sizeEquals(r);
+    for (var conv : l.zipView(r)) {
+      lr.map.put(conv._1, new RefTerm(conv._2));
+      rl.map.put(conv._2, new RefTerm(conv._1));
+    }
+    var res = supplier.get();
+    l.forEach(lr.map::remove);
+    r.forEach(rl.map::remove);
+    return res;
+  }
+
+  private static boolean sortLt(FormTerm.Sort l, FormTerm.Sort r) {
+    return switch (l) {
+      case FormTerm.Type lt -> switch (r) {
+        case FormTerm.Type rt -> lt.lift() <= rt.lift();
+        case FormTerm.Set rt -> lt.lift() <= rt.lift();
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop -> false;
+      };
+      case FormTerm.ISet iSet -> switch (r) {
+        case FormTerm.ISet set -> true;
+        case FormTerm.Prop prop -> false;
+        case FormTerm.Set set -> true;
+        case FormTerm.Type type -> false;
+      };
+      case FormTerm.Prop prop -> switch (r) {
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop1 -> true;
+        case FormTerm.Set set -> false;
+        case FormTerm.Type type -> false;
+      };
+      case FormTerm.Set lt -> switch (r) {
+        case FormTerm.ISet iSet -> false;
+        case FormTerm.Prop prop -> false;
+        case FormTerm.Set rt -> lt.lift() <= rt.lift();
+        case FormTerm.Type rt -> false;
+      };
+    };
+  }
 
   public @NotNull FailureData getFailure() {
     assert failure != null;
     return failure;
   }
 
-  public DefEq(
-    @NotNull Ordering cmp, @NotNull Reporter reporter,
-    boolean allowVague, boolean allowConfused,
-    @Nullable Trace.Builder traceBuilder, @NotNull TyckState state,
-    @NotNull SourcePos pos, @NotNull LocalCtx ctx
-  ) {
-    this.cmp = cmp;
-    this.allowVague = allowVague;
-    this.allowConfused = allowConfused;
-    this.reporter = reporter;
-    this.traceBuilder = traceBuilder;
-    this.state = state;
-    this.pos = pos;
-    this.ctx = ctx;
-    uneta = new Eta(ctx);
-  }
-
-  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+  protected final void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
@@ -111,7 +131,7 @@ public final class DefEq {
     return compare(lhs, rhs, new Sub(), new Sub(), type);
   }
 
-  private boolean compare(Term lhs, Term rhs, Sub lr, Sub rl, @Nullable Term type) {
+  protected final boolean compare(Term lhs, Term rhs, Sub lr, Sub rl, @Nullable Term type) {
     if (lhs == rhs) return true;
     if (compareApprox(lhs, rhs, lr, rl) != null) return true;
     lhs = lhs.normalize(state, NormalizeMode.WHNF);
@@ -126,9 +146,10 @@ public final class DefEq {
     return result;
   }
 
-  private @Nullable Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
+  @Nullable
+  protected Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     // lhs & rhs will both be WHNF if either is not a potentially reducible call
-    if (isCall(lhs) || isCall(rhs)) {
+    if (TermComparator.isCall(lhs) || TermComparator.isCall(rhs)) {
       var ty = compareApprox(lhs, rhs, lr, rl);
       if (ty == null) ty = doCompareUntyped(lhs, rhs, lr, rl);
       if (ty != null) return ty.normalize(state, NormalizeMode.WHNF);
@@ -226,30 +247,6 @@ public final class DefEq {
     return lhsRef.core.result().subst(substMap);
   }
 
-  private static boolean isCall(@NotNull Term term) {
-    return term instanceof CallTerm.Fn || term instanceof CallTerm.Con || term instanceof CallTerm.Prim;
-  }
-
-  private @NotNull TyckState.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
-    var local = new MapLocalCtx();
-    ctx.forward(local, lhs, state);
-    ctx.forward(local, rhs, state);
-    return new TyckState.Eqn(lhs, rhs, cmp, pos, local, lr.clone(), rl.clone());
-  }
-
-  private @Nullable Subst extract(
-    @NotNull CallTerm.Hole lhs, @NotNull Term rhs, @NotNull Meta meta
-  ) {
-    var subst = new Subst(new MutableHashMap<>(/*spine.size() * 2*/));
-    for (var arg : lhs.args().view().zip(meta.telescope)) {
-      if (uneta.uneta(arg._1.term()) instanceof RefTerm ref) {
-        if (subst.map().containsKey(ref.var())) return null;
-        subst.add(ref.var(), arg._2.toTerm());
-      } else return null;
-    }
-    return subst;
-  }
-
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state),
       pos, type.freezeHoles(state)));
@@ -310,7 +307,7 @@ public final class DefEq {
       case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
         if (lhs instanceof IntroTerm.PathLam lambda) return ctx.withIntervals(lambda.params().view(), () -> {
           if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
-            withIntervals(lambda.params().view(), rambda.params().view(), lr, rl, () ->
+            TermComparator.withIntervals(lambda.params().view(), rambda.params().view(), lr, rl, () ->
               compare(lambda.body(), rambda.body(), lr, rl, path.cube().type())));
           return comparePathLamBody(rhs, lr, rl, lambda, path.cube());
         });
@@ -354,20 +351,8 @@ public final class DefEq {
     };
   }
 
-  public static <E> E withIntervals(SeqView<LocalVar> l, SeqView<LocalVar> r, Sub lr, Sub rl, Supplier<E> supplier) {
-    assert l.sizeEquals(r);
-    for (var conv : l.zipView(r)) {
-      lr.map.put(conv._1, new RefTerm(conv._2));
-      rl.map.put(conv._2, new RefTerm(conv._1));
-    }
-    var res = supplier.get();
-    l.forEach(lr.map::remove);
-    r.forEach(rl.map::remove);
-    return res;
-  }
-
   private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
-    return withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
+    return TermComparator.withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
       // TODO: let CofThy.propExt uses lr and rl?
       var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type().subst(lr.map)).subst(lr.map);
       var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
@@ -523,110 +508,13 @@ public final class DefEq {
     return ret;
   }
 
-  private @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, CallTerm.Hole lhs) {
-    var meta = lhs.ref();
-    if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
-      // If we do not know the type, then we do not perform the comparison
-      if (meta.result == null) return null;
-      // Is this going to produce a readable error message?
-      compareSort(new FormTerm.Type(lhs.ulift()), new FormTerm.Type(rcall.ulift()));
-      var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
-      for (var arg : lhs.args().view().zip(rcall.args())) {
-        if (!(holeTy instanceof FormTerm.Pi holePi))
-          throw new InternalException("meta arg size larger than param size. this should not happen");
-        if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
-        holeTy = holePi.substBody(arg._1.term());
-      }
-      return holeTy.lift(lhs.ulift());
-    }
-    // Long time ago I wrote this to generate more unification equations,
-    // which solves more universe levels. However, with latest version Aya (0.13),
-    // removing this does not break anything.
-    // Update: this is still needed, see #327 last task (`coe'`)
-    var resultTy = preRhs.computeType(state, ctx);
-    // resultTy might be an ErrorTerm, what to do?
-    if (meta.result != null) {
-      compareUntyped(resultTy, meta.result.lift(lhs.ulift()), rl, lr);
-    }
-    var argSubst = extract(lhs, preRhs, meta);
-    if (argSubst == null) {
-      reporter.report(new HoleProblem.BadSpineError(lhs, pos));
-      return null;
-    }
-    var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
-    // In this case, the solution may not be unique (see #608),
-    // so we may delay its resolution to the end of the tycking when we disallow vague unification.
-    if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {
-      state.addEqn(createEqn(lhs, preRhs, lr, rl));
-      // Skip the unification and scope check
-      return resultTy;
-    }
-    subst.add(argSubst);
-    // TODO
-    // TODO: what's the TODO above? I don't know what's TODO? ????
-    rl.map.forEach(subst::add);
-    assert !state.metas().containsKey(meta);
-    var solved = preRhs.freezeHoles(state).subst(subst, -lhs.ulift());
-    var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
-    var scopeCheck = solved.scopeCheck(allowedVars);
-    if (scopeCheck.invalid.isNotEmpty()) {
-      // Normalization may remove the usages of certain variables
-      solved = solved.normalize(state, NormalizeMode.NF);
-      scopeCheck = solved.scopeCheck(allowedVars);
-    }
-    if (scopeCheck.invalid.isNotEmpty()) {
-      reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid, pos));
-      return new ErrorTerm(solved);
-    }
-    if (scopeCheck.confused.isNotEmpty()) {
-      if (allowConfused) state.addEqn(createEqn(lhs, solved, lr, rl));
-      else {
-        reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused, pos));
-        return new ErrorTerm(solved);
-      }
-    }
-    if (!meta.solve(state, solved)) {
-      reporter.report(new HoleProblem.RecursionError(lhs, solved, pos));
-      return new ErrorTerm(solved);
-    }
-    tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-    return resultTy;
-  }
-
-  private static boolean sortLt(FormTerm.Sort l, FormTerm.Sort r) {
-    return switch (l) {
-      case FormTerm.Type lt -> switch (r) {
-        case FormTerm.Type rt -> lt.lift() <= rt.lift();
-        case FormTerm.Set rt -> lt.lift() <= rt.lift();
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop -> false;
-      };
-      case FormTerm.ISet iSet -> switch (r) {
-        case FormTerm.ISet set -> true;
-        case FormTerm.Prop prop -> false;
-        case FormTerm.Set set -> true;
-        case FormTerm.Type type -> false;
-      };
-      case FormTerm.Prop prop -> switch (r) {
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop1 -> true;
-        case FormTerm.Set set -> false;
-        case FormTerm.Type type -> false;
-      };
-      case FormTerm.Set lt -> switch (r) {
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop -> false;
-        case FormTerm.Set rt -> lt.lift() <= rt.lift();
-        case FormTerm.Type rt -> false;
-      };
-    };
-  }
+  protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull CallTerm.Hole lhs);
 
   public boolean compareSort(FormTerm.Sort l, FormTerm.Sort r) {
     var result = switch (cmp) {
-      case Gt -> sortLt(r, l);
+      case Gt -> TermComparator.sortLt(r, l);
       case Eq -> l.kind() == r.kind() && l.lift() == r.lift();
-      case Lt -> sortLt(l, r);
+      case Lt -> TermComparator.sortLt(l, r);
     };
     if (!result) {
       switch (cmp) {
@@ -638,11 +526,16 @@ public final class DefEq {
     return result;
   }
 
-  public void checkEqn(@NotNull TyckState.Eqn eqn) {
-    compareUntyped(
-      eqn.lhs().normalize(state, NormalizeMode.WHNF),
-      eqn.rhs().normalize(state, NormalizeMode.WHNF),
-      eqn.lr(), eqn.rl()
-    );
+  public record Sub(@NotNull MutableMap<@NotNull AnyVar, @NotNull RefTerm> map) implements Cloneable {
+    public Sub() {
+      this(MutableMap.create());
+    }
+
+    @SuppressWarnings("MethodDoesntCallSuperMethod") public @NotNull Sub clone() {
+      return new Sub(MutableMap.from(map));
+    }
+  }
+
+  public record FailureData(@NotNull Term lhs, @NotNull Term rhs) {
   }
 }

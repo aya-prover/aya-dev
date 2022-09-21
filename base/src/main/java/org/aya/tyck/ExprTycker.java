@@ -34,7 +34,7 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.DefEq;
+import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -690,14 +690,14 @@ public final class ExprTycker extends Tycker {
   }
 
   /** @return null if unified successfully */
-  private DefEq.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
+  private Unifier.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.append(new Trace.UnifyT(lower, upper, pos)));
     var unifier = unifier(pos, Ordering.Lt);
     if (!unifier.compare(lower, upper, null)) return unifier.getFailure();
     else return null;
   }
 
-  public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
+  public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
     return unifier(pos, ord, localCtx);
   }
 
