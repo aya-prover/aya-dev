@@ -9,13 +9,13 @@ import org.aya.generic.ExprProblem;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.unify.DefEq;
+import org.aya.tyck.unify.Unifier;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 public interface UnifyError extends TyckError {
   @NotNull TyckState state();
-  @NotNull DefEq.FailureData failureData();
+  @NotNull Unifier.FailureData failureData();
 
   default @NotNull Doc describeUnify(
     @NotNull DistillerOptions options,
@@ -53,7 +53,7 @@ public interface UnifyError extends TyckError {
     @Override @NotNull Expr expr,
     @NotNull Term expected,
     @NotNull Term actual,
-    @Override @NotNull DefEq.FailureData failureData,
+    @Override @NotNull Unifier.FailureData failureData,
     @Override @NotNull TyckState state
   ) implements ExprProblem, UnifyError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {

@@ -7,7 +7,7 @@ import org.aya.core.visitor.Zonker;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.DefEq;
+import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -52,7 +52,7 @@ public abstract class Tycker {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
-    return new DefEq(ord, reporter, false, true, traceBuilder, state, pos, ctx);
+  public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
+    return new Unifier(ord, reporter, false, true, traceBuilder, state, pos, ctx);
   }
 }

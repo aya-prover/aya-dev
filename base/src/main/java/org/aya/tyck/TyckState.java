@@ -15,7 +15,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.DefEq;
+import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -44,7 +44,7 @@ public record TyckState(
     @NotNull Reporter reporter, Trace.@Nullable Builder tracer,
     @NotNull Eqn eqn, boolean trying
   ) {
-    new DefEq(eqn.cmp, reporter, !trying, trying, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
+    new Unifier(eqn.cmp, reporter, !trying, trying, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
   }
 
   /** @return true if <code>this.eqns</code> and <code>this.activeMetas</code> are mutated. */
@@ -100,7 +100,7 @@ public record TyckState(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull Ordering cmp, @NotNull SourcePos pos,
     @NotNull LocalCtx localCtx,
-    @NotNull DefEq.Sub lr, @NotNull DefEq.Sub rl
+    @NotNull Unifier.Sub lr, @NotNull Unifier.Sub rl
   ) implements AyaDocile {
     public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
