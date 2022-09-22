@@ -20,7 +20,7 @@ jobs:
           arguments: testCodeCoverageReport --info --no-daemon --stacktrace --warning-mode all
       - name: Upload coverage to Codecov
         if: github.base_ref != null
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
