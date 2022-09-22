@@ -54,7 +54,7 @@ def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c =>
   \k => hcomp2d p q idp k
 
 def infixr <==>'
-  (p : [| i |] A {| |})
+  (p : [| i |] A)
   (q : [| i |] A {| ~ i := p 1 |})
   : [| i |] A {| ~ i := p 0 | i := q 1 |} =>
   coe (\ k => idp k = q k) 0 (λ j => p j)

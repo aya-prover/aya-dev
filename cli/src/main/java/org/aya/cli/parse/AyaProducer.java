@@ -374,19 +374,23 @@ public record AyaProducer(
         else
           yield visitListComprehension(arrCtx.arrayBlock());
       }
-      case AyaParser.PartElContext elCtx -> visitPartial(elCtx.partial());
+      case AyaParser.PartElContext elCtx -> visitPartial(elCtx.partial(), elCtx);
       case AyaParser.PathContext path -> new Expr.Path(
         sourcePosOf(path),
         Seq.wrapJava(path.weakId()).map(w -> new LocalVar(w.getText(), sourcePosOf(w))),
         visitExpr(path.expr()),
-        visitPartial(path.partial())
+        visitPartial(path.partial(), path)
       );
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
   }
 
-  private @NotNull Expr.PartEl visitPartial(AyaParser.PartialContext ctx) {
+  private @NotNull Expr.PartEl visitPartial(
+    @Nullable AyaParser.PartialContext ctx,
+    @NotNull ParserRuleContext fallback
+  ) {
+    if (ctx == null) return new Expr.PartEl(sourcePosOf(fallback), ImmutableSeq.empty());
     return new Expr.PartEl(sourcePosOf(ctx), Seq.wrapJava(ctx.subSystem()).map(sys -> {
       var exprs = Seq.wrapJava(sys.expr()).map(this::visitExpr);
       return Tuple2.of(exprs.get(0), exprs.get(1));
