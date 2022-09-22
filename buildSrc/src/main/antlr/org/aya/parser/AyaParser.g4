@@ -98,11 +98,11 @@ expr : atom                                 # single
      | LARRAY arrayBlock? RARRAY            # array
      | THIS_KW (AT qualifiedId)?            # this
      | partial                              # partEl
-     | LPATH weakId+ RPATH expr partial     # path
+     | LPATH weakId+ RPATH expr partial?    # path
      ;
 
 subSystem : expr DEFINE_AS expr;
-partial : LPARTIAL BAR? subSystem (BAR subSystem)* RPARTIAL;
+partial : LPARTIAL (BAR? subSystem (BAR subSystem)*)? RPARTIAL;
 
 arrayBlock : exprList | expr BAR listComp;
 
