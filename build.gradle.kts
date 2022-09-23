@@ -50,7 +50,7 @@ subprojects {
   java {
     withSourcesJar()
     if (isRelease) withJavadocJar()
-    JavaVersion.VERSION_19.let {
+    JavaVersion.toVersion(javaVersion).let {
       sourceCompatibility = it
       targetCompatibility = it
     }

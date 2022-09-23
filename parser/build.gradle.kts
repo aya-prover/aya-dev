@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 dependencies {
   val deps: java.util.Properties by rootProject.ext
@@ -17,6 +17,7 @@ val generateLexerToken = tasks.register<org.aya.gradle.GenerateLexerTokenTask>("
   lexerG4 = buildSrcDir.resolve("src/main/antlr/org/aya/parser/AyaLexer.g4")
 }
 
+generateLexerToken { dependsOn(tasks.withType<AntlrTask>())}
 tasks.compileJava { dependsOn(generateLexerToken) }
 tasks.sourcesJar { dependsOn(generateLexerToken) }
 
