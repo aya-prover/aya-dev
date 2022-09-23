@@ -13,6 +13,7 @@ import org.aya.concrete.visitor.ExprView;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.term.FormTerm;
 import org.aya.ref.LocalVar;
+import org.aya.generic.SortKind;
 import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
     private int levelVar(@NotNull Expr expr) throws DesugarInterruption {
       return switch (expr) {
         case Expr.BinOpSeq binOpSeq -> levelVar(pre(binOpSeq));
-        case Expr.LitIntExpr uLit -> uLit.integer();
+        case Expr.LitIntExpr(var pos, var i) -> i;
         default -> {
           info.opSet().reporter.report(new LevelProblem.BadLevelExpr(expr));
           throw new DesugarInterruption();
@@ -34,19 +35,18 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
 
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
-        // TODO: java 19
-        case Expr.AppExpr(var pos, Expr.RawSortExpr univ, var arg)when univ.kind() == FormTerm.SortKind.Type -> {
+        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Type -> {
           try {
-            yield new Expr.TypeExpr(univ.sourcePos(), levelVar(arg.expr()));
+            yield new Expr.TypeExpr(uPos, levelVar(arg.expr()));
           } catch (DesugarInterruption e) {
             yield new Expr.ErrorExpr(pos, expr);
           }
         }
-        case Expr.AppExpr app when app.function() instanceof Expr.RawSortExpr univ && univ.kind() == FormTerm.SortKind.Set -> {
+        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Set -> {
           try {
-            yield new Expr.SetExpr(univ.sourcePos(), levelVar(app.argument().expr()));
+            yield new Expr.SetExpr(uPos, levelVar(arg.expr()));
           } catch (DesugarInterruption e) {
-            yield new Expr.ErrorExpr(((Expr) app).sourcePos(), app);
+            yield new Expr.ErrorExpr(pos, expr);
           }
         }
         case Expr.RawSortExpr univ -> switch (univ.kind()) {
@@ -55,10 +55,9 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
           case Prop -> new Expr.PropExpr(univ.sourcePos());
           case ISet -> new Expr.ISetExpr(univ.sourcePos());
         };
-        case Expr.BinOpSeq binOpSeq -> {
-          var seq = binOpSeq.seq();
-          assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
-          yield pre(new BinExprParser(info, seq.view()).build(binOpSeq.sourcePos()));
+        case Expr.BinOpSeq(var pos, var seq) -> {
+          assert seq.isNotEmpty() : pos.toString();
+          yield pre(new BinExprParser(info, seq.view()).build(pos));
         }
         case Expr.Do doNotation -> {
           var last = doNotation.binds().last();

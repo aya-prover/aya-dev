@@ -10,11 +10,11 @@ import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.FormTerm;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
+import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
@@ -225,23 +225,23 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author tsao-chi
    */
-  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull FormTerm.SortKind kind) implements Expr {}
+  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull SortKind kind) implements Expr {}
 
   sealed interface SortExpr extends Expr {
     int lift();
 
-    FormTerm.SortKind kind();
+    SortKind kind();
   }
 
   record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
-    @Override public FormTerm.SortKind kind() {
-      return FormTerm.SortKind.Type;
+    @Override public SortKind kind() {
+      return SortKind.Type;
     }
   }
 
   record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
-    @Override public FormTerm.SortKind kind() {
-      return FormTerm.SortKind.Set;
+    @Override public SortKind kind() {
+      return SortKind.Set;
     }
   }
 
@@ -250,8 +250,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       return 0;
     }
 
-    @Override public FormTerm.SortKind kind() {
-      return FormTerm.SortKind.Prop;
+    @Override public SortKind kind() {
+      return SortKind.Prop;
     }
   }
 
@@ -260,8 +260,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       return 0;
     }
 
-    @Override public FormTerm.SortKind kind() {
-      return FormTerm.SortKind.ISet;
+    @Override public SortKind kind() {
+      return SortKind.ISet;
     }
   }
 
