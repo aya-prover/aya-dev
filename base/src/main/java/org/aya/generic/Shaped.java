@@ -36,9 +36,9 @@ public interface Shaped<T> {
       var type = type();
       var otherType = otherData.type();
       return switch (type) {
-        case CallTerm.Data lhs && otherType instanceof CallTerm.Data rhs ->
+        case CallTerm.Data lhs when otherType instanceof CallTerm.Data rhs ->
           lhs.ref().core == rhs.ref().core;
-        case CallTerm.Hole lhs && otherType instanceof CallTerm.Hole rhs -> {
+        case CallTerm.Hole lhs when otherType instanceof CallTerm.Hole rhs -> {
           // same meta always have same solution
           if (lhs.ref() == rhs.ref()) yield true;
           // no state is given, so we can't check the solution

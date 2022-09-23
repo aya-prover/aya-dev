@@ -77,7 +77,7 @@ public interface EndoFunctor extends Function<Term, Term> {
   record Substituter(@NotNull Subst subst) implements BetaExpander {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case RefTerm ref && ref.var() == LocalVar.IGNORED -> throw new InternalException("found usage of ignored var");
+        case RefTerm ref when ref.var() == LocalVar.IGNORED -> throw new InternalException("found usage of ignored var");
         case RefTerm ref -> replacement(ref, ref.var());
         case RefTerm.Field field -> replacement(field, field.ref());
         case Term misc -> BetaExpander.super.post(misc);

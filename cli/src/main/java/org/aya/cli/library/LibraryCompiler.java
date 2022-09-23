@@ -273,7 +273,7 @@ public class LibraryCompiler {
     static void clear(@NotNull PrimDef.Factory factory, @NotNull Stmt stmt) {
       switch (stmt) {
         case Command.Module mod -> clear(factory, mod.contents());
-        case TeleDecl.PrimDecl decl && decl.ref.core != null -> factory.clear(decl.ref.core.id);
+        case TeleDecl.PrimDecl decl when decl.ref.core != null -> factory.clear(decl.ref.core.id);
         default -> {}
       }
     }

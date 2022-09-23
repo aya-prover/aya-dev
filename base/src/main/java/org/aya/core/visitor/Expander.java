@@ -23,7 +23,7 @@ public interface Expander extends DeltaExpander, BetaExpander {
     @Override public @NotNull Term apply(@NotNull Term term) {
       return switch (term) {
         case StableWHNF whnf -> term;
-        case CallTerm.Con con && (con.ref().core == null || con.ref().core.clauses.isEmpty()) -> con;
+        case CallTerm.Con con when (con.ref().core == null || con.ref().core.clauses.isEmpty()) -> con;
         default -> Expander.super.apply(term);
       };
     }

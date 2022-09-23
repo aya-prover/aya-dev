@@ -410,7 +410,7 @@ public final class PatTycker {
   ) implements ExprOps {
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
-        case Expr.RefExpr ref && bodySubst.containsKey(ref.resolvedVar()) -> pre(bodySubst.get(ref.resolvedVar()));
+        case Expr.RefExpr ref when bodySubst.containsKey(ref.resolvedVar()) -> pre(bodySubst.get(ref.resolvedVar()));
         case Expr.MetaPat metaPat -> pre(metaPat.meta().inline(null).toExpr(metaPat.sourcePos()));
         case Expr misc -> misc;
       };

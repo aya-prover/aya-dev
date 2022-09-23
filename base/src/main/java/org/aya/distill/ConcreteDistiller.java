@@ -54,7 +54,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         new ExprTraversal<Unit>() {
           @Override public @NotNull Expr visitExpr(@NotNull Expr e, Unit unit) {
             switch (e) {
-              case Expr.RefExpr ref && ref.resolvedVar() == expr.param().ref() -> data[0] = true;
+              case Expr.RefExpr ref when ref.resolvedVar() == expr.param().ref() -> data[0] = true;
               case Expr.UnresolvedExpr unresolved -> data[1] = true;
               default -> {}
             }
