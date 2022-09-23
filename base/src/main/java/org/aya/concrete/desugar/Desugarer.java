@@ -32,14 +32,14 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
         // TODO: java 19
-        case Expr.AppExpr app && app.function() instanceof Expr.RawSortExpr univ && univ.kind() == FormTerm.SortKind.Type -> {
+        case Expr.AppExpr(var pos, Expr.RawSortExpr univ, var arg) when univ.kind() == FormTerm.SortKind.Type -> {
           try {
-            yield new Expr.TypeExpr(univ.sourcePos(), levelVar(app.argument().expr()));
+            yield new Expr.TypeExpr(univ.sourcePos(), levelVar(arg.expr()));
           } catch (DesugarInterruption e) {
-            yield new Expr.ErrorExpr(((Expr) app).sourcePos(), app);
+            yield new Expr.ErrorExpr(pos, expr);
           }
         }
-        case Expr.AppExpr app && app.function() instanceof Expr.RawSortExpr univ && univ.kind() == FormTerm.SortKind.Set -> {
+        case Expr.AppExpr app when app.function() instanceof Expr.RawSortExpr univ && univ.kind() == FormTerm.SortKind.Set -> {
           try {
             yield new Expr.SetExpr(univ.sourcePos(), levelVar(app.argument().expr()));
           } catch (DesugarInterruption e) {

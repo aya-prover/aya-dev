@@ -34,7 +34,7 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
 
   @Override default @NotNull Doc toDoc() {
     return switch (this) {
-      case Decrease d && d.size == 0 -> Doc.plain("  =");
+      case Decrease d when d.size == 0 -> Doc.plain("  =");
       case Decrease d -> Doc.plain((d.usable ? " " : "!") + "-" + d.size);
       case Unknown ignored -> Doc.plain("  ?");
     };
@@ -44,7 +44,7 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
     if (rhs instanceof Unknown) return rhs;
     return switch (this) {
       case Unknown lhs -> lhs;
-      case Decrease l && rhs instanceof Decrease r -> decr(l.usable || r.usable, l.size + r.size);
+      case Decrease l when rhs instanceof Decrease r -> decr(l.usable || r.usable, l.size + r.size);
       default -> throw new InternalException("unreachable");
     };
   }

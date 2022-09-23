@@ -171,11 +171,11 @@ public sealed abstract class TermComparator permits Unifier {
 
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     return switch (preLhs) {
-      case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs ->
+      case CallTerm.Fn lhs when preRhs instanceof CallTerm.Fn rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
-      case CallTerm.Con lhs && preRhs instanceof CallTerm.Con rhs ->
+      case CallTerm.Con lhs when preRhs instanceof CallTerm.Con rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
-      case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
+      case CallTerm.Prim lhs when preRhs instanceof CallTerm.Prim rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };
@@ -316,7 +316,7 @@ public sealed abstract class TermComparator permits Unifier {
         // Question: do we need a unification for Pi.body?
         return compare(lhs, rhs, lr, rl, null);
       });
-      case FormTerm.PartTy ty && lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
+      case FormTerm.PartTy ty when lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
         comparePartial(lel, rel, ty, lr, rl);
       case FormTerm.PartTy ty -> false;
     };
@@ -342,9 +342,9 @@ public sealed abstract class TermComparator permits Unifier {
     @Nullable FormTerm.PartTy type, Sub lr, Sub rl
   ) {
     return switch (lhs.partial()) {
-      case Partial.Const<Term> ll && rhs.partial() instanceof Partial.Const<Term> rr ->
+      case Partial.Const<Term> ll when rhs.partial() instanceof Partial.Const<Term> rr ->
         compare(ll.u(), rr.u(), lr, rl, type == null ? null : type.type());
-      case Partial.Split<Term> ll && rhs.partial() instanceof Partial.Split<Term> rr ->
+      case Partial.Split<Term> ll when rhs.partial() instanceof Partial.Split<Term> rr ->
         CofThy.conv(type == null ? ll.restr() : type.restr(), new Subst(),
           subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type == null ? null : type.subst(subst)));
       default -> false;
@@ -445,10 +445,10 @@ public sealed abstract class TermComparator permits Unifier {
       case PrimTerm.Mula lhs -> {
         if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
         var happy = switch (lhs.asFormula()) {
-          case Formula.Lit<Term> ll && rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isLeft() == rr.isLeft();
-          case Formula.Inv<Term> ll && rhs.asFormula() instanceof Formula.Inv<Term> rr ->
+          case Formula.Lit<Term> ll when rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isLeft() == rr.isLeft();
+          case Formula.Inv<Term> ll when rhs.asFormula() instanceof Formula.Inv<Term> rr ->
             compare(ll.i(), rr.i(), lr, rl, null);
-          case Formula.Conn<Term> ll && rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()
+          case Formula.Conn<Term> ll when rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()
             && compare(ll.l(), rr.l(), lr, rl, null)
             && compare(ll.r(), rr.r(), lr, rl, null);
           default -> false;
