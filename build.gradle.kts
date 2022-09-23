@@ -56,6 +56,7 @@ subprojects {
     }
     toolchain {
       languageVersion.set(JavaLanguageVersion.of(javaVersion))
+      vendor.set(JvmVendorSpec.BELLSOFT)
     }
   }
 
