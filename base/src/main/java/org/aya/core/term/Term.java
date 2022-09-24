@@ -146,23 +146,23 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (partial == el.partial()) yield el;
         yield new IntroTerm.PartEl(partial, el.rhsType()); // Q: map `rhsType` as well?
       }
-      case FormTerm.Path path -> {
-        var cube = path.cube().map(f);
-        if (cube == path.cube()) yield path;
-        yield new FormTerm.Path(cube);
+      case FormTerm.Path(var cube) path -> {
+        var newCube = cube.map(f);
+        if (newCube == cube) yield path;
+        yield new FormTerm.Path(newCube);
       }
-      case IntroTerm.PathLam lam -> {
-        var body = f.apply(lam.body());
-        if (body == lam.body()) yield lam;
-        yield new IntroTerm.PathLam(lam.params(), body);
+      case IntroTerm.PathLam(var params, var body) lam -> {
+        var newBody = f.apply(body);
+        if (newBody == body) yield lam;
+        yield new IntroTerm.PathLam(params, newBody);
       }
-      case ElimTerm.PathApp app -> {
-        var of = f.apply(app.of());
-        var refs = app.args().map(a -> a.descent(f));
-        var cube = app.cube().map(f);
-        if (of == app.of() && cube == app.cube() && refs.sameElements(app.args(), true))
+      case ElimTerm.PathApp(var of, var args, var cube) app -> {
+        var newOf = f.apply(of);
+        var refs = args.map(a -> a.descent(f));
+        var newCube = cube.map(f);
+        if (newOf == of && newCube == cube && refs.sameElements(args, true))
           yield app;
-        yield new ElimTerm.PathApp(of, refs, cube);
+        yield new ElimTerm.PathApp(newOf, refs, newCube);
       }
       case PrimTerm.Coe coe -> {
         var type = f.apply(coe.type());
