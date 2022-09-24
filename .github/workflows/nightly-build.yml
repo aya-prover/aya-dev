@@ -45,6 +45,11 @@ jobs:
         with:
           distribution: 'liberica'
           java-version: '19'
+      - name: Setup JavaAgent for guard pattern
+        run: |
+          # In case the file does not have a newline at the end
+          echo '' >> gradle.properties
+          echo "org.gradle.jvmargs = -javaagent:${{ github.workspace }}/gradle/guard-pattern-fix.jar" >> gradle.properties
       - name: gradle publish
         uses: gradle/gradle-build-action@v2
         with:
@@ -76,6 +81,15 @@ jobs:
           distribution: 'liberica'
           java-version: '19'
 
+      - name: Setup JavaAgent for guard pattern
+        shell: bash
+        run: |
+          # In case the file does not have a newline at the end
+          echo '' >> gradle.properties
+          norm="${{ github.workspace }}"
+          norm="${norm//\\//}"
+          echo "org.gradle.jvmargs = -javaagent:$norm/gradle/guard-pattern-fix.jar" >> gradle.properties
+
       - name: gradle jlink
         uses: gradle/gradle-build-action@v2
         with:
@@ -103,8 +117,6 @@ jobs:
 
       - name: Gradle, let me tell you where's my JDK!
         run: |
-          # In case the file does not have a newline at the end
-          echo '' >> gradle.properties
           # Gradle should respect these environmental variables by default!
           echo 'org.gradle.java.installations.fromEnv=JAVA_HOME,GRAALVM_HOME' >> gradle.properties
 
@@ -112,7 +124,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           dependencies-cache-enabled: true
-          arguments: javaToolchains
+          arguments: javaToolchains --info --no-daemon --stacktrace --warning-mode all
 
       - name: gradle nativeCompile
         uses: gradle/gradle-build-action@v2
