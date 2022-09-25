@@ -293,11 +293,17 @@ public class AyaService extends LanguageServer {
     return LensMaker.resolve(codeLens);
   }
 
-  @Override public List<? extends GenericSymbol> documentSymbol(DocumentSymbolParams params) {
+  @Override public List<? extends GenericDocumentSymbol> documentSymbol(DocumentSymbolParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
     return ProjectSymbol.invoke(source)
       .map(ProjectSymbol.Symbol::document)
+      .asJava();
+  }
+
+  @Override public List<? extends GenericWorkspaceSymbol> workspaceSymbols(WorkspaceSymbolParams params) {
+    return ProjectSymbol.invoke(libraries.view())
+      .map(ProjectSymbol.Symbol::workspace)
       .asJava();
   }
 
@@ -308,19 +314,6 @@ public class AyaService extends LanguageServer {
       if (source == null) return Collections.emptyList();
       return InlayHintMaker.invoke(source, params.ran);
     });
-  }
-
-  @Override
-  public List<SymbolInformation> workspaceSymbols(WorkspaceSymbolParams params) {
-    return super.workspaceSymbols(params);
-  }
-
-  @SuppressWarnings("deprecation") @Override
-  public CompletableFuture<Either<List<? extends SymbolInformation>, List<? extends WorkspaceSymbol>>> symbol(WorkspaceSymbolParams params) {
-    return CompletableFuture.supplyAsync(() -> Either.forRight(
-      ProjectSymbol.invoke(libraries.view())
-        .map(ProjectSymbol.Symbol::workspace)
-        .asJava()));
   }
 
   @Override public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
