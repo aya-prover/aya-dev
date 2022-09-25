@@ -61,10 +61,11 @@ public class AyaService extends LanguageServer {
    */
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
-  private @Nullable AyaLanguageClient client;
+  private final @Nullable AyaLanguageClient client;
 
-  public AyaService(@NotNull CompilerAdvisor advisor) {
+  public AyaService(@NotNull CompilerAdvisor advisor, @Nullable LanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
+    this.client = new AyaLanguageClient(client);
   }
 
   public @NotNull SeqView<LibraryOwner> libraries() {
@@ -122,10 +123,6 @@ public class AyaService extends LanguageServer {
     cap.workspaceSymbolProvider = true;
     cap.foldingRangeProvider = true;
     return new InitializeResult(cap);
-  }
-
-  public void connect(@NotNull AyaLanguageClient client) {
-    this.client = client;
   }
 
   private @Nullable LibraryOwner findOwner(@Nullable Path path) {
@@ -274,7 +271,7 @@ public class AyaService extends LanguageServer {
     return Optional.of(new RenameResponse(LspRange.toRange(begin.sourcePos()), begin.data()));
   }
 
-/*
+  /*
   @Override
   public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
     return CompletableFuture.supplyAsync(() -> {
