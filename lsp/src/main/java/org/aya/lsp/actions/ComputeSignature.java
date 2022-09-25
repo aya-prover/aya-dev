@@ -15,7 +15,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.distill.DistillerOptions;
-import org.eclipse.lsp4j.Position;
+import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 
 public interface ComputeSignature {

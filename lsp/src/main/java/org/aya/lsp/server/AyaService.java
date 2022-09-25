@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
@@ -35,12 +34,7 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.BufferReporter;
 import org.aya.util.reporter.Problem;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.messages.Either3;
-import org.eclipse.lsp4j.services.NotebookDocumentService;
-import org.eclipse.lsp4j.services.TextDocumentService;
-import org.eclipse.lsp4j.services.WorkspaceService;
+import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,11 +46,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class AyaService implements WorkspaceService, TextDocumentService, NotebookDocumentService {
+public class AyaService extends LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
 
   private final BufferReporter reporter = new BufferReporter();
@@ -133,13 +127,12 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
     return null;
   }
 
-  public @Nullable LibrarySource find(@NotNull String uri) {
-    var path = toPath(uri);
-    return find(path);
+  public @Nullable LibrarySource find(@NotNull URI uri) {
+    return find(toPath(uri));
   }
 
-  @NotNull private Path toPath(@NotNull String uri) {
-    return FileUtil.canonicalize(Path.of(URI.create(uri)));
+  @NotNull private Path toPath(@NotNull URI uri) {
+    return FileUtil.canonicalize(Path.of(uri));
   }
 
   public @NotNull ImmutableSeq<HighlightResult> reload() {
@@ -183,11 +176,11 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
     AyaLanguageClient.clearAyaProblems(client, files);
   }
 
-  @Override public void didChangeWatchedFiles(@NotNull DidChangeWatchedFilesParams params) {
-    params.getChanges().forEach(change -> {
-      switch (change.getType()) {
-        case Created -> {
-          var newSrc = toPath(change.getUri());
+  @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+    params.changes.forEach(change -> {
+      switch (change.type) {
+        case FileChangeType.Created -> {
+          var newSrc = toPath(change.uri);
           switch (findOwner(newSrc)) {
             case MutableLibraryOwner ownerMut -> {
               Log.d("Created new file: %s, added to owner: %s", newSrc, ownerMut.underlyingLibrary().name());
@@ -201,8 +194,8 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
             default -> {}
           }
         }
-        case Deleted -> {
-          var src = find(change.getUri());
+        case FileChangeType.Deleted -> {
+          var src = find(change.uri);
           if (src == null) return;
           Log.d("Deleted file: %s, removed from owner: %s", src.file(), src.owner().underlyingLibrary().name());
           switch (src.owner()) {
@@ -215,67 +208,48 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
     });
   }
 
-  @Override public void didOpen(DidOpenTextDocumentParams params) {}
-  @Override public void didChange(DidChangeTextDocumentParams params) {}
-  @Override public void didClose(DidCloseTextDocumentParams params) {}
-  @Override public void didSave(DidSaveTextDocumentParams params) {}
-  @Override public void didChangeConfiguration(DidChangeConfigurationParams params) {}
-  @Override public void didOpen(DidOpenNotebookDocumentParams params) {}
-  @Override public void didChange(DidChangeNotebookDocumentParams params) {}
-  @Override public void didSave(DidSaveNotebookDocumentParams params) {}
-  @Override public void didClose(DidCloseNotebookDocumentParams params) {}
+  @Override public Optional<CompletionList> completion(TextDocumentPositionParams position) {
+    return Optional.empty();
+  }
 
-  @Override
-  public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
-    return CompletableFuture.supplyAsync(() -> Either.forLeft(Collections.emptyList()));
+  @Override public Optional<List<Location>> gotoDefinition(TextDocumentPositionParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Optional.empty();
+    return Optional.of(GotoDefinition.invoke(source, params.position, libraries.view()));
   }
 
   @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Either.forLeft(Collections.emptyList());
-      return Either.forRight(GotoDefinition.invoke(source, params.getPosition(), libraries.view()));
-    });
+  public Optional<Hover> hover(TextDocumentPositionParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Optional.empty();
+    var doc = ComputeSignature.invokeHover(source, params.position);
+    if (doc.isEmpty()) return Optional.empty();
+    var marked = new MarkedString(MarkupKind.PlainText, doc.debugRender());
+    return Optional.of(new Hover(List.of(marked)));
   }
 
-  @Override public CompletableFuture<Hover> hover(HoverParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return null;
-      var doc = ComputeSignature.invokeHover(source, params.getPosition());
-      if (doc.isEmpty()) return null;
-      return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
-    });
+  @Override public Optional<List<Location>> findReferences(ReferenceParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Optional.empty();
+    return Optional.of(FindReferences.invoke(source, params.position, libraries.view()));
   }
 
-  @Override public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return FindReferences.invoke(source, params.getPosition(), libraries.view());
-    });
+  @Override public WorkspaceEdit rename(RenameParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return null;
+    var renames = Rename.rename(source, params.position, params.newName, libraries.view());
+    return new WorkspaceEdit(renames);
   }
 
-  @Override public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return null;
-      var renames = Rename.rename(source, params.getPosition(), params.getNewName(), libraries.view());
-      return new WorkspaceEdit(renames);
-    });
+  @Override public Optional<RenameResponse> prepareRename(TextDocumentPositionParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Optional.empty();
+    var begin = Rename.prepare(source, params.position);
+    if (begin == null) return Optional.empty();
+    return Optional.of(new RenameResponse(LspRange.toRange(begin.sourcePos()), begin.data()));
   }
 
-  @Override public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> prepareRename(PrepareRenameParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return null;
-      var begin = Rename.prepare(source, params.getPosition());
-      if (begin == null) return null;
-      return Either3.forSecond(new PrepareRenameResult(LspRange.toRange(begin.sourcePos()), begin.data()));
-    });
-  }
-
+/*
   @Override
   public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
     return CompletableFuture.supplyAsync(() -> {
@@ -289,24 +263,24 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
         .stream().toList();
     });
   }
+*/
 
-  @Override public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return LensMaker.invoke(source, libraries.view());
-    });
+  @Override public List<CodeLens> codeLens(CodeLensParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    return LensMaker.invoke(source, libraries.view());
   }
 
-  @Override public CompletableFuture<CodeLens> resolveCodeLens(CodeLens codeLens) {
-    return CompletableFuture.supplyAsync(() -> LensMaker.resolve(codeLens));
+  @Override public CodeLens resolveCodeLens(CodeLens codeLens) {
+    return LensMaker.resolve(codeLens);
   }
 
+/*
   @Override public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
-      return InlayHintMaker.invoke(source, params.getRange());
+      return InlayHintMaker.invoke(source, params.ran);
     });
   }
 
@@ -319,6 +293,11 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
         .map(symbol -> Either.<SymbolInformation, DocumentSymbol>forRight(symbol.document()))
         .asJava();
     });
+  }
+
+  @Override
+  public List<SymbolInformation> workspaceSymbols(WorkspaceSymbolParams params) {
+    return super.workspaceSymbols(params);
   }
 
   @SuppressWarnings("deprecation") @Override
@@ -336,6 +315,7 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
       return Folding.invoke(source);
     });
   }
+*/
 
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
     var source = find(input.uri);

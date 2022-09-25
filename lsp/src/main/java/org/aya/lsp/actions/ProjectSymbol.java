@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -11,11 +11,11 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
 import org.aya.ref.DefVar;
-import org.eclipse.lsp4j.DocumentSymbol;
-import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.SymbolKind;
-import org.eclipse.lsp4j.WorkspaceSymbol;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.intellij.lang.annotations.MagicConstant;
+import org.javacs.lsp.DocumentSymbol;
+import org.javacs.lsp.Location;
+import org.javacs.lsp.SymbolKind;
+import org.javacs.lsp.WorkspaceSymbol;
 import org.jetbrains.annotations.NotNull;
 
 public final class ProjectSymbol implements SyntaxDeclAction<@NotNull MutableList<ProjectSymbol.Symbol>> {
@@ -68,18 +68,18 @@ public final class ProjectSymbol implements SyntaxDeclAction<@NotNull MutableLis
   public record Symbol(
     @NotNull String name,
     @NotNull String description,
-    @NotNull SymbolKind kind,
+    @MagicConstant(valuesFromClass = SymbolKind.class) int kind,
     @NotNull Location nameLocation,
     @NotNull Location entireLocation,
     @NotNull ImmutableSeq<Symbol> children
   ) {
     public @NotNull DocumentSymbol document() {
-      return new DocumentSymbol(name, kind, entireLocation.getRange(), nameLocation.getRange(),
-        description, children.map(Symbol::document).asJava());
+      return new DocumentSymbol(name, description, kind, false, entireLocation.range,
+        nameLocation.range, children.map(Symbol::document).asJava());
     }
 
     public @NotNull WorkspaceSymbol workspace() {
-      return new WorkspaceSymbol(name, kind, Either.forLeft(nameLocation));
+      return new WorkspaceSymbol(name, kind, nameLocation);
     }
   }
 }

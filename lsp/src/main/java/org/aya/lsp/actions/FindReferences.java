@@ -10,8 +10,8 @@ import org.aya.lsp.utils.Resolver;
 import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.Position;
+import org.javacs.lsp.Location;
+import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public interface FindReferences {
   static @NotNull List<Location> invoke(
     @NotNull LibrarySource source,
-    @NotNull Position position,
+    Position position,
     @NotNull SeqView<LibraryOwner> libraries
   ) {
     return findRefs(source, position, libraries)
