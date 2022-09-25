@@ -64,7 +64,7 @@ public final class ProjectSymbol implements SyntaxDeclAction<@NotNull MutableLis
     pp.append(symbol);
   }
 
-  /** Our superclass of {@link org.eclipse.lsp4j.WorkspaceSymbol} and {@link org.eclipse.lsp4j.DocumentSymbol} */
+  /** Our superclass of {@link WorkspaceSymbol} and {@link DocumentSymbol} */
   public record Symbol(
     @NotNull String name,
     @NotNull String description,

@@ -5,8 +5,6 @@ module aya.lsp {
   requires static org.jetbrains.annotations;
   requires com.google.gson;
   requires aya.javacs.protocol;
-  requires org.eclipse.lsp4j;
-  requires org.eclipse.lsp4j.jsonrpc;
   requires info.picocli;
 
   exports org.aya.lsp.models;
