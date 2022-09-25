@@ -10,10 +10,10 @@ import org.aya.lsp.utils.LspRange;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.services.LanguageClient;
+import org.javacs.lsp.Diagnostic;
+import org.javacs.lsp.DiagnosticSeverity;
+import org.javacs.lsp.LanguageClient;
+import org.javacs.lsp.PublishDiagnosticsParams;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -29,7 +29,7 @@ public interface AyaLanguageClient extends LanguageClient {
     problems.forEach((filePath, value) -> {
       Log.i("Found %d issues in %s", value.size(), filePath);
       var param = new PublishDiagnosticsParams(
-        filePath.toUri().toString(),
+        filePath.toUri(),
         value
           .collect(Collectors.groupingBy(Problem::sourcePos, ImmutableSeq.factory()))
           .entrySet().stream()
@@ -45,7 +45,7 @@ public interface AyaLanguageClient extends LanguageClient {
     @NotNull ImmutableSeq<Path> files
   ) {
     files.forEach(f -> self.publishDiagnostics(
-      new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
+      new PublishDiagnosticsParams(f.toUri(), Collections.emptyList())));
   }
 
   private static @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {
@@ -54,13 +54,13 @@ public interface AyaLanguageClient extends LanguageClient {
     for (var p : problems) {
       msgBuilder.append(p.brief(options).debugRender()).append('\n');
       var ps = severityOf(p);
-      if (ps.getValue() < severity.getValue()) severity = ps;
+      if (ps < severity) severity = ps;
     }
     return new Diagnostic(LspRange.toRange(sourcePos),
-      msgBuilder.toString(), severity, "Aya");
+      severity, "", "Aya", msgBuilder.toString(), Collections.emptyList());
   }
 
-  private static @NotNull DiagnosticSeverity severityOf(@NotNull Problem problem) {
+  private static int severityOf(@NotNull Problem problem) {
     return switch (problem.level()) {
       case WARN -> DiagnosticSeverity.Warning;
       case ERROR -> DiagnosticSeverity.Error;

@@ -3,9 +3,9 @@
 package org.aya.lsp.utils;
 
 import kala.control.Option;
-import org.aya.lsp.WaitForLspUpdate;
 import org.aya.util.error.SourcePos;
 import org.javacs.lsp.Location;
+import org.javacs.lsp.LocationLink;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.Range;
 import org.jetbrains.annotations.NotNull;
@@ -27,13 +27,12 @@ public class LspRange {
     return sourcePos.file().underlying().map(Path::toUri);
   }
 
-  @WaitForLspUpdate public static @Nullable Location toLoc(@NotNull SourcePos from, @NotNull SourcePos to) {
+  public static @Nullable LocationLink toLoc(@NotNull SourcePos from, @NotNull SourcePos to) {
     var uri = fileUri(to);
     if (uri.isEmpty()) return null;
     var fromRange = toRange(from);
     var toRange = toRange(to);
-    // return new LocationLink(uri.get(), toRange, toRange, fromRange);
-    return new Location(uri.get(), toRange);
+    return new LocationLink(fromRange, uri.get(), toRange, toRange);
   }
 
   public static @Nullable Location toLoc(@NotNull SourcePos to) {

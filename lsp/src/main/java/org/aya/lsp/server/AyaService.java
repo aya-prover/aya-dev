@@ -98,6 +98,32 @@ public class AyaService extends LanguageServer {
       .map(WsLibrary::mock));
   }
 
+  @Override public void initialized() {
+    // Imitate the javacs lsp
+    // client.registerCapability("workspace/didChangeWatchedFiles");
+  }
+
+  @Override public InitializeResult initialize(InitializeParams params) {
+    var cap = new ServerCapabilities();
+    cap.textDocumentSync = 0;
+    var workOps = new ServerCapabilities.WorkspaceFoldersOptions(true, true);
+    var workCap = new ServerCapabilities.WorkspaceServerCapabilities(workOps);
+    cap.completionProvider = new ServerCapabilities.CompletionOptions(
+      true, Collections.singletonList("QWERTYUIOPASDFGHJKLZXCVBNM.qwertyuiopasdfghjklzxcvbnm+-*/_[]:"));
+    cap.workspace = workCap;
+    cap.definitionProvider = true;
+    cap.referencesProvider = true;
+    cap.hoverProvider = true;
+    cap.renameProvider = new ServerCapabilities.RenameOptions(true);
+    cap.documentHighlightProvider = true;
+    cap.codeLensProvider = new ServerCapabilities.CodeLensOptions(true);
+    cap.inlayHintProvider = true;
+    cap.documentSymbolProvider = true;
+    cap.workspaceSymbolProvider = true;
+    cap.foldingRangeProvider = true;
+    return new InitializeResult(cap);
+  }
+
   public void connect(@NotNull AyaLanguageClient client) {
     this.client = client;
   }
@@ -212,14 +238,13 @@ public class AyaService extends LanguageServer {
     return Optional.empty();
   }
 
-  @Override public Optional<List<Location>> gotoDefinition(TextDocumentPositionParams params) {
+  @Override public Optional<List<GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
     return Optional.of(GotoDefinition.invoke(source, params.position, libraries.view()));
   }
 
-  @Override
-  public Optional<Hover> hover(TextDocumentPositionParams params) {
+  @Override public Optional<Hover> hover(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
     var doc = ComputeSignature.invokeHover(source, params.position);
