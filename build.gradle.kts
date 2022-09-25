@@ -82,7 +82,7 @@ subprojects {
     doLast {
       val tree = fileTree(destinationDirectory)
       tree.include("**/*.class")
-      // tree.exclude("module-info.class")
+      tree.include("module-info.class")
       val root = project.buildDir.toPath().resolve("classes/java/main")
       tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
     }

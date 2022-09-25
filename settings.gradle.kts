@@ -6,7 +6,6 @@ rootProject.name = "aya-prover"
 dependencyResolutionManagement {
   @Suppress("UnstableApiUsage") repositories {
     mavenCentral()
-    mavenLocal()
   }
 }
 

@@ -50,7 +50,7 @@ public record AyaLanguageClient(@NotNull LanguageClient delegate) implements Lan
     var msgBuilder = new StringBuilder();
     var severity = DiagnosticSeverity.Hint;
     for (var p : problems) {
-      msgBuilder.append(p.brief(options).debugRender()).append('\n');
+      msgBuilder.append(p.brief(options).debugRender()).append(System.lineSeparator());
       var ps = severityOf(p);
       if (ps < severity) severity = ps;
     }
