@@ -51,7 +51,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class AyaService implements LanguageServer {
+public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
 
   private final BufferReporter reporter = new BufferReporter();
@@ -64,7 +64,7 @@ public class AyaService implements LanguageServer {
   private final @NotNull CompilerAdvisor advisor;
   private final @Nullable AyaLanguageClient client;
 
-  public AyaService(@NotNull CompilerAdvisor advisor, @Nullable LanguageClient client) {
+  public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @Nullable LanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
     this.client = new AyaLanguageClient(client);
   }
@@ -370,9 +370,9 @@ public class AyaService implements LanguageServer {
   }
 
   private static final class CallbackAdvisor extends DelegateCompilerAdvisor {
-    private final @NotNull AyaService service;
+    private final @NotNull AyaLanguageServer service;
 
-    public CallbackAdvisor(@NotNull AyaService service, @NotNull CompilerAdvisor delegate) {
+    public CallbackAdvisor(@NotNull AyaLanguageServer service, @NotNull CompilerAdvisor delegate) {
       super(delegate);
       this.service = service;
     }

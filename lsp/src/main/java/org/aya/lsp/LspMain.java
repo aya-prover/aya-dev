@@ -3,7 +3,7 @@
 package org.aya.lsp;
 
 import org.aya.cli.library.incremental.CompilerAdvisor;
-import org.aya.lsp.server.AyaService;
+import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspArgs;
 import org.javacs.lsp.LSP;
@@ -32,7 +32,7 @@ public class LspMain extends LspArgs implements Callable<Integer> {
     };
 
     LSP.connect(
-      client -> new AyaService(CompilerAdvisor.inMemory(), client),
+      client -> new AyaLanguageServer(CompilerAdvisor.inMemory(), client),
       startup.in,
       startup.out
     );

@@ -6,7 +6,7 @@ import com.google.gson.JsonElement;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.generic.Constants;
-import org.aya.lsp.server.AyaService;
+import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Resolver;
 import org.javacs.lsp.DiagnosticSeverity;
 import org.javacs.lsp.LanguageClient;
@@ -18,11 +18,11 @@ import org.junit.jupiter.api.Assertions;
 import java.nio.file.Path;
 
 public final class LspTestClient implements LanguageClient {
-  public final @NotNull AyaService service;
+  public final @NotNull AyaLanguageServer service;
   public final @NotNull LspTestCompilerAdvisor advisor = new LspTestCompilerAdvisor();
 
   public LspTestClient() {
-    service = new AyaService(advisor, this);
+    service = new AyaLanguageServer(advisor, this);
   }
 
   public void registerLibrary(@NotNull Path libraryRoot) {
