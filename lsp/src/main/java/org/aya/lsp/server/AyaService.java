@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
@@ -235,7 +236,7 @@ public class AyaService extends LanguageServer {
     return Optional.empty();
   }
 
-  @Override public Optional<List<GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
+  @Override public Optional<List<? extends GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
     return Optional.of(GotoDefinition.invoke(source, params.position, libraries.view()));
@@ -271,21 +272,16 @@ public class AyaService extends LanguageServer {
     return Optional.of(new RenameResponse(LspRange.toRange(begin.sourcePos()), begin.data()));
   }
 
-  /*
-  @Override
-  public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      var currentFile = Option.ofNullable(source.file());
-      return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
-        // only highlight references in the current file
-        .filter(pos -> pos.file().underlying().equals(currentFile))
-        .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
-        .stream().toList();
-    });
+  @Override public List<DocumentHighlight> documentHighlight(TextDocumentPositionParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    var currentFile = Option.ofNullable(source.file());
+    return FindReferences.findOccurrences(source, params.position, SeqView.of(source.owner()))
+      // only highlight references in the current file
+      .filter(pos -> pos.file().underlying().equals(currentFile))
+      .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
+      .stream().toList();
   }
-*/
 
   @Override public List<CodeLens> codeLens(CodeLensParams params) {
     var source = find(params.textDocument.uri);
@@ -297,23 +293,20 @@ public class AyaService extends LanguageServer {
     return LensMaker.resolve(codeLens);
   }
 
+  @Override public List<? extends GenericSymbol> documentSymbol(DocumentSymbolParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    return ProjectSymbol.invoke(source)
+      .map(ProjectSymbol.Symbol::document)
+      .asJava();
+  }
+
 /*
   @Override public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
     return CompletableFuture.supplyAsync(() -> {
       var source = find(params.getTextDocument().getUri());
       if (source == null) return Collections.emptyList();
       return InlayHintMaker.invoke(source, params.ran);
-    });
-  }
-
-  @SuppressWarnings("deprecation") @Override
-  public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return ProjectSymbol.invoke(source)
-        .map(symbol -> Either.<SymbolInformation, DocumentSymbol>forRight(symbol.document()))
-        .asJava();
     });
   }
 
