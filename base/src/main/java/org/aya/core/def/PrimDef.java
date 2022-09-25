@@ -103,6 +103,35 @@ public final class PrimDef extends TopLevelDef<Term> {
         return new PrimTerm.Coe(type, isOne(restr));
       }
 
+      private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.hcomp, this::hcomp, ref -> {
+        var varA = new LocalVar("A");
+        var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
+        var varPhi = new LocalVar("phi");
+        var paramRestr = new Term.Param(varPhi, PrimTerm.Interval.INSTANCE, false);
+        var varU = new LocalVar("u");
+        var paramFuncU = new Term.Param(varU,
+          new FormTerm.Pi(
+            new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true),
+            new FormTerm.PartTy(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
+          true);
+        var varU0 = new LocalVar("u0");
+        var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
+        var result = new RefTerm(varA);
+        return new PrimDef(
+          ref,
+          ImmutableSeq.of(paramA, paramRestr, paramFuncU, paramU0),
+          result,
+          ID.hcomp
+        );
+      }, ImmutableSeq.of(ID.I));
+
+      private @NotNull Term hcomp(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+        var A = prim.args().get(0).term();
+        var u = prim.args().get(2).term();
+        var u0 = prim.args().get(3).term();
+        return new PrimTerm.HComp(A, u, u0);
+      }
+
       // transpfill (A: I -> Type) (phi: I) (u0: A 0) : Path A u (coe A phi u)
       public final @NotNull PrimDef.PrimSeed coercefill = new PrimSeed(ID.COEFILL, this::coefill, ref -> {
         var varA = new LocalVar("A");
@@ -315,6 +344,7 @@ public final class PrimDef extends TopLevelDef<Term> {
     I("I"),
     PARTIAL("Partial"),
     COE("coe"),
+    hcomp("hcomp"),
     COEFILL("coefill");
 
     public final @NotNull @NonNls String id;
