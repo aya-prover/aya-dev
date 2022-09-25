@@ -24,7 +24,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.eclipse.lsp4j.Position;
+import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

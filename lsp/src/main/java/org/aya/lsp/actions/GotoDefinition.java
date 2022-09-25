@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -13,8 +13,8 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.eclipse.lsp4j.LocationLink;
-import org.eclipse.lsp4j.Position;
+import org.javacs.lsp.GenericLocation;
+import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * @author ice1000, kiva
  */
 public interface GotoDefinition {
-  static @NotNull List<LocationLink> invoke(
+  static @NotNull List<GenericLocation> invoke(
     @NotNull LibrarySource source,
     @NotNull Position position,
     @NotNull SeqView<LibraryOwner> libraries
@@ -34,7 +34,7 @@ public interface GotoDefinition {
       var from = pos.sourcePos();
       var to = pos.data();
       var res = LspRange.toLoc(from, to);
-      if (res != null) Log.d("Resolved: %s in %s", to, res.getTargetUri());
+      if (res != null) Log.d("Resolved: %s in %s", to, res.targetUri);
       return res;
     }).collect(Collectors.toList());
   }

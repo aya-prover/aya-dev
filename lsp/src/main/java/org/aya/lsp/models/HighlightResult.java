@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.models;
 
@@ -6,17 +6,18 @@ import kala.collection.SeqLike;
 import kala.value.TransientVar;
 import org.aya.lsp.utils.LspRange;
 import org.aya.util.error.SourcePos;
-import org.eclipse.lsp4j.Range;
+import org.javacs.lsp.Range;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public record HighlightResult(
-  @NotNull String uri,
+  @NotNull URI uri,
   @NotNull List<Symbol> symbols
 ) {
-  public HighlightResult(@NotNull String uri, @NotNull SeqLike<Symbol> symbols) {
+  public HighlightResult(@NotNull URI uri, @NotNull SeqLike<Symbol> symbols) {
     this(uri, symbols.collect(Collectors.toList()));
   }
 

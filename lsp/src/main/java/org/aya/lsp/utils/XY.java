@@ -3,13 +3,13 @@
 package org.aya.lsp.utils;
 
 import org.aya.util.error.SourcePos;
-import org.eclipse.lsp4j.Position;
+import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 
 /** @see Position */
 public record XY(int x, int y) {
   public XY(@NotNull Position position) {
-    this(position.getLine() + 1, position.getCharacter() - 1);
+    this(position.line + 1, position.character - 1);
   }
 
   public boolean inside(@NotNull SourcePos sourcePos) {

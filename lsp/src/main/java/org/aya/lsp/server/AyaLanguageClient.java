@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
+import com.google.gson.JsonElement;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -10,17 +11,14 @@ import org.aya.lsp.utils.LspRange;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.services.LanguageClient;
+import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
-public interface AyaLanguageClient extends LanguageClient {
+public record AyaLanguageClient(@NotNull LanguageClient delegate) implements LanguageClient {
   static void publishAyaProblems(
     @NotNull AyaLanguageClient self,
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
@@ -29,7 +27,7 @@ public interface AyaLanguageClient extends LanguageClient {
     problems.forEach((filePath, value) -> {
       Log.i("Found %d issues in %s", value.size(), filePath);
       var param = new PublishDiagnosticsParams(
-        filePath.toUri().toString(),
+        filePath.toUri(),
         value
           .collect(Collectors.groupingBy(Problem::sourcePos, ImmutableSeq.factory()))
           .entrySet().stream()
@@ -45,27 +43,47 @@ public interface AyaLanguageClient extends LanguageClient {
     @NotNull ImmutableSeq<Path> files
   ) {
     files.forEach(f -> self.publishDiagnostics(
-      new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
+      new PublishDiagnosticsParams(f.toUri(), Collections.emptyList())));
   }
 
   private static @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {
     var msgBuilder = new StringBuilder();
     var severity = DiagnosticSeverity.Hint;
     for (var p : problems) {
-      msgBuilder.append(p.brief(options).debugRender()).append('\n');
+      msgBuilder.append(p.brief(options).debugRender()).append(System.lineSeparator());
       var ps = severityOf(p);
-      if (ps.getValue() < severity.getValue()) severity = ps;
+      if (ps < severity) severity = ps;
     }
     return new Diagnostic(LspRange.toRange(sourcePos),
-      msgBuilder.toString(), severity, "Aya");
+      severity, "", "Aya", msgBuilder.toString(), Collections.emptyList());
   }
 
-  private static @NotNull DiagnosticSeverity severityOf(@NotNull Problem problem) {
+  private static int severityOf(@NotNull Problem problem) {
     return switch (problem.level()) {
       case WARN -> DiagnosticSeverity.Warning;
       case ERROR -> DiagnosticSeverity.Error;
       case INFO -> DiagnosticSeverity.Information;
       case GOAL -> DiagnosticSeverity.Hint;
     };
+  }
+
+  @Override public void publishDiagnostics(@NotNull PublishDiagnosticsParams publishDiagnosticsParams) {
+    delegate.publishDiagnostics(publishDiagnosticsParams);
+  }
+
+  @Override public void showMessage(@NotNull ShowMessageParams showMessageParams) {
+    delegate.showMessage(showMessageParams);
+  }
+
+  @Override public void logMessage(ShowMessageParams showMessageParams) {
+    delegate.logMessage(showMessageParams);
+  }
+
+  @Override public void registerCapability(@NotNull String s, @NotNull JsonElement jsonElement) {
+    delegate.registerCapability(s, jsonElement);
+  }
+
+  @Override public void customNotification(@NotNull String s, @NotNull JsonElement jsonElement) {
+    delegate.customNotification(s, jsonElement);
   }
 }

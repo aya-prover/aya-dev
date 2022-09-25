@@ -35,12 +35,7 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.BufferReporter;
 import org.aya.util.reporter.Problem;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.messages.Either3;
-import org.eclipse.lsp4j.services.NotebookDocumentService;
-import org.eclipse.lsp4j.services.TextDocumentService;
-import org.eclipse.lsp4j.services.WorkspaceService;
+import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,11 +47,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class AyaService implements WorkspaceService, TextDocumentService, NotebookDocumentService {
+public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
 
   private final BufferReporter reporter = new BufferReporter();
@@ -67,10 +62,11 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
    */
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
-  private @Nullable AyaLanguageClient client;
+  private final @Nullable AyaLanguageClient client;
 
-  public AyaService(@NotNull CompilerAdvisor advisor) {
+  public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @Nullable LanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
+    this.client = new AyaLanguageClient(client);
   }
 
   public @NotNull SeqView<LibraryOwner> libraries() {
@@ -104,8 +100,37 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
       .map(WsLibrary::mock));
   }
 
-  public void connect(@NotNull AyaLanguageClient client) {
-    this.client = client;
+  @Override public void initialized() {
+    // Imitate the javacs lsp
+    // client.registerCapability("workspace/didChangeWatchedFiles");
+  }
+
+  @Override public InitializeResult initialize(InitializeParams params) {
+    var cap = new ServerCapabilities();
+    cap.textDocumentSync = 0;
+    var workOps = new ServerCapabilities.WorkspaceFoldersOptions(true, true);
+    var workCap = new ServerCapabilities.WorkspaceServerCapabilities(workOps);
+    cap.completionProvider = new ServerCapabilities.CompletionOptions(
+      true, Collections.singletonList("QWERTYUIOPASDFGHJKLZXCVBNM.qwertyuiopasdfghjklzxcvbnm+-*/_[]:"));
+    cap.workspace = workCap;
+    cap.definitionProvider = true;
+    cap.referencesProvider = true;
+    cap.hoverProvider = true;
+    cap.renameProvider = new ServerCapabilities.RenameOptions(true);
+    cap.documentHighlightProvider = true;
+    cap.codeLensProvider = new ServerCapabilities.CodeLensOptions(true);
+    cap.inlayHintProvider = true;
+    cap.documentSymbolProvider = true;
+    cap.workspaceSymbolProvider = true;
+    cap.foldingRangeProvider = true;
+
+    var folders = params.workspaceFolders;
+    // In case we open a single file, this value will be null, so be careful.
+    // Make sure the library to be initialized when loading files.
+    if (folders != null) folders.forEach(f ->
+      registerLibrary(Path.of(f.uri)));
+
+    return new InitializeResult(cap);
   }
 
   private @Nullable LibraryOwner findOwner(@Nullable Path path) {
@@ -133,13 +158,12 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
     return null;
   }
 
-  public @Nullable LibrarySource find(@NotNull String uri) {
-    var path = toPath(uri);
-    return find(path);
+  public @Nullable LibrarySource find(@NotNull URI uri) {
+    return find(toPath(uri));
   }
 
-  @NotNull private Path toPath(@NotNull String uri) {
-    return FileUtil.canonicalize(Path.of(URI.create(uri)));
+  @NotNull private Path toPath(@NotNull URI uri) {
+    return FileUtil.canonicalize(Path.of(uri));
   }
 
   public @NotNull ImmutableSeq<HighlightResult> reload() {
@@ -183,11 +207,11 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
     AyaLanguageClient.clearAyaProblems(client, files);
   }
 
-  @Override public void didChangeWatchedFiles(@NotNull DidChangeWatchedFilesParams params) {
-    params.getChanges().forEach(change -> {
-      switch (change.getType()) {
-        case Created -> {
-          var newSrc = toPath(change.getUri());
+  @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+    params.changes.forEach(change -> {
+      switch (change.type) {
+        case FileChangeType.Created -> {
+          var newSrc = toPath(change.uri);
           switch (findOwner(newSrc)) {
             case MutableLibraryOwner ownerMut -> {
               Log.d("Created new file: %s, added to owner: %s", newSrc, ownerMut.underlyingLibrary().name());
@@ -201,8 +225,8 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
             default -> {}
           }
         }
-        case Deleted -> {
-          var src = find(change.getUri());
+        case FileChangeType.Deleted -> {
+          var src = find(change.uri);
           if (src == null) return;
           Log.d("Deleted file: %s, removed from owner: %s", src.file(), src.owner().underlyingLibrary().name());
           switch (src.owner()) {
@@ -215,126 +239,106 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
     });
   }
 
-  @Override public void didOpen(DidOpenTextDocumentParams params) {}
-  @Override public void didChange(DidChangeTextDocumentParams params) {}
-  @Override public void didClose(DidCloseTextDocumentParams params) {}
-  @Override public void didSave(DidSaveTextDocumentParams params) {}
-  @Override public void didChangeConfiguration(DidChangeConfigurationParams params) {}
-  @Override public void didOpen(DidOpenNotebookDocumentParams params) {}
-  @Override public void didChange(DidChangeNotebookDocumentParams params) {}
-  @Override public void didSave(DidSaveNotebookDocumentParams params) {}
-  @Override public void didClose(DidCloseNotebookDocumentParams params) {}
-
-  @Override
-  public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
-    return CompletableFuture.supplyAsync(() -> Either.forLeft(Collections.emptyList()));
+  @Override public Optional<CompletionList> completion(TextDocumentPositionParams position) {
+    return Optional.empty();
   }
 
-  @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Either.forLeft(Collections.emptyList());
-      return Either.forRight(GotoDefinition.invoke(source, params.getPosition(), libraries.view()));
-    });
+  @Override public Optional<List<? extends GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Optional.empty();
+    return Optional.of(GotoDefinition.invoke(source, params.position, libraries.view()));
   }
 
-  @Override public CompletableFuture<Hover> hover(HoverParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return null;
-      var doc = ComputeSignature.invokeHover(source, params.getPosition());
-      if (doc.isEmpty()) return null;
-      return new Hover(new MarkupContent(MarkupKind.PLAINTEXT, doc.debugRender()));
-    });
+  @Override public Optional<Hover> hover(TextDocumentPositionParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Optional.empty();
+    var doc = ComputeSignature.invokeHover(source, params.position);
+    if (doc.isEmpty()) return Optional.empty();
+    var marked = new MarkedString(MarkupKind.PlainText, doc.debugRender());
+    return Optional.of(new Hover(List.of(marked)));
   }
 
-  @Override public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return FindReferences.invoke(source, params.getPosition(), libraries.view());
-    });
+  @Override public Optional<List<Location>> findReferences(ReferenceParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Optional.empty();
+    return Optional.of(FindReferences.invoke(source, params.position, libraries.view()));
   }
 
-  @Override public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return null;
-      var renames = Rename.rename(source, params.getPosition(), params.getNewName(), libraries.view());
-      return new WorkspaceEdit(renames);
-    });
+  @Override public WorkspaceEdit rename(RenameParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return null;
+    var renames = Rename.rename(source, params.position, params.newName, libraries.view());
+    return new WorkspaceEdit(renames);
   }
 
-  @Override public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> prepareRename(PrepareRenameParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return null;
-      var begin = Rename.prepare(source, params.getPosition());
-      if (begin == null) return null;
-      return Either3.forSecond(new PrepareRenameResult(LspRange.toRange(begin.sourcePos()), begin.data()));
-    });
+  @Override public Optional<RenameResponse> prepareRename(TextDocumentPositionParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Optional.empty();
+    var begin = Rename.prepare(source, params.position);
+    if (begin == null) return Optional.empty();
+    return Optional.of(new RenameResponse(LspRange.toRange(begin.sourcePos()), begin.data()));
   }
 
-  @Override
-  public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      var currentFile = Option.ofNullable(source.file());
-      return FindReferences.findOccurrences(source, params.getPosition(), SeqView.of(source.owner()))
-        // only highlight references in the current file
-        .filter(pos -> pos.file().underlying().equals(currentFile))
-        .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
-        .stream().toList();
-    });
+  @Override public List<DocumentHighlight> documentHighlight(TextDocumentPositionParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    var currentFile = Option.ofNullable(source.file());
+    return FindReferences.findOccurrences(source, params.position, SeqView.of(source.owner()))
+      // only highlight references in the current file
+      .filter(pos -> pos.file().underlying().equals(currentFile))
+      .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
+      .stream().toList();
   }
 
-  @Override public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return LensMaker.invoke(source, libraries.view());
-    });
+  @Override public List<CodeLens> codeLens(CodeLensParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    return LensMaker.invoke(source, libraries.view());
   }
 
-  @Override public CompletableFuture<CodeLens> resolveCodeLens(CodeLens codeLens) {
-    return CompletableFuture.supplyAsync(() -> LensMaker.resolve(codeLens));
+  @Override public CodeLens resolveCodeLens(CodeLens codeLens) {
+    return LensMaker.resolve(codeLens);
   }
 
-  @Override public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return InlayHintMaker.invoke(source, params.getRange());
-    });
+  @Override public List<? extends GenericDocumentSymbol> documentSymbol(DocumentSymbolParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    return ProjectSymbol.invoke(source)
+      .map(ProjectSymbol.Symbol::document)
+      .asJava();
   }
 
-  @SuppressWarnings("deprecation") @Override
-  public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return ProjectSymbol.invoke(source)
-        .map(symbol -> Either.<SymbolInformation, DocumentSymbol>forRight(symbol.document()))
-        .asJava();
-    });
+  @Override public List<? extends GenericWorkspaceSymbol> workspaceSymbols(WorkspaceSymbolParams params) {
+    return ProjectSymbol.invoke(libraries.view())
+      .map(ProjectSymbol.Symbol::workspace)
+      .asJava();
   }
 
-  @SuppressWarnings("deprecation") @Override
-  public CompletableFuture<Either<List<? extends SymbolInformation>, List<? extends WorkspaceSymbol>>> symbol(WorkspaceSymbolParams params) {
-    return CompletableFuture.supplyAsync(() -> Either.forRight(
-      ProjectSymbol.invoke(libraries.view())
-        .map(ProjectSymbol.Symbol::workspace)
-        .asJava()));
+  @Override public List<FoldingRange> foldingRange(FoldingRangeParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    return Folding.invoke(source);
   }
 
-  @Override public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return Folding.invoke(source);
-    });
+  @Override public List<InlayHint> inlayHint(InlayHintParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    return InlayHintMaker.invoke(source, params.range);
+  }
+
+  @LspRequest("aya/load") @SuppressWarnings("unused")
+  public List<HighlightResult> load(Object uri) {
+    return reload().asJava();
+  }
+
+  @LspRequest("aya/computeType") @SuppressWarnings("unused")
+  public @NotNull ComputeTermResult computeType(ComputeTermResult.Params input) {
+    return computeTerm(input, ComputeTerm.Kind.type());
+  }
+
+  @LspRequest("aya/computeNF") @SuppressWarnings("unused")
+  public @NotNull ComputeTermResult computeNF(ComputeTermResult.Params input) {
+    return computeTerm(input, ComputeTerm.Kind.nf());
   }
 
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
@@ -366,9 +370,9 @@ public class AyaService implements WorkspaceService, TextDocumentService, Notebo
   }
 
   private static final class CallbackAdvisor extends DelegateCompilerAdvisor {
-    private final @NotNull AyaService service;
+    private final @NotNull AyaLanguageServer service;
 
-    public CallbackAdvisor(@NotNull AyaService service, @NotNull CompilerAdvisor delegate) {
+    public CallbackAdvisor(@NotNull AyaLanguageServer service, @NotNull CompilerAdvisor delegate) {
       super(delegate);
       this.service = service;
     }

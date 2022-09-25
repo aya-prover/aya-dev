@@ -10,11 +10,12 @@ import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
 import org.aya.ref.AnyVar;
 import org.aya.util.error.WithPos;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.TextEdit;
+import org.javacs.lsp.Position;
+import org.javacs.lsp.TextEdit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public interface Rename {
     return vars.first().map(AnyVar::name);
   }
 
-  static Map<String, List<TextEdit>> rename(
+  static Map<URI, List<TextEdit>> rename(
     @NotNull LibrarySource source,
     @NotNull Position position,
     @NotNull String newName,
@@ -36,7 +37,7 @@ public interface Rename {
       .flatMap(to -> {
         var edit = new TextEdit(LspRange.toRange(to), newName);
         return to.file().underlying().map(uri -> Tuple.of(uri, edit));
-      }).collect(Collectors.groupingBy(tup -> tup._1.toUri().toString(), Collectors.mapping(
+      }).collect(Collectors.groupingBy(tup -> tup._1.toUri(), Collectors.mapping(
         tup -> tup._2,
         Collectors.toList()
       )));

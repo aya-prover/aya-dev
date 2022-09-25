@@ -10,6 +10,7 @@ plugins {
 
 repositories {
   mavenCentral()
+  mavenLocal()
   gradlePluginPortal()
 }
 
@@ -46,7 +47,7 @@ dependencies {
   val deps = Properties()
   deps.load(rootDir.resolve("gradle/deps.properties").reader())
   antlr("org.antlr", "antlr4", deps.getProperty("version.antlr"))
-  api("org.aya-prover.upstream", "build-util", deps.getProperty("version.build-util"))
+  api("org.aya-prover.upstream", "build-util", deps.getProperty("version.aya-upstream"))
 
   // The following is required for
   // - extracting common parts inside `graalvmNative` block

@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp;
 
-import org.aya.lsp.server.AyaLanguageClient;
-import org.aya.lsp.server.AyaServer;
+import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspArgs;
-import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.javacs.lsp.LSP;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
@@ -17,16 +17,13 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.function.Function;
 
 public class LspMain extends LspArgs implements Callable<Integer> {
   public static void main(String[] args) {
     new CommandLine(new LspMain()).execute(args);
   }
 
-  @Override
-  public Integer call() throws Exception {
+  @Override public Integer call() throws Exception {
     Log.i("Hello, this is Aya language server");
     var startup = switch (mode) {
       case server -> runServer();
@@ -34,18 +31,11 @@ public class LspMain extends LspArgs implements Callable<Integer> {
       case debug -> runDebug();
     };
 
-    var executor = Executors.newSingleThreadExecutor(f -> new Thread(f, "client"));
-    var server = new AyaServer();
-    var launcher = Launcher.createLauncher(
-      server,
-      AyaLanguageClient.class,
+    LSP.connect(
+      client -> new AyaLanguageServer(CompilerAdvisor.inMemory(), client),
       startup.in,
-      startup.out,
-      executor,
-      Function.identity()
+      startup.out
     );
-    server.connect(launcher.getRemoteProxy());
-    launcher.startListening();
     return 0;
   }
 

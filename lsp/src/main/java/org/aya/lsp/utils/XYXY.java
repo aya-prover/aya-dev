@@ -3,13 +3,13 @@
 package org.aya.lsp.utils;
 
 import org.aya.util.error.SourcePos;
-import org.eclipse.lsp4j.Range;
+import org.javacs.lsp.Range;
 import org.jetbrains.annotations.NotNull;
 
 /** @see Range */
 public record XYXY(@NotNull XY start, @NotNull XY end) {
   public XYXY(@NotNull Range position) {
-    this(new XY(position.getStart()), new XY(position.getEnd()));
+    this(new XY(position.start), new XY(position.end));
   }
 
   public boolean contains(@NotNull SourcePos sourcePos) {

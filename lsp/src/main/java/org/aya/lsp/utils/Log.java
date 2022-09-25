@@ -4,9 +4,9 @@ package org.aya.lsp.utils;
 
 import org.aya.generic.util.InternalException;
 import org.aya.lsp.server.AyaLanguageClient;
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.MessageType;
 import org.intellij.lang.annotations.PrintFormat;
+import org.javacs.lsp.ShowMessageParams;
+import org.javacs.lsp.ShowMessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,29 +31,29 @@ public class Log {
   }
 
   public static void i(@NotNull @PrintFormat String fmt, Object... args) {
-    log(MessageType.Info, fmt, args);
+    log(ShowMessageType.Info, fmt, args);
   }
 
   public static void e(@NotNull @PrintFormat String fmt, Object... args) {
-    log(MessageType.Error, fmt, args);
+    log(ShowMessageType.Error, fmt, args);
   }
 
   public static void w(@NotNull @PrintFormat String fmt, Object... args) {
-    log(MessageType.Warning, fmt, args);
+    log(ShowMessageType.Warning, fmt, args);
   }
 
   public static void d(@NotNull @PrintFormat String fmt, Object... args) {
-    log(MessageType.Log, fmt, args);
+    log(ShowMessageType.Log, fmt, args);
   }
 
-  public static void log(@NotNull MessageType type, @NotNull String fmt, Object... args) {
+  public static void log(@NotNull ShowMessageType type, @NotNull String fmt, Object... args) {
     var format = fmt.formatted(args);
     logConsole(type, format);
     var client = CLIENT;
-    if (client != null) client.logMessage(new MessageParams(type, format));
+    if (client != null) client.logMessage(new ShowMessageParams(type.value, format));
   }
 
-  public static void logConsole(@NotNull MessageType type, @NotNull String content) {
+  public static void logConsole(@NotNull ShowMessageType type, @NotNull String content) {
     try {
       var format = String.format("[%s]: %s%n", type, content);
       System.err.print(format);

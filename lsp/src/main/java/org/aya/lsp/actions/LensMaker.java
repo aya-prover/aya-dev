@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -11,10 +11,11 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Decl;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
-import org.eclipse.lsp4j.CodeLens;
-import org.eclipse.lsp4j.Command;
+import org.javacs.lsp.CodeLens;
+import org.javacs.lsp.Command;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public record LensMaker(@NotNull SeqView<LibraryOwner> libraries) implements SyntaxDeclAction<@NotNull MutableList<CodeLens>> {
@@ -27,8 +28,8 @@ public record LensMaker(@NotNull SeqView<LibraryOwner> libraries) implements Syn
   }
 
   public static @NotNull CodeLens resolve(@NotNull CodeLens codeLens) {
-    var cmd = new Gson().fromJson((JsonElement) codeLens.getData(), Command.class);
-    return new CodeLens(codeLens.getRange(), cmd, codeLens.getData());
+    var cmd = new Gson().fromJson((JsonElement) codeLens.data, Command.class);
+    return new CodeLens(codeLens.range, cmd, codeLens.data);
   }
 
   @Override public void visitDecl(@NotNull Decl maybe, @NotNull MutableList<CodeLens> pp) {
@@ -47,8 +48,8 @@ public record LensMaker(@NotNull SeqView<LibraryOwner> libraries) implements Syn
         var title = refs.sizeEquals(1) ? "1 usage" : "%d usages".formatted(refs.size());
         var locations = refs.mapNotNull(LspRange::toLoc).asJava();
         var cmd = uri.isDefined()
-          ? new Command(title, "editor.action.showReferences", List.of(uri.get(), range.getEnd(), locations))
-          : new Command(title, "");
+          ? new Command(title, "editor.action.showReferences", List.of(uri.get(), range.end, locations))
+          : new Command(title, "", Collections.emptyList());
         // the type of variable `cmd` is Command, but it cannot be used as
         // the command of the CodeLens created below, because VSCode cannot parse
         // the argument of the command directly due to some Uri serialization problems.

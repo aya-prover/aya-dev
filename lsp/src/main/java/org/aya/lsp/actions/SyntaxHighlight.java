@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -36,7 +36,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
     var program = source.program().get();
     if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
     return new HighlightResult(
-      source.file().toUri().toString(),
+      source.file().toUri(),
       symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
@@ -115,8 +115,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
         pp.append(new HighlightResult.Symbol(imp.path().sourcePos(), HighlightResult.Kind.ModuleDef));
       case Command.Open open ->
         pp.append(new HighlightResult.Symbol(open.path().sourcePos(), HighlightResult.Kind.ModuleDef));
-      case Command.Module mod ->
-        pp.append(new HighlightResult.Symbol(mod.sourcePos(), HighlightResult.Kind.ModuleDef));
+      case Command.Module mod -> pp.append(new HighlightResult.Symbol(mod.sourcePos(), HighlightResult.Kind.ModuleDef));
     }
     StmtOps.super.visitCommand(cmd, pp);
   }

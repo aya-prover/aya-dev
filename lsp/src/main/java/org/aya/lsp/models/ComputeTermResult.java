@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.models;
 
@@ -6,13 +6,15 @@ import org.aya.core.term.Term;
 import org.aya.lsp.utils.LspRange;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
+import org.javacs.lsp.Position;
+import org.javacs.lsp.Range;
 import org.jetbrains.annotations.NotNull;
 
-public record ComputeTermResult(@NotNull String uri, @NotNull String computed, @NotNull Range range) {
+import java.net.URI;
+
+public record ComputeTermResult(@NotNull URI uri, @NotNull String computed, @NotNull Range range) {
   public static class Params {
-    public String uri;
+    public URI uri;
     public Position position;
   }
 
