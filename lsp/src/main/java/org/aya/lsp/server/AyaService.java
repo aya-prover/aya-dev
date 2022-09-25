@@ -51,7 +51,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class AyaService extends LanguageServer {
+public class AyaService implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
 
   private final BufferReporter reporter = new BufferReporter();
@@ -123,6 +123,13 @@ public class AyaService extends LanguageServer {
     cap.documentSymbolProvider = true;
     cap.workspaceSymbolProvider = true;
     cap.foldingRangeProvider = true;
+
+    var folders = params.workspaceFolders;
+    // In case we open a single file, this value will be null, so be careful.
+    // Make sure the library to be initialized when loading files.
+    if (folders != null) folders.forEach(f ->
+      registerLibrary(Path.of(f.uri)));
+
     return new InitializeResult(cap);
   }
 
