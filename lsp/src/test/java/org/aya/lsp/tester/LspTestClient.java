@@ -2,28 +2,27 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.tester;
 
+import com.google.gson.JsonElement;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.generic.Constants;
-import org.aya.lsp.server.AyaLanguageClient;
-import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Resolver;
-import org.eclipse.lsp4j.*;
+import org.javacs.lsp.DiagnosticSeverity;
+import org.javacs.lsp.LanguageClient;
+import org.javacs.lsp.PublishDiagnosticsParams;
+import org.javacs.lsp.ShowMessageParams;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 
 import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
 
-public final class LspTestClient implements AyaLanguageClient {
+public final class LspTestClient implements LanguageClient {
   public final @NotNull AyaService service;
   public final @NotNull LspTestCompilerAdvisor advisor = new LspTestCompilerAdvisor();
 
   public LspTestClient() {
-    var server = new AyaServer(advisor);
-    service = server.getTextDocumentService();
-    server.connect(this);
+    service = new AyaService(advisor, this);
   }
 
   public void registerLibrary(@NotNull Path libraryRoot) {
@@ -61,25 +60,21 @@ public final class LspTestClient implements AyaLanguageClient {
     }
   }
 
-  @Override public void telemetryEvent(Object object) {
-  }
-
-  @Override public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
-    var errors = diagnostics.getDiagnostics().stream()
-      .filter(d -> d.getSeverity() == DiagnosticSeverity.Error)
+  @Override
+  public void publishDiagnostics(@NotNull PublishDiagnosticsParams diagnostics) {
+    var errors = diagnostics.diagnostics.stream()
+      .filter(d -> d.severity == DiagnosticSeverity.Error)
       .collect(ImmutableSeq.factory());
     Assertions.assertTrue(errors.isEmpty(),
       "Unexpected compiler errors: " +
-        errors.joinToString("\n", Diagnostic::getMessage));
+        errors.joinToString("\n", d -> d.message));
   }
 
-  @Override public void showMessage(MessageParams messageParams) {
-  }
+  @Override public void showMessage(@NotNull ShowMessageParams showMessageParams) {}
 
-  @Override public CompletableFuture<MessageActionItem> showMessageRequest(ShowMessageRequestParams requestParams) {
-    return null;
-  }
+  @Override public void logMessage(ShowMessageParams showMessageParams) {}
 
-  @Override public void logMessage(MessageParams message) {
-  }
+  @Override public void registerCapability(@NotNull String s, @NotNull JsonElement jsonElement) {}
+
+  @Override public void customNotification(@NotNull String s, @NotNull JsonElement jsonElement) {}
 }

@@ -75,6 +75,10 @@ public record AyaLanguageClient(@NotNull LanguageClient delegate) implements Lan
     delegate.showMessage(showMessageParams);
   }
 
+  @Override public void logMessage(ShowMessageParams showMessageParams) {
+    delegate.logMessage(showMessageParams);
+  }
+
   @Override public void registerCapability(@NotNull String s, @NotNull JsonElement jsonElement) {
     delegate.registerCapability(s, jsonElement);
   }

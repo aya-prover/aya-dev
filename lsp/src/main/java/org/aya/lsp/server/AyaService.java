@@ -307,23 +307,32 @@ public class AyaService extends LanguageServer {
       .asJava();
   }
 
-/*
-  @Override public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return InlayHintMaker.invoke(source, params.ran);
-    });
+  @Override public List<FoldingRange> foldingRange(FoldingRangeParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    return Folding.invoke(source);
   }
 
-  @Override public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
-    return CompletableFuture.supplyAsync(() -> {
-      var source = find(params.getTextDocument().getUri());
-      if (source == null) return Collections.emptyList();
-      return Folding.invoke(source);
-    });
+  @Override public List<InlayHint> inlayHint(InlayHintParams params) {
+    var source = find(params.textDocument.uri);
+    if (source == null) return Collections.emptyList();
+    return InlayHintMaker.invoke(source, params.range);
   }
-*/
+
+  @LspRequest("aya/load") @SuppressWarnings("unused")
+  public List<HighlightResult> load(Object uri) {
+    return reload().asJava();
+  }
+
+  @LspRequest("aya/computeType") @SuppressWarnings("unused")
+  public @NotNull ComputeTermResult computeType(ComputeTermResult.Params input) {
+    return computeTerm(input, ComputeTerm.Kind.type());
+  }
+
+  @LspRequest("aya/computeNF") @SuppressWarnings("unused")
+  public @NotNull ComputeTermResult computeNF(ComputeTermResult.Params input) {
+    return computeTerm(input, ComputeTerm.Kind.nf());
+  }
 
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
     var source = find(input.uri);

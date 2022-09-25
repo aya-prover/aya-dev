@@ -9,8 +9,8 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.Resolver;
 import org.aya.util.error.SourcePos;
-import org.eclipse.lsp4j.FoldingRange;
-import org.eclipse.lsp4j.FoldingRangeKind;
+import org.javacs.lsp.FoldingRange;
+import org.javacs.lsp.FoldingRangeKind;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -40,10 +40,7 @@ public final class Folding implements SyntaxDeclAction<@NotNull MutableList<Fold
 
   private @NotNull FoldingRange toFoldingRange(@NotNull SourcePos sourcePos) {
     var range = LspRange.toRange(sourcePos);
-    var fr = new FoldingRange(range.getStart().getLine(), range.getEnd().getLine());
-    fr.setStartCharacter(range.getStart().getCharacter());
-    fr.setEndCharacter(range.getEnd().getCharacter());
-    fr.setKind(FoldingRangeKind.Region);
-    return fr;
+    return new FoldingRange(range.start.line, range.start.character,
+      range.end.line, range.end.character, FoldingRangeKind.Region);
   }
 }

@@ -8,10 +8,9 @@ import org.aya.concrete.Pattern;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.XYXY;
 import org.aya.util.distill.DistillerOptions;
-import org.eclipse.lsp4j.InlayHint;
-import org.eclipse.lsp4j.InlayHintKind;
-import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.javacs.lsp.InlayHint;
+import org.javacs.lsp.InlayHintKind;
+import org.javacs.lsp.Range;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -31,9 +30,9 @@ public record InlayHintMaker(@NotNull MutableList<InlayHint> hints) implements S
     if (pattern instanceof Pattern.Bind bind && bind.type().get() != null) {
       var type = bind.type().get().toDoc(DistillerOptions.pretty()).commonRender();
       var range = LspRange.toRange(bind.sourcePos());
-      var hint = new InlayHint(range.getEnd(), Either.forLeft(": " + type));
-      hint.setKind(InlayHintKind.Type);
-      hint.setPaddingLeft(true);
+      var hint = new InlayHint(range.end, ": " + type);
+      hint.kind = InlayHintKind.Type;
+      hint.paddingLeft = true;
       hints.append(hint);
     }
     return Ranged.super.visitPattern(pattern, pp);
