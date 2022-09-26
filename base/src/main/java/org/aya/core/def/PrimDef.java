@@ -103,7 +103,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         return new PrimTerm.Coe(type, isOne(restr));
       }
 
-      private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.hcomp, this::hcomp, ref -> {
+      private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
         var varA = new LocalVar("A");
         var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
         var varPhi = new LocalVar("phi");
@@ -121,7 +121,7 @@ public final class PrimDef extends TopLevelDef<Term> {
           ref,
           ImmutableSeq.of(paramA, paramRestr, paramFuncU, paramU0),
           result,
-          ID.hcomp
+          ID.HCOMP
         );
       }, ImmutableSeq.of(ID.I));
 
@@ -133,7 +133,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       }
 
       // transpfill (A: I -> Type) (phi: I) (u0: A 0) : Path A u (coe A phi u)
-      public final @NotNull PrimDef.PrimSeed coercefill = new PrimSeed(ID.COEFILL, this::coefill, ref -> {
+      public final @NotNull PrimDef.PrimSeed coeFill = new PrimSeed(ID.COEFILL, this::coeFill, ref -> {
         var varA = new LocalVar("A");
         var typeA = new FormTerm.Pi(new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true), new FormTerm.Type(0));
         var paramA = new Term.Param(varA, typeA, true);
@@ -163,7 +163,7 @@ public final class PrimDef extends TopLevelDef<Term> {
           ID.COEFILL);
       }, ImmutableSeq.of(ID.COE));
 
-      private @NotNull Term coefill(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+      private @NotNull Term coeFill(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
         var type = prim.args().get(0).term();
         var phi = prim.args().get(1).term();
         var u0 = prim.args().get(2).term();
@@ -270,7 +270,8 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.intervalType,
           init.partialType,
           init.coerce,
-          init.coercefill
+          init.coeFill,
+          init.hcomp
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
@@ -344,8 +345,11 @@ public final class PrimDef extends TopLevelDef<Term> {
     I("I"),
     PARTIAL("Partial"),
     COE("coe"),
-    hcomp("hcomp"),
-    COEFILL("coefill");
+    HCOMP("hcomp"),
+    COEFILL("coeFill"),
+    FORWARD("forward"),
+    HFILL("hfill"),
+    COMP("comp");
 
     public final @NotNull @NonNls String id;
 
