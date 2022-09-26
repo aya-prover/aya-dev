@@ -31,7 +31,12 @@ public interface Reporter {
 
   @ApiStatus.Internal
   default void reportNest(@NotNull String text, int indent) {
-    reportDoc(Doc.nest(indent, Doc.english(text)), Problem.Severity.INFO);
+    reportNest(text, indent, Problem.Severity.INFO);
+  }
+
+  @ApiStatus.Internal
+  default void reportNest(@NotNull String text, int indent, Problem.Severity severity) {
+    reportDoc(Doc.nest(indent, Doc.english(text)), severity);
   }
 
   @ApiStatus.Internal

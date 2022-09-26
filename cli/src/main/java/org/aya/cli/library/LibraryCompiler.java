@@ -210,7 +210,8 @@ public class LibraryCompiler {
     SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("I dislike the following module(s):", Problem.Severity.ERROR);
-      tycker.skippedSet.forEach(f -> reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
+      tycker.skippedSet.forEach(f ->
+        reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
     } else {
       reporter.reportString("I like these modules :)");
     }
@@ -322,7 +323,7 @@ public class LibraryCompiler {
   }
 
   private void reportNest(@NotNull String text) {
-    reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT);
+    reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT, Problem.Severity.ERROR);
   }
 
   public @NotNull LibraryOwner libraryOwner() {
