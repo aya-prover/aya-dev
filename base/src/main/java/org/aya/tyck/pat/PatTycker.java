@@ -207,7 +207,7 @@ public final class PatTycker {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
         if (ty instanceof PrimTerm.Interval) {
           var end = num.number();
-          if (end == 0 || end == 1) yield new Pat.End(num.number() == 0, num.explicit());
+          if (end == 0 || end == 1) yield new Pat.End(!(num.number() == 0), num.explicit());
           yield withError(new PrimError.BadInterval(num.sourcePos(), end), num, term);
         }
         if (ty instanceof CallTerm.Data dataCall) {

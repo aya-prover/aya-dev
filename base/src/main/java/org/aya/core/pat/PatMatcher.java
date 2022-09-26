@@ -80,7 +80,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
         match(sol, term);
       }
       case Pat.End end -> {
-          if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && !termEnd.isOne() == end.isLeft())) {
+        if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && !termEnd.isOne() == !end.isOne())) {
             throw new Mismatch(true);
           }
       }

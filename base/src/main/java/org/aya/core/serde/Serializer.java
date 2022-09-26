@@ -138,7 +138,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeDataCall(ctor.type()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(), serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
-      case Pat.End end -> new SerPat.End(end.isLeft(), end.explicit());
+      case Pat.End end -> new SerPat.End(end.isOne(), end.explicit());
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
       case Pat.ShapedInt lit -> new SerPat.ShapedInt(
         lit.repr(), lit.explicit(),
