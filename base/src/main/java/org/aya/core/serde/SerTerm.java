@@ -151,6 +151,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
+  record Match(@NotNull SerTerm of, ImmutableSeq<SerPat.Clause> clauses) implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new ElimTerm.Match(of.de(state), clauses.map(c -> c.de(state)));
+    }
+  }
+
   record SerArg(@NotNull SerTerm arg, boolean explicit) implements Serializable {
     public @NotNull Arg<Term> de(@NotNull DeState state) {
       return new Arg<>(arg.de(state), explicit);

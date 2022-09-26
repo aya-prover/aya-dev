@@ -66,10 +66,11 @@ public interface DeltaExpander extends EndoFunctor {
     };
   }
 
-  default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
+  static @NotNull Option<WithPos<Term>> tryUnfoldClauses(
     boolean orderIndependent, @NotNull SeqLike<Arg<Term>> args,
-    @NotNull Subst subst, int ulift, @NotNull ImmutableSeq<Matching> clauses
+    int ulift, @NotNull ImmutableSeq<Matching> clauses
   ) {
+    var subst = new Subst(MutableMap.create());
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
       if (termSubst.isOk()) {
@@ -79,11 +80,5 @@ public interface DeltaExpander extends EndoFunctor {
       } else if (!orderIndependent && termSubst.getErr()) return Option.none();
     }
     return Option.none();
-  }
-  default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
-    boolean orderIndependent, @NotNull SeqLike<Arg<Term>> args,
-    int ulift, @NotNull ImmutableSeq<Matching> clauses
-  ) {
-    return tryUnfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), ulift, clauses);
   }
 }

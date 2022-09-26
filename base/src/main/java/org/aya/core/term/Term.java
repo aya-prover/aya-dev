@@ -88,6 +88,12 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (tuple == proj.of()) yield proj;
         yield new ElimTerm.Proj(tuple, proj.ix());
       }
+      case ElimTerm.Match match -> {
+        var scrutinee = f.apply(match.of());
+        var clauses = match.clauses().map(c -> c.descent(f));
+        if (scrutinee == match.of() && match.clauses().sameElements(clauses, true)) yield match;
+        yield new ElimTerm.Match(scrutinee, clauses);
+      }
       case CallTerm.Struct struct -> {
         var args = struct.args().map(arg -> arg.descent(f));
         if (args.sameElements(struct.args(), true)) yield struct;
@@ -309,6 +315,14 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
 
     public @NotNull Param subst(@NotNull Subst subst, int ulift) {
       return new Param(ref, type.subst(subst, ulift), explicit);
+    }
+  }
+
+  record Clause(@NotNull Pat pattern, Term body) {
+    public @NotNull Clause descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+      var body = f.apply(body());
+      if (body == body()) return this;
+      return new Clause(pattern, body);
     }
   }
 }

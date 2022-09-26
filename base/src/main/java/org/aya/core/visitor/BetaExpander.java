@@ -2,6 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
@@ -27,6 +30,15 @@ public interface BetaExpander extends EndoFunctor {
   static @NotNull FormTerm.PartTy partialType(@NotNull FormTerm.PartTy ty) {
     return new FormTerm.PartTy(ty.type(), ty.restr().normalize());
   }
+  static @NotNull Option<Term> tryMatch(@NotNull Term scrutinee, @NotNull ImmutableSeq<Term.Clause> clauses) {
+    for (var clause : clauses) {
+      var subst = PatMatcher.tryBuildSubst(null, clause.pattern(), scrutinee);
+      if (subst.isOk()) {
+        return Option.some(clause.body().rename().subst(subst.get()));
+      } else if (subst.getErr()) return Option.none();
+    }
+    return Option.none();
+  }
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
       case PrimTerm.Mula mula -> simplFormula(mula);
@@ -37,6 +49,10 @@ public interface BetaExpander extends EndoFunctor {
         yield result == term ? result : apply(result);
       }
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
+      case ElimTerm.Match match -> {
+        var result = tryMatch(match.of(), match.clauses());
+        yield result.isDefined() ? result.get() : match;
+      }
       case ElimTerm.PathApp app -> {
         if (app.of() instanceof IntroTerm.PathLam lam) {
           var ui = app.args().map(Arg::term);

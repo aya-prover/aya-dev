@@ -12,7 +12,7 @@ import org.aya.core.pat.PatToTerm;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Expander;
+import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.tyck.ExprTycker;
@@ -85,7 +85,7 @@ public record Conquer(
         return super.visit(pat);
       }
     }.visit(pat), pat.explicit()));
-    var volynskaya = new Expander.WHNFer(tycker.state).tryUnfoldClauses(orderIndependent, newArgs, 0, matchings).getOrNull();
+    var volynskaya = DeltaExpander.tryUnfoldClauses(orderIndependent, newArgs, 0, matchings).getOrNull();
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));

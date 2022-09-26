@@ -48,6 +48,8 @@ public sealed interface ElimTerm extends Term {
   record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
   }
 
+  record Match(@NotNull Term of, @NotNull ImmutableSeq<Clause> clauses) implements ElimTerm {}
+
   record PathApp(
     @NotNull Term of,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args,

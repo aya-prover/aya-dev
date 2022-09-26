@@ -51,6 +51,17 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
     }
   }
 
+  public static Result<Subst, Boolean> tryBuildSubst(
+    @Nullable LocalCtx localCtx, @NotNull Pat pattern, @NotNull Term term) {
+    var matcher = new PatMatcher(new Subst(), localCtx);
+    try {
+      matcher.match(pattern, term);
+      return Result.ok(matcher.subst());
+    } catch (Mismatch mismatch) {
+      return Result.err(mismatch.isBlocked);
+    }
+  }
+
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);

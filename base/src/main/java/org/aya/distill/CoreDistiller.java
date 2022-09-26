@@ -131,6 +131,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
       case ElimTerm.Proj term ->
         Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+      case ElimTerm.Match match -> Doc.cblock(Doc.cat(Doc.styled(KEYWORD, "match"), term(Outer.Free, match.of())), 2,
+        Doc.vcat(match.clauses().view()
+          .map(clause -> Doc.sep(Doc.symbol("|"),
+            pat(clause.pattern(), Outer.Free),
+            Doc.symbol("=>"), term(Outer.Free, clause.body())))
+          .toImmutableSeq()));
       case FormTerm.Pi term -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
           yield term(outer, term.body());
