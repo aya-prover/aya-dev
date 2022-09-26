@@ -51,7 +51,7 @@ public interface BetaExpander extends EndoFunctor {
       }
       case IntroTerm.PartEl partial -> new IntroTerm.PartEl(partial(partial.partial()), partial.rhsType());
       case PrimTerm.Coe coe -> {
-        if (coe.restr() instanceof Restr.Const<Term> c && c.isTrue()) {
+        if (coe.restr() instanceof Restr.Const<Term> c && c.isOne()) {
           var var = new LocalVar("x");
           var param = new Term.Param(var, CallTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true);
           yield new IntroTerm.Lambda(param, new RefTerm(var));

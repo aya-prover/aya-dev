@@ -296,7 +296,7 @@ public final class ExprTycker extends Tycker {
         yield list.view();
       }
       case Restr.Const<Term> c -> {
-        if (c.isTrue()) clauseState.truthValue = inherit(rhs, rhsType).wellTyped();
+        if (c.isOne()) clauseState.truthValue = inherit(rhs, rhsType).wellTyped();
         else clauseState.isConstantFalse = true;
         yield SeqView.empty();
       }
