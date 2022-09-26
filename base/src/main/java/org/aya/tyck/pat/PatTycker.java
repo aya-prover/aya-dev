@@ -16,6 +16,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
+import org.aya.concrete.visitor.PatternTraversal;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -255,6 +256,9 @@ public final class PatTycker {
     currentClause = match;
     var step0 = visitPatterns(signature, match.patterns.view());
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+    PatternTraversal.visit(p -> {
+      if (p instanceof Pattern.Bind bind) bind.type().update(META_PAT_INLINER::apply);
+    }, match.patterns);
     var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.toImmutableMap(), match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
