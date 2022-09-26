@@ -13,7 +13,13 @@ added Pat inline with context, replaced cofibration syntax with interval express
 reorganized problems by their type, removed more visitors, cleaned up unused classes & methods,
 added some utilities to `Tycker`, added workaround for a lsp4j bug, removed planned pattern synonym,
 enhanced generalized path type (fixed many bugs), introduced a sort system, overhauled the library
-with path type, deleted the old coe function from Arend, deleted records-with-conditions.
+with path type, deleted the old coe function from Arend, deleted records-with-conditions,
+supported explicitly raising errors in reporter (hence Aya no longer says 🐄🍺 when it fails),
+upgraded build JDK to JDK 19, fixed concrete patterns storing incorrect types (contains `MetaPat`),
+split `DefEq` into `TermComparator` and `Unifier`, fixed some pretty printing bugs.
+
+Replaced lsp4j with javacs (a java language server using javac API)'s self-contained protocol
+implementation, with JPMS support added by us.
 
 The sort system consists of:
 

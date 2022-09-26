@@ -16,9 +16,9 @@ but the release date displayed is very old and is an issue of GitHub.
 There are prebuilt binaries for Windows, Linux, and macOS that can be used
 in Java-free environments as well as fat-jar files which can be invoked via `java --enable-preview -jar`.
 
-The minimum required version of Java is [Java 18].
+The minimum required version of Java is [Java 19].
 
-Aya is under active development, so please expect bugs, usability/performance issues
+Aya is under active development, so please expect bugs, usability or performance issues
 (please file issues or create threads in discussions!).
 However, we can share some cool stuffs here:
 
@@ -36,7 +36,7 @@ However, we can share some cool stuffs here:
 + Binary operators, with precedence specified by a partial ordering
   (instead of a number, such as in Haskell or Agda)
   which is useful for [equation reasoning][assoc].
-+ Termination checker inspired from foetus.
++ Termination checker inspired by Andreas Abel's foetus.
   We adapted some code from Agda's implementation to accept
   [more definitions][foetus] (which are rejected by, e.g. Arend).
 + Inference of type checking order. That is to say,
@@ -45,12 +45,12 @@ However, we can share some cool stuffs here:
 See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
-[Java 18]: https://jdk.java.net/18
+[Java 19]: https://jdk.java.net/19
 
 ## Build
 
-Since you need Java 18 to set this project up,  in case your choice
-of IDE is IntelliJ IDEA, version 2021.2.1 or higher is required.
+Since you need [Java 19] to set this project up,  in case your choice
+of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
 If you have problems downloading dependencies (like you are in China),
 check out [how to][proxy] let gradle use a proxy.
 
