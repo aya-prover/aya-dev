@@ -127,9 +127,53 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       private @NotNull Term hcomp(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
         var A = prim.args().get(0).term();
+        var phi = prim.args().get(1).term();
         var u = prim.args().get(2).term();
         var u0 = prim.args().get(3).term();
-        return new PrimTerm.HComp(A, u, u0);
+        return new PrimTerm.HComp(A, u, phi, u0);
+      }
+
+      // hfill {A: Type} {phi: I} (u: I -> Partial phi I) (u0: A): I -> A
+      public final @NotNull PrimDef.PrimSeed hfill = new PrimSeed(ID.HFILL, this::hfill, ref -> {
+        var varA = new LocalVar("A");
+        var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
+        var varPhi = new LocalVar("phi");
+        var paramRestr = new Term.Param(varPhi, PrimTerm.Interval.INSTANCE, false);
+        var varU = new LocalVar("u");
+        var paramFuncU = new Term.Param(varU,
+          new FormTerm.Pi(
+            new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true),
+            new FormTerm.PartTy(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
+          true);
+        var varU0 = new LocalVar("u0");
+        var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
+        var result = new FormTerm.Pi(new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true), new RefTerm(varA));
+
+        return new PrimDef(
+          ref,
+          ImmutableSeq.of(paramA, paramRestr, paramFuncU, paramU0),
+          result,
+          ID.HFILL
+        );
+      }, ImmutableSeq.of(ID.I));
+
+      // need to find ways to infer the cofibration from the type of the partial element
+      private @NotNull Term hfill(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+        var A = prim.args().get(0).term();
+        var phi = prim.args().get(1).term();
+        var u = prim.args().get(2).term();
+        var u0 = prim.args().get(3).term();
+        var varI = new LocalVar("i");
+        var varJ = new LocalVar("j");
+        var iAndJ = PrimTerm.Mula.and(new RefTerm(varI), new RefTerm(varJ));
+        var partial = new Partial.Split<>(
+          ImmutableSeq.of(
+            new Restr.Side<>(new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(phi, false))),
+              new ElimTerm.App(u, new Arg<>(iAndJ, true))),
+            new Restr.Side<>(new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(varI), true))), u0)));
+
+
+        return new PrimTerm.HComp(A, u, phi, u0);
       }
 
       // transpfill (A: I -> Type) (phi: I) (u0: A 0) : Path A u (coe A phi u)
@@ -311,7 +355,8 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.coerce,
           init.coeFill,
           init.hcomp,
-          init.forward
+          init.forward,
+          init.hfill
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
