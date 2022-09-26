@@ -182,6 +182,41 @@ public final class PrimDef extends TopLevelDef<Term> {
         return new IntroTerm.PathLam(ImmutableSeq.of(varX), coerced);
       }
 
+      // forward (A: I -> Type) (r: I): A r -> A 1
+      public final @NotNull PrimDef.PrimSeed forward = new PrimSeed(ID.FORWARD, this::forward, ref -> {
+        var varA = new LocalVar("A");
+        var paramA = new Term.Param(varA, intervalToA(), true);
+        var varR = new LocalVar("r");
+        var paramR = new Term.Param(varR, PrimTerm.Interval.INSTANCE, true);
+        var varU = new LocalVar("u");
+        var paramU = new Term.Param(varU, new ElimTerm.App(new RefTerm(varA), new Arg<>(new RefTerm(varR), true)), true);
+        var Ar = new ElimTerm.App(new RefTerm(varA), new Arg<>(new RefTerm(varR), true));
+        var A1 = new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true));
+        var result = new FormTerm.Pi(new Term.Param(LocalVar.IGNORED, Ar, true), A1);
+
+        return new PrimDef(ref,
+          ImmutableSeq.of(paramA, paramR, paramU),
+          result,
+          ID.FORWARD);
+      }, ImmutableSeq.of(ID.I));
+
+      private @NotNull Term forward(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+        var A = prim.args().get(0).term();
+        var r = prim.args().get(1).term();
+
+        var varI = new LocalVar("i");
+        var varU = new LocalVar("u");
+
+        var iOrR = PrimTerm.Mula.or(new RefTerm(varI), r);
+        var cofib = isOne(r);
+        var Ar = new ElimTerm.App(A, new Arg<>(r, true));
+        var AiOrR = new ElimTerm.App(A, new Arg<>(iOrR, true));
+        var lam = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), AiOrR);
+        var transp = new PrimTerm.Coe(lam, cofib);
+        var body = new ElimTerm.App(transp, new Arg<>(new RefTerm(varU), true));
+        return new IntroTerm.Lambda(new Term.Param(LocalVar.IGNORED, Ar, true), body);
+      }
+
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMin = formula(ID.IMIN, prim -> {
         var args = prim.args();
@@ -275,7 +310,8 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.partialType,
           init.coerce,
           init.coeFill,
-          init.hcomp
+          init.hcomp,
+          init.forward
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
