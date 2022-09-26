@@ -170,9 +170,13 @@ public final class PrimDef extends TopLevelDef<Term> {
 
         var varX = new LocalVar("x");
 
-        var cofib = PrimTerm.Mula.and(phi, PrimTerm.Mula.inv(new RefTerm(varX)));
+        var cofib = PrimTerm.Mula.or(phi, PrimTerm.Mula.inv(new RefTerm(varX)));
+        var varY = new LocalVar("y");
+        var paramY = new Term.Param(varY, PrimTerm.Interval.INSTANCE, true);
+        var xAndY = PrimTerm.Mula.and(new RefTerm(varX), new RefTerm(varY));
+        var a = new IntroTerm.Lambda(paramY, new ElimTerm.App(type, new Arg<>(xAndY, true)));
 
-        var coe = new PrimTerm.Coe(type, isOne(cofib));
+        var coe = new PrimTerm.Coe(a, isOne(cofib));
         var coerced = new ElimTerm.App(coe, new Arg<>(u0, true));
 
         return new IntroTerm.PathLam(ImmutableSeq.of(varX), coerced);
