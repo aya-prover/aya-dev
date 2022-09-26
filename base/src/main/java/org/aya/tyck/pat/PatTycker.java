@@ -257,7 +257,8 @@ public final class PatTycker {
     var step0 = visitPatterns(signature, match.patterns.view());
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
     PatternTraversal.visit(p -> {
-      if (p instanceof Pattern.Bind bind) bind.type().update(META_PAT_INLINER::apply);
+      if (p instanceof Pattern.Bind bind)
+        bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
     }, match.patterns);
     var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.toImmutableMap(), match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
