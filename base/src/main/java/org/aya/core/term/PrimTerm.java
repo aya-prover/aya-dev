@@ -50,6 +50,5 @@ public sealed interface PrimTerm extends Term {
 
   record Coe(@NotNull Term type, @NotNull Restr<Term> restr) implements PrimTerm {}
 
-  // iToPart is a function from interval to Partial
-  record HComp(@NotNull Term type, @NotNull Term u, @NotNull Term u0) implements PrimTerm {}
+  record HComp(@NotNull Term type, @NotNull Term phi, @NotNull Term u, @NotNull Term u0) implements PrimTerm {}
 }
