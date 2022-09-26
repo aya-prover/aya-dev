@@ -9,7 +9,6 @@ dependencyResolutionManagement {
   }
 }
 
-includeBuild("../guest0x0")
 include(
   "cli",
   "parser",
