@@ -385,11 +385,14 @@ public final class PrimDef extends TopLevelDef<Term> {
     I("I"),
     PARTIAL("Partial"),
     COE("coe"),
-    HCOMP("hcomp"),
+    COEINV("coeInv"),
     COEFILL("coeFill"),
+    COEFILLINV("CoeFillInv"),
     FORWARD("forward"),
+    HCOMP("hcomp"),
     HFILL("hfill"),
-    COMP("comp");
+    COMP("comp"),
+    FILL("fill");
 
     public final @NotNull @NonNls String id;
 

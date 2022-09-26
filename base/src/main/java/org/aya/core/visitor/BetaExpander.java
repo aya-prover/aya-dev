@@ -56,8 +56,16 @@ public interface BetaExpander extends EndoFunctor {
           var param = new Term.Param(var, ElimTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true);
           yield new IntroTerm.Lambda(param, new RefTerm(var));
         }
-        // TODO: coe computation
-        yield coe;
+
+        var A = apply(new ElimTerm.App(coe.type(), new Arg<>(new RefTerm(new LocalVar("x")), true)));
+
+        yield switch (A) {
+          case FormTerm.Path path -> null;
+          case FormTerm.Pi pi -> null;
+          case FormTerm.Sigma sigma -> null;
+          case FormTerm.Type type -> null;
+          default -> coe;
+        };
       }
       default -> term;
     };
