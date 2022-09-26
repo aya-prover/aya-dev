@@ -41,7 +41,11 @@ public interface Reporter {
 
   @ApiStatus.Internal
   default void reportDoc(@NotNull Doc doc, final Problem.Severity severity) {
-    report(new Problem() {
+    report(dummyProblem(doc, severity));
+  }
+
+  static @NotNull Problem dummyProblem(@NotNull Doc doc, Problem.Severity severity) {
+    return new Problem() {
       @Override public @NotNull SourcePos sourcePos() {
         return SourcePos.NONE;
       }
@@ -53,6 +57,6 @@ public interface Reporter {
       @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
         return doc;
       }
-    });
+    };
   }
 }

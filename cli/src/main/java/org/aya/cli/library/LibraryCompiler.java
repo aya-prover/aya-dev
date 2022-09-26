@@ -24,7 +24,6 @@ import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.StringUtil;
 import org.aya.util.reporter.CountingReporter;
-import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.MutableGraph;
 import org.aya.util.tyck.OrgaTycker;
@@ -209,9 +208,10 @@ public class LibraryCompiler {
     var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader, advisor), affected);
     SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
-      reporter.reportString("I dislike the following module(s):", Problem.Severity.ERROR);
+      reporter.reportString("I dislike the following module(s):");
       tycker.skippedSet.forEach(f ->
         reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
+      reporter.raiseError();
     } else {
       reporter.reportString("I like these modules :)");
     }
@@ -323,7 +323,7 @@ public class LibraryCompiler {
   }
 
   private void reportNest(@NotNull String text) {
-    reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT, Problem.Severity.ERROR);
+    reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT);
   }
 
   public @NotNull LibraryOwner libraryOwner() {
