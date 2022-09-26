@@ -279,7 +279,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull SeqView<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType, @NotNull ClauseTyckState clauseState) {
     return switch (CofThy.isOne(whnf(inherit(lhs, PrimTerm.Interval.INSTANCE).wellTyped()))) {
-      case Restr.Vary<Term> restr -> {
+      case Restr.Disj<Term> restr -> {
         var list = MutableList.<Restr.Side<Term>>create();
         for (var cof : restr.orz()) {
           var u = CofThy.vdash(cof, new Subst(), subst -> inherit(rhs, whnf(rhsType.subst(subst))).wellTyped());
