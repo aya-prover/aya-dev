@@ -51,6 +51,12 @@ import java.util.function.Supplier;
  * @author ice1000
  */
 public final class PatTycker {
+  public static final EndoFunctor META_PAT_INLINER = new EndoFunctor() {
+    @Override public @NotNull Term post(@NotNull Term term) {
+      return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
+    }
+  };
+
   public final @NotNull ExprTycker exprTycker;
   private final @NotNull Subst typeSubst;
   private final @NotNull MutableMap<AnyVar, Expr> bodySubst;
@@ -231,11 +237,7 @@ public final class PatTycker {
   private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = lhsResult.gamma;
-    var type = new EndoFunctor() {
-      @Override public @NotNull Term post(@NotNull Term term) {
-        return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
-      }
-    }.apply(lhsResult.type);
+    var type = META_PAT_INLINER.apply(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,

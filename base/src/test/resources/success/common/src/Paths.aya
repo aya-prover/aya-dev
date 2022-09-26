@@ -57,4 +57,5 @@ def infixr <==>'
   (p : [| i |] A)
   (q : [| i |] A {| ~ i := p 1 |})
   : [| i |] A {| ~ i := p 0 | i := q 1 |} =>
-  coe (\ k => idp k = q k) 0 (λ j => p j)
+  coe (\ k => p 0 = q k) 0 (λ j => p j)
+  tighter <==>
