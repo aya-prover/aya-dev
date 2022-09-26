@@ -16,6 +16,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
+import org.aya.concrete.visitor.PatternTraversal;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -51,6 +52,12 @@ import java.util.function.Supplier;
  * @author ice1000
  */
 public final class PatTycker {
+  public static final EndoFunctor META_PAT_INLINER = new EndoFunctor() {
+    @Override public @NotNull Term post(@NotNull Term term) {
+      return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
+    }
+  };
+
   public final @NotNull ExprTycker exprTycker;
   private final @NotNull Subst typeSubst;
   private final @NotNull MutableMap<AnyVar, Expr> bodySubst;
@@ -231,11 +238,7 @@ public final class PatTycker {
   private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = lhsResult.gamma;
-    var type = new EndoFunctor() {
-      @Override public @NotNull Term post(@NotNull Term term) {
-        return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
-      }
-    }.apply(lhsResult.type);
+    var type = META_PAT_INLINER.apply(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,
@@ -253,6 +256,10 @@ public final class PatTycker {
     currentClause = match;
     var step0 = visitPatterns(signature, match.patterns.view());
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+    PatternTraversal.visit(p -> {
+      if (p instanceof Pattern.Bind bind)
+        bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
+    }, match.patterns);
     var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.toImmutableMap(), match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;

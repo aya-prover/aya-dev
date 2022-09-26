@@ -109,7 +109,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case RefTerm.MetaPat metaPat -> {
         var ref = metaPat.ref();
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
-        yield pat(ref, outer);
+        yield Doc.wrap("<", ">", pat(ref, outer));
       }
       case ErrorTerm term -> {
         var doc = term.description().toDoc(options);

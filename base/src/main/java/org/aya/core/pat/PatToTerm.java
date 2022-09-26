@@ -34,7 +34,7 @@ public class PatToTerm {
     var data = (CallTerm.Data) ctor.type();
     var core = ctor.ref().core;
     var tele = core.selfTele;
-    var args = ctor.params().view().zip(tele)
+    var args = ctor.params().zipView(tele)
       .map(p -> new Arg<>(visit(p._1), p._2.explicit()))
       .toImmutableSeq();
     return new CallTerm.Con(data.ref(), ctor.ref(), data.args(), data.ulift(), args);
