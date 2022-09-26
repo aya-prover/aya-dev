@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
 val mainClassQName = "org.aya.cli.Main"
 CommonTasks.fatJar(project, mainClassQName)
+application.mainClass.set(mainClassQName)
 CommonTasks.nativeImageConfig(project)
 
 dependencies {
@@ -25,6 +26,7 @@ dependencies {
 
 plugins {
   id("org.graalvm.buildtools.native")
+  application
 }
 
 tasks.withType<AbstractCopyTask>().configureEach {

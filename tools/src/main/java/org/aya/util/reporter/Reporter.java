@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
@@ -21,28 +21,42 @@ public interface Reporter {
 
   @ApiStatus.Internal
   default void reportString(@NotNull String s) {
-    reportDoc(Doc.english(s));
+    reportString(s, Problem.Severity.INFO);
+  }
+
+  @ApiStatus.Internal
+  default void reportString(@NotNull String s, Problem.Severity severity) {
+    reportDoc(Doc.english(s), severity);
   }
 
   @ApiStatus.Internal
   default void reportNest(@NotNull String text, int indent) {
-    reportDoc(Doc.nest(indent, Doc.english(text)));
+    reportNest(text, indent, Problem.Severity.INFO);
   }
 
   @ApiStatus.Internal
-  default void reportDoc(@NotNull Doc doc) {
-    report(new Problem() {
+  default void reportNest(@NotNull String text, int indent, Problem.Severity severity) {
+    reportDoc(Doc.nest(indent, Doc.english(text)), severity);
+  }
+
+  @ApiStatus.Internal
+  default void reportDoc(@NotNull Doc doc, final Problem.Severity severity) {
+    report(dummyProblem(doc, severity));
+  }
+
+  static @NotNull Problem dummyProblem(@NotNull Doc doc, Problem.Severity severity) {
+    return new Problem() {
       @Override public @NotNull SourcePos sourcePos() {
         return SourcePos.NONE;
       }
 
       @Override public @NotNull Severity level() {
-        return Severity.INFO;
+        return severity;
       }
 
       @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
         return doc;
       }
-    });
+    };
   }
 }

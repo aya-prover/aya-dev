@@ -209,8 +209,9 @@ public class LibraryCompiler {
     SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("I dislike the following module(s):");
-      tycker.skippedSet.forEach(f -> reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
-      reporter.reportString("");
+      tycker.skippedSet.forEach(f ->
+        reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
+      reporter.raiseError();
     } else {
       reporter.reportString("I like these modules :)");
     }

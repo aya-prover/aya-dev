@@ -58,13 +58,13 @@ public class MainArgs {
 
   /** Either `repl` or `compile` is not null */
   public static class Action {
-    @CommandLine.ArgGroup(heading = "REPL arguments:%n")
+    @CommandLine.ArgGroup(heading = "REPL arguments:%n", exclusive = false)
     public @Nullable ReplAction repl;
 
-    @CommandLine.ArgGroup(heading = "Compiler arguments:%n")
+    @CommandLine.ArgGroup(heading = "Compiler arguments:%n", exclusive = false)
     public @Nullable CompileAction compile;
 
-    @CommandLine.ArgGroup(heading = "PLCT report arguments:%n")
+    @CommandLine.ArgGroup(heading = "PLCT report arguments:%n", exclusive = false)
     public @Nullable PlctAction plct;
   }
 
