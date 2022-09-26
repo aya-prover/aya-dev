@@ -7,7 +7,7 @@ dependencies {
   api(project(":tools"))
   api(project(":pretty"))
   val deps: java.util.Properties by rootProject.ext
-  api("org.aya-prover.guest0x0", "cubical", version = deps.getProperty("version.guest0x0"))
+  api("org.aya-prover.guest0x0", "cubical")
   implementation("org.aya-prover", "commonmark", version = deps.getProperty("version.commonmark"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
