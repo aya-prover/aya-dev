@@ -265,7 +265,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
           cnn.isAnd() ? Outer.AppHead : Outer.IMin);
       }
       case Formula.Inv<Term> inv -> Doc.sep(Doc.symbol("~"), term(Outer.AppSpine, inv.i()));
-      case Formula.Lit<Term> lit -> Doc.plain(lit.isLeft() ? "0" : "1");
+      case Formula.Lit<Term> lit -> Doc.plain(lit.isOne() ? "1" : "0");
     };
   }
 

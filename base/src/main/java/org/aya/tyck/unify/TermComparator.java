@@ -445,7 +445,7 @@ public sealed abstract class TermComparator permits Unifier {
       case PrimTerm.Mula lhs -> {
         if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
         var happy = switch (lhs.asFormula()) {
-          case Formula.Lit<Term> ll when rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isLeft() == rr.isLeft();
+          case Formula.Lit<Term> ll when rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isOne() == rr.isOne();
           case Formula.Inv<Term> ll when rhs.asFormula() instanceof Formula.Inv<Term> rr ->
             compare(ll.i(), rr.i(), lr, rl, null);
           case Formula.Conn<Term> ll when rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()

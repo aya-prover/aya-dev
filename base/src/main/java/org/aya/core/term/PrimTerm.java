@@ -10,17 +10,21 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface PrimTerm extends Term {
 
   record Mula(@NotNull Formula<Term> asFormula) implements PrimTerm {
-    public static final @NotNull Mula LEFT = new Mula(new Formula.Lit<>(true));
-    public static final @NotNull Mula RIGHT = new Mula(new Formula.Lit<>(false));
+    public static final @NotNull Mula LEFT = new Mula(new Formula.Lit<>(false));
+    public static final @NotNull Mula RIGHT = new Mula(new Formula.Lit<>(true));
+
     public static @NotNull Mula inv(@NotNull Term term) {
       return new Mula(new Formula.Inv<>(term));
     }
+
     public static @NotNull Mula and(@NotNull Term lhs, @NotNull Term rhs) {
       return conn(true, lhs, rhs);
     }
+
     public static @NotNull Mula or(@NotNull Term lhs, @NotNull Term rhs) {
       return conn(false, lhs, rhs);
     }
+
     public static @NotNull Mula conn(boolean isAnd, @NotNull Term lhs, @NotNull Term rhs) {
       return new Mula(new Formula.Conn<>(isAnd, lhs, rhs));
     }

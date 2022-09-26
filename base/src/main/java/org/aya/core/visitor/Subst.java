@@ -96,7 +96,7 @@ public record Subst(
     if (!map.containsKey(i)) return false;
     // check whether if the cond is self-contradictory
     if (!(map.get(i).asFormula() instanceof Formula.Lit<Term> end)) return false;
-    return end.isLeft() != newIsLeft;
+      return end.isOne() == newIsLeft;
   }
 
   @Override public @Nullable LocalVar asRef(@NotNull Term term) {
