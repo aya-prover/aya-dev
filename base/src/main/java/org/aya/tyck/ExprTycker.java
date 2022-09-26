@@ -239,7 +239,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
     // forall i. (c_i is valid)
-    return new Restr.Cond<>(inherit(c.inst(), PrimTerm.Interval.INSTANCE).wellTyped(), c.isLeft());
+    return new Restr.Cond<>(inherit(c.inst(), PrimTerm.Interval.INSTANCE).wellTyped(), c.isOne());
     // ^ note: `inst` may be ErrorTerm!
   }
 
