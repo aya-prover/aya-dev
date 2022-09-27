@@ -62,11 +62,12 @@ public class AyaLanguageServer implements LanguageServer {
    */
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
-  private final @Nullable AyaLanguageClient client;
+  private final @NotNull AyaLanguageClient client;
 
-  public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @Nullable LanguageClient client) {
+  public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull LanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
-    this.client = new AyaLanguageClient(client);
+    this.client = AyaLanguageClient.of(client);
+    Log.init(this.client);
   }
 
   public @NotNull SeqView<LibraryOwner> libraries() {
@@ -187,7 +188,6 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   public void publishProblems(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
-    if (client == null) return;
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d("%s", p.describe(options).debugRender()))
@@ -198,13 +198,12 @@ public class AyaLanguageServer implements LanguageServer {
         Collectors.mapping(t -> t._2, ImmutableSeq.factory())
       ));
     var from = ImmutableMap.from(diags);
-    AyaLanguageClient.publishAyaProblems(client, from, options);
+    client.publishAyaProblems(from, options);
   }
 
   private void clearProblems(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
-    if (client == null) return;
     var files = affected.flatMap(i -> i.map(LibrarySource::file));
-    AyaLanguageClient.clearAyaProblems(client, files);
+    client.clearAyaProblems(files);
   }
 
   @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
