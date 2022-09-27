@@ -64,9 +64,9 @@ public class AyaLanguageServer implements LanguageServer {
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
 
-  public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull LanguageClient client) {
+  public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
-    this.client = AyaLanguageClient.of(client);
+    this.client = client;
     Log.init(this.client);
   }
 

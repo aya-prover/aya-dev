@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
-import com.google.gson.JsonElement;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -11,26 +10,18 @@ import org.aya.lsp.utils.LspRange;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
-import org.javacs.lsp.*;
+import org.javacs.lsp.Diagnostic;
+import org.javacs.lsp.DiagnosticSeverity;
+import org.javacs.lsp.LanguageClient;
+import org.javacs.lsp.PublishDiagnosticsParams;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
-public class AyaLanguageClient implements LanguageClient {
-  protected @NotNull LanguageClient delegate;
-
-  private AyaLanguageClient(@NotNull LanguageClient delegate) {
-    this.delegate = delegate;
-  }
-
-  public static @NotNull AyaLanguageClient of(@NotNull LanguageClient client) {
-    if (client instanceof AyaLanguageClient aya) return aya;
-    return new AyaLanguageClient(client);
-  }
-
-  public void publishAyaProblems(
+public interface AyaLanguageClient extends LanguageClient {
+  default void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
     @NotNull DistillerOptions options
   ) {
@@ -48,7 +39,7 @@ public class AyaLanguageClient implements LanguageClient {
     });
   }
 
-  public void clearAyaProblems(@NotNull ImmutableSeq<Path> files) {
+  default void clearAyaProblems(@NotNull ImmutableSeq<Path> files) {
     files.forEach(f -> publishDiagnostics(new PublishDiagnosticsParams(
       f.toUri(), Collections.emptyList())));
   }
@@ -72,25 +63,5 @@ public class AyaLanguageClient implements LanguageClient {
       case INFO -> DiagnosticSeverity.Information;
       case GOAL -> DiagnosticSeverity.Hint;
     };
-  }
-
-  @Override public void publishDiagnostics(@NotNull PublishDiagnosticsParams publishDiagnosticsParams) {
-    delegate.publishDiagnostics(publishDiagnosticsParams);
-  }
-
-  @Override public void showMessage(@NotNull ShowMessageParams showMessageParams) {
-    delegate.showMessage(showMessageParams);
-  }
-
-  @Override public void logMessage(ShowMessageParams showMessageParams) {
-    delegate.logMessage(showMessageParams);
-  }
-
-  @Override public void registerCapability(@NotNull String s, @NotNull JsonElement jsonElement) {
-    delegate.registerCapability(s, jsonElement);
-  }
-
-  @Override public void customNotification(@NotNull String s, @NotNull JsonElement jsonElement) {
-    delegate.customNotification(s, jsonElement);
   }
 }
