@@ -35,7 +35,6 @@ jlink {
   addExtraDependencies("jline-terminal-jansi")
   mergedModule {
     additive = true
-    requires("com.google.gson")
     uses("org.jline.terminal.spi.JansiSupport")
   }
   launcher {
