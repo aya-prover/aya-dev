@@ -18,9 +18,19 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
-public record AyaLanguageClient(@NotNull LanguageClient delegate) implements LanguageClient {
-  static void publishAyaProblems(
-    @NotNull AyaLanguageClient self,
+public class AyaLanguageClient implements LanguageClient {
+  protected @NotNull LanguageClient delegate;
+
+  private AyaLanguageClient(@NotNull LanguageClient delegate) {
+    this.delegate = delegate;
+  }
+
+  public static @NotNull AyaLanguageClient of(@NotNull LanguageClient client) {
+    if (client instanceof AyaLanguageClient aya) return aya;
+    return new AyaLanguageClient(client);
+  }
+
+  public void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
     @NotNull DistillerOptions options
   ) {
@@ -34,16 +44,13 @@ public record AyaLanguageClient(@NotNull LanguageClient delegate) implements Lan
           .map(kv -> toDiagnostic(kv.getKey(), kv.getValue(), options))
           .toList()
       );
-      self.publishDiagnostics(param);
+      publishDiagnostics(param);
     });
   }
 
-  static void clearAyaProblems(
-    @NotNull AyaLanguageClient self,
-    @NotNull ImmutableSeq<Path> files
-  ) {
-    files.forEach(f -> self.publishDiagnostics(
-      new PublishDiagnosticsParams(f.toUri(), Collections.emptyList())));
+  public void clearAyaProblems(@NotNull ImmutableSeq<Path> files) {
+    files.forEach(f -> publishDiagnostics(new PublishDiagnosticsParams(
+      f.toUri(), Collections.emptyList())));
   }
 
   private static @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {
