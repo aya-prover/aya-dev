@@ -7,8 +7,8 @@ CommonTasks.fatJar(project, mainClassQName)
 
 dependencies {
   val deps: java.util.Properties by rootProject.ext
-  implementation(project(":cli"))
-  implementation("org.aya-prover.upstream", "javacs-protocol", version = deps.getProperty("version.aya-upstream"))
+  api(project(":cli"))
+  api("org.aya-prover.upstream", "javacs-protocol", version = deps.getProperty("version.aya-upstream"))
   annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
