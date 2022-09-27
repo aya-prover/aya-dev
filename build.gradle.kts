@@ -80,11 +80,13 @@ subprojects {
     }
 
     doLast {
-      val tree = fileTree(destinationDirectory)
+      val root = destinationDirectory.asFile.get()
+      // skip for test sources
+      if (root.endsWith("test")) return@doLast
+      val tree = fileTree(root)
       tree.include("**/*.class")
       tree.include("module-info.class")
-      val root = project.buildDir.toPath().resolve("classes/java/main")
-      tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
+      tree.forEach { BuildUtil.stripPreview(root.toPath(), it.toPath()) }
     }
   }
 
