@@ -119,20 +119,9 @@ public record AyaProducer(
 
   public @NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
     return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
-      visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()),
+      ctx.loosers().stream().flatMap(c -> c.qualifiedId().stream().map(this::visitQualifiedId)).collect(ImmutableSeq.factory()),
+      ctx.tighters().stream().flatMap(c1 -> c1.qualifiedId().stream().map(this::visitQualifiedId)).collect(ImmutableSeq.factory()),
       MutableValue.create(), MutableValue.create());
-  }
-
-  public @NotNull ImmutableSeq<QualifiedID> visitLoosers(List<AyaParser.LoosersContext> ctx) {
-    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma())).collect(ImmutableSeq.factory());
-  }
-
-  public @NotNull ImmutableSeq<QualifiedID> visitTighters(List<AyaParser.TightersContext> ctx) {
-    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma())).collect(ImmutableSeq.factory());
-  }
-
-  public @NotNull Stream<QualifiedID> visitQIdsComma(AyaParser.QIdsCommaContext ctx) {
-    return ctx.qualifiedId().stream().map(this::visitQualifiedId);
   }
 
   private <T> T unreachable(ParserRuleContext ctx) {
