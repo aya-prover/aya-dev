@@ -328,7 +328,7 @@ public record PatClassifier(
     var head = head(subPats);
     return head instanceof Pat.End headEnd
       && end.asFormula() instanceof Formula.Lit<Term> endF
-      && headEnd.isLeft() == endF.isLeft() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
+      && headEnd.isOne() == endF.isOne() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
   }
 
   private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, AnyVar ctorRef) {

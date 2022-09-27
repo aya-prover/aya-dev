@@ -212,7 +212,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
-      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, end.isLeft() ? "0" : "1"), end.explicit());
+      case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, end.isOne() ? "1" : "0"), end.explicit());
       case Pat.ShapedInt lit -> Doc.bracedUnless(lit.with(
           (zero, suc) -> lit.repr() == 0
             ? linkLit(0, zero.ref, CON_CALL)

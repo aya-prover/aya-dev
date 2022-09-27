@@ -265,7 +265,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
           cnn.isAnd() ? Outer.AppHead : Outer.IMin);
       }
       case Formula.Inv<Term> inv -> Doc.sep(Doc.symbol("~"), term(Outer.AppSpine, inv.i()));
-      case Formula.Lit<Term> lit -> Doc.plain(lit.isLeft() ? "0" : "1");
+      case Formula.Lit<Term> lit -> Doc.plain(lit.isOne() ? "1" : "0");
     };
   }
 
@@ -282,8 +282,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
   restr(@NotNull DistillerOptions options, @NotNull Restr<T> restr) {
     return switch (restr) {
-      case Restr.Const<T> con -> con.isTrue() ? Doc.symbol("top") : Doc.symbol("_|_");
-      case Restr.Vary<T> v -> Doc.join(Doc.spaced(Doc.symbol("\\/")),
+      case Restr.Const<T> con -> con.isOne() ? Doc.symbol("top") : Doc.symbol("_|_");
+      case Restr.Disj<T> v -> Doc.join(Doc.spaced(Doc.symbol("\\/")),
         v.orz().view().map(or -> or.ands().sizeGreaterThan(1) && v.orz().sizeGreaterThan(1)
           ? Doc.parened(cofib(options, or))
           : cofib(options, or)));
@@ -296,9 +296,8 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  cofib(@NotNull DistillerOptions options, @NotNull Restr.Cofib<T> cofib) {
-    return Doc.join(Doc.spaced(Doc.symbol("/\\")), cofib.ands().view().map(and ->
-      Doc.sepNonEmpty(and.isLeft() ? Doc.symbol("~") : Doc.empty(), and.inst().toDoc(options))));
+  cofib(@NotNull DistillerOptions options, @NotNull Restr.Conj<T> conj) {
+    return Doc.join(Doc.spaced(Doc.symbol("/\\")), conj.ands().view().map(and -> Doc.sepNonEmpty(!and.isOne() ? Doc.symbol("~") : Doc.empty(), and.inst().toDoc(options))));
   }
 
   protected static @Nullable Style chooseStyle(Object concrete) {

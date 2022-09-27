@@ -87,16 +87,16 @@ public record Subst(
     return map.isEmpty();
   }
 
-  @Override public void put(LocalVar i, boolean isLeft) {
-    map.put(i, isLeft ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT);
+  @Override public void put(LocalVar i, boolean isOne) {
+    map.put(i, isOne ? PrimTerm.Mula.RIGHT : PrimTerm.Mula.LEFT);
   }
 
-  @Override public boolean contradicts(LocalVar i, boolean newIsLeft) {
+  @Override public boolean contradicts(LocalVar i, boolean newIsOne) {
     // In an and-only cofibration, every variable appears uniquely in a cond.
     if (!map.containsKey(i)) return false;
     // check whether if the cond is self-contradictory
     if (!(map.get(i).asFormula() instanceof Formula.Lit<Term> end)) return false;
-    return end.isLeft() != newIsLeft;
+    return end.isOne() != newIsOne;
   }
 
   @Override public @Nullable LocalVar asRef(@NotNull Term term) {

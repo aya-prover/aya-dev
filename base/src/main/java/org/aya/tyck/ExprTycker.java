@@ -239,7 +239,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
     // forall i. (c_i is valid)
-    return new Restr.Cond<>(inherit(c.inst(), PrimTerm.Interval.INSTANCE).wellTyped(), c.isLeft());
+    return new Restr.Cond<>(inherit(c.inst(), PrimTerm.Interval.INSTANCE).wellTyped(), c.isOne());
     // ^ note: `inst` may be ErrorTerm!
   }
 
@@ -279,7 +279,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull SeqView<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType, @NotNull ClauseTyckState clauseState) {
     return switch (CofThy.isOne(whnf(inherit(lhs, PrimTerm.Interval.INSTANCE).wellTyped()))) {
-      case Restr.Vary<Term> restr -> {
+      case Restr.Disj<Term> restr -> {
         var list = MutableList.<Restr.Side<Term>>create();
         for (var cof : restr.orz()) {
           var u = CofThy.vdash(cof, new Subst(), subst -> inherit(rhs, whnf(rhsType.subst(subst))).wellTyped());
@@ -296,7 +296,7 @@ public final class ExprTycker extends Tycker {
         yield list.view();
       }
       case Restr.Const<Term> c -> {
-        if (c.isTrue()) clauseState.truthValue = inherit(rhs, rhsType).wellTyped();
+        if (c.isOne()) clauseState.truthValue = inherit(rhs, rhsType).wellTyped();
         else clauseState.isConstantFalse = true;
         yield SeqView.empty();
       }
