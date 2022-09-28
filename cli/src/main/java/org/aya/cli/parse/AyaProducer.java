@@ -382,7 +382,7 @@ public record AyaProducer(
     if (ctx == null) return new Expr.PartEl(sourcePosOf(fallback), ImmutableSeq.empty());
     return new Expr.PartEl(sourcePosOf(ctx), Seq.wrapJava(ctx.subSystem()).map(sys -> {
       var exprs = Seq.wrapJava(sys.expr()).map(this::visitExpr);
-      return Tuple2.of(exprs.get(0), exprs.get(1));
+      return Tuple.of(exprs.get(0), exprs.get(1));
     }));
   }
 
@@ -603,7 +603,7 @@ public record AyaProducer(
       bind == null ? BindBlock.EMPTY : visitBind(bind),
       personality
     );
-    return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+    return Tuple.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(ctx.OPEN()),
         openAccessibility,
@@ -724,7 +724,7 @@ public record AyaProducer(
       bind == null ? BindBlock.EMPTY : visitBind(bind),
       personality
     );
-    return Tuple2.of(struct, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+    return Tuple.of(struct, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(ctx.OPEN()),
         openAccessibility,

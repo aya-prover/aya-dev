@@ -207,7 +207,7 @@ public record ExprResolver(
 
   private @NotNull Tuple2<Expr.Param, Context> resolveParam(@NotNull Expr.Param param, Context ctx) {
     var type = resolve(param.type(), ctx);
-    return Tuple2.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
+    return Tuple.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
   }
 
   private @NotNull Context resolveCubeParams(@NotNull ImmutableSeq<LocalVar> params, Context ctx) {
@@ -217,12 +217,12 @@ public record ExprResolver(
   @Contract(pure = true)
   public @NotNull Tuple2<SeqView<Expr.Param>, Context>
   resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
-    if (params.isEmpty()) return Tuple2.of(SeqView.empty(), ctx);
+    if (params.isEmpty()) return Tuple.of(SeqView.empty(), ctx);
     var first = params.first();
     var type = resolve(first.type(), ctx);
     var newCtx = ctx.bind(first.ref(), first.sourcePos());
     var result = resolveParams(params.view().drop(1), newCtx);
-    return Tuple2.of(result._1.prepended(new Expr.Param(first, type)), result._2);
+    return Tuple.of(result._1.prepended(new Expr.Param(first, type)), result._2);
   }
 
   private Expr.@NotNull Field resolveField(Expr.@NotNull Field t, Context context) {
