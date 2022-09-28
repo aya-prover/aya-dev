@@ -5,6 +5,7 @@ rootProject.name = "aya-prover"
 
 dependencyResolutionManagement {
   @Suppress("UnstableApiUsage") repositories {
+    mavenLocal()
     mavenCentral()
   }
 }
@@ -16,5 +17,6 @@ include(
   "tools-repl",
   "base",
   "pretty",
+  "parser-migrate",
   "lsp",
 )
