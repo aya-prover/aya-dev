@@ -378,7 +378,7 @@ public record AyaGKProducer(
   public @NotNull ImmutableSeq<Expr.Param> tele(@NotNull GenericNode<?> node) {
     var teleLit = node.peekChild(TELE_LIT);
     if (teleLit != null) {
-      var type = literal(teleLit);
+      var type = expr(teleLit.child(EXPR));
       var pos = sourcePosOf(node);
       return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), type, true));
     }
@@ -448,7 +448,44 @@ public record AyaGKProducer(
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
-    if (node.is(ATOM_EXPR)) return atomExpr(node);
+    if (node.is(REF_EXPR)) {
+      var qid = qualifiedId(node.child(QUALIFIED_ID));
+      return new Expr.UnresolvedExpr(qid.sourcePos(), qid);
+    }
+    if (node.is(CALM_FACE_EXPR)) return new Expr.HoleExpr(pos, false, null);
+    if (node.is(GOAL_EXPR)) {
+      var fillingExpr = node.peekChild(EXPR);
+      var filling = fillingExpr == null ? null : expr(fillingExpr);
+      return new Expr.HoleExpr(pos, true, filling);
+    }
+    if (node.is(UNIV_EXPR)) {
+      if (node.peekChild(KW_TYPE) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Type);
+      if (node.peekChild(KW_SET) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Set);
+      if (node.peekChild(KW_PROP) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Prop);
+      if (node.peekChild(KW_ISET) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.ISet);
+      return unreachable(node);
+    }
+    if (node.is(LIT_INT_EXPR)) try {
+      return new Expr.LitIntExpr(pos, Integer.parseInt(node.tokenText()));
+    } catch (NumberFormatException ignored) {
+      reporter.report(new ParseError(pos, "Unsupported integer literal `" + node.tokenText() + "`"));
+      throw new ParsingInterruptedException();
+    }
+    if (node.is(LIT_STRING_EXPR)) {
+      var text = node.tokenText();
+      var content = text.substring(1, text.length() - 1);
+      return new Expr.LitStringExpr(pos, StringEscapeUtil.escapeStringCharacters(content));
+    }
+    if (node.is(ATOM_ULIFT_EXPR)) {
+      var expr = expr(node.child(LITERAL));
+      var lifts = node.childrenOfType(ULIFT_PREFIX).toImmutableSeq().size();
+      return lifts > 0 ? new Expr.LiftExpr(sourcePosOf(node), expr, lifts) : expr;
+    }
+    if (node.is(ATOM_TUPLE_EXPR)) {
+      var expr = node.child(EXPR_LIST).childrenOfType(EXPR).toImmutableSeq();
+      if (expr.size() == 1) return newBinOPScope(expr(expr.get(0)));
+      return new Expr.TupExpr(sourcePosOf(node), expr.map(this::expr));
+    }
     if (node.is(APP_EXPR)) {
       var head = new Expr.NamedArg(true, expr(node.child(EXPR)));
       var tail = node.childrenOfType(ARGUMENT)
@@ -507,23 +544,17 @@ public record AyaGKProducer(
         var n = teleParamName(t.child(TELE_PARAM_NAME));
         return LocalVar.from(n);
       }).toImmutableSeq();
-      return new Expr.Path(pos, params, type(node.child(EXPR)), partial(node.peekChild(PARTIAL_EXPR), pos));
+      return new Expr.Path(pos, params, expr(node.child(EXPR)), partial(node.peekChild(PARTIAL_EXPR), pos));
     }
-    return unreachable(node);
-  }
-
-  public @NotNull Expr atomExpr(@NotNull GenericNode<?> node) {
-    var atomUliftExpr = node.peekChild(ATOM_ULIFT_EXPR);
-    if (atomUliftExpr != null) {
-      var expr = literal(atomUliftExpr.child(LITERAL));
-      var lifts = atomUliftExpr.childrenOfType(ULIFT_PREFIX).toImmutableSeq().size();
-      return lifts > 0 ? new Expr.LiftExpr(sourcePosOf(node), expr, lifts) : expr;
+    // TODO: implement this
+    if (node.is(DO_EXPR)) {
+      return new Expr.HoleExpr(pos, false, null);
     }
-    var atomTupleExpr = node.peekChild(ATOM_TUPLE_EXPR);
-    if (atomTupleExpr != null) {
-      var expr = atomTupleExpr.child(EXPR_LIST).childrenOfType(EXPR).toImmutableSeq();
-      if (expr.size() == 1) return newBinOPScope(expr(expr.get(0)));
-      return new Expr.TupExpr(sourcePosOf(node), expr.map(this::expr));
+    if (node.is(IDIOM_EXPR)) {
+      return new Expr.HoleExpr(pos, false, null);
+    }
+    if (node.is(ARRAY_EXPR)) {
+      return new Expr.HoleExpr(pos, false, null);
     }
     return unreachable(node);
   }
@@ -531,7 +562,7 @@ public record AyaGKProducer(
   public @NotNull Expr.NamedArg argument(@NotNull GenericNode<?> node) {
     if (node.is(ATOM_EX_ARGUMENT)) {
       var fixes = node.childrenOfType(PROJ_FIX);
-      var expr = atomExpr(node.child(ATOM_EXPR));
+      var expr = expr(node.child(EXPR));
       var projected = fixes
         .foldLeft(Tuple.of(sourcePosOf(node), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
@@ -599,46 +630,6 @@ public record AyaGKProducer(
       sourcePos, params.first(),
       buildLam(AntlrUtil.sourcePosForSubExpr(sourcePos.file(),
         drop.map(Expr.Param::sourcePos), body.sourcePos()), drop, body));
-  }
-
-  public @NotNull Expr literal(@NotNull GenericNode<?> node) {
-    var refExpr = node.peekChild(REF_EXPR);
-    if (refExpr != null) {
-      var qid = qualifiedId(refExpr.child(QUALIFIED_ID));
-      return new Expr.UnresolvedExpr(qid.sourcePos(), qid);
-    }
-    var pos = sourcePosOf(node);
-    var holeExpr = node.peekChild(HOLE_EXPR);
-    if (holeExpr != null) {
-      if (holeExpr.peekChild(CALM_FACE_EXPR) != null)
-        return new Expr.HoleExpr(pos, false, null);
-      var goalExpr = holeExpr.child(GOAL_EXPR);
-      var fillingExpr = goalExpr.peekChild(EXPR);
-      var filling = fillingExpr == null ? null : expr(fillingExpr);
-      return new Expr.HoleExpr(pos, true, filling);
-    }
-    var univExpr = node.peekChild(UNIV_EXPR);
-    if (univExpr != null) {
-      if (univExpr.peekChild(KW_TYPE) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Type);
-      if (univExpr.peekChild(KW_SET) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Set);
-      if (univExpr.peekChild(KW_PROP) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Prop);
-      if (univExpr.peekChild(KW_ISET) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.ISet);
-      return unreachable(univExpr);
-    }
-    var litIntExpr = node.peekChild(LIT_INT_EXPR);
-    if (litIntExpr != null) try {
-      return new Expr.LitIntExpr(pos, Integer.parseInt(litIntExpr.tokenText()));
-    } catch (NumberFormatException ignored) {
-      reporter.report(new ParseError(pos, "Unsupported integer literal `" + litIntExpr.tokenText() + "`"));
-      throw new ParsingInterruptedException();
-    }
-    var litStringExpr = node.peekChild(LIT_STRING_EXPR);
-    if (litStringExpr != null) {
-      var text = litStringExpr.tokenText();
-      var content = text.substring(1, text.length() - 1);
-      return new Expr.LitStringExpr(pos, StringEscapeUtil.escapeStringCharacters(content));
-    }
-    return unreachable(node);
   }
 
   public @NotNull Pattern pattern(@NotNull GenericNode<?> node) {
