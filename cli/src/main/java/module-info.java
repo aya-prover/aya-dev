@@ -1,5 +1,6 @@
 module aya.cli {
   requires transitive aya.parser;
+  requires transitive aya.parser.ij;
   requires transitive aya.repl;
   requires transitive aya.base;
 
