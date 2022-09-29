@@ -62,7 +62,6 @@ public interface AyaPsiElementTypes {
   IElementType LAMBDA_EXPR = new AyaPsiElementType("LAMBDA_EXPR");
   IElementType LAMBDA_TELE = new AyaPsiElementType("LAMBDA_TELE");
   IElementType LAMBDA_TELE_BINDER = new AyaPsiElementType("LAMBDA_TELE_BINDER");
-  IElementType LAMBDA_TELE_BINDER_ANONYMOUS = new AyaPsiElementType("LAMBDA_TELE_BINDER_ANONYMOUS");
   IElementType LAMBDA_TELE_EX = new AyaPsiElementType("LAMBDA_TELE_EX");
   IElementType LAMBDA_TELE_IM = new AyaPsiElementType("LAMBDA_TELE_IM");
   IElementType LAMBDA_TELE_LIT = new AyaPsiElementType("LAMBDA_TELE_LIT");

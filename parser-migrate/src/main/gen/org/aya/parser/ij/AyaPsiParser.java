@@ -1161,26 +1161,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // teleBinderTyped
-  //                    | lambdaTeleBinderAnonymous
+  //                    | lambdaTeleLit
   public static boolean lambdaTeleBinder(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTeleBinder")) return false;
     if (!nextTokenIs(b, "<lambda tele binder>", ID, REPL_COMMAND)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LAMBDA_TELE_BINDER, "<lambda tele binder>");
     r = teleBinderTyped(b, l + 1);
-    if (!r) r = lambdaTeleBinderAnonymous(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // teleParamName
-  public static boolean lambdaTeleBinderAnonymous(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaTeleBinderAnonymous")) return false;
-    if (!nextTokenIs(b, "<lambda tele binder anonymous>", ID, REPL_COMMAND)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, LAMBDA_TELE_BINDER_ANONYMOUS, "<lambda tele binder anonymous>");
-    r = teleParamName(b, l + 1);
+    if (!r) r = lambdaTeleLit(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

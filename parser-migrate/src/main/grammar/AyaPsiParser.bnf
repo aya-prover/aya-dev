@@ -372,8 +372,7 @@ lambdaTeleEx ::= LPAREN lambdaTeleBinder RPAREN
 lambdaTeleIm ::= LBRACE lambdaTeleBinder RBRACE
 
 lambdaTeleBinder ::= teleBinderTyped
-                   | lambdaTeleBinderAnonymous
-lambdaTeleBinderAnonymous ::= teleParamName
+                   | lambdaTeleLit
 
 // path type tele
 pathTele ::= teleParamName
