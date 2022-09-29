@@ -29,7 +29,8 @@ public abstract class AyaParserDefinitionBase implements ParserDefinition {
   }
 
   @Override public @NotNull TokenSet getCommentTokens() {
-    return COMMENTS;
+    // Remark needs DOC_COMMENT, do not skip it.
+    return SKIP_COMMENTS;
   }
 
   @Override public @NotNull TokenSet getStringLiteralElements() {
@@ -41,6 +42,7 @@ public abstract class AyaParserDefinitionBase implements ParserDefinition {
   public static final @NotNull AyaPsiTokenType DOC_COMMENT = (AyaPsiTokenType) AyaPsiElementTypes.DOC_COMMENT;
   public static final @NotNull TokenSet IDENTIFIERS = TokenSet.create(AyaPsiElementTypes.ID, AyaPsiElementTypes.REPL_COMMAND);
   public static final @NotNull TokenSet COMMENTS = TokenSet.create(LINE_COMMENT, BLOCK_COMMENT, DOC_COMMENT);
+  public static final @NotNull TokenSet SKIP_COMMENTS = TokenSet.create(LINE_COMMENT, BLOCK_COMMENT);
   public static final @NotNull TokenSet STRINGS = TokenSet.create(AyaPsiElementTypes.STRING);
   public static final @NotNull TokenSet MARKERS = TokenSet.create(
     AyaPsiElementTypes.COLON,
