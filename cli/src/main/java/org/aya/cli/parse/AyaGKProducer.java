@@ -477,7 +477,7 @@ public record AyaGKProducer(
       return new Expr.LitStringExpr(pos, StringEscapeUtil.escapeStringCharacters(content));
     }
     if (node.is(ATOM_ULIFT_EXPR)) {
-      var expr = expr(node.child(LITERAL));
+      var expr = expr(node.child(EXPR));
       var lifts = node.childrenOfType(ULIFT_PREFIX).toImmutableSeq().size();
       return lifts > 0 ? new Expr.LiftExpr(sourcePosOf(node), expr, lifts) : expr;
     }
@@ -505,16 +505,18 @@ public record AyaGKProducer(
     }
     if (node.is(NEW_EXPR)) {
       var struct = expr(node.child(EXPR));
-      var newBody = node.child(NEW_BODY);
-      var fields = newBody.childrenOfType(NEW_ARG).map(arg -> {
-        var id = newArgField(arg.child(NEW_ARG_FIELD));
-        var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
-          .map(b -> b.map($ -> LocalVar.from(b)))
-          .toImmutableSeq();
-        var body = expr(arg.child(EXPR));
-        return new Expr.Field(id, bindings, body, MutableValue.create());
-      }).toImmutableSeq();
-      return new Expr.NewExpr(pos, struct, fields);
+      var newBody = node.peekChild(NEW_BODY);
+      return new Expr.NewExpr(pos, struct,
+        newBody == null
+          ? ImmutableSeq.empty()
+          : newBody.childrenOfType(NEW_ARG).map(arg -> {
+          var id = newArgField(arg.child(NEW_ARG_FIELD));
+          var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
+            .map(b -> b.map($ -> LocalVar.from(b)))
+            .toImmutableSeq();
+          var body = expr(arg.child(EXPR));
+          return new Expr.Field(id, bindings, body, MutableValue.create());
+        }).toImmutableSeq());
     }
     if (node.is(PI_EXPR)) return buildPi(pos, false,
       telescope(node.childrenOfType(TELE).map(x -> x)).view(),
@@ -666,7 +668,8 @@ public record AyaGKProducer(
         ? (ignored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
         : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
     }
-    if (node.is(ATOM_NUMBER_PATTERN)) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));
+    if (node.is(ATOM_NUMBER_PATTERN))
+      return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));
     if (node.is(ATOM_ABSURD_PATTERN)) return ex -> new Pattern.Absurd(sourcePos, ex);
     if (node.is(ATOM_CALM_FACE_PATTERN)) return ex -> new Pattern.CalmFace(sourcePos, ex);
     return unreachable(node);
