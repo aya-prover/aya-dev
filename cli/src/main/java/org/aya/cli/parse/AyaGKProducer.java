@@ -774,7 +774,7 @@ public record AyaGKProducer(
     var end = node.isTerminalNode()
       ? LineColumn.of(start.line, start.column + (node.endOffset() - node.startOffset()))
       : StringUtil.offsetToLineColumn(file.sourceCode(), node.endOffset() - 1);
-    return new SourcePos(file, node.startOffset(), node.endOffset(),
+    return new SourcePos(file, node.startOffset(), node.endOffset() - 1,
       start.line + 1, start.column, end.line + 1, end.column);
   }
 }
