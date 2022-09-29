@@ -4,7 +4,6 @@ package org.aya.cli.parse;
 
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.builder.GenericNode;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -27,6 +26,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.parser.ij.AyaPsiParser;
+import org.aya.parser.ij.GenericNode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.repl.antlr.AntlrUtil;
