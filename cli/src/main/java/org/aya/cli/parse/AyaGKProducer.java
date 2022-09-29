@@ -55,21 +55,18 @@ public record AyaGKProducer(
   public static final @NotNull TokenSet ATOM_PATTERN = AyaPsiParser.EXTENDS_SETS_[2];
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
+  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
 
   public @NotNull ImmutableSeq<Stmt> program(@NotNull GenericNode<?> node) {
     return node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq();
   }
 
   public @NotNull ImmutableSeq<Stmt> stmt(@NotNull GenericNode<?> node) {
-    var importCmd = node.peekChild(IMPORT_CMD);
-    if (importCmd != null) return ImmutableSeq.of(importCmd(importCmd));
-    var mod = node.peekChild(MODULE);
-    if (mod != null) return ImmutableSeq.of(module(mod));
-    var openCmd = node.peekChild(OPEN_CMD);
-    if (openCmd != null) return openCmd(openCmd);
-    var decl = node.peekChild(DECL);
-    if (decl != null) {
-      var result = decl(decl);
+    if (node.is(IMPORT_CMD)) return ImmutableSeq.of(importCmd(node));
+    if (node.is(MODULE)) return ImmutableSeq.of(module(node));
+    if (node.is(OPEN_CMD)) return openCmd(node);
+    if (node.is(DECL)) {
+      var result = decl(node);
       var stmts = result._2.view().prepended(result._1);
       if (result._1 instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
         var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof Decl));
@@ -78,10 +75,8 @@ public record AyaGKProducer(
       }
       return stmts.toImmutableSeq();
     }
-    var generalize = node.peekChild(GENERALIZE);
-    if (generalize != null) return ImmutableSeq.of(generalize(generalize));
-    var remark = node.peekChild(REMARK);
-    if (remark != null) return ImmutableSeq.of(remark(remark));
+    if (node.is(GENERALIZE)) return ImmutableSeq.of(generalize(node));
+    if (node.is(REMARK)) return ImmutableSeq.of(remark(node));
     return unreachable(node);
   }
 
@@ -203,14 +198,10 @@ public record AyaGKProducer(
 
   public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
     var accessibility = node.peekChild(KW_PRIVATE) == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
-    var fnDecl = node.peekChild(FN_DECL);
-    if (fnDecl != null) return Tuple.of(fnDecl(fnDecl, accessibility), ImmutableSeq.empty());
-    var dataDecl = node.peekChild(DATA_DECL);
-    if (dataDecl != null) return dataDecl(dataDecl, accessibility);
-    var structDecl = node.peekChild(STRUCT_DECL);
-    if (structDecl != null) return structDecl(structDecl, accessibility);
-    var primDecl = node.peekChild(PRIM_DECL);
-    if (primDecl != null) return Tuple.of(primDecl(primDecl), ImmutableSeq.empty());
+    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, accessibility), ImmutableSeq.empty());
+    if (node.is(DATA_DECL)) return dataDecl(node, accessibility);
+    if (node.is(STRUCT_DECL)) return structDecl(node, accessibility);
+    if (node.is(PRIM_DECL)) return Tuple.of(primDecl(node), ImmutableSeq.empty());
     return unreachable(node);
   }
 
@@ -457,32 +448,27 @@ public record AyaGKProducer(
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
-    var atomExpr = node.peekChild(ATOM_EXPR);
-    if (atomExpr != null) return atomExpr(atomExpr);
-    var appExpr = node.peekChild(APP_EXPR);
-    if (appExpr != null) {
-      var head = new Expr.NamedArg(true, expr(appExpr.child(EXPR)));
-      var tail = appExpr.childrenOfType(ARGUMENT)
+    if (node.is(ATOM_EXPR)) return atomExpr(node);
+    if (node.is(APP_EXPR)) {
+      var head = new Expr.NamedArg(true, expr(node.child(EXPR)));
+      var tail = node.childrenOfType(ARGUMENT)
         .map(this::argument)
         .collect(MutableSinglyLinkedList.factory());
       tail.push(head);
       return new Expr.BinOpSeq(pos, tail.toImmutableSeq());
     }
-    var projExpr = node.peekChild(PROJ_EXPR);
-    if (projExpr != null) return buildProj(pos, expr(projExpr.child(EXPR)), projExpr.child(PROJ_FIX));
-    var arrowExpr = node.peekChild(ARROW_EXPR);
-    if (arrowExpr != null) {
-      var exprs = arrowExpr.childrenOfType(EXPR);
+    if (node.is(PROJ_EXPR)) return buildProj(pos, expr(node.child(EXPR)), node.child(PROJ_FIX));
+    if (node.is(ARROW_EXPR)) {
+      var exprs = node.childrenOfType(EXPR);
       var expr0 = exprs.get(0);
       var to = expr(exprs.get(1));
       var paramPos = sourcePosOf(expr0);
       var param = new Expr.Param(paramPos, Constants.randomlyNamed(paramPos), expr(expr0), true);
       return new Expr.PiExpr(pos, false, param, to);
     }
-    var newExpr = node.peekChild(NEW_EXPR);
-    if (newExpr != null) {
-      var struct = expr(newExpr.child(EXPR));
-      var newBody = newExpr.child(NEW_BODY);
+    if (node.is(NEW_EXPR)) {
+      var struct = expr(node.child(EXPR));
+      var newBody = node.child(NEW_BODY);
       var fields = newBody.childrenOfType(NEW_ARG).map(arg -> {
         var id = newArgField(arg.child(NEW_ARG_FIELD));
         var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
@@ -493,43 +479,37 @@ public record AyaGKProducer(
       }).toImmutableSeq();
       return new Expr.NewExpr(pos, struct, fields);
     }
-    var piExpr = node.peekChild(PI_EXPR);
-    if (piExpr != null) return buildPi(pos, false,
-      telescope(piExpr.childrenOfType(TELE).map(x -> x)).view(),
-      expr(piExpr.child(EXPR)));
-    var forallExpr = node.peekChild(FORALL_EXPR);
-    if (forallExpr != null) return buildPi(pos, false,
-      lambdaTelescope(forallExpr.childrenOfType(TELE).map(x -> x)).view(),
-      expr(forallExpr.child(EXPR)));
-    var sigmaExpr = node.peekChild(SIGMA_EXPR);
-    if (sigmaExpr != null) {
-      var last = expr(sigmaExpr.child(EXPR));
+    if (node.is(PI_EXPR)) return buildPi(pos, false,
+      telescope(node.childrenOfType(TELE).map(x -> x)).view(),
+      expr(node.child(EXPR)));
+    if (node.is(FORALL_EXPR)) return buildPi(pos, false,
+      lambdaTelescope(node.childrenOfType(TELE).map(x -> x)).view(),
+      expr(node.child(EXPR)));
+    if (node.is(SIGMA_EXPR)) {
+      var last = expr(node.child(EXPR));
       return new Expr.SigmaExpr(pos, false,
-        telescope(sigmaExpr.childrenOfType(TELE).map(x -> x))
+        telescope(node.childrenOfType(TELE).map(x -> x))
           .appended(new Expr.Param(last.sourcePos(), LocalVar.IGNORED, last, true)));
     }
-    var lambdaExpr = node.peekChild(LAMBDA_EXPR);
-    if (lambdaExpr != null) {
+    if (node.is(LAMBDA_EXPR)) {
       Expr result;
-      var bodyExpr = lambdaExpr.peekChild(EXPR);
+      var bodyExpr = node.peekChild(EXPR);
       if (bodyExpr == null) {
-        var impliesToken = lambdaExpr.peekChild(IMPLIES);
+        var impliesToken = node.peekChild(IMPLIES);
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
         result = new Expr.HoleExpr(bodyHolePos, false, null);
       } else result = expr(bodyExpr);
-      return buildLam(pos, lambdaTelescope(lambdaExpr.childrenOfType(TELE).map(x -> x)).view(), result);
+      return buildLam(pos, lambdaTelescope(node.childrenOfType(TELE).map(x -> x)).view(), result);
     }
-    var partialExpr = node.peekChild(PARTIAL_EXPR);
-    if (partialExpr != null) return partial(partialExpr, pos);
-    var pathExpr = node.peekChild(PATH_EXPR);
-    if (pathExpr != null) {
+    if (node.is(PARTIAL_EXPR)) return partial(node, pos);
+    if (node.is(PATH_EXPR)) {
       var params = node.childrenOfType(PATH_TELE).map(t -> {
         var n = teleParamName(t.child(TELE_PARAM_NAME));
         return LocalVar.from(n);
       }).toImmutableSeq();
-      return new Expr.Path(pos, params, type(pathExpr.child(EXPR)), partial(pathExpr.peekChild(PARTIAL_EXPR), pos));
+      return new Expr.Path(pos, params, type(node.child(EXPR)), partial(node.peekChild(PARTIAL_EXPR), pos));
     }
-    throw new UnsupportedOperationException("TODO: " + node.elementType());
+    return unreachable(node);
   }
 
   public @NotNull Expr atomExpr(@NotNull GenericNode<?> node) {
@@ -549,27 +529,24 @@ public record AyaGKProducer(
   }
 
   public @NotNull Expr.NamedArg argument(@NotNull GenericNode<?> node) {
-    var atomExArg = node.peekChild(ATOM_EX_ARGUMENT);
-    if (atomExArg != null) {
-      var fixes = atomExArg.childrenOfType(PROJ_FIX);
-      var expr = atomExpr(atomExArg.child(ATOM_EXPR));
+    if (node.is(ATOM_EX_ARGUMENT)) {
+      var fixes = node.childrenOfType(PROJ_FIX);
+      var expr = atomExpr(node.child(ATOM_EXPR));
       var projected = fixes
         .foldLeft(Tuple.of(sourcePosOf(node), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
       return new Expr.NamedArg(true, projected);
     }
-    var tupleImArg = node.peekChild(TUPLE_IM_ARGUMENT);
-    if (tupleImArg != null) {
-      var items = tupleImArg.child(EXPR_LIST).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
+    if (node.is(TUPLE_IM_ARGUMENT)) {
+      var items = node.child(EXPR_LIST).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
       if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.first()));
       var tupExpr = new Expr.TupExpr(sourcePosOf(node), items);
       return new Expr.NamedArg(false, tupExpr);
     }
-    var namedImArg = node.peekChild(NAMED_IM_ARGUMENT);
-    if (namedImArg != null) {
-      var id = weakId(namedImArg.child(WEAK_ID));
-      return new Expr.NamedArg(false, id.data(), expr(namedImArg.child(EXPR)));
+    if (node.is(NAMED_IM_ARGUMENT)) {
+      var id = weakId(node.child(WEAK_ID));
+      return new Expr.NamedArg(false, id.data(), expr(node.child(EXPR)));
     }
     return unreachable(node);
   }
@@ -682,18 +659,14 @@ public record AyaGKProducer(
 
   public @NotNull BooleanFunction<Pattern> atomPattern(@NotNull GenericNode<?> node) {
     var sourcePos = sourcePosOf(node);
-    var bindPat = node.peekChild(ATOM_BIND_PATTERN);
-    if (bindPat != null) {
-      var id = weakId(bindPat.child(WEAK_ID));
+    if (node.is(ATOM_BIND_PATTERN)) {
+      var id = weakId(node.child(WEAK_ID));
       return ex -> new Pattern.Bind(sourcePos, ex, LocalVar.from(id), MutableValue.create());
     }
-    var exPat = node.peekChild(ATOM_EX_PATTERN);
-    var imPat = node.peekChild(ATOM_IM_PATTERN);
-    if (exPat != null || imPat != null) {
-      var forceEx = exPat != null;
-      var pat = exPat != null ? exPat : imPat;
-      var patterns = pat.child(PATTERNS);
-      var asId = pat.peekChild(WEAK_ID);
+    if (node.is(ATOM_EX_PATTERN) || node.is(ATOM_IM_PATTERN)) {
+      var forceEx = node.is(ATOM_EX_PATTERN);
+      var patterns = node.child(PATTERNS);
+      var asId = node.peekChild(WEAK_ID);
       var as = asId == null ? null : LocalVar.from(weakId(asId));
       var tupElem = patterns.childrenOfType(PATTERN)
         .map(t -> atomPatterns(t.child(ATOM_PATTERNS)))
@@ -702,12 +675,9 @@ public record AyaGKProducer(
         ? (ignored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
         : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
     }
-    var numberPat = node.peekChild(ATOM_NUMBER_PATTERN);
-    if (numberPat != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(numberPat.tokenText()));
-    var absurdPat = node.peekChild(ATOM_ABSURD_PATTERN);
-    if (absurdPat != null) return ex -> new Pattern.Absurd(sourcePos, ex);
-    var calmFacePat = node.peekChild(ATOM_CALM_FACE_PATTERN);
-    if (calmFacePat != null) return ex -> new Pattern.CalmFace(sourcePos, ex);
+    if (node.is(ATOM_NUMBER_PATTERN)) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));
+    if (node.is(ATOM_ABSURD_PATTERN)) return ex -> new Pattern.Absurd(sourcePos, ex);
+    if (node.is(ATOM_CALM_FACE_PATTERN)) return ex -> new Pattern.CalmFace(sourcePos, ex);
     return unreachable(node);
   }
 
