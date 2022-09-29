@@ -166,11 +166,13 @@ public final class PrimDef extends TopLevelDef<Term> {
         var varI = new LocalVar("i");
         var varJ = new LocalVar("j");
         var iAndJ = PrimTerm.Mula.and(new RefTerm(varI), new RefTerm(varJ));
+
+        // TODO: move this elsewhere
         var partial = new Partial.Split<>(
           ImmutableSeq.of(
-            new Restr.Side<>(new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(phi, false))),
+            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(phi, false))),
               new ElimTerm.App(u, new Arg<>(iAndJ, true))),
-            new Restr.Side<>(new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(varI), true))), u0)));
+            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(varI), true))), u0)));
 
 
         return new PrimTerm.HComp(A, u, phi, u0);
@@ -196,8 +198,8 @@ public final class PrimDef extends TopLevelDef<Term> {
           new RefTerm(varA),
           new Partial.Split<>(
             ImmutableSeq.of(
-              new Restr.Side<>(new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(refX, true))), new RefTerm(varU0)),
-              new Restr.Side<>(new Restr.Cofib<>(ImmutableSeq.of(new Restr.Cond<>(refX, false))), coerced)))
+              new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(refX, false))), new RefTerm(varU0)),
+              new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(refX, true))), coerced)))
         ));
 
         return new PrimDef(
