@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.builder.GenericNode;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanFunction;
@@ -17,13 +18,17 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadCounterexampleWarn;
 import org.aya.concrete.error.BadModifierWarn;
+import org.aya.concrete.error.ParseError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
+import org.aya.core.term.FormTerm;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
+import org.aya.repl.antlr.AntlrUtil;
+import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
@@ -443,11 +448,212 @@ public record AyaGKProducer(
   }
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
-    throw new UnsupportedOperationException("TODO");
+    var pos = sourcePosOf(node);
+    var atomExpr = node.peekChild(ATOM_EXPR);
+    if (atomExpr != null) return atomExpr(atomExpr);
+    var appExpr = node.peekChild(APP_EXPR);
+    if (appExpr != null) {
+      var head = new Expr.NamedArg(true, expr(appExpr.child(EXPR)));
+      var tail = appExpr.childrenOfType(ARGUMENT)
+        .map(this::argument)
+        .collect(MutableSinglyLinkedList.factory());
+      tail.push(head);
+      return new Expr.BinOpSeq(pos, tail.toImmutableSeq());
+    }
+    var projExpr = node.peekChild(PROJ_EXPR);
+    if (projExpr != null) return buildProj(pos, expr(projExpr.child(EXPR)), projExpr.child(PROJ_FIX));
+    var arrowExpr = node.peekChild(ARROW_EXPR);
+    if (arrowExpr != null) {
+      var exprs = arrowExpr.childrenOfType(EXPR);
+      var expr0 = exprs.get(0);
+      var to = expr(exprs.get(1));
+      var paramPos = sourcePosOf(expr0);
+      var param = new Expr.Param(paramPos, Constants.randomlyNamed(paramPos), expr(expr0), true);
+      return new Expr.PiExpr(pos, false, param, to);
+    }
+    var newExpr = node.peekChild(NEW_EXPR);
+    if (newExpr != null) {
+      var struct = expr(newExpr.child(EXPR));
+      var newBody = newExpr.child(NEW_BODY);
+      var fields = newBody.childrenOfType(NEW_ARG).map(arg -> {
+        var id = newArgField(arg.child(NEW_ARG_FIELD));
+        var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
+          .map(b -> b.map($ -> LocalVar.from(b)))
+          .toImmutableSeq();
+        var body = expr(arg.child(EXPR));
+        return new Expr.Field(id, bindings, body, MutableValue.create());
+      }).toImmutableSeq();
+      return new Expr.NewExpr(pos, struct, fields);
+    }
+    var piExpr = node.peekChild(PI_EXPR);
+    if (piExpr != null) return buildPi(pos, false,
+      telescope(piExpr.childrenOfType(TELE).map(x -> x)).view(),
+      expr(piExpr.child(EXPR)));
+    var forallExpr = node.peekChild(FORALL_EXPR);
+    if (forallExpr != null) return buildPi(pos, false,
+      lambdaTelescope(forallExpr.childrenOfType(TELE).map(x -> x)).view(),
+      expr(forallExpr.child(EXPR)));
+    var sigmaExpr = node.peekChild(SIGMA_EXPR);
+    if (sigmaExpr != null) {
+      var last = expr(sigmaExpr.child(EXPR));
+      return new Expr.SigmaExpr(pos, false,
+        telescope(sigmaExpr.childrenOfType(TELE).map(x -> x))
+          .appended(new Expr.Param(last.sourcePos(), LocalVar.IGNORED, last, true)));
+    }
+    var lambdaExpr = node.peekChild(LAMBDA_EXPR);
+    if (lambdaExpr != null) {
+      Expr result;
+      var bodyExpr = lambdaExpr.peekChild(EXPR);
+      if (bodyExpr == null) {
+        var impliesToken = lambdaExpr.peekChild(IMPLIES);
+        var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
+        result = new Expr.HoleExpr(bodyHolePos, false, null);
+      } else result = expr(bodyExpr);
+      return buildLam(pos, lambdaTelescope(lambdaExpr.childrenOfType(TELE).map(x -> x)).view(), result);
+    }
+    var partialExpr = node.peekChild(PARTIAL_EXPR);
+    if (partialExpr != null) return partial(partialExpr, pos);
+    var pathExpr = node.peekChild(PATH_EXPR);
+    if (pathExpr != null) {
+      var params = node.childrenOfType(PATH_TELE).map(t -> {
+        var n = teleParamName(t.child(TELE_PARAM_NAME));
+        return LocalVar.from(n);
+      }).toImmutableSeq();
+      return new Expr.Path(pos, params, type(pathExpr.child(EXPR)), partial(pathExpr.peekChild(PARTIAL_EXPR), pos));
+    }
+    throw new UnsupportedOperationException("TODO: " + node.elementType());
+  }
+
+  public @NotNull Expr atomExpr(@NotNull GenericNode<?> node) {
+    var atomUliftExpr = node.peekChild(ATOM_ULIFT_EXPR);
+    if (atomUliftExpr != null) {
+      var expr = literal(atomUliftExpr.child(LITERAL));
+      var lifts = atomUliftExpr.childrenOfType(ULIFT_PREFIX).toImmutableSeq().size();
+      return lifts > 0 ? new Expr.LiftExpr(sourcePosOf(node), expr, lifts) : expr;
+    }
+    var atomTupleExpr = node.peekChild(ATOM_TUPLE_EXPR);
+    if (atomTupleExpr != null) {
+      var expr = atomTupleExpr.child(EXPR_LIST).childrenOfType(EXPR).toImmutableSeq();
+      if (expr.size() == 1) return newBinOPScope(expr(expr.get(0)));
+      return new Expr.TupExpr(sourcePosOf(node), expr.map(this::expr));
+    }
+    return unreachable(node);
+  }
+
+  public @NotNull Expr.NamedArg argument(@NotNull GenericNode<?> node) {
+    var atomExArg = node.peekChild(ATOM_EX_ARGUMENT);
+    if (atomExArg != null) {
+      var fixes = atomExArg.childrenOfType(PROJ_FIX);
+      var expr = atomExpr(atomExArg.child(ATOM_EXPR));
+      var projected = fixes
+        .foldLeft(Tuple.of(sourcePosOf(node), expr),
+          (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
+        ._2;
+      return new Expr.NamedArg(true, projected);
+    }
+    var tupleImArg = node.peekChild(TUPLE_IM_ARGUMENT);
+    if (tupleImArg != null) {
+      var items = tupleImArg.child(EXPR_LIST).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
+      if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.first()));
+      var tupExpr = new Expr.TupExpr(sourcePosOf(node), items);
+      return new Expr.NamedArg(false, tupExpr);
+    }
+    var namedImArg = node.peekChild(NAMED_IM_ARGUMENT);
+    if (namedImArg != null) {
+      var id = weakId(namedImArg.child(WEAK_ID));
+      return new Expr.NamedArg(false, id.data(), expr(namedImArg.child(EXPR)));
+    }
+    return unreachable(node);
+  }
+
+  public @NotNull Expr.PartEl partial(@Nullable GenericNode<?> partial, @NotNull SourcePos fallbackPos) {
+    if (partial == null) return new Expr.PartEl(fallbackPos, ImmutableSeq.empty());
+    var sub = partial.childrenView()
+      .filter(c -> c.elementType() == BARE_SUB_SYSTEM || c.elementType() == BARRED_SUB_SYSTEM)
+      .map(this::bareOrBarredSubSystem)
+      .toImmutableSeq();
+    return new Expr.PartEl(sourcePosOf(partial), sub);
+  }
+
+  public @NotNull Tuple2<Expr, Expr> bareOrBarredSubSystem(@NotNull GenericNode<?> node) {
+    return subSystem(node.child(SUB_SYSTEM));
+  }
+
+  public @NotNull Tuple2<Expr, Expr> subSystem(@NotNull GenericNode<?> node) {
+    var exprs = node.childrenOfType(EXPR).map(this::expr);
+    return Tuple.of(exprs.get(0), exprs.get(1));
+  }
+
+  private Expr.@NotNull ProjExpr buildProj(
+    @NotNull SourcePos sourcePos, @NotNull Expr projectee,
+    @NotNull GenericNode<?> fix
+  ) {
+    var number = fix.peekChild(NUMBER);
+    return new Expr.ProjExpr(sourcePos, projectee,
+      number != null
+        ? Either.left(Integer.parseInt(number.tokenText()))
+        : Either.right(qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID))));
+  }
+
+  public static @NotNull Expr buildPi(
+    SourcePos sourcePos, boolean co,
+    SeqView<Expr.Param> params, Expr body
+  ) {
+    if (params.isEmpty()) return body;
+    var drop = params.drop(1);
+    return new Expr.PiExpr(
+      sourcePos, co, params.first(),
+      buildPi(AntlrUtil.sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.Param::sourcePos), body.sourcePos()), co, drop, body));
+  }
+
+  public static @NotNull Expr buildLam(SourcePos sourcePos, SeqView<Expr.Param> params, Expr body) {
+    if (params.isEmpty()) return body;
+    var drop = params.drop(1);
+    return new Expr.LamExpr(
+      sourcePos, params.first(),
+      buildLam(AntlrUtil.sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.Param::sourcePos), body.sourcePos()), drop, body));
   }
 
   public @NotNull Expr literal(@NotNull GenericNode<?> node) {
-    throw new UnsupportedOperationException("TODO");
+    var refExpr = node.peekChild(REF_EXPR);
+    if (refExpr != null) {
+      var qid = qualifiedId(refExpr.child(QUALIFIED_ID));
+      return new Expr.UnresolvedExpr(qid.sourcePos(), qid);
+    }
+    var pos = sourcePosOf(node);
+    var holeExpr = node.peekChild(HOLE_EXPR);
+    if (holeExpr != null) {
+      if (holeExpr.peekChild(CALM_FACE_EXPR) != null)
+        return new Expr.HoleExpr(pos, false, null);
+      var goalExpr = holeExpr.child(GOAL_EXPR);
+      var fillingExpr = goalExpr.peekChild(EXPR);
+      var filling = fillingExpr == null ? null : expr(fillingExpr);
+      return new Expr.HoleExpr(pos, true, filling);
+    }
+    var univExpr = node.peekChild(UNIV_EXPR);
+    if (univExpr != null) {
+      if (univExpr.peekChild(KW_TYPE) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Type);
+      if (univExpr.peekChild(KW_SET) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Set);
+      if (univExpr.peekChild(KW_PROP) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Prop);
+      if (univExpr.peekChild(KW_ISET) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.ISet);
+      return unreachable(univExpr);
+    }
+    var litIntExpr = node.peekChild(LIT_INT_EXPR);
+    if (litIntExpr != null) try {
+      return new Expr.LitIntExpr(pos, Integer.parseInt(litIntExpr.tokenText()));
+    } catch (NumberFormatException ignored) {
+      reporter.report(new ParseError(pos, "Unsupported integer literal `" + litIntExpr.tokenText() + "`"));
+      throw new ParsingInterruptedException();
+    }
+    var litStringExpr = node.peekChild(LIT_STRING_EXPR);
+    if (litStringExpr != null) {
+      var text = litStringExpr.tokenText();
+      var content = text.substring(1, text.length() - 1);
+      return new Expr.LitStringExpr(pos, StringEscapeUtil.escapeStringCharacters(content));
+    }
+    return unreachable(node);
   }
 
   public @NotNull Pattern pattern(@NotNull GenericNode<?> node) {
