@@ -520,7 +520,7 @@ public record AyaGKProducer(
       telescope(node.childrenOfType(TELE).map(x -> x)).view(),
       expr(node.child(EXPR)));
     if (node.is(FORALL_EXPR)) return buildPi(pos, false,
-      lambdaTelescope(node.childrenOfType(TELE).map(x -> x)).view(),
+      lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(),
       expr(node.child(EXPR)));
     if (node.is(SIGMA_EXPR)) {
       var last = expr(node.child(EXPR));
@@ -536,7 +536,7 @@ public record AyaGKProducer(
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
         result = new Expr.HoleExpr(bodyHolePos, false, null);
       } else result = expr(bodyExpr);
-      return buildLam(pos, lambdaTelescope(node.childrenOfType(TELE).map(x -> x)).view(), result);
+      return buildLam(pos, lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(), result);
     }
     if (node.is(PARTIAL_EXPR)) return partial(node, pos);
     if (node.is(PATH_EXPR)) {

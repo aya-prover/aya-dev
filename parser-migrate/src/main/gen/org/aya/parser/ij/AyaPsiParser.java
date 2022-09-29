@@ -2481,8 +2481,8 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // 10: ATOM(partialExpr)
   // 11: ATOM(pathExpr)
   // 12: ATOM(atomExpr)
-  // 13: POSTFIX(appExpr)
-  // 14: BINARY(arrowExpr)
+  // 13: BINARY(arrowExpr)
+  // 14: POSTFIX(appExpr)
   // 15: POSTFIX(projExpr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
@@ -2513,13 +2513,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 13 && appExpr_0(b, l + 1)) {
+      if (g < 13 && consumeTokenSmart(b, TO)) {
+        r = expr(b, l, 12);
+        exit_section_(b, l, m, ARROW_EXPR, r, true, null);
+      }
+      else if (g < 14 && appExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, APP_EXPR, r, true, null);
-      }
-      else if (g < 14 && consumeTokenSmart(b, TO)) {
-        r = expr(b, l, 13);
-        exit_section_(b, l, m, ARROW_EXPR, r, true, null);
       }
       else if (g < 15 && projFix(b, l + 1)) {
         r = true;

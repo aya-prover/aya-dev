@@ -245,8 +245,8 @@ expr ::= newExpr
        | partialExpr
        | pathExpr
        | atomExpr
-       | appExpr
        | arrowExpr
+       | appExpr
        | projExpr
 
 // ulift is written here because we want `x ulift + y` to work
