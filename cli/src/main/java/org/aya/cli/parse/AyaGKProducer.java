@@ -735,8 +735,8 @@ public record AyaGKProducer(
 
   public @NotNull Modifier fnModifier(@NotNull GenericNode<?> node) {
     if (node.peekChild(KW_OPAQUE) != null) return Modifier.Opaque;
-    if (node.peekChild(KW_INLINE) != null) return Modifier.Opaque;
-    if (node.peekChild(KW_OVERLAP) != null) return Modifier.Opaque;
+    if (node.peekChild(KW_INLINE) != null) return Modifier.Inline;
+    if (node.peekChild(KW_OVERLAP) != null) return Modifier.Overlap;
     return unreachable(node);
   }
 
@@ -773,7 +773,7 @@ public record AyaGKProducer(
     var start = StringUtil.offsetToLineColumn(file.sourceCode(), node.startOffset());
     var end = node.isTerminalNode()
       ? LineColumn.of(start.line, start.column + (node.endOffset() - node.startOffset()))
-      : StringUtil.offsetToLineColumn(file.sourceCode(), node.endOffset());
+      : StringUtil.offsetToLineColumn(file.sourceCode(), node.endOffset() - 1);
     return new SourcePos(file, node.startOffset(), node.endOffset(),
       start.line + 1, start.column, end.line + 1, end.column);
   }
