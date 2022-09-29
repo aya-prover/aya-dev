@@ -1347,7 +1347,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE weakId DEFINE_AS expr? RBRACE
+  // LBRACE weakId DEFINE_AS expr RBRACE
   public static boolean namedImArgument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "namedImArgument")) return false;
     if (!nextTokenIs(b, LBRACE)) return false;
@@ -1356,17 +1356,10 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, LBRACE);
     r = r && weakId(b, l + 1);
     r = r && consumeToken(b, DEFINE_AS);
-    r = r && namedImArgument_3(b, l + 1);
+    r = r && expr(b, l + 1, -1);
     r = r && consumeToken(b, RBRACE);
     exit_section_(b, m, NAMED_IM_ARGUMENT, r);
     return r;
-  }
-
-  // expr?
-  private static boolean namedImArgument_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "namedImArgument_3")) return false;
-    expr(b, l + 1, -1);
-    return true;
   }
 
   /* ********************************************************** */
@@ -2834,7 +2827,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LPARTIAL (bareSubSystem barredSubSystem*)? RPARTIAL
+  // LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
   public static boolean partialExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "partialExpr")) return false;
     if (!nextTokenIsSmart(b, LPARTIAL)) return false;
@@ -2847,22 +2840,29 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (bareSubSystem barredSubSystem*)?
+  // (bareSubSystem? barredSubSystem*)?
   private static boolean partialExpr_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "partialExpr_1")) return false;
     partialExpr_1_0(b, l + 1);
     return true;
   }
 
-  // bareSubSystem barredSubSystem*
+  // bareSubSystem? barredSubSystem*
   private static boolean partialExpr_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "partialExpr_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = bareSubSystem(b, l + 1);
+    r = partialExpr_1_0_0(b, l + 1);
     r = r && partialExpr_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // bareSubSystem?
+  private static boolean partialExpr_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialExpr_1_0_0")) return false;
+    bareSubSystem(b, l + 1);
+    return true;
   }
 
   // barredSubSystem*
@@ -2876,7 +2876,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // LPATH pathTele+ RPATH expr? partialExpr?
+  // LPATH pathTele+ RPATH expr partialExpr?
   public static boolean pathExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pathExpr")) return false;
     if (!nextTokenIsSmart(b, LPATH)) return false;
@@ -2885,7 +2885,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = consumeTokenSmart(b, LPATH);
     r = r && pathExpr_1(b, l + 1);
     r = r && consumeToken(b, RPATH);
-    r = r && pathExpr_3(b, l + 1);
+    r = r && expr(b, l + 1, -1);
     r = r && pathExpr_4(b, l + 1);
     exit_section_(b, m, PATH_EXPR, r);
     return r;
@@ -2904,13 +2904,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     }
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // expr?
-  private static boolean pathExpr_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pathExpr_3")) return false;
-    expr(b, l + 1, -1);
-    return true;
   }
 
   // partialExpr?
