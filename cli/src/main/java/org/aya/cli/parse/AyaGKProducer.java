@@ -5,6 +5,7 @@ package org.aya.cli.parse;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.builder.GenericNode;
+import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSinglyLinkedList;
@@ -25,6 +26,7 @@ import org.aya.core.term.FormTerm;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
+import org.aya.parser.ij.AyaPsiParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.repl.antlr.AntlrUtil;
@@ -48,6 +50,12 @@ public record AyaGKProducer(
   @NotNull Either<SourceFile, SourcePos> source,
   @NotNull Reporter reporter
 ) {
+  public static final @NotNull TokenSet ARRAY_BLOCK = AyaPsiParser.EXTENDS_SETS_[0];
+  public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[1];
+  public static final @NotNull TokenSet ATOM_PATTERN = AyaPsiParser.EXTENDS_SETS_[2];
+  public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
+  public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
+
   public @NotNull ImmutableSeq<Stmt> program(@NotNull GenericNode<?> node) {
     return node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq();
   }

@@ -113,6 +113,7 @@
     STRING = 'regexp:"[^"]*"'
   ]
 
+  // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
   extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|litIntExpr|litStringExpr|univExpr") = literal
