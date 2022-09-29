@@ -5,7 +5,7 @@ package org.aya.cli.library.incremental;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.SerTerm;
@@ -45,7 +45,7 @@ public interface CompilerAdvisor {
 
   /** Used for injecting parser from IJ plugin to support on-the-fly analysis. */
   default @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
-    return new AyaParserImpl(reporter);
+    return new AyaGKParserImpl(reporter);
   }
 
   /**

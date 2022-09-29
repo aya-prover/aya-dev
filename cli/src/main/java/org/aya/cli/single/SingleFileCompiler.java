@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.stmt.Decl;
@@ -63,7 +63,7 @@ public record SingleFileCompiler(
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     var primFactory = new PrimDef.Factory();
     return AyaCompiler.catching(reporter, flags, () -> {
-      var ayaParser = new AyaParserImpl(reporter);
+      var ayaParser = new AyaGKParserImpl(reporter);
       var program = ayaParser.program(locator, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
