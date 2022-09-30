@@ -51,9 +51,9 @@ import static org.aya.parser.ij.AyaPsiElementTypes.*;
  * Working with GK parser:
  * <ul>
  *   <li>Use {@link GenericNode#peekChild(IElementType)} if you want to check if the node has a child with desired type.</li>
- *   <li>Use {@link GenericNode#child(IElementType)} if you are sure the node has a child with desire type.</li>
+ *   <li>Use {@link GenericNode#child(IElementType)} if you are sure the node has a child with desired type.</li>
  *   <li>
- *     For psi nodes that are declared in `extends` clause in `AyaPsiParser.bnf` (like expr, decl, stmt, etc.):
+ *     For psi nodes with <code>extends</code> attribute in `AyaPsiParser.bnf` (like expr, decl, stmt, etc.):
  *     <ul>
  *       <li>Use {@link GenericNode#peekChild(TokenSet)}, {@link GenericNode#child(TokenSet)} if you want to obtain
  *       the node itself from its parent. Available {@link TokenSet}s are {@link AyaGKProducer#EXPR}, {@link AyaGKProducer#STMT},
@@ -61,7 +61,8 @@ import static org.aya.parser.ij.AyaPsiElementTypes.*;
  *       <li>Use {@link GenericNode#is(IElementType)} to pattern-matching on the node.</li>
  *       <li>Note that extends nodes are flattened so producing concrete tree from parse tree is different from
  *       other nodes, compare {@link AyaGKProducer#expr(GenericNode)} and its bnf rule for more details.</li>
- *       <li>If you edited extends clause in the bnf file, do not forgot to update them here. We don't have any compile-time error
+ *       <li>You may inspect the produced node tree by the <code>toDebugString</code> method.</li>
+ *       <li>If you edited extends attribute in the bnf file, do not forgot to update them here. We don't have any compile-time error
  *       thanks to the parse node being dynamically typed (we may improve it in the future) -- so be careful and patient!</li>
  *     </ul>
  *   </li>
