@@ -25,15 +25,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
-  @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
+  public @NotNull GenericNode<?> tokens(@NotNull String code) {
     var parser = new AyaFleetParser();
-    var node = new NodeWrapper(parser.parse(AyaPsiElementTypes.EXPR, code));
-    return new AyaGKProducer(Either.right(sourcePos), reporter).expr(node);
+    return new NodeWrapper(parser.parse(code));
+  }
+
+  @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
+    var node = tokens("def a : " + code);
+    var type = node.child(AyaPsiElementTypes.FN_DECL).child(AyaPsiElementTypes.TYPE);
+    return new AyaGKProducer(Either.right(sourcePos), reporter).type(type);
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile) {
-    var parser = new AyaFleetParser();
-    var node = new NodeWrapper(parser.parse(sourceFile.sourceCode()));
+    var node = tokens(sourceFile.sourceCode());
     return new AyaGKProducer(Either.left(sourceFile), reporter).program(node);
   }
 
