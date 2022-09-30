@@ -48,6 +48,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
+ * The ANTLR4 concrete syntax producer.
+ * RIP: 2020-10-28 ~ 2022-09-30
+ * I will miss you!
+ * <p>
+ * TODO: remove after REPL parser migration.
+ *
  * @author ice1000, kiva
  */
 public record AyaProducer(

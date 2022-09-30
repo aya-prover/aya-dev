@@ -4,6 +4,7 @@ package org.aya.cli.parse;
 
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -46,10 +47,34 @@ import java.util.stream.Collectors;
 
 import static org.aya.parser.ij.AyaPsiElementTypes.*;
 
+/**
+ * Working with GK parser:
+ * <ul>
+ *   <li>Use {@link GenericNode#peekChild(IElementType)} if you want to check if the node has a child with desired type.</li>
+ *   <li>Use {@link GenericNode#child(IElementType)} if you are sure the node has a child with desire type.</li>
+ *   <li>
+ *     For psi nodes that are declared in `extends` clause in `AyaPsiParser.bnf` (like expr, decl, stmt, etc.):
+ *     <ul>
+ *       <li>Use {@link GenericNode#peekChild(TokenSet)}, {@link GenericNode#child(TokenSet)} if you want to obtain
+ *       the node itself from its parent. Available {@link TokenSet}s are {@link AyaGKProducer#EXPR}, {@link AyaGKProducer#STMT},
+ *       {@link AyaGKProducer#ARGUMENT} and something alike.</li>
+ *       <li>Use {@link GenericNode#is(IElementType)} to pattern-matching on the node.</li>
+ *       <li>Note that extends nodes are flattened so producing concrete tree from parse tree is different from
+ *       other nodes, compare {@link AyaGKProducer#expr(GenericNode)} and its bnf rule for more details.</li>
+ *       <li>If you edited extends clause in the bnf file, do not forgot to update them here. We don't have any compile-time error
+ *       thanks to the parse node being dynamically typed (we may improve it in the future) -- so be careful and patient!</li>
+ *     </ul>
+ *   </li>
+ * </ul>
+ *
+ * @author kiva
+ * @see org.aya.parser.ij.AyaPsiElementTypes
+ */
 public record AyaGKProducer(
   @NotNull Either<SourceFile, SourcePos> source,
   @NotNull Reporter reporter
 ) {
+  // NOTE: change here is you modified `extends` in `AyaPsiParser.bnf`
   public static final @NotNull TokenSet ARRAY_BLOCK = AyaPsiParser.EXTENDS_SETS_[0];
   public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[1];
   public static final @NotNull TokenSet ATOM_PATTERN = AyaPsiParser.EXTENDS_SETS_[2];
