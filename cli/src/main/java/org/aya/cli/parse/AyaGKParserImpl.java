@@ -3,15 +3,18 @@
 package org.aya.cli.parse;
 
 import com.intellij.psi.FleetPsiParser;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.builder.ASTMarkerVisitor;
 import com.intellij.psi.builder.FleetPsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.concrete.Expr;
 import org.aya.concrete.GenericAyaParser;
+import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.parser.ij.AyaLanguage;
 import org.aya.parser.ij.AyaParserDefinitionBase;
@@ -25,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
+  private static final @NotNull TokenSet ERROR = TokenSet.create(TokenType.ERROR_ELEMENT, TokenType.BAD_CHARACTER);
+
   public @NotNull GenericNode<?> tokens(@NotNull String code) {
     var parser = new AyaFleetParser();
     return new NodeWrapper(parser.parse(code));
@@ -37,8 +42,20 @@ public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaP
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile) {
-    var node = tokens(sourceFile.sourceCode());
+    var node = reportErrorElements(tokens(sourceFile.sourceCode()), sourceFile);
     return new AyaGKProducer(Either.left(sourceFile), reporter).program(node);
+  }
+
+  private @NotNull GenericNode<?> reportErrorElements(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
+    // note: report syntax error here (instead of in Producer) bc
+    // IJ plugin directly reports them through PsiErrorElements.
+    node.childrenView()
+      .filter(i -> ERROR.contains(i.elementType()))
+      .forEach(e ->
+        reporter.report(new ParseError(AyaGKProducer.sourcePosOf(e, file),
+          "Cannot parse")
+        ));
+    return node;
   }
 
   private record NodeWrapper(@NotNull ASTMarkerVisitor.Node node) implements GenericNode<NodeWrapper> {

@@ -64,7 +64,7 @@ public class ParseTest {
     parseOpen("open A hiding ()");
     parseImport("import A");
     parseImport("import A::B");
-    parseImport("import A::B using ()");
+    parseImport("open import A::B using ()");
     parseAndPretty("open Boy::Next::Door using (door) (next)", """
         open Boy::Next::Door using (door, next)
       """);
@@ -86,9 +86,8 @@ public class ParseTest {
                    (p : Sig A ** B) : C
         => f (p.1) (p.2)""");
     parseData("data Unit");
-    parseData("data Unit abusing {}");
-    parseData("data Unit : A abusing {}");
-    parseData("data T {A : Type} : A abusing {}");
+    parseData("data Unit : A");
+    parseData("data T {A : Type} : A");
     parseAndPretty("def id {A : Type} (a : A) : A => a", """
         def id {A : Type} (a : A) : A => a
       """);

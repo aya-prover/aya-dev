@@ -772,12 +772,14 @@ public record AyaGKProducer(
     return source.fold(file -> sourcePosOf(node, file), pos -> pos);
   }
 
-  private static @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
+  public static @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
     var start = StringUtil.offsetToLineColumn(file.sourceCode(), node.startOffset());
-    var end = node.isTerminalNode()
+    var length = node.endOffset() - node.startOffset();
+    var endOffset = length == 0 ? node.endOffset() : node.endOffset() - 1;
+    var end = node.isTerminalNode() || length == 0
       ? LineColumn.of(start.line, start.column + (node.endOffset() - node.startOffset()))
-      : StringUtil.offsetToLineColumn(file.sourceCode(), node.endOffset() - 1);
-    return new SourcePos(file, node.startOffset(), node.endOffset() - 1,
+      : StringUtil.offsetToLineColumn(file.sourceCode(), endOffset);
+    return new SourcePos(file, node.startOffset(), endOffset,
       start.line + 1, start.column, end.line + 1, end.column);
   }
 }
