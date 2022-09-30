@@ -258,17 +258,7 @@ public record AyaProducer(
 
   private @NotNull LocalVar visitParamLiteral(AyaParser.LiteralContext ctx) {
     var idCtx = ctx.qualifiedId();
-    if (idCtx == null) {
-      reporter.report(new ParseError(sourcePosOf(ctx),
-        "`" + ctx.getText() + "` is not a parameter name"));
-      throw new ParsingInterruptedException();
-    }
     var id = visitQualifiedId(idCtx);
-    if (id.isQualified()) {
-      reporter.report(new ParseError(sourcePosOf(ctx),
-        "parameter name `" + ctx.getText() + "` should not be qualified"));
-      throw new ParsingInterruptedException();
-    }
     return new LocalVar(id.justName(), sourcePosOf(idCtx));
   }
 

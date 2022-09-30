@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -19,10 +19,6 @@ public record QualifiedID(
 
   public boolean isUnqualified() {
     return ids.sizeEquals(1);
-  }
-
-  public boolean isQualified() {
-    return ids.sizeGreaterThan(1);
   }
 
   public @NotNull String justName() {
