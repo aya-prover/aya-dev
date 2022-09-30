@@ -5,8 +5,146 @@ In file $FILE:3:26 ->
   3 |              (p : Sig A  B) : C
                                 ^^
 
-Error: Parser error: extraneous input ')' expecting {'Type', 'Set', 'Prop', 'ISet', '**', '{', '(', '{?', NUMBER, '_', STRING, REPL_COMMAND, ID}
+Error: Parser error: Cannot parse
 
-Parsing interrupted due to:
-1 error(s), 0 warning(s).
+In file $FILE:8:29 ->
+
+  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+  7 |               (f : Pi A B C -> D)
+  8 |               (p : Sig A B  C) : D
+                                   ^^
+
+Error: Parser error: Cannot parse
+
+In file $FILE:1:4 ->
+
+  1 | def uncurry (A : Type) (B : Type) (C : Type)
+          ^-----^
+  2 |              (f : Pi A B -> C)
+  3 |              (p : Sig A  B) : C
+
+Error: The parameter:
+         (A : Type 0)
+         (Normalized: Type 0)
+       requires a binding in the patterns
+
+In file $FILE:1:4 ->
+
+  1 | def uncurry (A : Type) (B : Type) (C : Type)
+          ^-----^
+  2 |              (f : Pi A B -> C)
+  3 |              (p : Sig A  B) : C
+
+Error: The parameter:
+         (B : Type 0)
+         (Normalized: Type 0)
+       requires a binding in the patterns
+
+In file $FILE:1:4 ->
+
+  1 | def uncurry (A : Type) (B : Type) (C : Type)
+          ^-----^
+  2 |              (f : Pi A B -> C)
+  3 |              (p : Sig A  B) : C
+
+Error: The parameter:
+         (C : Type 0)
+         (Normalized: Type 0)
+       requires a binding in the patterns
+
+In file $FILE:1:4 ->
+
+  1 | def uncurry (A : Type) (B : Type) (C : Type)
+          ^-----^
+  2 |              (f : Pi A B -> C)
+  3 |              (p : Sig A  B) : C
+
+Error: The parameter:
+         (f : A -> B -> C)
+         (Normalized: A -> B -> C)
+       requires a binding in the patterns
+
+In file $FILE:1:0 ->
+
+  1 | def uncurry (A : Type) (B : Type) (C : Type)
+      ^-----------^
+  2 |              (f : Pi A B -> C)
+  3 |              (p : Sig A  B) : C
+  4 |   => f (p.1) (p.2)
+  5 | 
+
+Error: Unsolved meta _
+
+In file $FILE:6:4 ->
+
+  4 |   => f (p.1) (p.2)
+  5 | 
+  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+          ^------^
+
+Error: The parameter:
+         (A : Type 0)
+         (Normalized: Type 0)
+       requires a binding in the patterns
+
+In file $FILE:6:4 ->
+
+  4 |   => f (p.1) (p.2)
+  5 | 
+  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+          ^------^
+
+Error: The parameter:
+         (B : Type 0)
+         (Normalized: Type 0)
+       requires a binding in the patterns
+
+In file $FILE:6:4 ->
+
+  4 |   => f (p.1) (p.2)
+  5 | 
+  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+          ^------^
+
+Error: The parameter:
+         (C : Type 0)
+         (Normalized: Type 0)
+       requires a binding in the patterns
+
+In file $FILE:6:4 ->
+
+  4 |   => f (p.1) (p.2)
+  5 | 
+  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+          ^------^
+
+Error: The parameter:
+         (D : Type 0)
+         (Normalized: Type 0)
+       requires a binding in the patterns
+
+In file $FILE:6:4 ->
+
+  4 |   => f (p.1) (p.2)
+  5 | 
+  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+          ^------^
+
+Error: The parameter:
+         (f : A -> B -> C -> D)
+         (Normalized: A -> B -> C -> D)
+       requires a binding in the patterns
+
+In file $FILE:6:0 ->
+
+  4 |   => f (p.1) (p.2)
+  5 | 
+  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+      ^------------^
+  7 |               (f : Pi A B C -> D)
+  8 |               (p : Sig A B  C) : D
+
+Error: Unsolved meta _
+
+13 error(s), 0 warning(s).
 What are you doing?
