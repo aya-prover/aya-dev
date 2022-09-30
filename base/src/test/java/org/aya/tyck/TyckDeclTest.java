@@ -5,7 +5,7 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.cli.parse.AyaParserImpl;
+import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.TeleDecl;
@@ -17,7 +17,6 @@ import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.module.EmptyModuleLoader;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +28,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@SuppressWarnings("UnknownLanguage")
 public class TyckDeclTest {
   public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull TeleDecl decl, Trace.@Nullable Builder builder, @NotNull AyaShape.Factory shapes) {
     var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
@@ -37,8 +37,8 @@ public class TyckDeclTest {
     return def;
   }
 
-  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<Stmt>> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
-    var decls = new AyaParserImpl(ThrowingReporter.INSTANCE).program(new SourceFile("114514", Path.of("114514"), text));
+  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<Stmt>> successDesugarDecls(@Language("Aya") @NonNls @NotNull String text) {
+    var decls = ParseTest.parseStmt(text);
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
     var factory = resolve(decls, ctx);
     return Tuple.of(factory, decls);
@@ -51,7 +51,7 @@ public class TyckDeclTest {
     return primFactory;
   }
 
-  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
+  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>> successTyckDecls(@Language("Aya") @NonNls @NotNull String text) {
     var res = successDesugarDecls(text);
     var shapes = new AyaShape.Factory();
     return Tuple.of(res._1, res._2.view()

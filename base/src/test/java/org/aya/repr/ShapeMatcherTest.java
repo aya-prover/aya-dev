@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SuppressWarnings("UnknownLanguage")
 public class ShapeMatcherTest {
   @Test
   public void matchNat() {
@@ -29,12 +30,12 @@ public class ShapeMatcherTest {
     match(false, AyaShape.AyaIntLitShape.DATA_NAT, "open data Nat | s | z");
   }
 
-  public void match(boolean should, @NotNull CodeShape shape, @Language("TEXT") @NonNls @NotNull String code) {
+  public void match(boolean should, @NotNull CodeShape shape, @Language("Aya") @NonNls @NotNull String code) {
     var def = TyckDeclTest.successTyckDecls(code)._2;
     def.forEach(d -> assertEquals(should, ShapeMatcher.match(shape, d)));
   }
 
-  public void match(@NotNull ImmutableSeq<Boolean> should, @NotNull CodeShape shape, @Language("TEXT") @NonNls @NotNull String code) {
+  public void match(@NotNull ImmutableSeq<Boolean> should, @NotNull CodeShape shape, @Language("Aya") @NonNls @NotNull String code) {
     var def = TyckDeclTest.successTyckDecls(code)._2;
     def.zipView(should).forEach(tup -> assertEquals(tup._2, ShapeMatcher.match(shape, tup._1)));
   }

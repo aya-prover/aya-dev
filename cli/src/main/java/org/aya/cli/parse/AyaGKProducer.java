@@ -85,8 +85,7 @@ public record AyaGKProducer(
     for (var docComment : node.childrenOfType(DOC_COMMENT)) {
       sb.append(docComment.tokenText().substring(3)).append("\n");
     }
-    return Remark.make(sb.toString(), sourcePosOf(node), new AyaParserImpl(reporter));
-    // TODO: AyaGKParserImpl.expr() does not parse expr
+    return Remark.make(sb.toString(), sourcePosOf(node), new AyaGKParserImpl(reporter));
   }
 
   public @NotNull Generalize generalize(@NotNull GenericNode<?> node) {
