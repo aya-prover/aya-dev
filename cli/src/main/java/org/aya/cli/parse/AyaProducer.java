@@ -381,6 +381,11 @@ public record AyaProducer(
         visitExpr(path.expr()),
         visitPartial(path.partial(), path)
       );
+      case AyaParser.MatchContext match -> new Expr.Match(
+        sourcePosOf(match),
+        Seq.from(match.exprList().expr()).map(this::visitExpr),
+        Seq.from(match.clauses().clause()).map(this::visitClause)
+      );
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };

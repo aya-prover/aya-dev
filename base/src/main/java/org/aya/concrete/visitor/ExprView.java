@@ -4,6 +4,7 @@ package org.aya.concrete.visitor;
 
 import kala.tuple.Tuple;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +32,12 @@ public interface ExprView {
     var expr = commit(arg.expr());
     if (expr == arg.expr()) return arg;
     return new Expr.NamedArg(arg.explicit(), expr);
+  }
+
+  private Pattern.@NotNull Clause commit(Pattern.@NotNull Clause clause) {
+    var body = clause.expr.map(this::commit);
+    if (body == clause.expr) return clause;
+    return new Pattern.Clause(clause.sourcePos, clause.patterns, body);
   }
 
   private Expr.@NotNull PartEl commit(Expr.@NotNull PartEl partial) {
@@ -88,6 +95,13 @@ public interface ExprView {
         var tup = commit(proj.tup());
         if (tup == proj.tup()) yield proj;
         yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
+      }
+      case Expr.Match match -> {
+        var scrutinee = match.of().map(this::commit);
+        var clauses = match.clauses().map(this::commit);
+        if (scrutinee.sameElements(match.of(), true) && clauses.sameElements(match.clauses(), true))
+          yield match;
+        yield new Expr.Match(match.sourcePos(), scrutinee, clauses);
       }
       case Expr.NewExpr neu -> {
         var struct = commit(neu.struct());

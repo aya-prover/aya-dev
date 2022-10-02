@@ -267,6 +267,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @ForLSP @NotNull MutableValue<AnyVar> resolvedField
   ) {}
 
+  record Match(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<Expr> of,
+    @NotNull ImmutableSeq<Pattern.Clause> clauses
+  ) implements Expr {}
+
   /**
    * @author kiva
    */
