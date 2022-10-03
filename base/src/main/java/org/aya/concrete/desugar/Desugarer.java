@@ -6,11 +6,13 @@ import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.error.DoNotationError;
 import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.term.FormTerm;
+import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,6 +59,22 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
           var seq = binOpSeq.seq();
           assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
           yield pre(new BinExprParser(info, seq.view()).build(binOpSeq.sourcePos()));
+        }
+        case Expr.Do doNotation -> {
+          var last = doNotation.binds().last();
+          if (last.var() != LocalVar.IGNORED) {
+            info.opSet().reporter.report(new DoNotationError(last.sourcePos(), expr));
+          }
+          var rest = doNotation.binds().view().dropLast(1);
+          yield rest.foldRight(last.expr(),
+            // Upper: x <- a from last line
+            // Lower: current line
+            // Goal: >>=(a, \x -> rest)
+            (upper, lower) -> new Expr.AppExpr(upper.sourcePos(),
+              new Expr.AppExpr(
+                upper.sourcePos(), doNotation.bindName(),
+                new Expr.NamedArg(true, upper.expr())),
+              new Expr.NamedArg(true, lower)));
         }
         case Expr.Idiom idiom -> idiom.barredApps().view().map(app -> {
           var list = MutableList.<Expr.NamedArg>create();

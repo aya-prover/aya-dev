@@ -119,6 +119,14 @@ public interface ExprView {
           yield expr;
         yield new Expr.Idiom(idiom.sourcePos(), newNames, newInner);
       }
+      case Expr.Do doNotation -> {
+        var lamExprs = doNotation.binds().map(x ->
+          new Expr.DoBind(x.sourcePos(), x.var(), commit(x.expr())));
+        var bindName = commit(doNotation.bindName());
+        if (lamExprs.sameElements(doNotation.binds()) && bindName == doNotation.bindName())
+          yield doNotation;
+        yield new Expr.Do(doNotation.sourcePos(), bindName, lamExprs);
+      }
     };
   }
 

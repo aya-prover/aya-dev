@@ -5,10 +5,7 @@ package org.aya.resolve.visitor;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableStack;
+import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
@@ -59,6 +56,15 @@ public record ExprResolver(
         if (function == app.function() && argExpr == argument.expr()) yield app;
         var newArg = new Expr.NamedArg(argument.explicit(), argument.name(), argExpr);
         yield new Expr.AppExpr(app.sourcePos(), function, newArg);
+      }
+      case Expr.Do doNotation -> {
+        var list = MutableArrayList.<Expr.DoBind>create(doNotation.binds().size());
+        var localCtx = ctx;
+        for (var bind : doNotation.binds()) {
+          list.append(new Expr.DoBind(bind.sourcePos(), bind.var(), resolve(bind.expr(), localCtx)));
+          localCtx = localCtx.bind(bind.var(), bind.sourcePos());
+        }
+        yield new Expr.Do(doNotation.sourcePos(), resolve(doNotation.bindName(), ctx), list.toImmutableSeq());
       }
       case Expr.TupExpr tup -> {
         var items = tup.items().map(item -> resolve(item, ctx));

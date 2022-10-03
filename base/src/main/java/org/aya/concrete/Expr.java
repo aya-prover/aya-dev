@@ -146,6 +146,18 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr last
   ) implements Expr {}
 
+  record Do(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr bindName,
+    @NotNull ImmutableSeq<DoBind> binds
+  ) implements Expr {}
+
+  record DoBind(
+    @NotNull SourcePos sourcePos,
+    @NotNull LocalVar var,
+    @NotNull Expr expr
+  ) {}
+
   record Idiom(
     @NotNull SourcePos sourcePos,
     @NotNull Expr.IdiomNames names,
@@ -165,6 +177,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
         f.apply(applicativeAp),
         f.apply(applicativePure));
     }
+
     public boolean identical(@NotNull IdiomNames names) {
       return alternativeOr == names.alternativeOr &&
         alternativeEmpty == names.alternativeEmpty &&
