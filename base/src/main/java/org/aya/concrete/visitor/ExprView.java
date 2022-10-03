@@ -4,6 +4,7 @@ package org.aya.concrete.visitor;
 
 import kala.tuple.Tuple;
 import org.aya.concrete.Expr;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,11 +16,11 @@ import org.jetbrains.annotations.NotNull;
 public interface ExprView {
   @NotNull Expr initial();
 
-  default @NotNull Expr pre(@NotNull Expr expr) { return expr; }
+  default @NotNull Expr pre(@NotNull Expr expr) {return expr;}
 
-  default @NotNull Expr post(@NotNull Expr expr) { return expr; }
+  default @NotNull Expr post(@NotNull Expr expr) {return expr;}
 
-  private @NotNull Expr commit(@NotNull Expr expr) { return post(traverse(pre(expr))); }
+  private @NotNull Expr commit(@NotNull Expr expr) {return post(traverse(pre(expr)));}
 
   private Expr.@NotNull Param commit(Expr.@NotNull Param param) {
     var type = commit(param.type());
@@ -112,6 +113,11 @@ public interface ExprView {
       }
       case Expr.ErrorExpr error -> error;
       case Expr.MetaPat meta -> meta;
+      case Expr.Idiom(SourcePos pos, Expr inner) -> {
+        var newInner = commit(inner);
+        if (newInner == inner) yield expr;
+        yield new Expr.Idiom(pos, newInner);
+      }
     };
   }
 

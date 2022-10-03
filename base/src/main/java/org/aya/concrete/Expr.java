@@ -145,6 +145,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr last
   ) implements Expr {}
 
+  record Idiom(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr app
+  ) implements Expr {}
+
   /**
    * @author re-xyr
    */

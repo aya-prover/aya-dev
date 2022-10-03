@@ -148,6 +148,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         path.type().toDoc(options),
         path.partial().toDoc(options)
       );
+      case Expr.Idiom idiom -> Doc.wrap(
+        "(|", "|)",
+        term(Outer.Free, idiom.app())
+      );
     };
   }
 
