@@ -576,8 +576,14 @@ public record AyaGKProducer(
     }
     if (node.is(IDIOM_EXPR)) {
       var block = node.peekChild(IDIOM_BLOCK);
-      if (block == null) return new Expr.Idiom(pos, ImmutableSeq.empty());
-      return new Expr.Idiom(pos, block.childrenOfType(BARRED)
+      var names = new Expr.IdiomNames(
+        Constants.alternativeOr(pos),
+        Constants.alternativeEmpty(pos),
+        Constants.applicativeApp(pos),
+        Constants.functorPure(pos)
+      );
+      if (block == null) return new Expr.Idiom(pos, names, ImmutableSeq.empty());
+      return new Expr.Idiom(pos, names, block.childrenOfType(BARRED)
         .flatMap(child -> child.childrenOfType(EXPR))
         .map(this::expr)
         .appended(expr(block.child(EXPR)))

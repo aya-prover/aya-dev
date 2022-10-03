@@ -114,8 +114,10 @@ public interface ExprView {
       case Expr.MetaPat meta -> meta;
       case Expr.Idiom idiom -> {
         var newInner = idiom.barredApps().map(this::commit);
-        if (newInner.sameElements(idiom.barredApps())) yield expr;
-        yield new Expr.Idiom(idiom.sourcePos(), newInner);
+        var newNames = idiom.names().fmap(this::commit);
+        if (newInner.sameElements(idiom.barredApps()) && newNames.identical(idiom.names()))
+          yield expr;
+        yield new Expr.Idiom(idiom.sourcePos(), newNames, newInner);
       }
     };
   }

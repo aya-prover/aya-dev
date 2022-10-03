@@ -11,7 +11,6 @@ import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.concrete.visitor.StmtOps;
 import org.aya.core.term.FormTerm;
-import org.aya.generic.Constants;
 import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,14 +61,14 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
         case Expr.Idiom idiom -> idiom.barredApps().view().map(app -> {
           var list = MutableList.<Expr.NamedArg>create();
           Expr.unapp(app, list);
-          var pure = Constants.functorPure(app.sourcePos());
+          var pure = idiom.names().applicativePure();
           var head = new Expr.AppExpr(idiom.sourcePos(), pure, new Expr.NamedArg(true, app));
           return list.foldLeft(head, (e, arg) -> new Expr.AppExpr(e.sourcePos(),
-            new Expr.AppExpr(e.sourcePos(), Constants.applicativeApp(e.sourcePos()),
+            new Expr.AppExpr(e.sourcePos(), idiom.names().applicativeAp(),
               new Expr.NamedArg(true, e)), arg));
-        }).foldLeft(Constants.alternativeEmpty(idiom.sourcePos()), (e, arg) ->
+        }).foldLeft(idiom.names().alternativeEmpty(), (e, arg) ->
           new Expr.AppExpr(e.sourcePos(), new Expr.AppExpr(e.sourcePos(),
-            Constants.alternativeOr(e.sourcePos()), new Expr.NamedArg(true, e)),
+            idiom.names().alternativeOr(), new Expr.NamedArg(true, e)),
             new Expr.NamedArg(true, arg)));
         case Expr misc -> misc;
       };

@@ -54,7 +54,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     return new ConcreteDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
 
-  @ForLSP sealed interface WithTerm extends Expr {
+  @ForLSP
+  sealed interface WithTerm extends Expr {
     @NotNull MutableValue<ExprTycker.Result> theCore();
     default @Nullable ExprTycker.Result core() {
       return theCore().get();
@@ -147,8 +148,30 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
   record Idiom(
     @NotNull SourcePos sourcePos,
+    @NotNull Expr.IdiomNames names,
     @NotNull ImmutableSeq<Expr> barredApps
   ) implements Expr {}
+
+  record IdiomNames(
+    @NotNull Expr alternativeOr,
+    @NotNull Expr alternativeEmpty,
+    @NotNull Expr applicativeAp,
+    @NotNull Expr applicativePure
+  ) {
+    public IdiomNames fmap(@NotNull Function<Expr, Expr> f) {
+      return new IdiomNames(
+        f.apply(alternativeOr),
+        f.apply(alternativeEmpty),
+        f.apply(applicativeAp),
+        f.apply(applicativePure));
+    }
+    public boolean identical(@NotNull IdiomNames names) {
+      return alternativeOr == names.alternativeOr &&
+        alternativeEmpty == names.alternativeEmpty &&
+        applicativeAp == names.applicativeAp &&
+        applicativePure == names.applicativePure;
+    }
+  }
 
   /**
    * @author re-xyr
@@ -199,16 +222,19 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
     FormTerm.SortKind kind();
   }
+
   record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
     @Override public FormTerm.SortKind kind() {
       return FormTerm.SortKind.Type;
     }
   }
+
   record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
     @Override public FormTerm.SortKind kind() {
       return FormTerm.SortKind.Set;
     }
   }
+
   record PropExpr(@NotNull SourcePos sourcePos) implements SortExpr {
     @Override public int lift() {
       return 0;
@@ -218,6 +244,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       return FormTerm.SortKind.Prop;
     }
   }
+
   record ISetExpr(@NotNull SourcePos sourcePos) implements SortExpr {
     @Override public int lift() {
       return 0;
@@ -288,6 +315,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<NamedArg> seq
   ) implements Expr {}
+
   /** partial element */
   record PartEl(
     @NotNull SourcePos sourcePos,
