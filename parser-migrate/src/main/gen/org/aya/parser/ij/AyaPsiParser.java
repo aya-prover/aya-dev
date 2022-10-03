@@ -1,15 +1,19 @@
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser.ij;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import static org.aya.parser.ij.AyaPsiElementTypes.*;
-import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.LightPsiParser;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+
+import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
+import static org.aya.parser.ij.AyaPsiElementTypes.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class AyaPsiParser implements PsiParser, LightPsiParser {
@@ -35,7 +39,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return program(b, l + 1);
   }
 
-  public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
+  public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[]{
     create_token_set_(ARRAY_BLOCK, ARRAY_COMP_BLOCK, ARRAY_ELEMENTS_BLOCK),
     create_token_set_(ARGUMENT, ATOM_EX_ARGUMENT, NAMED_IM_ARGUMENT, TUPLE_IM_ARGUMENT),
     create_token_set_(ATOM_ABSURD_PATTERN, ATOM_BIND_PATTERN, ATOM_CALM_FACE_PATTERN, ATOM_EX_PATTERN,
@@ -352,29 +356,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // expr+ BAR
+  // expr BAR
   public static boolean barred(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "barred")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, BARRED, "<barred>");
-    r = barred_0(b, l + 1);
+    r = expr(b, l + 1, -1);
     r = r && consumeToken(b, BAR);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // expr+
-  private static boolean barred_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "barred_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr(b, l + 1, -1);
-    while (r) {
-      int c = current_position_(b);
-      if (!expr(b, l + 1, -1)) break;
-      if (!empty_element_parsed_guard_(b, "barred_0", c)) break;
-    }
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1034,13 +1023,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // barred* expr+
+  // barred* expr
   public static boolean idiomBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "idiomBlock")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, IDIOM_BLOCK, "<idiom block>");
     r = idiomBlock_0(b, l + 1);
-    r = r && idiomBlock_1(b, l + 1);
+    r = r && expr(b, l + 1, -1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1054,21 +1043,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "idiomBlock_0", c)) break;
     }
     return true;
-  }
-
-  // expr+
-  private static boolean idiomBlock_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "idiomBlock_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr(b, l + 1, -1);
-    while (r) {
-      int c = current_position_(b);
-      if (!expr(b, l + 1, -1)) break;
-      if (!empty_element_parsed_guard_(b, "idiomBlock_1", c)) break;
-    }
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -2516,16 +2490,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       if (g < 13 && consumeTokenSmart(b, TO)) {
         r = expr(b, l, 12);
         exit_section_(b, l, m, ARROW_EXPR, r, true, null);
-      }
-      else if (g < 14 && appExpr_0(b, l + 1)) {
+      } else if (g < 14 && appExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, APP_EXPR, r, true, null);
-      }
-      else if (g < 15 && projFix(b, l + 1)) {
+      } else if (g < 15 && projFix(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROJ_EXPR, r, true, null);
-      }
-      else {
+      } else {
         exit_section_(b, l, m, null, false, false, null);
         break;
       }
@@ -2761,13 +2732,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   public static boolean idiomExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "idiomExpr")) return false;
     if (!nextTokenIsSmart(b, LIDIOM)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, IDIOM_EXPR, null);
     r = consumeTokenSmart(b, LIDIOM);
-    r = r && idiomExpr_1(b, l + 1);
-    r = r && consumeToken(b, RIDIOM);
-    exit_section_(b, m, IDIOM_EXPR, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, idiomExpr_1(b, l + 1));
+    r = p && consumeToken(b, RIDIOM) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // idiomBlock?
@@ -2781,13 +2753,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   public static boolean arrayExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arrayExpr")) return false;
     if (!nextTokenIsSmart(b, LARRAY)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, ARRAY_EXPR, null);
     r = consumeTokenSmart(b, LARRAY);
-    r = r && arrayExpr_1(b, l + 1);
-    r = r && consumeToken(b, RARRAY);
-    exit_section_(b, m, ARRAY_EXPR, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, arrayExpr_1(b, l + 1));
+    r = p && consumeToken(b, RARRAY) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // arrayBlock?

@@ -36,8 +36,8 @@ public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaP
   }
 
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
-    var node = tokens("def a : " + code);
-    var type = node.child(AyaPsiElementTypes.FN_DECL).child(AyaPsiElementTypes.TYPE);
+    var node = tokens("prim a : " + code);
+    var type = node.child(AyaPsiElementTypes.PRIM_DECL).child(AyaPsiElementTypes.TYPE);
     return new AyaGKProducer(Either.right(sourcePos), reporter).type(type);
   }
 
