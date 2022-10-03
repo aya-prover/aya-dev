@@ -150,7 +150,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       );
       case Expr.Idiom idiom -> Doc.wrap(
         "(|", "|)",
-        term(Outer.Free, idiom.app())
+        Doc.join(Doc.symbol("|"), idiom.barredApps().view()
+          .map(app -> term(Outer.Free, app)))
       );
     };
   }

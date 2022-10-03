@@ -4,7 +4,6 @@ package org.aya.concrete.visitor;
 
 import kala.tuple.Tuple;
 import org.aya.concrete.Expr;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -113,10 +112,10 @@ public interface ExprView {
       }
       case Expr.ErrorExpr error -> error;
       case Expr.MetaPat meta -> meta;
-      case Expr.Idiom(SourcePos pos, Expr inner) -> {
-        var newInner = commit(inner);
-        if (newInner == inner) yield expr;
-        yield new Expr.Idiom(pos, newInner);
+      case Expr.Idiom idiom -> {
+        var newInner = idiom.barredApps().map(this::commit);
+        if (newInner.sameElements(idiom.barredApps())) yield expr;
+        yield new Expr.Idiom(idiom.sourcePos(), newInner);
       }
     };
   }
