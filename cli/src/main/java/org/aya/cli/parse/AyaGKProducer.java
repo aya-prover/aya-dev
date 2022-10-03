@@ -574,11 +574,17 @@ public record AyaGKProducer(
       }).toImmutableSeq();
       return new Expr.Path(pos, params, expr(node.child(EXPR)), partial(node.peekChild(PARTIAL_EXPR), pos));
     }
+    if (node.is(IDIOM_EXPR)) {
+      var block = node.peekChild(IDIOM_BLOCK);
+      if (block == null) return new Expr.Idiom(pos, ImmutableSeq.empty());
+      return new Expr.Idiom(pos, block.childrenOfType(BARRED)
+        .flatMap(child -> child.childrenOfType(EXPR))
+        .map(this::expr)
+        .appended(expr(block.child(EXPR)))
+        .toImmutableSeq());
+    }
     // TODO: implement this
     if (node.is(DO_EXPR)) {
-      return new Expr.HoleExpr(pos, false, null);
-    }
-    if (node.is(IDIOM_EXPR)) {
       return new Expr.HoleExpr(pos, false, null);
     }
     if (node.is(ARRAY_EXPR)) {

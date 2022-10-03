@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+ * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+ */
+
 {
   // we only need the parser and element types.
   parserClass='org.aya.parser.ij.AyaPsiParser'
@@ -100,9 +105,9 @@
     LGOAL = '{?'
     RGOAL = '?}'
     LPARTIAL = 'regexp:\{\||\u2983'
-    RPARTIAL = 'regexp:\|\}|\u2984'
+    RPARTIAL = 'regexp:\|}|\u2984'
     LPATH = 'regexp:\[\||\u27E6'
-    RPATH = 'regexp:\|\]|\u27E7'
+    RPATH = 'regexp:\|]|\u27E7'
     AT = '@'
 
     CALM_FACE = '_'
@@ -267,7 +272,7 @@ lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
-idiomExpr ::= LIDIOM idiomBlock? RIDIOM
+idiomExpr ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
 
 partialExpr ::= LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
@@ -275,12 +280,12 @@ subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem
 barredSubSystem ::= BAR subSystem
 
-arrayExpr ::= LARRAY arrayBlock? RARRAY
+arrayExpr ::= LARRAY arrayBlock? RARRAY { pin=1 }
 
 arrayBlock ::= arrayCompBlock | arrayElementsBlock
 arrayCompBlock ::= expr BAR listComp
 arrayElementsBlock ::= exprList
-idiomBlock ::= barred* expr+
+idiomBlock ::= barred* expr
 listComp ::= (doBinding COMMA)* doBinding
 
 doBlock ::= (doBlockContent COMMA)* doBlockContent
@@ -380,7 +385,7 @@ pathTele ::= teleParamName
 
 // utilities
 exprList ::= (expr COMMA)* expr
-barred ::= expr+ BAR
+barred ::= expr BAR
 idsComma ::= (weakId COMMA)* weakId?
 type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr {

@@ -51,8 +51,7 @@ public class ParseTest {
     return parseStmt(code).filterIsInstance(Decl.class);
   }
 
-  @Test
-  public void issue141() {
+  @Test public void issue141() {
     Assertions.assertEquals(parseStmt("module a {}"),
       ImmutableSeq.of(new Command.Module(SourcePos.NONE, SourcePos.NONE, "a", ImmutableSeq.empty())));
   }
