@@ -589,10 +589,19 @@ public record AyaGKProducer(
         .appended(expr(block.child(EXPR)))
         .toImmutableSeq());
     }
-    // TODO: implement this
     if (node.is(DO_EXPR)) {
-      return new Expr.HoleExpr(pos, false, null);
+      return new Expr.Do(pos, Constants.monadBind(pos),
+        node.child(DO_BLOCK).childrenOfType(DO_BLOCK_CONTENT)
+          .map(e -> {
+            if (e.is(DO_BINDING)) {
+              var wp = weakId(e.child(WEAK_ID));
+              return new Expr.DoBind(wp.sourcePos(), new LocalVar(wp.data()), expr(e.child(EXPR)));
+            }
+            return new Expr.DoBind(sourcePosOf(e), LocalVar.IGNORED, expr(e));
+          })
+          .toImmutableSeq());
     }
+    // TODO: implement this
     if (node.is(ARRAY_EXPR)) {
       return new Expr.HoleExpr(pos, false, null);
     }

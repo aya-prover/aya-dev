@@ -153,6 +153,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         Doc.join(Doc.symbol("|"), idiom.barredApps().view()
           .map(app -> term(Outer.Free, app)))
       );
+      case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
     };
   }
 
