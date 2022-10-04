@@ -54,6 +54,16 @@ public class DesugarTest {
       }""");
   }
 
+  @Test public void arrays() {
+    desugarAndPretty("""
+    def simpleList => [ 1, 2, 3 ]
+    def listGenerator => [ x * y | x <- xs, y <- ys ]
+    """, """
+    def simpleList => :< 1 (:< 2 (:< 3 nil))
+    def listGenerator => >>= xs (\\ (x : _) => >>= ys (\\ (y : _) => pure (x * y)))
+    """);   // Aya doesn't know the `:<` and `>>=` are infix function in this case, how to let she know?
+  }
+
   private void desugarAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     var resolveInfo = new ResolveInfo(new PrimDef.Factory(), new EmptyContext(ThrowingReporter.INSTANCE, Path.of("dummy")).derive("dummy"), ImmutableSeq.empty(), new AyaBinOpSet(ThrowingReporter.INSTANCE));
     var stmt = ParseTest.parseStmt(code);
