@@ -614,7 +614,7 @@ public record AyaGKProducer(
             .childrenOfType(DO_BINDING)
             .map(this::buildDoBinding)
             .toImmutableSeq();
-          // TODO: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
+          // Recommend: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
           var bindName = Constants.monadBind(pos);
           var pureName = Constants.functorPure(pos);
 

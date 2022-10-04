@@ -91,39 +91,34 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
           new Expr.AppExpr(e.sourcePos(), new Expr.AppExpr(e.sourcePos(),
             idiom.names().alternativeOr(), new Expr.NamedArg(true, e)),
             new Expr.NamedArg(true, arg)));
-        case Expr.Array arrayExpr -> {
-          var desugared = arrayExpr.arrayBlock().fold(
-            left -> {
-              // desugar `[ expr | x <- xs, y <- ys ]` to `do; x <- xs; y <- ys; return expr`
-              // but note that this expression should has type List.
+        case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
+          left -> {
+            // desugar `[ expr | x <- xs, y <- ys ]` to `do; x <- xs; y <- ys; return expr`
 
-              // just concat `bindings` and `return expr`
-              var returnApp = new Expr.AppExpr(left.pureName().sourcePos(), left.pureName(), new Expr.NamedArg(true, left.generator()));
-              var lastBind = new Expr.DoBind(left.generator().sourcePos(), LocalVar.IGNORED, returnApp);
-              var doNotation = new Expr.Do(arrayExpr.sourcePos(), left.bindName(), left.bindings().appended(lastBind));
+            // just concat `bindings` and `return expr`
+            var returnApp = new Expr.AppExpr(left.pureName().sourcePos(), left.pureName(), new Expr.NamedArg(true, left.generator()));
+            var lastBind = new Expr.DoBind(left.generator().sourcePos(), LocalVar.IGNORED, returnApp);
+            var doNotation = new Expr.Do(arrayExpr.sourcePos(), left.bindName(), left.bindings().appended(lastBind));
 
-              // desugar do-notation
-              return pre(doNotation);
-            },
-            right -> {
-              // desugar `[1, 2, 3]` to `consCtor 1 (consCtor 2 (consCtor 3 nilCtor))`
-              return right.exprList().foldRight(right.nilCtor(),
-                (e, last) -> {
-                  // construct `(consCtor e) last`
-                  // Note: the sourcePos of this call is the same as the element's (currently)
-                  // TODO: use sourcePos [currentElement..lastElement]
-                  return new Expr.AppExpr(e.sourcePos(),
-                    // construct `consCtor e`
-                    new Expr.AppExpr(e.sourcePos(),
-                      right.consCtor(),
-                      new Expr.NamedArg(true, e)),
-                    new Expr.NamedArg(true, last));
-              });
-            }
-          );
-
-          yield desugared;
-        }
+            // desugar do-notation
+            return pre(doNotation);
+          },
+          right -> {
+            // desugar `[1, 2, 3]` to `consCtor 1 (consCtor 2 (consCtor 3 nilCtor))`
+            return right.exprList().foldRight(right.nilCtor(),
+              (e, last) -> {
+                // construct `(consCtor e) last`
+                // Note: the sourcePos of this call is the same as the element's (currently)
+                // Recommend: use sourcePos [currentElement..lastElement]
+                return new Expr.AppExpr(e.sourcePos(),
+                  // construct `consCtor e`
+                  new Expr.AppExpr(e.sourcePos(),
+                    right.consCtor(),
+                    new Expr.NamedArg(true, e)),
+                  new Expr.NamedArg(true, last));
+            });
+          }
+        );
         case Expr misc -> misc;
       };
     }
