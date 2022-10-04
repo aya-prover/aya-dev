@@ -6,11 +6,10 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.cli.parse.AyaGKParserImpl;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.*;
+import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.LocalVar;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
@@ -160,6 +159,41 @@ public class ParseTest {
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
       && !neo.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
+
+    // array expr
+    parseTo("[ 1, x, 2 + y, \"3\" ]", new Expr.Array(
+      SourcePos.NONE,
+      Either.right(new Expr.Array.ElementList(
+        ImmutableSeq.of(
+          new Expr.LitIntExpr(SourcePos.NONE, 1),
+          new Expr.UnresolvedExpr(SourcePos.NONE, "x"),
+          new Expr.BinOpSeq(SourcePos.NONE, ImmutableSeq.of(
+            new Expr.NamedArg(true, new Expr.LitIntExpr(SourcePos.NONE, 2)),
+            new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "+")),
+            new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "y")))),
+          new Expr.LitStringExpr(SourcePos.NONE, "3")),
+        Constants.listNil(SourcePos.NONE), Constants.listCons(SourcePos.NONE)))));
+
+    // FIXME: Due to the implementation of `equals` of LocalVar, this code cannot pass (but they should pass)
+    // parseTo("[ x * y | x <- [ 1, x', 2 ], y <- ys ]", new Expr.Array(
+    //   SourcePos.NONE,
+    //   Either.left(new Expr.Array.CompBlock(
+    //     new Expr.BinOpSeq(SourcePos.NONE, ImmutableSeq.of(
+    //       new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "x")),
+    //       new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "*")),
+    //       new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "y")))),
+    //     ImmutableSeq.of(
+    //       new Expr.DoBind(SourcePos.NONE, new LocalVar("x"), new Expr.Array(
+    //         SourcePos.NONE,
+    //         Either.right(new Expr.Array.ElementList(ImmutableSeq.of(
+    //           new Expr.LitIntExpr(SourcePos.NONE, 1),
+    //           new Expr.UnresolvedExpr(SourcePos.NONE, "x'"),
+    //           new Expr.LitIntExpr(SourcePos.NONE, 2)
+    //         ),
+    //         Constants.listNil(SourcePos.NONE),
+    //         Constants.listCons(SourcePos.NONE))))),
+    //       new Expr.DoBind(SourcePos.NONE, new LocalVar("y"), new Expr.UnresolvedExpr(SourcePos.NONE, "ys"))),
+    //     Constants.monadBind(SourcePos.NONE)))));
   }
 
   private void parseImport(@Language("Aya") String code) {
