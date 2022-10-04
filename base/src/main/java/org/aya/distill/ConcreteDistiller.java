@@ -326,8 +326,15 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     };
   }
 
+  /**
+   * This function assumed that <code>binding.var()</code> is not {@link org.aya.ref.LocalVar.IGNORED}
+   */
   public @NotNull Doc visitDoBinding(@NotNull Expr.DoBind binding) {
-    throw new UnsupportedOperationException("TODO, sorry!");
+    return Doc.sep(
+      varDoc(binding.var()),
+      Doc.symbol("<-"),
+      term(Outer.Free, binding.expr())
+    );
   }
 
   public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
