@@ -154,7 +154,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           .map(app -> term(Outer.Free, app)))
       );
       case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
-      case Expr.Array arr -> arr.arrayBlock().map(
+      case Expr.Array arr -> arr.arrayBlock().fold(
         left  -> Doc.sep(
           Doc.symbol("["),
           term(Outer.Free, left.generator()),
@@ -167,7 +167,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           Doc.commaList(right.exprList().view().map(e -> term(Outer.Free, e))),   // Copied from Expr.Tup case
           Doc.symbol("]")
         )
-      ).fold(x -> x, x -> x);
+      );
     };
   }
 
