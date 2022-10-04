@@ -106,7 +106,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             right -> {
               // desugar `[1, 2, 3]` to `consCtor 1 (consCtor 2 (consCtor 3 nilCtor))`
               return right.exprList().foldRight(right.nilCtor(),
-                (last, e) -> {
+                (e, last) -> {
                   // construct `(consCtor e) last`
                   // Note: the sourcePos of this call is the same as the element's (currently)
                   // TODO: use sourcePos [currentElement..lastElement]
