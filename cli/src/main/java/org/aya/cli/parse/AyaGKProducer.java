@@ -605,9 +605,51 @@ public record AyaGKProducer(
     }
     // TODO: implement this
     if (node.is(ARRAY_EXPR)) {
+      var arrayBlock = node.peekChild(ARRAY_BLOCK);
+
+      if (arrayBlock != null) {
+        if (arrayBlock.is(ARRAY_COMP_BLOCK)) {
+          // arrayCompBlock ::=
+          //   expr  BAR listComp
+          // [ x * y  |  x <- xs, y <- ys ]
+
+          var generator = expr(arrayBlock.child(EXPR));
+          var bindings = arrayBlock.child(LIST_COMP)
+            .childrenOfType(DO_BINDING)
+            .map(this::buildDoBinding)
+            .toImmutableSeq();
+          var bindName = Constants.monadBind(pos);
+
+          return new Expr.Array(pos, Either.left(new Expr.Array.CompBlock(generator, bindings, bindName)));
+        } else if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) {
+          // arrayElementBlock ::=
+          //   exprList
+          // [ 1, 2, 3 ]
+
+          // Do we have to extract the parsing of EXPR_LIST as a new function?
+          var exprs = arrayBlock.child(EXPR_LIST).childrenOfType(EXPR)
+            .map(this::expr)
+            .toImmutableSeq();
+          var nilCtor = Constants.listNil(pos);
+          var consCtor = Constants.listCons(pos);
+
+          return new Expr.Array(pos, Either.right(new Expr.Array.ElementList(exprs, nilCtor, consCtor)));
+        }
+      } else {
+        return new Expr.Array(pos, Either.right(new Expr.Array.ElementList(ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos))));
+      }
+
       return new Expr.HoleExpr(pos, false, null);
     }
     return unreachable(node);
+  }
+
+  /**
+   * This function assumed that the node is DO_BINDING
+   */
+  public @NotNull Expr.DoBind buildDoBinding(@NotNull GenericNode<?> node) {
+    var wp = weakId(node.child(WEAK_ID));
+    return new Expr.DoBind(wp.sourcePos(), new LocalVar(wp.data()), expr(node.child(EXPR)));
   }
 
   public @NotNull Expr.NamedArg argument(@NotNull GenericNode<?> node) {

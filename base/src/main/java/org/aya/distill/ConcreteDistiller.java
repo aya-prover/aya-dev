@@ -154,6 +154,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           .map(app -> term(Outer.Free, app)))
       );
       case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
+      case Expr.Array arr -> throw new UnsupportedOperationException("TODO!");
     };
   }
 

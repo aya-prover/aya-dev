@@ -363,6 +363,51 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
   }
 
+  /**
+   * <h1>Array Expr</h1>
+   *
+   * @author HoshinoTented
+   * @param arrayBlock <code>[x | x <- [1, 2, 3]]</code> (left) or <code>[1, 2, 3]</code> (right)
+   * @apiNote the arrayBlock of an empty array <code>[]</code> should be a right (an empty expr seq)
+   */
+  record Array(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull Either<CompBlock, ElementList> arrayBlock
+  ) implements Expr {
+    /**
+     * @param nilCtor the Nil constructor, it is {@link org.aya.generic.Constants}.listNil in default
+     * @param consCtor the Cons constructor, it is {@link org.aya.generic.Constants}.listCons in default
+     */
+    public static record ElementList(
+      @NotNull ImmutableSeq<Expr> exprList,
+      @NotNull Expr nilCtor,
+      @NotNull Expr consCtor
+    ) {  }
+
+    /**
+     * <h1>Array Comp(?)</h1>
+     *
+     * The (half?) primary part of {@link Array}<br/>
+     * For example: <code>[x * y | x <- [1, 2, 3], y <- [4, 5, 6]]</code>
+     *
+     * @param generator <code>x * y</code> part above
+     * @param bindings <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
+     * @param bindName the bind (>>=) function, it is {@link org.aya.generic.Constants}.bind in default
+     * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above, it will be desugared to
+     *   <pre>
+     *     do
+     *       x <- [1, 2, 3]
+     *       y <- [4, 5, 6]
+     *       return x * y
+     *   </pre>
+     */
+    public static record CompBlock(
+      @NotNull Expr generator,
+      @NotNull ImmutableSeq<DoBind> bindings,
+      @NotNull Expr bindName
+    ) { }
+  }
+
   default @NotNull ExprView view() {
     return () -> this;
   }
