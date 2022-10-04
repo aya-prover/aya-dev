@@ -93,7 +93,6 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
         case Expr.Array arrayExpr -> {
           var desugared = arrayExpr.arrayBlock().fold(
             left -> {
-              // TODO: add type restriction: List Only
               // desugar `[ expr | x <- xs, y <- ys ]` to `do; x <- xs; y <- ys; return expr`
               // but note that this expression should has type List.
 

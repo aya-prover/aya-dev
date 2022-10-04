@@ -367,7 +367,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    * <h1>Array Expr</h1>
    *
    * @author HoshinoTented
-   * @param arrayBlock <code>[x | x <- [1, 2, 3]]</code> (left) or <code>[1, 2, 3]</code> (right)
+   * @param arrayBlock <code>[ x | x <- [ 1, 2, 3 ] ]</code> (left) or <code>[ 1, 2, 3 ]</code> (right)
    * @apiNote the arrayBlock of an empty array <code>[]</code> should be a right (an empty expr seq)
    */
   record Array(
