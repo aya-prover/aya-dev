@@ -90,6 +90,10 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
           new Expr.AppExpr(e.sourcePos(), new Expr.AppExpr(e.sourcePos(),
             idiom.names().alternativeOr(), new Expr.NamedArg(true, e)),
             new Expr.NamedArg(true, arg)));
+        case Expr.Array arrayExpr -> {
+          // TODO: by hoshino
+          yield arrayExpr;
+        }
         case Expr misc -> misc;
       };
     }
