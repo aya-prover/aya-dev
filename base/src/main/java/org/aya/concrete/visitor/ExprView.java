@@ -127,40 +127,33 @@ public interface ExprView {
           yield doNotation;
         yield new Expr.Do(doNotation.sourcePos(), bindName, lamExprs);
       }
-      case Expr.Array arrayExpr -> {
-        var arrayBlock = arrayExpr.arrayBlock().map(
-          left -> {
-            var generator = commit(left.generator());
-            var bindings = left.bindings().map(binding ->
-              new Expr.DoBind(binding.sourcePos(), binding.var(), commit(binding.expr()))
-            );
-            var bindName = commit(left.bindName());
+      case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
+        left -> {
+          var generator = commit(left.generator());
+          var bindings = left.bindings().map(binding ->
+            new Expr.DoBind(binding.sourcePos(), binding.var(), commit(binding.expr()))
+          );
+          var bindName = commit(left.bindName());
+          var pureName = commit(left.pureName());
 
-            if (generator == left.generator() && bindings.sameElements(left.bindings()) && bindName == left.bindName()) {
-              return left;
-            } else {
-              return new Expr.Array.CompBlock(generator, bindings, bindName);
-            }
-          },
-          right -> {
-            var exprs = right.exprList().map(this::commit);
-            var nilCtor = commit(right.nilCtor());
-            var consCtor = commit(right.consCtor());
-
-            if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
-              return right;
-            } else {
-              return new Expr.Array.ElementList(exprs, nilCtor, consCtor);
-            }
+          if (generator == left.generator() && bindings.sameElements(left.bindings()) && bindName == left.bindName() && pureName == left.pureName()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindings, bindName, pureName);
           }
-        );
+        },
+        right -> {
+          var exprs = right.exprList().map(this::commit);
+          var nilCtor = commit(right.nilCtor());
+          var consCtor = commit(right.consCtor());
 
-        if (arrayBlock == arrayExpr.arrayBlock()) {
-          yield arrayExpr;
-        } else {
-          yield new Expr.Array(arrayExpr.sourcePos(), arrayBlock);
+          if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs, nilCtor, consCtor);
+          }
         }
-      }
+      );
     };
   }
 

@@ -603,7 +603,6 @@ public record AyaGKProducer(
           })
           .toImmutableSeq());
     }
-    // TODO: implement this
     if (node.is(ARRAY_EXPR)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
 
@@ -618,9 +617,11 @@ public record AyaGKProducer(
             .childrenOfType(DO_BINDING)
             .map(this::buildDoBinding)
             .toImmutableSeq();
+          // TODO: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
           var bindName = Constants.monadBind(pos);
+          var pureName = Constants.functorPure(pos);
 
-          return new Expr.Array(pos, Either.left(new Expr.Array.CompBlock(generator, bindings, bindName)));
+          return Expr.Array.newGenerator(pos, generator, bindings, bindName, pureName);
         } else if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) {
           // arrayElementBlock ::=
           //   exprList
@@ -633,14 +634,13 @@ public record AyaGKProducer(
           var nilCtor = Constants.listNil(pos);
           var consCtor = Constants.listCons(pos);
 
-          return new Expr.Array(pos, Either.right(new Expr.Array.ElementList(exprs, nilCtor, consCtor)));
+          return Expr.Array.newList(pos, exprs, nilCtor, consCtor);
         }
       } else {
-        return new Expr.Array(pos, Either.right(new Expr.Array.ElementList(ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos))));
+        return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
       }
-
-      return new Expr.HoleExpr(pos, false, null);
     }
+
     return unreachable(node);
   }
 
