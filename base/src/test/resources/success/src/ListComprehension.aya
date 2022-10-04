@@ -1,0 +1,9 @@
+open import Data::List
+open import Arith::Nat
+
+def x : Nat => 114
+def y (_i : Nat) : Nat => 514
+
+def simpleList : List Nat => [ 1, y 2, x ]
+
+def generator : List Nat => [ a + b | a <- [ 1, 2, 3 ] , b <- [ 4, 5, 6 ] ]
