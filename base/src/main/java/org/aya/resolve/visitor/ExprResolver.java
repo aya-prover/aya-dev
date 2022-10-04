@@ -116,55 +116,47 @@ public record ExprResolver(
         if (type == path.type() && par == path.partial()) yield path;
         yield new Expr.Path(path.sourcePos(), path.params(), type, par);
       }
-      case Expr.Array arrayExpr -> {
-        var arrayBlock = arrayExpr.arrayBlock().map(
-          left -> {
-            var bindName = resolve(left.bindName(), ctx);
+      case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
+        left -> {
+          var bindName = resolve(left.bindName(), ctx);
+          var pureName = resolve(left.pureName(), ctx);
 
-            // region The same coding as Expr.Do! 😭
-            var list = MutableArrayList.<Expr.DoBind>create(left.bindings().size());
-            var localCtx = ctx;
+          // region The same coding as Expr.Do! 😭
+          var list = MutableArrayList.<Expr.DoBind>create(left.bindings().size());
+          var localCtx = ctx;
 
-            for (var bind : left.bindings()) {
-              var bindResolved = resolve(bind.expr(), localCtx);
-              if (bindResolved == bind.expr()) {
-                list.append(bind);
-              } else {
-                list.append(new Expr.DoBind(bind.sourcePos(), bind.var(), bindResolved));
-              }
-
-              localCtx = localCtx.bind(bind.var(), bind.sourcePos());
-            }
-
-            // endregion
-
-            var generator = resolve(left.generator(), localCtx);
-
-            if (generator == left.generator() && list.sameElements(left.bindings()) && bindName == left.bindName()) {
-              return left;
+          for (var bind : left.bindings()) {
+            var bindResolved = resolve(bind.expr(), localCtx);
+            if (bindResolved == bind.expr()) {
+              list.append(bind);
             } else {
-              return new Expr.Array.CompBlock(generator, list.toImmutableSeq(), bindName);
+              list.append(new Expr.DoBind(bind.sourcePos(), bind.var(), bindResolved));
             }
-          },
-          right -> {
-            var exprs = right.exprList().map(e -> resolve(e, ctx));
-            var nilCtor = resolve(right.nilCtor(), ctx);
-            var consCtor = resolve(right.consCtor(), ctx);
 
-            if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
-              return right;
-            } else {
-              return new Expr.Array.ElementList(exprs, nilCtor, consCtor);
-            }
+            localCtx = localCtx.bind(bind.var(), bind.sourcePos());
           }
-        );
+          // endregion
 
-        if (arrayBlock == arrayExpr.arrayBlock()) {
-          yield arrayExpr;
-        } else {
-          yield new Expr.Array(arrayExpr.sourcePos(), arrayBlock);
+          var generator = resolve(left.generator(), localCtx);
+
+          if (generator == left.generator() && list.sameElements(left.bindings()) && bindName == left.bindName() && pureName == left.pureName()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, list.toImmutableSeq(), bindName, pureName);
+          }
+        },
+        right -> {
+          var exprs = right.exprList().map(e -> resolve(e, ctx));
+          var nilCtor = resolve(right.nilCtor(), ctx);
+          var consCtor = resolve(right.consCtor(), ctx);
+
+          if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs, nilCtor, consCtor);
+          }
         }
-      }
+      );
       case Expr.UnresolvedExpr unresolved -> {
         var sourcePos = unresolved.sourcePos();
         yield switch (ctx.get(unresolved.name())) {

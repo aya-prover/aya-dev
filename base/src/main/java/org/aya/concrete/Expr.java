@@ -381,7 +381,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      * @param nilCtor the Nil constructor, it is {@link org.aya.generic.Constants}.listNil in default
      * @param consCtor the Cons constructor, it is {@link org.aya.generic.Constants}.listCons in default
      */
-    public static record ElementList(
+    public record ElementList(
       @NotNull ImmutableSeq<Expr> exprList,
       @NotNull Expr nilCtor,
       @NotNull Expr consCtor
@@ -395,7 +395,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      *
      * @param generator <code>x * y</code> part above
      * @param bindings <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
-     * @param bindName the bind (>>=) function, it is {@link org.aya.generic.Constants}.bind in default
+     * @param bindName the bind (>>=) function, it is {@link org.aya.generic.Constants}.monadBind in default
+     * @param pureName the pure (return) function, it is {@link org.aya.generic.Constants}.functorPure in default
      * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above, it will be desugared to
      *   <pre>
      *     do
@@ -404,11 +405,42 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      *       return x * y
      *   </pre>
      */
-    public static record CompBlock(
+    public record CompBlock(
       @NotNull Expr generator,
       @NotNull ImmutableSeq<DoBind> bindings,
-      @NotNull Expr bindName
+      @NotNull Expr bindName,
+      @NotNull Expr pureName
     ) { }
+
+    /**
+     * helper constructor, also find constructor calls easily in IDE
+     */
+    public static Expr.Array newList(
+      @NotNull SourcePos sourcePos,
+      @NotNull ImmutableSeq<Expr> exprs,
+      @NotNull Expr nilCtor,
+      @NotNull Expr consCtor) {
+      return new Expr.Array(
+        sourcePos,
+        Either.right(new ElementList(
+          exprs, nilCtor, consCtor
+        ))
+      );
+    }
+
+    public static Expr.Array newGenerator(
+      @NotNull SourcePos sourcePos,
+      @NotNull Expr generator,
+      @NotNull ImmutableSeq<DoBind> bindings,
+      @NotNull Expr bindName,
+      @NotNull Expr pureName) {
+      return new Expr.Array(
+        sourcePos,
+        Either.left(new CompBlock(
+          generator, bindings, bindName, pureName
+        ))
+      );
+    }
   }
 
   default @NotNull ExprView view() {

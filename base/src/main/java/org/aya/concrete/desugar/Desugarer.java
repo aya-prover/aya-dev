@@ -89,14 +89,15 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             idiom.names().alternativeOr(), new Expr.NamedArg(true, e)),
             new Expr.NamedArg(true, arg)));
         case Expr.Array arrayExpr -> {
-          var desugared = arrayExpr.arrayBlock().map(
+          var desugared = arrayExpr.arrayBlock().fold(
             left -> {
               // TODO: add type restriction: List Only
               // desugar `[ expr | x <- xs, y <- ys ]` to `do; x <- xs; y <- ys; return expr`
               // but note that this expression should has type List.
 
               // just concat `bindings` and `return expr`
-              var lastBind = new Expr.DoBind(left.generator().sourcePos(), LocalVar.IGNORED, left.generator());
+              var returnApp = new Expr.AppExpr(left.pureName().sourcePos(), left.pureName(), new Expr.NamedArg(true, left.generator()));
+              var lastBind = new Expr.DoBind(left.generator().sourcePos(), LocalVar.IGNORED, returnApp);
               var doNotation = new Expr.Do(arrayExpr.sourcePos(), left.bindName(), left.bindings().appended(lastBind));
 
               // desugar do-notation
@@ -117,7 +118,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
                     new Expr.NamedArg(true, last));
               });
             }
-          ).fold(x -> x, x -> x);
+          );
 
           yield desugared;
         }
