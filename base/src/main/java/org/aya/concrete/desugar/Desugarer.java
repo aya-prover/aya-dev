@@ -89,8 +89,37 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             idiom.names().alternativeOr(), new Expr.NamedArg(true, e)),
             new Expr.NamedArg(true, arg)));
         case Expr.Array arrayExpr -> {
-          // TODO: by hoshino
-          yield arrayExpr;
+          var desugared = arrayExpr.arrayBlock().map(
+            left -> {
+              // TODO: add type restriction: List Only
+              // desugar `[ expr | x <- xs, y <- ys ]` to `do; x <- xs; y <- ys; return expr`
+              // but note that this expression should has type List.
+
+              // just concat `bindings` and `return expr`
+              var lastBind = new Expr.DoBind(left.generator().sourcePos(), LocalVar.IGNORED, left.generator());
+              var doNotation = new Expr.Do(arrayExpr.sourcePos(), left.bindName(), left.bindings().appended(lastBind));
+
+              // desugar do-notation
+              return pre(doNotation);
+            },
+            right -> {
+              // desugar `[1, 2, 3]` to `consCtor 1 (consCtor 2 (consCtor 3 nilCtor))`
+              return right.exprList().foldRight(right.nilCtor(),
+                (last, e) -> {
+                  // construct `(consCtor e) last`
+                  // Note: the sourcePos of this call is the same as the element's (currently)
+                  // TODO: use sourcePos [currentElement..lastElement]
+                  return new Expr.AppExpr(e.sourcePos(),
+                    // construct `consCtor e`
+                    new Expr.AppExpr(e.sourcePos(),
+                      right.consCtor(),
+                      new Expr.NamedArg(true, e)),
+                    new Expr.NamedArg(true, last));
+              });
+            }
+          ).fold(x -> x, x -> x);
+
+          yield desugared;
         }
         case Expr misc -> misc;
       };
