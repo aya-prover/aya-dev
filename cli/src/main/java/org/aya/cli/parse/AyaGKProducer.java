@@ -594,11 +594,13 @@ public record AyaGKProducer(
       return new Expr.Do(pos, Constants.monadBind(pos),
         node.child(DO_BLOCK).childrenOfType(DO_BLOCK_CONTENT)
           .map(e -> {
-            if (e.is(DO_BINDING)) {
-              var wp = weakId(e.child(WEAK_ID));
-              return new Expr.DoBind(wp.sourcePos(), new LocalVar(wp.data()), expr(e.child(EXPR)));
+            var bind = e.peekChild(DO_BINDING);
+            if (bind != null) {
+              var wp = weakId(bind.child(WEAK_ID));
+              return new Expr.DoBind(wp.sourcePos(), new LocalVar(wp.data()), expr(bind.child(EXPR)));
             }
-            return new Expr.DoBind(sourcePosOf(e), LocalVar.IGNORED, expr(e));
+            var expr = e.child(EXPR);
+            return new Expr.DoBind(sourcePosOf(expr), LocalVar.IGNORED, expr(expr));
           })
           .toImmutableSeq());
     }
