@@ -30,7 +30,6 @@ import org.aya.parser.ij.AyaPsiParser;
 import org.aya.parser.ij.GenericNode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
-import org.aya.repl.antlr.AntlrUtil;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;

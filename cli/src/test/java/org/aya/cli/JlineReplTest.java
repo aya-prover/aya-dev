@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
@@ -23,7 +23,7 @@ public class JlineReplTest {
 
   @BeforeAll public static void setup() throws IOException {
     repl = new JlineRepl(ImmutableSeq.empty(), PlainReplTest.config);
-    parser = new ReplParser(repl.commandManager, repl);
+    parser = new ReplParser(repl.commandManager, repl.lexer);
   }
 
   @Test public void sanity() {

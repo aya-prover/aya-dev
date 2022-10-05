@@ -1,22 +1,19 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.antlr.v4.runtime.Token;
-import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.util.AyaHome;
-import org.aya.parser.GeneratedLexerTokens;
+import org.aya.parser.ij.AyaParserDefinitionBase;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.repl.CmdCompleter;
 import org.aya.repl.ReplUtil;
-import org.aya.repl.antlr.AntlrLexer;
+import org.aya.repl.antlr.JFlexAdapter;
 import org.aya.repl.antlr.ReplHighlighter;
 import org.aya.repl.antlr.ReplParser;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +34,13 @@ import org.jline.utils.AttributedString;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public final class JlineRepl extends AyaRepl implements AntlrLexer {
+public final class JlineRepl extends AyaRepl {
   private final @NotNull Terminal terminal;
   @VisibleForTesting
   public final @NotNull LineReader lineReader;
+
+  // Needs to be instance member because it's stateful
+  public final @NotNull JFlexAdapter lexer = new JFlexAdapter(AyaParserDefinitionBase.createLexer());
 
   public JlineRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) throws IOException {
     super(modulePaths, config);
@@ -52,12 +52,12 @@ public final class JlineRepl extends AyaRepl implements AntlrLexer {
       .appName("Aya REPL")
       .terminal(terminal)
       .history(new DefaultHistory())
-      .parser(new ReplParser(commandManager, this))
-      .highlighter(new ReplHighlighter(this) {
-        @Override protected @NotNull Doc highlight(@NotNull Token t) {
-          return GeneratedLexerTokens.KEYWORDS.containsKey(t.getType())
-            ? Doc.styled(BaseDistiller.KEYWORD, t.getText())
-            : Doc.plain(t.getText());
+      .parser(new ReplParser(commandManager, lexer))
+      .highlighter(new ReplHighlighter(lexer) {
+        @Override protected @NotNull Doc highlight(@NotNull JFlexAdapter.Token t) {
+          return AyaParserDefinitionBase.KEYWORDS.contains(t.type())
+            ? Doc.styled(BaseDistiller.KEYWORD, t.text())
+            : Doc.plain(t.text());
         }
       })
       .completer(new AggregateCompleter(
@@ -68,10 +68,6 @@ public final class JlineRepl extends AyaRepl implements AntlrLexer {
       .build();
     prettyPrintWidth = widthOf(terminal);
     terminal.handle(Terminal.Signal.WINCH, signal -> prettyPrintWidth = widthOf(terminal));
-  }
-
-  @Override public @NotNull SeqView<Token> tokensNoEOF(String line) {
-    return AyaParserImpl.tokens(line).view().dropLast(1);
   }
 
   private int widthOf(@NotNull Terminal terminal) {

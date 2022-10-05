@@ -6,18 +6,63 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.FlexAdapter;
+import com.intellij.lexer.FlexLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AyaParserDefinitionBase implements ParserDefinition {
-  public static @NotNull Lexer createLexer() {
-    return new FlexAdapter(new _AyaPsiLexer());
+  public static final @NotNull TokenSet KEYWORDS = TokenSet.create(
+    AyaPsiElementTypes.KW_AS,
+    AyaPsiElementTypes.KW_CODATA,
+    AyaPsiElementTypes.KW_COERCE,
+    AyaPsiElementTypes.KW_COMPLETED,
+    AyaPsiElementTypes.KW_COUNTEREXAMPLE,
+    AyaPsiElementTypes.KW_DATA,
+    AyaPsiElementTypes.KW_DEF,
+    AyaPsiElementTypes.KW_DO,
+    AyaPsiElementTypes.KW_EXAMPLE,
+    AyaPsiElementTypes.KW_EXTENDS,
+    AyaPsiElementTypes.KW_FORALL,
+    AyaPsiElementTypes.KW_HIDING,
+    AyaPsiElementTypes.KW_IMPORT,
+    AyaPsiElementTypes.KW_IN,
+    AyaPsiElementTypes.KW_INFIX,
+    AyaPsiElementTypes.KW_INFIXL,
+    AyaPsiElementTypes.KW_INFIXR,
+    AyaPsiElementTypes.KW_INLINE,
+    AyaPsiElementTypes.KW_LAMBDA,
+    AyaPsiElementTypes.KW_LAND,
+    AyaPsiElementTypes.KW_LET,
+    AyaPsiElementTypes.KW_LOOSER,
+    AyaPsiElementTypes.KW_LOR,
+    AyaPsiElementTypes.KW_MATCH,
+    AyaPsiElementTypes.KW_MODULE,
+    AyaPsiElementTypes.KW_NEW,
+    AyaPsiElementTypes.KW_OPAQUE,
+    AyaPsiElementTypes.KW_OPEN,
+    AyaPsiElementTypes.KW_OVERLAP,
+    AyaPsiElementTypes.KW_PATTERN,
+    AyaPsiElementTypes.KW_PI,
+    AyaPsiElementTypes.KW_PRIM,
+    AyaPsiElementTypes.KW_PRIVATE,
+    AyaPsiElementTypes.KW_PUBLIC,
+    AyaPsiElementTypes.KW_SIGMA,
+    AyaPsiElementTypes.KW_STRUCT,
+    AyaPsiElementTypes.KW_TIGHTER,
+    AyaPsiElementTypes.KW_TYPE,
+    AyaPsiElementTypes.KW_ULIFT,
+    AyaPsiElementTypes.KW_USING,
+    AyaPsiElementTypes.KW_VARIABLE
+  );
+
+  public static @NotNull FlexLexer createLexer() {
+    return new _AyaPsiLexer();
   }
 
   @Override public @NotNull Lexer createLexer(Project project) {
-    return createLexer();
+    return new FlexAdapter(createLexer());
   }
 
   @Override public @NotNull PsiParser createParser(Project project) {
