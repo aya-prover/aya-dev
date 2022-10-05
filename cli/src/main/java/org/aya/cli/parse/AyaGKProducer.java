@@ -595,8 +595,7 @@ public record AyaGKProducer(
           .map(e -> {
             var bind = e.peekChild(DO_BINDING);
             if (bind != null) {
-              var wp = weakId(bind.child(WEAK_ID));
-              return new Expr.DoBind(wp.sourcePos(), new LocalVar(wp.data()), expr(bind.child(EXPR)));
+              return doBinding(bind);
             }
             var expr = e.child(EXPR);
             return new Expr.DoBind(sourcePosOf(expr), LocalVar.IGNORED, expr(expr));
@@ -615,7 +614,7 @@ public record AyaGKProducer(
           var generator = expr(arrayBlock.child(EXPR));
           var bindings = arrayBlock.child(LIST_COMP)
             .childrenOfType(DO_BINDING)
-            .map(this::buildDoBinding)
+            .map(this::doBinding)
             .toImmutableSeq();
           // Recommend: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
           var bindName = Constants.monadBind(pos);
@@ -627,7 +626,7 @@ public record AyaGKProducer(
           //   exprList
           // [ 1, 2, 3 ]
 
-          // Do we have to extract the parsing of EXPR_LIST as a new function?
+          // Do we have to extract the producing of EXPR_LIST as a new function?
           var exprs = arrayBlock.child(EXPR_LIST).childrenOfType(EXPR)
             .map(this::expr)
             .toImmutableSeq();
@@ -647,9 +646,9 @@ public record AyaGKProducer(
   /**
    * This function assumed that the node is DO_BINDING
    */
-  public @NotNull Expr.DoBind buildDoBinding(@NotNull GenericNode<?> node) {
+  public @NotNull Expr.DoBind doBinding(@NotNull GenericNode<?> node) {
     var wp = weakId(node.child(WEAK_ID));
-    return new Expr.DoBind(wp.sourcePos(), new LocalVar(wp.data()), expr(node.child(EXPR)));
+    return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
   }
 
   public @NotNull Expr.NamedArg argument(@NotNull GenericNode<?> node) {
