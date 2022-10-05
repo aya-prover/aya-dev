@@ -66,7 +66,7 @@ public record ReplParser(
       .filter(x -> x.type() != TokenType.WHITE_SPACE)
       .toImmutableSeq();
     var wordOpt = tokens.firstOption(token ->
-      token.tokenStart() <= cursor && token.tokenEnd() + 1 >= cursor
+      token.tokenStart() <= cursor && token.tokenEnd() >= cursor
     );
     // In case we're in a whitespace or at the end
     if (wordOpt.isEmpty()) {
