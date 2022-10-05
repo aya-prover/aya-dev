@@ -667,8 +667,8 @@ public record AyaGKProducer(
     var drop = params.drop(1);
     return new Expr.PiExpr(
       sourcePos, co, params.first(),
-      buildPi(AntlrUtil.sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos), body.sourcePos()), co, drop, body));
+      buildPi(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.Param::sourcePos)), co, drop, body));
   }
 
   public static @NotNull Expr buildLam(SourcePos sourcePos, SeqView<Expr.Param> params, Expr body) {
@@ -676,8 +676,8 @@ public record AyaGKProducer(
     var drop = params.drop(1);
     return new Expr.LamExpr(
       sourcePos, params.first(),
-      buildLam(AntlrUtil.sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos), body.sourcePos()), drop, body));
+      buildLam(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.Param::sourcePos)), drop, body));
   }
 
   public @NotNull Pattern pattern(@NotNull GenericNode<?> node) {

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
+import kala.collection.SeqView;
 import org.aya.pretty.error.LineColSpan;
 import org.aya.pretty.error.Span;
 import org.jetbrains.annotations.Contract;
@@ -110,6 +111,26 @@ public record SourcePos(
 
   public int linesOfCode() {
     return endLine - startLine + 1;
+  }
+
+  public @NotNull SourcePos sourcePosForSubExpr(
+    @NotNull SourceFile sourceFile,
+    @NotNull SeqView<SourcePos> params
+  ) {
+    var restParamSourcePos = params.fold(SourcePos.NONE, (acc, it) -> {
+      if (acc == SourcePos.NONE) return it;
+      return new SourcePos(sourceFile, acc.tokenStartIndex(), it.tokenEndIndex(),
+        acc.startLine(), acc.startColumn(), it.endLine(), it.endColumn());
+    });
+    return new SourcePos(
+      sourceFile,
+      restParamSourcePos.tokenStartIndex(),
+      tokenEndIndex,
+      restParamSourcePos.startLine(),
+      restParamSourcePos.startColumn(),
+      endLine,
+      endColumn
+    );
   }
 
   @Override public String toString() {
