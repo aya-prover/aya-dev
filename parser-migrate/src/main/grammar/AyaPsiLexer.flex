@@ -190,9 +190,8 @@ BLOCK_COMMENT_END   = "-}"
   {RPATH}               { return RPATH; }
 
 
-
   // put REPL_COMMAND before ID, or REPL_COMMAND can never be matched
-  {REPL_COMMAND}        { return REPL_COMMAND; }
+  {REPL_COMMAND}        { return getTokenStart() == 0 ? REPL_COMMAND : ID; }
   {ID}                  { return ID; }
 
   {NUMBER}              { return NUMBER; }
