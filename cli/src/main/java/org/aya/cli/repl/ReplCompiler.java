@@ -148,6 +148,7 @@ public class ReplCompiler {
    */
   public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
+      // TODO: error report
       return tyckExpr(new AyaGKParserImpl(reporter).repl(text).getRightValue()).type().normalize(new TyckState(primFactory), normalizeMode);
     } catch (InterruptException ignored) {
       return null;

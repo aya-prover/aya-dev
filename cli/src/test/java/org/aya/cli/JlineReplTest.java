@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.pretty.doc.Doc;
-import org.aya.repl.antlr.ReplParser;
+import org.aya.repl.gk.ReplParser;
 import org.jline.reader.Candidate;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
