@@ -133,7 +133,7 @@
   extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
 }
 
-program ::= stmts
+program ::= repl | stmts
 private stmts ::= stmt_with_recover*
 private stmt_with_recover ::= !(<<eof>>) stmt {
   pin = 1
@@ -144,7 +144,7 @@ private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
                      | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
                      | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
 
-repl ::= stmt+ | REPL_COMMAND? expr
+private repl ::= REPL_COMMAND? expr
 
 // statements
 stmt ::= decl
@@ -394,5 +394,5 @@ doBinding ::= weakId LARROW expr {
 }
 
 qualifiedId ::= weakId (COLON2 weakId)*
-weakId ::= ID | REPL_COMMAND
+weakId ::= ID
 

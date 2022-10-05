@@ -10,8 +10,10 @@ import static org.aya.parser.ij.AyaPsiElementTypes.*;
 %%
 
 %{
-  public _AyaPsiLexer() {
+  private boolean isRepl;
+  public _AyaPsiLexer(boolean isRepl) {
     this((java.io.Reader)null);
+    this.isRepl = isRepl;
   }
 %}
 
@@ -190,9 +192,8 @@ BLOCK_COMMENT_END   = "-}"
   {RPATH}               { return RPATH; }
 
 
-
   // put REPL_COMMAND before ID, or REPL_COMMAND can never be matched
-  {REPL_COMMAND}        { return REPL_COMMAND; }
+  {REPL_COMMAND}        { return getTokenStart() == 0 && isRepl ? REPL_COMMAND : ID; }
   {ID}                  { return ID; }
 
   {NUMBER}              { return NUMBER; }

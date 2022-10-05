@@ -1,12 +1,14 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
+import com.intellij.psi.tree.IElementType;
+import kala.collection.Seq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.generic.Constants;
-import org.aya.parser.GeneratedLexerTokens;
+import org.aya.parser.ij.AyaParserDefinitionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -14,10 +16,12 @@ import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface AyaCompleters {
-  @NotNull List<Candidate> KEYWORDS = GeneratedLexerTokens.KEYWORDS
-    .values().stream().map(Candidate::new).toList();
+  @NotNull List<Candidate> KEYWORDS = Seq.of(AyaParserDefinitionBase.KEYWORDS.getTypes())
+    .view().map(IElementType::toString)
+    .map(Candidate::new).collect(Collectors.toList());
   @NotNull Completer KW = (reader, line, candidates) -> candidates.addAll(KEYWORDS);
 
   class Context implements Completer {

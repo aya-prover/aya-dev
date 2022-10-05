@@ -25,25 +25,39 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
   private static final @NotNull TokenSet ERROR = TokenSet.create(TokenType.ERROR_ELEMENT, TokenType.BAD_CHARACTER);
 
-  public @NotNull GenericNode<?> tokens(@NotNull String code) {
+  public @NotNull GenericNode<?> parseNode(@NotNull String code) {
     var parser = new AyaFleetParser();
     return new NodeWrapper(parser.parse(code));
   }
 
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
-    var node = tokens("prim a : " + code);
+    var node = parseNode("prim a : " + code);
     var type = node.child(AyaPsiElementTypes.PRIM_DECL).child(AyaPsiElementTypes.TYPE);
     return new AyaGKProducer(Either.right(sourcePos), reporter).type(type);
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile) {
-    var node = reportErrorElements(tokens(sourceFile.sourceCode()), sourceFile);
+    // TODO: error report
+    return parse(sourceFile).getLeftValue();
+  }
+
+  private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull SourceFile sourceFile) {
+    var node = reportErrorElements(parseNode(sourceFile.sourceCode()), sourceFile);
     return new AyaGKProducer(Either.left(sourceFile), reporter).program(node);
+  }
+
+  public @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull String code) {
+    return parse(replSourceFile(code));
+  }
+
+  private static @NotNull SourceFile replSourceFile(@NotNull String text) {
+    return new SourceFile("<stdin>", Path.of("stdin"), text);
   }
 
   private @NotNull GenericNode<?> reportErrorElements(@NotNull GenericNode<?> node, @NotNull SourceFile file) {

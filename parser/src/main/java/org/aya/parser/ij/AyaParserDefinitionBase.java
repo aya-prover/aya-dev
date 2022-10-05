@@ -6,18 +6,19 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.FlexAdapter;
+import com.intellij.lexer.FlexLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AyaParserDefinitionBase implements ParserDefinition {
-  public static @NotNull Lexer createLexer() {
-    return new FlexAdapter(new _AyaPsiLexer());
+  public static @NotNull FlexLexer createLexer(boolean isRepl) {
+    return new _AyaPsiLexer(isRepl);
   }
 
   @Override public @NotNull Lexer createLexer(Project project) {
-    return createLexer();
+    return new FlexAdapter(createLexer(false));
   }
 
   @Override public @NotNull PsiParser createParser(Project project) {

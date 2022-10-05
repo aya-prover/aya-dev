@@ -1,8 +1,8 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.repl.antlr;
+package org.aya.repl.gk;
 
-import org.antlr.v4.runtime.Token;
+import com.intellij.psi.TokenType;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.CommandManager;
@@ -17,10 +17,10 @@ import java.util.List;
  * @param shellLike see {@link org.aya.repl.CommandArg#shellLike}
  */
 public record ReplParser(
-  @NotNull CommandManager cmd, @NotNull AntlrLexer lexer,
+  @NotNull CommandManager cmd, @NotNull JFlexAdapter lexer,
   @NotNull DefaultParser shellLike
 ) implements Parser {
-  public ReplParser(@NotNull CommandManager cmd, @NotNull AntlrLexer lexer) {
+  public ReplParser(@NotNull CommandManager cmd, @NotNull JFlexAdapter lexer) {
     this(cmd, lexer, new DefaultParser());
   }
 
@@ -62,28 +62,29 @@ public record ReplParser(
     }
     // Drop whitespaces
     var tokens = lexer.tokensNoEOF(line)
-      .filter(token -> token.getChannel() != Token.HIDDEN_CHANNEL)
+      .view()
+      .filter(x -> x.type() != TokenType.WHITE_SPACE)
       .toImmutableSeq();
     var wordOpt = tokens.firstOption(token ->
-      token.getStartIndex() <= cursor && token.getStopIndex() + 1 >= cursor
+      token.tokenStart() <= cursor && token.tokenEnd() + 1 >= cursor
     );
     // In case we're in a whitespace or at the end
     if (wordOpt.isEmpty()) {
-      var tokenOpt = tokens.firstOption(tok -> tok.getStartIndex() >= cursor);
+      var tokenOpt = tokens.firstOption(tok -> tok.tokenStart() >= cursor);
       if (tokenOpt.isEmpty())
-        return simplest(line, cursor, tokens.size(), tokens.stream().map(Token::getText).toList());
+        return simplest(line, cursor, tokens.size(), tokens.stream().map(JFlexAdapter.Token::text).toList());
       var token = tokenOpt.get();
-      var wordCursor = cursor - token.getStartIndex();
+      var wordCursor = cursor - token.tokenStart();
       return new ReplParsedLine(
-        Math.max(wordCursor, 0), tokens.stream().map(Token::getText).toList(),
-        token.getText(), tokens.size() - 1, line, cursor
+        Math.max(wordCursor, 0), tokens.stream().map(JFlexAdapter.Token::text).toList(),
+        token.text(), tokens.size() - 1, line, cursor
       );
     }
     var word = wordOpt.get();
-    var wordText = word.getText();
+    var wordText = word.text();
     return new ReplParsedLine(
-      cursor - word.getStartIndex(),
-      tokens.stream().map(Token::getText).toList(),
+      cursor - word.tokenStart(),
+      tokens.stream().map(JFlexAdapter.Token::text).toList(),
       wordText, tokens.indexOf(word), line, cursor
     );
   }

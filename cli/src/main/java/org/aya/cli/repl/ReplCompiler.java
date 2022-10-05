@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
@@ -8,7 +8,7 @@ import kala.value.MutableValue;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
-import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.Expr;
@@ -119,9 +119,9 @@ public class ReplCompiler {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
     try {
-      var programOrExpr = AyaParserImpl.repl(reporter, text);
+      var programOrExpr = new AyaGKParserImpl(reporter).repl(text);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
-        new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
+        new FileModuleLoader(locator, path, reporter, new AyaGKParserImpl(reporter), primFactory, null)).toImmutableSeq()));
       return programOrExpr.map(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<GenericDef>>create();
@@ -148,7 +148,8 @@ public class ReplCompiler {
    */
   public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      return tyckExpr(AyaParserImpl.replExpr(reporter, text)).type().normalize(new TyckState(primFactory), normalizeMode);
+      // TODO: error report
+      return tyckExpr(new AyaGKParserImpl(reporter).repl(text).getRightValue()).type().normalize(new TyckState(primFactory), normalizeMode);
     } catch (InterruptException ignored) {
       return null;
     }

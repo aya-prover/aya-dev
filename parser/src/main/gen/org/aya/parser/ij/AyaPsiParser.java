@@ -4,16 +4,15 @@
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser.ij;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import com.intellij.lang.PsiParser;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
-
-import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
 import static org.aya.parser.ij.AyaPsiElementTypes.*;
+import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.lang.PsiParser;
+import com.intellij.lang.LightPsiParser;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class AyaPsiParser implements PsiParser, LightPsiParser {
@@ -39,7 +38,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return program(b, l + 1);
   }
 
-  public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[]{
+  public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARRAY_BLOCK, ARRAY_COMP_BLOCK, ARRAY_ELEMENTS_BLOCK),
     create_token_set_(ARGUMENT, ATOM_EX_ARGUMENT, NAMED_IM_ARGUMENT, TUPLE_IM_ARGUMENT),
     create_token_set_(ATOM_ABSURD_PATTERN, ATOM_BIND_PATTERN, ATOM_CALM_FACE_PATTERN, ATOM_EX_PATTERN,
@@ -138,11 +137,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // weakId
   public static boolean atomBindPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomBindPattern")) return false;
-    if (!nextTokenIs(b, "<atom bind pattern>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, ATOM_BIND_PATTERN, "<atom bind pattern>");
+    Marker m = enter_section_(b);
     r = weakId(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, ATOM_BIND_PATTERN, r);
     return r;
   }
 
@@ -732,13 +731,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // weakId LARROW expr
   public static boolean doBinding(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "doBinding")) return false;
-    if (!nextTokenIs(b, "<do binding>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, DO_BINDING, "<do binding>");
+    Marker m = enter_section_(b);
     r = weakId(b, l + 1);
     r = r && consumeToken(b, LARROW);
     r = r && expr(b, l + 1, -1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, DO_BINDING, r);
     return r;
   }
 
@@ -966,11 +965,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // teleParamName
   public static boolean generalizeParamName(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "generalizeParamName")) return false;
-    if (!nextTokenIs(b, "<generalize param name>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, GENERALIZE_PARAM_NAME, "<generalize param name>");
+    Marker m = enter_section_(b);
     r = teleParamName(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, GENERALIZE_PARAM_NAME, r);
     return r;
   }
 
@@ -1138,12 +1137,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   //                    | lambdaTeleLit
   public static boolean lambdaTeleBinder(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTeleBinder")) return false;
-    if (!nextTokenIs(b, "<lambda tele binder>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, LAMBDA_TELE_BINDER, "<lambda tele binder>");
+    Marker m = enter_section_(b);
     r = teleBinderTyped(b, l + 1);
     if (!r) r = lambdaTeleLit(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, LAMBDA_TELE_BINDER, r);
     return r;
   }
 
@@ -1179,11 +1178,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // teleParamName
   public static boolean lambdaTeleLit(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTeleLit")) return false;
-    if (!nextTokenIs(b, "<lambda tele lit>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, LAMBDA_TELE_LIT, "<lambda tele lit>");
+    Marker m = enter_section_(b);
     r = teleParamName(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, LAMBDA_TELE_LIT, r);
     return r;
   }
 
@@ -1191,12 +1190,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // (doBinding COMMA)* doBinding
   public static boolean listComp(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "listComp")) return false;
-    if (!nextTokenIs(b, "<list comp>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, LIST_COMP, "<list comp>");
+    Marker m = enter_section_(b);
     r = listComp_0(b, l + 1);
     r = r && doBinding(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, LIST_COMP, r);
     return r;
   }
 
@@ -1367,11 +1366,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // weakId
   public static boolean newArgField(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "newArgField")) return false;
-    if (!nextTokenIs(b, "<new arg field>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, NEW_ARG_FIELD, "<new arg field>");
+    Marker m = enter_section_(b);
     r = weakId(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, NEW_ARG_FIELD, r);
     return r;
   }
 
@@ -1453,11 +1452,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // teleParamName
   public static boolean pathTele(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pathTele")) return false;
-    if (!nextTokenIs(b, "<path tele>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PATH_TELE, "<path tele>");
+    Marker m = enter_section_(b);
     r = teleParamName(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, PATH_TELE, r);
     return r;
   }
 
@@ -1543,18 +1542,22 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // weakId
   public static boolean primName(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "primName")) return false;
-    if (!nextTokenIs(b, "<prim name>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PRIM_NAME, "<prim name>");
+    Marker m = enter_section_(b);
     r = weakId(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, PRIM_NAME, r);
     return r;
   }
 
   /* ********************************************************** */
-  // stmts
+  // repl | stmts
   static boolean program(PsiBuilder b, int l) {
-    return stmts(b, l + 1);
+    if (!recursion_guard_(b, l, "program")) return false;
+    boolean r;
+    r = repl(b, l + 1);
+    if (!r) r = stmts(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1583,11 +1586,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // qualifiedId
   public static boolean projFixId(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "projFixId")) return false;
-    if (!nextTokenIs(b, "<proj fix id>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PROJ_FIX_ID, "<proj fix id>");
+    Marker m = enter_section_(b);
     r = qualifiedId(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, PROJ_FIX_ID, r);
     return r;
   }
 
@@ -1595,12 +1598,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // weakId (COLON2 weakId)*
   public static boolean qualifiedId(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedId")) return false;
-    if (!nextTokenIs(b, "<qualified id>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, QUALIFIED_ID, "<qualified id>");
+    Marker m = enter_section_(b);
     r = weakId(b, l + 1);
     r = r && qualifiedId_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, QUALIFIED_ID, r);
     return r;
   }
 
@@ -1630,11 +1633,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // qualifiedId
   public static boolean refExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "refExpr")) return false;
-    if (!nextTokenIs(b, "<ref expr>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, REF_EXPR, "<ref expr>");
+    Marker m = enter_section_(b);
     r = qualifiedId(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, REF_EXPR, r);
     return r;
   }
 
@@ -1656,46 +1659,20 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // stmt+ | REPL_COMMAND? expr
-  public static boolean repl(PsiBuilder b, int l) {
+  // REPL_COMMAND? expr
+  static boolean repl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "repl")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, REPL, "<repl>");
+    Marker m = enter_section_(b);
     r = repl_0(b, l + 1);
-    if (!r) r = repl_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // stmt+
-  private static boolean repl_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "repl_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = stmt(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!stmt(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "repl_0", c)) break;
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // REPL_COMMAND? expr
-  private static boolean repl_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "repl_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = repl_1_0(b, l + 1);
     r = r && expr(b, l + 1, -1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // REPL_COMMAND?
-  private static boolean repl_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "repl_1_0")) return false;
+  private static boolean repl_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "repl_0")) return false;
     consumeToken(b, REPL_COMMAND);
     return true;
   }
@@ -2100,12 +2077,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // teleParamName+ type
   public static boolean teleBinderTyped(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "teleBinderTyped")) return false;
-    if (!nextTokenIs(b, "<tele binder typed>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TELE_BINDER_TYPED, "<tele binder typed>");
+    Marker m = enter_section_(b);
     r = teleBinderTyped_0(b, l + 1);
     r = r && type(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, TELE_BINDER_TYPED, r);
     return r;
   }
 
@@ -2167,11 +2144,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // weakId
   public static boolean teleParamName(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "teleParamName")) return false;
-    if (!nextTokenIs(b, "<tele param name>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TELE_PARAM_NAME, "<tele param name>");
+    Marker m = enter_section_(b);
     r = weakId(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, TELE_PARAM_NAME, r);
     return r;
   }
 
@@ -2355,12 +2332,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // weakId useAs?
   public static boolean useId(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "useId")) return false;
-    if (!nextTokenIs(b, "<use id>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, USE_ID, "<use id>");
+    Marker m = enter_section_(b);
     r = weakId(b, l + 1);
     r = r && useId_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, USE_ID, r);
     return r;
   }
 
@@ -2427,15 +2404,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ID | REPL_COMMAND
+  // ID
   public static boolean weakId(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "weakId")) return false;
-    if (!nextTokenIs(b, "<weak id>", ID, REPL_COMMAND)) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, WEAK_ID, "<weak id>");
+    Marker m = enter_section_(b);
     r = consumeToken(b, ID);
-    if (!r) r = consumeToken(b, REPL_COMMAND);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, WEAK_ID, r);
     return r;
   }
 
@@ -2490,13 +2466,16 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       if (g < 13 && consumeTokenSmart(b, TO)) {
         r = expr(b, l, 12);
         exit_section_(b, l, m, ARROW_EXPR, r, true, null);
-      } else if (g < 14 && appExpr_0(b, l + 1)) {
+      }
+      else if (g < 14 && appExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, APP_EXPR, r, true, null);
-      } else if (g < 15 && projFix(b, l + 1)) {
+      }
+      else if (g < 15 && projFix(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROJ_EXPR, r, true, null);
-      } else {
+      }
+      else {
         exit_section_(b, l, m, null, false, false, null);
         break;
       }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 dependencies {
   api(project(":pretty"))
@@ -7,5 +7,5 @@ dependencies {
   val jlineVersion = deps.getProperty("version.jline")
   api("org.jline", "jline-reader", version = jlineVersion)
   api("org.jline", "jline-terminal", version = jlineVersion)
-  api("org.antlr", "antlr4-runtime", version = deps.getProperty("version.antlr"))
+  api("org.aya-prover.upstream", "ij-parsing-core", version = deps.getProperty("version.aya-upstream"))
 }

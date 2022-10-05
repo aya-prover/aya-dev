@@ -1,8 +1,7 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.gradle
 
-import com.ibm.icu.text.SimpleDateFormat
 import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -14,6 +13,8 @@ import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask
+
+import java.text.SimpleDateFormat
 
 /**
  * @author ice1000, kiva
