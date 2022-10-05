@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -34,6 +34,10 @@ public class DesugarTest {
 
   @Test public void simpleUniv() {
     desugarAndPretty("def test => Type", "def test => Type 0");
+  }
+
+  @Test public void doIdiom() {
+    desugarAndPretty("def >>= => {??}\ndef test => do { 1 }", "def >>= => {??}\ndef test => 1");
   }
 
   @Test public void modules() {
