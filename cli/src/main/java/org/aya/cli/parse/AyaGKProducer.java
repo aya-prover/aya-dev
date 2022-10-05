@@ -82,8 +82,10 @@ public record AyaGKProducer(
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
 
-  public @NotNull ImmutableSeq<Stmt> program(@NotNull GenericNode<?> node) {
-    return node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq();
+  public @NotNull Either<ImmutableSeq<Stmt>, Expr> program(@NotNull GenericNode<?> node) {
+    var repl = node.peekChild(EXPR);
+    if (repl != null) return Either.right(expr(repl));
+    return Either.left(node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq());
   }
 
   public @NotNull ImmutableSeq<Stmt> stmt(@NotNull GenericNode<?> node) {
