@@ -9,7 +9,7 @@ CommonTasks.nativeImageConfig(project)
 
 dependencies {
   api(project(":base"))
-  api(project(":parser-migrate"))
+  api(project(":parser"))
   api(project(":tools-repl"))
   val deps: java.util.Properties by rootProject.ext
   api("com.google.code.gson", "gson", version = deps.getProperty("version.gson"))

@@ -16,6 +16,6 @@ include(
   "tools-repl",
   "base",
   "pretty",
-  "parser-migrate",
+  "parser",
   "lsp",
 )
