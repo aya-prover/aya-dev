@@ -35,7 +35,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
         // TODO: java 19
-        case Expr.AppExpr(var pos, Expr.RawSortExpr univ, var arg) when univ.kind() == FormTerm.SortKind.Type -> {
+        case Expr.AppExpr(var pos, Expr.RawSortExpr univ, var arg)when univ.kind() == FormTerm.SortKind.Type -> {
           try {
             yield new Expr.TypeExpr(univ.sourcePos(), levelVar(arg.expr()));
           } catch (DesugarInterruption e) {
@@ -74,7 +74,9 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
               new Expr.AppExpr(
                 upper.sourcePos(), doNotation.bindName(),
                 new Expr.NamedArg(true, upper.expr())),
-              new Expr.NamedArg(true, lower)));
+              new Expr.NamedArg(true, new Expr.LamExpr(lower.sourcePos(),
+                new Expr.Param(lower.sourcePos(), upper.var(), true),
+                lower))));
         }
         case Expr.Idiom idiom -> idiom.barredApps().view().map(app -> {
           var list = MutableList.<Expr.NamedArg>create();
