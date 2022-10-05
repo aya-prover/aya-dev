@@ -25,6 +25,7 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
@@ -46,9 +47,17 @@ public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaP
     return parse(sourceFile).getLeftValue();
   }
 
-  public @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull SourceFile sourceFile) {
+  private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull SourceFile sourceFile) {
     var node = reportErrorElements(parseNode(sourceFile.sourceCode()), sourceFile);
     return new AyaGKProducer(Either.left(sourceFile), reporter).program(node);
+  }
+
+  public @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull String code) {
+    return parse(replSourceFile(code));
+  }
+
+  private static @NotNull SourceFile replSourceFile(@NotNull String text) {
+    return new SourceFile("<stdin>", Path.of("stdin"), text);
   }
 
   private @NotNull GenericNode<?> reportErrorElements(@NotNull GenericNode<?> node, @NotNull SourceFile file) {

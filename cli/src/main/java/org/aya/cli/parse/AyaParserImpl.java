@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.IntBuffer;
-import java.nio.file.Path;
 import java.util.function.BiFunction;
 
 public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
@@ -62,7 +61,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     @NotNull Reporter reporter, @NotNull String text,
     @NotNull BiFunction<AyaProducer, AyaParser, T> tree
   ) {
-    var sourceFile = new SourceFile("<stdin>", Path.of("stdin"), text);
+    var sourceFile = replSourceFile(text);
     var parser = parser(sourceFile, reporter);
     return tree.apply(new AyaProducer(Either.left(sourceFile), reporter), parser);
   }
