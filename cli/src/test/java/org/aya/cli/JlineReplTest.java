@@ -68,7 +68,7 @@ public class JlineReplTest {
     assertEquals(0, parser.parse("suc zero", 1).wordIndex());
     assertEquals(0, parser.parse("suc zero", 2).wordIndex());
     assertEquals(0, parser.parse("suc zero", 3).wordIndex());
-    assertEquals(1, parser.parse("suc zero", 4).wordIndex());
+    assertEquals(0, parser.parse("suc zero", 4).wordIndex());
     assertEquals(1, parser.parse("suc zero", 5).wordIndex());
     assertEquals(1, parser.parse("suc zero", 6).wordIndex());
     assertEquals(1, parser.parse("suc zero", 7).wordIndex());
