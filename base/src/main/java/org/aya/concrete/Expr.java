@@ -166,21 +166,18 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
   record IdiomNames(
     @NotNull Expr alternativeOr,
-    @NotNull Expr alternativeEmpty,
     @NotNull Expr applicativeAp,
     @NotNull Expr applicativePure
   ) {
     public IdiomNames fmap(@NotNull Function<Expr, Expr> f) {
       return new IdiomNames(
         f.apply(alternativeOr),
-        f.apply(alternativeEmpty),
         f.apply(applicativeAp),
         f.apply(applicativePure));
     }
 
     public boolean identical(@NotNull IdiomNames names) {
       return alternativeOr == names.alternativeOr &&
-        alternativeEmpty == names.alternativeEmpty &&
         applicativeAp == names.applicativeAp &&
         applicativePure == names.applicativePure;
     }

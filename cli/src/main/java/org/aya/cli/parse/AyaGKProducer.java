@@ -579,7 +579,6 @@ public record AyaGKProducer(
       var block = node.peekChild(IDIOM_BLOCK);
       var names = new Expr.IdiomNames(
         Constants.alternativeOr(pos),
-        Constants.alternativeEmpty(pos),
         Constants.applicativeApp(pos),
         Constants.functorPure(pos)
       );
