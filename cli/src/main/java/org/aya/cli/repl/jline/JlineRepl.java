@@ -40,7 +40,7 @@ public final class JlineRepl extends AyaRepl {
   public final @NotNull LineReader lineReader;
 
   // Needs to be instance member because it's stateful
-  public final @NotNull JFlexAdapter lexer = new JFlexAdapter(AyaParserDefinitionBase.createLexer());
+  public final @NotNull JFlexAdapter lexer = new JFlexAdapter(AyaParserDefinitionBase.createLexer(true));
 
   public JlineRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) throws IOException {
     super(modulePaths, config);

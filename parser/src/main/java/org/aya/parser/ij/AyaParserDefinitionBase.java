@@ -13,12 +13,12 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AyaParserDefinitionBase implements ParserDefinition {
-  public static @NotNull FlexLexer createLexer() {
-    return new _AyaPsiLexer();
+  public static @NotNull FlexLexer createLexer(boolean isRepl) {
+    return new _AyaPsiLexer(isRepl);
   }
 
   @Override public @NotNull Lexer createLexer(Project project) {
-    return new FlexAdapter(createLexer());
+    return new FlexAdapter(createLexer(false));
   }
 
   @Override public @NotNull PsiParser createParser(Project project) {
