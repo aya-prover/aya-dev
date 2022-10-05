@@ -607,33 +607,9 @@ public record AyaGKProducer(
 
       if (arrayBlock != null) {
         if (arrayBlock.is(ARRAY_COMP_BLOCK)) {
-          // arrayCompBlock ::=
-          //   expr  BAR listComp
-          // [ x * y  |  x <- xs, y <- ys ]
-
-          var generator = expr(arrayBlock.child(EXPR));
-          var bindings = arrayBlock.child(LIST_COMP)
-            .childrenOfType(DO_BINDING)
-            .map(this::doBinding)
-            .toImmutableSeq();
-          // Recommend: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
-          var bindName = Constants.monadBind(pos);
-          var pureName = Constants.functorPure(pos);
-
-          return Expr.Array.newGenerator(pos, generator, bindings, bindName, pureName);
+          return arrayCompBlock(arrayBlock, pos);
         } else if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) {
-          // arrayElementBlock ::=
-          //   exprList
-          // [ 1, 2, 3 ]
-
-          // Do we have to extract the producing of EXPR_LIST as a new function?
-          var exprs = arrayBlock.child(EXPR_LIST).childrenOfType(EXPR)
-            .map(this::expr)
-            .toImmutableSeq();
-          var nilCtor = Constants.listNil(pos);
-          var consCtor = Constants.listCons(pos);
-
-          return Expr.Array.newList(pos, exprs, nilCtor, consCtor);
+          return arrayElementList(arrayBlock, pos);
         }
       } else {
         return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
@@ -755,6 +731,38 @@ public record AyaGKProducer(
     if (node.is(ATOM_ABSURD_PATTERN)) return ex -> new Pattern.Absurd(sourcePos, ex);
     if (node.is(ATOM_CALM_FACE_PATTERN)) return ex -> new Pattern.CalmFace(sourcePos, ex);
     return unreachable(node);
+  }
+
+  public @NotNull Expr.Array arrayCompBlock(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
+    // arrayCompBlock ::=
+    //   expr  BAR listComp
+    // [ x * y  |  x <- xs, y <- ys ]
+
+    var generator = expr(node.child(EXPR));
+    var bindings = node.child(LIST_COMP)
+      .childrenOfType(DO_BINDING)
+      .map(this::doBinding)
+      .toImmutableSeq();
+    // Recommend: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
+    var bindName = Constants.monadBind(entireSourcePos);
+    var pureName = Constants.functorPure(entireSourcePos);
+
+    return Expr.Array.newGenerator(entireSourcePos, generator, bindings, bindName, pureName);
+  }
+
+  public @NotNull Expr.Array arrayElementList(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
+    // arrayElementBlock ::=
+    //   exprList
+    // [ 1, 2, 3 ]
+
+    // Do we have to extract the producing of EXPR_LIST as a new function?
+    var exprs = node.child(EXPR_LIST).childrenOfType(EXPR)
+      .map(this::expr)
+      .toImmutableSeq();
+    var nilCtor = Constants.listNil(entireSourcePos);
+    var consCtor = Constants.listCons(entireSourcePos);
+
+    return Expr.Array.newList(entireSourcePos, exprs, nilCtor, consCtor);
   }
 
   public @NotNull ImmutableSeq<Pattern> patterns(@NotNull GenericNode<?> node) {
