@@ -12,7 +12,6 @@ dependencyResolutionManagement {
 
 include(
   "cli",
-  "parser",
   "tools",
   "tools-repl",
   "base",
