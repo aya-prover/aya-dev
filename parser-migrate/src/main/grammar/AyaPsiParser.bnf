@@ -1,0 +1,398 @@
+/*
+ * Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+ * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+ */
+
+{
+  // we only need the parser and element types.
+  parserClass='org.aya.parser.ij.AyaPsiParser'
+  elementTypeHolderClass='org.aya.parser.ij.AyaPsiElementTypes'
+  elementTypeClass='org.aya.parser.ij.AyaPsiElementType'
+  tokenTypeClass='org.aya.parser.ij.AyaPsiTokenType'
+
+  // we don't need psi here, but IJ plugin does --- Don't delete!
+  psiClassPrefix='AyaPsi'
+  psiImplClassSuffix='Impl'
+  implements='org.aya.intellij.psi.AyaPsiElement'
+  extends='org.aya.intellij.psi.impl.AyaPsiElementImpl'
+  psiPackage='org.aya.intellij.psi.concrete'
+  psiImplPackage='org.aya.intellij.psi.concrete.impl'
+
+  tokens = [
+    // ---- AyaLexer begin: Keywords
+    // add `KW_` prefix to avoid conflict with a AyaPsiTokenType name.
+
+    // associativities
+    KW_INFIX  = 'infix'
+    KW_INFIXL = 'infixl'
+    KW_INFIXR = 'infixr'
+    KW_FIXL = 'fixl'
+    KW_FIXR = 'fixr'
+
+    // operator precedence
+    KW_TIGHTER = 'tighter'
+    KW_LOOSER = 'looser'
+
+    // samples
+    KW_EXAMPLE = 'example'
+    KW_COUNTEREXAMPLE = 'counterexample'
+
+    // universe
+    KW_ULIFT = 'regexp:ulift|\u2191'
+    KW_TYPE = 'Type'
+    KW_SET = 'Set'
+    KW_PROP = 'Prop'
+    KW_ISET = 'ISet'
+
+    KW_AS = 'as'
+    KW_OPEN = 'open'
+    KW_IMPORT = 'import'
+    KW_PUBLIC = 'public'
+    KW_PRIVATE = 'private'
+    KW_USING = 'using'
+    KW_HIDING = 'hiding'
+    KW_COERCE = 'coerce'
+    KW_OPAQUE = 'opaque'
+    KW_INLINE = 'inline'
+    KW_OVERLAP = 'overlap'
+    KW_MODULE = 'module'
+    KW_MATCH = 'match'
+    KW_VARIABLE = 'variable'
+    KW_DEF = 'def'
+    KW_STRUCT = 'struct'
+    KW_DATA = 'data'
+    KW_PRIM = 'prim'
+    KW_EXTENDS = 'extends'
+    KW_NEW = 'new'
+    KW_DO = 'do'
+    KW_THIS = 'this'
+    KW_OVERRIDE = 'override'
+
+    // Unimplemented but reserved
+    KW_CODATA = 'codata'
+    KW_LET = 'let'
+    KW_IN = 'in'
+    KW_COMPLETED = 'completed'
+
+    // symbols
+    KW_SIGMA =  'regexp:Sig|\u03a3'
+    KW_LAMBDA = 'regexp:[\\\u03bb]'
+    KW_PI = 'regexp:Pi|\u03a0'
+    KW_FORALL = 'regexp:forall|\u2200'
+
+    // ---- AyaLexer end: Keywords
+
+    TO = 'regexp:->|\u2192'
+    LARROW = 'regexp:<-|\u2190'
+    IMPLIES = 'regexp:=>|\u21d2'
+    DEFINE_AS = ':='
+    SUCHTHAT = '**'
+    DOT = '.'
+    BAR = '|'
+    COMMA = ','
+    COLON = ':'
+    COLON2 = '::'
+
+    // markers
+    LBRACE = '{'
+    RBRACE = '}'
+    LPAREN = '('
+    RPAREN = ')'
+    LIDIOM = 'regexp:\(\||\u2987'
+    RIDIOM = 'regexp:\|\)|\u2988'
+    LARRAY = '['
+    RARRAY = ']'
+    LGOAL = '{?'
+    RGOAL = '?}'
+    LPARTIAL = 'regexp:\{\||\u2983'
+    RPARTIAL = 'regexp:\|}|\u2984'
+    LPATH = 'regexp:\[\||\u27E6'
+    RPATH = 'regexp:\|]|\u27E7'
+    AT = '@'
+
+    CALM_FACE = '_'
+
+    // used for bootstrapping lexer
+    ID = 'regexp:[a-zA-Z_][a-zA-Z0-9_]*'
+    NUMBER = 'regexp:[0-9]+'
+    STRING = 'regexp:"[^"]*"'
+  ]
+
+  // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
+  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
+  extends("literal") = expr
+  extends("refExpr|holeExpr|litIntExpr|litStringExpr|univExpr") = literal
+  extends("goalExpr|calmFaceExpr") = holeExpr
+
+  extends("atomUliftExpr|atomTupleExpr") = atomExpr
+  extends("arrayCompBlock|arrayElementsBlock") = arrayBlock
+  extends("atomExArgument|tupleImArgument|namedImArgument") = argument
+  extends("atomExPattern|atomImPattern|atomNumberPattern|atomAbsurdPattern|atomBindPattern|atomCalmFacePattern") = atomPattern
+
+  extends("fnDecl|structDecl|primDecl|dataDecl") = decl
+  extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
+}
+
+program ::= stmts
+private stmts ::= stmt_with_recover*
+private stmt_with_recover ::= !(<<eof>>) stmt {
+  pin = 1
+  recoverWhile = stmt_recover
+}
+private stmt_recover ::= !(stmt_first)
+private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
+                     | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
+                     | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
+
+repl ::= stmt+ | REPL_COMMAND? expr
+
+// statements
+stmt ::= decl
+       | importCmd
+       | openCmd
+       | module
+       | remark
+       | generalize
+
+remark ::= DOC_COMMENT+
+
+importCmd ::= KW_IMPORT qualifiedId (KW_AS weakId)?
+openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
+module ::= KW_MODULE weakId LBRACE stmt* RBRACE
+
+useHide ::= KW_USING useList+ | KW_HIDING hideList+
+hideList ::= LPAREN idsComma RPAREN
+useList ::= LPAREN useIdsComma RPAREN
+useIdsComma ::= (useId COMMA)* useId?
+useId ::= weakId useAs?
+useAs ::= KW_AS assoc? weakId bindBlock?
+
+generalizeParamName ::= teleParamName
+generalize ::= KW_VARIABLE generalizeParamName+ type
+
+// declarations
+
+sampleModifiers ::= KW_EXAMPLE | KW_COUNTEREXAMPLE
+
+decl ::= KW_PRIVATE?
+       ( fnDecl
+       | structDecl
+       | dataDecl
+       | primDecl
+       ) {
+  mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
+  implements="org.aya.intellij.psi.AyaPsiGenericDecl"
+}
+
+assoc ::= KW_INFIX | KW_INFIXL | KW_INFIXR | KW_FIXL | KW_FIXR
+
+declNameOrInfix ::= weakId | assoc weakId
+
+bindBlock ::= (tighters | loosers)+
+tighters ::= KW_TIGHTER qualifiedId+
+loosers ::= KW_LOOSER qualifiedId+
+
+fnDecl ::= sampleModifiers? KW_DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
+
+fnBody ::= IMPLIES expr
+         | barredClause*
+
+fnModifiers ::= KW_OPAQUE
+              | KW_INLINE
+              | KW_OVERLAP
+
+// turn the keyword into a psi node, so quick fix can easily delete it
+// see: BadCounterexampleInspection
+openKw::= KW_OPEN
+
+structDecl
+  ::=  sampleModifiers? (KW_PUBLIC? openKw)?
+       KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)?
+       (BAR structField)* bindBlock?
+
+// primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
+// This rule is used for convenience in semantic highlight.
+// see: SemanticHighlight, AyaGenericDeclImpl, AyaRunLineMarkerContributor
+primName ::= weakId
+primDecl ::= KW_PRIM primName tele* type?
+
+structField
+  ::= KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
+    | KW_OVERRIDE? KW_COERCE? declNameOrInfix tele* type               bindBlock? {
+  mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
+  implements="org.aya.intellij.psi.AyaPsiGenericDecl"
+}
+
+dataDecl ::= sampleModifiers? (KW_PUBLIC? openKw)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
+
+dataBody ::= dataCtorClause
+           | (BAR dataCtor) {
+  mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
+  implements="org.aya.intellij.psi.AyaPsiGenericDecl"
+}
+
+dataCtor ::= KW_COERCE? declNameOrInfix tele* clauses? bindBlock?
+
+dataCtorClause ::= BAR patterns IMPLIES dataCtor
+
+
+// expressions
+expr ::= newExpr
+       | piExpr
+       | forallExpr
+       | sigmaExpr
+       | lambdaExpr
+       | matchExpr
+       | doExpr
+       | idiomExpr
+       | arrayExpr
+       | thisExpr
+       | partialExpr
+       | pathExpr
+       | atomExpr
+       | arrowExpr
+       | appExpr
+       | projExpr
+
+// ulift is written here because we want `x ulift + y` to work
+atomExpr ::= atomUliftExpr
+           | atomTupleExpr
+atomUliftExpr ::= uliftPrefix* literal
+atomTupleExpr ::= LPAREN exprList RPAREN
+uliftPrefix ::= KW_ULIFT
+
+newExpr ::= KW_NEW expr newBody?
+appExpr ::= expr argument+
+arrowExpr ::= expr TO expr { rightAssociative = true }
+projExpr ::= expr projFix
+piExpr ::= KW_PI tele+ TO expr
+forallExpr ::= KW_FORALL lambdaTele+ TO expr
+sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
+lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
+matchExpr ::= KW_MATCH exprList clauses
+doExpr ::= KW_DO LBRACE? doBlock RBRACE?
+thisExpr ::= KW_THIS (AT qualifiedId)?
+idiomExpr ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
+pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
+
+partialExpr ::= LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
+subSystem ::= expr DEFINE_AS expr
+bareSubSystem ::= subSystem
+barredSubSystem ::= BAR subSystem
+
+arrayExpr ::= LARRAY arrayBlock? RARRAY { pin=1 }
+
+arrayBlock ::= arrayCompBlock | arrayElementsBlock
+arrayCompBlock ::= expr BAR listComp
+arrayElementsBlock ::= exprList
+idiomBlock ::= barred* expr
+listComp ::= (doBinding COMMA)* doBinding
+
+doBlock ::= (doBlockContent COMMA)* doBlockContent
+doBlockContent ::= doBinding | expr
+
+newArgField ::= weakId
+newArg ::= BAR newArgField teleParamName* IMPLIES expr
+// New body new body but you!
+newBody ::= LBRACE newArg* RBRACE
+
+argument ::= atomExArgument
+           | tupleImArgument
+           | namedImArgument
+atomExArgument ::= atomExpr projFix*
+tupleImArgument ::= LBRACE exprList RBRACE
+namedImArgument ::= LBRACE weakId DEFINE_AS expr RBRACE
+
+projFix ::= DOT (NUMBER | projFixId)
+projFixId ::= qualifiedId
+
+clauses ::= LBRACE bareClause? barredClause* RBRACE
+
+// barredClause and bareClause made inspection quick fix easier
+// see: DominationInspection
+barredClause ::= BAR clause
+bareClause ::= clause
+clause ::= patterns (IMPLIES expr)?
+
+patterns ::= pattern (COMMA pattern)*
+pattern ::= atomPatterns
+
+atomPatterns ::= atomPattern+
+atomPattern ::= atomExPattern
+              | atomImPattern
+              | atomNumberPattern
+              | atomAbsurdPattern
+              | atomBindPattern
+              | atomCalmFacePattern
+atomExPattern ::= LPAREN patterns RPAREN (KW_AS weakId)?
+atomImPattern ::= LBRACE patterns RBRACE (KW_AS weakId)?
+atomNumberPattern ::= NUMBER
+atomAbsurdPattern ::= LPAREN RPAREN
+atomBindPattern ::= weakId {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
+}
+atomCalmFacePattern ::= CALM_FACE
+
+literal ::= refExpr
+          | holeExpr
+          | litIntExpr
+          | litStringExpr
+          | univExpr
+holeExpr ::= goalExpr | calmFaceExpr
+calmFaceExpr ::= CALM_FACE
+
+goalExpr ::= LGOAL expr? RGOAL
+refExpr ::= qualifiedId
+litIntExpr ::= NUMBER
+litStringExpr ::= STRING
+univExpr ::= KW_TYPE | KW_SET | KW_PROP | KW_ISET
+
+// tele is always typed
+tele ::= teleLit
+       | teleEx
+       | teleIm
+
+teleLit ::= literal
+teleEx ::= LPAREN teleBinder RPAREN
+teleIm ::= LBRACE teleBinder RBRACE
+
+// Explicit arguments may be anonymous
+teleBinder ::= teleBinderTyped
+             | teleBinderAnonymous
+teleBinderTyped ::= teleParamName+ type
+teleBinderAnonymous ::= expr
+
+teleParamName ::= weakId {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
+}
+
+// lambda tele is always named
+lambdaTele ::= lambdaTeleLit
+             | lambdaTeleEx
+             | lambdaTeleIm
+
+lambdaTeleLit ::= teleParamName
+lambdaTeleEx ::= LPAREN lambdaTeleBinder RPAREN
+lambdaTeleIm ::= LBRACE lambdaTeleBinder RBRACE
+
+lambdaTeleBinder ::= teleBinderTyped
+                   | lambdaTeleLit
+
+// path type tele
+pathTele ::= teleParamName
+
+// utilities
+exprList ::= (expr COMMA)* expr
+barred ::= expr BAR
+idsComma ::= (weakId COMMA)* weakId?
+type ::= COLON expr { pin = 1 }
+doBinding ::= weakId LARROW expr {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
+}
+
+qualifiedId ::= weakId (COLON2 weakId)*
+weakId ::= ID | REPL_COMMAND
+

@@ -48,8 +48,8 @@ assoc : INFIX | INFIXL | INFIXR | FIXL | FIXR;
 declNameOrInfix : weakId | assoc weakId;
 
 bindBlock : (tighters | loosers)+;
-tighters : TIGHTER qIdsComma;
-loosers : LOOSER qIdsComma;
+tighters : TIGHTER qualifiedId+;
+loosers : LOOSER qualifiedId+;
 
 fnDecl : sampleModifiers? DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?;
 
@@ -172,7 +172,6 @@ teleMaybeTypedExpr : ids type?;
 exprList : (expr COMMA)* expr;
 barredExpr : expr+ BAR;
 idsComma : (weakId COMMA)* weakId?;
-qIdsComma : (qualifiedId COMMA)* qualifiedId?;
 ids : weakId*;
 type : COLON expr;
 doBindingExpr : weakId LARROW expr;

@@ -5,6 +5,8 @@ package org.aya.cli.library.incremental;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.cli.parse.AyaGKParserImpl;
+import org.aya.concrete.GenericAyaParser;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
@@ -40,6 +42,11 @@ public interface CompilerAdvisor {
   void prepareLibraryOutput(@NotNull LibraryOwner owner) throws IOException;
   void clearLibraryOutput(@NotNull LibraryOwner owner) throws IOException;
   void clearModuleOutput(@NotNull LibrarySource source) throws IOException;
+
+  /** Used for injecting parser from IJ plugin to support on-the-fly analysis. */
+  default @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
+    return new AyaGKParserImpl(reporter);
+  }
 
   /**
    * Called when all modified sources are detected

@@ -7,7 +7,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple2;
+import kala.tuple.Tuple;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -255,7 +255,7 @@ public sealed abstract class TermComparator permits Unifier {
       case CallTerm.Struct type1 -> {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
-          Tuple2.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
+          Tuple.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
         var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
           var dummyVars = fieldSig.selfTele.map(par ->

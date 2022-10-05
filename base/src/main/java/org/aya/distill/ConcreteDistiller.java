@@ -148,6 +148,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         path.type().toDoc(options),
         path.partial().toDoc(options)
       );
+      case Expr.Idiom idiom -> Doc.wrap(
+        "(|", "|)",
+        Doc.join(Doc.symbol("|"), idiom.barredApps().view()
+          .map(app -> term(Outer.Free, app)))
+      );
+      case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
     };
   }
 

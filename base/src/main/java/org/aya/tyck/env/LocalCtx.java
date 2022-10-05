@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
@@ -35,7 +36,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     var ctxTele = extract();
     var meta = Meta.from(ctxTele, name, type, sourcePos);
     var hole = new CallTerm.Hole(meta, 0, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
-    return Tuple2.of(hole, IntroTerm.Lambda.make(meta.telescope, hole));
+    return Tuple.of(hole, IntroTerm.Lambda.make(meta.telescope, hole));
   }
   default <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
     return with(param.ref(), param.type(), action);

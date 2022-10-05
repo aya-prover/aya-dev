@@ -26,7 +26,7 @@ def test2 : term2 = term2Ast => idp
 -----------------------------------------
 
 def infixr >== {A : Type} {a b c : A} (p : a = b) (q : b = c) => p <==> q
-  looser qed, ==<
+  looser qed ==<
 def infix  ==< {A : Type} (a : A) {b : A} (p : a = b) => p
 
 def fixr qed {A : Type} (a : A) : a = a => idp {A} {a}
@@ -36,7 +36,7 @@ def fixr qed {A : Type} (a : A) : a = a => idp {A} {a}
 def overlap infix +' (a b : Nat) : Nat
  | a, 0 => a
  | a, suc b => suc (a +' b)
- tighter =, ==<, qed
+ tighter = ==< qed
 
 def +'-comm (a b : Nat) : a +' b = b +' a
   | 0, 0 => idp

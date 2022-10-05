@@ -3,7 +3,6 @@
 package org.aya.util.error;
 
 import org.aya.pretty.error.LineColSpan;
-import org.aya.pretty.error.RangeSpan;
 import org.aya.pretty.error.Span;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +34,7 @@ public record SourcePos(
   public static final SourcePos SER = new SourcePos(SourceFile.SER, -1, -1, -1, -1, -1, -1);
 
   public @NotNull Span toSpan() {
-    if (indexAvailable()) {
-      return new RangeSpan(file().sourceCode(), tokenStartIndex, tokenEndIndex);
-    } else {
-      return new LineColSpan(file().sourceCode(), startLine, startColumn, endLine, endColumn);
-    }
+    return new LineColSpan(file().sourceCode(), startLine, startColumn, endLine, endColumn);
   }
 
   private boolean indexAvailable() {

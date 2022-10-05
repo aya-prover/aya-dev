@@ -15,11 +15,11 @@ import org.jetbrains.annotations.NotNull;
 public interface ExprView {
   @NotNull Expr initial();
 
-  default @NotNull Expr pre(@NotNull Expr expr) { return expr; }
+  default @NotNull Expr pre(@NotNull Expr expr) {return expr;}
 
-  default @NotNull Expr post(@NotNull Expr expr) { return expr; }
+  default @NotNull Expr post(@NotNull Expr expr) {return expr;}
 
-  private @NotNull Expr commit(@NotNull Expr expr) { return post(traverse(pre(expr))); }
+  private @NotNull Expr commit(@NotNull Expr expr) {return post(traverse(pre(expr)));}
 
   private Expr.@NotNull Param commit(Expr.@NotNull Param param) {
     var type = commit(param.type());
@@ -112,6 +112,21 @@ public interface ExprView {
       }
       case Expr.ErrorExpr error -> error;
       case Expr.MetaPat meta -> meta;
+      case Expr.Idiom idiom -> {
+        var newInner = idiom.barredApps().map(this::commit);
+        var newNames = idiom.names().fmap(this::commit);
+        if (newInner.sameElements(idiom.barredApps()) && newNames.identical(idiom.names()))
+          yield expr;
+        yield new Expr.Idiom(idiom.sourcePos(), newNames, newInner);
+      }
+      case Expr.Do doNotation -> {
+        var lamExprs = doNotation.binds().map(x ->
+          new Expr.DoBind(x.sourcePos(), x.var(), commit(x.expr())));
+        var bindName = commit(doNotation.bindName());
+        if (lamExprs.sameElements(doNotation.binds()) && bindName == doNotation.bindName())
+          yield doNotation;
+        yield new Expr.Do(doNotation.sourcePos(), bindName, lamExprs);
+      }
     };
   }
 

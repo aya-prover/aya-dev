@@ -48,6 +48,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
+ * The ANTLR4 concrete syntax producer.
+ * RIP: 2020-10-28 ~ 2022-09-30
+ * I will miss you!
+ * <p>
+ * TODO: remove after REPL parser migration.
+ *
  * @author ice1000, kiva
  */
 public record AyaProducer(
@@ -119,20 +125,9 @@ public record AyaProducer(
 
   public @NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
     return new BindBlock(sourcePosOf(ctx), MutableValue.create(),
-      visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()),
+      ctx.loosers().stream().flatMap(c -> c.qualifiedId().stream().map(this::visitQualifiedId)).collect(ImmutableSeq.factory()),
+      ctx.tighters().stream().flatMap(c1 -> c1.qualifiedId().stream().map(this::visitQualifiedId)).collect(ImmutableSeq.factory()),
       MutableValue.create(), MutableValue.create());
-  }
-
-  public @NotNull ImmutableSeq<QualifiedID> visitLoosers(List<AyaParser.LoosersContext> ctx) {
-    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma())).collect(ImmutableSeq.factory());
-  }
-
-  public @NotNull ImmutableSeq<QualifiedID> visitTighters(List<AyaParser.TightersContext> ctx) {
-    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma())).collect(ImmutableSeq.factory());
-  }
-
-  public @NotNull Stream<QualifiedID> visitQIdsComma(AyaParser.QIdsCommaContext ctx) {
-    return ctx.qualifiedId().stream().map(this::visitQualifiedId);
   }
 
   private <T> T unreachable(ParserRuleContext ctx) {
@@ -269,17 +264,7 @@ public record AyaProducer(
 
   private @NotNull LocalVar visitParamLiteral(AyaParser.LiteralContext ctx) {
     var idCtx = ctx.qualifiedId();
-    if (idCtx == null) {
-      reporter.report(new ParseError(sourcePosOf(ctx),
-        "`" + ctx.getText() + "` is not a parameter name"));
-      throw new ParsingInterruptedException();
-    }
     var id = visitQualifiedId(idCtx);
-    if (id.isQualified()) {
-      reporter.report(new ParseError(sourcePosOf(ctx),
-        "parameter name `" + ctx.getText() + "` should not be qualified"));
-      throw new ParsingInterruptedException();
-    }
     return new LocalVar(id.justName(), sourcePosOf(idCtx));
   }
 
@@ -393,7 +378,7 @@ public record AyaProducer(
     if (ctx == null) return new Expr.PartEl(sourcePosOf(fallback), ImmutableSeq.empty());
     return new Expr.PartEl(sourcePosOf(ctx), Seq.wrapJava(ctx.subSystem()).map(sys -> {
       var exprs = Seq.wrapJava(sys.expr()).map(this::visitExpr);
-      return Tuple2.of(exprs.get(0), exprs.get(1));
+      return Tuple.of(exprs.get(0), exprs.get(1));
     }));
   }
 
@@ -614,7 +599,7 @@ public record AyaProducer(
       bind == null ? BindBlock.EMPTY : visitBind(bind),
       personality
     );
-    return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+    return Tuple.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(ctx.OPEN()),
         openAccessibility,
@@ -735,7 +720,7 @@ public record AyaProducer(
       bind == null ? BindBlock.EMPTY : visitBind(bind),
       personality
     );
-    return Tuple2.of(struct, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+    return Tuple.of(struct, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(ctx.OPEN()),
         openAccessibility,

@@ -5,10 +5,7 @@ package org.aya.resolve.visitor;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableStack;
+import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
@@ -59,6 +56,15 @@ public record ExprResolver(
         if (function == app.function() && argExpr == argument.expr()) yield app;
         var newArg = new Expr.NamedArg(argument.explicit(), argument.name(), argExpr);
         yield new Expr.AppExpr(app.sourcePos(), function, newArg);
+      }
+      case Expr.Do doNotation -> {
+        var list = MutableArrayList.<Expr.DoBind>create(doNotation.binds().size());
+        var localCtx = ctx;
+        for (var bind : doNotation.binds()) {
+          list.append(new Expr.DoBind(bind.sourcePos(), bind.var(), resolve(bind.expr(), localCtx)));
+          localCtx = localCtx.bind(bind.var(), bind.sourcePos());
+        }
+        yield new Expr.Do(doNotation.sourcePos(), resolve(doNotation.bindName(), ctx), list.toImmutableSeq());
       }
       case Expr.TupExpr tup -> {
         var items = tup.items().map(item -> resolve(item, ctx));
@@ -207,7 +213,7 @@ public record ExprResolver(
 
   private @NotNull Tuple2<Expr.Param, Context> resolveParam(@NotNull Expr.Param param, Context ctx) {
     var type = resolve(param.type(), ctx);
-    return Tuple2.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
+    return Tuple.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
   }
 
   private @NotNull Context resolveCubeParams(@NotNull ImmutableSeq<LocalVar> params, Context ctx) {
@@ -217,12 +223,12 @@ public record ExprResolver(
   @Contract(pure = true)
   public @NotNull Tuple2<SeqView<Expr.Param>, Context>
   resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
-    if (params.isEmpty()) return Tuple2.of(SeqView.empty(), ctx);
+    if (params.isEmpty()) return Tuple.of(SeqView.empty(), ctx);
     var first = params.first();
     var type = resolve(first.type(), ctx);
     var newCtx = ctx.bind(first.ref(), first.sourcePos());
     var result = resolveParams(params.view().drop(1), newCtx);
-    return Tuple2.of(result._1.prepended(new Expr.Param(first, type)), result._2);
+    return Tuple.of(result._1.prepended(new Expr.Param(first, type)), result._2);
   }
 
   private Expr.@NotNull Field resolveField(Expr.@NotNull Field t, Context context) {

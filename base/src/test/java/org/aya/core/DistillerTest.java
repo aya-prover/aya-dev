@@ -3,7 +3,10 @@
 package org.aya.core;
 
 import org.aya.core.def.FnDef;
-import org.aya.core.term.*;
+import org.aya.core.term.ElimTerm;
+import org.aya.core.term.IntroTerm;
+import org.aya.core.term.RefTerm;
+import org.aya.core.term.Term;
 import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("UnknownLanguage")
 public class DistillerTest {
   @Test public void fn() {
     var doc1 = declDoc("def id {A : Type} (a : A) : A => a");
@@ -32,7 +36,7 @@ public class DistillerTest {
   }
 
   @Test public void data() {
-    @Language("TEXT") var code = """
+    @Language("Aya") var code = """
       open data Nat : Type | zero | suc Nat
       open data Int : Type | pos Nat | neg Nat { | zero => pos zero }
       open data Fin (n : Nat) : Type | suc m => fzero | suc m => fsuc (Fin m)
@@ -57,7 +61,7 @@ public class DistillerTest {
   }
 
   @Test public void path() {
-    @Language("TEXT") var code = """
+    @Language("Aya") var code = """
       prim I
       prim coe
       prim intervalInv
@@ -188,11 +192,11 @@ public class DistillerTest {
         |  a => suc a""", t3.toDoc(DistillerOptions.informative()).debugRender());
   }
 
-  private @NotNull Doc declDoc(@Language("TEXT") String text) {
+  private @NotNull Doc declDoc(@Language("Aya") String text) {
     return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(DistillerOptions.debug())));
   }
 
-  private @NotNull Doc declCDoc(@Language("TEXT") String text) {
+  private @NotNull Doc declCDoc(@Language("Aya") String text) {
     return Doc.vcat(TyckDeclTest.successDesugarDecls(text)._2.map(s -> s.toDoc(DistillerOptions.debug())));
   }
 }
