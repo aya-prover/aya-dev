@@ -643,14 +643,6 @@ public record AyaGKProducer(
     return unreachable(node);
   }
 
-  /**
-   * This function assumed that the node is DO_BINDING
-   */
-  public @NotNull Expr.DoBind doBinding(@NotNull GenericNode<?> node) {
-    var wp = weakId(node.child(WEAK_ID));
-    return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
-  }
-
   public @NotNull Expr.NamedArg argument(@NotNull GenericNode<?> node) {
     if (node.is(ATOM_EX_ARGUMENT)) {
       var fixes = node.childrenOfType(PROJ_FIX);
@@ -831,6 +823,14 @@ public record AyaGKProducer(
     if (node.peekChild(KW_INLINE) != null) return Modifier.Inline;
     if (node.peekChild(KW_OVERLAP) != null) return Modifier.Overlap;
     return unreachable(node);
+  }
+
+  /**
+   * This function assumed that the node is DO_BINDING
+   */
+  public @NotNull Expr.DoBind doBinding(@NotNull GenericNode<?> node) {
+    var wp = weakId(node.child(WEAK_ID));
+    return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
   }
 
   public @NotNull Decl.Personality sampleModifiers(@Nullable GenericNode<?> node) {
