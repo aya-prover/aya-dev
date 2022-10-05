@@ -72,7 +72,7 @@ public class DesugarTest {
       def >>= => {??}
       def simpleList => :< 1 (:< 2 (:< 3 nil))
       def listGenerator => >>= xs (\\ (x : _) => >>= ys (\\ (y : _) => pure (x * y)))
-      """); // TODO: make desugarAndPretty does resolve [#556](https://github.com/aya-prover/aya-dev/pull/556#issuecomment-1268376917).
+      """); // TODO[hoshino]: make desugarAndPretty does resolve [#556](https://github.com/aya-prover/aya-dev/pull/556#issuecomment-1268376917).
   }
 
   private void desugarAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {

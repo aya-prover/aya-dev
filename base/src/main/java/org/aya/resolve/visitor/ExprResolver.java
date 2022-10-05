@@ -58,13 +58,8 @@ public record ExprResolver(
         yield new Expr.AppExpr(app.sourcePos(), function, newArg);
       }
       case Expr.Do doNotation -> {
-        var list = MutableArrayList.<Expr.DoBind>create(doNotation.binds().size());
-        var localCtx = ctx;
-        for (var bind : doNotation.binds()) {
-          list.append(new Expr.DoBind(bind.sourcePos(), bind.var(), resolve(bind.expr(), localCtx)));
-          localCtx = localCtx.bind(bind.var(), bind.sourcePos());
-        }
-        yield new Expr.Do(doNotation.sourcePos(), resolve(doNotation.bindName(), ctx), list.toImmutableSeq());
+        var bindsCtx = resolveDoBinds(doNotation.binds(), ctx);
+        yield new Expr.Do(doNotation.sourcePos(), resolve(doNotation.bindName(), ctx), bindsCtx._1);
       }
       case Expr.TupExpr tup -> {
         var items = tup.items().map(item -> resolve(item, ctx));
@@ -120,29 +115,13 @@ public record ExprResolver(
         left -> {
           var bindName = resolve(left.bindName(), ctx);
           var pureName = resolve(left.pureName(), ctx);
+          var bindsCtx = resolveDoBinds(left.binds(), ctx);
+          var generator = resolve(left.generator(), bindsCtx._2);
 
-          // region The same coding as Expr.Do! 😭
-          var list = MutableArrayList.<Expr.DoBind>create(left.bindings().size());
-          var localCtx = ctx;
-
-          for (var bind : left.bindings()) {
-            var bindResolved = resolve(bind.expr(), localCtx);
-            if (bindResolved == bind.expr()) {
-              list.append(bind);
-            } else {
-              list.append(new Expr.DoBind(bind.sourcePos(), bind.var(), bindResolved));
-            }
-
-            localCtx = localCtx.bind(bind.var(), bind.sourcePos());
-          }
-          // endregion
-
-          var generator = resolve(left.generator(), localCtx);
-
-          if (generator == left.generator() && list.sameElements(left.bindings()) && bindName == left.bindName() && pureName == left.pureName()) {
+          if (generator == left.generator() && bindsCtx._1.sameElements(left.binds()) && bindName == left.bindName() && pureName == left.pureName()) {
             return arrayExpr;
           } else {
-            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, list.toImmutableSeq(), bindName, pureName);
+            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindsCtx._1, bindName, pureName);
           }
         },
         right -> {
@@ -255,6 +234,29 @@ public record ExprResolver(
   private @NotNull Tuple2<Expr.Param, Context> resolveParam(@NotNull Expr.Param param, Context ctx) {
     var type = resolve(param.type(), ctx);
     return Tuple.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
+  }
+
+  /**
+   * Resolving all {@link Expr.DoBind}s under the context {@param parent}
+   *
+   * @return (resolved bindings, a new context under all the bindings)
+   */
+  private @NotNull Tuple2<ImmutableSeq<Expr.DoBind>, Context> resolveDoBinds(@NotNull ImmutableSeq<Expr.DoBind> binds, Context parent) {
+    var list = MutableArrayList.<Expr.DoBind>create(binds.size());
+    var localCtx = parent;
+
+    for (var bind : binds) {
+      var bindResolved = resolve(bind.expr(), localCtx);
+      if (bindResolved == bind.expr()) {
+        list.append(bind);
+      } else {
+        list.append(new Expr.DoBind(bind.sourcePos(), bind.var(), bindResolved));
+      }
+
+      localCtx = localCtx.bind(bind.var(), bind.sourcePos());
+    }
+
+    return Tuple.of(list.toImmutableSeq(), localCtx);
   }
 
   private @NotNull Context resolveCubeParams(@NotNull ImmutableSeq<LocalVar> params, Context ctx) {

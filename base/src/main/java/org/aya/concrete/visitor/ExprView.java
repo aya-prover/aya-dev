@@ -130,13 +130,13 @@ public interface ExprView {
       case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
         left -> {
           var generator = commit(left.generator());
-          var bindings = left.bindings().map(binding ->
+          var bindings = left.binds().map(binding ->
             new Expr.DoBind(binding.sourcePos(), binding.var(), commit(binding.expr()))
           );
           var bindName = commit(left.bindName());
           var pureName = commit(left.pureName());
 
-          if (generator == left.generator() && bindings.sameElements(left.bindings()) && bindName == left.bindName() && pureName == left.pureName()) {
+          if (generator == left.generator() && bindings.sameElements(left.binds()) && bindName == left.bindName() && pureName == left.pureName()) {
             return arrayExpr;
           } else {
             return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindings, bindName, pureName);

@@ -391,7 +391,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      * For example: <code>[x * y | x <- [1, 2, 3], y <- [4, 5, 6]]</code>
      *
      * @param generator <code>x * y</code> part above
-     * @param bindings <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
+     * @param binds <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
      * @param bindName the bind (>>=) function, it is {@link org.aya.generic.Constants}.monadBind in default
      * @param pureName the pure (return) function, it is {@link org.aya.generic.Constants}.functorPure in default
      * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above, it will be desugared to
@@ -404,7 +404,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      */
     public record CompBlock(
       @NotNull Expr generator,
-      @NotNull ImmutableSeq<DoBind> bindings,
+      @NotNull ImmutableSeq<DoBind> binds,
       @NotNull Expr bindName,
       @NotNull Expr pureName
     ) { }

@@ -97,7 +97,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             // just concat `bindings` and `return expr`
             var returnApp = new Expr.AppExpr(left.pureName().sourcePos(), left.pureName(), new Expr.NamedArg(true, left.generator()));
             var lastBind = new Expr.DoBind(left.generator().sourcePos(), LocalVar.IGNORED, returnApp);
-            var doNotation = new Expr.Do(arrayExpr.sourcePos(), left.bindName(), left.bindings().appended(lastBind));
+            var doNotation = new Expr.Do(arrayExpr.sourcePos(), left.bindName(), left.binds().appended(lastBind));
 
             // desugar do-notation
             return pre(doNotation);
