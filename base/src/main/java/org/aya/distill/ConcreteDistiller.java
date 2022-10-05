@@ -155,11 +155,11 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       );
       case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
       case Expr.Array arr -> arr.arrayBlock().fold(
-        left  -> Doc.sep(
+        left -> Doc.sep(
           Doc.symbol("["),
           term(Outer.Free, left.generator()),
           Doc.symbol("|"),
-          Doc.commaList(left.bindings().map(this::visitDoBinding)),
+          Doc.commaList(left.binds().map(this::visitDoBinding)),
           Doc.symbol("]")
         ),
         right -> Doc.sep(
