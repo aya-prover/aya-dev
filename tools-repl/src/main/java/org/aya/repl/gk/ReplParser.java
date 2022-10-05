@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl.gk;
 
+import com.intellij.psi.TokenType;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.CommandManager;
@@ -60,7 +61,10 @@ public record ReplParser(
       if (shellAlike) return shellLike.parse(line, cursor, context);
     }
     // Drop whitespaces
-    var tokens = lexer.tokensNoEOF(line);
+    var tokens = lexer.tokensNoEOF(line)
+      .view()
+      .filter(x -> x.type() != TokenType.WHITE_SPACE)
+      .toImmutableSeq();
     var wordOpt = tokens.firstOption(token ->
       token.tokenStart() <= cursor && token.tokenEnd() + 1 >= cursor
     );
