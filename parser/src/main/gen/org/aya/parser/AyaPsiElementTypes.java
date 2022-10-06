@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 // This is a generated file. Not intended for manual editing.
-package org.aya.parser.ij;
+package org.aya.parser;
 
 import com.intellij.psi.tree.IElementType;
 
@@ -146,7 +146,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_EXTENDS = new AyaPsiTokenType("extends");
   IElementType KW_FIXL = new AyaPsiTokenType("fixl");
   IElementType KW_FIXR = new AyaPsiTokenType("fixr");
-  IElementType KW_FORALL = new AyaPsiTokenType("KW_FORALL");
+  IElementType KW_FORALL = new AyaPsiTokenType("forall");
   IElementType KW_HIDING = new AyaPsiTokenType("hiding");
   IElementType KW_IMPORT = new AyaPsiTokenType("import");
   IElementType KW_IN = new AyaPsiTokenType("in");
@@ -165,18 +165,18 @@ public interface AyaPsiElementTypes {
   IElementType KW_OPEN = new AyaPsiTokenType("open");
   IElementType KW_OVERLAP = new AyaPsiTokenType("overlap");
   IElementType KW_OVERRIDE = new AyaPsiTokenType("override");
-  IElementType KW_PI = new AyaPsiTokenType("KW_PI");
+  IElementType KW_PI = new AyaPsiTokenType("Pi");
   IElementType KW_PRIM = new AyaPsiTokenType("prim");
   IElementType KW_PRIVATE = new AyaPsiTokenType("private");
   IElementType KW_PROP = new AyaPsiTokenType("Prop");
   IElementType KW_PUBLIC = new AyaPsiTokenType("public");
   IElementType KW_SET = new AyaPsiTokenType("Set");
-  IElementType KW_SIGMA = new AyaPsiTokenType("KW_SIGMA");
+  IElementType KW_SIGMA = new AyaPsiTokenType("Sig");
   IElementType KW_STRUCT = new AyaPsiTokenType("struct");
   IElementType KW_THIS = new AyaPsiTokenType("this");
   IElementType KW_TIGHTER = new AyaPsiTokenType("tighter");
   IElementType KW_TYPE = new AyaPsiTokenType("Type");
-  IElementType KW_ULIFT = new AyaPsiTokenType("KW_ULIFT");
+  IElementType KW_ULIFT = new AyaPsiTokenType("ulift");
   IElementType KW_USING = new AyaPsiTokenType("using");
   IElementType KW_VARIABLE = new AyaPsiTokenType("variable");
   IElementType LARRAY = new AyaPsiTokenType("[");

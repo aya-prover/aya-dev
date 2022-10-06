@@ -1,11 +1,10 @@
 package org.aya.parser.ij;
 
-import com.intellij.lexer.FlexLexer;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IElementType;import org.aya.parser.AyaParserDefinitionBase;
 
 import static com.intellij.psi.TokenType.BAD_CHARACTER;
 import static com.intellij.psi.TokenType.WHITE_SPACE;
-import static org.aya.parser.ij.AyaPsiElementTypes.*;
+import static org.aya.parser.AyaPsiElementTypes.*;
 
 %%
 

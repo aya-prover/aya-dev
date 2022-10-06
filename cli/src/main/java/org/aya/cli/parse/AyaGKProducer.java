@@ -26,8 +26,9 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
-import org.aya.parser.ij.AyaPsiParser;
-import org.aya.parser.ij.GenericNode;
+import org.aya.parser.AyaPsiElementTypes;
+import org.aya.parser.AyaPsiParser;
+import org.aya.parser.GenericNode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.util.StringEscapeUtil;
@@ -44,7 +45,7 @@ import java.util.EnumSet;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import static org.aya.parser.ij.AyaPsiElementTypes.*;
+import static org.aya.parser.AyaPsiElementTypes.*;
 
 /**
  * Working with GK parser:
@@ -68,7 +69,7 @@ import static org.aya.parser.ij.AyaPsiElementTypes.*;
  * </ul>
  *
  * @author kiva
- * @see org.aya.parser.ij.AyaPsiElementTypes
+ * @see AyaPsiElementTypes
  */
 public record AyaGKProducer(
   @NotNull Either<SourceFile, SourcePos> source,

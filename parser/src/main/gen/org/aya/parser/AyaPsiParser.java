@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 // This is a generated file. Not intended for manual editing.
-package org.aya.parser.ij;
+package org.aya.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import static org.aya.parser.ij.AyaPsiElementTypes.*;
+import static org.aya.parser.AyaPsiElementTypes.*;
 import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.ASTNode;
