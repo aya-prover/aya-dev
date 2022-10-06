@@ -54,27 +54,6 @@ public class DesugarTest {
       }""");
   }
 
-  @Test public void arrays() {
-    desugarAndPretty("""
-      open data List (A : Type)
-        | nil
-        | infixr :< A (List A)
-        
-      def infix >>= => {??}
-      
-      def simpleList => [ 1, 2, 3 ]
-      def listGenerator => [ x * y | x <- xs, y <- ys ]
-      """, """
-      data List (A : Type 0)
-        | nil
-        | :< (_ : A) (_ : List A)
-      open List hiding ()
-      def >>= => {??}
-      def simpleList => :< 1 (:< 2 (:< 3 nil))
-      def listGenerator => >>= xs (\\ (x : _) => >>= ys (\\ (y : _) => pure (x * y)))
-      """); // TODO[hoshino]: make desugarAndPretty does resolve [#556](https://github.com/aya-prover/aya-dev/pull/556#issuecomment-1268376917).
-  }
-
   private void desugarAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     var resolveInfo = new ResolveInfo(new PrimDef.Factory(), new EmptyContext(ThrowingReporter.INSTANCE, Path.of("dummy")).derive("dummy"), ImmutableSeq.empty(), new AyaBinOpSet(ThrowingReporter.INSTANCE));
     var stmt = ParseTest.parseStmt(code);

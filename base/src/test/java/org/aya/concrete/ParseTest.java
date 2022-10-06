@@ -159,19 +159,6 @@ public class ParseTest {
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
       && !neo.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
-
-    // array expr
-    parseTo("[ 1, x, 2 + y, \"3\" ]", Expr.Array.newList(
-      SourcePos.NONE,
-      ImmutableSeq.of(
-        new Expr.LitIntExpr(SourcePos.NONE, 1),
-        new Expr.UnresolvedExpr(SourcePos.NONE, "x"),
-        new Expr.BinOpSeq(SourcePos.NONE, ImmutableSeq.of(
-          new Expr.NamedArg(true, new Expr.LitIntExpr(SourcePos.NONE, 2)),
-          new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "+")),
-          new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "y")))),
-        new Expr.LitStringExpr(SourcePos.NONE, "3")),
-      Constants.listNil(SourcePos.NONE), Constants.listCons(SourcePos.NONE)));
   }
 
   private void parseImport(@Language("Aya") String code) {
