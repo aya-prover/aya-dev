@@ -12,6 +12,7 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
@@ -60,6 +61,16 @@ public record ShapeMatcher(
       if (tele == null) return false;
       var teleVar = teleSubst.getOrNull(tele.ref());
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
+    }
+    if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof FormTerm.Sort sortTerm) {
+      // TODO[hoshino]: Is Set \0-Type ?
+
+      // If kind is null, any sort!
+      return sort.kind() == null ||
+        // If kind is not null, simply comparing
+        (sort.kind() == sortTerm.kind() &&
+          // If the kind doesn't have level, omit the ulift
+          ((! sort.kind().hasLevel()) || sort.ulift() <= sortTerm.lift()));
     }
     return false;
   }

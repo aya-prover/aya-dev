@@ -34,6 +34,21 @@ public sealed interface AyaShape {
     }
   }
 
+  record AyaListShape() implements AyaShape {
+    public static final @NotNull CodeShape DATA_LIST = new DataShape(
+      ImmutableSeq.of(CodeShape.ParamShape.ex(new CodeShape.TermShape.Sort(null, 0))),
+      ImmutableSeq.of(
+        new CtorShape(ImmutableSeq.empty()),    // nil
+        new CtorShape(ImmutableSeq.of(          // cons A (List A)
+          CodeShape.ParamShape.ex(new CodeShape.TermShape.TeleRef(0, 0)),   // A
+          CodeShape.ParamShape.ex(new CodeShape.TermShape.Call(0))))            // List A, TODO: not always List A, improve Call!
+      ));
+
+    @Override public @NotNull CodeShape codeShape() {
+      return DATA_LIST;
+    }
+  }
+
   class Factory {
     public @NotNull MutableMap<GenericDef, AyaShape> discovered = MutableLinkedHashMap.of();
 
