@@ -306,6 +306,16 @@ public class ParseTest {
         """);
   }
 
+  @Test public void array() {
+    parseAndPretty("""
+      def list => [ 1,2 ,3 ]
+      def listGen => [ x + y | x <-   xs ,y <- ys ]
+      """, """
+      def list => [ 1, 2, 3 ]
+      def listGen => [ x + y | x <- xs, y <- ys ]
+      """);
+  }
+
   private void parseAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
