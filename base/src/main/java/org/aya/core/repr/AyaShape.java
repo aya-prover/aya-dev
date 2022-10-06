@@ -21,12 +21,13 @@ public sealed interface AyaShape {
   @NotNull CodeShape codeShape();
 
   @NotNull AyaShape NAT_SHAPE = new AyaIntLitShape();
+  @NotNull AyaShape LIST_SHAPE = new AyaListShape();
   @NotNull ImmutableSeq<AyaShape> LITERAL_SHAPES = ImmutableSeq.of(NAT_SHAPE);
 
   record AyaIntLitShape() implements AyaShape {
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
       new CtorShape(ImmutableSeq.empty()),
-      new CtorShape(ImmutableSeq.of(CodeShape.ParamShape.ex(new CodeShape.TermShape.Call(0))))
+      new CtorShape(ImmutableSeq.of(CodeShape.ParamShape.ex(CodeShape.TermShape.Call.justCall(0))))
     ));
 
     @Override public @NotNull CodeShape codeShape() {
@@ -41,8 +42,8 @@ public sealed interface AyaShape {
         new CtorShape(ImmutableSeq.empty()),    // nil
         new CtorShape(ImmutableSeq.of(          // cons A (List A)
           CodeShape.ParamShape.ex(new CodeShape.TermShape.TeleRef(0, 0)),   // A
-          CodeShape.ParamShape.ex(new CodeShape.TermShape.DataApp(                       // List A
-            new CodeShape.TermShape.Call(0),
+          CodeShape.ParamShape.ex(new CodeShape.TermShape.Call(                          // List A
+            0,
             ImmutableSeq.of(new CodeShape.TermShape.TeleRef(0, 0))))))
       ));
 

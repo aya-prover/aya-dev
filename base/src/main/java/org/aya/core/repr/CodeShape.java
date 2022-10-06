@@ -5,6 +5,7 @@ package org.aya.core.repr;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,15 @@ public sealed interface CodeShape {
   sealed interface TermShape {
     record Any() implements TermShape {}
 
-    record Call(int superLevel) implements TermShape {}
+    /**
+     * @param superLevel the data def reference
+     * @param args corresponds to {@link CallTerm.Data#args()}
+     */
+    record Call(int superLevel, @NotNull ImmutableSeq<TermShape> args) implements TermShape {
+      @Contract("_ -> new") public static @NotNull Call justCall(int superLevel) {
+        return new Call(superLevel, ImmutableSeq.empty());
+      }
+    }
 
     record TeleRef(int superLevel, int nth) implements TermShape {}
 
@@ -54,12 +63,6 @@ public sealed interface CodeShape {
      * @param ulift the lower bound of the type level.
      */
     record Sort(@Nullable FormTerm.SortKind kind, int ulift) implements TermShape {}
-
-    /**
-     * @param data the data def reference
-     * @param args corresponds to {@link CallTerm.Data#args()}
-     */
-    record DataApp(@NotNull Call data, @NotNull ImmutableSeq<TermShape> args) implements TermShape {}
   }
 
   /**

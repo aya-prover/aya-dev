@@ -52,7 +52,13 @@ public record ShapeMatcher(
     if (shape instanceof CodeShape.TermShape.Any) return true;
     if (shape instanceof CodeShape.TermShape.Call call && term instanceof CallTerm callTerm) {
       var superLevel = def.getOrNull(call.superLevel());
-      return superLevel == callTerm.ref();
+      if (superLevel != callTerm.ref()) return false;                      // implies null check
+      if (call.args().size() != callTerm.args().size()) return false;      // TODO[hoshino]: do we also match implicit arguments?
+
+      // match each arg
+      return call.args().zipView(callTerm.args())
+        .map(t -> matchTerm(t._1, t._2.term()))   // match each term, but lazy
+        .allMatch(x -> x);    // check all term matching
     }
     if (shape instanceof CodeShape.TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
       var superLevel = def.getOrNull(ref.superLevel());
@@ -72,19 +78,6 @@ public record ShapeMatcher(
           // If the kind doesn't have level, omit the ulift
           ((! sort.kind().hasLevel()) || sort.ulift() <= sortTerm.lift()));
     }
-    if (shape instanceof CodeShape.TermShape.DataApp dataApp && term instanceof CallTerm.Data dataTerm) {
-      var dataDef = def.getOrNull(dataApp.data().superLevel());
-      if (dataDef == null) return false;
-      if (dataDef != dataTerm.ref()) return false;
-      if (dataApp.args().size() != dataTerm.args().size()) return false;      // TODO[hoshino]: do we also match implicit arguments?
-
-      // match each arg
-      // TODO[hoshino]: generalize this.
-      return dataApp.args().zipView(dataTerm.args())
-        .map(t -> matchTerm(t._1, t._2.term()))   // match each term, but lazy
-        .allMatch(x -> x);    // check all term matching
-    }
-
     return false;
   }
 

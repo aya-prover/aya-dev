@@ -40,6 +40,7 @@ public class ShapeMatcherTest {
     match(false, AyaShape.AyaListShape.DATA_LIST, "data List | nil | cons");
     match(false, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil | cons");
     match(false, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil | cons A A");
+    match(false, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil A | cons A (List A)");
     match(false, AyaShape.AyaListShape.DATA_LIST, "data List (A B : Type) | nil | cons A A");
     match(false, AyaShape.AyaListShape.DATA_LIST, "data List (A B : Type) | nil | cons A B");
     match(ImmutableSeq.of(false, false), AyaShape.AyaListShape.DATA_LIST, """
