@@ -11,9 +11,8 @@ import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.concrete.visitor.StmtOps;
-import org.aya.core.term.FormTerm;
-import org.aya.ref.LocalVar;
 import org.aya.generic.SortKind;
+import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,14 +34,14 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
 
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
-        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Type -> {
+        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg) when kind == SortKind.Type -> {
           try {
             yield new Expr.TypeExpr(uPos, levelVar(arg.expr()));
           } catch (DesugarInterruption e) {
             yield new Expr.ErrorExpr(pos, expr);
           }
         }
-        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Set -> {
+        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg) when kind == SortKind.Set -> {
           try {
             yield new Expr.SetExpr(uPos, levelVar(arg.expr()));
           } catch (DesugarInterruption e) {
@@ -114,7 +113,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
                     right.consCtor(),
                     new Expr.NamedArg(true, e)),
                   new Expr.NamedArg(true, last));
-            });
+              });
           }
         );
         case Expr misc -> misc;

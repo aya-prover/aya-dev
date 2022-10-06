@@ -35,13 +35,14 @@ public interface ExprView {
 
   private Expr.@NotNull PartEl commit(Expr.@NotNull PartEl partial) {
     var clauses = partial.clauses().map(cls -> Tuple.of(commit(cls._1), commit(cls._2)));
-    if (clauses == partial.clauses()) return partial;
+    if (clauses.allMatchWith(partial.clauses(), (l, r) ->
+      l._1 == r._1 && l._2 == r._2)) return partial;
     return new Expr.PartEl(partial.sourcePos(), clauses);
   }
 
   private @NotNull Expr traverse(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.RefExpr ref -> ref; // I don't know
+      case Expr.RefExpr ref -> ref;
       case Expr.UnresolvedExpr unresolved -> unresolved;
       case Expr.LamExpr lam -> {
         var param = commit(lam.param());
@@ -67,11 +68,11 @@ public interface ExprView {
         yield new Expr.LiftExpr(lift.sourcePos(), inner, lift.lift());
       }
       case Expr.SortExpr univ -> univ;
-      case Expr.AppExpr app -> {
-        var func = commit(app.function());
-        var arg = commit(app.argument());
-        if (func == app.function() && arg == app.argument()) yield app;
-        yield new Expr.AppExpr(app.sourcePos(), func, arg);
+      case Expr.AppExpr(var pos, var f, var a) -> {
+        var func = commit(f);
+        var arg = commit(a);
+        if (func == f && arg == a) yield expr;
+        yield new Expr.AppExpr(pos, func, arg);
       }
       case Expr.HoleExpr hole -> {
         var filling = hole.filling();
