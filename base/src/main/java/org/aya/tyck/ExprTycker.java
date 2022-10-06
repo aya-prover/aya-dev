@@ -428,7 +428,14 @@ public final class ExprTycker extends Tycker {
             yield new TermResult(new LitTerm.ShapedInt(lit.integer(), shape.get(), dataCall), term);
         }
         if (ty instanceof CallTerm.Hole hole) {
-          yield new TermResult(new LitTerm.ShapedInt(lit.integer(), AyaShape.NAT_SHAPE, hole), term);
+          var nat = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
+          // When there's more than one Nat, delay the unification for cases like
+          // def foo : Option Nat1 => some 0
+          // def bar : Option Nat2 => some 1
+          if (nat.sizeGreaterThan(1))
+            yield new TermResult(new LitTerm.ShapedInt(lit.integer(), AyaShape.NAT_SHAPE, hole), term);
+          // fallthrough: When there's only one Nat, solve the hole now.
+          // Note: if no Nat was found, errors will be reported in `synthesize(expr)`
         }
         yield unifyTyMaybeInsert(term, synthesize(expr), expr);
       }

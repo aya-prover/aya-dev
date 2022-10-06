@@ -198,13 +198,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record ConCall(
     @NotNull SerDef.QName dataRef, @NotNull SerDef.QName selfRef,
-    @NotNull CallData dataArgs, @NotNull ImmutableSeq<SerArg> args
+    @NotNull CallData dataArgs, @NotNull ImmutableSeq<SerArg> conArgs
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CallTerm.Con(
         state.resolve(dataRef), state.resolve(selfRef),
         dataArgs.de(state), dataArgs.ulift,
-        args.map(arg -> arg.de(state)));
+        conArgs.map(arg -> arg.de(state)));
     }
   }
 
