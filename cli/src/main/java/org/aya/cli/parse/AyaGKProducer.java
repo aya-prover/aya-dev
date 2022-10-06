@@ -605,15 +605,9 @@ public record AyaGKProducer(
     if (node.is(ARRAY_EXPR)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
 
-      if (arrayBlock != null) {
-        if (arrayBlock.is(ARRAY_COMP_BLOCK)) {
-          return arrayCompBlock(arrayBlock, pos);
-        } else if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) {
-          return arrayElementList(arrayBlock, pos);
-        }
-      } else {
-        return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
-      }
+      if (arrayBlock == null) return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
+      if (arrayBlock.is(ARRAY_COMP_BLOCK)) return arrayCompBlock(arrayBlock, pos);
+      if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
 
     return unreachable(node);
