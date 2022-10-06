@@ -95,17 +95,10 @@ public sealed abstract class TermComparator permits Unifier {
         case FormTerm.Set set -> true;
         case FormTerm.Type type -> false;
       };
-      case FormTerm.Prop prop -> switch (r) {
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop1 -> true;
-        case FormTerm.Set set -> false;
-        case FormTerm.Type type -> false;
-      };
+      case FormTerm.Prop prop -> r instanceof FormTerm.Prop;
       case FormTerm.Set lt -> switch (r) {
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop -> false;
-        case FormTerm.Set rt -> lt.lift() <= rt.lift();
-        case FormTerm.Type rt -> false;
+        case FormTerm.Set rt when lt.lift() <= rt.lift() -> true;
+        case default -> false;
       };
     };
   }
@@ -274,26 +267,26 @@ public sealed abstract class TermComparator permits Unifier {
       case IntroTerm.Tuple $ -> throw new InternalException("TupTerm is never type");
       case IntroTerm.New $ -> throw new InternalException("NewTerm is never type");
       case ErrorTerm $ -> true;
-      case FormTerm.Sigma sigma -> {
-        var params = sigma.params().view();
-        for (int i = 1, size = sigma.params().size(); i <= size; i++) {
+      case FormTerm.Sigma (var paramsSeq) -> {
+        var params = paramsSeq.view();
+        for (int i = 1, size = paramsSeq.size(); i <= size; i++) {
           var l = ElimTerm.proj(lhs, i);
           var currentParam = params.first();
           ctx.put(currentParam);
           if (!compare(l, ElimTerm.proj(rhs, i), lr, rl, currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
-        ctx.remove(sigma.params().view().map(Term.Param::ref));
+        ctx.remove(paramsSeq.view().map(Term.Param::ref));
         yield true;
       }
       case FormTerm.Pi pi -> ctx.with(pi.param(), () -> {
-        if (lhs instanceof IntroTerm.Lambda lambda) return ctx.with(lambda.param(), () -> {
-          if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(), () -> {
-            lr.map.put(lambda.param().ref(), rambda.param().toTerm());
-            rl.map.put(rambda.param().ref(), lambda.param().toTerm());
-            var res = compare(lambda.body(), rambda.body(), lr, rl, pi.body());
-            lr.map.remove(lambda.param().ref());
-            rl.map.remove(rambda.param().ref());
+        if (lhs instanceof IntroTerm.Lambda(var lp, var lb) lambda) return ctx.with(lp, () -> {
+          if (rhs instanceof IntroTerm.Lambda(var rp, var rb)) return ctx.with(rp, () -> {
+            lr.map.put(lp.ref(), rp.toTerm());
+            rl.map.put(rp.ref(), lp.toTerm());
+            var res = compare(lb, rb, lr, rl, pi.body());
+            lr.map.remove(lp.ref());
+            rl.map.remove(rp.ref());
             return res;
           });
           return compareLambdaBody(rhs, lr, rl, lambda, pi);
