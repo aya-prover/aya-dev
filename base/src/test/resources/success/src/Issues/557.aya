@@ -1,0 +1,5 @@
+open import Data::List
+open import Arith::Nat
+open import Paths
+
+def what : join (fmap (\ _x => 1 :< nil) (0 :< nil)) = (1 :< nil) => idp
