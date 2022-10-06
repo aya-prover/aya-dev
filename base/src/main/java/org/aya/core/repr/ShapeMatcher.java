@@ -72,6 +72,19 @@ public record ShapeMatcher(
           // If the kind doesn't have level, omit the ulift
           ((! sort.kind().hasLevel()) || sort.ulift() <= sortTerm.lift()));
     }
+    if (shape instanceof CodeShape.TermShape.DataApp dataApp && term instanceof CallTerm.Data dataTerm) {
+      var dataDef = def.getOrNull(dataApp.data().superLevel());
+      if (dataDef == null) return false;
+      if (dataDef != dataTerm.ref()) return false;
+      if (dataApp.args().size() != dataTerm.args().size()) return false;      // TODO[hoshino]: do we also match implicit arguments?
+
+      // match each arg
+      // TODO[hoshino]: generalize this.
+      return dataApp.args().zipView(dataTerm.args())
+        .map(t -> matchTerm(t._1, t._2.term()))   // match each term, but lazy
+        .allMatch(x -> x);    // check all term matching
+    }
+
     return false;
   }
 

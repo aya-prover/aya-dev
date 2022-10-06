@@ -41,7 +41,9 @@ public sealed interface AyaShape {
         new CtorShape(ImmutableSeq.empty()),    // nil
         new CtorShape(ImmutableSeq.of(          // cons A (List A)
           CodeShape.ParamShape.ex(new CodeShape.TermShape.TeleRef(0, 0)),   // A
-          CodeShape.ParamShape.ex(new CodeShape.TermShape.Call(0))))            // List A, TODO: not always List A, improve Call!
+          CodeShape.ParamShape.ex(new CodeShape.TermShape.DataApp(                       // List A
+            new CodeShape.TermShape.Call(0),
+            ImmutableSeq.of(new CodeShape.TermShape.TeleRef(0, 0))))))
       ));
 
     @Override public @NotNull CodeShape codeShape() {

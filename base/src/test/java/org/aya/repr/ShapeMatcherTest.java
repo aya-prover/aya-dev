@@ -48,7 +48,7 @@ public class ShapeMatcherTest {
       data List (A : Type)
         | nil
         | cons A (List False)
-      """);   // FIXME!!
+      """);
   }
 
   public void match(boolean should, @NotNull CodeShape shape, @Language("Aya") @NonNls @NotNull String code) {
