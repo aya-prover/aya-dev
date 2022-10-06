@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
+import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
@@ -58,30 +59,15 @@ public sealed interface FormTerm extends Term {
   record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm, StableWHNF {
   }
 
-  enum SortKind {
-    Type, Set, Prop, ISet;
-
-    public boolean hasLevel() {
-      return this == Type || this == Set;
-    }
-
-    public @NotNull SortKind max(@NotNull SortKind other) {
-      if (this == Set || other == Set) return Set;
-      if (this == Type || other == Type) return Type;
-      // Prop or ISet
-      return this == other ? this : Type;
-    }
-  }
-
   /**
    * @author ice1000
    */
   sealed interface Sort extends FormTerm, StableWHNF {
     int lift();
-    @NotNull FormTerm.SortKind kind();
+    @NotNull SortKind kind();
     @NotNull FormTerm.Sort succ();
 
-    static @NotNull Sort create(@NotNull FormTerm.SortKind kind, int lift) {
+    static @NotNull Sort create(@NotNull SortKind kind, int lift) {
       return switch (kind) {
         case Type -> new Type(lift);
         case Set -> new Set(lift);
@@ -98,7 +84,7 @@ public sealed interface FormTerm extends Term {
   record Type(@Override int lift) implements Sort {
     public static final @NotNull FormTerm.Type ZERO = new Type(0);
 
-    @Override public @NotNull FormTerm.SortKind kind() {
+    @Override public @NotNull SortKind kind() {
       return SortKind.Type;
     }
 
@@ -110,7 +96,7 @@ public sealed interface FormTerm extends Term {
   record Set(@Override int lift) implements Sort {
     public static final @NotNull FormTerm.Set ZERO = new Set(0);
 
-    @Override public @NotNull FormTerm.SortKind kind() {
+    @Override public @NotNull SortKind kind() {
       return SortKind.Set;
     }
 
@@ -130,7 +116,7 @@ public sealed interface FormTerm extends Term {
       return 0;
     }
 
-    @Override public @NotNull FormTerm.SortKind kind() {
+    @Override public @NotNull SortKind kind() {
       return SortKind.Prop;
     }
 
@@ -150,7 +136,7 @@ public sealed interface FormTerm extends Term {
       return 0;
     }
 
-    @Override public @NotNull FormTerm.SortKind kind() {
+    @Override public @NotNull SortKind kind() {
       return SortKind.ISet;
     }
 

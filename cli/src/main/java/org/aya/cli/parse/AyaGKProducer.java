@@ -22,9 +22,9 @@ import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
-import org.aya.core.term.FormTerm;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.parser.ij.AyaPsiParser;
 import org.aya.parser.ij.GenericNode;
@@ -486,10 +486,10 @@ public record AyaGKProducer(
       return new Expr.HoleExpr(pos, true, filling);
     }
     if (node.is(UNIV_EXPR)) {
-      if (node.peekChild(KW_TYPE) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Type);
-      if (node.peekChild(KW_SET) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Set);
-      if (node.peekChild(KW_PROP) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.Prop);
-      if (node.peekChild(KW_ISET) != null) return new Expr.RawSortExpr(pos, FormTerm.SortKind.ISet);
+      if (node.peekChild(KW_TYPE) != null) return new Expr.RawSortExpr(pos, SortKind.Type);
+      if (node.peekChild(KW_SET) != null) return new Expr.RawSortExpr(pos, SortKind.Set);
+      if (node.peekChild(KW_PROP) != null) return new Expr.RawSortExpr(pos, SortKind.Prop);
+      if (node.peekChild(KW_ISET) != null) return new Expr.RawSortExpr(pos, SortKind.ISet);
       return unreachable(node);
     }
     if (node.is(LIT_INT_EXPR)) try {
@@ -605,7 +605,8 @@ public record AyaGKProducer(
     if (node.is(ARRAY_EXPR)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
 
-      if (arrayBlock == null) return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
+      if (arrayBlock == null)
+        return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
       if (arrayBlock.is(ARRAY_COMP_BLOCK)) return arrayCompBlock(arrayBlock, pos);
       if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }

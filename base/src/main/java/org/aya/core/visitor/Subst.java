@@ -100,7 +100,7 @@ public record Subst(
   }
 
   @Override public @Nullable LocalVar asRef(@NotNull Term term) {
-    return term instanceof RefTerm ref ? ref.var() : null;
+    return term instanceof RefTerm(var var) ? var : null;
   }
 
   @Override public @NotNull Subst derive() {

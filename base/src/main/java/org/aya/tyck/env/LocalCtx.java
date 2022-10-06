@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
@@ -70,6 +71,14 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
       return action.get();
     } finally {
       remove(SeqView.of(var));
+    }
+  }
+  default <T> T with(@NotNull Supplier<T> action, @NotNull Term.Param... param) {
+    for (var p : param) put(p);
+    try {
+      return action.get();
+    } finally {
+      remove(Seq.of(param).view().map(Term.Param::ref));
     }
   }
   default @NotNull ImmutableSeq<Term.Param> extract() {
