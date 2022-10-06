@@ -8,7 +8,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.generic.Constants;
-import org.aya.parser.ij.AyaParserDefinitionBase;
+import org.aya.parser.AyaParserDefinitionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;

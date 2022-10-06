@@ -5,10 +5,10 @@
 
 {
   // we only need the parser and element types.
-  parserClass='org.aya.parser.ij.AyaPsiParser'
-  elementTypeHolderClass='org.aya.parser.ij.AyaPsiElementTypes'
-  elementTypeClass='org.aya.parser.ij.AyaPsiElementType'
-  tokenTypeClass='org.aya.parser.ij.AyaPsiTokenType'
+  parserClass='org.aya.parser.AyaPsiParser'
+  elementTypeHolderClass='org.aya.parser.AyaPsiElementTypes'
+  elementTypeClass='org.aya.parser.AyaPsiElementType'
+  tokenTypeClass='org.aya.parser.AyaPsiTokenType'
 
   // we don't need psi here, but IJ plugin does --- Don't delete!
   psiClassPrefix='AyaPsi'
@@ -38,7 +38,8 @@
     KW_COUNTEREXAMPLE = 'counterexample'
 
     // universe
-    KW_ULIFT = 'regexp:ulift|\u2191'
+    // KW_ULIFT = 'regexp:ulift|\u2191'
+    KW_ULIFT = 'ulift'
     KW_TYPE = 'Type'
     KW_SET = 'Set'
     KW_PROP = 'Prop'
@@ -75,10 +76,13 @@
     KW_COMPLETED = 'completed'
 
     // symbols
-    KW_SIGMA =  'regexp:Sig|\u03a3'
+    // KW_SIGMA =  'regexp:Sig|\u03a3'
+    KW_SIGMA =  'Sig'
     KW_LAMBDA = 'regexp:[\\\u03bb]'
-    KW_PI = 'regexp:Pi|\u03a0'
-    KW_FORALL = 'regexp:forall|\u2200'
+    // KW_PI = 'regexp:Pi|\u03a0'
+    KW_PI = 'Pi'
+    // KW_FORALL = 'regexp:forall|\u2200'
+    KW_FORALL = 'forall'
 
     // ---- AyaLexer end: Keywords
 

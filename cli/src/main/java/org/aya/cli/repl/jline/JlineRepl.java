@@ -7,7 +7,7 @@ import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.util.AyaHome;
-import org.aya.parser.ij.AyaParserDefinitionBase;
+import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.style.AyaStyleFamily;
