@@ -245,7 +245,7 @@ public sealed interface Doc extends Docile {
 
   /**
    * Either `{ defaultDoc }` or `{\nflatDoc\n}`
-   * TODO: There should be a better impl for this!
+   * TODO: There should be a better impl for this! For example, a new Doc element class
    */
   static @NotNull Doc flatAltBracedBlock(Doc defaultDoc, Doc flatDoc) {
     return flatAlt(

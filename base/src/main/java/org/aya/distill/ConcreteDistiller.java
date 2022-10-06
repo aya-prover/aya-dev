@@ -19,6 +19,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,23 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         Doc.join(Doc.symbol("|"), idiom.barredApps().view()
           .map(app -> term(Outer.Free, app)))
       );
-      case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
+      case Expr.Do doExpr -> {
+        var doBlockDoc = doExpr.binds().map(bind -> {
+          if (bind.var() == LocalVar.IGNORED) {
+            return term(Outer.Free, bind.expr());
+          } else {
+            return visitDoBind(bind);
+          }
+        });
+
+        // Either not flat (single line) or full flat
+        yield Doc.flatAltBracedBlock(
+          Doc.commaList(doBlockDoc),
+          Doc.vcommaList(
+            doBlockDoc.map(x -> Doc.nest(2, x))     // TODO[hoshino]: constant indent?
+          )
+        );
+      }
     };
   }
 
@@ -310,6 +327,16 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         } else yield Doc.sep(Doc.symbol("|"), doc);
       }
     };
+  }
+
+  /**
+   * This function assumed that <code>doBind.var()</code> is not {@link org.aya.ref.LocalVar#IGNORED}
+   */
+  public @NotNull Doc visitDoBind(@NotNull Expr.DoBind doBind) {
+    return Doc.sep(
+      varDoc(doBind.var()),
+      Doc.symbol("<-"),
+      term(Outer.Free, doBind.expr()));
   }
 
   public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
