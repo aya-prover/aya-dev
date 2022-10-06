@@ -595,18 +595,21 @@ public record AyaGKProducer(
           .map(e -> {
             var bind = e.peekChild(DO_BINDING);
             if (bind != null) {
-              var wp = weakId(bind.child(WEAK_ID));
-              return new Expr.DoBind(wp.sourcePos(), new LocalVar(wp.data()), expr(bind.child(EXPR)));
+              return doBinding(bind);
             }
             var expr = e.child(EXPR);
             return new Expr.DoBind(sourcePosOf(expr), LocalVar.IGNORED, expr(expr));
           })
           .toImmutableSeq());
     }
-    // TODO: implement this
     if (node.is(ARRAY_EXPR)) {
-      return new Expr.HoleExpr(pos, false, null);
+      var arrayBlock = node.peekChild(ARRAY_BLOCK);
+
+      if (arrayBlock == null) return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
+      if (arrayBlock.is(ARRAY_COMP_BLOCK)) return arrayCompBlock(arrayBlock, pos);
+      if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
+
     return unreachable(node);
   }
 
@@ -724,6 +727,38 @@ public record AyaGKProducer(
     return unreachable(node);
   }
 
+  public @NotNull Expr.Array arrayCompBlock(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
+    // arrayCompBlock ::=
+    //   expr  BAR listComp
+    // [ x * y  |  x <- xs, y <- ys ]
+
+    var generator = expr(node.child(EXPR));
+    var bindings = node.child(LIST_COMP)
+      .childrenOfType(DO_BINDING)
+      .map(this::doBinding)
+      .toImmutableSeq();
+    // Recommend: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
+    var bindName = Constants.monadBind(entireSourcePos);
+    var pureName = Constants.functorPure(entireSourcePos);
+
+    return Expr.Array.newGenerator(entireSourcePos, generator, bindings, bindName, pureName);
+  }
+
+  public @NotNull Expr.Array arrayElementList(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
+    // arrayElementBlock ::=
+    //   exprList
+    // [ 1, 2, 3 ]
+
+    // Do we have to extract the producing of EXPR_LIST as a new function?
+    var exprs = node.child(EXPR_LIST).childrenOfType(EXPR)
+      .map(this::expr)
+      .toImmutableSeq();
+    var nilCtor = Constants.listNil(entireSourcePos);
+    var consCtor = Constants.listCons(entireSourcePos);
+
+    return Expr.Array.newList(entireSourcePos, exprs, nilCtor, consCtor);
+  }
+
   public @NotNull ImmutableSeq<Pattern> patterns(@NotNull GenericNode<?> node) {
     return node.childrenOfType(PATTERN).map(this::pattern).toImmutableSeq();
   }
@@ -790,6 +825,14 @@ public record AyaGKProducer(
     if (node.peekChild(KW_INLINE) != null) return Modifier.Inline;
     if (node.peekChild(KW_OVERLAP) != null) return Modifier.Overlap;
     return unreachable(node);
+  }
+
+  /**
+   * This function assumed that the node is DO_BINDING
+   */
+  public @NotNull Expr.DoBind doBinding(@NotNull GenericNode<?> node) {
+    var wp = weakId(node.child(WEAK_ID));
+    return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
   }
 
   public @NotNull Decl.Personality sampleModifiers(@Nullable GenericNode<?> node) {

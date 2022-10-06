@@ -154,6 +154,20 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           .map(app -> term(Outer.Free, app)))
       );
       case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
+      case Expr.Array arr -> arr.arrayBlock().fold(
+        left -> Doc.sep(
+          Doc.symbol("["),
+          term(Outer.Free, left.generator()),
+          Doc.symbol("|"),
+          Doc.commaList(left.binds().map(this::visitDoBinding)),
+          Doc.symbol("]")
+        ),
+        right -> Doc.sep(
+          Doc.symbol("["),
+          Doc.commaList(right.exprList().view().map(e -> term(Outer.Free, e))),   // Copied from Expr.Tup case
+          Doc.symbol("]")
+        )
+      );
     };
   }
 
@@ -310,6 +324,17 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         } else yield Doc.sep(Doc.symbol("|"), doc);
       }
     };
+  }
+
+  /**
+   * This function assumed that <code>binding.var()</code> is not {@link org.aya.ref.LocalVar.IGNORED}
+   */
+  public @NotNull Doc visitDoBinding(@NotNull Expr.DoBind binding) {
+    return Doc.sep(
+      varDoc(binding.var()),
+      Doc.symbol("<-"),
+      term(Outer.Free, binding.expr())
+    );
   }
 
   public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
