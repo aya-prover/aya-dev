@@ -242,6 +242,18 @@ public sealed interface Doc extends Docile {
   static @NotNull Doc braced(Doc doc) {
     return wrap("{", "}", doc);
   }
+
+  /**
+   * Either `{ defaultDoc }` or `{\nflatDoc\n}`
+   * TODO: There should be a better impl for this!
+   */
+  static @NotNull Doc flatAltBracedBlock(Doc defaultDoc, Doc flatDoc) {
+    return flatAlt(
+      stickySep(Doc.plain("{"), defaultDoc, Doc.plain("}")),
+      vcat(Doc.plain("{"), flatDoc, Doc.plain("}"))
+    );
+  }
+
   static @NotNull Doc angled(Doc doc) {
     return wrap("<", ">", doc);
   }
@@ -516,6 +528,10 @@ public sealed interface Doc extends Docile {
 
   @Contract("_ -> new") static @NotNull Doc commaList(@NotNull SeqLike<Doc> docs) {
     return join(COMMA, docs);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc vcommaList(@NotNull SeqLike<Doc> docs) {
+    return join(cat(plain(","), line()), docs);
   }
 
   @Contract("_, _ -> new") static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
