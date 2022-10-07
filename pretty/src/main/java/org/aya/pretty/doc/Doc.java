@@ -249,8 +249,8 @@ public sealed interface Doc extends Docile {
    */
   static @NotNull Doc flatAltBracedBlock(Doc defaultDoc, Doc flatDoc) {
     return flatAlt(
-      stickySep(Doc.plain("{"), defaultDoc, Doc.plain("}")),
-      vcat(Doc.plain("{"), flatDoc, Doc.plain("}"))
+      stickySep(Doc.symbol("{"), defaultDoc, Doc.symbol("}")),
+      vcat(Doc.symbol("{"), flatDoc, Doc.symbol("}"))
     );
   }
 
