@@ -155,21 +155,17 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           .map(app -> term(Outer.Free, app)))
       );
       case Expr.Do doExpr -> {
-        var doBlockDoc = doExpr.binds().map(bind -> {
-          if (bind.var() == LocalVar.IGNORED) {
-            return term(Outer.Free, bind.expr());
-          } else {
-            return visitDoBind(bind);
-          }
-        });
+        var doBlockDoc = doExpr.binds().map(this::visitDoBinding);
 
         // Either not flat (single line) or full flat
-        yield Doc.flatAltBracedBlock(
-          Doc.commaList(doBlockDoc),
-          Doc.vcommaList(
-            doBlockDoc.map(x -> Doc.nest(2, x))
-          )
-        );
+        yield Doc.stickySep(      // doExpr is atom! It cannot be `do\n{ ... }`
+          Doc.symbol("do"),
+          Doc.flatAltBracedBlock(
+            Doc.commaList(doBlockDoc),
+            Doc.vcommaList(
+              doBlockDoc.map(x -> Doc.nest(2, x))
+            )
+        ));
       }
     };
   }
@@ -332,11 +328,13 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
   /**
    * This function assumed that <code>doBind.var()</code> is not {@link org.aya.ref.LocalVar#IGNORED}
    */
-  public @NotNull Doc visitDoBind(@NotNull Expr.DoBind doBind) {
-    return Doc.sep(
-      varDoc(doBind.var()),
-      Doc.symbol("<-"),
-      term(Outer.Free, doBind.expr()));
+  public @NotNull Doc visitDoBinding(@NotNull Expr.DoBind doBind) {
+    return doBind.var() == LocalVar.IGNORED
+      ? term(Outer.Free, doBind.expr())
+      : Doc.sep(
+          varDoc(doBind.var()),
+          Doc.symbol("<-"),
+          term(Outer.Free, doBind.expr()));
   }
 
   public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {

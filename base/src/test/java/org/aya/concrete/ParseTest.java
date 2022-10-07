@@ -307,6 +307,24 @@ public class ParseTest {
         """);
   }
 
+  @Test public void doExpr() {
+    // Testing pretty but not parse! 😂
+    parseAndPretty("def foo => do { x <- xs, y <- ys, return (x * y) }", "def foo => do { x <- xs, y <- ys, return (x * y) }");
+    parseAndPretty("""
+      def foo => do
+        x <- xs, y <- ys,
+        return (x * y)
+      """, "def foo => do { x <- xs, y <- ys, return (x * y) }");
+    parseAndPretty("""
+      def foo => do {
+        x <- xs,
+        y <- ys,
+        return (x * y)
+      }
+      """, "def foo => do { x <- xs, y <- ys, return (x * y) }");
+    // TODO[hoshino]: How to let `do` flat? Improving parseAndPretty?
+  }
+
   private void parseAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
