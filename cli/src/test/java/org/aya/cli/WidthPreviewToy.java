@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
-import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -21,7 +20,7 @@ public interface WidthPreviewToy {
         return (x + y)
       }
       """, SourcePos.NONE).toDoc(DistillerOptions.pretty());
-    preview(doc, 150);
+    preview(doc, 30);
   }
 
   static void preview(Doc doc, int maxWidth) {
@@ -30,7 +29,7 @@ public interface WidthPreviewToy {
     try (var imgui = new JImGui();
          var manager = new DeallocatableObjectManager()) {
       var width = new NativeInt();
-      width.modifyValue(100);
+      width.modifyValue(maxWidth);
       var unicode = new NativeBool();
       manager.add(width);
       manager.add(unicode);

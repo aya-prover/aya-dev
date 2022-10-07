@@ -158,7 +158,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var doBlockDoc = doExpr.binds().map(this::visitDoBinding);
 
         // Either not flat (single line) or full flat
-        yield Doc.stickySep(      // doExpr is atom! It cannot be `do\n{ ... }`
+        yield Doc.stickySep(
+          // doExpr is atom! It cannot be `do\n{ ... }`
           Doc.styled(KEYWORD, "do"),
           Doc.flatAltBracedBlock(
             Doc.commaList(doBlockDoc),
