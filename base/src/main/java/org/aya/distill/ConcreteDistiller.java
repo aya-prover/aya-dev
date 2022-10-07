@@ -159,7 +159,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
         // Either not flat (single line) or full flat
         yield Doc.stickySep(      // doExpr is atom! It cannot be `do\n{ ... }`
-          Doc.symbol("do"),
+          Doc.styled(KEYWORD, "do"),
           Doc.flatAltBracedBlock(
             Doc.commaList(doBlockDoc),
             Doc.vcommaList(
