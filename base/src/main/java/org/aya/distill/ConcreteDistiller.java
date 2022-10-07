@@ -167,7 +167,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield Doc.flatAltBracedBlock(
           Doc.commaList(doBlockDoc),
           Doc.vcommaList(
-            doBlockDoc.map(x -> Doc.nest(2, x))     // TODO[hoshino]: constant indent?
+            doBlockDoc.map(x -> Doc.nest(2, x))
           )
         );
       }
