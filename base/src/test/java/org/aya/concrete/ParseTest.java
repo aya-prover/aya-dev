@@ -322,7 +322,7 @@ public class ParseTest {
         return (x * y)
       }
       """, "def foo => do { x <- xs, y <- ys, return (x * y) }");
-    // TODO[hoshino]: How to let `do` flat? Improving parseAndPretty?
+    // TODO[hoshino]: How to make `do-notation` flat (multi-line) in testing? Improving parseAndPretty?
   }
 
   private void parseAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
