@@ -104,6 +104,10 @@ public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaP
     @Override public int endOffset() {
       return node.endOffset();
     }
+
+    @Override public @NotNull String toDebugString() {
+      return node.toDebugString();
+    }
   }
 
   private static class AyaFleetParser extends FleetPsiParser.DefaultPsiParser {
