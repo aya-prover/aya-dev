@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
+import com.intellij.lexer.FlexLexer;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
@@ -13,7 +14,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.repl.CmdCompleter;
 import org.aya.repl.ReplUtil;
-import org.aya.repl.gk.JFlexAdapter;
 import org.aya.repl.gk.ReplHighlighter;
 import org.aya.repl.gk.ReplParser;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ public final class JlineRepl extends AyaRepl {
   public final @NotNull LineReader lineReader;
 
   // Needs to be instance member because it's stateful
-  public final @NotNull JFlexAdapter lexer = new JFlexAdapter(AyaParserDefinitionBase.createLexer(true));
+  public final @NotNull FlexLexer lexer = AyaParserDefinitionBase.createLexer(true);
 
   public JlineRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) throws IOException {
     super(modulePaths, config);
@@ -54,10 +54,10 @@ public final class JlineRepl extends AyaRepl {
       .history(new DefaultHistory())
       .parser(new ReplParser(commandManager, lexer))
       .highlighter(new ReplHighlighter(lexer) {
-        @Override protected @NotNull Doc highlight(@NotNull JFlexAdapter.Token t) {
+        @Override protected @NotNull Doc highlight(String text, @NotNull FlexLexer.Token t) {
           return AyaParserDefinitionBase.KEYWORDS.contains(t.type())
-            ? Doc.styled(BaseDistiller.KEYWORD, t.text())
-            : Doc.plain(t.text());
+            ? Doc.styled(BaseDistiller.KEYWORD, text)
+            : Doc.plain(text);
         }
       })
       .completer(new AggregateCompleter(

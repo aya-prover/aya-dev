@@ -2,10 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FleetPsiParser;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.builder.ASTMarkerVisitor;
 import com.intellij.psi.builder.FleetPsiBuilder;
+import com.intellij.psi.builder.MarkerNode;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -77,7 +78,7 @@ public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaP
     return node;
   }
 
-  private record NodeWrapper(@NotNull ASTMarkerVisitor.Node node) implements GenericNode<NodeWrapper> {
+  private record NodeWrapper(@NotNull MarkerNode node) implements GenericNode<NodeWrapper> {
     @Override public @NotNull IElementType elementType() {
       return node.elementType();
     }
@@ -102,16 +103,12 @@ public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaP
       else childrenView().forEach(c -> c.buildText(builder));
     }
 
-    @Override public int startOffset() {
-      return node.startOffset();
-    }
-
-    @Override public int endOffset() {
-      return node.endOffset();
+    @Override public @NotNull TextRange range() {
+      return node.range();
     }
 
     @Override public @NotNull String toDebugString() {
-      return node.toDebugString();
+      return node.toDebugString("  ");
     }
   }
 

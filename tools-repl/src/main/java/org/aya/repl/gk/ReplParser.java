@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl.gk;
 
+import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.TokenType;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
@@ -17,10 +18,10 @@ import java.util.List;
  * @param shellLike see {@link org.aya.repl.CommandArg#shellLike}
  */
 public record ReplParser(
-  @NotNull CommandManager cmd, @NotNull JFlexAdapter lexer,
+  @NotNull CommandManager cmd, @NotNull FlexLexer lexer,
   @NotNull DefaultParser shellLike
 ) implements Parser {
-  public ReplParser(@NotNull CommandManager cmd, @NotNull JFlexAdapter lexer) {
+  public ReplParser(@NotNull CommandManager cmd, @NotNull FlexLexer lexer) {
     this(cmd, lexer, new DefaultParser());
   }
 
@@ -61,32 +62,37 @@ public record ReplParser(
       if (shellAlike) return shellLike.parse(line, cursor, context);
     }
     // Drop whitespaces
-    var tokens = lexer.tokensNoEOF(line)
+    lexer.reset(line, 0, line.length(), 0);
+    var tokens = lexer.allTheWayDown()
       .view()
       .filter(x -> x.type() != TokenType.WHITE_SPACE)
       .toImmutableSeq();
     var wordOpt = tokens.firstOption(token ->
-      token.tokenStart() <= cursor && token.tokenEnd() >= cursor
-    );
+      token.range().containsOffset(cursor));
     // In case we're in a whitespace or at the end
     if (wordOpt.isEmpty()) {
-      var tokenOpt = tokens.firstOption(tok -> tok.tokenStart() >= cursor);
+      var tokenOpt = tokens.firstOption(tok -> tok.range().getStartOffset() >= cursor);
       if (tokenOpt.isEmpty())
-        return simplest(line, cursor, tokens.size(), tokens.stream().map(JFlexAdapter.Token::text).toList());
+        return simplest(line, cursor, tokens.size(), tokens
+          .map(tok -> textOf(line, tok)).asJava());
       var token = tokenOpt.get();
-      var wordCursor = cursor - token.tokenStart();
+      var wordCursor = cursor - token.range().getStartOffset();
       return new ReplParsedLine(
-        Math.max(wordCursor, 0), tokens.stream().map(JFlexAdapter.Token::text).toList(),
-        token.text(), tokens.size() - 1, line, cursor
+        Math.max(wordCursor, 0), tokens.map(tok -> textOf(line, tok)).asJava(),
+        textOf(line, token), tokens.size() - 1, line, cursor
       );
     }
     var word = wordOpt.get();
-    var wordText = word.text();
+    var wordText = textOf(line, word);
     return new ReplParsedLine(
-      cursor - word.tokenStart(),
-      tokens.stream().map(JFlexAdapter.Token::text).toList(),
+      cursor - word.range().getStartOffset(),
+      tokens.stream().map(tok -> textOf(line, tok)).toList(),
       wordText, tokens.indexOf(word), line, cursor
     );
+  }
+
+  @NotNull private static String textOf(String line, FlexLexer.Token tok) {
+    return tok.range().substring(line);
   }
 
   public @NotNull ReplParsedLine simplest(String line, int cursor, int wordIndex, List<@NotNull String> tokens) {

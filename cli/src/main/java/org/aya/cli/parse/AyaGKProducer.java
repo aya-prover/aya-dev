@@ -866,13 +866,13 @@ public record AyaGKProducer(
   }
 
   public static @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
-    var start = StringUtil.offsetToLineColumn(file.sourceCode(), node.startOffset());
-    var length = node.endOffset() - node.startOffset();
-    var endOffset = length == 0 ? node.endOffset() : node.endOffset() - 1;
+    var start = StringUtil.offsetToLineColumn(file.sourceCode(), node.range().getStartOffset());
+    var length = node.range().getLength();
+    var endOffset = node.range().getEndOffset() - (length == 0 ? 0 : 1);
     var end = node.isTerminalNode() || length == 0
       ? LineColumn.of(start.line, start.column + length - 1)
       : StringUtil.offsetToLineColumn(file.sourceCode(), endOffset);
-    return new SourcePos(file, node.startOffset(), endOffset,
+    return new SourcePos(file, node.range().getStartOffset(), endOffset,
       start.line + 1, start.column, end.line + 1, end.column);
   }
 }
