@@ -243,8 +243,9 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structSig = structRef.concrete.signature;
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
+        var fieldSort = structLvl instanceof FormTerm.Prop ? FormTerm.Type.ZERO : structLvl;
         var tele = tele(tycker, field.telescope, structLvl);
-        var result = tycker.zonk(tycker.inherit(field.result, structLvl)).wellTyped();
+        var result = tycker.zonk(tycker.inherit(field.result, fieldSort)).wellTyped();
         field.signature = new Def.Signature(tele, result);
       }
     }
