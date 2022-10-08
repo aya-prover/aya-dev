@@ -32,6 +32,7 @@ import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.DelayedReporter;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +78,6 @@ public class ReplCompiler {
     return new Desugarer.ForExpr(expr.view(), resolveInfo).commit();
   }
 
-  /** @see ReplCompiler#compileExpr(String, NormalizeMode) */
   public int loadToContext(@NotNull Path file) throws IOException {
     if (Files.isDirectory(file)) return loadLibrary(file);
     return loadFile(file);
@@ -141,15 +141,14 @@ public class ReplCompiler {
     }
   }
 
-  /**
-   * Adapted.
-   *
-   * @see #loadToContext
-   */
-  public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
+  public @Nullable Term computeType(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      // TODO: error report
-      return tyckExpr(new AyaGKParserImpl(reporter).repl(text).getRightValue()).type().normalize(new TyckState(primFactory), normalizeMode);
+      var parseTree = new AyaGKParserImpl(reporter).repl(text);
+      if (parseTree.isLeft()) {
+        reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
+        return null;
+      }
+      return tyckExpr(parseTree.getRightValue()).type().normalize(new TyckState(primFactory), normalizeMode);
     } catch (InterruptException ignored) {
       return null;
     }

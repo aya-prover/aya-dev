@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.repl.Command;
 import org.aya.repl.ReplUtil;
@@ -30,9 +31,16 @@ public interface ReplCommands {
 
   @NotNull Command SHOW_TYPE = new Command(ImmutableSeq.of("type"), "Show the type of the given expression") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
-      var type = repl.replCompiler.compileExpr(code.code(), repl.config.normalizeMode);
+      var type = repl.replCompiler.computeType(code.code(), repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
+    }
+  };
+
+  @NotNull Command SHOW_PARSE_TREE = new Command(ImmutableSeq.of("parse-tree"), "Show the parse tree of the given expression") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
+      var parseTree = new AyaGKParserImpl(repl.replCompiler.reporter).parseNode(code.code());
+      return Result.ok(parseTree.toDebugString(), true);
     }
   };
 

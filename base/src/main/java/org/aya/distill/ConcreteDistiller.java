@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
+import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
@@ -20,7 +21,6 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.util.StringEscapeUtil;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +49,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case Expr.LitStringExpr expr -> Doc.plain('"' + StringEscapeUtil.unescapeStringCharacters(expr.string()) + '"');
+      case Expr.LitStringExpr expr -> Doc.plain('"' + StringUtil.unescapeStringCharacters(expr.string()) + '"');
       case Expr.PiExpr expr -> {
         var data = new boolean[]{false, false};
         new ExprTraversal<Unit>() {

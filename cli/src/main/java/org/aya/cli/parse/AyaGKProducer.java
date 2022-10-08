@@ -31,7 +31,6 @@ import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
-import org.aya.util.StringEscapeUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
@@ -502,7 +501,7 @@ public record AyaGKProducer(
     if (node.is(LIT_STRING_EXPR)) {
       var text = node.tokenText();
       var content = text.substring(1, text.length() - 1);
-      return new Expr.LitStringExpr(pos, StringEscapeUtil.escapeStringCharacters(content));
+      return new Expr.LitStringExpr(pos, StringUtil.escapeStringCharacters(content));
     }
     if (node.is(ATOM_ULIFT_EXPR)) {
       var expr = expr(node.child(EXPR));

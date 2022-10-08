@@ -7,6 +7,7 @@ import com.intellij.psi.builder.ASTMarkerVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,9 @@ public interface GenericNode<N extends GenericNode<N>> {
   int endOffset();
   boolean isTerminalNode();
   @NotNull SeqView<N> childrenView();
+  default @NotNull @NonNls String toDebugString() {
+    return toString();
+  }
 
   default boolean is(@NotNull IElementType type) {
     return elementType() == type;
