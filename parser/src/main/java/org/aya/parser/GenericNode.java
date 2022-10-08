@@ -3,7 +3,7 @@
 package org.aya.parser;
 
 import com.intellij.AyaModified;
-import com.intellij.psi.builder.ASTMarkerVisitor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
@@ -13,13 +13,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/** Generalized {@link ASTMarkerVisitor.Node} for reusing psi interfaces in Producer */
+/** Generalized {@link com.intellij.psi.builder.MarkerNode} for reusing psi interfaces in Producer */
 @AyaModified
 public interface GenericNode<N extends GenericNode<N>> {
   @NotNull IElementType elementType();
   @NotNull String tokenText();
-  int startOffset();
-  int endOffset();
+  @NotNull TextRange range();
   boolean isTerminalNode();
   @NotNull SeqView<N> childrenView();
   default @NotNull @NonNls String toDebugString() {
