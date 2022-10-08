@@ -313,11 +313,11 @@ public class LibraryCompiler {
 
     private void tyckOne(@NotNull LibrarySource file) {
       var moduleName = file.moduleName();
+      reporter.reportNest("[Tyck] %s (%s)".formatted(
+        QualifiedID.join(moduleName), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().get() == null)
         throw new InternalException("Unable to load module: " + moduleName);
-      reporter.reportNest("[Tyck] %s (%s)".formatted(
-        QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
     }
   }
 

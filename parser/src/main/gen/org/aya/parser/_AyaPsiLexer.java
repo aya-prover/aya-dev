@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 
 import static com.intellij.psi.TokenType.BAD_CHARACTER;
 import static com.intellij.psi.TokenType.WHITE_SPACE;
+import static org.aya.parser.AyaPsiElementTypes.*;
 
 
 /**
@@ -978,142 +979,142 @@ public class _AyaPsiLexer implements FlexLexer {
             // fall through
           case 85: break;
           case 3: 
-            { return AyaPsiElementTypes.ID;
+            { return ID;
             } 
             // fall through
           case 86: break;
           case 4: 
-            { return AyaPsiElementTypes.COLON;
+            { return COLON;
             } 
             // fall through
           case 87: break;
           case 5: 
-            { return AyaPsiElementTypes.KW_LAMBDA;
+            { return KW_LAMBDA;
             } 
             // fall through
           case 88: break;
           case 6: 
-            { return AyaPsiElementTypes.NUMBER;
+            { return NUMBER;
             } 
             // fall through
           case 89: break;
           case 7: 
-            { return AyaPsiElementTypes.KW_ULIFT;
+            { return KW_ULIFT;
             } 
             // fall through
           case 90: break;
           case 8: 
-            { return AyaPsiElementTypes.KW_SIGMA;
+            { return KW_SIGMA;
             } 
             // fall through
           case 91: break;
           case 9: 
-            { return AyaPsiElementTypes.KW_PI;
+            { return KW_PI;
             } 
             // fall through
           case 92: break;
           case 10: 
-            { return AyaPsiElementTypes.KW_FORALL;
+            { return KW_FORALL;
             } 
             // fall through
           case 93: break;
           case 11: 
-            { return AyaPsiElementTypes.TO;
+            { return TO;
             } 
             // fall through
           case 94: break;
           case 12: 
-            { return AyaPsiElementTypes.LARROW;
+            { return LARROW;
             } 
             // fall through
           case 95: break;
           case 13: 
-            { return AyaPsiElementTypes.IMPLIES;
+            { return IMPLIES;
             } 
             // fall through
           case 96: break;
           case 14: 
-            { return AyaPsiElementTypes.LPAREN;
+            { return LPAREN;
             } 
             // fall through
           case 97: break;
           case 15: 
-            { return AyaPsiElementTypes.BAR;
+            { return BAR;
             } 
             // fall through
           case 98: break;
           case 16: 
-            { return AyaPsiElementTypes.LIDIOM;
+            { return LIDIOM;
             } 
             // fall through
           case 99: break;
           case 17: 
-            { return AyaPsiElementTypes.RPAREN;
+            { return RPAREN;
             } 
             // fall through
           case 100: break;
           case 18: 
-            { return AyaPsiElementTypes.RIDIOM;
+            { return RIDIOM;
             } 
             // fall through
           case 101: break;
           case 19: 
-            { return AyaPsiElementTypes.LBRACE;
+            { return LBRACE;
             } 
             // fall through
           case 102: break;
           case 20: 
-            { return AyaPsiElementTypes.LPARTIAL;
+            { return LPARTIAL;
             } 
             // fall through
           case 103: break;
           case 21: 
-            { return AyaPsiElementTypes.RBRACE;
+            { return RBRACE;
             } 
             // fall through
           case 104: break;
           case 22: 
-            { return AyaPsiElementTypes.RPARTIAL;
+            { return RPARTIAL;
             } 
             // fall through
           case 105: break;
           case 23: 
-            { return AyaPsiElementTypes.LARRAY;
+            { return LARRAY;
             } 
             // fall through
           case 106: break;
           case 24: 
-            { return AyaPsiElementTypes.LPATH;
+            { return LPATH;
             } 
             // fall through
           case 107: break;
           case 25: 
-            { return AyaPsiElementTypes.RARRAY;
+            { return RARRAY;
             } 
             // fall through
           case 108: break;
           case 26: 
-            { return AyaPsiElementTypes.RPATH;
+            { return RPATH;
             } 
             // fall through
           case 109: break;
           case 27: 
-            { return AyaPsiElementTypes.DOT;
+            { return DOT;
             } 
             // fall through
           case 110: break;
           case 28: 
-            { return AyaPsiElementTypes.COMMA;
+            { return COMMA;
             } 
             // fall through
           case 111: break;
           case 29: 
-            { return AyaPsiElementTypes.AT;
+            { return AT;
             } 
             // fall through
           case 112: break;
           case 30: 
-            { return AyaPsiElementTypes.CALM_FACE;
+            { return CALM_FACE;
             } 
             // fall through
           case 113: break;
@@ -1123,17 +1124,17 @@ public class _AyaPsiLexer implements FlexLexer {
             // fall through
           case 114: break;
           case 32: 
-            { return getTokenStart() == 0 && isRepl ? AyaPsiElementTypes.REPL_COMMAND : AyaPsiElementTypes.ID;
+            { return getTokenStart() == 0 && isRepl ? REPL_COMMAND : ID;
             } 
             // fall through
           case 115: break;
           case 33: 
-            { return AyaPsiElementTypes.COLON2;
+            { return COLON2;
             } 
             // fall through
           case 116: break;
           case 34: 
-            { return AyaPsiElementTypes.DEFINE_AS;
+            { return DEFINE_AS;
             } 
             // fall through
           case 117: break;
@@ -1143,17 +1144,17 @@ public class _AyaPsiLexer implements FlexLexer {
             // fall through
           case 118: break;
           case 36: 
-            { return AyaPsiElementTypes.STRING;
+            { return STRING;
             } 
             // fall through
           case 119: break;
           case 37: 
-            { return AyaPsiElementTypes.KW_IN;
+            { return KW_IN;
             } 
             // fall through
           case 120: break;
           case 38: 
-            { return AyaPsiElementTypes.KW_AS;
+            { return KW_AS;
             } 
             // fall through
           case 121: break;
@@ -1163,22 +1164,22 @@ public class _AyaPsiLexer implements FlexLexer {
             // fall through
           case 122: break;
           case 40: 
-            { return AyaPsiElementTypes.LGOAL;
+            { return LGOAL;
             } 
             // fall through
           case 123: break;
           case 41: 
-            { return AyaPsiElementTypes.KW_DO;
+            { return KW_DO;
             } 
             // fall through
           case 124: break;
           case 42: 
-            { return AyaPsiElementTypes.SUCHTHAT;
+            { return SUCHTHAT;
             } 
             // fall through
           case 125: break;
           case 43: 
-            { return AyaPsiElementTypes.RGOAL;
+            { return RGOAL;
             } 
             // fall through
           case 126: break;
@@ -1198,187 +1199,187 @@ public class _AyaPsiLexer implements FlexLexer {
             // fall through
           case 129: break;
           case 47: 
-            { return AyaPsiElementTypes.KW_NEW;
+            { return KW_NEW;
             } 
             // fall through
           case 130: break;
           case 48: 
-            { return AyaPsiElementTypes.KW_LET;
+            { return KW_LET;
             } 
             // fall through
           case 131: break;
           case 49: 
-            { return AyaPsiElementTypes.KW_SET;
+            { return KW_SET;
             } 
             // fall through
           case 132: break;
           case 50: 
-            { return AyaPsiElementTypes.KW_DEF;
+            { return KW_DEF;
             } 
             // fall through
           case 133: break;
           case 51: 
-            { return AyaPsiElementTypes.KW_FIXL;
+            { return KW_FIXL;
             } 
             // fall through
           case 134: break;
           case 52: 
-            { return AyaPsiElementTypes.KW_FIXR;
+            { return KW_FIXR;
             } 
             // fall through
           case 135: break;
           case 53: 
-            { return AyaPsiElementTypes.KW_THIS;
+            { return KW_THIS;
             } 
             // fall through
           case 136: break;
           case 54: 
-            { return AyaPsiElementTypes.KW_PROP;
+            { return KW_PROP;
             } 
             // fall through
           case 137: break;
           case 55: 
-            { return AyaPsiElementTypes.KW_OPEN;
+            { return KW_OPEN;
             } 
             // fall through
           case 138: break;
           case 56: 
-            { return AyaPsiElementTypes.KW_PRIM;
+            { return KW_PRIM;
             } 
             // fall through
           case 139: break;
           case 57: 
-            { return AyaPsiElementTypes.KW_TYPE;
+            { return KW_TYPE;
             } 
             // fall through
           case 140: break;
           case 58: 
-            { return AyaPsiElementTypes.KW_ISET;
+            { return KW_ISET;
             } 
             // fall through
           case 141: break;
           case 59: 
-            { return AyaPsiElementTypes.KW_DATA;
+            { return KW_DATA;
             } 
             // fall through
           case 142: break;
           case 60: 
-            { return AyaPsiElementTypes.KW_USING;
+            { return KW_USING;
             } 
             // fall through
           case 143: break;
           case 61: 
-            { return AyaPsiElementTypes.KW_INFIX;
+            { return KW_INFIX;
             } 
             // fall through
           case 144: break;
           case 62: 
-            { return AyaPsiElementTypes.KW_MATCH;
+            { return KW_MATCH;
             } 
             // fall through
           case 145: break;
           case 63: 
-            { return AyaPsiElementTypes.KW_LOOSER;
+            { return KW_LOOSER;
             } 
             // fall through
           case 146: break;
           case 64: 
-            { return AyaPsiElementTypes.KW_INLINE;
+            { return KW_INLINE;
             } 
             // fall through
           case 147: break;
           case 65: 
-            { return AyaPsiElementTypes.KW_INFIXL;
+            { return KW_INFIXL;
             } 
             // fall through
           case 148: break;
           case 66: 
-            { return AyaPsiElementTypes.KW_INFIXR;
+            { return KW_INFIXR;
             } 
             // fall through
           case 149: break;
           case 67: 
-            { return AyaPsiElementTypes.KW_IMPORT;
+            { return KW_IMPORT;
             } 
             // fall through
           case 150: break;
           case 68: 
-            { return AyaPsiElementTypes.KW_OPAQUE;
+            { return KW_OPAQUE;
             } 
             // fall through
           case 151: break;
           case 69: 
-            { return AyaPsiElementTypes.KW_HIDING;
+            { return KW_HIDING;
             } 
             // fall through
           case 152: break;
           case 70: 
-            { return AyaPsiElementTypes.KW_STRUCT;
+            { return KW_STRUCT;
             } 
             // fall through
           case 153: break;
           case 71: 
-            { return AyaPsiElementTypes.KW_MODULE;
+            { return KW_MODULE;
             } 
             // fall through
           case 154: break;
           case 72: 
-            { return AyaPsiElementTypes.KW_PUBLIC;
+            { return KW_PUBLIC;
             } 
             // fall through
           case 155: break;
           case 73: 
-            { return AyaPsiElementTypes.KW_COERCE;
+            { return KW_COERCE;
             } 
             // fall through
           case 156: break;
           case 74: 
-            { return AyaPsiElementTypes.KW_CODATA;
+            { return KW_CODATA;
             } 
             // fall through
           case 157: break;
           case 75: 
-            { return AyaPsiElementTypes.KW_TIGHTER;
+            { return KW_TIGHTER;
             } 
             // fall through
           case 158: break;
           case 76: 
-            { return AyaPsiElementTypes.KW_OVERLAP;
+            { return KW_OVERLAP;
             } 
             // fall through
           case 159: break;
           case 77: 
-            { return AyaPsiElementTypes.KW_EXTENDS;
+            { return KW_EXTENDS;
             } 
             // fall through
           case 160: break;
           case 78: 
-            { return AyaPsiElementTypes.KW_EXAMPLE;
+            { return KW_EXAMPLE;
             } 
             // fall through
           case 161: break;
           case 79: 
-            { return AyaPsiElementTypes.KW_PRIVATE;
+            { return KW_PRIVATE;
             } 
             // fall through
           case 162: break;
           case 80: 
-            { return AyaPsiElementTypes.KW_OVERRIDE;
+            { return KW_OVERRIDE;
             } 
             // fall through
           case 163: break;
           case 81: 
-            { return AyaPsiElementTypes.KW_VARIABLE;
+            { return KW_VARIABLE;
             } 
             // fall through
           case 164: break;
           case 82: 
-            { return AyaPsiElementTypes.KW_COMPLETED;
+            { return KW_COMPLETED;
             } 
             // fall through
           case 165: break;
           case 83: 
-            { return AyaPsiElementTypes.KW_COUNTEREXAMPLE;
+            { return KW_COUNTEREXAMPLE;
             } 
             // fall through
           case 166: break;
