@@ -22,6 +22,7 @@ import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.GenericNode;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,8 +44,12 @@ public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaP
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile) {
-    // TODO: error report
-    return parse(sourceFile).getLeftValue();
+    var parse = parse(sourceFile);
+    if (parse.isRight()) {
+      reporter.reportString("Expect statement, got repl expression", Problem.Severity.ERROR);
+      return ImmutableSeq.empty();
+    }
+    return parse.getLeftValue();
   }
 
   private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull SourceFile sourceFile) {

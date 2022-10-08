@@ -143,7 +143,6 @@ public class ReplCompiler {
 
   public @Nullable Term computeType(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      // TODO: error report
       var parseTree = new AyaGKParserImpl(reporter).repl(text);
       if (parseTree.isLeft()) {
         reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
