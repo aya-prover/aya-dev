@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ReplParserTest {
+  public static final AyaGKParserImpl AYA_GK_PARSER = new AyaGKParserImpl(ThrowingReporter.INSTANCE);
+
   @Test public void issue358() {
-    var sucZero = new AyaGKParserImpl(ThrowingReporter.INSTANCE).repl("suc zero").getRightValue();
+    var sucZero = AYA_GK_PARSER.repl("suc zero").getRightValue();
     assertTrue(sucZero instanceof Expr.BinOpSeq);
   }
 }
