@@ -1,0 +1,4 @@
+open struct Squash (A: Type): Prop
+  | squash: A
+
+def squashElim {A: Type} {P: Prop} (f: A -> P) (squash: Squash A): P => f squash.squash
