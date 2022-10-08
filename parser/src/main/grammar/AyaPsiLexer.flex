@@ -1,6 +1,7 @@
-package org.aya.parser.ij;
+package org.aya.parser;
 
-import com.intellij.psi.tree.IElementType;import org.aya.parser.AyaParserDefinitionBase;
+import com.intellij.lexer.FlexLexer;
+import com.intellij.psi.tree.IElementType;
 
 import static com.intellij.psi.TokenType.BAD_CHARACTER;
 import static com.intellij.psi.TokenType.WHITE_SPACE;
