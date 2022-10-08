@@ -722,6 +722,13 @@ public record AyaGKProducer(
         ? (ignored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
         : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
     }
+    if (node.is(ATOM_LIST_PATTERN)) {
+      // atomListPattern ::= LARRAY patterns RARRAY (KW_AS weakId)?
+
+      var patterns = node.child(PATTERNS)
+        .childrenOfType(PATTERN)
+        .map(x -> x.child(ATOM_PATTERNS));
+    }
     if (node.is(ATOM_NUMBER_PATTERN))
       return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));
     if (node.is(ATOM_ABSURD_PATTERN)) return ex -> new Pattern.Absurd(sourcePos, ex);
