@@ -6,10 +6,11 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.cli.parse.AyaGKParserImpl;
-import org.aya.concrete.stmt.*;
-import org.aya.generic.Constants;
+import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.LocalVar;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
@@ -318,7 +319,8 @@ public class ParseTest {
 
   @Test public void doExpr() {
     // Testing pretty but not parse! 😂
-    parseAndPretty("def foo => do { x <- xs, y <- ys, return (x * y) }", "def foo => do { x <- xs, y <- ys, return (x * y) }");
+    parseAndPretty("def foo => do { x <- xs, y <- ys, return (x * y) }",
+      "def foo => do { x <- xs, y <- ys, return (x * y) }");
     parseAndPretty("""
       def foo => do
         x <- xs, y <- ys,
@@ -331,14 +333,29 @@ public class ParseTest {
         return (x * y)
       }
       """, "def foo => do { x <- xs, y <- ys, return (x * y) }");
-    // TODO[hoshino]: How to make `do-notation` flat (multi-line) in testing? Improving parseAndPretty?
+    parseAndPretty("""
+      def foo => do {
+        x <- f xs,
+        y <- ff ys,
+        someFuncIgnored x,
+        z <- fff zs,
+        return (x * y * z)
+      }
+      """, """
+      def foo => do {
+        x <- f xs,
+        y <- ff ys,
+        someFuncIgnored x,
+        z <- fff zs,
+        return (x * y * z)
+      }""");
   }
 
   private void parseAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
         .map(s -> s.toDoc(DistillerOptions.debug())))
-      .debugRender()
+      .renderWithPageWidth(80, false)
       .trim());
   }
 
