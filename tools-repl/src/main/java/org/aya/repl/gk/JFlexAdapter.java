@@ -5,16 +5,15 @@ package org.aya.repl.gk;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import kala.collection.Seq;
-import kala.function.CheckedSupplier;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
+import java.util.function.Supplier;
 
 public record JFlexAdapter(@NotNull FlexLexer lexer) {
   /** @return parsed tokens without the last EOF token */
   @NotNull Seq<Token> tokensNoEOF(String line) {
     lexer.reset(line, 0, line.length(), 0);
-    CheckedSupplier<IElementType, IOException> action = lexer::advance;
+    Supplier<IElementType> action = lexer::advanceUnchecked;
     return Seq.generateUntilNull(() -> {
       var type = action.get();
       if (type == null) return null;
