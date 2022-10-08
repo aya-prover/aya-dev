@@ -9,7 +9,6 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.stmt.Command;
@@ -92,7 +91,7 @@ public class LibraryCompiler {
 
   private void parse(@NotNull LibrarySource source) throws IOException {
     var owner = source.owner();
-    var program = new AyaParserImpl(reporter).program(owner.locator(), source.file());
+    var program = advisor.createParser(reporter).program(owner.locator(), source.file());
     source.program().set(program);
   }
 
@@ -314,11 +313,11 @@ public class LibraryCompiler {
 
     private void tyckOne(@NotNull LibrarySource file) {
       var moduleName = file.moduleName();
+      reporter.reportNest("[Tyck] %s (%s)".formatted(
+        QualifiedID.join(moduleName), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().get() == null)
         throw new InternalException("Unable to load module: " + moduleName);
-      reporter.reportNest("[Tyck] %s (%s)".formatted(
-        QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
     }
   }
 

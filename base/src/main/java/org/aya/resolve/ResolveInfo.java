@@ -4,6 +4,7 @@ package org.aya.resolve;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
@@ -51,7 +52,7 @@ public record ResolveInfo(
 
   public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull RenamedOpDecl renamed, @NotNull BindBlock bind) {
     defVar.opDeclRename.put(thisModule().moduleName(), renamed);
-    opRename.put(defVar, Tuple2.of(renamed, bind));
+    opRename.put(defVar, Tuple.of(renamed, bind));
   }
 
   public void open(@NotNull ResolveInfo other, @NotNull SourcePos sourcePos, @NotNull Stmt.Accessibility acc) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -18,7 +18,7 @@ public interface CommandArg {
    *
    * @return true to parse the argument with the default parser,
    * otherwise to parse with the antlr-based parser.
-   * @see org.aya.repl.antlr.ReplParser
+   * @see org.aya.repl.gk.ReplParser
    */
   boolean shellLike();
 

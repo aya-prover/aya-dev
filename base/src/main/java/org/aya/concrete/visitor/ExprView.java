@@ -16,11 +16,11 @@ import org.jetbrains.annotations.NotNull;
 public interface ExprView {
   @NotNull Expr initial();
 
-  default @NotNull Expr pre(@NotNull Expr expr) { return expr; }
+  default @NotNull Expr pre(@NotNull Expr expr) {return expr;}
 
-  default @NotNull Expr post(@NotNull Expr expr) { return expr; }
+  default @NotNull Expr post(@NotNull Expr expr) {return expr;}
 
-  private @NotNull Expr commit(@NotNull Expr expr) { return post(traverse(pre(expr))); }
+  private @NotNull Expr commit(@NotNull Expr expr) {return post(traverse(pre(expr)));}
 
   private Expr.@NotNull Param commit(Expr.@NotNull Param param) {
     var type = commit(param.type());
@@ -42,13 +42,14 @@ public interface ExprView {
 
   private Expr.@NotNull PartEl commit(Expr.@NotNull PartEl partial) {
     var clauses = partial.clauses().map(cls -> Tuple.of(commit(cls._1), commit(cls._2)));
-    if (clauses == partial.clauses()) return partial;
+    if (clauses.allMatchWith(partial.clauses(), (l, r) ->
+      l._1 == r._1 && l._2 == r._2)) return partial;
     return new Expr.PartEl(partial.sourcePos(), clauses);
   }
 
   private @NotNull Expr traverse(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.RefExpr ref -> ref; // I don't know
+      case Expr.RefExpr ref -> ref;
       case Expr.UnresolvedExpr unresolved -> unresolved;
       case Expr.LamExpr lam -> {
         var param = commit(lam.param());
@@ -74,11 +75,11 @@ public interface ExprView {
         yield new Expr.LiftExpr(lift.sourcePos(), inner, lift.lift());
       }
       case Expr.SortExpr univ -> univ;
-      case Expr.AppExpr app -> {
-        var func = commit(app.function());
-        var arg = commit(app.argument());
-        if (func == app.function() && arg == app.argument()) yield app;
-        yield new Expr.AppExpr(app.sourcePos(), func, arg);
+      case Expr.AppExpr(var pos, var f, var a) -> {
+        var func = commit(f);
+        var arg = commit(a);
+        if (func == f && arg == a) yield expr;
+        yield new Expr.AppExpr(pos, func, arg);
       }
       case Expr.HoleExpr hole -> {
         var filling = hole.filling();
@@ -126,6 +127,48 @@ public interface ExprView {
       }
       case Expr.ErrorExpr error -> error;
       case Expr.MetaPat meta -> meta;
+      case Expr.Idiom idiom -> {
+        var newInner = idiom.barredApps().map(this::commit);
+        var newNames = idiom.names().fmap(this::commit);
+        if (newInner.sameElements(idiom.barredApps()) && newNames.identical(idiom.names()))
+          yield expr;
+        yield new Expr.Idiom(idiom.sourcePos(), newNames, newInner);
+      }
+      case Expr.Do doNotation -> {
+        var lamExprs = doNotation.binds().map(x ->
+          new Expr.DoBind(x.sourcePos(), x.var(), commit(x.expr())));
+        var bindName = commit(doNotation.bindName());
+        if (lamExprs.sameElements(doNotation.binds()) && bindName == doNotation.bindName())
+          yield doNotation;
+        yield new Expr.Do(doNotation.sourcePos(), bindName, lamExprs);
+      }
+      case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
+        left -> {
+          var generator = commit(left.generator());
+          var bindings = left.binds().map(binding ->
+            new Expr.DoBind(binding.sourcePos(), binding.var(), commit(binding.expr()))
+          );
+          var bindName = commit(left.bindName());
+          var pureName = commit(left.pureName());
+
+          if (generator == left.generator() && bindings.sameElements(left.binds()) && bindName == left.bindName() && pureName == left.pureName()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindings, bindName, pureName);
+          }
+        },
+        right -> {
+          var exprs = right.exprList().map(this::commit);
+          var nilCtor = commit(right.nilCtor());
+          var consCtor = commit(right.consCtor());
+
+          if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs, nilCtor, consCtor);
+          }
+        }
+      );
     };
   }
 

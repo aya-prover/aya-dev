@@ -2,10 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
@@ -35,7 +37,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     var ctxTele = extract();
     var meta = Meta.from(ctxTele, name, type, sourcePos);
     var hole = new CallTerm.Hole(meta, 0, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
-    return Tuple2.of(hole, IntroTerm.Lambda.make(meta.telescope, hole));
+    return Tuple.of(hole, IntroTerm.Lambda.make(meta.telescope, hole));
   }
   default <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
     return with(param.ref(), param.type(), action);
@@ -69,6 +71,14 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
       return action.get();
     } finally {
       remove(SeqView.of(var));
+    }
+  }
+  default <T> T with(@NotNull Supplier<T> action, @NotNull Term.Param... param) {
+    for (var p : param) put(p);
+    try {
+      return action.get();
+    } finally {
+      remove(Seq.of(param).view().map(Term.Param::ref));
     }
   }
   default @NotNull ImmutableSeq<Term.Param> extract() {

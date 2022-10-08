@@ -106,6 +106,10 @@ public class AyaLanguageServer implements LanguageServer {
     // client.registerCapability("workspace/didChangeWatchedFiles");
   }
 
+  @Override public List<TextEdit> willSaveWaitUntilTextDocument(WillSaveTextDocumentParams params) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override public InitializeResult initialize(InitializeParams params) {
     var cap = new ServerCapabilities();
     cap.textDocumentSync = 0;
@@ -242,6 +246,10 @@ public class AyaLanguageServer implements LanguageServer {
     return Optional.empty();
   }
 
+  @Override public CompletionItem resolveCompletionItem(CompletionItem params) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override public Optional<List<? extends GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
@@ -257,6 +265,11 @@ public class AyaLanguageServer implements LanguageServer {
     return Optional.of(new Hover(List.of(marked)));
   }
 
+  @Override
+  public Optional<SignatureHelp> signatureHelp(TextDocumentPositionParams params) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override public Optional<List<Location>> findReferences(ReferenceParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
@@ -268,6 +281,10 @@ public class AyaLanguageServer implements LanguageServer {
     if (source == null) return null;
     var renames = Rename.rename(source, params.position, params.newName, libraries.view());
     return new WorkspaceEdit(renames);
+  }
+
+  @Override public List<TextEdit> formatting(DocumentFormattingParams params) {
+    throw new UnsupportedOperationException();
   }
 
   @Override public Optional<RenameResponse> prepareRename(TextDocumentPositionParams params) {
@@ -313,10 +330,19 @@ public class AyaLanguageServer implements LanguageServer {
       .asJava();
   }
 
+  @Override
+  public List<CodeAction> codeAction(CodeActionParams params) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override public List<FoldingRange> foldingRange(FoldingRangeParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
     return Folding.invoke(source);
+  }
+
+  @Override public List<DocumentLink> documentLink(DocumentLinkParams params) {
+    throw new UnsupportedOperationException();
   }
 
   @Override public List<InlayHint> inlayHint(InlayHintParams params) {

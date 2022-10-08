@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
+import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
@@ -19,7 +20,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.StringEscapeUtil;
+import org.aya.ref.LocalVar;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case Expr.LitStringExpr expr -> Doc.plain('"' + StringEscapeUtil.unescapeStringCharacters(expr.string()) + '"');
+      case Expr.LitStringExpr expr -> Doc.plain('"' + StringUtil.unescapeStringCharacters(expr.string()) + '"');
       case Expr.PiExpr expr -> {
         var data = new boolean[]{false, false};
         new ExprTraversal<Unit>() {
@@ -147,6 +148,39 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         Doc.symbol("|]"),
         path.type().toDoc(options),
         path.partial().toDoc(options)
+      );
+      case Expr.Idiom idiom -> Doc.wrap(
+        "(|", "|)",
+        Doc.join(Doc.symbol("|"), idiom.barredApps().view()
+          .map(app -> term(Outer.Free, app)))
+      );
+      case Expr.Do doExpr -> {
+        var doBlockDoc = doExpr.binds().map(this::visitDoBinding);
+
+        // Either not flat (single line) or full flat
+        yield Doc.stickySep(
+          // doExpr is atom! It cannot be `do\n{ ... }`
+          Doc.styled(KEYWORD, "do"),
+          Doc.flatAltBracedBlock(
+            Doc.commaList(doBlockDoc),
+            Doc.vcommaList(
+              doBlockDoc.map(x -> Doc.nest(2, x))
+            )
+          ));
+      }
+      case Expr.Array arr -> arr.arrayBlock().fold(
+        left -> Doc.sep(
+          Doc.symbol("["),
+          term(Outer.Free, left.generator()),
+          Doc.symbol("|"),
+          Doc.commaList(left.binds().map(this::visitDoBinding)),
+          Doc.symbol("]")
+        ),
+        right -> Doc.sep(
+          Doc.symbol("["),
+          Doc.commaList(right.exprList().view().map(e -> term(Outer.Free, e))),   // Copied from Expr.Tup case
+          Doc.symbol("]")
+        )
       );
     };
   }
@@ -304,6 +338,18 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         } else yield Doc.sep(Doc.symbol("|"), doc);
       }
     };
+  }
+
+  /**
+   * This function assumed that <code>doBind.var()</code> is not {@link org.aya.ref.LocalVar#IGNORED}
+   */
+  public @NotNull Doc visitDoBinding(@NotNull Expr.DoBind doBind) {
+    return doBind.var() == LocalVar.IGNORED
+      ? term(Outer.Free, doBind.expr())
+      : Doc.sep(
+          varDoc(doBind.var()),
+          Doc.symbol("<-"),
+          term(Outer.Free, doBind.expr()));
   }
 
   public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {

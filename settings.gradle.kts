@@ -11,10 +11,10 @@ dependencyResolutionManagement {
 
 include(
   "cli",
-  "parser",
   "tools",
   "tools-repl",
   "base",
   "pretty",
+  "parser",
   "lsp",
 )

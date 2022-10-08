@@ -15,8 +15,9 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+@SuppressWarnings("UnknownLanguage")
 public class TracingTest {
-  @Language("TEXT")
+  @Language("Aya")
   public static final String CODE = """
     open data Nat : Type | zero | suc Nat
     def max (a b : Nat) : Nat
@@ -31,7 +32,7 @@ public class TracingTest {
     assertEquals(1, tops.size());
   }
 
-  @NotNull private Trace.Builder mkBuilder(@Language("TEXT") String code) {
+  @NotNull private Trace.Builder mkBuilder(@Language("Aya") String code) {
     var res = TyckDeclTest.successDesugarDecls(code);
     var decls = res._2;
     var builder = new Trace.Builder();

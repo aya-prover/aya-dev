@@ -7,7 +7,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple2;
+import kala.tuple.Tuple;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -95,17 +95,10 @@ public sealed abstract class TermComparator permits Unifier {
         case FormTerm.Set set -> true;
         case FormTerm.Type type -> false;
       };
-      case FormTerm.Prop prop -> switch (r) {
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop1 -> true;
-        case FormTerm.Set set -> false;
-        case FormTerm.Type type -> false;
-      };
+      case FormTerm.Prop prop -> r instanceof FormTerm.Prop;
       case FormTerm.Set lt -> switch (r) {
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop -> false;
-        case FormTerm.Set rt -> lt.lift() <= rt.lift();
-        case FormTerm.Type rt -> false;
+        case FormTerm.Set rt when lt.lift() <= rt.lift() -> true;
+        case default -> false;
       };
     };
   }
@@ -239,6 +232,8 @@ public sealed abstract class TermComparator permits Unifier {
     else return null;
   }
 
+  private record Pair(Term lhs, Term rhs) {}
+
   private @NotNull Term getType(@NotNull CallTerm lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
     var substMap = MutableMap.<AnyVar, Term>create();
     for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
@@ -255,7 +250,7 @@ public sealed abstract class TermComparator permits Unifier {
       case CallTerm.Struct type1 -> {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
-          Tuple2.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
+          Tuple.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
         var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
           var dummyVars = fieldSig.selfTele.map(par ->
@@ -274,34 +269,31 @@ public sealed abstract class TermComparator permits Unifier {
       case IntroTerm.Tuple $ -> throw new InternalException("TupTerm is never type");
       case IntroTerm.New $ -> throw new InternalException("NewTerm is never type");
       case ErrorTerm $ -> true;
-      case FormTerm.Sigma sigma -> {
-        var params = sigma.params().view();
-        for (int i = 1, size = sigma.params().size(); i <= size; i++) {
+      case FormTerm.Sigma(var paramsSeq) -> {
+        var params = paramsSeq.view();
+        for (int i = 1, size = paramsSeq.size(); i <= size; i++) {
           var l = ElimTerm.proj(lhs, i);
           var currentParam = params.first();
           ctx.put(currentParam);
           if (!compare(l, ElimTerm.proj(rhs, i), lr, rl, currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
-        ctx.remove(sigma.params().view().map(Term.Param::ref));
+        ctx.remove(paramsSeq.view().map(Term.Param::ref));
         yield true;
       }
-      case FormTerm.Pi pi -> ctx.with(pi.param(), () -> {
-        if (lhs instanceof IntroTerm.Lambda lambda) return ctx.with(lambda.param(), () -> {
-          if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(), () -> {
-            lr.map.put(lambda.param().ref(), rambda.param().toTerm());
-            rl.map.put(rambda.param().ref(), lambda.param().toTerm());
-            var res = compare(lambda.body(), rambda.body(), lr, rl, pi.body());
-            lr.map.remove(lambda.param().ref());
-            rl.map.remove(rambda.param().ref());
-            return res;
-          });
-          return compareLambdaBody(rhs, lr, rl, lambda, pi);
-        });
-        if (rhs instanceof IntroTerm.Lambda rambda) return ctx.with(rambda.param(),
-          () -> compareLambdaBody(lhs, rl, lr, rambda, pi));
+      case FormTerm.Pi pi -> ctx.with(pi.param(), () -> switch (new Pair(lhs, rhs)) {
+        case Pair(IntroTerm.Lambda(var lp, var lb), IntroTerm.Lambda(var rp, var rb)) -> ctx.with(() -> {
+          lr.map.put(lp.ref(), rp.toTerm());
+          rl.map.put(rp.ref(), lp.toTerm());
+          var res = compare(lb, rb, lr, rl, pi.body());
+          lr.map.remove(lp.ref());
+          rl.map.remove(rp.ref());
+          return res;
+        }, lp, rp);
+        case Pair(var $, IntroTerm.Lambda rambda) -> compareLambdaBody(lhs, rl, lr, rambda, pi);
+        case Pair(IntroTerm.Lambda lambda, var $) -> compareLambdaBody(rhs, lr, rl, lambda, pi);
         // Question: do we need a unification for Pi.body?
-        return compare(lhs, rhs, lr, rl, null);
+        case default -> compare(lhs, rhs, lr, rl, null);
       });
       // In this case, both sides have the same type (I hope)
       case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
@@ -341,10 +333,11 @@ public sealed abstract class TermComparator permits Unifier {
     @NotNull IntroTerm.PartEl lhs, @NotNull IntroTerm.PartEl rhs,
     @Nullable FormTerm.PartTy type, Sub lr, Sub rl
   ) {
-    return switch (lhs.partial()) {
-      case Partial.Const<Term> ll when rhs.partial() instanceof Partial.Const<Term> rr ->
+    record P(Partial<Term> l, Partial<Term> r) {}
+    return switch (new P(lhs.partial(), rhs.partial())) {
+      case P(Partial.Const<Term> ll, Partial.Const<Term> rr) ->
         compare(ll.u(), rr.u(), lr, rl, type == null ? null : type.type());
-      case Partial.Split<Term> ll when rhs.partial() instanceof Partial.Split<Term> rr ->
+      case P(Partial.Split<Term> ll, Partial.Split<Term> rr) ->
         CofThy.conv(type == null ? ll.restr() : type.restr(), new Subst(),
           subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type == null ? null : type.subst(subst)));
       default -> false;

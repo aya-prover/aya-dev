@@ -78,10 +78,10 @@ public interface StmtOps<P> extends ExprTraversal<P> {
   default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
     return switch (pattern) {
       case Pattern.BinOpSeq seq -> visitBinOpPattern(seq, pp);
-      case Pattern.Ctor ctor ->
-        new Pattern.Ctor(ctor.sourcePos(), ctor.explicit(), ctor.resolved(), ctor.params().map(p -> visitPattern(p, pp)), ctor.as());
-      case Pattern.Tuple tup ->
-        new Pattern.Tuple(tup.sourcePos(), tup.explicit(), tup.patterns().map(p -> visitPattern(p, pp)), tup.as());
+      case Pattern.Ctor(var pos, var licit, var resolved, var params, var as) ->
+        new Pattern.Ctor(pos, licit, resolved, params.map(p -> visitPattern(p, pp)), as);
+      case Pattern.Tuple(var pos, var licit, var patterns, var as) ->
+        new Pattern.Tuple(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
       default -> pattern;
     };
   }

@@ -10,11 +10,11 @@ import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.FormTerm;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
+import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
@@ -54,7 +54,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     return new ConcreteDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
 
-  @ForLSP sealed interface WithTerm extends Expr {
+  @ForLSP
+  sealed interface WithTerm extends Expr {
     @NotNull MutableValue<ExprTycker.Result> theCore();
     default @Nullable ExprTycker.Result core() {
       return theCore().get();
@@ -145,6 +146,43 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr last
   ) implements Expr {}
 
+  record Do(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr bindName,
+    @NotNull ImmutableSeq<DoBind> binds
+  ) implements Expr {}
+
+  record DoBind(
+    @NotNull SourcePos sourcePos,
+    @NotNull LocalVar var,
+    @NotNull Expr expr
+  ) {}
+
+  record Idiom(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr.IdiomNames names,
+    @NotNull ImmutableSeq<Expr> barredApps
+  ) implements Expr {}
+
+  record IdiomNames(
+    @NotNull Expr alternativeOr,
+    @NotNull Expr applicativeAp,
+    @NotNull Expr applicativePure
+  ) {
+    public IdiomNames fmap(@NotNull Function<Expr, Expr> f) {
+      return new IdiomNames(
+        f.apply(alternativeOr),
+        f.apply(applicativeAp),
+        f.apply(applicativePure));
+    }
+
+    public boolean identical(@NotNull IdiomNames names) {
+      return alternativeOr == names.alternativeOr &&
+        applicativeAp == names.applicativeAp &&
+        applicativePure == names.applicativePure;
+    }
+  }
+
   /**
    * @author re-xyr
    */
@@ -187,39 +225,43 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author tsao-chi
    */
-  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull FormTerm.SortKind kind) implements Expr {}
+  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull SortKind kind) implements Expr {}
 
   sealed interface SortExpr extends Expr {
     int lift();
 
-    FormTerm.SortKind kind();
+    SortKind kind();
   }
+
   record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
-    @Override public FormTerm.SortKind kind() {
-      return FormTerm.SortKind.Type;
+    @Override public SortKind kind() {
+      return SortKind.Type;
     }
   }
+
   record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
-    @Override public FormTerm.SortKind kind() {
-      return FormTerm.SortKind.Set;
+    @Override public SortKind kind() {
+      return SortKind.Set;
     }
   }
+
   record PropExpr(@NotNull SourcePos sourcePos) implements SortExpr {
     @Override public int lift() {
       return 0;
     }
 
-    @Override public FormTerm.SortKind kind() {
-      return FormTerm.SortKind.Prop;
+    @Override public SortKind kind() {
+      return SortKind.Prop;
     }
   }
+
   record ISetExpr(@NotNull SourcePos sourcePos) implements SortExpr {
     @Override public int lift() {
       return 0;
     }
 
-    @Override public FormTerm.SortKind kind() {
-      return FormTerm.SortKind.ISet;
+    @Override public SortKind kind() {
+      return SortKind.ISet;
     }
   }
 
@@ -289,6 +331,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<NamedArg> seq
   ) implements Expr {}
+
   /** partial element */
   record PartEl(
     @NotNull SourcePos sourcePos,
@@ -323,6 +366,83 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
     public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @NotNull Expr> mapper) {
       return new Param(sourcePos, ref, mapper.apply(type), explicit);
+    }
+  }
+
+  /**
+   * <h1>Array Expr</h1>
+   *
+   * @author HoshinoTented
+   * @param arrayBlock <code>[ x | x <- [ 1, 2, 3 ] ]</code> (left) or <code>[ 1, 2, 3 ]</code> (right)
+   * @apiNote the arrayBlock of an empty array <code>[]</code> should be a right (an empty expr seq)
+   */
+  record Array(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull Either<CompBlock, ElementList> arrayBlock
+  ) implements Expr {
+    /**
+     * @param nilCtor the Nil constructor, it is {@link org.aya.generic.Constants}.listNil in default
+     * @param consCtor the Cons constructor, it is {@link org.aya.generic.Constants}.listCons in default
+     */
+    public record ElementList(
+      @NotNull ImmutableSeq<Expr> exprList,
+      @NotNull Expr nilCtor,
+      @NotNull Expr consCtor
+    ) {  }
+
+    /**
+     * <h1>Array Comp(?)</h1>
+     *
+     * The (half?) primary part of {@link Array}<br/>
+     * For example: <code>[x * y | x <- [1, 2, 3], y <- [4, 5, 6]]</code>
+     *
+     * @param generator <code>x * y</code> part above
+     * @param binds <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
+     * @param bindName the bind (>>=) function, it is {@link org.aya.generic.Constants}.monadBind in default
+     * @param pureName the pure (return) function, it is {@link org.aya.generic.Constants}.functorPure in default
+     * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above, it will be desugared to
+     *   <pre>
+     *     do
+     *       x <- [1, 2, 3]
+     *       y <- [4, 5, 6]
+     *       return x * y
+     *   </pre>
+     */
+    public record CompBlock(
+      @NotNull Expr generator,
+      @NotNull ImmutableSeq<DoBind> binds,
+      @NotNull Expr bindName,
+      @NotNull Expr pureName
+    ) { }
+
+    /**
+     * helper constructor, also find constructor calls easily in IDE
+     */
+    public static Expr.Array newList(
+      @NotNull SourcePos sourcePos,
+      @NotNull ImmutableSeq<Expr> exprs,
+      @NotNull Expr nilCtor,
+      @NotNull Expr consCtor) {
+      return new Expr.Array(
+        sourcePos,
+        Either.right(new ElementList(
+          exprs, nilCtor, consCtor
+        ))
+      );
+    }
+
+    public static Expr.Array newGenerator(
+      @NotNull SourcePos sourcePos,
+      @NotNull Expr generator,
+      @NotNull ImmutableSeq<DoBind> bindings,
+      @NotNull Expr bindName,
+      @NotNull Expr pureName) {
+      return new Expr.Array(
+        sourcePos,
+        Either.left(new CompBlock(
+          generator, bindings, bindName, pureName
+        ))
+      );
     }
   }
 

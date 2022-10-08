@@ -5,6 +5,7 @@ package org.aya.cli.library.incremental;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.concrete.GenericAyaParser;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
@@ -47,6 +48,10 @@ public class DelegateCompilerAdvisor implements CompilerAdvisor {
 
   @Override public void clearModuleOutput(@NotNull LibrarySource source) throws IOException {
     delegate.clearModuleOutput(source);
+  }
+
+  @Override public @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
+    return delegate.createParser(reporter);
   }
 
   @Override

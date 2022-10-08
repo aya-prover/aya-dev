@@ -5,10 +5,7 @@ package org.aya.resolve.visitor;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableStack;
+import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
@@ -60,6 +57,10 @@ public record ExprResolver(
         var newArg = new Expr.NamedArg(argument.explicit(), argument.name(), argExpr);
         yield new Expr.AppExpr(app.sourcePos(), function, newArg);
       }
+      case Expr.Do doNotation -> {
+        var bindsCtx = resolveDoBinds(doNotation.binds(), ctx);
+        yield new Expr.Do(doNotation.sourcePos(), resolve(doNotation.bindName(), ctx), bindsCtx._1);
+      }
       case Expr.TupExpr tup -> {
         var items = tup.items().map(item -> resolve(item, ctx));
         if (items.sameElements(tup.items(), true)) yield expr;
@@ -110,6 +111,31 @@ public record ExprResolver(
         if (type == path.type() && par == path.partial()) yield path;
         yield new Expr.Path(path.sourcePos(), path.params(), type, par);
       }
+      case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
+        left -> {
+          var bindName = resolve(left.bindName(), ctx);
+          var pureName = resolve(left.pureName(), ctx);
+          var bindsCtx = resolveDoBinds(left.binds(), ctx);
+          var generator = resolve(left.generator(), bindsCtx._2);
+
+          if (generator == left.generator() && bindsCtx._1.sameElements(left.binds()) && bindName == left.bindName() && pureName == left.pureName()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindsCtx._1, bindName, pureName);
+          }
+        },
+        right -> {
+          var exprs = right.exprList().map(e -> resolve(e, ctx));
+          var nilCtor = resolve(right.nilCtor(), ctx);
+          var consCtor = resolve(right.consCtor(), ctx);
+
+          if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs, nilCtor, consCtor);
+          }
+        }
+      );
       case Expr.UnresolvedExpr unresolved -> {
         var sourcePos = unresolved.sourcePos();
         yield switch (ctx.get(unresolved.name())) {
@@ -207,7 +233,30 @@ public record ExprResolver(
 
   private @NotNull Tuple2<Expr.Param, Context> resolveParam(@NotNull Expr.Param param, Context ctx) {
     var type = resolve(param.type(), ctx);
-    return Tuple2.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
+    return Tuple.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
+  }
+
+  /**
+   * Resolving all {@link Expr.DoBind}s under the context {@param parent}
+   *
+   * @return (resolved bindings, a new context under all the bindings)
+   */
+  private @NotNull Tuple2<ImmutableSeq<Expr.DoBind>, Context> resolveDoBinds(@NotNull ImmutableSeq<Expr.DoBind> binds, Context parent) {
+    var list = MutableArrayList.<Expr.DoBind>create(binds.size());
+    var localCtx = parent;
+
+    for (var bind : binds) {
+      var bindResolved = resolve(bind.expr(), localCtx);
+      if (bindResolved == bind.expr()) {
+        list.append(bind);
+      } else {
+        list.append(new Expr.DoBind(bind.sourcePos(), bind.var(), bindResolved));
+      }
+
+      localCtx = localCtx.bind(bind.var(), bind.sourcePos());
+    }
+
+    return Tuple.of(list.toImmutableSeq(), localCtx);
   }
 
   private @NotNull Context resolveCubeParams(@NotNull ImmutableSeq<LocalVar> params, Context ctx) {
@@ -217,12 +266,12 @@ public record ExprResolver(
   @Contract(pure = true)
   public @NotNull Tuple2<SeqView<Expr.Param>, Context>
   resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
-    if (params.isEmpty()) return Tuple2.of(SeqView.empty(), ctx);
+    if (params.isEmpty()) return Tuple.of(SeqView.empty(), ctx);
     var first = params.first();
     var type = resolve(first.type(), ctx);
     var newCtx = ctx.bind(first.ref(), first.sourcePos());
     var result = resolveParams(params.view().drop(1), newCtx);
-    return Tuple2.of(result._1.prepended(new Expr.Param(first, type)), result._2);
+    return Tuple.of(result._1.prepended(new Expr.Param(first, type)), result._2);
   }
 
   private Expr.@NotNull Field resolveField(Expr.@NotNull Field t, Context context) {

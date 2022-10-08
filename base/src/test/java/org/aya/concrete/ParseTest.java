@@ -4,9 +4,8 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import kala.tuple.Tuple2;
-import org.aya.cli.parse.AyaParserImpl;
-import org.aya.cli.parse.AyaProducer;
+import kala.control.Option;
+import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -28,10 +27,8 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("UnknownLanguage")
 public class ParseTest {
-  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(Either.left(SourceFile.NONE),
-    ThrowingReporter.INSTANCE);
-
   @BeforeAll public static void enableTest() {
     Global.NO_RANDOM_NAME = true;
     Global.UNITE_SOURCE_POS = true;
@@ -41,20 +38,20 @@ public class ParseTest {
     Global.reset();
   }
 
-  private static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitExpr(AyaParserImpl.parser(code).expr());
+  public static @NotNull Expr parseExpr(@NotNull @NonNls @Language("Aya") String code) {
+    return new AyaGKParserImpl(ThrowingReporter.INSTANCE).expr(code, SourcePos.NONE);
   }
 
-  public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitStmt(AyaParserImpl.parser(code).stmt()).toImmutableSeq();
+  public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("Aya") String code) {
+    var file = new SourceFile("main.aya", Option.none(), code);
+    return new AyaGKParserImpl(ThrowingReporter.INSTANCE).program(file);
   }
 
-  public static @NotNull Tuple2<? extends Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitDecl(AyaParserImpl.parser(code).decl());
+  public static @NotNull ImmutableSeq<Decl> parseDecl(@NotNull @NonNls @Language("Aya") String code) {
+    return parseStmt(code).filterIsInstance(Decl.class);
   }
 
-  @Test
-  public void issue141() {
+  @Test public void issue141() {
     Assertions.assertEquals(parseStmt("module a {}"),
       ImmutableSeq.of(new Command.Module(SourcePos.NONE, SourcePos.NONE, "a", ImmutableSeq.empty())));
   }
@@ -66,7 +63,7 @@ public class ParseTest {
     parseOpen("open A hiding ()");
     parseImport("import A");
     parseImport("import A::B");
-    parseImport("import A::B using ()");
+    parseImport("open import A::B using ()");
     parseAndPretty("open Boy::Next::Door using (door) (next)", """
         open Boy::Next::Door using (door, next)
       """);
@@ -88,9 +85,8 @@ public class ParseTest {
                    (p : Sig A ** B) : C
         => f (p.1) (p.2)""");
     parseData("data Unit");
-    parseData("data Unit abusing {}");
-    parseData("data Unit : A abusing {}");
-    parseData("data T {A : Type} : A abusing {}");
+    parseData("data Unit : A");
+    parseData("data T {A : Type} : A");
     parseAndPretty("def id {A : Type} (a : A) : A => a", """
         def id {A : Type} (a : A) : A => a
       """);
@@ -166,20 +162,20 @@ public class ParseTest {
       && !neo.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
-  private void parseImport(@Language("TEXT") String code) {
+  private void parseImport(@Language("Aya") String code) {
     assertTrue(parseStmt(code).first() instanceof Command.Import s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
-  private void parseOpen(@Language("TEXT") String code) {
+  private void parseOpen(@Language("Aya") String code) {
     assertTrue(parseStmt(code).last() instanceof Command.Open s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
-  private void parseFn(@Language("TEXT") String code) {
-    assertTrue(parseDecl(code)._1 instanceof TeleDecl.FnDecl s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
+  private void parseFn(@Language("Aya") String code) {
+    assertTrue(parseDecl(code).first() instanceof TeleDecl.FnDecl s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
-  private void parseData(@Language("TEXT") String code) {
-    assertTrue(parseDecl(code)._1 instanceof TeleDecl.DataDecl);
+  private void parseData(@Language("Aya") String code) {
+    assertTrue(parseDecl(code).first() instanceof TeleDecl.DataDecl);
   }
 
   @Test
@@ -311,15 +307,59 @@ public class ParseTest {
         """);
   }
 
-  private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
+  @Test public void array() {
+    parseAndPretty("""
+      def list => [ 1,2 ,3 ]
+      def listGen => [ x + y | x <-   xs ,y <- ys ]
+      """, """
+      def list => [ 1, 2, 3 ]
+      def listGen => [ x + y | x <- xs, y <- ys ]
+      """);
+  }
+
+  @Test public void doExpr() {
+    // Testing pretty but not parse! 😂
+    parseAndPretty("def foo => do { x <- xs, y <- ys, return (x * y) }",
+      "def foo => do { x <- xs, y <- ys, return (x * y) }");
+    parseAndPretty("""
+      def foo => do
+        x <- xs, y <- ys,
+        return (x * y)
+      """, "def foo => do { x <- xs, y <- ys, return (x * y) }");
+    parseAndPretty("""
+      def foo => do {
+        x <- xs,
+        y <- ys,
+        return (x * y)
+      }
+      """, "def foo => do { x <- xs, y <- ys, return (x * y) }");
+    parseAndPretty("""
+      def foo => do {
+        x <- f xs,
+        y <- ff ys,
+        someFuncIgnored x,
+        z <- fff zs,
+        return (x * y * z)
+      }
+      """, """
+      def foo => do {
+        x <- f xs,
+        y <- ff ys,
+        someFuncIgnored x,
+        z <- fff zs,
+        return (x * y * z)
+      }""");
+  }
+
+  private void parseAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
         .map(s -> s.toDoc(DistillerOptions.debug())))
-      .debugRender()
+      .renderWithPageWidth(80, false)
       .trim());
   }
 
-  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Expr expr) {
+  private void parseTo(@NotNull @NonNls @Language("Aya") String code, Expr expr) {
     Assertions.assertEquals(expr, parseExpr(code));
   }
 }

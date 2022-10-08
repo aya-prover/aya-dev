@@ -4,6 +4,7 @@
   "version": "0.1.0",
 
   "dependency": {
-    "common": { "file": "common" }
+    "common": { "file": "common" },
+    "nonsense": { "file": "nonsense" }
   }
 }

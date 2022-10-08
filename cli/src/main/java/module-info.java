@@ -1,13 +1,13 @@
 module aya.cli {
-  requires transitive aya.parser;
+  requires transitive aya.parser.ij;
   requires transitive aya.repl;
   requires transitive aya.base;
 
   requires static org.jetbrains.annotations;
 
+  requires aya.ij.parsing.core;
   requires com.google.gson;
   requires info.picocli;
-  requires org.antlr.antlr4.runtime;
   requires org.fusesource.jansi;
   requires org.jline.builtins;
   requires org.jline.reader;

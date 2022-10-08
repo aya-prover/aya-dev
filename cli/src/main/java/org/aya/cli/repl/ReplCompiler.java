@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
@@ -8,7 +8,7 @@ import kala.value.MutableValue;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
-import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.Expr;
@@ -32,6 +32,7 @@ import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.DelayedReporter;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +78,6 @@ public class ReplCompiler {
     return new Desugarer.ForExpr(expr.view(), resolveInfo).commit();
   }
 
-  /** @see ReplCompiler#compileExpr(String, NormalizeMode) */
   public int loadToContext(@NotNull Path file) throws IOException {
     if (Files.isDirectory(file)) return loadLibrary(file);
     return loadFile(file);
@@ -119,9 +119,9 @@ public class ReplCompiler {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
     try {
-      var programOrExpr = AyaParserImpl.repl(reporter, text);
+      var programOrExpr = new AyaGKParserImpl(reporter).repl(text);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
-        new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
+        new FileModuleLoader(locator, path, reporter, new AyaGKParserImpl(reporter), primFactory, null)).toImmutableSeq()));
       return programOrExpr.map(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<GenericDef>>create();
@@ -141,14 +141,14 @@ public class ReplCompiler {
     }
   }
 
-  /**
-   * Adapted.
-   *
-   * @see #loadToContext
-   */
-  public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
+  public @Nullable Term computeType(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      return tyckExpr(AyaParserImpl.replExpr(reporter, text)).type().normalize(new TyckState(primFactory), normalizeMode);
+      var parseTree = new AyaGKParserImpl(reporter).repl(text);
+      if (parseTree.isLeft()) {
+        reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
+        return null;
+      }
+      return tyckExpr(parseTree.getRightValue()).type().normalize(new TyckState(primFactory), normalizeMode);
     } catch (InterruptException ignored) {
       return null;
     }

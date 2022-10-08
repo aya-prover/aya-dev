@@ -1,7 +1,0 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE file.
-module aya.parser {
-  requires org.antlr.antlr4.runtime;
-
-  exports org.aya.parser;
-}

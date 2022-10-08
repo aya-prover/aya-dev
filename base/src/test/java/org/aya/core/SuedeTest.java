@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("UnknownLanguage")
 public class SuedeTest {
   @Test public void nat() {
     suedeAll("""
@@ -69,7 +70,7 @@ public class SuedeTest {
       """);
   }
 
-  private void suedeAll(@Language("TEXT") @NotNull String code) {
+  private void suedeAll(@Language("Aya") @NotNull String code) {
     var res = TyckDeclTest.successTyckDecls(code);
     var state = new SerTerm.DeState(res._1);
     var serializer = new Serializer(new Serializer.State());

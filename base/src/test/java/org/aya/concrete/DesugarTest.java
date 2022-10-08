@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -22,6 +22,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SuppressWarnings("UnknownLanguage")
 public class DesugarTest {
   @BeforeAll public static void enter() {
     Global.NO_RANDOM_NAME = true;
@@ -33,6 +34,10 @@ public class DesugarTest {
 
   @Test public void simpleUniv() {
     desugarAndPretty("def test => Type", "def test => Type 0");
+  }
+
+  @Test public void doIdiom() {
+    desugarAndPretty("def >>= => {??}\ndef test => do { 1 }", "def >>= => {??}\ndef test => 1");
   }
 
   @Test public void modules() {
@@ -49,7 +54,7 @@ public class DesugarTest {
       }""");
   }
 
-  private void desugarAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
+  private void desugarAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     var resolveInfo = new ResolveInfo(new PrimDef.Factory(), new EmptyContext(ThrowingReporter.INSTANCE, Path.of("dummy")).derive("dummy"), ImmutableSeq.empty(), new AyaBinOpSet(ThrowingReporter.INSTANCE));
     var stmt = ParseTest.parseStmt(code);
     stmt.forEach(s -> s.desugar(resolveInfo));

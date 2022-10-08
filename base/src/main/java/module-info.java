@@ -6,6 +6,8 @@ module aya.base {
   requires transitive kala.collection;
 
   requires static org.jetbrains.annotations;
+
+  requires aya.ij.parsing.core;
   requires org.commonmark;
 
   exports org.aya.concrete.desugar;
