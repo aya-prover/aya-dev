@@ -318,7 +318,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private boolean compareLambdaBody(Term rhs, Sub lr, Sub rl, IntroTerm.Lambda lambda, FormTerm.Pi pi) {
     return ctx.with(lambda.param(), () ->
-      compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body()));
+      compare(lambda.body(), ElimTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body()));
   }
 
   private boolean comparePathLamBody(Term rhs, Sub lr, Sub rl, IntroTerm.PathLam lambda, FormTerm.Cube cube) {

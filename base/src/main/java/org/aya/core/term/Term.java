@@ -81,7 +81,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         var function = f.apply(app.of());
         var arg = app.arg().descent(f);
         if (function == app.of() && arg == app.arg()) yield app;
-        yield CallTerm.make(function, arg);
+        yield ElimTerm.make(function, arg);
       }
       case ElimTerm.Proj proj -> {
         var tuple = f.apply(proj.of());

@@ -66,7 +66,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   }
 
   public final @NotNull ReplConfig config;
-  public @NotNull Path cwd = Path.of("");
+  public @NotNull Path cwd = Path.of(System.getProperty("user.dir"));
   public int prettyPrintWidth = 80;
   public final @NotNull ReplCompiler replCompiler;
   public final @NotNull CommandManager commandManager = makeCommand();
