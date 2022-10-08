@@ -174,12 +174,13 @@ public sealed interface FormTerm extends Term {
       var args = params.view().map(RefTerm::new);
       loop:
       while (true) {
+        if (args.isEmpty()) return pLam;
         switch (pLam) {
           case default -> {
             break loop;
           }
           case IntroTerm.PathLam lam -> {
-            assert lam.params().sizeLessThanOrEquals(params());
+            assert lam.params().sizeLessThanOrEquals(args);
             pLam = lam.body().subst(new Subst(lam.params(), args.take(lam.params().size())));
             args = args.drop(lam.params().size());
           }
