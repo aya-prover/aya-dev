@@ -231,7 +231,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           ? patTycker.visitPatterns(sig, ctor.patterns.view())._1.toImmutableSeq()
           // No patterns, leave it blank
           : ImmutableSeq.<Pat>empty();
-        var tele = tele(tycker, ctor.telescope, dataConcrete.ulift);
+        var ctorSort = dataConcrete.ulift instanceof FormTerm.Prop ? FormTerm.Type.ZERO : dataConcrete.ulift;
+        var tele = tele(tycker, ctor.telescope, ctorSort);
         ctor.signature = new Def.Signature(tele, dataCall);
         ctor.yetTycker = patTycker;
         ctor.yetTyckedPat = pat;
