@@ -56,7 +56,6 @@ subprojects {
     }
     toolchain {
       languageVersion.set(JavaLanguageVersion.of(javaVersion))
-      vendor.set(JvmVendorSpec.BELLSOFT)
     }
   }
 
@@ -86,7 +85,13 @@ subprojects {
       val tree = fileTree(root)
       tree.include("**/*.class")
       tree.include("module-info.class")
-      tree.forEach { BuildUtil.stripPreview(root.toPath(), it.toPath()) }
+      tree.forEach {
+        BuildUtil.stripPreview(
+          root.toPath(), it.toPath(),
+          true, false,
+          "java/lang/RuntimeException",
+        )
+      }
     }
   }
 
