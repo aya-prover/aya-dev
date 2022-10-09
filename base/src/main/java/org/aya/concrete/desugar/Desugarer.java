@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.concrete.Expr;
@@ -14,6 +15,8 @@ import org.aya.concrete.visitor.StmtOps;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
+import org.aya.tyck.pat.PatternProblem;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -126,10 +129,45 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
   public static class DesugarInterruption extends Exception {
   }
 
+  @Override
+  public @NotNull Pattern visitPattern(@NotNull Pattern pattern, Unit pp) {
+    return switch (pattern) {
+      case Pattern.List list -> {
+        if (list.nilName() instanceof Pattern.Ctor nilCtor) {
+          if (list.consName() instanceof Pattern.Ctor consCtor) {
+            if (list.elements().isEmpty()) yield nilCtor;
+
+            var elements = list.elements().map(x -> visitPattern(x, pp));
+            var newPattern = elements.foldRight(nilCtor, (e, right) -> {
+              // e : current element
+              // right : right element
+              // Goal : consCtor e right
+
+              return new Pattern.Ctor(consCtor.sourcePos(), consCtor.explicit(), consCtor.resolved(),
+                ImmutableSeq.of(e, right), null);
+            });
+
+            // replace newPattern.as() with list.as()
+            yield new Pattern.Ctor(newPattern.sourcePos(), newPattern.explicit(), newPattern.resolved(), newPattern.params(), list.as());
+          } else {
+            resolveInfo.opSet().reporter.report(new PatternProblem.UnknownCtor(list.consName()));
+          }
+        } else {
+          resolveInfo.opSet().reporter.report(new PatternProblem.UnknownCtor(list.nilName()));
+        }
+
+        // TODO[hoshino]: I don't think this is correct.
+        throw new Context.ResolvingInterruptedException();
+      }
+
+      default -> StmtOps.super.visitPattern(pattern, pp);
+    };
+  }
+
   @Override public @NotNull Pattern visitBinOpPattern(Pattern.@NotNull BinOpSeq binOpSeq, Unit unit) {
     var seq = binOpSeq.seq();
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
     var pat = new BinPatternParser(binOpSeq.explicit(), resolveInfo, seq.view()).build(binOpSeq.sourcePos());
-    return StmtOps.super.visitPattern(pat, unit);
+    return visitPattern(pat, unit);
   }
 }

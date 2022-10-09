@@ -16,9 +16,30 @@ def testDesuList : termList = termDesuList => idp
 def testDesuListComp : termListComp = termDesuListComp => idp
 
 def listPattern (l : List Nat) : List Nat
-  | [] => nil
+  | [ ] => nil
   | [ 1 ] => 1 :< nil
   | [ 1, e2 ] => 1 :< e2 :< nil
   | [ 1, e2, _ ] => l
   | [ _, _, _, _ ] as l' => l'
   | _ => l
+
+def testListPattern0 : listPattern nil = ([ ]) => idp
+def testListPattern1 : listPattern (1 :< nil) = ([ 1 ]) => idp
+def testListPattern2 : listPattern (1 :< 2 :< nil) = ([ 1, 2 ]) => idp
+def testListPattern3 : listPattern (1 :< 2 :< 3 :< nil) = ([ 1, 2, 3 ]) => idp
+def testListPattern4 : listPattern (1 :< 2 :< 3 :< 4 :< nil) = ([ 1, 2, 3, 4 ]) => idp
+
+def innerListPattern (l : List (List Nat)) : List Nat
+  | [ ] => nil
+  | [ [ 1 ], [ 2 ], [ 3 ] ] => [ 1, 2, 3 ]
+  | [ [ 1, 2, 3 ], [ ], [ ] ] => [ 1, 2, 3 ]
+  | [ [ 1, 2, 3 ], [ 2, 3, 4 ] as l2, l3 ] => [ 1, 2, 3 ] ++ l2 ++ l3
+  | [ [ 1, _, 3 ] as l1, [ _, _, _ ] as l2, l3 ] => l1 ++ l2 ++ l3
+  | _ => concat l
+
+def testInnerListPattern0 : innerListPattern nil = ([ ]) => idp
+def testInnerListPattern1 : innerListPattern (([ 1 ]) :< ([ 2 ]) :< ([ 3 ]) :< nil) = ([ 1, 2, 3 ]) => idp
+def testInnerListPattern2 : innerListPattern (([ 1, 2, 3 ]) :< nil :< nil :< nil) = ([ 1, 2, 3 ]) => idp
+def testInnerListPattern3 : innerListPattern (([ 1, 2, 3 ]) :< ([ 2, 3, 4 ]) :< ([ 3, 4, 5 ]) :< nil) = ([ 1, 2, 3, 2, 3, 4, 3, 4, 5 ]) => idp
+def testInnerListPattern4 : innerListPattern (([ 1, 2, 3 ]) :< ([ 2, 3, 4 ]) :< ([ 3, 4, 5 ]) :< nil) = ([ 1, 2, 3, 2, 3, 4, 3, 4, 5 ]) => idp
+
