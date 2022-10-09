@@ -208,8 +208,19 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var ctorDoc = visitMaybeCtorPatterns(param, Outer.AppSpine, Doc.ALT_WS);
         yield ctorDoc(outer, seq.explicit(), ctorDoc, seq.as(), param.sizeLessThanOrEquals(1));
       }
-      // TODO
-      case Pattern.List list -> throw new UnsupportedOperationException("TODO");
+      case Pattern.List list -> {
+        var listDoc = Doc.sep(      // Copied from ThisClass.term (Expr.Array case)
+          Doc.symbol("["),
+          Doc.commaList(list.elements().map(x -> pattern(x, Outer.Free))),
+          Doc.symbol("]")
+        );
+
+        yield list.as() == null ? listDoc : Doc.sep(
+          listDoc,
+          Doc.styled(KEYWORD, "as"),
+          linkDef(list.as())
+        );
+      }
     };
   }
 
