@@ -19,10 +19,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
-import org.aya.generic.AyaDocile;
-import org.aya.generic.Constants;
-import org.aya.generic.Modifier;
+import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -527,6 +524,20 @@ public final class ExprTycker extends Tycker {
     });
   }
 
+  private FormTerm.Sort calculateSigma(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) {
+    int lift = Math.max(x.lift(), y.lift());
+    if(x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
+      return FormTerm.Prop.INSTANCE;
+    } else if (x.kind() == SortKind.Set || y.kind() == SortKind.Set) {
+      return new FormTerm.Set(lift);
+    } else if (x.kind() == SortKind.Type || y.kind() == SortKind.Type) {
+      return new FormTerm.Type(lift);
+    } else if (x instanceof FormTerm.ISet && y instanceof FormTerm.ISet) {
+      return FormTerm.ISet.INSTANCE; // TODO: should we allow this?
+    }
+    throw new IllegalArgumentException(); // TODO: better error reporting
+  }
+
   private @NotNull SortResult doSort(@NotNull Expr expr) {
     var univ = FormTerm.Type.ZERO;
     return switch (expr) {
@@ -569,8 +580,8 @@ public final class ExprTycker extends Tycker {
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
-        var maxSort = resultTypes.reduce(FormTerm.Sort::max);
-        resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
+        var maxSort = resultTypes.reduce(this::calculateSigma);
+        if (!(maxSort instanceof FormTerm.Prop)) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxSort);
       }
