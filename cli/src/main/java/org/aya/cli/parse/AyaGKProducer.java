@@ -503,12 +503,12 @@ public record AyaGKProducer(
       var content = text.substring(1, text.length() - 1);
       return new Expr.LitStringExpr(pos, StringUtil.escapeStringCharacters(content));
     }
-    if (node.is(ATOM_ULIFT_EXPR)) {
+    if (node.is(ULIFT_ATOM)) {
       var expr = expr(node.child(EXPR));
       var lifts = node.childrenOfType(ULIFT_PREFIX).toImmutableSeq().size();
       return lifts > 0 ? new Expr.LiftExpr(sourcePosOf(node), expr, lifts) : expr;
     }
-    if (node.is(ATOM_TUPLE_EXPR)) {
+    if (node.is(TUPLE_ATOM)) {
       var expr = node.child(EXPR_LIST).childrenOfType(EXPR).toImmutableSeq();
       if (expr.size() == 1) return newBinOPScope(expr(expr.get(0)));
       return new Expr.TupExpr(sourcePosOf(node), expr.map(this::expr));
@@ -575,7 +575,7 @@ public record AyaGKProducer(
       }).toImmutableSeq();
       return new Expr.Path(pos, params, expr(node.child(EXPR)), partial(node.peekChild(PARTIAL_EXPR), pos));
     }
-    if (node.is(IDIOM_EXPR)) {
+    if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);
       var names = new Expr.IdiomNames(
         Constants.alternativeOr(pos),
@@ -602,7 +602,7 @@ public record AyaGKProducer(
           })
           .toImmutableSeq());
     }
-    if (node.is(ARRAY_EXPR)) {
+    if (node.is(ARRAY_ATOM)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
 
       if (arrayBlock == null)
