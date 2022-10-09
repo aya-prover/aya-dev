@@ -36,8 +36,8 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, ElimTerm, ErrorTerm,
-  FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, LitTerm {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, DummyTerm, ElimTerm,
+  ErrorTerm, FormTerm, IntroTerm, LitTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat {
 
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
     return switch (this) {
@@ -87,6 +87,11 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         var tuple = f.apply(proj.of());
         if (tuple == proj.of()) yield proj;
         yield new ElimTerm.Proj(tuple, proj.ix());
+      }
+      case DummyTerm dummy -> {
+        var type = f.apply(dummy.type());
+        if (type == dummy.type()) yield dummy;
+        yield new DummyTerm(type);
       }
       case CallTerm.Struct struct -> {
         var args = struct.args().map(arg -> arg.descent(f));

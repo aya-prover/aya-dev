@@ -93,6 +93,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield app.cube().type().subst(new Subst(xi, ui));
       }
       case PrimTerm.Coe coe -> PrimDef.familyLeftToRight(coe.type());
+      case DummyTerm dummy -> dummy.type();
     };
   }
 

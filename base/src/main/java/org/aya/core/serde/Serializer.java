@@ -130,6 +130,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case FormTerm.Sort sort -> serialize(sort);
+      case DummyTerm dummy -> new SerTerm.Dummy(serialize(dummy.type()));
     };
   }
 

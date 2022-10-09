@@ -332,4 +332,10 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
         partial.fmap(t -> t.de(state)));
     }
   }
+
+  record Dummy(@NotNull SerTerm type) implements SerTerm {
+    public @NotNull DummyTerm de(@NotNull DeState state) {
+      return new DummyTerm(type.de(state));
+    }
+  }
 }
