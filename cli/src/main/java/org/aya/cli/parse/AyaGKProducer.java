@@ -723,11 +723,16 @@ public record AyaGKProducer(
         : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
     }
     if (node.is(ATOM_LIST_PATTERN)) {
-      // atomListPattern ::= LARRAY patterns RARRAY (KW_AS weakId)?
-
       var patterns = node.child(PATTERNS)
         .childrenOfType(PATTERN)
-        .map(x -> x.child(ATOM_PATTERNS));
+        .map(x -> x.child(ATOM_PATTERNS))
+        .map(this::atomPatterns);
+
+      var weakId = node.peekChild(WEAK_ID);
+      var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
+
+      // TODO[hoshino]: Is this right?
+      return ex -> new Pattern.List(sourcePos, ex, patterns.map(f -> f.apply(ex, null)).toImmutableSeq(), asId);
     }
     if (node.is(ATOM_NUMBER_PATTERN))
       return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));

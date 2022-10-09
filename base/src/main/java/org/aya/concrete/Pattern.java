@@ -12,6 +12,7 @@ import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.Context;
 import org.aya.util.ForLSP;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
@@ -85,7 +86,26 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @NotNull ImmutableSeq<Pattern> seq,
     @Nullable LocalVar as,
     boolean explicit
-  ) implements Pattern {}
+  ) implements Pattern {
+  }
+
+  /**
+   * <h1>Undesugared List Pattern</h1>
+   *
+   * This pattern will be desugared during {@link org.aya.resolve.visitor.StmtResolver#resolve(Pattern, Context)}.
+   *
+   * @param sourcePos
+   * @param explicit
+   * @param elements
+   * @param as
+   */
+  record List(
+    @NotNull SourcePos sourcePos,
+    boolean explicit,
+    @NotNull ImmutableSeq<Pattern> elements,
+    @Nullable LocalVar as
+  ) implements Pattern {
+  }
 
   /**
    * @author kiva, ice1000
