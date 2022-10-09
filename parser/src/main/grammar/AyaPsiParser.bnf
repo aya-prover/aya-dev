@@ -274,6 +274,13 @@ atomExpr ::= uliftAtom
 uliftAtom ::= uliftPrefix* literal
 tupleAtom ::= LPAREN exprList RPAREN
 uliftPrefix ::= KW_ULIFT
+idiomAtom ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
+arrayAtom ::= LARRAY arrayBlock? RARRAY { pin=1 }
+arrayBlock ::= arrayCompBlock | arrayElementsBlock
+arrayCompBlock ::= expr BAR listComp
+arrayElementsBlock ::= exprList
+idiomBlock ::= barred* expr
+listComp ::= (doBinding COMMA)* doBinding
 
 newExpr ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
@@ -286,21 +293,12 @@ lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
-idiomAtom ::= LIDIOM idiomBlock RIDIOM { pin=1 }
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
 
 partialExpr ::= LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
 subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem
 barredSubSystem ::= BAR subSystem
-
-arrayAtom ::= LARRAY arrayBlock? RARRAY { pin=1 }
-
-arrayBlock ::= arrayCompBlock | arrayElementsBlock
-arrayCompBlock ::= expr BAR listComp
-arrayElementsBlock ::= exprList
-idiomBlock ::= barred* expr
-listComp ::= (doBinding COMMA)* doBinding
 
 doBlock ::= (doBlockContent COMMA)* doBlockContent
 doBlockContent ::= doBinding | expr

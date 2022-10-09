@@ -165,21 +165,24 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   ) implements Expr {}
 
   record IdiomNames(
+    @NotNull Expr alternativeEmpty,
     @NotNull Expr alternativeOr,
     @NotNull Expr applicativeAp,
     @NotNull Expr applicativePure
   ) {
     public IdiomNames fmap(@NotNull Function<Expr, Expr> f) {
       return new IdiomNames(
+        f.apply(alternativeEmpty),
         f.apply(alternativeOr),
         f.apply(applicativeAp),
         f.apply(applicativePure));
     }
 
     public boolean identical(@NotNull IdiomNames names) {
-      return alternativeOr == names.alternativeOr &&
-        applicativeAp == names.applicativeAp &&
-        applicativePure == names.applicativePure;
+      return alternativeEmpty == names.alternativeEmpty
+        && alternativeOr == names.alternativeOr
+        && applicativeAp == names.applicativeAp
+        && applicativePure == names.applicativePure;
     }
   }
 
@@ -366,8 +369,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * <h1>Array Expr</h1>
    *
-   * @author HoshinoTented
    * @param arrayBlock <code>[ x | x <- [ 1, 2, 3 ] ]</code> (left) or <code>[ 1, 2, 3 ]</code> (right)
+   * @author HoshinoTented
    * @apiNote the arrayBlock of an empty array <code>[]</code> should be a right (an empty expr seq)
    */
   record Array(
@@ -375,27 +378,27 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Either<CompBlock, ElementList> arrayBlock
   ) implements Expr {
     /**
-     * @param nilCtor the Nil constructor, it is {@link org.aya.generic.Constants}.listNil in default
+     * @param nilCtor  the Nil constructor, it is {@link org.aya.generic.Constants}.listNil in default
      * @param consCtor the Cons constructor, it is {@link org.aya.generic.Constants}.listCons in default
      */
     public record ElementList(
       @NotNull ImmutableSeq<Expr> exprList,
       @NotNull Expr nilCtor,
       @NotNull Expr consCtor
-    ) {  }
+    ) {}
 
     /**
      * <h1>Array Comp(?)</h1>
-     *
+     * <p>
      * The (half?) primary part of {@link Array}<br/>
      * For example: <code>[x * y | x <- [1, 2, 3], y <- [4, 5, 6]]</code>
      *
      * @param generator <code>x * y</code> part above
-     * @param binds <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
-     * @param bindName the bind (>>=) function, it is {@link org.aya.generic.Constants}.monadBind in default
-     * @param pureName the pure (return) function, it is {@link org.aya.generic.Constants}.functorPure in default
+     * @param binds     <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
+     * @param bindName  the bind (>>=) function, it is {@link org.aya.generic.Constants}.monadBind in default
+     * @param pureName  the pure (return) function, it is {@link org.aya.generic.Constants}.functorPure in default
      * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above, it will be desugared to
-     *   <pre>
+     * <pre>
      *     do
      *       x <- [1, 2, 3]
      *       y <- [4, 5, 6]
@@ -407,7 +410,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       @NotNull ImmutableSeq<DoBind> binds,
       @NotNull Expr bindName,
       @NotNull Expr pureName
-    ) { }
+    ) {}
 
     /**
      * helper constructor, also find constructor calls easily in IDE
