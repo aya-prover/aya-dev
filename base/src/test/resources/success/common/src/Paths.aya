@@ -56,6 +56,6 @@ def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c =>
 def infixr <==>'
   (p : [| i |] A)
   (q : [| i |] A {| ~ i := p 1 |})
-  : [| i |] A {| ~ i := p 0 | i := q 1 |} =>
+  : p 0 = q 1 =>
   coe (\ k => p 0 = q k) 0 (λ j => p j)
   tighter <==>
