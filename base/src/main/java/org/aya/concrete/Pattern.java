@@ -92,8 +92,6 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
   /**
    * <h1>Undesugared List Pattern</h1>
    *
-   * This pattern will be desugared during {@link org.aya.resolve.visitor.StmtResolver#resolve(Pattern, Context)}.
-   *
    * @param sourcePos
    * @param explicit
    * @param elements
@@ -103,7 +101,10 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @NotNull SourcePos sourcePos,
     boolean explicit,
     @NotNull ImmutableSeq<Pattern> elements,
-    @Nullable LocalVar as
+    @Nullable LocalVar as,
+    // dirty!!
+    @NotNull Pattern nilName,
+    @NotNull Pattern consName
   ) implements Pattern {
   }
 

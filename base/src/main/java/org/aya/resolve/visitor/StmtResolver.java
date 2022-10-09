@@ -250,6 +250,21 @@ public interface StmtResolver {
           bindAs(seq.as(), newCtx.get(), seq.sourcePos()),
           new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.as(), seq.explicit()));
       }
+      // resolve inner pattern but not desugar
+      case Pattern.List list -> {
+        var newCtx = MutableValue.create(context);
+
+        // resolve subpatterns
+        var subpats = list.elements().map(x -> subpatterns(newCtx, x));
+
+        // resolve ctors (these resolving won't change context, maybe...)
+        var nilPat = resolve(list.nilName(), newCtx.get());
+        var consPat = resolve(list.consName(), newCtx.get());
+
+        yield Tuple.of(
+          bindAs(list.as(), newCtx.get(), list.sourcePos()),
+          new Pattern.List(list.sourcePos(), list.explicit(), subpats, list.as(), nilPat._2, consPat._2));
+      }
       default -> Tuple.of(context, pattern);
     };
   }

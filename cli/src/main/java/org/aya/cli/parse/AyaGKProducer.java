@@ -723,16 +723,24 @@ public record AyaGKProducer(
         : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
     }
     if (node.is(ATOM_LIST_PATTERN)) {
-      var patterns = node.child(PATTERNS)
-        .childrenOfType(PATTERN)
-        .map(x -> x.child(ATOM_PATTERNS))
-        .map(this::atomPatterns);
+      var patternsNode = node.peekChild(PATTERNS);    // We allowed empty list pattern (nil)
+      var patterns = patternsNode != null
+        ? patternsNode
+          .childrenOfType(PATTERN)
+          .map(x -> x.child(ATOM_PATTERNS))
+          .map(this::atomPatterns)
+        : ImmutableSeq.<BiFunction<Boolean, LocalVar, Pattern>>empty().view();
 
       var weakId = node.peekChild(WEAK_ID);
       var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
+      var nilBind = new Pattern.Bind(sourcePos, true,
+        LocalVar.from(new WithPos<>(sourcePos, Constants.LIST_NIL)),
+        MutableValue.create());
+      var consBind = new Pattern.Bind(sourcePos, true,
+        LocalVar.from(new WithPos<>(sourcePos, Constants.LIST_CONS)),
+        MutableValue.create());
 
-      // TODO[hoshino]: Is this right?
-      return ex -> new Pattern.List(sourcePos, ex, patterns.map(f -> f.apply(ex, null)).toImmutableSeq(), asId);
+      return ex -> new Pattern.List(sourcePos, ex, patterns.map(f -> f.apply(ex, null)).toImmutableSeq(), asId, nilBind, consBind);
     }
     if (node.is(ATOM_NUMBER_PATTERN))
       return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));
