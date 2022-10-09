@@ -420,7 +420,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_COERCE? declNameOrInfix tele* clauses? bindBlock?
+  // KW_COERCE? declNameOrInfix tele* partialBlock? bindBlock?
   public static boolean dataCtor(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataCtor")) return false;
     boolean r;
@@ -452,10 +452,10 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // clauses?
+  // partialBlock?
   private static boolean dataCtor_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataCtor_3")) return false;
-    clauses(b, l + 1);
+    partialBlock(b, l + 1);
     return true;
   }
 
@@ -1369,6 +1369,51 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, KW_OPEN);
     exit_section_(b, m, OPEN_KW, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // LBRACE partialInner RBRACE
+  public static boolean partialBlock(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialBlock")) return false;
+    if (!nextTokenIs(b, LBRACE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PARTIAL_BLOCK, null);
+    r = consumeToken(b, LBRACE);
+    p = r; // pin = 1
+    r = r && report_error_(b, partialInner(b, l + 1));
+    r = p && consumeToken(b, RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // bareSubSystem? barredSubSystem*
+  static boolean partialInner(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialInner")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = partialInner_0(b, l + 1);
+    r = r && partialInner_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // bareSubSystem?
+  private static boolean partialInner_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialInner_0")) return false;
+    bareSubSystem(b, l + 1);
+    return true;
+  }
+
+  // barredSubSystem*
+  private static boolean partialInner_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialInner_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!barredSubSystem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "partialInner_1", c)) break;
+    }
+    return true;
   }
 
   /* ********************************************************** */
@@ -2805,7 +2850,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
+  // LPARTIAL partialInner? RPARTIAL
   public static boolean partialExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "partialExpr")) return false;
     if (!nextTokenIsSmart(b, LPARTIAL)) return false;
@@ -2818,39 +2863,10 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (bareSubSystem? barredSubSystem*)?
+  // partialInner?
   private static boolean partialExpr_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "partialExpr_1")) return false;
-    partialExpr_1_0(b, l + 1);
-    return true;
-  }
-
-  // bareSubSystem? barredSubSystem*
-  private static boolean partialExpr_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "partialExpr_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = partialExpr_1_0_0(b, l + 1);
-    r = r && partialExpr_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // bareSubSystem?
-  private static boolean partialExpr_1_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "partialExpr_1_0_0")) return false;
-    bareSubSystem(b, l + 1);
-    return true;
-  }
-
-  // barredSubSystem*
-  private static boolean partialExpr_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "partialExpr_1_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!barredSubSystem(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "partialExpr_1_0_1", c)) break;
-    }
+    partialInner(b, l + 1);
     return true;
   }
 
