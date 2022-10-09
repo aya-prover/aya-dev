@@ -286,7 +286,7 @@ lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
-idiomAtom ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
+idiomAtom ::= LIDIOM idiomBlock RIDIOM { pin=1 }
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
 
 partialExpr ::= LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL

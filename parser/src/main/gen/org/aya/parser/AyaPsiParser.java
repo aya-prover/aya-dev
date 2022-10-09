@@ -1007,7 +1007,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LIDIOM idiomBlock? RIDIOM
+  // LIDIOM idiomBlock RIDIOM
   public static boolean idiomAtom(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "idiomAtom")) return false;
     if (!nextTokenIs(b, LIDIOM)) return false;
@@ -1015,17 +1015,10 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, IDIOM_ATOM, null);
     r = consumeToken(b, LIDIOM);
     p = r; // pin = 1
-    r = r && report_error_(b, idiomAtom_1(b, l + 1));
+    r = r && report_error_(b, idiomBlock(b, l + 1));
     r = p && consumeToken(b, RIDIOM) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  // idiomBlock?
-  private static boolean idiomAtom_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "idiomAtom_1")) return false;
-    idiomBlock(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */
