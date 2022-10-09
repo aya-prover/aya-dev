@@ -9,24 +9,22 @@ import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
-public class MdUnicodeTrace {
+public class MarkdownTrace {
   public final int indent;
   public final @NotNull DistillerOptions options;
-  private final boolean asciiOnly;
   public static final @NotNull Doc plus = Doc.symbol("+");
   public static final @NotNull Doc colon = Doc.symbol(":");
   private final @NotNull Doc vdash, equiv, uparr;
 
-  public MdUnicodeTrace(int indent, @NotNull DistillerOptions options, boolean asciiOnly) {
+  public MarkdownTrace(int indent, @NotNull DistillerOptions options, boolean asciiOnly) {
     this.indent = indent;
     this.options = options;
-    this.asciiOnly = asciiOnly;
     vdash = asciiOnly ? Doc.symbol("|-") : Doc.symbol("\u22A2");
     equiv = asciiOnly ? Doc.symbol("==") : Doc.symbol("\u2261");
     uparr = asciiOnly ? Doc.symbol("^") : Doc.symbol("\u2191");
   }
 
-  public MdUnicodeTrace() {
+  public MarkdownTrace() {
     this(2, DistillerOptions.informative(), false);
   }
 

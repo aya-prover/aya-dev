@@ -13,7 +13,7 @@ import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.printer.PrinterConfig;
-import org.aya.tyck.trace.MdUnicodeTrace;
+import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
@@ -69,7 +69,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var compiler = new SingleFileCompiler(reporter, null, traceBuilder, distillOptions);
     var status = compiler.compile(filePath, flags, null);
     if (traceBuilder != null)
-      System.err.println(new MdUnicodeTrace(2, distillOptions, asciiOnly)
+      System.err.println(new MarkdownTrace(2, distillOptions, asciiOnly)
         .docify(traceBuilder).renderWithPageWidth(PrinterConfig.INFINITE_SIZE, !asciiOnly));
     return status;
   }
