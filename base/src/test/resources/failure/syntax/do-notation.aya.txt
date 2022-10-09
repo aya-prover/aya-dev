@@ -1,11 +1,19 @@
-In file $FILE:2:5 ->
+In file $FILE:4:5 ->
 
-  1 | def A: Type =>
-  2 |   do a <- b
-           ^----^
+  2 | 
+  3 | def A: Type =>
+  4 |   do a <- Type
+           ^^
 
-Error: Parser error: last expression in a do block cannot be a bind expression
+Error: Last expression in a do block cannot be a bind expression
 
-Parsing interrupted due to:
-1 error(s), 0 warning(s).
+In file $FILE:4:10 ->
+
+  3 | def A: Type =>
+  4 |   do a <- Type
+                ^--^
+
+Error: No rule inferring the type of Type
+
+2 error(s), 0 warning(s).
 What are you doing?
