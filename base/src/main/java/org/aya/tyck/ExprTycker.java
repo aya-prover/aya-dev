@@ -631,14 +631,14 @@ public final class ExprTycker extends Tycker {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
       result = new TermResult(new IntroTerm.Lambda(implicitParam, body), pi);
-    } else result = doInherit(expr, type);
+    } else result = doInherit(expr, type).checkDummy(state, localCtx);
     traceExit(result, expr);
     return result;
   }
 
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var res = doSynthesize(expr);
+    var res = doSynthesize(expr).checkDummy(state, localCtx);
     traceExit(res, expr);
     return res;
   }
@@ -828,6 +828,14 @@ public final class ExprTycker extends Tycker {
     @NotNull Term wellTyped();
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
+
+    default Result checkDummy(@NotNull TyckState state, @NotNull LocalCtx ctx) {
+      var type = type();
+      if(type instanceof FormTerm.Sort) return this;
+      var sort = type.computeType(state, ctx);
+      if(sort instanceof FormTerm.Prop) return new TermResult(new DummyTerm(type), type);
+      return this;
+    }
   }
 
 
