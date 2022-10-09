@@ -148,7 +148,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             });
 
             // replace newPattern.as() with list.as()
-            yield new Pattern.Ctor(newPattern.sourcePos(), newPattern.explicit(), newPattern.resolved(), newPattern.params(), list.as());
+            yield visitPattern(new Pattern.Ctor(newPattern.sourcePos(), newPattern.explicit(), newPattern.resolved(), newPattern.params(), list.as()), pp);
           } else {
             resolveInfo.opSet().reporter.report(new PatternProblem.UnknownCtor(list.consName()));
           }
