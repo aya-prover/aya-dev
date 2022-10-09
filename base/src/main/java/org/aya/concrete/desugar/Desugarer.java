@@ -78,9 +78,9 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
         }
         case Expr.Idiom idiom -> idiom.barredApps().view().map(app -> {
           var list = MutableList.<Expr.NamedArg>create();
-          Expr.unapp(app, list);
+          var pre = Expr.unapp(pre(app), list);
           var pure = idiom.names().applicativePure();
-          var head = new Expr.AppExpr(idiom.sourcePos(), pure, new Expr.NamedArg(true, app));
+          var head = new Expr.AppExpr(idiom.sourcePos(), pure, new Expr.NamedArg(true, pre));
           return list.foldLeft(head, (e, arg) -> new Expr.AppExpr(e.sourcePos(),
             new Expr.AppExpr(e.sourcePos(), idiom.names().applicativeAp(),
               new Expr.NamedArg(true, e)), arg));
