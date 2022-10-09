@@ -166,6 +166,11 @@ public record ExprResolver(
           case AnyVar var -> new Expr.RefExpr(sourcePos, var);
         };
       }
+      case Expr.Idiom idiom -> {
+        var newNames = idiom.names().fmap(e -> resolve(e, ctx));
+        var newBody = idiom.barredApps().map(e -> resolve(e, ctx));
+        yield new Expr.Idiom(idiom.sourcePos(), newNames, newBody);
+      }
       default -> expr;
     };
   }

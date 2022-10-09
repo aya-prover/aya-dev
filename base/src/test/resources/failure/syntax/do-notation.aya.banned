@@ -1,2 +1,0 @@
-def A: Type =>
-  do a <- b

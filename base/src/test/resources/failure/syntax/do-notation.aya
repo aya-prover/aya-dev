@@ -1,0 +1,4 @@
+def >>= => Type
+
+def A: Type 1 =>
+  do a <- Type
