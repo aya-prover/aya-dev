@@ -17,6 +17,26 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public sealed interface ElimTerm extends Term {
+  @Contract(pure = true) static @NotNull Term
+  make(@NotNull Term f, @NotNull Arg<Term> arg) {
+    return make(new App(f, arg));
+  }
+
+  @Contract(pure = true) static @NotNull Term make(@NotNull ElimTerm.App app) {
+    if (app.of() instanceof CallTerm.Hole hole) {
+      if (hole.args().sizeLessThan(hole.ref().telescope))
+        return new CallTerm.Hole(hole.ref(), hole.ulift(), hole.contextArgs(), hole.args().appended(app.arg()));
+    }
+    if (app.of() instanceof IntroTerm.Lambda lam) return make(lam, app.arg());
+    return app;
+  }
+
+  static @NotNull Term make(IntroTerm.Lambda lam, @NotNull Arg<Term> arg) {
+    var param = lam.param();
+    assert arg.explicit() == param.explicit();
+    return lam.body().subst(param.ref(), arg.term());
+  }
+
   @NotNull Term of();
 
   /**

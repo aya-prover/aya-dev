@@ -10,6 +10,7 @@ import kala.tuple.Tuple;
 import org.aya.core.Matching;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.ElimTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
@@ -57,7 +58,7 @@ public interface DeltaExpander extends EndoFunctor {
       case CallTerm.Access access -> {
         var fieldDef = access.ref().core;
         if (access.of() instanceof IntroTerm.New n) {
-          var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
+          var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), ElimTerm::make);
           yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
         }
         yield access;

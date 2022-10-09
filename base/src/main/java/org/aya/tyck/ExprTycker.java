@@ -181,7 +181,7 @@ public final class ExprTycker extends Tycker {
               // that implies paramLicit == false
               var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
               // path types are always explicit
-              app = CallTerm.make(app, holeApp);
+              app = ElimTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
               tup = ensurePiOrPath(pi.body());
               pi = tup._1;
@@ -198,7 +198,7 @@ public final class ExprTycker extends Tycker {
         subst.addDirectly(pi.param().ref(), elabArg);
         var arg = new Arg<>(elabArg, argLicit);
         var newApp = cube == null
-          ? CallTerm.make(app, arg)
+          ? ElimTerm.make(app, arg)
           : cube.makeApp(app, arg).subst(subst);
         // ^ instantiate inserted implicits to the partial element in `Cube`.
         // It is better to `cube.subst().makeApp()`, but we don't have a `subst` method for `Cube`.
@@ -306,7 +306,7 @@ public final class ExprTycker extends Tycker {
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
     term = whnf(term);
     while (term instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
-      term = whnf(CallTerm.make(intro, mockArg(intro.param(), pos)));
+      term = whnf(ElimTerm.make(intro, mockArg(intro.param(), pos)));
     }
     return term;
   }
@@ -316,7 +316,7 @@ public final class ExprTycker extends Tycker {
     var term = result.wellTyped();
     while (type instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var holeApp = mockArg(pi.param(), pos);
-      term = CallTerm.make(term, holeApp);
+      term = ElimTerm.make(term, holeApp);
       type = whnf(pi.substBody(holeApp.term()));
     }
     return new TermResult(term, type);
