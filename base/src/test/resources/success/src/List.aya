@@ -14,3 +14,11 @@ def termDesuListComp : List Nat => ([ 1, 2, 3 ]) >>= (\ a => [ 4, 5, 6 ] >>= (\ 
 
 def testDesuList : termList = termDesuList => idp
 def testDesuListComp : termListComp = termDesuListComp => idp
+
+def listPattern (l : List Nat) : List Nat
+  | [] => nil
+  | [ 1 ] => 1 :< nil
+  | [ 1, e2 ] => 1 :< e2 :< nil
+  | [ 1, e2, _ ] => l
+  | [ _, _, _, _ ] as l' => l'
+  | _ => l
