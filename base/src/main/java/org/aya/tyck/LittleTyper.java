@@ -63,10 +63,13 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case RefTerm.MetaPat metaPat -> metaPat.ref().type();
       case FormTerm.Pi pi -> {
         var paramTyRaw = term(pi.param().type()).normalize(state, NormalizeMode.WHNF);
-        var retTyRaw = term(pi.body()).normalize(state, NormalizeMode.WHNF);
-        if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy)
-          yield new FormTerm.Type(Math.max(paramTy.lift(), retTy.lift()));
-        else yield ErrorTerm.typeOf(pi);
+        var resultParam = new Term.Param(pi.param().ref(), paramTyRaw, pi.param().explicit());
+        yield localCtx.with(resultParam, () -> {
+          var retTyRaw = term(pi.body()).normalize(state, NormalizeMode.WHNF);
+          if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy)
+            return new FormTerm.Type(Math.max(paramTy.lift(), retTy.lift()));
+          else return ErrorTerm.typeOf(pi);
+        });
       }
       case ElimTerm.App app -> {
         var piRaw = term(app.of()).normalize(state, NormalizeMode.WHNF);
