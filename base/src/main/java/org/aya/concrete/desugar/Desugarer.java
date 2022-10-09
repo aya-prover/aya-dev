@@ -34,14 +34,14 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
 
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
-        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg) when kind == SortKind.Type -> {
+        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Type -> {
           try {
             yield new Expr.TypeExpr(uPos, levelVar(arg.expr()));
           } catch (DesugarInterruption e) {
             yield new Expr.ErrorExpr(pos, expr);
           }
         }
-        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg) when kind == SortKind.Set -> {
+        case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Set -> {
           try {
             yield new Expr.SetExpr(uPos, levelVar(arg.expr()));
           } catch (DesugarInterruption e) {
@@ -64,7 +64,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             info.opSet().reporter.report(new DoNotationError(last.sourcePos(), expr));
           }
           var rest = doNotation.binds().view().dropLast(1);
-          yield rest.foldRight(last.expr(),
+          yield pre(rest.foldRight(last.expr(),
             // Upper: x <- a from last line
             // Lower: current line
             // Goal: >>=(a, \x -> rest)
@@ -74,7 +74,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
                 new Expr.NamedArg(true, upper.expr())),
               new Expr.NamedArg(true, new Expr.LamExpr(lower.sourcePos(),
                 new Expr.Param(lower.sourcePos(), upper.var(), true),
-                lower))));
+                lower)))));
         }
         case Expr.Idiom idiom -> idiom.barredApps().view().map(app -> {
           var list = MutableList.<Expr.NamedArg>create();
@@ -101,7 +101,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             return pre(doNotation);
           },
           // desugar `[1, 2, 3]` to `consCtor 1 (consCtor 2 (consCtor 3 nilCtor))`
-          right -> right.exprList().foldRight(right.nilCtor(),
+          right -> pre(right.exprList().foldRight(right.nilCtor(),
             (e, last) -> {
               // construct `(consCtor e) last`
               // Note: the sourcePos of this call is the same as the element's (currently)
@@ -113,7 +113,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
                   new Expr.NamedArg(true, e)),
                 new Expr.NamedArg(true, last));
             })
-        );
+          ));
         case Expr misc -> misc;
       };
     }
