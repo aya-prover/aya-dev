@@ -84,7 +84,7 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
           return list.foldLeft(head, (e, arg) -> new Expr.AppExpr(e.sourcePos(),
             new Expr.AppExpr(e.sourcePos(), idiom.names().applicativeAp(),
               new Expr.NamedArg(true, e)), arg));
-        }).reduceLeft((e, arg) ->
+        }).foldLeft(idiom.names().alternativeEmpty(), (e, arg) ->
           new Expr.AppExpr(e.sourcePos(), new Expr.AppExpr(e.sourcePos(),
             idiom.names().alternativeOr(), new Expr.NamedArg(true, e)),
             new Expr.NamedArg(true, arg)));
