@@ -125,16 +125,16 @@
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
   extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
-  extends("refExpr|holeExpr|litIntExpr|litStringExpr|univExpr") = literal
+  extends("refExpr|holeExpr|lit.+Expr|univExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
 
-  extends("atomUliftExpr|atomTupleExpr") = atomExpr
-  extends("arrayCompBlock|arrayElementsBlock") = arrayBlock
-  extends("atomExArgument|tupleImArgument|namedImArgument") = argument
-  extends("atomExPattern|atomImPattern|atomNumberPattern|atomAbsurdPattern|atomBindPattern|atomCalmFacePattern") = atomPattern
+  extends("atom.+Expr") = atomExpr
+  extends("array.+Block") = arrayBlock
+  extends(".+Argument") = argument
+  extends("atom.+Pattern") = atomPattern
 
-  extends("fnDecl|structDecl|primDecl|dataDecl") = decl
-  extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
+  extends(".+Decl") = decl
+  extends("stmt|decl|.+Cmd|module|remark|generalize") = stmt
 }
 
 program ::= repl | stmts
