@@ -38,6 +38,11 @@ public interface BetaExpander extends EndoFunctor {
       }
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
       case ElimTerm.PathApp app -> {
+        if (app.of() instanceof ErasedTerm) {
+          var xi = app.cube().params();
+          var ui = app.args().map(Arg::term);
+          yield new ErasedTerm(app.cube().type().subst(new Subst(xi, ui)));
+        }
         if (app.of() instanceof IntroTerm.PathLam lam) {
           var ui = app.args().map(Arg::term);
           var subst = new Subst(lam.params(), ui);
