@@ -129,35 +129,35 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
   public static class DesugarInterruption extends Exception {
   }
 
+  /**
+   * Desugaring patterns
+   *
+   * @param pattern the pattern
+   * @param pp useless
+   * @return desugared pattern
+   */
   @Override
   public @NotNull Pattern visitPattern(@NotNull Pattern pattern, Unit pp) {
     return switch (pattern) {
       case Pattern.List list -> {
-        if (list.nilName() instanceof Pattern.Ctor nilCtor) {
-          if (list.consName() instanceof Pattern.Ctor consCtor) {
-            if (list.elements().isEmpty()) yield nilCtor;
+        // see StmtResolver.resolve
+        var nilCtor = (Pattern.Ctor) list.nilName();
+        var consCtor = (Pattern.Ctor) list.consName();
 
-            var elements = list.elements().map(x -> visitPattern(x, pp));
-            var newPattern = elements.foldRight(nilCtor, (e, right) -> {
-              // e : current element
-              // right : right element
-              // Goal : consCtor e right
+        if (list.elements().isEmpty()) yield nilCtor;
 
-              return new Pattern.Ctor(consCtor.sourcePos(), consCtor.explicit(), consCtor.resolved(),
-                ImmutableSeq.of(e, right), null);
-            });
+        var elements = list.elements().map(x -> visitPattern(x, pp));
+        var newPattern = elements.foldRight(nilCtor, (e, right) -> {
+          // e : current element
+          // right : right element
+          // Goal : consCtor e right
 
-            // replace newPattern.as() with list.as()
-            yield visitPattern(new Pattern.Ctor(newPattern.sourcePos(), newPattern.explicit(), newPattern.resolved(), newPattern.params(), list.as()), pp);
-          } else {
-            resolveInfo.opSet().reporter.report(new PatternProblem.UnknownCtor(list.consName()));
-          }
-        } else {
-          resolveInfo.opSet().reporter.report(new PatternProblem.UnknownCtor(list.nilName()));
-        }
+          return new Pattern.Ctor(consCtor.sourcePos(), consCtor.explicit(), consCtor.resolved(),
+            ImmutableSeq.of(e, right), null);
+        });
 
-        // TODO[hoshino]: I don't think this is correct.
-        throw new Context.ResolvingInterruptedException();
+        // replace newPattern.as() with list.as()
+        yield visitPattern(new Pattern.Ctor(newPattern.sourcePos(), newPattern.explicit(), newPattern.resolved(), newPattern.params(), list.as()), pp);
       }
 
       default -> StmtOps.super.visitPattern(pattern, pp);
