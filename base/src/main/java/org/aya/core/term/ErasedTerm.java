@@ -4,5 +4,5 @@ package org.aya.core.term;
 
 import org.jetbrains.annotations.NotNull;
 
-public record DummyTerm(@NotNull Term type) implements Term {
+public record ErasedTerm(@NotNull Term type) implements Term {
 }

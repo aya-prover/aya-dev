@@ -188,7 +188,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case PrimTerm.Coe coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
-      case DummyTerm dummy -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "dummy"), term(Outer.AppSpine, dummy.type())), Outer.AppSpine);
+      case ErasedTerm erased -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
     };
   }
 
