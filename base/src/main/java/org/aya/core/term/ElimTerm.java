@@ -27,6 +27,13 @@ public sealed interface ElimTerm extends Term {
       if (hole.args().sizeLessThan(hole.ref().telescope))
         return new CallTerm.Hole(hole.ref(), hole.ulift(), hole.contextArgs(), hole.args().appended(app.arg()));
     }
+    if (app.of() instanceof ErasedTerm erased) {
+      if (erased.type() instanceof FormTerm.Pi pi) {
+        return new ErasedTerm(pi.substBody(app.arg().term()));
+      } else {
+        return new ErasedTerm(ErrorTerm.typeOf(app));
+      }
+    }
     if (app.of() instanceof IntroTerm.Lambda lam) return make(lam, app.arg());
     return app;
   }
@@ -61,6 +68,13 @@ public sealed interface ElimTerm extends Term {
     if (proj.of instanceof IntroTerm.Tuple tup) {
       assert tup.items().sizeGreaterThanOrEquals(proj.ix) && proj.ix > 0 : proj.of.toDoc(DistillerOptions.debug()).debugRender();
       return tup.items().get(proj.ix - 1);
+    }
+    if (proj.of instanceof ErasedTerm erased) {
+      if (erased.type() instanceof FormTerm.Sigma sigma) {
+        return new ErasedTerm(sigma.params().get(proj.ix - 1).type());
+      } else {
+        return new ErasedTerm(ErrorTerm.typeOf(proj));
+      }
     }
     return proj;
   }
