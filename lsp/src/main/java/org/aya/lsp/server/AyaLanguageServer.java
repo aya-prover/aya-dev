@@ -367,7 +367,7 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
-    var source = find(input.uri);
+    var source = find(input.uri());
     if (source == null) return ComputeTermResult.bad(input);
     return new ComputeTerm(source, type, primFactory(source.owner())).invoke(input);
   }
