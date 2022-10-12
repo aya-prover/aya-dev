@@ -6,5 +6,8 @@ open data Squash2 (A: Type): Prop
 
 def squashElim {A: Type} {P: Prop} (f: A -> P) (squash: Squash A): P => f squash.value
 
+counterexample def badSquashElim {A: Type} {Q: Type} (f: A -> Q) (squash: Squash A): Q => f squash.value
+
 def squash2Elim {A: Type} {P: Prop} (f: A -> P) (squash: Squash2 A): P
   | f, (squash a) => f a
+
