@@ -4,7 +4,7 @@ public open data Unit | unit
 
 -- we cannot eta-contract this, same problem as Cubical Agda
 def coe {A B : Type} (eq : A ↑ = B) (x : A) : B
-  => ↑ ↑ ↑ primCoe (\y => eq y) 0 x
+  => ↑ primCoe (\y => eq y) 0 x
 
 def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
   => λ i => ↑ primCoe (λ j => A) (~ i) x
