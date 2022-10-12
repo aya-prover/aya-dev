@@ -157,13 +157,7 @@ public class AyaLanguageServer implements LanguageServer {
 
     try {
       var opts = new Gson().fromJson(options, ServerOptions.class);
-      var renderOpts = RenderOptions.fromServerOptions(opts);
-
-      if (renderOpts.isErr()) {
-        Log.e("%s", renderOpts.getErr());
-      } else {
-        this.renderOptions.set(renderOpts.get());
-      }
+      updateOptions(opts);
     } catch (JsonParseException ex) {
       // TODO[hoshino]: warn or panic?
       // Do warn
@@ -407,6 +401,17 @@ public class AyaLanguageServer implements LanguageServer {
 
   private @NotNull LspPrimFactory primFactory(@NotNull LibraryOwner owner) {
     return primFactories.getOrPut(owner.underlyingLibrary(), LspPrimFactory::new);
+  }
+
+  @LspRequest("options/updateOptions")
+  public void updateOptions(@NotNull ServerOptions options) {
+    var renderOpts = RenderOptions.fromServerOptions(options);
+
+    if (renderOpts.isErr()) {
+      Log.e("%s", renderOpts.getErr());
+    } else {
+      this.renderOptions.getAndUpdate(opts -> opts.update(renderOpts.get()));
+    }
   }
 
   public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {

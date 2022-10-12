@@ -27,4 +27,10 @@ public class ServerOptions {
   public @Nullable JsonElement styleFamily;
 
   public @Nullable RenderOptions.RenderTarget renderTarget;
+
+  public ServerOptions(@Nullable JsonElement colorScheme, @Nullable JsonElement styleFamily, @Nullable RenderOptions.RenderTarget renderTarget) {
+    this.colorScheme = colorScheme;
+    this.styleFamily = styleFamily;
+    this.renderTarget = renderTarget;
+  }
 }

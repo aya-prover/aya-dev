@@ -61,9 +61,7 @@ public record RenderOptions(
     }
 
     var styleFamily = Option.<StyleFamily>none();
-    if (rawStyleFamily != null) {
-      // TODO
-    }
+    // TODO[hoshino]
 
     return Result.ok(new RenderOptions(colorScheme, styleFamily, Option.ofNullable(renderTarget)));
   }
@@ -88,19 +86,24 @@ public record RenderOptions(
         @Nullable var key = entry.getKey();
         @Nullable var value = entry.getValue();
         // TODO[hoshino]: What if we pre-build a keyName set ?
-        var isKeyValid = key != null && Seq.from(AyaColorScheme.Key.values()).contains(key);
+        var isKeyValid = key != null && Seq.from(AyaColorScheme.Key.values())
+          .view().map(AyaColorScheme.Key::key)
+          .contains(key);
 
         // TODO: ignore or panic if `! isValid` ?
         if (isKeyValid) {
           var isColorValid = value != null
             && value.isJsonPrimitive()
-            && value.getAsJsonPrimitive().isNumber()
-            && ((value.getAsInt() & 0xFF000000) == 0);    // TODO: Is this required?
+            && value.getAsJsonPrimitive().isString();
 
           if (isColorValid) {
-            var color = value.getAsInt() & 0x00FFFFFF;
+            var colorCode = RenderOptions.parseColor(value.getAsString());
 
-            colorSchemeMap.put(key, color);
+            if (colorCode.isOk()) {
+              colorSchemeMap.put(key, colorCode.get());
+            } else {
+              return Result.err(colorCode.getErr());
+            }
           }
         }
       }
@@ -108,6 +111,27 @@ public record RenderOptions(
       return Result.ok(new AyaColorScheme(colorSchemeMap));
     } else {
       return Result.err("invalid color scheme");
+    }
+  }
+
+  /**
+   * Parsing the color code into an integer. I didn't find any function do this.
+   *
+   * @param color the color string, which should be a hexadecimal number string in 6 numbers long, optional prefix "#" and "0x" are allowed.
+   */
+  public static Result<Integer, String> parseColor(String color) {
+    var colorCode = color;
+    if (color.charAt(0) == '#') colorCode = colorCode.substring(1);
+    if (colorCode.startsWith("0x")) colorCode = colorCode.substring(2);
+
+    if (colorCode.length() != 6) return Result.err("color code is too long or too short!");
+
+    try {
+      var result = Integer.parseInt(colorCode, 16);
+
+      return Result.ok(result);
+    } catch (NumberFormatException e) {
+      return Result.err(e.getMessage());
     }
   }
 

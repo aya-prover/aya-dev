@@ -1,0 +1,10 @@
+open data Nat
+  | O
+  | S Nat
+
+def add (a b : Nat) : Nat
+  | O  , b => b
+  | S n, b => add n (S b)
+
+-- Inserting things to this file is highly unrecommended!
+-- Appending things to the end of this file is acceptable.
