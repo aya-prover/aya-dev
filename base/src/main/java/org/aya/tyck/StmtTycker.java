@@ -73,7 +73,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
         yield decl.body.fold(
           body -> {
-            var nobody = tycker.inherit(body, signature.result()).wellTyped();
+            var nobody = tycker.checkNotErased(body.sourcePos(), tycker.inherit(body, signature.result())).wellTyped();
             tycker.solveMetas();
             // It may contain unsolved metas. See `checkTele`.
             var resultTy = tycker.zonk(signature.result());

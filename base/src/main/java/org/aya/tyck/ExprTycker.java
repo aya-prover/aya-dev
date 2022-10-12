@@ -18,7 +18,9 @@ import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
+import org.aya.core.visitor.EndoFunctor;
 import org.aya.core.visitor.Subst;
+import org.aya.core.visitor.TermConsumer;
 import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -824,14 +826,39 @@ public final class ExprTycker extends Tycker {
     return new Arg<>(mockTerm(param, pos), param.explicit());
   }
 
+  public @NotNull Result checkNotErased(@NotNull SourcePos sourcePos, @NotNull Result result) {
+    return new TermResult(checkNotErased(sourcePos, result.wellTyped(), result.type()), result.type());
+  }
+
+  public @NotNull Term checkNotErased(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
+    if (type instanceof FormTerm.Sort) return wellTyped;
+    var sort = type.computeType(state, localCtx);
+    if (sort instanceof FormTerm.Prop) return wellTyped;
+    return checkNotErased(sourcePos, wellTyped);
+  }
+
+  public @NotNull Term checkNotErased(@NotNull SourcePos sourcePos, @NotNull Term term) {
+    var functor = new EndoFunctor() {
+      @Override public Term post(@NotNull Term term) {
+        if (term instanceof FormTerm.Sort) return term;
+        if (ElimTerm.isErased(term)) {
+          reporter.report(new ErasedError(sourcePos, term, null));
+          return new ErrorTerm(term);
+        }
+        return term;
+      }
+    };
+    return functor.apply(term);
+  }
+
   public interface Result {
     @NotNull Term wellTyped();
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
 
     default Result checkErased(@NotNull TyckState state, @NotNull LocalCtx ctx) {
+      if (wellTyped() instanceof FormTerm.Sort) return this;
       var type = type();
-      if (type instanceof FormTerm.Sort) return this;
       var sort = type.computeType(state, ctx);
       if (sort instanceof FormTerm.Prop || ElimTerm.isErased(wellTyped()))
         return new TermResult(new ErasedTerm(type), type);
