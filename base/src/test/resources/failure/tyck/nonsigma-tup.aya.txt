@@ -5,7 +5,7 @@ In file $FILE:1:19 ->
 
 Error: Unable to construct the expression
          (Type 0, Type 0)
-       because the type you checks it against is not a Sigma type, but instead:
+       because the type you checked it against is not a Sigma type, but instead:
          Type 0
          (Normalized: Type 0)
 

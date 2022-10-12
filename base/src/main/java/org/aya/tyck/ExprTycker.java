@@ -347,7 +347,7 @@ public final class ExprTycker extends Tycker {
         var typeWHNF = whnf(term);
         if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(tuple), tuple);
         if (!(typeWHNF instanceof FormTerm.Sigma dt))
-          yield fail(tuple, term, BadTypeError.sigmaCon(state, tuple, term));
+          yield fail(tuple, term, BadTypeError.sigmaCon(state, tuple, typeWHNF));
         var againstTele = dt.params().view();
         var last = dt.params().last().type();
         var subst = new Subst(MutableMap.create());

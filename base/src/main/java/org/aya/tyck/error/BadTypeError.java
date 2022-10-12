@@ -62,7 +62,7 @@ public record BadTypeError(
   public static @NotNull BadTypeError sigmaCon(@NotNull TyckState state, @NotNull Expr expr, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
       Doc.sep(Doc.plain("construct")),
-      Doc.english("you checks it against"),
+      Doc.english("you checked it against"),
       options -> Doc.english("Sigma type"),
       state);
   }

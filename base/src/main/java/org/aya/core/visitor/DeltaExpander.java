@@ -44,7 +44,7 @@ public interface DeltaExpander extends EndoFunctor {
         var def = fn.ref().core;
         if (def == null || def.modifiers.contains(Modifier.Opaque)) yield fn;
         yield def.body.fold(
-          lamBody -> apply(lamBody.rename().subst(buildSubst(def.telescope(), fn.args())).lift(fn.ulift())),
+          lamBody -> apply(lamBody.rename().lift(fn.ulift()).subst(buildSubst(def.telescope(), fn.args()))),
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
             .map(unfolded -> apply(unfolded.data())).getOrDefault(fn));
       }
@@ -75,7 +75,7 @@ public interface DeltaExpander extends EndoFunctor {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
-        var newBody = matchy.body().rename().subst(subst).lift(ulift);
+        var newBody = matchy.body().rename().lift(ulift).subst(subst);
         return Option.some(new WithPos<>(matchy.sourcePos(), newBody));
       } else if (!orderIndependent && termSubst.getErr()) return Option.none();
     }
