@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -9,6 +11,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
+import kala.value.MutableValue;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.incremental.DelegateCompilerAdvisor;
@@ -25,6 +28,8 @@ import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
+import org.aya.lsp.models.RenderOptions;
+import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.prim.LspPrimFactory;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
@@ -63,10 +68,13 @@ public class AyaLanguageServer implements LanguageServer {
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
+  // This field might be shared in different threads, and it is mutable during runtime.
+  private final @NotNull MutableValue<RenderOptions> renderOptions;
 
   public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
     this.client = client;
+    this.renderOptions = MutableValue.createVolatile(RenderOptions.DEFAULT);
     Log.init(this.client);
   }
 
@@ -135,7 +143,32 @@ public class AyaLanguageServer implements LanguageServer {
     if (folders != null) folders.forEach(f ->
       registerLibrary(Path.of(f.uri)));
 
+    performInitializeOptions(params);
+
     return new InitializeResult(cap);
+  }
+
+  /**
+   * @param param see {@link ServerOptions}
+   */
+  private void performInitializeOptions(@NotNull InitializeParams param) {
+    var options = param.initializationOptions;
+    if (options == null) return;
+
+    try {
+      var opts = new Gson().fromJson(options, ServerOptions.class);
+      var renderOpts = RenderOptions.fromServerOptions(opts);
+
+      if (renderOpts.isErr()) {
+        Log.e("%s", renderOpts.getErr());
+      } else {
+        this.renderOptions.set(renderOpts.get());
+      }
+    } catch (JsonParseException ex) {
+      // TODO[hoshino]: warn or panic?
+      // Do warn
+      Log.e("Unable to convert an InitializeParams.initializationOptions as a ServerOptions, cause: %s", ex.getLocalizedMessage());
+    }
   }
 
   private @Nullable LibraryOwner findOwner(@Nullable Path path) {
