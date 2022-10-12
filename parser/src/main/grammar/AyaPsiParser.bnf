@@ -332,12 +332,14 @@ pattern ::= atomPatterns
 atomPatterns ::= atomPattern+
 atomPattern ::= atomExPattern
               | atomImPattern
+              | atomListPattern
               | atomNumberPattern
               | atomAbsurdPattern
               | atomBindPattern
               | atomCalmFacePattern
 atomExPattern ::= LPAREN patterns RPAREN (KW_AS weakId)?
 atomImPattern ::= LBRACE patterns RBRACE (KW_AS weakId)?
+atomListPattern ::= LARRAY patterns? RARRAY (KW_AS weakId)?
 atomNumberPattern ::= NUMBER
 atomAbsurdPattern ::= LPAREN RPAREN
 atomBindPattern ::= weakId {

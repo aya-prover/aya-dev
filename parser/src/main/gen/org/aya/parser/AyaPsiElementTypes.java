@@ -1,10 +1,9 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
+import com.intellij.lang.ASTNode;
 
 public interface AyaPsiElementTypes {
 
@@ -23,6 +22,7 @@ public interface AyaPsiElementTypes {
   IElementType ATOM_EX_ARGUMENT = new AyaPsiElementType("ATOM_EX_ARGUMENT");
   IElementType ATOM_EX_PATTERN = new AyaPsiElementType("ATOM_EX_PATTERN");
   IElementType ATOM_IM_PATTERN = new AyaPsiElementType("ATOM_IM_PATTERN");
+  IElementType ATOM_LIST_PATTERN = new AyaPsiElementType("ATOM_LIST_PATTERN");
   IElementType ATOM_NUMBER_PATTERN = new AyaPsiElementType("ATOM_NUMBER_PATTERN");
   IElementType ATOM_PATTERN = new AyaPsiElementType("ATOM_PATTERN");
   IElementType ATOM_PATTERNS = new AyaPsiElementType("ATOM_PATTERNS");

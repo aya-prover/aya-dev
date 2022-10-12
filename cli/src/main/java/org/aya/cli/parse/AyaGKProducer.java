@@ -722,6 +722,28 @@ public record AyaGKProducer(
         ? (ignored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
         : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
     }
+    if (node.is(ATOM_LIST_PATTERN)) {
+      var patternsNode = node.peekChild(PATTERNS);    // We allowed empty list pattern (nil)
+      var patterns = patternsNode != null
+        ? patternsNode
+          .childrenOfType(PATTERN)
+          .map(x -> x.child(ATOM_PATTERNS))
+          .map(this::atomPatterns)
+        : SeqView.<BiFunction<Boolean, LocalVar, Pattern>>empty();
+
+      var weakId = node.peekChild(WEAK_ID);
+      var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
+      var nilBind = new Pattern.Bind(sourcePos, true,
+        new LocalVar(Constants.LIST_NIL, sourcePos),
+        MutableValue.create());
+      var consBind = new Pattern.Bind(sourcePos, true,
+        new LocalVar(Constants.LIST_CONS, sourcePos),
+        MutableValue.create());
+
+      return ex -> new Pattern.List(sourcePos, ex,
+        patterns.map(f -> f.apply(true, null)).toImmutableSeq(), asId,
+        nilBind, consBind);
+    }
     if (node.is(ATOM_NUMBER_PATTERN))
       return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));
     if (node.is(ATOM_ABSURD_PATTERN)) return ex -> new Pattern.Absurd(sourcePos, ex);

@@ -24,6 +24,7 @@ public interface PatternTraversal<P> {
       case Pattern.BinOpSeq seq -> visitBinOpPattern(seq, pp);
       case Pattern.Ctor ctor -> visitPatterns(ctor.params(), pp);
       case Pattern.Tuple tup -> visitPatterns(tup.patterns(), pp);
+      case Pattern.List list -> visitPatterns(list.elements(), pp);
       default -> {}
     }
   }
