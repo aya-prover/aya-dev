@@ -24,6 +24,7 @@ import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
+import org.aya.generic.util.InternalException;
 import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
@@ -41,6 +42,7 @@ import org.aya.util.error.WithPos;
 import org.aya.util.reporter.BufferReporter;
 import org.aya.util.reporter.Problem;
 import org.javacs.lsp.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -412,6 +414,15 @@ public class AyaLanguageServer implements LanguageServer {
     } else {
       this.renderOptions.getAndUpdate(opts -> opts.update(renderOpts.get()));
     }
+  }
+
+  /**
+   * A test only API, throws an InternalException
+   */
+  @Contract("-> fail")
+  @LspRequest("internal/panic")
+  public void pleasePanic() {
+    throw new InternalException("Sent!");
   }
 
   public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {
