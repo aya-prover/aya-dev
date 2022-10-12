@@ -19,14 +19,7 @@ import static org.aya.lsp.tester.TestCommand.compile;
 import static org.aya.lsp.tester.TestCommand.mutate;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LspTest {
-  public static final @NotNull Path TEST_LIB = Path.of("src", "test", "resources", "lsp-test-lib");
-
-  public @NotNull LspTestClient launch(@NotNull Path libraryRoot) {
-    var client = new LspTestClient();
-    client.registerLibrary(libraryRoot);
-    return client;
-  }
+public class LspTest extends LspTesterBase {
 
   @Test public void testJustLoad() {
     launch(TEST_LIB).execute(compile((a, e) -> {}));

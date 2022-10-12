@@ -14,6 +14,7 @@ import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ public record RenderOptions(
   /**
    * Construct a {@link RenderOptions} from {@link ServerOptions}
    */
+  @Contract(pure = true)
   public static @NotNull Result<@NotNull RenderOptions, @NotNull String> fromServerOptions(@NotNull ServerOptions options) {
     var rawColorScheme = options.colorScheme;
     var rawStyleFamily = options.styleFamily;
@@ -111,6 +113,7 @@ public record RenderOptions(
 
   /// endregion
 
+  @Contract(pure = true)
   public @NotNull RenderOptions update(@NotNull RenderOptions other) {
     var colorScheme = other.colorScheme();
     var styleFamily = other.styleFamily();
