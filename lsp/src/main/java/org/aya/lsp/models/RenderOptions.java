@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @param colorScheme
  * @param styleFamily
@@ -75,7 +77,7 @@ public record RenderOptions(
       } else if (colorSchemeName.equals("intellij")) {
         return Result.ok(AyaColorScheme.INTELLIJ);
       } else {
-        return Result.err("invalid color scheme name");
+        return Result.err("Invalid color scheme name");
       }
     } else if (colorScheme.isJsonObject()) {
       var colorSchemeObj = colorScheme.getAsJsonObject();
@@ -90,27 +92,26 @@ public record RenderOptions(
           .view().map(AyaColorScheme.Key::key)
           .contains(key);
 
-        // TODO: ignore or panic if `! isValid` ?
-        if (isKeyValid) {
-          var isColorValid = value != null
-            && value.isJsonPrimitive()
-            && value.getAsJsonPrimitive().isString();
+        if (!isKeyValid) return Result.err("Invalid key: " + key);
 
-          if (isColorValid) {
-            var colorCode = RenderOptions.parseColor(value.getAsString());
+        var isColorValid = value != null
+          && value.isJsonPrimitive()
+          && value.getAsJsonPrimitive().isString();
 
-            if (colorCode.isOk()) {
-              colorSchemeMap.put(key, colorCode.get());
-            } else {
-              return Result.err(colorCode.getErr());
-            }
-          }
+        if (!isColorValid) return Result.err("Invalid color: " + value);
+
+        var colorCode = RenderOptions.parseColor(value.getAsString());
+
+        if (colorCode.isOk()) {
+          colorSchemeMap.put(key, colorCode.get());
+        } else {
+          return Result.err(colorCode.getErr());
         }
       }
 
       return Result.ok(new AyaColorScheme(colorSchemeMap));
     } else {
-      return Result.err("invalid color scheme");
+      return Result.err("Invalid value");
     }
   }
 
@@ -124,7 +125,7 @@ public record RenderOptions(
     if (color.charAt(0) == '#') colorCode = colorCode.substring(1);
     if (colorCode.startsWith("0x")) colorCode = colorCode.substring(2);
 
-    if (colorCode.length() != 6) return Result.err("color code is too long or too short!");
+    if (colorCode.length() != 6) return Result.err("The color code is too long or too short!");
 
     try {
       var result = Integer.parseInt(colorCode, 16);
@@ -159,7 +160,7 @@ public record RenderOptions(
 
     return switch (renderTarget().getOrDefault(RenderTarget.Debug)) {
       case Debug -> doc.debugRender();
-      case HTML -> doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(colorScheme, styleFamily,false));
+      case HTML -> doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(colorScheme, styleFamily, false));
       case TeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(colorScheme, styleFamily));
     };
   }
