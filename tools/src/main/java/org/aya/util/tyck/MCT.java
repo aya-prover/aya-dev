@@ -4,6 +4,7 @@ package org.aya.util.tyck;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableDeque;
 import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -51,9 +52,13 @@ public sealed interface MCT<Term, Err> {
     forEach(buffer::append);
     return buffer.toImmutableSeq();
   }
-  @NotNull SeqView<PatClass<Term, Err>> view();
   default void forEach(@NotNull Consumer<PatClass<Term, Err>> f) {
-    view().forEach(f);
+    var queue = MutableDeque.<MCT<Term, Err>>create();
+    queue.enqueue(this);
+    while (queue.isNotEmpty()) switch (queue.dequeue()) {
+      case PatClass<Term, Err> leaf -> f.accept(leaf);
+      case Node<Term, Err> node -> node.children.forEach(queue::enqueue);
+    }
   }
   @NotNull MCT<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f);
   @NotNull MCT<Term, Err> flatMap(@NotNull Function<PatClass<Term, Err>, MCT<Term, Err>> f);
@@ -65,10 +70,6 @@ public sealed interface MCT<Term, Err> {
 
     @Override default @NotNull PatClass<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f) {
       return f.apply(this);
-    }
-
-    @Override default SeqView<PatClass<Term, Err>> view() {
-      return SeqView.of(this);
     }
     @Override default @NotNull MCT<Term, Err> flatMap(@NotNull Function<PatClass<Term, Err>, MCT<Term, Err>> f) {
       return f.apply(this);
@@ -91,10 +92,6 @@ public sealed interface MCT<Term, Err> {
   }
 
   record Node<Term, Err>(@NotNull Term type, @NotNull ImmutableSeq<MCT<Term, Err>> children) implements MCT<Term, Err> {
-    @Override public SeqView<PatClass<Term, Err>> view() {
-      return children.view().flatMap(MCT::view);
-    }
-
     @Override public @NotNull Node<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f) {
       return new Node<>(type, children.map(child -> child.map(f)));
     }
