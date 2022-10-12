@@ -831,9 +831,10 @@ public final class ExprTycker extends Tycker {
 
     default Result checkErased(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       var type = type();
-      if(type instanceof FormTerm.Sort) return this;
+      if (type instanceof FormTerm.Sort) return this;
       var sort = type.computeType(state, ctx);
-      if(sort instanceof FormTerm.Prop) return new TermResult(new ErasedTerm(type), type);
+      if (sort instanceof FormTerm.Prop || ElimTerm.isErased(wellTyped()))
+        return new TermResult(new ErasedTerm(type), type);
       return this;
     }
   }

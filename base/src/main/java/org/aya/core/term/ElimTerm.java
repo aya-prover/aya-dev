@@ -17,6 +17,11 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public sealed interface ElimTerm extends Term {
+  static boolean isErased(@NotNull Term term) {
+    if (term instanceof ElimTerm elim) return isErased(elim.of());
+    return term instanceof ErasedTerm;
+  }
+
   @Contract(pure = true) static @NotNull Term
   make(@NotNull Term f, @NotNull Arg<Term> arg) {
     return make(new App(f, arg));
