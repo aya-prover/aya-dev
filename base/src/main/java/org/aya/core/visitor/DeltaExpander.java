@@ -44,7 +44,7 @@ public interface DeltaExpander extends EndoFunctor {
         var def = fn.ref().core;
         if (def == null || def.modifiers.contains(Modifier.Opaque)) yield fn;
         yield def.body.fold(
-          lamBody -> apply(lamBody.rename().lift(fn.ulift())).subst(buildSubst(def.telescope(), fn.args())),
+          lamBody -> apply(lamBody.rename().lift(fn.ulift()).subst(buildSubst(def.telescope(), fn.args()))),
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
             .map(unfolded -> apply(unfolded.data())).getOrDefault(fn));
       }
