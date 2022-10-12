@@ -290,17 +290,25 @@ public record PatClassifier(
           var hasLit = nonEmpty.filter(subPats -> head(subPats) instanceof Pat.ShapedInt);
           var hasBind = nonEmpty.filter(subPats -> head(subPats) instanceof Pat.Bind);
           if (hasLit.isNotEmpty() && hasBind.isNotEmpty() && hasLit.size() + hasBind.size() == nonEmpty.size()) {
-            // We are in the base case.
-            var bindsIx = hasBind.map(MCT.SubPats::ix);
-            // classify all literals
+            // We are in the base case -- group literals by their values, and add all bind patterns to each group.
             var lits = hasLit.stream()
               .collect(Collectors.groupingBy(subPats -> ((Pat.ShapedInt) head(subPats)).repr()))
               .values().stream()
               .map(ImmutableSeq::from)
-              .<MCT<Term, PatErr>>map(subPats -> new MCT.Leaf<>(subPats.map(MCT.SubPats::ix).concat(bindsIx)))
+              .map(subPats -> subPats.concat(hasBind))
               .collect(ImmutableSeq.factory());
-            MCT<Term, PatErr> bindsLeaf = new MCT.Leaf<>(bindsIx);
-            classified = new MCT.Node<>(dataCall, lits.appended(bindsLeaf));
+            int fuelCopy = fuel;
+            var allSub = lits.map(
+              // Any remaining pattern?
+              subPats -> subPats.allMatch(pat -> pat.pats().sizeEquals(1))
+                // No, we're done!
+                ? new MCT.Leaf<Term, PatErr>(subPats.map(MCT.SubPats::ix))
+                // Yes, classify the rest of them
+                : classifySub(conTele2.view(), subPats, coverage, fuelCopy));
+            classified = allSub.isNotEmpty()
+              // bind patterns already exist in each group, so we don't need to add them again
+              ? new MCT.Node<>(dataCall, allSub)
+              : new MCT.Leaf<>(hasBind.map(MCT.SubPats::ix));
           } else {
             classified = classifySub(conTele2.view(), matches, coverage, fuel);
           }
