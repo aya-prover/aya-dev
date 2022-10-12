@@ -167,7 +167,7 @@ public class AyaLanguageServer implements LanguageServer {
     } catch (JsonParseException ex) {
       // TODO[hoshino]: warn or panic?
       // Do warn
-      Log.e("Unable to convert an InitializeParams.initializationOptions as a ServerOptions, cause: %s", ex.getLocalizedMessage());
+      Log.e("Unable to convert an InitializeParams.initializationOptions to a ServerOptions, cause: %s", ex.getLocalizedMessage());
     }
   }
 
