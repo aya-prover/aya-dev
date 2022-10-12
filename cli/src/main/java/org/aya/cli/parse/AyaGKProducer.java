@@ -729,18 +729,20 @@ public record AyaGKProducer(
           .childrenOfType(PATTERN)
           .map(x -> x.child(ATOM_PATTERNS))
           .map(this::atomPatterns)
-        : ImmutableSeq.<BiFunction<Boolean, LocalVar, Pattern>>empty().view();
+        : SeqView.<BiFunction<Boolean, LocalVar, Pattern>>empty();
 
       var weakId = node.peekChild(WEAK_ID);
       var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
       var nilBind = new Pattern.Bind(sourcePos, true,
-        LocalVar.from(new WithPos<>(sourcePos, Constants.LIST_NIL)),
+        new LocalVar(Constants.LIST_NIL, sourcePos),
         MutableValue.create());
       var consBind = new Pattern.Bind(sourcePos, true,
-        LocalVar.from(new WithPos<>(sourcePos, Constants.LIST_CONS)),
+        new LocalVar(Constants.LIST_CONS, sourcePos),
         MutableValue.create());
 
-      return ex -> new Pattern.List(sourcePos, ex, patterns.map(f -> f.apply(ex, null)).toImmutableSeq(), asId, nilBind, consBind);
+      return ex -> new Pattern.List(sourcePos, ex,
+        patterns.map(f -> f.apply(true, null)).toImmutableSeq(), asId,
+        nilBind, consBind);
     }
     if (node.is(ATOM_NUMBER_PATTERN))
       return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));

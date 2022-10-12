@@ -77,7 +77,8 @@ public interface StmtOps<P> extends ExprTraversal<P> {
 
   default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
     return switch (pattern) {
-      case Pattern.BinOpSeq seq -> visitBinOpPattern(seq, pp);
+      case Pattern.BinOpSeq(var pos, var seq, var as, var ex) ->
+        new Pattern.BinOpSeq(pos, seq.map(p -> visitPattern(p, pp)), as, ex);
       case Pattern.Ctor(var pos, var licit, var resolved, var params, var as) ->
         new Pattern.Ctor(pos, licit, resolved, params.map(p -> visitPattern(p, pp)), as);
       case Pattern.Tuple(var pos, var licit, var patterns, var as) ->
@@ -86,9 +87,5 @@ public interface StmtOps<P> extends ExprTraversal<P> {
         new Pattern.List(pos, licit, patterns.map(p -> visitPattern(p, pp)), as, visitPattern(nilCtor, pp), visitPattern(consCtor, pp));
       default -> pattern;
     };
-  }
-
-  default @NotNull Pattern visitBinOpPattern(@NotNull Pattern.BinOpSeq seq, P pp) {
-    return new Pattern.BinOpSeq(seq.sourcePos(), seq.seq().map(p -> visitPattern(p, pp)), seq.as(), seq.explicit());
   }
 }

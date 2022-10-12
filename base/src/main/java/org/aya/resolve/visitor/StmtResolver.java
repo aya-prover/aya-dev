@@ -268,8 +268,10 @@ public interface StmtResolver {
 
         // check both patterns
 
-        if (! (nilPat._2 instanceof Pattern.Ctor)) resolvingInterrupt(context.reporter(), new PatternProblem.UnknownCtor(list.nilName()));
-        if (! (consPat._2 instanceof Pattern.Ctor)) resolvingInterrupt(context.reporter(), new PatternProblem.UnknownCtor(list.consName()));
+        if (!(nilPat._2 instanceof Pattern.Ctor))
+          resolvingInterrupt(context.reporter(), new PatternProblem.UnknownCtor(list.nilName()));
+        if (!(consPat._2 instanceof Pattern.Ctor))
+          resolvingInterrupt(context.reporter(), new PatternProblem.UnknownCtor(list.consName()));
 
         // now both patterns are Ctors
 
@@ -291,9 +293,9 @@ public interface StmtResolver {
     });
   }
 
-  @Contract("_, _ -> fail") static Context.ResolvingInterruptedException resolvingInterrupt(Reporter reporter, Problem problem) {
+  @Contract("_, _ -> fail")
+  static Context.ResolvingInterruptedException resolvingInterrupt(Reporter reporter, Problem problem) {
     reporter.report(problem);
-
     throw new Context.ResolvingInterruptedException();
   }
 }

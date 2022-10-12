@@ -15,8 +15,6 @@ import org.aya.concrete.visitor.StmtOps;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.Context;
-import org.aya.tyck.pat.PatternProblem;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -133,41 +131,37 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
    * Desugaring patterns
    *
    * @param pattern the pattern
-   * @param pp useless
+   * @param pp      useless
    * @return desugared pattern
    */
   @Override
   public @NotNull Pattern visitPattern(@NotNull Pattern pattern, Unit pp) {
     return switch (pattern) {
       case Pattern.List list -> {
-        // see StmtResolver.resolve
+        assert list.nilName() instanceof Pattern.Ctor : "resolver bug";
+        assert list.consName() instanceof Pattern.Ctor : "resolver bug";
         var nilCtor = (Pattern.Ctor) list.nilName();
         var consCtor = (Pattern.Ctor) list.consName();
 
-        if (list.elements().isEmpty()) yield nilCtor;
-
-        var elements = list.elements().map(x -> visitPattern(x, pp));
-        var newPattern = elements.foldRight(nilCtor, (e, right) -> {
-          // e : current element
-          // right : right element
-          // Goal : consCtor e right
-
-          return new Pattern.Ctor(consCtor.sourcePos(), consCtor.explicit(), consCtor.resolved(),
-            ImmutableSeq.of(e, right), null);
-        });
+        var newPattern = list.elements().view()
+          .map(x -> visitPattern(x, pp))
+          .foldRight(nilCtor, (e, right) -> {
+            // e : current element
+            // right : right element
+            // Goal : consCtor e right
+            return new Pattern.Ctor(consCtor.sourcePos(), consCtor.explicit(), consCtor.resolved(),
+              ImmutableSeq.of(e, right), null);
+          });
 
         // replace newPattern.as() with list.as()
         yield visitPattern(new Pattern.Ctor(newPattern.sourcePos(), newPattern.explicit(), newPattern.resolved(), newPattern.params(), list.as()), pp);
       }
-
+      case Pattern.BinOpSeq(var pos, var seq, var as, var explicit) -> {
+        assert seq.isNotEmpty() : pos.toString();
+        var pat = new BinPatternParser(explicit, resolveInfo, seq.view()).build(pos);
+        yield visitPattern(pat, pp);
+      }
       default -> StmtOps.super.visitPattern(pattern, pp);
     };
-  }
-
-  @Override public @NotNull Pattern visitBinOpPattern(Pattern.@NotNull BinOpSeq binOpSeq, Unit unit) {
-    var seq = binOpSeq.seq();
-    assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
-    var pat = new BinPatternParser(binOpSeq.explicit(), resolveInfo, seq.view()).build(binOpSeq.sourcePos());
-    return visitPattern(pat, unit);
   }
 }
