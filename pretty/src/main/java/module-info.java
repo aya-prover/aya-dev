@@ -4,6 +4,7 @@ module aya.pretty {
   requires kala.base;
   requires kala.collection;
 
+  exports org.aya.pretty.backend.latex;
   exports org.aya.pretty.backend.html;
   exports org.aya.pretty.backend.string.custom;
   exports org.aya.pretty.backend.string.style;
