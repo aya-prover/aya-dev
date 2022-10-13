@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,14 +18,14 @@ import java.util.Objects;
 public final class CtorDef extends SubLevelDef {
   public final @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef;
   public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
-  public final @NotNull ImmutableSeq<Term.Matching> clauses;
+  public final @NotNull Partial<Term> clauses;
   public final @NotNull ImmutableSeq<Pat> pats;
 
   public CtorDef(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef, @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> pats,
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
-    @NotNull ImmutableSeq<Term.Matching> clauses, @NotNull Term result, boolean coerce
+    @NotNull Partial<Term> clauses, @NotNull Term result, boolean coerce
   ) {
     super(ownerTele, selfTele, result, coerce);
     ref.core = this;

@@ -264,7 +264,11 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record PartEl(@NotNull Partial<SerTerm> partial, @NotNull SerTerm rhsType) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PartialTerm(partial.fmap(t -> t.de(state)), rhsType.de(state));
+      return new PartialTerm(de(state, partial), rhsType.de(state));
+    }
+
+    static @NotNull Partial<Term> de(@NotNull DeState state, @NotNull Partial<SerTerm> par) {
+      return par.fmap(t -> t.de(state));
     }
   }
 
@@ -314,7 +318,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       return new PathTerm.Cube(
         params.map(p -> p.de(state)),
         type.de(state),
-        partial.fmap(t -> t.de(state)));
+        PartEl.de(state, partial));
     }
   }
 

@@ -11,6 +11,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.Contract;
@@ -61,7 +62,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serializePats(ctor.pats),
         serializeParams(ctor.ownerTele),
         serializeParams(ctor.selfTele),
-        ctor.clauses.map(this::serialize),
+        partial(ctor.clauses),
         serialize(ctor.result),
         ctor.coerce
       );
@@ -114,7 +115,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case NewTerm newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
-      case PartialTerm el -> new SerTerm.PartEl(el.partial().fmap(this::serialize), serialize(el.rhsType()));
+      case PartialTerm el -> new SerTerm.PartEl(partial(el.partial()), serialize(el.rhsType()));
       case PartialTyTerm ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
       case PathTerm path -> new SerTerm.Path(serialize(path.cube()));
       case PLamTerm path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
@@ -130,6 +131,10 @@ public record Serializer(@NotNull Serializer.State state) {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
     };
+  }
+
+  private @NotNull Partial<SerTerm> partial(Partial<Term> el) {
+    return el.fmap(this::serialize);
   }
 
   private @NotNull SerPat serialize(@NotNull Pat pat) {
@@ -156,7 +161,7 @@ public record Serializer(@NotNull Serializer.State state) {
     return new SerTerm.SerCube(
       serializeIntervals(cube.params()),
       serialize(cube.type()),
-      cube.partial().fmap(this::serialize));
+      partial(cube.partial()));
   }
 
   private @NotNull SerTerm.DataCall serializeDataCall(@NotNull DataCall dataCall) {

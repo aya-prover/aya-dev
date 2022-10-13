@@ -15,6 +15,7 @@ import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -55,14 +56,14 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerPat> pats,
     @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
     @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
-    @NotNull ImmutableSeq<SerPat.Clause> clauses,
+    @NotNull Partial<SerTerm> clauses,
     @NotNull SerTerm result, boolean coerce
   ) implements SerDef {
     @Override public @NotNull CtorDef de(SerTerm.@NotNull DeState state) {
       return new CtorDef(
         state.resolve(data), state.newDef(self), pats.map(pat -> pat.de(state)),
         ownerTele.map(tele -> tele.de(state)), selfTele.map(tele -> tele.de(state)),
-        clauses.map(matching -> matching.de(state)),
+        SerTerm.PartEl.de(state, clauses),
         result.de(state), coerce);
     }
   }

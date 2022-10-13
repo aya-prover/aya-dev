@@ -121,7 +121,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var tele = signature.param();
         var pat = ctor.yetTyckedPat;
         assert pat != null; // header should be checked first
-        if (pat.isNotEmpty()) dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
+        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(ImmutableMap.from(
           dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
         var elabClauses = tycker.elaboratePartial(ctor.clauses, dataCall);
         var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses, dataCall, ctor.coerce);
