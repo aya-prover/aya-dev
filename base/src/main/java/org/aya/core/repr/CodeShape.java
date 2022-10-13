@@ -4,7 +4,7 @@ package org.aya.core.repr;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.CallTerm;
-import org.aya.core.term.FormTerm;
+import org.aya.generic.SortKind;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,11 +58,11 @@ public sealed interface CodeShape {
      *
      * @author hoshino
      * @param kind the SortKind,
-     *             if the kind doesn't {@link FormTerm.SortKind#hasLevel()}, {@param ulift} is ignored during term matching.
+     *             if the kind doesn't {@link SortKind#hasLevel()}, {@param ulift} is ignored during term matching.
      *             null if accept any sort (also omits {@param ulift})
      * @param ulift the lower bound of the type level.
      */
-    record Sort(@Nullable FormTerm.SortKind kind, int ulift) implements TermShape {}
+    record Sort(@Nullable SortKind kind, int ulift) implements TermShape {}
   }
 
   /**
