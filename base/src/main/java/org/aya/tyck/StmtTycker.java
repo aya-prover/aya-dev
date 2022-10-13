@@ -119,19 +119,13 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert dataSig != null;
         var dataCall = ((DataCall) signature.result());
         var tele = signature.param();
-        var patTycker = ctor.yetTycker;
         var pat = ctor.yetTyckedPat;
-        assert patTycker != null && pat != null; // header should be checked first
-        // PatTycker was created when checking the header with another expr tycker,
-        // we should make sure it's the same one here. See comments of ExprTycker.
-        assert tycker == patTycker.exprTycker;
-        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(ImmutableMap.from(
+        assert pat != null; // header should be checked first
+        if (pat.isNotEmpty()) dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
           dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
-        var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature);
-        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
+        var elabClauses = tycker.elaboratePartial(ctor.clauses, dataCall);
+        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses, dataCall, ctor.coerce);
         dataConcrete.checkedBody.append(elaborated);
-        if (patTycker.noError())
-          ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
         yield elaborated;
       }
       case TeleDecl.StructField field -> {
@@ -237,7 +231,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var ctorSort = dataConcrete.ulift.kind() == SortKind.Prop ? SortTerm.Type0 : dataConcrete.ulift;
         var tele = tele(tycker, ctor.telescope, ctorSort);
         ctor.signature = new Def.Signature(tele, dataCall);
-        ctor.yetTycker = patTycker;
         ctor.yetTyckedPat = pat;
         ctor.patternTele = pat.isEmpty() ? dataSig.param().map(Term.Param::implicitify) : Pat.extractTele(pat);
       }

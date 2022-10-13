@@ -16,7 +16,6 @@ import org.aya.util.Arg;
 import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
-import org.aya.tyck.pat.PatTycker;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -131,8 +130,6 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
 
     /** used when tycking constructor's header */
     public @Nullable ImmutableSeq<Pat> yetTyckedPat;
-    /** used when tycking constructor's header */
-    public @Nullable PatTycker yetTycker;
 
     // will change after resolve
     public @NotNull ImmutableSeq<Expr.Param> telescope;
