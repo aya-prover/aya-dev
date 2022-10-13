@@ -382,14 +382,15 @@ public record AyaGKProducer(
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var bind = node.peekChild(BIND_BLOCK);
-    var clauses = node.peekChild(CLAUSES);
+    var partial = node.peekChild(PARTIAL_BLOCK);
+    var namePos = nameOrInfix._1.sourcePos();
     return new TeleDecl.DataCtor(
-      nameOrInfix._1.sourcePos(),
+      namePos,
       sourcePosOf(node),
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
-      clauses == null ? ImmutableSeq.empty() : clauses(clauses),
+      partial(partial, partial != null ? sourcePosOf(partial) : namePos),
       patterns,
       node.peekChild(KW_COERCE) != null,
       bind == null ? BindBlock.EMPTY : bindBlock(bind)
@@ -793,7 +794,10 @@ public record AyaGKProducer(
     return node.childrenOfType(PATTERN).map(this::pattern).toImmutableSeq();
   }
 
-  public @NotNull ImmutableSeq<Pattern.Clause> clauses(@NotNull GenericNode<?> node) {
+  public @Nullable Expr.PartEl
+  clauses(@Nullable GenericNode<?> node) {
+    if (node == null) return null;
+    var sourcePos = sourcePosOf(node);
     return node.childrenView()
       .filter(c -> c.elementType() == BARE_CLAUSE || c.elementType() == BARRED_CLAUSE)
       .map(this::bareOrBarredClause)

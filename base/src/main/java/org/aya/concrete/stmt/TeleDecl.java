@@ -125,7 +125,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     public DefVar<DataDef, DataDecl> dataRef;
     /** Similar to {@link Decl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
     public ImmutableSeq<Term.Param> patternTele;
-    public @NotNull ImmutableSeq<Pattern.Clause> clauses;
+    public @NotNull Expr.PartEl clauses;
     public @NotNull ImmutableSeq<Arg<Pattern>> patterns;
     public final boolean coerce;
 
@@ -143,7 +143,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
       @Nullable OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull ImmutableSeq<Pattern.Clause> clauses,
+      @NotNull Expr.PartEl clauses,
       @NotNull ImmutableSeq<Arg<Pattern>> patterns,
       boolean coerce,
       @NotNull BindBlock bindBlock
