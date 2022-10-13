@@ -32,6 +32,12 @@ public record RenderOptions(
     Option.some(AyaStyleFamily.DEFAULT)
   );
 
+  public enum RenderTarget {
+    Debug,
+    HTML,
+    TeX
+  }
+
   /// region Helper
 
   /**
