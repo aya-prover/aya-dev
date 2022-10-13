@@ -69,14 +69,11 @@ public record ShapeMatcher(
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
     }
     if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof FormTerm.Sort sortTerm) {
-      // TODO[hoshino]: Is Set \0-Type ?
+      // kind is null -> any sort
+      if (sort.kind() == null) return true;
 
-      // If kind is null, any sort!
-      return sort.kind() == null ||
-        // If kind is not null, simply comparing
-        (sort.kind() == sortTerm.kind() &&
-          // If the kind doesn't have level, omit the ulift
-          ((! sort.kind().hasLevel()) || sort.ulift() <= sortTerm.lift()));
+      // TODO
+      throw new UnsupportedOperationException("TODO");
     }
     return false;
   }
