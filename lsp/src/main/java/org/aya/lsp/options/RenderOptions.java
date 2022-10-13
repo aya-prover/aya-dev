@@ -1,12 +1,13 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.models;
+package org.aya.lsp.options;
 
 import com.google.gson.JsonElement;
 import kala.collection.Seq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.control.Result;
+import org.aya.lsp.models.ServerOptions;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.doc.Doc;
@@ -21,25 +22,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @param colorScheme
  * @param styleFamily
- * @param renderTarget Determines the render target,
- *                     the {@param colorScheme} and {@param styleFamily} will be ignored
- *                     if the render target is {@link RenderTarget#Debug}.
  */
 public record RenderOptions(
   @NotNull Option<ColorScheme> colorScheme,
-  @NotNull Option<StyleFamily> styleFamily,
-  @NotNull Option<RenderTarget> renderTarget
+  @NotNull Option<StyleFamily> styleFamily
 ) {
-  public enum RenderTarget {
-    Debug,
-    HTML,
-    TeX
-  }
-
   public final static RenderOptions DEFAULT = new RenderOptions(
     Option.some(AyaColorScheme.INTELLIJ),
-    Option.some(AyaStyleFamily.DEFAULT),
-    Option.some(RenderTarget.Debug)
+    Option.some(AyaStyleFamily.DEFAULT)
   );
 
   /// region Helper
@@ -51,7 +41,6 @@ public record RenderOptions(
   public static @NotNull Result<@NotNull RenderOptions, @NotNull String> fromServerOptions(@NotNull ServerOptions options) {
     var rawColorScheme = options.colorScheme;
     var rawStyleFamily = options.styleFamily;
-    var renderTarget = options.renderTarget;
 
     var colorScheme = Option.<ColorScheme>none();
     if (rawColorScheme != null) {
@@ -63,7 +52,7 @@ public record RenderOptions(
     var styleFamily = Option.<StyleFamily>none();
     // TODO[hoshino]
 
-    return Result.ok(new RenderOptions(colorScheme, styleFamily, Option.ofNullable(renderTarget)));
+    return Result.ok(new RenderOptions(colorScheme, styleFamily));
   }
 
   private static Result<ColorScheme, String> parseColorScheme(@NotNull JsonElement colorScheme) {
@@ -140,26 +129,28 @@ public record RenderOptions(
   public @NotNull RenderOptions update(@NotNull RenderOptions other) {
     var colorScheme = other.colorScheme();
     var styleFamily = other.styleFamily();
-    var renderTarget = other.renderTarget();
 
     if (colorScheme.isEmpty()) colorScheme = this.colorScheme();
     if (styleFamily.isEmpty()) styleFamily = this.styleFamily();
-    if (renderTarget.isEmpty()) renderTarget = this.renderTarget();
 
-    return new RenderOptions(colorScheme, styleFamily, renderTarget);
+    return new RenderOptions(colorScheme, styleFamily);
   }
 
-  /**
-   * Render the {@param doc} with {@link RenderOptions}
-   */
-  public @NotNull String render(@NotNull Doc doc) {
-    var colorScheme = this.colorScheme().getOrDefault(DEFAULT.colorScheme.get());
+  public @NotNull String renderToHtml(@NotNull Doc doc) {
+    var colorScheme = this.colorScheme().getOrDefault(DEFAULT.colorScheme().get());
     var styleFamily = this.styleFamily().getOrDefault(DEFAULT.styleFamily().get());
 
-    return switch (renderTarget().getOrDefault(RenderTarget.Debug)) {
-      case Debug -> doc.debugRender();
-      case HTML -> doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(colorScheme, styleFamily, false));
-      case TeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(colorScheme, styleFamily));
-    };
+    return doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(colorScheme, styleFamily, false));
+  }
+
+  public @NotNull String renderToTeX(@NotNull Doc doc) {
+    var colorScheme = this.colorScheme().getOrDefault(DEFAULT.colorScheme().get());
+    var styleFamily = this.styleFamily().getOrDefault(DEFAULT.styleFamily().get());
+
+    return doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(colorScheme, styleFamily));
+  }
+
+  public @NotNull String renderToString(@NotNull Doc doc) {
+    return doc.debugRender();
   }
 }

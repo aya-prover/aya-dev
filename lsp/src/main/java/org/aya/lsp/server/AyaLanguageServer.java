@@ -29,7 +29,7 @@ import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
-import org.aya.lsp.models.RenderOptions;
+import org.aya.lsp.options.RenderOptions;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.prim.LspPrimFactory;
 import org.aya.lsp.utils.Log;
@@ -163,7 +163,7 @@ public class AyaLanguageServer implements LanguageServer {
     } catch (JsonParseException ex) {
       // TODO[hoshino]: warn or panic?
       // Do warn
-      Log.e("Unable to convert an InitializeParams.initializationOptions to a ServerOptions, cause: %s", ex.getLocalizedMessage());
+      Log.e("Unable to convert an InitializeParams.initializationOptions to a ServerOptions, cause: %s", ex.getMessage());
     }
   }
 
@@ -290,7 +290,7 @@ public class AyaLanguageServer implements LanguageServer {
     if (source == null) return Optional.empty();
     var doc = ComputeSignature.invokeHover(source, params.position);
     if (doc.isEmpty()) return Optional.empty();
-    var marked = new MarkedString(MarkupKind.PlainText, renderOptions.getValue().render(doc));
+    var marked = new MarkedString(MarkupKind.PlainText, renderOptions.getValue().renderToHtml(doc));
     return Optional.of(new Hover(List.of(marked)));
   }
 

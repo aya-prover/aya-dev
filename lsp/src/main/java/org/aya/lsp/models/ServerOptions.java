@@ -4,7 +4,7 @@ package org.aya.lsp.models;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.javacs.lsp.InitializeParams;
+import org.aya.lsp.options.RenderOptions;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,14 +31,8 @@ public class ServerOptions {
    */
   public @Nullable JsonElement styleFamily;
 
-  /**
-   * @see RenderOptions#renderTarget()
-   */
-  public @Nullable RenderOptions.RenderTarget renderTarget;
-
-  public ServerOptions(@Nullable JsonElement colorScheme, @Nullable JsonElement styleFamily, @Nullable RenderOptions.RenderTarget renderTarget) {
+  public ServerOptions(@Nullable JsonElement colorScheme, @Nullable JsonElement styleFamily) {
     this.colorScheme = colorScheme;
     this.styleFamily = styleFamily;
-    this.renderTarget = renderTarget;
   }
 }
