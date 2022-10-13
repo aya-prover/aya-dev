@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
+import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
@@ -62,7 +63,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
       );
       case TeleDecl.DataCtor ctor -> {
         ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> visitPattern(pattern, pp)));
-        ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, pp));
+        ctor.clauses = (Expr.PartEl) visitExpr(ctor.clauses, pp);
       }
       case TeleDecl.StructField field -> field.body = field.body.map(expr -> visitExpr(expr, pp));
     }

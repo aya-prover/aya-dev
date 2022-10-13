@@ -75,7 +75,7 @@ public interface StmtResolver {
             .appended(new TyckOrder.Head(decl)));
 
           bodyResolver.enterBody();
-          ctor.clauses = ctor.clauses.map(bodyResolver.enter(mCtx.get())::apply);
+          ctor.clauses = bodyResolver.partial(ctorLocal._2, ctor.clauses);
           addReferences(info, new TyckOrder.Body(ctor), bodyResolver);
         });
         addReferences(info, new TyckOrder.Body(decl), resolver.reference().view()

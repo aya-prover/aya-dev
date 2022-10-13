@@ -53,8 +53,13 @@ public record ExprResolver(
     this(ctx, options, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), null);
   }
 
-  public static final @NotNull Options RESTRICTIVE = new Options(false, false);
-  public static final @NotNull Options LAX = new Options(true, true);
+  @NotNull Expr.PartEl partial(@NotNull Context ctx, Expr.PartEl el) {
+    var partial = el.clauses().map(e ->
+      Tuple.of(resolve(e._1, ctx), resolve(e._2, ctx)));
+    if (partial.zipView(el.clauses())
+      .allMatch(p -> p._1._1 == p._2._1 && p._1._2 == p._2._2)) return el;
+    return new Expr.PartEl(el.sourcePos(), partial);
+  }
 
   public void enterHead() {
     where.push(Where.Head);

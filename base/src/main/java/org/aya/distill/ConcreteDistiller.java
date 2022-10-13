@@ -148,9 +148,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
-        Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(cl -> Doc.sep(
-          cl._1.toDoc(options), Doc.symbol(":="), cl._2.toDoc(options))
-        )),
+        partial(el),
         Doc.symbol("|}"));
       case Expr.Path path -> Doc.sep(
         Doc.symbol("[|"),
@@ -193,6 +191,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         )
       );
     };
+  }
+
+  private Doc partial(Expr.PartEl el) {
+    return Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(cl -> Doc.sep(
+      term(Outer.Free, cl._1), Doc.symbol(":="), term(Outer.Free, cl._2))
+    ));
   }
 
   public @NotNull Doc pattern(@NotNull Arg<Pattern> pattern, Outer outer) {
@@ -359,7 +363,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var doc = Doc.cblock(Doc.sepNonEmpty(
           coe(ctor.coerce),
           linkDef(ctor.ref, CON_CALL),
-          visitTele(ctor.telescope)), 2, visitClauses(ctor.clauses));
+          visitTele(ctor.telescope)), 2, partial(ctor.clauses));
         if (ctor.patterns.isNotEmpty()) {
           var pats = Doc.commaList(ctor.patterns.view().map(pattern -> pattern(pattern, Outer.Free)));
           yield Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);
