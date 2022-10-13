@@ -15,9 +15,12 @@ import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
+import org.javacs.lsp.MarkupKind;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @param colorScheme
@@ -142,6 +145,24 @@ public record RenderOptions(
     return new RenderOptions(colorScheme, styleFamily);
   }
 
+  /// region Render
+
+  /**
+   * Choose the most colorful target which the client supports.
+   * Note that the client should support `plaintext` at least.
+   *
+   * @param capabilities the client capabilities, `plaintext` is returned if the capabilities is empty.
+   * @throws IllegalArgumentException is thrown if the capabilities is not empty and invalid.
+   */
+  public static @NotNull RenderTarget renderTargetFromCapabilities(@NotNull List<String> capabilities)
+    throws IllegalArgumentException {
+    if (capabilities.isEmpty()) return RenderTarget.Debug;
+    if (capabilities.contains(MarkupKind.Markdown)) return RenderTarget.HTML;
+    if (capabilities.contains(MarkupKind.PlainText)) return RenderTarget.Debug;
+
+    throw new IllegalArgumentException("Unsupported capabilities: " + capabilities);
+  }
+
   public @NotNull String renderToHtml(@NotNull Doc doc) {
     var colorScheme = this.colorScheme().getOrDefault(DEFAULT.colorScheme().get());
     var styleFamily = this.styleFamily().getOrDefault(DEFAULT.styleFamily().get());
@@ -159,4 +180,19 @@ public record RenderOptions(
   public @NotNull String renderToString(@NotNull Doc doc) {
     return doc.debugRender();
   }
+
+  /**
+   * @see RenderOptions#renderTargetFromCapabilities(List)
+   */
+  public @NotNull String renderWithCapabilities(@NotNull Doc doc, @NotNull List<String> kinds) throws IllegalArgumentException {
+    var target = RenderOptions.renderTargetFromCapabilities(kinds);
+
+    return switch (target) {
+      case Debug -> renderToString(doc);
+      case HTML -> renderToHtml(doc);
+      case TeX -> renderToTeX(doc);         // unreachable for now.
+    };
+  }
+
+  /// endregion
 }
