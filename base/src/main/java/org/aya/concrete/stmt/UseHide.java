@@ -17,8 +17,8 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
 
   public boolean uses(@NotNull String name) {
     return switch (strategy) {
-      case Using -> list.find(n -> n.id.equals(name)).isDefined();
-      case Hiding -> list.find(n -> n.id.equals(name)).isEmpty();
+      case Using -> list.anyMatch(n -> n.id.equals(name));
+      case Hiding -> list.noneMatch(n -> n.id.equals(name));
     };
   }
 

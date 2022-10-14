@@ -300,8 +300,7 @@ public sealed interface Pat extends AyaDocile {
       var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
       var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
         pats.view().map(p -> distiller.pat(p, BaseDistiller.Outer.Free)))));
-      if (expr.isDefined()) return Doc.sep(doc, Doc.symbol("=>"), expr.get().toDoc(options));
-      else return doc;
+      return expr.getOrDefault(it -> Doc.sep(doc, Doc.symbol("=>"), it.toDoc(options)), doc);
     }
 
     public static @NotNull Preclause<Term> weaken(@NotNull Matching clause) {

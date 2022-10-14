@@ -73,17 +73,15 @@ public record PrettyError(
 
       // render error column as underlines
       final int finalLineNo = lineNo;
-      var r = hints.find(kv -> kv._1.startLine() == finalLineNo);
-      if (r.isDefined()) {
-        var find = r.get();
-        int startCol = find._1.startCol();
-        int endCol = find._1.endCol();
-        var hintUnderline = renderHint(startCol, endCol, linenoWidth);
-        var doc = find._2;
-        if (doc instanceof Doc.Empty) docs.append(hintUnderline);
-        else docs.append(Doc.cat(hintUnderline, Doc.ONE_WS, doc));
-      }
-
+      hints.find(kv -> kv._1.startLine() == finalLineNo)
+        .ifDefined(find -> {
+          int startCol = find._1.startCol();
+          int endCol = find._1.endCol();
+          var hintUnderline = renderHint(startCol, endCol, linenoWidth);
+          var doc = find._2;
+          if (doc instanceof Doc.Empty) docs.append(hintUnderline);
+          else docs.append(Doc.cat(hintUnderline, Doc.ONE_WS, doc));
+        });
       lineNo++;
     }
 

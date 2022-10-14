@@ -96,8 +96,8 @@ public record AyaGKProducer(
       var result = decl(node);
       var stmts = result._2.view().prepended(result._1);
       if (result._1 instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
-        var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof Decl));
-        if (stmtOption.isDefined()) reporter.report(new BadCounterexampleWarn(stmtOption.get()));
+        result._2.firstOption(stmt -> !(stmt instanceof Decl))
+          .ifDefined(stmt -> reporter.report(new BadCounterexampleWarn(stmt)));
         return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
       }
       return stmts.toImmutableSeq();
