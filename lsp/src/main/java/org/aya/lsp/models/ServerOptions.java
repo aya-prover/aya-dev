@@ -23,7 +23,7 @@ public class ServerOptions {
   public @Nullable Map<String, String> colorOverride;
 
   /**
-   * The colorScheme name, "emacs", "intellij" and "none" are valid for now, see {@link RenderOptions#BUILTIN_COLOR_SCHEMES}.
+   * The colorScheme name, "emacs"/"Emacs" and "intellij"/"IntelliJ" are valid for now, see {@link RenderOptions#BUILTIN_COLOR_SCHEMES}.
    * "none" is picked if {@code colorScheme == null}
    */
   public @Nullable String colorName;

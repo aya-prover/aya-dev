@@ -69,7 +69,10 @@ public record RenderOptions(
     var colorOverride = options.colorOverride;
     var baseColorScheme = colorName == null
       ? AyaColorScheme.EMPTY
-      : BUILTIN_COLOR_SCHEMES.getOrDefault(colorName, AyaColorScheme.EMPTY);
+      : BUILTIN_COLOR_SCHEMES.getOrElse(colorName.toLowerCase(), () -> {
+        doWarn("Invalid color scheme name: " + colorName);
+        return AyaColorScheme.EMPTY;
+      });
 
     if (colorOverride == null || colorOverride.isEmpty()) return baseColorScheme;
 

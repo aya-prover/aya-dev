@@ -60,7 +60,7 @@ public class LspRenderTest extends LspTesterBase {
     );
 
     var opt2 = new ServerOptions(
-      "intellij", Map.of(), null
+      "IntelliJ", Map.of(), null
     );
 
     var expected2 = new RenderOptions(
@@ -116,9 +116,20 @@ public class LspRenderTest extends LspTesterBase {
       AyaStyleFamily.DEFAULT
     );
 
+    var wrong3 = new ServerOptions(
+      "emacses",
+      null, null
+    );
+
+    var expected3w = new RenderOptions(
+      AyaColorScheme.EMPTY,
+      AyaStyleFamily.DEFAULT
+    );
+
     assertEquals(RenderOptions.DEFAULT, RenderOptions.fromServerOptions(wrong0));
     assertEquals(expected1w, RenderOptions.fromServerOptions(wrong1));
     assertEquals(expected2w, RenderOptions.fromServerOptions(wrong2));
+    assertEquals(expected3w, RenderOptions.fromServerOptions(wrong3));
   }
 
   @Test
