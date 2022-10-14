@@ -15,6 +15,6 @@ module aya.lsp {
 
   opens org.aya.lsp.models to com.google.gson;
   exports org.aya.lsp.actions;
-    exports org.aya.lsp.options;
-    opens org.aya.lsp.options to com.google.gson;
+  exports org.aya.lsp.options;
+  opens org.aya.lsp.options to com.google.gson;
 }

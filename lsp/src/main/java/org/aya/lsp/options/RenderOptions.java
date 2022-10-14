@@ -5,9 +5,9 @@ package org.aya.lsp.options;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.MutableMap;
-import kala.control.Option;
 import kala.control.Result;
 import org.aya.lsp.models.ServerOptions;
+import org.aya.lsp.utils.Log;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.doc.Doc;
@@ -27,94 +27,83 @@ import java.util.Objects;
  * @param styleFamily
  */
 public record RenderOptions(
-  @NotNull Option<ColorScheme> colorScheme,
-  @NotNull Option<StyleFamily> styleFamily
+  @NotNull ColorScheme colorScheme,
+  @NotNull StyleFamily styleFamily
 ) {
-  public final static RenderOptions DEFAULT = new RenderOptions(
-    Option.some(AyaColorScheme.EMPTY),
-    Option.some(AyaStyleFamily.DEFAULT)
-  );
-
   public enum RenderTarget {
     Debug,
     HTML,
     TeX
   }
 
+  public static final @NotNull RenderOptions DEFAULT = new RenderOptions(
+    AyaColorScheme.EMPTY,
+    AyaStyleFamily.DEFAULT
+  );
+
   public static final @NotNull ImmutableMap<String, ColorScheme> BUILTIN_COLOR_SCHEMES = ImmutableMap.of(
     "emacs", AyaColorScheme.EMACS,
-    "intellij", AyaColorScheme.INTELLIJ,
-    "none", AyaColorScheme.EMPTY
+    "intellij", AyaColorScheme.INTELLIJ
   );
 
   /// region Helper
 
   /**
-   * Construct a {@link RenderOptions} from {@link ServerOptions}
+   * Construct a {@link RenderOptions} from {@link ServerOptions}.
    */
-  @Contract(pure = true)
-  public static @NotNull Result<@NotNull RenderOptions, @NotNull String> fromServerOptions(@NotNull ServerOptions options) {
-    Option<ColorScheme> colorScheme = Option.none();
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull RenderOptions fromServerOptions(@NotNull ServerOptions options) {
+    ColorScheme colorScheme = parseColorScheme(options);
+    // TODO[hoshino]: styleFamily
 
-    // colorScheme is none if both colorName and colorOverride are null
-    if (options.colorName != null || options.colorOverride != null) {
-      Result<ColorScheme, String> parsed = parseColorScheme(options);
-      if (parsed.isErr()) return Result.err(parsed.getErr());
-
-      colorScheme = Option.some(parsed.get());
-    }
-    // TODO[hoshino]: styleFaimily
-
-
-    return Result.ok(new RenderOptions(colorScheme, Option.none()));
+    return new RenderOptions(colorScheme, AyaStyleFamily.DEFAULT);
   }
 
   /**
-   * @apiNote this function returns {@code Result.ok(AyaColorScheme.EMPTY)} even though {@code options.colorName and options.colorOverride are null}
+   * Construct a {@link ColorScheme} from {@link ServerOptions}.
+   * @apiNote the key that doesn't exist in {@link AyaColorScheme.Key} is ignored.
+   *          the color that is invalid is ignored.
    */
-  private static Result<ColorScheme, String> parseColorScheme(@NotNull ServerOptions options) {
+  private static @NotNull ColorScheme parseColorScheme(@NotNull ServerOptions options) {
     var colorName = options.colorName;
-    var baseOption = options.colorName == null
-      ? Option.some(AyaColorScheme.EMPTY)
-      : BUILTIN_COLOR_SCHEMES.getOption(colorName);
+    var colorOverride = options.colorOverride;
+    var baseColorScheme = colorName == null
+      ? AyaColorScheme.EMPTY
+      : BUILTIN_COLOR_SCHEMES.getOrDefault(colorName, AyaColorScheme.EMPTY);
 
-    if (baseOption.isEmpty()) {
-      return Result.err("Invalid color scheme name");
-    }
+    if (colorOverride == null || colorOverride.isEmpty()) return baseColorScheme;
 
-    var base = baseOption.get();
-    // We won't modify the origin ColorScheme
-    var newColorScheme = MutableMap.from(base.definedColors());
-    var override = options.colorOverride;
-    if (override == null || override.isEmpty()) return Result.ok(base);
+    var newMap = MutableMap.from(baseColorScheme.definedColors());
 
-    boolean modified = false;
-
-    for (var entry : override.entrySet()) {
+    for (var entry : colorOverride.entrySet()) {
       var key = entry.getKey();
       var value = entry.getValue();
 
       var isKeyValid = key != null && Seq.from(AyaColorScheme.Key.values()).view()
         .map(AyaColorScheme.Key::key)
         .contains(key);
-      var isValueValid = value != null;   // I don't like to inline this code, sorry!
+      var isValueValid = value != null;
 
-      if (!isKeyValid) return Result.err("Invalid key: " + key);
-      if (!isValueValid) return Result.err("Invalid color: null");
-
-      var colorResult = parseColor(value);
-      if (colorResult.isErr()) return Result.err("Invalid color: " + value);
-
-      var color = colorResult.get();
-      var oldValue = newColorScheme.put(key, color);
-
-      if (oldValue.isDefined() && ! oldValue.get().equals(color)) {
-        modified = true;
+      if (! isKeyValid) {
+        doWarn("Invalid key: " + key);
+        continue;
       }
+
+      if (! isValueValid) {
+        doWarn("Invalid value: null");
+        continue;
+      }
+
+      var color = parseColor(value);
+      if (color.isErr()) {
+        doWarn("Invalid color: " + value);
+        continue;
+      }
+
+      newMap.put(key, color.get());
     }
 
-    return Result.ok(
-      modified ? new AyaColorScheme(newColorScheme) : base);
+    return new AyaColorScheme(newMap);
   }
 
   /**
@@ -138,18 +127,11 @@ public record RenderOptions(
     }
   }
 
-  /// endregion
-
-  @Contract(pure = true)
-  public @NotNull RenderOptions update(@NotNull RenderOptions other) {
-    var colorScheme = other.colorScheme();
-    var styleFamily = other.styleFamily();
-
-    if (colorScheme.isEmpty()) colorScheme = this.colorScheme();
-    if (styleFamily.isEmpty()) styleFamily = this.styleFamily();
-
-    return new RenderOptions(colorScheme, styleFamily);
+  public static void doWarn(@NotNull String message) {
+    Log.w("%s", message);
   }
+
+  /// endregion
 
   /// region Render
 
@@ -160,25 +142,27 @@ public record RenderOptions(
    * @param capabilities the client capabilities, `plaintext` is returned if the capabilities is empty.
    * @throws IllegalArgumentException is thrown if the capabilities is not empty and invalid.
    */
-  public static @NotNull RenderTarget renderTargetFromCapabilities(@NotNull List<String> capabilities)
-    throws IllegalArgumentException {
+  public static @NotNull RenderTarget renderTargetFromCapabilities(@NotNull List<String> capabilities) {
     if (capabilities.isEmpty()) return RenderTarget.Debug;
     if (capabilities.contains(MarkupKind.Markdown)) return RenderTarget.HTML;
     if (capabilities.contains(MarkupKind.PlainText)) return RenderTarget.Debug;
 
-    throw new IllegalArgumentException("Unsupported capabilities: " + capabilities);
+    doWarn("Invalid capabilities: " + capabilities + ". Ignored.");
+
+    // The client should support `plaintext` at least.
+    return RenderTarget.Debug;
   }
 
   public @NotNull String renderToHtml(@NotNull Doc doc) {
-    var colorScheme = this.colorScheme().getOrDefault(DEFAULT.colorScheme().get());
-    var styleFamily = this.styleFamily().getOrDefault(DEFAULT.styleFamily().get());
+    var colorScheme = this.colorScheme();
+    var styleFamily = this.styleFamily();
 
     return doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(colorScheme, styleFamily, false));
   }
 
   public @NotNull String renderToTeX(@NotNull Doc doc) {
-    var colorScheme = this.colorScheme().getOrDefault(DEFAULT.colorScheme().get());
-    var styleFamily = this.styleFamily().getOrDefault(DEFAULT.styleFamily().get());
+    var colorScheme = this.colorScheme();
+    var styleFamily = this.styleFamily();
 
     return doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(colorScheme, styleFamily));
   }

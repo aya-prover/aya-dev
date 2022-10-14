@@ -4,15 +4,20 @@ package org.aya.lsp;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.MutableMap;
-import kala.control.Option;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.options.RenderOptions;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleFamily;
+import org.javacs.lsp.MarkupKind;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class LspRenderTest extends LspTesterBase {
   @Test
@@ -41,8 +46,8 @@ public class LspRenderTest extends LspTesterBase {
     );
 
     var expected0 = new RenderOptions(
-      Option.none(),
-      Option.none()
+      AyaColorScheme.EMPTY,
+      AyaStyleFamily.DEFAULT
     );
 
     var opt1 = new ServerOptions(
@@ -50,8 +55,8 @@ public class LspRenderTest extends LspTesterBase {
     );
 
     var expected1 = new RenderOptions(
-      Option.some(AyaColorScheme.EMACS),
-      Option.none()
+      AyaColorScheme.EMACS,
+      AyaStyleFamily.DEFAULT
     );
 
     var opt2 = new ServerOptions(
@@ -59,8 +64,8 @@ public class LspRenderTest extends LspTesterBase {
     );
 
     var expected2 = new RenderOptions(
-      Option.some(AyaColorScheme.INTELLIJ),
-      Option.none()
+      AyaColorScheme.INTELLIJ,
+      AyaStyleFamily.DEFAULT
     );
 
     var opt3 = new ServerOptions(
@@ -76,24 +81,14 @@ public class LspRenderTest extends LspTesterBase {
     expected3Inner.put(AyaColorScheme.Key.StructCall.key(), 0x19198A);
 
     var expected3 = new RenderOptions(
-      Option.some(new AyaColorScheme(expected3Inner)),
-      Option.none()
+      new AyaColorScheme(expected3Inner),
+      AyaStyleFamily.DEFAULT
     );
 
-    var opt4 = new ServerOptions(
-      "intellij", Map.of(
-        AyaColorScheme.Key.DataCall.key(), "0x000000",
-        AyaColorScheme.Key.StructCall.key(), "0x000000"
-      ), null
-    );
-
-    var expected4 = new RenderOptions(Option.some(AyaColorScheme.INTELLIJ), Option.none());
-
-    assertTrue(RenderOptions.fromServerOptions(opt0).get().colorScheme().isEmpty());
-    assertSame(expected1.colorScheme().get(), RenderOptions.fromServerOptions(opt1).get().colorScheme().get());
-    assertSame(expected2.colorScheme().get(), RenderOptions.fromServerOptions(opt2).get().colorScheme().get());
-    assertEquals(expected3, RenderOptions.fromServerOptions(opt3).get());
-    assertSame(expected4.colorScheme().get(), RenderOptions.fromServerOptions(opt4).get().colorScheme().get());
+    assertEquals(RenderOptions.DEFAULT, RenderOptions.fromServerOptions(opt0));
+    assertEquals(expected1, RenderOptions.fromServerOptions(opt1));
+    assertEquals(expected2, RenderOptions.fromServerOptions(opt2));
+    assertEquals(expected3, RenderOptions.fromServerOptions(opt3));
 
     var wrong0 = new ServerOptions(
       "hoshino", null, null
@@ -105,14 +100,45 @@ public class LspRenderTest extends LspTesterBase {
       null
     );
 
+    var expected1w = new RenderOptions(
+      AyaColorScheme.EMACS,
+      AyaStyleFamily.DEFAULT
+    );
+
     var wrong2 = new ServerOptions(
       "emacs",
       Map.of("aya:FnCall", "0x1919810"),
       null
     );
 
-    assertFalse(RenderOptions.fromServerOptions(wrong0).isOk());
-    assertFalse(RenderOptions.fromServerOptions(wrong1).isOk());
-    assertFalse(RenderOptions.fromServerOptions(wrong2).isOk());
+    var expected2w = new RenderOptions(
+      AyaColorScheme.EMACS,
+      AyaStyleFamily.DEFAULT
+    );
+
+    assertEquals(RenderOptions.DEFAULT, RenderOptions.fromServerOptions(wrong0));
+    assertEquals(expected1w, RenderOptions.fromServerOptions(wrong1));
+    assertEquals(expected2w, RenderOptions.fromServerOptions(wrong2));
+  }
+
+  @Test
+  public void testRender() {
+    var renderOpt = new RenderOptions(
+      AyaColorScheme.EMACS,
+      AyaStyleFamily.DEFAULT
+    );
+
+    var cap0 = List.of(MarkupKind.PlainText);
+    var cap1 = List.of(MarkupKind.Markdown);
+    var code = Doc.cat(
+      Doc.plain("plaintext"),
+      Doc.symbol(", "),
+      Doc.styled(Style.color(AyaColorScheme.Key.Keyword.key()), "keyword"));
+
+    var result0 = renderOpt.renderWithCapabilities(code, cap0);
+    var result1 = renderOpt.renderWithCapabilities(code, cap1);
+
+    assertEquals("plaintext, keyword", result0);
+    assertEquals("<pre class=\"Aya\">plaintext, <span style=\"color:#ff6d00;\">keyword</span></pre>", result1);
   }
 }

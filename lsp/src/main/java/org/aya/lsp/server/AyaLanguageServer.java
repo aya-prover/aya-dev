@@ -159,8 +159,6 @@ public class AyaLanguageServer implements LanguageServer {
       var opts = new Gson().fromJson(options, ServerOptions.class);
       updateOptions(opts);
     } catch (JsonParseException ex) {
-      // TODO[hoshino]: warn or panic?
-      // Do warn
       Log.e("Unable to convert an InitializeParams.initializationOptions to a ServerOptions, cause: %s", ex.getMessage());
     }
   }
@@ -406,12 +404,7 @@ public class AyaLanguageServer implements LanguageServer {
   @LspRequest("aya/options/updateOptions")
   public void updateOptions(@NotNull ServerOptions options) {
     var renderOpts = RenderOptions.fromServerOptions(options);
-
-    if (renderOpts.isErr()) {
-      Log.e("%s", renderOpts.getErr());
-    } else {
-      this.renderOptions.getAndUpdate(opts -> opts.update(renderOpts.get()));
-    }
+    this.renderOptions.set(renderOpts);
   }
 
   public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {
