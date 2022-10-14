@@ -31,7 +31,7 @@ public record RenderOptions(
   @NotNull Option<StyleFamily> styleFamily
 ) {
   public final static RenderOptions DEFAULT = new RenderOptions(
-    Option.some(AyaColorScheme.INTELLIJ),
+    Option.some(AyaColorScheme.EMPTY),
     Option.some(AyaStyleFamily.DEFAULT)
   );
 
@@ -54,12 +54,19 @@ public record RenderOptions(
    */
   @Contract(pure = true)
   public static @NotNull Result<@NotNull RenderOptions, @NotNull String> fromServerOptions(@NotNull ServerOptions options) {
-    Result<ColorScheme, String> colorScheme = parseColorScheme(options);
+    Option<ColorScheme> colorScheme = Option.none();
+
+    // colorScheme is none if both colorName and colorOverride are null
+    if (options.colorName != null || options.colorOverride != null) {
+      Result<ColorScheme, String> parsed = parseColorScheme(options);
+      if (parsed.isErr()) return Result.err(parsed.getErr());
+
+      colorScheme = Option.some(parsed.get());
+    }
     // TODO[hoshino]: styleFaimily
 
-    if (colorScheme.isErr()) return Result.err(colorScheme.getErr());
 
-    return Result.ok(new RenderOptions(colorScheme.getOption(), Option.none()));
+    return Result.ok(new RenderOptions(colorScheme, Option.none()));
   }
 
   private static Result<ColorScheme, String> parseColorScheme(@NotNull ServerOptions options) {

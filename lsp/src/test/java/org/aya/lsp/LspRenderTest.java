@@ -41,7 +41,7 @@ public class LspRenderTest extends LspTesterBase {
     );
 
     var expected0 = new RenderOptions(
-      Option.some(AyaColorScheme.EMPTY),
+      Option.none(),
       Option.none()
     );
 
@@ -89,7 +89,7 @@ public class LspRenderTest extends LspTesterBase {
 
     var expected4 = new RenderOptions(Option.some(AyaColorScheme.INTELLIJ), Option.none());
 
-    assertSame(expected0.colorScheme().get(), RenderOptions.fromServerOptions(opt0).get().colorScheme().get());
+    assertTrue(RenderOptions.fromServerOptions(opt0).get().colorScheme().isEmpty());
     assertSame(expected1.colorScheme().get(), RenderOptions.fromServerOptions(opt1).get().colorScheme().get());
     assertSame(expected2.colorScheme().get(), RenderOptions.fromServerOptions(opt2).get().colorScheme().get());
     assertEquals(expected3, RenderOptions.fromServerOptions(opt3).get());
