@@ -35,20 +35,20 @@ public record AyaStyleFamily(
   }
 
   public static final @NotNull AyaStyleFamily DEFAULT = new AyaStyleFamily(MutableMap.ofEntries(
-    Tuple.of(Key.Keyword.key(), Style.bold().and().color("aya:Keyword")),
-    Tuple.of(Key.PrimCall.key(), Style.color("aya:Keyword").and()),
-    Tuple.of(Key.FnCall.key(), Style.color("aya:FnCall").and()),
-    Tuple.of(Key.DataCall.key(), Style.color("aya:DataCall").and()),
-    Tuple.of(Key.StructCall.key(), Style.color("aya:StructCall").and()),
-    Tuple.of(Key.ConCall.key(), Style.color("aya:ConCall").and()),
-    Tuple.of(Key.FieldCall.key(), Style.color("aya:FieldCall").and()),
-    Tuple.of(Key.Generalized.key(), Style.color("aya:Generalized").and())
+    Tuple.of(Key.Keyword.key(), Style.bold().and().color(AyaColorScheme.Key.Keyword.key())),
+    Tuple.of(Key.PrimCall.key(), Style.color(AyaColorScheme.Key.Keyword.key()).and()),
+    Tuple.of(Key.FnCall.key(), Style.color(AyaColorScheme.Key.FnCall.key()).and()),
+    Tuple.of(Key.DataCall.key(), Style.color(AyaColorScheme.Key.DataCall.key()).and()),
+    Tuple.of(Key.StructCall.key(), Style.color(AyaColorScheme.Key.StructCall.key()).and()),
+    Tuple.of(Key.ConCall.key(), Style.color(AyaColorScheme.Key.ConCall.key()).and()),
+    Tuple.of(Key.FieldCall.key(), Style.color(AyaColorScheme.Key.FieldCall.key()).and()),
+    Tuple.of(Key.Generalized.key(), Style.color(AyaColorScheme.Key.Generalized.key()).and())
   ));
 
   /** use colors from terminal instead of absolute colors to protect eyes */
   public static final @NotNull StyleFamily ADAPTIVE_CLI = new AyaStyleFamily(MutableMap.ofEntries(
-    Tuple.of(Key.Keyword.key(), Style.color("aya:Keyword").and()),
-    Tuple.of(Key.PrimCall.key(), Style.color("aya:Keyword").and()),
+    Tuple.of(Key.Keyword.key(), Style.color(AyaColorScheme.Key.Keyword.key()).and()),
+    Tuple.of(Key.PrimCall.key(), Style.color(AyaColorScheme.Key.Keyword.key()).and()),
     Tuple.of(Key.FnCall.key(), UnixTermStyle.TerminalYellow.and()),
     Tuple.of(Key.DataCall.key(), UnixTermStyle.TerminalGreen.and()),
     Tuple.of(Key.StructCall.key(), UnixTermStyle.TerminalGreen.and()),
