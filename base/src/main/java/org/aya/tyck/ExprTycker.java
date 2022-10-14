@@ -839,7 +839,7 @@ public final class ExprTycker extends Tycker {
 
   public @NotNull Term checkNotErased(@NotNull SourcePos sourcePos, @NotNull Term term) {
     var functor = new EndoFunctor() {
-      @Override public Term post(@NotNull Term term) {
+      @Override public @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
         if (ElimTerm.isErased(term)) {
           reporter.report(new ErasedError(sourcePos, term, null));
