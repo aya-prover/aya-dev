@@ -403,7 +403,7 @@ public class AyaLanguageServer implements LanguageServer {
     return primFactories.getOrPut(owner.underlyingLibrary(), LspPrimFactory::new);
   }
 
-  @LspRequest("options/updateOptions")
+  @LspRequest("aya/options/updateOptions")
   public void updateOptions(@NotNull ServerOptions options) {
     var renderOpts = RenderOptions.fromServerOptions(options);
 
