@@ -3,9 +3,10 @@
 package org.aya.lsp.models;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import org.aya.lsp.options.RenderOptions;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * The server options for LSP
@@ -16,13 +17,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ServerOptions {
   /**
-   * the color scheme for pretty printer, can be either {@link String} or {@link JsonObject}
-   * <ul>
-   *   <li>String: color scheme name, "emacs" and "intellij" are valid for now, see {@link org.aya.pretty.style.AyaColorScheme}</li>
-   *   <li>JsonObject: a {@link String}-{@link Integer} map, see {@link org.aya.pretty.style.AyaColorScheme.Key}</li>
-   * </ul>
+   * the color scheme which overrides the {@link ServerOptions#colorName}.
+   * Due to the JSON doesn't support hexadecimal integer literal, we use {@link String} instead of {@link Integer}.
    */
-  public @Nullable JsonElement colorScheme;
+  public @Nullable Map<String, String> colorOverride;
+
+  /**
+   * The colorScheme name, "emacs", "intellij" and "none" are valid for now, see {@link RenderOptions#BUILTIN_COLOR_SCHEMES}.
+   * "none" is picked if {@code colorScheme == null}
+   */
+  public @Nullable String colorName;
 
   /**
    * unused for now
@@ -31,8 +35,9 @@ public class ServerOptions {
    */
   public @Nullable JsonElement styleFamily;
 
-  public ServerOptions(@Nullable JsonElement colorScheme, @Nullable JsonElement styleFamily) {
-    this.colorScheme = colorScheme;
+  public ServerOptions(@Nullable String colorName, @Nullable Map<String, String> colorOverride, @Nullable JsonElement styleFamily) {
+    this.colorOverride = colorOverride;
+    this.colorName = colorName;
     this.styleFamily = styleFamily;
   }
 }

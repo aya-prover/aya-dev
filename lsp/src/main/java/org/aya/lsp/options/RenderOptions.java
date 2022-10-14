@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.options;
 
-import com.google.gson.JsonElement;
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.control.Result;
@@ -18,9 +18,9 @@ import org.aya.pretty.style.AyaStyleFamily;
 import org.javacs.lsp.MarkupKind;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @param colorScheme
@@ -41,6 +41,12 @@ public record RenderOptions(
     TeX
   }
 
+  public static final @NotNull ImmutableMap<String, ColorScheme> BUILTIN_COLOR_SCHEMES = ImmutableMap.of(
+    "emacs", AyaColorScheme.EMACS,
+    "intellij", AyaColorScheme.INTELLIJ,
+    "none", AyaColorScheme.EMPTY
+  );
+
   /// region Helper
 
   /**
@@ -48,67 +54,57 @@ public record RenderOptions(
    */
   @Contract(pure = true)
   public static @NotNull Result<@NotNull RenderOptions, @NotNull String> fromServerOptions(@NotNull ServerOptions options) {
-    var rawColorScheme = options.colorScheme;
-    var rawStyleFamily = options.styleFamily;
+    Result<ColorScheme, String> colorScheme = parseColorScheme(options);
+    // TODO[hoshino]: styleFaimily
 
-    var colorScheme = Option.<ColorScheme>none();
-    if (rawColorScheme != null) {
-      var result = parseColorScheme(rawColorScheme);
-      if (result.isErr()) return Result.err(result.getErr());
-      colorScheme = Option.some(result.get());
-    }
+    if (colorScheme.isErr()) return Result.err(colorScheme.getErr());
 
-    var styleFamily = Option.<StyleFamily>none();
-    // TODO[hoshino]
-
-    return Result.ok(new RenderOptions(colorScheme, styleFamily));
+    return Result.ok(new RenderOptions(colorScheme.getOption(), Option.none()));
   }
 
-  private static Result<ColorScheme, String> parseColorScheme(@NotNull JsonElement colorScheme) {
-    if (colorScheme.isJsonPrimitive() && colorScheme.getAsJsonPrimitive().isString()) {
-      var colorSchemeName = colorScheme.getAsString();
+  private static Result<ColorScheme, String> parseColorScheme(@NotNull ServerOptions options) {
+    var colorName = options.colorName;
+    var baseOption = options.colorName == null
+      ? Option.some(AyaColorScheme.EMPTY)
+      : BUILTIN_COLOR_SCHEMES.getOption(colorName);
 
-      if (colorSchemeName.equals("emacs")) {
-        return Result.ok(AyaColorScheme.EMACS);
-      } else if (colorSchemeName.equals("intellij")) {
-        return Result.ok(AyaColorScheme.INTELLIJ);
-      } else {
-        return Result.err("Invalid color scheme name");
-      }
-    } else if (colorScheme.isJsonObject()) {
-      var colorSchemeObj = colorScheme.getAsJsonObject();
-      var colorSchemeMap = MutableMap.<String, Integer>create();
-
-      for (var entry : colorSchemeObj.entrySet()) {
-        // TODO[hoshino]: Does gson guarantee the key and the value are NotNull?
-        @Nullable var key = entry.getKey();
-        @Nullable var value = entry.getValue();
-        // TODO[hoshino]: What if we pre-build a keyName set ?
-        var isKeyValid = key != null && Seq.from(AyaColorScheme.Key.values())
-          .view().map(AyaColorScheme.Key::key)
-          .contains(key);
-
-        if (!isKeyValid) return Result.err("Invalid key: " + key);
-
-        var isColorValid = value != null
-          && value.isJsonPrimitive()
-          && value.getAsJsonPrimitive().isString();
-
-        if (!isColorValid) return Result.err("Invalid color: " + value);
-
-        var colorCode = RenderOptions.parseColor(value.getAsString());
-
-        if (colorCode.isOk()) {
-          colorSchemeMap.put(key, colorCode.get());
-        } else {
-          return Result.err(colorCode.getErr());
-        }
-      }
-
-      return Result.ok(new AyaColorScheme(colorSchemeMap));
-    } else {
-      return Result.err("Invalid value");
+    if (baseOption.isEmpty()) {
+      return Result.err("Invalid color scheme name");
     }
+
+    var base = baseOption.get();
+    // We won't modify the origin ColorScheme
+    var newColorScheme = MutableMap.from(base.definedColors());
+    var override = options.colorOverride;
+    if (override == null || override.isEmpty()) return Result.ok(base);
+
+    boolean modified = false;
+
+    for (var entry : override.entrySet()) {
+      var key = entry.getKey();
+      var value = entry.getValue();
+
+      var isKeyValid = key != null && Seq.from(AyaColorScheme.Key.values()).view()
+        .map(AyaColorScheme.Key::key)
+        .contains(key);
+      var isValueValid = value != null;   // I don't like to inline this code, sorry!
+
+      if (!isKeyValid) return Result.err("Invalid key: " + key);
+      if (!isValueValid) return Result.err("Invalid colorResult: null");
+
+      var colorResult = parseColor(value);
+      if (colorResult.isErr()) return Result.err("Invalid colorResult: " + value);
+
+      var color = colorResult.get();
+      var oldValue = newColorScheme.put(key, color);
+
+      if (oldValue.isDefined() && ! oldValue.get().equals(color)) {
+        modified = true;
+      }
+    }
+
+    return Result.ok(
+      modified ? new AyaColorScheme(newColorScheme) : base);
   }
 
   /**
@@ -195,4 +191,16 @@ public record RenderOptions(
   }
 
   /// endregion
+
+
+  @Override public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof RenderOptions that)) return false;
+    return colorScheme.equals(that.colorScheme) && styleFamily.equals(that.styleFamily);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(colorScheme, styleFamily);
+  }
 }
