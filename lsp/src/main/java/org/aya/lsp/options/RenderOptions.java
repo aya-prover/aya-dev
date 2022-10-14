@@ -154,17 +154,11 @@ public record RenderOptions(
   }
 
   public @NotNull String renderToHtml(@NotNull Doc doc) {
-    var colorScheme = this.colorScheme();
-    var styleFamily = this.styleFamily();
-
-    return doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(colorScheme, styleFamily, false));
+    return doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(colorScheme(), styleFamily(), false));
   }
 
   public @NotNull String renderToTeX(@NotNull Doc doc) {
-    var colorScheme = this.colorScheme();
-    var styleFamily = this.styleFamily();
-
-    return doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(colorScheme, styleFamily));
+    return doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(colorScheme(), styleFamily()));
   }
 
   public @NotNull String renderToString(@NotNull Doc doc) {
