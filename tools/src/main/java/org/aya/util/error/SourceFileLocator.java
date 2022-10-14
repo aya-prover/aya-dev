@@ -24,9 +24,8 @@ public interface SourceFileLocator {
   record Module(@NotNull SeqLike<Path> modulePath) implements SourceFileLocator {
     @Override public @NotNull Path displayName(@NotNull Path path) {
       var normalized = path.toAbsolutePath().normalize();
-      var found = modulePath.find(m -> normalized.startsWith(m.toAbsolutePath()));
-      if (found.isDefined()) return found.get().toAbsolutePath().normalize().relativize(normalized);
-      return path;
+      return modulePath.find(m -> normalized.startsWith(m.toAbsolutePath()))
+        .getOrDefault(found -> found.toAbsolutePath().normalize().relativize(normalized), path);
     }
   }
 }

@@ -72,12 +72,10 @@ public record StmtShallowResolver(
           cmd.sourcePos());
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
-        var modInfo = resolveInfo.imports().getOption(mod);
-        if (modInfo.isDefined()) {
+        resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
-          var modResolveInfo = modInfo.get();
           resolveInfo.open(modResolveInfo, cmd.sourcePos(), acc);
-        }
+        });
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;

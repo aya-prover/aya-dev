@@ -334,10 +334,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           linkDef(field.ref, FIELD_CALL),
           visitTele(field.telescope));
         appendResult(doc, field.result);
-        if (field.body.isDefined()) {
+        field.body.ifDefined(body -> {
           doc.append(Doc.symbol("=>"));
-          doc.append(term(Outer.Free, field.body.get()));
-        }
+          doc.append(term(Outer.Free, body));
+        });
         yield Doc.sepNonEmpty(doc);
       }
       case TeleDecl.DataCtor ctor -> {
