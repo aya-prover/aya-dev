@@ -69,6 +69,9 @@ public record RenderOptions(
     return Result.ok(new RenderOptions(colorScheme, Option.none()));
   }
 
+  /**
+   * @apiNote this function returns {@code Result.ok(AyaColorScheme.EMPTY)} even though {@code options.colorName and options.colorOverride are null}
+   */
   private static Result<ColorScheme, String> parseColorScheme(@NotNull ServerOptions options) {
     var colorName = options.colorName;
     var baseOption = options.colorName == null
@@ -97,10 +100,10 @@ public record RenderOptions(
       var isValueValid = value != null;   // I don't like to inline this code, sorry!
 
       if (!isKeyValid) return Result.err("Invalid key: " + key);
-      if (!isValueValid) return Result.err("Invalid colorResult: null");
+      if (!isValueValid) return Result.err("Invalid color: null");
 
       var colorResult = parseColor(value);
-      if (colorResult.isErr()) return Result.err("Invalid colorResult: " + value);
+      if (colorResult.isErr()) return Result.err("Invalid color: " + value);
 
       var color = colorResult.get();
       var oldValue = newColorScheme.put(key, color);
