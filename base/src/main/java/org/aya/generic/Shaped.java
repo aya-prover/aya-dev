@@ -45,7 +45,8 @@ public interface Shaped<T> {
      * This is true for {@link org.aya.core.pat.PatUnify} and {@link org.aya.core.pat.PatMatcher}.
      */
     default <O> boolean compareUntyped(@NotNull Shaped<O> other) {
-      var otherData = ((Nat<O>) other);
+      assert other instanceof Nat<?>;
+      var otherData = (Nat<O>) other;
       return repr() == otherData.repr();
     }
 
