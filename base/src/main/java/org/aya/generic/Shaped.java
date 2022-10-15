@@ -8,6 +8,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,41 +24,28 @@ public interface Shaped<T> {
     return constructorForm(null);
   }
 
-  interface Inductively<T> extends Shaped<T> {
+  interface Nat<T> extends Shaped<T> {
     @Override @NotNull Term type();
     @NotNull T makeZero(@NotNull CtorDef zero);
     @NotNull T makeSuc(@NotNull CtorDef suc, @NotNull T t);
     @NotNull T destruct(int repr);
     int repr();
 
-    private <O> boolean sameEncoding(@Nullable TyckState state, @NotNull Shaped<O> other) {
+    default <O> boolean compareShape(@NotNull TyckState state, @NotNull Shaped<O> other) {
       if (shape() != other.shape()) return false;
-      if (!(other instanceof Inductively<?> otherData)) return false;
-      var type = type();
-      var otherType = otherData.type();
-      return switch (type) {
-        case CallTerm.Data lhs when otherType instanceof CallTerm.Data rhs ->
-          lhs.ref().core == rhs.ref().core;
-        case CallTerm.Hole lhs when otherType instanceof CallTerm.Hole rhs -> {
-          // same meta always have same solution
-          if (lhs.ref() == rhs.ref()) yield true;
-          // no state is given, so we can't check the solution
-          if (state == null) yield false;
-          // different meta can have same solution
-          var lSol = findSolution(state, lhs);
-          var rSol = findSolution(state, rhs);
-          if (lSol == null || rSol == null) yield false;
-          yield lSol instanceof CallTerm.Data lData
-            && rSol instanceof CallTerm.Data rData
-            && lData.ref().core == rData.ref().core;
-        }
-        default -> false;
-      };
+      if (!(other instanceof Shaped.Nat<?> otherData)) return false;
+      if (type().normalize(state, NormalizeMode.WHNF) instanceof CallTerm.Data lhs
+        && otherData.type().normalize(state, NormalizeMode.WHNF) instanceof CallTerm.Data rhs) {
+        return lhs.ref() == rhs.ref();
+      } else return false;
     }
 
-    default <O> boolean sameValue(@Nullable TyckState state, @NotNull Shaped<O> other) {
-      if (!sameEncoding(state, other)) return false;
-      var otherData = ((Inductively<O>) other);
+    /**
+     * Presumption: {@code this} and {@code other} are well-typed terms of the same type.
+     * This is true for {@link org.aya.core.pat.PatUnify} and {@link org.aya.core.pat.PatMatcher}.
+     */
+    default <O> boolean compareUntyped(@NotNull Shaped<O> other) {
+      var otherData = ((Nat<O>) other);
       return repr() == otherData.repr();
     }
 
