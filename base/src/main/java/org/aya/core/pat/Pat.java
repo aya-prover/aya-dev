@@ -242,7 +242,7 @@ public sealed interface Pat extends AyaDocile {
    * TODO[literal]: literal type needs meta-solving for first-class patterns. Possible changes:
    *  - Make {@link ShapedInt#type} a {@link Term} instead of {@link CallTerm.Data}
    *  - Call {@link ShapedInt#constructorForm()} with a {@link TyckState}
-   *  - Call {@link ShapedInt#sameValue(TyckState, Shaped)} with a {@link TyckState}
+   *  - Call {@link #compareUntyped(Shaped)} with a {@link TyckState}
    *  see <a href="https://github.com/aya-prover/aya-dev/pull/400#discussion_r862371935">discussion</a>
    */
   record ShapedInt(
@@ -250,7 +250,7 @@ public sealed interface Pat extends AyaDocile {
     @Override @NotNull AyaShape shape,
     @NotNull CallTerm.Data type,
     boolean explicit
-  ) implements Pat, Shaped.Inductively<Pat> {
+  ) implements Pat, Shaped.Nat<Pat> {
     @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
       return new Expr.LitIntExpr(pos, repr);
     }
