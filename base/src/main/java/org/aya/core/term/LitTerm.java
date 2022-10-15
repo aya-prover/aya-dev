@@ -14,7 +14,7 @@ public sealed interface LitTerm extends Term {
     @Override int repr,
     @Override @NotNull AyaShape shape,
     @Override @NotNull Term type
-  ) implements LitTerm, Shaped.Inductively<Term> {
+  ) implements LitTerm, Shaped.Nat<Term> {
 
     @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
       return new CallTerm.Con(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());

@@ -170,17 +170,30 @@ public sealed interface FormTerm extends Term {
       return (Pi) Pi.make(iTele, type());
     }
 
-    public @NotNull Term applyDimsTo(@NotNull Term innerMost) {
+    public @NotNull Term applyDimsTo(@NotNull Term pLam) {
       var args = params.view().map(RefTerm::new);
-      if (innerMost instanceof IntroTerm.PathLam lam) {
-        assert lam.params().sizeEquals(params());
-        return lam.body().subst(new Subst(lam.params(), args));
+      loop:
+      while (true) {
+        if (args.isEmpty()) return pLam;
+        switch (pLam) {
+          case default -> {
+            break loop;
+          }
+          case IntroTerm.PathLam lam -> {
+            assert lam.params().sizeLessThanOrEquals(args);
+            pLam = lam.body().subst(new Subst(lam.params(), args.take(lam.params().size())));
+            args = args.drop(lam.params().size());
+          }
+          case IntroTerm.Lambda lam -> {
+            // TODO: replace with error report¿
+            assert lam.param().explicit();
+            pLam = ElimTerm.make(lam, new Arg<>(args.first(), true));
+            args = args.drop(1);
+          }
+        }
       }
-      var newArgs = args.map(x -> new Arg<Term>(x, true));
-      if (innerMost instanceof IntroTerm.Lambda) {
-        return newArgs.foldLeft(innerMost, CallTerm::make);
-      }
-      return new ElimTerm.PathApp(innerMost, newArgs.toImmutableSeq(), this);
+      var newArgs = args.map(x -> new Arg<Term>(x, true)).toImmutableSeq();
+      return new ElimTerm.PathApp(pLam, newArgs, this);
     }
 
     public @NotNull FormTerm.Cube map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
@@ -195,7 +208,7 @@ public sealed interface FormTerm extends Term {
     }
 
     public @NotNull Term makeApp(@NotNull Term app, @NotNull Arg<Term> arg) {
-      return CallTerm.make(makeLam(app), arg);
+      return ElimTerm.make(makeLam(app), arg);
     }
 
     public @NotNull Term makeLam(@NotNull Term app) {

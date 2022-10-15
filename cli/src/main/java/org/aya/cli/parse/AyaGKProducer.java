@@ -96,8 +96,8 @@ public record AyaGKProducer(
       var result = decl(node);
       var stmts = result._2.view().prepended(result._1);
       if (result._1 instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
-        var stmtOption = result._2.firstOption(stmt -> !(stmt instanceof Decl));
-        if (stmtOption.isDefined()) reporter.report(new BadCounterexampleWarn(stmtOption.get()));
+        result._2.firstOption(stmt -> !(stmt instanceof Decl))
+          .ifDefined(stmt -> reporter.report(new BadCounterexampleWarn(stmt)));
         return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
       }
       return stmts.toImmutableSeq();
@@ -503,12 +503,12 @@ public record AyaGKProducer(
       var content = text.substring(1, text.length() - 1);
       return new Expr.LitStringExpr(pos, StringUtil.escapeStringCharacters(content));
     }
-    if (node.is(ATOM_ULIFT_EXPR)) {
+    if (node.is(ULIFT_ATOM)) {
       var expr = expr(node.child(EXPR));
       var lifts = node.childrenOfType(ULIFT_PREFIX).toImmutableSeq().size();
       return lifts > 0 ? new Expr.LiftExpr(sourcePosOf(node), expr, lifts) : expr;
     }
-    if (node.is(ATOM_TUPLE_EXPR)) {
+    if (node.is(TUPLE_ATOM)) {
       var expr = node.child(EXPR_LIST).childrenOfType(EXPR).toImmutableSeq();
       if (expr.size() == 1) return newBinOPScope(expr(expr.get(0)));
       return new Expr.TupExpr(sourcePosOf(node), expr.map(this::expr));
@@ -585,9 +585,10 @@ public record AyaGKProducer(
       }).toImmutableSeq();
       return new Expr.Path(pos, params, expr(node.child(EXPR)), partial(node.peekChild(PARTIAL_EXPR), pos));
     }
-    if (node.is(IDIOM_EXPR)) {
+    if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);
       var names = new Expr.IdiomNames(
+        Constants.alternativeEmpty(pos),
         Constants.alternativeOr(pos),
         Constants.applicativeApp(pos),
         Constants.functorPure(pos)
@@ -612,7 +613,7 @@ public record AyaGKProducer(
           })
           .toImmutableSeq());
     }
-    if (node.is(ARRAY_EXPR)) {
+    if (node.is(ARRAY_ATOM)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
 
       if (arrayBlock == null)
@@ -730,6 +731,28 @@ public record AyaGKProducer(
       return tupElem.sizeEquals(1)
         ? (ignored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
         : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
+    }
+    if (node.is(ATOM_LIST_PATTERN)) {
+      var patternsNode = node.peekChild(PATTERNS);    // We allowed empty list pattern (nil)
+      var patterns = patternsNode != null
+        ? patternsNode
+          .childrenOfType(PATTERN)
+          .map(x -> x.child(ATOM_PATTERNS))
+          .map(this::atomPatterns)
+        : SeqView.<BiFunction<Boolean, LocalVar, Pattern>>empty();
+
+      var weakId = node.peekChild(WEAK_ID);
+      var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
+      var nilBind = new Pattern.Bind(sourcePos, true,
+        new LocalVar(Constants.LIST_NIL, sourcePos),
+        MutableValue.create());
+      var consBind = new Pattern.Bind(sourcePos, true,
+        new LocalVar(Constants.LIST_CONS, sourcePos),
+        MutableValue.create());
+
+      return ex -> new Pattern.List(sourcePos, ex,
+        patterns.map(f -> f.apply(true, null)).toImmutableSeq(), asId,
+        nilBind, consBind);
     }
     if (node.is(ATOM_NUMBER_PATTERN))
       return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));

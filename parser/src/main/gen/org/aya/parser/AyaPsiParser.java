@@ -1,6 +1,3 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -42,17 +39,17 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     create_token_set_(ARRAY_BLOCK, ARRAY_COMP_BLOCK, ARRAY_ELEMENTS_BLOCK),
     create_token_set_(ARGUMENT, ATOM_EX_ARGUMENT, NAMED_IM_ARGUMENT, TUPLE_IM_ARGUMENT),
     create_token_set_(ATOM_ABSURD_PATTERN, ATOM_BIND_PATTERN, ATOM_CALM_FACE_PATTERN, ATOM_EX_PATTERN,
-      ATOM_IM_PATTERN, ATOM_NUMBER_PATTERN, ATOM_PATTERN),
+      ATOM_IM_PATTERN, ATOM_LIST_PATTERN, ATOM_NUMBER_PATTERN, ATOM_PATTERN),
     create_token_set_(DATA_DECL, DECL, FN_DECL, GENERALIZE,
       IMPORT_CMD, MODULE, OPEN_CMD, PRIM_DECL,
       REMARK, STMT, STRUCT_DECL),
-    create_token_set_(APP_EXPR, ARRAY_EXPR, ARROW_EXPR, ATOM_EXPR,
-      ATOM_TUPLE_EXPR, ATOM_ULIFT_EXPR, CALM_FACE_EXPR, DO_EXPR,
-      EXPR, FORALL_EXPR, GOAL_EXPR, HOLE_EXPR,
-      IDIOM_EXPR, LAMBDA_EXPR, LITERAL, LIT_INT_EXPR,
-      LIT_STRING_EXPR, MATCH_EXPR, NEW_EXPR, PARTIAL_EXPR,
-      PATH_EXPR, PI_EXPR, PROJ_EXPR, REF_EXPR,
-      SIGMA_EXPR, THIS_EXPR, UNIV_EXPR),
+    create_token_set_(APP_EXPR, ARRAY_ATOM, ARROW_EXPR, ATOM_EXPR,
+      CALM_FACE_EXPR, DO_EXPR, EXPR, FORALL_EXPR,
+      GOAL_EXPR, HOLE_EXPR, IDIOM_ATOM, LAMBDA_EXPR,
+      LITERAL, LIT_INT_EXPR, LIT_STRING_EXPR, MATCH_EXPR,
+      NEW_EXPR, PARTIAL_EXPR, PATH_EXPR, PI_EXPR,
+      PROJ_EXPR, REF_EXPR, SIGMA_EXPR, THIS_EXPR,
+      TUPLE_ATOM, ULIFT_ATOM, UNIV_EXPR),
   };
 
   /* ********************************************************** */
@@ -68,6 +65,28 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = namedImArgument(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  /* ********************************************************** */
+  // LARRAY arrayBlock? RARRAY
+  public static boolean arrayAtom(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arrayAtom")) return false;
+    if (!nextTokenIs(b, LARRAY)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, ARRAY_ATOM, null);
+    r = consumeToken(b, LARRAY);
+    p = r; // pin = 1
+    r = r && report_error_(b, arrayAtom_1(b, l + 1));
+    r = p && consumeToken(b, RARRAY) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // arrayBlock?
+  private static boolean arrayAtom_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arrayAtom_1")) return false;
+    arrayBlock(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -247,6 +266,46 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // LARRAY patterns? RARRAY (KW_AS weakId)?
+  public static boolean atomListPattern(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atomListPattern")) return false;
+    if (!nextTokenIs(b, LARRAY)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LARRAY);
+    r = r && atomListPattern_1(b, l + 1);
+    r = r && consumeToken(b, RARRAY);
+    r = r && atomListPattern_3(b, l + 1);
+    exit_section_(b, m, ATOM_LIST_PATTERN, r);
+    return r;
+  }
+
+  // patterns?
+  private static boolean atomListPattern_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atomListPattern_1")) return false;
+    patterns(b, l + 1);
+    return true;
+  }
+
+  // (KW_AS weakId)?
+  private static boolean atomListPattern_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atomListPattern_3")) return false;
+    atomListPattern_3_0(b, l + 1);
+    return true;
+  }
+
+  // KW_AS weakId
+  private static boolean atomListPattern_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atomListPattern_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, KW_AS);
+    r = r && weakId(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // NUMBER
   public static boolean atomNumberPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomNumberPattern")) return false;
@@ -261,6 +320,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // atomExPattern
   //               | atomImPattern
+  //               | atomListPattern
   //               | atomNumberPattern
   //               | atomAbsurdPattern
   //               | atomBindPattern
@@ -271,6 +331,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _COLLAPSE_, ATOM_PATTERN, "<atom pattern>");
     r = atomExPattern(b, l + 1);
     if (!r) r = atomImPattern(b, l + 1);
+    if (!r) r = atomListPattern(b, l + 1);
     if (!r) r = atomNumberPattern(b, l + 1);
     if (!r) r = atomAbsurdPattern(b, l + 1);
     if (!r) r = atomBindPattern(b, l + 1);
@@ -293,43 +354,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     }
     exit_section_(b, l, m, r, false, null);
     return r;
-  }
-
-  /* ********************************************************** */
-  // LPAREN exprList RPAREN
-  public static boolean atomTupleExpr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomTupleExpr")) return false;
-    if (!nextTokenIs(b, LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && exprList(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, ATOM_TUPLE_EXPR, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // uliftPrefix* literal
-  public static boolean atomUliftExpr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomUliftExpr")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, ATOM_ULIFT_EXPR, "<atom ulift expr>");
-    r = atomUliftExpr_0(b, l + 1);
-    r = r && literal(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // uliftPrefix*
-  private static boolean atomUliftExpr_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomUliftExpr_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!uliftPrefix(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "atomUliftExpr_0", c)) break;
-    }
-    return true;
   }
 
   /* ********************************************************** */
@@ -1019,6 +1043,28 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = calmFaceExpr(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  /* ********************************************************** */
+  // LIDIOM idiomBlock? RIDIOM
+  public static boolean idiomAtom(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "idiomAtom")) return false;
+    if (!nextTokenIs(b, LIDIOM)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, IDIOM_ATOM, null);
+    r = consumeToken(b, LIDIOM);
+    p = r; // pin = 1
+    r = r && report_error_(b, idiomAtom_1(b, l + 1));
+    r = p && consumeToken(b, RIDIOM) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // idiomBlock?
+  private static boolean idiomAtom_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "idiomAtom_1")) return false;
+    idiomBlock(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -2181,6 +2227,20 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // LPAREN exprList RPAREN
+  public static boolean tupleAtom(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleAtom")) return false;
+    if (!nextTokenIs(b, LPAREN)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LPAREN);
+    r = r && exprList(b, l + 1);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, TUPLE_ATOM, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // LBRACE exprList RBRACE
   public static boolean tupleImArgument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tupleImArgument")) return false;
@@ -2206,6 +2266,29 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = r && expr(b, l + 1, -1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // uliftPrefix* literal
+  public static boolean uliftAtom(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "uliftAtom")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, ULIFT_ATOM, "<ulift atom>");
+    r = uliftAtom_0(b, l + 1);
+    r = r && literal(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // uliftPrefix*
+  private static boolean uliftAtom_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "uliftAtom_0")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!uliftPrefix(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "uliftAtom_0", c)) break;
+    }
+    return true;
   }
 
   /* ********************************************************** */
@@ -2425,15 +2508,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // 4: ATOM(lambdaExpr)
   // 5: ATOM(matchExpr)
   // 6: ATOM(doExpr)
-  // 7: ATOM(idiomExpr)
-  // 8: ATOM(arrayExpr)
-  // 9: ATOM(thisExpr)
-  // 10: ATOM(partialExpr)
-  // 11: ATOM(pathExpr)
-  // 12: ATOM(atomExpr)
-  // 13: BINARY(arrowExpr)
-  // 14: POSTFIX(appExpr)
-  // 15: POSTFIX(projExpr)
+  // 7: ATOM(thisExpr)
+  // 8: ATOM(partialExpr)
+  // 9: ATOM(pathExpr)
+  // 10: ATOM(atomExpr)
+  // 11: BINARY(arrowExpr)
+  // 12: POSTFIX(appExpr)
+  // 13: POSTFIX(projExpr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -2446,8 +2527,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = lambdaExpr(b, l + 1);
     if (!r) r = matchExpr(b, l + 1);
     if (!r) r = doExpr(b, l + 1);
-    if (!r) r = idiomExpr(b, l + 1);
-    if (!r) r = arrayExpr(b, l + 1);
     if (!r) r = thisExpr(b, l + 1);
     if (!r) r = partialExpr(b, l + 1);
     if (!r) r = pathExpr(b, l + 1);
@@ -2463,15 +2542,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 13 && consumeTokenSmart(b, TO)) {
-        r = expr(b, l, 12);
+      if (g < 11 && consumeTokenSmart(b, TO)) {
+        r = expr(b, l, 10);
         exit_section_(b, l, m, ARROW_EXPR, r, true, null);
       }
-      else if (g < 14 && appExpr_0(b, l + 1)) {
+      else if (g < 12 && appExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, APP_EXPR, r, true, null);
       }
-      else if (g < 15 && projFix(b, l + 1)) {
+      else if (g < 13 && projFix(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROJ_EXPR, r, true, null);
       }
@@ -2707,48 +2786,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // LIDIOM idiomBlock? RIDIOM
-  public static boolean idiomExpr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "idiomExpr")) return false;
-    if (!nextTokenIsSmart(b, LIDIOM)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, IDIOM_EXPR, null);
-    r = consumeTokenSmart(b, LIDIOM);
-    p = r; // pin = 1
-    r = r && report_error_(b, idiomExpr_1(b, l + 1));
-    r = p && consumeToken(b, RIDIOM) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // idiomBlock?
-  private static boolean idiomExpr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "idiomExpr_1")) return false;
-    idiomBlock(b, l + 1);
-    return true;
-  }
-
-  // LARRAY arrayBlock? RARRAY
-  public static boolean arrayExpr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arrayExpr")) return false;
-    if (!nextTokenIsSmart(b, LARRAY)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, ARRAY_EXPR, null);
-    r = consumeTokenSmart(b, LARRAY);
-    p = r; // pin = 1
-    r = r && report_error_(b, arrayExpr_1(b, l + 1));
-    r = p && consumeToken(b, RARRAY) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // arrayBlock?
-  private static boolean arrayExpr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arrayExpr_1")) return false;
-    arrayBlock(b, l + 1);
-    return true;
-  }
-
   // KW_THIS (AT qualifiedId)?
   public static boolean thisExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "thisExpr")) return false;
@@ -2865,14 +2902,18 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // atomUliftExpr
-  //            | atomTupleExpr
+  // uliftAtom
+  //            | tupleAtom
+  //            | idiomAtom
+  //            | arrayAtom
   public static boolean atomExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomExpr")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, ATOM_EXPR, "<atom expr>");
-    r = atomUliftExpr(b, l + 1);
-    if (!r) r = atomTupleExpr(b, l + 1);
+    r = uliftAtom(b, l + 1);
+    if (!r) r = tupleAtom(b, l + 1);
+    if (!r) r = idiomAtom(b, l + 1);
+    if (!r) r = arrayAtom(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

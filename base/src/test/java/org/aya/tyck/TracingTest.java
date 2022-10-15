@@ -4,7 +4,7 @@ package org.aya.tyck;
 
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.repr.AyaShape;
-import org.aya.tyck.trace.MdUnicodeTrace;
+import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +44,11 @@ public class TracingTest {
   }
 
   @Test public void traceMd() {
-    assertFalse(new MdUnicodeTrace().docify(Objects.requireNonNull(mkBuilder(CODE))).debugRender().isEmpty());
+    assertFalse(new MarkdownTrace().docify(Objects.requireNonNull(mkBuilder(CODE))).debugRender().isEmpty());
   }
 
   @Test public void traceHole() {
-    assertFalse(new MdUnicodeTrace().docify(Objects.requireNonNull(mkBuilder("""
+    assertFalse(new MarkdownTrace().docify(Objects.requireNonNull(mkBuilder("""
       open data Nat : Type | zero | suc Nat
       def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => zero
       example def test (A B : Type) (x : A) (y : B) => wow A B x y

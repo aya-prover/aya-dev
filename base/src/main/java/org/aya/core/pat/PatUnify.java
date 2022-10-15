@@ -45,7 +45,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
       case Pat.ShapedInt lhsInt -> {
         switch (rhs) {
           case Pat.ShapedInt rhsInt -> {
-            if (!lhsInt.sameValue(null, rhsInt)) reportError(lhs, rhs);
+            if (!lhsInt.compareUntyped(rhsInt)) reportError(lhs, rhs);
           }
           case Pat.Ctor ctor -> unifyLitWithCtor(ctor, lhsInt, lhs);
           // Try one more time in case we add more rhs case when lhs is a constructor.

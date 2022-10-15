@@ -79,10 +79,7 @@ public abstract class ClosingStylist extends StringStylist {
   }
 
   protected @NotNull StyleToken formatColorName(@NotNull Style.ColorName color, boolean background) {
-    var rgb = getColor(color.colorName());
-    return rgb.isDefined()
-      ? formatColorHex(rgb.get(), background)
-      : StyleToken.NULL;
+    return getColor(color.colorName()).getOrDefault(it -> formatColorHex(it, background), StyleToken.NULL);
   }
 
   protected abstract @NotNull StyleToken formatItalic();

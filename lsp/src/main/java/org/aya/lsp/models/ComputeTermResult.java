@@ -9,17 +9,20 @@ import org.aya.util.error.WithPos;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.Range;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 
-public record ComputeTermResult(@NotNull URI uri, @NotNull String computed, @NotNull Range range) {
-  public static class Params {
-    public URI uri;
-    public Position position;
+/**
+ * @param uri the uri to the file
+ * @param computed null if failed
+ */
+public record ComputeTermResult(@NotNull URI uri, @Nullable String computed, @NotNull Range range) {
+  public record Params(@NotNull URI uri, @NotNull Position position) {
   }
 
   public static @NotNull ComputeTermResult bad(@NotNull Params params) {
-    return new ComputeTermResult(params.uri, "<unknown>",
+    return new ComputeTermResult(params.uri, null,
       new Range(params.position, params.position));
   }
 

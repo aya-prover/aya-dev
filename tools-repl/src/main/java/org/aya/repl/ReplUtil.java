@@ -13,9 +13,10 @@ import java.nio.file.Path;
 public interface ReplUtil {
   static @NotNull Command.Result invokeHelp(CommandManager commandManager, @Nullable HelpItem argument) {
     if (argument != null && !argument.cmd.isEmpty()) {
-      var cmd = commandManager.cmd.find(c -> c.owner().names().contains(argument.cmd));
-      if (cmd.isDefined()) return Command.Result.ok(cmd.get().owner().help(), true);
-      else return Command.Result.err("No such command: " + argument.cmd, true);
+      return commandManager.cmd.find(c -> c.owner().names().contains(argument.cmd))
+        .getOrElse(
+          it -> Command.Result.ok(it.owner().help(), true),
+          () -> Command.Result.err("No such command: " + argument.cmd, true));
     }
     var commands = Doc.vcat(commandManager.cmd.view()
       .map(command -> Doc.sep(

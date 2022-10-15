@@ -318,7 +318,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private boolean compareLambdaBody(Term rhs, Sub lr, Sub rl, IntroTerm.Lambda lambda, FormTerm.Pi pi) {
     return ctx.with(lambda.param(), () ->
-      compare(lambda.body(), CallTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body()));
+      compare(lambda.body(), ElimTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body()));
   }
 
   private boolean comparePathLamBody(Term rhs, Sub lr, Sub rl, IntroTerm.PathLam lambda, FormTerm.Cube cube) {
@@ -347,7 +347,7 @@ public sealed abstract class TermComparator permits Unifier {
   private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
     return TermComparator.withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
       // TODO: let CofThy.propExt uses lr and rl?
-      var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type().subst(lr.map)).subst(lr.map);
+      var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type()).subst(lr.map);
       var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
       var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
       var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
@@ -489,7 +489,8 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case LitTerm.ShapedInt lhs -> switch (preRhs) {
         case LitTerm.ShapedInt rhs -> {
-          if (!lhs.sameValue(state, rhs)) yield null;
+          if (!lhs.compareShape(state, rhs)) yield null;
+          if (!lhs.compareUntyped(rhs)) yield null;
           yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
         }
         case CallTerm.Con rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);

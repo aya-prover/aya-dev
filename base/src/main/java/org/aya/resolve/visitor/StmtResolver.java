@@ -20,8 +20,12 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.tyck.order.TyckOrder;
+import org.aya.tyck.pat.PatternProblem;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Problem;
+import org.aya.util.reporter.Reporter;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,8 +177,9 @@ public interface StmtResolver {
         return defVar;
       }
     }
-    opSet.reporter.report(new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
-    throw new Context.ResolvingInterruptedException();
+
+    // make compiler happy 😥
+    throw resolvingInterrupt(opSet.reporter, new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
   }
 
   static void resolveBind(@NotNull SeqLike<@NotNull Stmt> contents, @NotNull ResolveInfo info) {
@@ -250,6 +255,30 @@ public interface StmtResolver {
           bindAs(seq.as(), newCtx.get(), seq.sourcePos()),
           new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.as(), seq.explicit()));
       }
+      // resolve inner pattern but not desugar
+      case Pattern.List list -> {
+        var newCtx = MutableValue.create(context);
+
+        // resolve subpatterns
+        var subpats = list.elements().map(x -> subpatterns(newCtx, x));
+
+        // resolve ctors (these resolving won't change context, maybe...)
+        var nilPat = resolve(list.nilName(), newCtx.get());
+        var consPat = resolve(list.consName(), newCtx.get());
+
+        // check both patterns
+
+        if (!(nilPat._2 instanceof Pattern.Ctor))
+          resolvingInterrupt(context.reporter(), new PatternProblem.UnknownCtor(list.nilName()));
+        if (!(consPat._2 instanceof Pattern.Ctor))
+          resolvingInterrupt(context.reporter(), new PatternProblem.UnknownCtor(list.consName()));
+
+        // now both patterns are Ctors
+
+        yield Tuple.of(
+          bindAs(list.as(), newCtx.get(), list.sourcePos()),
+          new Pattern.List(list.sourcePos(), list.explicit(), subpats, list.as(), nilPat._2, consPat._2));
+      }
       default -> Tuple.of(context, pattern);
     };
   }
@@ -262,5 +291,11 @@ public interface StmtResolver {
       if (defVar.core instanceof PrimDef || defVar.concrete instanceof TeleDecl.PrimDecl) return defVar;
       return null;
     });
+  }
+
+  @Contract("_, _ -> fail")
+  static Context.ResolvingInterruptedException resolvingInterrupt(Reporter reporter, Problem problem) {
+    reporter.report(problem);
+    throw new Context.ResolvingInterruptedException();
   }
 }

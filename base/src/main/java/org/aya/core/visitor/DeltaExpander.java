@@ -10,6 +10,7 @@ import kala.tuple.Tuple;
 import org.aya.core.Matching;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.ElimTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
@@ -43,7 +44,7 @@ public interface DeltaExpander extends EndoFunctor {
         var def = fn.ref().core;
         if (def == null || def.modifiers.contains(Modifier.Opaque)) yield fn;
         yield def.body.fold(
-          lamBody -> apply(lamBody.rename().subst(buildSubst(def.telescope(), fn.args())).lift(fn.ulift())),
+          lamBody -> apply(lamBody.rename().lift(fn.ulift()).subst(buildSubst(def.telescope(), fn.args()))),
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
             .map(unfolded -> apply(unfolded.data())).getOrDefault(fn));
       }
@@ -57,7 +58,7 @@ public interface DeltaExpander extends EndoFunctor {
       case CallTerm.Access access -> {
         var fieldDef = access.ref().core;
         if (access.of() instanceof IntroTerm.New n) {
-          var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), CallTerm::make);
+          var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), ElimTerm::make);
           yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
         }
         yield access;
@@ -75,7 +76,7 @@ public interface DeltaExpander extends EndoFunctor {
       var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
-        var newBody = matchy.body().rename().subst(subst).lift(ulift);
+        var newBody = matchy.body().rename().lift(ulift).subst(subst);
         return Option.some(new WithPos<>(matchy.sourcePos(), newBody));
       } else if (!orderIndependent && termSubst.getErr()) return Option.none();
     }

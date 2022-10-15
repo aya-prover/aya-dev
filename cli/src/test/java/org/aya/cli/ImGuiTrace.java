@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -25,7 +26,7 @@ import java.util.Objects;
 /**
  * This is no longer useful.
  *
- * @see org.aya.tyck.trace.MdUnicodeTrace
+ * @see MarkdownTrace
  */
 @SuppressWarnings("AccessStaticViaInstance")
 public class ImGuiTrace {

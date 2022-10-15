@@ -47,9 +47,9 @@ public record LensMaker(@NotNull SeqView<LibraryOwner> libraries) implements Syn
         //   (returns) - A promise that resolves to an array of Location-instances.
         var title = refs.sizeEquals(1) ? "1 usage" : "%d usages".formatted(refs.size());
         var locations = refs.mapNotNull(LspRange::toLoc).asJava();
-        var cmd = uri.isDefined()
-          ? new Command(title, "editor.action.showReferences", List.of(uri.get(), range.end, locations))
-          : new Command(title, "", Collections.emptyList());
+        var cmd = uri.getOrElse(
+          it -> new Command(title, "editor.action.showReferences", List.of(it, range.end, locations)),
+          () -> new Command(title, "", Collections.emptyList()));
         // the type of variable `cmd` is Command, but it cannot be used as
         // the command of the CodeLens created below, because VSCode cannot parse
         // the argument of the command directly due to some Uri serialization problems.

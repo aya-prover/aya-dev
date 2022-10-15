@@ -217,6 +217,7 @@ public final class PatTycker {
         }
         yield withError(new LiteralError.BadLitPattern(num.sourcePos(), num.number(), term), num, term);
       }
+      case Pattern.List list -> throw new InternalException("List patterns should be desugared");
       case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
   }

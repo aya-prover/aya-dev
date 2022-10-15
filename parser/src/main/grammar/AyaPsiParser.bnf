@@ -78,7 +78,8 @@
     // symbols
     // KW_SIGMA =  'regexp:Sig|\u03a3'
     KW_SIGMA =  'Sig'
-    KW_LAMBDA = 'regexp:[\\\u03bb]'
+    // KW_LAMBDA = 'regexp:[\\\u03bb]'
+    KW_LAMBDA = '\'
     // KW_PI = 'regexp:Pi|\u03a0'
     KW_PI = 'Pi'
     // KW_FORALL = 'regexp:forall|\u2200'
@@ -86,9 +87,12 @@
 
     // ---- AyaLexer end: Keywords
 
-    TO = 'regexp:->|\u2192'
-    LARROW = 'regexp:<-|\u2190'
-    IMPLIES = 'regexp:=>|\u21d2'
+    // TO = 'regexp:->|\u2192'
+    TO = '->'
+    // LARROW = 'regexp:<-|\u2190'
+    LARROW = '<-'
+    // IMPLIES = 'regexp:=>|\u21d2'
+    IMPLIES = '=>'
     DEFINE_AS = ':='
     SUCHTHAT = '**'
     DOT = '.'
@@ -102,16 +106,22 @@
     RBRACE = '}'
     LPAREN = '('
     RPAREN = ')'
-    LIDIOM = 'regexp:\(\||\u2987'
-    RIDIOM = 'regexp:\|\)|\u2988'
+    // LIDIOM = 'regexp:\(\||\u2987'
+    LIDIOM = '(|'
+    // RIDIOM = 'regexp:\|\)|\u2988'
+    RIDIOM = '|)'
     LARRAY = '['
     RARRAY = ']'
     LGOAL = '{?'
     RGOAL = '?}'
-    LPARTIAL = 'regexp:\{\||\u2983'
-    RPARTIAL = 'regexp:\|}|\u2984'
-    LPATH = 'regexp:\[\||\u27E6'
-    RPATH = 'regexp:\|]|\u27E7'
+    // LPARTIAL = 'regexp:\{\||\u2983'
+    LPARTIAL = '{|'
+    // RPARTIAL = 'regexp:\|}|\u2984'
+    RPARTIAL = '|}'
+    // LPATH = 'regexp:\[\||\u27E6'
+    LPATH = '[|'
+    // RPATH = 'regexp:\|]|\u27E7'
+    RPATH = '|]'
     AT = '@'
 
     CALM_FACE = '_'
@@ -125,16 +135,16 @@
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
   extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
-  extends("refExpr|holeExpr|litIntExpr|litStringExpr|univExpr") = literal
+  extends("refExpr|holeExpr|lit.+Expr|univExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
 
-  extends("atomUliftExpr|atomTupleExpr") = atomExpr
-  extends("arrayCompBlock|arrayElementsBlock") = arrayBlock
-  extends("atomExArgument|tupleImArgument|namedImArgument") = argument
-  extends("atomExPattern|atomImPattern|atomNumberPattern|atomAbsurdPattern|atomBindPattern|atomCalmFacePattern") = atomPattern
+  extends(".+Atom") = atomExpr
+  extends("array.+Block") = arrayBlock
+  extends(".+Argument") = argument
+  extends("atom.+Pattern") = atomPattern
 
-  extends("fnDecl|structDecl|primDecl|dataDecl") = decl
-  extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
+  extends(".+Decl") = decl
+  extends("stmt|decl|.+Cmd|module|remark|generalize") = stmt
 }
 
 program ::= repl | stmts
@@ -248,8 +258,6 @@ expr ::= newExpr
        | lambdaExpr
        | matchExpr
        | doExpr
-       | idiomExpr
-       | arrayExpr
        | thisExpr
        | partialExpr
        | pathExpr
@@ -259,11 +267,20 @@ expr ::= newExpr
        | projExpr
 
 // ulift is written here because we want `x ulift + y` to work
-atomExpr ::= atomUliftExpr
-           | atomTupleExpr
-atomUliftExpr ::= uliftPrefix* literal
-atomTupleExpr ::= LPAREN exprList RPAREN
+atomExpr ::= uliftAtom
+           | tupleAtom
+           | idiomAtom
+           | arrayAtom
+uliftAtom ::= uliftPrefix* literal
+tupleAtom ::= LPAREN exprList RPAREN
 uliftPrefix ::= KW_ULIFT
+idiomAtom ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
+arrayAtom ::= LARRAY arrayBlock? RARRAY { pin=1 }
+arrayBlock ::= arrayCompBlock | arrayElementsBlock
+arrayCompBlock ::= expr BAR listComp
+arrayElementsBlock ::= exprList
+idiomBlock ::= barred* expr
+listComp ::= (doBinding COMMA)* doBinding
 
 newExpr ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
@@ -276,21 +293,12 @@ lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
-idiomExpr ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
 
 partialExpr ::= LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
 subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem
 barredSubSystem ::= BAR subSystem
-
-arrayExpr ::= LARRAY arrayBlock? RARRAY { pin=1 }
-
-arrayBlock ::= arrayCompBlock | arrayElementsBlock
-arrayCompBlock ::= expr BAR listComp
-arrayElementsBlock ::= exprList
-idiomBlock ::= barred* expr
-listComp ::= (doBinding COMMA)* doBinding
 
 doBlock ::= (doBlockContent COMMA)* doBlockContent
 doBlockContent ::= doBinding | expr
@@ -324,12 +332,14 @@ pattern ::= atomPatterns
 atomPatterns ::= atomPattern+
 atomPattern ::= atomExPattern
               | atomImPattern
+              | atomListPattern
               | atomNumberPattern
               | atomAbsurdPattern
               | atomBindPattern
               | atomCalmFacePattern
 atomExPattern ::= LPAREN patterns RPAREN (KW_AS weakId)?
 atomImPattern ::= LBRACE patterns RBRACE (KW_AS weakId)?
+atomListPattern ::= LARRAY patterns? RARRAY (KW_AS weakId)?
 atomNumberPattern ::= NUMBER
 atomAbsurdPattern ::= LPAREN RPAREN
 atomBindPattern ::= weakId {

@@ -45,7 +45,7 @@ public interface BetaExpander extends EndoFunctor {
       case FormTerm.PartTy ty -> partialType(ty);
       case RefTerm.MetaPat metaPat -> metaPat.inline();
       case ElimTerm.App app -> {
-        var result = CallTerm.make(app);
+        var result = ElimTerm.make(app);
         yield result == term ? result : apply(result);
       }
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
@@ -69,7 +69,7 @@ public interface BetaExpander extends EndoFunctor {
       case PrimTerm.Coe coe -> {
         if (coe.restr() instanceof Restr.Const<Term> c && c.isOne()) {
           var var = new LocalVar("x");
-          var param = new Term.Param(var, CallTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true);
+          var param = new Term.Param(var, ElimTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true);
           yield new IntroTerm.Lambda(param, new RefTerm(var));
         }
         // TODO: coe computation

@@ -50,7 +50,7 @@ public final class ComputeTerm implements SyntaxNodeAction.Cursor {
   public @NotNull ComputeTermResult invoke(ComputeTermResult.Params params) {
     var program = source.program().get();
     if (program == null) return ComputeTermResult.bad(params);
-    visitAll(program, new XY(params.position));
+    visitAll(program, new XY(params.position()));
     return result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, result);
   }
 

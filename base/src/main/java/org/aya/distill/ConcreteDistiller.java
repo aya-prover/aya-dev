@@ -208,6 +208,19 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var ctorDoc = visitMaybeCtorPatterns(param, Outer.AppSpine, Doc.ALT_WS);
         yield ctorDoc(outer, seq.explicit(), ctorDoc, seq.as(), param.sizeLessThanOrEquals(1));
       }
+      case Pattern.List list -> {
+        var listDoc = Doc.sep(      // Copied from ThisClass.term (Expr.Array case)
+          Doc.symbol("["),
+          Doc.commaList(list.elements().map(x -> pattern(x, Outer.Free))),
+          Doc.symbol("]")
+        );
+
+        yield list.as() == null ? listDoc : Doc.sep(
+          listDoc,
+          Doc.styled(KEYWORD, "as"),
+          linkDef(list.as())
+        );
+      }
     };
   }
 
@@ -321,10 +334,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           linkDef(field.ref, FIELD_CALL),
           visitTele(field.telescope));
         appendResult(doc, field.result);
-        if (field.body.isDefined()) {
+        field.body.ifDefined(body -> {
           doc.append(Doc.symbol("=>"));
-          doc.append(term(Outer.Free, field.body.get()));
-        }
+          doc.append(term(Outer.Free, body));
+        });
         yield Doc.sepNonEmpty(doc);
       }
       case TeleDecl.DataCtor ctor -> {

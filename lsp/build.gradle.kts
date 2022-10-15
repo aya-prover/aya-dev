@@ -54,10 +54,15 @@ jlink {
 val jlinkTask = tasks.named("jlink")
 val imageDir = buildDir.resolve("image")
 jlinkTask.configure {
+  fun copyBat(f: String) {
+    doFirst {
+      file(f).copyTo(imageDir.resolve("bin/$f"), overwrite = true)
+    }
+    inputs.file(file(f))
+  }
+  copyBat("aya.bat")
+  copyBat("aya-lsp.bat")
   doFirst {
-    file("aya.bat").copyTo(imageDir.resolve("bin/aya.bat"), overwrite = true)
-    file("aya-lsp.bat").copyTo(imageDir.resolve("bin/aya-lsp.bat"), overwrite = true)
-
     file("aya.sh").copyTo(imageDir.resolve("bin/aya"), overwrite = true).setExecutable(true)
     file("aya-lsp.sh").copyTo(imageDir.resolve("bin/aya-lsp"), overwrite = true).setExecutable(true)
   }
