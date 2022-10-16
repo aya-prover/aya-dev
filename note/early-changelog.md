@@ -2,6 +2,8 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.22
+
 ## 0.21
 
 Considered size-change in termination checker and reimplemented call graph completion,
