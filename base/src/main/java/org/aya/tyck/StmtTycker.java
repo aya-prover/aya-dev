@@ -158,7 +158,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var okTele = checkTele(tycker, fn.telescope, null);
     var preresult = tycker.synthesize(fn.result).wellTyped();
     var bodyExpr = fn.body.getLeftValue();
-    var prebody = tycker.inherit(bodyExpr, preresult).wellTyped();
+    var prebody = tycker.checkNotErased(bodyExpr.sourcePos(), tycker.inherit(bodyExpr, preresult)).wellTyped();
     tycker.solveMetas();
     var result = tycker.zonk(preresult);
     var tele = zonkTele(tycker, okTele);
