@@ -5,7 +5,6 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.Matching;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
@@ -20,13 +19,13 @@ import java.util.function.BiFunction;
 public final class FnDef extends UserDef<Term> {
   public final @NotNull EnumSet<Modifier> modifiers;
   public final @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref;
-  public final @NotNull Either<Term, ImmutableSeq<Matching>> body;
+  public final @NotNull Either<Term, ImmutableSeq<Term.Matching>> body;
 
   public FnDef(
     @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull Term result,
     @NotNull EnumSet<Modifier> modifiers,
-    @NotNull Either<Term, ImmutableSeq<Matching>> body
+    @NotNull Either<Term, ImmutableSeq<Term.Matching>> body
   ) {
     super(telescope, result);
     this.modifiers = modifiers;
@@ -35,8 +34,8 @@ public final class FnDef extends UserDef<Term> {
     this.body = body;
   }
 
-  public static <T> BiFunction<Term, Either<Term, ImmutableSeq<Matching>>, T>
-  factory(BiFunction<Term, Either<Term, ImmutableSeq<Matching>>, T> function) {
+  public static <T> BiFunction<Term, Either<Term, ImmutableSeq<Term.Matching>>, T>
+  factory(BiFunction<Term, Either<Term, ImmutableSeq<Term.Matching>>, T> function) {
     return function;
   }
 

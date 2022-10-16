@@ -34,7 +34,7 @@ public sealed interface SerDef extends Serializable {
   record Fn(
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull Either<SerTerm, ImmutableSeq<SerPat.Matchy>> body,
+    @NotNull Either<SerTerm, ImmutableSeq<SerPat.Clause>> body,
     @NotNull EnumSet<Modifier> modifiers,
     @NotNull SerTerm result
   ) implements SerDef {
@@ -42,7 +42,7 @@ public sealed interface SerDef extends Serializable {
       return new FnDef(
         state.newDef(name), telescope.map(tele -> tele.de(state)),
         result.de(state), modifiers,
-        body.map(term -> term.de(state), mischa -> mischa.map(matchy -> matchy.de(state))));
+        body.map(term -> term.de(state), mischa -> mischa.map(clause -> clause.de(state))));
     }
   }
 
@@ -51,7 +51,7 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerPat> pats,
     @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
     @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
-    @NotNull ImmutableSeq<SerPat.Matchy> clauses,
+    @NotNull ImmutableSeq<SerPat.Clause> clauses,
     @NotNull SerTerm result, boolean coerce
   ) implements SerDef {
     @Override public @NotNull CtorDef de(SerTerm.@NotNull DeState state) {

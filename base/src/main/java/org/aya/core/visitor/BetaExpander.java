@@ -30,9 +30,9 @@ public interface BetaExpander extends EndoFunctor {
   static @NotNull FormTerm.PartTy partialType(@NotNull FormTerm.PartTy ty) {
     return new FormTerm.PartTy(ty.type(), ty.restr().normalize());
   }
-  static @NotNull Option<Term> tryMatch(@NotNull Term scrutinee, @NotNull ImmutableSeq<Term.Clause> clauses) {
+  static @NotNull Option<Term> tryMatch(@NotNull ImmutableSeq<Term> scrutinee, @NotNull ImmutableSeq<Term.Matching> clauses) {
     for (var clause : clauses) {
-      var subst = PatMatcher.tryBuildSubst(null, clause.pattern(), scrutinee);
+      var subst = PatMatcher.tryBuildSubstTerms(null, clause.patterns(), scrutinee.view());
       if (subst.isOk()) {
         return Option.some(clause.body().rename().subst(subst.get()));
       } else if (subst.getErr()) return Option.none();
@@ -50,7 +50,7 @@ public interface BetaExpander extends EndoFunctor {
       }
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
       case ElimTerm.Match match -> {
-        var result = tryMatch(match.of(), match.clauses());
+        var result = tryMatch(match.discriminant(), match.clauses());
         yield result.isDefined() ? result.get() : match;
       }
       case ElimTerm.PathApp app -> {

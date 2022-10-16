@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
-import org.aya.core.Matching;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ElimTerm;
@@ -69,16 +68,14 @@ public interface DeltaExpander extends EndoFunctor {
 
   static @NotNull Option<WithPos<Term>> tryUnfoldClauses(
     boolean orderIndependent, @NotNull SeqLike<Arg<Term>> args,
-    int ulift, @NotNull ImmutableSeq<Matching> clauses
+    int ulift, @NotNull ImmutableSeq<Term.Matching> clauses
   ) {
-    var subst = new Subst(MutableMap.create());
     for (var matchy : clauses) {
-      var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
-      if (termSubst.isOk()) {
-        subst.add(termSubst.get());
-        var newBody = matchy.body().rename().lift(ulift).subst(subst);
+      var subst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
+      if (subst.isOk()) {
+        var newBody = matchy.body().rename().lift(ulift).subst(subst.get());
         return Option.some(new WithPos<>(matchy.sourcePos(), newBody));
-      } else if (!orderIndependent && termSubst.getErr()) return Option.none();
+      } else if (!orderIndependent && subst.getErr()) return Option.none();
     }
     return Option.none();
   }

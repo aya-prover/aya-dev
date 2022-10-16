@@ -8,7 +8,6 @@ import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.CallTerm;
@@ -303,12 +302,12 @@ public sealed interface Pat extends AyaDocile {
       return expr.getOrDefault(it -> Doc.sep(doc, Doc.symbol("=>"), it.toDoc(options)), doc);
     }
 
-    public static @NotNull Preclause<Term> weaken(@NotNull Matching clause) {
+    public static @NotNull Preclause<Term> weaken(@NotNull Term.Matching clause) {
       return new Preclause<>(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
     }
 
-    public static @NotNull Option<@NotNull Matching> lift(@NotNull Preclause<Term> clause) {
-      return clause.expr.map(term -> new Matching(clause.sourcePos, clause.patterns, term));
+    public static @NotNull Option<Term.@NotNull Matching> lift(@NotNull Preclause<Term> clause) {
+      return clause.expr.map(term -> new Term.Matching(clause.sourcePos, clause.patterns, term));
     }
   }
 }

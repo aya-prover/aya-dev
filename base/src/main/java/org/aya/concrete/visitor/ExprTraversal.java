@@ -25,7 +25,7 @@ public interface ExprTraversal<P> {
       case Expr.TupExpr tup -> tup.items().forEach(i -> visitExpr(i, p));
       case Expr.ProjExpr proj -> visitExpr(proj.tup(), p);
       case Expr.Match match -> {
-        match.of().forEach(i -> visitExpr(i, p));
+        match.discriminant().forEach(i -> visitExpr(i, p));
         match.clauses().forEach(c -> c.expr.forEach(i -> visitExpr(i, p)));
       }
       case Expr.LiftExpr lift -> visitExpr(lift.expr(), p);

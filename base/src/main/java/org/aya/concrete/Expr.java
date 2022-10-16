@@ -314,7 +314,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
   record Match(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Expr> of,
+    @NotNull ImmutableSeq<Expr> discriminant,
     @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) implements Expr {}
 

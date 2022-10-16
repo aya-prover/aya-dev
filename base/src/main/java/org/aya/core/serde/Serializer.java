@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
@@ -108,7 +107,8 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeCall(fnCall.ulift(), fnCall.args()));
       case ElimTerm.Proj proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
       case ElimTerm.App app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
-      case ElimTerm.Match match -> new SerTerm.Match(serialize(match.of()), match.clauses().map(this::serialize));
+      case ElimTerm.Match match ->
+        new SerTerm.Match(match.discriminant().map(this::serialize), match.clauses().map(this::serialize));
       case IntroTerm.Tuple tuple -> new SerTerm.Tup(tuple.items().map(this::serialize));
       case IntroTerm.Lambda lambda -> new SerTerm.Lam(serialize(lambda.param()), serialize(lambda.body()));
       case IntroTerm.New newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
@@ -127,10 +127,6 @@ public record Serializer(@NotNull Serializer.State state) {
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case FormTerm.Sort sort -> serialize(sort);
     };
-  }
-
-  private @NotNull SerPat.Clause serialize(@NotNull Term.Clause clause) {
-    return new SerPat.Clause(serialize(clause.pattern()), serialize(clause.body()));
   }
 
   private @NotNull SerPat serialize(@NotNull Pat pat) {
@@ -171,8 +167,8 @@ public record Serializer(@NotNull Serializer.State state) {
       serializeCall(structCall.ulift(), structCall.args()));
   }
 
-  private @NotNull SerPat.Matchy serialize(@NotNull Matching matchy) {
-    return new SerPat.Matchy(serializePats(matchy.patterns()), serialize(matchy.body()));
+  private @NotNull SerPat.Clause serialize(@NotNull Term.Matching matchy) {
+    return new SerPat.Clause(serializePats(matchy.patterns()), serialize(matchy.body()));
   }
 
   private SerTerm.SerArg serialize(@NotNull Arg<@NotNull Term> termArg) {

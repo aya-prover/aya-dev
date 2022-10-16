@@ -98,11 +98,11 @@ public interface ExprView {
         yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
       }
       case Expr.Match match -> {
-        var scrutinee = match.of().map(this::commit);
+        var discriminant = match.discriminant().map(this::commit);
         var clauses = match.clauses().map(this::commit);
-        if (scrutinee.sameElements(match.of(), true) && clauses.sameElements(match.clauses(), true))
+        if (discriminant.sameElements(match.discriminant(), true) && clauses.sameElements(match.clauses(), true))
           yield match;
-        yield new Expr.Match(match.sourcePos(), scrutinee, clauses);
+        yield new Expr.Match(match.sourcePos(), discriminant, clauses);
       }
       case Expr.NewExpr neu -> {
         var struct = commit(neu.struct());

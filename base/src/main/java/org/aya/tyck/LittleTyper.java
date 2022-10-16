@@ -74,8 +74,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
       case ElimTerm.Match match -> {
-        // TODO: Should I normalize match.of() before matching?
-        var term = BetaExpander.tryMatch(match.of(), match.clauses());
+        // TODO: Should I normalize match.discriminant() before matching?
+        var term = BetaExpander.tryMatch(match.discriminant(), match.clauses());
         yield term.isDefined() ? term(term.get()) : ErrorTerm.typeOf(match);
       }
       case FormTerm.Sort sort -> sort.succ();

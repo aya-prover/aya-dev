@@ -4,7 +4,6 @@ package org.aya.core.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
@@ -123,7 +122,7 @@ public interface MonoidalVarFolder<R> extends Function<Term, R> {
       };
     }
 
-    private SeqView<Def> matchy(@NotNull Matching match) {
+    private SeqView<Def> matchy(@NotNull Term.Matching match) {
       return apply(match.body());
     }
 

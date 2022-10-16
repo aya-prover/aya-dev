@@ -17,7 +17,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.concrete.visitor.PatternTraversal;
-import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
@@ -98,7 +97,7 @@ public final class PatTycker {
   public record PatResult(
     @NotNull Term result,
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
-    @NotNull ImmutableSeq<Matching> matchings
+    @NotNull ImmutableSeq<Term.Matching> matchings
   ) {
   }
 

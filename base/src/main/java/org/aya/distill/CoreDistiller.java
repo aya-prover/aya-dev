@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
@@ -131,10 +130,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
       case ElimTerm.Proj term ->
         Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
-      case ElimTerm.Match match -> Doc.cblock(Doc.cat(Doc.styled(KEYWORD, "match"), term(Outer.Free, match.of())), 2,
+      case ElimTerm.Match match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
+          Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
         Doc.vcat(match.clauses().view()
           .map(clause -> Doc.sep(Doc.symbol("|"),
-            pat(clause.pattern(), Outer.Free),
+            Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
             Doc.symbol("=>"), term(Outer.Free, clause.body())))
           .toImmutableSeq()));
       case FormTerm.Pi term -> {
@@ -280,7 +280,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
     };
   }
 
-  private @NotNull Doc visitClauses(@NotNull ImmutableSeq<Matching> clauses) {
+  private @NotNull Doc visitClauses(@NotNull ImmutableSeq<Term.Matching> clauses) {
     return Doc.vcat(clauses.view().map(matching ->
       Doc.sep(Doc.symbol("|"), matching.toDoc(options))));
   }

@@ -25,6 +25,7 @@ import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,10 +90,11 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         yield new ElimTerm.Proj(tuple, proj.ix());
       }
       case ElimTerm.Match match -> {
-        var scrutinee = f.apply(match.of());
+        var discriminant = match.discriminant().map(f);
         var clauses = match.clauses().map(c -> c.descent(f));
-        if (scrutinee == match.of() && match.clauses().sameElements(clauses, true)) yield match;
-        yield new ElimTerm.Match(scrutinee, clauses);
+        if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
+          yield match;
+        yield new ElimTerm.Match(discriminant, clauses);
       }
       case CallTerm.Struct struct -> {
         var args = struct.args().map(arg -> arg.descent(f));
@@ -318,11 +320,19 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
     }
   }
 
-  record Clause(@NotNull Pat pattern, Term body) {
-    public @NotNull Clause descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+  record Matching(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull Term body
+  ) implements AyaDocile {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      return Pat.Preclause.weaken(this).toDoc(options);
+    }
+
+    public @NotNull Matching descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
       var body = f.apply(body());
       if (body == body()) return this;
-      return new Clause(pattern, body);
+      return new Matching(sourcePos, patterns, body);
     }
   }
 }

@@ -104,6 +104,13 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
         Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
+      case Expr.Match match ->
+        Doc.cblock(Doc.cat(Doc.styled(KEYWORD, "match"), Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
+          Doc.vcat(match.clauses().view()
+            .map(clause -> Doc.sep(Doc.symbol("|"),
+              Doc.commaList(clause.patterns.map(p -> pattern(p, Outer.Free))),
+              clause.expr.map(t -> Doc.cat(Doc.symbol("=>"), term(Outer.Free, t))).getOrDefault(Doc.empty())))
+            .toImmutableSeq()));
       case Expr.UnresolvedExpr expr -> Doc.plain(expr.name().join());
       case Expr.RefExpr expr -> {
         var ref = expr.resolvedVar();
