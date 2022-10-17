@@ -19,10 +19,12 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface ElimTerm extends Term {
   static boolean isErased(@NotNull Term term) {
     if (term instanceof ElimTerm elim) return isErased(elim.of());
+    if (term instanceof CallTerm.Access elim) return isErased(elim.of());
     return term instanceof ErasedTerm;
   }
   static boolean isErasedNotProp(@NotNull Term term) {
-    if (term instanceof ElimTerm elim) return isErasedNotProp(elim.of());
+    if (term instanceof ElimTerm elim) return isErased(elim.of());
+    if (term instanceof CallTerm.Access elim) return isErased(elim.of());
     return term instanceof ErasedTerm elim && !elim.isProp();
   }
 
