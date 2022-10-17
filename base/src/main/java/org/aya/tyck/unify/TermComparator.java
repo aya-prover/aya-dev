@@ -477,6 +477,7 @@ public sealed abstract class TermComparator permits Unifier {
           yield null;
         }
         case LitTerm.ShapedInt rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
+        case LitTerm.ShapedList rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
         default -> null;
       };
       case CallTerm.Prim lhs -> null;
@@ -493,6 +494,17 @@ public sealed abstract class TermComparator permits Unifier {
           if (!lhs.compareUntyped(rhs)) yield null;
           yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
         }
+        case CallTerm.Con rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
+        default -> null;
+      };
+      case LitTerm.ShapedList lhs -> switch (preRhs) {
+        case LitTerm.ShapedList rhs -> {
+          if (! lhs.compareShape(this, rhs)) yield null;
+          if (! lhs.compareUntyped(this, rhs)) yield null;
+
+          yield lhs.type();
+        }
+
         case CallTerm.Con rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
         default -> null;
       };

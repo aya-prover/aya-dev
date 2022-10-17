@@ -5,6 +5,7 @@ package org.aya.tyck;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
@@ -269,6 +270,35 @@ public final class ExprTycker extends Tycker {
         var cube = new FormTerm.Cube(path.params(), type.wellTyped(), partial);
         return new TermResult(new FormTerm.Path(cube), type.type());
       });
+      case Expr.Array arr when arr.arrayBlock().isRight() -> {
+        var arrayBlock = arr.arrayBlock().getRightValue();
+        var elements = arrayBlock.exprList().view();
+
+        // find def
+        var defs = shapeFactory.findImpl(AyaShape.LIST_SHAPE);
+        if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
+        if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs));
+        var def = (DataDef) defs.first();
+
+        // preparing
+        var dataParam = def.telescope().first();
+        var sort = dataParam.type();    // the sort of type below.
+        var hole = localCtx.freshHole(sort, arr.sourcePos());
+        var type = new CallTerm.Data(def.ref(), 0, ImmutableSeq.of(
+          new Arg<>(hole._1, dataParam.explicit())));
+
+        // do type check
+        var wellTypeds = MutableArrayList.<Term>create(elements.size());
+
+        for (var element : elements) {
+          var result = inherit(element, hole._1);
+
+          if (result.wellTyped() instanceof ErrorTerm || result.type() instanceof ErrorTerm) yield result;
+          wellTypeds.append(result.wellTyped());
+        }
+
+        yield new TermResult(new LitTerm.ShapedList(wellTypeds.toImmutableSeq(), AyaShape.LIST_SHAPE, type), type);
+      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }

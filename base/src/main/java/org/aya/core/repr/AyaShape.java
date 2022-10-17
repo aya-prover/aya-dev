@@ -22,7 +22,7 @@ public sealed interface AyaShape {
 
   @NotNull AyaShape NAT_SHAPE = new AyaIntLitShape();
   @NotNull AyaShape LIST_SHAPE = new AyaListShape();
-  @NotNull ImmutableSeq<AyaShape> LITERAL_SHAPES = ImmutableSeq.of(NAT_SHAPE);
+  @NotNull ImmutableSeq<AyaShape> LITERAL_SHAPES = ImmutableSeq.of(NAT_SHAPE, LIST_SHAPE);
 
   record AyaIntLitShape() implements AyaShape {
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(

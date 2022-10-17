@@ -72,7 +72,7 @@ public record ShapeMatcher(
       // kind is null -> any sort
       if (sort.kind() == null) return true;
 
-      // TODO
+      // TODO[hoshino]: match kind, but I don't know how to do.
       throw new UnsupportedOperationException("TODO");
     }
     return false;
