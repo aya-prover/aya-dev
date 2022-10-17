@@ -606,8 +606,7 @@ public record AyaGKProducer(
     if (node.is(ARRAY_ATOM)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
 
-      if (arrayBlock == null)
-        return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
+      if (arrayBlock == null) return Expr.Array.newList(pos, ImmutableSeq.empty());
       if (arrayBlock.is(ARRAY_COMP_BLOCK)) return arrayCompBlock(arrayBlock, pos);
       if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
@@ -782,10 +781,8 @@ public record AyaGKProducer(
     var exprs = node.child(EXPR_LIST).childrenOfType(EXPR)
       .map(this::expr)
       .toImmutableSeq();
-    var nilCtor = Constants.listNil(entireSourcePos);
-    var consCtor = Constants.listCons(entireSourcePos);
 
-    return Expr.Array.newList(entireSourcePos, exprs, nilCtor, consCtor);
+    return Expr.Array.newList(entireSourcePos, exprs);
   }
 
   public @NotNull ImmutableSeq<Pattern> patterns(@NotNull GenericNode<?> node) {

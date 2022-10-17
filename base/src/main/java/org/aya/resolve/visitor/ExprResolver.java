@@ -131,13 +131,11 @@ public record ExprResolver(
         },
         right -> {
           var exprs = right.exprList().map(e -> resolve(e, ctx));
-          var nilCtor = resolve(right.nilCtor(), ctx);
-          var consCtor = resolve(right.consCtor(), ctx);
 
-          if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
+          if (exprs.sameElements(right.exprList())) {
             return arrayExpr;
           } else {
-            return Expr.Array.newList(arrayExpr.sourcePos(), exprs, nilCtor, consCtor);
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs);
           }
         }
       );

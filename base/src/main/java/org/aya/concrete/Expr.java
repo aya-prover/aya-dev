@@ -403,15 +403,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @Override @NotNull SourcePos sourcePos,
     @NotNull Either<CompBlock, ElementList> arrayBlock
   ) implements Expr {
-    /**
-     * @param nilCtor  the Nil constructor, it is {@link org.aya.generic.Constants}.listNil in default
-     * @param consCtor the Cons constructor, it is {@link org.aya.generic.Constants}.listCons in default
-     */
-    public record ElementList(
-      @NotNull ImmutableSeq<Expr> exprList,
-      @NotNull Expr nilCtor,
-      @NotNull Expr consCtor
-    ) {}
+    public record ElementList(@NotNull ImmutableSeq<Expr> exprList) {}
 
     /**
      * <h1>Array Comp(?)</h1>
@@ -443,14 +435,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      */
     public static Expr.Array newList(
       @NotNull SourcePos sourcePos,
-      @NotNull ImmutableSeq<Expr> exprs,
-      @NotNull Expr nilCtor,
-      @NotNull Expr consCtor) {
+      @NotNull ImmutableSeq<Expr> exprs) {
       return new Expr.Array(
         sourcePos,
-        Either.right(new ElementList(
-          exprs, nilCtor, consCtor
-        ))
+        Either.right(new ElementList(exprs))
       );
     }
 
