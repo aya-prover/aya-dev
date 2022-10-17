@@ -7,6 +7,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.generic.Arg;
 import org.aya.generic.Shaped;
+import org.aya.tyck.unify.TermComparator;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface LitTerm extends Term {
@@ -27,6 +28,42 @@ public sealed interface LitTerm extends Term {
 
     @Override public @NotNull Term destruct(int repr) {
       return new LitTerm.ShapedInt(repr, this.shape, this.type);
+    }
+  }
+
+  record ShapedList(
+    @Override @NotNull ImmutableSeq<Term> repr,
+    @Override @NotNull AyaShape shape,
+    @Override @NotNull Term type
+    ) implements LitTerm, Shaped.List<Term> {
+
+    @Override
+    public @NotNull Term makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> dataArg) {
+      return new CallTerm.Con(nil.dataRef, nil.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.empty());
+    }
+
+    @Override
+    public @NotNull Term makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> dataArg, @NotNull Term value, @NotNull Term last) {
+      return new CallTerm.Con(cons.dataRef, cons.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.of(
+        new Arg<>(value, true),
+        new Arg<>(last, true)
+      ));
+    }
+
+
+
+    // TODO[hoshino]: move to Shaped.List<T>
+    public boolean compareUntyped(@NotNull TermComparator comparator, @NotNull Shaped.List<Term> other) {
+      var rhsRepr = other.repr();
+      if (! repr().sizeEquals(rhsRepr)) return false;
+      return repr().view().zip(rhsRepr)
+        .foldLeft(true, (l, tuple) ->
+          l && comparator.compare(tuple._1, tuple._2, null));
+    }
+
+    @Override
+    public @NotNull Term destruct(@NotNull ImmutableSeq<Term> repr) {
+      return new ShapedList(repr, shape(), type());
     }
   }
 }
