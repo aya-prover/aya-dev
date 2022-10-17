@@ -159,6 +159,17 @@ public class CoreDistiller extends BaseDistiller<Term> {
           ? linkLit(0, zero.ref, CON_CALL)
           : linkLit(shaped.repr(), suc.ref, CON_CALL),
         () -> Doc.plain(String.valueOf(shaped.repr())));
+      case LitTerm.ShapedList shaped -> {
+        var display = Doc.sep(
+          Doc.symbol("["),
+          Doc.commaList(shaped.repr().map(x -> term(Outer.Free, x))),
+          Doc.symbol("]"));
+
+        yield shaped.with((nil, cons, dataArg) -> {
+          // link to data, i think.
+          return linkListLit(display, nil.dataRef, DATA_CALL);   // Maybe we should use other style.
+        }, () -> display);
+      }
       case PrimTerm.Str str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
