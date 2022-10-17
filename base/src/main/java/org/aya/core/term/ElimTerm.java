@@ -33,6 +33,7 @@ public sealed interface ElimTerm extends Term {
         return new CallTerm.Hole(hole.ref(), hole.ulift(), hole.contextArgs(), hole.args().appended(app.arg()));
     }
     if (app.of() instanceof ErasedTerm erased) {
+      // erased.type() can be an ErrorTerm
       if (erased.type() instanceof FormTerm.Pi pi) {
         return new ErasedTerm(pi.substBody(app.arg().term()));
       } else {
@@ -75,6 +76,7 @@ public sealed interface ElimTerm extends Term {
       return tup.items().get(proj.ix - 1);
     }
     if (proj.of instanceof ErasedTerm erased) {
+      // erased.type() can be an ErrorTerm
       if (erased.type() instanceof FormTerm.Sigma sigma) {
         return new ErasedTerm(sigma.params().get(proj.ix - 1).type());
       } else {
