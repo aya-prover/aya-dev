@@ -122,20 +122,8 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             // desugar do-notation
             return pre(doNotation);
           },
-          // desugar `[1, 2, 3]` to `consCtor 1 (consCtor 2 (consCtor 3 nilCtor))`
-          right -> pre(right.exprList().foldRight(right.nilCtor(),
-            (e, last) -> {
-              // construct `(consCtor e) last`
-              // Note: the sourcePos of this call is the same as the element's (currently)
-              // Recommend: use sourcePos [currentElement..lastElement]
-              return new Expr.AppExpr(e.sourcePos(),
-                // construct `consCtor e`
-                new Expr.AppExpr(e.sourcePos(),
-                  right.consCtor(),
-                  new Expr.NamedArg(true, e)),
-                new Expr.NamedArg(true, last));
-            })
-          ));
+          // do not desugar
+          right -> arrayExpr);
         case Expr misc -> misc;
       };
     }
