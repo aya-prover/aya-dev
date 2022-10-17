@@ -40,6 +40,12 @@ public interface ExprView {
     return new Expr.PartEl(partial.sourcePos(), clauses);
   }
 
+  private Expr.@NotNull ProjOrCoe commit(@NotNull Expr.ProjOrCoe data) {
+    var freeze = data.freeze().map(this::commit);
+    if (freeze.sameElements(data.freeze(), true)) return data;
+    return new Expr.ProjOrCoe(data.id(), freeze, data.resolvedIx());
+  }
+
   private @NotNull Expr traverse(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.RefExpr ref -> ref;
@@ -87,8 +93,17 @@ public interface ExprView {
       }
       case Expr.ProjExpr proj -> {
         var tup = commit(proj.tup());
-        if (tup == proj.tup()) yield proj;
-        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
+        var ix = proj.ix().map(x -> x, this::commit);
+        var sameElements = ix.map(x -> proj.ix().getLeftValue().equals(x), x -> x == proj.ix().getRightValue())
+          .fold(x -> x, x -> x);
+        if (tup == proj.tup() && sameElements) yield proj;
+        yield new Expr.ProjExpr(proj.sourcePos(), tup, ix, proj.theCore());
+      }
+      case Expr.CoeExpr coe -> {
+        var e = commit(coe.expr());
+        var data = commit(coe.coeData());
+        if (e == coe.expr() && data == coe.coeData()) yield coe;
+        yield new Expr.CoeExpr(coe.sourcePos(), e, data);
       }
       case Expr.NewExpr neu -> {
         var struct = commit(neu.struct());

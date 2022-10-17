@@ -23,7 +23,14 @@ public interface ExprTraversal<P> {
         visitExpr(lamExpr.body(), p);
       }
       case Expr.TupExpr tup -> tup.items().forEach(i -> visitExpr(i, p));
-      case Expr.ProjExpr proj -> visitExpr(proj.tup(), p);
+      case Expr.ProjExpr proj -> {
+        visitExpr(proj.tup(), p);
+        proj.ix().getRightOption().forEach(ix -> ix.freeze().forEach(e -> visitExpr(e, p)));
+      }
+      case Expr.CoeExpr coe -> {
+        visitExpr(coe.expr(), p);
+        coe.coeData().freeze().forEach(e -> visitExpr(e, p));
+      }
       case Expr.LiftExpr lift -> visitExpr(lift.expr(), p);
       case Expr.HoleExpr hole -> {
         if (hole.filling() != null) visitExpr(hole.filling(), p);

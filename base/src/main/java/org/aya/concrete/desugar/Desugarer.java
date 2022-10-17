@@ -12,7 +12,9 @@ import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.concrete.visitor.StmtOps;
+import org.aya.core.def.PrimDef;
 import org.aya.generic.SortKind;
+import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +51,12 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             yield new Expr.ErrorExpr(pos, expr);
           }
         }
+        // TODO: report meaningless freezing
+        case Expr.ProjExpr proj when proj.ix().isRight()
+          && proj.ix().getRightValue().resolvedIx() instanceof DefVar<?, ?> defVar
+          && defVar.core instanceof PrimDef primDef
+          && primDef.id == PrimDef.ID.COE ->
+          pre(new Expr.CoeExpr(proj.sourcePos(), proj.tup(), proj.ix().getRightValue()));
         case Expr.RawSortExpr univ -> switch (univ.kind()) {
           case Type -> new Expr.TypeExpr(univ.sourcePos(), 0);
           case Set -> new Expr.SetExpr(univ.sourcePos(), 0);

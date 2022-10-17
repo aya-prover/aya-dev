@@ -5,6 +5,7 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
+import kala.control.Option;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
@@ -277,23 +278,40 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   ) implements Expr {}
 
   /**
-   * @param resolvedIx will be set to the field's DefVar during resolving if this is a field access.
    * @author re-xyr
    */
   record ProjExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
-    @NotNull Either<Integer, QualifiedID> ix,
-    @Nullable AnyVar resolvedIx,
+    @NotNull Either<Integer, ProjOrCoe> ix,
     @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public ProjExpr(
       @NotNull SourcePos sourcePos, @NotNull Expr tup,
-      @NotNull Either<Integer, QualifiedID> ix
+      @NotNull Either<Integer, ProjOrCoe> ix
     ) {
-      this(sourcePos, tup, ix, null, MutableValue.create());
+      this(sourcePos, tup, ix, MutableValue.create());
     }
+  }
 
+  /**
+   * Overloaded projection as coercion syntax
+   *
+   * @param resolvedIx will be set to the field's DefVar during resolving
+   * @param freeze     used when the projection is overloaded as coercion with freezing.
+   */
+  record ProjOrCoe(
+    @NotNull QualifiedID id,
+    @NotNull Option<Expr> freeze,
+    @Nullable AnyVar resolvedIx
+  ) {}
+
+  /** calls to {@link org.aya.core.def.PrimDef.ID#COE}, desugared from {@link ProjExpr} for simplicity */
+  record CoeExpr(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull Expr expr,
+    @NotNull Expr.ProjOrCoe coeData
+  ) implements Expr {
   }
 
   record NewExpr(

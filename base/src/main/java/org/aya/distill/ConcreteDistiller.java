@@ -24,8 +24,6 @@ import org.aya.ref.LocalVar;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * @author ice1000, kiva
  * @see CoreDistiller
@@ -103,7 +101,9 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield Doc.sep(Doc.symbol("{?"), term(Outer.Free, filling), Doc.symbol("?}"));
       }
       case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
-        Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
+        expr.ix().fold(ix -> Doc.plain(ix.toString()), this::visitProjOrCoe));
+      case Expr.CoeExpr expr -> Doc.cat(term(Outer.ProjHead, expr.expr()), Doc.symbol("."),
+        visitProjOrCoe(expr.coeData()));
       case Expr.UnresolvedExpr expr -> Doc.plain(expr.name().join());
       case Expr.RefExpr expr -> {
         var ref = expr.resolvedVar();
@@ -222,6 +222,13 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         );
       }
     };
+  }
+
+  private Doc visitProjOrCoe(@NotNull Expr.ProjOrCoe projOrCoe) {
+    var freezeDoc = projOrCoe.freeze()
+      .map(freeze -> Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, freeze)))
+      .getOrDefault(Doc.empty());
+    return Doc.sepNonEmpty(Doc.plain(projOrCoe.id().join()), freezeDoc);
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, Outer outer, @NotNull Doc delim) {
@@ -360,9 +367,9 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     return doBind.var() == LocalVar.IGNORED
       ? term(Outer.Free, doBind.expr())
       : Doc.sep(
-          varDoc(doBind.var()),
-          Doc.symbol("<-"),
-          term(Outer.Free, doBind.expr()));
+      varDoc(doBind.var()),
+      Doc.symbol("<-"),
+      term(Outer.Free, doBind.expr()));
   }
 
   public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {

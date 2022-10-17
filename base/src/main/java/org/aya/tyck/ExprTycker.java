@@ -133,13 +133,13 @@ public final class ExprTycker extends Tycker {
           var subst = ElimTerm.Proj.projSubst(projectee.wellTyped(), index, telescope);
           return new TermResult(new ElimTerm.Proj(projectee.wellTyped(), ix), type.subst(subst));
         }, sp -> {
-          var fieldName = sp.justName();
+          var fieldName = sp.id().justName();
           if (!(projectee.type() instanceof CallTerm.Struct structCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
           var structCore = structCall.ref().core;
           if (structCore == null) throw new UnsupportedOperationException("TODO");
           // TODO[ice]: instantiate the type
-          if (!(proj.resolvedIx() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
+          if (!(sp.resolvedIx() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
             return fail(proj, new FieldError.UnknownField(proj, fieldName));
           var fieldRef = field.ref();
 

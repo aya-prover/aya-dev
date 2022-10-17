@@ -76,12 +76,17 @@ public record ExprResolver(
         binOpSeq.seq().map(e -> new Expr.NamedArg(e.explicit(), e.name(), resolve(e.expr(), ctx))));
       case Expr.ProjExpr proj -> {
         var tup = resolve(proj.tup(), ctx);
-        if (proj.ix().isLeft())
-          yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
-        var projName = proj.ix().getRightValue();
-        var resolvedIx = ctx.getMaybe(projName);
-        if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(proj, projName.join()));
-        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), resolvedIx, proj.theCore());
+        var ix = proj.ix().map(
+          i -> i,
+          projOrCoe -> {
+            var projId = projOrCoe.id();
+            var resolvedIx = ctx.getMaybe(projId);
+            if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(proj, projId.join()));
+            var freeze = projOrCoe.freeze().map(e -> resolve(e, ctx));
+            return new Expr.ProjOrCoe(projId, freeze, resolvedIx);
+          }
+        );
+        yield new Expr.ProjExpr(proj.sourcePos(), tup, ix, proj.theCore());
       }
       case Expr.LamExpr lam -> {
         var param = resolveParam(lam.param(), ctx);
