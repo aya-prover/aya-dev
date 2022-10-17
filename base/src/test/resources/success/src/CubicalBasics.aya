@@ -14,3 +14,7 @@ def p1=p2 (A : Type) (a : A) (i : I) : p1 A a i = p2 A a i =>
 def cmp {A : Type} (x : A)
   : [| i j |] (Partial (~ j) A) {| ~ i := p1 A x j |}
   => \i => \j => p2 A x j
+
+def transport-constant (A : I -> Type) (a : A 0) (i : I) : A i
+  => ((\j => A (i /\ j)).coe freeze ~ i) a
+-- ^ `A (i /\ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.

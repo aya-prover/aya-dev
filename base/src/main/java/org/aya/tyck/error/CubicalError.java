@@ -13,6 +13,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public sealed interface CubicalError extends ExprProblem, TyckError {
   record BoundaryDisagree(
@@ -45,18 +46,18 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
   record CoeVaryingType(
     @NotNull Expr expr,
     @NotNull Term type,
-    @NotNull Term typeInst,
+    @Nullable Term typeInst,
     @NotNull Restr<Term> restr
   ) implements CubicalError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       var typeDoc = type.toDoc(options);
-      var under = typeInst.toDoc(options);
+      var under = typeInst != null ? typeInst.toDoc(options) : null;
       var buf = MutableList.of(
         Doc.english("Under the cofibration:"),
         Doc.par(1, BaseDistiller.restr(options, restr)),
         Doc.english("The type in the body still depends on the interval parameter:"),
         Doc.par(1, typeDoc));
-      if (!under.equals(typeDoc)) buf.append(Doc.par(1,
+      if (under != null && !typeDoc.equals(under)) buf.append(Doc.par(1,
         Doc.parened(Doc.sep(Doc.plain("Normalized under cofibration:"), under))));
       buf.append(Doc.english("which is not allowed in coercion"));
       return Doc.vcat(buf);
