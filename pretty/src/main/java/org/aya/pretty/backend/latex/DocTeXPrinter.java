@@ -7,6 +7,8 @@ import kala.tuple.Tuple;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.printer.ColorScheme;
+import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +64,10 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
    */
   public static class Config extends StringPrinterConfig {
     public Config() {
-      super(new TeXStylist(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT), INFINITE_SIZE, false);
+      this(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT);
+    }
+    public Config(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
+      super(new TeXStylist(colorScheme, styleFamily), INFINITE_SIZE, false);
     }
   }
 }

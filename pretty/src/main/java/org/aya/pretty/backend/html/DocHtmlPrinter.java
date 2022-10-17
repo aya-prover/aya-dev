@@ -6,6 +6,8 @@ import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.printer.ColorScheme;
+import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.intellij.lang.annotations.Language;
@@ -81,7 +83,11 @@ public class DocHtmlPrinter extends StringPrinter<DocHtmlPrinter.Config> {
     public final boolean withHeader;
 
     public Config(boolean withHeader) {
-      super(new Html5Stylist(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT), INFINITE_SIZE, true);
+      this(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT, withHeader);
+    }
+
+    public Config(ColorScheme colorScheme, StyleFamily styleFamily, boolean withHeader) {
+      super(new Html5Stylist(colorScheme, styleFamily), INFINITE_SIZE, true);
       this.withHeader = withHeader;
     }
   }
