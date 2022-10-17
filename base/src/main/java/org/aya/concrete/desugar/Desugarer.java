@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableList;
 import kala.tuple.Unit;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.error.BadFreezingWarn;
 import org.aya.concrete.error.DoNotationError;
 import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.ExprOps;
@@ -51,12 +52,16 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             yield new Expr.ErrorExpr(pos, expr);
           }
         }
-        // TODO: report meaningless freezing
         case Expr.ProjExpr proj when proj.ix().isRight()
           && proj.ix().getRightValue().resolvedIx() instanceof DefVar<?, ?> defVar
           && defVar.core instanceof PrimDef primDef
           && primDef.id == PrimDef.ID.COE ->
           pre(new Expr.CoeExpr(proj.sourcePos(), proj.tup(), proj.ix().getRightValue()));
+        case Expr.ProjExpr proj when proj.ix().isRight()
+          && proj.ix().getRightValue().freeze().isDefined() -> {
+          info.opSet().reporter.report(new BadFreezingWarn(proj));
+          yield new Expr.ErrorExpr(proj.sourcePos(), proj);
+        }
         case Expr.RawSortExpr univ -> switch (univ.kind()) {
           case Type -> new Expr.TypeExpr(univ.sourcePos(), 0);
           case Set -> new Expr.SetExpr(univ.sourcePos(), 0);

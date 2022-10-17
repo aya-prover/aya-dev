@@ -401,10 +401,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     if (loosers.isEmpty() && tighters.isEmpty()) return Doc.empty();
 
     if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
-      Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "tighter"),
+      Doc.styled(KEYWORD, "tighter"),
       Doc.commaList(tighters.view().map(BaseDistiller::defVar)))));
     else if (tighters.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
-      Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "looser"),
+      Doc.styled(KEYWORD, "looser"),
       Doc.commaList(loosers.view().map(BaseDistiller::defVar)))));
     return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.sep(
       Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::defVar)),
