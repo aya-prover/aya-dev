@@ -658,7 +658,15 @@ public final class ExprTycker extends Tycker {
     return result;
   }
 
-  public @NotNull FormTerm.Sort sortPi(@NotNull Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+  public @NotNull FormTerm.Sort sortPi(@Nullable Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+    return sortPi(this.reporter, expr, domain, codomain);
+  }
+
+  public static @NotNull FormTerm.Sort sortPi(@NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+    return sortPi(null, null, domain, codomain);
+  }
+
+  public static @NotNull FormTerm.Sort sortPi(@Nullable Reporter reporter, @Nullable Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
     var result = switch (domain) {
       case FormTerm.Type a -> switch (codomain) {
         case FormTerm.Type b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
@@ -685,7 +693,7 @@ public final class ExprTycker extends Tycker {
       };
     };
     if (result == null) {
-      reporter.report(new SortPiError(expr.sourcePos(), domain, codomain));
+      if(reporter != null) reporter.report(new SortPiError(expr.sourcePos(), domain, codomain));
       return FormTerm.Type.ZERO;
     } else {
       return result;
@@ -838,17 +846,23 @@ public final class ExprTycker extends Tycker {
   }
 
   public @NotNull Term checkNotErased(@NotNull SourcePos sourcePos, @NotNull Term term) {
-    var functor = new EndoFunctor() {
-      @Override public @NotNull Term post(@NotNull Term term) {
+    var checker = new Function<Term, Term>() {
+      private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
-        if (ElimTerm.isErased(term)) {
+        if (ElimTerm.isErasedNotProp(term)) {
           reporter.report(new ErasedError(sourcePos, term, null));
           return new ErrorTerm(term);
         }
         return term;
       }
+      @Override
+      public @NotNull Term apply(@NotNull Term term) {
+        if (term instanceof IntroTerm.Lambda) return term;
+        if (term instanceof ErasedTerm) return post(term);
+        return post(term.descent(this));
+      }
     };
-    return functor.apply(term);
+    return checker.apply(term);
   }
 
   public interface Result {
@@ -861,7 +875,7 @@ public final class ExprTycker extends Tycker {
       var type = type();
       var sort = type.computeType(state, ctx);
       if (sort instanceof FormTerm.Prop || ElimTerm.isErased(wellTyped()))
-        return new TermResult(new ErasedTerm(type), type);
+        return new TermResult(new ErasedTerm(type, sort instanceof FormTerm.Prop), type);
       return this;
     }
   }

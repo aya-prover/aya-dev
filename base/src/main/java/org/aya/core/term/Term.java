@@ -91,7 +91,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       case ErasedTerm erased -> {
         var type = f.apply(erased.type());
         if (type == erased.type()) yield erased;
-        yield new ErasedTerm(type);
+        yield new ErasedTerm(type, erased.isProp());
       }
       case CallTerm.Struct struct -> {
         var args = struct.args().map(arg -> arg.descent(f));

@@ -21,6 +21,10 @@ public sealed interface ElimTerm extends Term {
     if (term instanceof ElimTerm elim) return isErased(elim.of());
     return term instanceof ErasedTerm;
   }
+  static boolean isErasedNotProp(@NotNull Term term) {
+    if (term instanceof ElimTerm elim) return isErasedNotProp(elim.of());
+    return term instanceof ErasedTerm elim && !elim.isProp();
+  }
 
   @Contract(pure = true) static @NotNull Term
   make(@NotNull Term f, @NotNull Arg<Term> arg) {
@@ -35,9 +39,9 @@ public sealed interface ElimTerm extends Term {
     if (app.of() instanceof ErasedTerm erased) {
       // erased.type() can be an ErrorTerm
       if (erased.type() instanceof FormTerm.Pi pi) {
-        return new ErasedTerm(pi.substBody(app.arg().term()));
+        return new ErasedTerm(pi.substBody(app.arg().term()), false);
       } else {
-        return new ErasedTerm(ErrorTerm.typeOf(app));
+        return new ErasedTerm(ErrorTerm.typeOf(app), true);
       }
     }
     if (app.of() instanceof IntroTerm.Lambda lam) return make(lam, app.arg());
@@ -78,9 +82,9 @@ public sealed interface ElimTerm extends Term {
     if (proj.of instanceof ErasedTerm erased) {
       // erased.type() can be an ErrorTerm
       if (erased.type() instanceof FormTerm.Sigma sigma) {
-        return new ErasedTerm(sigma.params().get(proj.ix - 1).type());
+        return new ErasedTerm(sigma.params().get(proj.ix - 1).type(), false);
       } else {
-        return new ErasedTerm(ErrorTerm.typeOf(proj));
+        return new ErasedTerm(ErrorTerm.typeOf(proj), true);
       }
     }
     return proj;

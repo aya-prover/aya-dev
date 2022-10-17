@@ -4,5 +4,6 @@ package org.aya.core.term;
 
 import org.jetbrains.annotations.NotNull;
 
-public record ErasedTerm(@NotNull Term type) implements Term {
+// non-Prop erased term can not appear in non-erased terms
+public record ErasedTerm(@NotNull Term type, boolean isProp) implements Term {
 }
