@@ -256,6 +256,21 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
+  record ShapedList(
+    @NotNull ImmutableSeq<SerTerm> repr,
+    @NotNull SerDef.SerAyaShape shape,
+    @NotNull SerTerm type
+  ) implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      var termDesered = repr.map(x -> x.de(state));
+      var shape = shape().de();
+      var type = type().de(state);
+
+      return new LitTerm.ShapedList(termDesered, shape, type);
+    }
+  }
+
   record Str(@NotNull String string) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new PrimTerm.Str(string);
