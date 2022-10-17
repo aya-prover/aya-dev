@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
+import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
@@ -38,6 +39,27 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
         Doc.par(1, BaseDistiller.restr(options, face)),
         Doc.english("must cover the face(s) specified in type:"),
         Doc.par(1, BaseDistiller.restr(options, cof)));
+    }
+  }
+
+  record CoeVaryingType(
+    @NotNull Expr expr,
+    @NotNull Term type,
+    @NotNull Term typeInst,
+    @NotNull Restr<Term> restr
+  ) implements CubicalError {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      var typeDoc = type.toDoc(options);
+      var under = typeInst.toDoc(options);
+      var buf = MutableList.of(
+        Doc.english("Under the cofibration:"),
+        Doc.par(1, BaseDistiller.restr(options, restr)),
+        Doc.english("The type in the body still depends on the interval parameter:"),
+        Doc.par(1, typeDoc));
+      if (!under.equals(typeDoc)) buf.append(Doc.par(1,
+        Doc.parened(Doc.sep(Doc.plain("Normalized under cofibration:"), under))));
+      buf.append(Doc.english("which is not allowed in coercion"));
+      return Doc.vcat(buf);
     }
   }
 }

@@ -154,6 +154,37 @@ public final class ExprTycker extends Tycker {
         var items = tuple.items().map(this::synthesize);
         yield new TermResult(new IntroTerm.Tuple(items.map(Result::wellTyped)), new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
       }
+      case Expr.CoeExpr coe -> {
+        assert coe.coeData().resolvedIx() instanceof DefVar<?, ?> defVar
+          && defVar.core instanceof PrimDef def && def.id == PrimDef.ID.COE : "desugar bug";
+        var defVar = (DefVar<?, ?>) coe.coeData().resolvedIx();
+        var typeE = coe.expr();
+        var restrE = coe.coeData().freeze().getOrElse(() -> new Expr.LitIntExpr(coe.sourcePos(), 0));
+        var mockApp = new Expr.AppExpr(coe.sourcePos(), new Expr.AppExpr(coe.sourcePos(),
+          new Expr.RefExpr(coe.coeData().id().sourcePos(), defVar),
+          new Expr.NamedArg(true, typeE)),
+          new Expr.NamedArg(true, restrE));
+        var res = synthesize(mockApp);
+        if (whnf(res.wellTyped()) instanceof PrimTerm.Coe(var type, var restr)) {
+          var bad = new Object() {
+            Term typeSubst;
+          };
+          var freezes = CofThy.conv(restr, new Subst(), subst -> {
+            var typeSubst = type.subst(subst);
+            // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
+            // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all
+            // by substituting `i` with any binding `?` and then find usage of `?` --- this makes life easier.
+            // See: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
+            var yeah = new LocalVar("?");
+            var oh = ElimTerm.make(typeSubst, new Arg<>(new RefTerm(yeah), true));
+            int usages = oh.findUsages(yeah);
+            if (usages != 0) bad.typeSubst = typeSubst;
+            return usages == 0;
+          });
+          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(coe, type, bad.typeSubst, restr));
+        }
+        yield res;
+      }
       case Expr.AppExpr appE -> {
         var f = synthesize(appE.function());
         if (f.wellTyped() instanceof ErrorTerm || f.type() instanceof ErrorTerm) yield f;
