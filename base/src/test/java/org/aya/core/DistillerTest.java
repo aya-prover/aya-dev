@@ -192,6 +192,36 @@ public class DistillerTest {
         |  a => suc a""", t3.toDoc(DistillerOptions.informative()).debugRender());
   }
 
+  @Test public void coeExpr() {
+    assertEquals("""
+        prim I
+        prim Partial
+        prim intervalMin
+        prim intervalMax
+        prim intervalInv
+        prim coe
+        def inline /\\ => intervalMin
+          tighter \\/
+        def inline \\/ => intervalMax
+        def inline ~ => intervalInv
+        def YY (A : I -> Type 0) (a : A 0) (i : I) : A i => (\\ (j : _) => A (i /\\ j)).coe freeze (~ i) a""",
+      declCDoc("""
+        prim I
+        prim Partial
+        prim intervalMin
+        prim intervalMax
+        prim intervalInv
+        prim coe
+              
+        def inline infix /\\ => intervalMin tighter \\/
+        def inline infix \\/ => intervalMax
+        def inline ~ => intervalInv
+              
+        def YY (A : I -> Type) (a : A 0) (i : I) : A i
+          => ((\\j => A (i /\\ j)).coe freeze (~ i)) a
+        """).debugRender());
+  }
+
   private @NotNull Doc declDoc(@Language("Aya") String text) {
     return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(DistillerOptions.debug())));
   }

@@ -1,0 +1,6 @@
+open data Unit | unit
+open struct Test
+  | x : Unit
+
+def YY (t : Test) : Unit
+  => t.x freeze t
