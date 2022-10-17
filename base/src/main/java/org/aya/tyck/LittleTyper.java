@@ -44,9 +44,15 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           .map(param -> term(param.type()).normalize(state, NormalizeMode.WHNF))
           .filterIsInstance(FormTerm.Sort.class)
           .toImmutableSeq();
-        if (univ.sizeEquals(sigma.params().size()))
-          yield new FormTerm.Type(univ.view().map(FormTerm.Sort::lift).max());
-        else yield ErrorTerm.typeOf(sigma);
+        if (univ.sizeEquals(sigma.params().size())) {
+          try {
+            yield univ.reduce(ExprTycker::calculateSigma);
+          } catch (IllegalArgumentException ignored) {
+            yield ErrorTerm.typeOf(sigma);
+          }
+        } else {
+          yield ErrorTerm.typeOf(sigma);
+        }
       }
       case IntroTerm.Lambda lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
       case ElimTerm.Proj proj -> {
@@ -67,9 +73,15 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         var t = new LittleTyper(state, localCtx.deriveMap());
         yield t.localCtx.with(resultParam, () -> {
           var retTyRaw = t.term(pi.body()).normalize(state, NormalizeMode.WHNF);
-          if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy)
-            return ExprTycker.sortPi(paramTy, retTy);
-          else return ErrorTerm.typeOf(pi);
+          if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy) {
+            try {
+              return ExprTycker.sortPi(paramTy, retTy);
+            } catch (IllegalArgumentException ignored) {
+              return ErrorTerm.typeOf(pi);
+            }
+          } else {
+            return ErrorTerm.typeOf(pi);
+          }
         });
       }
       case ElimTerm.App app -> {

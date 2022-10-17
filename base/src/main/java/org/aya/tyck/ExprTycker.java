@@ -526,7 +526,7 @@ public final class ExprTycker extends Tycker {
     });
   }
 
-  private FormTerm.Sort calculateSigma(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) {
+  public static @NotNull FormTerm.Sort calculateSigma(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) throws IllegalArgumentException {
     int lift = Math.max(x.lift(), y.lift());
     if(x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
       return FormTerm.Prop.INSTANCE;
@@ -582,7 +582,7 @@ public final class ExprTycker extends Tycker {
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
-        var maxSort = resultTypes.reduce(this::calculateSigma);
+        var maxSort = resultTypes.reduce(ExprTycker::calculateSigma);
         if (!(maxSort instanceof FormTerm.Prop)) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxSort);
@@ -662,11 +662,11 @@ public final class ExprTycker extends Tycker {
     return sortPi(this.reporter, expr, domain, codomain);
   }
 
-  public static @NotNull FormTerm.Sort sortPi(@NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+  public static @NotNull FormTerm.Sort sortPi(@NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
     return sortPi(null, null, domain, codomain);
   }
 
-  public static @NotNull FormTerm.Sort sortPi(@Nullable Reporter reporter, @Nullable Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+  public static @NotNull FormTerm.Sort sortPi(@Nullable Reporter reporter, @Nullable Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
     var result = switch (domain) {
       case FormTerm.Type a -> switch (codomain) {
         case FormTerm.Type b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
@@ -693,7 +693,11 @@ public final class ExprTycker extends Tycker {
       };
     };
     if (result == null) {
-      if(reporter != null) reporter.report(new SortPiError(expr.sourcePos(), domain, codomain));
+      if (reporter == null) {
+        throw new IllegalArgumentException("Cannot construct a pi type from " + domain + " -> " + codomain);
+      } else {
+        reporter.report(new SortPiError(expr.sourcePos(), domain, codomain));
+      }
       return FormTerm.Type.ZERO;
     } else {
       return result;
