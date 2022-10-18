@@ -77,7 +77,7 @@ public record ExprResolver(
       case Expr.ProjExpr proj -> {
         var tup = resolve(proj.tup(), ctx);
         // before desugar, we can only have integer projections.
-        yield new Expr.ProjExpr(expr.sourcePos(), tup, proj.ix());
+        yield new Expr.ProjExpr(expr.sourcePos(), tup, proj.ix(), proj.resolvedVar(), proj.theCore());
       }
       case Expr.RawProjExpr proj -> {
         var tup = resolve(proj.tup(), ctx);
