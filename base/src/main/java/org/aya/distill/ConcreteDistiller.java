@@ -104,7 +104,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
         Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
-      case Expr.RawProjExpr expr -> Doc.sep(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
+      case Expr.RawProjExpr expr -> Doc.sepNonEmpty(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
           Doc.plain(expr.id().join())), expr.coeLeft() != null ? term(Outer.AppSpine, expr.coeLeft()) : Doc.empty(),
         expr.restr() != null ? Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, expr.restr())) : Doc.empty());
       case Expr.CoeExpr expr -> visitCalls(expr.resolvedVar(), PRIM_CALL,
