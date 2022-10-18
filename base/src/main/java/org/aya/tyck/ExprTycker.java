@@ -191,7 +191,7 @@ public final class ExprTycker extends Tycker {
               }
             };
           });
-          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(coe, type, bad.typeSubst, restr, bad.stuck));
+          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(coe.type(), type, bad.typeSubst, restr, bad.stuck));
         }
         yield res;
       }
