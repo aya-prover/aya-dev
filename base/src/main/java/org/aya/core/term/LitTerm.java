@@ -50,17 +50,6 @@ public sealed interface LitTerm extends Term {
       ));
     }
 
-
-
-    // TODO[hoshino]: move to Shaped.List<T>
-    public boolean compareUntyped(@NotNull TermComparator comparator, @NotNull Shaped.List<Term> other) {
-      var rhsRepr = other.repr();
-      if (! repr().sizeEquals(rhsRepr)) return false;
-      return repr().view().zip(rhsRepr)
-        .foldLeft(true, (l, tuple) ->
-          l && comparator.compare(tuple._1, tuple._2, null));
-    }
-
     @Override
     public @NotNull Term destruct(@NotNull ImmutableSeq<Term> repr) {
       return new ShapedList(repr, shape(), type());

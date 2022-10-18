@@ -128,6 +128,14 @@ public interface Shaped<T> {
       return comparator.compare(type(), otherData.type(), null);   // TODO[hoshino]: I don't know whether it is true.
     }
 
+    default <O> boolean compareUntyped(@NotNull Shaped.List<O> other, @NotNull BiFunction<T, O, Boolean> comparator) {
+      var rhsRepr = other.repr();
+      if (! repr().sizeEquals(rhsRepr)) return false;
+      return repr().view().zip(rhsRepr)
+        .foldLeft(true, (l, tuple) ->
+          l && comparator.apply(tuple._1, tuple._2));
+    }
+
     /// region Copied from Shaped.Nat
     /// FIXME: see above
 

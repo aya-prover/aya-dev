@@ -500,7 +500,7 @@ public sealed abstract class TermComparator permits Unifier {
       case LitTerm.ShapedList lhs -> switch (preRhs) {
         case LitTerm.ShapedList rhs -> {
           if (! lhs.compareShape(this, rhs)) yield null;
-          if (! lhs.compareUntyped(this, rhs)) yield null;
+          if (! lhs.compareUntyped(rhs, (l, r) -> compare(l, r, null))) yield null;
 
           yield lhs.type();
         }
