@@ -24,6 +24,7 @@ import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -167,17 +169,23 @@ public final class ExprTycker extends Tycker {
           var bad = new Object() {
             Term typeSubst;
           };
+          // in case the `type` was eta-expanded from a definition.
+          var typeNF = type.normalize(state, NormalizeMode.NF);
           var freezes = CofThy.conv(restr, new Subst(), subst -> {
-            var typeSubst = type.subst(subst);
+            var typeSubst = typeNF.subst(subst);
             // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
-            // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all
-            // by substituting `i` with any binding `?` and then find usage of `?` --- this makes life easier.
-            // See: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
-            var yeah = new LocalVar("?");
-            var oh = ElimTerm.make(typeSubst, new Arg<>(new RefTerm(yeah), true));
-            int usages = oh.findUsages(yeah);
-            if (usages != 0) bad.typeSubst = typeSubst;
-            return usages == 0;
+            // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
+            // See also: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
+            Function<Integer, Boolean> post = usages -> {
+              if (usages != 0) bad.typeSubst = typeSubst;
+              return usages == 0;
+            };
+            return switch (typeSubst) {
+              case IntroTerm.Lambda(var param, var body) -> post.apply(body.findUsages(param.ref()));
+              case IntroTerm.PathLam(var params, var body) ->
+                post.apply(params.view().map(body::findUsages).foldLeft(0, Integer::sum));
+              default -> throw new InternalException("unreachable");
+            };
           });
           if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(coe, type, bad.typeSubst, restr));
         }
