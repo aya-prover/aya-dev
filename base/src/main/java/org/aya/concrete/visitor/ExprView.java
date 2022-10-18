@@ -40,12 +40,6 @@ public interface ExprView {
     return new Expr.PartEl(partial.sourcePos(), clauses);
   }
 
-  private Expr.@NotNull ProjOrCoe commit(@NotNull Expr.ProjOrCoe data) {
-    var freeze = data.freeze().map(this::commit);
-    if (freeze.sameElements(data.freeze(), true)) return data;
-    return new Expr.ProjOrCoe(data.id(), freeze, data.resolvedIx());
-  }
-
   private @NotNull Expr traverse(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.RefExpr ref -> ref;
@@ -93,17 +87,21 @@ public interface ExprView {
       }
       case Expr.ProjExpr proj -> {
         var tup = commit(proj.tup());
-        var ix = proj.ix().map(x -> x, this::commit);
-        var sameElements = ix.map(x -> proj.ix().getLeftValue().equals(x), x -> x == proj.ix().getRightValue())
-          .fold(x -> x, x -> x);
-        if (tup == proj.tup() && sameElements) yield proj;
-        yield new Expr.ProjExpr(proj.sourcePos(), tup, ix, proj.theCore());
+        if (tup == proj.tup()) yield proj;
+        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedVar(), proj.theCore());
+      }
+      case Expr.RawProjExpr proj -> {
+        var tup = commit(proj.tup());
+        var coeLeft = proj.coeLeft() != null ? commit(proj.coeLeft()) : null;
+        var restr = proj.restr() != null ? commit(proj.restr()) : null;
+        if (tup == proj.tup() && coeLeft == proj.coeLeft() && restr == proj.restr()) yield proj;
+        yield new Expr.RawProjExpr(proj.sourcePos(), tup, proj.id(), proj.resolvedVar(), coeLeft, restr);
       }
       case Expr.CoeExpr coe -> {
-        var e = commit(coe.expr());
-        var data = commit(coe.coeData());
-        if (e == coe.expr() && data == coe.coeData()) yield coe;
-        yield new Expr.CoeExpr(coe.sourcePos(), e, data);
+        var type = commit(coe.type());
+        var restr = commit(coe.restr());
+        if (type == coe.type() && restr == coe.restr()) yield coe;
+        yield new Expr.CoeExpr(coe.sourcePos(), coe.id(), coe.resolvedVar(), type, restr);
       }
       case Expr.NewExpr neu -> {
         var struct = commit(neu.struct());

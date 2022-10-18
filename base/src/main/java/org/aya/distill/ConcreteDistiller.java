@@ -24,6 +24,8 @@ import org.aya.ref.LocalVar;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author ice1000, kiva
  * @see CoreDistiller
@@ -101,9 +103,13 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield Doc.sep(Doc.symbol("{?"), term(Outer.Free, filling), Doc.symbol("?}"));
       }
       case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
-        expr.ix().fold(ix -> Doc.plain(ix.toString()), this::visitProjOrCoe));
-      case Expr.CoeExpr expr -> Doc.cat(term(Outer.ProjHead, expr.expr()), Doc.symbol("."),
-        visitProjOrCoe(expr.coeData()));
+        Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
+      case Expr.RawProjExpr expr -> Doc.sep(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
+          Doc.plain(expr.id().join())), expr.coeLeft() != null ? term(Outer.AppSpine, expr.coeLeft()) : Doc.empty(),
+        expr.restr() != null ? Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, expr.restr())) : Doc.empty());
+      case Expr.CoeExpr expr -> visitCalls(expr.resolvedVar(), PRIM_CALL,
+        ImmutableSeq.of(new Arg<>(expr.type(), true), new Arg<>(expr.restr(), true)),
+        outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case Expr.UnresolvedExpr expr -> Doc.plain(expr.name().join());
       case Expr.RefExpr expr -> {
         var ref = expr.resolvedVar();
@@ -222,13 +228,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         );
       }
     };
-  }
-
-  private Doc visitProjOrCoe(@NotNull Expr.ProjOrCoe projOrCoe) {
-    var freezeDoc = projOrCoe.freeze()
-      .map(freeze -> Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, freeze)))
-      .getOrDefault(Doc.empty());
-    return Doc.sepNonEmpty(Doc.plain(projOrCoe.id().join()), freezeDoc);
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, Outer outer, @NotNull Doc delim) {

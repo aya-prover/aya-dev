@@ -121,14 +121,11 @@ public interface Resolver {
     @Override public @NotNull Expr visitExpr(@NotNull Expr expr, P pp) {
       switch (expr) {
         case Expr.RefExpr ref -> check(pp, ref.resolvedVar(), ref.sourcePos());
-        case Expr.ProjExpr proj -> proj.ix().getRightOption().ifDefined(projData -> {
-          if (projData.resolvedIx() != null)
-            check(pp, projData.resolvedIx(), projData.id().sourcePos());
-        });
-        case Expr.CoeExpr coe -> {
-          if (coe.coeData().resolvedIx() != null)
-            check(pp, coe.coeData().resolvedIx(), coe.coeData().id().sourcePos());
+        case Expr.ProjExpr proj -> {
+          if (proj.ix().isRight() && proj.resolvedVar() != null)
+            check(pp, proj.resolvedVar(), proj.ix().getRightValue().sourcePos());
         }
+        case Expr.CoeExpr coe -> check(pp, coe.resolvedVar(), coe.id().sourcePos());
         case Expr.NewExpr neo -> neo.fields().forEach(field -> {
           field.bindings().forEach(binding ->
             check(pp, binding.data(), binding.sourcePos()));

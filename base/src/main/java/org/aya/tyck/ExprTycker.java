@@ -133,14 +133,14 @@ public final class ExprTycker extends Tycker {
           var subst = ElimTerm.Proj.projSubst(projectee.wellTyped(), index, telescope);
           return new TermResult(new ElimTerm.Proj(projectee.wellTyped(), ix), type.subst(subst));
         }, sp -> {
-          var fieldName = sp.id().justName();
+          var fieldName = sp.justName();
           if (!(projectee.type() instanceof CallTerm.Struct structCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
           var structCore = structCall.ref().core;
           if (structCore == null) throw new UnsupportedOperationException("TODO");
           // TODO[ice]: instantiate the type
-          if (!(sp.resolvedIx() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
-            return fail(proj, new FieldError.UnknownField(proj, fieldName));
+          if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
+            return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
 
           var structSubst = DeltaExpander.buildSubst(structCore.telescope(), structCall.args());
@@ -155,15 +155,13 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new IntroTerm.Tuple(items.map(Result::wellTyped)), new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
       }
       case Expr.CoeExpr coe -> {
-        assert coe.coeData().resolvedIx() instanceof DefVar<?, ?> defVar
+        assert coe.resolvedVar() instanceof DefVar<?, ?> defVar
           && defVar.core instanceof PrimDef def && def.id == PrimDef.ID.COE : "desugar bug";
-        var defVar = (DefVar<?, ?>) coe.coeData().resolvedIx();
-        var typeE = coe.expr();
-        var restrE = coe.coeData().freeze().getOrElse(() -> new Expr.LitIntExpr(coe.sourcePos(), 0));
+        var defVar = coe.resolvedVar();
         var mockApp = new Expr.AppExpr(coe.sourcePos(), new Expr.AppExpr(coe.sourcePos(),
-          new Expr.RefExpr(coe.coeData().id().sourcePos(), defVar),
-          new Expr.NamedArg(true, typeE)),
-          new Expr.NamedArg(true, restrE));
+          new Expr.RefExpr(coe.id().sourcePos(), defVar),
+          new Expr.NamedArg(true, coe.type())),
+          new Expr.NamedArg(true, coe.restr()));
         var res = synthesize(mockApp);
         if (whnf(res.wellTyped()) instanceof PrimTerm.Coe(var type, var restr)) {
           var bad = new Object() {

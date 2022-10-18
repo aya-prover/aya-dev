@@ -4,7 +4,9 @@ package org.aya.concrete.desugar;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Either;
 import kala.tuple.Unit;
+import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadFreezingWarn;
@@ -52,15 +54,21 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             yield new Expr.ErrorExpr(pos, expr);
           }
         }
-        case Expr.ProjExpr proj when proj.ix().isRight()
-          && proj.ix().getRightValue().resolvedIx() instanceof DefVar<?, ?> defVar
-          && defVar.core instanceof PrimDef primDef
-          && primDef.id == PrimDef.ID.COE ->
-          pre(new Expr.CoeExpr(proj.sourcePos(), proj.tup(), proj.ix().getRightValue()));
-        case Expr.ProjExpr proj when proj.ix().isRight()
-          && proj.ix().getRightValue().freeze().isDefined() -> {
-          info.opSet().reporter.report(new BadFreezingWarn(proj));
-          yield new Expr.ErrorExpr(proj.sourcePos(), proj);
+        case Expr.RawProjExpr proj -> {
+          if (proj.resolvedVar() instanceof DefVar<?, ?> defVar
+            && defVar.core instanceof PrimDef primDef
+            && primDef.id == PrimDef.ID.COE) {
+            var restr = proj.restr() != null ? proj.restr() : new Expr.LitIntExpr(proj.sourcePos(), 0);
+            var coe = new Expr.CoeExpr(proj.sourcePos(), proj.id(), defVar, proj.tup(), restr);
+            yield proj.coeLeft() != null
+              ? new Expr.AppExpr(proj.sourcePos(), coe, new Expr.NamedArg(true, proj.coeLeft()))
+              : coe;
+          }
+          if (proj.restr() != null) info.opSet().reporter.report(new BadFreezingWarn(proj.restr()));
+          var projExpr = new Expr.ProjExpr(proj.sourcePos(), proj.tup(), Either.right(proj.id()), proj.resolvedVar(), MutableValue.create());
+          yield proj.coeLeft() != null
+            ? new Expr.AppExpr(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.coeLeft()))
+            : projExpr;
         }
         case Expr.RawSortExpr univ -> switch (univ.kind()) {
           case Type -> new Expr.TypeExpr(univ.sourcePos(), 0);

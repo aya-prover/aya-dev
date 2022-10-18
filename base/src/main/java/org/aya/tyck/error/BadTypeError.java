@@ -3,7 +3,6 @@
 package org.aya.tyck.error;
 
 import kala.control.Either;
-import kala.control.Option;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.FieldDef;
@@ -39,7 +38,7 @@ public record BadTypeError(
     if (expr instanceof Expr.AppExpr app && app.function() instanceof Expr.RefExpr ref
       && ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef) {
       var fix = new Expr.ProjExpr(SourcePos.NONE, app.argument().expr(),
-        Either.right(new Expr.ProjOrCoe(new QualifiedID(SourcePos.NONE, defVar.name()), Option.none(), null)));
+        Either.right(new QualifiedID(SourcePos.NONE, defVar.name())));
       return Doc.sep(Doc.english("Did you mean"),
         Doc.styled(Style.code(), fix.toDoc(options)),
         Doc.english("?"));

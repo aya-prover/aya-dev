@@ -656,7 +656,7 @@ public record AyaGKProducer(
     return Tuple.of(exprs.get(0), exprs.get(1));
   }
 
-  private Expr.@NotNull ProjExpr buildProj(
+  private @NotNull Expr buildProj(
     @NotNull SourcePos sourcePos, @NotNull Expr projectee,
     @NotNull GenericNode<?> fix
   ) {
@@ -664,9 +664,12 @@ public record AyaGKProducer(
     if (number != null) return new Expr.ProjExpr(sourcePos, projectee, Either.left(
       Integer.parseInt(number.tokenText())));
     var qid = qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID));
-    var freeze = fix.peekChild(EXPR);
-    return new Expr.ProjExpr(sourcePos, projectee, Either.right(
-      new Expr.ProjOrCoe(qid, Option.ofNullable(freeze).map(this::expr), null)));
+    var exprs = fix.childrenOfType(EXPR).toImmutableSeq();
+    var coeLeft = exprs.getOption(0);
+    var restr = exprs.getOption(1);
+    return new Expr.RawProjExpr(sourcePos, projectee, qid, null,
+      coeLeft.map(this::expr).getOrNull(),
+      restr.map(this::expr).getOrNull());
   }
 
   public static @NotNull Expr buildPi(

@@ -316,7 +316,7 @@ atomExArgument ::= atomExpr projFix*
 tupleImArgument ::= LBRACE exprList RBRACE
 namedImArgument ::= LBRACE weakId DEFINE_AS expr RBRACE
 
-projFix ::= DOT NUMBER | DOT projFixId (KW_FREEZE expr)?
+projFix ::= DOT NUMBER | DOT projFixId (expr (KW_FREEZE expr)?)?
 projFixId ::= qualifiedId
 
 clauses ::= LBRACE bareClause? barredClause* RBRACE

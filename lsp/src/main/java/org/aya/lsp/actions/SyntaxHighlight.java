@@ -77,14 +77,11 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
       case Expr.RefExpr ref -> {
         if (ref.resolvedVar() instanceof DefVar<?, ?> defVar) visitCall(defVar, ref.sourcePos(), pp);
       }
-      case Expr.ProjExpr proj -> proj.ix().getRightOption().ifDefined(projData -> {
-        if (projData.resolvedIx() instanceof DefVar<?, ?> defVar)
-          visitCall(defVar, projData.id().sourcePos(), pp);
-      });
-      case Expr.CoeExpr coe -> {
-        if (coe.coeData().resolvedIx() instanceof DefVar<?, ?> defVar)
-          visitCall(defVar, coe.coeData().id().sourcePos(), pp);
+      case Expr.ProjExpr proj -> {
+        if (proj.ix().isRight() && proj.resolvedVar() instanceof DefVar<?, ?> defVar)
+          visitCall(defVar, proj.ix().getRightValue().sourcePos(), pp);
       }
+      case Expr.CoeExpr coe -> visitCall(coe.resolvedVar(), coe.id().sourcePos(), pp);
       case Expr.NewExpr neo -> neo.fields().forEach(field -> {
         if (field.resolvedField().get() instanceof DefVar<?, ?> defVar)
           visitCall(defVar, field.name().sourcePos(), pp);

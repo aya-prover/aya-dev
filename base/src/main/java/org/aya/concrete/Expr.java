@@ -5,7 +5,6 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
-import kala.control.Option;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
@@ -19,6 +18,7 @@ import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
+import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.visitor.ExprResolver;
@@ -278,39 +278,47 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   ) implements Expr {}
 
   /**
+   * @param resolvedVar will be set to the field's DefVar during resolving
    * @author re-xyr
    */
   record ProjExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
-    @NotNull Either<Integer, ProjOrCoe> ix,
+    @NotNull Either<Integer, QualifiedID> ix,
+    @Nullable AnyVar resolvedVar,
     @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public ProjExpr(
       @NotNull SourcePos sourcePos, @NotNull Expr tup,
-      @NotNull Either<Integer, ProjOrCoe> ix
+      @NotNull Either<Integer, QualifiedID> ix
     ) {
-      this(sourcePos, tup, ix, MutableValue.create());
+      this(sourcePos, tup, ix, null, MutableValue.create());
     }
   }
 
-  /**
-   * Overloaded projection as coercion syntax
-   *
-   * @param resolvedIx will be set to the field's DefVar during resolving
-   * @param freeze     used when the projection is overloaded as coercion with freezing.
-   */
-  record ProjOrCoe(
+  /** undesugared overloaded projection as coercion syntax */
+  record RawProjExpr(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr tup,
     @NotNull QualifiedID id,
-    @NotNull Option<Expr> freeze,
-    @Nullable AnyVar resolvedIx
-  ) {}
+    @Nullable AnyVar resolvedVar,
+    @Nullable Expr coeLeft,
+    @Nullable Expr restr
+  ) implements Expr {
+  }
 
-  /** calls to {@link org.aya.core.def.PrimDef.ID#COE}, desugared from {@link ProjExpr} for simplicity */
+  /**
+   * calls to {@link org.aya.core.def.PrimDef.ID#COE}, desugared from {@link ProjExpr} for simplicity
+   *
+   * @param resolvedVar will be set to the primitive coe's DefVar during resolving
+   * @param restr       The cofibration under which the type should be constant
+   */
   record CoeExpr(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull Expr expr,
-    @NotNull Expr.ProjOrCoe coeData
+    @NotNull QualifiedID id,
+    @NotNull DefVar<?, ?> resolvedVar,
+    @NotNull Expr type,
+    @NotNull Expr restr
   ) implements Expr {
   }
 
