@@ -168,6 +168,7 @@ public final class ExprTycker extends Tycker {
         if (whnf(res.wellTyped()) instanceof PrimTerm.Coe(var type, var restr)) {
           var bad = new Object() {
             Term typeSubst;
+            boolean stuck = false;
           };
           // in case the `type` was eta-expanded from a definition.
           var typeNF = type.normalize(state, NormalizeMode.NF);
@@ -184,10 +185,13 @@ public final class ExprTycker extends Tycker {
               case IntroTerm.Lambda(var param, var body) -> post.apply(body.findUsages(param.ref()));
               case IntroTerm.PathLam(var params, var body) ->
                 post.apply(params.view().map(body::findUsages).foldLeft(0, Integer::sum));
-              default -> throw new InternalException("unreachable");
+              default -> {
+                bad.stuck = true; // TODO: what can we do on neutral term?
+                yield false;
+              }
             };
           });
-          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(coe, type, bad.typeSubst, restr));
+          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(coe, type, bad.typeSubst, restr, bad.stuck));
         }
         yield res;
       }
