@@ -1,9 +1,9 @@
-In file $FILE:17:6 ->
+In file $FILE:17:5 ->
 
   15 | 
   16 | def GG (A : I -> Type) (a : A 0) (i : I) : A i
-  17 |   => ((\j => A (i /\ j)).coe freeze i) a
-             ^-----------------------------^
+  17 |   => (\j => A (i /\ j)).coe a freeze i
+            ^-------------------------------^
 
 Error: Under the cofibration:
          i
@@ -12,12 +12,12 @@ Error: Under the cofibration:
          (Normalized under cofibration: \ j => A j)
        which is not allowed in coercion
 
-In file $FILE:21:6 ->
+In file $FILE:21:5 ->
 
   19 | 
   20 | def GG2 (A : I -> Type) (a : A 0) (i : I) : A i
-  21 |   => ((\j => A j).coe freeze i) a
-             ^----------------------^
+  21 |   => (\j => A j).coe a freeze i
+            ^------------------------^
 
 Error: Under the cofibration:
          i
@@ -25,12 +25,12 @@ Error: Under the cofibration:
          \ j => A j
        which is not allowed in coercion
 
-In file $FILE:25:36 ->
+In file $FILE:25:37 ->
 
   23 | 
   24 | def GG3 (A : I -> Type) (a : A 0) (i : I) : A i
-  25 |   => ((\j => A (i /\ j)).coe freeze a) a
-                                           ^^
+  25 |   => (\j => A (i /\ j)).coe a freeze a
+                                            ^^
 
 Error: Cannot check the expression
          a
@@ -39,12 +39,12 @@ Error: Cannot check the expression
        against the type
          I
 
-In file $FILE:25:6 ->
+In file $FILE:25:5 ->
 
   23 | 
   24 | def GG3 (A : I -> Type) (a : A 0) (i : I) : A i
-  25 |   => ((\j => A (i /\ j)).coe freeze a) a
-             ^-----------------------------^
+  25 |   => (\j => A (i /\ j)).coe a freeze a
+            ^-------------------------------^
 
 Error: Under the cofibration:
          <a>

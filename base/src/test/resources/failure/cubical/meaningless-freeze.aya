@@ -1,6 +1,6 @@
 open data Unit | unit
 open struct Test
-  | x : Unit
+  | x : Unit -> Unit
 
 def YY (t : Test) : Unit
-  => t.x freeze t
+  => t.x unit freeze t

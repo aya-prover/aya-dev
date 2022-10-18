@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
+import org.aya.concrete.ParseTest;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.ElimTerm;
 import org.aya.core.term.IntroTerm;
@@ -195,31 +196,20 @@ public class DistillerTest {
   @Test public void coeExpr() {
     assertEquals("""
         prim I
-        prim Partial
-        prim intervalMin
-        prim intervalMax
-        prim intervalInv
         prim coe
-        def inline /\\ => intervalMin
-          tighter \\/
-        def inline \\/ => intervalMax
-        def inline ~ => intervalInv
-        def YY (A : I -> Type 0) (a : A 0) (i : I) : A i => (\\ (j : _) => A (i /\\ j)).coe freeze (~ i) a""",
+        def YY (A : I -> Type 0) (a : A 0) (i : I) : A i => coe (\\ (j : _) => A j) i a""",
       declCDoc("""
         prim I
-        prim Partial
-        prim intervalMin
-        prim intervalMax
-        prim intervalInv
         prim coe
-              
-        def inline infix /\\ => intervalMin tighter \\/
-        def inline infix \\/ => intervalMax
-        def inline ~ => intervalInv
-              
         def YY (A : I -> Type) (a : A 0) (i : I) : A i
-          => ((\\j => A (i /\\ j)).coe freeze (~ i)) a
+          => (\\j => A j).coe a freeze i
         """).debugRender());
+  }
+
+  @Test public void rawProjExpr() {
+    ParseTest.parseAndPretty("def a => E.coe u freeze F", "def a => E.coe u freeze F");
+    ParseTest.parseAndPretty("def a => E.coe u", "def a => E.coe u");
+    ParseTest.parseAndPretty("def a => E.coe", "def a => E.coe");
   }
 
   private @NotNull Doc declDoc(@Language("Aya") String text) {
