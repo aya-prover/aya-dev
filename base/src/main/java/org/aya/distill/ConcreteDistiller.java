@@ -367,9 +367,9 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     return doBind.var() == LocalVar.IGNORED
       ? term(Outer.Free, doBind.expr())
       : Doc.sep(
-      varDoc(doBind.var()),
-      Doc.symbol("<-"),
-      term(Outer.Free, doBind.expr()));
+        varDoc(doBind.var()),
+        Doc.symbol("<-"),
+        term(Outer.Free, doBind.expr()));
   }
 
   public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
