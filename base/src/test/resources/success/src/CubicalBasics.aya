@@ -18,3 +18,6 @@ def cmp {A : Type} (x : A)
 def transport-constant (A : I -> Type) (a : A 0) (i : I) : A i
   => (\j => A (i /\ j)).coe a freeze ~ i
 -- ^ `A (i /\ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.
+
+def transport  (A : I -> Type) (a : A 0) : A 1 => A.coe a
+def transport' (A : I -> Type) (a : A 0) : A 1 => A.coe a freeze 0

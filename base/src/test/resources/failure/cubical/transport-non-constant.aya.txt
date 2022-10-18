@@ -25,11 +25,25 @@ Error: Under the cofibration:
          \ j => A j
        which is not allowed in coercion
 
-In file $FILE:25:37 ->
+In file $FILE:25:5 ->
 
   23 | 
   24 | def GG3 (A : I -> Type) (a : A 0) (i : I) : A i
-  25 |   => (\j => A (i /\ j)).coe a freeze a
+  25 |   => A.coe a freeze i
+            ^--------------^
+
+Error: Under the cofibration:
+         i
+       I am not sure if the type is constant, as my normalization is blocked for
+       type:
+         A
+       which is not allowed in coercion
+
+In file $FILE:29:37 ->
+
+  27 | 
+  28 | def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
+  29 |   => (\j => A (i /\ j)).coe a freeze a
                                             ^^
 
 Error: Cannot check the expression
@@ -39,11 +53,11 @@ Error: Cannot check the expression
        against the type
          I
 
-In file $FILE:25:5 ->
+In file $FILE:29:5 ->
 
-  23 | 
-  24 | def GG3 (A : I -> Type) (a : A 0) (i : I) : A i
-  25 |   => (\j => A (i /\ j)).coe a freeze a
+  27 | 
+  28 | def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
+  29 |   => (\j => A (i /\ j)).coe a freeze a
             ^-------------------------------^
 
 Error: Under the cofibration:
@@ -52,5 +66,5 @@ Error: Under the cofibration:
          \ j => A (i /\ j)
        which is not allowed in coercion
 
-4 error(s), 0 warning(s).
+5 error(s), 0 warning(s).
 What are you doing?

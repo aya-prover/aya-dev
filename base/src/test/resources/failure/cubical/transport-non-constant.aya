@@ -22,5 +22,9 @@ def GG2 (A : I -> Type) (a : A 0) (i : I) : A i
 -- ^ `A j` normalizes to `A j` under cofibration `i`, which is not a constant.
 
 def GG3 (A : I -> Type) (a : A 0) (i : I) : A i
+  => A.coe a freeze i
+-- ^ `A` is blocked, which is unknown to be constant.
+
+def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
   => (\j => A (i /\ j)).coe a freeze a
 -- ^ The cofibration is an ErrorTerm, so we test the error reporter.

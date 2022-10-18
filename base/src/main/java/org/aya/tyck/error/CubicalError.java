@@ -56,7 +56,7 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
       var buf = MutableList.of(
         Doc.english("Under the cofibration:"),
         Doc.par(1, BaseDistiller.restr(options, restr)));
-      if (stuck) buf.append(Doc.english("I am not sure if the type is constant, as my normalization is blocked for type"));
+      if (stuck) buf.append(Doc.english("I am not sure if the type is constant, as my normalization is blocked for type:"));
       else buf.append(Doc.english("The type in the body still depends on the interval parameter:"));
       buf.append(Doc.par(1, typeDoc));
       if (under != null && !typeDoc.equals(under)) buf.append(
