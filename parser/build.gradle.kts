@@ -13,3 +13,10 @@ dependencies {
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
 }
+
+tasks.register<org.aya.gradle.JFlexTask>("lexer") {
+  outputDir = genDir.resolve("org/aya/parser")
+  val grammar = file("src/main/grammar")
+  jflex = grammar.resolve("AyaPsiLexer.flex")
+  skel = grammar.resolve("idea-flex.skeleton")
+}
