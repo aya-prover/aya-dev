@@ -1,10 +1,14 @@
-  // Warning: this skeleton file is incompatible with IntelliJ IDEA
+  // Warning: this skeleton file is INCOMPATIBLE with IntelliJ IDEA
   //  in the following ways:
   //
   // - Compatible with 1.8.2 JFlex -- there seem to be breaking changes.
   //   - Some fields are removed because JFlex seems to generate them now.
   //   - IntelliJ IDEA uses 1.7.0-2 JFlex.
+  //
+  // Apart from that, this file changes the implementation of the lexer:
+  //
   // - zzBuffer is replaced with a char array, which affects the `reset` method signature.
+  //   - A redirecting method with `@Deprecated` is added for the `FlexLexer` interface.
   // - The implementation of `yytext` is changed, but the API is not.
 
   /** This character denotes the end of file */
