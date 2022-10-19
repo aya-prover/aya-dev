@@ -165,15 +165,14 @@ public final class ExprTycker extends Tycker {
           new Expr.NamedArg(true, coe.type())),
           new Expr.NamedArg(true, coe.restr()));
         var res = synthesize(mockApp);
-        if (whnf(res.wellTyped()) instanceof PrimTerm.Coe(var type, var restr)) {
+        if (whnf(res.wellTyped()) instanceof PrimTerm.Coe(var type, var restr) && !(type instanceof ErrorTerm)) {
           var bad = new Object() {
             Term typeSubst;
             boolean stuck = false;
           };
-          // in case the `type` was eta-expanded from a definition.
-          var typeNF = type.normalize(state, NormalizeMode.NF);
           var freezes = CofThy.conv(restr, new Subst(), subst -> {
-            var typeSubst = typeNF.subst(subst);
+            // normalizes to NF in case the `type` was eta-expanded from a definition.
+            var typeSubst = type.subst(subst).normalize(state, NormalizeMode.NF);
             // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
             // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
             // See also: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
@@ -186,12 +185,13 @@ public final class ExprTycker extends Tycker {
               case IntroTerm.PathLam(var params, var body) ->
                 post.apply(params.view().map(body::findUsages).foldLeft(0, Integer::sum));
               default -> {
-                bad.stuck = true; // TODO: what can we do on neutral term?
+                bad.stuck = true;
                 yield false;
               }
             };
           });
-          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(coe.type(), type, bad.typeSubst, restr, bad.stuck));
+          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(
+            coe.type(), type, bad.typeSubst, restr, bad.stuck));
         }
         yield res;
       }
