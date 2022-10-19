@@ -10,6 +10,7 @@ import org.aya.generic.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Elimination rules.
@@ -17,15 +18,18 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public sealed interface ElimTerm extends Term {
-  static boolean isErased(@NotNull Term term) {
-    if (term instanceof ElimTerm elim) return isErased(elim.of());
-    if (term instanceof CallTerm.Access elim) return isErased(elim.of());
-    return term instanceof ErasedTerm;
+  static @Nullable ErasedTerm checkErased(@NotNull Term term) {
+    if (term instanceof ElimTerm elim) return checkErased(elim.of());
+    if (term instanceof CallTerm.Access elim) return checkErased(elim.of());
+    return term instanceof ErasedTerm erased ? erased : null;
   }
-  static boolean isErasedNotProp(@NotNull Term term) {
-    if (term instanceof ElimTerm elim) return isErased(elim.of());
-    if (term instanceof CallTerm.Access elim) return isErased(elim.of());
-    return term instanceof ErasedTerm elim && !elim.isProp();
+  static boolean isErased(@NotNull Term term) {
+    return checkErased(term) != null;
+  }
+  static @Nullable ErasedTerm checkErasedNotProp(@NotNull Term term) {
+    if (term instanceof ElimTerm elim) return checkErased(elim.of());
+    if (term instanceof CallTerm.Access elim) return checkErased(elim.of());
+    return term instanceof ErasedTerm erased && !erased.isProp() ? erased : null;
   }
 
   @Contract(pure = true) static @NotNull Term
@@ -41,7 +45,7 @@ public sealed interface ElimTerm extends Term {
     if (app.of() instanceof ErasedTerm erased) {
       // erased.type() can be an ErrorTerm
       if (erased.type() instanceof FormTerm.Pi pi) {
-        return new ErasedTerm(pi.substBody(app.arg().term()), false);
+        return new ErasedTerm(pi.substBody(app.arg().term()));
       } else {
         return new ErasedTerm(ErrorTerm.typeOf(app), true);
       }
@@ -84,7 +88,7 @@ public sealed interface ElimTerm extends Term {
     if (proj.of instanceof ErasedTerm erased) {
       // erased.type() can be an ErrorTerm
       if (erased.type() instanceof FormTerm.Sigma sigma) {
-        return new ErasedTerm(sigma.params().get(proj.ix - 1).type(), false);
+        return new ErasedTerm(sigma.params().get(proj.ix - 1).type());
       } else {
         return new ErasedTerm(ErrorTerm.typeOf(proj), true);
       }

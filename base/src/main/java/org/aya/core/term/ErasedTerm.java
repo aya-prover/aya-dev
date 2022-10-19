@@ -2,8 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 // non-Prop erased term can not appear in non-erased terms
-public record ErasedTerm(@NotNull Term type, boolean isProp) implements Term {
+public record ErasedTerm(@NotNull Term type, boolean isProp, @Nullable SourcePos sourcePos) implements Term {
+  public ErasedTerm(@NotNull Term type) {
+    this(type, false, null);
+  }
+  public ErasedTerm(@NotNull Term type, boolean isProp) {
+    this(type, isProp, null);
+  }
 }

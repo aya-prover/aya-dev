@@ -18,9 +18,7 @@ import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
-import org.aya.core.visitor.EndoFunctor;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.TermConsumer;
 import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -633,14 +631,14 @@ public final class ExprTycker extends Tycker {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
       result = new TermResult(new IntroTerm.Lambda(implicitParam, body), pi);
-    } else result = doInherit(expr, type).checkErased(state, localCtx);
+    } else result = doInherit(expr, type).checkErased(expr, state, localCtx);
     traceExit(result, expr);
     return result;
   }
 
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var res = doSynthesize(expr).checkErased(state, localCtx);
+    var res = doSynthesize(expr).checkErased(expr, state, localCtx);
     traceExit(res, expr);
     return res;
   }
@@ -853,8 +851,9 @@ public final class ExprTycker extends Tycker {
     var checker = new Function<Term, Term>() {
       private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
-        if (ElimTerm.isErasedNotProp(term)) {
-          reporter.report(new ErasedError(sourcePos, term, null));
+        var erased = ElimTerm.checkErasedNotProp(term);
+        if (erased != null) {
+          reporter.report(new ErasedError(sourcePos, erased, null));
           return new ErrorTerm(term);
         }
         return term;
@@ -874,12 +873,12 @@ public final class ExprTycker extends Tycker {
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
 
-    default Result checkErased(@NotNull TyckState state, @NotNull LocalCtx ctx) {
+    default Result checkErased(@NotNull Expr expr, @NotNull TyckState state, @NotNull LocalCtx ctx) {
       if (wellTyped() instanceof FormTerm.Sort) return this;
       var type = type();
       var sort = type.computeType(state, ctx);
       if (sort instanceof FormTerm.Prop || ElimTerm.isErased(wellTyped()))
-        return new TermResult(new ErasedTerm(type, sort instanceof FormTerm.Prop), type);
+        return new TermResult(new ErasedTerm(type, sort instanceof FormTerm.Prop, expr.sourcePos()), type);
       return this;
     }
   }

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
+import org.aya.core.term.ErasedTerm;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.distill.DistillerOptions;
@@ -10,17 +11,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record ErasedError(
-  @Override @NotNull SourcePos sourcePos,
-  @NotNull Term wellTyped, @Nullable Term type) implements TyckError {
+  @NotNull SourcePos sourcePos,
+  @NotNull ErasedTerm wellTyped, @Nullable Term type) implements TyckError {
+  @Override public @NotNull SourcePos sourcePos() {
+    return wellTyped.sourcePos() == null ? sourcePos : wellTyped.sourcePos();
+  }
+
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     if (type == null) {
-      return Doc.sepNonEmpty(Doc.english("The term is expected to be not erased"),
-        wellTyped.toDoc(options));
+      return Doc.sepNonEmpty(Doc.english("The"),
+        wellTyped.type().toDoc(options), Doc.english("term is expected to be not erased"));
     } else {
-      return Doc.sepNonEmpty(Doc.english("The term is expected to be not erased"),
-        wellTyped.toDoc(options),
-        Doc.symbol(":"),
-        type.toDoc(options));
+      return Doc.sepNonEmpty(Doc.english("The"), wellTyped.type().toDoc(options), Doc.english("term with type"),
+        type.toDoc(options), Doc.english("is expected to be not erased"));
     }
   }
 }
