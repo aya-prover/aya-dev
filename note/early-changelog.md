@@ -2,6 +2,28 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.22
+
+Improved the shape matcher with normalization, improved performance of `MCT` traversal,
+elementary support for list literals (based on resolver, not shape matcher),
+fixed a serious bug of pattern classifier with literals and unfolding,
+moved the desugaring of `do` and idiom brackets to the desugarer (was in producer before),
+migrated from ANTLR4 to GrammerKit (even fewer build dependencies -- no longer need icu4j),
+improved tracing, improved pretty printing of `do` and idiom brackets,
+updated to Java 19, removed commas from bind clauses, flipped from `isLeft`
+to `isOne`, renamed some classes in cubical library.
+
+Welcome [`@HoshinoTented`](https://github.com/HoshinoTented)!
+
+Speaking of upstream dependencies, we have much fewer dependencies now.
+The badass-jlink plugin now runs blazingly fast because now we have only a few non-jpms jars.
+The only non-jpms dependency is jline3. Oh yes!
+
+The GrammarKit parser has better error recovery than ANTLR4,
+but right now we can't use the build script to generate the parser.
+This slightly bloats the git repo, but it's not a big deal.
+We are planning on generating the lexer in the build script.
+
 ## 0.21
 
 Considered size-change in termination checker and reimplemented call graph completion,
