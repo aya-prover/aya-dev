@@ -87,7 +87,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         list.append(Doc.symbol("=>"));
         list.append(bodyDoc);
         var doc = Doc.sep(list);
-        yield checkParen(outer, doc, Outer.AppHead);
+        yield checkParen(outer, doc, Outer.BinOp);
       }
       case FormTerm.Sort term -> {
         var fn = Doc.styled(KEYWORD, term.kind().name());
@@ -170,7 +170,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           Doc.sep(lam.params().map(BaseDistiller::varDoc)),
           Doc.symbol("=>"),
           lam.body().toDoc(options)),
-        Outer.AppHead);
+        Outer.BinOp);
       case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case PrimTerm.Coe coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
