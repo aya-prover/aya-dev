@@ -32,6 +32,8 @@ dependencies {
   deps.load(rootDir.resolve("gradle/deps.properties").reader())
   api("org.aya-prover.upstream", "build-util", deps.getProperty("version.aya-upstream"))
 
+  implementation("de.jflex", "jflex", deps.getProperty("version.jflex"))
+
   // The following is required for
   // - extracting common parts inside `graalvmNative` block
   // - specifying the plugin version from deps.properties
