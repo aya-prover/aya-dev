@@ -124,9 +124,8 @@ public final class ExprTycker extends Tycker {
         var struct = proj.tup();
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
-          if (!(projectee.type() instanceof FormTerm.Sigma sigma))
+          if (!(projectee.type() instanceof FormTerm.Sigma(var telescope)))
             return fail(struct, projectee.type(), BadTypeError.sigmaAcc(state, struct, ix, projectee.type()));
-          var telescope = sigma.params();
           var index = ix - 1;
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
@@ -334,8 +333,8 @@ public final class ExprTycker extends Tycker {
   ensurePiOrPath(@NotNull Term term) throws NotPi {
     term = whnf(term);
     if (term instanceof FormTerm.Pi pi) return Tuple.of(pi, null);
-    if (term instanceof FormTerm.Path path)
-      return Tuple.of(path.cube().computePi(), path.cube());
+    if (term instanceof FormTerm.Path(var cube))
+      return Tuple.of(cube.computePi(), cube);
     else throw new NotPi(term);
   }
 
@@ -346,10 +345,10 @@ public final class ExprTycker extends Tycker {
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
         if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(tuple), tuple);
-        if (!(typeWHNF instanceof FormTerm.Sigma dt))
+        if (!(typeWHNF instanceof FormTerm.Sigma(var params)))
           yield fail(tuple, term, BadTypeError.sigmaCon(state, tuple, typeWHNF));
-        var againstTele = dt.params().view();
-        var last = dt.params().last().type();
+        var againstTele = params.view();
+        var last = params.last().type();
         var subst = new Subst(MutableMap.create());
         for (var iter = tuple.items().iterator(); iter.hasNext(); ) {
           var item = iter.next();
@@ -361,7 +360,7 @@ public final class ExprTycker extends Tycker {
           againstTele = againstTele.drop(1);
           if (againstTele.isNotEmpty()) subst.add(ref, result.wellTyped());
           else if (iter.hasNext()) {
-            yield fail(tuple, term, new TupleError.ElemMismatchError(tuple.sourcePos(), dt.params().size(), tuple.items().size()));
+            yield fail(tuple, term, new TupleError.ElemMismatchError(tuple.sourcePos(), params.size(), tuple.items().size()));
           } else items.append(inherit(item, last.subst(subst)).wellTyped());
         }
         var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
