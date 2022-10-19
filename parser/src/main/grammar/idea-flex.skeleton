@@ -1,3 +1,11 @@
+  // Warning: this skeleton file is incompatible with IntelliJ IDEA
+  //  in the following ways:
+  //
+  // - Compatible with 1.8.2 JFlex -- there seem to be breaking changes.
+  //   - Some fields are removed because JFlex seems to generate them now.
+  //   - IntelliJ IDEA uses 1.7.0-2 JFlex.
+  // - zzBuffer is replaced with a char array, which affects the `reset` method signature.
+  // - The implementation of `yytext` is changed, but the API is not.
 
   /** This character denotes the end of file */
   public static final int YYEOF = -1;
@@ -21,7 +29,7 @@
   };
 
 --- isFinal list
-  /** the input device */
+  /** the input device, not used, but kept for compatibility with jflex */
   private java.io.Reader zzReader;
 
   /** the current state of the DFA */
@@ -31,8 +39,11 @@
   private int zzLexicalState = YYINITIAL;
 
   /** this buffer contains the current text to be matched and is
-      the source of the yytext() string */
-  private CharSequence zzBuffer = "";
+    * the source of the yytext() string.
+    *
+    * Must call reset for a reinitialization!
+    */
+  private char[] zzBuffer = new char[0];
 
   /** the textposition at the last accepting state */
   private int zzMarkedPos;
@@ -47,16 +58,8 @@
       from input */
   private int zzEndRead;
 
-  /**
-   * zzAtBOL == true <=> the scanner is currently at the beginning of a line
-   */
-  private boolean zzAtBOL = true;
-
   /** zzAtEOF == true <=> the scanner is at the EOF */
   private boolean zzAtEOF;
-
-  /** denotes if the user-EOF-code has already been executed */
-  private boolean zzEOFDone;
 
 --- user class code
 
@@ -70,13 +73,18 @@
     return getTokenStart() + yylength();
   }
 
-  public void reset(CharSequence buffer, int start, int end, int initialState) {
+  public void reset(char[] buffer, int start, int end, int initialState) {
     zzBuffer = buffer;
     zzCurrentPos = zzMarkedPos = zzStartRead = start;
     zzAtEOF  = false;
     zzAtBOL = true;
     zzEndRead = end;
     yybegin(initialState);
+  }
+
+  @Deprecated
+  public void reset(CharSequence buffer, int start, int end, int initialState) {
+    reset(buffer.toString().toCharArray(), start, end, initialState);
   }
 
   /**
@@ -112,10 +120,10 @@
   /**
    * Returns the text matched by the current regular expression.
    */
+  @Deprecated
   public final CharSequence yytext() {
-    return zzBuffer.subSequence(zzStartRead, zzMarkedPos);
+    return java.nio.CharBuffer.wrap(zzBuffer, zzStartRead, zzMarkedPos - zzStartRead);
   }
-
 
   /**
    * Returns the character at position {@code pos} from the
@@ -129,7 +137,7 @@
    * @return the character at position pos
    */
   public final char yycharat(int pos) {
-    return zzBuffer.charAt(zzStartRead+pos);
+    return zzBuffer[zzStartRead+pos];
   }
 
 
@@ -200,7 +208,7 @@
     int zzCurrentPosL;
     int zzMarkedPosL;
     int zzEndReadL = zzEndRead;
-    CharSequence zzBufferL = zzBuffer;
+    var zzBufferL = zzBuffer;
 
 --- local declarations
 
