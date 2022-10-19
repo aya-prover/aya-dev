@@ -842,7 +842,7 @@ public final class ExprTycker extends Tycker {
   }
 
   public @NotNull Term checkNotErased(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
-    if (type instanceof FormTerm.Sort) return wellTyped;
+    if (wellTyped instanceof FormTerm.Sort) return wellTyped;
     var sort = type.computeType(state, localCtx);
     if (sort instanceof FormTerm.Prop) return wellTyped;
     return checkNotErased(sourcePos, wellTyped);
