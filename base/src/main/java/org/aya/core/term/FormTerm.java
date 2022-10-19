@@ -165,6 +165,10 @@ public sealed interface FormTerm extends Term {
     @NotNull Term type,
     @NotNull Partial<Term> partial
   ) {
+    public @NotNull Term eta(@NotNull Term term) {
+      return new IntroTerm.PathLam(params(), applyDimsTo(term)).rename();
+    }
+
     public @NotNull Pi computePi() {
       var iTele = params().view().map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
       return (Pi) Pi.make(iTele, type());
@@ -212,7 +216,7 @@ public sealed interface FormTerm extends Term {
     }
 
     public @NotNull Term makeLam(@NotNull Term app) {
-      var xi = params().map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
+      var xi = params.map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
       var elim = new ElimTerm.PathApp(app, xi.map(Param::toArg), this);
       return xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
       // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
