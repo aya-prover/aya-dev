@@ -166,9 +166,9 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       }
       case PrimTerm.Coe coe -> {
         var type = f.apply(coe.type());
-        var restr = coe.restr().map(f).normalize();
+        var restr = coe.restr().map(f);
         if (type == coe.type() && restr == coe.restr()) yield coe;
-        yield new PrimTerm.Coe(type, restr);
+        yield new PrimTerm.Coe(type, restr.normalize());
       }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
