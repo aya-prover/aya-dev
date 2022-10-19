@@ -463,7 +463,8 @@ public final class ExprTycker extends Tycker {
             var body = dt.substBody(resultParam.toTerm());
             yield localCtx.with(resultParam, () -> {
               var rec = inherit(lam.body(), body);
-              return new TermResult(new IntroTerm.Lambda(resultParam, rec.wellTyped()), dt);
+              var lamBody = checkNotErased(lam.body().sourcePos(), rec.wellTyped(), body);
+              return new TermResult(new IntroTerm.Lambda(resultParam, lamBody), dt);
             });
           }
           // Path lambda!
