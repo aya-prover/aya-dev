@@ -25,28 +25,39 @@ public interface UnifyError extends TyckError {
     @NotNull Term expected
   ) {
     var actualDoc = actual.toDoc(options);
-    var buf = MutableList.of(prologue, Doc.par(1, actualDoc));
-    var actualNFDoc = actual.normalize(state(), NormalizeMode.NF).toDoc(options);
-    if (!actualNFDoc.equals(actualDoc))
-      buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualNFDoc))));
     var expectedDoc = expected.toDoc(options);
-    buf.append(epilogue);
-    buf.append(Doc.par(1, expectedDoc));
-    var expectedNFDoc = expected.normalize(state(), NormalizeMode.NF).toDoc(options);
-    if (!expectedNFDoc.equals(expectedDoc))
-      buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expectedNFDoc))));
-    var failureLhs = failureData().lhs().freezeHoles(state()).toDoc(options);
+    var actualNFDoc = nf(actual).toDoc(options);
+    var expectedNFDoc = nf(expected).toDoc(options);
+    var buf = MutableList.of(prologue);
+    compareExprs(epilogue, actualDoc, expectedDoc, actualNFDoc, expectedNFDoc, buf);
+    var failureTermL = failureData().lhs();
+    var failureTermR = failureData().rhs();
+    var failureLhs = failureTermL.toDoc(options);
     if (!failureLhs.equals(actualDoc)
       && !failureLhs.equals(expectedDoc)
       && !failureLhs.equals(actualNFDoc)
       && !failureLhs.equals(expectedNFDoc)
-    ) buf.appendAll(new Doc[]{
-      Doc.english("In particular, we failed to unify"),
-      Doc.par(1, failureLhs),
-      Doc.english("with"),
-      Doc.par(1, failureData().rhs().freezeHoles(state()).toDoc(options))
-    });
+    ) {
+      buf.append(Doc.english("In particular, we failed to unify"));
+      compareExprs(Doc.plain("with"),
+        failureLhs, failureTermR.toDoc(options),
+        nf(failureTermL).toDoc(options),
+        nf(failureTermR).toDoc(options),
+        buf);
+    }
     return Doc.vcat(buf);
+  }
+  @NotNull private Term nf(Term failureTermL) {
+    return failureTermL.normalize(state(), NormalizeMode.NF);
+  }
+  private static void compareExprs(@NotNull Doc mid, Doc actualDoc, Doc expectedDoc, Doc actualNFDoc, Doc expectedNFDoc, MutableList<@NotNull Doc> buf) {
+    buf.append(Doc.par(1, actualDoc));
+    if (!actualNFDoc.equals(actualDoc))
+      buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualNFDoc))));
+    buf.append(mid);
+    buf.append(Doc.par(1, expectedDoc));
+    if (!expectedNFDoc.equals(expectedDoc))
+      buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expectedNFDoc))));
   }
 
   record Type(

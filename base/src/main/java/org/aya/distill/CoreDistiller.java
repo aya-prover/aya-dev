@@ -87,7 +87,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         list.append(Doc.symbol("=>"));
         list.append(bodyDoc);
         var doc = Doc.sep(list);
-        yield checkParen(outer, doc, Outer.AppHead);
+        yield checkParen(outer, doc, Outer.BinOp);
       }
       case FormTerm.Sort term -> {
         var fn = Doc.styled(KEYWORD, term.kind().name());
@@ -165,10 +165,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case IntroTerm.PartEl el -> partial(options, el.partial());
       case PrimTerm.Mula mula -> formula(outer, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());
-      case IntroTerm.PathLam lam -> Doc.sep(Doc.styled(KEYWORD, "\\"),
-        Doc.sep(lam.params().map(BaseDistiller::varDoc)),
-        Doc.symbol("=>"),
-        lam.body().toDoc(options));
+      case IntroTerm.PathLam lam -> checkParen(outer,
+        Doc.sep(Doc.styled(KEYWORD, "\\"),
+          Doc.sep(lam.params().map(BaseDistiller::varDoc)),
+          Doc.symbol("=>"),
+          lam.body().toDoc(options)),
+        Outer.BinOp);
       case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case PrimTerm.Coe coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),

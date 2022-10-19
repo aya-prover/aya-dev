@@ -727,8 +727,14 @@ public final class ExprTycker extends Tycker {
    */
   private Result unifyTyMaybeInsert(@NotNull Term upper, @NotNull Result result, Expr loc) {
     var inst = instImplicits(result, loc.sourcePos());
-    var lower = inst.type();
     var term = inst.wellTyped();
+    var lower = inst.type();
+    if (upper instanceof FormTerm.Path path) {
+      var checked = checkBoundaries(loc, path, new Subst(), term);
+      return lower instanceof FormTerm.Path actualPath
+        ? new TermResult(actualPath.cube().eta(checked.wellTyped()), actualPath)
+        : new TermResult(path.cube().eta(checked.wellTyped()), checked.type);
+    }
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return inst;
     return fail(term.freezeHoles(state), upper, new UnifyError.Type(loc, upper.freezeHoles(state), lower.freezeHoles(state), failureData, state));
