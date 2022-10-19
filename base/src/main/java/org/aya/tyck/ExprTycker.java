@@ -731,9 +731,9 @@ public final class ExprTycker extends Tycker {
     var lower = inst.type();
     if (upper instanceof FormTerm.Path path) {
       var checked = checkBoundaries(loc, path, new Subst(), term);
-      return lower instanceof FormTerm.Path(var cube)
-        ? new TermResult(cube.eta(checked.wellTyped()), checked.type)
-        : checked;
+      return lower instanceof FormTerm.Path actualPath
+        ? new TermResult(actualPath.cube().eta(checked.wellTyped()), actualPath)
+        : new TermResult(path.cube().eta(checked.wellTyped()), checked.type);
     }
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return inst;
