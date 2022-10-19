@@ -124,9 +124,8 @@ public final class ExprTycker extends Tycker {
         var struct = proj.tup();
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
-          if (!(projectee.type() instanceof FormTerm.Sigma sigma))
+          if (!(projectee.type() instanceof FormTerm.Sigma(var telescope)))
             return fail(struct, projectee.type(), BadTypeError.sigmaAcc(state, struct, ix, projectee.type()));
-          var telescope = sigma.params();
           var index = ix - 1;
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
@@ -334,24 +333,24 @@ public final class ExprTycker extends Tycker {
   ensurePiOrPath(@NotNull Term term) throws NotPi {
     term = whnf(term);
     if (term instanceof FormTerm.Pi pi) return Tuple.of(pi, null);
-    if (term instanceof FormTerm.Path path)
-      return Tuple.of(path.cube().computePi(), path.cube());
+    if (term instanceof FormTerm.Path(var cube))
+      return Tuple.of(cube.computePi(), cube);
     else throw new NotPi(term);
   }
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
-      case Expr.TupExpr tuple -> {
+      case Expr.TupExpr (var pos, var it) -> {
         var items = MutableList.<Term>create();
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
-        if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(tuple), tuple);
-        if (!(typeWHNF instanceof FormTerm.Sigma dt))
-          yield fail(tuple, term, BadTypeError.sigmaCon(state, tuple, typeWHNF));
-        var againstTele = dt.params().view();
-        var last = dt.params().last().type();
+        if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(expr), expr);
+        if (!(typeWHNF instanceof FormTerm.Sigma(var params)))
+          yield fail(expr, term, BadTypeError.sigmaCon(state, expr, typeWHNF));
+        var againstTele = params.view();
+        var last = params.last().type();
         var subst = new Subst(MutableMap.create());
-        for (var iter = tuple.items().iterator(); iter.hasNext(); ) {
+        for (var iter = it.iterator(); iter.hasNext(); ) {
           var item = iter.next();
           var first = againstTele.first().subst(subst);
           var result = inherit(item, first.type());
@@ -361,7 +360,7 @@ public final class ExprTycker extends Tycker {
           againstTele = againstTele.drop(1);
           if (againstTele.isNotEmpty()) subst.add(ref, result.wellTyped());
           else if (iter.hasNext()) {
-            yield fail(tuple, term, new TupleError.ElemMismatchError(tuple.sourcePos(), dt.params().size(), tuple.items().size()));
+            yield fail(expr, term, new TupleError.ElemMismatchError(pos, params.size(), it.size()));
           } else items.append(inherit(item, last.subst(subst)).wellTyped());
         }
         var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
@@ -414,18 +413,17 @@ public final class ExprTycker extends Tycker {
           default -> fail(lam, term, BadTypeError.pi(state, lam, term));
         };
       }
-      case Expr.LitIntExpr lit -> {
+      case Expr.LitIntExpr (var pos, var end) -> {
         var ty = whnf(term);
         if (ty instanceof PrimTerm.Interval) {
-          var end = lit.integer();
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT, ty);
-          else yield fail(expr, new PrimError.BadInterval(lit.sourcePos(), lit.integer()));
+          else yield fail(expr, new PrimError.BadInterval(pos, end));
         }
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
           var shape = shapeFactory.find(data);
           if (shape.isDefined())
-            yield new TermResult(new LitTerm.ShapedInt(lit.integer(), shape.get(), dataCall), term);
+            yield new TermResult(new LitTerm.ShapedInt(end, shape.get(), dataCall), term);
         }
         if (ty instanceof CallTerm.Hole hole) {
           var nat = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
@@ -433,7 +431,7 @@ public final class ExprTycker extends Tycker {
           // def foo : Option Nat1 => some 0
           // def bar : Option Nat2 => some 1
           if (nat.sizeGreaterThan(1))
-            yield new TermResult(new LitTerm.ShapedInt(lit.integer(), AyaShape.NAT_SHAPE, hole), term);
+            yield new TermResult(new LitTerm.ShapedInt(end, AyaShape.NAT_SHAPE, hole), term);
           // fallthrough: When there's only one Nat, solve the hole now.
           // Note: if no Nat was found, errors will be reported in `synthesize(expr)`
         }

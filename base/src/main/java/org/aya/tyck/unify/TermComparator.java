@@ -298,9 +298,9 @@ public sealed abstract class TermComparator permits Unifier {
       // In this case, both sides have the same type (I hope)
       case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
         if (lhs instanceof IntroTerm.PathLam lambda) return ctx.withIntervals(lambda.params().view(), () -> {
-          if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
-            TermComparator.withIntervals(lambda.params().view(), rambda.params().view(), lr, rl, () ->
-              compare(lambda.body(), rambda.body(), lr, rl, path.cube().type())));
+          if (rhs instanceof IntroTerm.PathLam(var rparams, var rbody)) return ctx.withIntervals(rparams.view(), () ->
+            TermComparator.withIntervals(lambda.params().view(), rparams.view(), lr, rl, () ->
+              compare(lambda.body(), rbody, lr, rl, path.cube().type())));
           return comparePathLamBody(rhs, lr, rl, lambda, path.cube());
         });
         if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
@@ -368,34 +368,34 @@ public sealed abstract class TermComparator permits Unifier {
         throw new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(DistillerOptions.debug()).debugRender());
       case RefTerm.MetaPat metaPat -> {
         var lhsRef = metaPat.ref();
-        if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
+        if (preRhs instanceof RefTerm.MetaPat(var rRef) && lhsRef == rRef) yield lhsRef.type();
         else yield null;
       }
       case RefTerm lhs -> preRhs instanceof RefTerm rhs && (
         rl.map.getOrDefault(rhs.var(), rhs).var() == lhs.var() ||
           lr.map.getOrDefault(lhs.var(), lhs).var() == rhs.var()
       ) ? ctx.get(lhs.var()) : null;
-      case ElimTerm.App lhs -> {
-        if (!(preRhs instanceof ElimTerm.App rhs)) yield null;
-        var preFnType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
+      case ElimTerm.App(var lOf, var lArg) -> {
+        if (!(preRhs instanceof ElimTerm.App(var rOf, var rArg))) yield null;
+        var preFnType = compareUntyped(lOf, rOf, lr, rl);
         if (!(preFnType instanceof FormTerm.Pi fnType)) yield null;
-        if (!compare(lhs.arg().term(), rhs.arg().term(), lr, rl, fnType.param().type())) yield null;
-        yield fnType.substBody(lhs.arg().term());
+        if (!compare(lArg.term(), rArg.term(), lr, rl, fnType.param().type())) yield null;
+        yield fnType.substBody(lArg.term());
       }
       case ElimTerm.PathApp lhs -> {
         if (!(preRhs instanceof ElimTerm.PathApp rhs)) yield null;
         var prePathType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(prePathType instanceof FormTerm.Path path)) yield null;
+        if (!(prePathType instanceof FormTerm.Path(var cube))) yield null;
         var happy = lhs.args().zipView(rhs.args()).allMatch(t ->
           compare(t._1.term(), t._2.term(), lr, rl, null));
-        yield happy ? path.cube().type() : null;
+        yield happy ? cube.type() : null;
       }
       case ElimTerm.Proj lhs -> {
         if (!(preRhs instanceof ElimTerm.Proj rhs)) yield null;
         var preTupType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(preTupType instanceof FormTerm.Sigma tupType)) yield null;
+        if (!(preTupType instanceof FormTerm.Sigma(var tele))) yield null;
         if (lhs.ix() != rhs.ix()) yield null;
-        var params = tupType.params().view();
+        var params = tele.view();
         var subst = new Subst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
           var l = ElimTerm.proj(lhs, i);
@@ -407,32 +407,32 @@ public sealed abstract class TermComparator permits Unifier {
         yield params.last().subst(subst).type();
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
-      case FormTerm.Pi lhs -> {
+      case FormTerm.Pi(var lParam, var lBody) -> {
         if (!(preRhs instanceof FormTerm.Pi rhs)) yield null;
-        yield checkParam(lhs.param(), rhs.param(), null, lr, rl, () -> null, () -> {
-          var bodyIsOk = compare(lhs.body(), rhs.body(), lr, rl, null);
+        yield checkParam(lParam, rhs.param(), null, lr, rl, () -> null, () -> {
+          var bodyIsOk = compare(lBody, rhs.body(), lr, rl, null);
           if (!bodyIsOk) return null;
           return FormTerm.Type.ZERO;
         });
       }
-      case FormTerm.Sigma lhs -> {
-        if (!(preRhs instanceof FormTerm.Sigma rhs)) yield null;
-        yield checkParams(lhs.params().view(), rhs.params().view(), lr, rl, () -> null, () -> FormTerm.Type.ZERO);
+      case FormTerm.Sigma(var lParams) -> {
+        if (!(preRhs instanceof FormTerm.Sigma(var rParams))) yield null;
+        yield checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, () -> FormTerm.Type.ZERO);
       }
       case FormTerm.Sort lhs -> {
         if (!(preRhs instanceof FormTerm.Sort rhs)) yield null;
         if (!compareSort(lhs, rhs)) yield null;
         yield (cmp == Ordering.Lt ? lhs : rhs).succ();
       }
-      case FormTerm.PartTy lhs -> {
-        if (!(preRhs instanceof FormTerm.PartTy rhs)) yield null;
-        var happy = compare(lhs.type(), rhs.type(), lr, rl, null)
-          && compareRestr(lhs.restr(), rhs.restr());
+      case FormTerm.PartTy(var lTy, var lR) -> {
+        if (!(preRhs instanceof FormTerm.PartTy(var rTy, var rR))) yield null;
+        var happy = compare(lTy, rTy, lr, rl, null)
+          && compareRestr(lR, rR);
         yield happy ? FormTerm.Type.ZERO : null;
       }
-      case FormTerm.Path lhs -> {
-        if (!(preRhs instanceof FormTerm.Path rhs)) yield null;
-        yield compareCube(lhs.cube(), rhs.cube(), lr, rl) ? FormTerm.Type.ZERO : null;
+      case FormTerm.Path(var lCube) -> {
+        if (!(preRhs instanceof FormTerm.Path(var rCube))) yield null;
+        yield compareCube(lCube, rCube, lr, rl) ? FormTerm.Type.ZERO : null;
       }
       case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Type.ZERO : null;
       case PrimTerm.Mula lhs -> {
