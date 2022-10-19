@@ -118,26 +118,31 @@ public interface Shaped<T> {
     @NotNull T makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, T value, T last);
     @NotNull T destruct(@NotNull ImmutableSeq<T> repr);
 
-    // TODO[hoshino]: I hope that I have a `SomeComparator.compare : T -> O -> Boolean`
-    //                TermComparator : Term -> Term -> Boolean
-    //                PatUnifier     : Pat  -> Pat  -> Boolean
-    //                PatMatcher     : Pat  -> Term -> Boolean
     default <O> boolean compareShape(@NotNull TermComparator comparator, @NotNull Shaped<O> other) {
       if (shape() != other.shape()) return false;
       if (!(other instanceof Shaped.List<?> otherData)) return false;
-      return comparator.compare(type(), otherData.type(), null);   // TODO[hoshino]: I don't know whether it is true.
+      return comparator.compare(type(), otherData.type(), null);   // TODO[hoshino]: I don't know whether it is correct.
     }
 
+    /**
+     * Comparing two List
+     *
+     * @param other      another list
+     * @param comparator a comparator that should compare the subterms between two List.
+     * @return true if they matches (a term matches a pat or two terms are equivalent,
+     * which depends on the type parameters {@link T} and {@link O}), false if otherwise.
+     */
     default <O> boolean compareUntyped(@NotNull Shaped.List<O> other, @NotNull BiFunction<T, O, Boolean> comparator) {
+      var lhsRepr = repr();
       var rhsRepr = other.repr();
-      if (! repr().sizeEquals(rhsRepr)) return false;
-      return repr().view().zip(rhsRepr)
+      if (!lhsRepr.sizeEquals(rhsRepr)) return false;    // the size should equal.
+      return lhsRepr.zip(rhsRepr)
         .foldLeft(true, (l, tuple) ->
           l && comparator.apply(tuple._1, tuple._2));
     }
 
     /// region Copied from Shaped.Nat
-    /// FIXME: see above
+    /// FIXME: see above, maybe move these to Shaped.Data
 
     @Override
     default @NotNull T constructorForm(@Nullable TyckState state) {
