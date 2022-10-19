@@ -18,9 +18,10 @@ class JFlexTask extends DefaultTask implements Runnable {
   @InputFile File skel
 
   @TaskAction void run() {
-    OptionUtils.skeleton = skel
+    OptionUtils.setSkeleton(skel)
+    Options.setRootDirectory(project.rootDir)
     Options.encoding = StandardCharsets.UTF_8
-    OptionUtils.dir = outputDir
+    OptionUtils.setDir(outputDir)
     Options.no_minimize = false
     Options.no_backup = true
     Options.unused_warning = true
