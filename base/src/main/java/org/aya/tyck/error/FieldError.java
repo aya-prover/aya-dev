@@ -3,10 +3,8 @@
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.Expr;
 import org.aya.core.def.FieldDef;
 import org.aya.distill.BaseDistiller;
-import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
@@ -38,9 +36,9 @@ public sealed interface FieldError extends TyckError {
   }
 
   record UnknownField(
-    @Override @NotNull Expr.ProjExpr expr,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull String name
-  ) implements FieldError, ExprProblem {
+  ) implements FieldError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Unknown field"),

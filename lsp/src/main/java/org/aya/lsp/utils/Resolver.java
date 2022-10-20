@@ -103,7 +103,7 @@ public interface Resolver {
 
   /**
    * Traverse all referring terms including:
-   * {@link Expr.RefExpr}, {@link Expr.ProjExpr}, {@link Expr.NewExpr}
+   * {@link Expr.RefExpr}, {@link Expr.ProjExpr}, {@link Expr.CoeExpr}, {@link Expr.NewExpr}
    * and {@link Pattern} and check against a given condition implemented in
    * {@link ReferringResolver#check(P, AnyVar, SourcePos)}
    */
@@ -122,11 +122,10 @@ public interface Resolver {
       switch (expr) {
         case Expr.RefExpr ref -> check(pp, ref.resolvedVar(), ref.sourcePos());
         case Expr.ProjExpr proj -> {
-          if (proj.ix().isRight() && proj.resolvedIx() != null) {
-            var pos = proj.ix().getRightValue();
-            check(pp, proj.resolvedIx(), pos.sourcePos());
-          }
+          if (proj.ix().isRight() && proj.resolvedVar() != null)
+            check(pp, proj.resolvedVar(), proj.ix().getRightValue().sourcePos());
         }
+        case Expr.CoeExpr coe -> check(pp, coe.resolvedVar(), coe.id().sourcePos());
         case Expr.NewExpr neo -> neo.fields().forEach(field -> {
           field.bindings().forEach(binding ->
             check(pp, binding.data(), binding.sourcePos()));

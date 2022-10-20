@@ -152,6 +152,7 @@ public record AyaSccTycker(
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
     decideTyckResult(fn, fn, tycker.simpleFn(newExprTycker(), fn));
+    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
   private void check(@NotNull TyckOrder tyckOrder) {

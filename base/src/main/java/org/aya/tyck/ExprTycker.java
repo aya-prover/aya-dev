@@ -24,6 +24,7 @@ import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -139,8 +141,8 @@ public final class ExprTycker extends Tycker {
           var structCore = structCall.ref().core;
           if (structCore == null) throw new UnsupportedOperationException("TODO");
           // TODO[ice]: instantiate the type
-          if (!(proj.resolvedIx() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
-            return fail(proj, new FieldError.UnknownField(proj, fieldName));
+          if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
+            return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
 
           var structSubst = DeltaExpander.buildSubst(structCore.telescope(), structCall.args());
@@ -153,6 +155,45 @@ public final class ExprTycker extends Tycker {
       case Expr.TupExpr tuple -> {
         var items = tuple.items().map(this::synthesize);
         yield new TermResult(new IntroTerm.Tuple(items.map(Result::wellTyped)), new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
+      }
+      case Expr.CoeExpr coe -> {
+        assert coe.resolvedVar() instanceof DefVar<?, ?> defVar
+          && defVar.core instanceof PrimDef def && def.id == PrimDef.ID.COE : "desugar bug";
+        var defVar = coe.resolvedVar();
+        var mockApp = new Expr.AppExpr(coe.sourcePos(), new Expr.AppExpr(coe.sourcePos(),
+          new Expr.RefExpr(coe.id().sourcePos(), defVar),
+          new Expr.NamedArg(true, coe.type())),
+          new Expr.NamedArg(true, coe.restr()));
+        var res = synthesize(mockApp);
+        if (whnf(res.wellTyped()) instanceof PrimTerm.Coe(var type, var restr) && !(type instanceof ErrorTerm)) {
+          var bad = new Object() {
+            Term typeSubst;
+            boolean stuck = false;
+          };
+          var freezes = CofThy.conv(restr, new Subst(), subst -> {
+            // normalizes to NF in case the `type` was eta-expanded from a definition.
+            var typeSubst = type.subst(subst).normalize(state, NormalizeMode.NF);
+            // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
+            // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
+            // See also: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
+            Function<Integer, Boolean> post = usages -> {
+              if (usages != 0) bad.typeSubst = typeSubst;
+              return usages == 0;
+            };
+            return switch (typeSubst) {
+              case IntroTerm.Lambda(var param, var body) -> post.apply(body.findUsages(param.ref()));
+              case IntroTerm.PathLam(var params, var body) ->
+                post.apply(params.view().map(body::findUsages).foldLeft(0, Integer::sum));
+              default -> {
+                bad.stuck = true;
+                yield false;
+              }
+            };
+          });
+          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(
+            coe.type(), type, bad.typeSubst, restr, bad.stuck));
+        }
+        yield res;
       }
       case Expr.AppExpr appE -> {
         var f = synthesize(appE.function());

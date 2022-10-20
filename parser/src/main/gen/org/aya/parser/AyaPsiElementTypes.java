@@ -1,9 +1,10 @@
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
-import com.intellij.lang.ASTNode;
 
 public interface AyaPsiElementTypes {
 
@@ -147,6 +148,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_FIXL = new AyaPsiTokenType("fixl");
   IElementType KW_FIXR = new AyaPsiTokenType("fixr");
   IElementType KW_FORALL = new AyaPsiTokenType("forall");
+  IElementType KW_FREEZE = new AyaPsiTokenType("freeze");
   IElementType KW_HIDING = new AyaPsiTokenType("hiding");
   IElementType KW_IMPORT = new AyaPsiTokenType("import");
   IElementType KW_IN = new AyaPsiTokenType("in");

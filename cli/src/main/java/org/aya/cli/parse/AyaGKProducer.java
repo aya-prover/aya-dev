@@ -656,15 +656,20 @@ public record AyaGKProducer(
     return Tuple.of(exprs.get(0), exprs.get(1));
   }
 
-  private Expr.@NotNull ProjExpr buildProj(
+  private @NotNull Expr buildProj(
     @NotNull SourcePos sourcePos, @NotNull Expr projectee,
     @NotNull GenericNode<?> fix
   ) {
     var number = fix.peekChild(NUMBER);
-    return new Expr.ProjExpr(sourcePos, projectee,
-      number != null
-        ? Either.left(Integer.parseInt(number.tokenText()))
-        : Either.right(qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID))));
+    if (number != null) return new Expr.ProjExpr(sourcePos, projectee, Either.left(
+      Integer.parseInt(number.tokenText())));
+    var qid = qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID));
+    var exprs = fix.childrenOfType(EXPR).toImmutableSeq();
+    var coeLeft = exprs.getOption(0);
+    var restr = exprs.getOption(1);
+    return new Expr.RawProjExpr(sourcePos, projectee, qid, null,
+      coeLeft.map(this::expr).getOrNull(),
+      restr.map(this::expr).getOrNull());
   }
 
   public static @NotNull Expr buildPi(
@@ -726,9 +731,9 @@ public record AyaGKProducer(
       var patternsNode = node.peekChild(PATTERNS);    // We allowed empty list pattern (nil)
       var patterns = patternsNode != null
         ? patternsNode
-          .childrenOfType(PATTERN)
-          .map(x -> x.child(ATOM_PATTERNS))
-          .map(this::atomPatterns)
+        .childrenOfType(PATTERN)
+        .map(x -> x.child(ATOM_PATTERNS))
+        .map(this::atomPatterns)
         : SeqView.<BiFunction<Boolean, LocalVar, Pattern>>empty();
 
       var weakId = node.peekChild(WEAK_ID);

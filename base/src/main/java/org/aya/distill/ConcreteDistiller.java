@@ -104,6 +104,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       }
       case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
         Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
+      case Expr.RawProjExpr expr -> Doc.sepNonEmpty(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
+          Doc.plain(expr.id().join())), expr.coeLeft() != null ? term(Outer.AppSpine, expr.coeLeft()) : Doc.empty(),
+        expr.restr() != null ? Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, expr.restr())) : Doc.empty());
+      case Expr.CoeExpr expr -> visitCalls(expr.resolvedVar(), PRIM_CALL,
+        ImmutableSeq.of(new Arg<>(expr.type(), true), new Arg<>(expr.restr(), true)),
+        outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case Expr.UnresolvedExpr expr -> Doc.plain(expr.name().join());
       case Expr.RefExpr expr -> {
         var ref = expr.resolvedVar();
@@ -360,9 +366,9 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     return doBind.var() == LocalVar.IGNORED
       ? term(Outer.Free, doBind.expr())
       : Doc.sep(
-          varDoc(doBind.var()),
-          Doc.symbol("<-"),
-          term(Outer.Free, doBind.expr()));
+        varDoc(doBind.var()),
+        Doc.symbol("<-"),
+        term(Outer.Free, doBind.expr()));
   }
 
   public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
@@ -394,10 +400,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     if (loosers.isEmpty() && tighters.isEmpty()) return Doc.empty();
 
     if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
-      Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "tighter"),
+      Doc.styled(KEYWORD, "tighter"),
       Doc.commaList(tighters.view().map(BaseDistiller::defVar)))));
     else if (tighters.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
-      Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "looser"),
+      Doc.styled(KEYWORD, "looser"),
       Doc.commaList(loosers.view().map(BaseDistiller::defVar)))));
     return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.sep(
       Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::defVar)),
