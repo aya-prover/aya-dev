@@ -21,9 +21,10 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /**
- * <h2> What should I do if I create a new Shape? </h2>
+ * <h2> What should I do after I creating a new Shape? </h2>
  * <ul>
- *   <li>impl your Shape, see {@link org.aya.core.term.LitTerm.ShapedInt}, and do everything you should after you creating a Term.</l1>
+ *   <li>impl your Shape, see {@link org.aya.core.term.LitTerm.ShapedInt},
+ *   and do everything you should after you creating a {@link Term}/{@link Pat}.</l1>
  *   <li>impl TermComparator, see {@link TermComparator#doCompareUntyped(Term, Term, TermComparator.Sub, TermComparator.Sub)}</li>
  *   <li>impl PatMatcher, see {@link org.aya.core.pat.PatMatcher#match(Pat, Term)}</li>
  *   <li>impl PatUnifier, see {@link org.aya.core.pat.PatUnify#unify(Pat, Pat)}</li>
