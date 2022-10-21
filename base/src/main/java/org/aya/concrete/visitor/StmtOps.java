@@ -83,8 +83,8 @@ public interface StmtOps<P> extends ExprTraversal<P> {
         new Pattern.Ctor(pos, licit, resolved, params.map(p -> visitPattern(p, pp)), as);
       case Pattern.Tuple(var pos, var licit, var patterns, var as) ->
         new Pattern.Tuple(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
-      case Pattern.List(var pos, var licit, var patterns, var as, var nilCtor, var consCtor) ->
-        new Pattern.List(pos, licit, patterns.map(p -> visitPattern(p, pp)), as, visitPattern(nilCtor, pp), visitPattern(consCtor, pp));
+      case Pattern.List(var pos, var licit, var patterns, var as) ->
+        new Pattern.List(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
       default -> pattern;
     };
   }

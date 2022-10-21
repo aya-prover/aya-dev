@@ -12,7 +12,6 @@ import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.resolve.context.Context;
 import org.aya.util.ForLSP;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
@@ -101,10 +100,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @NotNull SourcePos sourcePos,
     boolean explicit,
     @NotNull ImmutableSeq<Pattern> elements,
-    @Nullable LocalVar as,
-    // dirty!!
-    @NotNull Pattern nilName,
-    @NotNull Pattern consName
+    @Nullable LocalVar as
   ) implements Pattern {
   }
 
