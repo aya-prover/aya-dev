@@ -164,7 +164,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
 
         yield shaped.with((nil, cons, dataArg) -> Doc.sep(
           linkListLit(Doc.symbol("["), nil.ref(), CON_CALL),
-          Doc.join(linkListLit(Doc.COMMA, cons.ref(), CON_CALL)),
+          Doc.join(linkListLit(Doc.COMMA, cons.ref(), CON_CALL), subterms),
           linkListLit(Doc.symbol("]"), nil.ref(), CON_CALL)
         ), () -> Doc.sep(
           Doc.symbol("["),
