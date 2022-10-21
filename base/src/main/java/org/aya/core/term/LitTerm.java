@@ -7,7 +7,6 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.generic.Arg;
 import org.aya.generic.Shaped;
-import org.aya.tyck.unify.TermComparator;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface LitTerm extends Term {

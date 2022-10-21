@@ -169,7 +169,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         ), () -> Doc.sep(
           Doc.symbol("["),
           Doc.commaList(subterms),
-          Doc.symbol("]")));
+          Doc.symbol("]"))
+        );
       }
       case PrimTerm.Str str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
