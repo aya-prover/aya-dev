@@ -5,6 +5,7 @@ package org.aya.generic;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.TriFunction;
 import org.aya.core.def.CtorDef;
+import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
@@ -19,6 +20,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
+/**
+ * <h2> What should I do if I create a new Shape? </h2>
+ * <ul>
+ *   <l1>impl your Shape, see {@link org.aya.core.term.LitTerm.ShapedInt}, and do everything you should after you creating a Term.</l1>
+ *   <li>impl TermComparator, see {@link TermComparator#doCompareUntyped(Term, Term, TermComparator.Sub, TermComparator.Sub)}</li>
+ *   <li>impl PatMatcher, see {@link org.aya.core.pat.PatMatcher#match(Pat, Term)}</li>
+ *   <li>impl PatUnifier, see {@link org.aya.core.pat.PatUnify#unify(Pat, Pat)}</li>
+ * </ul>
+ * @param <T>
+ */
 public interface Shaped<T> {
   @NotNull AyaShape shape();
   @NotNull Term type();
