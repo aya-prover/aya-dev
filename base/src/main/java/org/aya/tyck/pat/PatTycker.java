@@ -215,7 +215,7 @@ public final class PatTycker {
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
-          if (shape.isDefined()) yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
+          if (shape.isDefined() && shape.get() == AyaShape.NAT_SHAPE) yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
         }
         yield withError(new LiteralError.BadLitPattern(num.sourcePos(), num.number(), term), num, term);
       }
@@ -258,7 +258,7 @@ public final class PatTycker {
           }
         }
 
-        // TODO[hoshino]
+        // TODO[hoshino]: create a new LiteralError
         yield withError(new LiteralError.BadLitPattern(list.sourcePos(), -1, term), list, term);
       }
       case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
