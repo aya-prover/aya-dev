@@ -272,7 +272,7 @@ public final class ExprTycker extends Tycker {
       });
       case Expr.Array arr when arr.arrayBlock().isRight() -> {
         var arrayBlock = arr.arrayBlock().getRightValue();
-        var elements = arrayBlock.exprList().view();
+        var elements = arrayBlock.exprList();
 
         // find def
         var defs = shapeFactory.findImpl(AyaShape.LIST_SHAPE);
@@ -293,7 +293,8 @@ public final class ExprTycker extends Tycker {
         for (var element : elements) {
           var result = inherit(element, hole._1);
 
-          if (result.wellTyped() instanceof ErrorTerm || result.type() instanceof ErrorTerm) yield result;
+          // imkiva   : It's ok to push ErrorTerms to that list and typecheck the remaining elements.
+          // future me: Right, the `fail` will `report` the error.
           wellTypeds.append(result.wellTyped());
         }
 
