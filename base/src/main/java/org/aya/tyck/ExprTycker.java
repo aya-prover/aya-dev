@@ -293,8 +293,8 @@ public final class ExprTycker extends Tycker {
         for (var element : elements) {
           var result = inherit(element, hole._1);
 
-          // imkiva   : It's ok to push ErrorTerms to that list and typecheck the remaining elements.
-          // future me: Right, the `fail` will `report` the error.
+          // imkiva        : It's ok to push ErrorTerms to that list and typecheck the remaining elements.
+          // future hoshino: Right, the `fail` will `report` the error.
           wellTypeds.append(result.wellTyped());
         }
 

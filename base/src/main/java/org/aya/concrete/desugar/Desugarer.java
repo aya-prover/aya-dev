@@ -146,25 +146,6 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
   @Override
   public @NotNull Pattern visitPattern(@NotNull Pattern pattern, Unit pp) {
     return switch (pattern) {
-      case Pattern.List list -> {
-        assert list.nilName() instanceof Pattern.Ctor : "resolver bug";
-        assert list.consName() instanceof Pattern.Ctor : "resolver bug";
-        var nilCtor = (Pattern.Ctor) list.nilName();
-        var consCtor = (Pattern.Ctor) list.consName();
-
-        var newPattern = list.elements().view()
-          .map(x -> visitPattern(x, pp))
-          .foldRight(nilCtor, (e, right) -> {
-            // e : current element
-            // right : right element
-            // Goal : consCtor e right
-            return new Pattern.Ctor(consCtor.sourcePos(), consCtor.explicit(), consCtor.resolved(),
-              ImmutableSeq.of(e, right), null);
-          });
-
-        // replace newPattern.as() with list.as()
-        yield visitPattern(new Pattern.Ctor(newPattern.sourcePos(), newPattern.explicit(), newPattern.resolved(), newPattern.params(), list.as()), pp);
-      }
       case Pattern.BinOpSeq(var pos, var seq, var as, var explicit) -> {
         assert seq.isNotEmpty() : pos.toString();
         var pat = new BinPatternParser(explicit, resolveInfo, seq.view()).build(pos);
