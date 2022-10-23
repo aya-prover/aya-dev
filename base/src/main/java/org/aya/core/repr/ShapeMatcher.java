@@ -12,6 +12,7 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
@@ -51,7 +52,14 @@ public record ShapeMatcher(
     if (shape instanceof CodeShape.TermShape.Any) return true;
     if (shape instanceof CodeShape.TermShape.Call call && term instanceof CallTerm callTerm) {
       var superLevel = def.getOrNull(call.superLevel());
-      return superLevel == callTerm.ref();
+      if (superLevel != callTerm.ref()) return false;                      // implies null check
+      if (call.args().size() != callTerm.args().size())
+        return false;      // TODO[hoshino]: do we also match implicit arguments?
+
+      // match each arg
+      return call.args().allMatchWith(callTerm.args(),
+        // match each term, but lazy
+        (l, r) -> matchTerm(l, r.term()));
     }
     if (shape instanceof CodeShape.TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
       var superLevel = def.getOrNull(ref.superLevel());
@@ -60,6 +68,13 @@ public record ShapeMatcher(
       if (tele == null) return false;
       var teleVar = teleSubst.getOrNull(tele.ref());
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
+    }
+    if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof FormTerm.Sort sortTerm) {
+      // kind is null -> any sort
+      if (sort.kind() == null) return true;
+
+      // TODO[hoshino]: match kind, but I don't know how to do.
+      throw new UnsupportedOperationException("TODO");
     }
     return false;
   }

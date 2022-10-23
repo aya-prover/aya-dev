@@ -22,6 +22,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.EndoFunctor;
@@ -35,7 +36,6 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.error.LiteralError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
@@ -213,11 +213,30 @@ public final class PatTycker {
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
-          if (shape.isDefined()) yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
+          if (shape.isDefined() && shape.get() == AyaShape.NAT_SHAPE)
+            yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
         }
-        yield withError(new LiteralError.BadLitPattern(num.sourcePos(), num.number(), term), num, term);
+        yield withError(new PatternProblem.BadLitPattern(num, term), num, term);
       }
-      case Pattern.List list -> throw new InternalException("List patterns should be desugared");
+      case Pattern.List list -> {
+        // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !
+        // Note: this is a special case (maybe), If there is another similar requirement,
+        //       a PatternDesugarer is recommended.
+
+        var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
+        if (ty instanceof CallTerm.Data dataCall) {
+          var data = dataCall.ref().core;
+          var shape = exprTycker.shapeFactory.find(data);
+
+          if (shape.isDefined() && shape.get() == AyaShape.LIST_SHAPE) {
+            yield doTyck(new Pattern.FakeShapedList(
+              list.sourcePos(), list.explicit(), list.as(),
+              list.elements(), AyaShape.LIST_SHAPE, ty).constructorForm(), term);
+          }
+        }
+
+        yield withError(new PatternProblem.BadLitPattern(list, term), list, term);
+      }
       case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
   }

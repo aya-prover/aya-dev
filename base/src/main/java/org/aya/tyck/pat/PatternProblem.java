@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -106,7 +106,8 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record TooManyImplicitPattern(@Override @NotNull Pattern pattern, @NotNull Term.Param param) implements PatternProblem {
+  record TooManyImplicitPattern(@Override @NotNull Pattern pattern,
+                                @NotNull Term.Param param) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("There are too many implicit patterns:"),
@@ -119,5 +120,17 @@ public sealed interface PatternProblem extends Problem {
 
   @Override default @NotNull Severity level() {
     return Severity.ERROR;
+  }
+
+  record BadLitPattern(
+    @NotNull Pattern pattern,
+    @NotNull Term type
+  ) implements PatternProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(Doc.english("The literal"),
+        Doc.par(1, pattern.toDoc(options)),
+        Doc.english("cannot be encoded as a term of type:"),
+        Doc.par(1, type.toDoc(options)));
+    }
   }
 }

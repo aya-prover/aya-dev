@@ -147,16 +147,19 @@ public sealed interface SerDef extends Serializable {
 
   /** serialized {@link AyaShape} */
   enum SerAyaShape implements Serializable {
-    NAT;
+    NAT,
+    LIST;
 
     public @NotNull AyaShape de() {
       return switch (this) {
         case NAT -> AyaShape.NAT_SHAPE;
+        case LIST -> AyaShape.LIST_SHAPE;
       };
     }
 
     public static @NotNull SerAyaShape serialize(@NotNull AyaShape shape) {
       if (shape == AyaShape.NAT_SHAPE) return NAT;
+      if (shape == AyaShape.LIST_SHAPE) return LIST;
       throw new InternalException("unexpected shape: " + shape.getClass());
     }
   }

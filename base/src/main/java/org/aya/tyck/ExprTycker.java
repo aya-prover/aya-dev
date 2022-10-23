@@ -269,6 +269,27 @@ public final class ExprTycker extends Tycker {
         var cube = new FormTerm.Cube(path.params(), type.wellTyped(), partial);
         return new TermResult(new FormTerm.Path(cube), type.type());
       });
+      case Expr.Array arr when arr.arrayBlock().isRight() -> {
+        var arrayBlock = arr.arrayBlock().getRightValue();
+        var elements = arrayBlock.exprList();
+
+        // find def
+        var defs = shapeFactory.findImpl(AyaShape.LIST_SHAPE);
+        if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
+        if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs));
+        var def = (DataDef) defs.first();
+
+        // preparing
+        var dataParam = def.telescope().first();
+        var sort = dataParam.type();    // the sort of type below.
+        var hole = localCtx.freshHole(sort, arr.sourcePos());
+        var type = new CallTerm.Data(def.ref(), 0, ImmutableSeq.of(
+          new Arg<>(hole._1, dataParam.explicit())));
+
+        // do type check
+        var results = elements.map(element -> inherit(element, hole._1).wellTyped());
+        yield new TermResult(new LitTerm.ShapedList(results, AyaShape.LIST_SHAPE, type), type);
+      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -381,7 +402,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
-      case Expr.TupExpr (var pos, var it) -> {
+      case Expr.TupExpr(var pos, var it) -> {
         var items = MutableList.<Term>create();
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
@@ -454,7 +475,7 @@ public final class ExprTycker extends Tycker {
           default -> fail(lam, term, BadTypeError.pi(state, lam, term));
         };
       }
-      case Expr.LitIntExpr (var pos, var end) -> {
+      case Expr.LitIntExpr(var pos, var end) -> {
         var ty = whnf(term);
         if (ty instanceof PrimTerm.Interval) {
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT, ty);

@@ -158,13 +158,11 @@ public interface ExprView {
         },
         right -> {
           var exprs = right.exprList().map(this::commit);
-          var nilCtor = commit(right.nilCtor());
-          var consCtor = commit(right.consCtor());
 
-          if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
+          if (exprs.sameElements(right.exprList())) {
             return arrayExpr;
           } else {
-            return Expr.Array.newList(arrayExpr.sourcePos(), exprs, nilCtor, consCtor);
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs);
           }
         }
       );

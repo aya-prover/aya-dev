@@ -226,7 +226,7 @@ public record AyaSccTycker(
       .filter(u -> selfReferencing(resolveInfo.depGraph(), u))
       .map(TyckOrder::unit);
     if (recDefs.isEmpty()) return;
-    // TODO: terck other definitions
+    // TODO: positivity check for data/record definitions
     var fn = recDefs.filterIsInstance(TeleDecl.FnDecl.class)
       .map(f -> f.ref.core);
     terckRecursiveFn(fn);

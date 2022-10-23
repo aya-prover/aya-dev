@@ -82,6 +82,11 @@ public record Serializer(@NotNull Serializer.State state) {
     return switch (term) {
       case LitTerm.ShapedInt lit ->
         new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
+      case LitTerm.ShapedList lit ->
+        new SerTerm.ShapedList(
+          lit.repr().map(this::serialize).toImmutableSeq(),
+          SerDef.SerAyaShape.serialize(lit.shape()),
+          serialize(lit.type()));
       case PrimTerm.Mula end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case PrimTerm.Str str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));

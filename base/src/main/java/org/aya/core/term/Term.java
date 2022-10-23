@@ -135,6 +135,15 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (type == shaped.type()) yield shaped;
         yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
       }
+      case LitTerm.ShapedList shaped -> {
+        var type = f.apply(shaped.type());
+        var elements = shaped.repr().map(f).toImmutableSeq();
+
+        if (type == shaped.type()
+          && elements.sameElements(shaped.repr())) yield shaped;
+
+        yield new LitTerm.ShapedList(elements, shaped.shape(), type);
+      }
       case FormTerm.PartTy ty -> {
         var type = f.apply(ty.type());
         var restr = ty.restr().map(f);
