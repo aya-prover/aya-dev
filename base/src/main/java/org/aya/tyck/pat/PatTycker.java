@@ -171,7 +171,7 @@ public final class PatTycker {
         var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view())._1.toImmutableSeq());
+        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view(), tuple)._1.toImmutableSeq());
         if (as != null) {
           exprTycker.localCtx.put(as, sigma);
           addPatSubst(as, ret, tuple.sourcePos());
@@ -186,7 +186,8 @@ public final class PatTycker {
         var ctorCore = ctorRef.core;
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
-        var patterns = visitPatterns(sig, ctor.params().view())._1.toImmutableSeq();
+        // It is possible that `ctor.params()` is empty.
+        var patterns = visitPatterns(sig, ctor.params().view(), ctor)._1.toImmutableSeq();
         var as = ctor.as();
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
@@ -274,7 +275,7 @@ public final class PatTycker {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
-    var step0 = visitPatterns(signature, match.patterns.view());
+    var step0 = visitPatterns(signature, match.patterns.view(), null);
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
     PatternTraversal.visit(p -> {
       if (p instanceof Pattern.Bind bind)
@@ -288,20 +289,38 @@ public final class PatTycker {
     return step1;
   }
 
+  /**
+   * @param outerPattern null if visiting the outer pattern. This is only used for error reporting.
+   *                     For now, {@param outerPattern} is used when {@param sig} is not empty
+   *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
+   */
   public @NotNull Tuple2<SeqView<Pat>, Term>
-  visitPatterns(Def.Signature sig, SeqView<Pattern> stream) {
+  visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @Nullable Pattern outerPattern) {
     var results = MutableList.<Pat>create();
     if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.view(), sig.result());
-    var lastPat = stream.last();
+    @Nullable Pattern lastPat = null;
     while (sig.param().isNotEmpty()) {
       var param = sig.param().first();
       Pattern pat;
       if (param.explicit()) {
         if (stream.isEmpty()) {
-          foundError(new PatternProblem.InsufficientPattern(lastPat, param));
+          Pattern errorPattern;
+
+          if (lastPat == null) {
+            if (outerPattern == null) {
+              throw new InternalException("outerPattern should not be null");
+            }
+
+            errorPattern = outerPattern;
+          } else {
+            errorPattern = lastPat;
+          }
+
+          foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
           return Tuple.of(results.view(), sig.result());
         }
         pat = stream.first();
+        lastPat = pat;
         stream = stream.drop(1);
         if (!pat.explicit()) {
           foundError(new PatternProblem.TooManyImplicitPattern(pat, param));
@@ -318,7 +337,10 @@ public final class PatTycker {
           // Pattern is explicit, so we leave it to the next type, do not "consume" it
           sig = generatePat(new PatData(sig, results, param));
           continue;
-        } else stream = stream.drop(1);
+        } else {
+          lastPat = pat;
+          stream = stream.drop(1);
+        }
         // ^ Pattern is implicit, so we "consume" it (stream.drop(1))
       }
       sig = updateSig(new PatData(sig, results, param), pat);
