@@ -48,9 +48,9 @@ public interface Shaped<T> {
       var type = type();
       if (state != null) type = type.normalize(state, NormalizeMode.WHNF);
       // already reported as UnsolvedMeta
-      if (type instanceof ErrorTerm) return null;
+      if (type instanceof ErrorTerm || type instanceof CallTerm.Hole) return null;
       if (type instanceof CallTerm.Data data) return data;
-      throw new InternalException("unknown type for literal");
+      throw new InternalException("unknown type for literal of type " + type);
     }
 
     default <O> boolean compareShape(TermComparator comparator, @NotNull Shaped<O> other) {
