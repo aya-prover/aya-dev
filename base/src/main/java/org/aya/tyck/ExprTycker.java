@@ -852,7 +852,7 @@ public final class ExprTycker extends Tycker {
     var checker = new Function<Term, Term>() {
       private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
-        var erased = ElimTerm.checkErasedNotProp(term);
+        var erased = ElimTerm.underlyingIllegalErased(term);
         if (erased != null) {
           reporter.report(new ErasedError(sourcePos, erased, null));
           return new ErrorTerm(term);

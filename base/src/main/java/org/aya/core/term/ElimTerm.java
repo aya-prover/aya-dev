@@ -19,19 +19,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface ElimTerm extends Term {
   // ErasedTerm itself and ElimTerm with `of` erased are erased.
-  static @Nullable ErasedTerm checkErased(@NotNull Term term) {
-    if (term instanceof ElimTerm elim) return checkErased(elim.of());
-    if (term instanceof CallTerm.Access elim) return checkErased(elim.of());
+  static @Nullable ErasedTerm underlyingErased(@NotNull Term term) {
+    if (term instanceof ElimTerm elim) return underlyingErased(elim.of());
+    if (term instanceof CallTerm.Access elim) return underlyingErased(elim.of());
     return term instanceof ErasedTerm erased ? erased : null;
   }
   static boolean isErased(@NotNull Term term) {
-    return checkErased(term) != null;
+    return underlyingErased(term) != null;
   }
   // ErasedTerm with a Prop type might safely appear in IntroTerms.
   // ErasedTerm with a non-Prop type or ElimTerm with `of` erased are disallowed.
-  static @Nullable ErasedTerm checkErasedNotProp(@NotNull Term term) {
-    if (term instanceof ElimTerm elim) return checkErased(elim.of());
-    if (term instanceof CallTerm.Access elim) return checkErased(elim.of());
+  static @Nullable ErasedTerm underlyingIllegalErased(@NotNull Term term) {
+    if (term instanceof ElimTerm elim) return underlyingErased(elim.of());
+    if (term instanceof CallTerm.Access elim) return underlyingErased(elim.of());
     return term instanceof ErasedTerm erased && !erased.isProp() ? erased : null;
   }
 
