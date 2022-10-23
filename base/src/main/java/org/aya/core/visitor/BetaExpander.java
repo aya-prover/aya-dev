@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
@@ -68,16 +67,16 @@ public interface BetaExpander extends EndoFunctor {
           case FormTerm.Pi pi -> {
             var u0Var = new LocalVar("u0");
             var vVar = new LocalVar("v");
-            var A = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.param().type()).rename();
+            var A = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.param().type());
             var B = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.body());
             var vType = ElimTerm.make(A, new Arg<>(PrimTerm.Mula.RIGHT, true));
             var w = coeFillInv(A, coe.restr(), new RefTerm(vVar));
-            var BSubsted = B.subst(pi.param().ref(), w);
-            var wSusted = w.subst(varI, PrimTerm.Mula.LEFT);
+            var BSubsted = B.subst(pi.param().ref(), w.rename());
+            var wSubsted = w.subst(varI, PrimTerm.Mula.LEFT).rename();
             yield new IntroTerm.Lambda(new Term.Param(u0Var, ElimTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
               new IntroTerm.Lambda(new Term.Param(vVar, vType, true),
                 ElimTerm.make(new PrimTerm.Coe(BSubsted, coe.restr()),
-                  new Arg<>(ElimTerm.make(new RefTerm(u0Var), new Arg<>(wSusted, true)), true))));
+                  new Arg<>(ElimTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
           }
           case FormTerm.Sigma sigma -> coe;
           case FormTerm.Type type -> {
@@ -106,20 +105,19 @@ public interface BetaExpander extends EndoFunctor {
     return new IntroTerm.Lambda(new Term.Param(LocalVar.IGNORED, Ar, true), body);
   }
 
-  // coeFill (A: I -> Type) (phi: I) (u0: A 0) : Path A u (coe A phi u)
-  private static @NotNull Term coeFill(@NotNull Term type, @NotNull Restr<Term> phi, @NotNull Term u0) {
-    var varX = new LocalVar("x");
-
-    var cofib = phi.or(new Restr.Cond<>(new RefTerm(varX), false));
+  /**
+   * <code>coeFill (A: I -> Type) (phi: I) : Path A u (coe A phi u)</code>
+   *
+   * @param ri the interval abstraction or its inverse
+   */
+  private static @NotNull Term coeFill(@NotNull Term type, @NotNull Restr<Term> phi, Term ri) {
+    var cofib = phi.or(new Restr.Cond<>(ri, false));
     var varY = new LocalVar("y");
     var paramY = new Term.Param(varY, PrimTerm.Interval.INSTANCE, true);
-    var xAndY = PrimTerm.Mula.and(new RefTerm(varX), new RefTerm(varY));
+    var xAndY = PrimTerm.Mula.and(ri, new RefTerm(varY));
     var a = new IntroTerm.Lambda(paramY, ElimTerm.make(type, new Arg<>(xAndY, true)));
 
-    var coe = new PrimTerm.Coe(a, cofib);
-    var coerced = ElimTerm.make(coe, new Arg<>(u0, true));
-
-    return new IntroTerm.PathLam(ImmutableSeq.of(varX), coerced);
+    return new PrimTerm.Coe(a, cofib);
   }
 
   /**
@@ -128,7 +126,7 @@ public interface BetaExpander extends EndoFunctor {
    * @param A pi type I -> Type
    * @return inverted A
    */
-  private @NotNull Term invertA(@NotNull Term A) {
+  private static @NotNull Term invertA(@NotNull Term A) {
     var i = new LocalVar("i");
     var invertedI = PrimTerm.Mula.inv(new RefTerm(i));
     return new IntroTerm.Lambda(
@@ -137,12 +135,12 @@ public interface BetaExpander extends EndoFunctor {
   }
 
   // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0
-  private @NotNull Term coeInv(@NotNull Term A, @NotNull Restr<Term> phi, @NotNull Term u) {
-    return apply(ElimTerm.make(new PrimTerm.Coe(invertA(A), phi), new Arg<>(u, true)));
+  private static @NotNull Term coeInv(@NotNull Term A, @NotNull Restr<Term> phi, @NotNull Term u) {
+    return ElimTerm.make(new PrimTerm.Coe(invertA(A), phi), new Arg<>(u, true));
   }
 
   // coeFillInv
-  private @NotNull Term coeFillInv(@NotNull Term type, @NotNull Restr<Term> phi, @NotNull Term u) {
-    return coeFill(invertA(type), phi, u);
+  private static @NotNull Term coeFillInv(@NotNull Term type, @NotNull Restr<Term> phi, @NotNull Term ri) {
+    return coeFill(invertA(type), phi, PrimTerm.Mula.inv(ri));
   }
 }
