@@ -106,12 +106,29 @@ public interface BetaExpander extends EndoFunctor {
     return new IntroTerm.PathLam(ImmutableSeq.of(varX), coerced);
   }
 
-  // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0
-  private static @NotNull Term coeInv(@NotNull Term A, @NotNull Term phi, @NotNull Term u) {
-    throw new InternalException("TODO");
+  /**
+   * inverts interval in A : I -> Type
+   *
+   * @param A pi type I -> Type
+   * @return inverted A
+   */
+  private @NotNull Term invertA(@NotNull Term A) {
+    if (A instanceof FormTerm.Pi pi) {
+      var paramRef = new RefTerm(pi.param().ref());
+      var invertedParam = PrimTerm.Mula.inv(paramRef);
+      return pi.substBody(invertedParam);
+    } else {
+      throw new InternalException("expected A : I -> Type");
+    }
   }
 
-  private static @NotNull Term coeFillInv(@NotNull Term A, @NotNull Term phi, @NotNull Term u) {
-    throw new InternalException("TODO");
+  // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0
+  private @NotNull Term coeInv(@NotNull Term A, @NotNull Term phi, @NotNull Term u) {
+    return apply(new ElimTerm.App(new PrimTerm.Coe(invertA(A), isOne(phi)), new Arg<>(u, true)));
+  }
+
+  // coeFillInv
+  private @NotNull Term coeFillInv(@NotNull Term type, @NotNull Term phi, @NotNull Term u) {
+    return coeFill(invertA(type), phi, u);
   }
 }
