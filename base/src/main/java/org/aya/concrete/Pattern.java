@@ -5,10 +5,14 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
+import org.aya.core.def.CtorDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
+import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Shaped;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
@@ -117,6 +121,35 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
       this.sourcePos = sourcePos;
       this.patterns = patterns;
       this.expr = expr;
+    }
+  }
+
+  record FakeShapedList(
+    @NotNull SourcePos sourcePos,
+    boolean explicit,
+    @Nullable LocalVar as,
+    @Override @NotNull ImmutableSeq<Pattern> repr,
+    @Override @NotNull AyaShape shape,
+    @Override @NotNull Term type
+  ) implements Shaped.List<Pattern> {
+    @Override public @NotNull Pattern makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> type) {
+      return new Pattern.Ctor(sourcePos, explicit,
+        new WithPos<>(sourcePos, nil.ref()), ImmutableSeq.empty(), as);
+    }
+
+    @Override public @NotNull Pattern
+    makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, Pattern x, Pattern last) {
+      // x    : Current Pattern
+      // xs   : Right Pattern
+      // Goal : consCtor value list
+      return new Pattern.Ctor(sourcePos, explicit,
+        new WithPos<>(sourcePos, cons.ref()),
+        ImmutableSeq.of(x, last), as);
+    }
+
+    @Override public @NotNull Pattern destruct(@NotNull ImmutableSeq<Pattern> repr) {
+      return new FakeShapedList(sourcePos, true, null, repr, shape, type)
+        .constructorForm();
     }
   }
 }

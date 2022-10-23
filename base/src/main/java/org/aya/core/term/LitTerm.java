@@ -34,7 +34,7 @@ public sealed interface LitTerm extends Term {
     @Override @NotNull ImmutableSeq<Term> repr,
     @Override @NotNull AyaShape shape,
     @Override @NotNull Term type
-    ) implements LitTerm, Shaped.List<Term> {
+  ) implements LitTerm, Shaped.List<Term> {
 
     @Override
     public @NotNull Term makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> dataArg) {
@@ -42,9 +42,9 @@ public sealed interface LitTerm extends Term {
     }
 
     @Override
-    public @NotNull Term makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> dataArg, @NotNull Term value, @NotNull Term last) {
+    public @NotNull Term makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> dataArg, @NotNull Term x, @NotNull Term last) {
       return new CallTerm.Con(cons.dataRef, cons.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.of(
-        new Arg<>(value, true),
+        new Arg<>(x, true),
         new Arg<>(last, true)
       ));
     }

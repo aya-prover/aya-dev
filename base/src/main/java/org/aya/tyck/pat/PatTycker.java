@@ -41,7 +41,6 @@ import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -230,27 +229,9 @@ public final class PatTycker {
           var shape = exprTycker.shapeFactory.find(data);
 
           if (shape.isDefined() && shape.get() == AyaShape.LIST_SHAPE) {
-            // prepare
-            // FIXME: duplicated code, see Shaped.List#with
-            var nilCtor = data.body.find(x -> x.selfTele.sizeEquals(0));
-            var consCtor = data.body.find(x -> x.selfTele.sizeEquals(2));
-
-            if (nilCtor.isEmpty() || consCtor.isEmpty()) throw new InternalException("shape recognition bug");
-
-            var nilPat = new Pattern.Ctor(list.sourcePos(), list.explicit(),
-              new WithPos<>(list.sourcePos(), nilCtor.get().ref()), ImmutableSeq.empty(), null);
-
-            // do desugar
-            var ctorPattern = list.elements().foldRight(nilPat, (value, right) -> {
-              // value : Current Pattern
-              // right : Right Pattern
-              // Goal  : consCtor value list
-              return new Pattern.Ctor(list.sourcePos(), list.explicit(),
-                new WithPos<>(list.sourcePos(), consCtor.get().ref()),
-                ImmutableSeq.of(value, right), list.as());
-            });
-
-            yield doTyck(ctorPattern, term);
+            yield doTyck(new Pattern.FakeShapedList(
+              list.sourcePos(), list.explicit(), list.as(),
+              list.elements(), AyaShape.LIST_SHAPE, ty).constructorForm(), term);
           }
         }
 

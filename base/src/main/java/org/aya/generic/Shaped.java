@@ -114,7 +114,7 @@ public interface Shaped<T> {
   non-sealed interface List<T> extends Inductive<T> {
     @NotNull ImmutableSeq<T> repr();
     @NotNull T makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> type);
-    @NotNull T makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, T value, T last);
+    @NotNull T makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, T x, T xs);
     @NotNull T destruct(@NotNull ImmutableSeq<T> repr);
 
     /**
@@ -141,7 +141,8 @@ public interface Shaped<T> {
       return with(state, (nil, cons, dataArg) -> {
         var elements = repr();
         if (elements.isEmpty()) return makeNil(nil, dataArg);
-        return makeCons(cons, dataArg, elements.first(), destruct(elements.drop(1)));
+        return makeCons(cons, dataArg, elements.first(),
+          destruct(elements.drop(1)));
       }, () -> {
         // TODO[literal]: how to handle this?
         throw new InternalException("trying to make constructor form without type solved");

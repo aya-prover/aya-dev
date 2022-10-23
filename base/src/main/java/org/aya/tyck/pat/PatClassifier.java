@@ -291,7 +291,7 @@ public record PatClassifier(
           var hasBind = nonEmpty.filter(subPats -> head(subPats) instanceof Pat.Bind);
           if (hasLit.isNotEmpty() && hasBind.isNotEmpty() && hasLit.size() + hasBind.size() == nonEmpty.size()) {
             // We are in the base case -- group literals by their values, and add all bind patterns to each group.
-            var lits = hasLit.stream()
+            var lits = hasLit
               .collect(Collectors.groupingBy(subPats -> ((Pat.ShapedInt) head(subPats)).repr()))
               .values().stream()
               .map(ImmutableSeq::from)
