@@ -40,21 +40,30 @@ public interface Shaped<T> {
     return constructorForm(null);
   }
 
-  interface Nat<T> extends Shaped<T> {
+  sealed interface Inductive<T> extends Shaped<T> {
     @Override @NotNull Term type();
+
+    default @Nullable CallTerm.Data solved(@Nullable TyckState state) {
+      var type = type();
+      if (state != null) type = type.normalize(state, NormalizeMode.WHNF);
+      // already reported as UnsolvedMeta
+      if (type instanceof ErrorTerm) return null;
+      if (type instanceof CallTerm.Data data) return data;
+      throw new InternalException("unknown type for literal");
+    }
+
+    default <O> boolean compareShape(TermComparator comparator, @NotNull Shaped<O> other) {
+      if (shape() != other.shape()) return false;
+      if (other.getClass() != getClass()) return false;
+      return comparator.compare(type(), other.type(), null);
+    }
+  }
+
+  non-sealed interface Nat<T> extends Inductive<T> {
     @NotNull T makeZero(@NotNull CtorDef zero);
     @NotNull T makeSuc(@NotNull CtorDef suc, @NotNull T t);
     @NotNull T destruct(int repr);
     int repr();
-
-    default <O> boolean compareShape(@NotNull TyckState state, @NotNull Shaped<O> other) {
-      if (shape() != other.shape()) return false;
-      if (!(other instanceof Shaped.Nat<?> otherData)) return false;
-      if (type().normalize(state, NormalizeMode.WHNF) instanceof CallTerm.Data lhs
-        && otherData.type().normalize(state, NormalizeMode.WHNF) instanceof CallTerm.Data rhs) {
-        return lhs.ref() == rhs.ref();
-      } else return false;
-    }
 
     /**
      * Presumption: {@code this} and {@code other} are well-typed terms of the same type.
@@ -99,28 +108,13 @@ public interface Shaped<T> {
       var suc = sucOpt.get();
       return block.apply(zero, suc);
     }
-
-    private @Nullable CallTerm.Data solved(@Nullable TyckState state) {
-      var type = type();
-      if (state != null) type = type.normalize(state, NormalizeMode.WHNF);
-      // already reported as UnsolvedMeta
-      if (type instanceof ErrorTerm) return null;
-      if (type instanceof CallTerm.Data data) return data;
-      throw new InternalException("unknown type for literal");
-    }
   }
 
-  interface List<T> extends Shaped<T> {
+  non-sealed interface List<T> extends Inductive<T> {
     @NotNull ImmutableSeq<T> repr();
     @NotNull T makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> type);
     @NotNull T makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, T value, T last);
     @NotNull T destruct(@NotNull ImmutableSeq<T> repr);
-
-    default <O> boolean compareShape(@NotNull TermComparator comparator, @NotNull Shaped<O> other) {
-      if (shape() != other.shape()) return false;
-      if (!(other instanceof Shaped.List<?> otherData)) return false;
-      return comparator.compare(type(), otherData.type(), null);
-    }
 
     /**
      * Comparing two List
@@ -178,16 +172,6 @@ public interface Shaped<T> {
       var dataArg = type.args().first();    // Check?
       return block.apply(nil, cons, dataArg);
     }
-
-    private @Nullable CallTerm.Data solved(@Nullable TyckState state) {
-      var type = type();
-      if (state != null) type = type.normalize(state, NormalizeMode.WHNF);
-      // already reported as UnsolvedMeta
-      if (type instanceof ErrorTerm) return null;
-      if (type instanceof CallTerm.Data data) return data;
-      throw new InternalException("unknown type for literal");
-    }
-
     /// endregion
   }
 }

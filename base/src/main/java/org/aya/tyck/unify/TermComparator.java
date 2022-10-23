@@ -490,7 +490,7 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case LitTerm.ShapedInt lhs -> switch (preRhs) {
         case LitTerm.ShapedInt rhs -> {
-          if (!lhs.compareShape(state, rhs)) yield null;
+          if (!lhs.compareShape(this, rhs)) yield null;
           if (!lhs.compareUntyped(rhs)) yield null;
           yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
         }
