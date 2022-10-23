@@ -53,12 +53,13 @@ public record ShapeMatcher(
     if (shape instanceof CodeShape.TermShape.Call call && term instanceof CallTerm callTerm) {
       var superLevel = def.getOrNull(call.superLevel());
       if (superLevel != callTerm.ref()) return false;                      // implies null check
-      if (call.args().size() != callTerm.args().size()) return false;      // TODO[hoshino]: do we also match implicit arguments?
+      if (call.args().size() != callTerm.args().size())
+        return false;      // TODO[hoshino]: do we also match implicit arguments?
 
       // match each arg
-      return call.args().zipView(callTerm.args())
-        .map(t -> matchTerm(t._1, t._2.term()))   // match each term, but lazy
-        .allMatch(x -> x);    // check all term matching
+      return call.args().allMatchWith(callTerm.args(),
+        // match each term, but lazy
+        (l, r) -> matchTerm(l, r.term()));
     }
     if (shape instanceof CodeShape.TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
       var superLevel = def.getOrNull(ref.superLevel());
