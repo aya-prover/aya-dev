@@ -346,7 +346,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
     return TermComparator.withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
-      // TODO: let CofThy.propExt uses lr and rl?
+      // TODO: purge lr/rl
       var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type()).subst(lr.map);
       var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
       var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
@@ -463,7 +463,8 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case PrimTerm.Coe lhs -> {
         if (!(preRhs instanceof PrimTerm.Coe rhs)) yield null;
-        if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
+        // TODO: purge lr/rl
+        if (!compareRestr(lhs.restr().map(t -> t.subst(lr.map)), rhs.restr())) yield null;
         yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
           PrimDef.familyLeftToRight(lhs.type()) : null;
       }
