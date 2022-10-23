@@ -4,6 +4,7 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.core.def.GenericDef;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
@@ -40,6 +41,21 @@ public interface LiteralError extends TyckError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(Doc.english("The literal"),
         Doc.par(1, Doc.plain(String.valueOf(integer))),
+        Doc.english("cannot be encoded as a term of type:"),
+        Doc.par(1, type.toDoc(options)));
+    }
+  }
+
+  record BadListPattern(
+    @NotNull SourcePos sourcePos,
+    Pattern.List pattern,
+    @NotNull Term type
+  ) implements LiteralError {
+
+    @Override
+    public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(Doc.english("The literal"),
+        Doc.par(1, pattern.toDoc(options)),
         Doc.english("cannot be encoded as a term of type:"),
         Doc.par(1, type.toDoc(options)));
     }
