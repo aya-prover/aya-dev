@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 /**
@@ -121,17 +122,15 @@ public interface Shaped<T> {
      *
      * @param other      another list
      * @param comparator a comparator that should compare the subterms between two List.
-     * @return true if they matches (a term matches a pat or two terms are equivalent,
+     * @return true if they match (a term matches a pat or two terms are equivalent,
      * which depends on the type parameters {@link T} and {@link O}), false if otherwise.
      */
-    default <O> boolean compareUntyped(@NotNull Shaped.List<O> other, @NotNull BiFunction<T, O, Boolean> comparator) {
+    default <O> boolean compareUntyped(@NotNull Shaped.List<O> other, @NotNull BiPredicate<T, O> comparator) {
       var lhsRepr = repr();
       var rhsRepr = other.repr();
       // the size should equal.
       if (!lhsRepr.sizeEquals(rhsRepr)) return false;
-      return lhsRepr.zip(rhsRepr)
-        .foldLeft(true, (l, tuple) ->
-          l && comparator.apply(tuple._1, tuple._2));
+      return lhsRepr.allMatchWith(rhsRepr, comparator);
     }
 
     /// region Copied from Shaped.Nat
