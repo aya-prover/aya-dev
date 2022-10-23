@@ -2,8 +2,8 @@ public open import Primitives using
   ( I
   , Partial
   , intervalInv as fixl ~ tighter =
-  , intervalMin as infix /\
-  , intervalMax as infix \/
+  , intervalMin as infix /\  looser \/
+  , intervalMax as infix \/ looser ~
   , coe
   )
 

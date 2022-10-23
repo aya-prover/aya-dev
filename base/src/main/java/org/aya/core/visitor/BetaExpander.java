@@ -61,7 +61,7 @@ public interface BetaExpander extends EndoFunctor {
         }
 
         var varI = new LocalVar("i");
-        var codom = apply(new ElimTerm.App(coe.type(), new Arg<>(new RefTerm(varI), true)));
+        var codom = apply(ElimTerm.make(coe.type(), new Arg<>(new RefTerm(varI), true)));
 
         yield switch (codom) {
           case FormTerm.Path path -> coe;
@@ -70,14 +70,14 @@ public interface BetaExpander extends EndoFunctor {
             var vVar = new LocalVar("v");
             var A = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.param().type()).rename();
             var B = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.body());
-            var vType = apply(new ElimTerm.App(A, new Arg<>(PrimTerm.Mula.RIGHT, true)));
+            var vType = ElimTerm.make(A, new Arg<>(PrimTerm.Mula.RIGHT, true));
             var w = coeFillInv(A, coe.restr(), new RefTerm(vVar));
             var BSubsted = B.subst(pi.param().ref(), w);
             var wSusted = w.subst(varI, PrimTerm.Mula.LEFT);
-            yield new IntroTerm.Lambda(new Term.Param(u0Var, new ElimTerm.App(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
+            yield new IntroTerm.Lambda(new Term.Param(u0Var, ElimTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
               new IntroTerm.Lambda(new Term.Param(vVar, vType, true),
-                new ElimTerm.App(new PrimTerm.Coe(BSubsted, coe.restr()),
-                  new Arg<>(new ElimTerm.App(new RefTerm(u0Var), new Arg<>(wSusted, true)), true))));
+                ElimTerm.make(new PrimTerm.Coe(BSubsted, coe.restr()),
+                  new Arg<>(ElimTerm.make(new RefTerm(u0Var), new Arg<>(wSusted, true)), true))));
           }
           case FormTerm.Sigma sigma -> coe;
           case FormTerm.Type type -> {
@@ -98,11 +98,11 @@ public interface BetaExpander extends EndoFunctor {
 
     var iOrR = PrimTerm.Mula.or(new RefTerm(varI), r);
     var cofib = isOne(r);
-    var Ar = new ElimTerm.App(A, new Arg<>(r, true));
-    var AiOrR = new ElimTerm.App(A, new Arg<>(iOrR, true));
+    var Ar = ElimTerm.make(A, new Arg<>(r, true));
+    var AiOrR = ElimTerm.make(A, new Arg<>(iOrR, true));
     var lam = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), AiOrR);
     var transp = new PrimTerm.Coe(lam, cofib);
-    var body = new ElimTerm.App(transp, new Arg<>(new RefTerm(varU), true));
+    var body = ElimTerm.make(transp, new Arg<>(new RefTerm(varU), true));
     return new IntroTerm.Lambda(new Term.Param(LocalVar.IGNORED, Ar, true), body);
   }
 
@@ -114,10 +114,10 @@ public interface BetaExpander extends EndoFunctor {
     var varY = new LocalVar("y");
     var paramY = new Term.Param(varY, PrimTerm.Interval.INSTANCE, true);
     var xAndY = PrimTerm.Mula.and(new RefTerm(varX), new RefTerm(varY));
-    var a = new IntroTerm.Lambda(paramY, new ElimTerm.App(type, new Arg<>(xAndY, true)));
+    var a = new IntroTerm.Lambda(paramY, ElimTerm.make(type, new Arg<>(xAndY, true)));
 
     var coe = new PrimTerm.Coe(a, cofib);
-    var coerced = new ElimTerm.App(coe, new Arg<>(u0, true));
+    var coerced = ElimTerm.make(coe, new Arg<>(u0, true));
 
     return new IntroTerm.PathLam(ImmutableSeq.of(varX), coerced);
   }
@@ -138,7 +138,7 @@ public interface BetaExpander extends EndoFunctor {
 
   // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0
   private @NotNull Term coeInv(@NotNull Term A, @NotNull Restr<Term> phi, @NotNull Term u) {
-    return apply(new ElimTerm.App(new PrimTerm.Coe(invertA(A), phi), new Arg<>(u, true)));
+    return apply(ElimTerm.make(new PrimTerm.Coe(invertA(A), phi), new Arg<>(u, true)));
   }
 
   // coeFillInv
