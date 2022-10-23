@@ -102,26 +102,11 @@ public interface Shaped<T> {
 
     private @Nullable CallTerm.Data solved(@Nullable TyckState state) {
       var type = type();
+      if (state != null) type = type.normalize(state, NormalizeMode.WHNF);
       // already reported as UnsolvedMeta
       if (type instanceof ErrorTerm) return null;
       if (type instanceof CallTerm.Data data) return data;
-      if (type instanceof CallTerm.Hole hole) {
-        if (state == null) return null;
-        var sol = findSolution(state, hole);
-        if (sol instanceof CallTerm.Data data) return data;
-        // report ill-typed solution? is this possible?
-        throw new InternalException("unknown type for literal");
-      }
       throw new InternalException("unknown type for literal");
-    }
-
-    private @Nullable Term findSolution(@NotNull TyckState state, @NotNull Term maybeHole) {
-      if (maybeHole instanceof CallTerm.Hole hole) {
-        var sol = state.metas().getOrNull(hole.ref());
-        if (sol == null) return null;
-        else return findSolution(state, sol);
-      }
-      return maybeHole;
     }
   }
 
@@ -196,26 +181,11 @@ public interface Shaped<T> {
 
     private @Nullable CallTerm.Data solved(@Nullable TyckState state) {
       var type = type();
+      if (state != null) type = type.normalize(state, NormalizeMode.WHNF);
       // already reported as UnsolvedMeta
       if (type instanceof ErrorTerm) return null;
       if (type instanceof CallTerm.Data data) return data;
-      if (type instanceof CallTerm.Hole hole) {
-        if (state == null) return null;
-        var sol = findSolution(state, hole);
-        if (sol instanceof CallTerm.Data data) return data;
-        // report ill-typed solution? is this possible?
-        throw new InternalException("unknown type for literal");
-      }
       throw new InternalException("unknown type for literal");
-    }
-
-    private @Nullable Term findSolution(@NotNull TyckState state, @NotNull Term maybeHole) {
-      if (maybeHole instanceof CallTerm.Hole hole) {
-        var sol = state.metas().getOrNull(hole.ref());
-        if (sol == null) return null;
-        else return findSolution(state, sol);
-      }
-      return maybeHole;
     }
 
     /// endregion
