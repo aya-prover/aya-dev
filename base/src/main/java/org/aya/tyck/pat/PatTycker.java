@@ -290,7 +290,7 @@ public final class PatTycker {
   }
 
   /**
-   * @param outerPattern null if visiting the outer pattern. This is only used for error reporting.
+   * @param outerPattern null if visiting the whole pattern (like `A, x, ctor a b`). This is only used for error reporting.
    *                     For now, {@param outerPattern} is used when {@param sig} is not empty
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
    */
@@ -308,7 +308,7 @@ public final class PatTycker {
 
           if (lastPat == null) {
             if (outerPattern == null) {
-              throw new InternalException("outerPattern should not be null");
+              throw new InternalException("outerPattern should not be null when stream is empty");
             }
 
             errorPattern = outerPattern;
