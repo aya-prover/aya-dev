@@ -36,7 +36,6 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.error.LiteralError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
@@ -218,7 +217,7 @@ public final class PatTycker {
           if (shape.isDefined() && shape.get() == AyaShape.NAT_SHAPE)
             yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
         }
-        yield withError(new LiteralError.BadLitPattern(num.sourcePos(), num.number(), term), num, term);
+        yield withError(new PatternProblem.BadLitPattern(num, term), num, term);
       }
       case Pattern.List list -> {
         // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !
@@ -255,7 +254,7 @@ public final class PatTycker {
           }
         }
 
-        yield withError(new LiteralError.BadListPattern(list.sourcePos(), list, term), list, term);
+        yield withError(new PatternProblem.BadLitPattern(list, term), list, term);
       }
       case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
