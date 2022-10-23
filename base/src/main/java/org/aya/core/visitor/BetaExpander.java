@@ -5,7 +5,6 @@ package org.aya.core.visitor;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
-import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
@@ -65,7 +64,7 @@ public interface BetaExpander extends EndoFunctor {
         var codom = apply(new ElimTerm.App(coe.type(), new Arg<>(new RefTerm(varI), true)));
 
         yield switch (codom) {
-          case FormTerm.Path path -> throw new InternalException("TODO");
+          case FormTerm.Path path -> coe;
           case FormTerm.Pi pi -> {
             var u0Var = new LocalVar("u0");
             var vVar = new LocalVar("v");
@@ -80,8 +79,8 @@ public interface BetaExpander extends EndoFunctor {
                 new ElimTerm.App(new PrimTerm.Coe(BSubsted, coe.restr()),
                   new Arg<>(new ElimTerm.App(new RefTerm(u0Var), new Arg<>(wSusted, true)), true))));
           }
-          case FormTerm.Sigma sigma -> throw new InternalException("TODO");
-          case FormTerm.Type type -> throw new InternalException("TODO");
+          case FormTerm.Sigma sigma -> coe;
+          case FormTerm.Type type -> type;
           default -> coe;
         };
       }
@@ -127,13 +126,11 @@ public interface BetaExpander extends EndoFunctor {
    * @return inverted A
    */
   private @NotNull Term invertA(@NotNull Term A) {
-    if (A instanceof FormTerm.Pi pi) {
-      var paramRef = new RefTerm(pi.param().ref());
-      var invertedParam = PrimTerm.Mula.inv(paramRef);
-      return pi.substBody(invertedParam);
-    } else {
-      throw new InternalException("expected A : I -> Type");
-    }
+    var i = new LocalVar("i");
+    var invertedI = PrimTerm.Mula.inv(new RefTerm(i));
+    return new IntroTerm.Lambda(
+      new Term.Param(i, PrimTerm.Interval.INSTANCE, true),
+      ElimTerm.make(A, new Arg<>(invertedI, true)));
   }
 
   // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0

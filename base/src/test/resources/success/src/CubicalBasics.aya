@@ -21,3 +21,6 @@ def transport-constant (A : I -> Type) (a : A 0) (i : I) : A i
 
 def transport  (A : I -> Type) (a : A 0) : A 1 => A.coe a
 def transport' (A : I -> Type) (a : A 0) : A 1 => A.coe a freeze 0
+
+def id {A : Type} (a: A) : A => a
+def transportID {A : Type} (a: A) : A => (transport' (\ i => A -> A) id) a
