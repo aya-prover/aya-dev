@@ -70,7 +70,7 @@ public interface BetaExpander extends EndoFunctor {
             var A = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.param().type());
             var B = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.body());
             var vType = ElimTerm.make(A, new Arg<>(PrimTerm.Mula.RIGHT, true));
-            var w = coeFillInv(A, coe.restr(), new RefTerm(vVar));
+            var w = ElimTerm.make(coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
             var BSubsted = B.subst(pi.param().ref(), w.rename());
             var wSubsted = w.subst(varI, PrimTerm.Mula.LEFT).rename();
             yield new IntroTerm.Lambda(new Term.Param(u0Var, ElimTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
