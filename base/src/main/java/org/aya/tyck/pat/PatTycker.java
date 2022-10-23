@@ -290,14 +290,19 @@ public final class PatTycker {
   }
 
   /**
+   * Tyck each {@link Pattern} with {@link Def.Signature}.
+   * {@param outerPattern} should be specified if stream is empty.
+   *
    * @param outerPattern null if visiting the whole pattern (like `A, x, ctor a b`). This is only used for error reporting.
    *                     For now, {@param outerPattern} is used when {@param sig} is not empty
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
+   * @return (wellTyped patterns, sig.result())
    */
   public @NotNull Tuple2<SeqView<Pat>, Term>
   visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @Nullable Pattern outerPattern) {
     var results = MutableList.<Pat>create();
     if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.view(), sig.result());
+    // last pattern which user given (not aya generated)
     @Nullable Pattern lastPat = null;
     while (sig.param().isNotEmpty()) {
       var param = sig.param().first();
