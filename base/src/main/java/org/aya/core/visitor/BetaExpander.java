@@ -80,7 +80,10 @@ public interface BetaExpander extends EndoFunctor {
                   new Arg<>(new ElimTerm.App(new RefTerm(u0Var), new Arg<>(wSusted, true)), true))));
           }
           case FormTerm.Sigma sigma -> coe;
-          case FormTerm.Type type -> type;
+          case FormTerm.Type type -> {
+            var A = new LocalVar("A");
+            yield new IntroTerm.Lambda(new Term.Param(A, type, true), new RefTerm(A));
+          }
           default -> coe;
         };
       }
