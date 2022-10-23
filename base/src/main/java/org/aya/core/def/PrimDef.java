@@ -11,8 +11,6 @@ import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
-import org.aya.guest0x0.cubical.Partial;
-import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
@@ -133,136 +131,6 @@ public final class PrimDef extends TopLevelDef<Term> {
         return new PrimTerm.HComp(A, u, phi, u0);
       }
 
-      // hfill {A: Type} {phi: I} (u: I -> Partial phi I) (u0: A): I -> A
-      public final @NotNull PrimDef.PrimSeed hfill = new PrimSeed(ID.HFILL, this::hfill, ref -> {
-        var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
-        var varPhi = new LocalVar("phi");
-        var paramRestr = new Term.Param(varPhi, PrimTerm.Interval.INSTANCE, false);
-        var varU = new LocalVar("u");
-        var paramFuncU = new Term.Param(varU,
-          new FormTerm.Pi(
-            new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true),
-            new FormTerm.PartTy(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
-          true);
-        var varU0 = new LocalVar("u0");
-        var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
-        var result = new FormTerm.Pi(new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true), new RefTerm(varA));
-
-        return new PrimDef(
-          ref,
-          ImmutableSeq.of(paramA, paramRestr, paramFuncU, paramU0),
-          result,
-          ID.HFILL
-        );
-      }, ImmutableSeq.of(ID.I));
-
-      // need to find ways to infer the cofibration from the type of the partial element
-      private @NotNull Term hfill(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
-        var A = prim.args().get(0).term();
-        var phi = prim.args().get(1).term();
-        var u = prim.args().get(2).term();
-        var u0 = prim.args().get(3).term();
-        var varI = new LocalVar("i");
-        var varJ = new LocalVar("j");
-        var iAndJ = PrimTerm.Mula.and(new RefTerm(varI), new RefTerm(varJ));
-
-        // TODO: move this elsewhere
-        var partial = new Partial.Split<>(
-          ImmutableSeq.of(
-            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(phi, false))),
-              new ElimTerm.App(u, new Arg<>(iAndJ, true))),
-            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(varI), true))), u0)));
-
-
-        return new PrimTerm.HComp(A, u, phi, u0);
-      }
-
-      // transpfill (A: I -> Type) (phi: I) (u0: A 0) : Path A u (coe A phi u)
-      public final @NotNull PrimDef.PrimSeed coeFill = new PrimSeed(ID.COEFILL, this::coeFill, ref -> {
-        var varA = new LocalVar("A");
-        var typeA = new FormTerm.Pi(new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true), new FormTerm.Type(0));
-        var paramA = new Term.Param(varA, typeA, true);
-        var varPhi = new LocalVar("phi");
-        var paramPhi = new Term.Param(varPhi, PrimTerm.Interval.INSTANCE, true);
-        var varU0 = new LocalVar("u0");
-        var typeU0 = new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true));
-        var paramU0 = new Term.Param(varU0, typeU0, true);
-        var varX = new LocalVar("x");
-        var refX = new RefTerm(varX);
-        var coe = new PrimTerm.Coe(new RefTerm(varA), isOne(new RefTerm(varPhi)));
-        var coerced = new ElimTerm.App(coe, new Arg<>(new RefTerm(varU0), true));
-
-        var result = new FormTerm.Path(new FormTerm.Cube(
-          ImmutableSeq.of(varX),
-          new RefTerm(varA),
-          new Partial.Split<>(
-            ImmutableSeq.of(
-              new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(refX, false))), new RefTerm(varU0)),
-              new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(refX, true))), coerced)))
-        ));
-
-        return new PrimDef(
-          ref,
-          ImmutableSeq.of(paramA, paramPhi, paramU0),
-          result,
-          ID.COEFILL);
-      }, ImmutableSeq.of(ID.COE));
-
-      private @NotNull Term coeFill(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
-        var type = prim.args().get(0).term();
-        var phi = prim.args().get(1).term();
-        var u0 = prim.args().get(2).term();
-
-        var varX = new LocalVar("x");
-
-        var cofib = PrimTerm.Mula.or(phi, PrimTerm.Mula.inv(new RefTerm(varX)));
-        var varY = new LocalVar("y");
-        var paramY = new Term.Param(varY, PrimTerm.Interval.INSTANCE, true);
-        var xAndY = PrimTerm.Mula.and(new RefTerm(varX), new RefTerm(varY));
-        var a = new IntroTerm.Lambda(paramY, new ElimTerm.App(type, new Arg<>(xAndY, true)));
-
-        var coe = new PrimTerm.Coe(a, isOne(cofib));
-        var coerced = new ElimTerm.App(coe, new Arg<>(u0, true));
-
-        return new IntroTerm.PathLam(ImmutableSeq.of(varX), coerced);
-      }
-
-      // forward (A: I -> Type) (r: I): A r -> A 1
-      public final @NotNull PrimDef.PrimSeed forward = new PrimSeed(ID.FORWARD, this::forward, ref -> {
-        var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, intervalToA(), true);
-        var varR = new LocalVar("r");
-        var paramR = new Term.Param(varR, PrimTerm.Interval.INSTANCE, true);
-        var varU = new LocalVar("u");
-        var paramU = new Term.Param(varU, new ElimTerm.App(new RefTerm(varA), new Arg<>(new RefTerm(varR), true)), true);
-        var Ar = new ElimTerm.App(new RefTerm(varA), new Arg<>(new RefTerm(varR), true));
-        var A1 = new ElimTerm.App(new RefTerm(varA), new Arg<>(PrimTerm.Mula.LEFT, true));
-        var result = new FormTerm.Pi(new Term.Param(LocalVar.IGNORED, Ar, true), A1);
-
-        return new PrimDef(ref,
-          ImmutableSeq.of(paramA, paramR, paramU),
-          result,
-          ID.FORWARD);
-      }, ImmutableSeq.of(ID.I));
-
-      private @NotNull Term forward(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
-        var A = prim.args().get(0).term();
-        var r = prim.args().get(1).term();
-
-        var varI = new LocalVar("i");
-        var varU = new LocalVar("u");
-
-        var iOrR = PrimTerm.Mula.or(new RefTerm(varI), r);
-        var cofib = isOne(r);
-        var Ar = new ElimTerm.App(A, new Arg<>(r, true));
-        var AiOrR = new ElimTerm.App(A, new Arg<>(iOrR, true));
-        var lam = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), AiOrR);
-        var transp = new PrimTerm.Coe(lam, cofib);
-        var body = new ElimTerm.App(transp, new Arg<>(new RefTerm(varU), true));
-        return new IntroTerm.Lambda(new Term.Param(LocalVar.IGNORED, Ar, true), body);
-      }
-
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMin = formula(ID.IMIN, prim -> {
         var args = prim.args();
@@ -355,10 +223,7 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.intervalType,
           init.partialType,
           init.coerce,
-          init.coeFill,
-          init.hcomp,
-          init.forward,
-          init.hfill
+          init.hcomp
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
@@ -432,14 +297,7 @@ public final class PrimDef extends TopLevelDef<Term> {
     I("I"),
     PARTIAL("Partial"),
     COE("coe"),
-    COEINV("coeInv"),
-    COEFILL("coeFill"),
-    COEFILLINV("CoeFillInv"),
-    FORWARD("forward"),
-    HCOMP("hcomp"),
-    HFILL("hfill"),
-    COMP("comp"),
-    FILL("fill");
+    HCOMP("hcomp");
 
     public final @NotNull @NonNls String id;
 
