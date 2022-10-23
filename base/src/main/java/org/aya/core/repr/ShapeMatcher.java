@@ -100,10 +100,19 @@ public record ShapeMatcher(
     if (shape instanceof CodeShape.ParamShape.Any) return true;
     if (shape instanceof CodeShape.ParamShape.Optional opt) return matchParam(opt.param(), param);
     if (shape instanceof CodeShape.ParamShape.Licit licit) {
-      if (licit.explicit() != param.explicit()) return false;
-      return matchTerm(licit.type(), param.type());
+      return matchLicit(licit.explicit(), param.explicit())
+        && matchTerm(licit.type(), param.type());
     }
     return false;
+  }
+
+  /**
+   * @param licit the licit from shape
+   * @param explicit the explicit from term
+   */
+  private boolean matchLicit(@NotNull CodeShape.ParamShape.Explicit licit, boolean explicit) {
+    if (licit == CodeShape.ParamShape.Explicit.Any) return true;
+    return (licit == CodeShape.ParamShape.Explicit.Explicit) == explicit;
   }
 
   private boolean matchInside(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar, @NotNull BooleanSupplier matcher) {

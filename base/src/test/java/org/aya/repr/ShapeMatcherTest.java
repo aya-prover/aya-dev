@@ -36,6 +36,8 @@ public class ShapeMatcherTest {
     match(true, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil | cons A (List A)");
     match(true, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | cons A (List A) | nil");
     match(true, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil | infixr :< A (List A)");
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List {A : Type} | nil | cons {A} (List {A})");
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List {A : Type} | nil | cons (A) {List {A}}");
 
     match(false, AyaShape.AyaListShape.DATA_LIST, "data List | nil | cons");
     match(false, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil | cons");
