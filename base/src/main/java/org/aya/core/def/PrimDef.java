@@ -86,12 +86,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var paramRestr = new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true);
         var result = familyLeftToRight(new RefTerm(varA));
 
-        return new PrimDef(
-          ref,
-          ImmutableSeq.of(paramA, paramRestr),
-          result,
-          ID.COE
-        );
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramRestr), result, ID.COE);
       }, ImmutableSeq.of(ID.I));
 
       @Contract("_, _ -> new")
@@ -128,7 +123,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var phi = prim.args().get(1).term();
         var u = prim.args().get(2).term();
         var u0 = prim.args().get(3).term();
-        return new PrimTerm.HComp(A, u, phi, u0);
+        return new PrimTerm.HComp(A, phi, u, u0);
       }
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
@@ -277,6 +272,7 @@ public final class PrimDef extends TopLevelDef<Term> {
     }
   }
 
+  /** Let A be argument, then <code>A 0 -> A 1</code> */
   public static @NotNull FormTerm.Pi familyLeftToRight(Term term) {
     return new FormTerm.Pi(
       new Term.Param(LocalVar.IGNORED, new ElimTerm.App(term, new Arg<>(PrimTerm.Mula.LEFT, true)), true),
