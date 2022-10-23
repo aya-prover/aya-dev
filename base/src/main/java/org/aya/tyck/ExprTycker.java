@@ -463,7 +463,7 @@ public final class ExprTycker extends Tycker {
             var body = dt.substBody(resultParam.toTerm());
             yield localCtx.with(resultParam, () -> {
               var rec = inherit(lam.body(), body);
-              var lamBody = checkNotErased(lam.body().sourcePos(), rec.wellTyped(), body);
+              var lamBody = checkIllegalErasure(lam.body().sourcePos(), rec.wellTyped(), body);
               return new TermResult(new IntroTerm.Lambda(resultParam, lamBody), dt);
             });
           }
@@ -837,22 +837,22 @@ public final class ExprTycker extends Tycker {
     return new Arg<>(mockTerm(param, pos), param.explicit());
   }
 
-  public @NotNull Result checkNotErased(@NotNull SourcePos sourcePos, @NotNull Result result) {
-    return new TermResult(checkNotErased(sourcePos, result.wellTyped(), result.type()), result.type());
+  public @NotNull Result checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Result result) {
+    return new TermResult(checkIllegalErasure(sourcePos, result.wellTyped(), result.type()), result.type());
   }
 
-  public @NotNull Term checkNotErased(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
+  public @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
     if (wellTyped instanceof FormTerm.Sort) return wellTyped;
     var sort = type.computeType(state, localCtx);
     if (sort instanceof FormTerm.Prop) return wellTyped;
-    return checkNotErased(sourcePos, wellTyped);
+    return checkIllegalErasure(sourcePos, wellTyped);
   }
 
-  public @NotNull Term checkNotErased(@NotNull SourcePos sourcePos, @NotNull Term term) {
+  public @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
     var checker = new Function<Term, Term>() {
       private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
-        var erased = ElimTerm.underlyingIllegalErased(term);
+        var erased = ElimTerm.underlyingIllegalErasure(term);
         if (erased != null) {
           reporter.report(new ErasedError(sourcePos, erased, null));
           return new ErrorTerm(term);

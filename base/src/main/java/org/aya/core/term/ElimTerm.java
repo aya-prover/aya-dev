@@ -29,7 +29,7 @@ public sealed interface ElimTerm extends Term {
   }
   // ErasedTerm with a Prop type might safely appear in IntroTerms.
   // ErasedTerm with a non-Prop type or ElimTerm with `of` erased are disallowed.
-  static @Nullable ErasedTerm underlyingIllegalErased(@NotNull Term term) {
+  static @Nullable ErasedTerm underlyingIllegalErasure(@NotNull Term term) {
     if (term instanceof ElimTerm elim) return underlyingErased(elim.of());
     if (term instanceof CallTerm.Access elim) return underlyingErased(elim.of());
     return term instanceof ErasedTerm erased && !erased.isProp() ? erased : null;
