@@ -7,7 +7,7 @@ In file $FILE:6:17 ->
 
 Error: More than one types can be used to encode the literal:
          0
-       Candidates are:
+       Candidates:
          `Nat1`, `Nat2`
 note: Specify the type explicitly can resolve the ambiguity.
 

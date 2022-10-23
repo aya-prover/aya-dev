@@ -29,6 +29,7 @@ import java.util.function.Supplier;
  *   <li>impl PatMatcher, see {@link org.aya.core.pat.PatMatcher#match(Pat, Term)}</li>
  *   <li>impl PatUnifier, see {@link org.aya.core.pat.PatUnify#unify(Pat, Pat)}</li>
  * </ul>
+ *
  * @param <T>
  */
 public interface Shaped<T> {
@@ -133,7 +134,7 @@ public interface Shaped<T> {
     default <O> boolean compareShape(@NotNull TermComparator comparator, @NotNull Shaped<O> other) {
       if (shape() != other.shape()) return false;
       if (!(other instanceof Shaped.List<?> otherData)) return false;
-      return comparator.compare(type(), otherData.type(), null);   // TODO[hoshino]: I don't know whether it is correct.
+      return comparator.compare(type(), otherData.type(), null);
     }
 
     /**
@@ -147,7 +148,8 @@ public interface Shaped<T> {
     default <O> boolean compareUntyped(@NotNull Shaped.List<O> other, @NotNull BiFunction<T, O, Boolean> comparator) {
       var lhsRepr = repr();
       var rhsRepr = other.repr();
-      if (!lhsRepr.sizeEquals(rhsRepr)) return false;    // the size should equal.
+      // the size should equal.
+      if (!lhsRepr.sizeEquals(rhsRepr)) return false;
       return lhsRepr.zip(rhsRepr)
         .foldLeft(true, (l, tuple) ->
           l && comparator.apply(tuple._1, tuple._2));

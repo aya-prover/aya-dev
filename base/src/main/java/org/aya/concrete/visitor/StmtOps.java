@@ -11,7 +11,6 @@ import java.util.function.BiConsumer;
 
 /**
  * @author ice1000
- * TODO: rewrite this class using pattern matching
  */
 public interface StmtOps<P> extends ExprTraversal<P> {
   default <T extends Decl> void traced(@NotNull T yeah, P p, @NotNull BiConsumer<T, P> f) {
