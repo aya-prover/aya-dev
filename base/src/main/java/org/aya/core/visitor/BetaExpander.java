@@ -61,13 +61,27 @@ public interface BetaExpander extends EndoFunctor {
           yield new IntroTerm.Lambda(param, new RefTerm(var));
         }
 
-        var A = apply(new ElimTerm.App(coe.type(), new Arg<>(new RefTerm(new LocalVar("x")), true)));
+        var varI = new LocalVar("i");
+        var codom = apply(new ElimTerm.App(coe.type(), new Arg<>(new RefTerm(varI), true)));
 
-        yield switch (A) {
-          case FormTerm.Path path -> null;
-          case FormTerm.Pi pi -> null;
-          case FormTerm.Sigma sigma -> null;
-          case FormTerm.Type type -> null;
+        yield switch (codom) {
+          case FormTerm.Path path -> throw new InternalException("TODO");
+          case FormTerm.Pi pi -> {
+            var u0Var = new LocalVar("u0");
+            var vVar = new LocalVar("v");
+            var A = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.param().type()).rename();
+            var B = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), pi.body());
+            var vType = apply(new ElimTerm.App(A, new Arg<>(PrimTerm.Mula.RIGHT, true)));
+            var w = coeFillInv(A, coe.restr(), new RefTerm(vVar));
+            var BSubsted = B.subst(pi.param().ref(), w);
+            var wSusted = w.subst(varI, PrimTerm.Mula.LEFT);
+            yield new IntroTerm.Lambda(new Term.Param(u0Var, new ElimTerm.App(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
+              new IntroTerm.Lambda(new Term.Param(vVar, vType, true),
+                new ElimTerm.App(new PrimTerm.Coe(BSubsted, coe.restr()),
+                  new Arg<>(new ElimTerm.App(new RefTerm(u0Var), new Arg<>(wSusted, true)), true))));
+          }
+          case FormTerm.Sigma sigma -> throw new InternalException("TODO");
+          case FormTerm.Type type -> throw new InternalException("TODO");
           default -> coe;
         };
       }
@@ -91,16 +105,16 @@ public interface BetaExpander extends EndoFunctor {
   }
 
   // coeFill (A: I -> Type) (phi: I) (u0: A 0) : Path A u (coe A phi u)
-  private static @NotNull Term coeFill(@NotNull Term type, @NotNull Term phi, @NotNull Term u0) {
+  private static @NotNull Term coeFill(@NotNull Term type, @NotNull Restr<Term> phi, @NotNull Term u0) {
     var varX = new LocalVar("x");
 
-    var cofib = PrimTerm.Mula.or(phi, PrimTerm.Mula.inv(new RefTerm(varX)));
+    var cofib = phi.or(new Restr.Cond<>(new RefTerm(varX), false));
     var varY = new LocalVar("y");
     var paramY = new Term.Param(varY, PrimTerm.Interval.INSTANCE, true);
     var xAndY = PrimTerm.Mula.and(new RefTerm(varX), new RefTerm(varY));
     var a = new IntroTerm.Lambda(paramY, new ElimTerm.App(type, new Arg<>(xAndY, true)));
 
-    var coe = new PrimTerm.Coe(a, isOne(cofib));
+    var coe = new PrimTerm.Coe(a, cofib);
     var coerced = new ElimTerm.App(coe, new Arg<>(u0, true));
 
     return new IntroTerm.PathLam(ImmutableSeq.of(varX), coerced);
@@ -123,12 +137,12 @@ public interface BetaExpander extends EndoFunctor {
   }
 
   // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0
-  private @NotNull Term coeInv(@NotNull Term A, @NotNull Term phi, @NotNull Term u) {
-    return apply(new ElimTerm.App(new PrimTerm.Coe(invertA(A), isOne(phi)), new Arg<>(u, true)));
+  private @NotNull Term coeInv(@NotNull Term A, @NotNull Restr<Term> phi, @NotNull Term u) {
+    return apply(new ElimTerm.App(new PrimTerm.Coe(invertA(A), phi), new Arg<>(u, true)));
   }
 
   // coeFillInv
-  private @NotNull Term coeFillInv(@NotNull Term type, @NotNull Term phi, @NotNull Term u) {
+  private @NotNull Term coeFillInv(@NotNull Term type, @NotNull Restr<Term> phi, @NotNull Term u) {
     return coeFill(invertA(type), phi, u);
   }
 }
