@@ -109,16 +109,9 @@ public record CompiledAya(
 
     private @NotNull SerDef.SerBind serBind(@NotNull BindBlock bindBlock) {
       if (bindBlock == BindBlock.EMPTY) return SerDef.SerBind.EMPTY;
-      var loosers = bindBlock.resolvedLoosers().get().map(this::serBindName);
-      var tighters = bindBlock.resolvedTighters().get().map(this::serBindName);
+      var loosers = bindBlock.resolvedLoosers().get().map(state::def);
+      var tighters = bindBlock.resolvedTighters().get().map(state::def);
       return new SerDef.SerBind(loosers, tighters);
-    }
-
-    private @NotNull SerDef.SerBindName serBindName(@NotNull DefVar<?, ?> defVar) {
-      var renamed = resolveInfo.opRename().getOrNull(defVar);
-      // `defVar` was not renamed in current module
-      if (renamed == null) return new SerDef.SerBindNameNormal(state.def(defVar));
-      return new SerDef.SerBindNameRenamed(state.def(defVar));
     }
   }
 
@@ -211,16 +204,12 @@ public record CompiledAya(
     });
   }
 
-  private @NotNull OpDecl resolveOp(@NotNull ResolveInfo resolveInfo, @NotNull SerTerm.DeState state, @NotNull SerDef.SerBindName bindName) {
-    var opDecl = switch (bindName) {
-      case SerDef.SerBindNameNormal(var name) -> state.resolve(name).opDecl;
-      case SerDef.SerBindNameRenamed(var name) -> {
-        var original = state.resolve(name);
-        yield resolveInfo.opRename().get(original)._1;
-      }
-    };
+  private @NotNull OpDecl resolveOp(@NotNull ResolveInfo resolveInfo, @NotNull SerTerm.DeState state, @NotNull SerDef.QName name) {
+    var original = state.resolve(name);
+    var renamed = resolveInfo.opRename().getOrNull(original);
+    var opDecl = renamed != null ? renamed._1 : original.opDecl;
     if (opDecl != null) return opDecl;
-    resolveInfo.opSet().reporter.report(new NameProblem.OperatorNameNotFound(SourcePos.SER, bindName.name().toString()));
+    resolveInfo.opSet().reporter.report(new NameProblem.OperatorNameNotFound(SourcePos.SER, name.toString()));
     throw new Context.ResolvingInterruptedException();
   }
 
