@@ -31,6 +31,7 @@ import org.aya.util.Ordering;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,23 +83,18 @@ public sealed abstract class TermComparator permits Unifier {
 
   private static boolean sortLt(FormTerm.Sort l, FormTerm.Sort r) {
     return switch (l) {
-      case FormTerm.Type lt -> switch (r) {
-        case FormTerm.Type rt -> lt.lift() <= rt.lift();
-        case FormTerm.Set rt -> lt.lift() <= rt.lift();
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop -> false;
+      case FormTerm.Type(var lift) -> switch (r) {
+        case FormTerm.Type(var rift) -> lift <= rift;
+        case FormTerm.Set(var rift) -> lift <= rift;
+        case default -> false;
       };
       case FormTerm.ISet iSet -> switch (r) {
         case FormTerm.ISet set -> true;
-        case FormTerm.Prop prop -> false;
         case FormTerm.Set set -> true;
-        case FormTerm.Type type -> false;
-      };
-      case FormTerm.Prop prop -> r instanceof FormTerm.Prop;
-      case FormTerm.Set lt -> switch (r) {
-        case FormTerm.Set rt when lt.lift() <= rt.lift() -> true;
         case default -> false;
       };
+      case FormTerm.Prop prop -> r instanceof FormTerm.Prop;
+      case FormTerm.Set lt -> r instanceof FormTerm.Set rt && lt.lift() <= rt.lift();
     };
   }
 
@@ -393,10 +389,10 @@ public sealed abstract class TermComparator permits Unifier {
         yield happy ? cube.type() : null;
       }
       case ElimTerm.Proj lhs -> {
-        if (!(preRhs instanceof ElimTerm.Proj rhs)) yield null;
-        var preTupType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
+        if (!(preRhs instanceof ElimTerm.Proj(var rof, var rix))) yield null;
+        var preTupType = compareUntyped(lhs.of(), rof, lr, rl);
         if (!(preTupType instanceof FormTerm.Sigma(var tele))) yield null;
-        if (lhs.ix() != rhs.ix()) yield null;
+        if (lhs.ix() != rix) yield null;
         var params = tele.view();
         var subst = new Subst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
@@ -410,9 +406,9 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
       case FormTerm.Pi(var lParam, var lBody) -> {
-        if (!(preRhs instanceof FormTerm.Pi rhs)) yield null;
-        yield checkParam(lParam, rhs.param(), null, lr, rl, () -> null, () -> {
-          var bodyIsOk = compare(lBody, rhs.body(), lr, rl, null);
+        if (!(preRhs instanceof FormTerm.Pi(var rParam, var rBody))) yield null;
+        yield checkParam(lParam, rParam, null, lr, rl, () -> null, () -> {
+          var bodyIsOk = compare(lBody, rBody, lr, rl, null);
           if (!bodyIsOk) return null;
           return FormTerm.Type.ZERO;
         });
@@ -528,6 +524,7 @@ public sealed abstract class TermComparator permits Unifier {
     return result;
   }
 
+  @Debug.Renderer(childrenArray = "map.values().toArray()", hasChildren = "!map.isEmpty()")
   public record Sub(@NotNull MutableMap<@NotNull AnyVar, @NotNull RefTerm> map) implements Cloneable {
     public Sub() {
       this(MutableMap.create());
