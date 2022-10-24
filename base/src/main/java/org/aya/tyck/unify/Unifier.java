@@ -59,7 +59,7 @@ public final class Unifier extends TermComparator {
     @NotNull CallTerm.Hole lhs, @NotNull Term rhs, @NotNull Meta meta
   ) {
     var subst = new Subst(new MutableHashMap<>(/*spine.size() * 2*/));
-    for (var arg : lhs.args().view().zip(meta.telescope)) {
+    for (var arg : lhs.args().zipView(meta.telescope)) {
       if (uneta.uneta(arg._1.term()) instanceof RefTerm ref) {
         if (subst.map().containsKey(ref.var())) return null;
         subst.add(ref.var(), arg._2.toTerm());
@@ -73,10 +73,8 @@ public final class Unifier extends TermComparator {
     if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
       // If we do not know the type, then we do not perform the comparison
       if (meta.result == null) return null;
-      // Is this going to produce a readable error message?
-      compareSort(new FormTerm.Type(lhs.ulift()), new FormTerm.Type(rcall.ulift()));
       var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
-      for (var arg : lhs.args().view().zip(rcall.args())) {
+      for (var arg : lhs.args().zipView(rcall.args())) {
         if (!(holeTy instanceof FormTerm.Pi holePi))
           throw new InternalException("meta arg size larger than param size. this should not happen");
         if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;

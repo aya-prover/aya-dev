@@ -223,7 +223,7 @@ public sealed abstract class TermComparator permits Unifier {
     return visitLists(l.view().map(Arg::term), r.view().map(Arg::term), lr, rl, params);
   }
 
-  private boolean visitLists(SeqLike<Term> l, SeqLike<Term> r, Sub lr, Sub rl, @NotNull SeqLike<Term.Param> types) {
+  private boolean visitLists(SeqView<Term> l, SeqView<Term> r, Sub lr, Sub rl, @NotNull SeqLike<Term.Param> types) {
     if (!l.sizeEquals(r)) return false;
     if (!r.sizeEquals(types)) return false;
     var typesSubst = types.view();
