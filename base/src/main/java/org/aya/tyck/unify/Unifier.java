@@ -91,7 +91,7 @@ public final class Unifier extends TermComparator {
     var resultTy = preRhs.computeType(state, ctx);
     // resultTy might be an ErrorTerm, what to do?
     if (meta.result != null) {
-      compareUntyped(resultTy, meta.result.lift(lhs.ulift()), rl, lr);
+      compare(resultTy, meta.result.lift(lhs.ulift()), rl, lr, null);
     }
     var argSubst = extract(lhs, preRhs, meta);
     if (argSubst == null) {
