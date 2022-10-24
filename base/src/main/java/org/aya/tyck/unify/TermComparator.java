@@ -307,9 +307,11 @@ public sealed abstract class TermComparator permits Unifier {
         // Question: do we need a unification for Pi.body?
         return compare(lhs, rhs, lr, rl, null);
       });
-      case FormTerm.PartTy ty when lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
-        comparePartial(lel, rel, ty, lr, rl);
-      case FormTerm.PartTy ty -> false;
+      case FormTerm.PartTy ty -> {
+        if (lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel)
+          yield comparePartial(lel, rel, ty, lr, rl);
+        else yield false;
+      }
     };
     traceExit();
     return ret;
@@ -330,15 +332,13 @@ public sealed abstract class TermComparator permits Unifier {
 
   private boolean comparePartial(
     @NotNull IntroTerm.PartEl lhs, @NotNull IntroTerm.PartEl rhs,
-    @Nullable FormTerm.PartTy type, Sub lr, Sub rl
+    @NotNull FormTerm.PartTy type, Sub lr, Sub rl
   ) {
     record P(Partial<Term> l, Partial<Term> r) {}
     return switch (new P(lhs.partial(), rhs.partial())) {
-      case P(Partial.Const<Term> ll, Partial.Const<Term> rr) ->
-        compare(ll.u(), rr.u(), lr, rl, type == null ? null : type.type());
-      case P(Partial.Split<Term> ll, Partial.Split<Term> rr) ->
-        CofThy.conv(type == null ? ll.restr() : type.restr(), new Subst(),
-          subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type == null ? null : type.subst(subst)));
+      case P(Partial.Const<Term>(var ll), Partial.Const<Term>(var rr)) -> compare(ll, rr, lr, rl, type.type());
+      case P(Partial.Split<Term> ll, Partial.Split<Term> rr) -> CofThy.conv(type.restr(), new Subst(),
+        subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type.type().subst(subst)));
       default -> false;
     };
   }
@@ -346,7 +346,7 @@ public sealed abstract class TermComparator permits Unifier {
   private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
     return TermComparator.withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
       // TODO: purge lr/rl
-      var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type()).subst(lr.map);
+      var lPar = new IntroTerm.PartEl(lhs.partial(), lhs.type());
       var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
       var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
       var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
@@ -355,8 +355,11 @@ public sealed abstract class TermComparator permits Unifier {
     });
   }
 
-  private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
-    return CofThy.propExt(new Subst(), lhs, rhs, (sub, term) -> sub.restr(state, term));
+  private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs, Sub lr, Sub rl) {
+    // var lrSubst = new Subst(MutableMap.from(lr.map));
+    // var rlSubst = new Subst(MutableMap.from(rl.map));
+    return CofThy.conv(lhs.map(s -> s.subst(lr.map)), new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
+      && CofThy.conv(rhs.map(r -> r.subst(rl.map)), new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
   }
 
   private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
@@ -426,7 +429,7 @@ public sealed abstract class TermComparator permits Unifier {
       case FormTerm.PartTy(var lTy, var lR) -> {
         if (!(preRhs instanceof FormTerm.PartTy(var rTy, var rR))) yield null;
         var happy = compare(lTy, rTy, lr, rl, null)
-          && compareRestr(lR, rR);
+          && compareRestr(lR, rR, lr, rl);
         yield happy ? FormTerm.Type.ZERO : null;
       }
       case FormTerm.Path(var lCube) -> {
@@ -436,8 +439,7 @@ public sealed abstract class TermComparator permits Unifier {
       case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Type.ZERO : null;
       case PrimTerm.Mula lhs -> {
         if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
-        // TODO: abolish lr/rl
-        if (compareRestr(CofThy.isOne(lhs.subst(lr.map)), CofThy.isOne(rhs)))
+        if (compareRestr(CofThy.isOne(lhs), CofThy.isOne(rhs), lr, rl))
           yield PrimTerm.Interval.INSTANCE;
         else yield null;
       }
@@ -456,8 +458,7 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case PrimTerm.Coe lhs -> {
         if (!(preRhs instanceof PrimTerm.Coe rhs)) yield null;
-        // TODO: purge lr/rl
-        if (!compareRestr(lhs.restr().map(t -> t.subst(lr.map)), rhs.restr())) yield null;
+        if (!compareRestr(lhs.restr(), rhs.restr(), lr, rl)) yield null;
         yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
           PrimDef.familyLeftToRight(lhs.type()) : null;
       }
@@ -493,8 +494,8 @@ public sealed abstract class TermComparator permits Unifier {
       };
       case LitTerm.ShapedList lhs -> switch (preRhs) {
         case LitTerm.ShapedList rhs -> {
-          if (! lhs.compareShape(this, rhs)) yield null;
-          if (! lhs.compareUntyped(rhs,
+          if (!lhs.compareShape(this, rhs)) yield null;
+          if (!lhs.compareUntyped(rhs,
             (l, r) -> compare(l, r, lr, rl, null))) yield null;
 
           yield lhs.type();
