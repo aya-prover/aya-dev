@@ -12,6 +12,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.generic.Arg;
+import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.distill.DistillerOptions;
@@ -188,6 +189,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case PrimTerm.Coe coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
+      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
     };
   }

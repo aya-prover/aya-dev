@@ -9,6 +9,7 @@ import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.LocalCtx;
@@ -109,6 +110,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield app.cube().type().subst(new Subst(xi, ui));
       }
       case PrimTerm.Coe coe -> PrimDef.familyLeftToRight(coe.type());
+      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> erased.type();
     };
   }

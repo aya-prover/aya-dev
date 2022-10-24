@@ -188,6 +188,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       case RefTerm.MetaPat metaPat -> metaPat;
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
+      case PrimTerm.HComp hComp -> hComp; //TODO
     };
   }
 

@@ -228,7 +228,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
         var pat = ctor.patterns.isNotEmpty()
-          ? patTycker.visitPatterns(sig, ctor.patterns.view())._1.toImmutableSeq()
+          ? patTycker.visitPatterns(sig, ctor.patterns.view(), null)._1.toImmutableSeq()
           // No patterns, leave it blank
           : ImmutableSeq.<Pat>empty();
         var ctorSort = dataConcrete.ulift instanceof FormTerm.Prop ? FormTerm.Type.ZERO : dataConcrete.ulift;

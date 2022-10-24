@@ -1,8 +1,8 @@
 public open import Primitives using
   ( I
   , Partial
-  , intervalInv as fixl ~ tighter =
-  , intervalMin as infix /\
+  , intervalInv as fixl  ~  tighter = \/ /\
+  , intervalMin as infix /\ tighter \/
   , intervalMax as infix \/
   , coe
   )
