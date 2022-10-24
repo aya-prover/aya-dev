@@ -71,6 +71,7 @@ public record ResolveInfo(
     });
   }
 
+  @Debug.Renderer(text = "opInfo.name()")
   public record RenamedOpDecl(@NotNull OpInfo opInfo) implements OpDecl {
   }
 }
