@@ -184,7 +184,8 @@ public sealed abstract class TermComparator permits Unifier {
     Sub lr, Sub rl, Supplier<T> fail, BiFunction<Subst, Subst, T> success
   ) {
     if (l.explicit() != r.explicit()) return fail.get();
-    if (!compare(l.type().subst(lsub), r.type().subst(rsub), lr, rl, type)) return fail.get();
+    var lTy = l.type().subst(lsub);
+    if (!compare(lTy, r.type().subst(rsub), lr, rl, type)) return fail.get();
     // Do not substitute when one side is ignored
     if (l.ref() == LocalVar.IGNORED || r.ref() == LocalVar.IGNORED) {
       return success.apply(lsub, rsub);
@@ -195,7 +196,7 @@ public sealed abstract class TermComparator permits Unifier {
       var term = new RefTerm(i);
       lsub.addDirectly(l.ref(), term);
       rsub.addDirectly(r.ref(), term);
-      var result = success.apply(lsub, rsub);
+      var result = ctx.with(i, lTy, () -> success.apply(lsub, rsub));
       rl.map.remove(i);
       lr.map.remove(i);
       return result;
