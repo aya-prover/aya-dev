@@ -18,7 +18,6 @@ import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
-import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.AnyVar;
@@ -346,7 +345,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
     return TermComparator.withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
-      // TODO: let CofThy.propExt uses lr and rl?
+      // TODO: purge lr/rl
       var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type()).subst(lr.map);
       var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
       var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
@@ -437,16 +436,10 @@ public sealed abstract class TermComparator permits Unifier {
       case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Type.ZERO : null;
       case PrimTerm.Mula lhs -> {
         if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
-        var happy = switch (lhs.asFormula()) {
-          case Formula.Lit<Term> ll when rhs.asFormula() instanceof Formula.Lit<Term> rr -> ll.isOne() == rr.isOne();
-          case Formula.Inv<Term> ll when rhs.asFormula() instanceof Formula.Inv<Term> rr ->
-            compare(ll.i(), rr.i(), lr, rl, null);
-          case Formula.Conn<Term> ll when rhs.asFormula() instanceof Formula.Conn<Term> rr -> ll.isAnd() == rr.isAnd()
-            && compare(ll.l(), rr.l(), lr, rl, null)
-            && compare(ll.r(), rr.r(), lr, rl, null);
-          default -> false;
-        };
-        yield happy ? PrimTerm.Interval.INSTANCE : null;
+        // TODO: abolish lr/rl
+        if (compareRestr(CofThy.isOne(lhs.subst(lr.map)), CofThy.isOne(rhs)))
+          yield PrimTerm.Interval.INSTANCE;
+        else yield null;
       }
       // See compareApprox for why we don't compare these
       case CallTerm.Fn lhs -> null;
@@ -463,7 +456,8 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case PrimTerm.Coe lhs -> {
         if (!(preRhs instanceof PrimTerm.Coe rhs)) yield null;
-        if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
+        // TODO: purge lr/rl
+        if (!compareRestr(lhs.restr().map(t -> t.subst(lr.map)), rhs.restr())) yield null;
         yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
           PrimDef.familyLeftToRight(lhs.type()) : null;
       }

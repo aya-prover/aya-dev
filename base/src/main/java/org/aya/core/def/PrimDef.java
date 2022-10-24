@@ -15,6 +15,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,20 +86,45 @@ public final class PrimDef extends TopLevelDef<Term> {
         var paramRestr = new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true);
         var result = familyLeftToRight(new RefTerm(varA));
 
-        return new PrimDef(
-          ref,
-          ImmutableSeq.of(paramA, paramRestr),
-          result,
-          ID.COE
-        );
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramRestr), result, ID.COE);
       }, ImmutableSeq.of(ID.I));
 
-      private Term coe(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+      @Contract("_, _ -> new")
+      private @NotNull Term coe(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
         var type = prim.args().get(0).term();
         var restr = prim.args().get(1).term();
         return new PrimTerm.Coe(type, isOne(restr));
       }
 
+      private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
+        var varA = new LocalVar("A");
+        var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
+        var varPhi = new LocalVar("phi");
+        var paramRestr = new Term.Param(varPhi, PrimTerm.Interval.INSTANCE, false);
+        var varU = new LocalVar("u");
+        var paramFuncU = new Term.Param(varU,
+          new FormTerm.Pi(
+            new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true),
+            new FormTerm.PartTy(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
+          true);
+        var varU0 = new LocalVar("u0");
+        var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
+        var result = new RefTerm(varA);
+        return new PrimDef(
+          ref,
+          ImmutableSeq.of(paramA, paramRestr, paramFuncU, paramU0),
+          result,
+          ID.HCOMP
+        );
+      }, ImmutableSeq.of(ID.I));
+
+      private @NotNull Term hcomp(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+        var A = prim.args().get(0).term();
+        var phi = prim.args().get(1).term();
+        var u = prim.args().get(2).term();
+        var u0 = prim.args().get(3).term();
+        return new PrimTerm.HComp(A, phi, u, u0);
+      }
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMin = formula(ID.IMIN, prim -> {
@@ -191,7 +217,8 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.stringConcat,
           init.intervalType,
           init.partialType,
-          init.coerce
+          init.coerce,
+          init.hcomp
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
     }
@@ -245,6 +272,7 @@ public final class PrimDef extends TopLevelDef<Term> {
     }
   }
 
+  /** Let A be argument, then <code>A 0 -> A 1</code> */
   public static @NotNull FormTerm.Pi familyLeftToRight(Term term) {
     return new FormTerm.Pi(
       new Term.Param(LocalVar.IGNORED, new ElimTerm.App(term, new Arg<>(PrimTerm.Mula.LEFT, true)), true),
@@ -264,7 +292,8 @@ public final class PrimDef extends TopLevelDef<Term> {
     STRCONCAT("strcat"),
     I("I"),
     PARTIAL("Partial"),
-    COE("coe");
+    COE("coe"),
+    HCOMP("hcomp");
 
     public final @NotNull @NonNls String id;
 
