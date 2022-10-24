@@ -52,7 +52,7 @@ public record CompiledAya(
       throw new UnsupportedOperationException();
     }
 
-    var serialization = new Serialization(state, MutableList.create(), MutableList.create());
+    var serialization = new Serialization(state, resolveInfo, MutableList.create(), MutableList.create());
     serialization.ser(defs);
 
     var modName = ctx.moduleName();
@@ -79,6 +79,7 @@ public record CompiledAya(
 
   private record Serialization(
     @NotNull Serializer.State state,
+    @NotNull ResolveInfo resolveInfo,
     @NotNull MutableList<SerDef> serDefs,
     @NotNull MutableList<SerDef.SerOp> serOps
   ) {
@@ -100,7 +101,6 @@ public record CompiledAya(
     }
 
     private void serOp(@NotNull SerDef serDef, @NotNull GenericDef def) {
-      // TODO: serialize rebind and operator renaming
       var concrete = def.ref().concrete;
       var opInfo = concrete.opInfo();
       if (opInfo != null) serOps.append(new SerDef.SerOp(
@@ -109,9 +109,16 @@ public record CompiledAya(
 
     private @NotNull SerDef.SerBind serBind(@NotNull BindBlock bindBlock) {
       if (bindBlock == BindBlock.EMPTY) return SerDef.SerBind.EMPTY;
-      var loosers = bindBlock.resolvedLoosers().get().map(state::def);
-      var tighters = bindBlock.resolvedTighters().get().map(state::def);
+      var loosers = bindBlock.resolvedLoosers().get().map(this::serBindName);
+      var tighters = bindBlock.resolvedTighters().get().map(this::serBindName);
       return new SerDef.SerBind(loosers, tighters);
+    }
+
+    private @NotNull SerDef.SerBindName serBindName(@NotNull DefVar<?, ?> defVar) {
+      var renamed = resolveInfo.opRename().getOrNull(defVar);
+      // `defVar` was not renamed in current module
+      if (renamed == null) return new SerDef.SerBindNameNormal(state.def(defVar));
+      return new SerDef.SerBindNameRenamed(state.def(defVar));
     }
   }
 
@@ -156,7 +163,6 @@ public record CompiledAya(
 
   /** like {@link StmtResolver} but only resolve operator */
   private void deOp(@NotNull SerTerm.DeState state, @NotNull ResolveInfo resolveInfo) {
-    var opSet = resolveInfo.opSet();
     // deserialize defined operator and their bindings
     serOps.forEach(serOp -> {
       var defVar = state.resolve(serOp.name());
@@ -169,16 +175,21 @@ public record CompiledAya(
       assert opDecl != null; // just initialized above
       deBindDontCare(resolveInfo, state, opDecl, serOp.bind());
     });
-    // deserialize renamed operator and their bindings
+    // deserialize renamed operator
     opRename.view().forEach((name, serOp) -> {
       var defVar = state.resolve(name);
       var asName = serOp.name();
-      var asBind = serOp.bind();
       var asAssoc = serOp.assoc();
       var opDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, asAssoc));
-      deBindDontCare(resolveInfo, state, opDecl, asBind);
       resolveInfo.renameOp(defVar, opDecl, BindBlock.EMPTY);
-      // ^ always use empty bind block bc we already resolved the bind here!
+      // ^ always use empty bind block bc we will resolve the bind here!
+    });
+    // and their bindings
+    opRename.view().forEach((name, serOp) -> {
+      var defVar = state.resolve(name);
+      var asBind = serOp.bind();
+      var opDecl = resolveInfo.opRename().get(defVar)._1;
+      deBindDontCare(resolveInfo, state, opDecl, asBind);
     });
   }
 
@@ -191,19 +202,25 @@ public record CompiledAya(
     var opSet = resolveInfo.opSet();
     opSet.ensureHasElem(opDecl);
     bind.loosers().forEach(looser -> {
-      var target = resolveOp(opSet, state, looser);
+      var target = resolveOp(resolveInfo, state, looser);
       opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
     });
     bind.tighters().forEach(tighter -> {
-      var target = resolveOp(opSet, state, tighter);
+      var target = resolveOp(resolveInfo, state, tighter);
       opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
     });
   }
 
-  private @NotNull OpDecl resolveOp(@NotNull AyaBinOpSet opSet, @NotNull SerTerm.DeState state, @NotNull SerDef.QName name) {
-    var opDecl = state.resolve(name).opDecl;
+  private @NotNull OpDecl resolveOp(@NotNull ResolveInfo resolveInfo, @NotNull SerTerm.DeState state, @NotNull SerDef.SerBindName bindName) {
+    var opDecl = switch (bindName) {
+      case SerDef.SerBindNameNormal(var name) -> state.resolve(name).opDecl;
+      case SerDef.SerBindNameRenamed(var name) -> {
+        var original = state.resolve(name);
+        yield resolveInfo.opRename().get(original)._1;
+      }
+    };
     if (opDecl != null) return opDecl;
-    opSet.reporter.report(new NameProblem.OperatorNameNotFound(SourcePos.SER, name.name()));
+    resolveInfo.opSet().reporter.report(new NameProblem.OperatorNameNotFound(SourcePos.SER, bindName.name().toString()));
     throw new Context.ResolvingInterruptedException();
   }
 

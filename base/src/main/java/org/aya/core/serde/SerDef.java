@@ -141,9 +141,21 @@ public sealed interface SerDef extends Serializable {
   }
 
   /** Serialized version of {@link org.aya.concrete.stmt.BindBlock} */
-  record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
+  record SerBind(@NotNull ImmutableSeq<SerBindName> loosers,
+                 @NotNull ImmutableSeq<SerBindName> tighters) implements Serializable {
     public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
   }
+
+  /** Support renamed operator in bind clause */
+  sealed interface SerBindName extends Serializable {
+    @NotNull QName name();
+  }
+
+  /** The name can only be resolved through {@link org.aya.core.serde.SerTerm.DeState#resolve(QName)} */
+  record SerBindNameNormal(@NotNull QName name) implements SerBindName, Serializable {}
+
+  /** The name can only be resolved through {@link CompiledAya#opRename()} */
+  record SerBindNameRenamed(@NotNull QName name) implements SerBindName, Serializable {}
 
   /** serialized {@link AyaShape} */
   enum SerAyaShape implements Serializable {
