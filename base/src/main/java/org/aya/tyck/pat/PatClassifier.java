@@ -305,10 +305,10 @@ public record PatClassifier(
                 ? new MCT.Leaf<Term, PatErr>(subPats.map(MCT.SubPats::ix))
                 // Yes, classify the rest of them
                 : classifySub(conTele2.view(), subPats, coverage, fuelCopy));
-            classified = allSub.isNotEmpty()
-              // bind patterns already exist in each group, so we don't need to add them again
-              ? new MCT.Node<>(dataCall, allSub)
-              : new MCT.Leaf<>(hasBind.map(MCT.SubPats::ix));
+            // Always add bind patterns as a separate group. See: https://github.com/aya-prover/aya-dev/issues/437
+            // even though we will report duplicated domination warnings!
+            var allBinds = new MCT.Leaf<Term, PatErr>(hasBind.map(MCT.SubPats::ix));
+            classified = new MCT.Node<>(dataCall, allSub.appended(allBinds));
           } else {
             classified = classifySub(conTele2.view(), matches, coverage, fuel);
           }
