@@ -27,7 +27,6 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.ArrayUtil;
 import org.aya.util.Ordering;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -79,15 +78,15 @@ public sealed abstract class TermComparator permits Unifier {
     assert l.sizeEquals(r);
     var lSubst = new Subst();
     var rSubst = new Subst();
-    for (var conv : ArrayUtil.zip(l.toArray(LocalVar.class), r.toArray(LocalVar.class), tyVars.toArray(LocalVar.class))) {
+    for (var conv : l.view().zip3(r, tyVars)) {
       lr.map.put(conv._3, new RefTerm(conv._2));
       rl.map.put(conv._3, new RefTerm(conv._1));
       lSubst.addDirectly(conv._1, new RefTerm(conv._3));
       rSubst.addDirectly(conv._2, new RefTerm(conv._3));
     }
     var res = supplier.apply(lSubst, rSubst);
-    tyVars.forEach(lr.map::remove);
-    tyVars.forEach(rl.map::remove);
+    lr.map.removeAll(tyVars);
+    rl.map.removeAll(tyVars);
     return res;
   }
 
@@ -359,7 +358,7 @@ public sealed abstract class TermComparator permits Unifier {
       rl.map.put(p._1, new RefTerm(p._2)));
     var result = ctx.withIntervals(lambda.params().view(), () ->
       compare(cube.applyDimsTo(lambda), cube.applyDimsTo(rhs), lr, rl, cube.type()));
-    cube.params().forEach(rl.map::remove);
+    rl.map.removeAll(cube.params());
     return result;
   }
 

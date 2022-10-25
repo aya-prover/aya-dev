@@ -212,14 +212,13 @@ public sealed interface FormTerm extends Term {
     }
 
     public @NotNull Term makeApp(@NotNull Term app, @NotNull Arg<Term> arg) {
-      return ElimTerm.make(makeLam(app), arg);
+      return ElimTerm.make(etaLam(app), arg);
     }
 
-    public @NotNull Term makeLam(@NotNull Term app) {
-      var xi = params.map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
-      var elim = new ElimTerm.PathApp(app, xi.map(Param::toArg), this);
-      return xi.foldRight((Term) elim, IntroTerm.Lambda::new).rename();
-      // ^ the cast is necessary, see https://bugs.openjdk.org/browse/JDK-8292975
+    /** "not really eta". Used together with {@link #computePi()} */
+    public @NotNull Term etaLam(@NotNull Term term) {
+      return params.map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true))
+        .foldRight(applyDimsTo(term), IntroTerm.Lambda::new).rename();
     }
   }
 }
