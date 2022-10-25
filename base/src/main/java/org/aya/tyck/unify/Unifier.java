@@ -2,7 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
-import kala.collection.mutable.MutableHashMap;
+import kala.collection.Seq;
+import kala.collection.mutable.MutableArrayList;
 import org.aya.core.Meta;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
@@ -10,6 +11,7 @@ import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
@@ -55,17 +57,23 @@ public final class Unifier extends TermComparator {
     return new TyckState.Eqn(lhs, rhs, cmp, pos, local, lr.clone(), rl.clone());
   }
 
-  private @Nullable Subst extract(
-    @NotNull CallTerm.Hole lhs, @NotNull Term rhs, @NotNull Meta meta
-  ) {
-    var subst = new Subst(new MutableHashMap<>(/*spine.size() * 2*/));
-    for (var arg : lhs.args().view().zip(meta.telescope)) {
+  /**
+   * @param subst is added with unique variables in the inverted spine
+   * @return the list of duplicated variables if the spine is successfully inverted.
+   */
+  private @Nullable Seq<LocalVar> invertSpine(Subst subst, @NotNull CallTerm.Hole lhs, @NotNull Meta meta) {
+    var overlap = MutableArrayList.<LocalVar>create();
+    for (var arg : lhs.args().zipView(meta.telescope)) {
       if (uneta.uneta(arg._1.term()) instanceof RefTerm ref) {
-        if (subst.map().containsKey(ref.var())) return null;
+        if (overlap.contains(ref.var())) continue;
+        if (subst.map().containsKey(ref.var())) {
+          overlap.append(ref.var());
+          subst.map().remove(ref.var());
+        }
         subst.add(ref.var(), arg._2.toTerm());
       } else return null;
     }
-    return subst;
+    return overlap;
   }
 
   @Override @Nullable protected Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, CallTerm.@NotNull Hole lhs) {
@@ -73,10 +81,8 @@ public final class Unifier extends TermComparator {
     if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
       // If we do not know the type, then we do not perform the comparison
       if (meta.result == null) return null;
-      // Is this going to produce a readable error message?
-      compareSort(new FormTerm.Type(lhs.ulift()), new FormTerm.Type(rcall.ulift()));
       var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
-      for (var arg : lhs.args().view().zip(rcall.args())) {
+      for (var arg : lhs.args().zipView(rcall.args())) {
         if (!(holeTy instanceof FormTerm.Pi holePi))
           throw new InternalException("meta arg size larger than param size. this should not happen");
         if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
@@ -93,26 +99,40 @@ public final class Unifier extends TermComparator {
     if (meta.result != null) {
       compare(resultTy, meta.result.lift(lhs.ulift()), rl, lr, null);
     }
-    var argSubst = extract(lhs, preRhs, meta);
-    if (argSubst == null) {
+    // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
+    var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
+    var overlap = invertSpine(subst, lhs, meta);
+    if (overlap == null) {
       reporter.report(new HoleProblem.BadSpineError(lhs, pos));
       return null;
     }
-    var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
     // In this case, the solution may not be unique (see #608),
     // so we may delay its resolution to the end of the tycking when we disallow vague unification.
-    if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {
+    if (!allowVague && overlap.anyMatch(var -> preRhs.findUsages(var) > 0)) {
       state.addEqn(createEqn(lhs, preRhs, lr, rl));
       // Skip the unification and scope check
       return resultTy;
     }
-    subst.add(argSubst);
-    // TODO
-    // TODO: what's the TODO above? I don't know what's TODO? ????
+    // Now we are sure that the variables in overlap are all unused.
+
+    // The substitution `rl` maps the intermediate, fresh names to the LHS of unification.
+    // We use intermediate fresh names as suggested by Andras Kovacs
+    // Now, two things can make use of those intermediate fresh names:
+    //  1. lhs.args(), 2. preRhs
+    // The generated substitution is okay, because if it has the fresh names,
+    //  they will be replaced with meta.telescope variables which is well-scoped.
+    // However, if preRhs refer to a fresh name, we need to substitute it to the LHS
+    //  version of them. Hence, we use rl to modify `subst`.
+    // According to the above rationales, this should not be replaced with `subst.map.putAll(rl.map)`.
     rl.map().forEach(subst::add);
+    // Since we're here, this is definitely an unsolved meta. Assert that just in case
+    //  we break the logic.
     assert !state.metas().containsKey(meta);
-    var solved = preRhs.freezeHoles(state).subst(subst, -lhs.ulift());
+    // TODO: purge Hole.ulift
+    assert lhs.ulift() == 0;
+    var solved = preRhs.freezeHoles(state).subst(subst);
     var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
+    // First, try to scope check without normalization
     var scopeCheck = solved.scopeCheck(allowedVars);
     if (scopeCheck.invalid.isNotEmpty()) {
       // Normalization may remove the usages of certain variables
