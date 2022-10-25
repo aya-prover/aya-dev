@@ -72,7 +72,7 @@ public record CallGraph<T, P>(
   private static <T, P> @NotNull Tuple2<CallGraph<T, P>, CallGraph<T, P>> merge(
     @NotNull CallGraph<T, P> comb, @NotNull CallGraph<T, P> cs
   ) {
-    var newG = CallGraph.<T, P>create(); // all accept new matrices go here, used for indicating whether we are done.
+    var newG = CallGraph.<T, P>create(); // all accepted new matrices go here, used for indicating whether we are done.
     var oldG = CallGraph.<T, P>create(); // all old matrices and accepted new matrices go here
     forEachGraph(comb.graph, cs.graph,
       // If the matrix is really new (no old matrices describing the same call -- we find a new call path), accept it
@@ -84,7 +84,7 @@ public record CallGraph<T, P>(
       o -> o.forEach(oldG::put),
       // If `n` is replacing `o`, compare one by one
       (n, o) -> {
-        // check if there's still old ones better than new olds...
+        // check if there's still old ones better than new ones...
         // note: the idea of "better" is not the same as "decrease more", see comments on `Selector.select()`
         var cmp = Selector.select(n.view(), o.view());
         cmp._1.forEach(newG::put); // filtered really better new ones,
