@@ -73,7 +73,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
         yield decl.body.fold(
           body -> {
-            var nobody = tycker.checkIllegalErasure(body.sourcePos(), tycker.inherit(body, signature.result())).wellTyped();
+            var nobody = tycker.check(body, signature.result()).wellTyped();
             tycker.solveMetas();
             // It may contain unsolved metas. See `checkTele`.
             var resultTy = tycker.zonk(signature.result());
@@ -158,7 +158,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var okTele = checkTele(tycker, fn.telescope, null);
     var preresult = tycker.synthesize(fn.result).wellTyped();
     var bodyExpr = fn.body.getLeftValue();
-    var prebody = tycker.checkIllegalErasure(bodyExpr.sourcePos(), tycker.inherit(bodyExpr, preresult)).wellTyped();
+    var prebody = tycker.check(bodyExpr, preresult).wellTyped();
     tycker.solveMetas();
     var result = tycker.zonk(preresult);
     var tele = zonkTele(tycker, okTele);

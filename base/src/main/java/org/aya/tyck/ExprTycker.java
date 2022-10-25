@@ -462,9 +462,8 @@ public final class ExprTycker extends Tycker {
             var resultParam = new Term.Param(var, type, param.explicit());
             var body = dt.substBody(resultParam.toTerm());
             yield localCtx.with(resultParam, () -> {
-              var rec = inherit(lam.body(), body);
-              var lamBody = checkIllegalErasure(lam.body().sourcePos(), rec.wellTyped(), body);
-              return new TermResult(new IntroTerm.Lambda(resultParam, lamBody), dt);
+              var rec = check(lam.body(), body);
+              return new TermResult(new IntroTerm.Lambda(resultParam, rec.wellTyped()), dt);
             });
           }
           // Path lambda!
@@ -835,6 +834,10 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Arg<Term> mockArg(Term.Param param, SourcePos pos) {
     return new Arg<>(mockTerm(param, pos), param.explicit());
+  }
+
+  public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
+    return checkIllegalErasure(expr.sourcePos(), inherit(expr, type));
   }
 
   public @NotNull Result checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Result result) {
