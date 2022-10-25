@@ -27,14 +27,17 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.ArrayUtil;
 import org.aya.util.Ordering;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -68,37 +71,40 @@ public sealed abstract class TermComparator permits Unifier {
     return term instanceof CallTerm.Fn || term instanceof CallTerm.Con || term instanceof CallTerm.Prim;
   }
 
-  public static <E> E withIntervals(SeqView<LocalVar> l, SeqView<LocalVar> r, Sub lr, Sub rl, Supplier<E> supplier) {
+  public static <E> E withIntervals(
+    @NotNull ImmutableSeq<LocalVar> l, @NotNull ImmutableSeq<LocalVar> r, Sub lr, Sub rl,
+    @NotNull ImmutableSeq<LocalVar> tyVars,
+    @NotNull BiFunction<Subst, Subst, E> supplier
+  ) {
     assert l.sizeEquals(r);
-    for (var conv : l.zipView(r)) {
-      lr.map.put(conv._1, new RefTerm(conv._2));
-      rl.map.put(conv._2, new RefTerm(conv._1));
+    var lSubst = new Subst();
+    var rSubst = new Subst();
+    for (var conv : ArrayUtil.zip(l.toArray(LocalVar.class), r.toArray(LocalVar.class), tyVars.toArray(LocalVar.class))) {
+      lr.map.put(conv._3, new RefTerm(conv._2));
+      rl.map.put(conv._3, new RefTerm(conv._1));
+      lSubst.addDirectly(conv._1, new RefTerm(conv._3));
+      rSubst.addDirectly(conv._2, new RefTerm(conv._3));
     }
-    var res = supplier.get();
-    l.forEach(lr.map::remove);
-    r.forEach(rl.map::remove);
+    var res = supplier.apply(lSubst, rSubst);
+    tyVars.forEach(lr.map::remove);
+    tyVars.forEach(rl.map::remove);
     return res;
   }
 
   private static boolean sortLt(FormTerm.Sort l, FormTerm.Sort r) {
     return switch (l) {
-      case FormTerm.Type lt -> switch (r) {
-        case FormTerm.Type rt -> lt.lift() <= rt.lift();
-        case FormTerm.Set rt -> lt.lift() <= rt.lift();
-        case FormTerm.ISet iSet -> false;
-        case FormTerm.Prop prop -> false;
+      case FormTerm.Type(var lift) -> switch (r) {
+        case FormTerm.Type(var rift) -> lift <= rift;
+        case FormTerm.Set(var rift) -> lift <= rift;
+        case default -> false;
       };
       case FormTerm.ISet iSet -> switch (r) {
         case FormTerm.ISet set -> true;
-        case FormTerm.Prop prop -> false;
         case FormTerm.Set set -> true;
-        case FormTerm.Type type -> false;
-      };
-      case FormTerm.Prop prop -> r instanceof FormTerm.Prop;
-      case FormTerm.Set lt -> switch (r) {
-        case FormTerm.Set rt when lt.lift() <= rt.lift() -> true;
         case default -> false;
       };
+      case FormTerm.Prop prop -> r instanceof FormTerm.Prop;
+      case FormTerm.Set lt -> r instanceof FormTerm.Set rt && lt.lift() <= rt.lift();
     };
   }
 
@@ -150,7 +156,7 @@ public sealed abstract class TermComparator permits Unifier {
     rhs = rhs.normalize(state, NormalizeMode.WHNF);
     var x = doCompareUntyped(lhs, rhs, lr, rl);
     if (x != null) return x.normalize(state, NormalizeMode.WHNF);
-    if (failure == null) failure = new FailureData(lhs.subst(lr.map).freezeHoles(state), rhs.freezeHoles(state));
+    if (failure == null) failure = new FailureData(lhs.freezeHoles(state), rhs.freezeHoles(state));
     return null;
   }
 
@@ -174,37 +180,51 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private <T> T checkParam(
-    Term.Param l, Term.Param r, @Nullable Term type,
-    Sub lr, Sub rl, Supplier<T> fail, Supplier<T> success
+    Term.Param l, Term.Param r, @Nullable Term type, Subst lsub, Subst rsub,
+    Sub lr, Sub rl, Supplier<T> fail, BiFunction<Subst, Subst, T> success
   ) {
     if (l.explicit() != r.explicit()) return fail.get();
-    if (!compare(l.type(), r.type(), lr, rl, type)) return fail.get();
+    var lTy = l.type().subst(lsub);
+    if (!compare(lTy, r.type().subst(rsub), lr, rl, type)) return fail.get();
     // Do not substitute when one side is ignored
-    if (l.ref() != LocalVar.IGNORED && r.ref() != LocalVar.IGNORED) {
-      rl.map.put(r.ref(), l.toTerm());
-      lr.map.put(l.ref(), r.toTerm());
+    if (l.ref() == LocalVar.IGNORED || r.ref() == LocalVar.IGNORED) {
+      return success.apply(lsub, rsub);
+    } else {
+      var i = new LocalVar(l.ref().name() + r.ref().name());
+      rl.map.put(i, l.toTerm());
+      lr.map.put(i, r.toTerm());
+      var term = new RefTerm(i);
+      lsub.addDirectly(l.ref(), term);
+      rsub.addDirectly(r.ref(), term);
+      var result = ctx.with(i, lTy, () -> success.apply(lsub, rsub));
+      rl.map.remove(i);
+      lr.map.remove(i);
+      return result;
     }
-    var result = ctx.with(l, () -> ctx.with(r, success));
-    rl.map.remove(r.ref());
-    lr.map.remove(l.ref());
-    return result;
+  }
+
+  private <T> T checkParams(
+    SeqView<Term.Param> l, SeqView<Term.Param> r, Subst lsub, Subst rsub,
+    Sub lr, Sub rl, Supplier<T> fail, BiFunction<Subst, Subst, T> success
+  ) {
+    if (!l.sizeEquals(r)) return fail.get();
+    if (l.isEmpty()) return success.apply(lsub, rsub);
+    return checkParam(l.first(), r.first(), null, lsub, rsub, lr, rl, fail, (ls, rs) ->
+      checkParams(l.drop(1), r.drop(1), ls, rs, lr, rl, fail, success));
   }
 
   private <T> T checkParams(
     SeqView<Term.Param> l, SeqView<Term.Param> r,
-    Sub lr, Sub rl, Supplier<T> fail, Supplier<T> success
+    Sub lr, Sub rl, Supplier<T> fail, BiFunction<Subst, Subst, T> success
   ) {
-    if (!l.sizeEquals(r)) return fail.get();
-    if (l.isEmpty()) return success.get();
-    return checkParam(l.first(), r.first(), null, lr, rl, fail, () ->
-      checkParams(l.drop(1), r.drop(1), lr, rl, fail, success));
+    return checkParams(l, r, new Subst(), new Subst(), lr, rl, fail, success);
   }
 
   private boolean visitArgs(SeqLike<Arg<Term>> l, SeqLike<Arg<Term>> r, Sub lr, Sub rl, SeqLike<Term.Param> params) {
     return visitLists(l.view().map(Arg::term), r.view().map(Arg::term), lr, rl, params);
   }
 
-  private boolean visitLists(SeqLike<Term> l, SeqLike<Term> r, Sub lr, Sub rl, @NotNull SeqLike<Term.Param> types) {
+  private boolean visitLists(SeqView<Term> l, SeqView<Term> r, Sub lr, Sub rl, @NotNull SeqLike<Term.Param> types) {
     if (!l.sizeEquals(r)) return false;
     if (!r.sizeEquals(types)) return false;
     var typesSubst = types.view();
@@ -281,73 +301,85 @@ public sealed abstract class TermComparator permits Unifier {
         yield true;
       }
       case FormTerm.Pi pi -> ctx.with(pi.param(), () -> switch (new Pair(lhs, rhs)) {
-        case Pair(IntroTerm.Lambda(var lp, var lb), IntroTerm.Lambda(var rp, var rb)) -> ctx.with(() -> {
-          lr.map.put(lp.ref(), rp.toTerm());
-          rl.map.put(rp.ref(), lp.toTerm());
-          var res = compare(lb, rb, lr, rl, pi.body());
-          lr.map.remove(lp.ref());
-          rl.map.remove(rp.ref());
-          return res;
-        }, lp, rp);
-        case Pair(var $, IntroTerm.Lambda rambda) -> compareLambdaBody(lhs, rl, lr, rambda, pi);
-        case Pair(IntroTerm.Lambda lambda, var $) -> compareLambdaBody(rhs, lr, rl, lambda, pi);
+        case Pair(IntroTerm.Lambda(var lp, var lb), IntroTerm.Lambda(var rp, var rb)) -> {
+          var ref = pi.param().ref();
+          if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
+          lr.map.put(ref, rp.toTerm());
+          rl.map.put(ref, lp.toTerm());
+          var piParam = new RefTerm(ref);
+          var res = compare(lb.subst(lp.ref(), piParam), rb.subst(rp.ref(), piParam), lr, rl, pi.body());
+          lr.map.remove(ref);
+          rl.map.remove(ref);
+          yield res;
+        }
+        case Pair(var $, IntroTerm.Lambda rambda) -> compareLambdaBody(rambda, lhs, rl, lr, pi);
+        case Pair(IntroTerm.Lambda lambda, var $) -> compareLambdaBody(lambda, rhs, lr, rl, pi);
         // Question: do we need a unification for Pi.body?
         case default -> compare(lhs, rhs, lr, rl, null);
       });
       // In this case, both sides have the same type (I hope)
-      case FormTerm.Path path -> ctx.withIntervals(path.cube().params().view(), () -> {
-        if (lhs instanceof IntroTerm.PathLam lambda) return ctx.withIntervals(lambda.params().view(), () -> {
-          if (rhs instanceof IntroTerm.PathLam(var rparams, var rbody)) return ctx.withIntervals(rparams.view(), () ->
-            TermComparator.withIntervals(lambda.params().view(), rparams.view(), lr, rl, () ->
-              compare(lambda.body(), rbody, lr, rl, path.cube().type())));
-          return comparePathLamBody(rhs, lr, rl, lambda, path.cube());
-        });
-        if (rhs instanceof IntroTerm.PathLam rambda) return ctx.withIntervals(rambda.params().view(), () ->
-          comparePathLamBody(lhs, rl, lr, rambda, path.cube()));
+      case FormTerm.Path(var cube) -> ctx.withIntervals(cube.params().view(), () -> {
+        if (lhs instanceof IntroTerm.PathLam lambda) {
+          assert lambda.params().sizeEquals(cube.params());
+          if (rhs instanceof IntroTerm.PathLam(var rparams, var rbody)) {
+            assert rparams.sizeEquals(cube.params());
+            withIntervals(lambda.params(), rparams, lr, rl, cube.params(), (lsub, rsub) ->
+              compare(lambda.body().subst(lsub), rbody.subst(rsub), lr, rl, cube.type()));
+          }
+          return comparePathLamBody(lambda, rhs, lr, rl, cube);
+        }
+        if (rhs instanceof IntroTerm.PathLam rambda) {
+          assert rambda.params().sizeEquals(cube.params());
+          return comparePathLamBody(rambda, lhs, rl, lr, cube);
+        }
         // Question: do we need a unification for Pi.body?
         return compare(lhs, rhs, lr, rl, null);
       });
-      case FormTerm.PartTy ty when lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel ->
-        comparePartial(lel, rel, ty, lr, rl);
-      case FormTerm.PartTy ty -> false;
+      case FormTerm.PartTy ty -> {
+        if (lhs instanceof IntroTerm.PartEl lel && rhs instanceof IntroTerm.PartEl rel)
+          yield comparePartial(lel, rel, ty, lr, rl);
+        else yield false;
+      }
     };
     traceExit();
     return ret;
   }
 
-  private boolean compareLambdaBody(Term rhs, Sub lr, Sub rl, IntroTerm.Lambda lambda, FormTerm.Pi pi) {
-    return ctx.with(lambda.param(), () ->
-      compare(lambda.body(), ElimTerm.make(rhs, lambda.param().toArg()), lr, rl, pi.body()));
+  private boolean compareLambdaBody(IntroTerm.Lambda lambda, Term rhs, Sub lr, Sub rl, FormTerm.Pi pi) {
+    var arg = pi.param().toArg();
+    rl.map.put(pi.param().ref(), lambda.param().toTerm());
+    var result = ctx.with(lambda.param(), () ->
+      compare(ElimTerm.make(lambda, arg), ElimTerm.make(rhs, arg), lr, rl, pi.body()));
+    rl.map.remove(pi.param().ref());
+    return result;
   }
 
-  private boolean comparePathLamBody(Term rhs, Sub lr, Sub rl, IntroTerm.PathLam lambda, FormTerm.Cube cube) {
-    // This is not necessarily correct, but we don't need to generate a precise cube
-    // as conversion for PathApp does not compare cubes (it doesn't have to)
-    var constructed = new FormTerm.Cube(lambda.params(), cube.type(), new Partial.Split<>(ImmutableSeq.empty()));
-    return ctx.withIntervals(lambda.params().view(), () ->
-      compare(lambda.body(), constructed.applyDimsTo(rhs), lr, rl, cube.type()));
+  private boolean comparePathLamBody(IntroTerm.PathLam lambda, Term rhs, Sub lr, Sub rl, FormTerm.Cube cube) {
+    cube.params().zipView(lambda.params()).forEach(p ->
+      rl.map.put(p._1, new RefTerm(p._2)));
+    var result = ctx.withIntervals(lambda.params().view(), () ->
+      compare(cube.applyDimsTo(lambda), cube.applyDimsTo(rhs), lr, rl, cube.type()));
+    cube.params().forEach(rl.map::remove);
+    return result;
   }
 
   private boolean comparePartial(
     @NotNull IntroTerm.PartEl lhs, @NotNull IntroTerm.PartEl rhs,
-    @Nullable FormTerm.PartTy type, Sub lr, Sub rl
+    @NotNull FormTerm.PartTy type, Sub lr, Sub rl
   ) {
     record P(Partial<Term> l, Partial<Term> r) {}
     return switch (new P(lhs.partial(), rhs.partial())) {
-      case P(Partial.Const<Term> ll, Partial.Const<Term> rr) ->
-        compare(ll.u(), rr.u(), lr, rl, type == null ? null : type.type());
-      case P(Partial.Split<Term> ll, Partial.Split<Term> rr) ->
-        CofThy.conv(type == null ? ll.restr() : type.restr(), new Subst(),
-          subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type == null ? null : type.subst(subst)));
+      case P(Partial.Const<Term>(var ll), Partial.Const<Term>(var rr)) -> compare(ll, rr, lr, rl, type.type());
+      case P(Partial.Split<Term> ll, Partial.Split<Term> rr) -> CofThy.conv(type.restr(), new Subst(),
+        subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type.subst(subst)));
       default -> false;
     };
   }
 
   private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
-    return TermComparator.withIntervals(lhs.params().view(), rhs.params().view(), lr, rl, () -> {
-      // TODO: purge lr/rl
-      var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type()).subst(lr.map);
-      var rPar = new IntroTerm.PartEl(rhs.partial(), rhs.type());
+    return TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, rhs.params(), (lsub, rsub) -> {
+      var lPar = (IntroTerm.PartEl) new IntroTerm.PartEl(lhs.partial(), lhs.type()).subst(lsub);
+      var rPar = (IntroTerm.PartEl) new IntroTerm.PartEl(rhs.partial(), rhs.type()).subst(rsub);
       var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
       var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
       if (!compare(lType, rType, lr, rl, null)) return false;
@@ -356,7 +388,8 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
-    return CofThy.propExt(new Subst(), lhs, rhs, (sub, term) -> sub.restr(state, term));
+    return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
+      && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
   }
 
   private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
@@ -370,10 +403,7 @@ public sealed abstract class TermComparator permits Unifier {
         if (preRhs instanceof RefTerm.MetaPat(var rRef) && lhsRef == rRef) yield lhsRef.type();
         else yield null;
       }
-      case RefTerm lhs -> preRhs instanceof RefTerm rhs && (
-        rl.map.getOrDefault(rhs.var(), rhs).var() == lhs.var() ||
-          lr.map.getOrDefault(lhs.var(), lhs).var() == rhs.var()
-      ) ? ctx.get(lhs.var()) : null;
+      case RefTerm(var lhs) -> preRhs instanceof RefTerm(var rhs) && lhs == rhs ? ctx.get(lhs) : null;
       case ElimTerm.App(var lOf, var lArg) -> {
         if (!(preRhs instanceof ElimTerm.App(var rOf, var rArg))) yield null;
         var preFnType = compareUntyped(lOf, rOf, lr, rl);
@@ -390,10 +420,10 @@ public sealed abstract class TermComparator permits Unifier {
         yield happy ? cube.type() : null;
       }
       case ElimTerm.Proj lhs -> {
-        if (!(preRhs instanceof ElimTerm.Proj rhs)) yield null;
-        var preTupType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
+        if (!(preRhs instanceof ElimTerm.Proj(var rof, var rix))) yield null;
+        var preTupType = compareUntyped(lhs.of(), rof, lr, rl);
         if (!(preTupType instanceof FormTerm.Sigma(var tele))) yield null;
-        if (lhs.ix() != rhs.ix()) yield null;
+        if (lhs.ix() != rix) yield null;
         var params = tele.view();
         var subst = new Subst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
@@ -407,16 +437,16 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
       case FormTerm.Pi(var lParam, var lBody) -> {
-        if (!(preRhs instanceof FormTerm.Pi rhs)) yield null;
-        yield checkParam(lParam, rhs.param(), null, lr, rl, () -> null, () -> {
-          var bodyIsOk = compare(lBody, rhs.body(), lr, rl, null);
+        if (!(preRhs instanceof FormTerm.Pi(var rParam, var rBody))) yield null;
+        yield checkParam(lParam, rParam, null, new Subst(), new Subst(), lr, rl, () -> null, (lsub, rsub) -> {
+          var bodyIsOk = compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null);
           if (!bodyIsOk) return null;
           return FormTerm.Type.ZERO;
         });
       }
       case FormTerm.Sigma(var lParams) -> {
         if (!(preRhs instanceof FormTerm.Sigma(var rParams))) yield null;
-        yield checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, () -> FormTerm.Type.ZERO);
+        yield checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> FormTerm.Type.ZERO);
       }
       case FormTerm.Sort lhs -> {
         if (!(preRhs instanceof FormTerm.Sort rhs)) yield null;
@@ -436,8 +466,7 @@ public sealed abstract class TermComparator permits Unifier {
       case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Type.ZERO : null;
       case PrimTerm.Mula lhs -> {
         if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
-        // TODO: abolish lr/rl
-        if (compareRestr(CofThy.isOne(lhs.subst(lr.map)), CofThy.isOne(rhs)))
+        if (compareRestr(CofThy.isOne(lhs), CofThy.isOne(rhs)))
           yield PrimTerm.Interval.INSTANCE;
         else yield null;
       }
@@ -456,8 +485,7 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case PrimTerm.Coe lhs -> {
         if (!(preRhs instanceof PrimTerm.Coe rhs)) yield null;
-        // TODO: purge lr/rl
-        if (!compareRestr(lhs.restr().map(t -> t.subst(lr.map)), rhs.restr())) yield null;
+        if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
         yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
           PrimDef.familyLeftToRight(lhs.type()) : null;
       }
@@ -493,8 +521,8 @@ public sealed abstract class TermComparator permits Unifier {
       };
       case LitTerm.ShapedList lhs -> switch (preRhs) {
         case LitTerm.ShapedList rhs -> {
-          if (! lhs.compareShape(this, rhs)) yield null;
-          if (! lhs.compareUntyped(rhs,
+          if (!lhs.compareShape(this, rhs)) yield null;
+          if (!lhs.compareUntyped(rhs,
             (l, r) -> compare(l, r, lr, rl, null))) yield null;
 
           yield lhs.type();
@@ -527,6 +555,7 @@ public sealed abstract class TermComparator permits Unifier {
     return result;
   }
 
+  @Debug.Renderer(childrenArray = "map.toArray()", hasChildren = "!map.isEmpty()")
   public record Sub(@NotNull MutableMap<@NotNull AnyVar, @NotNull RefTerm> map) implements Cloneable {
     public Sub() {
       this(MutableMap.create());
