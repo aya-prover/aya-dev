@@ -23,7 +23,7 @@ public record MapLocalCtx(
   }
 
   @Override public void remove(@NotNull SeqView<LocalVar> vars) {
-    vars.forEach(localMap::remove);
+    localMap.removeAll(vars);
   }
 
   @Override public @Nullable Term getLocal(@NotNull LocalVar var) {
