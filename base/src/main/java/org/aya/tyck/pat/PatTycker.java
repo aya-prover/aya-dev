@@ -58,6 +58,10 @@ public final class PatTycker {
   };
 
   public final @NotNull ExprTycker exprTycker;
+  /**
+   * Old: a {@link Subst} for types in signature
+   * Now: a {@link Subst} for types in signature and Rhs
+   */
   private final @NotNull Subst typeSubst;
   private final @NotNull MutableMap<AnyVar, Expr> bodySubst;
   private final @Nullable Trace.Builder traceBuilder;
@@ -183,12 +187,19 @@ public final class PatTycker {
         if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();
         var ctorCore = ctorRef.core;
+        // generate ownerTele arguments
+        //
+        // The correctness depends on that the `Param#ref`s of `CtorDef#ownerTele`
+        // are equal to the `Pat.Bind#bind`s (as they should).
+        var ownerTeleArgs = ctorCore.ownerTele.map(x ->
+          new RefTerm(x.ref()).subst(realCtor._2));
+
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = visitPatterns(sig, ctor.params().view(), ctor)._1.toImmutableSeq();
         var as = ctor.as();
-        var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, dataCall);
+        var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), ownerTeleArgs, patterns, dataCall);
         if (as != null) {
           exprTycker.localCtx.put(as, dataCall);
           addPatSubst(as, ret, ctor.sourcePos());
@@ -242,13 +253,16 @@ public final class PatTycker {
   }
 
   /**
-   * @param bodySubst in case the body uses references from the telescope,
-   *                  we need to replace them with the corresponding patterns
-   * @param hasError  if there is an error in the patterns
+   * @param bodySubst     in case the body uses references from the telescope,
+   *                      we need to replace them with the corresponding patterns
+   * @param bodySubstTerm we do need to replace them with the corresponding patterns,
+   *                      but patterns are terms (they are already well-typed if not {@param hasError})
+   * @param hasError      if there is an error in the patterns
    */
   public record LhsResult(
     @NotNull LocalCtx gamma,
     @NotNull Term type,
+    @NotNull Subst bodySubstTerm,
     @NotNull ImmutableMap<AnyVar, Expr> bodySubst,
     boolean hasError,
     @NotNull Pat.Preclause<Expr> preclause
@@ -257,7 +271,9 @@ public final class PatTycker {
 
   private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
     var parent = exprTycker.localCtx;
+    var parentLets = exprTycker.lets;
     exprTycker.localCtx = lhsResult.gamma;
+    exprTycker.lets = parentLets.add(lhsResult.bodySubstTerm());
     var type = META_PAT_INLINER.apply(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
@@ -265,8 +281,9 @@ public final class PatTycker {
       // and in case the patterns are malformed, some bindings may
       // not be added to the localCtx of tycker, causing assertion errors
       ? new ErrorTerm(e, false)
-      : exprTycker.inherit(new BodySubstitutor(lhsResult.bodySubst).apply(e), type).wellTyped());
+      : exprTycker.inherit(e, type).wellTyped());
     exprTycker.localCtx = parent;
+    exprTycker.lets = parentLets;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
   }
 
@@ -280,7 +297,8 @@ public final class PatTycker {
       if (p instanceof Pattern.Bind bind)
         bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
     }, match.patterns);
-    var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.toImmutableMap(), match.hasError,
+    var step1 = new LhsResult(exprTycker.localCtx, step0._2, typeSubst.derive(),
+      bodySubst.toImmutableMap(), match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
     typeSubst.clear();
@@ -295,7 +313,7 @@ public final class PatTycker {
    * @param outerPattern null if visiting the whole pattern (like `A, x, ctor a b`). This is only used for error reporting.
    *                     For now, {@param outerPattern} is used when {@param sig} is not empty
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
-   * @return (wellTyped patterns, sig.result())
+   * @return (wellTyped patterns, sig.result ())
    */
   public @NotNull Tuple2<SeqView<Pat>, Term>
   visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @Nullable Pattern outerPattern) {
@@ -356,6 +374,13 @@ public final class PatTycker {
     return Tuple.of(results.view(), sig.result());
   }
 
+  /**
+   * A data object during PatTyck
+   *
+   * @param sig     the signature doesn't matched yet (include {@param param})
+   * @param results the {@link Pat}s that already tycked
+   * @param param   the parameter we want to match
+   */
   private record PatData(
     @NotNull Def.Signature sig,
     @NotNull MutableList<Pat> results,
@@ -373,9 +398,18 @@ public final class PatTycker {
     tracing(TreeBuilder::reduce);
     addPatSubst(data.param.ref(), res, pat.sourcePos());
     data.results.append(res);
+
+    // update signature for current parameter,
+    // because it probably changed when we call `data.sig.inst`
+    exprTycker.localCtx.put(data.param().ref(), type);
+
     return data.sig.inst(typeSubst);
   }
 
+  /**
+   * For every implicit parameter, we generate a MetaPat for each,
+   * so that they can be inferred during {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature)}
+   */
   private @NotNull Def.Signature generatePat(@NotNull PatData data) {
     var ref = data.param.ref();
     Pat bind;

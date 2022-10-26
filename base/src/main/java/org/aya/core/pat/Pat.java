@@ -183,13 +183,18 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
+  /**
+   * @param ownerArgs the arguments to the owner telescope of this Ctor.
+   */
   record Ctor(
     boolean explicit,
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
+    @NotNull ImmutableSeq<Term> ownerArgs,
     @NotNull ImmutableSeq<Pat> params,
     @NotNull CallTerm.Data type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
+      // ownerTeles are not pattern, so they don't introduce any binding.
       params.forEach(pat -> pat.storeBindings(ctx));
     }
 
@@ -200,18 +205,22 @@ public sealed interface Pat extends AyaDocile {
 
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
+      // TODO: ownerArgs
       var params = this.params.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      return new Ctor(explicit, ref, params, (CallTerm.Data) type.subst(subst));
+      return new Ctor(explicit, ref, ownerArgs, params, (CallTerm.Data) type.subst(subst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return new Ctor(explicit, ref, params.map(pat -> pat.zonk(tycker)),
+      return new Ctor(explicit, ref,
+        ownerArgs.map(tycker::zonk),            // TODO[hoshino]: Is it correct?
+        params.map(pat -> pat.zonk(tycker)),
         (CallTerm.Data) tycker.zonk(type));
       // The cast must succeed
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return new Ctor(explicit, ref, params.map(p -> p.inline(ctx)), type);
+      // TODO[hoshino]: Is it correct?
+      return new Ctor(explicit, ref, ownerArgs(), params.map(p -> p.inline(ctx)), type);
     }
   }
 
@@ -273,11 +282,11 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat makeZero(@NotNull CtorDef zero) {
-      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), type);
+      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), ImmutableSeq.empty(), type);
     }
 
     @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Pat pat) {
-      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.of(pat), type);
+      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat), type);
     }
 
     @Override public @NotNull Pat destruct(int repr) {

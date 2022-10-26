@@ -64,6 +64,12 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements AyaDocile {
+
+    /**
+     * drop the first one and subst the remains
+     *
+     * @see Def#substParams(SeqLike, Subst)
+     */
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Subst subst) {
       return new Signature(substParams(param, subst), result.subst(subst));
     }

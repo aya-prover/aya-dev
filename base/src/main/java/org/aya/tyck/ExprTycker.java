@@ -51,6 +51,12 @@ import java.util.function.Function;
  */
 public final class ExprTycker extends Tycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
+
+  /**
+   * a `let` sequence, consider we are tycking in
+   * {@code let ... in HERE}
+   */
+  public @NotNull Subst lets = new Subst();
   public @NotNull AyaShape.Factory shapeFactory;
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
@@ -60,7 +66,15 @@ public final class ExprTycker extends Tycker {
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
-          yield new TermResult(new RefTerm(loc), ty);
+          var subst = lets.map().getOption(loc);
+
+          // there is a subst for `loc`
+          if (subst.isDefined()) {
+            yield new TermResult(subst.get(), ty);
+          } else {
+            // there is not a subst for `loc`
+            yield new TermResult(new RefTerm(loc), ty);
+          }
         }
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
