@@ -45,9 +45,15 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           .map(param -> term(param.type()).normalize(state, NormalizeMode.WHNF))
           .filterIsInstance(FormTerm.Sort.class)
           .toImmutableSeq();
-        if (univ.sizeEquals(sigma.params().size()))
-          yield new FormTerm.Type(univ.view().map(FormTerm.Sort::lift).max());
-        else yield ErrorTerm.typeOf(sigma);
+        if (univ.sizeEquals(sigma.params().size())) {
+          try {
+            yield univ.reduce(ExprTycker::calculateSigma);
+          } catch (IllegalArgumentException ignored) {
+            yield ErrorTerm.typeOf(sigma);
+          }
+        } else {
+          yield ErrorTerm.typeOf(sigma);
+        }
       }
       case IntroTerm.Lambda lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
       case ElimTerm.Proj proj -> {
@@ -64,10 +70,20 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case RefTerm.MetaPat metaPat -> metaPat.ref().type();
       case FormTerm.Pi pi -> {
         var paramTyRaw = term(pi.param().type()).normalize(state, NormalizeMode.WHNF);
-        var retTyRaw = term(pi.body()).normalize(state, NormalizeMode.WHNF);
-        if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy)
-          yield new FormTerm.Type(Math.max(paramTy.lift(), retTy.lift()));
-        else yield ErrorTerm.typeOf(pi);
+        var resultParam = new Term.Param(pi.param().ref(), pi.param().type().normalize(state, NormalizeMode.WHNF), pi.param().explicit());
+        var t = new LittleTyper(state, localCtx.deriveMap());
+        yield t.localCtx.with(resultParam, () -> {
+          var retTyRaw = t.term(pi.body()).normalize(state, NormalizeMode.WHNF);
+          if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy) {
+            try {
+              return ExprTycker.sortPi(paramTy, retTy);
+            } catch (IllegalArgumentException ignored) {
+              return ErrorTerm.typeOf(pi);
+            }
+          } else {
+            return ErrorTerm.typeOf(pi);
+          }
+        });
       }
       case ElimTerm.App app -> {
         var piRaw = term(app.of()).normalize(state, NormalizeMode.WHNF);
@@ -95,6 +111,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case PrimTerm.Coe coe -> PrimDef.familyLeftToRight(coe.type());
       case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case ErasedTerm erased -> erased.type();
     };
   }
 

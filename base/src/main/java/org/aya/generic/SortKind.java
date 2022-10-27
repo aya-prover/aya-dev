@@ -10,11 +10,4 @@ public enum SortKind {
   public boolean hasLevel() {
     return this == Type || this == Set;
   }
-
-  public @NotNull SortKind max(@NotNull SortKind other) {
-    if (this == Set || other == Set) return Set;
-    if (this == Type || other == Type) return Type;
-    // Prop or ISet
-    return this == other ? this : Type;
-  }
 }

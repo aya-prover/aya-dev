@@ -19,10 +19,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
-import org.aya.generic.AyaDocile;
-import org.aya.generic.Constants;
-import org.aya.generic.Modifier;
+import org.aya.generic.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -133,7 +130,7 @@ public final class ExprTycker extends Tycker {
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
           var type = telescope.get(index).type();
           var subst = ElimTerm.Proj.projSubst(projectee.wellTyped(), index, telescope);
-          return new TermResult(new ElimTerm.Proj(projectee.wellTyped(), ix), type.subst(subst));
+          return new TermResult(ElimTerm.proj(projectee.wellTyped(), ix), type.subst(subst));
         }, sp -> {
           var fieldName = sp.justName();
           if (!(projectee.type() instanceof CallTerm.Struct structCall))
@@ -465,7 +462,7 @@ public final class ExprTycker extends Tycker {
             var resultParam = new Term.Param(var, type, param.explicit());
             var body = dt.substBody(resultParam.toTerm());
             yield localCtx.with(resultParam, () -> {
-              var rec = inherit(lam.body(), body);
+              var rec = check(lam.body(), body);
               return new TermResult(new IntroTerm.Lambda(resultParam, rec.wellTyped()), dt);
             });
           }
@@ -527,6 +524,22 @@ public final class ExprTycker extends Tycker {
     });
   }
 
+  public static @NotNull FormTerm.Sort calculateSigma(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) throws IllegalArgumentException {
+    int lift = Math.max(x.lift(), y.lift());
+    if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
+      return FormTerm.Prop.INSTANCE;
+    } else if (x.kind() == SortKind.Set || y.kind() == SortKind.Set) {
+      return new FormTerm.Set(lift);
+    } else if (x.kind() == SortKind.Type || y.kind() == SortKind.Type) {
+      return new FormTerm.Type(lift);
+    } else if (x instanceof FormTerm.ISet && y instanceof FormTerm.ISet) {
+      // ice: this is controversial, but I think it's fine.
+      // See https://github.com/agda/cubical/pull/910#issuecomment-1233113020
+      return FormTerm.ISet.INSTANCE;
+    }
+    throw new IllegalArgumentException(); // TODO: better error reporting
+  }
+
   private @NotNull SortResult doSort(@NotNull Expr expr) {
     var univ = FormTerm.Type.ZERO;
     return switch (expr) {
@@ -569,8 +582,8 @@ public final class ExprTycker extends Tycker {
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
-        var maxSort = resultTypes.reduce(FormTerm.Sort::max);
-        resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
+        var maxSort = resultTypes.reduce(ExprTycker::calculateSigma);
+        if (!(maxSort instanceof FormTerm.Prop)) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new SortResult(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), maxSort);
       }
@@ -620,14 +633,14 @@ public final class ExprTycker extends Tycker {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
       result = new TermResult(new IntroTerm.Lambda(implicitParam, body), pi);
-    } else result = doInherit(expr, type);
+    } else result = doInherit(expr, type).checkErased(expr, state, localCtx);
     traceExit(result, expr);
     return result;
   }
 
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var res = doSynthesize(expr);
+    var res = doSynthesize(expr).checkErased(expr, state, localCtx);
     traceExit(res, expr);
     return res;
   }
@@ -646,12 +659,23 @@ public final class ExprTycker extends Tycker {
   }
 
   public @NotNull FormTerm.Sort sortPi(@NotNull Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+    return sortPiImpl(new SortPiParam(reporter, expr), domain, codomain);
+  }
+
+  public static @NotNull FormTerm.Sort sortPi(@NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
+    return sortPiImpl(null, domain, codomain);
+  }
+
+  private record SortPiParam(@NotNull Reporter reporter, @NotNull Expr expr) {
+  }
+
+  private static @NotNull FormTerm.Sort sortPiImpl(@Nullable SortPiParam p, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
     var result = switch (domain) {
-      case FormTerm.Type a -> switch (codomain) {
-        case FormTerm.Type b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
-        case FormTerm.Set b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
-        case FormTerm.ISet b -> new FormTerm.Set(a.lift());
-        case FormTerm.Prop prop -> FormTerm.Prop.INSTANCE;
+      case FormTerm.Type(var alift) -> switch (codomain) {
+        case FormTerm.Type(var blift) -> new FormTerm.Type(Math.max(alift, blift));
+        case FormTerm.Set(var blift) -> new FormTerm.Type(Math.max(alift, blift));
+        case FormTerm.ISet b -> new FormTerm.Set(alift);
+        case FormTerm.Prop prop -> prop;
       };
       case FormTerm.ISet a -> switch (codomain) {
         case FormTerm.ISet b -> FormTerm.Set.ZERO;
@@ -659,20 +683,24 @@ public final class ExprTycker extends Tycker {
         case FormTerm.Type b -> b;
         default -> null;
       };
-      case FormTerm.Set a -> switch (codomain) {
-        case FormTerm.Set b -> new FormTerm.Set(Math.max(a.lift(), b.lift()));
-        case FormTerm.Type b -> new FormTerm.Set(Math.max(a.lift(), b.lift()));
-        case FormTerm.ISet b -> new FormTerm.Set(a.lift());
+      case FormTerm.Set(var alift) -> switch (codomain) {
+        case FormTerm.Set(var blift) -> new FormTerm.Set(Math.max(alift, blift));
+        case FormTerm.Type(var blift) -> new FormTerm.Set(Math.max(alift, blift));
+        case FormTerm.ISet b -> new FormTerm.Set(alift);
         default -> null;
       };
       case FormTerm.Prop a -> switch (codomain) {
-        case FormTerm.Prop b -> FormTerm.Prop.INSTANCE;
+        case FormTerm.Prop b -> b;
         case FormTerm.Type b -> b;
         default -> null;
       };
     };
+    if (p == null) {
+      assert result != null;
+      return result;
+    }
     if (result == null) {
-      reporter.report(new SortPiError(expr.sourcePos(), domain, codomain));
+      p.reporter.report(new SortPiError(p.expr.sourcePos(), domain, codomain));
       return FormTerm.Type.ZERO;
     } else {
       return result;
@@ -813,10 +841,55 @@ public final class ExprTycker extends Tycker {
     return new Arg<>(mockTerm(param, pos), param.explicit());
   }
 
+  public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
+    return checkIllegalErasure(expr.sourcePos(), inherit(expr, type));
+  }
+
+  private @NotNull Result checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Result result) {
+    return new TermResult(checkIllegalErasure(sourcePos, result.wellTyped(), result.type()), result.type());
+  }
+
+  private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
+    if (wellTyped instanceof FormTerm.Sort) return wellTyped;
+    var sort = type.computeType(state, localCtx);
+    if (sort instanceof FormTerm.Prop) return wellTyped;
+    return checkIllegalErasure(sourcePos, wellTyped);
+  }
+
+  private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
+    var checker = new Function<Term, Term>() {
+      private @NotNull Term post(@NotNull Term term) {
+        if (term instanceof FormTerm.Sort) return term;
+        var erased = ElimTerm.underlyingIllegalErasure(term);
+        if (erased != null) {
+          reporter.report(new ErasedError(sourcePos, erased));
+          return new ErrorTerm(term);
+        }
+        return term;
+      }
+
+      @Override public @NotNull Term apply(@NotNull Term term) {
+        if (term instanceof IntroTerm.Lambda) return term;
+        if (term instanceof ErasedTerm) return post(term);
+        return post(term.descent(this));
+      }
+    };
+    return checker.apply(term);
+  }
+
   public interface Result {
     @NotNull Term wellTyped();
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
+
+    default Result checkErased(@NotNull Expr expr, @NotNull TyckState state, @NotNull LocalCtx ctx) {
+      if (wellTyped() instanceof FormTerm.Sort) return this;
+      var type = type();
+      var sort = type.computeType(state, ctx);
+      if (sort instanceof FormTerm.Prop || ElimTerm.isErased(wellTyped()))
+        return new TermResult(new ErasedTerm(type, sort instanceof FormTerm.Prop, expr.sourcePos()), type);
+      return this;
+    }
   }
 
 

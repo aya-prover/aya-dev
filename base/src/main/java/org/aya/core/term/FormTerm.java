@@ -75,10 +75,6 @@ public sealed interface FormTerm extends Term {
         case ISet -> ISet.INSTANCE;
       };
     }
-
-    default @NotNull Sort max(@NotNull Sort other) {
-      return Sort.create(this.kind().max(other.kind()), Math.max(this.lift(), other.lift()));
-    }
   }
 
   record Type(@Override int lift) implements Sort {

@@ -131,6 +131,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case FormTerm.Sort sort -> serialize(sort);
       case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
     };
   }
 
