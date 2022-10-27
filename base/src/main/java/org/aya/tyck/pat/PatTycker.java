@@ -14,7 +14,6 @@ import kala.tuple.Tuple3;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.visitor.EndoExpr;
 import org.aya.concrete.visitor.PatternTraversal;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
@@ -61,6 +60,7 @@ public final class PatTycker {
   /**
    * Old: a {@link Subst} for types in signature
    * Now: a {@link Subst} for types in signature and Rhs
+   * TODO[hoshino]: rename
    */
   private final @NotNull Subst typeSubst;
   private final @NotNull MutableMap<AnyVar, Expr> bodySubst;
@@ -110,8 +110,7 @@ public final class PatTycker {
    * corresponding telescope binding with the pattern.
    */
   private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull SourcePos pos) {
-    typeSubst.add(var, pat.toTerm());
-    bodySubst.put(var, pat.toExpr(pos));
+    typeSubst.addDirectly(var, pat.toTerm());
   }
 
   public @NotNull PatResult elabClausesDirectly(
@@ -489,15 +488,5 @@ public final class PatTycker {
     if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view()
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
     else return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
-  }
-
-  private record BodySubstitutor(@NotNull ImmutableMap<AnyVar, Expr> bodySubst) implements EndoExpr {
-    @Override public @NotNull Expr pre(@NotNull Expr expr) {
-      return switch (expr) {
-        case Expr.RefExpr ref when bodySubst.containsKey(ref.resolvedVar()) -> pre(bodySubst.get(ref.resolvedVar()));
-        case Expr.MetaPat metaPat -> pre(metaPat.meta().inline(null).toExpr(metaPat.sourcePos()));
-        case Expr misc -> misc;
-      };
-    }
   }
 }

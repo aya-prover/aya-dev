@@ -6,7 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
-import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
@@ -43,7 +42,6 @@ public sealed interface Pat extends AyaDocile {
   default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
-  @NotNull Expr toExpr(@NotNull SourcePos pos);
   default @NotNull Arg<Term> toArg() {
     return new Arg<>(toTerm(), explicit());
   }
@@ -71,10 +69,6 @@ public sealed interface Pat extends AyaDocile {
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
       ctx.put(bind, type);
-    }
-
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.RefExpr(pos, bind);
     }
 
     @Override
@@ -107,10 +101,6 @@ public sealed interface Pat extends AyaDocile {
       // only used for constructor ownerTele extraction for simpler indexed types
     }
 
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.MetaPat(pos, this);
-    }
-
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       throw new InternalException("unreachable");
     }
@@ -137,11 +127,6 @@ public sealed interface Pat extends AyaDocile {
       throw new InternalException("unreachable");
     }
 
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      // [ice]: this code is reachable (to substitute a telescope), but the telescope will be dropped anyway.
-      return new Expr.RefExpr(pos, new LocalVar("()", SourcePos.NONE));
-    }
-
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       throw new InternalException();
@@ -162,10 +147,6 @@ public sealed interface Pat extends AyaDocile {
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
       pats.forEach(pat -> pat.storeBindings(ctx));
-    }
-
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.TupExpr(pos, pats.map(pat -> pat.toExpr(pos)));
     }
 
     @Override
@@ -198,11 +179,6 @@ public sealed interface Pat extends AyaDocile {
       params.forEach(pat -> pat.storeBindings(ctx));
     }
 
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return params.foldLeft((Expr) new Expr.RefExpr(pos, ref), (f, pat) -> new Expr.AppExpr(pos, f,
-        new Expr.NamedArg(pat.explicit(), pat.toExpr(pos))));
-    }
-
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = this.params.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
@@ -225,10 +201,6 @@ public sealed interface Pat extends AyaDocile {
   }
 
   record End(boolean isOne, boolean explicit) implements Pat {
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.LitIntExpr(pos, isOne ? 1 : 0);
-    }
-
     @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       return this;
     }
@@ -260,10 +232,6 @@ public sealed interface Pat extends AyaDocile {
     @NotNull CallTerm.Data type,
     boolean explicit
   ) implements Pat, Shaped.Nat<Pat> {
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.LitIntExpr(pos, repr);
-    }
-
     @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       return this;
     }
