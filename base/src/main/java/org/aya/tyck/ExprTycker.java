@@ -526,14 +526,16 @@ public final class ExprTycker extends Tycker {
 
   public static @NotNull FormTerm.Sort calculateSigma(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) throws IllegalArgumentException {
     int lift = Math.max(x.lift(), y.lift());
-    if(x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
+    if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
       return FormTerm.Prop.INSTANCE;
     } else if (x.kind() == SortKind.Set || y.kind() == SortKind.Set) {
       return new FormTerm.Set(lift);
     } else if (x.kind() == SortKind.Type || y.kind() == SortKind.Type) {
       return new FormTerm.Type(lift);
     } else if (x instanceof FormTerm.ISet && y instanceof FormTerm.ISet) {
-      return FormTerm.ISet.INSTANCE; // TODO: should we allow this?
+      // ice: this is controversial, but I think it's fine.
+      // See https://github.com/agda/cubical/pull/910#issuecomment-1233113020
+      return FormTerm.ISet.INSTANCE;
     }
     throw new IllegalArgumentException(); // TODO: better error reporting
   }
@@ -656,21 +658,24 @@ public final class ExprTycker extends Tycker {
     return result;
   }
 
-  public @NotNull FormTerm.Sort sortPi(@Nullable Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
-    return sortPi(this.reporter, expr, domain, codomain);
+  public @NotNull FormTerm.Sort sortPi(@NotNull Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+    return sortPiImpl(new SortPiParam(reporter, expr), domain, codomain);
   }
 
   public static @NotNull FormTerm.Sort sortPi(@NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
-    return sortPi(null, null, domain, codomain);
+    return sortPiImpl(null, domain, codomain);
   }
 
-  public static @NotNull FormTerm.Sort sortPi(@Nullable Reporter reporter, @Nullable Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
+  private record SortPiParam(@NotNull Reporter reporter, @NotNull Expr expr) {
+  }
+
+  private static @NotNull FormTerm.Sort sortPiImpl(@Nullable SortPiParam p, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
     var result = switch (domain) {
-      case FormTerm.Type a -> switch (codomain) {
-        case FormTerm.Type b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
-        case FormTerm.Set b -> new FormTerm.Type(Math.max(a.lift(), b.lift()));
-        case FormTerm.ISet b -> new FormTerm.Set(a.lift());
-        case FormTerm.Prop prop -> FormTerm.Prop.INSTANCE;
+      case FormTerm.Type(var alift) -> switch (codomain) {
+        case FormTerm.Type(var blift) -> new FormTerm.Type(Math.max(alift, blift));
+        case FormTerm.Set(var blift) -> new FormTerm.Type(Math.max(alift, blift));
+        case FormTerm.ISet b -> new FormTerm.Set(alift);
+        case FormTerm.Prop prop -> prop;
       };
       case FormTerm.ISet a -> switch (codomain) {
         case FormTerm.ISet b -> FormTerm.Set.ZERO;
@@ -678,24 +683,24 @@ public final class ExprTycker extends Tycker {
         case FormTerm.Type b -> b;
         default -> null;
       };
-      case FormTerm.Set a -> switch (codomain) {
-        case FormTerm.Set b -> new FormTerm.Set(Math.max(a.lift(), b.lift()));
-        case FormTerm.Type b -> new FormTerm.Set(Math.max(a.lift(), b.lift()));
-        case FormTerm.ISet b -> new FormTerm.Set(a.lift());
+      case FormTerm.Set(var alift) -> switch (codomain) {
+        case FormTerm.Set(var blift) -> new FormTerm.Set(Math.max(alift, blift));
+        case FormTerm.Type(var blift) -> new FormTerm.Set(Math.max(alift, blift));
+        case FormTerm.ISet b -> new FormTerm.Set(alift);
         default -> null;
       };
       case FormTerm.Prop a -> switch (codomain) {
-        case FormTerm.Prop b -> FormTerm.Prop.INSTANCE;
+        case FormTerm.Prop b -> b;
         case FormTerm.Type b -> b;
         default -> null;
       };
     };
+    if (p == null) {
+      assert result != null;
+      return result;
+    }
     if (result == null) {
-      if (reporter == null) {
-        throw new IllegalArgumentException("Cannot construct a pi type from " + domain + " -> " + codomain);
-      } else {
-        reporter.report(new SortPiError(expr.sourcePos(), domain, codomain));
-      }
+      p.reporter.report(new SortPiError(p.expr.sourcePos(), domain, codomain));
       return FormTerm.Type.ZERO;
     } else {
       return result;
@@ -840,30 +845,30 @@ public final class ExprTycker extends Tycker {
     return checkIllegalErasure(expr.sourcePos(), inherit(expr, type));
   }
 
-  public @NotNull Result checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Result result) {
+  private @NotNull Result checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Result result) {
     return new TermResult(checkIllegalErasure(sourcePos, result.wellTyped(), result.type()), result.type());
   }
 
-  public @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
+  private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
     if (wellTyped instanceof FormTerm.Sort) return wellTyped;
     var sort = type.computeType(state, localCtx);
     if (sort instanceof FormTerm.Prop) return wellTyped;
     return checkIllegalErasure(sourcePos, wellTyped);
   }
 
-  public @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
+  private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
     var checker = new Function<Term, Term>() {
       private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
         var erased = ElimTerm.underlyingIllegalErasure(term);
         if (erased != null) {
-          reporter.report(new ErasedError(sourcePos, erased, null));
+          reporter.report(new ErasedError(sourcePos, erased));
           return new ErrorTerm(term);
         }
         return term;
       }
-      @Override
-      public @NotNull Term apply(@NotNull Term term) {
+
+      @Override public @NotNull Term apply(@NotNull Term term) {
         if (term instanceof IntroTerm.Lambda) return term;
         if (term instanceof ErasedTerm) return post(term);
         return post(term.descent(this));

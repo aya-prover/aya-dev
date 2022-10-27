@@ -39,20 +39,18 @@ public interface BetaExpander extends EndoFunctor {
         yield result == term ? result : apply(result);
       }
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
-      case ElimTerm.PathApp app -> {
-        if (app.of() instanceof ErasedTerm) {
-          var xi = app.cube().params();
-          var ui = app.args().map(Arg::term);
-          yield new ErasedTerm(app.cube().type().subst(new Subst(xi, ui)));
+      case ElimTerm.PathApp(var of, var args, FormTerm.Cube(var xi, var type, var partial)) -> {
+        if (of instanceof ErasedTerm) {
+          var ui = args.map(Arg::term);
+          yield new ErasedTerm(type.subst(new Subst(xi, ui)));
         }
-        if (app.of() instanceof IntroTerm.PathLam lam) {
-          var ui = app.args().map(Arg::term);
+        if (of instanceof IntroTerm.PathLam lam) {
+          var ui = args.map(Arg::term);
           var subst = new Subst(lam.params(), ui);
           yield apply(lam.body().subst(subst));
         }
-        yield switch (partial(app.cube().partial())) {
-          case Partial.Split<Term> hap -> new ElimTerm.PathApp(app.of(), app.args(), new FormTerm.Cube(
-            app.cube().params(), app.cube().type(), hap));
+        yield switch (partial(partial)) {
+          case Partial.Split<Term> hap -> new ElimTerm.PathApp(of, args, new FormTerm.Cube(xi, type, hap));
           case Partial.Const<Term> sad -> sad.u();
         };
       }

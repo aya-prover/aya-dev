@@ -18,7 +18,10 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public sealed interface ElimTerm extends Term {
-  // ErasedTerm itself and ElimTerm with `of` erased are erased.
+  /**
+   * {@link ErasedTerm} itself and {@link ElimTerm}
+   * with <code>of</code> erased are erased.
+   */
   static @Nullable ErasedTerm underlyingErased(@NotNull Term term) {
     if (term instanceof ElimTerm elim) return underlyingErased(elim.of());
     if (term instanceof CallTerm.Access elim) return underlyingErased(elim.of());
@@ -27,8 +30,10 @@ public sealed interface ElimTerm extends Term {
   static boolean isErased(@NotNull Term term) {
     return underlyingErased(term) != null;
   }
-  // ErasedTerm with a Prop type might safely appear in IntroTerms.
-  // ErasedTerm with a non-Prop type or ElimTerm with `of` erased are disallowed.
+  /**
+   * {@link ErasedTerm} with a Prop type might safely appear in {@link IntroTerm}s.
+   * {@link ErasedTerm} with a non-Prop type or {@link ElimTerm} with `of` erased are disallowed.
+   */
   static @Nullable ErasedTerm underlyingIllegalErasure(@NotNull Term term) {
     if (term instanceof ElimTerm elim) return underlyingErased(elim.of());
     if (term instanceof CallTerm.Access elim) return underlyingErased(elim.of());
