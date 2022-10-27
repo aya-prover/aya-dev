@@ -234,7 +234,7 @@ public class AyaLanguageServer implements LanguageServer {
           Log.d("Deleted file: %s, removed from owner: %s", src.file(), src.owner().underlyingLibrary().name());
           switch (src.owner()) {
             case MutableLibraryOwner owner -> owner.removeLibrarySource(src);
-            case WsLibrary owner -> libraries.removeAll(o -> o == owner);
+            case WsLibrary owner -> libraries.removeIf(o -> o == owner);
             default -> {}
           }
         }
