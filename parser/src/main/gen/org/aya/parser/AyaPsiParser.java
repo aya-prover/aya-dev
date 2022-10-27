@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -1607,24 +1610,63 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // DOT (NUMBER | projFixId)
+  // DOT NUMBER | DOT projFixId (expr (KW_FREEZE expr)?)?
   public static boolean projFix(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "projFix")) return false;
     if (!nextTokenIs(b, DOT)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, DOT);
-    r = r && projFix_1(b, l + 1);
+    r = parseTokens(b, 0, DOT, NUMBER);
+    if (!r) r = projFix_1(b, l + 1);
     exit_section_(b, m, PROJ_FIX, r);
     return r;
   }
 
-  // NUMBER | projFixId
+  // DOT projFixId (expr (KW_FREEZE expr)?)?
   private static boolean projFix_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "projFix_1")) return false;
     boolean r;
-    r = consumeToken(b, NUMBER);
-    if (!r) r = projFixId(b, l + 1);
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DOT);
+    r = r && projFixId(b, l + 1);
+    r = r && projFix_1_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (expr (KW_FREEZE expr)?)?
+  private static boolean projFix_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "projFix_1_2")) return false;
+    projFix_1_2_0(b, l + 1);
+    return true;
+  }
+
+  // expr (KW_FREEZE expr)?
+  private static boolean projFix_1_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "projFix_1_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expr(b, l + 1, -1);
+    r = r && projFix_1_2_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (KW_FREEZE expr)?
+  private static boolean projFix_1_2_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "projFix_1_2_0_1")) return false;
+    projFix_1_2_0_1_0(b, l + 1);
+    return true;
+  }
+
+  // KW_FREEZE expr
+  private static boolean projFix_1_2_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "projFix_1_2_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, KW_FREEZE);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, null, r);
     return r;
   }
 

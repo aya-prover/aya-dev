@@ -152,6 +152,7 @@ public record AyaSccTycker(
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
     decideTyckResult(fn, fn, tycker.simpleFn(newExprTycker(), fn));
+    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
   private void check(@NotNull TyckOrder tyckOrder) {
@@ -225,7 +226,7 @@ public record AyaSccTycker(
       .filter(u -> selfReferencing(resolveInfo.depGraph(), u))
       .map(TyckOrder::unit);
     if (recDefs.isEmpty()) return;
-    // TODO: terck other definitions
+    // TODO: positivity check for data/record definitions
     var fn = recDefs.filterIsInstance(TeleDecl.FnDecl.class)
       .map(f -> f.ref.core);
     terckRecursiveFn(fn);

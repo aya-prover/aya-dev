@@ -73,7 +73,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
         yield decl.body.fold(
           body -> {
-            var nobody = tycker.inherit(body, signature.result()).wellTyped();
+            var nobody = tycker.check(body, signature.result()).wellTyped();
             tycker.solveMetas();
             // It may contain unsolved metas. See `checkTele`.
             var resultTy = tycker.zonk(signature.result());
@@ -158,7 +158,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var okTele = checkTele(tycker, fn.telescope, null);
     var preresult = tycker.synthesize(fn.result).wellTyped();
     var bodyExpr = fn.body.getLeftValue();
-    var prebody = tycker.inherit(bodyExpr, preresult).wellTyped();
+    var prebody = tycker.check(bodyExpr, preresult).wellTyped();
     tycker.solveMetas();
     var result = tycker.zonk(preresult);
     var tele = zonkTele(tycker, okTele);
@@ -228,10 +228,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
         var pat = ctor.patterns.isNotEmpty()
-          ? patTycker.visitPatterns(sig, ctor.patterns.view())._1.toImmutableSeq()
+          ? patTycker.visitPatterns(sig, ctor.patterns.view(), null)._1.toImmutableSeq()
           // No patterns, leave it blank
           : ImmutableSeq.<Pat>empty();
-        var tele = tele(tycker, ctor.telescope, dataConcrete.ulift);
+        var ctorSort = dataConcrete.ulift instanceof FormTerm.Prop ? FormTerm.Type.ZERO : dataConcrete.ulift;
+        var tele = tele(tycker, ctor.telescope, ctorSort);
         ctor.signature = new Def.Signature(tele, dataCall);
         ctor.yetTycker = patTycker;
         ctor.yetTyckedPat = pat;
@@ -243,8 +244,9 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structSig = structRef.concrete.signature;
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
+        var fieldSort = structLvl instanceof FormTerm.Prop ? FormTerm.Type.ZERO : structLvl;
         var tele = tele(tycker, field.telescope, structLvl);
-        var result = tycker.zonk(tycker.inherit(field.result, structLvl)).wellTyped();
+        var result = tycker.zonk(tycker.inherit(field.result, fieldSort)).wellTyped();
         field.signature = new Def.Signature(tele, result);
       }
     }

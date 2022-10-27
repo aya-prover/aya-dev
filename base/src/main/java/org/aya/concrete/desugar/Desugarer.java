@@ -4,15 +4,20 @@ package org.aya.concrete.desugar;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Either;
 import kala.tuple.Unit;
+import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.error.BadFreezingWarn;
 import org.aya.concrete.error.DoNotationError;
 import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.ExprOps;
 import org.aya.concrete.visitor.ExprView;
 import org.aya.concrete.visitor.StmtOps;
+import org.aya.core.def.PrimDef;
 import org.aya.generic.SortKind;
+import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +53,22 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
           } catch (DesugarInterruption e) {
             yield new Expr.ErrorExpr(pos, expr);
           }
+        }
+        case Expr.RawProjExpr proj -> {
+          if (proj.resolvedVar() instanceof DefVar<?, ?> defVar
+            && defVar.core instanceof PrimDef primDef
+            && primDef.id == PrimDef.ID.COE) {
+            var restr = proj.restr() != null ? proj.restr() : new Expr.LitIntExpr(proj.sourcePos(), 0);
+            var coe = new Expr.CoeExpr(proj.sourcePos(), proj.id(), defVar, proj.tup(), restr);
+            yield pre(proj.coeLeft() != null
+              ? new Expr.AppExpr(proj.sourcePos(), coe, new Expr.NamedArg(true, proj.coeLeft()))
+              : coe);
+          }
+          if (proj.restr() != null) info.opSet().reporter.report(new BadFreezingWarn(proj.restr()));
+          var projExpr = new Expr.ProjExpr(proj.sourcePos(), proj.tup(), Either.right(proj.id()), proj.resolvedVar(), MutableValue.create());
+          yield pre(proj.coeLeft() != null
+            ? new Expr.AppExpr(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.coeLeft()))
+            : projExpr);
         }
         case Expr.RawSortExpr univ -> switch (univ.kind()) {
           case Type -> new Expr.TypeExpr(univ.sourcePos(), 0);
@@ -101,20 +122,8 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
             // desugar do-notation
             return pre(doNotation);
           },
-          // desugar `[1, 2, 3]` to `consCtor 1 (consCtor 2 (consCtor 3 nilCtor))`
-          right -> pre(right.exprList().foldRight(right.nilCtor(),
-            (e, last) -> {
-              // construct `(consCtor e) last`
-              // Note: the sourcePos of this call is the same as the element's (currently)
-              // Recommend: use sourcePos [currentElement..lastElement]
-              return new Expr.AppExpr(e.sourcePos(),
-                // construct `consCtor e`
-                new Expr.AppExpr(e.sourcePos(),
-                  right.consCtor(),
-                  new Expr.NamedArg(true, e)),
-                new Expr.NamedArg(true, last));
-            })
-          ));
+          // do not desugar
+          right -> arrayExpr);
         case Expr misc -> misc;
       };
     }
@@ -137,25 +146,6 @@ public record Desugarer(@NotNull ResolveInfo resolveInfo) implements StmtOps<Uni
   @Override
   public @NotNull Pattern visitPattern(@NotNull Pattern pattern, Unit pp) {
     return switch (pattern) {
-      case Pattern.List list -> {
-        assert list.nilName() instanceof Pattern.Ctor : "resolver bug";
-        assert list.consName() instanceof Pattern.Ctor : "resolver bug";
-        var nilCtor = (Pattern.Ctor) list.nilName();
-        var consCtor = (Pattern.Ctor) list.consName();
-
-        var newPattern = list.elements().view()
-          .map(x -> visitPattern(x, pp))
-          .foldRight(nilCtor, (e, right) -> {
-            // e : current element
-            // right : right element
-            // Goal : consCtor e right
-            return new Pattern.Ctor(consCtor.sourcePos(), consCtor.explicit(), consCtor.resolved(),
-              ImmutableSeq.of(e, right), null);
-          });
-
-        // replace newPattern.as() with list.as()
-        yield visitPattern(new Pattern.Ctor(newPattern.sourcePos(), newPattern.explicit(), newPattern.resolved(), newPattern.params(), list.as()), pp);
-      }
       case Pattern.BinOpSeq(var pos, var seq, var as, var explicit) -> {
         assert seq.isNotEmpty() : pos.toString();
         var pat = new BinPatternParser(explicit, resolveInfo, seq.view()).build(pos);

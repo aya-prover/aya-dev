@@ -66,7 +66,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     f.accept(term);
   }
   default <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
-    put(var, type);
+    if (var != LocalVar.IGNORED) put(var, type);
     try {
       return action.get();
     } finally {

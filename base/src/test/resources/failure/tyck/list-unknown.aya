@@ -1,0 +1,5 @@
+open data List (A : Type) | nil | cons A (List A)
+open data Unit | unit
+
+def good : List Unit => [ ]
+def bad => [ ]

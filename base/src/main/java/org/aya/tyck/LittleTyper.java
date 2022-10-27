@@ -10,6 +10,7 @@ import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.LocalCtx;
@@ -45,9 +46,15 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           .map(param -> term(param.type()).normalize(state, NormalizeMode.WHNF))
           .filterIsInstance(FormTerm.Sort.class)
           .toImmutableSeq();
-        if (univ.sizeEquals(sigma.params().size()))
-          yield new FormTerm.Type(univ.view().map(FormTerm.Sort::lift).max());
-        else yield ErrorTerm.typeOf(sigma);
+        if (univ.sizeEquals(sigma.params().size())) {
+          try {
+            yield univ.reduce(ExprTycker::calculateSigma);
+          } catch (IllegalArgumentException ignored) {
+            yield ErrorTerm.typeOf(sigma);
+          }
+        } else {
+          yield ErrorTerm.typeOf(sigma);
+        }
       }
       case IntroTerm.Lambda lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
       case ElimTerm.Proj proj -> {
@@ -64,10 +71,20 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case RefTerm.MetaPat metaPat -> metaPat.ref().type();
       case FormTerm.Pi pi -> {
         var paramTyRaw = term(pi.param().type()).normalize(state, NormalizeMode.WHNF);
-        var retTyRaw = term(pi.body()).normalize(state, NormalizeMode.WHNF);
-        if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy)
-          yield new FormTerm.Type(Math.max(paramTy.lift(), retTy.lift()));
-        else yield ErrorTerm.typeOf(pi);
+        var resultParam = new Term.Param(pi.param().ref(), pi.param().type().normalize(state, NormalizeMode.WHNF), pi.param().explicit());
+        var t = new LittleTyper(state, localCtx.deriveMap());
+        yield t.localCtx.with(resultParam, () -> {
+          var retTyRaw = t.term(pi.body()).normalize(state, NormalizeMode.WHNF);
+          if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy) {
+            try {
+              return ExprTycker.sortPi(paramTy, retTy);
+            } catch (IllegalArgumentException ignored) {
+              return ErrorTerm.typeOf(pi);
+            }
+          } else {
+            return ErrorTerm.typeOf(pi);
+          }
+        });
       }
       case ElimTerm.App app -> {
         var piRaw = term(app.of()).normalize(state, NormalizeMode.WHNF);
@@ -83,6 +100,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case PrimTerm.Mula end -> PrimTerm.Interval.INSTANCE;
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STRING);
       case LitTerm.ShapedInt shaped -> shaped.type();
+      case LitTerm.ShapedList shaped -> shaped.type();
       case FormTerm.PartTy ty -> FormTerm.Type.ZERO;
       case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
       case FormTerm.Path path -> FormTerm.Type.ZERO;
@@ -98,6 +116,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield app.cube().type().subst(new Subst(xi, ui));
       }
       case PrimTerm.Coe coe -> PrimDef.familyLeftToRight(coe.type());
+      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case ErasedTerm erased -> erased.type();
     };
   }
 

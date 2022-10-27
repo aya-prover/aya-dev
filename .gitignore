@@ -14,6 +14,7 @@ out/
 /.vscode/
 *.iml
 gradle.properties
+local.properties
 .DS_Store
 lombok.config
 /test.aya

@@ -81,6 +81,11 @@ public record Serializer(@NotNull Serializer.State state) {
     return switch (term) {
       case LitTerm.ShapedInt lit ->
         new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
+      case LitTerm.ShapedList lit ->
+        new SerTerm.ShapedList(
+          lit.repr().map(this::serialize).toImmutableSeq(),
+          SerDef.SerAyaShape.serialize(lit.shape()),
+          serialize(lit.type()));
       case PrimTerm.Mula end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case PrimTerm.Str str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
@@ -126,6 +131,8 @@ public record Serializer(@NotNull Serializer.State state) {
       case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case FormTerm.Sort sort -> serialize(sort);
+      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
     };
   }
 

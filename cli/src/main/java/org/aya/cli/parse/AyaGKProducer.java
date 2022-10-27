@@ -616,8 +616,7 @@ public record AyaGKProducer(
     if (node.is(ARRAY_ATOM)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
 
-      if (arrayBlock == null)
-        return Expr.Array.newList(pos, ImmutableSeq.empty(), Constants.listNil(pos), Constants.listCons(pos));
+      if (arrayBlock == null) return Expr.Array.newList(pos, ImmutableSeq.empty());
       if (arrayBlock.is(ARRAY_COMP_BLOCK)) return arrayCompBlock(arrayBlock, pos);
       if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
@@ -666,15 +665,20 @@ public record AyaGKProducer(
     return Tuple.of(exprs.get(0), exprs.get(1));
   }
 
-  private Expr.@NotNull ProjExpr buildProj(
+  private @NotNull Expr buildProj(
     @NotNull SourcePos sourcePos, @NotNull Expr projectee,
     @NotNull GenericNode<?> fix
   ) {
     var number = fix.peekChild(NUMBER);
-    return new Expr.ProjExpr(sourcePos, projectee,
-      number != null
-        ? Either.left(Integer.parseInt(number.tokenText()))
-        : Either.right(qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID))));
+    if (number != null) return new Expr.ProjExpr(sourcePos, projectee, Either.left(
+      Integer.parseInt(number.tokenText())));
+    var qid = qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID));
+    var exprs = fix.childrenOfType(EXPR).toImmutableSeq();
+    var coeLeft = exprs.getOption(0);
+    var restr = exprs.getOption(1);
+    return new Expr.RawProjExpr(sourcePos, projectee, qid, null,
+      coeLeft.map(this::expr).getOrNull(),
+      restr.map(this::expr).getOrNull());
   }
 
   public static @NotNull Expr buildPi(
@@ -736,23 +740,16 @@ public record AyaGKProducer(
       var patternsNode = node.peekChild(PATTERNS);    // We allowed empty list pattern (nil)
       var patterns = patternsNode != null
         ? patternsNode
-          .childrenOfType(PATTERN)
-          .map(x -> x.child(ATOM_PATTERNS))
-          .map(this::atomPatterns)
+        .childrenOfType(PATTERN)
+        .map(x -> x.child(ATOM_PATTERNS))
+        .map(this::atomPatterns)
         : SeqView.<BiFunction<Boolean, LocalVar, Pattern>>empty();
 
       var weakId = node.peekChild(WEAK_ID);
       var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
-      var nilBind = new Pattern.Bind(sourcePos, true,
-        new LocalVar(Constants.LIST_NIL, sourcePos),
-        MutableValue.create());
-      var consBind = new Pattern.Bind(sourcePos, true,
-        new LocalVar(Constants.LIST_CONS, sourcePos),
-        MutableValue.create());
 
       return ex -> new Pattern.List(sourcePos, ex,
-        patterns.map(f -> f.apply(true, null)).toImmutableSeq(), asId,
-        nilBind, consBind);
+        patterns.map(f -> f.apply(true, null)).toImmutableSeq(), asId);
     }
     if (node.is(ATOM_NUMBER_PATTERN))
       return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));
@@ -787,10 +784,8 @@ public record AyaGKProducer(
     var exprs = node.child(EXPR_LIST).childrenOfType(EXPR)
       .map(this::expr)
       .toImmutableSeq();
-    var nilCtor = Constants.listNil(entireSourcePos);
-    var consCtor = Constants.listCons(entireSourcePos);
 
-    return Expr.Array.newList(entireSourcePos, exprs, nilCtor, consCtor);
+    return Expr.Array.newList(entireSourcePos, exprs);
   }
 
   public @NotNull ImmutableSeq<Pattern> patterns(@NotNull GenericNode<?> node) {

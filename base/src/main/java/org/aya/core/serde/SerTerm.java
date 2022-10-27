@@ -263,6 +263,21 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
+  record ShapedList(
+    @NotNull ImmutableSeq<SerTerm> repr,
+    @NotNull SerDef.SerAyaShape shape,
+    @NotNull SerTerm type
+  ) implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      var termDesered = repr.map(x -> x.de(state));
+      var shape = shape().de();
+      var type = type().de(state);
+
+      return new LitTerm.ShapedList(termDesered, shape, type);
+    }
+  }
+
   record Str(@NotNull String string) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new PrimTerm.Str(string);
@@ -322,6 +337,12 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
         params.map(p -> p.de(state)),
         type.de(state),
         partial.fmap(t -> t.de(state)));
+    }
+  }
+
+  record Erased(@NotNull SerTerm type, boolean isProp) implements SerTerm {
+    public @NotNull ErasedTerm de(@NotNull DeState state) {
+      return new ErasedTerm(type.de(state), isProp);
     }
   }
 }

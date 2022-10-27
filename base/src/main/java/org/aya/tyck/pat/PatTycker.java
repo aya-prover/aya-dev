@@ -21,6 +21,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.EndoFunctor;
@@ -34,7 +35,6 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.error.LiteralError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
@@ -170,7 +170,7 @@ public final class PatTycker {
         var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view())._1.toImmutableSeq());
+        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view(), tuple)._1.toImmutableSeq());
         if (as != null) {
           exprTycker.localCtx.put(as, sigma);
           addPatSubst(as, ret, tuple.sourcePos());
@@ -185,7 +185,8 @@ public final class PatTycker {
         var ctorCore = ctorRef.core;
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
-        var patterns = visitPatterns(sig, ctor.params().view())._1.toImmutableSeq();
+        // It is possible that `ctor.params()` is empty.
+        var patterns = visitPatterns(sig, ctor.params().view(), ctor)._1.toImmutableSeq();
         var as = ctor.as();
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
@@ -212,11 +213,30 @@ public final class PatTycker {
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
-          if (shape.isDefined()) yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
+          if (shape.isDefined() && shape.get() == AyaShape.NAT_SHAPE)
+            yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, num.explicit());
         }
-        yield withError(new LiteralError.BadLitPattern(num.sourcePos(), num.number(), term), num, term);
+        yield withError(new PatternProblem.BadLitPattern(num, term), num, term);
       }
-      case Pattern.List list -> throw new InternalException("List patterns should be desugared");
+      case Pattern.List list -> {
+        // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !
+        // Note: this is a special case (maybe), If there is another similar requirement,
+        //       a PatternDesugarer is recommended.
+
+        var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
+        if (ty instanceof CallTerm.Data dataCall) {
+          var data = dataCall.ref().core;
+          var shape = exprTycker.shapeFactory.find(data);
+
+          if (shape.isDefined() && shape.get() == AyaShape.LIST_SHAPE) {
+            yield doTyck(new Pattern.FakeShapedList(
+              list.sourcePos(), list.explicit(), list.as(),
+              list.elements(), AyaShape.LIST_SHAPE, ty).constructorForm(), term);
+          }
+        }
+
+        yield withError(new PatternProblem.BadLitPattern(list, term), list, term);
+      }
       case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
   }
@@ -254,7 +274,7 @@ public final class PatTycker {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
-    var step0 = visitPatterns(signature, match.patterns.view());
+    var step0 = visitPatterns(signature, match.patterns.view(), null);
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
     PatternTraversal.visit(p -> {
       if (p instanceof Pattern.Bind bind)
@@ -268,20 +288,43 @@ public final class PatTycker {
     return step1;
   }
 
+  /**
+   * Tyck each {@link Pattern} with {@link Def.Signature}.
+   * {@param outerPattern} should be specified if stream is empty.
+   *
+   * @param outerPattern null if visiting the whole pattern (like `A, x, ctor a b`). This is only used for error reporting.
+   *                     For now, {@param outerPattern} is used when {@param sig} is not empty
+   *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
+   * @return (wellTyped patterns, sig.result())
+   */
   public @NotNull Tuple2<SeqView<Pat>, Term>
-  visitPatterns(Def.Signature sig, SeqView<Pattern> stream) {
+  visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @Nullable Pattern outerPattern) {
     var results = MutableList.<Pat>create();
     if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.view(), sig.result());
-    var lastPat = stream.last();
+    // last pattern which user given (not aya generated)
+    @Nullable Pattern lastPat = null;
     while (sig.param().isNotEmpty()) {
       var param = sig.param().first();
       Pattern pat;
       if (param.explicit()) {
         if (stream.isEmpty()) {
-          foundError(new PatternProblem.InsufficientPattern(lastPat, param));
+          Pattern errorPattern;
+
+          if (lastPat == null) {
+            if (outerPattern == null) {
+              throw new InternalException("outerPattern should not be null when stream is empty");
+            }
+
+            errorPattern = outerPattern;
+          } else {
+            errorPattern = lastPat;
+          }
+
+          foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
           return Tuple.of(results.view(), sig.result());
         }
         pat = stream.first();
+        lastPat = pat;
         stream = stream.drop(1);
         if (!pat.explicit()) {
           foundError(new PatternProblem.TooManyImplicitPattern(pat, param));
@@ -298,7 +341,10 @@ public final class PatTycker {
           // Pattern is explicit, so we leave it to the next type, do not "consume" it
           sig = generatePat(new PatData(sig, results, param));
           continue;
-        } else stream = stream.drop(1);
+        } else {
+          lastPat = pat;
+          stream = stream.drop(1);
+        }
         // ^ Pattern is implicit, so we "consume" it (stream.drop(1))
       }
       sig = updateSig(new PatData(sig, results, param), pat);

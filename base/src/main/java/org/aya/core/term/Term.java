@@ -37,8 +37,8 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, ElimTerm, ErrorTerm,
-  FormTerm, IntroTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat, LitTerm {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, ErasedTerm, ElimTerm,
+  ErrorTerm, FormTerm, IntroTerm, LitTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat {
 
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
     return switch (this) {
@@ -95,6 +95,11 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
           yield match;
         yield new ElimTerm.Match(discriminant, clauses);
+	  }
+      case ErasedTerm erased -> {
+        var type = f.apply(erased.type());
+        if (type == erased.type()) yield erased;
+        yield new ErasedTerm(type, erased.isProp(), erased.sourcePos());
       }
       case CallTerm.Struct struct -> {
         var args = struct.args().map(arg -> arg.descent(f));
@@ -143,6 +148,15 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (type == shaped.type()) yield shaped;
         yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
       }
+      case LitTerm.ShapedList shaped -> {
+        var type = f.apply(shaped.type());
+        var elements = shaped.repr().map(f).toImmutableSeq();
+
+        if (type == shaped.type()
+          && elements.sameElements(shaped.repr())) yield shaped;
+
+        yield new LitTerm.ShapedList(elements, shaped.shape(), type);
+      }
       case FormTerm.PartTy ty -> {
         var type = f.apply(ty.type());
         var restr = ty.restr().map(f);
@@ -174,14 +188,15 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       }
       case PrimTerm.Coe coe -> {
         var type = f.apply(coe.type());
-        var restr = coe.restr().map(f).normalize();
+        var restr = coe.restr().map(f);
         if (type == coe.type() && restr == coe.restr()) yield coe;
-        yield new PrimTerm.Coe(type, restr);
+        yield new PrimTerm.Coe(type, restr.normalize());
       }
       case RefTerm ref -> ref;
       case RefTerm.MetaPat metaPat -> metaPat;
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
+      case PrimTerm.HComp hComp -> hComp; //TODO
     };
   }
 

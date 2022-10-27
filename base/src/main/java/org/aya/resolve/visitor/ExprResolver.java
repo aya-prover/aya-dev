@@ -76,12 +76,17 @@ public record ExprResolver(
         binOpSeq.seq().map(e -> new Expr.NamedArg(e.explicit(), e.name(), resolve(e.expr(), ctx))));
       case Expr.ProjExpr proj -> {
         var tup = resolve(proj.tup(), ctx);
-        if (proj.ix().isLeft())
-          yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
-        var projName = proj.ix().getRightValue();
-        var resolvedIx = ctx.getMaybe(projName);
-        if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(proj, projName.join()));
-        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), resolvedIx, proj.theCore());
+        // before desugar, we can only have integer projections.
+        yield new Expr.ProjExpr(expr.sourcePos(), tup, proj.ix(), proj.resolvedVar(), proj.theCore());
+      }
+      case Expr.RawProjExpr proj -> {
+        var tup = resolve(proj.tup(), ctx);
+        var resolvedIx = ctx.getMaybe(proj.id());
+        if (resolvedIx == null)
+          ctx.reportAndThrow(new FieldError.UnknownField(proj.id().sourcePos(), proj.id().join()));
+        var coeLeft = proj.coeLeft() != null ? resolve(proj.coeLeft(), ctx) : null;
+        var restr = proj.restr() != null ? resolve(proj.restr(), ctx) : null;
+        yield new Expr.RawProjExpr(proj.sourcePos(), tup, proj.id(), resolvedIx, coeLeft, restr);
       }
       case Expr.LamExpr lam -> {
         var param = resolveParam(lam.param(), ctx);
@@ -126,13 +131,11 @@ public record ExprResolver(
         },
         right -> {
           var exprs = right.exprList().map(e -> resolve(e, ctx));
-          var nilCtor = resolve(right.nilCtor(), ctx);
-          var consCtor = resolve(right.consCtor(), ctx);
 
-          if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
+          if (exprs.sameElements(right.exprList())) {
             return arrayExpr;
           } else {
-            return Expr.Array.newList(arrayExpr.sourcePos(), exprs, nilCtor, consCtor);
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs);
           }
         }
       );

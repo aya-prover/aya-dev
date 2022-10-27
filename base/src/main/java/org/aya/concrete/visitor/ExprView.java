@@ -95,7 +95,20 @@ public interface ExprView {
       case Expr.ProjExpr proj -> {
         var tup = commit(proj.tup());
         if (tup == proj.tup()) yield proj;
-        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedIx(), proj.theCore());
+        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedVar(), proj.theCore());
+      }
+      case Expr.RawProjExpr proj -> {
+        var tup = commit(proj.tup());
+        var coeLeft = proj.coeLeft() != null ? commit(proj.coeLeft()) : null;
+        var restr = proj.restr() != null ? commit(proj.restr()) : null;
+        if (tup == proj.tup() && coeLeft == proj.coeLeft() && restr == proj.restr()) yield proj;
+        yield new Expr.RawProjExpr(proj.sourcePos(), tup, proj.id(), proj.resolvedVar(), coeLeft, restr);
+      }
+      case Expr.CoeExpr coe -> {
+        var type = commit(coe.type());
+        var restr = commit(coe.restr());
+        if (type == coe.type() && restr == coe.restr()) yield coe;
+        yield new Expr.CoeExpr(coe.sourcePos(), coe.id(), coe.resolvedVar(), type, restr);
       }
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(this::commit);
@@ -159,13 +172,11 @@ public interface ExprView {
         },
         right -> {
           var exprs = right.exprList().map(this::commit);
-          var nilCtor = commit(right.nilCtor());
-          var consCtor = commit(right.consCtor());
 
-          if (exprs.sameElements(right.exprList()) && nilCtor == right.nilCtor() && consCtor == right.consCtor()) {
+          if (exprs.sameElements(right.exprList())) {
             return arrayExpr;
           } else {
-            return Expr.Array.newList(arrayExpr.sourcePos(), exprs, nilCtor, consCtor);
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs);
           }
         }
       );

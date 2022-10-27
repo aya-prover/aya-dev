@@ -11,7 +11,6 @@ import java.util.function.BiConsumer;
 
 /**
  * @author ice1000
- * TODO: rewrite this class using pattern matching
  */
 public interface StmtOps<P> extends ExprTraversal<P> {
   default <T extends Decl> void traced(@NotNull T yeah, P p, @NotNull BiConsumer<T, P> f) {
@@ -83,8 +82,8 @@ public interface StmtOps<P> extends ExprTraversal<P> {
         new Pattern.Ctor(pos, licit, resolved, params.map(p -> visitPattern(p, pp)), as);
       case Pattern.Tuple(var pos, var licit, var patterns, var as) ->
         new Pattern.Tuple(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
-      case Pattern.List(var pos, var licit, var patterns, var as, var nilCtor, var consCtor) ->
-        new Pattern.List(pos, licit, patterns.map(p -> visitPattern(p, pp)), as, visitPattern(nilCtor, pp), visitPattern(consCtor, pp));
+      case Pattern.List(var pos, var licit, var patterns, var as) ->
+        new Pattern.List(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
       default -> pattern;
     };
   }

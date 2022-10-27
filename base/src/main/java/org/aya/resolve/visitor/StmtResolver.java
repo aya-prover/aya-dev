@@ -20,7 +20,6 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.tyck.order.TyckOrder;
-import org.aya.tyck.pat.PatternProblem;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -262,22 +261,9 @@ public interface StmtResolver {
         // resolve subpatterns
         var subpats = list.elements().map(x -> subpatterns(newCtx, x));
 
-        // resolve ctors (these resolving won't change context, maybe...)
-        var nilPat = resolve(list.nilName(), newCtx.get());
-        var consPat = resolve(list.consName(), newCtx.get());
-
-        // check both patterns
-
-        if (!(nilPat._2 instanceof Pattern.Ctor))
-          resolvingInterrupt(context.reporter(), new PatternProblem.UnknownCtor(list.nilName()));
-        if (!(consPat._2 instanceof Pattern.Ctor))
-          resolvingInterrupt(context.reporter(), new PatternProblem.UnknownCtor(list.consName()));
-
-        // now both patterns are Ctors
-
         yield Tuple.of(
           bindAs(list.as(), newCtx.get(), list.sourcePos()),
-          new Pattern.List(list.sourcePos(), list.explicit(), subpats, list.as(), nilPat._2, consPat._2));
+          new Pattern.List(list.sourcePos(), list.explicit(), subpats, list.as()));
       }
       default -> Tuple.of(context, pattern);
     };

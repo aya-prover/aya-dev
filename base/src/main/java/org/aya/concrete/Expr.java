@@ -18,6 +18,7 @@ import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
+import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.visitor.ExprResolver;
@@ -277,14 +278,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   ) implements Expr {}
 
   /**
-   * @param resolvedIx will be set to the field's DefVar during resolving if this is a field access.
+   * @param resolvedVar will be set to the field's DefVar during resolving
    * @author re-xyr
    */
   record ProjExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
     @NotNull Either<Integer, QualifiedID> ix,
-    @Nullable AnyVar resolvedIx,
+    @Nullable AnyVar resolvedVar,
     @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public ProjExpr(
@@ -293,7 +294,32 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     ) {
       this(sourcePos, tup, ix, null, MutableValue.create());
     }
+  }
 
+  /** undesugared overloaded projection as coercion syntax */
+  record RawProjExpr(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr tup,
+    @NotNull QualifiedID id,
+    @Nullable AnyVar resolvedVar,
+    @Nullable Expr coeLeft,
+    @Nullable Expr restr
+  ) implements Expr {
+  }
+
+  /**
+   * calls to {@link org.aya.core.def.PrimDef.ID#COE}, desugared from {@link ProjExpr} for simplicity
+   *
+   * @param resolvedVar will be set to the primitive coe's DefVar during resolving
+   * @param restr       The cofibration under which the type should be constant
+   */
+  record CoeExpr(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull QualifiedID id,
+    @NotNull DefVar<?, ?> resolvedVar,
+    @NotNull Expr type,
+    @NotNull Expr restr
+  ) implements Expr {
   }
 
   record NewExpr(
@@ -383,15 +409,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @Override @NotNull SourcePos sourcePos,
     @NotNull Either<CompBlock, ElementList> arrayBlock
   ) implements Expr {
-    /**
-     * @param nilCtor  the Nil constructor, it is {@link org.aya.generic.Constants}.listNil in default
-     * @param consCtor the Cons constructor, it is {@link org.aya.generic.Constants}.listCons in default
-     */
-    public record ElementList(
-      @NotNull ImmutableSeq<Expr> exprList,
-      @NotNull Expr nilCtor,
-      @NotNull Expr consCtor
-    ) {}
+    public record ElementList(@NotNull ImmutableSeq<Expr> exprList) {}
 
     /**
      * <h1>Array Comp(?)</h1>
@@ -423,14 +441,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      */
     public static Expr.Array newList(
       @NotNull SourcePos sourcePos,
-      @NotNull ImmutableSeq<Expr> exprs,
-      @NotNull Expr nilCtor,
-      @NotNull Expr consCtor) {
+      @NotNull ImmutableSeq<Expr> exprs) {
       return new Expr.Array(
         sourcePos,
-        Either.right(new ElementList(
-          exprs, nilCtor, consCtor
-        ))
+        Either.right(new ElementList(exprs))
       );
     }
 

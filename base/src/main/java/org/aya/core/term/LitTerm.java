@@ -29,4 +29,29 @@ public sealed interface LitTerm extends Term {
       return new LitTerm.ShapedInt(repr, this.shape, this.type);
     }
   }
+
+  record ShapedList(
+    @Override @NotNull ImmutableSeq<Term> repr,
+    @Override @NotNull AyaShape shape,
+    @Override @NotNull Term type
+  ) implements LitTerm, Shaped.List<Term> {
+
+    @Override
+    public @NotNull Term makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> dataArg) {
+      return new CallTerm.Con(nil.dataRef, nil.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.empty());
+    }
+
+    @Override
+    public @NotNull Term makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> dataArg, @NotNull Term x, @NotNull Term last) {
+      return new CallTerm.Con(cons.dataRef, cons.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.of(
+        new Arg<>(x, true),
+        new Arg<>(last, true)
+      ));
+    }
+
+    @Override
+    public @NotNull Term destruct(@NotNull ImmutableSeq<Term> repr) {
+      return new ShapedList(repr, shape(), type());
+    }
+  }
 }

@@ -25,3 +25,13 @@ Names are listed in random order.
 + Shreck Ye <shreckye@gmail.com>
 + Shuxian Wang <wsx@berkeley.edu>
 + tonfeiz <feitong@mail.ustc.edu.cn>
+
+# Long-term development
+
++ Shuxian Wang <wsx@berkeley.edu>
++ HoshinoTented <limbolrain@gmail.com>
++ Tesla Zhang <ice1000kotlin@foxmail.com>
++ Kiva Oyama <imkiva@islovely.icu>
++ Luna Xin <luna.xin@outlook.com>
++ ㄗㄠˋ ㄑㄧˊ <tsao-chi@the-lingo.org>
++ Dark-flames <dark_flames@outlook.com>

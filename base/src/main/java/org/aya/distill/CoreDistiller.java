@@ -11,6 +11,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.generic.Arg;
+import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.distill.DistillerOptions;
@@ -86,7 +87,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         list.append(Doc.symbol("=>"));
         list.append(bodyDoc);
         var doc = Doc.sep(list);
-        yield checkParen(outer, doc, Outer.AppHead);
+        yield checkParen(outer, doc, Outer.BinOp);
       }
       case FormTerm.Sort term -> {
         var fn = Doc.styled(KEYWORD, term.kind().name());
@@ -165,20 +166,37 @@ public class CoreDistiller extends BaseDistiller<Term> {
           ? linkLit(0, zero.ref, CON_CALL)
           : linkLit(shaped.repr(), suc.ref, CON_CALL),
         () -> Doc.plain(String.valueOf(shaped.repr())));
+      case LitTerm.ShapedList shaped -> {
+        var subterms = shaped.repr().map(x -> term(Outer.Free, x));
+
+        yield shaped.with((nil, cons, dataArg) -> Doc.sep(
+          linkListLit(Doc.symbol("["), nil.ref(), CON_CALL),
+          Doc.join(linkListLit(Doc.COMMA, cons.ref(), CON_CALL), subterms),
+          linkListLit(Doc.symbol("]"), nil.ref(), CON_CALL)
+        ), () -> Doc.sep(
+          Doc.symbol("["),
+          Doc.commaList(subterms),
+          Doc.symbol("]"))
+        );
+      }
       case PrimTerm.Str str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
       case IntroTerm.PartEl el -> partial(options, el.partial());
       case PrimTerm.Mula mula -> formula(outer, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());
-      case IntroTerm.PathLam lam -> Doc.sep(Doc.styled(KEYWORD, "\\"),
-        Doc.sep(lam.params().map(BaseDistiller::varDoc)),
-        Doc.symbol("=>"),
-        lam.body().toDoc(options));
+      case IntroTerm.PathLam lam -> checkParen(outer,
+        Doc.sep(Doc.styled(KEYWORD, "\\"),
+          Doc.sep(lam.params().map(BaseDistiller::varDoc)),
+          Doc.symbol("=>"),
+          lam.body().toDoc(options)),
+        Outer.BinOp);
       case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case PrimTerm.Coe coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
+      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case ErasedTerm erased -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
     };
   }
 

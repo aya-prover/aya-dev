@@ -49,4 +49,6 @@ public sealed interface PrimTerm extends Term {
   }
 
   record Coe(@NotNull Term type, @NotNull Restr<Term> restr) implements PrimTerm {}
+
+  record HComp(@NotNull Term type, @NotNull Term phi, @NotNull Term u, @NotNull Term u0) implements PrimTerm {}
 }

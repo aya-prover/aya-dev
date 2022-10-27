@@ -75,6 +75,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
           case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
           case LitTerm.ShapedInt litTerm -> match(ctor, litTerm.constructorForm());
+          case LitTerm.ShapedList litTerm -> match(ctor, litTerm.constructorForm());
           default -> throw new Mismatch(true);
         }
       }
