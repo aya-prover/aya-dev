@@ -194,7 +194,7 @@ public sealed interface Pat extends AyaDocile {
     @NotNull CallTerm.Data type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
-      // ownerTeles are not pattern, so they don't introduce any binding.
+      // ownerArgs are not pattern, so they don't introduce any binding.
       params.forEach(pat -> pat.storeBindings(ctx));
     }
 
@@ -205,21 +205,21 @@ public sealed interface Pat extends AyaDocile {
 
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      // TODO: ownerArgs
       var params = this.params.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      return new Ctor(explicit, ref, ownerArgs, params, (CallTerm.Data) type.subst(subst));
+      return new Ctor(explicit, ref, 
+        ownerArgs.map(x -> x.subst(subst)),
+        params, (CallTerm.Data) type.subst(subst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       return new Ctor(explicit, ref,
-        ownerArgs.map(tycker::zonk),            // TODO[hoshino]: Is it correct?
+        ownerArgs.map(tycker::zonk),
         params.map(pat -> pat.zonk(tycker)),
-        (CallTerm.Data) tycker.zonk(type));
       // The cast must succeed
+        (CallTerm.Data) tycker.zonk(type));
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      // TODO[hoshino]: Is it correct?
       return new Ctor(explicit, ref, ownerArgs(), params.map(p -> p.inline(ctx)), type);
     }
   }
