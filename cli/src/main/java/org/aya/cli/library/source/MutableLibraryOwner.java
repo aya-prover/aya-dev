@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -31,7 +31,7 @@ public interface MutableLibraryOwner extends LibraryOwner {
   }
 
   default void removeLibrarySource(@NotNull LibrarySource source) {
-    this.librarySourcesMut().removeAll(src -> src == source);
+    this.librarySourcesMut().removeIf(src -> src == source);
   }
 
   default @NotNull LibrarySource addLibrarySource(@NotNull Path source) {
