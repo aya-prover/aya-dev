@@ -21,4 +21,7 @@ val lexer = tasks.register<org.aya.gradle.JFlexTask>("lexer") {
   skel = grammar.resolve("aya-flex.skeleton")
 }
 
-tasks.compileJava.configure { dependsOn(lexer) }
+@Suppress("unsupported")
+[tasks.compileJava, tasks.sourcesJar].forEach {
+  it.configure { dependsOn(lexer) }
+}
