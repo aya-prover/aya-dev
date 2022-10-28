@@ -3,7 +3,6 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.SeqLike;
-import kala.tuple.Unit;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.distill.ConcreteDistiller;

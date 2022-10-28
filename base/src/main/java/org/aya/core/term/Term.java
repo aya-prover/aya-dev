@@ -221,7 +221,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
 
   default int findUsages(@NotNull AnyVar var) {
-    return new MonoidalTermFolder.Usages(var).apply(this);
+    return new TermFolder.Usages(var).apply(this);
   }
 
   default VarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {

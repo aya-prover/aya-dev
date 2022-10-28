@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.value.MutableValue;
 import org.aya.core.def.*;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
@@ -13,11 +14,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-public interface MonoidalTermFolder<R> extends Function<Term, R> {
+public interface TermFolder<R> extends Function<Term, R> {
   @NotNull R init();
 
   default @NotNull R fold(@NotNull R acc, @NotNull AnyVar var) {
     return acc;
+  }
+
+  default @NotNull R fold(@NotNull R acc, @NotNull Pat pat) {
+    return switch (pat) {
+      case Pat.Ctor ctor -> fold(acc, ctor.ref());
+      case Pat.Bind bind -> fold(acc, bind.bind());
+      default -> acc;
+    };
   }
 
   default @NotNull R fold(@NotNull R acc, @NotNull Term term) {
@@ -39,7 +48,7 @@ public interface MonoidalTermFolder<R> extends Function<Term, R> {
     return acc.get();
   }
 
-  record Usages(@NotNull AnyVar var) implements MonoidalTermFolder<Integer> {
+  record Usages(@NotNull AnyVar var) implements TermFolder<Integer> {
     @Override public @NotNull Integer init() {
       return 0;
     }
@@ -55,9 +64,9 @@ public interface MonoidalTermFolder<R> extends Function<Term, R> {
    * @see RefFinder#HEADER_AND_BODY
    */
   record RefFinder(boolean withBody) implements
-    MonoidalTermFolder<@NotNull SeqView<Def>> {
-    public static final @NotNull MonoidalTermFolder.RefFinder HEADER_ONLY = new RefFinder(false);
-    public static final @NotNull MonoidalTermFolder.RefFinder HEADER_AND_BODY = new RefFinder(true);
+    TermFolder<@NotNull SeqView<Def>> {
+    public static final @NotNull TermFolder.RefFinder HEADER_ONLY = new RefFinder(false);
+    public static final @NotNull TermFolder.RefFinder HEADER_AND_BODY = new RefFinder(true);
 
     @Override
     public @NotNull SeqView<Def> init() {
