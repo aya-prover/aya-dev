@@ -37,7 +37,7 @@ public sealed interface Stmt extends AyaDocile, TyckUnit permits Remark, Decl, C
   }
 
   default void desugar(@NotNull ResolveInfo resolveInfo) {
-    new Desugarer(resolveInfo).visit(this, Unit.unit());
+    new Desugarer(resolveInfo).accept(this);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

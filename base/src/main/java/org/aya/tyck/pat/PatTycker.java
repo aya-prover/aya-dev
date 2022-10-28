@@ -14,8 +14,7 @@ import kala.tuple.Tuple3;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.visitor.ExprOps;
-import org.aya.concrete.visitor.ExprView;
+import org.aya.concrete.visitor.EndoExpr;
 import org.aya.concrete.visitor.PatternTraversal;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -265,7 +264,7 @@ public final class PatTycker {
       // and in case the patterns are malformed, some bindings may
       // not be added to the localCtx of tycker, causing assertion errors
       ? new ErrorTerm(e, false)
-      : exprTycker.inherit(new BodySubstitutor(e.view(), lhsResult.bodySubst).commit(), type).wellTyped());
+      : exprTycker.inherit(new BodySubstitutor(lhsResult.bodySubst).apply(e), type).wellTyped());
     exprTycker.localCtx = parent;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
   }
@@ -457,10 +456,7 @@ public final class PatTycker {
     else return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }
 
-  private record BodySubstitutor(
-    @Override @NotNull ExprView view,
-    @NotNull ImmutableMap<AnyVar, Expr> bodySubst
-  ) implements ExprOps {
+  private record BodySubstitutor(@NotNull ImmutableMap<AnyVar, Expr> bodySubst) implements EndoExpr {
     @Override public @NotNull Expr pre(@NotNull Expr expr) {
       return switch (expr) {
         case Expr.RefExpr ref when bodySubst.containsKey(ref.resolvedVar()) -> pre(bodySubst.get(ref.resolvedVar()));
