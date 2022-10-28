@@ -49,12 +49,12 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
   @Override default @NotNull R apply(@NotNull Stmt stmt) {
     var acc = MutableValue.create(init());
     new StmtConsumer() {
-      @Override public Expr pre(@NotNull Expr expr) {
+      @Override public @NotNull Expr pre(@NotNull Expr expr) {
         acc.set(fold(acc.get(), expr));
         return expr;
       }
 
-      @Override public Pattern pre(@NotNull Pattern pattern) {
+      @Override public @NotNull Pattern pre(@NotNull Pattern pattern) {
         acc.set(fold(acc.get(), pattern));
         return pattern;
       }

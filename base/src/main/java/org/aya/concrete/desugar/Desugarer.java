@@ -25,7 +25,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
   private int levelVar(@NotNull Expr expr) throws DesugarInterruption {
     return switch (expr) {
       case Expr.BinOpSeq binOpSeq -> levelVar(pre(binOpSeq));
-      case Expr.LitIntExpr(var pos,var i) -> i;
+      case Expr.LitIntExpr(var pos, var i) -> i;
       default -> {
         info.opSet().reporter.report(new LevelProblem.BadLevelExpr(expr));
         throw new DesugarInterruption();
@@ -37,14 +37,14 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.AppExpr(var pos,Expr.RawSortExpr(var uPos,var kind),var arg)when kind == SortKind.Type -> {
+      case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Type -> {
         try {
           yield new Expr.TypeExpr(uPos, levelVar(arg.expr()));
         } catch (DesugarInterruption e) {
           yield new Expr.ErrorExpr(pos, expr);
         }
       }
-      case Expr.AppExpr(var pos,Expr.RawSortExpr(var uPos,var kind),var arg)when kind == SortKind.Set -> {
+      case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Set -> {
         try {
           yield new Expr.SetExpr(uPos, levelVar(arg.expr()));
         } catch (DesugarInterruption e) {
@@ -71,13 +71,13 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         var clauses = match.clauses().map(this::clause);
         yield new Expr.Match(match.sourcePos(), match.discriminant(), clauses);
       }
-      case Expr.RawSortExpr univ -> switch (univ.kind()) {
-        case Type -> new Expr.TypeExpr(univ.sourcePos(), 0);
-        case Set -> new Expr.SetExpr(univ.sourcePos(), 0);
-        case Prop -> new Expr.PropExpr(univ.sourcePos());
-        case ISet -> new Expr.ISetExpr(univ.sourcePos());
+      case Expr.RawSortExpr(var pos, var kind) -> switch (kind) {
+        case Type -> new Expr.TypeExpr(pos, 0);
+        case Set -> new Expr.SetExpr(pos, 0);
+        case Prop -> new Expr.PropExpr(pos);
+        case ISet -> new Expr.ISetExpr(pos);
       };
-      case Expr.BinOpSeq(var pos,var seq) -> {
+      case Expr.BinOpSeq(var pos, var seq) -> {
         assert seq.isNotEmpty() : pos.toString();
         yield pre(new BinExprParser(info, seq.view()).build(pos));
       }
@@ -137,7 +137,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
    */
   @Override public @NotNull Pattern pre(@NotNull Pattern pattern) {
     return switch (pattern) {
-      case Pattern.BinOpSeq(var pos,var seq,var as,var explicit) -> {
+      case Pattern.BinOpSeq(var pos, var seq, var as, var explicit) -> {
         assert seq.isNotEmpty() : pos.toString();
         yield pre(new BinPatternParser(explicit, info, seq.view()).build(pos));
       }

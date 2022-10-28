@@ -41,11 +41,12 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
 
   default @NotNull Pattern descent(@NotNull Function<@NotNull Pattern, @NotNull Pattern> f) {
     return switch (this) {
-      case Pattern.BinOpSeq(var pos,var seq,var as,var ex) -> new Pattern.BinOpSeq(pos, seq.map(f), as, ex);
-      case Pattern.Ctor(var pos,var licit,var resolved,var params,var as) ->
+      case Pattern.BinOpSeq(var pos, var seq, var as, var ex) -> new Pattern.BinOpSeq(pos, seq.map(f), as, ex);
+      case Pattern.Ctor(var pos, var licit, var resolved, var params, var as) ->
         new Pattern.Ctor(pos, licit, resolved, params.map(f), as);
-      case Pattern.Tuple(var pos,var licit,var patterns,var as) -> new Pattern.Tuple(pos, licit, patterns.map(f), as);
-      case Pattern.List(var pos,var licit,var patterns,var as) -> new Pattern.List(pos, licit, patterns.map(f), as);
+      case Pattern.Tuple(var pos, var licit, var patterns, var as) ->
+        new Pattern.Tuple(pos, licit, patterns.map(f), as);
+      case Pattern.List(var pos, var licit, var patterns, var as) -> new Pattern.List(pos, licit, patterns.map(f), as);
       default -> this;
     };
   }
@@ -105,14 +106,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
   ) implements Pattern {
   }
 
-  /**
-   * <h1>Undesugared List Pattern</h1>
-   *
-   * @param sourcePos
-   * @param explicit
-   * @param elements
-   * @param as
-   */
+  /** Sugared List Pattern */
   record List(
     @NotNull SourcePos sourcePos,
     boolean explicit,
