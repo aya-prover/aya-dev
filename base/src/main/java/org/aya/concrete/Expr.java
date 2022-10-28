@@ -5,6 +5,7 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
@@ -40,6 +41,138 @@ import java.util.function.Function;
  * @author re-xyr
  */
 public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr> {
+  default @NotNull Expr descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
+    return switch (this) {
+      case Expr.RefExpr ref -> ref;
+      case Expr.UnresolvedExpr unresolved -> unresolved;
+      case Expr.LamExpr lam -> {
+        var param = lam.param().descent(f);
+        var body = f.apply(lam.body());
+        if (param == lam.param() && body == lam.body()) yield lam;
+        yield new Expr.LamExpr(lam.sourcePos(), param, body);
+      }
+      case Expr.PiExpr pi -> {
+        var param = pi.param().descent(f);
+        var last = f.apply(pi.last());
+        if (param == pi.param() && last == pi.last()) yield pi;
+        yield new Expr.PiExpr(pi.sourcePos(), pi.co(), param, last);
+      }
+      case Expr.SigmaExpr sigma -> {
+        var params = sigma.params().map(param -> param.descent(f));
+        if (params.sameElements(sigma.params(), true)) yield sigma;
+        yield new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), params);
+      }
+      case Expr.RawSortExpr rawType -> rawType;
+      case Expr.LiftExpr lift -> {
+        var inner = f.apply(lift.expr());
+        if (inner == lift.expr()) yield lift;
+        yield new Expr.LiftExpr(lift.sourcePos(), inner, lift.lift());
+      }
+      case Expr.SortExpr univ -> univ;
+      case Expr.AppExpr(var pos,var fun,var a) -> {
+        var func = f.apply(fun);
+        var arg = a.descent(f);
+        if (func == fun && arg == a) yield this;
+        yield new Expr.AppExpr(pos, func, arg);
+      }
+      case Expr.HoleExpr hole -> {
+        var filling = hole.filling();
+        var committed = filling != null ? f.apply(filling) : null;
+        if (committed == filling) yield hole;
+        yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), committed, hole.accessibleLocal());
+      }
+      case Expr.TupExpr tup -> {
+        var items = tup.items().map(f);
+        if (items.sameElements(tup.items(), true)) yield tup;
+        yield new Expr.TupExpr(tup.sourcePos(), items);
+      }
+      case Expr.ProjExpr proj -> {
+        var tup = f.apply(proj.tup());
+        if (tup == proj.tup()) yield proj;
+        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedVar(), proj.theCore());
+      }
+      case Expr.RawProjExpr proj -> {
+        var tup = f.apply(proj.tup());
+        var coeLeft = proj.coeLeft() != null ? f.apply(proj.coeLeft()) : null;
+        var restr = proj.restr() != null ? f.apply(proj.restr()) : null;
+        if (tup == proj.tup() && coeLeft == proj.coeLeft() && restr == proj.restr()) yield proj;
+        yield new Expr.RawProjExpr(proj.sourcePos(), tup, proj.id(), proj.resolvedVar(), coeLeft, restr);
+      }
+      case Expr.CoeExpr coe -> {
+        var type = f.apply(coe.type());
+        var restr = f.apply(coe.restr());
+        if (type == coe.type() && restr == coe.restr()) yield coe;
+        yield new Expr.CoeExpr(coe.sourcePos(), coe.id(), coe.resolvedVar(), type, restr);
+      }
+      case Expr.NewExpr neu -> {
+        var struct = f.apply(neu.struct());
+        var fields = neu.fields().map(field ->
+          new Expr.Field(field.name(), field.bindings(), f.apply(field.body()), field.resolvedField()));
+        if (struct == neu.struct() && fields.sameElements(neu.fields(), true)) yield neu;
+        yield new Expr.NewExpr(neu.sourcePos(), struct, fields);
+      }
+      case Expr.PartEl el -> {
+        var clauses = el.clauses().map(cls -> Tuple.of(f.apply(cls._1), f.apply(cls._2)));
+        if (clauses.allMatchWith(el.clauses(), (l, r) ->
+          l._1 == r._1 && l._2 == r._2)) yield el;
+        yield new Expr.PartEl(el.sourcePos(), clauses);
+      }
+      case Expr.Path path -> {
+        var partial = (PartEl) path.partial().descent(f);
+        var type = f.apply(path.type());
+        if (partial == path.partial() && type == path.type()) yield path;
+        yield new Expr.Path(path.sourcePos(), path.params(), type, partial);
+      }
+      case Expr.LitIntExpr litInt -> litInt;
+      case Expr.LitStringExpr litStr -> litStr;
+      case Expr.BinOpSeq binOpSeq -> {
+        var seq = binOpSeq.seq().map(arg -> arg.descent(f));
+        if (seq.sameElements(binOpSeq.seq(), true)) yield binOpSeq;
+        yield new Expr.BinOpSeq(binOpSeq.sourcePos(), seq);
+      }
+      case Expr.ErrorExpr error -> error;
+      case Expr.MetaPat meta -> meta;
+      case Expr.Idiom idiom -> {
+        var newInner = idiom.barredApps().map(f);
+        var newNames = idiom.names().fmap(f);
+        if (newInner.sameElements(idiom.barredApps()) && newNames.identical(idiom.names())) yield idiom;
+        yield new Expr.Idiom(idiom.sourcePos(), newNames, newInner);
+      }
+      case Expr.Do doNotation -> {
+        var lamExprs = doNotation.binds().map(x ->
+          new Expr.DoBind(x.sourcePos(), x.var(), f.apply(x.expr())));
+        var bindName = f.apply(doNotation.bindName());
+        if (lamExprs.sameElements(doNotation.binds()) && bindName == doNotation.bindName())
+          yield doNotation;
+        yield new Expr.Do(doNotation.sourcePos(), bindName, lamExprs);
+      }
+      case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
+        left -> {
+          var generator = f.apply(left.generator());
+          var bindings = left.binds().map(binding ->
+            new Expr.DoBind(binding.sourcePos(), binding.var(), f.apply(binding.expr()))
+          );
+          var bindName = f.apply(left.bindName());
+          var pureName = f.apply(left.pureName());
+
+          if (generator == left.generator() && bindings.sameElements(left.binds()) && bindName == left.bindName() && pureName == left.pureName()) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindings, bindName, pureName);
+          }
+        },
+        right -> {
+          var exprs = right.exprList().map(f);
+
+          if (exprs.sameElements(right.exprList())) {
+            return arrayExpr;
+          } else {
+            return Expr.Array.newList(arrayExpr.sourcePos(), exprs);
+          }
+        }
+      );
+    };
+  }
   /**
    * @see org.aya.concrete.stmt.Stmt#resolve
    * @see StmtShallowResolver
@@ -124,6 +257,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
     public NamedArg(boolean explicit, @NotNull Expr expr) {
       this(explicit, null, expr);
+    }
+
+    public @NotNull NamedArg descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
+      var expr = f.apply(expr());
+      if (expr == expr()) return this;
+      return new NamedArg(explicit(), name(), expr);
     }
 
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
@@ -387,8 +526,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, var, new HoleExpr(sourcePos, false, null), explicit);
     }
 
-    public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @NotNull Expr> mapper) {
-      return new Param(sourcePos, ref, mapper.apply(type), explicit);
+    public @NotNull Param descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
+      var type = f.apply(type());
+      if (type == type()) return this;
+      return new Param(this, type);
     }
   }
 

@@ -26,7 +26,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
 
   default void visitTelescopic(@NotNull Decl decl, @NotNull Decl.Telescopic proof, P pp) {
     assert decl == proof;
-    proof.setTelescope(proof.telescope().map(p -> p.mapExpr(expr -> visitExpr(expr, pp))));
+    proof.setTelescope(proof.telescope().map(p -> p.descent(expr -> visitExpr(expr, pp))));
   }
 
   default void visit(@NotNull Stmt stmt, P pp) {
