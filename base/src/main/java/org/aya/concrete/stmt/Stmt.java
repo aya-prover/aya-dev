@@ -3,7 +3,6 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.SeqLike;
-import kala.tuple.Unit;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.distill.ConcreteDistiller;
@@ -37,7 +36,7 @@ public sealed interface Stmt extends AyaDocile, TyckUnit permits Remark, Decl, C
   }
 
   default void desugar(@NotNull ResolveInfo resolveInfo) {
-    new Desugarer(resolveInfo).visit(this, Unit.unit());
+    new Desugarer(resolveInfo).accept(this);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

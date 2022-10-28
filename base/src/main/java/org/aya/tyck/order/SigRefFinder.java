@@ -1,15 +1,14 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
-import org.aya.concrete.visitor.ExprTraversal;
+import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.core.visitor.MonoidalVarFolder;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -20,35 +19,30 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  * @see MonoidalVarFolder.RefFinder
  */
-public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit>> {
-  public static final @NotNull SigRefFinder HEADER_ONLY = new SigRefFinder();
-
-  public void visit(@NotNull TyckUnit sn, @NotNull MutableList<TyckUnit> references) {
+// TODO(wsx): Folder
+public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements ExprConsumer {
+  public void accept(@NotNull TyckUnit sn) {
     switch (sn) {
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic proof) tele(proof.telescope(), references);
-        if (decl instanceof Decl.Resulted proof) visitExpr(proof.result(), references);
+        if (decl instanceof Decl.Telescopic proof)
+          proof.telescope().mapNotNull(Expr.Param::type).forEach(this);
+        if (decl instanceof Decl.Resulted proof) accept(proof.result());
       }
       case Command.Module module -> {}
       case Command cmd -> {}
       case Remark remark -> {
         assert remark.literate != null;
-        remark.literate.visit(this, references);
+        remark.literate.visit(this);
       }
-      case Generalize variables -> visitExpr(variables.type, references);
+      case Generalize variables -> accept(variables.type);
     }
   }
 
-  private void tele(@NotNull ImmutableSeq<Expr.Param> tele, @NotNull MutableList<TyckUnit> references) {
-    tele.mapNotNull(Expr.Param::type).forEach(type -> visitExpr(type, references));
-  }
-
-  @Override public @NotNull Expr visitExpr(@NotNull Expr expr, @NotNull MutableList<TyckUnit> references) {
-    if (expr instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar) {
-      // in the past when we had Signatured, the Decl class only derives top-level definitions
-      if (defVar.concrete instanceof Decl.TopLevel)
-        references.append(defVar.concrete);
+  @Override public void pre(@NotNull Expr expr) {
+    switch (expr) {
+      case Expr.RefExpr ref when ref.resolvedVar() instanceof DefVar<?, ?> def
+        && def.concrete instanceof Decl.TopLevel -> references.append(def.concrete);
+      default -> ExprConsumer.super.pre(expr);
     }
-    return ExprTraversal.super.visitExpr(expr, references);
   }
 }

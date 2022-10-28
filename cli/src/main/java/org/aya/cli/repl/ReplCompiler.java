@@ -75,7 +75,7 @@ public class ReplCompiler {
     var resolveInfo = new ResolveInfo(primFactory,
       new EmptyContext(reporter, Path.of("dummy")).derive("dummy"),
       ImmutableSeq.empty(), new AyaBinOpSet(reporter));
-    return new Desugarer.ForExpr(expr.view(), resolveInfo).commit();
+    return new Desugarer(resolveInfo).apply(expr);
   }
 
   public int loadToContext(@NotNull Path file) throws IOException {

@@ -26,7 +26,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
 
   default void visitTelescopic(@NotNull Decl decl, @NotNull Decl.Telescopic proof, P pp) {
     assert decl == proof;
-    proof.setTelescope(proof.telescope().map(p -> p.mapExpr(expr -> visitExpr(expr, pp))));
+    proof.setTelescope(proof.telescope().map(p -> p.descent(expr -> visitExpr(expr, pp))));
   }
 
   default void visit(@NotNull Stmt stmt, P pp) {
@@ -72,19 +72,5 @@ public interface StmtOps<P> extends ExprTraversal<P> {
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {
     return new Pattern.Clause(c.sourcePos, c.patterns.map(p -> visitPattern(p, pp)), c.expr.map(expr -> visitExpr(expr, pp)));
-  }
-
-  default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
-    return switch (pattern) {
-      case Pattern.BinOpSeq(var pos, var seq, var as, var ex) ->
-        new Pattern.BinOpSeq(pos, seq.map(p -> visitPattern(p, pp)), as, ex);
-      case Pattern.Ctor(var pos, var licit, var resolved, var params, var as) ->
-        new Pattern.Ctor(pos, licit, resolved, params.map(p -> visitPattern(p, pp)), as);
-      case Pattern.Tuple(var pos, var licit, var patterns, var as) ->
-        new Pattern.Tuple(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
-      case Pattern.List(var pos, var licit, var patterns, var as) ->
-        new Pattern.List(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
-      default -> pattern;
-    };
   }
 }
