@@ -87,11 +87,11 @@ public interface BetaExpander extends EndoFunctor {
             var A = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), sigma.params().first().type());
 
             var B = sigma.params().sizeEquals(2) ?
-              new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), sigma.params().get(2).type()) :
+              new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), sigma.params().get(1).type()) :
               new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), new FormTerm.Sigma(sigma.params().drop(1)));
 
-            var u00 = new ElimTerm.Proj(new RefTerm(u0Var), 0);
-            var u01 = new ElimTerm.Proj(new RefTerm(u0Var), 1);
+            var u00 = new ElimTerm.Proj(new RefTerm(u0Var), 1);
+            var u01 = new ElimTerm.Proj(new RefTerm(u0Var), 2);
             var v = ElimTerm.make(coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
 
             var Bsubsted = B.subst(sigma.params().first().ref(), v);
