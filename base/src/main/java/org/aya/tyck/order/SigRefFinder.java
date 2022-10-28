@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
@@ -10,7 +10,7 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
 import org.aya.concrete.visitor.ExprTraversal;
-import org.aya.core.visitor.MonoidalVarFolder;
+import org.aya.core.visitor.MonoidalTermFolder;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * Concrete version of RefFinder but only header is searched.
  *
  * @author kiva
- * @see MonoidalVarFolder.RefFinder
+ * @see MonoidalTermFolder.RefFinder
  */
 public class SigRefFinder implements ExprTraversal<@NotNull MutableList<TyckUnit>> {
   public static final @NotNull SigRefFinder HEADER_ONLY = new SigRefFinder();

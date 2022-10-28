@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author wsx
  * @see BetaExpander
  */
-public interface DeltaExpander extends EndoFunctor {
+public interface DeltaExpander extends EndoTerm {
   @NotNull TyckState state();
 
   static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, @NotNull SeqLike<Arg<Term>> args) {

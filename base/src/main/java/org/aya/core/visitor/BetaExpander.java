@@ -22,7 +22,7 @@ import static org.aya.guest0x0.cubical.CofThy.isOne;
  * @author wsx
  * @see DeltaExpander
  */
-public interface BetaExpander extends EndoFunctor {
+public interface BetaExpander extends EndoTerm {
   private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
     return partial.flatMap(Function.identity());
   }

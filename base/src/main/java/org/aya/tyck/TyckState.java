@@ -8,7 +8,7 @@ import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.MonoidalVarFolder;
+import org.aya.core.visitor.MonoidalTermFolder;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
@@ -54,8 +54,8 @@ public record TyckState(
     var removingMetas = MutableList.<WithPos<Meta>>create();
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
-        var usageCounter = new MonoidalVarFolder.Usages(activeMeta.data());
-        eqns.filterInPlace(eqn -> {
+        var usageCounter = new MonoidalTermFolder.Usages(activeMeta.data());
+        eqns.retainIf(eqn -> {
           if (usageCounter.apply(eqn.lhs) + usageCounter.apply(eqn.rhs) > 0) {
             solveEqn(reporter, tracer, eqn, true);
             return false;
@@ -64,7 +64,7 @@ public record TyckState(
         removingMetas.append(activeMeta);
       }
     }
-    activeMetas.filterNotInPlace(removingMetas::contains);
+    activeMetas.removeIf(removingMetas::contains);
     return removingMetas.isNotEmpty();
   }
 

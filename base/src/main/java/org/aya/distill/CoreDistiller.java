@@ -9,7 +9,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.aya.core.visitor.MonoidalVarFolder;
+import org.aya.core.visitor.MonoidalTermFolder;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
@@ -79,7 +79,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         } else bodyDoc = term(Outer.Free, body);
 
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats))
-          params.retainAll(Term.Param::explicit);
+          params.retainIf(Term.Param::explicit);
         if (params.isEmpty()) yield bodyDoc;
 
         var list = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
@@ -206,7 +206,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
     if (arg.explicit() != param.explicit()) return false;
     if (!(arg.term() instanceof RefTerm argRef)) return false;
     if (argRef.var() != param.ref()) return false;
-    var counter = new MonoidalVarFolder.Usages(param.ref());
+    var counter = new MonoidalTermFolder.Usages(param.ref());
     return args.dropLast(1).allMatch(a -> counter.apply(a.term()) == 0);
   }
 

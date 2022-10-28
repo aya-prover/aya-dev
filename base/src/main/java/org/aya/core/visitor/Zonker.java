@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public record Zonker(
   @NotNull Tycker tycker,
   @NotNull MutableSinglyLinkedList<Term> stack
-) implements EndoFunctor {
+) implements EndoTerm {
   public static @NotNull Zonker make(@NotNull Tycker tycker) {
     return new Zonker(tycker, MutableSinglyLinkedList.create());
   }
@@ -55,7 +55,7 @@ public record Zonker(
 
   @Override public @NotNull Term apply(@NotNull Term term) {
     stack.push(term);
-    var result = EndoFunctor.super.apply(term);
+    var result = EndoTerm.super.apply(term);
     stack.pop();
     return result;
   }

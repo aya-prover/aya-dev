@@ -23,7 +23,7 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
-import org.aya.core.visitor.EndoFunctor;
+import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
@@ -50,7 +50,7 @@ import java.util.function.Supplier;
  * @author ice1000
  */
 public final class PatTycker {
-  public static final EndoFunctor META_PAT_INLINER = new EndoFunctor() {
+  public static final EndoTerm META_PAT_INLINER = new EndoTerm() {
     @Override public @NotNull Term post(@NotNull Term term) {
       return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
     }

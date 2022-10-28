@@ -205,7 +205,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
 
   default @NotNull Term subst(@NotNull Subst subst) {
-    return new EndoFunctor.Substituter(subst).apply(this);
+    return new EndoTerm.Substituter(subst).apply(this);
   }
 
   default @NotNull Term subst(@NotNull Map<AnyVar, ? extends Term> subst) {
@@ -217,11 +217,11 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
 
   default @NotNull Term rename() {
-    return new EndoFunctor.Renamer().apply(this);
+    return new EndoTerm.Renamer().apply(this);
   }
 
   default int findUsages(@NotNull AnyVar var) {
-    return new MonoidalVarFolder.Usages(var).apply(this);
+    return new MonoidalTermFolder.Usages(var).apply(this);
   }
 
   default VarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
@@ -245,7 +245,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
 
   default @NotNull Term freezeHoles(@Nullable TyckState state) {
-    return new EndoFunctor() {
+    return new EndoTerm() {
       @Override public @NotNull Term pre(@NotNull Term term) {
         return term instanceof CallTerm.Hole hole && state != null
           ? state.metas().getOrDefault(hole.ref(), term)
@@ -258,7 +258,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
     return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
   default @NotNull Term lift(int ulift) {
-    return new EndoFunctor.Elevator(ulift).apply(this);
+    return new EndoTerm.Elevator(ulift).apply(this);
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return new LittleTyper(state, ctx).term(this);
