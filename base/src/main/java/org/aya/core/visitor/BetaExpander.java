@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
@@ -81,7 +82,23 @@ public interface BetaExpander extends EndoFunctor {
                 ElimTerm.make(new PrimTerm.Coe(BSubsted, coe.restr()),
                   new Arg<>(ElimTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
           }
-          case FormTerm.Sigma sigma -> coe;
+          case FormTerm.Sigma sigma -> {
+            var u0Var = new LocalVar("u0");
+            var A = new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), sigma.params().first().type());
+
+            var B = sigma.params().sizeEquals(2) ?
+              new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), sigma.params().get(2).type()) :
+              new IntroTerm.Lambda(new Term.Param(varI, PrimTerm.Interval.INSTANCE, true), new FormTerm.Sigma(sigma.params().drop(1)));
+
+            var u00 = new ElimTerm.Proj(new RefTerm(u0Var), 0);
+            var u01 = new ElimTerm.Proj(new RefTerm(u0Var), 1);
+            var v = ElimTerm.make(coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
+
+            var Bsubsted = B.subst(sigma.params().first().ref(), v);
+            var coe0 = ElimTerm.make(new PrimTerm.Coe(A, coe.restr()), new Arg<>(u00, true));
+            var coe1 = ElimTerm.make(new PrimTerm.Coe(Bsubsted, coe.restr()), new Arg<>(u01, true));
+            yield new IntroTerm.Tuple(ImmutableSeq.of(coe0, coe1));
+          }
           case FormTerm.Type type -> {
             var A = new LocalVar("A");
             yield new IntroTerm.Lambda(new Term.Param(A, type, true), new RefTerm(A));
