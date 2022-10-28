@@ -3,6 +3,7 @@
 package org.aya.concrete.visitor;
 
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprTraversal<P> {
@@ -56,5 +57,19 @@ public interface ExprTraversal<P> {
 
   default @NotNull Expr visitParam(Expr.Param e, P pp) {
     return visitExpr(e.type(), pp);
+  }
+
+  default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
+    return switch (pattern) {
+      case Pattern.BinOpSeq(var pos,var seq,var as,var ex) ->
+        new Pattern.BinOpSeq(pos, seq.map(p -> visitPattern(p, pp)), as, ex);
+      case Pattern.Ctor(var pos,var licit,var resolved,var params,var as) ->
+        new Pattern.Ctor(pos, licit, resolved, params.map(p -> visitPattern(p, pp)), as);
+      case Pattern.Tuple(var pos,var licit,var patterns,var as) ->
+        new Pattern.Tuple(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
+      case Pattern.List(var pos,var licit,var patterns,var as) ->
+        new Pattern.List(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
+      default -> pattern;
+    };
   }
 }

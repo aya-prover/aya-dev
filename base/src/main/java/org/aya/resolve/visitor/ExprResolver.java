@@ -42,6 +42,7 @@ public record ExprResolver(
   @NotNull MutableStack<Where> where,
   @Nullable Consumer<TyckUnit> parentAdd
 ) {
+  // TODO(wsx): Visitor
   public @NotNull Expr resolve(@NotNull Expr expr, @NotNull Context ctx) {
     return switch (expr) {
       case Expr.LiftExpr lift -> {

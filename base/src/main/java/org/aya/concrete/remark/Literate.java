@@ -5,7 +5,6 @@ package org.aya.concrete.remark;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
-import org.aya.concrete.visitor.ExprTraversal;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
@@ -26,15 +25,16 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
  * @author ice1000
  */
 public sealed interface Literate extends Docile {
-  default <P> void modify(@NotNull Function<Expr, Expr> fixpoint) {
+  default void modify(@NotNull Function<Expr, Expr> fixpoint) {
   }
-  default <P> void visit(@NotNull ExprTraversal<P> consumer, P p) {
+  default void visit(@NotNull Consumer<Expr> consumer) {
   }
   default void tyck(@NotNull ExprTycker tycker) {
   }
@@ -53,12 +53,12 @@ public sealed interface Literate extends Docile {
       return ImmutableSeq.empty();
     }
 
-    @Override public <P> void modify(@NotNull Function<Expr, Expr> fixpoint) {
+    @Override public void modify(@NotNull Function<Expr, Expr> fixpoint) {
       children.forEach(literate -> literate.modify(fixpoint));
     }
 
-    @Override public <P> void visit(@NotNull ExprTraversal<P> consumer, P p) {
-      children.forEach(literate -> literate.visit(consumer, p));
+    @Override public void visit(@NotNull Consumer<Expr> consumer) {
+      children.forEach(child -> child.visit(consumer));
     }
 
     @Override public void tyck(@NotNull ExprTycker tycker) {
@@ -100,12 +100,12 @@ public sealed interface Literate extends Docile {
     }
 
     @Override @Contract(mutates = "this")
-    public <P> void modify(@NotNull Function<Expr, Expr> fixpoint) {
+    public void modify(@NotNull Function<Expr, Expr> fixpoint) {
       expr = fixpoint.apply(expr);
     }
 
-    @Override public <P> void visit(@NotNull ExprTraversal<P> consumer, P p) {
-      consumer.visitExpr(expr, p);
+    @Override public void visit(@NotNull Consumer<Expr> consumer) {
+      consumer.accept(expr);
     }
 
     @Override public void tyck(@NotNull ExprTycker tycker) {
