@@ -55,7 +55,7 @@ public record TyckState(
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
         var usageCounter = new MonoidalVarFolder.Usages(activeMeta.data());
-        eqns.filterInPlace(eqn -> {
+        eqns.retainIf(eqn -> {
           if (usageCounter.apply(eqn.lhs) + usageCounter.apply(eqn.rhs) > 0) {
             solveEqn(reporter, tracer, eqn, true);
             return false;
@@ -64,7 +64,7 @@ public record TyckState(
         removingMetas.append(activeMeta);
       }
     }
-    activeMetas.filterNotInPlace(removingMetas::contains);
+    activeMetas.removeIf(removingMetas::contains);
     return removingMetas.isNotEmpty();
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
@@ -21,7 +21,7 @@ public record SeqLocalCtx(
   }
 
   @Override public void remove(@NotNull SeqView<LocalVar> vars) {
-    localSeq.removeAll(p -> vars.contains(p.var));
+    localSeq.removeIf(p -> vars.contains(p.var));
   }
 
   @Override public void extractToLocal(@NotNull MutableList<Term.Param> dest) {

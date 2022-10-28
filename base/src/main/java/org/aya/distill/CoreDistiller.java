@@ -80,7 +80,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         } else bodyDoc = term(Outer.Free, body);
 
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats))
-          params.retainAll(Term.Param::explicit);
+          params.retainIf(Term.Param::explicit);
         if (params.isEmpty()) yield bodyDoc;
 
         var list = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
