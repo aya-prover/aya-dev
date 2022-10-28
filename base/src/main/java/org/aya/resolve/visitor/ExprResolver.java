@@ -9,6 +9,7 @@ import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
@@ -42,6 +43,7 @@ public record ExprResolver(
   @NotNull MutableStack<Where> where,
   @Nullable Consumer<TyckUnit> parentAdd
 ) {
+  // TODO(wsx): Visitor
   public @NotNull Expr resolve(@NotNull Expr expr, @NotNull Context ctx) {
     return switch (expr) {
       case Expr.LiftExpr lift -> {
@@ -87,6 +89,14 @@ public record ExprResolver(
         var coeLeft = proj.coeLeft() != null ? resolve(proj.coeLeft(), ctx) : null;
         var restr = proj.restr() != null ? resolve(proj.restr(), ctx) : null;
         yield new Expr.RawProjExpr(proj.sourcePos(), tup, proj.id(), resolvedIx, coeLeft, restr);
+      }
+      case Expr.Match match -> {
+        var discriminant = match.discriminant().map(e -> resolve(e, ctx));
+        var clauses = match.clauses().map(c -> {
+          var body = c.expr.map(i -> resolve(i, ctx));
+          return new Pattern.Clause(c.sourcePos, c.patterns, body);
+        });
+        yield new Expr.Match(match.sourcePos(), discriminant, clauses);
       }
       case Expr.LamExpr lam -> {
         var param = resolveParam(lam.param(), ctx);

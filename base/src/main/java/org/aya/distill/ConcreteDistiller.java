@@ -14,7 +14,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
-import org.aya.concrete.visitor.ExprTraversal;
+import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -52,16 +52,15 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.LitStringExpr expr -> Doc.plain('"' + StringUtil.unescapeStringCharacters(expr.string()) + '"');
       case Expr.PiExpr expr -> {
         var data = new boolean[]{false, false};
-        new ExprTraversal<Unit>() {
-          @Override public @NotNull Expr visitExpr(@NotNull Expr e, Unit unit) {
+        new ExprConsumer() {
+          @Override public void pre(@NotNull Expr e) {
             switch (e) {
               case Expr.RefExpr ref when ref.resolvedVar() == expr.param().ref() -> data[0] = true;
-              case Expr.UnresolvedExpr unresolved -> data[1] = true;
-              default -> {}
+              case Expr.UnresolvedExpr ignored -> data[1] = true;
+              default -> ExprConsumer.super.pre(e);
             }
-            return ExprTraversal.super.visitExpr(e, unit);
           }
-        }.visitExpr(expr.last(), Unit.unit());
+        }.accept(expr.last());
         Doc doc;
         var last = term(Outer.Codomain, expr.last());
         if (!data[0] && !data[1]) {
