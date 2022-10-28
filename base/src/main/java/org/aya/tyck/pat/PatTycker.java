@@ -3,7 +3,6 @@
 package org.aya.tyck.pat;
 
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
@@ -252,8 +251,6 @@ public final class PatTycker {
   }
 
   /**
-   * @param bodySubst     in case the body uses references from the telescope,
-   *                      we need to replace them with the corresponding patterns
    * @param bodySubstTerm we do need to replace them with the corresponding patterns,
    *                      but patterns are terms (they are already well-typed if not {@param hasError})
    * @param hasError      if there is an error in the patterns
@@ -262,7 +259,6 @@ public final class PatTycker {
     @NotNull LocalCtx gamma,
     @NotNull Term type,
     @NotNull Subst bodySubstTerm,
-    @NotNull ImmutableMap<AnyVar, Expr> bodySubst,
     boolean hasError,
     @NotNull Pat.Preclause<Expr> preclause
   ) {
@@ -297,7 +293,7 @@ public final class PatTycker {
         bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
     }, match.patterns);
     var step1 = new LhsResult(exprTycker.localCtx, step0._2, typeSubst.derive(),
-      bodySubst.toImmutableMap(), match.hasError,
+      match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
     typeSubst.clear();
