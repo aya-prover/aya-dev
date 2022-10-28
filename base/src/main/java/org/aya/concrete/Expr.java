@@ -9,7 +9,6 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.concrete.visitor.ExprView;
 import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
@@ -596,9 +595,5 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
         ))
       );
     }
-  }
-
-  default @NotNull ExprView view() {
-    return () -> this;
   }
 }
