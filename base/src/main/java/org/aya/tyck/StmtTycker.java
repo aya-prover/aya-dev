@@ -151,10 +151,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   // Apply a simple checking strategy for maximal metavar inference.
   public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn) {
-    return traced(fn, tycker, (o, w) -> doSimpleFn(tycker, fn));
+    return traced(fn, tycker, this::doSimpleFn);
   }
 
-  private @NotNull FnDef doSimpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn) {
+  private @NotNull FnDef doSimpleFn(TeleDecl.FnDecl fn, @NotNull ExprTycker tycker) {
     var okTele = checkTele(tycker, fn.telescope, null);
     var preresult = tycker.synthesize(fn.result).wellTyped();
     var bodyExpr = fn.body.getLeftValue();
