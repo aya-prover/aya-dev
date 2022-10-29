@@ -108,7 +108,7 @@ public final class PatTycker {
    * After checking a pattern, we need to replace the references of the
    * corresponding telescope binding with the pattern.
    */
-  private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull SourcePos pos) {
+  private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat) {
     typeSubst.addDirectly(var, pat.toTerm());
   }
 
@@ -175,7 +175,7 @@ public final class PatTycker {
         var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view(), tuple)._1.toImmutableSeq());
         if (as != null) {
           exprTycker.localCtx.put(as, sigma);
-          addPatSubst(as, ret, tuple.sourcePos());
+          addPatSubst(as, ret);
         }
         yield ret;
       }
@@ -200,7 +200,7 @@ public final class PatTycker {
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), ownerTeleArgs, patterns, dataCall);
         if (as != null) {
           exprTycker.localCtx.put(as, dataCall);
-          addPatSubst(as, ret, ctor.sourcePos());
+          addPatSubst(as, ret);
         }
         yield ret;
       }
@@ -391,7 +391,7 @@ public final class PatTycker {
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
     var res = doTyck(pat, type);
     tracing(TreeBuilder::reduce);
-    addPatSubst(data.param.ref(), res, pat.sourcePos());
+    addPatSubst(data.param.ref(), res);
     data.results.append(res);
     return data.sig.inst(typeSubst);
   }
@@ -409,7 +409,7 @@ public final class PatTycker {
     else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());
-    addPatSubst(ref, bind, data.paramPos());
+    addPatSubst(ref, bind);
     return data.sig.inst(typeSubst);
   }
 
