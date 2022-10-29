@@ -393,11 +393,6 @@ public final class PatTycker {
     tracing(TreeBuilder::reduce);
     addPatSubst(data.param.ref(), res, pat.sourcePos());
     data.results.append(res);
-
-    // update signature for current parameter,
-    // because it probably changed when we call `data.sig.inst`
-    exprTycker.localCtx.put(data.param().ref(), type);
-
     return data.sig.inst(typeSubst);
   }
 
