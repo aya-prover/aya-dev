@@ -7,17 +7,29 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-public interface ExprConsumer extends Consumer<Expr> {
+public interface ExprConsumer extends Consumer<Expr>, PatternConsumer {
   default void pre(@NotNull Expr expr) {}
 
   default void post(@NotNull Expr expr) {}
 
   default void accept(@NotNull Expr expr) {
     pre(expr);
-    expr.descent(e -> {
-      accept(e);
-      return e;
-    });
+    switch (expr) {
+      case Expr.Match match -> match.descent(
+        e -> {
+          accept(e);
+          return e;
+        },
+        p -> {
+          accept(p);
+          return p;
+        }
+      );
+      case Expr ex -> ex.descent(e -> {
+        accept(e);
+        return e;
+      });
+    }
     post(expr);
   }
 }

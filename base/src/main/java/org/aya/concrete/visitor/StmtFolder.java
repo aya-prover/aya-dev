@@ -46,9 +46,18 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
     };
   }
 
-  @Override default @NotNull R apply(@NotNull Stmt stmt) {
+  default @NotNull R fold(@NotNull R acc, @NotNull Stmt stmt) {
+    return acc;
+  }
+
+  default @NotNull R apply(@NotNull Stmt stmt) {
     var acc = MutableValue.create(init());
     new StmtConsumer() {
+      @Override public void accept(@NotNull Stmt stmt) {
+        acc.set(fold(acc.get(), stmt));
+        StmtConsumer.super.accept(stmt);
+      }
+
       @Override public @NotNull Expr pre(@NotNull Expr expr) {
         acc.set(fold(acc.get(), expr));
         return expr;

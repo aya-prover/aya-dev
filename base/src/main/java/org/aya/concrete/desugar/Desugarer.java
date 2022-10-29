@@ -67,10 +67,6 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
           ? new Expr.AppExpr(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.coeLeft()))
           : projExpr);
       }
-      case Expr.Match match -> {
-        var clauses = match.clauses().map(this::clause);
-        yield new Expr.Match(match.sourcePos(), match.discriminant(), clauses);
-      }
       case Expr.RawSortExpr(var pos, var kind) -> switch (kind) {
         case Type -> new Expr.TypeExpr(pos, 0);
         case Set -> new Expr.SetExpr(pos, 0);

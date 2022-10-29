@@ -35,12 +35,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * @author re-xyr
  */
 public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr> {
-  default @NotNull Expr descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
+  default @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
     return switch (this) {
       case Expr.RefExpr ref -> ref;
       case Expr.UnresolvedExpr unresolved -> unresolved;
@@ -487,7 +488,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Expr> discriminant,
     @NotNull ImmutableSeq<Pattern.Clause> clauses
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull Match descent(@NotNull UnaryOperator<@NotNull Expr> f, @NotNull UnaryOperator<@NotNull Pattern> g) {
+      var discriminant = discriminant().map(f);
+      var clauses = clauses().map(cl -> cl.descent(f, g));
+      if (discriminant().sameElements(discriminant, true) && clauses().sameElements(clauses, true)) return this;
+      return new Match(sourcePos, discriminant, clauses);
+    }
+  }
 
   /**
    * @author kiva

@@ -15,7 +15,7 @@ import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.EndoExpr;
-import org.aya.concrete.visitor.PatternTraversal;
+import org.aya.concrete.visitor.PatternConsumer;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
@@ -275,10 +275,14 @@ public final class PatTycker {
     currentClause = match;
     var step0 = visitPatterns(signature, match.patterns.view(), null);
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
-    PatternTraversal.visit(p -> {
-      if (p instanceof Pattern.Bind bind)
-        bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
-    }, match.patterns);
+    var consumer = new PatternConsumer() {
+      @Override public void pre(@NotNull Pattern pat) {
+        if (pat instanceof Pattern.Bind bind)
+          bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
+        PatternConsumer.super.pre(pat);
+      }
+    };
+    match.patterns.forEach(consumer::accept);
     var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.toImmutableMap(), match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
