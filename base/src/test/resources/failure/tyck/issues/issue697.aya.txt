@@ -20,10 +20,10 @@ In file $FILE:17:65 ->
                                                                         ^^
 
 Error: Unsolved meta a'
-       in `idp {[| i |] A' {| ~ i := a | i := a' |}} {a'}`
-       in `idp {[| i |] A' {| ~ i := a | i := a' |}} {a'} <a>`
-       in `hcomp2d {A'} {a} {a'} {b} {a'} (idp {[| i |] A' {| ~ i := a | i := a'
-        |}} {a'} <a>) (idp {A} {a}) p`
+       in `idp {[| i |] A {| ~ i := a | i := a |}} {a'}`
+       in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
+       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
+        <a>) (idp {A} {a}) p`
 
 In file $FILE:17:65 ->
 
@@ -33,9 +33,9 @@ In file $FILE:17:65 ->
                                                                         ^^
 
 Error: Unsolved meta a'
-       in `idp {[| i |] A' {| ~ i := a | i := a' |}} {a'} <a>`
-       in `hcomp2d {A'} {a} {a'} {b} {a'} (idp {[| i |] A' {| ~ i := a | i := a'
-        |}} {a'} <a>) (idp {A} {a}) p`
+       in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
+       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
+        <a>) (idp {A} {a}) p`
 
 In file $FILE:17:65 ->
 
@@ -45,9 +45,9 @@ In file $FILE:17:65 ->
                                                                         ^^
 
 Error: Unsolved meta a'
-       in `idp {[| i |] A' {| ~ i := a | i := a' |}} {a'} <a>`
-       in `hcomp2d {A'} {a} {a'} {b} {a'} (idp {[| i |] A' {| ~ i := a | i := a'
-        |}} {a'} <a>) (idp {A} {a}) p`
+       in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
+       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
+        <a>) (idp {A} {a}) p`
 
 4 error(s), 0 warning(s).
 What are you doing?
