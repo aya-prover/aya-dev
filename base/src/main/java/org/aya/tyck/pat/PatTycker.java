@@ -55,7 +55,6 @@ public final class PatTycker {
   };
 
   public final @NotNull ExprTycker exprTycker;
-  private final @NotNull Subst typeSubst;
 
   /**
    * An {@code as pattern} map.
@@ -73,12 +72,10 @@ public final class PatTycker {
 
   public PatTycker(
     @NotNull ExprTycker exprTycker,
-    @NotNull Subst typeSubst,
     @NotNull TypedSubst bodySubst,
     @Nullable Trace.Builder traceBuilder
   ) {
     this.exprTycker = exprTycker;
-    this.typeSubst = typeSubst;
     this.bodySubst = bodySubst;
     this.traceBuilder = traceBuilder;
   }
@@ -95,7 +92,7 @@ public final class PatTycker {
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new Subst(), new TypedSubst(), exprTycker.traceBuilder);
+    this(exprTycker, new TypedSubst(), exprTycker.traceBuilder);
   }
 
   public record PatResult(
@@ -111,8 +108,6 @@ public final class PatTycker {
    */
   private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
     var patTerm = pat.toTerm();
-
-    typeSubst.addDirectly(var, patTerm);
     bodySubst.addDirectly(var, patTerm, type);
   }
 
@@ -274,8 +269,7 @@ public final class PatTycker {
     exprTycker.localCtx = lhsResult.gamma;
     // We `addDirectly` to `parentLets`.
     // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
-    // It is fine if we have all `newVar => originVar in lets` substitutions
-    // (then we are no need to derive on the origin Lets)
+    // TODO[hoshino]: addDirectly or add?
     exprTycker.lets = parentLets.derive().addDirectly(lhsResult.bodySubst());
     var type = META_PAT_INLINER.apply(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
@@ -304,7 +298,6 @@ public final class PatTycker {
       match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
-    typeSubst.clear();
     bodySubst.clear();
     return step1;
   }
@@ -404,7 +397,7 @@ public final class PatTycker {
     tracing(TreeBuilder::reduce);
     addPatSubst(data.param.ref(), res, data.param.type());
     data.results.append(res);
-    return data.sig.inst(typeSubst);
+    return data.sig.inst(bodySubst.map());
   }
 
   /**
@@ -422,7 +415,7 @@ public final class PatTycker {
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());
     addPatSubst(ref, bind, data.param.type());
-    return data.sig.inst(typeSubst);
+    return data.sig.inst(bodySubst.map());
   }
 
   private void foundError(@Nullable Problem problem) {
