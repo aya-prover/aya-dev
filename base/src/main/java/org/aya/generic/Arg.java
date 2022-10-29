@@ -22,9 +22,11 @@ public record Arg<T extends AyaDocile>(@NotNull T term, boolean explicit) implem
     return Doc.bracedUnless(term.toDoc(options), explicit);
   }
 
+  public @NotNull Arg<T> update(@NotNull T term) {
+    return term == term() ? this : new Arg<>(term, explicit);
+  }
+
   public @NotNull Arg<T> descent(@NotNull Function<@NotNull T, @NotNull T> f) {
-    var term = f.apply(term());
-    if (term == term()) return this;
-    return new Arg<>(term, explicit());
+    return update(f.apply(term));
   }
 }

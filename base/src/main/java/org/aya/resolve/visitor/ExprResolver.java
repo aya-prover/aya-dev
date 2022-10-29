@@ -250,8 +250,7 @@ public record ExprResolver(
   }
 
   private @NotNull Tuple2<Expr.Param, Context> resolveParam(@NotNull Expr.Param param, Context ctx) {
-    var type = resolve(param.type(), ctx);
-    return Tuple.of(new Expr.Param(param, type), ctx.bind(param.ref(), param.sourcePos()));
+    return Tuple.of(param.update(resolve(param.type(), ctx)), ctx.bind(param.ref(), param.sourcePos()));
   }
 
   /**
@@ -289,7 +288,7 @@ public record ExprResolver(
     var type = resolve(first.type(), ctx);
     var newCtx = ctx.bind(first.ref(), first.sourcePos());
     var result = resolveParams(params.view().drop(1), newCtx);
-    return Tuple.of(result._1.prepended(new Expr.Param(first, type)), result._2);
+    return Tuple.of(result._1.prepended(first.update(type)), result._2);
   }
 
   private Expr.@NotNull Field resolveField(Expr.@NotNull Field t, Context context) {

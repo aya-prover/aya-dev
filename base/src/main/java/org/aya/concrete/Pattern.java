@@ -131,15 +131,17 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
       this.expr = expr;
     }
 
+    public @NotNull Clause update(@NotNull ImmutableSeq<Pattern> pats, @NotNull Option<Expr> body) {
+      return body.sameElements(expr, true) && pats.sameElements(patterns, true) ? this
+        : new Clause(sourcePos, pats, body);
+    }
+
     public @NotNull Clause descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return descent(f, UnaryOperator.identity());
+      return update(patterns, expr.map(f));
     }
 
     public @NotNull Clause descent(@NotNull UnaryOperator<@NotNull Expr> f, @NotNull UnaryOperator<@NotNull Pattern> g) {
-      var body = expr.map(f);
-      var pats = patterns.map(g);
-      if (body.sameElements(expr, true) && pats.sameElements(patterns, true)) return this;
-      return new Clause(sourcePos, pats, body);
+      return update(patterns.map(g), expr.map(f));
     }
   }
 
