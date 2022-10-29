@@ -59,8 +59,7 @@ public interface BetaExpander extends EndoFunctor {
       case PrimTerm.Coe coe -> {
         if (coe.restr() instanceof Restr.Const<Term> c && c.isOne()) {
           var var = new LocalVar("x");
-          var param = new Term.Param(var, ElimTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true);
-          yield new IntroTerm.Lambda(param, new RefTerm(var));
+          yield new IntroTerm.Lambda(coeDom(var, coe.type()), new RefTerm(var));
         }
 
         var varI = new LocalVar("i");
@@ -77,7 +76,7 @@ public interface BetaExpander extends EndoFunctor {
             var w = ElimTerm.make(coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
             var BSubsted = B.subst(pi.param().ref(), w.rename());
             var wSubsted = w.subst(varI, PrimTerm.Mula.LEFT).rename();
-            yield new IntroTerm.Lambda(new Term.Param(u0Var, ElimTerm.make(coe.type(), new Arg<>(PrimTerm.Mula.LEFT, true)), true),
+            yield new IntroTerm.Lambda(coeDom(u0Var, coe.type()),
               new IntroTerm.Lambda(new Term.Param(vVar, vType, true),
                 ElimTerm.make(new PrimTerm.Coe(BSubsted, coe.restr()),
                   new Arg<>(ElimTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
@@ -97,7 +96,7 @@ public interface BetaExpander extends EndoFunctor {
             var Bsubsted = B.subst(sigma.params().first().ref(), v);
             var coe0 = ElimTerm.make(new PrimTerm.Coe(A, coe.restr()), new Arg<>(u00, true));
             var coe1 = ElimTerm.make(new PrimTerm.Coe(Bsubsted, coe.restr()), new Arg<>(u01, true));
-            yield new IntroTerm.Tuple(ImmutableSeq.of(coe0, coe1));
+            yield new IntroTerm.Lambda(coeDom(u0Var, coe.type()), new IntroTerm.Tuple(ImmutableSeq.of(coe0, coe1)));
           }
           case FormTerm.Type type -> {
             var A = new LocalVar("A");
@@ -108,6 +107,9 @@ public interface BetaExpander extends EndoFunctor {
       }
       default -> term;
     };
+  }
+  @NotNull private static Term.Param coeDom(LocalVar u0Var, Term type) {
+    return new Term.Param(u0Var, ElimTerm.make(type, new Arg<>(PrimTerm.Mula.LEFT, true)), true);
   }
 
   // forward (A: I -> Type) (r: I): A r -> A 1
