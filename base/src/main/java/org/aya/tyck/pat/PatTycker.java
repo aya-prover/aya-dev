@@ -5,7 +5,6 @@ package org.aya.tyck.pat;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -56,13 +55,14 @@ public final class PatTycker {
   };
 
   public final @NotNull ExprTycker exprTycker;
-  /**
-   * Old: a {@link Subst} for types in signature
-   * Now: a {@link Subst} for types in signature and Rhs
-   * TODO[hoshino]: rename
-   */
   private final @NotNull Subst typeSubst;
-  private final @NotNull MutableMap<AnyVar, Expr> bodySubst;
+
+  /**
+   * An {@code as pattern} map.
+   * Every binding in the function telescope was treated as an {@code as pattern}
+   * so they were added to this map.
+   */
+  private final @NotNull TypedSubst bodySubst;
   private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
   private Pattern.Clause currentClause = null;
@@ -74,7 +74,8 @@ public final class PatTycker {
   public PatTycker(
     @NotNull ExprTycker exprTycker,
     @NotNull Subst typeSubst,
-    @NotNull MutableMap<AnyVar, Expr> bodySubst, @Nullable Trace.Builder traceBuilder
+    @NotNull TypedSubst bodySubst,
+    @Nullable Trace.Builder traceBuilder
   ) {
     this.exprTycker = exprTycker;
     this.typeSubst = typeSubst;
@@ -94,7 +95,7 @@ public final class PatTycker {
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new Subst(MutableMap.create()), MutableMap.create(), exprTycker.traceBuilder);
+    this(exprTycker, new Subst(), new TypedSubst(), exprTycker.traceBuilder);
   }
 
   public record PatResult(
@@ -108,8 +109,11 @@ public final class PatTycker {
    * After checking a pattern, we need to replace the references of the
    * corresponding telescope binding with the pattern.
    */
-  private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat) {
-    typeSubst.addDirectly(var, pat.toTerm());
+  private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
+    var patTerm = pat.toTerm();
+
+    typeSubst.addDirectly(var, patTerm);
+    bodySubst.addDirectly(var, patTerm, type);
   }
 
   public @NotNull PatResult elabClausesDirectly(
@@ -175,7 +179,7 @@ public final class PatTycker {
         var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view(), tuple)._1.toImmutableSeq());
         if (as != null) {
           exprTycker.localCtx.put(as, sigma);
-          addPatSubst(as, ret);
+          addPatSubst(as, ret, term);
         }
         yield ret;
       }
@@ -200,7 +204,7 @@ public final class PatTycker {
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), ownerTeleArgs, patterns, dataCall);
         if (as != null) {
           exprTycker.localCtx.put(as, dataCall);
-          addPatSubst(as, ret);
+          addPatSubst(as, ret, term);
         }
         yield ret;
       }
@@ -251,14 +255,14 @@ public final class PatTycker {
   }
 
   /**
-   * @param bodySubstTerm we do need to replace them with the corresponding patterns,
-   *                      but patterns are terms (they are already well-typed if not {@param hasError})
-   * @param hasError      if there is an error in the patterns
+   * @param bodySubst we do need to replace them with the corresponding patterns,
+   *                  but patterns are terms (they are already well-typed if not {@param hasError})
+   * @param hasError  if there is an error in the patterns
    */
   public record LhsResult(
     @NotNull LocalCtx gamma,
     @NotNull Term type,
-    @NotNull Subst bodySubstTerm,
+    @NotNull TypedSubst bodySubst,
     boolean hasError,
     @NotNull Pat.Preclause<Expr> preclause
   ) {
@@ -268,7 +272,11 @@ public final class PatTycker {
     var parent = exprTycker.localCtx;
     var parentLets = exprTycker.lets;
     exprTycker.localCtx = lhsResult.gamma;
-    exprTycker.lets = parentLets.add(lhsResult.bodySubstTerm());
+    // We `addDirectly` to `parentLets`.
+    // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
+    // It is fine if we have all `newVar => originVar in lets` substitutions
+    // (then we are no need to derive on the origin Lets)
+    exprTycker.lets = parentLets.derive().addDirectly(lhsResult.bodySubst());
     var type = META_PAT_INLINER.apply(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
@@ -292,7 +300,7 @@ public final class PatTycker {
       if (p instanceof Pattern.Bind bind)
         bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
     }, match.patterns);
-    var step1 = new LhsResult(exprTycker.localCtx, step0._2, typeSubst.derive(),
+    var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.derive(),
       match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
@@ -386,18 +394,22 @@ public final class PatTycker {
     }
   }
 
+  /**
+   * A user given pattern matches a parameter, we update the signature.
+   */
   private @NotNull Def.Signature updateSig(PatData data, Pattern pat) {
     var type = data.param.type();
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
     var res = doTyck(pat, type);
     tracing(TreeBuilder::reduce);
-    addPatSubst(data.param.ref(), res);
+    addPatSubst(data.param.ref(), res, data.param.type());
     data.results.append(res);
     return data.sig.inst(typeSubst);
   }
 
   /**
-   * For every implicit parameter, we generate a MetaPat for each,
+   * For every implicit parameter that not explicitly (no user given pattern) matched,
+   * we generate a MetaPat for each,
    * so that they can be inferred during {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature)}
    */
   private @NotNull Def.Signature generatePat(@NotNull PatData data) {
@@ -409,7 +421,7 @@ public final class PatTycker {
     else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());
-    addPatSubst(ref, bind);
+    addPatSubst(ref, bind, data.param.type());
     return data.sig.inst(typeSubst);
   }
 
