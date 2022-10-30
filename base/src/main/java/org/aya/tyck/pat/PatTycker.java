@@ -67,10 +67,6 @@ public final class PatTycker {
   private boolean hasError = false;
   private Pattern.Clause currentClause = null;
 
-  public boolean noError() {
-    return !hasError;
-  }
-
   public PatTycker(
     @NotNull ExprTycker exprTycker,
     @NotNull TypedSubst patSubst,
@@ -101,19 +97,6 @@ public final class PatTycker {
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
     @NotNull ImmutableSeq<Matching> matchings
   ) {
-  }
-
-  /**
-   * After checking a pattern, we need to replace the references of the
-   * corresponding telescope binding with the pattern.
-   *
-   * TODO[hoshino]: The parameters in the Ctor telescope are also added to patSubst during PatTyck.
-   *                It is okay when we tyck a ctor pat, but it becomes useless after tyck:
-   *                there is no reference to these variables.
-   */
-  private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
-    var patTerm = pat.toTerm();
-    patSubst.addDirectly(var, patTerm, type);
   }
 
   public @NotNull PatResult elabClausesDirectly(
@@ -160,6 +143,78 @@ public final class PatTycker {
       c.expr().map(exprTycker::zonk)));
     return new PatResult(exprTycker.zonk(result), preclauses,
       preclauses.flatMap(Pat.Preclause::lift));
+  }
+
+  /**
+   * @param bodySubst we do need to replace them with the corresponding patterns,
+   *                  but patterns are terms (they are already well-typed if not {@param hasError})
+   * @param hasError  if there is an error in the patterns
+   */
+  public record LhsResult(
+    @NotNull LocalCtx gamma,
+    @NotNull Term type,
+    @NotNull TypedSubst bodySubst,
+    boolean hasError,
+    @NotNull Pat.Preclause<Expr> preclause
+  ) {
+  }
+
+  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
+    var parent = exprTycker.localCtx;
+    exprTycker.localCtx = parent.deriveMap();
+    currentClause = match;
+    var step0 = visitPatterns(signature, match.patterns.view(), null);
+
+    /// inline
+    var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+    var type = META_PAT_INLINER.apply(step0._2);
+    patSubst.inline();
+    PatternTraversal.visit(p -> {
+      if (p instanceof Pattern.Bind bind)
+        bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
+    }, match.patterns);
+
+    var step1 = new LhsResult(exprTycker.localCtx, type, patSubst.derive(),
+      match.hasError,
+      new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
+    exprTycker.localCtx = parent;
+    patSubst.clear();
+    return step1;
+  }
+
+  private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
+    var parent = exprTycker.localCtx;
+    var parentLets = exprTycker.lets;
+    exprTycker.localCtx = lhsResult.gamma;
+    // We `addDirectly` to `parentLets`.
+    // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
+    // TODO[hoshino]: addDirectly or add?
+    exprTycker.lets = parentLets.derive().addDirectly(lhsResult.bodySubst());
+    var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
+      // In case the patterns are malformed, do not check the body
+      // as we bind local variables in the pattern checker,
+      // and in case the patterns are malformed, some bindings may
+      // not be added to the localCtx of tycker, causing assertion errors
+      ? new ErrorTerm(e, false)
+      : exprTycker.inherit(e, lhsResult.type).wellTyped());
+    exprTycker.localCtx = parent;
+    exprTycker.lets = parentLets;
+    return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
+  }
+
+  /// region Tyck
+
+  /**
+   * After checking a pattern, we need to replace the references of the
+   * corresponding telescope binding with the pattern.
+   *
+   * TODO[hoshino]: The parameters in the Ctor telescope are also added to patSubst during PatTyck.
+   *                It is okay when we tyck a ctor pat, but it becomes useless after tyck:
+   *                there is no reference to these variables.
+   */
+  private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
+    var patTerm = pat.toTerm();
+    patSubst.addDirectly(var, patTerm, type);
   }
 
   private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
@@ -252,63 +307,6 @@ public final class PatTycker {
       }
       case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
-  }
-
-  /**
-   * @param bodySubst we do need to replace them with the corresponding patterns,
-   *                  but patterns are terms (they are already well-typed if not {@param hasError})
-   * @param hasError  if there is an error in the patterns
-   */
-  public record LhsResult(
-    @NotNull LocalCtx gamma,
-    @NotNull Term type,
-    @NotNull TypedSubst bodySubst,
-    boolean hasError,
-    @NotNull Pat.Preclause<Expr> preclause
-  ) {
-  }
-
-  private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
-    var parent = exprTycker.localCtx;
-    var parentLets = exprTycker.lets;
-    exprTycker.localCtx = lhsResult.gamma;
-    // We `addDirectly` to `parentLets`.
-    // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
-    // TODO[hoshino]: addDirectly or add?
-    exprTycker.lets = parentLets.derive().addDirectly(lhsResult.bodySubst());
-    var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
-      // In case the patterns are malformed, do not check the body
-      // as we bind local variables in the pattern checker,
-      // and in case the patterns are malformed, some bindings may
-      // not be added to the localCtx of tycker, causing assertion errors
-      ? new ErrorTerm(e, false)
-      : exprTycker.inherit(e, lhsResult.type).wellTyped());
-    exprTycker.localCtx = parent;
-    exprTycker.lets = parentLets;
-    return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
-  }
-
-  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
-    var parent = exprTycker.localCtx;
-    exprTycker.localCtx = parent.deriveMap();
-    currentClause = match;
-    var step0 = visitPatterns(signature, match.patterns.view(), null);
-
-    /// inline
-    var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
-    var type = META_PAT_INLINER.apply(step0._2);
-    patSubst.inline();
-    PatternTraversal.visit(p -> {
-      if (p instanceof Pattern.Bind bind)
-        bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
-    }, match.patterns);
-
-    var step1 = new LhsResult(exprTycker.localCtx, type, patSubst.derive(),
-      match.hasError,
-      new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
-    exprTycker.localCtx = parent;
-    patSubst.clear();
-    return step1;
   }
 
   /**
@@ -452,18 +450,6 @@ public final class PatTycker {
     return afterMatch(data).sig();
   }
 
-  private void foundError(@Nullable Problem problem) {
-    hasError = true;
-    if (currentClause != null) currentClause.hasError = true;
-    if (problem != null) exprTycker.reporter.report(problem);
-  }
-
-  private @NotNull Pat withError(Problem problem, Pattern pattern, Term param) {
-    foundError(problem);
-    // In case something's wrong, produce a random pattern
-    return randomPat(pattern, param);
-  }
-
   private @NotNull Pat randomPat(Pattern pattern, Term param) {
     return new Pat.Bind(pattern.explicit(), new LocalVar("?"), param);
   }
@@ -519,4 +505,26 @@ public final class PatTycker {
       .map(arg -> arg.term().normalize(state, NormalizeMode.WHNF)));
     else return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
   }
+
+  /// endregion
+
+  /// region Error Reporting
+
+  private void foundError(@Nullable Problem problem) {
+    hasError = true;
+    if (currentClause != null) currentClause.hasError = true;
+    if (problem != null) exprTycker.reporter.report(problem);
+  }
+
+  private @NotNull Pat withError(Problem problem, Pattern pattern, Term param) {
+    foundError(problem);
+    // In case something's wrong, produce a random pattern
+    return randomPat(pattern, param);
+  }
+
+  public boolean noError() {
+    return !hasError;
+  }
+
+  /// endregion
 }
