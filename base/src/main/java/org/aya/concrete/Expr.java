@@ -48,9 +48,9 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   @Contract(pure = true)
   default Expr resolve(@NotNull ModuleContext context) {
-    var exprResolver = new ExprResolver(ExprResolver.RESTRICTIVE);
+    var exprResolver = new ExprResolver(context, ExprResolver.RESTRICTIVE);
     exprResolver.enterBody();
-    return exprResolver.resolve(this, context);
+    return exprResolver.apply(this);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
@@ -445,7 +445,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr type,
     @NotNull Expr restr
   ) implements Expr {
-    @NotNull CoeExpr update(@NotNull Expr type, @NotNull Expr restr) {
+    public @NotNull CoeExpr update(@NotNull Expr type, @NotNull Expr restr) {
       return type == type() && restr == restr() ? this : new CoeExpr(sourcePos, id, resolvedVar, type, restr);
     }
 
@@ -459,7 +459,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr struct,
     @NotNull ImmutableSeq<Field> fields
   ) implements Expr {
-    @NotNull NewExpr update(@NotNull Expr struct, @NotNull ImmutableSeq<Field> fields) {
+    public @NotNull NewExpr update(@NotNull Expr struct, @NotNull ImmutableSeq<Field> fields) {
       return struct == struct() && fields.sameElements(fields(), true) ? this
         : new NewExpr(sourcePos, struct, fields);
     }
@@ -492,13 +492,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull ImmutableSeq<Expr> discriminant,
     @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) implements Expr {
-    @NotNull Match update(@NotNull ImmutableSeq<Expr> discriminant, @NotNull ImmutableSeq<Pattern.Clause> clauses) {
+    public @NotNull Match update(@NotNull ImmutableSeq<Expr> discriminant, @NotNull ImmutableSeq<Pattern.Clause> clauses) {
       return discriminant.sameElements(discriminant(), true) && clauses.sameElements(clauses(), true) ? this
         : new Match(sourcePos, discriminant, clauses);
     }
 
     @Override public @NotNull Match descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return update(discriminant.map(f), clauses);
+      return update(discriminant.map(f), clauses.map(cl -> cl.descent(f)));
     }
 
     public @NotNull Match descent(@NotNull UnaryOperator<@NotNull Expr> f, @NotNull UnaryOperator<@NotNull Pattern> g) {
@@ -534,7 +534,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<NamedArg> seq
   ) implements Expr {
-    @NotNull BinOpSeq update(@NotNull ImmutableSeq<NamedArg> seq) {
+    public @NotNull BinOpSeq update(@NotNull ImmutableSeq<NamedArg> seq) {
       return seq.sameElements(seq(), true) ? this : new BinOpSeq(sourcePos, seq);
     }
 
@@ -565,7 +565,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr type,
     @NotNull PartEl partial
   ) implements Expr {
-    @NotNull Path update(@NotNull Expr type, @NotNull PartEl partial) {
+    public @NotNull Path update(@NotNull Expr type, @NotNull PartEl partial) {
       return type == type() && partial == partial() ? this : new Path(sourcePos, params, type, partial);
     }
 
@@ -626,11 +626,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
 
     public record ElementList(@NotNull ImmutableSeq<Expr> exprList) {
-      @NotNull ElementList update(@NotNull ImmutableSeq<Expr> exprList) {
+      public @NotNull ElementList update(@NotNull ImmutableSeq<Expr> exprList) {
         return exprList.sameElements(exprList(), true) ? this : new ElementList(exprList);
       }
 
-      @NotNull ElementList descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      public @NotNull ElementList descent(@NotNull UnaryOperator<@NotNull Expr> f) {
         return update(exprList.map(f));
       }
     }
@@ -659,12 +659,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       @NotNull Expr bindName,
       @NotNull Expr pureName
     ) {
-      @NotNull CompBlock update(@NotNull Expr generator, @NotNull ImmutableSeq<DoBind> binds, @NotNull Expr bindName, @NotNull Expr pureName) {
+      public @NotNull CompBlock update(@NotNull Expr generator, @NotNull ImmutableSeq<DoBind> binds, @NotNull Expr bindName, @NotNull Expr pureName) {
         return generator == generator() && binds.sameElements(binds(), true) && bindName == bindName() && pureName == pureName() ? this
           : new CompBlock(generator, binds, bindName, pureName);
       }
 
-      @NotNull CompBlock descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      public @NotNull CompBlock descent(@NotNull UnaryOperator<@NotNull Expr> f) {
         return update(f.apply(generator), binds.map(bind -> bind.descent(f)), f.apply(bindName), f.apply(pureName));
       }
     }
