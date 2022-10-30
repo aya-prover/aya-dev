@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -61,7 +62,7 @@ public final class PatTycker {
    * Every binding in the function telescope was treated as an {@code as pattern}
    * so they were added to this map.
    */
-  private final @NotNull TypedSubst bodySubst;
+  private final @NotNull TypedSubst patSubst;
   private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
   private Pattern.Clause currentClause = null;
@@ -72,11 +73,11 @@ public final class PatTycker {
 
   public PatTycker(
     @NotNull ExprTycker exprTycker,
-    @NotNull TypedSubst bodySubst,
+    @NotNull TypedSubst patSubst,
     @Nullable Trace.Builder traceBuilder
   ) {
     this.exprTycker = exprTycker;
-    this.bodySubst = bodySubst;
+    this.patSubst = patSubst;
     this.traceBuilder = traceBuilder;
   }
 
@@ -108,7 +109,7 @@ public final class PatTycker {
    */
   private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
     var patTerm = pat.toTerm();
-    bodySubst.addDirectly(var, patTerm, type);
+    patSubst.addDirectly(var, patTerm, type);
   }
 
   public @NotNull PatResult elabClausesDirectly(
@@ -294,11 +295,11 @@ public final class PatTycker {
       if (p instanceof Pattern.Bind bind)
         bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
     }, match.patterns);
-    var step1 = new LhsResult(exprTycker.localCtx, step0._2, bodySubst.derive(),
+    var step1 = new LhsResult(exprTycker.localCtx, step0._2, patSubst.derive(),
       match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
-    bodySubst.clear();
+    patSubst.clear();
     return step1;
   }
 
@@ -335,14 +336,14 @@ public final class PatTycker {
           }
 
           foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
-          return Tuple.of(results.view(), sig.result());
+          return done(results, sig.result());
         }
         pat = stream.first();
         lastPat = pat;
         stream = stream.drop(1);
         if (!pat.explicit()) {
           foundError(new PatternProblem.TooManyImplicitPattern(pat, param));
-          return Tuple.of(results.view(), sig.result());
+          return done(results, sig.result());
         }
       } else {
         // Type is implicit, so....?
@@ -367,7 +368,7 @@ public final class PatTycker {
       foundError(new PatternProblem
         .TooManyPattern(stream.first(), sig.result().freezeHoles(exprTycker.state)));
     }
-    return Tuple.of(results.view(), sig.result());
+    return done(results, sig.result());
   }
 
   /**
@@ -387,17 +388,39 @@ public final class PatTycker {
     }
   }
 
+  private @NotNull PatData beforeMatch(@NotNull PatData data) {
+    return new PatData(
+      data.sig(), data.results(),
+      data.param().subst(patSubst.map())
+    );
+  }
+
+  private @NotNull PatData afterMatch(@NotNull PatData data) {
+    return new PatData(
+      new Def.Signature(data.sig().param().drop(1), data.sig().result()),
+      data.results(),
+      data.param()
+    );
+  }
+
+  private @NotNull Tuple2<SeqView<Pat>, Term> done(@NotNull SeqLike<Pat> results, @NotNull Term type) {
+    return Tuple.of(results.view(), type.subst(patSubst.map()));
+  }
+
   /**
    * A user given pattern matches a parameter, we update the signature.
    */
   private @NotNull Def.Signature updateSig(PatData data, Pattern pat) {
+    data = beforeMatch(data);
+
     var type = data.param.type();
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
     var res = doTyck(pat, type);
     tracing(TreeBuilder::reduce);
     addPatSubst(data.param.ref(), res, data.param.type());
     data.results.append(res);
-    return data.sig.inst(bodySubst.map());
+
+    return afterMatch(data).sig();
   }
 
   /**
@@ -406,6 +429,8 @@ public final class PatTycker {
    * so that they can be inferred during {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature)}
    */
   private @NotNull Def.Signature generatePat(@NotNull PatData data) {
+    data = beforeMatch(data);
+
     var ref = data.param.ref();
     Pat bind;
     var freshVar = new LocalVar(ref.name(), ref.definition());
@@ -415,7 +440,8 @@ public final class PatTycker {
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());
     addPatSubst(ref, bind, data.param.type());
-    return data.sig.inst(bodySubst.map());
+
+    return afterMatch(data).sig();
   }
 
   private void foundError(@Nullable Problem problem) {

@@ -11,8 +11,6 @@ import org.aya.tyck.ExprTycker;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Another impl of {@link Lets}
- * the {@link PatTycker#typeSubst} can be removed if we use this as the type of {@link PatTycker#bodySubst}
  * TODO[hoshino]: move to another place
  */
 public record TypedSubst(
