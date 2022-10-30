@@ -110,6 +110,7 @@ public sealed interface Pat extends AyaDocile {
       if (value == null) {
         var bind = new Bind(explicit, fakeBind, type);
         assert ctx != null : "Pre-inline patterns must be inlined with ctx";
+        // We set a solution here, so multiple inline on the same MetaPat is safe.
         solution.set(bind);
         ctx.put(fakeBind, type);
         return bind;

@@ -65,13 +65,11 @@ public final class ExprTycker extends Tycker {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.SortExpr sort -> sort(sort);
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
-        case LocalVar loc -> {
-          yield lets.getOption(loc).getOrElse(() -> {
-            // not defined in lets, search localCtx
-            var ty = localCtx.get(loc);
-            return new TermResult(new RefTerm(loc), ty);
-          });
-        }
+        case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
+          // not defined in lets, search localCtx
+          var ty = localCtx.get(loc);
+          return new TermResult(new RefTerm(loc), ty);
+        });
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };

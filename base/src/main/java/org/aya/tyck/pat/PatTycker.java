@@ -106,6 +106,10 @@ public final class PatTycker {
   /**
    * After checking a pattern, we need to replace the references of the
    * corresponding telescope binding with the pattern.
+   *
+   * TODO[hoshino]: The parameters in the Ctor telescope are also added to patSubst during PatTyck.
+   *                It is okay when we tyck a ctor pat, but it becomes useless after tyck:
+   *                there is no reference to these variables.
    */
   private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
     var patTerm = pat.toTerm();
@@ -272,14 +276,13 @@ public final class PatTycker {
     // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
     // TODO[hoshino]: addDirectly or add?
     exprTycker.lets = parentLets.derive().addDirectly(lhsResult.bodySubst());
-    var type = META_PAT_INLINER.apply(lhsResult.type);
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,
       // and in case the patterns are malformed, some bindings may
       // not be added to the localCtx of tycker, causing assertion errors
       ? new ErrorTerm(e, false)
-      : exprTycker.inherit(e, type).wellTyped());
+      : exprTycker.inherit(e, lhsResult.type).wellTyped());
     exprTycker.localCtx = parent;
     exprTycker.lets = parentLets;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
@@ -290,12 +293,17 @@ public final class PatTycker {
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
     var step0 = visitPatterns(signature, match.patterns.view(), null);
+
+    /// inline
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+    var type = META_PAT_INLINER.apply(step0._2);
+    patSubst.inline();
     PatternTraversal.visit(p -> {
       if (p instanceof Pattern.Bind bind)
         bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
     }, match.patterns);
-    var step1 = new LhsResult(exprTycker.localCtx, step0._2, patSubst.derive(),
+
+    var step1 = new LhsResult(exprTycker.localCtx, type, patSubst.derive(),
       match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;

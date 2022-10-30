@@ -42,6 +42,17 @@ public record TypedSubst(
     );
   }
 
+  /**
+   * <b>Please</b> call this after inline all the patterns
+   */
+  public void inline() {
+    map.map().replaceAll((var, term) ->
+      PatTycker.META_PAT_INLINER.apply(term));
+
+    type.replaceAll((var, term) ->
+      PatTycker.META_PAT_INLINER.apply(term));
+  }
+
   public @NotNull TypedSubst derive() {
     return new TypedSubst(
       map.derive(),
