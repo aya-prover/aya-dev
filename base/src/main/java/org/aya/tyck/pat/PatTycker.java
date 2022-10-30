@@ -105,7 +105,7 @@ public final class PatTycker {
    * corresponding telescope binding with the pattern.
    */
   private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull SourcePos pos) {
-    typeSubst.addDirectly(var, pat.toTerm());
+    typeSubst.add(var, pat.toTerm());
     bodySubst.put(var, pat.toExpr(pos));
   }
 

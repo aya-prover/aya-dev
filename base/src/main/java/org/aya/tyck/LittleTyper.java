@@ -34,7 +34,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case ErrorTerm term -> ErrorTerm.typeOf(term);
       case RefTerm.Field field -> Def.defType(field.ref());
       case CallTerm.Access access -> {
-        var callRaw = term(access.of()).normalize(state, NormalizeMode.WHNF);
+        var callRaw = whnf(term(access.of()));
         if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
         var core = access.ref().core;
         var subst = DeltaExpander.buildSubst(core.telescope(), access.fieldArgs())
@@ -43,7 +43,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case FormTerm.Sigma sigma -> {
         var univ = sigma.params().view()
-          .map(param -> term(param.type()).normalize(state, NormalizeMode.WHNF))
+          .map(param -> whnf(term(param.type())))
           .filterIsInstance(FormTerm.Sort.class)
           .toImmutableSeq();
         if (univ.sizeEquals(sigma.params().size())) {
@@ -58,7 +58,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case IntroTerm.Lambda lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
       case ElimTerm.Proj proj -> {
-        var sigmaRaw = term(proj.of()).normalize(state, NormalizeMode.WHNF);
+        var sigmaRaw = whnf(term(proj.of()));
         if (!(sigmaRaw instanceof FormTerm.Sigma sigma)) yield ErrorTerm.typeOf(proj);
         var index = proj.ix() - 1;
         var telescope = sigma.params();
@@ -70,11 +70,11 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         new Term.Param(Constants.anonymous(), term(item), true)));
       case RefTerm.MetaPat metaPat -> metaPat.ref().type();
       case FormTerm.Pi pi -> {
-        var paramTyRaw = term(pi.param().type()).normalize(state, NormalizeMode.WHNF);
-        var resultParam = new Term.Param(pi.param().ref(), pi.param().type().normalize(state, NormalizeMode.WHNF), pi.param().explicit());
+        var paramTyRaw = whnf(term(pi.param().type()));
+        var resultParam = new Term.Param(pi.param().ref(), whnf(pi.param().type()), pi.param().explicit());
         var t = new LittleTyper(state, localCtx.deriveMap());
         yield t.localCtx.with(resultParam, () -> {
-          var retTyRaw = t.term(pi.body()).normalize(state, NormalizeMode.WHNF);
+          var retTyRaw = whnf(t.term(pi.body()));
           if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy) {
             try {
               return ExprTycker.sortPi(paramTy, retTy);
@@ -87,7 +87,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         });
       }
       case ElimTerm.App app -> {
-        var piRaw = term(app.of()).normalize(state, NormalizeMode.WHNF);
+        var piRaw = whnf(term(app.of()));
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
       case ElimTerm.Match match -> {
@@ -101,9 +101,9 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STRING);
       case LitTerm.ShapedInt shaped -> shaped.type();
       case LitTerm.ShapedList shaped -> shaped.type();
-      case FormTerm.PartTy ty -> FormTerm.Type.ZERO;
+      case FormTerm.PartTy ty -> term(ty.type());
       case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
-      case FormTerm.Path path -> FormTerm.Type.ZERO;
+      case FormTerm.Path(var cube) -> term(cube.type());
       case IntroTerm.PathLam lam -> new FormTerm.Path(new FormTerm.Cube(
         lam.params(),
         term(lam.body()),
@@ -119,6 +119,10 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case PrimTerm.HComp hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> erased.type();
     };
+  }
+
+  private @NotNull Term whnf(Term x) {
+    return x.normalize(state, NormalizeMode.WHNF);
   }
 
   private @NotNull Term defCall(@NotNull CallTerm.DefCall call) {

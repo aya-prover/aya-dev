@@ -248,7 +248,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
     return new EndoTerm() {
       @Override public @NotNull Term pre(@NotNull Term term) {
         return term instanceof CallTerm.Hole hole && state != null
-          ? state.metas().getOrDefault(hole.ref(), term)
+          ? state.metas().getOption(hole.ref()).map(this::pre).getOrDefault(term)
           : term;
       }
     }.apply(this);

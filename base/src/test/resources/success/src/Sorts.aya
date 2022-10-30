@@ -17,9 +17,6 @@ open data Disj (A B : Prop) : Prop
 | inl (a : A)
 | inr (b : B)
 
-def bad (u : Unit)
-  | _ => u
-
 variable A : Type
 
 -- Leibniz equality using impredicative universe of propositions

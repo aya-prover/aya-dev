@@ -95,17 +95,18 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
               new Expr.Param(lower.sourcePos(), upper.var(), true),
               lower)))));
       }
-      case Expr.Idiom idiom -> idiom.barredApps().view().map(app -> {
+      case Expr.Idiom(
+        var pos, Expr.IdiomNames(var empty, var or, var ap, var pure), var barred
+      ) -> barred.view().map(app -> {
         var list = MutableList.<Expr.NamedArg>create();
         var pre = Expr.unapp(pre(app), list);
-        var pure = idiom.names().applicativePure();
-        var head = new Expr.AppExpr(idiom.sourcePos(), pure, new Expr.NamedArg(true, pre));
+        var head = new Expr.AppExpr(pos, pure, new Expr.NamedArg(true, pre));
         return list.foldLeft(head, (e, arg) -> new Expr.AppExpr(e.sourcePos(),
-          new Expr.AppExpr(e.sourcePos(), idiom.names().applicativeAp(),
+          new Expr.AppExpr(e.sourcePos(), ap,
             new Expr.NamedArg(true, e)), arg));
-      }).foldLeft(idiom.names().alternativeEmpty(), (e, arg) ->
+      }).foldLeft(empty, (e, arg) ->
         new Expr.AppExpr(e.sourcePos(), new Expr.AppExpr(e.sourcePos(),
-          idiom.names().alternativeOr(), new Expr.NamedArg(true, e)),
+          or, new Expr.NamedArg(true, e)),
           new Expr.NamedArg(true, arg)));
       case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
         left -> {

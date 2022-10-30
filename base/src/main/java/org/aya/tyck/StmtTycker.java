@@ -151,10 +151,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   // Apply a simple checking strategy for maximal metavar inference.
   public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn) {
-    return traced(fn, tycker, (o, w) -> doSimpleFn(tycker, fn));
+    return traced(fn, tycker, this::doSimpleFn);
   }
 
-  private @NotNull FnDef doSimpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn) {
+  private @NotNull FnDef doSimpleFn(TeleDecl.FnDecl fn, @NotNull ExprTycker tycker) {
     var okTele = checkTele(tycker, fn.telescope, null);
     var preresult = tycker.synthesize(fn.result).wellTyped();
     var bodyExpr = fn.body.getLeftValue();
@@ -175,6 +175,12 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var resultTele = tele(tycker, fn.telescope, null);
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
+        // We cannot solve metas in result type from clauses,
+        //  because when we're in the clauses, the result type is substituted,
+        //  and it doesn't make sense to solve a "substituted meta"
+        // In the future, we may generate a "constant" meta and try to solve it
+        //  if the result type is a pure meta.
+        if (fn.body.isRight()) resultRes = tycker.zonk(resultRes);
         fn.signature = new Def.Signature(resultTele, resultRes);
         if (resultTele.isEmpty() && fn.body.isRight() && fn.body.getRightValue().isEmpty())
           reporter.report(new NobodyError(decl.sourcePos(), fn.ref));
