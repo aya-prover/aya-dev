@@ -160,10 +160,11 @@ public final class PatTycker {
   }
 
   private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
+    var resultIsProp = signature.result().computeType(exprTycker.state, exprTycker.localCtx) instanceof FormTerm.Prop;
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
-    var step0 = visitPatterns(signature, match.patterns.view(), null);
+    var step0 = visitPatterns(signature, match.patterns.view(), null, resultIsProp);
 
     /// inline
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
@@ -196,7 +197,7 @@ public final class PatTycker {
       // and in case the patterns are malformed, some bindings may
       // not be added to the localCtx of tycker, causing assertion errors
       ? new ErrorTerm(e, false)
-      : exprTycker.inherit(e, lhsResult.type).wellTyped());
+      : exprTycker.check(e, lhsResult.type).wellTyped());
     exprTycker.localCtx = parent;
     exprTycker.lets = parentLets;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
@@ -217,7 +218,7 @@ public final class PatTycker {
     patSubst.addDirectly(var, patTerm, type);
   }
 
-  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
+  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term, boolean resultIsProp) {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
@@ -227,11 +228,13 @@ public final class PatTycker {
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Sigma sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, term);
+        var tupleIsProp = sigma.computeType(exprTycker.state, exprTycker.localCtx) instanceof FormTerm.Prop;
+        if (!resultIsProp && tupleIsProp) throw new IllegalStateException(); // TODO: better reporting
         // sig.result is a dummy term
         var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view(), tuple)._1.toImmutableSeq());
+        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view(), tuple, resultIsProp)._1.toImmutableSeq());
         if (as != null) {
           addPatSubst(as, ret, term);
         }
@@ -242,6 +245,8 @@ public final class PatTycker {
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();
+        var dataIsProp = ctorRef.core.dataRef.concrete.ulift instanceof FormTerm.Prop;
+        if (!resultIsProp && dataIsProp) throw new IllegalStateException(); // TODO: better reporting
         var ctorCore = ctorRef.core;
         // generate ownerTele arguments
         //
@@ -253,7 +258,7 @@ public final class PatTycker {
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
-        var patterns = visitPatterns(sig, ctor.params().view(), ctor)._1.toImmutableSeq();
+        var patterns = visitPatterns(sig, ctor.params().view(), ctor, resultIsProp)._1.toImmutableSeq();
         var as = ctor.as();
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), ownerTeleArgs, patterns, dataCall);
         if (as != null) {
@@ -298,7 +303,7 @@ public final class PatTycker {
           if (shape.isDefined() && shape.get() == AyaShape.LIST_SHAPE) {
             yield doTyck(new Pattern.FakeShapedList(
               list.sourcePos(), list.explicit(), list.as(),
-              list.elements(), AyaShape.LIST_SHAPE, ty).constructorForm(), term);
+              list.elements(), AyaShape.LIST_SHAPE, ty).constructorForm(), term, resultIsProp);
           }
         }
 
@@ -318,7 +323,7 @@ public final class PatTycker {
    * @return (wellTyped patterns, sig.result ())
    */
   public @NotNull Tuple2<SeqView<Pat>, Term>
-  visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @Nullable Pattern outerPattern) {
+  visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @Nullable Pattern outerPattern, boolean resultIsProp) {
     var results = MutableList.<Pat>create();
     if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.view(), sig.result());
     // last pattern which user given (not aya generated)
@@ -367,7 +372,7 @@ public final class PatTycker {
         }
         // ^ Pattern is implicit, so we "consume" it (stream.drop(1))
       }
-      sig = updateSig(new PatData(sig, results, param), pat);
+      sig = updateSig(new PatData(sig, results, param), pat, resultIsProp);
     }
     if (stream.isNotEmpty()) {
       foundError(new PatternProblem
@@ -415,12 +420,12 @@ public final class PatTycker {
   /**
    * A user given pattern matches a parameter, we update the signature.
    */
-  private @NotNull Def.Signature updateSig(PatData data, Pattern pat) {
+  private @NotNull Def.Signature updateSig(PatData data, Pattern pat, boolean resultIsProp) {
     data = beforeMatch(data);
 
     var type = data.param.type();
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
-    var res = doTyck(pat, type);
+    var res = doTyck(pat, type, resultIsProp);
     tracing(TreeBuilder::reduce);
     addPatSubst(data.param.ref(), res, data.param.type());
     data.results.append(res);
