@@ -96,12 +96,12 @@ public record ExprResolver(
       }
       case Expr.SigmaExpr sigma -> {
         var params = resolveParams(sigma.params(), ctx);
-        yield new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), params._1.toImmutableSeq());
+        yield new Expr.SigmaExpr(sigma.sourcePos(), params._1.toImmutableSeq());
       }
       case Expr.PiExpr pi -> {
         var param = resolveParam(pi.param(), ctx);
         var last = resolve(pi.last(), param._2);
-        yield new Expr.PiExpr(pi.sourcePos(), pi.co(), param._1, last);
+        yield new Expr.PiExpr(pi.sourcePos(), param._1, last);
       }
       case Expr.HoleExpr hole -> {
         hole.accessibleLocal().set(ctx.collect(MutableList.create()).toImmutableSeq());
@@ -110,14 +110,14 @@ public record ExprResolver(
         yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h, hole.accessibleLocal());
       }
       case Expr.PartEl el -> partial(ctx, el);
-      case Expr.Path path -> {
-        var newCtx = resolveCubeParams(path.params(), ctx);
-        var par = partial(newCtx, path.partial());
-        var type = resolve(path.type(), newCtx);
-        if (type == path.type() && par == path.partial()) yield path;
-        yield new Expr.Path(path.sourcePos(), path.params(), type, par);
+      case Expr.Path(var pos, var params, var ty, var partial) -> {
+        var newCtx = resolveCubeParams(params, ctx);
+        var par = partial(newCtx, partial);
+        var type = resolve(ty, newCtx);
+        if (type == ty && par == partial) yield expr;
+        yield new Expr.Path(pos, params, type, par);
       }
-      case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
+      case Expr.Array(var pos, var array) -> array.fold(
         left -> {
           var bindName = resolve(left.bindName(), ctx);
           var pureName = resolve(left.pureName(), ctx);
@@ -125,55 +125,52 @@ public record ExprResolver(
           var generator = resolve(left.generator(), bindsCtx._2);
 
           if (generator == left.generator() && bindsCtx._1.sameElements(left.binds()) && bindName == left.bindName() && pureName == left.pureName()) {
-            return arrayExpr;
+            return expr;
           } else {
-            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindsCtx._1, bindName, pureName);
+            return Expr.Array.newGenerator(pos, generator, bindsCtx._1, bindName, pureName);
           }
         },
         right -> {
           var exprs = right.exprList().map(e -> resolve(e, ctx));
 
           if (exprs.sameElements(right.exprList())) {
-            return arrayExpr;
+            return expr;
           } else {
-            return Expr.Array.newList(arrayExpr.sourcePos(), exprs);
+            return Expr.Array.newList(pos, exprs);
           }
         }
       );
-      case Expr.UnresolvedExpr unresolved -> {
-        var sourcePos = unresolved.sourcePos();
-        yield switch (ctx.get(unresolved.name())) {
-          case GeneralizedVar generalized -> {
-            if (options.allowGeneralized) {
-              // Ordered set semantics. Do not expect too many generalized vars.
-              if (!allowedGeneralizes.containsKey(generalized)) {
-                var owner = generalized.owner;
-                assert owner != null : "Sanity check";
-                allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
-                addReference(owner);
-              }
-            } else if (!allowedGeneralizes.containsKey(generalized))
-              generalizedUnavailable(ctx, sourcePos, generalized);
-            yield new Expr.RefExpr(sourcePos, allowedGeneralizes.get(generalized).ref());
-          }
-          case DefVar<?, ?> ref -> {
-            switch (ref.concrete) {
-              case null -> {
-                // RefExpr is referring to a serialized core which is already tycked.
-                // Collecting tyck order for tycked terms is unnecessary, just skip.
-                assert ref.core != null; // ensure it is tycked
-              }
-              case TyckUnit unit -> addReference(unit);
+      case Expr.UnresolvedExpr(var pos, var name) -> switch (ctx.get(name)) {
+        case GeneralizedVar generalized -> {
+          if (options.allowGeneralized) {
+            // Ordered set semantics. Do not expect too many generalized vars.
+            if (!allowedGeneralizes.containsKey(generalized)) {
+              var owner = generalized.owner;
+              assert owner != null : "Sanity check";
+              allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
+              addReference(owner);
             }
-            yield new Expr.RefExpr(sourcePos, ref);
+          } else if (!allowedGeneralizes.containsKey(generalized))
+            generalizedUnavailable(ctx, pos, generalized);
+          yield new Expr.RefExpr(pos, allowedGeneralizes.get(generalized).ref());
+        }
+        case DefVar<?, ?> ref -> {
+          switch (ref.concrete) {
+            case null -> {
+              // RefExpr is referring to a serialized core which is already tycked.
+              // Collecting tyck order for tycked terms is unnecessary, just skip.
+              assert ref.core != null; // ensure it is tycked
+            }
+            case TyckUnit unit -> addReference(unit);
           }
-          case AnyVar var -> new Expr.RefExpr(sourcePos, var);
-        };
-      }
-      case Expr.Idiom idiom -> {
-        var newNames = idiom.names().fmap(e -> resolve(e, ctx));
-        var newBody = idiom.barredApps().map(e -> resolve(e, ctx));
-        yield new Expr.Idiom(idiom.sourcePos(), newNames, newBody);
+          yield new Expr.RefExpr(pos, ref);
+        }
+        case AnyVar var -> new Expr.RefExpr(pos, var);
+      };
+      case Expr.Idiom(var pos, var names, var barred) -> {
+        var newNames = names.fmap(e -> resolve(e, ctx));
+        var newBody = barred.map(e -> resolve(e, ctx));
+        yield new Expr.Idiom(pos, newNames, newBody);
       }
       default -> expr;
     };

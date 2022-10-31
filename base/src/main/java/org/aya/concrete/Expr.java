@@ -54,12 +54,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
         var param = pi.param().descent(f);
         var last = f.apply(pi.last());
         if (param == pi.param() && last == pi.last()) yield pi;
-        yield new Expr.PiExpr(pi.sourcePos(), pi.co(), param, last);
+        yield new Expr.PiExpr(pi.sourcePos(), param, last);
       }
       case Expr.SigmaExpr sigma -> {
         var params = sigma.params().map(param -> param.descent(f));
         if (params.sameElements(sigma.params(), true)) yield sigma;
-        yield new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), params);
+        yield new Expr.SigmaExpr(sigma.sourcePos(), params);
       }
       case Expr.RawSortExpr rawType -> rawType;
       case Expr.LiftExpr lift -> {
@@ -280,7 +280,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record PiExpr(
     @NotNull SourcePos sourcePos,
-    boolean co,
     @NotNull Expr.Param param,
     @NotNull Expr last
   ) implements Expr {}
@@ -339,7 +338,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record SigmaExpr(
     @NotNull SourcePos sourcePos,
-    boolean co,
     @NotNull ImmutableSeq<@NotNull Param> params
   ) implements Expr {}
 

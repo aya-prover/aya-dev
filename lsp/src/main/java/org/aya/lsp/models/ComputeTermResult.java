@@ -14,11 +14,12 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 
 /**
- * @param uri the uri to the file
  * @param computed null if failed
  */
 public record ComputeTermResult(@NotNull URI uri, @Nullable String computed, @NotNull Range range) {
-  public record Params(@NotNull URI uri, @NotNull Position position) {
+  public static class Params {
+    public URI uri;
+    public Position position;
   }
 
   public static @NotNull ComputeTermResult bad(@NotNull Params params) {

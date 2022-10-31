@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -37,7 +37,7 @@ public final class ComputeTerm implements SyntaxNodeAction.Cursor {
     }
 
     public static @NotNull Kind whnf() {
-      return new Kind((fac, term)  -> term.wellTyped().normalize(new TyckState(fac), NormalizeMode.WHNF));
+      return new Kind((fac, term) -> term.wellTyped().normalize(new TyckState(fac), NormalizeMode.WHNF));
     }
   }
 
@@ -50,7 +50,7 @@ public final class ComputeTerm implements SyntaxNodeAction.Cursor {
   public @NotNull ComputeTermResult invoke(ComputeTermResult.Params params) {
     var program = source.program().get();
     if (program == null) return ComputeTermResult.bad(params);
-    visitAll(program, new XY(params.position()));
+    visitAll(program, new XY(params.position));
     return result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, result);
   }
 
