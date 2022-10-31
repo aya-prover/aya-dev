@@ -167,11 +167,11 @@ public final class PatTycker {
 
     /// inline
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
-    var type = META_PAT_INLINER.apply(step0._2);
+    var type = inlineTerm(step0._2);
     patSubst.inline();
     PatternTraversal.visit(p -> {
       if (p instanceof Pattern.Bind bind)
-        bind.type().update(t -> t == null ? null : META_PAT_INLINER.apply(t));
+        bind.type().update(t -> t == null ? null : inlineTerm(t));
     }, match.patterns);
 
     var step1 = new LhsResult(exprTycker.localCtx, type, patSubst.derive(),
@@ -527,4 +527,8 @@ public final class PatTycker {
   }
 
   /// endregion
+
+  public static @NotNull Term inlineTerm(@NotNull Term term) {
+    return META_PAT_INLINER.apply(term);
+  }
 }

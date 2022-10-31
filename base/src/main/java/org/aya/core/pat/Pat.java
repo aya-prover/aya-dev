@@ -27,6 +27,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
+import org.aya.tyck.pat.PatTycker;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
@@ -51,6 +52,8 @@ public sealed interface Pat extends AyaDocile {
   @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit);
   @NotNull Pat zonk(@NotNull Tycker tycker);
   /**
+   * Make sure you are inline all patterns in order
+   *
    * @param ctx when null, the solutions will not be inlined
    * @return inlined patterns
    */
@@ -108,6 +111,7 @@ public sealed interface Pat extends AyaDocile {
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var value = solution.get();
       if (value == null) {
+        var type = PatTycker.inlineTerm(this.type);
         var bind = new Bind(explicit, fakeBind, type);
         assert ctx != null : "Pre-inline patterns must be inlined with ctx";
         // We set a solution here, so multiple inline on the same MetaPat is safe.
@@ -183,7 +187,7 @@ public sealed interface Pat extends AyaDocile {
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = this.params.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      return new Ctor(explicit, ref, 
+      return new Ctor(explicit, ref,
         ownerArgs.map(x -> x.subst(subst)),
         params, (CallTerm.Data) type.subst(subst));
     }
@@ -192,12 +196,17 @@ public sealed interface Pat extends AyaDocile {
       return new Ctor(explicit, ref,
         ownerArgs.map(tycker::zonk),
         params.map(pat -> pat.zonk(tycker)),
-      // The cast must succeed
+        // The cast must succeed
         (CallTerm.Data) tycker.zonk(type));
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return new Ctor(explicit, ref, ownerArgs(), params.map(p -> p.inline(ctx)), type);
+      var params = this.params.map(p -> p.inline(ctx));
+
+      return new Ctor(explicit, ref,
+        ownerArgs.map(PatTycker::inlineTerm),
+        params,
+        (CallTerm.Data) PatTycker.inlineTerm(type));
     }
   }
 
@@ -243,6 +252,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
+      // We are no need to inline type here, because the type of Nat doesn't (mustn't) have any type parameter.
       return this;
     }
 
