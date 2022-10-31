@@ -528,7 +528,7 @@ public record AyaGKProducer(
       var to = expr(exprs.get(1));
       var paramPos = sourcePosOf(expr0);
       var param = new Expr.Param(paramPos, Constants.randomlyNamed(paramPos), expr(expr0), true);
-      return new Expr.PiExpr(pos, false, param, to);
+      return new Expr.PiExpr(pos, param, to);
     }
     if (node.is(NEW_EXPR)) {
       var struct = expr(node.child(EXPR));
@@ -553,7 +553,7 @@ public record AyaGKProducer(
       expr(node.child(EXPR)));
     if (node.is(SIGMA_EXPR)) {
       var last = expr(node.child(EXPR));
-      return new Expr.SigmaExpr(pos, false,
+      return new Expr.SigmaExpr(pos,
         telescope(node.childrenOfType(TELE).map(x -> x))
           .appended(new Expr.Param(last.sourcePos(), LocalVar.IGNORED, last, true)));
     }
@@ -678,7 +678,7 @@ public record AyaGKProducer(
     if (params.isEmpty()) return body;
     var drop = params.drop(1);
     return new Expr.PiExpr(
-      sourcePos, co, params.first(),
+      sourcePos, params.first(),
       buildPi(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
         drop.map(Expr.Param::sourcePos)), co, drop, body));
   }

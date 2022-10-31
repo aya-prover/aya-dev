@@ -96,12 +96,12 @@ public record ExprResolver(
       }
       case Expr.SigmaExpr sigma -> {
         var params = resolveParams(sigma.params(), ctx);
-        yield new Expr.SigmaExpr(sigma.sourcePos(), sigma.co(), params._1.toImmutableSeq());
+        yield new Expr.SigmaExpr(sigma.sourcePos(), params._1.toImmutableSeq());
       }
       case Expr.PiExpr pi -> {
         var param = resolveParam(pi.param(), ctx);
         var last = resolve(pi.last(), param._2);
-        yield new Expr.PiExpr(pi.sourcePos(), pi.co(), param._1, last);
+        yield new Expr.PiExpr(pi.sourcePos(), param._1, last);
       }
       case Expr.HoleExpr hole -> {
         hole.accessibleLocal().set(ctx.collect(MutableList.create()).toImmutableSeq());
