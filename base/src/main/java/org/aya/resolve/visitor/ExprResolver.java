@@ -110,14 +110,14 @@ public record ExprResolver(
         yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), h, hole.accessibleLocal());
       }
       case Expr.PartEl el -> partial(ctx, el);
-      case Expr.Path path -> {
-        var newCtx = resolveCubeParams(path.params(), ctx);
-        var par = partial(newCtx, path.partial());
-        var type = resolve(path.type(), newCtx);
-        if (type == path.type() && par == path.partial()) yield path;
-        yield new Expr.Path(path.sourcePos(), path.params(), type, par);
+      case Expr.Path(var pos, var params, var ty, var partial) -> {
+        var newCtx = resolveCubeParams(params, ctx);
+        var par = partial(newCtx, partial);
+        var type = resolve(ty, newCtx);
+        if (type == ty && par == partial) yield expr;
+        yield new Expr.Path(pos, params, type, par);
       }
-      case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
+      case Expr.Array(var pos, var array) -> array.fold(
         left -> {
           var bindName = resolve(left.bindName(), ctx);
           var pureName = resolve(left.pureName(), ctx);
@@ -125,24 +125,23 @@ public record ExprResolver(
           var generator = resolve(left.generator(), bindsCtx._2);
 
           if (generator == left.generator() && bindsCtx._1.sameElements(left.binds()) && bindName == left.bindName() && pureName == left.pureName()) {
-            return arrayExpr;
+            return expr;
           } else {
-            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindsCtx._1, bindName, pureName);
+            return Expr.Array.newGenerator(pos, generator, bindsCtx._1, bindName, pureName);
           }
         },
         right -> {
           var exprs = right.exprList().map(e -> resolve(e, ctx));
 
           if (exprs.sameElements(right.exprList())) {
-            return arrayExpr;
+            return expr;
           } else {
-            return Expr.Array.newList(arrayExpr.sourcePos(), exprs);
+            return Expr.Array.newList(pos, exprs);
           }
         }
       );
-      case Expr.UnresolvedExpr unresolved -> {
-        var sourcePos = unresolved.sourcePos();
-        yield switch (ctx.get(unresolved.name())) {
+      case Expr.UnresolvedExpr(var pos, var name) -> {
+        yield switch (ctx.get(name)) {
           case GeneralizedVar generalized -> {
             if (options.allowGeneralized) {
               // Ordered set semantics. Do not expect too many generalized vars.
@@ -153,8 +152,8 @@ public record ExprResolver(
                 addReference(owner);
               }
             } else if (!allowedGeneralizes.containsKey(generalized))
-              generalizedUnavailable(ctx, sourcePos, generalized);
-            yield new Expr.RefExpr(sourcePos, allowedGeneralizes.get(generalized).ref());
+              generalizedUnavailable(ctx, pos, generalized);
+            yield new Expr.RefExpr(pos, allowedGeneralizes.get(generalized).ref());
           }
           case DefVar<?, ?> ref -> {
             switch (ref.concrete) {
@@ -165,15 +164,15 @@ public record ExprResolver(
               }
               case TyckUnit unit -> addReference(unit);
             }
-            yield new Expr.RefExpr(sourcePos, ref);
+            yield new Expr.RefExpr(pos, ref);
           }
-          case AnyVar var -> new Expr.RefExpr(sourcePos, var);
+          case AnyVar var -> new Expr.RefExpr(pos, var);
         };
       }
-      case Expr.Idiom idiom -> {
-        var newNames = idiom.names().fmap(e -> resolve(e, ctx));
-        var newBody = idiom.barredApps().map(e -> resolve(e, ctx));
-        yield new Expr.Idiom(idiom.sourcePos(), newNames, newBody);
+      case Expr.Idiom(var pos, var names, var barred) -> {
+        var newNames = names.fmap(e -> resolve(e, ctx));
+        var newBody = barred.map(e -> resolve(e, ctx));
+        yield new Expr.Idiom(pos, newNames, newBody);
       }
       default -> expr;
     };
