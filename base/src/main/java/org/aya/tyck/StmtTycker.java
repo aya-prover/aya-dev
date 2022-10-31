@@ -80,7 +80,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             return factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
           },
           clauses -> {
-            var patTycker = new PatTycker(tycker);
+            var patTycker = new PatTycker(newTycker(tycker.state.primFactory(), tycker.shapeFactory));
             FnDef def;
             var pos = decl.sourcePos;
             if (decl.modifiers.contains(Modifier.Overlap)) {

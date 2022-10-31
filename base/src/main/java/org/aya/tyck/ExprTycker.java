@@ -31,6 +31,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
+import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
@@ -51,6 +52,12 @@ import java.util.function.Function;
  */
 public final class ExprTycker extends Tycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
+
+  /**
+   * a `let` sequence, consider we are tycking in
+   * {@code let ... in HERE}
+   */
+  public @NotNull TypedSubst lets = new TypedSubst();
   public @NotNull AyaShape.Factory shapeFactory;
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
@@ -58,10 +65,11 @@ public final class ExprTycker extends Tycker {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.SortExpr sort -> sort(sort);
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
-        case LocalVar loc -> {
+        case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
+          // not defined in lets, search localCtx
           var ty = localCtx.get(loc);
-          yield new TermResult(new RefTerm(loc), ty);
-        }
+          return new TermResult(new RefTerm(loc), ty);
+        });
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };

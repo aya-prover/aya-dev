@@ -24,8 +24,6 @@ Goal: Goal of type
         (Normalized: Type 0)
       Context:
         {m : Nat}
-        {m : Nat} (not in scope)
-        {n : Nat}
       To ensure confluence:
         Given (m => zero), we should have: <n>
         Given (m => suc m), we should have: <suc <add m n>>

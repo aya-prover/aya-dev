@@ -141,6 +141,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case Pat.Ctor ctor -> new SerPat.Ctor(
         ctor.explicit(),
         state.def(ctor.ref()),
+        ctor.ownerArgs().map(this::serialize),
         serializePats(ctor.params()),
         serializeDataCall(ctor.type()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(), serializePats(tuple.pats()));
