@@ -188,7 +188,7 @@ public final class PatTycker {
     exprTycker.localCtx = lhsResult.gamma;
     // We `addDirectly` to `parentLets`.
     // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
-    // TODO[hoshino]: addDirectly or add?
+    // IDEA said that this line is useless...
     exprTycker.lets = parentLets.derive().addDirectly(lhsResult.bodySubst());
     var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
@@ -233,7 +233,6 @@ public final class PatTycker {
         var as = tuple.as();
         var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view(), tuple)._1.toImmutableSeq());
         if (as != null) {
-          exprTycker.localCtx.put(as, sigma);
           addPatSubst(as, ret, term);
         }
         yield ret;
@@ -258,7 +257,7 @@ public final class PatTycker {
         var as = ctor.as();
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), ownerTeleArgs, patterns, dataCall);
         if (as != null) {
-          exprTycker.localCtx.put(as, dataCall);
+          // as pattern === let, so don't add to localCtx
           addPatSubst(as, ret, term);
         }
         yield ret;
