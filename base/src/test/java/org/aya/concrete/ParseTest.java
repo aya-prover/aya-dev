@@ -123,14 +123,14 @@ public class ParseTest {
     assertTrue(parseExpr("λ a => a") instanceof Expr.LamExpr);
     assertTrue(parseExpr("\\ a => a") instanceof Expr.LamExpr);
     assertTrue(parseExpr("\\ a b => a") instanceof Expr.LamExpr);
-    assertTrue(parseExpr("Π a -> a") instanceof Expr.PiExpr dt && !dt.co());
-    assertTrue(parseExpr("Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(parseExpr("Π a -> a") instanceof Expr.PiExpr dt);
+    assertTrue(parseExpr("Pi a -> a") instanceof Expr.PiExpr dt);
     assertTrue(parseExpr("Pi a b -> a") instanceof Expr.PiExpr dt
-      && !dt.co() && dt.last() instanceof Expr.PiExpr);
-    assertTrue(parseExpr("Σ a ** b") instanceof Expr.SigmaExpr dt && !dt.co());
-    assertTrue(parseExpr("Sig a ** b") instanceof Expr.SigmaExpr dt && !dt.co());
-    assertTrue(parseExpr("Sig a b ** c") instanceof Expr.SigmaExpr dt && !dt.co());
-    assertTrue(parseExpr("Pi (x : Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.SigmaExpr);
+      && dt.last() instanceof Expr.PiExpr);
+    assertTrue(parseExpr("Σ a ** b") instanceof Expr.SigmaExpr dt);
+    assertTrue(parseExpr("Sig a ** b") instanceof Expr.SigmaExpr dt);
+    assertTrue(parseExpr("Sig a b ** c") instanceof Expr.SigmaExpr dt);
+    assertTrue(parseExpr("Pi (x : Sig a ** b) -> c") instanceof Expr.PiExpr dt && dt.param().type() instanceof Expr.SigmaExpr);
     parseTo("(f a) . 1", new Expr.ProjExpr(
       SourcePos.NONE,
       new Expr.BinOpSeq(
