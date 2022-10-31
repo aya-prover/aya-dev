@@ -140,35 +140,33 @@ public record ExprResolver(
           }
         }
       );
-      case Expr.UnresolvedExpr(var pos, var name) -> {
-        yield switch (ctx.get(name)) {
-          case GeneralizedVar generalized -> {
-            if (options.allowGeneralized) {
-              // Ordered set semantics. Do not expect too many generalized vars.
-              if (!allowedGeneralizes.containsKey(generalized)) {
-                var owner = generalized.owner;
-                assert owner != null : "Sanity check";
-                allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
-                addReference(owner);
-              }
-            } else if (!allowedGeneralizes.containsKey(generalized))
-              generalizedUnavailable(ctx, pos, generalized);
-            yield new Expr.RefExpr(pos, allowedGeneralizes.get(generalized).ref());
-          }
-          case DefVar<?, ?> ref -> {
-            switch (ref.concrete) {
-              case null -> {
-                // RefExpr is referring to a serialized core which is already tycked.
-                // Collecting tyck order for tycked terms is unnecessary, just skip.
-                assert ref.core != null; // ensure it is tycked
-              }
-              case TyckUnit unit -> addReference(unit);
+      case Expr.UnresolvedExpr(var pos, var name) -> switch (ctx.get(name)) {
+        case GeneralizedVar generalized -> {
+          if (options.allowGeneralized) {
+            // Ordered set semantics. Do not expect too many generalized vars.
+            if (!allowedGeneralizes.containsKey(generalized)) {
+              var owner = generalized.owner;
+              assert owner != null : "Sanity check";
+              allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
+              addReference(owner);
             }
-            yield new Expr.RefExpr(pos, ref);
+          } else if (!allowedGeneralizes.containsKey(generalized))
+            generalizedUnavailable(ctx, pos, generalized);
+          yield new Expr.RefExpr(pos, allowedGeneralizes.get(generalized).ref());
+        }
+        case DefVar<?, ?> ref -> {
+          switch (ref.concrete) {
+            case null -> {
+              // RefExpr is referring to a serialized core which is already tycked.
+              // Collecting tyck order for tycked terms is unnecessary, just skip.
+              assert ref.core != null; // ensure it is tycked
+            }
+            case TyckUnit unit -> addReference(unit);
           }
-          case AnyVar var -> new Expr.RefExpr(pos, var);
-        };
-      }
+          yield new Expr.RefExpr(pos, ref);
+        }
+        case AnyVar var -> new Expr.RefExpr(pos, var);
+      };
       case Expr.Idiom(var pos, var names, var barred) -> {
         var newNames = names.fmap(e -> resolve(e, ctx));
         var newBody = barred.map(e -> resolve(e, ctx));
