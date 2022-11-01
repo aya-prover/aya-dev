@@ -220,16 +220,14 @@ public final class PatTycker {
    * add an {@code as pattern} subst
    */
   private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
-    var patTerm = pat.toTerm();
-    patSubst.addDirectly(var, patTerm, type);
+    patSubst.addDirectly(var, pat.toTerm(), type);
   }
 
   /**
    * add a {@code parameter} subst
    */
   private void addSigSubst(@NotNull Term.Param param, @NotNull Pat pat) {
-    var patTerm = pat.toTerm();
-    sigSubst.addDirectly(param.ref(), patTerm, param.type());
+    sigSubst.addDirectly(param.ref(), pat.toTerm(), param.type());
   }
 
   private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
@@ -422,14 +420,14 @@ public final class PatTycker {
     }
   }
 
-  private @NotNull PatData beforeMatch(@NotNull PatData data) {
+  private @NotNull PatData beforeTyck(@NotNull PatData data) {
     return new PatData(
       data.sig(), data.results(),
       data.param().subst(sigSubst.map())
     );
   }
 
-  private @NotNull PatData afterMatch(@NotNull PatData data) {
+  private @NotNull PatData afterTyck(@NotNull PatData data) {
     return new PatData(
       new Def.Signature(data.sig().param().drop(1), data.sig().result()),
       data.results(),
@@ -445,7 +443,7 @@ public final class PatTycker {
    * A user given pattern matches a parameter, we update the signature.
    */
   private @NotNull Def.Signature updateSig(PatData data, Pattern pat) {
-    data = beforeMatch(data);
+    data = beforeTyck(data);
 
     var type = data.param.type();
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
@@ -454,7 +452,7 @@ public final class PatTycker {
     addSigSubst(data.param(), res);
     data.results.append(res);
 
-    return afterMatch(data).sig();
+    return afterTyck(data).sig();
   }
 
   /**
@@ -463,7 +461,7 @@ public final class PatTycker {
    * so that they can be inferred during {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature)}
    */
   private @NotNull Def.Signature generatePat(@NotNull PatData data) {
-    data = beforeMatch(data);
+    data = beforeTyck(data);
 
     var ref = data.param.ref();
     Pat bind;
@@ -475,7 +473,7 @@ public final class PatTycker {
     exprTycker.localCtx.put(freshVar, data.param.type());
     addSigSubst(data.param(), bind);
 
-    return afterMatch(data).sig();
+    return afterTyck(data).sig();
   }
 
   private @NotNull Pat randomPat(Pattern pattern, Term param) {
