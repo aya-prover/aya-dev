@@ -55,7 +55,7 @@ public record Conquer(
           var condition = conditions.get(i);
           var matchy = PatMatcher.tryBuildSubstTerms(null, params,
             condition.patterns().view().map(Pat::toTerm),
-            tycker.state);    // TODO: Is it correct?
+            tycker.state);
           if (matchy.isOk()) {
             var ctx = new MapLocalCtx();
             condition.patterns().forEach(tern -> tern.storeBindings(ctx));

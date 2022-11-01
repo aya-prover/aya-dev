@@ -35,7 +35,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
   public static Result<Subst, Boolean> tryBuildSubstArgs(
     @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms, @NotNull TyckState state
-    ) {
+  ) {
     return tryBuildSubstTerms(localCtx, pats, terms.view().map(Arg::term), state);
   }
 
@@ -56,6 +56,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
 
   /**
    * Try to match te pat and term (WHNF)
+   *
    * @param term a WHNF term, or a Mismatch will be thrown
    * @throws Mismatch if mismatch
    */
@@ -90,8 +91,8 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
       }
       case Pat.End end -> {
         if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
-            throw new Mismatch(true);
-          }
+          throw new Mismatch(true);
+        }
       }
       case Pat.ShapedInt lit -> {
         switch (term) {
