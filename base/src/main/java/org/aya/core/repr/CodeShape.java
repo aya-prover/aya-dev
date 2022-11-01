@@ -14,6 +14,11 @@ import org.jetbrains.annotations.Nullable;
  * @author kiva
  */
 public sealed interface CodeShape {
+  /** A capture group, see {@link CodeShape.CtorShape} and {@link ShapeMatcher#captures()} */
+  sealed interface Moment {
+    @NotNull String name();
+  }
+
   record FnShape(
     @NotNull ImmutableSeq<ParamShape> tele
   ) implements CodeShape {}
@@ -29,8 +34,9 @@ public sealed interface CodeShape {
   ) implements CodeShape {}
 
   record CtorShape(
+    @NotNull String name,
     @NotNull ImmutableSeq<ParamShape> tele
-  ) implements CodeShape {}
+  ) implements CodeShape, Moment {}
 
   record FieldShape(
     @NotNull ImmutableSeq<ParamShape> tele
@@ -57,9 +63,9 @@ public sealed interface CodeShape {
     /**
      * The shape to Sort term, I am not very work well at type theory, so improve this feel free!
      *
-     * @author hoshino
-     * @param kind the SortKind, null if accept any kind of sort. see {@link ShapeMatcher#matchTerm(TermShape, Term)}
+     * @param kind  the SortKind, null if accept any kind of sort. see {@link ShapeMatcher#matchTerm(TermShape, Term)}
      * @param ulift the lower bound of the type level.
+     * @author hoshino
      */
     record Sort(@Nullable SortKind kind, int ulift) implements TermShape {}
   }

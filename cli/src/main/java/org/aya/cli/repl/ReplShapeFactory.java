@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
@@ -46,7 +46,7 @@ public class ReplShapeFactory extends AyaShape.Factory implements RepoLike<ReplS
     var bors = downstream.get();
     RepoLike.super.merge();
     if (bors == null) return;
-    bors.discovered.forEach((k, v) -> findImpl(v).forEach(old -> discovered.remove(old)));
+    bors.discovered.forEach((k, v) -> findImpl(v.shape()).forEach(old -> discovered.remove(old)));
     importAll(bors);
   }
 }
