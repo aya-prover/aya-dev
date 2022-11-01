@@ -67,6 +67,11 @@ public record Subst(
     return this;
   }
 
+  public @NotNull Subst addAllDirectly(@NotNull Subst subst) {
+    map.putAll(subst.map);
+    return this;
+  }
+
   public @NotNull Subst add(@NotNull AnyVar var, @NotNull Term term) {
     subst(new Subst(var, term));
     return addDirectly(var, term);
