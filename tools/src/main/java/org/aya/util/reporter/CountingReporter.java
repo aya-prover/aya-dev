@@ -3,7 +3,6 @@
 package org.aya.util.reporter;
 
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -41,7 +40,6 @@ public interface CountingReporter extends Reporter {
   static @NotNull CountingReporter delegate(@NotNull Reporter reporter) {
     return new Delegated(reporter);
   }
-  @Contract(mutates = "this") void raiseError();
 
   record Delegated(
     @NotNull Reporter delegated,
@@ -57,10 +55,6 @@ public interface CountingReporter extends Reporter {
 
     @Override public void clear() {
       Arrays.fill(count, 0);
-    }
-
-    @Override public void raiseError() {
-      count[Problem.Severity.ERROR.ordinal()]++;
     }
 
     @Override public void report(@NotNull Problem problem) {

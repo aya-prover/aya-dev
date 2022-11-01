@@ -9,7 +9,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * A convenient interface to obtain an endomorphism on `Term`.
@@ -21,7 +21,7 @@ import java.util.function.Function;
  *
  * @author wsx
  */
-public interface EndoTerm extends Function<Term, Term> {
+public interface EndoTerm extends UnaryOperator<Term> {
   default @NotNull Term pre(@NotNull Term term) {
     return term;
   }

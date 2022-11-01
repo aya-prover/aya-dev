@@ -174,12 +174,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record PiExpr(
     @NotNull SourcePos sourcePos,
-    boolean co,
     @NotNull Param param,
     @NotNull Expr last
   ) implements Expr {
     public @NotNull PiExpr update(@NotNull Param param, @NotNull Expr last) {
-      return param == param() && last == last() ? this : new PiExpr(sourcePos, co, param, last);
+      return param == param() && last == last() ? this : new PiExpr(sourcePos, param, last);
     }
 
     @Override public @NotNull PiExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
@@ -275,11 +274,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record SigmaExpr(
     @NotNull SourcePos sourcePos,
-    boolean co,
     @NotNull ImmutableSeq<@NotNull Param> params
   ) implements Expr {
     public @NotNull SigmaExpr update(@NotNull ImmutableSeq<@NotNull Param> params) {
-      return params.sameElements(params(), true) ? this : new SigmaExpr(sourcePos, co, params);
+      return params.sameElements(params(), true) ? this : new SigmaExpr(sourcePos, params);
     }
 
     @Override public @NotNull SigmaExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {

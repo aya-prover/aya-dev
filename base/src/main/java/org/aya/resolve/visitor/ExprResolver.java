@@ -186,7 +186,11 @@ public record ExprResolver(
       @Override public @NotNull Pattern post(@NotNull Pattern pattern) {
         return switch (pattern) {
           case Pattern.Bind bind -> {
-            var maybe = patternDef(ctx.get(), bind.sourcePos(), bind.bind().name());
+            var maybe = ctx.get().iterate(c -> switch (c.getUnqualifiedLocalMaybe(bind.bind().name(), bind.sourcePos())) {
+              case DefVar<?, ?> def when def.core instanceof CtorDef || def.concrete instanceof TeleDecl.DataCtor
+                || def.core instanceof PrimDef || def.concrete instanceof TeleDecl.PrimDecl -> def;
+              case null, default -> null;
+            });
             if (maybe != null) yield new Pattern.Ctor(bind, maybe);
             ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
             yield bind;
@@ -211,14 +215,6 @@ public record ExprResolver(
 
   private static Context bindAs(LocalVar as, Context ctx, SourcePos sourcePos) {
     return as != null ? ctx.bind(as, sourcePos) : ctx;
-  }
-
-  private static @Nullable DefVar<?, ?> patternDef(@NotNull Context ctx, SourcePos pos, String name) {
-    return ctx.iterate(c -> switch (c.getUnqualifiedLocalMaybe(name, pos)) {
-      case DefVar<?, ?> def when def.core instanceof CtorDef || def.concrete instanceof TeleDecl.DataCtor -> def;
-      case DefVar<?, ?> def when def.core instanceof PrimDef || def.concrete instanceof TeleDecl.PrimDecl -> def;
-      case null, default -> null;
-    });
   }
 
   public @NotNull Expr.Param resolve(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {

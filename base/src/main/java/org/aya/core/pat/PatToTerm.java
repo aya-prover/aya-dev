@@ -37,6 +37,8 @@ public class PatToTerm {
     var args = ctor.params().zipView(tele)
       .map(p -> new Arg<>(visit(p._1), p._2.explicit()))
       .toImmutableSeq();
-    return new CallTerm.Con(data.ref(), ctor.ref(), data.args(), data.ulift(), args);
+    return new CallTerm.Con(data.ref(), ctor.ref(),
+      ctor.ownerArgs().map(x -> new Arg<>(x, false)),
+      data.ulift(), args);
   }
 }

@@ -17,32 +17,33 @@ import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.UnaryOperator;
+
 /**
  * Matches a term with a pattern.
  *
  * @author ice1000
- * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike)} instead of instantiating the class directly.
+ * @apiNote Use {@link PatMatcher#tryBuildSubstTerms} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
-public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
+public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @NotNull UnaryOperator<@NotNull Term> pre) {
+  public static Result<Subst, Boolean> tryBuildSubstTerms(
+    @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
+    @NotNull SeqView<@NotNull Term> terms
+  ) {
+    return tryBuildSubstTerms(localCtx, pats, terms, UnaryOperator.identity());
+  }
+
   /**
    * @param localCtx not null only if we expect the presence of {@link RefTerm.MetaPat}
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
-  public static Result<Subst, Boolean> tryBuildSubstArgs(
-    @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms
-  ) {
-    return tryBuildSubstTerms(localCtx, pats, terms.view().map(Arg::term));
-  }
-
-  /** @see PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike) */
   public static Result<Subst, Boolean> tryBuildSubstTerms(
     @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqView<@NotNull Term> terms
+    @NotNull SeqView<@NotNull Term> terms, @NotNull UnaryOperator<Term> pre
   ) {
-    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), localCtx);
+    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), localCtx, pre);
     try {
       for (var pat : pats.zip(terms)) matchy.match(pat);
       return Result.ok(matchy.subst());
@@ -51,18 +52,14 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
     }
   }
 
-  public static Result<Subst, Boolean> tryBuildSubst(
-    @Nullable LocalCtx localCtx, @NotNull Pat pattern, @NotNull Term term) {
-    var matcher = new PatMatcher(new Subst(), localCtx);
-    try {
-      matcher.match(pattern, term);
-      return Result.ok(matcher.subst());
-    } catch (Mismatch mismatch) {
-      return Result.err(mismatch.isBlocked);
-    }
-  }
-
+  /**
+   * Try to match te pat and term (WHNF)
+   *
+   * @param term a WHNF term, or a Mismatch will be thrown
+   * @throws Mismatch if mismatch
+   */
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
+    term = pre.apply(term);
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
       case Pat.Absurd ignored -> throw new InternalException("unreachable");
@@ -93,8 +90,8 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
       }
       case Pat.End end -> {
         if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
-            throw new Mismatch(true);
-          }
+          throw new Mismatch(true);
+        }
       }
       case Pat.ShapedInt lit -> {
         switch (term) {
@@ -121,7 +118,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
     todo.set(pat.rename(subst, localCtx, referee.explicit()));
   }
 
-  private void visitList(ImmutableSeq<Pat> lpats, SeqLike<Term> terms) throws Mismatch {
+  private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
     lpats.view().zip(terms).forEachChecked(this::match);
   }

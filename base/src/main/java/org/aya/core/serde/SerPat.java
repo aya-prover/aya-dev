@@ -42,11 +42,16 @@ public sealed interface SerPat extends Serializable {
 
   record Ctor(
     boolean explicit,
-    @NotNull SerDef.QName name, @NotNull ImmutableSeq<SerPat> params,
+    @NotNull SerDef.QName name,
+    @NotNull ImmutableSeq<SerTerm> ownerArgs,
+    @NotNull ImmutableSeq<SerPat> params,
     @NotNull SerTerm.DataCall ty
   ) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Ctor(explicit, state.resolve(name), params.map(param -> param.de(state)), ty.de(state));
+      return new Pat.Ctor(explicit, state.resolve(name),
+        ownerArgs.map(arg -> arg.de(state)),
+        params.map(param -> param.de(state)),
+        ty.de(state));
     }
   }
 

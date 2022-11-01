@@ -17,9 +17,9 @@ public interface Expander extends DeltaExpander, BetaExpander {
     return BetaExpander.super.post(DeltaExpander.super.post(term));
   }
 
-  record Normalizer(@NotNull TyckState state) implements Expander {}
+  record Normalizer(@Override @NotNull TyckState state) implements Expander {}
 
-  record WHNFer(@NotNull TyckState state) implements Expander {
+  record WHNFer(@Override @NotNull TyckState state) implements Expander {
     @Override public @NotNull Term apply(@NotNull Term term) {
       return switch (term) {
         case StableWHNF whnf -> term;
@@ -32,7 +32,7 @@ public interface Expander extends DeltaExpander, BetaExpander {
   record Tracked(
     @NotNull Set<@NotNull AnyVar> unfolding,
     @NotNull MutableSet<@NotNull AnyVar> unfolded,
-    @NotNull TyckState state,
+    @Override @NotNull TyckState state,
     @NotNull PrimDef.Factory factory
   ) implements Expander {
     @Override public @NotNull Term apply(@NotNull Term term) {

@@ -11,9 +11,10 @@ import org.aya.core.pat.PatToTerm;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.DeltaExpander;
+import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
@@ -52,7 +53,9 @@ public record Conquer(
         var conditions = ctor.ref().core.clauses;
         for (int i = 0, size = conditions.size(); i < size; i++) {
           var condition = conditions.get(i);
-          var matchy = PatMatcher.tryBuildSubstTerms(null, params, condition.patterns().view().map(Pat::toTerm));
+          var matchy = PatMatcher.tryBuildSubstTerms(null, params,
+            condition.patterns().view().map(Pat::toTerm),
+            t -> t.normalize(tycker.state, NormalizeMode.WHNF));
           if (matchy.isOk()) {
             var ctx = new MapLocalCtx();
             condition.patterns().forEach(tern -> tern.storeBindings(ctx));
@@ -84,7 +87,7 @@ public record Conquer(
         return super.visit(pat);
       }
     }.visit(pat), pat.explicit()));
-    var volynskaya = DeltaExpander.tryUnfoldClauses(orderIndependent, newArgs, 0, matchings).getOrNull();
+    var volynskaya = new Expander.WHNFer(tycker.state).tryUnfoldClauses(orderIndependent, newArgs, 0, matchings).getOrNull();
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));

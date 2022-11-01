@@ -17,6 +17,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
+import org.aya.generic.util.InterruptException;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
@@ -210,7 +211,8 @@ public class LibraryCompiler {
       reporter.reportString("I dislike the following module(s):");
       tycker.skippedSet.forEach(f ->
         reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
-      reporter.raiseError();
+      // Stop the whole compilation in case downstream libraries depend on skipped modules.
+      throw new LibraryTyckingFailed();
     } else {
       reporter.reportString("I like these modules :)");
     }
@@ -318,6 +320,12 @@ public class LibraryCompiler {
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().get() == null)
         throw new InternalException("Unable to load module: " + moduleName);
+    }
+  }
+
+  public static class LibraryTyckingFailed extends InterruptException {
+    @Override public InterruptStage stage() {
+      return InterruptStage.Tycking;
     }
   }
 

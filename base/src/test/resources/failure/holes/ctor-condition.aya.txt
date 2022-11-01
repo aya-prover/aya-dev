@@ -10,7 +10,6 @@ Goal: Goal of type
         (Normalized: Nat)
       Context:
         {a : Nat}
-        {a : Int} (not in scope)
       To ensure confluence:
         Given (a => zero), we should have: zero
 

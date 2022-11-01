@@ -6,7 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
-import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
@@ -27,6 +26,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
+import org.aya.tyck.pat.PatTycker;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
@@ -42,7 +42,6 @@ public sealed interface Pat extends AyaDocile {
   default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
-  @NotNull Expr toExpr(@NotNull SourcePos pos);
   default @NotNull Arg<Term> toArg() {
     return new Arg<>(toTerm(), explicit());
   }
@@ -52,6 +51,8 @@ public sealed interface Pat extends AyaDocile {
   @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit);
   @NotNull Pat zonk(@NotNull Tycker tycker);
   /**
+   * Make sure you are inline all patterns in order
+   *
    * @param ctx when null, the solutions will not be inlined
    * @return inlined patterns
    */
@@ -70,10 +71,6 @@ public sealed interface Pat extends AyaDocile {
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
       ctx.put(bind, type);
-    }
-
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.RefExpr(pos, bind);
     }
 
     @Override
@@ -106,10 +103,6 @@ public sealed interface Pat extends AyaDocile {
       // only used for constructor ownerTele extraction for simpler indexed types
     }
 
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.MetaPat(pos, this);
-    }
-
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       throw new InternalException("unreachable");
     }
@@ -117,8 +110,10 @@ public sealed interface Pat extends AyaDocile {
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var value = solution.get();
       if (value == null) {
+        var type = PatTycker.inlineTerm(this.type);
         var bind = new Bind(explicit, fakeBind, type);
         assert ctx != null : "Pre-inline patterns must be inlined with ctx";
+        // We set a solution here, so multiple inline on the same MetaPat is safe.
         solution.set(bind);
         ctx.put(fakeBind, type);
         return bind;
@@ -134,11 +129,6 @@ public sealed interface Pat extends AyaDocile {
   record Absurd(boolean explicit) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
       throw new InternalException("unreachable");
-    }
-
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      // [ice]: this code is reachable (to substitute a telescope), but the telescope will be dropped anyway.
-      return new Expr.RefExpr(pos, new LocalVar("()", SourcePos.NONE));
     }
 
     @Override
@@ -163,10 +153,6 @@ public sealed interface Pat extends AyaDocile {
       pats.forEach(pat -> pat.storeBindings(ctx));
     }
 
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.TupExpr(pos, pats.map(pat -> pat.toExpr(pos)));
-    }
-
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = pats.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
@@ -182,43 +168,48 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
+  /**
+   * @param ownerArgs the arguments to the owner telescope of this Ctor.
+   */
   record Ctor(
     boolean explicit,
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
+    @NotNull ImmutableSeq<Term> ownerArgs,
     @NotNull ImmutableSeq<Pat> params,
     @NotNull CallTerm.Data type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
+      // ownerArgs are not pattern, so they don't introduce any binding.
       params.forEach(pat -> pat.storeBindings(ctx));
-    }
-
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return params.foldLeft((Expr) new Expr.RefExpr(pos, ref), (f, pat) -> new Expr.AppExpr(pos, f,
-        new Expr.NamedArg(pat.explicit(), pat.toExpr(pos))));
     }
 
     @Override
     public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = this.params.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      return new Ctor(explicit, ref, params, (CallTerm.Data) type.subst(subst));
+      return new Ctor(explicit, ref,
+        ownerArgs.map(x -> x.subst(subst)),
+        params, (CallTerm.Data) type.subst(subst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return new Ctor(explicit, ref, params.map(pat -> pat.zonk(tycker)),
+      return new Ctor(explicit, ref,
+        ownerArgs.map(tycker::zonk),
+        params.map(pat -> pat.zonk(tycker)),
+        // The cast must succeed
         (CallTerm.Data) tycker.zonk(type));
-      // The cast must succeed
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return new Ctor(explicit, ref, params.map(p -> p.inline(ctx)), type);
+      var params = this.params.map(p -> p.inline(ctx));
+
+      return new Ctor(explicit, ref,
+        ownerArgs.map(PatTycker::inlineTerm),
+        params,
+        (CallTerm.Data) PatTycker.inlineTerm(type));
     }
   }
 
   record End(boolean isOne, boolean explicit) implements Pat {
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.LitIntExpr(pos, isOne ? 1 : 0);
-    }
-
     @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       return this;
     }
@@ -250,10 +241,6 @@ public sealed interface Pat extends AyaDocile {
     @NotNull CallTerm.Data type,
     boolean explicit
   ) implements Pat, Shaped.Nat<Pat> {
-    @Override public @NotNull Expr toExpr(@NotNull SourcePos pos) {
-      return new Expr.LitIntExpr(pos, repr);
-    }
-
     @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       return this;
     }
@@ -264,6 +251,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
+      // We are no need to inline type here, because the type of Nat doesn't (mustn't) have any type parameter.
       return this;
     }
 
@@ -272,11 +260,11 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat makeZero(@NotNull CtorDef zero) {
-      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), type);
+      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), ImmutableSeq.empty(), type);
     }
 
     @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Pat pat) {
-      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.of(pat), type);
+      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat), type);
     }
 
     @Override public @NotNull Pat destruct(int repr) {
