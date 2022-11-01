@@ -16,7 +16,11 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface CodeShape {
   /** A capture group, see {@link CodeShape.CtorShape} and {@link ShapeMatcher#captures()} */
   sealed interface Moment {
-    @NotNull String name();
+    @NotNull MomentId name();
+  }
+
+  /** Typed capture name, rather than plain strings. Object identity was used to tell different IDs. */
+  final class MomentId {
   }
 
   record FnShape(
@@ -34,7 +38,7 @@ public sealed interface CodeShape {
   ) implements CodeShape {}
 
   record CtorShape(
-    @NotNull String name,
+    @NotNull MomentId name,
     @NotNull ImmutableSeq<ParamShape> tele
   ) implements CodeShape, Moment {}
 

@@ -3,6 +3,7 @@
 package org.aya.core.repr;
 
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
 import kala.collection.mutable.MutableMap;
@@ -29,12 +30,12 @@ import java.util.function.Function;
  */
 public record ShapeMatcher(
   @NotNull MutableLinkedList<DefVar<? extends Def, ? extends Decl.Telescopic>> def,
-  @NotNull MutableMap<String, DefVar<?, ?>> captures,
+  @NotNull MutableMap<CodeShape.MomentId, DefVar<?, ?>> captures,
   @NotNull MutableMap<AnyVar, AnyVar> teleSubst
 ) {
   public record Result(
     @NotNull AyaShape shape,
-    @NotNull MutableMap<String, DefVar<?, ?>> captures
+    @NotNull ImmutableMap<CodeShape.MomentId, DefVar<?, ?>> captures
   ) {}
 
   public ShapeMatcher() {
@@ -44,7 +45,7 @@ public record ShapeMatcher(
   public static Option<Result> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
     var matcher = new ShapeMatcher();
     if (shape.codeShape() instanceof CodeShape.DataShape dataShape && def instanceof DataDef data)
-      return matcher.matchData(dataShape, data) ? Option.some(new Result(shape, matcher.captures)) : Option.none();
+      return matcher.matchData(dataShape, data) ? Option.some(new Result(shape, matcher.captures.toImmutableMap())) : Option.none();
     return Option.none();
   }
 

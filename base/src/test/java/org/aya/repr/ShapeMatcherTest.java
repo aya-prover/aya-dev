@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.GenericDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.ShapeMatcher;
+import org.aya.ref.DefVar;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.util.distill.DistillerOptions;
 import org.intellij.lang.annotations.Language;
@@ -14,8 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("UnknownLanguage")
 public class ShapeMatcherTest {
@@ -58,12 +58,21 @@ public class ShapeMatcherTest {
   public void capture() {
     var match = match(true, AyaShape.NAT_SHAPE, "open data Nat | zero | suc (pred : Nat)");
     assertNotNull(match);
-    assertEquals("| zero", match.captures().get("zero").core.toDoc(DistillerOptions.pretty()).debugRender());
-    assertEquals("| suc (pred : Nat)", match.captures().get("suc").core.toDoc(DistillerOptions.pretty()).debugRender());
+    assertEquals("| zero", pp(match.captures().get(AyaShape.AyaIntShape.ZERO)));
+    assertEquals("| suc (pred : Nat)", pp(match.captures().get(AyaShape.AyaIntShape.SUC)));
+    assertNull(match.captures().getOrNull(AyaShape.AyaListShape.NIL));
+    assertNull(match.captures().getOrNull(AyaShape.AyaListShape.CONS));
+
     match = match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | nil | infixr :< (a : A) (tail : List A)");
     assertNotNull(match);
-    assertEquals("| nil", match.captures().get("nil").core.toDoc(DistillerOptions.pretty()).debugRender());
-    assertEquals("| :< (a : A) (tail : List A)", match.captures().get("cons").core.toDoc(DistillerOptions.pretty()).debugRender());
+    assertEquals("| nil", pp(match.captures().get(AyaShape.AyaListShape.NIL)));
+    assertEquals("| :< (a : A) (tail : List A)", pp(match.captures().get(AyaShape.AyaListShape.CONS)));
+    assertNull(match.captures().getOrNull(AyaShape.AyaIntShape.ZERO));
+    assertNull(match.captures().getOrNull(AyaShape.AyaIntShape.SUC));
+  }
+
+  private @NotNull String pp(@NotNull DefVar<?, ?> def) {
+    return def.core.toDoc(DistillerOptions.pretty()).debugRender();
   }
 
   @Test
