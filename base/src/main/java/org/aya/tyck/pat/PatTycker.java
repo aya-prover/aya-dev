@@ -65,9 +65,9 @@ public final class PatTycker {
   /**
    * Every binding in the function telescope was treated as an {@code as pattern},
    * but they won't be added to {@link PatTycker#patSubst},
-   * because we may visit a complete different signature during tycking {@link Pat.Ctor},
+   * because we may visit a completely different signature during tycking {@link Pat.Ctor},
    * and the substs for that signature become useless after tycking {@link Pat.Ctor}
-   * (Also, the substs for the function we tycking is useless when we tycking the {@link Pat.Ctor}).
+   * (Also, the substs for the function we tycking is useless when we tyck the {@link Pat.Ctor}).
    */
   private @NotNull TypedSubst sigSubst;
   private final @Nullable Trace.Builder traceBuilder;
