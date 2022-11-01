@@ -72,7 +72,7 @@ public interface DeltaExpander extends EndoFunctor {
     @NotNull Subst subst, int ulift, @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
-      var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args);
+      var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args, state());
       if (termSubst.isOk()) {
         subst.add(termSubst.get());
         var newBody = matchy.body().rename().lift(ulift).subst(subst);

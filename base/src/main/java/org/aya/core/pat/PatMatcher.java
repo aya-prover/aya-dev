@@ -12,7 +12,9 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,10 +23,10 @@ import org.jetbrains.annotations.Nullable;
  * Matches a term with a pattern.
  *
  * @author ice1000
- * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike)} instead of instantiating the class directly.
+ * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike, TyckState)} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
-public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
+public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @NotNull TyckState state) {
   /**
    * @param localCtx not null only if we expect the presence of {@link RefTerm.MetaPat}
    * @return ok if the term matches the pattern,
@@ -32,17 +34,18 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
    */
   public static Result<Subst, Boolean> tryBuildSubstArgs(
     @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms
+    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms, @NotNull TyckState state
   ) {
-    return tryBuildSubstTerms(localCtx, pats, terms.view().map(Arg::term));
+    return tryBuildSubstTerms(localCtx, pats, terms.view().map(Arg::term), state);
   }
 
-  /** @see PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike) */
+  /** @see PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike, TyckState) */
   public static Result<Subst, Boolean> tryBuildSubstTerms(
     @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqView<@NotNull Term> terms
+    @NotNull SeqView<@NotNull Term> terms, @NotNull TyckState state
   ) {
-    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), localCtx);
+    terms = terms.map(x -> x.normalize(state, NormalizeMode.WHNF));
+    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), localCtx, state);
     try {
       for (var pat : pats.zip(terms)) matchy.match(pat);
       return Result.ok(matchy.subst());
@@ -51,6 +54,12 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
     }
   }
 
+  /**
+   * Try to match te pat and term (WHNF)
+   *
+   * @param term a WHNF term, or a Mismatch will be thrown
+   * @throws Mismatch if mismatch
+   */
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
@@ -82,8 +91,8 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
       }
       case Pat.End end -> {
         if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
-            throw new Mismatch(true);
-          }
+          throw new Mismatch(true);
+        }
       }
       case Pat.ShapedInt lit -> {
         switch (term) {
@@ -110,9 +119,11 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx) {
     todo.set(pat.rename(subst, localCtx, referee.explicit()));
   }
 
-  private void visitList(ImmutableSeq<Pat> lpats, SeqLike<Term> terms) throws Mismatch {
+  private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
-    lpats.view().zip(terms).forEachChecked(this::match);
+    lpats.view().zip(
+      terms.map(x -> x.normalize(state, NormalizeMode.WHNF))
+    ).forEachChecked(this::match);
   }
 
   private void match(@NotNull Tuple2<Pat, Term> pp) throws Mismatch {

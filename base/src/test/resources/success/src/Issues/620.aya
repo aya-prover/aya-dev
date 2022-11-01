@@ -1,0 +1,11 @@
+open import Paths
+
+open data Nat | O | S Nat
+
+def so : Nat => S O
+def why (n : Nat) : Nat
+| O => O
+| S (S O) => S O
+| S _ => S (S O)
+
+def yes : why (S so) = S O => idp
