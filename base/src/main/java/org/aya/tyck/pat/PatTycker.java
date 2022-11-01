@@ -232,7 +232,7 @@ public final class PatTycker {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Sigma sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, term);
         var tupleIsProp = sigma.computeType(exprTycker.state, exprTycker.localCtx) instanceof FormTerm.Prop;
-        if (!resultIsProp && tupleIsProp) throw new IllegalStateException(); // TODO: better reporting
+        if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
@@ -249,7 +249,7 @@ public final class PatTycker {
         if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();
         var dataIsProp = (ctorRef.core.dataRef.concrete != null ? ctorRef.core.dataRef.concrete.ulift : ctorRef.core.dataRef.core.result) instanceof FormTerm.Prop;
-        if (!resultIsProp && dataIsProp) throw new IllegalStateException(); // TODO: better reporting
+        if (!resultIsProp && dataIsProp) foundError(new PatternProblem.IllegalPropPat(ctor));
         var ctorCore = ctorRef.core;
         // generate ownerTele arguments
         //
