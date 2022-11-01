@@ -80,11 +80,11 @@ public record Serializer(@NotNull Serializer.State state) {
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
       case IntegerTerm lit ->
-        new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
+        new SerTerm.ShapedInt(lit.repr(), SerDef.SerShapeResult.serialize(state, lit.shape()), serialize(lit.type()));
       case ListTerm lit ->
         new SerTerm.ShapedList(
-          lit.repr().map(this::serialize).toImmutableSeq(),
-          SerDef.SerAyaShape.serialize(lit.shape()),
+          lit.repr().map(this::serialize),
+          SerDef.SerShapeResult.serialize(state, lit.shape()),
           serialize(lit.type()));
       case FormulaTerm end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case StringTerm str -> new SerTerm.Str(str.string());
@@ -151,7 +151,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
       case Pat.ShapedInt lit -> new SerPat.ShapedInt(
         lit.repr(), lit.explicit(),
-        SerDef.SerAyaShape.serialize(lit.shape()),
+        SerDef.SerShapeResult.serialize(state, lit.shape()),
         serializeDataCall(lit.type()));
     };
   }

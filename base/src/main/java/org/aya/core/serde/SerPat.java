@@ -68,11 +68,11 @@ public sealed interface SerPat extends Serializable {
   record ShapedInt(
     int integer,
     boolean explicit,
-    @NotNull SerDef.SerAyaShape shape,
+    @NotNull SerDef.SerShapeResult shape,
     @NotNull SerTerm.DataCall type
   ) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.ShapedInt(integer, shape.de(), type.de(state), explicit);
+      return new Pat.ShapedInt(integer, shape.de(state), type.de(state), explicit);
     }
   }
 }

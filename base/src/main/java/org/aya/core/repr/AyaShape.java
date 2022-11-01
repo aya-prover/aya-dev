@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.jetbrains.annotations.NotNull;
@@ -60,15 +61,14 @@ public sealed interface AyaShape {
   class Factory {
     public @NotNull MutableMap<GenericDef, ShapeMatcher.Result> discovered = MutableLinkedHashMap.of();
 
-    public @NotNull ImmutableSeq<GenericDef> findImpl(@NotNull AyaShape shape) {
+    public @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeMatcher.Result>> findImpl(@NotNull AyaShape shape) {
       return discovered.view().map(Tuple::of)
         .filter(t -> t._2.shape() == shape)
-        .map(t -> t._1)
         .toImmutableSeq();
     }
 
-    public @NotNull Option<AyaShape> find(@NotNull Def def) {
-      return discovered.getOption(def).map(ShapeMatcher.Result::shape);
+    public @NotNull Option<ShapeMatcher.Result> find(@NotNull Def def) {
+      return discovered.getOption(def);
     }
 
     public void bonjour(@NotNull GenericDef def, @NotNull ShapeMatcher.Result shape) {

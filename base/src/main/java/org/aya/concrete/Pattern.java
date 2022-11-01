@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.core.def.CtorDef;
-import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.ShapeMatcher;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
@@ -140,7 +140,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     @NotNull SourcePos sourcePos,
     @Nullable LocalVar as,
     @Override @NotNull ImmutableSeq<Pattern> repr,
-    @Override @NotNull AyaShape shape,
+    @Override @NotNull ShapeMatcher.Result shape,
     @Override @NotNull Term type
   ) implements Shaped.List<Pattern> {
 
