@@ -160,7 +160,10 @@ public final class PatTycker {
   }
 
   private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
-    var resultIsProp = signature.result().computeType(exprTycker.state, exprTycker.localCtx) instanceof FormTerm.Prop;
+    var resultIsProp = false;
+    try {
+      resultIsProp = signature.result().computeType(exprTycker.state, exprTycker.localCtx) instanceof FormTerm.Prop;
+    } catch (org.aya.generic.util.InternalException ignored) {} // TODO: remove this hack
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
@@ -208,7 +211,7 @@ public final class PatTycker {
   /**
    * After checking a pattern, we need to replace the references of the
    * corresponding telescope binding with the pattern.
-   *
+   * <p>
    * TODO[hoshino]: The parameters in the Ctor telescope are also added to patSubst during PatTyck.
    *                It is okay when we tyck a ctor pat, but it becomes useless after tyck:
    *                there is no reference to these variables.
@@ -245,7 +248,7 @@ public final class PatTycker {
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();
-        var dataIsProp = ctorRef.core.dataRef.concrete.ulift instanceof FormTerm.Prop;
+        var dataIsProp = (ctorRef.core.dataRef.concrete != null ? ctorRef.core.dataRef.concrete.ulift : ctorRef.core.dataRef.core.result) instanceof FormTerm.Prop;
         if (!resultIsProp && dataIsProp) throw new IllegalStateException(); // TODO: better reporting
         var ctorCore = ctorRef.core;
         // generate ownerTele arguments
