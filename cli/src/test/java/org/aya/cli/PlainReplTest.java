@@ -35,7 +35,7 @@ public class PlainReplTest extends ReplTestBase {
 
   @Test public void typeType() {
     var s = repl(":type Type")._1.trim();
-    assertEquals("Type", s);
+    assertTrue(s.startsWith("Type"));
   }
 
   @Test public void amb() {
@@ -49,7 +49,7 @@ public class PlainReplTest extends ReplTestBase {
 
   @Test public void type() {
     var s = repl("Type")._1.trim();
-    assertEquals("Type", s);
+    assertTrue(s.startsWith("Type"));
   }
 
   @Test public void disableUnicode() {
