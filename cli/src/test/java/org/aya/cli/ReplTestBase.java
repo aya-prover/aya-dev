@@ -8,6 +8,7 @@ import kala.tuple.Tuple2;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.repl.IO;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 
@@ -26,7 +27,7 @@ public class ReplTestBase {
     config.prompt = "";
   }
 
-  @NotNull protected Tuple2<String, String> repl(@NotNull String input) {
+  @NotNull protected Tuple2<String, String> repl(@Language("TEXT") @NotNull String input) {
     var out = new StringWriter();
     var err = new StringWriter();
     var reader = new StringReader(input + "\n:exit");

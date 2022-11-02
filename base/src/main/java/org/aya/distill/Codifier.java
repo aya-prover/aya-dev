@@ -210,7 +210,7 @@ public record Codifier(
       }
       case Formula.Inv<Term> inv -> {
         builder.append("new Formula.Inv<>(");
-        formula(inv);
+        term(inv.i());
         builder.append(")");
       }
       case Formula.Lit<Term>(var one) -> builder.append("new Formula.Lit<>(").append(one).append(")");
