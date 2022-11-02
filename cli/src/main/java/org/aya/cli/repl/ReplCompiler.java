@@ -15,11 +15,13 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.core.def.FnDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.PhysicalModuleContext;
@@ -152,6 +154,17 @@ public class ReplCompiler {
     } catch (InterruptException ignored) {
       return null;
     }
+  }
+
+  public @Nullable FnDef codificationObject(@NotNull String text) {
+    var parseTree = new AyaGKParserImpl(reporter).expr(text, SourcePos.NONE);
+    if (parseTree instanceof Expr.RefExpr ref
+      && ref.resolvedVar() instanceof DefVar<?, ?> defVar
+      && defVar.core instanceof FnDef fn
+      && fn.body.isLeft()) {
+      return fn;
+    }
+    return null;
   }
 
   public @NotNull ReplContext getContext() {
