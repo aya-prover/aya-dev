@@ -13,6 +13,8 @@ public class CodifierTest extends ReplTestBase {
       def pmap {A B : Type} (p : [| i |] A) (f : A -> B) : [| i |] B => \\i => f (p i)
       :codify pmap
       """)._1.trim();
+    // It would be nice if we can generate a complete Java file
+    //  and run the code to test the codifier
     assertNotNull(out);
   }
 }

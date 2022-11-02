@@ -80,7 +80,11 @@ public record Codifier(
       }
       case IntroTerm.Tuple(var items) -> tupSigma(items, this::term, "IntroTerm.Tuple");
       case PrimTerm.Coe(var ty, var restr) -> coePar(ty, restr, "PrimTerm.Coe");
-      case PrimTerm.Mula(var mula) -> formula(mula);
+      case PrimTerm.Mula(var mula) -> {
+        builder.append("new PrimTerm.Mula(");
+        formula(mula);
+        builder.append(")");
+      }
       case ErrorTerm error -> throw new UnsupportedOperationException("Cannot generate error");
       case ErasedTerm erased -> throw new UnsupportedOperationException("Cannot generate erased");
       case CallTerm call -> throw new UnsupportedOperationException("Cannot generate calls");
@@ -196,7 +200,21 @@ public record Codifier(
   }
 
   private void formula(Formula<Term> mula) {
-    throw new UnsupportedOperationException("TODO");
+    switch (mula) {
+      case Formula.Conn<Term> conn -> {
+        builder.append("new Formula.Conn<>(").append(conn.isAnd()).append(",");
+        term(conn.l());
+        builder.append(",");
+        term(conn.r());
+        builder.append(")");
+      }
+      case Formula.Inv<Term> inv -> {
+        builder.append("new Formula.Inv<>(");
+        formula(inv);
+        builder.append(")");
+      }
+      case Formula.Lit<Term>(var one) -> builder.append("new Formula.Lit<>(").append(one).append(")");
+    }
   }
 
   private void param(@NotNull Term.Param param) {

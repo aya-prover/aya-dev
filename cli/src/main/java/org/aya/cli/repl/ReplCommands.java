@@ -42,7 +42,8 @@ public interface ReplCommands {
   @NotNull Command CODIFY = new Command(ImmutableSeq.of("codify"), "Generate Java code that builds certain function's body") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
       var fn = repl.replCompiler.codificationObject(code.code());
-      return fn != null ? new Result(Output.stdout(Doc.plain(Codifier.sweet(fn).toString())), true)
+      return fn != null ? new Result(Output.stdout(Doc.plain(
+        Codifier.sweet(fn).toString())), true)
         : Result.err("Expect just a simple function's (no clauses) name!", true);
     }
   };
