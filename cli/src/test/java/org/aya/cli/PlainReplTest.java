@@ -4,12 +4,11 @@ package org.aya.cli;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PlainReplTest extends ReplTestBase {
   @Test public void exit() {
-    assertNotNull(repl(""));
+    assertEquals("", repl("")._1.trim());
   }
 
   @Test public void help() {
@@ -35,11 +34,13 @@ public class PlainReplTest extends ReplTestBase {
   }
 
   @Test public void typeType() {
-    assertTrue(repl(":type Type")._1.contains("Type"));
+    var s = repl(":type Type")._1.trim();
+    assertEquals("Type", s);
   }
 
   @Test public void amb() {
-    assertTrue(repl(":p")._2.contains("Ambiguous"));
+    var s = repl(":p")._2;
+    assertTrue(s.startsWith("Ambiguous command name"));
   }
 
   @Test public void notFound() {
@@ -47,7 +48,8 @@ public class PlainReplTest extends ReplTestBase {
   }
 
   @Test public void type() {
-    assertTrue(repl("Type")._1.contains("Type"));
+    var s = repl("Type")._1.trim();
+    assertEquals("Type", s);
   }
 
   @Test public void disableUnicode() {
@@ -63,8 +65,7 @@ public class PlainReplTest extends ReplTestBase {
   }
 
   @Test public void typeSuc() {
-    var repl = repl("data Nat : Type | suc Nat | zero\n:type Nat::suc")._1;
-    assertTrue(repl.contains("Nat"));
-    assertTrue(repl.contains("->"));
+    var repl = repl("data Nat : Type | suc Nat | zero\n:type Nat::suc")._1.trim();
+    assertEquals("Nat -> Nat", repl);
   }
 }
