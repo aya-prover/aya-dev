@@ -4,7 +4,9 @@ package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaGKParserImpl;
+import org.aya.distill.Codifier;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.pretty.doc.Doc;
 import org.aya.repl.Command;
 import org.aya.repl.ReplUtil;
 import org.aya.util.distill.DistillerOptions;
@@ -34,6 +36,15 @@ public interface ReplCommands {
       var type = repl.replCompiler.computeType(code.code(), repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
+    }
+  };
+
+  @NotNull Command CODIFY = new Command(ImmutableSeq.of("codify"), "Generate Java code that builds certain function's body") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
+      var fn = repl.replCompiler.codificationObject(code.code());
+      return fn != null ? new Result(Output.stdout(Doc.plain(
+        Codifier.sweet(fn).toString())), true)
+        : Result.err("Expect just a simple function's (no clauses) name!", true);
     }
   };
 
@@ -82,7 +93,8 @@ public interface ReplCommands {
 
   @NotNull Command QUIT = new Command(ImmutableSeq.of("quit", "exit"), "Quit the REPL") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
-      return Result.ok("See you space cow woof woof :3", false);
+      return Result.ok(repl.config.silent ? "" :
+        "See you space cow woof woof :3", false);
     }
   };
 

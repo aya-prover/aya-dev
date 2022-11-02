@@ -56,6 +56,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.CHANGE_NORM_MODE,
       ReplCommands.TOGGLE_DISTILL,
       ReplCommands.SHOW_TYPE,
+      ReplCommands.CODIFY,
       ReplCommands.SHOW_PARSE_TREE,
       ReplCommands.CHANGE_PP_WIDTH,
       ReplCommands.TOGGLE_UNICODE,
@@ -85,9 +86,11 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   }
 
   @Override public void run() {
-    println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH + ")");
-    var hint = hintMessage();
-    if (hint != null) println(hint);
+    if (!config.silent) {
+      println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH + ")");
+      var hint = hintMessage();
+      if (hint != null) println(hint);
+    }
     //noinspection StatementWithEmptyBody
     while (singleLoop()) ;
   }
@@ -106,7 +109,8 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   @Override public @NotNull Command.Output eval(@NotNull String line) {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
-      program -> Doc.vcat(program.view().map(def -> def.toDoc(config.distillerOptions))),
+      program -> config.silent ? Doc.empty() :
+        Doc.vcat(program.view().map(def -> def.toDoc(config.distillerOptions))),
       this::render
     ));
   }
