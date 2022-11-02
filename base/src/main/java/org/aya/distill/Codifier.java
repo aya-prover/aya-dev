@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
+import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
@@ -141,7 +142,8 @@ public record Codifier(
     me.term(def.body.getLeftValue());
     var pre = new StringBuilder(me.builder.length() + me.locals.size() * 36);
     me.locals.forEach((k, v) -> pre.append("var var")
-      .append(v).append(" = new LocalVar(").append(k.name()).append(");"));
+      .append(v).append(" = new LocalVar(\"")
+      .append(StringUtil.escapeStringCharacters(k.name())).append("\");"));
     return pre.append(me.builder);
   }
 
@@ -150,7 +152,7 @@ public record Codifier(
       case Partial.Split<Term> s -> {
         builder.append("new Partial.Split<>(ImmutableSeq.of(");
         commaSep(s.clauses(), side -> {
-          builder.append("new Restr.Side(");
+          builder.append("new Restr.Side<>(");
           restr(side.cof());
           builder.append(",");
           term(side.u());
@@ -175,7 +177,7 @@ public record Codifier(
   private void restr(Restr.Conj<Term> restr) {
     builder.append("new Restr.Conj<>(ImmutableSeq.of(");
     commaSep(restr.ands(), this::cond);
-    builder.append(")");
+    builder.append("))");
   }
 
   private void restr(Restr<Term> restr) {
