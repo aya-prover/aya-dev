@@ -119,11 +119,9 @@ public class ReplCompiler {
    */
   public @NotNull Either<ImmutableSeq<GenericDef>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
-    var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
     try {
       var programOrExpr = new AyaGKParserImpl(reporter).repl(text);
-      var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
-        new FileModuleLoader(locator, path, reporter, new AyaGKParserImpl(reporter), primFactory, null)).toImmutableSeq()));
+      var loader = createLoader();
       return programOrExpr.map(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<GenericDef>>create();
@@ -158,13 +156,20 @@ public class ReplCompiler {
 
   public @Nullable FnDef codificationObject(@NotNull String text) {
     var parseTree = new AyaGKParserImpl(reporter).expr(text, SourcePos.NONE);
-    if (parseTree instanceof Expr.RefExpr ref
+    if (parseTree.resolve(context) instanceof Expr.RefExpr ref
       && ref.resolvedVar() instanceof DefVar<?, ?> defVar
       && defVar.core instanceof FnDef fn
       && fn.body.isLeft()) {
       return fn;
     }
+    System.out.println(parseTree);
     return null;
+  }
+
+  private CachedModuleLoader<ModuleListLoader> createLoader() {
+    var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
+    return new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
+      new FileModuleLoader(locator, path, reporter, new AyaGKParserImpl(reporter), primFactory, null)).toImmutableSeq()));
   }
 
   public @NotNull ReplContext getContext() {

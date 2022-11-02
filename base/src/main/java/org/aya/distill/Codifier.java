@@ -124,7 +124,10 @@ public record Codifier(
       me.locals.put(param.ref(), me.locals.size());
     }
     me.term(def.body.getLeftValue());
-    return me.builder;
+    var pre = new StringBuilder(me.builder.length() + me.locals.size() * 36);
+    me.locals.forEach((k, v) -> pre.append("var var")
+      .append(v).append(" = new LocalVar(").append(k.name()).append(");"));
+    return pre.append(me.builder);
   }
 
   private void partial(Partial<Term> par) {
