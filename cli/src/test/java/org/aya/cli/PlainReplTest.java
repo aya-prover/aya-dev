@@ -1,33 +1,13 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
-import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
-import org.aya.cli.repl.AyaRepl;
-import org.aya.cli.repl.ReplConfig;
-import org.aya.repl.IO;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class PlainReplTest {
-  public static final @NotNull Path configDir = Paths.get("build", "test_config.json");
-  public static final @NotNull ReplConfig config = new ReplConfig(configDir);
-
-  @BeforeAll public static void setup() {
-    config.enableUnicode = false;
-  }
-
+public class PlainReplTest extends ReplTestBase {
   @Test public void exit() {
     assertNotNull(repl(""));
   }
@@ -86,14 +66,5 @@ public class PlainReplTest {
     var repl = repl("data Nat : Type | suc Nat | zero\n:type Nat::suc")._1;
     assertTrue(repl.contains("Nat"));
     assertTrue(repl.contains("->"));
-  }
-
-  private @NotNull Tuple2<String, String> repl(@NotNull String input) {
-    var out = new StringWriter();
-    var err = new StringWriter();
-    var reader = new StringReader(input + "\n:exit");
-    var repl = new AyaRepl.PlainRepl(ImmutableSeq.empty(), config, new IO(reader, out, err));
-    repl.run();
-    return Tuple.of(out.toString(), err.toString());
   }
 }

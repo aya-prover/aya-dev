@@ -27,9 +27,13 @@ public record Codifier(
 ) {
   private void term(@NotNull Term term) {
     switch (term) {
-      // If this `get` fails, it means we have an incorrectly-scoped
-      // term in the core, which should be a bug
-      case RefTerm(var var) -> varRef(locals.get(var));
+      case RefTerm(var var) -> {
+        builder.append("new RefTerm(");
+        // If this `get` fails, it means we have an incorrectly-scoped
+        // term in the core, which should be a bug
+        varRef(locals.get(var));
+        builder.append(")");
+      }
       case ElimTerm.App(var of, var arg) -> {
         builder.append("new ElimTerm.App(");
         term(of);
