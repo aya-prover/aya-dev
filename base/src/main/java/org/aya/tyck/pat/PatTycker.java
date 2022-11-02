@@ -59,10 +59,17 @@ public final class PatTycker {
 
   /**
    * An {@code as pattern} map.
-   * Every binding in the function telescope was treated as an {@code as pattern}
-   * so they were added to this map.
    */
   private final @NotNull TypedSubst patSubst;
+
+  /**
+   * Every binding in the function telescope was treated as an {@code as pattern},
+   * but they won't be added to {@link PatTycker#patSubst},
+   * because we may visit a completely different signature during tycking {@link Pat.Ctor},
+   * and the substs for that signature become useless after tycking {@link Pat.Ctor}
+   * (Also, the substs for the function we tycking is useless when we tyck the {@link Pat.Ctor}).
+   */
+  private @NotNull TypedSubst sigSubst;
   private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
   private Pattern.Clause currentClause = null;
@@ -70,10 +77,12 @@ public final class PatTycker {
   public PatTycker(
     @NotNull ExprTycker exprTycker,
     @NotNull TypedSubst patSubst,
+    @NotNull TypedSubst sigSubst,
     @Nullable Trace.Builder traceBuilder
   ) {
     this.exprTycker = exprTycker;
     this.patSubst = patSubst;
+    this.sigSubst = sigSubst;
     this.traceBuilder = traceBuilder;
   }
 
@@ -89,7 +98,7 @@ public final class PatTycker {
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new TypedSubst(), exprTycker.traceBuilder);
+    this(exprTycker, new TypedSubst(), new TypedSubst(), exprTycker.traceBuilder);
   }
 
   public record PatResult(
@@ -169,16 +178,19 @@ public final class PatTycker {
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
     var type = inlineTerm(step0._2);
     patSubst.inline();
+    sigSubst.inline();
     PatternTraversal.visit(p -> {
       if (p instanceof Pattern.Bind bind)
         bind.type().update(t -> t == null ? null : inlineTerm(t));
     }, match.patterns);
 
-    var step1 = new LhsResult(exprTycker.localCtx, type, patSubst.derive(),
+    var subst = patSubst.derive().addDirectly(sigSubst);
+    var step1 = new LhsResult(exprTycker.localCtx, type, subst,
       match.hasError,
       new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
     exprTycker.localCtx = parent;
     patSubst.clear();
+    sigSubst.clear();
     return step1;
   }
 
@@ -205,16 +217,17 @@ public final class PatTycker {
   /// region Tyck
 
   /**
-   * After checking a pattern, we need to replace the references of the
-   * corresponding telescope binding with the pattern.
-   *
-   * TODO[hoshino]: The parameters in the Ctor telescope are also added to patSubst during PatTyck.
-   *                It is okay when we tyck a ctor pat, but it becomes useless after tyck:
-   *                there is no reference to these variables.
+   * add an {@code as pattern} subst
    */
   private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
-    var patTerm = pat.toTerm();
-    patSubst.addDirectly(var, patTerm, type);
+    patSubst.addDirectly(var, pat.toTerm(), type);
+  }
+
+  /**
+   * add a {@code parameter} subst
+   */
+  private void addSigSubst(@NotNull Term.Param param, @NotNull Pat pat) {
+    sigSubst.addDirectly(param.ref(), pat.toTerm(), param.type());
   }
 
   private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
@@ -231,7 +244,7 @@ public final class PatTycker {
         var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        var ret = new Pat.Tuple(tuple.explicit(), visitPatterns(sig, tuple.patterns().view(), tuple)._1.toImmutableSeq());
+        var ret = new Pat.Tuple(tuple.explicit(), visitInnerPatterns(sig, tuple.patterns().view(), tuple)._1.toImmutableSeq());
         if (as != null) {
           addPatSubst(as, ret, term);
         }
@@ -253,7 +266,7 @@ public final class PatTycker {
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
-        var patterns = visitPatterns(sig, ctor.params().view(), ctor)._1.toImmutableSeq();
+        var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor)._1.toImmutableSeq();
         var as = ctor.as();
         var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), ownerTeleArgs, patterns, dataCall);
         if (as != null) {
@@ -304,7 +317,7 @@ public final class PatTycker {
 
         yield withError(new PatternProblem.BadLitPattern(list, term), list, term);
       }
-      case Pattern.BinOpSeq binOpSeq -> throw new InternalException("BinOpSeq patterns should be desugared");
+      case Pattern.BinOpSeq ignored -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
   }
 
@@ -320,7 +333,6 @@ public final class PatTycker {
   public @NotNull Tuple2<SeqView<Pat>, Term>
   visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @Nullable Pattern outerPattern) {
     var results = MutableList.<Pat>create();
-    if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.view(), sig.result());
     // last pattern which user given (not aya generated)
     @Nullable Pattern lastPat = null;
     while (sig.param().isNotEmpty()) {
@@ -376,6 +388,19 @@ public final class PatTycker {
     return done(results, sig.result());
   }
 
+  private @NotNull Tuple2<SeqView<Pat>, Term>
+  visitInnerPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @NotNull Pattern outerPattern) {
+    var oldSigSubst = this.sigSubst;
+    this.sigSubst = new TypedSubst();
+
+    var result = visitPatterns(sig, stream, outerPattern);
+
+    // recover
+    this.sigSubst = oldSigSubst;
+
+    return result;
+  }
+
   /**
    * A data object during PatTyck
    *
@@ -393,14 +418,14 @@ public final class PatTycker {
     }
   }
 
-  private @NotNull PatData beforeMatch(@NotNull PatData data) {
+  private @NotNull PatData beforeTyck(@NotNull PatData data) {
     return new PatData(
       data.sig(), data.results(),
-      data.param().subst(patSubst.map())
+      data.param().subst(sigSubst.map())
     );
   }
 
-  private @NotNull PatData afterMatch(@NotNull PatData data) {
+  private @NotNull PatData afterTyck(@NotNull PatData data) {
     return new PatData(
       new Def.Signature(data.sig().param().drop(1), data.sig().result()),
       data.results(),
@@ -409,23 +434,23 @@ public final class PatTycker {
   }
 
   private @NotNull Tuple2<SeqView<Pat>, Term> done(@NotNull SeqLike<Pat> results, @NotNull Term type) {
-    return Tuple.of(results.view(), type.subst(patSubst.map()));
+    return Tuple.of(results.view(), type.subst(sigSubst.map()));
   }
 
   /**
    * A user given pattern matches a parameter, we update the signature.
    */
   private @NotNull Def.Signature updateSig(PatData data, Pattern pat) {
-    data = beforeMatch(data);
+    data = beforeTyck(data);
 
     var type = data.param.type();
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
     var res = doTyck(pat, type);
     tracing(TreeBuilder::reduce);
-    addPatSubst(data.param.ref(), res, data.param.type());
+    addSigSubst(data.param(), res);
     data.results.append(res);
 
-    return afterMatch(data).sig();
+    return afterTyck(data).sig();
   }
 
   /**
@@ -434,7 +459,7 @@ public final class PatTycker {
    * so that they can be inferred during {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature)}
    */
   private @NotNull Def.Signature generatePat(@NotNull PatData data) {
-    data = beforeMatch(data);
+    data = beforeTyck(data);
 
     var ref = data.param.ref();
     Pat bind;
@@ -444,9 +469,9 @@ public final class PatTycker {
     else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(freshVar, data.param.type());
-    addPatSubst(ref, bind, data.param.type());
+    addSigSubst(data.param(), bind);
 
-    return afterMatch(data).sig();
+    return afterTyck(data).sig();
   }
 
   private @NotNull Pat randomPat(Pattern pattern, Term param) {
