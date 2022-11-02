@@ -147,9 +147,9 @@ public record Codifier(
 
   private void partial(Partial<Term> par) {
     switch (par) {
-      case Partial.Split<Term>(var u) -> {
+      case Partial.Split<Term> s -> {
         builder.append("new Partial.Split<>(ImmutableSeq.of(");
-        commaSep(u, side -> {
+        commaSep(s.clauses(), side -> {
           builder.append("new Restr.Side(");
           restr(side.cof());
           builder.append(",");
@@ -158,9 +158,9 @@ public record Codifier(
         });
         builder.append("))");
       }
-      case Partial.Const<Term>(var u) -> {
+      case Partial.Const<Term> c -> {
         builder.append("new Partial.Const<>(");
-        term(u);
+        term(c.u());
         builder.append(")");
       }
     }
