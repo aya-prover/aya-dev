@@ -162,7 +162,8 @@ public final class PatTycker {
   private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
     var resultIsProp = false;
     try {
-      resultIsProp = signature.result().computeType(exprTycker.state, exprTycker.localCtx) instanceof FormTerm.Prop;
+      var ctx = exprTycker.localCtx.deriveMap();
+      resultIsProp = ctx.with((() -> signature.result().computeType(exprTycker.state, ctx) instanceof FormTerm.Prop), signature.param().toArray(new Term.Param[0]));
     } catch (org.aya.generic.util.InternalException ignored) {} // TODO: remove this hack
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
