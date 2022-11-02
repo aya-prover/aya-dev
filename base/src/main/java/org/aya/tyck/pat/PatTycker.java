@@ -333,8 +333,6 @@ public final class PatTycker {
   public @NotNull Tuple2<SeqView<Pat>, Term>
   visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Pattern> stream, @Nullable Pattern outerPattern) {
     var results = MutableList.<Pat>create();
-    // this path seems useless
-    if (sig.param().isEmpty() && stream.isEmpty()) return done(results, sig.result());
     // last pattern which user given (not aya generated)
     @Nullable Pattern lastPat = null;
     while (sig.param().isNotEmpty()) {
