@@ -131,11 +131,47 @@ public record Codifier(
   }
 
   private void partial(Partial<Term> par) {
-    throw new UnsupportedOperationException("TODO");
+    switch (par) {
+      case Partial.Split<Term>(var u) -> {
+        builder.append("new Partial.Split<>(ImmutableSeq.of(");
+        commaSep(u, side -> {
+          builder.append("new Restr.Side(");
+          restr(side.cof());
+          builder.append(",");
+          term(side.u());
+          builder.append(")");
+        });
+        builder.append("))");
+      }
+      case Partial.Const<Term>(var u) -> {
+        builder.append("new Partial.Const<>(");
+        term(u);
+        builder.append(")");
+      }
+    }
+  }
+
+  private void cond(Restr.Cond<Term> cond) {
+    builder.append("new Restr.Cond<>(");
+    term(cond.inst());
+    builder.append(",").append(cond.isOne()).append(")");
+  }
+
+  private void restr(Restr.Conj<Term> restr) {
+    builder.append("new Restr.Conj<>(ImmutableSeq.of(");
+    commaSep(restr.ands(), this::cond);
+    builder.append(")");
   }
 
   private void restr(Restr<Term> restr) {
-    throw new UnsupportedOperationException("TODO");
+    switch (restr) {
+      case Restr.Disj<Term>(var orz) -> {
+        builder.append("new Restr.Disj<>(ImmutableSeq.of(");
+        commaSep(orz, this::restr);
+        builder.append("))");
+      }
+      case Restr.Const<Term>(var one) -> builder.append("new Restr.Const<>(").append(one).append(")");
+    }
   }
 
   private void formula(Formula<Term> mula) {
