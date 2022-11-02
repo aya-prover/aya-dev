@@ -42,14 +42,10 @@ public record Codifier(
         builder.append(",").append(ix).append(")");
       }
       case FormTerm.PartTy(var ty, var restr) -> coePar(ty, restr, "FormTerm.PartTy");
-      case FormTerm.Path(FormTerm.Cube(var params, var ty, var par)) -> {
-        builder.append("new FormTerm.Path(new FormTerm.Cube(ImmutableSeq.of(");
-        commaSep(params, this::varDef);
-        builder.append("),");
-        term(ty);
-        builder.append(",");
-        partial(par);
-        builder.append("))");
+      case FormTerm.Path(var cube) -> {
+        builder.append("new FormTerm.Path(");
+        cube(cube);
+        builder.append(")");
       }
       case FormTerm.Pi(var param, var body) -> piLam(param, body, "FormTerm.Pi");
       case FormTerm.Sigma(var items) -> tupSigma(items, this::param, "FormTerm.Sigma");
@@ -68,6 +64,15 @@ public record Codifier(
         term(body);
         builder.append(")");
       }
+      case ElimTerm.PathApp(var of, var args, var cube) -> {
+        builder.append("new ElimTerm.PathApp(");
+        term(of);
+        builder.append(",ImmutableSeq.of(");
+        commaSep(args, this::arg);
+        builder.append("),");
+        cube(cube);
+        builder.append(")");
+      }
       case IntroTerm.Tuple(var items) -> tupSigma(items, this::term, "IntroTerm.Tuple");
       case PrimTerm.Coe(var ty, var restr) -> coePar(ty, restr, "PrimTerm.Coe");
       case PrimTerm.Mula(var mula) -> formula(mula);
@@ -81,6 +86,16 @@ public record Codifier(
       case FormTerm.Type(var lift) -> universe("Type", lift);
       case default -> throw new UnsupportedOperationException("TODO: " + term.getClass().getCanonicalName());
     }
+  }
+
+  private void cube(FormTerm.@NotNull Cube cube) {
+    builder.append("new FormTerm.Cube(ImmutableSeq.of(");
+    commaSep(cube.params(), this::varDef);
+    builder.append("),");
+    term(cube.type());
+    builder.append(",");
+    partial(cube.partial());
+    builder.append(")");
   }
 
   private void name(String name) {
