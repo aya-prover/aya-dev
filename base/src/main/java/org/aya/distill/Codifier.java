@@ -3,7 +3,9 @@
 package org.aya.distill;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
+import org.aya.core.def.FnDef;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Formula;
@@ -22,7 +24,7 @@ public record Codifier(
   @NotNull MutableMap<LocalVar, Integer> locals,
   @NotNull StringBuilder builder
 ) {
-  public void term(@NotNull Term term) {
+  private void term(@NotNull Term term) {
     switch (term) {
       // If this `get` fails, it means we have an incorrectly-scoped
       // term in the core, which should be a bug
@@ -114,6 +116,15 @@ public record Codifier(
       else builder.append(",");
       f.accept(item);
     }
+  }
+
+  public static @NotNull CharSequence sweet(@NotNull FnDef def) {
+    var me = new Codifier(new MutableLinkedHashMap<>(), new StringBuilder());
+    for (var param : def.telescope) {
+      me.locals.put(param.ref(), me.locals.size());
+    }
+    me.term(def.body.getLeftValue());
+    return me.builder;
   }
 
   private void partial(Partial<Term> par) {
