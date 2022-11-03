@@ -52,12 +52,6 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
     }
   }
 
-  /**
-   * Try to match te pat and term (WHNF)
-   *
-   * @param term a WHNF term, or a Mismatch will be thrown
-   * @throws Mismatch if mismatch
-   */
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
