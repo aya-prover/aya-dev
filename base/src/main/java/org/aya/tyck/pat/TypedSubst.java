@@ -29,7 +29,7 @@ public record TypedSubst(
   }
 
   public @NotNull TypedSubst addDirectly(@NotNull TypedSubst subst) {
-    map.add(subst.map);
+    map.addAllDirectly(subst.map);
     type.putAll(subst.type);
 
     return this;
