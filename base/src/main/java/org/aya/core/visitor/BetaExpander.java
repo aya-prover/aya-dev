@@ -3,6 +3,8 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
@@ -20,7 +22,7 @@ import static org.aya.guest0x0.cubical.CofThy.isOne;
  * @author wsx
  * @see DeltaExpander
  */
-public interface BetaExpander extends EndoFunctor {
+public interface BetaExpander extends EndoTerm {
   private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
     return partial.flatMap(Function.identity());
   }
@@ -29,6 +31,15 @@ public interface BetaExpander extends EndoFunctor {
   }
   static @NotNull FormTerm.PartTy partialType(@NotNull FormTerm.PartTy ty) {
     return new FormTerm.PartTy(ty.type(), ty.restr().normalize());
+  }
+  static @NotNull Option<Term> tryMatch(@NotNull ImmutableSeq<Term> scrutinee, @NotNull ImmutableSeq<Term.Matching> clauses) {
+    for (var clause : clauses) {
+      var subst = PatMatcher.tryBuildSubstTerms(null, clause.patterns(), scrutinee.view());
+      if (subst.isOk()) {
+        return Option.some(clause.body().rename().subst(subst.get()));
+      } else if (subst.getErr()) return Option.none();
+    }
+    return Option.none();
   }
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
@@ -40,6 +51,10 @@ public interface BetaExpander extends EndoFunctor {
         yield result == term ? result : apply(result);
       }
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
+      case ElimTerm.Match match -> {
+        var result = tryMatch(match.discriminant(), match.clauses());
+        yield result.isDefined() ? result.get() : match;
+      }
       case ElimTerm.PathApp(var of, var args, FormTerm.Cube(var xi, var type, var partial)) -> {
         if (of instanceof ErasedTerm) {
           var ui = args.map(Arg::term);

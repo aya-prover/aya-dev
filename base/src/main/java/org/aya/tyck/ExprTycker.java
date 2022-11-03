@@ -31,6 +31,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
+import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
@@ -513,6 +514,13 @@ public final class ExprTycker extends Tycker {
         if (!CofThy.conv(cofTy, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
           yield fail(el, new CubicalError.FaceMismatch(el, face, cofTy));
         yield new TermResult(new IntroTerm.PartEl(partial, rhsType), ty);
+      }
+      case Expr.Match match -> {
+        var patTyck = new PatTycker(this);
+        var discriminant = match.discriminant().map(this::synthesize);
+        var sig = new Def.Signature(discriminant.map(r -> new Term.Param(new LocalVar("_"), r.type(), true)), term);
+        var result = patTyck.elabClausesClassified(match.clauses(), sig, match.sourcePos());
+        yield new TermResult(new ElimTerm.Match(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };

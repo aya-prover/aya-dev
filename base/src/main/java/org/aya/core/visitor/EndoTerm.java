@@ -9,7 +9,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * A convenient interface to obtain an endomorphism on `Term`.
@@ -21,7 +21,7 @@ import java.util.function.Function;
  *
  * @author wsx
  */
-public interface EndoFunctor extends Function<Term, Term> {
+public interface EndoTerm extends UnaryOperator<Term> {
   default @NotNull Term pre(@NotNull Term term) {
     return term;
   }
@@ -35,7 +35,7 @@ public interface EndoFunctor extends Function<Term, Term> {
   }
 
   /** Not an IntelliJ Renamer. */
-  record Renamer(@NotNull Subst subst) implements EndoFunctor {
+  record Renamer(@NotNull Subst subst) implements EndoTerm {
     public Renamer() {
       this(new Subst(MutableMap.create()));
     }
@@ -90,7 +90,7 @@ public interface EndoFunctor extends Function<Term, Term> {
   }
 
   /** A lift but in American English. */
-  record Elevator(int lift) implements EndoFunctor {
+  record Elevator(int lift) implements EndoTerm {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case FormTerm.Type univ -> new FormTerm.Type(univ.lift() + lift);

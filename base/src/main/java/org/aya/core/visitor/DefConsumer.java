@@ -3,7 +3,6 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
@@ -19,7 +18,7 @@ public interface DefConsumer extends TermConsumer {
     this.accept(def.result());
   }
 
-  default void visitMatching(@NotNull Matching matching) {
+  default void visitMatching(@NotNull Term.Matching matching) {
     matching.patterns().forEach(this::visitPat);
     this.accept(matching.body());
   }

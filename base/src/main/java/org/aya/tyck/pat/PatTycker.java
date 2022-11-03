@@ -13,8 +13,7 @@ import kala.tuple.Tuple3;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.visitor.PatternTraversal;
-import org.aya.core.Matching;
+import org.aya.concrete.visitor.PatternConsumer;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
@@ -22,8 +21,9 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
-import org.aya.core.visitor.EndoFunctor;
+import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
+import org.aya.generic.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -49,7 +49,7 @@ import java.util.function.Supplier;
  * @author ice1000
  */
 public final class PatTycker {
-  public static final EndoFunctor META_PAT_INLINER = new EndoFunctor() {
+  public static final EndoTerm META_PAT_INLINER = new EndoTerm() {
     @Override public @NotNull Term post(@NotNull Term term) {
       return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
     }
@@ -104,7 +104,7 @@ public final class PatTycker {
   public record PatResult(
     @NotNull Term result,
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
-    @NotNull ImmutableSeq<Matching> matchings
+    @NotNull ImmutableSeq<Term.Matching> matchings
   ) {
   }
 
@@ -179,10 +179,14 @@ public final class PatTycker {
     var type = inlineTerm(step0._2);
     patSubst.inline();
     sigSubst.inline();
-    PatternTraversal.visit(p -> {
-      if (p instanceof Pattern.Bind bind)
-        bind.type().update(t -> t == null ? null : inlineTerm(t));
-    }, match.patterns);
+    var consumer = new PatternConsumer() {
+      @Override public void pre(@NotNull Pattern pat) {
+        if (pat instanceof Pattern.Bind bind)
+          bind.type().update(t -> t == null ? null : inlineTerm(t));
+        PatternConsumer.super.pre(pat);
+      }
+    };
+    match.patterns.forEach(consumer::accept);
 
     var subst = patSubst.derive().addDirectly(sigSubst);
     var step1 = new LhsResult(exprTycker.localCtx, type, subst,
@@ -526,7 +530,7 @@ public final class PatTycker {
   public static Result<Subst, Boolean>
   mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) {
-      return PatMatcher.tryBuildSubstArgs(ctx, ctor.pats, dataCall.args().view(), state);
+      return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view().map(Arg::term), t -> t.normalize(state, NormalizeMode.WHNF));
     } else {
       return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
     }

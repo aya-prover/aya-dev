@@ -35,152 +35,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * @author re-xyr
  */
 public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr> {
-  default @NotNull Expr descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
-    return switch (this) {
-      case Expr.RefExpr ref -> ref;
-      case Expr.UnresolvedExpr unresolved -> unresolved;
-      case Expr.LamExpr lam -> {
-        var param = lam.param().descent(f);
-        var body = f.apply(lam.body());
-        if (param == lam.param() && body == lam.body()) yield lam;
-        yield new Expr.LamExpr(lam.sourcePos(), param, body);
-      }
-      case Expr.PiExpr pi -> {
-        var param = pi.param().descent(f);
-        var last = f.apply(pi.last());
-        if (param == pi.param() && last == pi.last()) yield pi;
-        yield new Expr.PiExpr(pi.sourcePos(), param, last);
-      }
-      case Expr.SigmaExpr sigma -> {
-        var params = sigma.params().map(param -> param.descent(f));
-        if (params.sameElements(sigma.params(), true)) yield sigma;
-        yield new Expr.SigmaExpr(sigma.sourcePos(), params);
-      }
-      case Expr.RawSortExpr rawType -> rawType;
-      case Expr.LiftExpr lift -> {
-        var inner = f.apply(lift.expr());
-        if (inner == lift.expr()) yield lift;
-        yield new Expr.LiftExpr(lift.sourcePos(), inner, lift.lift());
-      }
-      case Expr.SortExpr univ -> univ;
-      case Expr.AppExpr(var pos,var fun,var a) -> {
-        var func = f.apply(fun);
-        var arg = a.descent(f);
-        if (func == fun && arg == a) yield this;
-        yield new Expr.AppExpr(pos, func, arg);
-      }
-      case Expr.HoleExpr hole -> {
-        var filling = hole.filling();
-        var committed = filling != null ? f.apply(filling) : null;
-        if (committed == filling) yield hole;
-        yield new Expr.HoleExpr(hole.sourcePos(), hole.explicit(), committed, hole.accessibleLocal());
-      }
-      case Expr.TupExpr tup -> {
-        var items = tup.items().map(f);
-        if (items.sameElements(tup.items(), true)) yield tup;
-        yield new Expr.TupExpr(tup.sourcePos(), items);
-      }
-      case Expr.ProjExpr proj -> {
-        var tup = f.apply(proj.tup());
-        if (tup == proj.tup()) yield proj;
-        yield new Expr.ProjExpr(proj.sourcePos(), tup, proj.ix(), proj.resolvedVar(), proj.theCore());
-      }
-      case Expr.RawProjExpr proj -> {
-        var tup = f.apply(proj.tup());
-        var coeLeft = proj.coeLeft() != null ? f.apply(proj.coeLeft()) : null;
-        var restr = proj.restr() != null ? f.apply(proj.restr()) : null;
-        if (tup == proj.tup() && coeLeft == proj.coeLeft() && restr == proj.restr()) yield proj;
-        yield new Expr.RawProjExpr(proj.sourcePos(), tup, proj.id(), proj.resolvedVar(), coeLeft, restr);
-      }
-      case Expr.CoeExpr coe -> {
-        var type = f.apply(coe.type());
-        var restr = f.apply(coe.restr());
-        if (type == coe.type() && restr == coe.restr()) yield coe;
-        yield new Expr.CoeExpr(coe.sourcePos(), coe.id(), coe.resolvedVar(), type, restr);
-      }
-      case Expr.NewExpr neu -> {
-        var struct = f.apply(neu.struct());
-        var fields = neu.fields().map(field ->
-          new Expr.Field(field.name(), field.bindings(), f.apply(field.body()), field.resolvedField()));
-        if (struct == neu.struct() && fields.sameElements(neu.fields(), true)) yield neu;
-        yield new Expr.NewExpr(neu.sourcePos(), struct, fields);
-      }
-      case Expr.PartEl el -> {
-        var clauses = el.clauses().map(cls -> Tuple.of(f.apply(cls._1), f.apply(cls._2)));
-        if (clauses.allMatchWith(el.clauses(), (l, r) ->
-          l._1 == r._1 && l._2 == r._2)) yield el;
-        yield new Expr.PartEl(el.sourcePos(), clauses);
-      }
-      case Expr.Path path -> {
-        var partial = (PartEl) path.partial().descent(f);
-        var type = f.apply(path.type());
-        if (partial == path.partial() && type == path.type()) yield path;
-        yield new Expr.Path(path.sourcePos(), path.params(), type, partial);
-      }
-      case Expr.LitIntExpr litInt -> litInt;
-      case Expr.LitStringExpr litStr -> litStr;
-      case Expr.BinOpSeq binOpSeq -> {
-        var seq = binOpSeq.seq().map(arg -> arg.descent(f));
-        if (seq.sameElements(binOpSeq.seq(), true)) yield binOpSeq;
-        yield new Expr.BinOpSeq(binOpSeq.sourcePos(), seq);
-      }
-      case Expr.ErrorExpr error -> error;
-      case Expr.MetaPat meta -> meta;
-      case Expr.Idiom idiom -> {
-        var newInner = idiom.barredApps().map(f);
-        var newNames = idiom.names().fmap(f);
-        if (newInner.sameElements(idiom.barredApps()) && newNames.identical(idiom.names())) yield idiom;
-        yield new Expr.Idiom(idiom.sourcePos(), newNames, newInner);
-      }
-      case Expr.Do doNotation -> {
-        var lamExprs = doNotation.binds().map(x ->
-          new Expr.DoBind(x.sourcePos(), x.var(), f.apply(x.expr())));
-        var bindName = f.apply(doNotation.bindName());
-        if (lamExprs.sameElements(doNotation.binds()) && bindName == doNotation.bindName())
-          yield doNotation;
-        yield new Expr.Do(doNotation.sourcePos(), bindName, lamExprs);
-      }
-      case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
-        left -> {
-          var generator = f.apply(left.generator());
-          var bindings = left.binds().map(binding ->
-            new Expr.DoBind(binding.sourcePos(), binding.var(), f.apply(binding.expr()))
-          );
-          var bindName = f.apply(left.bindName());
-          var pureName = f.apply(left.pureName());
-
-          if (generator == left.generator() && bindings.sameElements(left.binds()) && bindName == left.bindName() && pureName == left.pureName()) {
-            return arrayExpr;
-          } else {
-            return Expr.Array.newGenerator(arrayExpr.sourcePos(), generator, bindings, bindName, pureName);
-          }
-        },
-        right -> {
-          var exprs = right.exprList().map(f);
-
-          if (exprs.sameElements(right.exprList())) {
-            return arrayExpr;
-          } else {
-            return Expr.Array.newList(arrayExpr.sourcePos(), exprs);
-          }
-        }
-      );
-    };
-  }
+  @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f);
   /**
    * @see org.aya.concrete.stmt.Stmt#resolve
    * @see StmtShallowResolver
    */
   @Contract(pure = true)
   default Expr resolve(@NotNull ModuleContext context) {
-    var exprResolver = new ExprResolver(ExprResolver.RESTRICTIVE);
+    var exprResolver = new ExprResolver(context, ExprResolver.RESTRICTIVE);
     exprResolver.enterBody();
-    return exprResolver.resolve(this, context);
+    return exprResolver.apply(this);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
@@ -206,6 +76,9 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, new QualifiedID(sourcePos, name));
     }
 
+    @Override public @NotNull UnresolvedExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
   }
 
   record ErrorExpr(@NotNull SourcePos sourcePos, @NotNull AyaDocile description) implements Expr {
@@ -213,6 +86,9 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, options -> description);
     }
 
+    @Override public @NotNull ErrorExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
   }
 
   /**
@@ -228,6 +104,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, explicit, filling, MutableValue.create());
     }
 
+    public @NotNull HoleExpr update(@Nullable Expr filling) {
+      return filling == filling() ? this : new HoleExpr(sourcePos, explicit, filling);
+    }
+
+    @Override public @NotNull HoleExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(filling == null ? null : f.apply(filling));
+    }
   }
 
   /**
@@ -237,7 +120,15 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull Expr function,
     @NotNull NamedArg argument
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull AppExpr update(@NotNull Expr function, @NotNull NamedArg argument) {
+      return function == function() && argument == argument() ? this : new AppExpr(sourcePos, function, argument);
+    }
+
+    @Override public @NotNull AppExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(function), argument.descent(f));
+    }
+  }
 
   static @NotNull Expr unapp(@NotNull Expr expr, @Nullable MutableList<NamedArg> args) {
     while (expr instanceof AppExpr app) {
@@ -258,10 +149,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(explicit, null, expr);
     }
 
+
+    public @NotNull NamedArg update(@NotNull Expr expr) {
+      return expr == expr() ? this : new NamedArg(explicit, name, expr);
+    }
+
     public @NotNull NamedArg descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
-      var expr = f.apply(expr());
-      if (expr == expr()) return this;
-      return new NamedArg(explicit(), name(), expr);
+      return update(f.apply(expr));
     }
 
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
@@ -280,27 +174,61 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record PiExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Expr.Param param,
+    @NotNull Param param,
     @NotNull Expr last
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull PiExpr update(@NotNull Param param, @NotNull Expr last) {
+      return param == param() && last == last() ? this : new PiExpr(sourcePos, param, last);
+    }
+
+    @Override public @NotNull PiExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(param.descent(f), f.apply(last));
+    }
+  }
 
   record Do(
     @NotNull SourcePos sourcePos,
     @NotNull Expr bindName,
     @NotNull ImmutableSeq<DoBind> binds
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull Do update(@NotNull Expr bindName, @NotNull ImmutableSeq<DoBind> binds) {
+      return bindName == bindName() && binds.sameElements(binds(), true) ? this
+        : new Do(sourcePos, bindName, binds);
+    }
+
+    @Override public @NotNull Do descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(bindName), binds.map(bind -> bind.descent(f)));
+    }
+  }
 
   record DoBind(
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar var,
     @NotNull Expr expr
-  ) {}
+  ) {
+    public @NotNull DoBind update(@NotNull Expr expr) {
+      return expr == expr() ? this : new DoBind(sourcePos, var, expr);
+    }
+
+    public @NotNull DoBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(expr));
+    }
+  }
 
   record Idiom(
     @NotNull SourcePos sourcePos,
-    @NotNull Expr.IdiomNames names,
+    @NotNull IdiomNames names,
     @NotNull ImmutableSeq<Expr> barredApps
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull Idiom update(@NotNull IdiomNames names, @NotNull ImmutableSeq<Expr> barredApps) {
+      return names.identical(names()) && barredApps.sameElements(barredApps(), true) ? this
+        : new Idiom(sourcePos, names, barredApps);
+    }
+
+    @Override public @NotNull Idiom descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(names.fmap(f), barredApps.map(f));
+    }
+  }
 
   record IdiomNames(
     @NotNull Expr alternativeEmpty,
@@ -329,9 +257,17 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record LamExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Expr.Param param,
+    @NotNull Param param,
     @NotNull Expr body
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull LamExpr update(@NotNull Param param, @NotNull Expr body) {
+      return param == param() && body == body() ? this : new LamExpr(sourcePos, param, body);
+    }
+
+    @Override public @NotNull LamExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(param.descent(f), f.apply(body));
+    }
+  }
 
   /**
    * @author re-xyr
@@ -339,7 +275,15 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record SigmaExpr(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<@NotNull Param> params
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull SigmaExpr update(@NotNull ImmutableSeq<@NotNull Param> params) {
+      return params.sameElements(params(), true) ? this : new SigmaExpr(sourcePos, params);
+    }
+
+    @Override public @NotNull SigmaExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(params.map(param -> param.descent(f)));
+    }
+  }
 
   /**
    * <pre>
@@ -358,19 +302,38 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, resolvedVar, MutableValue.create());
     }
 
+    @Override public @NotNull RefExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
   }
 
-  record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {}
+  record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {
+    public @NotNull LiftExpr update(@NotNull Expr expr) {
+      return expr == expr() ? this : new LiftExpr(sourcePos, expr, lift);
+    }
+
+    @Override public @NotNull LiftExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(expr));
+    }
+  }
 
   /**
    * @author tsao-chi
    */
-  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull SortKind kind) implements Expr {}
+  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull SortKind kind) implements Expr {
+    @Override public @NotNull RawSortExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
+  }
 
   sealed interface SortExpr extends Expr {
     int lift();
 
     SortKind kind();
+
+    @Override default @NotNull SortExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
   }
 
   record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
@@ -411,7 +374,15 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record TupExpr(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<@NotNull Expr> items
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull TupExpr update(@NotNull ImmutableSeq<@NotNull Expr> items) {
+      return items.sameElements(items(), true) ? this : new TupExpr(sourcePos, items);
+    }
+
+    @Override public @NotNull TupExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(items.map(f));
+    }
+  }
 
   /**
    * @param resolvedVar will be set to the field's DefVar during resolving
@@ -430,6 +401,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     ) {
       this(sourcePos, tup, ix, null, MutableValue.create());
     }
+
+    public @NotNull ProjExpr update(@NotNull Expr tup) {
+      return tup == tup() ? this : new ProjExpr(sourcePos, tup, ix, resolvedVar, theCore);
+    }
+
+    @Override public @NotNull ProjExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(tup));
+    }
   }
 
   /** undesugared overloaded projection as coercion syntax */
@@ -441,6 +420,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @Nullable Expr coeLeft,
     @Nullable Expr restr
   ) implements Expr {
+    public @NotNull RawProjExpr update(@NotNull Expr tup, @Nullable Expr coeLeft, @Nullable Expr restr) {
+      return tup == tup() && coeLeft == coeLeft() && restr == restr() ? this
+        : new RawProjExpr(sourcePos, tup, id, resolvedVar, coeLeft, restr);
+    }
+
+    @Override public @NotNull RawProjExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(tup), coeLeft == null ? null : f.apply(coeLeft), restr == null ? null : f.apply(restr));
+    }
   }
 
   /**
@@ -456,13 +443,29 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr type,
     @NotNull Expr restr
   ) implements Expr {
+    public @NotNull CoeExpr update(@NotNull Expr type, @NotNull Expr restr) {
+      return type == type() && restr == restr() ? this : new CoeExpr(sourcePos, id, resolvedVar, type, restr);
+    }
+
+    @Override public @NotNull CoeExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(type), f.apply(restr));
+    }
   }
 
   record NewExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr struct,
     @NotNull ImmutableSeq<Field> fields
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull NewExpr update(@NotNull Expr struct, @NotNull ImmutableSeq<Field> fields) {
+      return struct == struct() && fields.sameElements(fields(), true) ? this
+        : new NewExpr(sourcePos, struct, fields);
+    }
+
+    @Override public @NotNull NewExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(struct), fields.map(field -> field.descent(f)));
+    }
+  }
 
   /**
    * @param resolvedField will be modified during tycking for LSP to function properly.
@@ -472,16 +475,55 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
     @NotNull Expr body,
     @ForLSP @NotNull MutableValue<AnyVar> resolvedField
-  ) {}
+  ) {
+    public @NotNull Field update(@NotNull Expr body) {
+      return body == body() ? this : new Field(name, bindings, body, resolvedField);
+    }
+
+    public @NotNull Field descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(body));
+    }
+  }
+
+  record Match(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<Expr> discriminant,
+    @NotNull ImmutableSeq<Pattern.Clause> clauses
+  ) implements Expr {
+    public @NotNull Match update(@NotNull ImmutableSeq<Expr> discriminant, @NotNull ImmutableSeq<Pattern.Clause> clauses) {
+      return discriminant.sameElements(discriminant(), true) && clauses.sameElements(clauses(), true) ? this
+        : new Match(sourcePos, discriminant, clauses);
+    }
+
+    @Override public @NotNull Match descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(discriminant.map(f), clauses.map(cl -> cl.descent(f)));
+    }
+
+    public @NotNull Match descent(@NotNull UnaryOperator<@NotNull Expr> f, @NotNull UnaryOperator<@NotNull Pattern> g) {
+      return update(discriminant.map(f), clauses.map(cl -> cl.descent(f, g)));
+    }
+  }
 
   /**
    * @author kiva
    */
-  record LitIntExpr(@NotNull SourcePos sourcePos, int integer) implements Expr {}
+  record LitIntExpr(@NotNull SourcePos sourcePos, int integer) implements Expr {
+    @Override public @NotNull LitIntExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
+  }
 
-  record LitStringExpr(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {}
+  record LitStringExpr(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {
+    @Override public @NotNull LitStringExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
+  }
 
-  record MetaPat(@NotNull SourcePos sourcePos, Pat.Meta meta) implements Expr {}
+  record MetaPat(@NotNull SourcePos sourcePos, Pat.Meta meta) implements Expr {
+    @Override public @NotNull MetaPat descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
+  }
 
   /**
    * @author kiva
@@ -489,13 +531,30 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<NamedArg> seq
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull BinOpSeq update(@NotNull ImmutableSeq<NamedArg> seq) {
+      return seq.sameElements(seq(), true) ? this : new BinOpSeq(sourcePos, seq);
+    }
+
+    @Override public @NotNull BinOpSeq descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(seq.map(arg -> arg.descent(f)));
+    }
+  }
 
   /** partial element */
   record PartEl(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Tuple2<Expr, Expr>> clauses
-  ) implements Expr {}
+  ) implements Expr {
+    public @NotNull PartEl update(@NotNull ImmutableSeq<Tuple2<Expr, Expr>> clauses) {
+      return clauses.allMatchWith(clauses(), (l, r) -> l._1 == r._1 && l._2 == r._2) ? this
+        : new PartEl(sourcePos, clauses);
+    }
+
+    @Override public @NotNull PartEl descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(clauses.map(cls -> Tuple.of(f.apply(cls._1), f.apply(cls._2))));
+    }
+  }
 
   /** generalized path type */
   record Path(
@@ -504,6 +563,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr type,
     @NotNull PartEl partial
   ) implements Expr {
+    public @NotNull Path update(@NotNull Expr type, @NotNull PartEl partial) {
+      return type == type() && partial == partial() ? this : new Path(sourcePos, params, type, partial);
+    }
+
+    @Override public @NotNull Path descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(type), partial.descent(f));
+    }
   }
 
   /**
@@ -523,10 +589,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, var, new HoleExpr(sourcePos, false, null), explicit);
     }
 
+    public @NotNull Param update(@NotNull Expr type) {
+      return type == type() ? this : new Param(sourcePos, ref, type, explicit);
+    }
+
     public @NotNull Param descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
-      var type = f.apply(type());
-      if (type == type()) return this;
-      return new Param(this, type);
+      return update(f.apply(type));
     }
   }
 
@@ -541,7 +609,29 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @Override @NotNull SourcePos sourcePos,
     @NotNull Either<CompBlock, ElementList> arrayBlock
   ) implements Expr {
-    public record ElementList(@NotNull ImmutableSeq<Expr> exprList) {}
+    public @NotNull Array update(@NotNull Either<CompBlock, ElementList> arrayBlock) {
+      if (arrayBlock.isLeft() && arrayBlock().isLeft() && arrayBlock.getLeftValue() == arrayBlock().getLeftValue()) {
+        return this;
+      } else if (arrayBlock.isRight() && arrayBlock().isRight() && arrayBlock.getRightValue() == arrayBlock().getRightValue()) {
+        return this;
+      } else {
+        return new Array(sourcePos, arrayBlock);
+      }
+    }
+
+    @Override public @NotNull Array descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(arrayBlock.map(comp -> comp.descent(f), list -> list.descent(f)));
+    }
+
+    public record ElementList(@NotNull ImmutableSeq<Expr> exprList) {
+      public @NotNull ElementList update(@NotNull ImmutableSeq<Expr> exprList) {
+        return exprList.sameElements(exprList(), true) ? this : new ElementList(exprList);
+      }
+
+      public @NotNull ElementList descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+        return update(exprList.map(f));
+      }
+    }
 
     /**
      * <h1>Array Comp(?)</h1>
@@ -566,7 +656,16 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       @NotNull ImmutableSeq<DoBind> binds,
       @NotNull Expr bindName,
       @NotNull Expr pureName
-    ) {}
+    ) {
+      public @NotNull CompBlock update(@NotNull Expr generator, @NotNull ImmutableSeq<DoBind> binds, @NotNull Expr bindName, @NotNull Expr pureName) {
+        return generator == generator() && binds.sameElements(binds(), true) && bindName == bindName() && pureName == pureName() ? this
+          : new CompBlock(generator, binds, bindName, pureName);
+      }
+
+      public @NotNull CompBlock descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+        return update(f.apply(generator), binds.map(bind -> bind.descent(f)), f.apply(bindName), f.apply(pureName));
+      }
+    }
 
     /**
      * helper constructor, also find constructor calls easily in IDE

@@ -4,29 +4,21 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.value.MutableValue;
-import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.error.OperatorError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
-import org.aya.core.def.CtorDef;
-import org.aya.core.def.PrimDef;
 import org.aya.ref.DefVar;
-import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.util.binop.OpDecl;
-import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Resolves expressions inside stmts, after {@link StmtShallowResolver}
@@ -48,10 +40,10 @@ public interface StmtResolver {
       case Remark remark -> info.depGraph().sucMut(new TyckOrder.Body(remark)).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize variables -> {
-        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
-        resolver.enterBody();
         assert variables.ctx != null;
-        variables.type = resolver.resolve(variables.type, variables.ctx);
+        var resolver = new ExprResolver(variables.ctx, ExprResolver.RESTRICTIVE);
+        resolver.enterBody();
+        variables.type = resolver.apply(variables.type);
         addReferences(info, new TyckOrder.Body(variables), resolver);
       }
     }
@@ -62,59 +54,54 @@ public interface StmtResolver {
     switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.FnDecl decl -> {
-        var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), local._1);
-        local._1.enterBody();
-        var bodyResolver = local._1.body();
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
+        addReferences(info, new TyckOrder.Head(decl), resolver);
+        var bodyResolver = resolver.body();
         bodyResolver.enterBody();
-        decl.body = decl.body.map(
-          expr -> bodyResolver.resolve(expr, local._2),
-          pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
-        addReferences(info, new TyckOrder.Body(decl), local._1);
+        decl.body = decl.body.map(bodyResolver, pats -> pats.map(bodyResolver::apply));
+        addReferences(info, new TyckOrder.Body(decl), resolver);
       }
       case TeleDecl.DataDecl decl -> {
-        var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), local._1);
-        local._1.enterBody();
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
+        addReferences(info, new TyckOrder.Head(decl), resolver);
+        resolver.enterBody();
         decl.body.forEach(ctor -> {
-          var bodyResolver = local._1.member(decl);
+          var bodyResolver = resolver.member(decl);
           bodyResolver.enterHead();
-          var localCtxWithPat = MutableValue.create(local._2);
-          ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
-          var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.get());
-          ctor.telescope = ctorLocal._1.toImmutableSeq();
+          var mCtx = MutableValue.create(resolver.ctx());
+          ctor.patterns = ctor.patterns.map(pattern -> ExprResolver.resolve(pattern, mCtx));
+          ctor.telescope = ctor.telescope.map(param -> bodyResolver.resolve(param, mCtx));
           addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));
 
           bodyResolver.enterBody();
-          ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
+          ctor.clauses = ctor.clauses.map(bodyResolver.enter(mCtx.get())::apply);
           addReferences(info, new TyckOrder.Body(ctor), bodyResolver);
         });
-        addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
+        addReferences(info, new TyckOrder.Body(decl), resolver.reference().view()
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
       case TeleDecl.StructDecl decl -> {
-        var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), local._1);
-        local._1.enterBody();
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
+        addReferences(info, new TyckOrder.Head(decl), resolver);
+        resolver.enterBody();
         decl.fields.forEach(field -> {
-          var bodyResolver = local._1.member(decl);
+          var bodyResolver = resolver.member(decl);
           bodyResolver.enterHead();
-          var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
-          field.telescope = fieldLocal._1.toImmutableSeq();
-          field.result = bodyResolver.resolve(field.result, fieldLocal._2);
+          var mCtx = MutableValue.create(resolver.ctx());
+          field.telescope = field.telescope.map(param -> bodyResolver.resolve(param, mCtx));
+          field.result = bodyResolver.enter(mCtx.get()).apply(field.result);
           addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));
-
           bodyResolver.enterBody();
-          field.body = field.body.map(e -> bodyResolver.resolve(e, fieldLocal._2));
+          field.body = field.body.map(bodyResolver.enter(mCtx.get()));
           addReferences(info, new TyckOrder.Body(field), bodyResolver);
         });
-        addReferences(info, new TyckOrder.Body(decl), local._1.reference().view()
+        addReferences(info, new TyckOrder.Body(decl), resolver.reference().view()
           .concat(decl.fields.map(TyckOrder.Body::new)));
       }
       case TeleDecl.PrimDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
+        var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE);
         addReferences(info, new TyckOrder.Head(decl), resolver);
         addReferences(info, new TyckOrder.Body(decl), SeqView.empty());
       }
@@ -135,16 +122,16 @@ public interface StmtResolver {
     addReferences(info, decl, resolver.reference().view());
   }
 
-  private static @NotNull Tuple2<ExprResolver, Context>
-  resolveDeclSignature(@NotNull TeleDecl decl, ExprResolver.@NotNull Options options) {
-    var resolver = new ExprResolver(options);
+  private static @NotNull ExprResolver resolveDeclSignature(@NotNull TeleDecl decl, ExprResolver.@NotNull Options options) {
+    assert decl.ctx != null;
+    var resolver = new ExprResolver(decl.ctx, options);
     resolver.enterHead();
-    var local = resolver.resolveParams(decl.telescope, decl.ctx);
-    decl.result = resolver.resolve(decl.result, local._2);
-    decl.telescope = local._1
-      .prependedAll(resolver.allowedGeneralizes().valuesView())
-      .toImmutableSeq();
-    return Tuple.of(resolver, local._2);
+    var mCtx = MutableValue.create(decl.ctx);
+    var telescope = decl.telescope.map(param -> resolver.resolve(param, mCtx));
+    var newResolver = resolver.enter(mCtx.get());
+    decl.result = newResolver.apply(decl.result);
+    decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
+    return newResolver;
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
@@ -209,74 +196,6 @@ public interface StmtResolver {
       case Command cmd -> {}
       case Generalize generalize -> {}
     }
-  }
-
-  static Pattern.Clause matchy(
-    @NotNull Pattern.Clause match,
-    @NotNull Context context,
-    @NotNull ExprResolver bodyResolver
-  ) {
-    var ctx = MutableValue.create(context);
-    var pats = match.patterns.map(pat -> subpatterns(ctx, pat));
-    return new Pattern.Clause(match.sourcePos, pats,
-      match.expr.map(e -> bodyResolver.resolve(e, ctx.get())));
-  }
-
-  static @NotNull Pattern subpatterns(@NotNull MutableValue<Context> ctx, Pattern pat) {
-    var res = resolve(pat, ctx.get());
-    ctx.set(res._1);
-    return res._2;
-  }
-
-  static Context bindAs(LocalVar as, Context ctx, SourcePos sourcePos) {
-    return as != null ? ctx.bind(as, sourcePos) : ctx;
-  }
-
-  static Tuple2<Context, Pattern> resolve(@NotNull Pattern pattern, Context context) {
-    return switch (pattern) {
-      case Pattern.Tuple tuple -> {
-        var newCtx = MutableValue.create(context);
-        var patterns = tuple.patterns().map(p -> subpatterns(newCtx, p));
-        yield Tuple.of(
-          bindAs(tuple.as(), newCtx.get(), tuple.sourcePos()),
-          new Pattern.Tuple(tuple.sourcePos(), tuple.explicit(), patterns, tuple.as()));
-      }
-      case Pattern.Bind bind -> {
-        var maybe = findPatternDef(context, bind.sourcePos(), bind.bind().name());
-        if (maybe != null) yield Tuple.of(context, new Pattern.Ctor(bind, maybe));
-        else yield Tuple.of(context.bind(bind.bind(), bind.sourcePos(), var -> false), bind);
-      }
-      // We will never have Ctor instances before desugar.
-      case Pattern.BinOpSeq seq -> {
-        var newCtx = MutableValue.create(context);
-        var pats = seq.seq().map(p -> subpatterns(newCtx, p));
-        yield Tuple.of(
-          bindAs(seq.as(), newCtx.get(), seq.sourcePos()),
-          new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.as(), seq.explicit()));
-      }
-      // resolve inner pattern but not desugar
-      case Pattern.List list -> {
-        var newCtx = MutableValue.create(context);
-
-        // resolve subpatterns
-        var subpats = list.elements().map(x -> subpatterns(newCtx, x));
-
-        yield Tuple.of(
-          bindAs(list.as(), newCtx.get(), list.sourcePos()),
-          new Pattern.List(list.sourcePos(), list.explicit(), subpats, list.as()));
-      }
-      default -> Tuple.of(context, pattern);
-    };
-  }
-
-  static @Nullable DefVar<?, ?> findPatternDef(Context context, SourcePos namePos, String name) {
-    return context.iterate(c -> {
-      var maybe = c.getUnqualifiedLocalMaybe(name, namePos);
-      if (!(maybe instanceof DefVar<?, ?> defVar)) return null;
-      if (defVar.core instanceof CtorDef || defVar.concrete instanceof TeleDecl.DataCtor) return defVar;
-      if (defVar.core instanceof PrimDef || defVar.concrete instanceof TeleDecl.PrimDecl) return defVar;
-      return null;
-    });
   }
 
   @Contract("_, _ -> fail")

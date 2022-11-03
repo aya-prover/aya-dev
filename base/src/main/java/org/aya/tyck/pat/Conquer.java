@@ -4,7 +4,6 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
@@ -15,6 +14,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
@@ -28,14 +28,14 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Conquer(
-  @NotNull ImmutableSeq<Matching> matchings,
+  @NotNull ImmutableSeq<Term.Matching> matchings,
   @NotNull SourcePos sourcePos,
   @NotNull Def.Signature signature,
   boolean orderIndependent,
   @NotNull ExprTycker tycker
 ) {
   public static void against(
-    @NotNull ImmutableSeq<Matching> matchings, boolean orderIndependent,
+    @NotNull ImmutableSeq<Term.Matching> matchings, boolean orderIndependent,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
     var conquer = new Conquer(matchings, pos, signature, orderIndependent, tycker);
@@ -55,7 +55,7 @@ public record Conquer(
           var condition = conditions.get(i);
           var matchy = PatMatcher.tryBuildSubstTerms(null, params,
             condition.patterns().view().map(Pat::toTerm),
-            tycker.state);
+            t -> t.normalize(tycker.state, NormalizeMode.WHNF));
           if (matchy.isOk()) {
             var ctx = new MapLocalCtx();
             condition.patterns().forEach(tern -> tern.storeBindings(ctx));

@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
-import org.aya.core.Matching;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ElimTerm;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author wsx
  * @see BetaExpander
  */
-public interface DeltaExpander extends EndoFunctor {
+public interface DeltaExpander extends EndoTerm {
   @NotNull TyckState state();
 
   static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, @NotNull SeqLike<Arg<Term>> args) {
@@ -69,22 +68,15 @@ public interface DeltaExpander extends EndoFunctor {
 
   default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
     boolean orderIndependent, @NotNull SeqLike<Arg<Term>> args,
-    @NotNull Subst subst, int ulift, @NotNull ImmutableSeq<Matching> clauses
+    int ulift, @NotNull ImmutableSeq<Term.Matching> clauses
   ) {
     for (var matchy : clauses) {
-      var termSubst = PatMatcher.tryBuildSubstArgs(null, matchy.patterns(), args, state());
-      if (termSubst.isOk()) {
-        subst.add(termSubst.get());
-        var newBody = matchy.body().rename().lift(ulift).subst(subst);
+      var subst = PatMatcher.tryBuildSubstTerms(null, matchy.patterns(), args.view().map(Arg::term), this);
+      if (subst.isOk()) {
+        var newBody = matchy.body().rename().lift(ulift).subst(subst.get());
         return Option.some(new WithPos<>(matchy.sourcePos(), newBody));
-      } else if (!orderIndependent && termSubst.getErr()) return Option.none();
+      } else if (!orderIndependent && subst.getErr()) return Option.none();
     }
     return Option.none();
-  }
-  default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
-    boolean orderIndependent, @NotNull SeqLike<Arg<Term>> args,
-    int ulift, @NotNull ImmutableSeq<Matching> clauses
-  ) {
-    return tryUnfoldClauses(orderIndependent, args, new Subst(MutableMap.create()), ulift, clauses);
   }
 }

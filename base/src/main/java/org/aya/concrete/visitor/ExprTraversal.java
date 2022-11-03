@@ -25,6 +25,15 @@ public interface ExprTraversal<P> {
       }
       case Expr.TupExpr tup -> tup.items().forEach(i -> visitExpr(i, p));
       case Expr.ProjExpr proj -> visitExpr(proj.tup(), p);
+      case Expr.Match match -> {
+        var discriminant = match.discriminant().map(i -> visitExpr(i, p));
+        var clauses = match.clauses().map(c -> {
+          var patterns = c.patterns.map(pat -> visitPattern(pat, p));
+          var body = c.expr.map(i -> visitExpr(i, p));
+          return new Pattern.Clause(c.sourcePos, patterns, body);
+        });
+        return new Expr.Match(match.sourcePos(), discriminant, clauses);
+      }
       case Expr.RawProjExpr proj -> {
         visitExpr(proj.tup(), p);
         if (proj.coeLeft() != null) visitExpr(proj.coeLeft(), p);

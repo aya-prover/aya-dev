@@ -31,13 +31,12 @@ module RedBlackEx {
   | black, l, v, rbNode red b y (rbNode red c z d) => rbNode red (rbNode black l v b) y (rbNode black c z d)
   | c, l, v, b => rbNode c l v b
 
-  def insert-lemma (Decider A) (a a1 : A) Color (l1 l2 : RBTree A) Bool : RBTree A
-  | dec<, a, a1, c, l1, l2, true => balanceRight c l1 a1 (insert a l2 dec<)
-  | dec<, a, a1, c, l1, l2, false => balanceLeft c (insert a l1 dec<) a1 l2
-
   def insert A (RBTree A) (Decider A) : RBTree A
   | a, rbLeaf, dec< => rbNode red rbLeaf a rbLeaf
-  | a, rbNode c l1 a1 l2, dec< => insert-lemma dec< a a1 c l1 l2 (dec< a1 a)
+  | a, rbNode c l1 a1 l2, dec< => match dec< a1 a {
+    | true => balanceRight c l1 a1 (insert a l2 dec<)
+    | false => balanceLeft c (insert a l1 dec<) a1 l2
+  }
 
   def aux (List A) (RBTree A) (Decider A) : RBTree A
   | nil, r, dec< => r
@@ -100,21 +99,18 @@ module RedBlackIn {
 
   def insertBlack (Tree A black n) A (Decider A) : HTree A n
   | rbLeaf, x, dec< => hRed (rbRed rbLeaf x rbLeaf)
-  | rbBlack l y r, x, dec< => insertBlack-lemma dec< l y r x (dec< x y)
-
-  def insertBlack-lemma (Decider A) (Tree A c1 n) A (Tree A c2 n) A Bool : HTree A (suc n)
-  | dec<, l, y, r, x, true => balanceLeftBlack (insertRed l x dec<) y r
-  | dec<, l, y, r, x, false => balanceRightBlack l x (insertRed r x dec<)
+  | rbBlack l y r, x, dec< => match dec< x y {
+    | true => balanceLeftBlack (insertRed l x dec<) y r
+    | false => balanceRightBlack l x (insertRed r x dec<)
+  }
 
   def insertRed (Tree A c n) A (Decider A) : AlmostTree A n
   | rbLeaf, x, dec< => forget (insertBlack rbLeaf x dec<)
   | rbBlack l y r, x, dec< => forget (insertBlack (rbBlack l y r) x dec<)
-  | rbRed l y r, x, dec< => insert-lemma dec< l y r x (dec< x y)
-
-  def insert-lemma (Decider A) (Tree A black n) A (Tree A black n) A Bool
-    : AlmostTree A n
-  | dec<, l, y, r, x, true => balanceLeftRed (insertBlack l x dec<) y r
-  | dec<, l, y, r, x, false => balanceRightRed l y (insertBlack r x dec<)
+  | rbRed l y r, x, dec< => match dec< x y {
+    | true => balanceLeftRed (insertBlack l x dec<) y r
+    | false => balanceRightRed l y (insertBlack r x dec<)
+  }
 
   def dyeRoot (HTree A n) : RBTree A
   | hRed (rbRed l x r) => (_, rbBlack l x r)

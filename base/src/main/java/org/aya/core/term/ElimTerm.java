@@ -107,6 +107,13 @@ public sealed interface ElimTerm extends Term {
   record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
   }
 
+  record Match(@NotNull ImmutableSeq<Term> discriminant, @NotNull ImmutableSeq<Matching> clauses) implements ElimTerm {
+    @Override
+    public @NotNull Term of() {
+      return new IntroTerm.Tuple(discriminant);
+    }
+  }
+
   record PathApp(
     @NotNull Term of,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args,

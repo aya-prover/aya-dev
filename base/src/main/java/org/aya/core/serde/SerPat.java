@@ -3,8 +3,8 @@
 package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
+import org.aya.core.term.Term;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +16,9 @@ import java.io.Serializable;
 public sealed interface SerPat extends Serializable {
   @NotNull Pat de(@NotNull SerTerm.DeState state);
 
-  record Matchy(@NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm body) implements Serializable {
-    public @NotNull Matching de(@NotNull SerTerm.DeState state) {
-      return new Matching(SourcePos.SER, pats.map(pat -> pat.de(state)), body.de(state));
+  record Clause(@NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm body) implements Serializable {
+    public @NotNull Term.Matching de(@NotNull SerTerm.DeState state) {
+      return new Term.Matching(SourcePos.SER, pats.map(pat -> pat.de(state)), body.de(state));
     }
   }
 

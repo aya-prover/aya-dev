@@ -522,6 +522,16 @@ public record AyaGKProducer(
       return new Expr.BinOpSeq(pos, tail.toImmutableSeq());
     }
     if (node.is(PROJ_EXPR)) return buildProj(pos, expr(node.child(EXPR)), node.child(PROJ_FIX));
+    if (node.is(MATCH_EXPR)) {
+      var clauses = node.child(CLAUSES);
+      var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
+      var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
+      return new Expr.Match(
+        sourcePosOf(node),
+        node.child(EXPR_LIST).childrenOfType(EXPR).map(this::expr).toImmutableSeq(),
+        bare.concat(barred).toImmutableSeq()
+      );
+    }
     if (node.is(ARROW_EXPR)) {
       var exprs = node.childrenOfType(EXPR);
       var expr0 = exprs.get(0);

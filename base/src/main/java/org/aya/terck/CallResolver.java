@@ -4,7 +4,6 @@ package org.aya.terck;
 
 import kala.collection.mutable.MutableSet;
 import kala.value.MutableValue;
-import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public record CallResolver(
   @NotNull FnDef caller,
   @NotNull MutableSet<Def> targets,
-  @NotNull MutableValue<Matching> currentMatching,
+  @NotNull MutableValue<Term.Matching> currentMatching,
   @NotNull CallGraph<Def, Term.Param> graph
 ) implements DefConsumer {
   public CallResolver(@NotNull FnDef fn, @NotNull MutableSet<Def> targets, @NotNull CallGraph<Def, Term.Param> graph) {
@@ -98,7 +97,7 @@ public record CallResolver(
     };
   }
 
-  @Override public void visitMatching(@NotNull Matching matching) {
+  @Override public void visitMatching(@NotNull Term.Matching matching) {
     this.currentMatching.set(matching);
     DefConsumer.super.visitMatching(matching);
     this.currentMatching.set(null);

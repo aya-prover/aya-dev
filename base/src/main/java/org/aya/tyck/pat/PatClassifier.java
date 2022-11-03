@@ -11,7 +11,6 @@ import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
-import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
@@ -125,7 +124,7 @@ public record PatClassifier(
     });
   }
 
-  private static void domination(Subst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching matching) {
+  private static void domination(Subst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Term.Matching matching) {
     if (rhsSubst.isEmpty())
       reporter.report(new ClausesProblem.Domination(
         lhsIx + 1, rhsIx + 1, matching.sourcePos()));

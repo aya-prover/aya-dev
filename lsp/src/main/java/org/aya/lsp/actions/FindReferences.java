@@ -41,9 +41,10 @@ public interface FindReferences {
     @NotNull SeqView<AnyVar> vars,
     @NotNull SeqView<LibraryOwner> libraries
   ) {
-    var resolver = new Resolver.UsageResolver();
-    vars.forEach(def -> libraries.forEach(lib -> resolve(resolver, lib, def)));
-    return resolver.refs.view();
+    return vars.flatMap(var -> {
+      var resolver = new Resolver.UsageResolver(var);
+      return libraries.flatMap(lib -> resolve(resolver, lib));
+    });
   }
 
   static @NotNull SeqView<SourcePos> findOccurrences(
@@ -56,11 +57,9 @@ public interface FindReferences {
     return defs.concat(refs);
   }
 
-  private static void resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner, @NotNull AnyVar var) {
-    owner.librarySources().forEach(src -> {
-      var program = src.program().get();
-      if (program != null) resolver.visitAll(program, var);
-    });
-    owner.libraryDeps().forEach(dep -> resolve(resolver, dep, var));
+  private static @NotNull SeqView<SourcePos> resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner) {
+    return owner.librarySources().map(src -> src.program().get()).filterNotNull()
+      .flatMap(prog -> prog.view().flatMap(resolver))
+      .concat(owner.libraryDeps().flatMap(dep -> resolve(resolver, dep)));
   }
 }

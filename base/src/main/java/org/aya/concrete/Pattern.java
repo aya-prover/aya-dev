@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * @author kiva, ice1000
@@ -130,10 +131,17 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
       this.expr = expr;
     }
 
-    public @NotNull Clause descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
-      var body = expr.map(f);
-      if (body.sameElements(expr, true)) return this;
-      return new Clause(sourcePos, patterns, body);
+    public @NotNull Clause update(@NotNull ImmutableSeq<Pattern> pats, @NotNull Option<Expr> body) {
+      return body.sameElements(expr, true) && pats.sameElements(patterns, true) ? this
+        : new Clause(sourcePos, pats, body);
+    }
+
+    public @NotNull Clause descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(patterns, expr.map(f));
+    }
+
+    public @NotNull Clause descent(@NotNull UnaryOperator<@NotNull Expr> f, @NotNull UnaryOperator<@NotNull Pattern> g) {
+      return update(patterns.map(g), expr.map(f));
     }
   }
 

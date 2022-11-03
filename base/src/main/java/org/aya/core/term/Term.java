@@ -25,6 +25,7 @@ import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,6 +89,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (tuple == proj.of()) yield proj;
         yield new ElimTerm.Proj(tuple, proj.ix());
       }
+      case ElimTerm.Match match -> {
+        var discriminant = match.discriminant().map(f);
+        var clauses = match.clauses().map(c -> c.descent(f));
+        if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
+          yield match;
+        yield new ElimTerm.Match(discriminant, clauses);
+	  }
       case ErasedTerm erased -> {
         var type = f.apply(erased.type());
         if (type == erased.type()) yield erased;
@@ -197,7 +205,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
 
   default @NotNull Term subst(@NotNull Subst subst) {
-    return new EndoFunctor.Substituter(subst).apply(this);
+    return new EndoTerm.Substituter(subst).apply(this);
   }
 
   default @NotNull Term subst(@NotNull Map<AnyVar, ? extends Term> subst) {
@@ -209,11 +217,11 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
 
   default @NotNull Term rename() {
-    return new EndoFunctor.Renamer().apply(this);
+    return new EndoTerm.Renamer().apply(this);
   }
 
   default int findUsages(@NotNull AnyVar var) {
-    return new MonoidalVarFolder.Usages(var).apply(this);
+    return new TermFolder.Usages(var).apply(this);
   }
 
   default VarConsumer.ScopeChecker scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
@@ -237,7 +245,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
 
   default @NotNull Term freezeHoles(@Nullable TyckState state) {
-    return new EndoFunctor() {
+    return new EndoTerm() {
       @Override public @NotNull Term pre(@NotNull Term term) {
         return term instanceof CallTerm.Hole hole && state != null
           ? state.metas().getOption(hole.ref()).map(this::pre).getOrDefault(term)
@@ -250,7 +258,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
     return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
   }
   default @NotNull Term lift(int ulift) {
-    return new EndoFunctor.Elevator(ulift).apply(this);
+    return new EndoTerm.Elevator(ulift).apply(this);
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return new LittleTyper(state, ctx).term(this);
@@ -324,6 +332,22 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
 
     public @NotNull Param subst(@NotNull Subst subst, int ulift) {
       return new Param(ref, type.subst(subst, ulift), explicit);
+    }
+  }
+
+  record Matching(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull Term body
+  ) implements AyaDocile {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      return Pat.Preclause.weaken(this).toDoc(options);
+    }
+
+    public @NotNull Matching descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+      var body = f.apply(body());
+      if (body == body()) return this;
+      return new Matching(sourcePos, patterns, body);
     }
   }
 }

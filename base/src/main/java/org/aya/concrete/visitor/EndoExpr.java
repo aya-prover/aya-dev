@@ -5,9 +5,9 @@ package org.aya.concrete.visitor;
 import org.aya.concrete.Expr;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
-public interface EndoExpr extends Function<Expr, Expr> {
+public interface EndoExpr extends UnaryOperator<Expr>, EndoPattern {
   default @NotNull Expr pre(@NotNull Expr expr) {
     return expr;
   }
@@ -17,6 +17,9 @@ public interface EndoExpr extends Function<Expr, Expr> {
   }
 
   default @NotNull Expr apply(@NotNull Expr expr) {
-    return post(pre(expr).descent(this));
+    return post(switch (pre(expr)) {
+      case Expr.Match match -> match.descent(this, this::apply);
+      case Expr e -> e.descent(this);
+    });
   }
 }

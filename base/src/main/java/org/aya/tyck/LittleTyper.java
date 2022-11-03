@@ -5,6 +5,7 @@ package org.aya.tyck;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
+import org.aya.core.visitor.BetaExpander;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
@@ -88,6 +89,11 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case ElimTerm.App app -> {
         var piRaw = whnf(term(app.of()));
         yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
+      }
+      case ElimTerm.Match match -> {
+        // TODO: Should I normalize match.discriminant() before matching?
+        var term = BetaExpander.tryMatch(match.discriminant(), match.clauses());
+        yield term.isDefined() ? term(term.get()) : ErrorTerm.typeOf(match);
       }
       case FormTerm.Sort sort -> sort.succ();
       case PrimTerm.Interval interval -> FormTerm.Type.ZERO;

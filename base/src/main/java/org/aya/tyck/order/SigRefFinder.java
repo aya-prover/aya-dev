@@ -9,7 +9,7 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
 import org.aya.concrete.visitor.ExprConsumer;
-import org.aya.core.visitor.MonoidalVarFolder;
+import org.aya.core.visitor.TermFolder;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,9 +17,9 @@ import org.jetbrains.annotations.NotNull;
  * Concrete version of RefFinder but only header is searched.
  *
  * @author kiva
- * @see MonoidalVarFolder.RefFinder
+ * @see TermFolder.RefFinder
  */
-// TODO(wsx): Folder
+// TODO(wsx): Folder?
 public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements ExprConsumer {
   public void accept(@NotNull TyckUnit sn) {
     switch (sn) {

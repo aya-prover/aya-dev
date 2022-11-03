@@ -1,0 +1,13 @@
+open import Arith::Nat
+
+example open data Int : Type
+ | pos Nat
+ | neg Nat { | 0 => pos 0 }
+
+example def abs (n : Int) : Nat
+ => match n, n {
+ | pos n, neg m
+ | neg n, pos m
+ | pos n, pos m => n
+ | neg n, neg m => n
+ }
