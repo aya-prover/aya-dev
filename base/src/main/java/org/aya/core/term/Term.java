@@ -95,7 +95,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
           yield match;
         yield new ElimTerm.Match(discriminant, clauses);
-	  }
+	    }
       case ErasedTerm erased -> {
         var type = f.apply(erased.type());
         if (type == erased.type()) yield erased;
