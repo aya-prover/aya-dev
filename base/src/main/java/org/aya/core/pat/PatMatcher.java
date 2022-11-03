@@ -84,11 +84,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
           default -> throw new Mismatch(true);
         }
       }
-      case Pat.Meta meta -> {
-        var sol = meta.solution().get();
-        assert sol != null : "Unsolved pattern " + meta;
-        match(sol, term);
-      }
+      case Pat.Meta ignored -> throw new InternalException("Pat.Meta is not allowed");
       case Pat.End end -> {
         term = pre.apply(term);
         if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
