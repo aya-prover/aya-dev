@@ -59,11 +59,11 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
    * @throws Mismatch if mismatch
    */
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
-    term = pre.apply(term);
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
       case Pat.Absurd ignored -> throw new InternalException("unreachable");
       case Pat.Ctor ctor -> {
+        term = pre.apply(term);
         switch (term) {
           case CallTerm.Con conCall -> {
             if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
@@ -77,6 +77,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
         }
       }
       case Pat.Tuple tuple -> {
+        term = pre.apply(term);
         switch (term) {
           case IntroTerm.Tuple tup -> visitList(tuple.pats(), tup.items());
           case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
@@ -89,11 +90,13 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
         match(sol, term);
       }
       case Pat.End end -> {
+        term = pre.apply(term);
         if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
           throw new Mismatch(true);
         }
       }
       case Pat.ShapedInt lit -> {
+        term = pre.apply(term);
         switch (term) {
           case LitTerm.ShapedInt litTerm -> {
             if (!lit.compareUntyped(litTerm)) throw new Mismatch(false);
