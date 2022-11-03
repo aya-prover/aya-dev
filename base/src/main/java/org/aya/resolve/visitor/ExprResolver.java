@@ -95,8 +95,11 @@ public record ExprResolver(
     };
   }
 
-  @Override
-  public @NotNull Expr apply(@NotNull Expr expr) {
+  /**
+   * Special handling of terms with binding structure.
+   * We need to invoke a resolver with a different context under the binders.
+   */
+  @Override public @NotNull Expr apply(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Do doExpr -> doExpr.update(apply(doExpr.bindName()), resolve(doExpr.binds(), MutableValue.create(ctx)));
       case Expr.Match match -> {

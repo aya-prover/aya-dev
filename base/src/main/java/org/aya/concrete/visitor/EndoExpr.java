@@ -7,6 +7,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
+/**
+ * A convenient interface to obtain an endomorphism on `Expr`.
+ * One can specify the `pre` and `post` method which represents a recursive step in pre- and post-order respectively.
+ * Additionally, one can define `pre` and `post` logic on patterns as well, since we extend `EndoPattern` here.
+ */
 public interface EndoExpr extends UnaryOperator<Expr>, EndoPattern {
   default @NotNull Expr pre(@NotNull Expr expr) {
     return expr;
