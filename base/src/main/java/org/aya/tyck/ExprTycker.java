@@ -641,14 +641,14 @@ public final class ExprTycker extends Tycker {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
       result = new TermResult(new IntroTerm.Lambda(implicitParam, body), pi);
-    } else result = doInherit(expr, type).checkErased(expr, state, localCtx);
+    } else result = doInherit(expr, type).checkErased(expr, this);
     traceExit(result, expr);
     return result;
   }
 
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var res = doSynthesize(expr).checkErased(expr, state, localCtx);
+    var res = doSynthesize(expr).checkErased(expr, this);
     traceExit(res, expr);
     return res;
   }
@@ -859,9 +859,12 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
     if (wellTyped instanceof FormTerm.Sort) return wellTyped;
-    var sort = type.computeType(state, localCtx);
-    if (sort instanceof FormTerm.Prop) return wellTyped;
+    if (computeType(type) instanceof FormTerm.Prop) return wellTyped;
     return checkIllegalErasure(sourcePos, wellTyped);
+  }
+
+  public @NotNull Term computeType(@NotNull Term type) {
+    return type.computeType(state, localCtx);
   }
 
   private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
@@ -890,12 +893,12 @@ public final class ExprTycker extends Tycker {
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
 
-    default Result checkErased(@NotNull Expr expr, @NotNull TyckState state, @NotNull LocalCtx ctx) {
+    private Result checkErased(@NotNull Expr expr, @NotNull ExprTycker tycker) {
       if (wellTyped() instanceof FormTerm.Sort) return this;
       var type = type();
-      var sort = type.computeType(state, ctx);
-      if (sort instanceof FormTerm.Prop || ElimTerm.isErased(wellTyped()))
-        return new TermResult(new ErasedTerm(type, sort instanceof FormTerm.Prop, expr.sourcePos()), type);
+      var isProp = tycker.computeType(type) instanceof FormTerm.Prop;
+      if (isProp || ElimTerm.isErased(wellTyped()))
+        return new TermResult(new ErasedTerm(type, isProp, expr.sourcePos()), type);
       return this;
     }
   }

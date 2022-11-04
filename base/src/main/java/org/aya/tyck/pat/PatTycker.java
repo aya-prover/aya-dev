@@ -134,9 +134,11 @@ public final class PatTycker {
 
   private @NotNull ImmutableSeq<LhsResult>
   checkAllLhs(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, @NotNull Def.Signature signature) {
+    var inProp = exprTycker.localCtx.with(() ->
+      exprTycker.computeType(signature.result()) instanceof FormTerm.Prop, signature.param().view());
     return clauses.mapIndexed((index, clause) -> traced(
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
-      () -> checkLhs(clause, signature)));
+      () -> checkLhs(clause, signature, inProp)));
   }
 
   private @NotNull PatResult checkAllRhs(
@@ -168,13 +170,11 @@ public final class PatTycker {
   ) {
   }
 
-  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
-    var ctx = exprTycker.localCtx.deriveMap();
-    var resultIsProp = ctx.with((() -> signature.result().computeType(exprTycker.state, ctx) instanceof FormTerm.Prop), signature.param().toArray(new Term.Param[0]));
+  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature, boolean inProp) {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
-    var step0 = visitPatterns(signature, match.patterns.view(), null, resultIsProp);
+    var step0 = visitPatterns(signature, match.patterns.view(), null, inProp);
 
     /// inline
     var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
@@ -462,7 +462,7 @@ public final class PatTycker {
   /**
    * For every implicit parameter that not explicitly (no user given pattern) matched,
    * we generate a MetaPat for each,
-   * so that they can be inferred during {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature)}
+   * so that they can be inferred during {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature, boolean)}
    */
   private @NotNull Def.Signature generatePat(@NotNull PatData data) {
     data = beforeTyck(data);
