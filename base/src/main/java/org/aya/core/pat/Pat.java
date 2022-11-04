@@ -10,9 +10,7 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.CallTerm;
-import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Subst;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Arg;
@@ -48,7 +46,7 @@ public sealed interface Pat extends AyaDocile {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).pat(this, BaseDistiller.Outer.Free);
   }
-  @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit);
+
   @NotNull Pat zonk(@NotNull Tycker tycker);
   /**
    * Make sure you are inline all patterns in order
@@ -73,15 +71,6 @@ public sealed interface Pat extends AyaDocile {
       ctx.put(bind, type);
     }
 
-    @Override
-    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      var newName = new LocalVar(bind.name(), bind.definition());
-      var newBind = new Bind(explicit, newName, type.subst(subst));
-      subst.addDirectly(bind, new RefTerm(newName));
-      localCtx.put(newName, type);
-      return newBind;
-    }
-
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       return new Bind(explicit, bind, tycker.zonk(type));
     }
@@ -91,6 +80,14 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
+
+  /**
+   * Meta for Hole
+   *
+   * @param fakeBind is used when inline if there is no solution.
+   *                 So don't add this to {@link LocalCtx} too early
+   *                 and remember to inline Meta in {@link PatTycker#checkLhs}
+   */
   record Meta(
     boolean explicit,
     @NotNull MutableValue<Pat> solution,
@@ -117,23 +114,16 @@ public sealed interface Pat extends AyaDocile {
         solution.set(bind);
         ctx.put(fakeBind, type);
         return bind;
-      } else return value;
+      } else {
+        return value.inline(ctx);
+      }
     }
 
-    @Override
-    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      throw new InternalException("unreachable");
-    }
   }
 
   record Absurd(boolean explicit) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
       throw new InternalException("unreachable");
-    }
-
-    @Override
-    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      throw new InternalException();
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
@@ -151,12 +141,6 @@ public sealed interface Pat extends AyaDocile {
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
       pats.forEach(pat -> pat.storeBindings(ctx));
-    }
-
-    @Override
-    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      var params = pats.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      return new Tuple(explicit, params);
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
@@ -183,14 +167,6 @@ public sealed interface Pat extends AyaDocile {
       params.forEach(pat -> pat.storeBindings(ctx));
     }
 
-    @Override
-    public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      var params = this.params.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      return new Ctor(explicit, ref,
-        ownerArgs.map(x -> x.subst(subst)),
-        params, (CallTerm.Data) type.subst(subst));
-    }
-
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       return new Ctor(explicit, ref,
         ownerArgs.map(tycker::zonk),
@@ -210,9 +186,6 @@ public sealed interface Pat extends AyaDocile {
   }
 
   record End(boolean isOne, boolean explicit) implements Pat {
-    @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      return this;
-    }
 
     @Override
     public @NotNull Pat zonk(@NotNull Tycker tycker) {
@@ -241,9 +214,6 @@ public sealed interface Pat extends AyaDocile {
     @NotNull CallTerm.Data type,
     boolean explicit
   ) implements Pat, Shaped.Nat<Pat> {
-    @Override public @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      return this;
-    }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       // The cast must succeed

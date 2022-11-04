@@ -1,0 +1,4 @@
+open data Nat | O | S Nat
+
+def justMatch {n : Nat} (m : Nat) : Nat
+| m => {??}
