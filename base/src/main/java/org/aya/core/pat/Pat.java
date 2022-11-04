@@ -48,6 +48,8 @@ public sealed interface Pat extends AyaDocile {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).pat(this, BaseDistiller.Outer.Free);
   }
+
+  // TODO[hoshino]: useless now
   @NotNull Pat rename(@NotNull Subst subst, @NotNull LocalCtx localCtx, boolean explicit);
   @NotNull Pat zonk(@NotNull Tycker tycker);
   /**

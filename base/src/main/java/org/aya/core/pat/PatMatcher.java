@@ -26,6 +26,8 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  * @apiNote Use {@link PatMatcher#tryBuildSubstTerms} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
+ *
+ * FIXME[hoshino]: localCtx is useless now, it can be replaced with a {@code (inferable : Boolean)}
  */
 public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @NotNull UnaryOperator<@NotNull Term> pre) {
   public static Result<Subst, Boolean> tryBuildSubstTerms(

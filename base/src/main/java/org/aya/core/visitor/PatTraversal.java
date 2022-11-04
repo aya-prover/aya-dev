@@ -74,6 +74,8 @@ public interface PatTraversal extends Function<Pat, Pat> {
 
   /**
    * subst all binding to corresponding MetaPat
+   *
+   * TODO[hoshino]: A PatTraversal or a method of Pat?
    */
   class MetaBind implements NoMeta {
     public final @NotNull Subst subst;
