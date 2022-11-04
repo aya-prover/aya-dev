@@ -91,6 +91,14 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
+
+  /**
+   * Meta for Hole
+   *
+   * @param fakeBind is used when inline if there is no solution.
+   *                 So don't add this to {@link LocalCtx} too early
+   *                 and remember to inline Meta in {@link PatTycker#checkLhs}
+   */
   record Meta(
     boolean explicit,
     @NotNull MutableValue<Pat> solution,
@@ -117,7 +125,9 @@ public sealed interface Pat extends AyaDocile {
         solution.set(bind);
         ctx.put(fakeBind, type);
         return bind;
-      } else return value;
+      } else {
+        return value.inline(ctx);
+      }
     }
 
     @Override

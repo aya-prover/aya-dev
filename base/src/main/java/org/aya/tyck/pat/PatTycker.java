@@ -468,11 +468,13 @@ public final class PatTycker {
     var ref = data.param.ref();
     Pat bind;
     var freshVar = new LocalVar(ref.name(), ref.definition());
-    if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)
+    if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall) {
       bind = new Pat.Meta(false, MutableValue.create(), freshVar, dataCall);
-    else bind = new Pat.Bind(false, freshVar, data.param.type());
+    } else {
+      bind = new Pat.Bind(false, freshVar, data.param.type());
+      exprTycker.localCtx.put(freshVar, data.param.type());
+    }
     data.results.append(bind);
-    exprTycker.localCtx.put(freshVar, data.param.type());
     addSigSubst(data.param(), bind);
 
     return afterTyck(data).sig();

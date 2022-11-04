@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableHashMap;
 import kala.control.Result;
 import kala.tuple.Tuple2;
 import org.aya.core.term.*;
+import org.aya.core.visitor.PatTraversal;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.util.InternalException;
@@ -101,14 +102,33 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
     }
   }
 
+  /**
+   * We are matching some Pat against the MetaPat here:
+   * <ul>
+   *   <li>MetaPat is unresolved:
+   *   replace all the bindings in Pat with a corresponding MetaPat (so they can be inferred),
+   *   and then set it as the solution</li>
+   *   <li>MetaPat is resolved: match the Pat and the solution of MetaPat</li>
+   * </ul>
+   *
+   * @param pat make sure that pat is a "ctor" pat (such as Ctor, Tuple, Int, etc.) instead of a binding pat
+   */
   private void solve(@NotNull Pat pat, @NotNull RefTerm.MetaPat metaPat) throws Mismatch {
     var referee = metaPat.ref();
-    var todo = referee.solution();
-    if (todo.get() != null) throw new UnsupportedOperationException(
-      "unsure what to do, please file an issue with reproduction if you see this!");
-    // In case this pattern matching is not from `PatTycker#mischa`, just block the evaluation.
-    if (localCtx == null) throw new Mismatch(true);
-    todo.set(pat.rename(subst, localCtx, referee.explicit()));
+    var todo = referee.solution().get();
+
+    // the MetaPat didn't solve
+    if (todo == null) {
+      // don't infer
+      if (localCtx == null) throw new Mismatch(true);
+      var bindSubst = new PatTraversal.MetaBind(this.subst, metaPat.ref().fakeBind().definition());
+      var metalized = bindSubst.apply(pat);
+      // solve as pat
+      metaPat.ref().solution().set(metalized);
+    } else {
+      // a MetaPat that has solution <==> the solution
+      match(pat, todo.toTerm());
+    }
   }
 
   private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
