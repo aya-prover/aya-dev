@@ -32,7 +32,7 @@ public interface PatTraversal extends Function<Pat, Pat> {
       case Pat.Ctor ctor -> {
         var params = ctor.params().map(this);
 
-        if (params.sameElements(ctor.params())) yield ctor;
+        if (params.sameElements(ctor.params(), true)) yield ctor;
         yield new Pat.Ctor(ctor.explicit(), ctor.ref(), ctor.ownerArgs(), params, ctor.type());
       }
       case Pat.End end -> end;
@@ -51,7 +51,7 @@ public interface PatTraversal extends Function<Pat, Pat> {
       case Pat.Tuple tuple -> {
         var pats = tuple.pats().map(this);
 
-        if (pats.sameElements(tuple.pats())) yield tuple;
+        if (pats.sameElements(tuple.pats(), true)) yield tuple;
         yield new Pat.Tuple(tuple.explicit(), pats);
       }
     };
