@@ -74,11 +74,14 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     }
   }
   default <T> T with(@NotNull Supplier<T> action, @NotNull Term.Param... param) {
+    return with(action, Seq.of(param).view());
+  }
+  default <T> T with(@NotNull Supplier<T> action, @NotNull SeqView<Term.Param> param) {
     for (var p : param) put(p);
     try {
       return action.get();
     } finally {
-      remove(Seq.of(param).view().map(Term.Param::ref));
+      remove(param.map(Term.Param::ref));
     }
   }
   default @NotNull ImmutableSeq<Term.Param> extract() {

@@ -64,6 +64,16 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
+  record IllegalPropPat(
+    @Override @NotNull Pattern pattern
+  ) implements PatternProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(
+        Doc.english("Prop pattern is disallowed in this context:"),
+        Doc.par(1, pattern.toDoc(options)));
+    }
+  }
+
   record UnknownCtor(@Override @NotNull Pattern pattern) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
