@@ -54,15 +54,15 @@ public record Codifier(
       }
       case FormTerm.Pi(var param, var body) -> piLam(param, body, "FormTerm.Pi");
       case FormTerm.Sigma(var items) -> tupSigma(items, this::param, "FormTerm.Sigma");
-      case IntroTerm.Lambda(var param, var body) -> piLam(param, body, "IntroTerm.Lambda");
-      case IntroTerm.PartEl(var par, var ty) -> {
+      case LamTerm(var param, var body) -> piLam(param, body, "IntroTerm.Lambda");
+      case PartialTerm(var par, var ty) -> {
         builder.append("new IntroTerm.PartEl(");
         partial(par);
         builder.append(",");
         term(ty);
         builder.append(")");
       }
-      case IntroTerm.PathLam(var params, var body) -> {
+      case PLamTerm(var params, var body) -> {
         builder.append("new IntroTerm.PathLam(ImmutableSeq.of(");
         commaSep(params, this::varDef);
         builder.append("),");
@@ -78,7 +78,7 @@ public record Codifier(
         cube(cube);
         builder.append(")");
       }
-      case IntroTerm.Tuple(var items) -> tupSigma(items, this::term, "IntroTerm.Tuple");
+      case TupTerm(var items) -> tupSigma(items, this::term, "IntroTerm.Tuple");
       case CoeTerm(var ty, var restr) -> coePar(ty, restr, "PrimTerm.Coe");
       case FormulaTerm(var mula) -> {
         builder.append("new PrimTerm.Mula(");

@@ -54,7 +54,7 @@ public interface EndoTerm extends UnaryOperator<Term> {
 
     @Override public @NotNull Term pre(@NotNull Term term) {
       return switch (term) {
-        case IntroTerm.Lambda lambda -> new IntroTerm.Lambda(handleBinder(lambda.param()), lambda.body());
+        case LamTerm lambda -> new LamTerm(handleBinder(lambda.param()), lambda.body());
         case FormTerm.Pi pi -> new FormTerm.Pi(handleBinder(pi.param()), pi.body());
         case FormTerm.Sigma sigma -> new FormTerm.Sigma(sigma.params().map(this::handleBinder));
         case RefTerm ref -> subst.map().getOrDefault(ref.var(), ref);
@@ -63,7 +63,7 @@ public interface EndoTerm extends UnaryOperator<Term> {
           path.cube().params().map(this::handleBinder),
           path.cube().type(),
           path.cube().partial()));
-        case IntroTerm.PathLam lam -> new IntroTerm.PathLam(
+        case PLamTerm lam -> new PLamTerm(
           lam.params().map(this::handleBinder),
           lam.body());
         case Term misc -> misc;

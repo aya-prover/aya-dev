@@ -31,8 +31,8 @@ public sealed interface ElimTerm extends Term {
     return underlyingErased(term) != null;
   }
   /**
-   * {@link ErasedTerm} with a Prop type might safely appear in {@link IntroTerm}s.
-   * {@link ErasedTerm} with a non-Prop type or {@link ElimTerm} with `of` erased are disallowed.
+   * {@link ErasedTerm} with a Prop type might safely appear in introduction term.
+   * {@link ErasedTerm} with a non-Prop type or elimination term with `of` erased are disallowed.
    */
   static @Nullable ErasedTerm underlyingIllegalErasure(@NotNull Term term) {
     if (term instanceof ElimTerm elim) return underlyingErased(elim.of());
@@ -58,11 +58,11 @@ public sealed interface ElimTerm extends Term {
         return new ErasedTerm(ErrorTerm.typeOf(app), true);
       }
     }
-    if (app.of() instanceof IntroTerm.Lambda lam) return make(lam, app.arg());
+    if (app.of() instanceof LamTerm lam) return make(lam, app.arg());
     return app;
   }
 
-  static @NotNull Term make(IntroTerm.Lambda lam, @NotNull Arg<Term> arg) {
+  static @NotNull Term make(LamTerm lam, @NotNull Arg<Term> arg) {
     var param = lam.param();
     assert arg.explicit() == param.explicit();
     return lam.body().subst(param.ref(), arg.term());
@@ -89,7 +89,7 @@ public sealed interface ElimTerm extends Term {
   }
 
   @Contract(pure = true) static @NotNull Term proj(@NotNull Proj proj) {
-    if (proj.of instanceof IntroTerm.Tuple tup) {
+    if (proj.of instanceof TupTerm tup) {
       assert tup.items().sizeGreaterThanOrEquals(proj.ix) && proj.ix > 0 : proj.of.toDoc(DistillerOptions.debug()).debugRender();
       return tup.items().get(proj.ix - 1);
     }
@@ -110,7 +110,7 @@ public sealed interface ElimTerm extends Term {
   record Match(@NotNull ImmutableSeq<Term> discriminant, @NotNull ImmutableSeq<Matching> clauses) implements ElimTerm {
     @Override
     public @NotNull Term of() {
-      return new IntroTerm.Tuple(discriminant);
+      return new TupTerm(discriminant);
     }
   }
 

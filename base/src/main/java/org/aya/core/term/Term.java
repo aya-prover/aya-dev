@@ -37,7 +37,7 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, ElimTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, IntroTerm, MetaPatTerm, RefTerm, RefTerm.Field, StableWHNF {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, ElimTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
     return switch (this) {
       case FormTerm.Pi pi -> {
@@ -59,22 +59,22 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         yield new FormulaTerm(formula);
       }
       case StringTerm str -> str;
-      case IntroTerm.Lambda lambda -> {
+      case LamTerm lambda -> {
         var param = lambda.param().descent(f);
         var body = f.apply(lambda.body());
         if (param == lambda.param() && body == lambda.body()) yield lambda;
-        yield new IntroTerm.Lambda(param, body);
+        yield new LamTerm(param, body);
       }
-      case IntroTerm.Tuple tuple -> {
+      case TupTerm tuple -> {
         var items = tuple.items().map(f);
         if (items.sameElements(tuple.items(), true)) yield tuple;
-        yield new IntroTerm.Tuple(items);
+        yield new TupTerm(items);
       }
-      case IntroTerm.New neu -> {
+      case NewTerm neu -> {
         var struct = f.apply(neu.struct());
         var fields = ImmutableMap.from(neu.params().view().map((k, v) -> Tuple.of(k, f.apply(v))));
         if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView(), true)) yield neu;
-        yield new IntroTerm.New((StructCall) struct, fields);
+        yield new NewTerm((StructCall) struct, fields);
       }
       case ElimTerm.App app -> {
         var function = f.apply(app.of());
@@ -161,20 +161,20 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (type == ty.type() && restr == ty.restr()) yield ty;
         yield new FormTerm.PartTy(type, restr);
       }
-      case IntroTerm.PartEl el -> {
+      case PartialTerm el -> {
         var partial = el.partial().map(f);
         if (partial == el.partial()) yield el;
-        yield new IntroTerm.PartEl(partial, el.rhsType()); // Q: map `rhsType` as well?
+        yield new PartialTerm(partial, el.rhsType()); // Q: map `rhsType` as well?
       }
       case FormTerm.Path(var cube) path -> {
         var newCube = cube.map(f);
         if (newCube == cube) yield path;
         yield new FormTerm.Path(newCube);
       }
-      case IntroTerm.PathLam(var params, var body) lam -> {
+      case PLamTerm(var params, var body) lam -> {
         var newBody = f.apply(body);
         if (newBody == body) yield lam;
-        yield new IntroTerm.PathLam(params, newBody);
+        yield new PLamTerm(params, newBody);
       }
       case ElimTerm.PathApp(var of, var args, var cube) app -> {
         var newOf = f.apply(of);

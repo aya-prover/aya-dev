@@ -76,7 +76,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
       case Pat.Tuple tuple -> {
         term = pre.apply(term);
         switch (term) {
-          case IntroTerm.Tuple tup -> visitList(tuple.pats(), tup.items());
+          case TupTerm tup -> visitList(tuple.pats(), tup.items());
           case MetaPatTerm metaPat -> solve(pat, metaPat);
           default -> throw new Mismatch(true);
         }

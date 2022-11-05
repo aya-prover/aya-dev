@@ -41,7 +41,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield Doc.wrap("{?", "?}",
           visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
       }
-      case IntroTerm.Tuple term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
+      case TupTerm term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
       case FormTerm.Sigma term -> {
@@ -55,9 +55,9 @@ public class CoreDistiller extends BaseDistiller<Term> {
         // Same as Pi
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case IntroTerm.Lambda term -> {
+      case LamTerm term -> {
         var params = MutableList.of(term.param());
-        var body = IntroTerm.Lambda.unwrap(term.body(), params::append);
+        var body = LamTerm.unwrap(term.body(), params::append);
         Doc bodyDoc;
         // Syntactic eta-contraction
         if (body instanceof Callable call && call.ref() instanceof DefVar<?, ?> defVar) {
@@ -98,7 +98,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         );
       }
       case IntervalTerm term -> Doc.styled(KEYWORD, "I");
-      case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
+      case NewTerm newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
             linkRef(k, FIELD_CALL),
@@ -182,10 +182,10 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case StringTerm str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
-      case IntroTerm.PartEl el -> partial(options, el.partial());
+      case PartialTerm el -> partial(options, el.partial());
       case FormulaTerm mula -> formula(outer, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());
-      case IntroTerm.PathLam lam -> checkParen(outer,
+      case PLamTerm lam -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
           Doc.sep(lam.params().map(BaseDistiller::varDoc)),
           Doc.symbol("=>"),

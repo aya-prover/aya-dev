@@ -134,13 +134,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Lam(@NotNull SerParam param, @NotNull SerTerm body) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.Lambda(param.de(state), body.de(state));
+      return new LamTerm(param.de(state), body.de(state));
     }
   }
 
   record New(@NotNull StructCall call, @NotNull ImmutableMap<SerDef.QName, SerTerm> map) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.New(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
+      return new NewTerm(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
         Tuple.of(state.resolve(k), v.de(state)))));
     }
   }
@@ -217,7 +217,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Tup(@NotNull ImmutableSeq<SerTerm> components) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.Tuple(components.map(t -> t.de(state)));
+      return new TupTerm(components.map(t -> t.de(state)));
     }
   }
 
@@ -286,7 +286,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record PartEl(@NotNull Partial<SerTerm> partial, @NotNull SerTerm rhsType) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.PartEl(partial.fmap(t -> t.de(state)), rhsType.de(state));
+      return new PartialTerm(partial.fmap(t -> t.de(state)), rhsType.de(state));
     }
   }
 
@@ -307,7 +307,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerTerm body
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.PathLam(params.map(p -> p.de(state)), body.de(state));
+      return new PLamTerm(params.map(p -> p.de(state)), body.de(state));
     }
   }
 

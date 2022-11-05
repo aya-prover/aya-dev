@@ -56,7 +56,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           yield ErrorTerm.typeOf(sigma);
         }
       }
-      case IntroTerm.Lambda lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
+      case LamTerm lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
       case ElimTerm.Proj proj -> {
         var sigmaRaw = whnf(term(proj.of()));
         if (!(sigmaRaw instanceof FormTerm.Sigma sigma)) yield ErrorTerm.typeOf(proj);
@@ -65,8 +65,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield telescope.get(index).type()
           .subst(ElimTerm.Proj.projSubst(proj.of(), index, telescope));
       }
-      case IntroTerm.New neu -> neu.struct();
-      case IntroTerm.Tuple tuple -> new FormTerm.Sigma(tuple.items().map(item ->
+      case NewTerm neu -> neu.struct();
+      case TupTerm tuple -> new FormTerm.Sigma(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
       case MetaPatTerm metaPat -> metaPat.ref().type();
       case FormTerm.Pi pi -> {
@@ -102,9 +102,9 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case IntegerTerm shaped -> shaped.type();
       case ListTerm shaped -> shaped.type();
       case FormTerm.PartTy ty -> term(ty.type());
-      case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
+      case PartialTerm el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
       case FormTerm.Path(var cube) -> term(cube.type());
-      case IntroTerm.PathLam lam -> new FormTerm.Path(new FormTerm.Cube(
+      case PLamTerm lam -> new FormTerm.Path(new FormTerm.Cube(
         lam.params(),
         term(lam.body()),
         new Partial.Const<>(term(lam.body()))

@@ -125,7 +125,7 @@ public final class ExprTycker extends Tycker {
           yield fail(aNew, structCall, new FieldError.MissingField(aNew.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
           yield fail(aNew, structCall, new FieldError.NoSuchField(aNew.sourcePos(), conFields.keysView().toImmutableSeq()));
-        yield new TermResult(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
+        yield new TermResult(new NewTerm(structCall, ImmutableMap.from(fields)), structCall);
       }
       case Expr.Proj proj -> {
         var struct = proj.tup();
@@ -154,12 +154,12 @@ public final class ExprTycker extends Tycker {
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
           var teleRenamed = tele.map(Term.Param::rename);
           var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(Term.Param::toArg));
-          return new TermResult(IntroTerm.Lambda.make(teleRenamed, access), FormTerm.Pi.make(tele, field.result().subst(structSubst)));
+          return new TermResult(LamTerm.make(teleRenamed, access), FormTerm.Pi.make(tele, field.result().subst(structSubst)));
         });
       }
       case Expr.Tuple tuple -> {
         var items = tuple.items().map(this::synthesize);
-        yield new TermResult(new IntroTerm.Tuple(items.map(Result::wellTyped)), new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
+        yield new TermResult(new TupTerm(items.map(Result::wellTyped)), new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
       }
       case Expr.Coe coe -> {
         assert coe.resolvedVar() instanceof DefVar<?, ?> defVar
@@ -186,8 +186,8 @@ public final class ExprTycker extends Tycker {
               return usages == 0;
             };
             return switch (typeSubst) {
-              case IntroTerm.Lambda(var param, var body) -> post.apply(body.findUsages(param.ref()));
-              case IntroTerm.PathLam(var params, var body) ->
+              case LamTerm(var param, var body) -> post.apply(body.findUsages(param.ref()));
+              case PLamTerm(var params, var body) ->
                 post.apply(params.view().map(body::findUsages).foldLeft(0, Integer::sum));
               default -> {
                 bad.stuck = true;
@@ -371,7 +371,7 @@ public final class ExprTycker extends Tycker {
 
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
     term = whnf(term);
-    while (term instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
+    while (term instanceof LamTerm intro && !intro.param().explicit()) {
       term = whnf(ElimTerm.make(intro, mockArg(intro.param(), pos)));
     }
     return term;
@@ -431,7 +431,7 @@ public final class ExprTycker extends Tycker {
           } else items.append(inherit(item, last.subst(subst)).wellTyped());
         }
         var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
-        yield new TermResult(new IntroTerm.Tuple(items.toImmutableSeq()), resTy);
+        yield new TermResult(new TupTerm(items.toImmutableSeq()), resTy);
       }
       case Expr.Hole hole -> {
         // TODO[ice]: deal with unit type
@@ -471,7 +471,7 @@ public final class ExprTycker extends Tycker {
             var body = dt.substBody(resultParam.toTerm());
             yield localCtx.with(resultParam, () -> {
               var rec = check(lam.body(), body);
-              return new TermResult(new IntroTerm.Lambda(resultParam, rec.wellTyped()), dt);
+              return new TermResult(new LamTerm(resultParam, rec.wellTyped()), dt);
             });
           }
           // Path lambda!
@@ -512,7 +512,7 @@ public final class ExprTycker extends Tycker {
         var face = partial.restr();
         if (!CofThy.conv(cofTy, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
           yield fail(el, new CubicalError.FaceMismatch(el, face, cofTy));
-        yield new TermResult(new IntroTerm.PartEl(partial, rhsType), ty);
+        yield new TermResult(new PartialTerm(partial, rhsType), ty);
       }
       case Expr.Match match -> {
         var patTyck = new PatTycker(this);
@@ -534,7 +534,7 @@ public final class ExprTycker extends Tycker {
         case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
           CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), cube.type(), s)));
       };
-      return happy ? new TermResult(new IntroTerm.PathLam(cube.params(), applied), path)
+      return happy ? new TermResult(new PLamTerm(cube.params(), applied), path)
         : new TermResult(ErrorTerm.unexpected(expr), path);
     });
   }
@@ -647,7 +647,7 @@ public final class ExprTycker extends Tycker {
     if (type instanceof FormTerm.Pi pi && !pi.param().explicit() && needImplicitParamIns(expr)) {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
-      result = new TermResult(new IntroTerm.Lambda(implicitParam, body), pi);
+      result = new TermResult(new LamTerm(implicitParam, body), pi);
     } else result = doInherit(expr, type).checkErased(expr, this);
     traceExit(result, expr);
     return result;
@@ -773,7 +773,7 @@ public final class ExprTycker extends Tycker {
       var type = FormTerm.Pi.make(tele, Def.defResult(conVar));
       var telescopes = CtorDef.telescopes(conVar).rename();
       var body = telescopes.toConCall(conVar);
-      return new TermResult(IntroTerm.Lambda.make(telescopes.params(), body), type);
+      return new TermResult(LamTerm.make(telescopes.params(), body), type);
     } else if (var.core instanceof FieldDef || var.concrete instanceof TeleDecl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
@@ -796,7 +796,7 @@ public final class ExprTycker extends Tycker {
     if ((defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) || defVar.core instanceof PrimDef) {
       body = whnf(body);
     }
-    return new TermResult(IntroTerm.Lambda.make(teleRenamed, body), type);
+    return new TermResult(LamTerm.make(teleRenamed, body), type);
   }
 
   /** @return null if unified successfully */
@@ -887,7 +887,7 @@ public final class ExprTycker extends Tycker {
       }
 
       @Override public @NotNull Term apply(@NotNull Term term) {
-        if (term instanceof IntroTerm.Lambda) return term;
+        if (term instanceof LamTerm) return term;
         if (term instanceof ErasedTerm) return post(term);
         return post(term.descent(this));
       }

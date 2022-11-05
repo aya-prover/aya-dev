@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.ops;
 
@@ -16,19 +16,19 @@ public record Eta(@NotNull LocalCtx ctx) {
    */
   public @NotNull Term uneta(@NotNull Term term) {
     return switch (term) {
-      case IntroTerm.Lambda lam -> {
+      case LamTerm lam -> {
         var etaBody = uneta(lam.body());
         var last = getLastTerm(etaBody);
         var bodyWoLast = constructBodyWithoutLast(etaBody, last);
         if (last instanceof RefTerm lastRef
           && compareRefTerm(lam.param().toTerm(), lastRef)
           && bodyWoLast.findUsages(lastRef.var()) <= 0) yield uneta(bodyWoLast);
-        yield IntroTerm.Lambda.make(ImmutableSeq.of(lam.param()), etaBody);
+        yield LamTerm.make(ImmutableSeq.of(lam.param()), etaBody);
       }
-      case IntroTerm.Tuple tuple -> {
+      case TupTerm tuple -> {
         if (tuple.items().isEmpty()) yield tuple;
         var etaItems = tuple.items().map(this::uneta);
-        var defaultRes = new IntroTerm.Tuple(etaItems);
+        var defaultRes = new TupTerm(etaItems);
         // Get first item's Proj.of Term to compare with other items'
         var firstItem = etaItems.first();
         if (!(firstItem instanceof ElimTerm.Proj proj
@@ -55,7 +55,7 @@ public record Eta(@NotNull LocalCtx ctx) {
 
   private static @NotNull Term getLastTerm(@NotNull Term term) {
     return switch (term) {
-      case IntroTerm.Lambda lam -> getLastTerm(lam.body());
+      case LamTerm lam -> getLastTerm(lam.body());
       case ElimTerm.App app -> app.arg().term();
       default -> term;
     };
@@ -63,7 +63,7 @@ public record Eta(@NotNull LocalCtx ctx) {
 
   private static @NotNull Term constructBodyWithoutLast(@NotNull Term term, @NotNull Term lastTerm) {
     return switch (term) {
-      case IntroTerm.Lambda lamTerm -> IntroTerm.Lambda.make(ImmutableSeq.of(lamTerm.param()),
+      case LamTerm lamTerm -> LamTerm.make(ImmutableSeq.of(lamTerm.param()),
         constructBodyWithoutLast(lamTerm.body(), lastTerm));
       case ElimTerm.App appTerm -> compareRefTerm(appTerm.arg().term(), lastTerm) ? appTerm.of() : appTerm;
       default -> term;

@@ -23,7 +23,7 @@ public class PatToTerm {
       case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"));
       case Pat.Ctor ctor -> visitCtor(ctor);
       case Pat.Bind bind -> new RefTerm(bind.bind());
-      case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
+      case Pat.Tuple tuple -> new TupTerm(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new MetaPatTerm(meta);
       case Pat.End end -> !end.isOne() ? FormulaTerm.LEFT : FormulaTerm.RIGHT;
       case Pat.ShapedInt lit -> new IntegerTerm(lit.repr(), lit.shape(), lit.type());

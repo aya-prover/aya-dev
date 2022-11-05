@@ -33,7 +33,7 @@ public class EtaTest {
     // It's rather tedious to construct a Fn here
     // So let's be lazy here as the type of f doesn't really matter
     var fRefTerm = new RefTerm(new LocalVar("f"));
-    var lambda = IntroTerm.Lambda.make(
+    var lambda = LamTerm.make(
       // Params
       ImmutableSeq.of(xParamTerm),
       // Body
@@ -49,7 +49,7 @@ public class EtaTest {
     var xRefTerm = new RefTerm(X);
     var yRefTerm = new RefTerm(Y);
     var fRefTerm = new RefTerm(new LocalVar("f"));
-    var lambda = IntroTerm.Lambda.make(
+    var lambda = LamTerm.make(
       // Params
       ImmutableSeq.of(xParamTerm, yParamTerm),
       // Body
@@ -65,7 +65,7 @@ public class EtaTest {
     var xRefTerm = new RefTerm(X);
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
-    var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
+    var tuple = new TupTerm(ImmutableSeq.of(firstTerm, secondTerm));
     assertTrue(Eta.compareRefTerm(xRefTerm, ETA.uneta(tuple)));
   }
 
@@ -74,8 +74,8 @@ public class EtaTest {
     var xRefTerm = new RefTerm(X);
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
-    var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
-    var finalTuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, new ElimTerm.Proj(tuple, 2)));
+    var tuple = new TupTerm(ImmutableSeq.of(firstTerm, secondTerm));
+    var finalTuple = new TupTerm(ImmutableSeq.of(firstTerm, new ElimTerm.Proj(tuple, 2)));
     assertTrue(Eta.compareRefTerm(xRefTerm, ETA.uneta(finalTuple)));
   }
 
@@ -87,8 +87,8 @@ public class EtaTest {
     // construct lambda body: tuple term
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
-    var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
-    var lambda = IntroTerm.Lambda.make(
+    var tuple = new TupTerm(ImmutableSeq.of(firstTerm, secondTerm));
+    var lambda = LamTerm.make(
       // Params
       ImmutableSeq.of(xParamTerm),
       // Body

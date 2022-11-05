@@ -11,7 +11,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.Meta;
 import org.aya.core.term.IntervalTerm;
-import org.aya.core.term.IntroTerm;
+import org.aya.core.term.LamTerm;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.VarConsumer;
@@ -37,7 +37,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     var ctxTele = extract();
     var meta = Meta.from(ctxTele, name, type, sourcePos);
     var hole = new MetaTerm(meta, 0, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
-    return Tuple.of(hole, IntroTerm.Lambda.make(meta.telescope, hole));
+    return Tuple.of(hole, LamTerm.make(meta.telescope, hole));
   }
   default <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
     return with(param.ref(), param.type(), action);

@@ -57,7 +57,7 @@ public interface VarConsumer extends TermConsumer {
 
     @Override public void accept(@NotNull Term term) {
       switch (term) {
-        case IntroTerm.Lambda lambda -> {
+        case LamTerm lambda -> {
           bound.append(lambda.param().ref());
           VarConsumer.super.accept(lambda);
           bound.removeLast();
@@ -82,7 +82,7 @@ public interface VarConsumer extends TermConsumer {
           path.cube().partial().termsView().forEach(this);
           bound.removeInRange(start, start + path.cube().params().size());
         }
-        case IntroTerm.PathLam lam -> {
+        case PLamTerm lam -> {
           var start = bound.size();
           lam.params().forEach(bound::append);
           accept(lam.body());

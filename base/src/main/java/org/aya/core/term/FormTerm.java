@@ -162,7 +162,7 @@ public sealed interface FormTerm extends Term {
     @NotNull Partial<Term> partial
   ) {
     public @NotNull Term eta(@NotNull Term term) {
-      return new IntroTerm.PathLam(params(), applyDimsTo(term)).rename();
+      return new PLamTerm(params(), applyDimsTo(term)).rename();
     }
 
     public @NotNull Pi computePi() {
@@ -179,12 +179,12 @@ public sealed interface FormTerm extends Term {
           case default -> {
             break loop;
           }
-          case IntroTerm.PathLam lam -> {
+          case PLamTerm lam -> {
             assert lam.params().sizeLessThanOrEquals(args);
             pLam = lam.body().subst(new Subst(lam.params(), args.take(lam.params().size())));
             args = args.drop(lam.params().size());
           }
-          case IntroTerm.Lambda lam -> {
+          case LamTerm lam -> {
             // TODO: replace with error report¿
             assert lam.param().explicit();
             pLam = ElimTerm.make(lam, new Arg<>(args.first(), true));
@@ -214,7 +214,7 @@ public sealed interface FormTerm extends Term {
     /** "not really eta". Used together with {@link #computePi()} */
     public @NotNull Term etaLam(@NotNull Term term) {
       return params.map(x -> new Param(x, IntervalTerm.INSTANCE, true))
-        .foldRight(applyDimsTo(term), IntroTerm.Lambda::new).rename();
+        .foldRight(applyDimsTo(term), LamTerm::new).rename();
     }
   }
 }
