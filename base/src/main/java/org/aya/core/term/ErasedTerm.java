@@ -34,4 +34,14 @@ public record ErasedTerm(@NotNull Term type, boolean isProp, @Nullable SourcePos
   public static boolean isErased(@NotNull Term term) {
     return underlyingErased(term) != null;
   }
+
+  /**
+   * {@link ErasedTerm} with a Prop type might safely appear in introduction term.
+   * {@link ErasedTerm} with a non-Prop type or elimination term with `of` erased are disallowed.
+   */
+  public static @Nullable ErasedTerm underlyingIllegalErasure(@NotNull Term term) {
+    if (term instanceof Elimination elim) return underlyingErased(elim.of());
+    if (term instanceof FieldTerm elim) return underlyingErased(elim.of());
+    return term instanceof ErasedTerm erased && !erased.isProp() ? erased : null;
+  }
 }

@@ -17,7 +17,6 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -342,16 +341,6 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   }
 
   record Erased(@NotNull SerTerm type, boolean isProp) implements SerTerm {
-    /**
-     * {@link ErasedTerm} with a Prop type might safely appear in introduction term.
-     * {@link ErasedTerm} with a non-Prop type or elimination term with `of` erased are disallowed.
-     */
-    public static @Nullable ErasedTerm underlyingIllegalErasure(@NotNull Term term) {
-      if (term instanceof Elimination elim) return ErasedTerm.underlyingErased(elim.of());
-      if (term instanceof FieldTerm elim) return ErasedTerm.underlyingErased(elim.of());
-      return term instanceof ErasedTerm erased && !erased.isProp() ? erased : null;
-    }
-
     public @NotNull ErasedTerm de(@NotNull DeState state) {
       return new ErasedTerm(type.de(state), isProp);
     }

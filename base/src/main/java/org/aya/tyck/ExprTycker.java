@@ -15,7 +15,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.serde.SerTerm;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
@@ -879,7 +878,7 @@ public final class ExprTycker extends Tycker {
     var checker = new Function<Term, Term>() {
       private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
-        var erased = SerTerm.Erased.underlyingIllegalErasure(term);
+        var erased = ErasedTerm.underlyingIllegalErasure(term);
         if (erased != null) {
           reporter.report(new ErasedError(sourcePos, erased));
           return new ErrorTerm(term);
