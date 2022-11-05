@@ -57,14 +57,26 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
           && PrimDef.ID.projSyntax(primDef.id)) {
           var restr = proj.restr() != null ? proj.restr() : new Expr.LitInt(proj.sourcePos(), 0);
           var coe = new Expr.Coe(proj.sourcePos(), proj.id(), defVar, proj.tup(), restr);
-          yield pre(proj.coeLeft() != null
-            ? new Expr.App(proj.sourcePos(), coe, new Expr.NamedArg(true, proj.coeLeft()))
+          yield pre(proj.cubicalArg() != null
+            ? new Expr.App(proj.sourcePos(), coe, new Expr.NamedArg(true, proj.cubicalArg()))
             : coe);
         }
+
+        if (proj.resolvedVar() instanceof DefVar<?, ?> defVar
+          && defVar.core instanceof PrimDef primDef
+          && primDef.id == PrimDef.ID.HCOMP) {
+
+          if (proj.cubicalArg() == null) {
+            yield new Expr.Error(expr.sourcePos(), expr);
+          } else {
+            yield new Expr.HComp(proj.sourcePos(), proj.id(), defVar, proj.tup(), proj.cubicalArg());
+          }
+        }
+
         if (proj.restr() != null) info.opSet().reporter.report(new BadFreezingWarn(proj.restr()));
         var projExpr = new Expr.Proj(proj.sourcePos(), proj.tup(), Either.right(proj.id()), proj.resolvedVar(), MutableValue.create());
-        yield pre(proj.coeLeft() != null
-          ? new Expr.App(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.coeLeft()))
+        yield pre(proj.cubicalArg() != null
+          ? new Expr.App(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.cubicalArg()))
           : projExpr);
       }
       case Expr.RawSort(var pos, var kind) -> switch (kind) {

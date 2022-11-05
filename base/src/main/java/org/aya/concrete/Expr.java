@@ -421,22 +421,22 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
   }
 
-  /** Sugared overloaded projection as coercion syntax */
+  /** Sugared overloaded projection as coercion or hcomp syntax */
   record RawProj(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
     @NotNull QualifiedID id,
     @Nullable AnyVar resolvedVar,
-    @Nullable Expr coeLeft,
+    @Nullable Expr cubicalArg,
     @Nullable Expr restr
   ) implements Expr {
     public @NotNull Expr.RawProj update(@NotNull Expr tup, @Nullable Expr coeLeft, @Nullable Expr restr) {
-      return tup == tup() && coeLeft == coeLeft() && restr == restr() ? this
+      return tup == tup() && coeLeft == cubicalArg() && restr == restr() ? this
         : new RawProj(sourcePos, tup, id, resolvedVar, coeLeft, restr);
     }
 
     @Override public @NotNull Expr.RawProj descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return update(f.apply(tup), coeLeft == null ? null : f.apply(coeLeft), restr == null ? null : f.apply(restr));
+      return update(f.apply(tup), cubicalArg == null ? null : f.apply(cubicalArg), restr == null ? null : f.apply(restr));
     }
   }
 
@@ -467,6 +467,22 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
     @Override public @NotNull Expr.Coe descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(type), f.apply(restr));
+    }
+  }
+
+  record HComp(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull QualifiedID id,
+    @NotNull DefVar<?, ?> resolvedVar,
+    @Override @NotNull Expr u,
+    @Override @NotNull Expr u0
+  ) implements Expr {
+    public @NotNull Expr.HComp update(@NotNull Expr u, @NotNull Expr u0) {
+      return u == u() && u0 == u0() ? this : new HComp(sourcePos, id, resolvedVar, u, u0);
+    }
+
+    @Override public @NotNull Expr.HComp descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(u), f.apply(u0));
     }
   }
 
