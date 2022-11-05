@@ -26,12 +26,6 @@ public interface BetaExpander extends EndoTerm {
   private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
     return partial.flatMap(Function.identity());
   }
-  static @NotNull Term simplFormula(@NotNull FormulaTerm mula) {
-    return Restr.formulae(mula.asFormula(), FormulaTerm::new);
-  }
-  static @NotNull PartialTyTerm partialType(@NotNull PartialTyTerm ty) {
-    return new PartialTyTerm(ty.type(), ty.restr().normalize());
-  }
   static @NotNull Option<Term> tryMatch(@NotNull ImmutableSeq<Term> scrutinee, @NotNull ImmutableSeq<Term.Matching> clauses) {
     for (var clause : clauses) {
       var subst = PatMatcher.tryBuildSubstTerms(null, clause.patterns(), scrutinee.view());
@@ -43,8 +37,8 @@ public interface BetaExpander extends EndoTerm {
   }
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
-      case FormulaTerm mula -> simplFormula(mula);
-      case PartialTyTerm ty -> partialType(ty);
+      case FormulaTerm mula -> mula.simpl();
+      case PartialTyTerm ty -> ty.normalizeRestr();
       case MetaPatTerm metaPat -> metaPat.inline();
       case AppTerm app -> {
         var result = AppTerm.make(app);

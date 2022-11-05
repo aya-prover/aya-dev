@@ -48,7 +48,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           .toImmutableSeq();
         if (univ.sizeEquals(sigma.params().size())) {
           try {
-            yield univ.reduce(ExprTycker::calculateSigma);
+            yield univ.reduce(SigmaTerm::calculateSigma);
           } catch (IllegalArgumentException ignored) {
             yield ErrorTerm.typeOf(sigma);
           }

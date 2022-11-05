@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.value.LazyValue;
@@ -18,7 +19,10 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.*;
+import org.aya.generic.Arg;
+import org.aya.generic.AyaDocile;
+import org.aya.generic.Constants;
+import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -90,7 +94,7 @@ public final class ExprTycker extends Tycker {
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Term>>create();
         var missing = MutableList.<AnyVar>create();
-        var conFields = MutableMap.from(aNew.fields().view().map(t -> kala.tuple.Tuple.of(t.name().data(), t)));
+        var conFields = MutableMap.from(aNew.fields().view().map(t -> Tuple.of(t.name().data(), t)));
 
         for (var defField : structRef.core.fields) {
           var fieldRef = defField.ref();
@@ -101,7 +105,7 @@ public final class ExprTycker extends Tycker {
             else {
               // use default value from defField
               var field = defField.body.get().subst(subst, structCall.ulift());
-              fields.append(kala.tuple.Tuple.of(fieldRef, field));
+              fields.append(Tuple.of(fieldRef, field));
               subst.add(fieldRef, field);
             }
             continue;
@@ -117,7 +121,7 @@ public final class ExprTycker extends Tycker {
           }
           var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) -> new Expr.Lambda(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
           var field = inherit(fieldExpr, type).wellTyped();
-          fields.append(kala.tuple.Tuple.of(fieldRef, field));
+          fields.append(Tuple.of(fieldRef, field));
           subst.add(fieldRef, field);
         }
 
@@ -399,9 +403,9 @@ public final class ExprTycker extends Tycker {
   private Tuple2<PiTerm, PathTerm.@Nullable Cube>
   ensurePiOrPath(@NotNull Term term) throws NotPi {
     term = whnf(term);
-    if (term instanceof PiTerm pi) return kala.tuple.Tuple.of(pi, null);
+    if (term instanceof PiTerm pi) return Tuple.of(pi, null);
     if (term instanceof PathTerm(var cube))
-      return kala.tuple.Tuple.of(cube.computePi(), cube);
+      return Tuple.of(cube.computePi(), cube);
     else throw new NotPi(term);
   }
 
@@ -539,22 +543,6 @@ public final class ExprTycker extends Tycker {
     });
   }
 
-  public static @NotNull FormTerm.Sort calculateSigma(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) throws IllegalArgumentException {
-    int lift = Math.max(x.lift(), y.lift());
-    if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
-      return FormTerm.Prop.INSTANCE;
-    } else if (x.kind() == SortKind.Set || y.kind() == SortKind.Set) {
-      return new FormTerm.Set(lift);
-    } else if (x.kind() == SortKind.Type || y.kind() == SortKind.Type) {
-      return new FormTerm.Type(lift);
-    } else if (x instanceof FormTerm.ISet && y instanceof FormTerm.ISet) {
-      // ice: this is controversial, but I think it's fine.
-      // See https://github.com/agda/cubical/pull/910#issuecomment-1233113020
-      return FormTerm.ISet.INSTANCE;
-    }
-    throw new IllegalArgumentException(); // TODO: better error reporting
-  }
-
   private @NotNull SortResult doSort(@NotNull Expr expr) {
     var univ = FormTerm.Type.ZERO;
     return switch (expr) {
@@ -594,10 +582,10 @@ public final class ExprTycker extends Tycker {
           resultTypes.append(result.type());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
-          resultTele.append(kala.tuple.Tuple.of(ref, tuple.explicit(), result.wellTyped()));
+          resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
-        var maxSort = resultTypes.reduce(ExprTycker::calculateSigma);
+        var maxSort = resultTypes.reduce(SigmaTerm::calculateSigma);
         if (!(maxSort instanceof FormTerm.Prop)) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new SortResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
@@ -918,7 +906,7 @@ public final class ExprTycker extends Tycker {
    */
   public record TermResult(@Override @NotNull Term wellTyped, @Override @NotNull Term type) implements Result {
     @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
-      return kala.tuple.Tuple.of(type, wellTyped);
+      return Tuple.of(type, wellTyped);
     }
 
     public static @NotNull TermResult error(@NotNull AyaDocile description) {

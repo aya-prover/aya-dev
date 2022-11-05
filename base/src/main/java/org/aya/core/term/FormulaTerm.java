@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.SeqView;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
 public record FormulaTerm(@NotNull Formula<Term> asFormula) implements Term {
@@ -24,6 +25,10 @@ public record FormulaTerm(@NotNull Formula<Term> asFormula) implements Term {
 
   public static @NotNull FormulaTerm conn(boolean isAnd, @NotNull Term lhs, @NotNull Term rhs) {
     return new FormulaTerm(new Formula.Conn<>(isAnd, lhs, rhs));
+  }
+
+  public @NotNull Term simpl() {
+    return Restr.formulae(asFormula(), FormulaTerm::new);
   }
 
   public @NotNull SeqView<Term> view() {
