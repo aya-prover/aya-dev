@@ -22,7 +22,7 @@ def psqueeze {a b : A} (p : a = b) (i : I)
 
 def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b (\i => p i) =>
-      coe (\ i => B (p i) (\j => p (j /\ i))) 0 r
+      (\ i => B (p i) (\j => p (j /\ i))).coe r
 
 def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
   => J (\b' p' => B b') x p
@@ -48,7 +48,7 @@ def hcomp2d
   (p : a = b)
   (q : b = d)
   (r : a = c) : c = d
-  => \i => coe (\ k => r k = q k) 0 p i
+  => \i => ((\ k => r k = q k).coe p) i
 
 def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c =>
   \k => hcomp2d p q idp k
@@ -57,5 +57,5 @@ def infixr <==>'
   (p : [| i |] A)
   (q : [| i |] A {| ~ i := p 1 |})
   : p 0 = q 1 =>
-  coe (\ k => p 0 = q k) 0 (λ j => p j)
+  (\ k => p 0 = q k).coe (λ j => p j)
   tighter <==>

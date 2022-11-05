@@ -22,6 +22,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
+import org.aya.resolve.error.PrimResolveError;
 import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
@@ -148,8 +149,7 @@ public record ExprResolver(
               allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
               addReference(owner);
             } else {
-              ctx.reporter().report(new GeneralizedNotAvailableError(pos, generalized));
-              throw new Context.ResolvingInterruptedException();
+              ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
             }
           }
           yield new Expr.Ref(pos, allowedGeneralizes.get(generalized).ref());
@@ -159,6 +159,8 @@ public record ExprResolver(
           // Collecting tyck order for tycked terms is unnecessary, just skip.
           if (def.concrete == null) assert def.core != null;
           else if (def.concrete instanceof TyckUnit unit) addReference(unit);
+          if (def.core instanceof PrimDef prim && prim.id == PrimDef.ID.COE)
+            ctx.reportAndThrow(new PrimResolveError.BadUsage(name.join(), pos));
           yield new Expr.Ref(pos, def);
         }
         case AnyVar var -> new Expr.Ref(pos, var);

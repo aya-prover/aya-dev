@@ -11,7 +11,7 @@ def hcomp2d
   (p : a = b)
   (q : b = d)
   (r : a = c) : c = d
-  => \i => coe (\ k => r k = q k) 0 p i
+  => \i => ((\ k => r k = q k).coe p) i
 def idp {a : A} : a = a => \i => a
 
 def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p

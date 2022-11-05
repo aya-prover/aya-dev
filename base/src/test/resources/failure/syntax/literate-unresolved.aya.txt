@@ -2,7 +2,7 @@ In file $FILE:3:0 ->
 
   1 | prim I
   2 | prim coe
-  3 | --| test `coe`
+  3 | --| test `I`
       ^-------------------^
   4 | --| test `unresolved`
 

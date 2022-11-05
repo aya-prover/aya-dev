@@ -53,7 +53,7 @@ public class SuedeTest {
       prim coe
       def hcomp2d {a b c d : A}
         (p : a = b) (q : b = d) (r : a = c) : c = d
-        => \\i => coe (\\ k => r k = q k) 0 p i
+        => \\i => ((\\ k => r k = q k).coe p) i
       struct Monoid {A : Type} (op : A -> A -> A): Type
         | id : A
         | assoc (a b c : A) : op (op a b) c = op a (op b c)

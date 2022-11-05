@@ -49,8 +49,8 @@ public class NormalizeTest {
       prim I
       open data Nat : Type | zero | suc Nat
       prim coe
-      def xyr : Nat => coe (\\ i => Nat) 1 zero
-      def kiva : Nat => coe (\\ i => Nat) 1 (suc zero)""");
+      def xyr : Nat => (\\ i => Nat).coe zero freeze 1
+      def kiva : Nat => (\\ i => Nat).coe (suc zero) freeze 1""");
     var state = new TyckState(res._1);
     var defs = res._2;
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
