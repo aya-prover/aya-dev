@@ -11,6 +11,8 @@ import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Partial;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
@@ -88,6 +90,36 @@ public final class PrimDef extends TopLevelDef<Term> {
 
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramRestr), result, ID.COE);
       }, ImmutableSeq.of(ID.I));
+
+      public final @NotNull PrimDef.PrimSeed coeFill = new PrimSeed(ID.COEFILL, this::coeFill, ref -> {
+        // coeFill : (A : I -> Type) (phi : I) (u : A 0) : Path A u (coe A phi u)
+        var varA = new LocalVar("A");
+        var paramA = new Term.Param(varA, intervalToA(), true);
+        var varPhi = new LocalVar("phi");
+        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, true);
+        var varU = new LocalVar("u");
+        var paramU = new Term.Param(varU, new AppTerm(new RefTerm(varA), new Arg<>(FormulaTerm.LEFT, true)), true);
+        var i = new LocalVar("i");
+        var result = new PathTerm(new PathTerm.Cube(
+          ImmutableSeq.of(i),
+          new AppTerm(new RefTerm(varA), new Arg<>(new RefTerm(i), true)),
+          new Partial.Split<>(ImmutableSeq.of(
+            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), false))), new RefTerm(varU)),
+            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), true))), new AppTerm(getCall(ID.COE, ImmutableSeq.of(
+              new Arg<>(new RefTerm(varA), true),
+              new Arg<>(new RefTerm(varPhi), true))),
+              new Arg<>(new RefTerm(varU), true)))
+          ))));
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), result, ID.COEFILL);
+      }, ImmutableSeq.of(ID.I, ID.COE));
+
+      private @NotNull Term coeFill(@NotNull PrimCall prim, @NotNull TyckState state) {
+        var type = prim.args().get(0).term();
+        var restr = prim.args().get(1).term();
+        var u = prim.args().get(2).term();
+        var j = new LocalVar("j");
+        return new AppTerm(CoeTerm.coeFill(type, isOne(restr), new RefTerm(j)), new Arg<>(u, true));
+      }
 
       @Contract("_, _ -> new")
       private @NotNull Term coe(@NotNull PrimCall prim, @NotNull TyckState state) {
@@ -218,6 +250,7 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.intervalType,
           init.partialType,
           init.coe,
+          init.coeFill,
           init.hcomp
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
@@ -293,6 +326,9 @@ public final class PrimDef extends TopLevelDef<Term> {
     I("I"),
     PARTIAL("Partial"),
     COE("coe"),
+    COEFILL("coeFill"),
+    COEINV("eoc"),
+    COEINVFILL("eocFill"),
     HCOMP("hcomp");
 
     public final @NotNull @NonNls String id;
