@@ -212,7 +212,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var phi = prim.args().get(1).term();
         var u = prim.args().get(2).term();
         var u0 = prim.args().get(3).term();
-        return new HCompTerm(A, phi, u, u0);
+        return new HCompTerm(A, isOne(phi), u, u0);
       }
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
