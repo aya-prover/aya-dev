@@ -23,21 +23,21 @@ public class PatToTerm {
       case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"));
       case Pat.Ctor ctor -> visitCtor(ctor);
       case Pat.Bind bind -> new RefTerm(bind.bind());
-      case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
-      case Pat.Meta meta -> new RefTerm.MetaPat(meta);
-      case Pat.End end -> !end.isOne() ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT;
-      case Pat.ShapedInt lit -> new LitTerm.ShapedInt(lit.repr(), lit.shape(), lit.type());
+      case Pat.Tuple tuple -> new TupTerm(tuple.pats().map(this::visit));
+      case Pat.Meta meta -> new MetaPatTerm(meta);
+      case Pat.End end -> !end.isOne() ? FormulaTerm.LEFT : FormulaTerm.RIGHT;
+      case Pat.ShapedInt lit -> new IntegerTerm(lit.repr(), lit.shape(), lit.type());
     };
   }
 
   protected @NotNull Term visitCtor(Pat.@NotNull Ctor ctor) {
-    var data = (CallTerm.Data) ctor.type();
+    var data = (DataCall) ctor.type();
     var core = ctor.ref().core;
     var tele = core.selfTele;
     var args = ctor.params().zipView(tele)
       .map(p -> new Arg<>(visit(p._1), p._2.explicit()))
       .toImmutableSeq();
-    return new CallTerm.Con(data.ref(), ctor.ref(),
+    return new ConCall(data.ref(), ctor.ref(),
       ctor.ownerArgs().map(x -> new Arg<>(x, false)),
       data.ulift(), args);
   }

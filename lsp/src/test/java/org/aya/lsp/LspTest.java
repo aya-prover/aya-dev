@@ -5,8 +5,8 @@ package org.aya.lsp;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.RefTerm;
+import org.aya.core.term.DataCall;
+import org.aya.core.term.MetaPatTerm;
 import org.aya.generic.Constants;
 import org.aya.lsp.tester.LspTestClient;
 import org.aya.lsp.tester.LspTestCompilerAdvisor;
@@ -52,11 +52,11 @@ public class LspTest {
       var testClause = testOpt.get().body.getRightValue().first();
       // vnil, ys => 0
       var testPat = (Pattern.Bind) testClause.patterns.last();
-      var testTy = assertInstanceOf(CallTerm.Data.class, testPat.type().get());
+      var testTy = assertInstanceOf(DataCall.class, testPat.type().get());
       assertNotNull(testTy);
       // ys : Vec A m
       var lastArg = testTy.args().last().term();
-      assertFalse(lastArg instanceof RefTerm.MetaPat);
+      assertFalse(lastArg instanceof MetaPatTerm);
     }));
   }
 

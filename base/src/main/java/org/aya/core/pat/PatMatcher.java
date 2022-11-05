@@ -38,7 +38,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
   }
 
   /**
-   * @param localCtx not null only if we expect the presence of {@link RefTerm.MetaPat}
+   * @param localCtx not null only if we expect the presence of {@link MetaPatTerm}
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
@@ -62,22 +62,22 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
       case Pat.Ctor ctor -> {
         term = pre.apply(term);
         switch (term) {
-          case CallTerm.Con conCall -> {
+          case ConCall conCall -> {
             if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
             visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
           }
-          case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
+          case MetaPatTerm metaPat -> solve(pat, metaPat);
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
-          case LitTerm.ShapedInt litTerm -> match(ctor, litTerm.constructorForm());
-          case LitTerm.ShapedList litTerm -> match(ctor, litTerm.constructorForm());
+          case IntegerTerm litTerm -> match(ctor, litTerm.constructorForm());
+          case ListTerm litTerm -> match(ctor, litTerm.constructorForm());
           default -> throw new Mismatch(true);
         }
       }
       case Pat.Tuple tuple -> {
         term = pre.apply(term);
         switch (term) {
-          case IntroTerm.Tuple tup -> visitList(tuple.pats(), tup.items());
-          case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
+          case TupTerm tup -> visitList(tuple.pats(), tup.items());
+          case MetaPatTerm metaPat -> solve(pat, metaPat);
           default -> throw new Mismatch(true);
         }
       }
@@ -91,11 +91,11 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
       case Pat.ShapedInt lit -> {
         term = pre.apply(term);
         switch (term) {
-          case LitTerm.ShapedInt litTerm -> {
+          case IntegerTerm litTerm -> {
             if (!lit.compareUntyped(litTerm)) throw new Mismatch(false);
           }
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
-          case CallTerm.Con con -> match(lit.constructorForm(), con);
+          case ConCall con -> match(lit.constructorForm(), con);
           // we only need to handle matching both literals, otherwise we just rematch it
           // with constructor form to reuse the code as much as possible (like solving MetaPats).
           default -> match(lit.constructorForm(), term);
@@ -115,7 +115,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
    *
    * @param pat make sure that pat is a "ctor" pat (such as Ctor, Tuple, Int, etc.) instead of a binding pat
    */
-  private void solve(@NotNull Pat pat, @NotNull RefTerm.MetaPat metaPat) throws Mismatch {
+  private void solve(@NotNull Pat pat, @NotNull MetaPatTerm metaPat) throws Mismatch {
     var referee = metaPat.ref();
     var todo = referee.solution().get();
 

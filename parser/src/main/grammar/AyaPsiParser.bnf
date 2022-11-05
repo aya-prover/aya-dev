@@ -252,7 +252,7 @@ dataCtorClause ::= BAR patterns IMPLIES dataCtor
 
 
 // expressions
-expr ::= newExpr
+expr ::= aNew
        | piExpr
        | forallExpr
        | sigmaExpr
@@ -283,7 +283,7 @@ arrayElementsBlock ::= exprList
 idiomBlock ::= barred* expr
 listComp ::= (doBinding COMMA)* doBinding
 
-newExpr ::= KW_NEW expr newBody?
+aNew ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
 arrowExpr ::= expr TO expr { rightAssociative = true }
 projExpr ::= expr projFix

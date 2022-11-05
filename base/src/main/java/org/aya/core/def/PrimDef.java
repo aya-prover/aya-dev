@@ -64,7 +64,7 @@ public final class PrimDef extends TopLevelDef<Term> {
   }
 
   @FunctionalInterface
-  interface Unfolder extends BiFunction<CallTerm.@NotNull Prim, @NotNull TyckState, @NotNull Term> {
+  interface Unfolder extends BiFunction<@NotNull PrimCall, @NotNull TyckState, @NotNull Term> {
   }
 
   record PrimSeed(
@@ -83,29 +83,29 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed coerce = new PrimSeed(ID.COE, this::coe, ref -> {
         var varA = new LocalVar("A");
         var paramA = new Term.Param(varA, intervalToA(), true);
-        var paramRestr = new Term.Param(new LocalVar("i"), PrimTerm.Interval.INSTANCE, true);
+        var paramRestr = new Term.Param(new LocalVar("i"), IntervalTerm.INSTANCE, true);
         var result = familyLeftToRight(new RefTerm(varA));
 
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramRestr), result, ID.COE);
       }, ImmutableSeq.of(ID.I));
 
       @Contract("_, _ -> new")
-      private @NotNull Term coe(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+      private @NotNull Term coe(@NotNull PrimCall prim, @NotNull TyckState state) {
         var type = prim.args().get(0).term();
         var restr = prim.args().get(1).term();
-        return new PrimTerm.Coe(type, isOne(restr));
+        return new CoeTerm(type, isOne(restr));
       }
 
       private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
         var varA = new LocalVar("A");
         var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
         var varPhi = new LocalVar("phi");
-        var paramRestr = new Term.Param(varPhi, PrimTerm.Interval.INSTANCE, false);
+        var paramRestr = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
         var varU = new LocalVar("u");
         var paramFuncU = new Term.Param(varU,
-          new FormTerm.Pi(
-            new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true),
-            new FormTerm.PartTy(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
+          new PiTerm(
+            new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true),
+            new PartialTyTerm(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
           true);
         var varU0 = new LocalVar("u0");
         var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
@@ -118,36 +118,36 @@ public final class PrimDef extends TopLevelDef<Term> {
         );
       }, ImmutableSeq.of(ID.I));
 
-      private @NotNull Term hcomp(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+      private @NotNull Term hcomp(@NotNull PrimCall prim, @NotNull TyckState state) {
         var A = prim.args().get(0).term();
         var phi = prim.args().get(1).term();
         var u = prim.args().get(2).term();
         var u0 = prim.args().get(3).term();
-        return new PrimTerm.HComp(A, phi, u, u0);
+        return new HCompTerm(A, phi, u, u0);
       }
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMin = formula(ID.IMIN, prim -> {
         var args = prim.args();
-        return PrimTerm.Mula.and(args.first().term(), args.last().term());
+        return FormulaTerm.and(args.first().term(), args.last().term());
       }, "i", "j");
       /** \/ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMax = formula(ID.IMAX, prim -> {
         var args = prim.args();
-        return PrimTerm.Mula.or(args.first().term(), args.last().term());
+        return FormulaTerm.or(args.first().term(), args.last().term());
       }, "i", "j");
       /** ~ in Cubical Agda, should elaborate to {@link Formula.Inv} */
       public final @NotNull PrimDef.PrimSeed intervalInv = formula(ID.INVOL, prim ->
-        PrimTerm.Mula.inv(prim.args().first().term()), "i");
+        FormulaTerm.inv(prim.args().first().term()), "i");
 
       private @NotNull PrimSeed formula(
-        ID id, Function<CallTerm.Prim, Term> unfold,
+        ID id, Function<PrimCall, Term> unfold,
         String... tele
       ) {
         return new PrimSeed(id, (prim, state) -> unfold.apply(prim), ref -> new PrimDef(
           ref,
-          ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), PrimTerm.Interval.INSTANCE, true)),
-          PrimTerm.Interval.INSTANCE,
+          ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), IntervalTerm.INSTANCE, true)),
+          IntervalTerm.INSTANCE,
           id
         ), ImmutableSeq.of(ID.I));
       }
@@ -167,21 +167,21 @@ public final class PrimDef extends TopLevelDef<Term> {
           ID.STRCONCAT
         ), ImmutableSeq.of(ID.STRING));
 
-      private static @NotNull Term concat(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
+      private static @NotNull Term concat(@NotNull PrimCall prim, @NotNull TyckState state) {
         var first = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var second = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
 
-        if (first instanceof PrimTerm.Str str1 && second instanceof PrimTerm.Str str2) {
-          return new PrimTerm.Str(str1.string() + str2.string());
+        if (first instanceof StringTerm str1 && second instanceof StringTerm str2) {
+          return new StringTerm(str1.string() + str2.string());
         }
 
-        return new CallTerm.Prim(prim.ref(), prim.ulift(), ImmutableSeq.of(
+        return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(
           new Arg<>(first, true), new Arg<>(second, true)));
       }
 
       public final @NotNull PrimDef.PrimSeed intervalType =
         new PrimSeed(ID.I,
-          ((prim, state) -> PrimTerm.Interval.INSTANCE),
+          ((prim, state) -> IntervalTerm.INSTANCE),
           ref -> new PrimDef(ref, FormTerm.ISet.INSTANCE, ID.I),
           ImmutableSeq.empty());
 
@@ -191,12 +191,12 @@ public final class PrimDef extends TopLevelDef<Term> {
             var iExp = prim.args().get(0).term();
             var ty = prim.args().get(1).term();
 
-            return new FormTerm.PartTy(ty, isOne(iExp));
+            return new PartialTyTerm(ty, isOne(iExp));
           },
           ref -> new PrimDef(
             ref,
             ImmutableSeq.of(
-              new Term.Param(new LocalVar("phi"), PrimTerm.Interval.INSTANCE, true),
+              new Term.Param(new LocalVar("phi"), IntervalTerm.INSTANCE, true),
               new Term.Param(new LocalVar("A"), FormTerm.Type.ZERO, true)
             ),
             FormTerm.Type.ZERO, ID.PARTIAL),
@@ -230,11 +230,11 @@ public final class PrimDef extends TopLevelDef<Term> {
       return rst;
     }
 
-    public @NotNull CallTerm.Prim getCall(@NotNull ID id, @NotNull ImmutableSeq<Arg<Term>> args) {
-      return new CallTerm.Prim(getOption(id).get().ref(), 0, args);
+    public @NotNull PrimCall getCall(@NotNull ID id, @NotNull ImmutableSeq<Arg<Term>> args) {
+      return new PrimCall(getOption(id).get().ref(), 0, args);
     }
 
-    public @NotNull CallTerm.Prim getCall(@NotNull ID id) {
+    public @NotNull PrimCall getCall(@NotNull ID id) {
       return getCall(id, ImmutableSeq.empty());
     }
 
@@ -259,7 +259,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       return seeds.getOption(name).map(seed -> seed.dependency().filterNot(this::have));
     }
 
-    public @NotNull Term unfold(@NotNull ID name, @NotNull CallTerm.Prim primCall, @NotNull TyckState state) {
+    public @NotNull Term unfold(@NotNull ID name, @NotNull PrimCall primCall, @NotNull TyckState state) {
       return seeds.get(name).unfold.apply(primCall, state);
     }
 
@@ -273,15 +273,15 @@ public final class PrimDef extends TopLevelDef<Term> {
   }
 
   /** Let A be argument, then <code>A 0 -> A 1</code> */
-  public static @NotNull FormTerm.Pi familyLeftToRight(Term term) {
-    return new FormTerm.Pi(
-      new Term.Param(LocalVar.IGNORED, new ElimTerm.App(term, new Arg<>(PrimTerm.Mula.LEFT, true)), true),
-      new ElimTerm.App(term, new Arg<>(PrimTerm.Mula.RIGHT, true)));
+  public static @NotNull PiTerm familyLeftToRight(Term term) {
+    return new PiTerm(
+      new Term.Param(LocalVar.IGNORED, new AppTerm(term, new Arg<>(FormulaTerm.LEFT, true)), true),
+      new AppTerm(term, new Arg<>(FormulaTerm.RIGHT, true)));
   }
 
   public static @NotNull Term intervalToA() {
-    var paramI = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
-    return new FormTerm.Pi(paramI, new FormTerm.Type(0));
+    var paramI = new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true);
+    return new PiTerm(paramI, new FormTerm.Type(0));
   }
 
   public enum ID {

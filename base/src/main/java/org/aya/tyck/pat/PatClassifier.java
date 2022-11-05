@@ -110,9 +110,9 @@ public record PatClassifier(
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
         var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
         // TODO: Currently all holes at this point are in an ErrorTerm
-        if (lhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+        if (lhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
           hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
-        } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+        } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
           hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
         }
         var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
@@ -167,7 +167,7 @@ public record PatClassifier(
       // The type is sigma type, and do we have any non-catchall patterns?
       // Note that we cannot have ill-typed patterns such as constructor patterns,
       // since patterns here are already well-typed
-      case FormTerm.Sigma sigma -> {
+      case SigmaTerm sigma -> {
         var hasTuple = clauses
           .mapIndexedNotNull((index, subPats) -> head(subPats) instanceof Pat.Tuple tuple
             ? new MCT.SubPats<>(tuple.pats().view(), index) : null);
@@ -176,7 +176,7 @@ public record PatClassifier(
           // Add a catchall pattern to the pattern tree builder since tuple patterns are irrefutable
           builder.shiftEmpty(explicit);
           // We will subst the telescope with this fake tuple term
-          var thatTuple = new IntroTerm.Tuple(sigma.params().map(Term.Param::toTerm));
+          var thatTuple = new TupTerm(sigma.params().map(Term.Param::toTerm));
           // Do it!! Just do it!!
           var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), thatTuple))
@@ -188,7 +188,7 @@ public record PatClassifier(
             classifySub(newTele, MCT.extract(pat, clauses).map(MCT.SubPats<Pat>::drop), coverage, fuelCopy)));
         }
       }
-      case PrimTerm.Interval interval -> {
+      case IntervalTerm interval -> {
         var lrSplit = clauses
           .mapNotNull(subPats -> head(subPats) instanceof Pat.End end ? end : null)
           .firstOption();
@@ -198,8 +198,8 @@ public record PatClassifier(
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
 
           for (var item : ImmutableSeq.of(
-            Tuple.of(PrimTerm.Mula.LEFT, "0"),
-            Tuple.of(PrimTerm.Mula.RIGHT, "1")
+            Tuple.of(FormulaTerm.LEFT, "0"),
+            Tuple.of(FormulaTerm.RIGHT, "1")
           )) {
             builder.append(new PatTree(item._2, explicit, 0));
             var patClass = new MCT.Leaf<>(clauses.view()
@@ -224,7 +224,7 @@ public record PatClassifier(
         }
       }
       // THE BIG GAME
-      case CallTerm.Data dataCall -> {
+      case DataCall dataCall -> {
         // If there are no remaining clauses, probably it's due to a previous `impossible` clause,
         // but since we're going to remove this keyword, this check may not be needed in the future? LOL
         if (clauses.anyMatch(subPats -> subPats.pats().isNotEmpty()) &&
@@ -312,7 +312,7 @@ public record PatClassifier(
             classified = classifySub(conTele2.view(), matches, coverage, fuel);
           }
           builder.reduce();
-          var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
+          var conCall = new ConCall(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
           var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), conCall))
             .toImmutableSeq().view();
@@ -331,7 +331,7 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, PrimTerm.Mula end) {
+  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, FormulaTerm end) {
     var head = head(subPats);
     return head instanceof Pat.End headEnd
       && end.asFormula() instanceof Formula.Lit<Term> endF

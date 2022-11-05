@@ -4,8 +4,8 @@ package org.aya.core;
 
 import org.aya.concrete.ParseTest;
 import org.aya.core.def.FnDef;
-import org.aya.core.term.ElimTerm;
-import org.aya.core.term.IntroTerm;
+import org.aya.core.term.AppTerm;
+import org.aya.core.term.LamTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
@@ -154,7 +154,7 @@ public class DistillerTest {
     var a = new LocalVar("a");
     var A = new LocalVar("A");
     var x = new LocalVar("x");
-    var t = new ElimTerm.App(new IntroTerm.Lambda(new Term.Param(a, new RefTerm(A), true), new RefTerm(a)), new Arg<>(new RefTerm(x), true));
+    var t = new AppTerm(new LamTerm(new Term.Param(a, new RefTerm(A), true), new RefTerm(a)), new Arg<>(new RefTerm(x), true));
     assertEquals("(\\ a => a) x", t.toDoc(DistillerOptions.informative()).debugRender());
   }
 

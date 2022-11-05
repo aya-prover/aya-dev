@@ -32,7 +32,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> varDoc(term.var());
-      case CallTerm.Hole term -> {
+      case MetaTerm term -> {
         var name = term.ref();
         var inner = varDoc(name);
         var showImplicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
@@ -41,10 +41,10 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield Doc.wrap("{?", "?}",
           visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
       }
-      case IntroTerm.Tuple term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
-      case CallTerm.Con conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
-      case CallTerm.Fn fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
-      case FormTerm.Sigma term -> {
+      case TupTerm term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
+      case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
+      case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
+      case SigmaTerm term -> {
         var last = term.params().last();
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Sig")),
@@ -55,12 +55,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
         // Same as Pi
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case IntroTerm.Lambda term -> {
+      case LamTerm term -> {
         var params = MutableList.of(term.param());
-        var body = IntroTerm.Lambda.unwrap(term.body(), params::append);
+        var body = LamTerm.unwrap(term.body(), params::append);
         Doc bodyDoc;
         // Syntactic eta-contraction
-        if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {
+        if (body instanceof Callable call && call.ref() instanceof DefVar<?, ?> defVar) {
           var args = visibleArgsOf(call).view();
           while (params.isNotEmpty() && args.isNotEmpty()) {
             if (checkUneta(args, params.last())) {
@@ -68,7 +68,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
               params.removeLast();
             } else break;
           }
-          if (call instanceof CallTerm.Access access) bodyDoc = visitAccessHead(access);
+          if (call instanceof FieldTerm access) bodyDoc = visitAccessHead(access);
           else {
             var style = chooseStyle(defVar);
             bodyDoc = style != null
@@ -97,16 +97,16 @@ public class CoreDistiller extends BaseDistiller<Term> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case PrimTerm.Interval term -> Doc.styled(KEYWORD, "I");
-      case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
+      case IntervalTerm term -> Doc.styled(KEYWORD, "I");
+      case NewTerm newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
             linkRef(k, FIELD_CALL),
             Doc.symbol("=>"), term(Outer.Free, v)))
           .toImmutableSeq()));
-      case CallTerm.Access term -> visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
+      case FieldTerm term -> visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
         options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-      case RefTerm.MetaPat metaPat -> {
+      case MetaPatTerm metaPat -> {
         var ref = metaPat.ref();
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
         yield Doc.wrap("<", ">", pat(ref, outer));
@@ -115,30 +115,30 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var doc = term.description().toDoc(options);
         yield term.isReallyError() ? Doc.angled(doc) : doc;
       }
-      case ElimTerm.App term -> {
+      case AppTerm term -> {
         var args = MutableList.of(term.arg());
-        var head = ElimTerm.unapp(term.of(), args);
+        var head = AppTerm.unapp(term.of(), args);
         if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
         var implicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
         // Infix def-calls
-        if (head instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> var && var.isInfix()) {
+        if (head instanceof Callable call && call.ref() instanceof DefVar<?, ?> var && var.isInfix()) {
           yield visitCalls(true, defVar(var),
             call.args().view().appendedAll(args), outer, implicits);
         }
         yield visitCalls(false, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
-      case CallTerm.Prim prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
+      case PrimCall prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
-      case ElimTerm.Proj term ->
+      case ProjTerm term ->
         Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
-      case ElimTerm.Match match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
+      case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
           Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
         Doc.vcat(match.clauses().view()
           .map(clause -> Doc.sep(Doc.symbol("|"),
             Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
             Doc.symbol("=>"), term(Outer.Free, clause.body())))
           .toImmutableSeq()));
-      case FormTerm.Pi term -> {
+      case PiTerm term -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
           yield term(outer, term.body());
         }
@@ -149,7 +149,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           term(Outer.Codomain, term.body())
         ), Outer.BinOp);
         var params = MutableList.of(term.param());
-        var body = FormTerm.unpi(term.body(), params);
+        var body = PiTerm.unpi(term.body(), params);
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Pi")),
           visitTele(params, body, Term::findUsages),
@@ -159,14 +159,14 @@ public class CoreDistiller extends BaseDistiller<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
-      case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
-      case LitTerm.ShapedInt shaped -> shaped.with(
+      case StructCall structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
+      case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
+      case IntegerTerm shaped -> shaped.with(
         (zero, suc) -> shaped.repr() == 0
           ? linkLit(0, zero.ref, CON_CALL)
           : linkLit(shaped.repr(), suc.ref, CON_CALL),
         () -> Doc.plain(String.valueOf(shaped.repr())));
-      case LitTerm.ShapedList shaped -> {
+      case ListTerm shaped -> {
         var subterms = shaped.repr().map(x -> term(Outer.Free, x));
 
         yield shaped.with((nil, cons, dataArg) -> Doc.sep(
@@ -179,23 +179,23 @@ public class CoreDistiller extends BaseDistiller<Term> {
           Doc.symbol("]"))
         );
       }
-      case PrimTerm.Str str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
-      case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
+      case StringTerm str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
+      case PartialTyTerm ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
-      case IntroTerm.PartEl el -> partial(options, el.partial());
-      case PrimTerm.Mula mula -> formula(outer, mula.asFormula());
-      case FormTerm.Path path -> cube(options, path.cube());
-      case IntroTerm.PathLam lam -> checkParen(outer,
+      case PartialTerm el -> partial(options, el.partial());
+      case FormulaTerm mula -> formula(outer, mula.asFormula());
+      case PathTerm path -> cube(options, path.cube());
+      case PLamTerm lam -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
           Doc.sep(lam.params().map(BaseDistiller::varDoc)),
           Doc.symbol("=>"),
           lam.body().toDoc(options)),
         Outer.BinOp);
-      case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
+      case PAppTerm app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-      case PrimTerm.Coe coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
+      case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
-      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
     };
   }
@@ -210,13 +210,13 @@ public class CoreDistiller extends BaseDistiller<Term> {
     return args.dropLast(1).allMatch(a -> counter.apply(a.term()) == 0);
   }
 
-  private ImmutableSeq<Arg<Term>> visibleArgsOf(CallTerm call) {
-    return call instanceof CallTerm.Con con
-      ? con.conArgs() : call instanceof CallTerm.Access access
+  private ImmutableSeq<Arg<Term>> visibleArgsOf(Callable call) {
+    return call instanceof ConCall con
+      ? con.conArgs() : call instanceof FieldTerm access
       ? access.fieldArgs() : call.args();
   }
 
-  private @NotNull Doc visitAccessHead(CallTerm.@NotNull Access term) {
+  private @NotNull Doc visitAccessHead(@NotNull FieldTerm term) {
     return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
       linkRef(term.ref(), FIELD_CALL));
   }

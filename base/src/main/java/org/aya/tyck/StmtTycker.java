@@ -12,8 +12,9 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.DataCall;
 import org.aya.core.term.FormTerm;
+import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.tyck.error.NobodyError;
@@ -118,7 +119,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var dataConcrete = dataRef.concrete;
         var dataSig = dataConcrete.signature;
         assert dataSig != null;
-        var dataCall = ((CallTerm.Data) signature.result());
+        var dataCall = ((DataCall) signature.result());
         var tele = signature.param();
         var patTycker = ctor.yetTycker;
         var pat = ctor.yetTyckedPat;
@@ -126,7 +127,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         // PatTycker was created when checking the header with another expr tycker,
         // we should make sure it's the same one here. See comments of ExprTycker.
         assert tycker == patTycker.exprTycker;
-        if (pat.isNotEmpty()) dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
+        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(ImmutableMap.from(
           dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
         var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature);
         var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
@@ -205,18 +206,18 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var tele = tele(tycker, prim.telescope, null);
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
-          if (prim.result instanceof Expr.ErrorExpr) {
+          if (prim.result instanceof Expr.Error) {
             reporter.report(new PrimError.NoResultType(prim));
             return;
           }
           var result = tycker.synthesize(prim.result).wellTyped();
           // We assume that there aren't many level parameters in prims (at most 1).
           tycker.unifyTyReported(
-            FormTerm.Pi.make(tele, result),
-            FormTerm.Pi.make(core.telescope, core.result),
+            PiTerm.make(tele, result),
+            PiTerm.make(core.telescope, core.result),
             prim.result);
           prim.signature = new Def.Signature(tele, result);
-        } else if (!(prim.result instanceof Expr.ErrorExpr)) {
+        } else if (!(prim.result instanceof Expr.Error)) {
           var result = tycker.synthesize(prim.result).wellTyped();
           tycker.unifyTyReported(result, core.result, prim.result);
         } else prim.signature = new Def.Signature(core.telescope, core.result);
@@ -229,7 +230,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var dataSig = dataConcrete.signature;
         assert dataSig != null;
         var dataArgs = dataSig.param().map(Term.Param::toArg);
-        var dataCall = new CallTerm.Data(dataRef, 0, dataArgs);
+        var dataCall = new DataCall(dataRef, 0, dataArgs);
         var sig = new Def.Signature(dataSig.param(), dataCall);
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
@@ -261,7 +262,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private FormTerm.Sort resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
     FormTerm.Sort ret = FormTerm.Type.ZERO;
-    if (!(data.result instanceof Expr.HoleExpr)) {
+    if (!(data.result instanceof Expr.Hole)) {
       var result = tycker.ty(data.result);
       ret = (FormTerm.Sort) tycker.zonk(result.wellTyped());
     }

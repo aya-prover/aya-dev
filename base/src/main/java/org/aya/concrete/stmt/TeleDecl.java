@@ -93,7 +93,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
 
   /**
    * @author ice1000
-   * @implSpec the result field of {@link PrimDecl} might be {@link org.aya.concrete.Expr.ErrorExpr},
+   * @implSpec the result field of {@link PrimDecl} might be {@link Expr.Error},
    * which means it's unspecified in the concrete syntax.
    * @see PrimDef
    */

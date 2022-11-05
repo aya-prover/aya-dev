@@ -88,13 +88,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Pi(@NotNull SerTerm.SerParam param, @NotNull SerTerm body) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Pi(param.de(state), body.de(state));
+      return new PiTerm(param.de(state), body.de(state));
     }
   }
 
   record Sigma(@NotNull ImmutableSeq<SerParam> params) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Sigma(params.map(p -> p.de(state)));
+      return new SigmaTerm(params.map(p -> p.de(state)));
     }
   }
 
@@ -134,27 +134,27 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Lam(@NotNull SerParam param, @NotNull SerTerm body) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.Lambda(param.de(state), body.de(state));
+      return new LamTerm(param.de(state), body.de(state));
     }
   }
 
   record New(@NotNull StructCall call, @NotNull ImmutableMap<SerDef.QName, SerTerm> map) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.New(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
+      return new NewTerm(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
         Tuple.of(state.resolve(k), v.de(state)))));
     }
   }
 
   record Proj(@NotNull SerTerm of, int ix) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.Proj(of.de(state), ix);
+      return new ProjTerm(of.de(state), ix);
     }
   }
 
   record Match(@NotNull ImmutableSeq<SerTerm> of, ImmutableSeq<SerPat.Clause> clauses) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.Match(of.map(t -> t.de(state)), clauses.map(c -> c.de(state)));
+      return new MatchTerm(of.map(t -> t.de(state)), clauses.map(c -> c.de(state)));
     }
   }
 
@@ -166,7 +166,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record App(@NotNull SerTerm of, @NotNull SerArg arg) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.App(of.de(state), arg.de(state));
+      return new AppTerm(of.de(state), arg.de(state));
     }
   }
 
@@ -180,26 +180,26 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   }
 
   record StructCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
-    @Override public @NotNull CallTerm.Struct de(@NotNull DeState state) {
-      return new CallTerm.Struct(state.resolve(name), data.ulift, data.de(state));
+    @Override public @NotNull org.aya.core.term.StructCall de(@NotNull DeState state) {
+      return new org.aya.core.term.StructCall(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record FnCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Fn(state.resolve(name), data.ulift, data.de(state));
+      return new org.aya.core.term.FnCall(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record DataCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
-    @Override public @NotNull CallTerm.Data de(@NotNull DeState state) {
-      return new CallTerm.Data(state.resolve(name), data.ulift, data.de(state));
+    @Override public @NotNull org.aya.core.term.DataCall de(@NotNull DeState state) {
+      return new org.aya.core.term.DataCall(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record PrimCall(@NotNull SerDef.QName name, @NotNull PrimDef.ID id, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Prim(state.resolve(name), id, data.ulift, data.de(state));
+      return new org.aya.core.term.PrimCall(state.resolve(name), id, data.ulift, data.de(state));
     }
   }
 
@@ -208,7 +208,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull CallData dataArgs, @NotNull ImmutableSeq<SerArg> conArgs
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Con(
+      return new org.aya.core.term.ConCall(
         state.resolve(dataRef), state.resolve(selfRef),
         dataArgs.de(state), dataArgs.ulift,
         conArgs.map(arg -> arg.de(state)));
@@ -217,7 +217,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Tup(@NotNull ImmutableSeq<SerTerm> components) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.Tuple(components.map(t -> t.de(state)));
+      return new TupTerm(components.map(t -> t.de(state)));
     }
   }
 
@@ -228,7 +228,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull ImmutableSeq<@NotNull SerArg> fieldArgs
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Access(
+      return new FieldTerm(
         of.de(state), state.resolve(ref),
         structArgs.map(arg -> arg.de(state)),
         fieldArgs.map(arg -> arg.de(state)));
@@ -243,13 +243,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Interval() implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return PrimTerm.Interval.INSTANCE;
+      return IntervalTerm.INSTANCE;
     }
   }
 
   record Mula(@NotNull Formula<SerTerm> formula) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PrimTerm.Mula(formula.fmap(t -> t.de(state)));
+      return new FormulaTerm(formula.fmap(t -> t.de(state)));
     }
   }
 
@@ -259,7 +259,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerTerm type
   ) implements SerTerm {
     @Override public @NotNull Term de(SerTerm.@NotNull DeState state) {
-      return new LitTerm.ShapedInt(integer, shape.de(), type.de(state));
+      return new IntegerTerm(integer, shape.de(), type.de(state));
     }
   }
 
@@ -274,31 +274,31 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       var shape = shape().de();
       var type = type().de(state);
 
-      return new LitTerm.ShapedList(termDesered, shape, type);
+      return new ListTerm(termDesered, shape, type);
     }
   }
 
   record Str(@NotNull String string) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PrimTerm.Str(string);
+      return new StringTerm(string);
     }
   }
 
   record PartEl(@NotNull Partial<SerTerm> partial, @NotNull SerTerm rhsType) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.PartEl(partial.fmap(t -> t.de(state)), rhsType.de(state));
+      return new PartialTerm(partial.fmap(t -> t.de(state)), rhsType.de(state));
     }
   }
 
   record PartTy(@NotNull SerTerm type, @NotNull Restr<SerTerm> restr) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.PartTy(type.de(state), restr.fmap(t -> t.de(state)));
+      return new PartialTyTerm(type.de(state), restr.fmap(t -> t.de(state)));
     }
   }
 
   record Path(@NotNull SerCube cube) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Path(cube.de(state));
+      return new PathTerm(cube.de(state));
     }
   }
 
@@ -307,7 +307,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerTerm body
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new IntroTerm.PathLam(params.map(p -> p.de(state)), body.de(state));
+      return new PLamTerm(params.map(p -> p.de(state)), body.de(state));
     }
   }
 
@@ -317,13 +317,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerCube cube
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.PathApp(of.de(state), args.map(arg -> arg.de(state)), cube.de(state));
+      return new PAppTerm(of.de(state), args.map(arg -> arg.de(state)), cube.de(state));
     }
   }
 
   record Coe(@NotNull SerTerm type, @NotNull Restr<SerTerm> restr) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PrimTerm.Coe(type.de(state), restr.fmap(t -> t.de(state)));
+      return new CoeTerm(type.de(state), restr.fmap(t -> t.de(state)));
     }
   }
 
@@ -332,8 +332,8 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerTerm type,
     @NotNull Partial<SerTerm> partial
   ) implements Serializable {
-    public @NotNull FormTerm.Cube de(@NotNull DeState state) {
-      return new FormTerm.Cube(
+    public @NotNull PathTerm.Cube de(@NotNull DeState state) {
+      return new PathTerm.Cube(
         params.map(p -> p.de(state)),
         type.de(state),
         partial.fmap(t -> t.de(state)));

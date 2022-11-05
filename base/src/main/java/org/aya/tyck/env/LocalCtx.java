@@ -10,9 +10,9 @@ import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.Meta;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.PrimTerm;
+import org.aya.core.term.IntervalTerm;
+import org.aya.core.term.LamTerm;
+import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
@@ -29,22 +29,22 @@ import java.util.function.Supplier;
 
 @Debug.Renderer(hasChildren = "true", childrenArray = "extract().toArray()")
 public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
-  @NotNull default Tuple2<CallTerm.Hole, Term> freshHole(@NotNull Term type, @NotNull SourcePos sourcePos) {
+  @NotNull default Tuple2<MetaTerm, Term> freshHole(@NotNull Term type, @NotNull SourcePos sourcePos) {
     return freshHole(type, Constants.ANONYMOUS_PREFIX, sourcePos);
   }
-  default @NotNull Tuple2<CallTerm.Hole, Term>
+  default @NotNull Tuple2<MetaTerm, Term>
   freshHole(@Nullable Term type, @NotNull String name, @NotNull SourcePos sourcePos) {
     var ctxTele = extract();
     var meta = Meta.from(ctxTele, name, type, sourcePos);
-    var hole = new CallTerm.Hole(meta, 0, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
-    return Tuple.of(hole, IntroTerm.Lambda.make(meta.telescope, hole));
+    var hole = new MetaTerm(meta, 0, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
+    return Tuple.of(hole, LamTerm.make(meta.telescope, hole));
   }
   default <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
     return with(param.ref(), param.type(), action);
   }
   default <T> T withIntervals(@NotNull SeqView<LocalVar> params, @NotNull Supplier<T> action) {
     if (params.isEmpty()) return action.get();
-    params.forEach(x -> put(x, PrimTerm.Interval.INSTANCE));
+    params.forEach(x -> put(x, IntervalTerm.INSTANCE));
     try {
       return action.get();
     } finally {

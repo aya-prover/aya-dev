@@ -61,7 +61,7 @@ public final class Unifier extends TermComparator {
    * @param subst is added with unique variables in the inverted spine
    * @return the list of duplicated variables if the spine is successfully inverted.
    */
-  private @Nullable Seq<LocalVar> invertSpine(Subst subst, @NotNull CallTerm.Hole lhs, @NotNull Meta meta) {
+  private @Nullable Seq<LocalVar> invertSpine(Subst subst, @NotNull MetaTerm lhs, @NotNull Meta meta) {
     var overlap = MutableArrayList.<LocalVar>create();
     for (var arg : lhs.args().zipView(meta.telescope)) {
       if (uneta.uneta(arg._1.term()) instanceof RefTerm ref) {
@@ -76,14 +76,14 @@ public final class Unifier extends TermComparator {
     return overlap;
   }
 
-  @Override @Nullable protected Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, CallTerm.@NotNull Hole lhs) {
+  @Override @Nullable protected Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs) {
     var meta = lhs.ref();
-    if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
+    if (preRhs instanceof MetaTerm rcall && lhs.ref() == rcall.ref()) {
       // If we do not know the type, then we do not perform the comparison
       if (meta.result == null) return null;
-      var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
+      var holeTy = PiTerm.make(meta.telescope, meta.result);
       for (var arg : lhs.args().zipView(rcall.args())) {
-        if (!(holeTy instanceof FormTerm.Pi holePi))
+        if (!(holeTy instanceof PiTerm holePi))
           throw new InternalException("meta arg size larger than param size. this should not happen");
         if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
         holeTy = holePi.substBody(arg._1.term());

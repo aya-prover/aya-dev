@@ -79,59 +79,59 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
-      case LitTerm.ShapedInt lit ->
+      case IntegerTerm lit ->
         new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
-      case LitTerm.ShapedList lit ->
+      case ListTerm lit ->
         new SerTerm.ShapedList(
           lit.repr().map(this::serialize).toImmutableSeq(),
           SerDef.SerAyaShape.serialize(lit.shape()),
           serialize(lit.type()));
-      case PrimTerm.Mula end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
-      case PrimTerm.Str str -> new SerTerm.Str(str.string());
+      case FormulaTerm end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
+      case StringTerm str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
       case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()));
-      case PrimTerm.Interval interval -> new SerTerm.Interval();
-      case FormTerm.Pi pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
-      case FormTerm.Sigma sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
-      case CallTerm.Con conCall -> new SerTerm.ConCall(
+      case IntervalTerm interval -> new SerTerm.Interval();
+      case PiTerm pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
+      case SigmaTerm sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
+      case ConCall conCall -> new SerTerm.ConCall(
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
         serializeArgs(conCall.conArgs()));
-      case CallTerm.Struct structCall -> serializeStructCall(structCall);
-      case CallTerm.Data dataCall -> serializeDataCall(dataCall);
-      case CallTerm.Prim prim -> new SerTerm.PrimCall(
+      case StructCall structCall -> serializeStructCall(structCall);
+      case DataCall dataCall -> serializeDataCall(dataCall);
+      case PrimCall prim -> new SerTerm.PrimCall(
         state.def(prim.ref()),
         prim.id(),
         serializeCall(prim.ulift(), prim.args()));
-      case CallTerm.Access access -> new SerTerm.Access(
+      case FieldTerm access -> new SerTerm.Access(
         serialize(access.of()), state.def(access.ref()),
         serializeArgs(access.structArgs()),
         serializeArgs(access.fieldArgs()));
-      case CallTerm.Fn fnCall -> new SerTerm.FnCall(
+      case FnCall fnCall -> new SerTerm.FnCall(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
-      case ElimTerm.Proj proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
-      case ElimTerm.App app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
-      case ElimTerm.Match match ->
+      case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
+      case AppTerm app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
+      case MatchTerm match ->
         new SerTerm.Match(match.discriminant().map(this::serialize), match.clauses().map(this::serialize));
-      case IntroTerm.Tuple tuple -> new SerTerm.Tup(tuple.items().map(this::serialize));
-      case IntroTerm.Lambda lambda -> new SerTerm.Lam(serialize(lambda.param()), serialize(lambda.body()));
-      case IntroTerm.New newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
+      case TupTerm tuple -> new SerTerm.Tup(tuple.items().map(this::serialize));
+      case LamTerm lambda -> new SerTerm.Lam(serialize(lambda.param()), serialize(lambda.body()));
+      case NewTerm newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
-      case IntroTerm.PartEl el -> new SerTerm.PartEl(el.partial().fmap(this::serialize), serialize(el.rhsType()));
-      case FormTerm.PartTy ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
-      case FormTerm.Path path -> new SerTerm.Path(serialize(path.cube()));
-      case IntroTerm.PathLam path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
-      case ElimTerm.PathApp app -> new SerTerm.PathApp(serialize(app.of()),
+      case PartialTerm el -> new SerTerm.PartEl(el.partial().fmap(this::serialize), serialize(el.rhsType()));
+      case PartialTyTerm ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
+      case PathTerm path -> new SerTerm.Path(serialize(path.cube()));
+      case PLamTerm path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
+      case PAppTerm app -> new SerTerm.PathApp(serialize(app.of()),
         serializeArgs(app.args()), serialize(app.cube()));
-      case PrimTerm.Coe coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
+      case CoeTerm coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
 
-      case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
-      case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
+      case MetaTerm hole -> throw new InternalException("Shall not have holes serialized.");
+      case MetaPatTerm metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case FormTerm.Sort sort -> serialize(sort);
-      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
     };
   }
@@ -156,20 +156,20 @@ public record Serializer(@NotNull Serializer.State state) {
     };
   }
 
-  private @NotNull SerTerm.SerCube serialize(@NotNull FormTerm.Cube cube) {
+  private @NotNull SerTerm.SerCube serialize(@NotNull PathTerm.Cube cube) {
     return new SerTerm.SerCube(
       serializeIntervals(cube.params()),
       serialize(cube.type()),
       cube.partial().fmap(this::serialize));
   }
 
-  private @NotNull SerTerm.DataCall serializeDataCall(CallTerm.@NotNull Data dataCall) {
+  private @NotNull SerTerm.DataCall serializeDataCall(@NotNull DataCall dataCall) {
     return new SerTerm.DataCall(
       state.def(dataCall.ref()),
       serializeCall(dataCall.ulift(), dataCall.args()));
   }
 
-  private @NotNull SerTerm.StructCall serializeStructCall(CallTerm.@NotNull Struct structCall) {
+  private @NotNull SerTerm.StructCall serializeStructCall(@NotNull StructCall structCall) {
     return new SerTerm.StructCall(
       state.def(structCall.ref()),
       serializeCall(structCall.ulift(), structCall.args()));

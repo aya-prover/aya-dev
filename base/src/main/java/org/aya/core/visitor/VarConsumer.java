@@ -19,12 +19,12 @@ public interface VarConsumer extends TermConsumer {
     switch (term) {
       case RefTerm ref -> var(ref.var());
       case RefTerm.Field field -> var(field.ref());
-      case CallTerm.Hole hole -> var(hole.ref());
-      case CallTerm.Fn fn -> var(fn.ref());
-      case CallTerm.Prim prim -> var(prim.ref());
-      case CallTerm.Data data -> var(data.ref());
-      case CallTerm.Con con -> var(con.ref());
-      case CallTerm.Struct struct -> var(struct.ref());
+      case MetaTerm hole -> var(hole.ref());
+      case FnCall fn -> var(fn.ref());
+      case PrimCall prim -> var(prim.ref());
+      case DataCall data -> var(data.ref());
+      case ConCall con -> var(con.ref());
+      case StructCall struct -> var(struct.ref());
       default -> {}
     }
     TermConsumer.super.accept(term);
@@ -57,17 +57,17 @@ public interface VarConsumer extends TermConsumer {
 
     @Override public void accept(@NotNull Term term) {
       switch (term) {
-        case IntroTerm.Lambda lambda -> {
+        case LamTerm lambda -> {
           bound.append(lambda.param().ref());
           VarConsumer.super.accept(lambda);
           bound.removeLast();
         }
-        case FormTerm.Pi pi -> {
+        case PiTerm pi -> {
           bound.append(pi.param().ref());
           VarConsumer.super.accept(pi);
           bound.removeLast();
         }
-        case FormTerm.Sigma sigma -> {
+        case SigmaTerm sigma -> {
           var start = bound.size();
           sigma.params().forEach(param -> {
             bound.append(param.ref());
@@ -75,20 +75,20 @@ public interface VarConsumer extends TermConsumer {
           });
           bound.removeInRange(start, start + sigma.params().size());
         }
-        case FormTerm.Path path -> {
+        case PathTerm path -> {
           var start = bound.size();
           path.cube().params().forEach(bound::append);
           accept(path.cube().type());
           path.cube().partial().termsView().forEach(this);
           bound.removeInRange(start, start + path.cube().params().size());
         }
-        case IntroTerm.PathLam lam -> {
+        case PLamTerm lam -> {
           var start = bound.size();
           lam.params().forEach(bound::append);
           accept(lam.body());
           bound.removeInRange(start, start + lam.params().size());
         }
-        case CallTerm.Hole hole -> {
+        case MetaTerm hole -> {
           var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);
           hole.contextArgs().forEach(arg -> checker.accept(arg.term()));
           hole.args().forEach(arg -> accept(arg.term()));

@@ -5,7 +5,6 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
-import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
@@ -68,25 +67,25 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author re-xyr
    */
-  record UnresolvedExpr(
+  record Unresolved(
     @NotNull SourcePos sourcePos,
     @NotNull QualifiedID name
   ) implements Expr {
-    public UnresolvedExpr(@NotNull SourcePos sourcePos, @NotNull String name) {
+    public Unresolved(@NotNull SourcePos sourcePos, @NotNull String name) {
       this(sourcePos, new QualifiedID(sourcePos, name));
     }
 
-    @Override public @NotNull UnresolvedExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Unresolved descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
 
-  record ErrorExpr(@NotNull SourcePos sourcePos, @NotNull AyaDocile description) implements Expr {
-    public ErrorExpr(@NotNull SourcePos sourcePos, @NotNull Doc description) {
+  record Error(@NotNull SourcePos sourcePos, @NotNull AyaDocile description) implements Expr {
+    public Error(@NotNull SourcePos sourcePos, @NotNull Doc description) {
       this(sourcePos, options -> description);
     }
 
-    @Override public @NotNull ErrorExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Error descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
@@ -94,21 +93,21 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author ice1000
    */
-  record HoleExpr(
+  record Hole(
     @Override @NotNull SourcePos sourcePos,
     boolean explicit,
     @Nullable Expr filling,
     MutableValue<ImmutableSeq<LocalVar>> accessibleLocal
   ) implements Expr {
-    public HoleExpr(@NotNull SourcePos sourcePos, boolean explicit, @Nullable Expr filling) {
+    public Hole(@NotNull SourcePos sourcePos, boolean explicit, @Nullable Expr filling) {
       this(sourcePos, explicit, filling, MutableValue.create());
     }
 
-    public @NotNull HoleExpr update(@Nullable Expr filling) {
-      return filling == filling() ? this : new HoleExpr(sourcePos, explicit, filling);
+    public @NotNull Expr.Hole update(@Nullable Expr filling) {
+      return filling == filling() ? this : new Hole(sourcePos, explicit, filling);
     }
 
-    @Override public @NotNull HoleExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Hole descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(filling == null ? null : f.apply(filling));
     }
   }
@@ -116,22 +115,22 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author re-xyr
    */
-  record AppExpr(
+  record App(
     @NotNull SourcePos sourcePos,
     @NotNull Expr function,
     @NotNull NamedArg argument
   ) implements Expr {
-    public @NotNull AppExpr update(@NotNull Expr function, @NotNull NamedArg argument) {
-      return function == function() && argument == argument() ? this : new AppExpr(sourcePos, function, argument);
+    public @NotNull Expr.App update(@NotNull Expr function, @NotNull NamedArg argument) {
+      return function == function() && argument == argument() ? this : new App(sourcePos, function, argument);
     }
 
-    @Override public @NotNull AppExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.App descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(function), argument.descent(f));
     }
   }
 
   static @NotNull Expr unapp(@NotNull Expr expr, @Nullable MutableList<NamedArg> args) {
-    while (expr instanceof AppExpr app) {
+    while (expr instanceof App app) {
       if (args != null) args.append(app.argument);
       expr = app.function;
     }
@@ -172,16 +171,16 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author re-xyr
    */
-  record PiExpr(
+  record Pi(
     @NotNull SourcePos sourcePos,
     @NotNull Param param,
     @NotNull Expr last
   ) implements Expr {
-    public @NotNull PiExpr update(@NotNull Param param, @NotNull Expr last) {
-      return param == param() && last == last() ? this : new PiExpr(sourcePos, param, last);
+    public @NotNull Expr.Pi update(@NotNull Param param, @NotNull Expr last) {
+      return param == param() && last == last() ? this : new Pi(sourcePos, param, last);
     }
 
-    @Override public @NotNull PiExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Pi descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(param.descent(f), f.apply(last));
     }
   }
@@ -255,16 +254,16 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author re-xyr
    */
-  record LamExpr(
+  record Lambda(
     @NotNull SourcePos sourcePos,
     @NotNull Param param,
     @NotNull Expr body
   ) implements Expr {
-    public @NotNull LamExpr update(@NotNull Param param, @NotNull Expr body) {
-      return param == param() && body == body() ? this : new LamExpr(sourcePos, param, body);
+    public @NotNull Expr.Lambda update(@NotNull Param param, @NotNull Expr body) {
+      return param == param() && body == body() ? this : new Lambda(sourcePos, param, body);
     }
 
-    @Override public @NotNull LamExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Lambda descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(param.descent(f), f.apply(body));
     }
   }
@@ -272,15 +271,15 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author re-xyr
    */
-  record SigmaExpr(
+  record Sigma(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<@NotNull Param> params
   ) implements Expr {
-    public @NotNull SigmaExpr update(@NotNull ImmutableSeq<@NotNull Param> params) {
-      return params.sameElements(params(), true) ? this : new SigmaExpr(sourcePos, params);
+    public @NotNull Expr.Sigma update(@NotNull ImmutableSeq<@NotNull Param> params) {
+      return params.sameElements(params(), true) ? this : new Sigma(sourcePos, params);
     }
 
-    @Override public @NotNull SigmaExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Sigma descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(params.map(param -> param.descent(f)));
     }
   }
@@ -293,26 +292,26 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    *
    * @author ice1000
    */
-  record RefExpr(
+  record Ref(
     @NotNull SourcePos sourcePos,
     @NotNull AnyVar resolvedVar,
     @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
-    public RefExpr(@NotNull SourcePos sourcePos, @NotNull AnyVar resolvedVar) {
+    public Ref(@NotNull SourcePos sourcePos, @NotNull AnyVar resolvedVar) {
       this(sourcePos, resolvedVar, MutableValue.create());
     }
 
-    @Override public @NotNull RefExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Ref descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
 
-  record LiftExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {
-    public @NotNull LiftExpr update(@NotNull Expr expr) {
-      return expr == expr() ? this : new LiftExpr(sourcePos, expr, lift);
+  record Lift(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {
+    public @NotNull Expr.Lift update(@NotNull Expr expr) {
+      return expr == expr() ? this : new Lift(sourcePos, expr, lift);
     }
 
-    @Override public @NotNull LiftExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Lift descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(expr));
     }
   }
@@ -320,35 +319,35 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author tsao-chi
    */
-  record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull SortKind kind) implements Expr {
-    @Override public @NotNull RawSortExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+  record RawSort(@NotNull SourcePos sourcePos, @NotNull SortKind kind) implements Expr {
+    @Override public @NotNull Expr.RawSort descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
 
-  sealed interface SortExpr extends Expr {
+  sealed interface Sort extends Expr {
     int lift();
 
     SortKind kind();
 
-    @Override default @NotNull SortExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override default @NotNull Expr.Sort descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
 
-  record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
+  record Type(@NotNull SourcePos sourcePos, @Override int lift) implements Sort {
     @Override public SortKind kind() {
       return SortKind.Type;
     }
   }
 
-  record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
+  record Set(@NotNull SourcePos sourcePos, @Override int lift) implements Sort {
     @Override public SortKind kind() {
       return SortKind.Set;
     }
   }
 
-  record PropExpr(@NotNull SourcePos sourcePos) implements SortExpr {
+  record Prop(@NotNull SourcePos sourcePos) implements Sort {
     @Override public int lift() {
       return 0;
     }
@@ -358,7 +357,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
   }
 
-  record ISetExpr(@NotNull SourcePos sourcePos) implements SortExpr {
+  record ISet(@NotNull SourcePos sourcePos) implements Sort {
     @Override public int lift() {
       return 0;
     }
@@ -371,15 +370,15 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author re-xyr
    */
-  record TupExpr(
+  record Tuple(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<@NotNull Expr> items
   ) implements Expr {
-    public @NotNull TupExpr update(@NotNull ImmutableSeq<@NotNull Expr> items) {
-      return items.sameElements(items(), true) ? this : new TupExpr(sourcePos, items);
+    public @NotNull Expr.Tuple update(@NotNull ImmutableSeq<@NotNull Expr> items) {
+      return items.sameElements(items(), true) ? this : new Tuple(sourcePos, items);
     }
 
-    @Override public @NotNull TupExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Tuple descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(items.map(f));
     }
   }
@@ -388,31 +387,31 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    * @param resolvedVar will be set to the field's DefVar during resolving
    * @author re-xyr
    */
-  record ProjExpr(
+  record Proj(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
     @NotNull Either<Integer, QualifiedID> ix,
     @Nullable AnyVar resolvedVar,
     @NotNull MutableValue<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
-    public ProjExpr(
+    public Proj(
       @NotNull SourcePos sourcePos, @NotNull Expr tup,
       @NotNull Either<Integer, QualifiedID> ix
     ) {
       this(sourcePos, tup, ix, null, MutableValue.create());
     }
 
-    public @NotNull ProjExpr update(@NotNull Expr tup) {
-      return tup == tup() ? this : new ProjExpr(sourcePos, tup, ix, resolvedVar, theCore);
+    public @NotNull Expr.Proj update(@NotNull Expr tup) {
+      return tup == tup() ? this : new Proj(sourcePos, tup, ix, resolvedVar, theCore);
     }
 
-    @Override public @NotNull ProjExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Proj descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(tup));
     }
   }
 
-  /** undesugared overloaded projection as coercion syntax */
-  record RawProjExpr(
+  /** Sugared overloaded projection as coercion syntax */
+  record RawProj(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
     @NotNull QualifiedID id,
@@ -420,49 +419,49 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @Nullable Expr coeLeft,
     @Nullable Expr restr
   ) implements Expr {
-    public @NotNull RawProjExpr update(@NotNull Expr tup, @Nullable Expr coeLeft, @Nullable Expr restr) {
+    public @NotNull Expr.RawProj update(@NotNull Expr tup, @Nullable Expr coeLeft, @Nullable Expr restr) {
       return tup == tup() && coeLeft == coeLeft() && restr == restr() ? this
-        : new RawProjExpr(sourcePos, tup, id, resolvedVar, coeLeft, restr);
+        : new RawProj(sourcePos, tup, id, resolvedVar, coeLeft, restr);
     }
 
-    @Override public @NotNull RawProjExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.RawProj descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(tup), coeLeft == null ? null : f.apply(coeLeft), restr == null ? null : f.apply(restr));
     }
   }
 
   /**
-   * calls to {@link org.aya.core.def.PrimDef.ID#COE}, desugared from {@link ProjExpr} for simplicity
+   * calls to {@link org.aya.core.def.PrimDef.ID#COE}, desugared from {@link Proj} for simplicity
    *
    * @param resolvedVar will be set to the primitive coe's DefVar during resolving
    * @param restr       The cofibration under which the type should be constant
    */
-  record CoeExpr(
+  record Coe(
     @Override @NotNull SourcePos sourcePos,
     @NotNull QualifiedID id,
     @NotNull DefVar<?, ?> resolvedVar,
     @NotNull Expr type,
     @NotNull Expr restr
   ) implements Expr {
-    public @NotNull CoeExpr update(@NotNull Expr type, @NotNull Expr restr) {
-      return type == type() && restr == restr() ? this : new CoeExpr(sourcePos, id, resolvedVar, type, restr);
+    public @NotNull Expr.Coe update(@NotNull Expr type, @NotNull Expr restr) {
+      return type == type() && restr == restr() ? this : new Coe(sourcePos, id, resolvedVar, type, restr);
     }
 
-    @Override public @NotNull CoeExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.Coe descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(type), f.apply(restr));
     }
   }
 
-  record NewExpr(
+  record New(
     @NotNull SourcePos sourcePos,
     @NotNull Expr struct,
     @NotNull ImmutableSeq<Field> fields
   ) implements Expr {
-    public @NotNull NewExpr update(@NotNull Expr struct, @NotNull ImmutableSeq<Field> fields) {
+    public @NotNull Expr.New update(@NotNull Expr struct, @NotNull ImmutableSeq<Field> fields) {
       return struct == struct() && fields.sameElements(fields(), true) ? this
-        : new NewExpr(sourcePos, struct, fields);
+        : new New(sourcePos, struct, fields);
     }
 
-    @Override public @NotNull NewExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.New descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(struct), fields.map(field -> field.descent(f)));
     }
   }
@@ -507,14 +506,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author kiva
    */
-  record LitIntExpr(@NotNull SourcePos sourcePos, int integer) implements Expr {
-    @Override public @NotNull LitIntExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+  record LitInt(@NotNull SourcePos sourcePos, int integer) implements Expr {
+    @Override public @NotNull Expr.LitInt descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
 
-  record LitStringExpr(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {
-    @Override public @NotNull LitStringExpr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+  record LitString(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {
+    @Override public @NotNull Expr.LitString descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
@@ -552,7 +551,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
 
     @Override public @NotNull PartEl descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return update(clauses.map(cls -> Tuple.of(f.apply(cls._1), f.apply(cls._2))));
+      return update(clauses.map(cls -> kala.tuple.Tuple.of(f.apply(cls._1), f.apply(cls._2))));
     }
   }
 
@@ -586,7 +585,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
 
     public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
-      this(sourcePos, var, new HoleExpr(sourcePos, false, null), explicit);
+      this(sourcePos, var, new Hole(sourcePos, false, null), explicit);
     }
 
     public @NotNull Param update(@NotNull Expr type) {

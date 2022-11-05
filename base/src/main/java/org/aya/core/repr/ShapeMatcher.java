@@ -11,7 +11,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.Callable;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
@@ -50,14 +50,14 @@ public record ShapeMatcher(
 
   private boolean matchTerm(@NotNull CodeShape.TermShape shape, @NotNull Term term) {
     if (shape instanceof CodeShape.TermShape.Any) return true;
-    if (shape instanceof CodeShape.TermShape.Call call && term instanceof CallTerm callTerm) {
+    if (shape instanceof CodeShape.TermShape.Call call && term instanceof Callable callable) {
       var superLevel = def.getOrNull(call.superLevel());
-      if (superLevel != callTerm.ref()) return false;                      // implies null check
-      if (call.args().size() != callTerm.args().size())
+      if (superLevel != callable.ref()) return false;                      // implies null check
+      if (call.args().size() != callable.args().size())
         return false;      // TODO[hoshino]: do we also match implicit arguments?
 
       // match each arg
-      return call.args().allMatchWith(callTerm.args(),
+      return call.args().allMatchWith(callable.args(),
         // match each term, but lazy
         (l, r) -> matchTerm(l, r.term()));
     }

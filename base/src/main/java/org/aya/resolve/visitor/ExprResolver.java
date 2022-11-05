@@ -80,14 +80,14 @@ public record ExprResolver(
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.RawProjExpr(var pos, var tup, var id, var resolved, var coeLeft, var restr) -> {
+      case Expr.RawProj(var pos, var tup, var id, var resolved, var coeLeft, var restr) -> {
         var resolvedIx = ctx.getMaybe(id);
         if (resolvedIx == null)
           ctx.reportAndThrow(new FieldError.UnknownField(id.sourcePos(), id.join()));
         yield resolvedIx == resolved ? expr
-          : new Expr.RawProjExpr(pos, tup, id, resolvedIx, coeLeft, restr);
+          : new Expr.RawProj(pos, tup, id, resolvedIx, coeLeft, restr);
       }
-      case Expr.HoleExpr hole -> {
+      case Expr.Hole hole -> {
         hole.accessibleLocal().set(ctx.collect(MutableList.create()).toImmutableSeq());
         yield hole;
       }
@@ -106,21 +106,21 @@ public record ExprResolver(
         var clauses = match.clauses().map(this::apply);
         yield match.update(match.discriminant().map(this), clauses);
       }
-      case Expr.NewExpr neu -> neu.update(apply(neu.struct()), neu.fields().map(field -> {
+      case Expr.New neu -> neu.update(apply(neu.struct()), neu.fields().map(field -> {
         var fieldCtx = field.bindings().foldLeft(ctx, (c, x) -> c.bind(x.data(), x.sourcePos()));
         return field.descent(enter(fieldCtx));
       }));
-      case Expr.LamExpr lam -> {
+      case Expr.Lambda lam -> {
         var mCtx = MutableValue.create(ctx);
         var param = resolve(lam.param(), mCtx);
         yield lam.update(param, enter(mCtx.get()).apply(lam.body()));
       }
-      case Expr.PiExpr pi -> {
+      case Expr.Pi pi -> {
         var mCtx = MutableValue.create(ctx);
         var param = resolve(pi.param(), mCtx);
         yield pi.update(param, enter(mCtx.get()).apply(pi.last()));
       }
-      case Expr.SigmaExpr sigma -> {
+      case Expr.Sigma sigma -> {
         var mCtx = MutableValue.create(ctx);
         var params = sigma.params().map(param -> resolve(param, mCtx));
         yield sigma.update(params);
@@ -138,7 +138,7 @@ public record ExprResolver(
         },
         right -> right.descent(this)
       ));
-      case Expr.UnresolvedExpr(var pos, var name) -> switch (ctx.get(name)) {
+      case Expr.Unresolved(var pos, var name) -> switch (ctx.get(name)) {
         case GeneralizedVar generalized -> {
           if (!allowedGeneralizes.containsKey(generalized)) {
             if (options.allowGeneralized()) {
@@ -152,16 +152,16 @@ public record ExprResolver(
               throw new Context.ResolvingInterruptedException();
             }
           }
-          yield new Expr.RefExpr(pos, allowedGeneralizes.get(generalized).ref());
+          yield new Expr.Ref(pos, allowedGeneralizes.get(generalized).ref());
         }
         case DefVar<?, ?> def -> {
           // RefExpr is referring to a serialized core which is already tycked.
           // Collecting tyck order for tycked terms is unnecessary, just skip.
           if (def.concrete == null) assert def.core != null;
           else if (def.concrete instanceof TyckUnit unit) addReference(unit);
-          yield new Expr.RefExpr(pos, def);
+          yield new Expr.Ref(pos, def);
         }
-        case AnyVar var -> new Expr.RefExpr(pos, var);
+        case AnyVar var -> new Expr.Ref(pos, var);
       };
       default -> EndoExpr.super.apply(expr);
     };

@@ -7,7 +7,9 @@ import kala.collection.SeqView;
 import kala.value.MutableValue;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.*;
+import org.aya.core.term.Callable;
+import org.aya.core.term.RefTerm;
+import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,7 @@ public interface TermFolder<R> extends Function<Term, R> {
 
   default @NotNull R fold(@NotNull R acc, @NotNull Term term) {
     return switch (term) {
-      case CallTerm call -> fold(acc, call.ref());
+      case Callable call -> fold(acc, call.ref());
       case RefTerm ref -> fold(acc, ref.var());
       case RefTerm.Field field -> fold(acc, field.ref());
       default -> acc;

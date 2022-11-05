@@ -7,9 +7,7 @@ import kala.function.TriFunction;
 import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckState;
@@ -24,7 +22,7 @@ import java.util.function.Supplier;
 /**
  * <h2> What should I do after I creating a new Shape? </h2>
  * <ul>
- *   <li>impl your Shape, see {@link org.aya.core.term.LitTerm.ShapedInt},
+ *   <li>impl your Shape, see {@link IntegerTerm},
  *   and do everything you should after you creating a {@link Term}/{@link Pat}.</l1>
  *   <li>impl TermComparator, see {@link TermComparator#doCompareUntyped(Term, Term, TermComparator.Sub, TermComparator.Sub)}</li>
  *   <li>impl PatMatcher, see {@link org.aya.core.pat.PatMatcher#match(Pat, Term)}</li>
@@ -44,12 +42,12 @@ public interface Shaped<T> {
   sealed interface Inductive<T> extends Shaped<T> {
     @Override @NotNull Term type();
 
-    default @Nullable CallTerm.Data solved(@Nullable TyckState state) {
+    default @Nullable DataCall solved(@Nullable TyckState state) {
       var type = type();
       if (state != null) type = type.normalize(state, NormalizeMode.WHNF);
       // already reported as UnsolvedMeta
-      if (type instanceof ErrorTerm || type instanceof CallTerm.Hole) return null;
-      if (type instanceof CallTerm.Data data) return data;
+      if (type instanceof ErrorTerm || type instanceof MetaTerm) return null;
+      if (type instanceof DataCall data) return data;
       throw new InternalException("unknown type for literal of type " + type);
     }
 

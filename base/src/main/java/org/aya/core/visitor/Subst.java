@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
-import org.aya.core.term.PrimTerm;
+import org.aya.core.term.FormulaTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
@@ -93,7 +93,7 @@ public record Subst(
   }
 
   @Override public void put(LocalVar i, boolean isOne) {
-    map.put(i, isOne ? PrimTerm.Mula.RIGHT : PrimTerm.Mula.LEFT);
+    map.put(i, isOne ? FormulaTerm.RIGHT : FormulaTerm.LEFT);
   }
 
   @Override public boolean contradicts(LocalVar i, boolean newIsOne) {

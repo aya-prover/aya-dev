@@ -3,8 +3,8 @@
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
+import org.aya.core.term.MetaTerm;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record Goal(
   @NotNull TyckState state,
-  @NotNull CallTerm.Hole hole,
+  @NotNull MetaTerm hole,
   @NotNull ImmutableSeq<LocalVar> scope
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {

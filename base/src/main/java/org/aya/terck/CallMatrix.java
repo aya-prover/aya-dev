@@ -3,7 +3,7 @@
 package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.Callable;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -22,20 +22,20 @@ import org.jetbrains.annotations.NotNull;
  */
 @Debug.Renderer(text = "toDoc().debugRender()")
 public record CallMatrix<Def, Param>(
-  @NotNull CallTerm callTerm,
+  @NotNull Callable callable,
   @NotNull Def domain, @NotNull Def codomain,
   @NotNull ImmutableSeq<Param> domainTele,
   @NotNull ImmutableSeq<Param> codomainTele,
   @NotNull Relation[][] matrix
 ) implements Docile, Selector.Candidate<CallMatrix<Def, Param>> {
   public CallMatrix(
-    @NotNull CallTerm callTerm,
+    @NotNull Callable callable,
     @NotNull Def domain, @NotNull Def codomain,
     @NotNull ImmutableSeq<Param> domainTele,
     @NotNull ImmutableSeq<Param> codomainTele
   ) {
     // TODO: sparse matrix?
-    this(callTerm, domain, codomain, domainTele, codomainTele,
+    this(callable, domain, codomain, domainTele, codomainTele,
       new Relation[codomainTele.size()][domainTele.size()]);
     ArrayUtil.fill(matrix, Relation.unk());
   }
@@ -82,7 +82,7 @@ public record CallMatrix<Def, Param>(
     if (B.domain != A.codomain) // implies B.cols() != A.rows()
       throw new InternalException("The combine cannot be applied to these two call matrices");
 
-    var BA = new CallMatrix<>(B.callTerm, A.domain, B.codomain,
+    var BA = new CallMatrix<>(B.callable, A.domain, B.codomain,
       A.domainTele, B.codomainTele);
 
     for (int i = 0; i < BA.rows(); i++)

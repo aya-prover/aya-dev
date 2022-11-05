@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -6,7 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -125,7 +125,7 @@ public sealed interface ClausesProblem extends Problem {
   record UnsureCase(
     @Override @NotNull SourcePos sourcePos,
     @NotNull CtorDef ctor,
-    @NotNull CallTerm.Data dataCall
+    @NotNull DataCall dataCall
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(

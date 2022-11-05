@@ -7,7 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.term.FormTerm;
+import org.aya.core.term.PathTerm;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
@@ -248,7 +248,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return style != null ? linkDef(ref, style) : varDoc(ref);
   }
 
-  public static @NotNull Doc cube(@NotNull DistillerOptions options, @NotNull FormTerm.Cube cube) {
+  public static @NotNull Doc cube(@NotNull DistillerOptions options, @NotNull PathTerm.Cube cube) {
     return Doc.sep(
       Doc.symbol("[|"),
       Doc.commaList(cube.params().map(BaseDistiller::linkDef)),

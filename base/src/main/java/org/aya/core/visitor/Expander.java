@@ -5,9 +5,7 @@ package org.aya.core.visitor;
 import kala.collection.Set;
 import kala.collection.mutable.MutableSet;
 import org.aya.core.def.PrimDef;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.StableWHNF;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +21,7 @@ public interface Expander extends DeltaExpander, BetaExpander {
     @Override public @NotNull Term apply(@NotNull Term term) {
       return switch (term) {
         case StableWHNF whnf -> term;
-        case CallTerm.Con con when (con.ref().core == null || con.ref().core.clauses.isEmpty()) -> con;
+        case ConCall con when (con.ref().core == null || con.ref().core.clauses.isEmpty()) -> con;
         default -> Expander.super.apply(term);
       };
     }
@@ -37,17 +35,17 @@ public interface Expander extends DeltaExpander, BetaExpander {
   ) implements Expander {
     @Override public @NotNull Term apply(@NotNull Term term) {
       return switch (term) {
-        case CallTerm.Fn fn -> {
+        case FnCall fn -> {
           if (!unfolding.contains(fn.ref())) yield fn;
           unfolded.add(fn.ref());
           yield Expander.super.apply(fn);
         }
-        case CallTerm.Con con -> {
+        case ConCall con -> {
           if (!unfolding.contains(con.ref())) yield con;
           unfolded.add(con.ref());
           yield Expander.super.apply(con);
         }
-        case CallTerm.Prim prim -> factory.unfold(prim.id(), prim, state);
+        case PrimCall prim -> factory.unfold(prim.id(), prim, state);
         default -> Expander.super.apply(term);
       };
     }

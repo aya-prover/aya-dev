@@ -8,8 +8,8 @@ import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatToTerm;
-import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
+import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
@@ -93,9 +93,9 @@ public record Conquer(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));
       return;
     }
-    if (newBody instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+    if (newBody instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
       hole.ref().conditions.append(Tuple.of(matchy, volynskaya.data()));
-    } else if (volynskaya.data() instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+    } else if (volynskaya.data() instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
       hole.ref().conditions.append(Tuple.of(matchy, newBody));
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq, ctx)

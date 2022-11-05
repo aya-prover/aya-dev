@@ -3,7 +3,7 @@
 package org.aya.core.repr;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.generic.SortKind;
 import org.jetbrains.annotations.Contract;
@@ -44,7 +44,7 @@ public sealed interface CodeShape {
 
     /**
      * @param superLevel the data def reference
-     * @param args corresponds to {@link CallTerm.Data#args()}
+     * @param args corresponds to {@link DataCall#args()}
      */
     record Call(int superLevel, @NotNull ImmutableSeq<TermShape> args) implements TermShape {
       @Contract("_ -> new") public static @NotNull Call justCall(int superLevel) {

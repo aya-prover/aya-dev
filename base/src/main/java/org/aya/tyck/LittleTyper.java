@@ -5,7 +5,6 @@ package org.aya.tyck;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
-import org.aya.core.visitor.BetaExpander;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
@@ -25,30 +24,30 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
   public @NotNull Term term(@NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> localCtx.get(term.var());
-      case CallTerm.Con conCall -> conCall.head().underlyingDataCall();
-      case CallTerm.DefCall call -> defCall(call);
-      case CallTerm.Hole hole -> {
+      case ConCall conCall -> conCall.head().underlyingDataCall();
+      case Callable.DefCall call -> defCall(call);
+      case MetaTerm hole -> {
         var result = hole.ref().result;
         yield result == null ? ErrorTerm.typeOf(hole) : result;
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term);
       case RefTerm.Field field -> Def.defType(field.ref());
-      case CallTerm.Access access -> {
+      case FieldTerm access -> {
         var callRaw = whnf(term(access.of()));
-        if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
+        if (!(callRaw instanceof StructCall call)) yield ErrorTerm.typeOf(access);
         var core = access.ref().core;
         var subst = DeltaExpander.buildSubst(core.telescope(), access.fieldArgs())
           .add(DeltaExpander.buildSubst(call.ref().core.telescope(), access.structArgs()));
         yield core.result().subst(subst);
       }
-      case FormTerm.Sigma sigma -> {
+      case SigmaTerm sigma -> {
         var univ = sigma.params().view()
           .map(param -> whnf(term(param.type())))
           .filterIsInstance(FormTerm.Sort.class)
           .toImmutableSeq();
         if (univ.sizeEquals(sigma.params().size())) {
           try {
-            yield univ.reduce(ExprTycker::calculateSigma);
+            yield univ.reduce(SigmaTerm::max);
           } catch (IllegalArgumentException ignored) {
             yield ErrorTerm.typeOf(sigma);
           }
@@ -56,20 +55,20 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           yield ErrorTerm.typeOf(sigma);
         }
       }
-      case IntroTerm.Lambda lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
-      case ElimTerm.Proj proj -> {
+      case LamTerm lambda -> new PiTerm(lambda.param(), term(lambda.body()));
+      case ProjTerm proj -> {
         var sigmaRaw = whnf(term(proj.of()));
-        if (!(sigmaRaw instanceof FormTerm.Sigma sigma)) yield ErrorTerm.typeOf(proj);
+        if (!(sigmaRaw instanceof SigmaTerm sigma)) yield ErrorTerm.typeOf(proj);
         var index = proj.ix() - 1;
         var telescope = sigma.params();
         yield telescope.get(index).type()
-          .subst(ElimTerm.Proj.projSubst(proj.of(), index, telescope));
+          .subst(ProjTerm.projSubst(proj.of(), index, telescope));
       }
-      case IntroTerm.New neu -> neu.struct();
-      case IntroTerm.Tuple tuple -> new FormTerm.Sigma(tuple.items().map(item ->
+      case NewTerm neu -> neu.struct();
+      case TupTerm tuple -> new SigmaTerm(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
-      case RefTerm.MetaPat metaPat -> metaPat.ref().type();
-      case FormTerm.Pi pi -> {
+      case MetaPatTerm metaPat -> metaPat.ref().type();
+      case PiTerm pi -> {
         var paramTyRaw = whnf(term(pi.param().type()));
         var resultParam = new Term.Param(pi.param().ref(), whnf(pi.param().type()), pi.param().explicit());
         var t = new LittleTyper(state, localCtx.deriveMap());
@@ -86,37 +85,37 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           }
         });
       }
-      case ElimTerm.App app -> {
+      case AppTerm app -> {
         var piRaw = whnf(term(app.of()));
-        yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
+        yield piRaw instanceof PiTerm pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
-      case ElimTerm.Match match -> {
+      case MatchTerm match -> {
         // TODO: Should I normalize match.discriminant() before matching?
-        var term = BetaExpander.tryMatch(match.discriminant(), match.clauses());
+        var term = match.tryMatch();
         yield term.isDefined() ? term(term.get()) : ErrorTerm.typeOf(match);
       }
       case FormTerm.Sort sort -> sort.succ();
-      case PrimTerm.Interval interval -> FormTerm.Type.ZERO;
-      case PrimTerm.Mula end -> PrimTerm.Interval.INSTANCE;
-      case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STRING);
-      case LitTerm.ShapedInt shaped -> shaped.type();
-      case LitTerm.ShapedList shaped -> shaped.type();
-      case FormTerm.PartTy ty -> term(ty.type());
-      case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
-      case FormTerm.Path(var cube) -> term(cube.type());
-      case IntroTerm.PathLam lam -> new FormTerm.Path(new FormTerm.Cube(
+      case IntervalTerm interval -> FormTerm.Type.ZERO;
+      case FormulaTerm end -> IntervalTerm.INSTANCE;
+      case StringTerm str -> state.primFactory().getCall(PrimDef.ID.STRING);
+      case IntegerTerm shaped -> shaped.type();
+      case ListTerm shaped -> shaped.type();
+      case PartialTyTerm ty -> term(ty.type());
+      case PartialTerm el -> new PartialTyTerm(el.rhsType(), el.partial().restr());
+      case PathTerm(var cube) -> term(cube.type());
+      case PLamTerm lam -> new PathTerm(new PathTerm.Cube(
         lam.params(),
         term(lam.body()),
         new Partial.Const<>(term(lam.body()))
       ));
-      case ElimTerm.PathApp app -> {
+      case PAppTerm app -> {
         // v @ ui : A[ui/xi]
         var xi = app.cube().params();
         var ui = app.args().map(Arg::term);
         yield app.cube().type().subst(new Subst(xi, ui));
       }
-      case PrimTerm.Coe coe -> PrimDef.familyLeftToRight(coe.type());
-      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
+      case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> erased.type();
     };
   }
@@ -125,7 +124,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     return x.normalize(state, NormalizeMode.WHNF);
   }
 
-  private @NotNull Term defCall(@NotNull CallTerm.DefCall call) {
+  private @NotNull Term defCall(@NotNull Callable.DefCall call) {
     return Def.defResult(call.ref())
       .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
       .lift(call.ulift());

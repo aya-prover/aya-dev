@@ -6,8 +6,8 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.FormTerm;
+import org.aya.core.term.MetaTerm;
+import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
@@ -58,24 +58,24 @@ public final class Meta implements AnyVar {
     @NotNull ImmutableSeq<Term.Param> contextTele, @NotNull String name,
     @Nullable Term result, @NotNull SourcePos sourcePos
   ) {
-    if (result instanceof FormTerm.Pi pi) {
+    if (result instanceof PiTerm pi) {
       var buf = MutableList.<Term.Param>create();
       var r = pi.parameters(buf);
       return new Meta(contextTele, buf.toImmutableSeq(), name, r, sourcePos);
     } else return new Meta(contextTele, ImmutableSeq.empty(), name, result, sourcePos);
   }
 
-  public @NotNull FormTerm.Pi asPi(
+  public @NotNull PiTerm asPi(
     @NotNull String domName, @NotNull String codName, boolean explicit,
     int ulift, @NotNull ImmutableSeq<Arg<Term>> contextArgs
   ) {
     assert telescope.isEmpty();
     var domVar = Meta.from(contextTele, domName, result, sourcePos);
     var codVar = Meta.from(contextTele, codName, result, sourcePos);
-    var dom = new CallTerm.Hole(domVar, ulift, contextArgs, ImmutableSeq.empty());
-    var cod = new CallTerm.Hole(codVar, ulift, contextArgs, ImmutableSeq.empty());
+    var dom = new MetaTerm(domVar, ulift, contextArgs, ImmutableSeq.empty());
+    var cod = new MetaTerm(codVar, ulift, contextArgs, ImmutableSeq.empty());
     var domParam = new Term.Param(Constants.randomlyNamed(sourcePos), dom, explicit);
-    return new FormTerm.Pi(domParam, cod);
+    return new PiTerm(domParam, cod);
   }
 
   @Override public @NotNull String name() {

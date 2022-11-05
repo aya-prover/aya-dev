@@ -32,11 +32,11 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
 
   default @NotNull R fold(@NotNull R acc, @NotNull Expr expr) {
     return switch (expr) {
-      case Expr.RefExpr ref -> fold(acc, ref.resolvedVar(), ref.sourcePos());
-      case Expr.ProjExpr proj when proj.ix().isRight() && proj.resolvedVar() != null ->
+      case Expr.Ref ref -> fold(acc, ref.resolvedVar(), ref.sourcePos());
+      case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null ->
         fold(acc, proj.resolvedVar(), proj.ix().getRightValue().sourcePos());
-      case Expr.CoeExpr coe -> fold(acc, coe.resolvedVar(), coe.id().sourcePos());
-      case Expr.NewExpr neu -> neu.fields().view().foldLeft(acc, (ac, field) -> {
+      case Expr.Coe coe -> fold(acc, coe.resolvedVar(), coe.id().sourcePos());
+      case Expr.New neu -> neu.fields().view().foldLeft(acc, (ac, field) -> {
         var acc1 = field.bindings().foldLeft(ac, (a, binding) -> fold(a, binding.data(), binding.sourcePos()));
         var fieldRef = field.resolvedField().get();
         return fieldRef != null ? fold(acc1, fieldRef, field.name().sourcePos()) : acc1;

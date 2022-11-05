@@ -39,10 +39,11 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
   }
 
   @Override public void pre(@NotNull Expr expr) {
-    switch (expr) {
-      case Expr.RefExpr ref when ref.resolvedVar() instanceof DefVar<?, ?> def
-        && def.concrete instanceof Decl.TopLevel -> references.append(def.concrete);
-      default -> ExprConsumer.super.pre(expr);
+    if (expr instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> def
+        && def.concrete instanceof Decl.TopLevel) {
+      references.append(def.concrete);
+    } else {
+      ExprConsumer.super.pre(expr);
     }
   }
 }

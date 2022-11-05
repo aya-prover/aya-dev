@@ -70,8 +70,8 @@ public class ParseTest {
   }
 
   @Test public void successLiteral() {
-    assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
-    assertTrue(parseExpr("Type") instanceof Expr.RawSortExpr);
+    assertTrue(parseExpr("diavolo") instanceof Expr.Unresolved);
+    assertTrue(parseExpr("Type") instanceof Expr.RawSort);
   }
 
   @Test public void successDecl() {
@@ -104,34 +104,34 @@ public class ParseTest {
   }
 
   @Test public void successExpr() {
-    assertTrue(parseExpr("boy") instanceof Expr.UnresolvedExpr);
+    assertTrue(parseExpr("boy") instanceof Expr.Unresolved);
     assertTrue(parseExpr("f a") instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("f a b c") instanceof Expr.BinOpSeq);
-    assertTrue(parseExpr("a.1") instanceof Expr.ProjExpr);
-    assertTrue(parseExpr("a.1.2") instanceof Expr.ProjExpr);
+    assertTrue(parseExpr("a.1") instanceof Expr.Proj);
+    assertTrue(parseExpr("a.1.2") instanceof Expr.Proj);
     assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.BinOpSeq app
       && app.seq().get(1).expr() instanceof Expr.BinOpSeq proj1
       && proj1.seq().sizeEquals(1)
-      && proj1.seq().get(0).expr() instanceof Expr.ProjExpr
+      && proj1.seq().get(0).expr() instanceof Expr.Proj
       && app.seq().get(2).expr() instanceof Expr.BinOpSeq proj2
       && proj2.seq().sizeEquals(1)
-      && proj2.seq().get(0).expr() instanceof Expr.ProjExpr);
+      && proj2.seq().get(0).expr() instanceof Expr.Proj);
     assertTrue(parseExpr("f a.1") instanceof Expr.BinOpSeq app
-      && app.seq().get(1).expr() instanceof Expr.ProjExpr);
-    assertTrue(parseExpr("(f a).1") instanceof Expr.ProjExpr proj
+      && app.seq().get(1).expr() instanceof Expr.Proj);
+    assertTrue(parseExpr("(f a).1") instanceof Expr.Proj proj
       && proj.tup() instanceof Expr.BinOpSeq);
-    assertTrue(parseExpr("λ a => a") instanceof Expr.LamExpr);
-    assertTrue(parseExpr("\\ a => a") instanceof Expr.LamExpr);
-    assertTrue(parseExpr("\\ a b => a") instanceof Expr.LamExpr);
-    assertTrue(parseExpr("Π a -> a") instanceof Expr.PiExpr dt);
-    assertTrue(parseExpr("Pi a -> a") instanceof Expr.PiExpr dt);
-    assertTrue(parseExpr("Pi a b -> a") instanceof Expr.PiExpr dt
-      && dt.last() instanceof Expr.PiExpr);
-    assertTrue(parseExpr("Σ a ** b") instanceof Expr.SigmaExpr dt);
-    assertTrue(parseExpr("Sig a ** b") instanceof Expr.SigmaExpr dt);
-    assertTrue(parseExpr("Sig a b ** c") instanceof Expr.SigmaExpr dt);
-    assertTrue(parseExpr("Pi (x : Sig a ** b) -> c") instanceof Expr.PiExpr dt && dt.param().type() instanceof Expr.SigmaExpr);
-    parseTo("(f a) . 1", new Expr.ProjExpr(
+    assertTrue(parseExpr("λ a => a") instanceof Expr.Lambda);
+    assertTrue(parseExpr("\\ a => a") instanceof Expr.Lambda);
+    assertTrue(parseExpr("\\ a b => a") instanceof Expr.Lambda);
+    assertTrue(parseExpr("Π a -> a") instanceof Expr.Pi dt);
+    assertTrue(parseExpr("Pi a -> a") instanceof Expr.Pi dt);
+    assertTrue(parseExpr("Pi a b -> a") instanceof Expr.Pi dt
+      && dt.last() instanceof Expr.Pi);
+    assertTrue(parseExpr("Σ a ** b") instanceof Expr.Sigma dt);
+    assertTrue(parseExpr("Sig a ** b") instanceof Expr.Sigma dt);
+    assertTrue(parseExpr("Sig a b ** c") instanceof Expr.Sigma dt);
+    assertTrue(parseExpr("Pi (x : Sig a ** b) -> c") instanceof Expr.Pi dt && dt.param().type() instanceof Expr.Sigma);
+    parseTo("(f a) . 1", new Expr.Proj(
       SourcePos.NONE,
       new Expr.BinOpSeq(
         SourcePos.NONE,
@@ -139,26 +139,26 @@ public class ParseTest {
           new Expr.NamedArg(true, new Expr.BinOpSeq(
             SourcePos.NONE,
             ImmutableSeq.of(
-              new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "f")),
-              new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "a"))
+              new Expr.NamedArg(true, new Expr.Unresolved(SourcePos.NONE, "f")),
+              new Expr.NamedArg(true, new Expr.Unresolved(SourcePos.NONE, "a"))
             ))))),
       Either.left(1)
     ));
     parseTo("f a . 1", new Expr.BinOpSeq(
         SourcePos.NONE,
         ImmutableSeq.of(
-          new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "f")),
+          new Expr.NamedArg(true, new Expr.Unresolved(SourcePos.NONE, "f")),
           new Expr.NamedArg(true,
-            new Expr.ProjExpr(SourcePos.NONE, new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
+            new Expr.Proj(SourcePos.NONE, new Expr.Unresolved(SourcePos.NONE, "a"),
               Either.left(1))))
       )
     );
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app
       && app.seq().sizeEquals(2)
       && !app.toDoc(DistillerOptions.debug()).debugRender().isEmpty()
-      && app.seq().get(1).expr() instanceof Expr.TupExpr tup
+      && app.seq().get(1).expr() instanceof Expr.Tuple tup
       && tup.items().sizeEquals(3));
-    assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
+    assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.New neo
       && !neo.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 

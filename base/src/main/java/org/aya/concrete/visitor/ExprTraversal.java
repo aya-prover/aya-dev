@@ -9,22 +9,22 @@ import org.jetbrains.annotations.NotNull;
 public interface ExprTraversal<P> {
   default @NotNull Expr visitExpr(@NotNull Expr expr, P p) {
     switch (expr) {
-      case Expr.AppExpr app -> {
+      case Expr.App app -> {
         visitExpr(app.function(), p);
         visitExpr(app.argument().expr(), p);
       }
-      case Expr.NewExpr neo -> {
+      case Expr.New neo -> {
         neo.fields().forEach(e -> visitExpr(e.body(), p));
         visitExpr(neo.struct(), p);
       }
       case Expr.BinOpSeq seq -> seq.seq().forEach(e -> visitExpr(e.expr(), p));
-      case Expr.SigmaExpr sig -> sig.params().forEach(e -> visitParam(e, p));
-      case Expr.LamExpr lamExpr -> {
-        visitParam(lamExpr.param(), p);
-        visitExpr(lamExpr.body(), p);
+      case Expr.Sigma sig -> sig.params().forEach(e -> visitParam(e, p));
+      case Expr.Lambda lam -> {
+        visitParam(lam.param(), p);
+        visitExpr(lam.body(), p);
       }
-      case Expr.TupExpr tup -> tup.items().forEach(i -> visitExpr(i, p));
-      case Expr.ProjExpr proj -> visitExpr(proj.tup(), p);
+      case Expr.Tuple tup -> tup.items().forEach(i -> visitExpr(i, p));
+      case Expr.Proj proj -> visitExpr(proj.tup(), p);
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(i -> visitExpr(i, p));
         var clauses = match.clauses().map(c -> {
@@ -34,20 +34,20 @@ public interface ExprTraversal<P> {
         });
         return new Expr.Match(match.sourcePos(), discriminant, clauses);
       }
-      case Expr.RawProjExpr proj -> {
+      case Expr.RawProj proj -> {
         visitExpr(proj.tup(), p);
         if (proj.coeLeft() != null) visitExpr(proj.coeLeft(), p);
         if (proj.restr() != null) visitExpr(proj.restr(), p);
       }
-      case Expr.CoeExpr coe -> {
+      case Expr.Coe coe -> {
         visitExpr(coe.type(), p);
         visitExpr(coe.restr(), p);
       }
-      case Expr.LiftExpr lift -> visitExpr(lift.expr(), p);
-      case Expr.HoleExpr hole -> {
+      case Expr.Lift lift -> visitExpr(lift.expr(), p);
+      case Expr.Hole hole -> {
         if (hole.filling() != null) visitExpr(hole.filling(), p);
       }
-      case Expr.PiExpr pi -> {
+      case Expr.Pi pi -> {
         visitParam(pi.param(), p);
         visitExpr(pi.last(), p);
       }

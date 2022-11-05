@@ -5,10 +5,7 @@ package org.aya.core.visitor;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.Tycker;
@@ -36,7 +33,7 @@ public record Zonker(
 
   @Override public @NotNull Term pre(@NotNull Term term) {
     return switch (term) {
-      case CallTerm.Hole hole -> {
+      case MetaTerm hole -> {
         var sol = hole.ref();
         var metas = tycker.state.metas();
         if (!metas.containsKey(sol)) {
@@ -48,7 +45,7 @@ public record Zonker(
         }
         yield pre(metas.get(sol));
       }
-      case RefTerm.MetaPat metaPat -> metaPat.inline();
+      case MetaPatTerm metaPat -> metaPat.inline();
       case Term misc -> misc;
     };
   }

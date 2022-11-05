@@ -3,7 +3,7 @@
 package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.FnCall;
 import org.aya.ref.DefVar;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +30,7 @@ public class RelationTest {
   }
 
   @Test public void pretty() {
-    var dummy = new CallTerm.Fn(DefVar.empty("f"), 0, ImmutableSeq.empty());
+    var dummy = new FnCall(DefVar.empty("f"), 0, ImmutableSeq.empty());
     // only used for error reporting, so it's fine to mock it.
     var mat = new CallMatrix<>(dummy, "f", "g",
       ImmutableSeq.of("a", "b", "c"),

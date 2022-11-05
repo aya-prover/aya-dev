@@ -19,7 +19,7 @@ public sealed interface TupleError extends TyckError {
     }
   }
 
-  record ProjIxError(@Override @NotNull Expr.ProjExpr expr, int actual, int expectedBound)
+  record ProjIxError(@Override @NotNull Expr.Proj expr, int actual, int expectedBound)
     implements ExprProblem, TupleError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
