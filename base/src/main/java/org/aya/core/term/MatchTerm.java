@@ -5,6 +5,8 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
-public record MatchTerm(@NotNull ImmutableSeq<Term> discriminant,
-                        @NotNull ImmutableSeq<Matching> clauses) implements Term {
+public record MatchTerm(
+  @NotNull ImmutableSeq<Term> discriminant,
+  @NotNull ImmutableSeq<Matching> clauses
+) implements Term {
 }

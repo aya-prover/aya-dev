@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-import static org.aya.guest0x0.cubical.CofThy.isOne;
-
 /**
  * We think of all cubical reductions as beta reductions.
  *
@@ -82,7 +80,7 @@ public interface BetaExpander extends EndoTerm {
             var A = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), pi.param().type());
             var B = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), pi.body());
             var vType = AppTerm.make(A, new Arg<>(FormulaTerm.RIGHT, true));
-            var w = AppTerm.make(coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
+            var w = AppTerm.make(CoeTerm.coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
             var BSubsted = B.subst(pi.param().ref(), w.rename());
             var wSubsted = w.subst(varI, FormulaTerm.LEFT).rename();
             yield new LamTerm(coeDom(u0Var, coe.type()),
@@ -100,7 +98,7 @@ public interface BetaExpander extends EndoTerm {
 
             var u00 = new ProjTerm(new RefTerm(u0Var), 1);
             var u01 = new ProjTerm(new RefTerm(u0Var), 2);
-            var v = AppTerm.make(coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
+            var v = AppTerm.make(CoeTerm.coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
 
             var Bsubsted = B.subst(sigma.params().first().ref(), v);
             var coe0 = AppTerm.make(new CoeTerm(A, coe.restr()), new Arg<>(u00, true));
@@ -119,59 +117,5 @@ public interface BetaExpander extends EndoTerm {
   }
   @NotNull private static Term.Param coeDom(LocalVar u0Var, Term type) {
     return new Term.Param(u0Var, AppTerm.make(type, new Arg<>(FormulaTerm.LEFT, true)), true);
-  }
-
-  // forward (A: I -> Type) (r: I): A r -> A 1
-  private static @NotNull Term forward(@NotNull Term A, @NotNull Term r) {
-    var varI = new LocalVar("i");
-    var varU = new LocalVar("u");
-
-    var iOrR = FormulaTerm.or(new RefTerm(varI), r);
-    var cofib = isOne(r);
-    var Ar = AppTerm.make(A, new Arg<>(r, true));
-    var AiOrR = AppTerm.make(A, new Arg<>(iOrR, true));
-    var lam = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), AiOrR);
-    var transp = new CoeTerm(lam, cofib);
-    var body = AppTerm.make(transp, new Arg<>(new RefTerm(varU), true));
-    return new LamTerm(new Term.Param(LocalVar.IGNORED, Ar, true), body);
-  }
-
-  /**
-   * <code>coeFill (A: I -> Type) (phi: I) : Path A u (coe A phi u)</code>
-   *
-   * @param ri the interval abstraction or its inverse
-   */
-  private static @NotNull Term coeFill(@NotNull Term type, @NotNull Restr<Term> phi, Term ri) {
-    var cofib = phi.or(new Restr.Cond<>(ri, false));
-    var varY = new LocalVar("y");
-    var paramY = new Term.Param(varY, IntervalTerm.INSTANCE, true);
-    var xAndY = FormulaTerm.and(ri, new RefTerm(varY));
-    var a = new LamTerm(paramY, AppTerm.make(type, new Arg<>(xAndY, true)));
-
-    return new CoeTerm(a, cofib);
-  }
-
-  /**
-   * inverts interval in A : I -> Type
-   *
-   * @param A pi type I -> Type
-   * @return inverted A
-   */
-  private static @NotNull Term invertA(@NotNull Term A) {
-    var i = new LocalVar("i");
-    var invertedI = FormulaTerm.inv(new RefTerm(i));
-    return new LamTerm(
-      new Term.Param(i, IntervalTerm.INSTANCE, true),
-      AppTerm.make(A, new Arg<>(invertedI, true)));
-  }
-
-  // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0
-  private static @NotNull Term coeInv(@NotNull Term A, @NotNull Restr<Term> phi, @NotNull Term u) {
-    return AppTerm.make(new CoeTerm(invertA(A), phi), new Arg<>(u, true));
-  }
-
-  // coeFillInv
-  private static @NotNull Term coeFillInv(@NotNull Term type, @NotNull Restr<Term> phi, @NotNull Term ri) {
-    return coeFill(invertA(type), phi, FormulaTerm.inv(ri));
   }
 }
