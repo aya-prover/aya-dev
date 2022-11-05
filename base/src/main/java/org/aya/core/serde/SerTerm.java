@@ -180,26 +180,26 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   }
 
   record StructCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
-    @Override public @NotNull CallTerm.Struct de(@NotNull DeState state) {
-      return new CallTerm.Struct(state.resolve(name), data.ulift, data.de(state));
+    @Override public @NotNull org.aya.core.term.StructCall de(@NotNull DeState state) {
+      return new org.aya.core.term.StructCall(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record FnCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Fn(state.resolve(name), data.ulift, data.de(state));
+      return new org.aya.core.term.FnCall(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record DataCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
-    @Override public @NotNull CallTerm.Data de(@NotNull DeState state) {
-      return new CallTerm.Data(state.resolve(name), data.ulift, data.de(state));
+    @Override public @NotNull org.aya.core.term.DataCall de(@NotNull DeState state) {
+      return new org.aya.core.term.DataCall(state.resolve(name), data.ulift, data.de(state));
     }
   }
 
   record PrimCall(@NotNull SerDef.QName name, @NotNull PrimDef.ID id, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Prim(state.resolve(name), id, data.ulift, data.de(state));
+      return new org.aya.core.term.PrimCall(state.resolve(name), id, data.ulift, data.de(state));
     }
   }
 
@@ -208,7 +208,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull CallData dataArgs, @NotNull ImmutableSeq<SerArg> conArgs
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Con(
+      return new org.aya.core.term.ConCall(
         state.resolve(dataRef), state.resolve(selfRef),
         dataArgs.de(state), dataArgs.ulift,
         conArgs.map(arg -> arg.de(state)));
@@ -228,7 +228,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull ImmutableSeq<@NotNull SerArg> fieldArgs
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Access(
+      return new FieldTerm(
         of.de(state), state.resolve(ref),
         structArgs.map(arg -> arg.de(state)),
         fieldArgs.map(arg -> arg.de(state)));

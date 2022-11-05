@@ -95,16 +95,16 @@ public interface EndoTerm extends UnaryOperator<Term> {
       return switch (term) {
         case FormTerm.Type univ -> new FormTerm.Type(univ.lift() + lift);
         case FormTerm.Set set -> new FormTerm.Set(set.lift() + lift);
-        case CallTerm.Struct struct -> new CallTerm.Struct(struct.ref(), struct.ulift() + lift, struct.args());
-        case CallTerm.Data data -> new CallTerm.Data(data.ref(), data.ulift() + lift, data.args());
-        case CallTerm.Con con -> {
+        case StructCall struct -> new StructCall(struct.ref(), struct.ulift() + lift, struct.args());
+        case DataCall data -> new DataCall(data.ref(), data.ulift() + lift, data.args());
+        case ConCall con -> {
           var head = con.head();
-          head = new CallTerm.ConHead(head.dataRef(), head.ref(), head.ulift() + lift, head.dataArgs());
-          yield new CallTerm.Con(head, con.conArgs());
+          head = new ConCall.Head(head.dataRef(), head.ref(), head.ulift() + lift, head.dataArgs());
+          yield new ConCall(head, con.conArgs());
         }
-        case CallTerm.Fn fn -> new CallTerm.Fn(fn.ref(), fn.ulift() + lift, fn.args());
-        case CallTerm.Prim prim -> new CallTerm.Prim(prim.ref(), prim.ulift() + lift, prim.args());
-        case CallTerm.Hole hole -> new CallTerm.Hole(hole.ref(), hole.ulift() + lift, hole.contextArgs(), hole.args());
+        case FnCall fn -> new FnCall(fn.ref(), fn.ulift() + lift, fn.args());
+        case PrimCall prim -> new PrimCall(prim.ref(), prim.ulift() + lift, prim.args());
+        case MetaTerm hole -> new MetaTerm(hole.ref(), hole.ulift() + lift, hole.contextArgs(), hole.args());
         case Term misc -> misc;
       };
     }

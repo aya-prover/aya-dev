@@ -110,9 +110,9 @@ public record PatClassifier(
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
         var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
         // TODO: Currently all holes at this point are in an ErrorTerm
-        if (lhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+        if (lhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
           hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
-        } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+        } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
           hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
         }
         var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
@@ -224,7 +224,7 @@ public record PatClassifier(
         }
       }
       // THE BIG GAME
-      case CallTerm.Data dataCall -> {
+      case DataCall dataCall -> {
         // If there are no remaining clauses, probably it's due to a previous `impossible` clause,
         // but since we're going to remove this keyword, this check may not be needed in the future? LOL
         if (clauses.anyMatch(subPats -> subPats.pats().isNotEmpty()) &&
@@ -312,7 +312,7 @@ public record PatClassifier(
             classified = classifySub(conTele2.view(), matches, coverage, fuel);
           }
           builder.reduce();
-          var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
+          var conCall = new ConCall(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
           var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), conCall))
             .toImmutableSeq().view();

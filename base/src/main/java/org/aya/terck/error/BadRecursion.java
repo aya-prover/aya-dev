@@ -35,7 +35,7 @@ public record BadRecursion(
     var matrix = diag.matrix();
     var buffer = MutableList.of(
       Doc.english("In particular, the problematic call is:"),
-      Doc.nest(2, matrix.callTerm().toDoc(options)),
+      Doc.nest(2, matrix.callable().toDoc(options)),
       Doc.english("whose call matrix is:"),
       matrix.toDoc());
     if (diag.matrix().rows() > 1) {

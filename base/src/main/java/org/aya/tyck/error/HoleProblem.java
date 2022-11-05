@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */
 public sealed interface HoleProblem extends Problem {
-  @NotNull CallTerm.Hole term();
+  @NotNull MetaTerm term();
 
   @Override default @NotNull Severity level() {
     return Severity.ERROR;
@@ -28,7 +28,7 @@ public sealed interface HoleProblem extends Problem {
 
   /** @author ice1000 */
   record BadSpineError(
-    @Override @NotNull CallTerm.Hole term,
+    @Override @NotNull MetaTerm term,
     @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
@@ -40,7 +40,7 @@ public sealed interface HoleProblem extends Problem {
   }
 
   record BadlyScopedError(
-    @Override @NotNull CallTerm.Hole term,
+    @Override @NotNull MetaTerm term,
     @NotNull Term solved,
     @NotNull Seq<LocalVar> scopeCheck,
     @Override @NotNull SourcePos sourcePos
@@ -62,7 +62,7 @@ public sealed interface HoleProblem extends Problem {
    * @author ice1000
    */
   record RecursionError(
-    @Override @NotNull CallTerm.Hole term,
+    @Override @NotNull MetaTerm term,
     @NotNull Term sol,
     @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {

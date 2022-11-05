@@ -300,7 +300,7 @@ public final class PatTycker {
           if (end == 0 || end == 1) yield new Pat.End(num.number() == 1, num.explicit());
           yield withError(new PrimError.BadInterval(num.sourcePos(), end), num, term);
         }
-        if (ty instanceof CallTerm.Data dataCall) {
+        if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined() && shape.get() == AyaShape.NAT_SHAPE)
@@ -314,7 +314,7 @@ public final class PatTycker {
         //       a PatternDesugarer is recommended.
 
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
-        if (ty instanceof CallTerm.Data dataCall) {
+        if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
 
@@ -474,7 +474,7 @@ public final class PatTycker {
     var ref = data.param.ref();
     Pat bind;
     var freshVar = new LocalVar(ref.name(), ref.definition());
-    if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall) {
+    if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof DataCall dataCall) {
       bind = new Pat.Meta(false, MutableValue.create(), freshVar, dataCall);
     } else {
       bind = new Pat.Bind(false, freshVar, data.param.type());
@@ -494,9 +494,9 @@ public final class PatTycker {
    * @param name if null, the selection will be performed on all constructors
    * @return null means selection failed
    */
-  private @Nullable Tuple3<CallTerm.Data, Subst, CallTerm.ConHead>
+  private @Nullable Tuple3<DataCall, Subst, ConCall.Head>
   selectCtor(Term param, @Nullable AnyVar name, @NotNull Pattern pos) {
-    if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
+    if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof DataCall dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pos, param));
       return null;
     }
@@ -536,7 +536,7 @@ public final class PatTycker {
   }
 
   public static Result<Subst, Boolean>
-  mischa(CallTerm.Data dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
+  mischa(DataCall dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) {
       return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view().map(Arg::term), t -> t.normalize(state, NormalizeMode.WHNF));
     } else {

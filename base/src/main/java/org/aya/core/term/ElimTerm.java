@@ -24,7 +24,7 @@ public sealed interface ElimTerm extends Term {
    */
   static @Nullable ErasedTerm underlyingErased(@NotNull Term term) {
     if (term instanceof ElimTerm elim) return underlyingErased(elim.of());
-    if (term instanceof CallTerm.Access elim) return underlyingErased(elim.of());
+    if (term instanceof FieldTerm elim) return underlyingErased(elim.of());
     return term instanceof ErasedTerm erased ? erased : null;
   }
   static boolean isErased(@NotNull Term term) {
@@ -36,7 +36,7 @@ public sealed interface ElimTerm extends Term {
    */
   static @Nullable ErasedTerm underlyingIllegalErasure(@NotNull Term term) {
     if (term instanceof ElimTerm elim) return underlyingErased(elim.of());
-    if (term instanceof CallTerm.Access elim) return underlyingErased(elim.of());
+    if (term instanceof FieldTerm elim) return underlyingErased(elim.of());
     return term instanceof ErasedTerm erased && !erased.isProp() ? erased : null;
   }
 
@@ -46,9 +46,9 @@ public sealed interface ElimTerm extends Term {
   }
 
   @Contract(pure = true) static @NotNull Term make(@NotNull ElimTerm.App app) {
-    if (app.of() instanceof CallTerm.Hole hole) {
+    if (app.of() instanceof MetaTerm hole) {
       if (hole.args().sizeLessThan(hole.ref().telescope))
-        return new CallTerm.Hole(hole.ref(), hole.ulift(), hole.contextArgs(), hole.args().appended(app.arg()));
+        return new MetaTerm(hole.ref(), hole.ulift(), hole.contextArgs(), hole.args().appended(app.arg()));
     }
     if (app.of() instanceof ErasedTerm erased) {
       // erased.type() can be an ErrorTerm

@@ -29,21 +29,21 @@ public record CallResolver(
     this(fn, targets, MutableValue.create(), graph);
   }
 
-  private void resolveCall(@NotNull CallTerm callTerm) {
-    if (!(callTerm.ref() instanceof DefVar<?, ?> defVar)) return;
+  private void resolveCall(@NotNull Callable callable) {
+    if (!(callable.ref() instanceof DefVar<?, ?> defVar)) return;
     var callee = ((Def) defVar.core);
     if (!targets.contains(callee)) return;
     // TODO: reduce arguments? I guess no. see https://github.com/agda/agda/issues/2403
-    var matrix = new CallMatrix<>(callTerm, caller, callee, caller.telescope, callee.telescope());
-    fillMatrix(callTerm, callee, matrix);
+    var matrix = new CallMatrix<>(callable, caller, callee, caller.telescope, callee.telescope());
+    fillMatrix(callable, callee, matrix);
     graph.put(matrix);
   }
 
-  private void fillMatrix(@NotNull CallTerm callTerm, @NotNull Def callee, CallMatrix<Def, Term.Param> matrix) {
+  private void fillMatrix(@NotNull Callable callable, @NotNull Def callee, CallMatrix<Def, Term.Param> matrix) {
     var matching = currentMatching.get();
     if (matching == null) return;
     for (var domThing : matching.patterns().zipView(caller.telescope)) {
-      for (var codomThing : callTerm.args().zipView(callee.telescope())) {
+      for (var codomThing : callable.args().zipView(callee.telescope())) {
         var relation = compare(codomThing._1.term(), domThing._1);
         matrix.set(domThing._2, codomThing._2, relation);
       }
@@ -54,7 +54,7 @@ public record CallResolver(
   private @NotNull Relation compare(@NotNull Term term, @NotNull Pat pat) {
     return switch (pat) {
       case Pat.Ctor ctor -> switch (term) {
-        case CallTerm.Con con -> {
+        case ConCall con -> {
           if (con.ref() != ctor.ref() || !con.conArgs().sizeEquals(ctor.params())) yield Relation.unk();
           var subCompare = con.conArgs().zipView(ctor.params())
             .map(sub -> compare(sub._1.term(), sub._2));
@@ -80,7 +80,7 @@ public record CallResolver(
           yield Relation.fromCompare(Integer.compare(intTerm.repr(), intPat.repr()));
         }
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
-        case CallTerm.Con con -> compare(con, intPat.constructorForm());
+        case ConCall con -> compare(con, intPat.constructorForm());
         default -> compare(term, intPat.constructorForm());
       };
       default -> Relation.unk();
@@ -92,7 +92,7 @@ public record CallResolver(
     return switch (term) {
       case ElimTerm.App app -> headOf(app.of());
       case ElimTerm.Proj proj -> headOf(proj.of());
-      case CallTerm.Access access -> headOf(access.of());
+      case FieldTerm access -> headOf(access.of());
       default -> term;
     };
   }
@@ -104,7 +104,7 @@ public record CallResolver(
   }
 
   @Override public void pre(@NotNull Term term) {
-    if (term instanceof CallTerm call) {
+    if (term instanceof Callable call) {
       resolveCall(call);
     }
     DefConsumer.super.pre(term);

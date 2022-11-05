@@ -3,7 +3,7 @@
 package org.aya.core;
 
 import org.aya.core.def.FnDef;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.ConCall;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
@@ -34,9 +34,9 @@ public class NormalizeTest {
     var defs = res._2;
     var state = new TyckState(res._1);
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
-    assertTrue(normalizer.apply(2) instanceof CallTerm.Con conCall
+    assertTrue(normalizer.apply(2) instanceof ConCall conCall
       && Objects.equals(conCall.ref().name(), "suc"));
-    assertTrue(normalizer.apply(3) instanceof CallTerm.Con conCall
+    assertTrue(normalizer.apply(3) instanceof ConCall conCall
       && Objects.equals(conCall.ref().name(), "suc"));
     assertTrue(normalizer.apply(4) instanceof RefTerm ref
       && Objects.equals(ref.var().name(), "a"));
@@ -54,10 +54,10 @@ public class NormalizeTest {
     var state = new TyckState(res._1);
     var defs = res._2;
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
-    assertTrue(normalizer.apply(3) instanceof CallTerm.Con conCall
+    assertTrue(normalizer.apply(3) instanceof ConCall conCall
       && Objects.equals(conCall.ref().name(), "zero")
       && conCall.conArgs().isEmpty());
-    assertTrue(normalizer.apply(4) instanceof CallTerm.Con conCall
+    assertTrue(normalizer.apply(4) instanceof ConCall conCall
       && Objects.equals(conCall.ref().name(), "suc"));
   }
 

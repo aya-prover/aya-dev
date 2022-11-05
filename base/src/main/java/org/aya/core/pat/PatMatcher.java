@@ -62,7 +62,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
       case Pat.Ctor ctor -> {
         term = pre.apply(term);
         switch (term) {
-          case CallTerm.Con conCall -> {
+          case ConCall conCall -> {
             if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
             visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
           }
@@ -95,7 +95,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
             if (!lit.compareUntyped(litTerm)) throw new Mismatch(false);
           }
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
-          case CallTerm.Con con -> match(lit.constructorForm(), con);
+          case ConCall con -> match(lit.constructorForm(), con);
           // we only need to handle matching both literals, otherwise we just rematch it
           // with constructor form to reuse the code as much as possible (like solving MetaPats).
           default -> match(lit.constructorForm(), term);

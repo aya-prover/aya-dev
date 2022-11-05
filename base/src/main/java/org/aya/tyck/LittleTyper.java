@@ -25,17 +25,17 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
   public @NotNull Term term(@NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> localCtx.get(term.var());
-      case CallTerm.Con conCall -> conCall.head().underlyingDataCall();
-      case CallTerm.DefCall call -> defCall(call);
-      case CallTerm.Hole hole -> {
+      case ConCall conCall -> conCall.head().underlyingDataCall();
+      case Callable.DefCall call -> defCall(call);
+      case MetaTerm hole -> {
         var result = hole.ref().result;
         yield result == null ? ErrorTerm.typeOf(hole) : result;
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term);
       case RefTerm.Field field -> Def.defType(field.ref());
-      case CallTerm.Access access -> {
+      case FieldTerm access -> {
         var callRaw = whnf(term(access.of()));
-        if (!(callRaw instanceof CallTerm.Struct call)) yield ErrorTerm.typeOf(access);
+        if (!(callRaw instanceof StructCall call)) yield ErrorTerm.typeOf(access);
         var core = access.ref().core;
         var subst = DeltaExpander.buildSubst(core.telescope(), access.fieldArgs())
           .add(DeltaExpander.buildSubst(call.ref().core.telescope(), access.structArgs()));
@@ -125,7 +125,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     return x.normalize(state, NormalizeMode.WHNF);
   }
 
-  private @NotNull Term defCall(@NotNull CallTerm.DefCall call) {
+  private @NotNull Term defCall(@NotNull Callable.DefCall call) {
     return Def.defResult(call.ref())
       .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
       .lift(call.ulift());

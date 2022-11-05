@@ -64,7 +64,7 @@ public final class PrimDef extends TopLevelDef<Term> {
   }
 
   @FunctionalInterface
-  interface Unfolder extends BiFunction<CallTerm.@NotNull Prim, @NotNull TyckState, @NotNull Term> {
+  interface Unfolder extends BiFunction<@NotNull PrimCall, @NotNull TyckState, @NotNull Term> {
   }
 
   record PrimSeed(
@@ -90,7 +90,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       }, ImmutableSeq.of(ID.I));
 
       @Contract("_, _ -> new")
-      private @NotNull Term coe(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+      private @NotNull Term coe(@NotNull PrimCall prim, @NotNull TyckState state) {
         var type = prim.args().get(0).term();
         var restr = prim.args().get(1).term();
         return new CoeTerm(type, isOne(restr));
@@ -118,7 +118,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         );
       }, ImmutableSeq.of(ID.I));
 
-      private @NotNull Term hcomp(@NotNull CallTerm.Prim prim, @NotNull TyckState state) {
+      private @NotNull Term hcomp(@NotNull PrimCall prim, @NotNull TyckState state) {
         var A = prim.args().get(0).term();
         var phi = prim.args().get(1).term();
         var u = prim.args().get(2).term();
@@ -141,7 +141,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         FormulaTerm.inv(prim.args().first().term()), "i");
 
       private @NotNull PrimSeed formula(
-        ID id, Function<CallTerm.Prim, Term> unfold,
+        ID id, Function<PrimCall, Term> unfold,
         String... tele
       ) {
         return new PrimSeed(id, (prim, state) -> unfold.apply(prim), ref -> new PrimDef(
@@ -167,7 +167,7 @@ public final class PrimDef extends TopLevelDef<Term> {
           ID.STRCONCAT
         ), ImmutableSeq.of(ID.STRING));
 
-      private static @NotNull Term concat(CallTerm.@NotNull Prim prim, @NotNull TyckState state) {
+      private static @NotNull Term concat(@NotNull PrimCall prim, @NotNull TyckState state) {
         var first = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
         var second = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
 
@@ -175,7 +175,7 @@ public final class PrimDef extends TopLevelDef<Term> {
           return new StringTerm(str1.string() + str2.string());
         }
 
-        return new CallTerm.Prim(prim.ref(), prim.ulift(), ImmutableSeq.of(
+        return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(
           new Arg<>(first, true), new Arg<>(second, true)));
       }
 
@@ -230,11 +230,11 @@ public final class PrimDef extends TopLevelDef<Term> {
       return rst;
     }
 
-    public @NotNull CallTerm.Prim getCall(@NotNull ID id, @NotNull ImmutableSeq<Arg<Term>> args) {
-      return new CallTerm.Prim(getOption(id).get().ref(), 0, args);
+    public @NotNull PrimCall getCall(@NotNull ID id, @NotNull ImmutableSeq<Arg<Term>> args) {
+      return new PrimCall(getOption(id).get().ref(), 0, args);
     }
 
-    public @NotNull CallTerm.Prim getCall(@NotNull ID id) {
+    public @NotNull PrimCall getCall(@NotNull ID id) {
       return getCall(id, ImmutableSeq.empty());
     }
 
@@ -259,7 +259,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       return seeds.getOption(name).map(seed -> seed.dependency().filterNot(this::have));
     }
 
-    public @NotNull Term unfold(@NotNull ID name, @NotNull CallTerm.Prim primCall, @NotNull TyckState state) {
+    public @NotNull Term unfold(@NotNull ID name, @NotNull PrimCall primCall, @NotNull TyckState state) {
       return seeds.get(name).unfold.apply(primCall, state);
     }
 

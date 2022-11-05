@@ -33,7 +33,7 @@ public record Zonker(
 
   @Override public @NotNull Term pre(@NotNull Term term) {
     return switch (term) {
-      case CallTerm.Hole hole -> {
+      case MetaTerm hole -> {
         var sol = hole.ref();
         var metas = tycker.state.metas();
         if (!metas.containsKey(sol)) {

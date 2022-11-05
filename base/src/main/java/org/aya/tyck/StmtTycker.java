@@ -12,7 +12,7 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.DataCall;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
@@ -118,7 +118,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var dataConcrete = dataRef.concrete;
         var dataSig = dataConcrete.signature;
         assert dataSig != null;
-        var dataCall = ((CallTerm.Data) signature.result());
+        var dataCall = ((DataCall) signature.result());
         var tele = signature.param();
         var patTycker = ctor.yetTycker;
         var pat = ctor.yetTyckedPat;
@@ -126,7 +126,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         // PatTycker was created when checking the header with another expr tycker,
         // we should make sure it's the same one here. See comments of ExprTycker.
         assert tycker == patTycker.exprTycker;
-        if (pat.isNotEmpty()) dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
+        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(ImmutableMap.from(
           dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
         var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature);
         var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
@@ -229,7 +229,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var dataSig = dataConcrete.signature;
         assert dataSig != null;
         var dataArgs = dataSig.param().map(Term.Param::toArg);
-        var dataCall = new CallTerm.Data(dataRef, 0, dataArgs);
+        var dataCall = new DataCall(dataRef, 0, dataArgs);
         var sig = new Def.Signature(dataSig.param(), dataCall);
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor

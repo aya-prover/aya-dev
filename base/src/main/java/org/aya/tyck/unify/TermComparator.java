@@ -67,7 +67,7 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private static boolean isCall(@NotNull Term term) {
-    return term instanceof CallTerm.Fn || term instanceof CallTerm.Con || term instanceof CallTerm.Prim;
+    return term instanceof FnCall || term instanceof ConCall || term instanceof PrimCall;
   }
 
   public static <E> E withIntervals(
@@ -134,9 +134,9 @@ public sealed abstract class TermComparator permits Unifier {
     lhs = lhs.normalize(state, NormalizeMode.WHNF);
     rhs = rhs.normalize(state, NormalizeMode.WHNF);
     if (compareApprox(lhs, rhs, lr, rl) != null) return true;
-    if (rhs instanceof CallTerm.Hole) return compareUntyped(rhs, lhs, rl, lr) != null;
+    if (rhs instanceof MetaTerm) return compareUntyped(rhs, lhs, rl, lr) != null;
     // ^ Beware of the order!!
-    if (lhs instanceof CallTerm.Hole || type == null) return compareUntyped(lhs, rhs, lr, rl) != null;
+    if (lhs instanceof MetaTerm || type == null) return compareUntyped(lhs, rhs, lr, rl) != null;
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
     var result = doCompareTyped(type.normalize(state, NormalizeMode.WHNF), lhs, rhs, lr, rl);
     if (!result && failure == null) failure = new FailureData(lhs.freezeHoles(state), rhs.freezeHoles(state));
@@ -168,11 +168,11 @@ public sealed abstract class TermComparator permits Unifier {
 
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     return switch (preLhs) {
-      case CallTerm.Fn lhs when preRhs instanceof CallTerm.Fn rhs ->
+      case FnCall lhs when preRhs instanceof FnCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
-      case CallTerm.Con lhs when preRhs instanceof CallTerm.Con rhs ->
+      case ConCall lhs when preRhs instanceof ConCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
-      case CallTerm.Prim lhs when preRhs instanceof CallTerm.Prim rhs ->
+      case PrimCall lhs when preRhs instanceof PrimCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };
@@ -239,7 +239,7 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private @Nullable Term visitCall(
-    @NotNull CallTerm lhs, @NotNull CallTerm rhs, Sub lr, Sub rl,
+    @NotNull Callable lhs, @NotNull Callable rhs, Sub lr, Sub rl,
     @NotNull DefVar<? extends Def, ? extends Decl.Telescopic> lhsRef, int ulift
   ) {
     var retType = getType(lhs, lhsRef);
@@ -252,7 +252,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private record Pair(Term lhs, Term rhs) {}
 
-  private @NotNull Term getType(@NotNull CallTerm lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
+  private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
     var substMap = MutableMap.<AnyVar, Term>create();
     for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
@@ -265,7 +265,7 @@ public sealed abstract class TermComparator permits Unifier {
       pos, type.freezeHoles(state)));
     var ret = switch (type) {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
-      case CallTerm.Struct type1 -> {
+      case StructCall type1 -> {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
           Tuple.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
@@ -275,15 +275,15 @@ public sealed abstract class TermComparator permits Unifier {
             new LocalVar(par.ref().name(), par.ref().definition()));
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
             new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
-          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.args(), dummy);
-          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.args(), dummy);
+          var l = new FieldTerm(lhs, fieldSig.ref(), type1.args(), dummy);
+          var r = new FieldTerm(rhs, fieldSig.ref(), type1.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);
           if (!compare(l, r, lr, rl, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
         }
         yield true;
       }
       case IntroTerm.Lambda $ -> throw new InternalException("LamTerm is never type");
-      case CallTerm.Con $ -> throw new InternalException("ConCall is never type");
+      case ConCall $ -> throw new InternalException("ConCall is never type");
       case IntroTerm.Tuple $ -> throw new InternalException("TupTerm is never type");
       case IntroTerm.New $ -> throw new InternalException("NewTerm is never type");
       case ErrorTerm $ -> true;
@@ -470,15 +470,15 @@ public sealed abstract class TermComparator permits Unifier {
         else yield null;
       }
       // See compareApprox for why we don't compare these
-      case CallTerm.Fn lhs -> null;
-      case CallTerm.Data lhs -> {
-        if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) yield null;
+      case FnCall lhs -> null;
+      case DataCall lhs -> {
+        if (!(preRhs instanceof DataCall rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         // Do not need to be computed precisely because unification won't need this info
         yield args ? FormTerm.Type.ZERO : null;
       }
-      case CallTerm.Struct lhs -> {
-        if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
+      case StructCall lhs -> {
+        if (!(preRhs instanceof StructCall rhs) || lhs.ref() != rhs.ref()) yield null;
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         yield args ? FormTerm.Type.ZERO : null;
       }
@@ -488,8 +488,8 @@ public sealed abstract class TermComparator permits Unifier {
         yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
           PrimDef.familyLeftToRight(lhs.type()) : null;
       }
-      case CallTerm.Con lhs -> switch (preRhs) {
-        case CallTerm.Con rhs -> {
+      case ConCall lhs -> switch (preRhs) {
+        case ConCall rhs -> {
           if (lhs.ref() != rhs.ref()) yield null;
           var retType = getType(lhs, lhs.ref());
           // Lossy comparison
@@ -501,11 +501,11 @@ public sealed abstract class TermComparator permits Unifier {
         case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
         default -> null;
       };
-      case CallTerm.Prim lhs -> null;
-      case CallTerm.Access lhs -> {
-        if (!(preRhs instanceof CallTerm.Access rhs)) yield null;
+      case PrimCall lhs -> null;
+      case FieldTerm lhs -> {
+        if (!(preRhs instanceof FieldTerm rhs)) yield null;
         var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(preStructType instanceof CallTerm.Struct structType)) yield null;
+        if (!(preStructType instanceof StructCall structType)) yield null;
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }
@@ -515,7 +515,7 @@ public sealed abstract class TermComparator permits Unifier {
           if (!lhs.compareUntyped(rhs)) yield null;
           yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
         }
-        case CallTerm.Con rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
+        case ConCall rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
         default -> null;
       };
       case ListTerm lhs -> switch (preRhs) {
@@ -527,16 +527,16 @@ public sealed abstract class TermComparator permits Unifier {
           yield lhs.type();
         }
 
-        case CallTerm.Con rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
+        case ConCall rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
         default -> null;
       };
-      case CallTerm.Hole lhs -> solveMeta(preRhs, lr, rl, lhs);
+      case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs);
     };
     traceExit();
     return ret;
   }
 
-  protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull CallTerm.Hole lhs);
+  protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs);
 
   public boolean compareSort(FormTerm.Sort l, FormTerm.Sort r) {
     var result = switch (cmp) {

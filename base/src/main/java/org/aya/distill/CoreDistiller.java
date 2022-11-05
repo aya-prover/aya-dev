@@ -32,7 +32,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> varDoc(term.var());
-      case CallTerm.Hole term -> {
+      case MetaTerm term -> {
         var name = term.ref();
         var inner = varDoc(name);
         var showImplicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
@@ -42,8 +42,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
           visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
       }
       case IntroTerm.Tuple term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
-      case CallTerm.Con conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
-      case CallTerm.Fn fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
+      case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
+      case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
       case FormTerm.Sigma term -> {
         var last = term.params().last();
         var doc = Doc.sep(
@@ -60,7 +60,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var body = IntroTerm.Lambda.unwrap(term.body(), params::append);
         Doc bodyDoc;
         // Syntactic eta-contraction
-        if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {
+        if (body instanceof Callable call && call.ref() instanceof DefVar<?, ?> defVar) {
           var args = visibleArgsOf(call).view();
           while (params.isNotEmpty() && args.isNotEmpty()) {
             if (checkUneta(args, params.last())) {
@@ -68,7 +68,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
               params.removeLast();
             } else break;
           }
-          if (call instanceof CallTerm.Access access) bodyDoc = visitAccessHead(access);
+          if (call instanceof FieldTerm access) bodyDoc = visitAccessHead(access);
           else {
             var style = chooseStyle(defVar);
             bodyDoc = style != null
@@ -104,7 +104,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
             linkRef(k, FIELD_CALL),
             Doc.symbol("=>"), term(Outer.Free, v)))
           .toImmutableSeq()));
-      case CallTerm.Access term -> visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
+      case FieldTerm term -> visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
         options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case MetaPatTerm metaPat -> {
         var ref = metaPat.ref();
@@ -121,13 +121,13 @@ public class CoreDistiller extends BaseDistiller<Term> {
         if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
         var implicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
         // Infix def-calls
-        if (head instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> var && var.isInfix()) {
+        if (head instanceof Callable call && call.ref() instanceof DefVar<?, ?> var && var.isInfix()) {
           yield visitCalls(true, defVar(var),
             call.args().view().appendedAll(args), outer, implicits);
         }
         yield visitCalls(false, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
-      case CallTerm.Prim prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
+      case PrimCall prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
       case ElimTerm.Proj term ->
         Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
@@ -159,8 +159,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
-      case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
+      case StructCall structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
+      case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
       case IntegerTerm shaped -> shaped.with(
         (zero, suc) -> shaped.repr() == 0
           ? linkLit(0, zero.ref, CON_CALL)
@@ -210,13 +210,13 @@ public class CoreDistiller extends BaseDistiller<Term> {
     return args.dropLast(1).allMatch(a -> counter.apply(a.term()) == 0);
   }
 
-  private ImmutableSeq<Arg<Term>> visibleArgsOf(CallTerm call) {
-    return call instanceof CallTerm.Con con
-      ? con.conArgs() : call instanceof CallTerm.Access access
+  private ImmutableSeq<Arg<Term>> visibleArgsOf(Callable call) {
+    return call instanceof ConCall con
+      ? con.conArgs() : call instanceof FieldTerm access
       ? access.fieldArgs() : call.args();
   }
 
-  private @NotNull Doc visitAccessHead(CallTerm.@NotNull Access term) {
+  private @NotNull Doc visitAccessHead(@NotNull FieldTerm term) {
     return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
       linkRef(term.ref(), FIELD_CALL));
   }

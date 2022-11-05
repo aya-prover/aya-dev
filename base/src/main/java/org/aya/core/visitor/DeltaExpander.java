@@ -8,10 +8,7 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.core.pat.PatMatcher;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ElimTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.tyck.TyckState;
@@ -33,13 +30,13 @@ public interface DeltaExpander extends EndoTerm {
 
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
-      case CallTerm.Con con -> {
+      case ConCall con -> {
         var def = con.ref().core;
         if (def == null) yield con;
         yield tryUnfoldClauses(true, con.conArgs(), con.ulift(), def.clauses)
           .map(un -> apply(un.data())).getOrDefault(con);
       }
-      case CallTerm.Fn fn -> {
+      case FnCall fn -> {
         var def = fn.ref().core;
         if (def == null || def.modifiers.contains(Modifier.Opaque)) yield fn;
         yield def.body.fold(
@@ -47,14 +44,14 @@ public interface DeltaExpander extends EndoTerm {
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
             .map(unfolded -> apply(unfolded.data())).getOrDefault(fn));
       }
-      case CallTerm.Prim prim -> state().primFactory().unfold(prim.id(), prim, state());
-      case CallTerm.Hole hole -> {
+      case PrimCall prim -> state().primFactory().unfold(prim.id(), prim, state());
+      case MetaTerm hole -> {
         var def = hole.ref();
         yield state().metas().getOption(def)
           .map(body -> apply(body.subst(buildSubst(def.fullTelescope(), hole.fullArgs()))))
           .getOrDefault(hole);
       }
-      case CallTerm.Access access -> {
+      case FieldTerm access -> {
         var fieldDef = access.ref().core;
         if (access.of() instanceof IntroTerm.New n) {
           var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), ElimTerm::make);

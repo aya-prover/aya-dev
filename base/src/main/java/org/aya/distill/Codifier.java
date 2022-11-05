@@ -87,7 +87,7 @@ public record Codifier(
       }
       case ErrorTerm error -> throw new UnsupportedOperationException("Cannot generate error");
       case ErasedTerm erased -> throw new UnsupportedOperationException("Cannot generate erased");
-      case CallTerm call -> throw new UnsupportedOperationException("Cannot generate calls");
+      case Callable call -> throw new UnsupportedOperationException("Cannot generate calls");
       case IntervalTerm interval -> builder.append("PrimTerm.Interval.INSTANCE");
       case FormTerm.ISet iSet -> builder.append("FormTerm.ISet.INSTANCE");
       case FormTerm.Prop prop -> builder.append("FormTerm.Prop.INSTANCE");

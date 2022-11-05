@@ -17,12 +17,12 @@ public record ListTerm(
 
   @Override
   public @NotNull Term makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> dataArg) {
-    return new CallTerm.Con(nil.dataRef, nil.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.empty());
+    return new ConCall(nil.dataRef, nil.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.empty());
   }
 
   @Override
   public @NotNull Term makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> dataArg, @NotNull Term x, @NotNull Term last) {
-    return new CallTerm.Con(cons.dataRef, cons.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.of(
+    return new ConCall(cons.dataRef, cons.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.of(
       new Arg<>(x, true),
       new Arg<>(last, true)
     ));

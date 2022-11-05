@@ -16,11 +16,11 @@ public record IntegerTerm(
 ) implements StableWHNF, Shaped.Nat<Term> {
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
-    return new CallTerm.Con(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
+    return new ConCall(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
   }
 
   @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Term term) {
-    return new CallTerm.Con(suc.dataRef, suc.ref, ImmutableSeq.empty(), 0,
+    return new ConCall(suc.dataRef, suc.ref, ImmutableSeq.empty(), 0,
       ImmutableSeq.of(new Arg<>(term, true)));
   }
 

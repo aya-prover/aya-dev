@@ -37,7 +37,7 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, CoeTerm, ElimTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, IntroTerm, MetaPatTerm, RefTerm, RefTerm.Field, StableWHNF {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, ElimTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, IntroTerm, MetaPatTerm, RefTerm, RefTerm.Field, StableWHNF {
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
     return switch (this) {
       case FormTerm.Pi pi -> {
@@ -74,7 +74,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         var struct = f.apply(neu.struct());
         var fields = ImmutableMap.from(neu.params().view().map((k, v) -> Tuple.of(k, f.apply(v))));
         if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView(), true)) yield neu;
-        yield new IntroTerm.New((CallTerm.Struct) struct, fields);
+        yield new IntroTerm.New((StructCall) struct, fields);
       }
       case ElimTerm.App app -> {
         var function = f.apply(app.of());
@@ -99,28 +99,28 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (type == erased.type()) yield erased;
         yield new ErasedTerm(type, erased.isProp(), erased.sourcePos());
       }
-      case CallTerm.Struct struct -> {
+      case StructCall struct -> {
         var args = struct.args().map(arg -> arg.descent(f));
         if (args.sameElements(struct.args(), true)) yield struct;
-        yield new CallTerm.Struct(struct.ref(), struct.ulift(), args);
+        yield new StructCall(struct.ref(), struct.ulift(), args);
       }
-      case CallTerm.Data data -> {
+      case DataCall data -> {
         var args = data.args().map(arg -> arg.descent(f));
         if (args.sameElements(data.args(), true)) yield data;
-        yield new CallTerm.Data(data.ref(), data.ulift(), args);
+        yield new DataCall(data.ref(), data.ulift(), args);
       }
-      case CallTerm.Con con -> {
+      case ConCall con -> {
         var head = con.head().descent(f);
         var args = con.conArgs().map(arg -> arg.descent(f));
         if (head == con.head() && args.sameElements(con.conArgs(), true)) yield con;
-        yield new CallTerm.Con(head, args);
+        yield new ConCall(head, args);
       }
-      case CallTerm.Fn fn -> {
+      case FnCall fn -> {
         var args = fn.args().map(arg -> arg.descent(f));
         if (args.sameElements(fn.args(), true)) yield fn;
-        yield new CallTerm.Fn(fn.ref(), fn.ulift(), args);
+        yield new FnCall(fn.ref(), fn.ulift(), args);
       }
-      case CallTerm.Access access -> {
+      case FieldTerm access -> {
         var struct = f.apply(access.of());
         var structArgs = access.structArgs().map(arg -> arg.descent(f));
         var fieldArgs = access.fieldArgs().map(arg -> arg.descent(f));
@@ -128,18 +128,18 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
           && structArgs.sameElements(access.structArgs(), true)
           && fieldArgs.sameElements(access.fieldArgs(), true))
           yield access;
-        yield new CallTerm.Access(struct, access.ref(), structArgs, fieldArgs);
+        yield new FieldTerm(struct, access.ref(), structArgs, fieldArgs);
       }
-      case CallTerm.Prim prim -> {
+      case PrimCall prim -> {
         var args = prim.args().map(arg -> arg.descent(f));
         if (args.sameElements(prim.args(), true)) yield prim;
-        yield new CallTerm.Prim(prim.ref(), prim.ulift(), args);
+        yield new PrimCall(prim.ref(), prim.ulift(), args);
       }
-      case CallTerm.Hole hole -> {
+      case MetaTerm hole -> {
         var contextArgs = hole.contextArgs().map(arg -> arg.descent(f));
         var args = hole.args().map(arg -> arg.descent(f));
         if (contextArgs.sameElements(hole.contextArgs(), true) && args.sameElements(hole.args(), true)) yield hole;
-        yield new CallTerm.Hole(hole.ref(), hole.ulift(), contextArgs, args);
+        yield new MetaTerm(hole.ref(), hole.ulift(), contextArgs, args);
       }
       case IntegerTerm shaped -> {
         var type = f.apply(shaped.type());
@@ -245,7 +245,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   default @NotNull Term freezeHoles(@Nullable TyckState state) {
     return new EndoTerm() {
       @Override public @NotNull Term pre(@NotNull Term term) {
-        return term instanceof CallTerm.Hole hole && state != null
+        return term instanceof MetaTerm hole && state != null
           ? state.metas().getOption(hole.ref()).map(this::pre).getOrDefault(term)
           : term;
       }

@@ -19,12 +19,12 @@ public interface VarConsumer extends TermConsumer {
     switch (term) {
       case RefTerm ref -> var(ref.var());
       case RefTerm.Field field -> var(field.ref());
-      case CallTerm.Hole hole -> var(hole.ref());
-      case CallTerm.Fn fn -> var(fn.ref());
-      case CallTerm.Prim prim -> var(prim.ref());
-      case CallTerm.Data data -> var(data.ref());
-      case CallTerm.Con con -> var(con.ref());
-      case CallTerm.Struct struct -> var(struct.ref());
+      case MetaTerm hole -> var(hole.ref());
+      case FnCall fn -> var(fn.ref());
+      case PrimCall prim -> var(prim.ref());
+      case DataCall data -> var(data.ref());
+      case ConCall con -> var(con.ref());
+      case StructCall struct -> var(struct.ref());
       default -> {}
     }
     TermConsumer.super.accept(term);
@@ -88,7 +88,7 @@ public interface VarConsumer extends TermConsumer {
           accept(lam.body());
           bound.removeInRange(start, start + lam.params().size());
         }
-        case CallTerm.Hole hole -> {
+        case MetaTerm hole -> {
           var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);
           hole.contextArgs().forEach(arg -> checker.accept(arg.term()));
           hole.args().forEach(arg -> accept(arg.term()));

@@ -42,7 +42,7 @@ public sealed interface IntroTerm extends Term {
    * @author kiva
    */
   record New(
-    @NotNull CallTerm.Struct struct,
+    @NotNull StructCall struct,
     @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.StructField>, Term> params
   ) implements IntroTerm, StableWHNF {
   }

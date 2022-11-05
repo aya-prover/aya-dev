@@ -4,7 +4,7 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.ConCall;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
@@ -45,8 +45,8 @@ public final class DataDef extends UserDef.Type {
     @NotNull ImmutableSeq<Term.Param> dataTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
-    public @NotNull CallTerm.Con toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar) {
-      return new CallTerm.Con(fromCtor(conVar), conVar,
+    public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar) {
+      return new ConCall(fromCtor(conVar), conVar,
         dataTele.map(Term.Param::toArg),
         0, // TODO: is this correct?
         conTele.map(Term.Param::toArg));

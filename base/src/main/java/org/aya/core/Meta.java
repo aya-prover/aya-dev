@@ -6,8 +6,8 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
-import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
+import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
@@ -72,8 +72,8 @@ public final class Meta implements AnyVar {
     assert telescope.isEmpty();
     var domVar = Meta.from(contextTele, domName, result, sourcePos);
     var codVar = Meta.from(contextTele, codName, result, sourcePos);
-    var dom = new CallTerm.Hole(domVar, ulift, contextArgs, ImmutableSeq.empty());
-    var cod = new CallTerm.Hole(codVar, ulift, contextArgs, ImmutableSeq.empty());
+    var dom = new MetaTerm(domVar, ulift, contextArgs, ImmutableSeq.empty());
+    var cod = new MetaTerm(codVar, ulift, contextArgs, ImmutableSeq.empty());
     var domParam = new Term.Param(Constants.randomlyNamed(sourcePos), dom, explicit);
     return new FormTerm.Pi(domParam, cod);
   }

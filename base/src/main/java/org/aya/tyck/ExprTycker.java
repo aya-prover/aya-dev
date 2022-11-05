@@ -83,7 +83,7 @@ public final class ExprTycker extends Tycker {
       case Expr.New aNew -> {
         var structExpr = aNew.struct();
         var struct = instImplicits(synthesize(structExpr).wellTyped(), structExpr.sourcePos());
-        if (!(struct instanceof CallTerm.Struct structCall))
+        if (!(struct instanceof StructCall structCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, aNew, struct));
         var structRef = structCall.ref();
         var subst = new Subst(Def.defTele(structRef).map(Term.Param::ref), structCall.args().map(Arg::term));
@@ -141,7 +141,7 @@ public final class ExprTycker extends Tycker {
           return new TermResult(ElimTerm.proj(projectee.wellTyped(), ix), type.subst(subst));
         }, sp -> {
           var fieldName = sp.justName();
-          if (!(projectee.type() instanceof CallTerm.Struct structCall))
+          if (!(projectee.type() instanceof StructCall structCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
           var structCore = structCall.ref().core;
           if (structCore == null) throw new UnsupportedOperationException("TODO");
@@ -153,7 +153,7 @@ public final class ExprTycker extends Tycker {
           var structSubst = DeltaExpander.buildSubst(structCore.telescope(), structCall.args());
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
           var teleRenamed = tele.map(Term.Param::rename);
-          var access = new CallTerm.Access(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(Term.Param::toArg));
+          var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(Term.Param::toArg));
           return new TermResult(IntroTerm.Lambda.make(teleRenamed, access), FormTerm.Pi.make(tele, field.result().subst(structSubst)));
         });
       }
@@ -207,7 +207,7 @@ public final class ExprTycker extends Tycker {
         var argument = appE.argument();
         var fTy = whnf(f.type());
         var argLicit = argument.explicit();
-        if (fTy instanceof CallTerm.Hole fTyHole) {
+        if (fTy instanceof MetaTerm fTyHole) {
           // [ice] Cannot 'generatePi' because 'generatePi' takes the current contextTele,
           // but it may contain variables absent from the 'contextTele' of 'fTyHole.ref.core'
           var pi = fTyHole.asPi(argLicit);
@@ -259,7 +259,7 @@ public final class ExprTycker extends Tycker {
         var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs));
-        var type = new CallTerm.Data(((DataDef) defs.first()).ref, 0, ImmutableSeq.empty());
+        var type = new DataCall(((DataDef) defs.first()).ref, 0, ImmutableSeq.empty());
         yield new TermResult(new IntegerTerm(integer, AyaShape.NAT_SHAPE, type), type);
       }
       case Expr.LitString litStr -> {
@@ -288,7 +288,7 @@ public final class ExprTycker extends Tycker {
         var dataParam = def.telescope().first();
         var sort = dataParam.type();    // the sort of type below.
         var hole = localCtx.freshHole(sort, arr.sourcePos());
-        var type = new CallTerm.Data(def.ref(), 0, ImmutableSeq.of(
+        var type = new DataCall(def.ref(), 0, ImmutableSeq.of(
           new Arg<>(hole._1, dataParam.explicit())));
 
         // do type check
@@ -411,7 +411,7 @@ public final class ExprTycker extends Tycker {
         var items = MutableList.<Term>create();
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
-        if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(expr), expr);
+        if (typeWHNF instanceof MetaTerm hole) yield unifyTyMaybeInsert(hole, synthesize(expr), expr);
         if (!(typeWHNF instanceof FormTerm.Sigma(var params)))
           yield fail(expr, term, BadTypeError.sigmaCon(state, expr, typeWHNF));
         var againstTele = params.view();
@@ -451,7 +451,7 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(result.wellTyped(), normTerm);
       }
       case Expr.Lambda lam -> {
-        if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
+        if (term instanceof MetaTerm) unifyTy(term, generatePi(lam), lam.sourcePos());
         yield switch (whnf(term)) {
           case FormTerm.Pi dt -> {
             var param = lam.param();
@@ -486,13 +486,13 @@ public final class ExprTycker extends Tycker {
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? FormulaTerm.LEFT : FormulaTerm.RIGHT, ty);
           else yield fail(expr, new PrimError.BadInterval(pos, end));
         }
-        if (ty instanceof CallTerm.Data dataCall) {
+        if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = shapeFactory.find(data);
           if (shape.isDefined())
             yield new TermResult(new IntegerTerm(end, shape.get(), dataCall), term);
         }
-        if (ty instanceof CallTerm.Hole hole) {
+        if (ty instanceof MetaTerm hole) {
           var nat = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
           // When there's more than one Nat, delay the unification for cases like
           // def foo : Option Nat1 => some 0
@@ -616,7 +616,7 @@ public final class ExprTycker extends Tycker {
   private @NotNull FormTerm.Sort ty(@NotNull Expr errorMsg, @NotNull Term term) {
     return switch (whnf(term)) {
       case FormTerm.Sort u -> u;
-      case CallTerm.Hole hole -> {
+      case MetaTerm hole -> {
         unifyTyReported(hole, FormTerm.Type.ZERO, errorMsg);
         yield FormTerm.Type.ZERO;
       }
@@ -760,13 +760,13 @@ public final class ExprTycker extends Tycker {
 
   @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var) {
     if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
-      return defCall(pos, (DefVar<FnDef, TeleDecl.FnDecl>) var, CallTerm.Fn::new);
+      return defCall(pos, (DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall(pos, (DefVar<PrimDef, TeleDecl.PrimDecl>) var, CallTerm.Prim::new);
+      return defCall(pos, (DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
-      return defCall(pos, (DefVar<DataDef, TeleDecl.DataDecl>) var, CallTerm.Data::new);
+      return defCall(pos, (DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof TeleDecl.StructDecl) {
-      return defCall(pos, (DefVar<StructDef, TeleDecl.StructDecl>) var, CallTerm.Struct::new);
+      return defCall(pos, (DefVar<StructDef, TeleDecl.StructDecl>) var, StructCall::new);
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
@@ -787,7 +787,7 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic> ExprTycker.Result defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
+  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic> ExprTycker.Result defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables

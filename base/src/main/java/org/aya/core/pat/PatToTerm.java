@@ -31,13 +31,13 @@ public class PatToTerm {
   }
 
   protected @NotNull Term visitCtor(Pat.@NotNull Ctor ctor) {
-    var data = (CallTerm.Data) ctor.type();
+    var data = (DataCall) ctor.type();
     var core = ctor.ref().core;
     var tele = core.selfTele;
     var args = ctor.params().zipView(tele)
       .map(p -> new Arg<>(visit(p._1), p._2.explicit()))
       .toImmutableSeq();
-    return new CallTerm.Con(data.ref(), ctor.ref(),
+    return new ConCall(data.ref(), ctor.ref(),
       ctor.ownerArgs().map(x -> new Arg<>(x, false)),
       data.ulift(), args);
   }

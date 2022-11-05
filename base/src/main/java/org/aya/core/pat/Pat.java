@@ -9,7 +9,7 @@ import kala.value.MutableValue;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
@@ -160,7 +160,7 @@ public sealed interface Pat extends AyaDocile {
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull ImmutableSeq<Term> ownerArgs,
     @NotNull ImmutableSeq<Pat> params,
-    @NotNull CallTerm.Data type
+    @NotNull DataCall type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
       // ownerArgs are not pattern, so they don't introduce any binding.
@@ -172,7 +172,7 @@ public sealed interface Pat extends AyaDocile {
         ownerArgs.map(tycker::zonk),
         params.map(pat -> pat.zonk(tycker)),
         // The cast must succeed
-        (CallTerm.Data) tycker.zonk(type));
+        (DataCall) tycker.zonk(type));
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
@@ -181,7 +181,7 @@ public sealed interface Pat extends AyaDocile {
       return new Ctor(explicit, ref,
         ownerArgs.map(PatTycker::inlineTerm),
         params,
-        (CallTerm.Data) PatTycker.inlineTerm(type));
+        (DataCall) PatTycker.inlineTerm(type));
     }
   }
 
@@ -203,7 +203,7 @@ public sealed interface Pat extends AyaDocile {
 
   /**
    * TODO[literal]: literal type needs meta-solving for first-class patterns. Possible changes:
-   *  - Make {@link ShapedInt#type} a {@link Term} instead of {@link CallTerm.Data}
+   *  - Make {@link ShapedInt#type} a {@link Term} instead of {@link DataCall}
    *  - Call {@link ShapedInt#constructorForm()} with a {@link TyckState}
    *  - Call {@link #compareUntyped(Shaped)} with a {@link TyckState}
    *  see <a href="https://github.com/aya-prover/aya-dev/pull/400#discussion_r862371935">discussion</a>
@@ -211,13 +211,13 @@ public sealed interface Pat extends AyaDocile {
   record ShapedInt(
     @Override int repr,
     @Override @NotNull AyaShape shape,
-    @NotNull CallTerm.Data type,
+    @NotNull DataCall type,
     boolean explicit
   ) implements Pat, Shaped.Nat<Pat> {
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       // The cast must succeed
-      return new Pat.ShapedInt(repr, shape, (CallTerm.Data) tycker.zonk(type), explicit);
+      return new Pat.ShapedInt(repr, shape, (DataCall) tycker.zonk(type), explicit);
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {

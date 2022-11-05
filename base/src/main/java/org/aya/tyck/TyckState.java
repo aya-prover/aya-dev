@@ -6,10 +6,10 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.TermFolder;
 import org.aya.core.visitor.TermConsumer;
+import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
@@ -86,7 +86,7 @@ public record TyckState(
     var currentActiveMetas = activeMetas.size();
     var consumer = new TermConsumer() {
       @Override public void pre(@NotNull Term tm) {
-        if (tm instanceof CallTerm.Hole hole && !metas.containsKey(hole.ref()))
+        if (tm instanceof MetaTerm hole && !metas.containsKey(hole.ref()))
             activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
         TermConsumer.super.pre(tm);
       }

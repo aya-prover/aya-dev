@@ -93,21 +93,21 @@ public record Serializer(@NotNull Serializer.State state) {
       case IntervalTerm interval -> new SerTerm.Interval();
       case FormTerm.Pi pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
       case FormTerm.Sigma sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
-      case CallTerm.Con conCall -> new SerTerm.ConCall(
+      case ConCall conCall -> new SerTerm.ConCall(
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
         serializeArgs(conCall.conArgs()));
-      case CallTerm.Struct structCall -> serializeStructCall(structCall);
-      case CallTerm.Data dataCall -> serializeDataCall(dataCall);
-      case CallTerm.Prim prim -> new SerTerm.PrimCall(
+      case StructCall structCall -> serializeStructCall(structCall);
+      case DataCall dataCall -> serializeDataCall(dataCall);
+      case PrimCall prim -> new SerTerm.PrimCall(
         state.def(prim.ref()),
         prim.id(),
         serializeCall(prim.ulift(), prim.args()));
-      case CallTerm.Access access -> new SerTerm.Access(
+      case FieldTerm access -> new SerTerm.Access(
         serialize(access.of()), state.def(access.ref()),
         serializeArgs(access.structArgs()),
         serializeArgs(access.fieldArgs()));
-      case CallTerm.Fn fnCall -> new SerTerm.FnCall(
+      case FnCall fnCall -> new SerTerm.FnCall(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
       case ElimTerm.Proj proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
@@ -127,7 +127,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeArgs(app.args()), serialize(app.cube()));
       case CoeTerm coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
 
-      case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
+      case MetaTerm hole -> throw new InternalException("Shall not have holes serialized.");
       case MetaPatTerm metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case FormTerm.Sort sort -> serialize(sort);
@@ -163,13 +163,13 @@ public record Serializer(@NotNull Serializer.State state) {
       cube.partial().fmap(this::serialize));
   }
 
-  private @NotNull SerTerm.DataCall serializeDataCall(CallTerm.@NotNull Data dataCall) {
+  private @NotNull SerTerm.DataCall serializeDataCall(@NotNull DataCall dataCall) {
     return new SerTerm.DataCall(
       state.def(dataCall.ref()),
       serializeCall(dataCall.ulift(), dataCall.args()));
   }
 
-  private @NotNull SerTerm.StructCall serializeStructCall(CallTerm.@NotNull Struct structCall) {
+  private @NotNull SerTerm.StructCall serializeStructCall(@NotNull StructCall structCall) {
     return new SerTerm.StructCall(
       state.def(structCall.ref()),
       serializeCall(structCall.ulift(), structCall.args()));

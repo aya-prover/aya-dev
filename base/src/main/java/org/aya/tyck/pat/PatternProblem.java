@@ -3,7 +3,8 @@
 package org.aya.tyck.pat;
 
 import org.aya.concrete.Pattern;
-import org.aya.core.term.CallTerm;
+import org.aya.core.term.ConCall;
+import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
@@ -20,7 +21,7 @@ public sealed interface PatternProblem extends Problem {
     return pattern().sourcePos();
   }
 
-  record BlockedEval(@Override @NotNull Pattern pattern, @NotNull CallTerm.Data dataCall) implements PatternProblem {
+  record BlockedEval(@Override @NotNull Pattern pattern, @NotNull DataCall dataCall) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Unsure if this pattern is actually impossible, as constructor selection is blocked on:"),
@@ -30,7 +31,7 @@ public sealed interface PatternProblem extends Problem {
 
   record PossiblePat(
     @Override @NotNull Pattern pattern,
-    @NotNull CallTerm.ConHead available
+    @NotNull ConCall.Head available
   ) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
@@ -53,7 +54,7 @@ public sealed interface PatternProblem extends Problem {
 
   record UnavailableCtor(
     @Override @NotNull Pattern pattern,
-    @NotNull CallTerm.Data dataCall
+    @NotNull DataCall dataCall
   ) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
