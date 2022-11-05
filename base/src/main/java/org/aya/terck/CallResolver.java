@@ -90,8 +90,8 @@ public record CallResolver(
   /** @return the head of application or projection */
   private @NotNull Term headOf(@NotNull Term term) {
     return switch (term) {
-      case ElimTerm.App app -> headOf(app.of());
-      case ElimTerm.Proj proj -> headOf(proj.of());
+      case AppTerm app -> headOf(app.of());
+      case ProjTerm proj -> headOf(proj.of());
       case FieldTerm access -> headOf(access.of());
       default -> term;
     };

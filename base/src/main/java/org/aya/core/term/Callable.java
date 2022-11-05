@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
- * @see ElimTerm#make(ElimTerm.App)
+ * @see AppTerm#make(AppTerm)
  */
 public sealed interface Callable extends Term permits Callable.DefCall, FieldTerm, MetaTerm {
   @NotNull AnyVar ref();

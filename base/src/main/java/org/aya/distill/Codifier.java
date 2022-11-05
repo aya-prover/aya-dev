@@ -34,14 +34,14 @@ public record Codifier(
         varRef(locals.get(var));
         builder.append(")");
       }
-      case ElimTerm.App(var of, var arg) -> {
+      case AppTerm(var of, var arg) -> {
         builder.append("new ElimTerm.App(");
         term(of);
         builder.append(",");
         arg(arg);
         builder.append(")");
       }
-      case ElimTerm.Proj(var of, var ix) -> {
+      case ProjTerm(var of, var ix) -> {
         builder.append("new ElimTerm.Proj(");
         term(of);
         builder.append(",").append(ix).append(")");
@@ -69,7 +69,7 @@ public record Codifier(
         term(body);
         builder.append(")");
       }
-      case ElimTerm.PathApp(var of, var args, var cube) -> {
+      case PAppTerm(var of, var args, var cube) -> {
         builder.append("new ElimTerm.PathApp(");
         term(of);
         builder.append(",ImmutableSeq.of(");

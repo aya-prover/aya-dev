@@ -57,13 +57,13 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         }
       }
       case LamTerm lambda -> new PiTerm(lambda.param(), term(lambda.body()));
-      case ElimTerm.Proj proj -> {
+      case ProjTerm proj -> {
         var sigmaRaw = whnf(term(proj.of()));
         if (!(sigmaRaw instanceof SigmaTerm sigma)) yield ErrorTerm.typeOf(proj);
         var index = proj.ix() - 1;
         var telescope = sigma.params();
         yield telescope.get(index).type()
-          .subst(ElimTerm.Proj.projSubst(proj.of(), index, telescope));
+          .subst(ProjTerm.projSubst(proj.of(), index, telescope));
       }
       case NewTerm neu -> neu.struct();
       case TupTerm tuple -> new SigmaTerm(tuple.items().map(item ->
@@ -86,7 +86,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           }
         });
       }
-      case ElimTerm.App app -> {
+      case AppTerm app -> {
         var piRaw = whnf(term(app.of()));
         yield piRaw instanceof PiTerm pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
@@ -109,7 +109,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         term(lam.body()),
         new Partial.Const<>(term(lam.body()))
       ));
-      case ElimTerm.PathApp app -> {
+      case PAppTerm app -> {
         // v @ ui : A[ui/xi]
         var xi = app.cube().params();
         var ui = app.args().map(Arg::term);

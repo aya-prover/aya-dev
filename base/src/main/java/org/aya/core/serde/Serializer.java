@@ -110,8 +110,8 @@ public record Serializer(@NotNull Serializer.State state) {
       case FnCall fnCall -> new SerTerm.FnCall(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
-      case ElimTerm.Proj proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
-      case ElimTerm.App app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
+      case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
+      case AppTerm app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
       case MatchTerm match ->
         new SerTerm.Match(match.discriminant().map(this::serialize), match.clauses().map(this::serialize));
       case TupTerm tuple -> new SerTerm.Tup(tuple.items().map(this::serialize));
@@ -123,7 +123,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case PartialTyTerm ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
       case PathTerm path -> new SerTerm.Path(serialize(path.cube()));
       case PLamTerm path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
-      case ElimTerm.PathApp app -> new SerTerm.PathApp(serialize(app.of()),
+      case PAppTerm app -> new SerTerm.PathApp(serialize(app.of()),
         serializeArgs(app.args()), serialize(app.cube()));
       case CoeTerm coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
 

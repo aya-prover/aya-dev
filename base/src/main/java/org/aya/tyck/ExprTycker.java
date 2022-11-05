@@ -15,6 +15,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
+import org.aya.core.serde.SerTerm;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
@@ -137,8 +138,8 @@ public final class ExprTycker extends Tycker {
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
           var type = telescope.get(index).type();
-          var subst = ElimTerm.Proj.projSubst(projectee.wellTyped(), index, telescope);
-          return new TermResult(ElimTerm.proj(projectee.wellTyped(), ix), type.subst(subst));
+          var subst = ProjTerm.projSubst(projectee.wellTyped(), index, telescope);
+          return new TermResult(ProjTerm.proj(projectee.wellTyped(), ix), type.subst(subst));
         }, sp -> {
           var fieldName = sp.justName();
           if (!(projectee.type() instanceof StructCall structCall))
@@ -226,7 +227,7 @@ public final class ExprTycker extends Tycker {
               // that implies paramLicit == false
               var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
               // path types are always explicit
-              app = ElimTerm.make(app, holeApp);
+              app = AppTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
               tup = ensurePiOrPath(pi.body());
               pi = tup._1;
@@ -243,7 +244,7 @@ public final class ExprTycker extends Tycker {
         subst.addDirectly(pi.param().ref(), elabArg);
         var arg = new Arg<>(elabArg, argLicit);
         var newApp = cube == null
-          ? ElimTerm.make(app, arg)
+          ? AppTerm.make(app, arg)
           : cube.makeApp(app, arg).subst(subst);
         // ^ instantiate inserted implicits to the partial element in `Cube`.
         // It is better to `cube.subst().makeApp()`, but we don't have a `subst` method for `Cube`.
@@ -372,7 +373,7 @@ public final class ExprTycker extends Tycker {
   private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
     term = whnf(term);
     while (term instanceof LamTerm intro && !intro.param().explicit()) {
-      term = whnf(ElimTerm.make(intro, mockArg(intro.param(), pos)));
+      term = whnf(AppTerm.make(intro, mockArg(intro.param(), pos)));
     }
     return term;
   }
@@ -382,7 +383,7 @@ public final class ExprTycker extends Tycker {
     var term = result.wellTyped();
     while (type instanceof PiTerm pi && !pi.param().explicit()) {
       var holeApp = mockArg(pi.param(), pos);
-      term = ElimTerm.make(term, holeApp);
+      term = AppTerm.make(term, holeApp);
       type = whnf(pi.substBody(holeApp.term()));
     }
     return new TermResult(term, type);
@@ -878,7 +879,7 @@ public final class ExprTycker extends Tycker {
     var checker = new Function<Term, Term>() {
       private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
-        var erased = ElimTerm.underlyingIllegalErasure(term);
+        var erased = SerTerm.Erased.underlyingIllegalErasure(term);
         if (erased != null) {
           reporter.report(new ErasedError(sourcePos, erased));
           return new ErrorTerm(term);
@@ -904,7 +905,7 @@ public final class ExprTycker extends Tycker {
       if (wellTyped() instanceof FormTerm.Sort) return this;
       var type = type();
       var isProp = tycker.computeType(type) instanceof FormTerm.Prop;
-      if (isProp || ElimTerm.isErased(wellTyped()))
+      if (isProp || ErasedTerm.isErased(wellTyped()))
         return new TermResult(new ErasedTerm(type, isProp, expr.sourcePos()), type);
       return this;
     }

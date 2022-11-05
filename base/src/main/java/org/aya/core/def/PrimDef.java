@@ -275,8 +275,8 @@ public final class PrimDef extends TopLevelDef<Term> {
   /** Let A be argument, then <code>A 0 -> A 1</code> */
   public static @NotNull PiTerm familyLeftToRight(Term term) {
     return new PiTerm(
-      new Term.Param(LocalVar.IGNORED, new ElimTerm.App(term, new Arg<>(FormulaTerm.LEFT, true)), true),
-      new ElimTerm.App(term, new Arg<>(FormulaTerm.RIGHT, true)));
+      new Term.Param(LocalVar.IGNORED, new AppTerm(term, new Arg<>(FormulaTerm.LEFT, true)), true),
+      new AppTerm(term, new Arg<>(FormulaTerm.RIGHT, true)));
   }
 
   public static @NotNull Term intervalToA() {

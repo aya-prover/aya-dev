@@ -54,7 +54,7 @@ public interface DeltaExpander extends EndoTerm {
       case FieldTerm access -> {
         var fieldDef = access.ref().core;
         if (access.of() instanceof NewTerm n) {
-          var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), ElimTerm::make);
+          var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), AppTerm::make);
           yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
         }
         yield access;

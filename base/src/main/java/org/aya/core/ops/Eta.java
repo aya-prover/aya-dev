@@ -31,7 +31,7 @@ public record Eta(@NotNull LocalCtx ctx) {
         var defaultRes = new TupTerm(etaItems);
         // Get first item's Proj.of Term to compare with other items'
         var firstItem = etaItems.first();
-        if (!(firstItem instanceof ElimTerm.Proj proj
+        if (!(firstItem instanceof ProjTerm proj
           && proj.of() instanceof RefTerm ref
           && ctx.get(ref.var()) instanceof SigmaTerm sigmaTerm)) yield defaultRes;
         // Make sure targetSigma's size is equal to this tuple's size
@@ -39,15 +39,15 @@ public record Eta(@NotNull LocalCtx ctx) {
         // Make sure every Proj.of Term is the same and index match the position
         for (var i = 0; i < etaItems.size(); ++i) {
           var item = etaItems.get(i);
-          if (!(item instanceof ElimTerm.Proj itemProj)
+          if (!(item instanceof ProjTerm itemProj)
             || !compareRefTerm(itemProj.of(), ref)
             || (itemProj.ix() != i + 1)) yield defaultRes;
         }
         yield ref;
       }
-      case ElimTerm.App app -> new ElimTerm.App(app.of(),
+      case AppTerm app -> new AppTerm(app.of(),
         new Arg<>(uneta(app.arg().term()), app.arg().explicit()));
-      case ElimTerm.Proj proj -> new ElimTerm.Proj(uneta(proj.of()), proj.ix());
+      case ProjTerm proj -> new ProjTerm(uneta(proj.of()), proj.ix());
       // Ignore other cases because they are useless in becoming a RefTerm
       default -> term;
     };
@@ -56,7 +56,7 @@ public record Eta(@NotNull LocalCtx ctx) {
   private static @NotNull Term getLastTerm(@NotNull Term term) {
     return switch (term) {
       case LamTerm lam -> getLastTerm(lam.body());
-      case ElimTerm.App app -> app.arg().term();
+      case AppTerm app -> app.arg().term();
       default -> term;
     };
   }
@@ -65,7 +65,7 @@ public record Eta(@NotNull LocalCtx ctx) {
     return switch (term) {
       case LamTerm lamTerm -> LamTerm.make(ImmutableSeq.of(lamTerm.param()),
         constructBodyWithoutLast(lamTerm.body(), lastTerm));
-      case ElimTerm.App appTerm -> compareRefTerm(appTerm.arg().term(), lastTerm) ? appTerm.of() : appTerm;
+      case AppTerm appTerm -> compareRefTerm(appTerm.arg().term(), lastTerm) ? appTerm.of() : appTerm;
       default -> term;
     };
   }

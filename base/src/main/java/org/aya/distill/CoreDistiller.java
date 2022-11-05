@@ -115,9 +115,9 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var doc = term.description().toDoc(options);
         yield term.isReallyError() ? Doc.angled(doc) : doc;
       }
-      case ElimTerm.App term -> {
+      case AppTerm term -> {
         var args = MutableList.of(term.arg());
-        var head = ElimTerm.unapp(term.of(), args);
+        var head = AppTerm.unapp(term.of(), args);
         if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
         var implicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
         // Infix def-calls
@@ -129,7 +129,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case PrimCall prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
-      case ElimTerm.Proj term ->
+      case ProjTerm term ->
         Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
       case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
           Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
@@ -191,7 +191,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           Doc.symbol("=>"),
           lam.body().toDoc(options)),
         Outer.BinOp);
-      case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
+      case PAppTerm app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);

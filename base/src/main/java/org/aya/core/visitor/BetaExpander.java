@@ -46,16 +46,16 @@ public interface BetaExpander extends EndoTerm {
       case FormulaTerm mula -> simplFormula(mula);
       case PartialTyTerm ty -> partialType(ty);
       case MetaPatTerm metaPat -> metaPat.inline();
-      case ElimTerm.App app -> {
-        var result = ElimTerm.make(app);
+      case AppTerm app -> {
+        var result = AppTerm.make(app);
         yield result == term ? result : apply(result);
       }
-      case ElimTerm.Proj proj -> ElimTerm.proj(proj);
+      case ProjTerm proj -> ProjTerm.proj(proj);
       case MatchTerm match -> {
         var result = tryMatch(match.discriminant(), match.clauses());
         yield result.isDefined() ? result.get() : match;
       }
-      case ElimTerm.PathApp(var of, var args, PathTerm.Cube(var xi, var type, var partial)) -> {
+      case PAppTerm(var of, var args, PathTerm.Cube(var xi, var type, var partial)) -> {
         if (of instanceof ErasedTerm) {
           var ui = args.map(Arg::term);
           yield new ErasedTerm(type.subst(new Subst(xi, ui)));
@@ -66,7 +66,7 @@ public interface BetaExpander extends EndoTerm {
           yield apply(lam.body().subst(subst));
         }
         yield switch (partial(partial)) {
-          case Partial.Split<Term> hap -> new ElimTerm.PathApp(of, args, new PathTerm.Cube(xi, type, hap));
+          case Partial.Split<Term> hap -> new PAppTerm(of, args, new PathTerm.Cube(xi, type, hap));
           case Partial.Const<Term> sad -> sad.u();
         };
       }
@@ -78,7 +78,7 @@ public interface BetaExpander extends EndoTerm {
         }
 
         var varI = new LocalVar("i");
-        var codom = apply(ElimTerm.make(coe.type(), new Arg<>(new RefTerm(varI), true)));
+        var codom = apply(AppTerm.make(coe.type(), new Arg<>(new RefTerm(varI), true)));
 
         yield switch (codom) {
           case PathTerm path -> coe;
@@ -87,14 +87,14 @@ public interface BetaExpander extends EndoTerm {
             var vVar = new LocalVar("v");
             var A = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), pi.param().type());
             var B = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), pi.body());
-            var vType = ElimTerm.make(A, new Arg<>(FormulaTerm.RIGHT, true));
-            var w = ElimTerm.make(coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
+            var vType = AppTerm.make(A, new Arg<>(FormulaTerm.RIGHT, true));
+            var w = AppTerm.make(coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
             var BSubsted = B.subst(pi.param().ref(), w.rename());
             var wSubsted = w.subst(varI, FormulaTerm.LEFT).rename();
             yield new LamTerm(coeDom(u0Var, coe.type()),
               new LamTerm(new Term.Param(vVar, vType, true),
-                ElimTerm.make(new CoeTerm(BSubsted, coe.restr()),
-                  new Arg<>(ElimTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
+                AppTerm.make(new CoeTerm(BSubsted, coe.restr()),
+                  new Arg<>(AppTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
           }
           case SigmaTerm sigma -> {
             var u0Var = new LocalVar("u0");
@@ -104,13 +104,13 @@ public interface BetaExpander extends EndoTerm {
               new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), sigma.params().get(1).type()) :
               new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), new SigmaTerm(sigma.params().drop(1)));
 
-            var u00 = new ElimTerm.Proj(new RefTerm(u0Var), 1);
-            var u01 = new ElimTerm.Proj(new RefTerm(u0Var), 2);
-            var v = ElimTerm.make(coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
+            var u00 = new ProjTerm(new RefTerm(u0Var), 1);
+            var u01 = new ProjTerm(new RefTerm(u0Var), 2);
+            var v = AppTerm.make(coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
 
             var Bsubsted = B.subst(sigma.params().first().ref(), v);
-            var coe0 = ElimTerm.make(new CoeTerm(A, coe.restr()), new Arg<>(u00, true));
-            var coe1 = ElimTerm.make(new CoeTerm(Bsubsted, coe.restr()), new Arg<>(u01, true));
+            var coe0 = AppTerm.make(new CoeTerm(A, coe.restr()), new Arg<>(u00, true));
+            var coe1 = AppTerm.make(new CoeTerm(Bsubsted, coe.restr()), new Arg<>(u01, true));
             yield new LamTerm(coeDom(u0Var, coe.type()), new TupTerm(ImmutableSeq.of(coe0, coe1)));
           }
           case FormTerm.Type type -> {
@@ -124,7 +124,7 @@ public interface BetaExpander extends EndoTerm {
     };
   }
   @NotNull private static Term.Param coeDom(LocalVar u0Var, Term type) {
-    return new Term.Param(u0Var, ElimTerm.make(type, new Arg<>(FormulaTerm.LEFT, true)), true);
+    return new Term.Param(u0Var, AppTerm.make(type, new Arg<>(FormulaTerm.LEFT, true)), true);
   }
 
   // forward (A: I -> Type) (r: I): A r -> A 1
@@ -134,11 +134,11 @@ public interface BetaExpander extends EndoTerm {
 
     var iOrR = FormulaTerm.or(new RefTerm(varI), r);
     var cofib = isOne(r);
-    var Ar = ElimTerm.make(A, new Arg<>(r, true));
-    var AiOrR = ElimTerm.make(A, new Arg<>(iOrR, true));
+    var Ar = AppTerm.make(A, new Arg<>(r, true));
+    var AiOrR = AppTerm.make(A, new Arg<>(iOrR, true));
     var lam = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), AiOrR);
     var transp = new CoeTerm(lam, cofib);
-    var body = ElimTerm.make(transp, new Arg<>(new RefTerm(varU), true));
+    var body = AppTerm.make(transp, new Arg<>(new RefTerm(varU), true));
     return new LamTerm(new Term.Param(LocalVar.IGNORED, Ar, true), body);
   }
 
@@ -152,7 +152,7 @@ public interface BetaExpander extends EndoTerm {
     var varY = new LocalVar("y");
     var paramY = new Term.Param(varY, IntervalTerm.INSTANCE, true);
     var xAndY = FormulaTerm.and(ri, new RefTerm(varY));
-    var a = new LamTerm(paramY, ElimTerm.make(type, new Arg<>(xAndY, true)));
+    var a = new LamTerm(paramY, AppTerm.make(type, new Arg<>(xAndY, true)));
 
     return new CoeTerm(a, cofib);
   }
@@ -168,12 +168,12 @@ public interface BetaExpander extends EndoTerm {
     var invertedI = FormulaTerm.inv(new RefTerm(i));
     return new LamTerm(
       new Term.Param(i, IntervalTerm.INSTANCE, true),
-      ElimTerm.make(A, new Arg<>(invertedI, true)));
+      AppTerm.make(A, new Arg<>(invertedI, true)));
   }
 
   // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0
   private static @NotNull Term coeInv(@NotNull Term A, @NotNull Restr<Term> phi, @NotNull Term u) {
-    return ElimTerm.make(new CoeTerm(invertA(A), phi), new Arg<>(u, true));
+    return AppTerm.make(new CoeTerm(invertA(A), phi), new Arg<>(u, true));
   }
 
   // coeFillInv

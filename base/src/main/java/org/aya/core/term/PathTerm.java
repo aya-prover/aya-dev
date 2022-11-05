@@ -21,7 +21,7 @@ public record PathTerm(@NotNull Cube cube) implements FormTerm, StableWHNF {
    * @see org.aya.concrete.Expr.Path
    * @see PathTerm
    */
-  public static final record Cube(
+  public record Cube(
     @NotNull ImmutableSeq<LocalVar> params,
     @NotNull Term type,
     @NotNull Partial<Term> partial
@@ -52,28 +52,28 @@ public record PathTerm(@NotNull Cube cube) implements FormTerm, StableWHNF {
           case LamTerm lam -> {
             // TODO: replace with error report¿
             assert lam.param().explicit();
-            pLam = ElimTerm.make(lam, new Arg<>(args.first(), true));
+            pLam = AppTerm.make(lam, new Arg<>(args.first(), true));
             args = args.drop(1);
           }
         }
       }
       var newArgs = args.map(x -> new Arg<Term>(x, true)).toImmutableSeq();
-      return new ElimTerm.PathApp(pLam, newArgs, this);
+      return new PAppTerm(pLam, newArgs, this);
     }
 
-    public @NotNull FormTerm.Cube map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
+    public @NotNull Cube map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
       var ty = mapper.apply(type);
       var par = partial.map(mapper);
       if (ty == type && par == partial) return this;
       return new Cube(params, ty, par);
     }
 
-    public @NotNull FormTerm.Cube map(@NotNull Function<Term, Term> mapper) {
+    public @NotNull Cube map(@NotNull Function<Term, Term> mapper) {
       return map(params, mapper);
     }
 
     public @NotNull Term makeApp(@NotNull Term app, @NotNull Arg<Term> arg) {
-      return ElimTerm.make(etaLam(app), arg);
+      return AppTerm.make(etaLam(app), arg);
     }
 
     /** "not really eta". Used together with {@link #computePi()} */

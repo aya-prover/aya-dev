@@ -37,7 +37,7 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, ElimTerm, MatchTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, Elimination, MatchTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -76,16 +76,16 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView(), true)) yield neu;
         yield new NewTerm((StructCall) struct, fields);
       }
-      case ElimTerm.App app -> {
+      case AppTerm app -> {
         var function = f.apply(app.of());
         var arg = app.arg().descent(f);
         if (function == app.of() && arg == app.arg()) yield app;
-        yield ElimTerm.make(function, arg);
+        yield AppTerm.make(function, arg);
       }
-      case ElimTerm.Proj proj -> {
+      case ProjTerm proj -> {
         var tuple = f.apply(proj.of());
         if (tuple == proj.of()) yield proj;
-        yield new ElimTerm.Proj(tuple, proj.ix());
+        yield new ProjTerm(tuple, proj.ix());
       }
       case MatchTerm match -> {
         var discriminant = match.discriminant().map(f);
@@ -176,13 +176,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (newBody == body) yield lam;
         yield new PLamTerm(params, newBody);
       }
-      case ElimTerm.PathApp(var of, var args, var cube) app -> {
+      case PAppTerm(var of, var args, var cube) app -> {
         var newOf = f.apply(of);
         var refs = args.map(a -> a.descent(f));
         var newCube = cube.map(f);
         if (newOf == of && newCube == cube && refs.sameElements(args, true))
           yield app;
-        yield new ElimTerm.PathApp(newOf, refs, newCube);
+        yield new PAppTerm(newOf, refs, newCube);
       }
       case CoeTerm coe -> {
         var type = f.apply(coe.type());

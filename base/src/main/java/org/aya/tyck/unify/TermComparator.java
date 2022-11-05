@@ -290,10 +290,10 @@ public sealed abstract class TermComparator permits Unifier {
       case SigmaTerm(var paramsSeq) -> {
         var params = paramsSeq.view();
         for (int i = 1, size = paramsSeq.size(); i <= size; i++) {
-          var l = ElimTerm.proj(lhs, i);
+          var l = ProjTerm.proj(lhs, i);
           var currentParam = params.first();
           ctx.put(currentParam);
-          if (!compare(l, ElimTerm.proj(rhs, i), lr, rl, currentParam.type())) yield false;
+          if (!compare(l, ProjTerm.proj(rhs, i), lr, rl, currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
         ctx.remove(paramsSeq.view().map(Term.Param::ref));
@@ -348,7 +348,7 @@ public sealed abstract class TermComparator permits Unifier {
     var arg = pi.param().toArg();
     rl.map.put(pi.param().ref(), lambda.param().toTerm());
     var result = ctx.with(lambda.param(), () ->
-      compare(ElimTerm.make(lambda, arg), ElimTerm.make(rhs, arg), lr, rl, pi.body()));
+      compare(AppTerm.make(lambda, arg), AppTerm.make(rhs, arg), lr, rl, pi.body()));
     rl.map.remove(pi.param().ref());
     return result;
   }
@@ -403,30 +403,30 @@ public sealed abstract class TermComparator permits Unifier {
         else yield null;
       }
       case RefTerm(var lhs) -> preRhs instanceof RefTerm(var rhs) && lhs == rhs ? ctx.get(lhs) : null;
-      case ElimTerm.App(var lOf, var lArg) -> {
-        if (!(preRhs instanceof ElimTerm.App(var rOf, var rArg))) yield null;
+      case AppTerm(var lOf, var lArg) -> {
+        if (!(preRhs instanceof AppTerm(var rOf, var rArg))) yield null;
         var preFnType = compareUntyped(lOf, rOf, lr, rl);
         if (!(preFnType instanceof PiTerm fnType)) yield null;
         if (!compare(lArg.term(), rArg.term(), lr, rl, fnType.param().type())) yield null;
         yield fnType.substBody(lArg.term());
       }
-      case ElimTerm.PathApp lhs -> {
-        if (!(preRhs instanceof ElimTerm.PathApp rhs)) yield null;
+      case PAppTerm lhs -> {
+        if (!(preRhs instanceof PAppTerm rhs)) yield null;
         var prePathType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
         if (!(prePathType instanceof PathTerm(var cube))) yield null;
         var happy = lhs.args().zipView(rhs.args()).allMatch(t ->
           compare(t._1.term(), t._2.term(), lr, rl, null));
         yield happy ? cube.type() : null;
       }
-      case ElimTerm.Proj lhs -> {
-        if (!(preRhs instanceof ElimTerm.Proj(var rof, var rix))) yield null;
+      case ProjTerm lhs -> {
+        if (!(preRhs instanceof ProjTerm(var rof, var rix))) yield null;
         var preTupType = compareUntyped(lhs.of(), rof, lr, rl);
         if (!(preTupType instanceof SigmaTerm(var tele))) yield null;
         if (lhs.ix() != rix) yield null;
         var params = tele.view();
         var subst = new Subst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
-          var l = ElimTerm.proj(lhs, i);
+          var l = ProjTerm.proj(lhs, i);
           var currentParam = params.first();
           subst.add(currentParam.ref(), l);
           params = params.drop(1);

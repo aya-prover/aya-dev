@@ -17,6 +17,7 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -147,7 +148,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Proj(@NotNull SerTerm of, int ix) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.Proj(of.de(state), ix);
+      return new ProjTerm(of.de(state), ix);
     }
   }
 
@@ -166,7 +167,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record App(@NotNull SerTerm of, @NotNull SerArg arg) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.App(of.de(state), arg.de(state));
+      return new AppTerm(of.de(state), arg.de(state));
     }
   }
 
@@ -317,7 +318,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerCube cube
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.PathApp(of.de(state), args.map(arg -> arg.de(state)), cube.de(state));
+      return new PAppTerm(of.de(state), args.map(arg -> arg.de(state)), cube.de(state));
     }
   }
 
@@ -341,6 +342,16 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   }
 
   record Erased(@NotNull SerTerm type, boolean isProp) implements SerTerm {
+    /**
+     * {@link ErasedTerm} with a Prop type might safely appear in introduction term.
+     * {@link ErasedTerm} with a non-Prop type or elimination term with `of` erased are disallowed.
+     */
+    public static @Nullable ErasedTerm underlyingIllegalErasure(@NotNull Term term) {
+      if (term instanceof Elimination elim) return ErasedTerm.underlyingErased(elim.of());
+      if (term instanceof FieldTerm elim) return ErasedTerm.underlyingErased(elim.of());
+      return term instanceof ErasedTerm erased && !erased.isProp() ? erased : null;
+    }
+
     public @NotNull ErasedTerm de(@NotNull DeState state) {
       return new ErasedTerm(type.de(state), isProp);
     }

@@ -20,4 +20,18 @@ public record ErasedTerm(@NotNull Term type, boolean isProp, @Nullable SourcePos
   public ErasedTerm(@NotNull Term type, boolean isProp) {
     this(type, isProp, null);
   }
+
+  /**
+   * {@link ErasedTerm} itself and {@link Elimination}
+   * with <code>of</code> erased are erased.
+   */
+  public static @Nullable ErasedTerm underlyingErased(@NotNull Term term) {
+    if (term instanceof Elimination elim) return underlyingErased(elim.of());
+    if (term instanceof FieldTerm elim) return underlyingErased(elim.of());
+    return term instanceof ErasedTerm erased ? erased : null;
+  }
+
+  public static boolean isErased(@NotNull Term term) {
+    return underlyingErased(term) != null;
+  }
 }
