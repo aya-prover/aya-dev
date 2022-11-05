@@ -3,7 +3,10 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.visitor.BetaExpander;
+import org.aya.generic.Arg;
 import org.aya.generic.SortKind;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,5 +27,23 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
       return ISet.INSTANCE;
     }
     throw new AssertionError("unreachable");
+  }
+
+  public @NotNull LamTerm coe(CoeTerm coe, LocalVar varI) {
+    var u0Var = new LocalVar("u0");
+    var A = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), params.first().type());
+
+    var B = params().sizeEquals(2) ?
+      new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), params.get(1).type()) :
+      new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), new SigmaTerm(params.drop(1)));
+
+    var u00 = new ProjTerm(new RefTerm(u0Var), 1);
+    var u01 = new ProjTerm(new RefTerm(u0Var), 2);
+    var v = AppTerm.make(CoeTerm.coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
+
+    var Bsubsted = B.subst(params().first().ref(), v);
+    var coe0 = AppTerm.make(new CoeTerm(A, coe.restr()), new Arg<>(u00, true));
+    var coe1 = AppTerm.make(new CoeTerm(Bsubsted, coe.restr()), new Arg<>(u01, true));
+    return new LamTerm(BetaExpander.coeDom(u0Var, coe.type()), new TupTerm(ImmutableSeq.of(coe0, coe1)));
   }
 }

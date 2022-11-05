@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
@@ -64,23 +63,7 @@ public interface BetaExpander extends EndoTerm {
         yield switch (codom) {
           case PathTerm path -> coe;
           case PiTerm pi -> pi.coe(coe, varI);
-          case SigmaTerm sigma -> {
-            var u0Var = new LocalVar("u0");
-            var A = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), sigma.params().first().type());
-
-            var B = sigma.params().sizeEquals(2) ?
-              new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), sigma.params().get(1).type()) :
-              new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), new SigmaTerm(sigma.params().drop(1)));
-
-            var u00 = new ProjTerm(new RefTerm(u0Var), 1);
-            var u01 = new ProjTerm(new RefTerm(u0Var), 2);
-            var v = AppTerm.make(CoeTerm.coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
-
-            var Bsubsted = B.subst(sigma.params().first().ref(), v);
-            var coe0 = AppTerm.make(new CoeTerm(A, coe.restr()), new Arg<>(u00, true));
-            var coe1 = AppTerm.make(new CoeTerm(Bsubsted, coe.restr()), new Arg<>(u01, true));
-            yield new LamTerm(coeDom(u0Var, coe.type()), new TupTerm(ImmutableSeq.of(coe0, coe1)));
-          }
+          case SigmaTerm sigma -> sigma.coe(coe, varI);
           case FormTerm.Type type -> {
             var A = new LocalVar("A");
             yield new LamTerm(new Term.Param(A, type, true), new RefTerm(A));
