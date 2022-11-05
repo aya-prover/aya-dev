@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author re-xyr, kiva, ice1000
@@ -16,6 +17,34 @@ public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements F
       term = body;
     }
     return term;
+  }
+
+  public static @Nullable Sort max(@NotNull Sort domain, @NotNull Sort codomain) {
+    return switch (domain) {
+      case Type(var alift) -> switch (codomain) {
+        case Type(var blift) -> new Type(Math.max(alift, blift));
+        case Set(var blift) -> new Type(Math.max(alift, blift));
+        case ISet b -> new Set(alift);
+        case Prop prop -> prop;
+      };
+      case ISet a -> switch (codomain) {
+        case ISet b -> Set.ZERO;
+        case Set b -> b;
+        case Type b -> b;
+        default -> null;
+      };
+      case Set(var alift) -> switch (codomain) {
+        case Set(var blift) -> new Set(Math.max(alift, blift));
+        case Type(var blift) -> new Set(Math.max(alift, blift));
+        case ISet b -> new Set(alift);
+        default -> null;
+      };
+      case Prop a -> switch (codomain) {
+        case Prop b -> b;
+        case Type b -> b;
+        default -> null;
+      };
+    };
   }
 
   public @NotNull Term substBody(@NotNull Term term) {

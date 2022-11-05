@@ -585,7 +585,7 @@ public final class ExprTycker extends Tycker {
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
-        var maxSort = resultTypes.reduce(SigmaTerm::calculateSigma);
+        var maxSort = resultTypes.reduce(SigmaTerm::max);
         if (!(maxSort instanceof FormTerm.Prop)) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new SortResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
@@ -673,31 +673,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private static @NotNull FormTerm.Sort sortPiImpl(@Nullable SortPiParam p, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
-    var result = switch (domain) {
-      case FormTerm.Type(var alift) -> switch (codomain) {
-        case FormTerm.Type(var blift) -> new FormTerm.Type(Math.max(alift, blift));
-        case FormTerm.Set(var blift) -> new FormTerm.Type(Math.max(alift, blift));
-        case FormTerm.ISet b -> new FormTerm.Set(alift);
-        case FormTerm.Prop prop -> prop;
-      };
-      case FormTerm.ISet a -> switch (codomain) {
-        case FormTerm.ISet b -> FormTerm.Set.ZERO;
-        case FormTerm.Set b -> b;
-        case FormTerm.Type b -> b;
-        default -> null;
-      };
-      case FormTerm.Set(var alift) -> switch (codomain) {
-        case FormTerm.Set(var blift) -> new FormTerm.Set(Math.max(alift, blift));
-        case FormTerm.Type(var blift) -> new FormTerm.Set(Math.max(alift, blift));
-        case FormTerm.ISet b -> new FormTerm.Set(alift);
-        default -> null;
-      };
-      case FormTerm.Prop a -> switch (codomain) {
-        case FormTerm.Prop b -> b;
-        case FormTerm.Type b -> b;
-        default -> null;
-      };
-    };
+    var result = PiTerm.max(domain, codomain);
     if (p == null) {
       assert result != null;
       return result;

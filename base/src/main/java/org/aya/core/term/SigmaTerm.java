@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author re-xyr
  */
 public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm, StableWHNF {
-  public static @NotNull FormTerm.Sort calculateSigma(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) {
+  public static @NotNull FormTerm.Sort max(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) {
     int lift = Math.max(x.lift(), y.lift());
     if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
       return Prop.INSTANCE;
