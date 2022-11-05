@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @see CoreDistiller#term(BaseDistiller.Outer, Term) (ErrorTerm case)
  */
-public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) implements Term {
+public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) implements StableWHNF {
   public ErrorTerm(@NotNull Term description) {
     this((AyaDocile) description.freezeHoles(null));
   }

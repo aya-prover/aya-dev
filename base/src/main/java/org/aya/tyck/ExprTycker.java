@@ -170,7 +170,7 @@ public final class ExprTycker extends Tycker {
           new Expr.NamedArg(true, coe.type())),
           new Expr.NamedArg(true, coe.restr()));
         var res = synthesize(mockApp);
-        if (whnf(res.wellTyped()) instanceof PrimTerm.Coe(var type, var restr) && !(type instanceof ErrorTerm)) {
+        if (whnf(res.wellTyped()) instanceof CoeTerm(var type, var restr) && !(type instanceof ErrorTerm)) {
           var bad = new Object() {
             Term typeSubst;
             boolean stuck = false;
@@ -260,13 +260,13 @@ public final class ExprTycker extends Tycker {
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs));
         var type = new CallTerm.Data(((DataDef) defs.first()).ref, 0, ImmutableSeq.empty());
-        yield new TermResult(new LitTerm.ShapedInt(integer, AyaShape.NAT_SHAPE, type), type);
+        yield new TermResult(new IntegerTerm(integer, AyaShape.NAT_SHAPE, type), type);
       }
       case Expr.LitString litStr -> {
         if (!state.primFactory().have(PrimDef.ID.STRING))
           yield fail(expr, new NoRuleError(expr, null));
 
-        yield new TermResult(new PrimTerm.Str(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
+        yield new TermResult(new StringTerm(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
       case Expr.Path path -> localCtx.withIntervals(path.params().view(), () -> {
         var type = synthesize(path.type());
@@ -293,7 +293,7 @@ public final class ExprTycker extends Tycker {
 
         // do type check
         var results = elements.map(element -> inherit(element, hole._1).wellTyped());
-        yield new TermResult(new LitTerm.ShapedList(results, AyaShape.LIST_SHAPE, type), type);
+        yield new TermResult(new ListTerm(results, AyaShape.LIST_SHAPE, type), type);
       }
       default -> fail(expr, new NoRuleError(expr, null));
     };
@@ -305,7 +305,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
     // forall i. (c_i is valid)
-    return new Restr.Cond<>(inherit(c.inst(), PrimTerm.Interval.INSTANCE).wellTyped(), c.isOne());
+    return new Restr.Cond<>(inherit(c.inst(), IntervalTerm.INSTANCE).wellTyped(), c.isOne());
     // ^ note: `inst` may be ErrorTerm!
   }
 
@@ -344,7 +344,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull SeqView<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType, @NotNull ClauseTyckState clauseState) {
-    return switch (CofThy.isOne(whnf(inherit(lhs, PrimTerm.Interval.INSTANCE).wellTyped()))) {
+    return switch (CofThy.isOne(whnf(inherit(lhs, IntervalTerm.INSTANCE).wellTyped()))) {
       case Restr.Disj<Term> restr -> {
         var list = MutableList.<Restr.Side<Term>>create();
         for (var cof : restr.orz()) {
@@ -482,15 +482,15 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.LitInt(var pos, var end) -> {
         var ty = whnf(term);
-        if (ty instanceof PrimTerm.Interval) {
-          if (end == 0 || end == 1) yield new TermResult(end == 0 ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT, ty);
+        if (ty instanceof IntervalTerm) {
+          if (end == 0 || end == 1) yield new TermResult(end == 0 ? FormulaTerm.LEFT : FormulaTerm.RIGHT, ty);
           else yield fail(expr, new PrimError.BadInterval(pos, end));
         }
         if (ty instanceof CallTerm.Data dataCall) {
           var data = dataCall.ref().core;
           var shape = shapeFactory.find(data);
           if (shape.isDefined())
-            yield new TermResult(new LitTerm.ShapedInt(end, shape.get(), dataCall), term);
+            yield new TermResult(new IntegerTerm(end, shape.get(), dataCall), term);
         }
         if (ty instanceof CallTerm.Hole hole) {
           var nat = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
@@ -498,7 +498,7 @@ public final class ExprTycker extends Tycker {
           // def foo : Option Nat1 => some 0
           // def bar : Option Nat2 => some 1
           if (nat.sizeGreaterThan(1))
-            yield new TermResult(new LitTerm.ShapedInt(end, AyaShape.NAT_SHAPE, hole), term);
+            yield new TermResult(new IntegerTerm(end, AyaShape.NAT_SHAPE, hole), term);
           // fallthrough: When there's only one Nat, solve the hole now.
           // Note: if no Nat was found, errors will be reported in `synthesize(expr)`
         }

@@ -243,13 +243,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Interval() implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return PrimTerm.Interval.INSTANCE;
+      return IntervalTerm.INSTANCE;
     }
   }
 
   record Mula(@NotNull Formula<SerTerm> formula) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PrimTerm.Mula(formula.fmap(t -> t.de(state)));
+      return new FormulaTerm(formula.fmap(t -> t.de(state)));
     }
   }
 
@@ -259,7 +259,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerTerm type
   ) implements SerTerm {
     @Override public @NotNull Term de(SerTerm.@NotNull DeState state) {
-      return new LitTerm.ShapedInt(integer, shape.de(), type.de(state));
+      return new IntegerTerm(integer, shape.de(), type.de(state));
     }
   }
 
@@ -274,13 +274,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       var shape = shape().de();
       var type = type().de(state);
 
-      return new LitTerm.ShapedList(termDesered, shape, type);
+      return new ListTerm(termDesered, shape, type);
     }
   }
 
   record Str(@NotNull String string) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PrimTerm.Str(string);
+      return new StringTerm(string);
     }
   }
 
@@ -323,7 +323,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Coe(@NotNull SerTerm type, @NotNull Restr<SerTerm> restr) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PrimTerm.Coe(type.de(state), restr.fmap(t -> t.de(state)));
+      return new CoeTerm(type.de(state), restr.fmap(t -> t.de(state)));
     }
   }
 

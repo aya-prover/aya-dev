@@ -397,9 +397,9 @@ public sealed abstract class TermComparator permits Unifier {
     var ret = switch (preLhs) {
       default ->
         throw new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(DistillerOptions.debug()).debugRender());
-      case RefTerm.MetaPat metaPat -> {
+      case MetaPatTerm metaPat -> {
         var lhsRef = metaPat.ref();
-        if (preRhs instanceof RefTerm.MetaPat(var rRef) && lhsRef == rRef) yield lhsRef.type();
+        if (preRhs instanceof MetaPatTerm(var rRef) && lhsRef == rRef) yield lhsRef.type();
         else yield null;
       }
       case RefTerm(var lhs) -> preRhs instanceof RefTerm(var rhs) && lhs == rhs ? ctx.get(lhs) : null;
@@ -462,11 +462,11 @@ public sealed abstract class TermComparator permits Unifier {
         if (!(preRhs instanceof FormTerm.Path(var rCube))) yield null;
         yield compareCube(lCube, rCube, lr, rl) ? FormTerm.Type.ZERO : null;
       }
-      case PrimTerm.Interval lhs -> preRhs instanceof PrimTerm.Interval ? FormTerm.Type.ZERO : null;
-      case PrimTerm.Mula lhs -> {
-        if (!(preRhs instanceof PrimTerm.Mula rhs)) yield null;
+      case IntervalTerm lhs -> preRhs instanceof IntervalTerm ? FormTerm.Type.ZERO : null;
+      case FormulaTerm lhs -> {
+        if (!(preRhs instanceof FormulaTerm rhs)) yield null;
         if (compareRestr(CofThy.isOne(lhs), CofThy.isOne(rhs)))
-          yield PrimTerm.Interval.INSTANCE;
+          yield IntervalTerm.INSTANCE;
         else yield null;
       }
       // See compareApprox for why we don't compare these
@@ -482,8 +482,8 @@ public sealed abstract class TermComparator permits Unifier {
         var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
         yield args ? FormTerm.Type.ZERO : null;
       }
-      case PrimTerm.Coe lhs -> {
-        if (!(preRhs instanceof PrimTerm.Coe rhs)) yield null;
+      case CoeTerm lhs -> {
+        if (!(preRhs instanceof CoeTerm rhs)) yield null;
         if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
         yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
           PrimDef.familyLeftToRight(lhs.type()) : null;
@@ -497,8 +497,8 @@ public sealed abstract class TermComparator permits Unifier {
             yield retType;
           yield null;
         }
-        case LitTerm.ShapedInt rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
-        case LitTerm.ShapedList rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
+        case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
+        case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
         default -> null;
       };
       case CallTerm.Prim lhs -> null;
@@ -509,8 +509,8 @@ public sealed abstract class TermComparator permits Unifier {
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }
-      case LitTerm.ShapedInt lhs -> switch (preRhs) {
-        case LitTerm.ShapedInt rhs -> {
+      case IntegerTerm lhs -> switch (preRhs) {
+        case IntegerTerm rhs -> {
           if (!lhs.compareShape(this, rhs)) yield null;
           if (!lhs.compareUntyped(rhs)) yield null;
           yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
@@ -518,8 +518,8 @@ public sealed abstract class TermComparator permits Unifier {
         case CallTerm.Con rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
         default -> null;
       };
-      case LitTerm.ShapedList lhs -> switch (preRhs) {
-        case LitTerm.ShapedList rhs -> {
+      case ListTerm lhs -> switch (preRhs) {
+        case ListTerm rhs -> {
           if (!lhs.compareShape(this, rhs)) yield null;
           if (!lhs.compareUntyped(rhs,
             (l, r) -> compare(l, r, lr, rl, null))) yield null;

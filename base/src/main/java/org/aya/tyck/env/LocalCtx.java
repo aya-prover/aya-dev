@@ -11,8 +11,8 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.IntervalTerm;
 import org.aya.core.term.IntroTerm;
-import org.aya.core.term.PrimTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
@@ -44,7 +44,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   default <T> T withIntervals(@NotNull SeqView<LocalVar> params, @NotNull Supplier<T> action) {
     if (params.isEmpty()) return action.get();
-    params.forEach(x -> put(x, PrimTerm.Interval.INSTANCE));
+    params.forEach(x -> put(x, IntervalTerm.INSTANCE));
     try {
       return action.get();
     } finally {

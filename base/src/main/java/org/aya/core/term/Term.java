@@ -37,9 +37,7 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, ErasedTerm, ElimTerm,
-  ErrorTerm, FormTerm, IntroTerm, LitTerm, PrimTerm, RefTerm, RefTerm.Field, RefTerm.MetaPat {
-
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits CallTerm, CoeTerm, ElimTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, IntroTerm, MetaPatTerm, RefTerm, RefTerm.Field, StableWHNF {
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
     return switch (this) {
       case FormTerm.Pi pi -> {
@@ -54,13 +52,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         yield new FormTerm.Sigma(params);
       }
       case FormTerm.Sort univ -> univ;
-      case PrimTerm.Interval interval -> interval;
-      case PrimTerm.Mula mula -> {
+      case IntervalTerm interval -> interval;
+      case FormulaTerm mula -> {
         var formula = mula.asFormula().fmap(f);
         if (formula == mula.asFormula()) yield mula;
-        yield new PrimTerm.Mula(formula);
+        yield new FormulaTerm(formula);
       }
-      case PrimTerm.Str str -> str;
+      case StringTerm str -> str;
       case IntroTerm.Lambda lambda -> {
         var param = lambda.param().descent(f);
         var body = f.apply(lambda.body());
@@ -75,7 +73,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       case IntroTerm.New neu -> {
         var struct = f.apply(neu.struct());
         var fields = ImmutableMap.from(neu.params().view().map((k, v) -> Tuple.of(k, f.apply(v))));
-        if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView())) yield neu;
+        if (struct == neu.struct() && fields.valuesView().sameElements(neu.params().valuesView(), true)) yield neu;
         yield new IntroTerm.New((CallTerm.Struct) struct, fields);
       }
       case ElimTerm.App app -> {
@@ -143,19 +141,19 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (contextArgs.sameElements(hole.contextArgs(), true) && args.sameElements(hole.args(), true)) yield hole;
         yield new CallTerm.Hole(hole.ref(), hole.ulift(), contextArgs, args);
       }
-      case LitTerm.ShapedInt shaped -> {
+      case IntegerTerm shaped -> {
         var type = f.apply(shaped.type());
         if (type == shaped.type()) yield shaped;
-        yield new LitTerm.ShapedInt(shaped.repr(), shaped.shape(), type);
+        yield new IntegerTerm(shaped.repr(), shaped.shape(), type);
       }
-      case LitTerm.ShapedList shaped -> {
+      case ListTerm shaped -> {
         var type = f.apply(shaped.type());
-        var elements = shaped.repr().map(f).toImmutableSeq();
+        var elements = shaped.repr().map(f);
 
         if (type == shaped.type()
-          && elements.sameElements(shaped.repr())) yield shaped;
+          && elements.sameElements(shaped.repr(), true)) yield shaped;
 
-        yield new LitTerm.ShapedList(elements, shaped.shape(), type);
+        yield new ListTerm(elements, shaped.shape(), type);
       }
       case FormTerm.PartTy ty -> {
         var type = f.apply(ty.type());
@@ -186,17 +184,17 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
           yield app;
         yield new ElimTerm.PathApp(newOf, refs, newCube);
       }
-      case PrimTerm.Coe coe -> {
+      case CoeTerm coe -> {
         var type = f.apply(coe.type());
         var restr = coe.restr().map(f);
         if (type == coe.type() && restr == coe.restr()) yield coe;
-        yield new PrimTerm.Coe(type, restr.normalize());
+        yield new CoeTerm(type, restr.normalize());
       }
       case RefTerm ref -> ref;
-      case RefTerm.MetaPat metaPat -> metaPat;
+      case MetaPatTerm metaPat -> metaPat;
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
-      case PrimTerm.HComp hComp -> hComp; //TODO
+      case HCompTerm hComp -> hComp; //TODO
     };
   }
 

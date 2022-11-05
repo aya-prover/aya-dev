@@ -97,7 +97,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case PrimTerm.Interval term -> Doc.styled(KEYWORD, "I");
+      case IntervalTerm term -> Doc.styled(KEYWORD, "I");
       case IntroTerm.New newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
@@ -106,7 +106,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           .toImmutableSeq()));
       case CallTerm.Access term -> visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
         options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-      case RefTerm.MetaPat metaPat -> {
+      case MetaPatTerm metaPat -> {
         var ref = metaPat.ref();
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
         yield Doc.wrap("<", ">", pat(ref, outer));
@@ -161,12 +161,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case CallTerm.Struct structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
       case CallTerm.Data dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
-      case LitTerm.ShapedInt shaped -> shaped.with(
+      case IntegerTerm shaped -> shaped.with(
         (zero, suc) -> shaped.repr() == 0
           ? linkLit(0, zero.ref, CON_CALL)
           : linkLit(shaped.repr(), suc.ref, CON_CALL),
         () -> Doc.plain(String.valueOf(shaped.repr())));
-      case LitTerm.ShapedList shaped -> {
+      case ListTerm shaped -> {
         var subterms = shaped.repr().map(x -> term(Outer.Free, x));
 
         yield shaped.with((nil, cons, dataArg) -> Doc.sep(
@@ -179,11 +179,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
           Doc.symbol("]"))
         );
       }
-      case PrimTerm.Str str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
+      case StringTerm str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
       case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
       case IntroTerm.PartEl el -> partial(options, el.partial());
-      case PrimTerm.Mula mula -> formula(outer, mula.asFormula());
+      case FormulaTerm mula -> formula(outer, mula.asFormula());
       case FormTerm.Path path -> cube(options, path.cube());
       case IntroTerm.PathLam lam -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
@@ -193,9 +193,9 @@ public class CoreDistiller extends BaseDistiller<Term> {
         Outer.BinOp);
       case ElimTerm.PathApp app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-      case PrimTerm.Coe coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
+      case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
-      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
     };
   }

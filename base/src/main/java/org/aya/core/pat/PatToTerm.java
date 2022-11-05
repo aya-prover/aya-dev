@@ -24,9 +24,9 @@ public class PatToTerm {
       case Pat.Ctor ctor -> visitCtor(ctor);
       case Pat.Bind bind -> new RefTerm(bind.bind());
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
-      case Pat.Meta meta -> new RefTerm.MetaPat(meta);
-      case Pat.End end -> !end.isOne() ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT;
-      case Pat.ShapedInt lit -> new LitTerm.ShapedInt(lit.repr(), lit.shape(), lit.type());
+      case Pat.Meta meta -> new MetaPatTerm(meta);
+      case Pat.End end -> !end.isOne() ? FormulaTerm.LEFT : FormulaTerm.RIGHT;
+      case Pat.ShapedInt lit -> new IntegerTerm(lit.repr(), lit.shape(), lit.type());
     };
   }
 

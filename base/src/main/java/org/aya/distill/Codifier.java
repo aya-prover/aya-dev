@@ -79,8 +79,8 @@ public record Codifier(
         builder.append(")");
       }
       case IntroTerm.Tuple(var items) -> tupSigma(items, this::term, "IntroTerm.Tuple");
-      case PrimTerm.Coe(var ty, var restr) -> coePar(ty, restr, "PrimTerm.Coe");
-      case PrimTerm.Mula(var mula) -> {
+      case CoeTerm(var ty, var restr) -> coePar(ty, restr, "PrimTerm.Coe");
+      case FormulaTerm(var mula) -> {
         builder.append("new PrimTerm.Mula(");
         formula(mula);
         builder.append(")");
@@ -88,7 +88,7 @@ public record Codifier(
       case ErrorTerm error -> throw new UnsupportedOperationException("Cannot generate error");
       case ErasedTerm erased -> throw new UnsupportedOperationException("Cannot generate erased");
       case CallTerm call -> throw new UnsupportedOperationException("Cannot generate calls");
-      case PrimTerm.Interval interval -> builder.append("PrimTerm.Interval.INSTANCE");
+      case IntervalTerm interval -> builder.append("PrimTerm.Interval.INSTANCE");
       case FormTerm.ISet iSet -> builder.append("FormTerm.ISet.INSTANCE");
       case FormTerm.Prop prop -> builder.append("FormTerm.Prop.INSTANCE");
       case FormTerm.Set(var lift) -> universe("Set", lift);

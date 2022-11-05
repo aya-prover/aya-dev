@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.CallTerm;
-import org.aya.core.term.RefTerm;
+import org.aya.core.term.MetaPatTerm;
 import org.aya.generic.Constants;
 import org.aya.lsp.tester.LspTestClient;
 import org.aya.lsp.tester.LspTestCompilerAdvisor;
@@ -56,7 +56,7 @@ public class LspTest {
       assertNotNull(testTy);
       // ys : Vec A m
       var lastArg = testTy.args().last().term();
-      assertFalse(lastArg instanceof RefTerm.MetaPat);
+      assertFalse(lastArg instanceof MetaPatTerm);
     }));
   }
 

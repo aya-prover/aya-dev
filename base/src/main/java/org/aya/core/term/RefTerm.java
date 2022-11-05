@@ -4,7 +4,6 @@ package org.aya.core.term;
 
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.FieldDef;
-import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
@@ -14,12 +13,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public record RefTerm(@NotNull LocalVar var) implements Term {
   public record Field(@NotNull DefVar<FieldDef, TeleDecl.StructField> ref) implements Term {
-  }
-
-  public record MetaPat(@NotNull Pat.Meta ref) implements Term {
-    public @NotNull Term inline() {
-      var sol = ref.solution().get();
-      return sol != null ? sol.toTerm() : this;
-    }
   }
 }

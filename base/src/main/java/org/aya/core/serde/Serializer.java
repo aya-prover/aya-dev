@@ -79,18 +79,18 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
-      case LitTerm.ShapedInt lit ->
+      case IntegerTerm lit ->
         new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
-      case LitTerm.ShapedList lit ->
+      case ListTerm lit ->
         new SerTerm.ShapedList(
           lit.repr().map(this::serialize).toImmutableSeq(),
           SerDef.SerAyaShape.serialize(lit.shape()),
           serialize(lit.type()));
-      case PrimTerm.Mula end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
-      case PrimTerm.Str str -> new SerTerm.Str(str.string());
+      case FormulaTerm end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
+      case StringTerm str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
       case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()));
-      case PrimTerm.Interval interval -> new SerTerm.Interval();
+      case IntervalTerm interval -> new SerTerm.Interval();
       case FormTerm.Pi pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
       case FormTerm.Sigma sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
       case CallTerm.Con conCall -> new SerTerm.ConCall(
@@ -125,13 +125,13 @@ public record Serializer(@NotNull Serializer.State state) {
       case IntroTerm.PathLam path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
       case ElimTerm.PathApp app -> new SerTerm.PathApp(serialize(app.of()),
         serializeArgs(app.args()), serialize(app.cube()));
-      case PrimTerm.Coe coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
+      case CoeTerm coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
 
       case CallTerm.Hole hole -> throw new InternalException("Shall not have holes serialized.");
-      case RefTerm.MetaPat metaPat -> throw new InternalException("Shall not have metaPats serialized.");
+      case MetaPatTerm metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case FormTerm.Sort sort -> serialize(sort);
-      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
     };
   }

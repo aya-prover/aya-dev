@@ -51,7 +51,7 @@ import java.util.function.Supplier;
 public final class PatTycker {
   public static final EndoTerm META_PAT_INLINER = new EndoTerm() {
     @Override public @NotNull Term post(@NotNull Term term) {
-      return term instanceof RefTerm.MetaPat metaPat ? metaPat.inline() : term;
+      return term instanceof MetaPatTerm metaPat ? metaPat.inline() : term;
     }
   };
 
@@ -295,7 +295,7 @@ public final class PatTycker {
         new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
       case Pattern.Number num -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
-        if (ty instanceof PrimTerm.Interval) {
+        if (ty instanceof IntervalTerm) {
           var end = num.number();
           if (end == 0 || end == 1) yield new Pat.End(num.number() == 1, num.explicit());
           yield withError(new PrimError.BadInterval(num.sourcePos(), end), num, term);

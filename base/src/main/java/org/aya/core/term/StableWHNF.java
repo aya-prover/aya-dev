@@ -6,5 +6,5 @@ package org.aya.core.term;
  * Cubical-stable WHNF: those who will not change to other term formers
  * under face restrictions (aka cofibrations).
  */
-public sealed interface StableWHNF permits CallTerm.Data, CallTerm.Struct, FormTerm.Path, FormTerm.Pi, FormTerm.Sigma, FormTerm.Sort, IntroTerm.Lambda, IntroTerm.New, IntroTerm.PathLam, IntroTerm.Tuple {
+public sealed interface StableWHNF extends Term permits CallTerm.Data, CallTerm.Struct, ErrorTerm, FormTerm.Path, FormTerm.Pi, FormTerm.Sigma, FormTerm.Sort, IntegerTerm, IntervalTerm, IntroTerm.Lambda, IntroTerm.New, IntroTerm.PathLam, IntroTerm.Tuple, ListTerm, StringTerm {
 }

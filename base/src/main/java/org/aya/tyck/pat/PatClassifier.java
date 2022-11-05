@@ -188,7 +188,7 @@ public record PatClassifier(
             classifySub(newTele, MCT.extract(pat, clauses).map(MCT.SubPats<Pat>::drop), coverage, fuelCopy)));
         }
       }
-      case PrimTerm.Interval interval -> {
+      case IntervalTerm interval -> {
         var lrSplit = clauses
           .mapNotNull(subPats -> head(subPats) instanceof Pat.End end ? end : null)
           .firstOption();
@@ -198,8 +198,8 @@ public record PatClassifier(
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
 
           for (var item : ImmutableSeq.of(
-            Tuple.of(PrimTerm.Mula.LEFT, "0"),
-            Tuple.of(PrimTerm.Mula.RIGHT, "1")
+            Tuple.of(FormulaTerm.LEFT, "0"),
+            Tuple.of(FormulaTerm.RIGHT, "1")
           )) {
             builder.append(new PatTree(item._2, explicit, 0));
             var patClass = new MCT.Leaf<>(clauses.view()
@@ -331,7 +331,7 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, PrimTerm.Mula end) {
+  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, FormulaTerm end) {
     var head = head(subPats);
     return head instanceof Pat.End headEnd
       && end.asFormula() instanceof Formula.Lit<Term> endF

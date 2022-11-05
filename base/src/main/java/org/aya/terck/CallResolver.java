@@ -61,7 +61,7 @@ public record CallResolver(
           yield subCompare.foldLeft(Relation.eq(), Relation::mul);
         }
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
-        case LitTerm.ShapedInt lit -> compare(lit.constructorForm(), ctor);
+        case IntegerTerm lit -> compare(lit.constructorForm(), ctor);
         default -> {
           var subCompare = ctor.params().view().map(sub -> compare(term, sub));
           yield subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.lt() : Relation.unk();
@@ -75,7 +75,7 @@ public record CallResolver(
         yield Relation.unk();
       }
       case Pat.ShapedInt intPat -> switch (term) {
-        case LitTerm.ShapedInt intTerm -> {
+        case IntegerTerm intTerm -> {
           if (intTerm.shape() != intPat.shape()) yield Relation.unk();
           yield Relation.fromCompare(Integer.compare(intTerm.repr(), intPat.repr()));
         }

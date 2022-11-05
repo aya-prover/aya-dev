@@ -68,7 +68,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case IntroTerm.New neu -> neu.struct();
       case IntroTerm.Tuple tuple -> new FormTerm.Sigma(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
-      case RefTerm.MetaPat metaPat -> metaPat.ref().type();
+      case MetaPatTerm metaPat -> metaPat.ref().type();
       case FormTerm.Pi pi -> {
         var paramTyRaw = whnf(term(pi.param().type()));
         var resultParam = new Term.Param(pi.param().ref(), whnf(pi.param().type()), pi.param().explicit());
@@ -96,11 +96,11 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         yield term.isDefined() ? term(term.get()) : ErrorTerm.typeOf(match);
       }
       case FormTerm.Sort sort -> sort.succ();
-      case PrimTerm.Interval interval -> FormTerm.Type.ZERO;
-      case PrimTerm.Mula end -> PrimTerm.Interval.INSTANCE;
-      case PrimTerm.Str str -> state.primFactory().getCall(PrimDef.ID.STRING);
-      case LitTerm.ShapedInt shaped -> shaped.type();
-      case LitTerm.ShapedList shaped -> shaped.type();
+      case IntervalTerm interval -> FormTerm.Type.ZERO;
+      case FormulaTerm end -> IntervalTerm.INSTANCE;
+      case StringTerm str -> state.primFactory().getCall(PrimDef.ID.STRING);
+      case IntegerTerm shaped -> shaped.type();
+      case ListTerm shaped -> shaped.type();
       case FormTerm.PartTy ty -> term(ty.type());
       case IntroTerm.PartEl el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
       case FormTerm.Path(var cube) -> term(cube.type());
@@ -115,8 +115,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         var ui = app.args().map(Arg::term);
         yield app.cube().type().subst(new Subst(xi, ui));
       }
-      case PrimTerm.Coe coe -> PrimDef.familyLeftToRight(coe.type());
-      case PrimTerm.HComp hComp -> throw new InternalException("TODO");
+      case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
+      case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> erased.type();
     };
   }

@@ -166,7 +166,7 @@ public sealed interface FormTerm extends Term {
     }
 
     public @NotNull Pi computePi() {
-      var iTele = params().view().map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true));
+      var iTele = params().view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
       return (Pi) Pi.make(iTele, type());
     }
 
@@ -213,7 +213,7 @@ public sealed interface FormTerm extends Term {
 
     /** "not really eta". Used together with {@link #computePi()} */
     public @NotNull Term etaLam(@NotNull Term term) {
-      return params.map(x -> new Param(x, PrimTerm.Interval.INSTANCE, true))
+      return params.map(x -> new Param(x, IntervalTerm.INSTANCE, true))
         .foldRight(applyDimsTo(term), IntroTerm.Lambda::new).rename();
     }
   }
