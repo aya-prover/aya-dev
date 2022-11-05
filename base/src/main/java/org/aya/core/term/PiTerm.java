@@ -4,6 +4,9 @@ package org.aya.core.term;
 
 import kala.collection.SeqLike;
 import kala.collection.mutable.MutableList;
+import org.aya.core.visitor.BetaExpander;
+import org.aya.generic.Arg;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +48,21 @@ public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements F
         default -> null;
       };
     };
+  }
+
+  public @NotNull LamTerm coe(CoeTerm coe, LocalVar varI) {
+    var u0Var = new LocalVar("u0");
+    var vVar = new LocalVar("v");
+    var A = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), param.type());
+    var B = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), body);
+    var vType = AppTerm.make(A, new Arg<>(FormulaTerm.RIGHT, true));
+    var w = AppTerm.make(CoeTerm.coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
+    var BSubsted = B.subst(param.ref(), w.rename());
+    var wSubsted = w.subst(varI, FormulaTerm.LEFT).rename();
+    return new LamTerm(BetaExpander.coeDom(u0Var, coe.type()),
+      new LamTerm(new Param(vVar, vType, true),
+        AppTerm.make(new CoeTerm(BSubsted, coe.restr()),
+          new Arg<>(AppTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
   }
 
   public @NotNull Term substBody(@NotNull Term term) {

@@ -3,8 +3,6 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
-import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
@@ -24,15 +22,6 @@ public interface BetaExpander extends EndoTerm {
   private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
     return partial.flatMap(Function.identity());
   }
-  static @NotNull Option<Term> tryMatch(@NotNull ImmutableSeq<Term> scrutinee, @NotNull ImmutableSeq<Term.Matching> clauses) {
-    for (var clause : clauses) {
-      var subst = PatMatcher.tryBuildSubstTerms(null, clause.patterns(), scrutinee.view());
-      if (subst.isOk()) {
-        return Option.some(clause.body().rename().subst(subst.get()));
-      } else if (subst.getErr()) return Option.none();
-    }
-    return Option.none();
-  }
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
       case FormulaTerm mula -> mula.simpl();
@@ -44,7 +33,7 @@ public interface BetaExpander extends EndoTerm {
       }
       case ProjTerm proj -> ProjTerm.proj(proj);
       case MatchTerm match -> {
-        var result = tryMatch(match.discriminant(), match.clauses());
+        var result = match.tryMatch();
         yield result.isDefined() ? result.get() : match;
       }
       case PAppTerm(var of, var args, PathTerm.Cube(var xi, var type, var partial)) -> {
@@ -74,20 +63,7 @@ public interface BetaExpander extends EndoTerm {
 
         yield switch (codom) {
           case PathTerm path -> coe;
-          case PiTerm pi -> {
-            var u0Var = new LocalVar("u0");
-            var vVar = new LocalVar("v");
-            var A = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), pi.param().type());
-            var B = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), pi.body());
-            var vType = AppTerm.make(A, new Arg<>(FormulaTerm.RIGHT, true));
-            var w = AppTerm.make(CoeTerm.coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
-            var BSubsted = B.subst(pi.param().ref(), w.rename());
-            var wSubsted = w.subst(varI, FormulaTerm.LEFT).rename();
-            yield new LamTerm(coeDom(u0Var, coe.type()),
-              new LamTerm(new Term.Param(vVar, vType, true),
-                AppTerm.make(new CoeTerm(BSubsted, coe.restr()),
-                  new Arg<>(AppTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
-          }
+          case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> {
             var u0Var = new LocalVar("u0");
             var A = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), sigma.params().first().type());
@@ -115,7 +91,7 @@ public interface BetaExpander extends EndoTerm {
       default -> term;
     };
   }
-  @NotNull private static Term.Param coeDom(LocalVar u0Var, Term type) {
+  @NotNull static Term.Param coeDom(LocalVar u0Var, Term type) {
     return new Term.Param(u0Var, AppTerm.make(type, new Arg<>(FormulaTerm.LEFT, true)), true);
   }
 }

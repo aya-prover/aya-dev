@@ -5,7 +5,6 @@ package org.aya.tyck;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
-import org.aya.core.visitor.BetaExpander;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
@@ -92,7 +91,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case MatchTerm match -> {
         // TODO: Should I normalize match.discriminant() before matching?
-        var term = BetaExpander.tryMatch(match.discriminant(), match.clauses());
+        var term = match.tryMatch();
         yield term.isDefined() ? term(term.get()) : ErrorTerm.typeOf(match);
       }
       case FormTerm.Sort sort -> sort.succ();

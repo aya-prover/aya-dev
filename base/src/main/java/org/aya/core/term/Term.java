@@ -163,8 +163,9 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       }
       case PartialTerm el -> {
         var partial = el.partial().map(f);
-        if (partial == el.partial()) yield el;
-        yield new PartialTerm(partial, el.rhsType()); // Q: map `rhsType` as well?
+        var rhs = f.apply(el.rhsType());
+        if (partial == el.partial() && rhs == el.rhsType()) yield el;
+        yield new PartialTerm(partial, rhs);
       }
       case PathTerm(var cube) path -> {
         var newCube = cube.map(f);
