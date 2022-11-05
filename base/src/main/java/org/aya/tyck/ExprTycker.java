@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.value.LazyValue;
@@ -63,9 +62,9 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
-      case Expr.SortExpr sort -> sort(sort);
-      case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
+      case Expr.Lambda lam -> inherit(lam, generatePi(lam));
+      case Expr.Sort sort -> sort(sort);
+      case Expr.Ref ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
           // not defined in lets, search localCtx
           var ty = localCtx.get(loc);
@@ -74,24 +73,24 @@ public final class ExprTycker extends Tycker {
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
-      case Expr.PiExpr pi -> sort(pi);
-      case Expr.SigmaExpr sigma -> sort(sigma);
-      case Expr.LiftExpr lift -> {
+      case Expr.Pi pi -> sort(pi);
+      case Expr.Sigma sigma -> sort(sigma);
+      case Expr.Lift lift -> {
         var result = synthesize(lift.expr());
         var levels = lift.lift();
         yield new TermResult(result.wellTyped().lift(levels), result.type().lift(levels));
       }
-      case Expr.NewExpr newExpr -> {
-        var structExpr = newExpr.struct();
+      case Expr.New aNew -> {
+        var structExpr = aNew.struct();
         var struct = instImplicits(synthesize(structExpr).wellTyped(), structExpr.sourcePos());
         if (!(struct instanceof CallTerm.Struct structCall))
-          yield fail(structExpr, struct, BadTypeError.structCon(state, newExpr, struct));
+          yield fail(structExpr, struct, BadTypeError.structCon(state, aNew, struct));
         var structRef = structCall.ref();
         var subst = new Subst(Def.defTele(structRef).map(Term.Param::ref), structCall.args().map(Arg::term));
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Term>>create();
         var missing = MutableList.<AnyVar>create();
-        var conFields = MutableMap.from(newExpr.fields().view().map(t -> Tuple.of(t.name().data(), t)));
+        var conFields = MutableMap.from(aNew.fields().view().map(t -> kala.tuple.Tuple.of(t.name().data(), t)));
 
         for (var defField : structRef.core.fields) {
           var fieldRef = defField.ref();
@@ -102,7 +101,7 @@ public final class ExprTycker extends Tycker {
             else {
               // use default value from defField
               var field = defField.body.get().subst(subst, structCall.ulift());
-              fields.append(Tuple.of(fieldRef, field));
+              fields.append(kala.tuple.Tuple.of(fieldRef, field));
               subst.add(fieldRef, field);
             }
             continue;
@@ -114,21 +113,21 @@ public final class ExprTycker extends Tycker {
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
-            yield fail(newExpr, structCall, new FieldError.ArgMismatch(newExpr.sourcePos(), defField, bindings.size()));
+            yield fail(aNew, structCall, new FieldError.ArgMismatch(aNew.sourcePos(), defField, bindings.size()));
           }
-          var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) -> new Expr.LamExpr(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
+          var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) -> new Expr.Lambda(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
           var field = inherit(fieldExpr, type).wellTyped();
-          fields.append(Tuple.of(fieldRef, field));
+          fields.append(kala.tuple.Tuple.of(fieldRef, field));
           subst.add(fieldRef, field);
         }
 
         if (missing.isNotEmpty())
-          yield fail(newExpr, structCall, new FieldError.MissingField(newExpr.sourcePos(), missing.toImmutableSeq()));
+          yield fail(aNew, structCall, new FieldError.MissingField(aNew.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
-          yield fail(newExpr, structCall, new FieldError.NoSuchField(newExpr.sourcePos(), conFields.keysView().toImmutableSeq()));
+          yield fail(aNew, structCall, new FieldError.NoSuchField(aNew.sourcePos(), conFields.keysView().toImmutableSeq()));
         yield new TermResult(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
       }
-      case Expr.ProjExpr proj -> {
+      case Expr.Proj proj -> {
         var struct = proj.tup();
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
@@ -158,16 +157,16 @@ public final class ExprTycker extends Tycker {
           return new TermResult(IntroTerm.Lambda.make(teleRenamed, access), FormTerm.Pi.make(tele, field.result().subst(structSubst)));
         });
       }
-      case Expr.TupExpr tuple -> {
+      case Expr.Tuple tuple -> {
         var items = tuple.items().map(this::synthesize);
         yield new TermResult(new IntroTerm.Tuple(items.map(Result::wellTyped)), new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
       }
-      case Expr.CoeExpr coe -> {
+      case Expr.Coe coe -> {
         assert coe.resolvedVar() instanceof DefVar<?, ?> defVar
           && defVar.core instanceof PrimDef def && def.id == PrimDef.ID.COE : "desugar bug";
         var defVar = coe.resolvedVar();
-        var mockApp = new Expr.AppExpr(coe.sourcePos(), new Expr.AppExpr(coe.sourcePos(),
-          new Expr.RefExpr(coe.id().sourcePos(), defVar),
+        var mockApp = new Expr.App(coe.sourcePos(), new Expr.App(coe.sourcePos(),
+          new Expr.Ref(coe.id().sourcePos(), defVar),
           new Expr.NamedArg(true, coe.type())),
           new Expr.NamedArg(true, coe.restr()));
         var res = synthesize(mockApp);
@@ -201,7 +200,7 @@ public final class ExprTycker extends Tycker {
         }
         yield res;
       }
-      case Expr.AppExpr appE -> {
+      case Expr.App appE -> {
         var f = synthesize(appE.function());
         if (f.wellTyped() instanceof ErrorTerm || f.type() instanceof ErrorTerm) yield f;
         var app = f.wellTyped();
@@ -251,10 +250,10 @@ public final class ExprTycker extends Tycker {
         // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
         yield new TermResult(newApp, pi.body().subst(subst));
       }
-      case Expr.HoleExpr hole ->
+      case Expr.Hole hole ->
         inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
-      case Expr.ErrorExpr err -> TermResult.error(err.description());
-      case Expr.LitIntExpr lit -> {
+      case Expr.Error err -> TermResult.error(err.description());
+      case Expr.LitInt lit -> {
         int integer = lit.integer();
         // TODO[literal]: int literals. Currently the parser does not allow negative literals.
         var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
@@ -263,7 +262,7 @@ public final class ExprTycker extends Tycker {
         var type = new CallTerm.Data(((DataDef) defs.first()).ref, 0, ImmutableSeq.empty());
         yield new TermResult(new LitTerm.ShapedInt(integer, AyaShape.NAT_SHAPE, type), type);
       }
-      case Expr.LitStringExpr litStr -> {
+      case Expr.LitString litStr -> {
         if (!state.primFactory().have(PrimDef.ID.STRING))
           yield fail(expr, new NoRuleError(expr, null));
 
@@ -400,15 +399,15 @@ public final class ExprTycker extends Tycker {
   private Tuple2<FormTerm.Pi, FormTerm.@Nullable Cube>
   ensurePiOrPath(@NotNull Term term) throws NotPi {
     term = whnf(term);
-    if (term instanceof FormTerm.Pi pi) return Tuple.of(pi, null);
+    if (term instanceof FormTerm.Pi pi) return kala.tuple.Tuple.of(pi, null);
     if (term instanceof FormTerm.Path(var cube))
-      return Tuple.of(cube.computePi(), cube);
+      return kala.tuple.Tuple.of(cube.computePi(), cube);
     else throw new NotPi(term);
   }
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
-      case Expr.TupExpr(var pos, var it) -> {
+      case Expr.Tuple(var pos, var it) -> {
         var items = MutableList.<Term>create();
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
@@ -434,13 +433,13 @@ public final class ExprTycker extends Tycker {
         var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
         yield new TermResult(new IntroTerm.Tuple(items.toImmutableSeq()), resTy);
       }
-      case Expr.HoleExpr hole -> {
+      case Expr.Hole hole -> {
         // TODO[ice]: deal with unit type
         var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new TermResult(freshHole._2, term);
       }
-      case Expr.SortExpr sortExpr -> {
+      case Expr.Sort sortExpr -> {
         var result = sort(sortExpr);
         var normTerm = whnf(term);
         if (normTerm instanceof FormTerm.Sort sort) {
@@ -451,7 +450,7 @@ public final class ExprTycker extends Tycker {
         }
         yield new TermResult(result.wellTyped(), normTerm);
       }
-      case Expr.LamExpr lam -> {
+      case Expr.Lambda lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
         yield switch (whnf(term)) {
           case FormTerm.Pi dt -> {
@@ -481,7 +480,7 @@ public final class ExprTycker extends Tycker {
           default -> fail(lam, term, BadTypeError.pi(state, lam, term));
         };
       }
-      case Expr.LitIntExpr(var pos, var end) -> {
+      case Expr.LitInt(var pos, var end) -> {
         var ty = whnf(term);
         if (ty instanceof PrimTerm.Interval) {
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? PrimTerm.Mula.LEFT : PrimTerm.Mula.RIGHT, ty);
@@ -559,24 +558,24 @@ public final class ExprTycker extends Tycker {
   private @NotNull SortResult doSort(@NotNull Expr expr) {
     var univ = FormTerm.Type.ZERO;
     return switch (expr) {
-      case Expr.TupExpr tuple -> failSort(tuple, BadTypeError.sigmaCon(state, tuple, univ));
-      case Expr.HoleExpr hole -> {
+      case Expr.Tuple tuple -> failSort(tuple, BadTypeError.sigmaCon(state, tuple, univ));
+      case Expr.Hole hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new SortResult(freshHole._2, univ);
       }
-      case Expr.SortExpr sortExpr -> {
-        var self = switch (sortExpr) {
-          case Expr.TypeExpr ty -> new FormTerm.Type(ty.lift());
-          case Expr.SetExpr set -> new FormTerm.Set(set.lift());
-          case Expr.PropExpr prop -> FormTerm.Prop.INSTANCE;
-          case Expr.ISetExpr iset -> FormTerm.ISet.INSTANCE;
+      case Expr.Sort sort -> {
+        var self = switch (sort) {
+          case Expr.Type ty -> new FormTerm.Type(ty.lift());
+          case Expr.Set set -> new FormTerm.Set(set.lift());
+          case Expr.Prop prop -> FormTerm.Prop.INSTANCE;
+          case Expr.ISet iset -> FormTerm.ISet.INSTANCE;
         };
         yield new SortResult(self, self.succ());
       }
-      case Expr.LamExpr lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
+      case Expr.Lambda lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failSort(el, BadTypeError.partTy(state, el, univ));
-      case Expr.PiExpr pi -> {
+      case Expr.Pi pi -> {
         var param = pi.param();
         final var var = param.ref();
         var domTy = param.type();
@@ -587,7 +586,7 @@ public final class ExprTycker extends Tycker {
           return new SortResult(new FormTerm.Pi(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
         });
       }
-      case Expr.SigmaExpr sigma -> {
+      case Expr.Sigma sigma -> {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
         var resultTypes = MutableList.<FormTerm.Sort>create();
         for (var tuple : sigma.params()) {
@@ -595,7 +594,7 @@ public final class ExprTycker extends Tycker {
           resultTypes.append(result.type());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
-          resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
+          resultTele.append(kala.tuple.Tuple.of(ref, tuple.explicit(), result.wellTyped()));
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
         var maxSort = resultTypes.reduce(ExprTycker::calculateSigma);
@@ -724,7 +723,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
-    return expr instanceof Expr.LamExpr ex && ex.param().explicit() || !(expr instanceof Expr.LamExpr);
+    return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
   }
 
   public @NotNull Result zonk(@NotNull Result result) {
@@ -732,7 +731,7 @@ public final class ExprTycker extends Tycker {
     return new TermResult(zonk(result.wellTyped()), zonk(result.type()));
   }
 
-  private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {
+  private @NotNull Term generatePi(Expr.@NotNull Lambda expr) {
     var param = expr.param();
     return generatePi(expr.sourcePos(), param.ref().name(), param.explicit());
   }
@@ -919,7 +918,7 @@ public final class ExprTycker extends Tycker {
    */
   public record TermResult(@Override @NotNull Term wellTyped, @Override @NotNull Term type) implements Result {
     @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
-      return Tuple.of(type, wellTyped);
+      return kala.tuple.Tuple.of(type, wellTyped);
     }
 
     public static @NotNull TermResult error(@NotNull AyaDocile description) {

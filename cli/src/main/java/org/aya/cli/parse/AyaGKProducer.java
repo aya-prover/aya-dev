@@ -12,7 +12,6 @@ import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanFunction;
-import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
@@ -225,16 +224,16 @@ public record AyaGKProducer(
 
   public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
     var accessibility = node.peekChild(KW_PRIVATE) == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
-    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, accessibility), ImmutableSeq.empty());
+    if (node.is(FN_DECL)) return kala.tuple.Tuple.of(fnDecl(node, accessibility), ImmutableSeq.empty());
     if (node.is(DATA_DECL)) return dataDecl(node, accessibility);
     if (node.is(STRUCT_DECL)) return structDecl(node, accessibility);
-    if (node.is(PRIM_DECL)) return Tuple.of(primDecl(node), ImmutableSeq.empty());
+    if (node.is(PRIM_DECL)) return kala.tuple.Tuple.of(primDecl(node), ImmutableSeq.empty());
     return unreachable(node);
   }
 
   public TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node, Stmt.Accessibility acc) {
     var sample = sampleModifiers(node.peekChild(SAMPLE_MODIFIERS));
-    var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> Tuple.of(m, fnModifier(m)))
+    var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> kala.tuple.Tuple.of(m, fnModifier(m)))
       .toImmutableSeq();
     var inline = modifiers.find(t -> t._2 == Modifier.Inline);
     var opaque = modifiers.find(t -> t._2 == Modifier.Opaque);
@@ -295,7 +294,7 @@ public record AyaGKProducer(
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
-    return Tuple.of(data, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+    return kala.tuple.Tuple.of(data, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(node.child(OPEN_KW)),
         openAcc,
@@ -338,7 +337,7 @@ public record AyaGKProducer(
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
-    return Tuple.of(struct, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+    return kala.tuple.Tuple.of(struct, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(node.child(OPEN_KW)),
         openAcc,
@@ -375,7 +374,7 @@ public record AyaGKProducer(
       sourcePosOf(node),
       id.data(),
       telescope(node.childrenOfType(TELE).map(x -> x)),
-      type == null ? new Expr.ErrorExpr(id.sourcePos(), Doc.plain("missing result")) : type(type)
+      type == null ? new Expr.Error(id.sourcePos(), Doc.plain("missing result")) : type(type)
       // ^ Question: typeOrHole?
     );
   }
@@ -468,32 +467,32 @@ public record AyaGKProducer(
   public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> declNameOrInfix(@NotNull GenericNode<?> node) {
     var assoc = node.peekChild(ASSOC);
     var id = weakId(node.child(WEAK_ID));
-    if (assoc == null) return Tuple.of(id, null);
+    if (assoc == null) return kala.tuple.Tuple.of(id, null);
     var infix = new OpDecl.OpInfo(id.data(), assoc(assoc));
-    return Tuple.of(new WithPos<>(id.sourcePos(), infix.name()), infix);
+    return kala.tuple.Tuple.of(new WithPos<>(id.sourcePos(), infix.name()), infix);
   }
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
     if (node.is(REF_EXPR)) {
       var qid = qualifiedId(node.child(QUALIFIED_ID));
-      return new Expr.UnresolvedExpr(qid.sourcePos(), qid);
+      return new Expr.Unresolved(qid.sourcePos(), qid);
     }
-    if (node.is(CALM_FACE_EXPR)) return new Expr.HoleExpr(pos, false, null);
+    if (node.is(CALM_FACE_EXPR)) return new Expr.Hole(pos, false, null);
     if (node.is(GOAL_EXPR)) {
       var fillingExpr = node.peekChild(EXPR);
       var filling = fillingExpr == null ? null : expr(fillingExpr);
-      return new Expr.HoleExpr(pos, true, filling);
+      return new Expr.Hole(pos, true, filling);
     }
     if (node.is(UNIV_EXPR)) {
-      if (node.peekChild(KW_TYPE) != null) return new Expr.RawSortExpr(pos, SortKind.Type);
-      if (node.peekChild(KW_SET) != null) return new Expr.RawSortExpr(pos, SortKind.Set);
-      if (node.peekChild(KW_PROP) != null) return new Expr.RawSortExpr(pos, SortKind.Prop);
-      if (node.peekChild(KW_ISET) != null) return new Expr.RawSortExpr(pos, SortKind.ISet);
+      if (node.peekChild(KW_TYPE) != null) return new Expr.RawSort(pos, SortKind.Type);
+      if (node.peekChild(KW_SET) != null) return new Expr.RawSort(pos, SortKind.Set);
+      if (node.peekChild(KW_PROP) != null) return new Expr.RawSort(pos, SortKind.Prop);
+      if (node.peekChild(KW_ISET) != null) return new Expr.RawSort(pos, SortKind.ISet);
       return unreachable(node);
     }
     if (node.is(LIT_INT_EXPR)) try {
-      return new Expr.LitIntExpr(pos, Integer.parseInt(node.tokenText()));
+      return new Expr.LitInt(pos, Integer.parseInt(node.tokenText()));
     } catch (NumberFormatException ignored) {
       reporter.report(new ParseError(pos, "Unsupported integer literal `" + node.tokenText() + "`"));
       throw new ParsingInterruptedException();
@@ -501,17 +500,17 @@ public record AyaGKProducer(
     if (node.is(LIT_STRING_EXPR)) {
       var text = node.tokenText();
       var content = text.substring(1, text.length() - 1);
-      return new Expr.LitStringExpr(pos, StringUtil.escapeStringCharacters(content));
+      return new Expr.LitString(pos, StringUtil.escapeStringCharacters(content));
     }
     if (node.is(ULIFT_ATOM)) {
       var expr = expr(node.child(EXPR));
       var lifts = node.childrenOfType(ULIFT_PREFIX).toImmutableSeq().size();
-      return lifts > 0 ? new Expr.LiftExpr(sourcePosOf(node), expr, lifts) : expr;
+      return lifts > 0 ? new Expr.Lift(sourcePosOf(node), expr, lifts) : expr;
     }
     if (node.is(TUPLE_ATOM)) {
       var expr = node.child(EXPR_LIST).childrenOfType(EXPR).toImmutableSeq();
       if (expr.size() == 1) return newBinOPScope(expr(expr.get(0)));
-      return new Expr.TupExpr(sourcePosOf(node), expr.map(this::expr));
+      return new Expr.Tuple(sourcePosOf(node), expr.map(this::expr));
     }
     if (node.is(APP_EXPR)) {
       var head = new Expr.NamedArg(true, expr(node.child(EXPR)));
@@ -538,12 +537,12 @@ public record AyaGKProducer(
       var to = expr(exprs.get(1));
       var paramPos = sourcePosOf(expr0);
       var param = new Expr.Param(paramPos, Constants.randomlyNamed(paramPos), expr(expr0), true);
-      return new Expr.PiExpr(pos, param, to);
+      return new Expr.Pi(pos, param, to);
     }
     if (node.is(NEW_EXPR)) {
       var struct = expr(node.child(EXPR));
       var newBody = node.peekChild(NEW_BODY);
-      return new Expr.NewExpr(pos, struct,
+      return new Expr.New(pos, struct,
         newBody == null
           ? ImmutableSeq.empty()
           : newBody.childrenOfType(NEW_ARG).map(arg -> {
@@ -563,7 +562,7 @@ public record AyaGKProducer(
       expr(node.child(EXPR)));
     if (node.is(SIGMA_EXPR)) {
       var last = expr(node.child(EXPR));
-      return new Expr.SigmaExpr(pos,
+      return new Expr.Sigma(pos,
         telescope(node.childrenOfType(TELE).map(x -> x))
           .appended(new Expr.Param(last.sourcePos(), LocalVar.IGNORED, last, true)));
     }
@@ -573,7 +572,7 @@ public record AyaGKProducer(
       if (bodyExpr == null) {
         var impliesToken = node.peekChild(IMPLIES);
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
-        result = new Expr.HoleExpr(bodyHolePos, false, null);
+        result = new Expr.Hole(bodyHolePos, false, null);
       } else result = expr(bodyExpr);
       return buildLam(pos, lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(), result);
     }
@@ -629,15 +628,15 @@ public record AyaGKProducer(
       var fixes = node.childrenOfType(PROJ_FIX);
       var expr = expr(node.child(EXPR));
       var projected = fixes
-        .foldLeft(Tuple.of(sourcePosOf(node), expr),
-          (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
+        .foldLeft(kala.tuple.Tuple.of(sourcePosOf(node), expr),
+          (acc, proj) -> kala.tuple.Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
       return new Expr.NamedArg(true, projected);
     }
     if (node.is(TUPLE_IM_ARGUMENT)) {
       var items = node.child(EXPR_LIST).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
       if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.first()));
-      var tupExpr = new Expr.TupExpr(sourcePosOf(node), items);
+      var tupExpr = new Expr.Tuple(sourcePosOf(node), items);
       return new Expr.NamedArg(false, tupExpr);
     }
     if (node.is(NAMED_IM_ARGUMENT)) {
@@ -662,7 +661,7 @@ public record AyaGKProducer(
 
   public @NotNull Tuple2<Expr, Expr> subSystem(@NotNull GenericNode<?> node) {
     var exprs = node.childrenOfType(EXPR).map(this::expr);
-    return Tuple.of(exprs.get(0), exprs.get(1));
+    return kala.tuple.Tuple.of(exprs.get(0), exprs.get(1));
   }
 
   private @NotNull Expr buildProj(
@@ -670,13 +669,13 @@ public record AyaGKProducer(
     @NotNull GenericNode<?> fix
   ) {
     var number = fix.peekChild(NUMBER);
-    if (number != null) return new Expr.ProjExpr(sourcePos, projectee, Either.left(
+    if (number != null) return new Expr.Proj(sourcePos, projectee, Either.left(
       Integer.parseInt(number.tokenText())));
     var qid = qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID));
     var exprs = fix.childrenOfType(EXPR).toImmutableSeq();
     var coeLeft = exprs.getOption(0);
     var restr = exprs.getOption(1);
-    return new Expr.RawProjExpr(sourcePos, projectee, qid, null,
+    return new Expr.RawProj(sourcePos, projectee, qid, null,
       coeLeft.map(this::expr).getOrNull(),
       restr.map(this::expr).getOrNull());
   }
@@ -687,7 +686,7 @@ public record AyaGKProducer(
   ) {
     if (params.isEmpty()) return body;
     var drop = params.drop(1);
-    return new Expr.PiExpr(
+    return new Expr.Pi(
       sourcePos, params.first(),
       buildPi(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
         drop.map(Expr.Param::sourcePos)), co, drop, body));
@@ -696,7 +695,7 @@ public record AyaGKProducer(
   public static @NotNull Expr buildLam(SourcePos sourcePos, SeqView<Expr.Param> params, Expr body) {
     if (params.isEmpty()) return body;
     var drop = params.drop(1);
-    return new Expr.LamExpr(
+    return new Expr.Lambda(
       sourcePos, params.first(),
       buildLam(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
         drop.map(Expr.Param::sourcePos)), drop, body));
@@ -814,7 +813,7 @@ public record AyaGKProducer(
 
   public @NotNull Expr typeOrHole(@Nullable GenericNode<?> node, SourcePos sourcePos) {
     return node == null
-      ? new Expr.HoleExpr(sourcePos, false, null)
+      ? new Expr.Hole(sourcePos, false, null)
       : type(node);
   }
 

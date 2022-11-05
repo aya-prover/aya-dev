@@ -30,7 +30,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
   private static final Expr.NamedArg OP_APP = new Expr.NamedArg(
     true,
     BinOpSet.APP_ELEM.name(),
-    new Expr.ErrorExpr(SourcePos.NONE, Doc.english("fakeApp escaped from BinOpParser"))
+    new Expr.Error(SourcePos.NONE, Doc.english("fakeApp escaped from BinOpParser"))
   );
 
   @Override protected @NotNull Expr.NamedArg appOp() {
@@ -47,7 +47,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
   }
 
   @Override protected @NotNull Expr createErrorExpr(@NotNull SourcePos sourcePos) {
-    return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
+    return new Expr.Error(sourcePos, Doc.english("an application"));
   }
 
   @Override protected void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos) {
@@ -56,24 +56,24 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
     var expr = elem.expr();
-    while (expr instanceof Expr.LiftExpr lift) expr = lift.expr();
-    return expr instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar
+    while (expr instanceof Expr.Lift lift) expr = lift.expr();
+    return expr instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar
       ? defVar.resolveOpDecl(resolveInfo.thisModule().moduleName())
       : null;
   }
 
   @Override protected @NotNull Expr.NamedArg
   makeArg(@NotNull SourcePos pos, @NotNull Expr func, Expr.@NotNull NamedArg arg, boolean explicit) {
-    return new Expr.NamedArg(explicit, new Expr.AppExpr(pos, func, arg));
+    return new Expr.NamedArg(explicit, new Expr.App(pos, func, arg));
   }
 
   @Override public @NotNull Expr.NamedArg makeSectionApp(
     @NotNull SourcePos pos, Expr.@NotNull NamedArg op, @NotNull Function<Expr.NamedArg, Expr> lamBody
   ) {
     var missing = Constants.randomlyNamed(op.expr().sourcePos());
-    var missingElem = new Expr.NamedArg(true, new Expr.RefExpr(SourcePos.NONE, missing));
+    var missingElem = new Expr.NamedArg(true, new Expr.Ref(SourcePos.NONE, missing));
     var missingParam = new Expr.Param(missing.definition(), missing, true);
-    var term = new Expr.LamExpr(pos, missingParam, lamBody.apply(missingElem));
+    var term = new Expr.Lambda(pos, missingParam, lamBody.apply(missingElem));
     return new Expr.NamedArg(op.explicit(), term);
   }
 }

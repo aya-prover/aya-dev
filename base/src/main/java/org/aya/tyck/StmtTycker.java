@@ -205,7 +205,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var tele = tele(tycker, prim.telescope, null);
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
-          if (prim.result instanceof Expr.ErrorExpr) {
+          if (prim.result instanceof Expr.Error) {
             reporter.report(new PrimError.NoResultType(prim));
             return;
           }
@@ -216,7 +216,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             FormTerm.Pi.make(core.telescope, core.result),
             prim.result);
           prim.signature = new Def.Signature(tele, result);
-        } else if (!(prim.result instanceof Expr.ErrorExpr)) {
+        } else if (!(prim.result instanceof Expr.Error)) {
           var result = tycker.synthesize(prim.result).wellTyped();
           tycker.unifyTyReported(result, core.result, prim.result);
         } else prim.signature = new Def.Signature(core.telescope, core.result);
@@ -261,7 +261,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private FormTerm.Sort resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
     FormTerm.Sort ret = FormTerm.Type.ZERO;
-    if (!(data.result instanceof Expr.HoleExpr)) {
+    if (!(data.result instanceof Expr.Hole)) {
       var result = tycker.ty(data.result);
       ret = (FormTerm.Sort) tycker.zonk(result.wellTyped());
     }

@@ -36,8 +36,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Expr prexpr) {
     return switch (prexpr) {
-      case Expr.ErrorExpr error -> Doc.angled(error.description().toDoc(options));
-      case Expr.TupExpr expr -> Doc.parened(Doc.commaList(expr.items().view().map(e -> term(Outer.Free, e))));
+      case Expr.Error error -> Doc.angled(error.description().toDoc(options));
+      case Expr.Tuple expr -> Doc.parened(Doc.commaList(expr.items().view().map(e -> term(Outer.Free, e))));
       case Expr.BinOpSeq binOpSeq -> {
         var seq = binOpSeq.seq();
         var first = seq.first().expr();
@@ -48,14 +48,14 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case Expr.LitStringExpr expr -> Doc.plain('"' + StringUtil.unescapeStringCharacters(expr.string()) + '"');
-      case Expr.PiExpr expr -> {
+      case Expr.LitString expr -> Doc.plain('"' + StringUtil.unescapeStringCharacters(expr.string()) + '"');
+      case Expr.Pi expr -> {
         var data = new boolean[]{false, false};
         new ExprConsumer() {
           @Override public void pre(@NotNull Expr e) {
             switch (e) {
-              case Expr.RefExpr ref when ref.resolvedVar() == expr.param().ref() -> data[0] = true;
-              case Expr.UnresolvedExpr ignored -> data[1] = true;
+              case Expr.Ref ref when ref.resolvedVar() == expr.param().ref() -> data[0] = true;
+              case Expr.Unresolved ignored -> data[1] = true;
               default -> ExprConsumer.super.pre(e);
             }
           }
@@ -71,36 +71,36 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         // When outsider is neither a codomain nor non-expression, we need to add parentheses.
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case Expr.AppExpr expr -> {
+      case Expr.App expr -> {
         var args = MutableList.of(expr.argument());
         var head = Expr.unapp(expr.function(), args);
         var infix = false;
-        if (head instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> var)
+        if (head instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> var)
           infix = var.isInfix();
         yield visitCalls(infix,
           term(Outer.AppHead, head),
           args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
-      case Expr.LamExpr expr -> {
+      case Expr.Lambda expr -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
           yield term(outer, expr.body());
         }
         var prelude = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
           lambdaParam(expr.param()));
-        if (!(expr.body() instanceof Expr.HoleExpr)) {
+        if (!(expr.body() instanceof Expr.Hole)) {
           prelude.append(Doc.symbol("=>"));
           prelude.append(term(Outer.Free, expr.body()));
         }
         yield checkParen(outer, Doc.sep(prelude), Outer.BinOp);
       }
-      case Expr.HoleExpr expr -> {
+      case Expr.Hole expr -> {
         if (!expr.explicit()) yield Doc.symbol(Constants.ANONYMOUS_PREFIX);
         var filling = expr.filling();
         if (filling == null) yield Doc.symbol("{??}");
         yield Doc.sep(Doc.symbol("{?"), term(Outer.Free, filling), Doc.symbol("?}"));
       }
-      case Expr.ProjExpr expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
+      case Expr.Proj expr -> Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
         Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
       case Expr.Match match ->
         Doc.cblock(Doc.cat(Doc.styled(KEYWORD, "match"), Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
@@ -109,21 +109,21 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
               Doc.commaList(clause.patterns.map(p -> pattern(p, Outer.Free))),
               clause.expr.map(t -> Doc.cat(Doc.symbol("=>"), term(Outer.Free, t))).getOrDefault(Doc.empty())))
             .toImmutableSeq()));
-      case Expr.RawProjExpr expr -> Doc.sepNonEmpty(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
+      case Expr.RawProj expr -> Doc.sepNonEmpty(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
           Doc.plain(expr.id().join())), expr.coeLeft() != null ? term(Outer.AppSpine, expr.coeLeft()) : Doc.empty(),
         expr.restr() != null ? Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, expr.restr())) : Doc.empty());
-      case Expr.CoeExpr expr -> visitCalls(expr.resolvedVar(), PRIM_CALL,
+      case Expr.Coe expr -> visitCalls(expr.resolvedVar(), PRIM_CALL,
         ImmutableSeq.of(new Arg<>(expr.type(), true), new Arg<>(expr.restr(), true)),
         outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-      case Expr.UnresolvedExpr expr -> Doc.plain(expr.name().join());
-      case Expr.RefExpr expr -> {
+      case Expr.Unresolved expr -> Doc.plain(expr.name().join());
+      case Expr.Ref expr -> {
         var ref = expr.resolvedVar();
         if (ref instanceof DefVar<?, ?> defVar) yield defVar(defVar);
         else yield varDoc(ref);
       }
-      case Expr.LitIntExpr expr -> Doc.plain(String.valueOf(expr.integer()));
-      case Expr.RawSortExpr e -> Doc.styled(KEYWORD, e.kind().name());
-      case Expr.NewExpr expr -> Doc.cblock(
+      case Expr.LitInt expr -> Doc.plain(String.valueOf(expr.integer()));
+      case Expr.RawSort e -> Doc.styled(KEYWORD, e.kind().name());
+      case Expr.New expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
           Doc.sep(Doc.symbol("|"), Doc.styled(FIELD_CALL, t.name().data()),
@@ -131,19 +131,19 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
               Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
             Doc.plain("=>"), term(Outer.Free, t.body()))
         )));
-      case Expr.SigmaExpr expr -> checkParen(outer, Doc.sep(
+      case Expr.Sigma expr -> checkParen(outer, Doc.sep(
         Doc.styled(KEYWORD, Doc.symbol("Sig")),
         visitTele(expr.params().dropLast(1)),
         Doc.symbol("**"),
         term(Outer.Codomain, expr.params().last().type())), Outer.BinOp);
       // ^ Same as Pi
-      case Expr.SortExpr expr -> {
+      case Expr.Sort expr -> {
         var fn = Doc.styled(KEYWORD, expr.kind().name());
         if (!expr.kind().hasLevel()) yield fn;
         yield visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
           SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(expr.lift())), true)), true);
       }
-      case Expr.LiftExpr expr -> Doc.sep(Seq
+      case Expr.Lift expr -> Doc.sep(Seq
         .from(IntRange.closed(1, expr.lift()).iterator()).view()
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
@@ -393,7 +393,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
   }
 
   private void appendResult(MutableList<Doc> prelude, Expr result) {
-    if (result instanceof Expr.HoleExpr) return;
+    if (result instanceof Expr.Hole) return;
     prelude.append(Doc.symbol(":"));
     prelude.append(term(Outer.Free, result));
   }

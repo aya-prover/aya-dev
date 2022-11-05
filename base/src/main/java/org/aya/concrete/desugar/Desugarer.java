@@ -25,7 +25,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
   private int levelVar(@NotNull Expr expr) throws DesugarInterruption {
     return switch (expr) {
       case Expr.BinOpSeq binOpSeq -> levelVar(pre(binOpSeq));
-      case Expr.LitIntExpr(var pos, var i) -> i;
+      case Expr.LitInt(var pos, var i) -> i;
       default -> {
         info.opSet().reporter.report(new LevelProblem.BadLevelExpr(expr));
         throw new DesugarInterruption();
@@ -37,41 +37,41 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Type -> {
+      case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg)when kind == SortKind.Type -> {
         try {
-          yield new Expr.TypeExpr(uPos, levelVar(arg.expr()));
+          yield new Expr.Type(uPos, levelVar(arg.expr()));
         } catch (DesugarInterruption e) {
-          yield new Expr.ErrorExpr(pos, expr);
+          yield new Expr.Error(pos, expr);
         }
       }
-      case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Set -> {
+      case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg)when kind == SortKind.Set -> {
         try {
-          yield new Expr.SetExpr(uPos, levelVar(arg.expr()));
+          yield new Expr.Set(uPos, levelVar(arg.expr()));
         } catch (DesugarInterruption e) {
-          yield new Expr.ErrorExpr(pos, expr);
+          yield new Expr.Error(pos, expr);
         }
       }
-      case Expr.RawProjExpr proj -> {
+      case Expr.RawProj proj -> {
         if (proj.resolvedVar() instanceof DefVar<?, ?> defVar
           && defVar.core instanceof PrimDef primDef
           && primDef.id == PrimDef.ID.COE) {
-          var restr = proj.restr() != null ? proj.restr() : new Expr.LitIntExpr(proj.sourcePos(), 0);
-          var coe = new Expr.CoeExpr(proj.sourcePos(), proj.id(), defVar, proj.tup(), restr);
+          var restr = proj.restr() != null ? proj.restr() : new Expr.LitInt(proj.sourcePos(), 0);
+          var coe = new Expr.Coe(proj.sourcePos(), proj.id(), defVar, proj.tup(), restr);
           yield pre(proj.coeLeft() != null
-            ? new Expr.AppExpr(proj.sourcePos(), coe, new Expr.NamedArg(true, proj.coeLeft()))
+            ? new Expr.App(proj.sourcePos(), coe, new Expr.NamedArg(true, proj.coeLeft()))
             : coe);
         }
         if (proj.restr() != null) info.opSet().reporter.report(new BadFreezingWarn(proj.restr()));
-        var projExpr = new Expr.ProjExpr(proj.sourcePos(), proj.tup(), Either.right(proj.id()), proj.resolvedVar(), MutableValue.create());
+        var projExpr = new Expr.Proj(proj.sourcePos(), proj.tup(), Either.right(proj.id()), proj.resolvedVar(), MutableValue.create());
         yield pre(proj.coeLeft() != null
-          ? new Expr.AppExpr(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.coeLeft()))
+          ? new Expr.App(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.coeLeft()))
           : projExpr);
       }
-      case Expr.RawSortExpr(var pos, var kind) -> switch (kind) {
-        case Type -> new Expr.TypeExpr(pos, 0);
-        case Set -> new Expr.SetExpr(pos, 0);
-        case Prop -> new Expr.PropExpr(pos);
-        case ISet -> new Expr.ISetExpr(pos);
+      case Expr.RawSort(var pos, var kind) -> switch (kind) {
+        case Type -> new Expr.Type(pos, 0);
+        case Set -> new Expr.Set(pos, 0);
+        case Prop -> new Expr.Prop(pos);
+        case ISet -> new Expr.ISet(pos);
       };
       case Expr.BinOpSeq(var pos, var seq) -> {
         assert seq.isNotEmpty() : pos.toString();
@@ -87,11 +87,11 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
           // Upper: x <- a from last line
           // Lower: current line
           // Goal: >>=(a, \x -> rest)
-          (upper, lower) -> new Expr.AppExpr(upper.sourcePos(),
-            new Expr.AppExpr(
+          (upper, lower) -> new Expr.App(upper.sourcePos(),
+            new Expr.App(
               upper.sourcePos(), doNotation.bindName(),
               new Expr.NamedArg(true, upper.expr())),
-            new Expr.NamedArg(true, new Expr.LamExpr(lower.sourcePos(),
+            new Expr.NamedArg(true, new Expr.Lambda(lower.sourcePos(),
               new Expr.Param(lower.sourcePos(), upper.var(), true),
               lower)))));
       }
@@ -100,12 +100,12 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
       ) -> barred.view().map(app -> {
         var list = MutableList.<Expr.NamedArg>create();
         var pre = Expr.unapp(pre(app), list);
-        var head = new Expr.AppExpr(pos, pure, new Expr.NamedArg(true, pre));
-        return list.foldLeft(head, (e, arg) -> new Expr.AppExpr(e.sourcePos(),
-          new Expr.AppExpr(e.sourcePos(), ap,
+        var head = new Expr.App(pos, pure, new Expr.NamedArg(true, pre));
+        return list.foldLeft(head, (e, arg) -> new Expr.App(e.sourcePos(),
+          new Expr.App(e.sourcePos(), ap,
             new Expr.NamedArg(true, e)), arg));
       }).foldLeft(empty, (e, arg) ->
-        new Expr.AppExpr(e.sourcePos(), new Expr.AppExpr(e.sourcePos(),
+        new Expr.App(e.sourcePos(), new Expr.App(e.sourcePos(),
           or, new Expr.NamedArg(true, e)),
           new Expr.NamedArg(true, arg)));
       case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
@@ -113,7 +113,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
           // desugar `[ expr | x <- xs, y <- ys ]` to `do; x <- xs; y <- ys; return expr`
 
           // just concat `bindings` and `return expr`
-          var returnApp = new Expr.AppExpr(left.pureName().sourcePos(), left.pureName(), new Expr.NamedArg(true, left.generator()));
+          var returnApp = new Expr.App(left.pureName().sourcePos(), left.pureName(), new Expr.NamedArg(true, left.generator()));
           var lastBind = new Expr.DoBind(left.generator().sourcePos(), LocalVar.IGNORED, returnApp);
           var doNotation = new Expr.Do(arrayExpr.sourcePos(), left.bindName(), left.binds().appended(lastBind));
 

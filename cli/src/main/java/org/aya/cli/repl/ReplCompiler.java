@@ -156,7 +156,7 @@ public class ReplCompiler {
 
   public @Nullable FnDef codificationObject(@NotNull String text) {
     var parseTree = new AyaGKParserImpl(reporter).expr(text, SourcePos.NONE);
-    if (parseTree.resolve(context) instanceof Expr.RefExpr ref
+    if (parseTree.resolve(context) instanceof Expr.Ref ref
       && ref.resolvedVar() instanceof DefVar<?, ?> defVar
       && defVar.core instanceof FnDef fn
       && fn.body.isLeft()) {

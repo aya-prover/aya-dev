@@ -74,15 +74,15 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
   // region call terms
   @Override public @NotNull Expr visitExpr(@NotNull Expr expr, @NotNull MutableList<HighlightResult.Symbol> pp) {
     switch (expr) {
-      case Expr.RefExpr ref -> {
+      case Expr.Ref ref -> {
         if (ref.resolvedVar() instanceof DefVar<?, ?> defVar) visitCall(defVar, ref.sourcePos(), pp);
       }
-      case Expr.ProjExpr proj -> {
+      case Expr.Proj proj -> {
         if (proj.ix().isRight() && proj.resolvedVar() instanceof DefVar<?, ?> defVar)
           visitCall(defVar, proj.ix().getRightValue().sourcePos(), pp);
       }
-      case Expr.CoeExpr coe -> visitCall(coe.resolvedVar(), coe.id().sourcePos(), pp);
-      case Expr.NewExpr neo -> neo.fields().forEach(field -> {
+      case Expr.Coe coe -> visitCall(coe.resolvedVar(), coe.id().sourcePos(), pp);
+      case Expr.New neo -> neo.fields().forEach(field -> {
         if (field.resolvedField().get() instanceof DefVar<?, ?> defVar)
           visitCall(defVar, field.name().sourcePos(), pp);
       });
