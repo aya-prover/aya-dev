@@ -37,19 +37,19 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, ElimTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, ElimTerm, MatchTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
     return switch (this) {
-      case FormTerm.Pi pi -> {
+      case PiTerm pi -> {
         var param = pi.param().descent(f);
         var body = f.apply(pi.body());
         if (param == pi.param() && body == pi.body()) yield pi;
-        yield new FormTerm.Pi(param, body);
+        yield new PiTerm(param, body);
       }
-      case FormTerm.Sigma sigma -> {
+      case SigmaTerm sigma -> {
         var params = sigma.params().map(param -> param.descent(f));
         if (params.sameElements(sigma.params(), true)) yield sigma;
-        yield new FormTerm.Sigma(params);
+        yield new SigmaTerm(params);
       }
       case FormTerm.Sort univ -> univ;
       case IntervalTerm interval -> interval;
@@ -87,12 +87,12 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (tuple == proj.of()) yield proj;
         yield new ElimTerm.Proj(tuple, proj.ix());
       }
-      case ElimTerm.Match match -> {
+      case MatchTerm match -> {
         var discriminant = match.discriminant().map(f);
         var clauses = match.clauses().map(c -> c.descent(f));
         if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
           yield match;
-        yield new ElimTerm.Match(discriminant, clauses);
+        yield new MatchTerm(discriminant, clauses);
 	    }
       case ErasedTerm erased -> {
         var type = f.apply(erased.type());
@@ -155,21 +155,21 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
 
         yield new ListTerm(elements, shaped.shape(), type);
       }
-      case FormTerm.PartTy ty -> {
+      case PartialTyTerm ty -> {
         var type = f.apply(ty.type());
         var restr = ty.restr().map(f);
         if (type == ty.type() && restr == ty.restr()) yield ty;
-        yield new FormTerm.PartTy(type, restr);
+        yield new PartialTyTerm(type, restr);
       }
       case PartialTerm el -> {
         var partial = el.partial().map(f);
         if (partial == el.partial()) yield el;
         yield new PartialTerm(partial, el.rhsType()); // Q: map `rhsType` as well?
       }
-      case FormTerm.Path(var cube) path -> {
+      case PathTerm(var cube) path -> {
         var newCube = cube.map(f);
         if (newCube == cube) yield path;
-        yield new FormTerm.Path(newCube);
+        yield new PathTerm(newCube);
       }
       case PLamTerm(var params, var body) lam -> {
         var newBody = f.apply(body);

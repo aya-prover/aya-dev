@@ -52,7 +52,7 @@ public sealed interface ElimTerm extends Term {
     }
     if (app.of() instanceof ErasedTerm erased) {
       // erased.type() can be an ErrorTerm
-      if (erased.type() instanceof FormTerm.Pi pi) {
+      if (erased.type() instanceof PiTerm pi) {
         return new ErasedTerm(pi.substBody(app.arg().term()));
       } else {
         return new ErasedTerm(ErrorTerm.typeOf(app), true);
@@ -95,7 +95,7 @@ public sealed interface ElimTerm extends Term {
     }
     if (proj.of instanceof ErasedTerm erased) {
       // erased.type() can be an ErrorTerm
-      if (erased.type() instanceof FormTerm.Sigma sigma) {
+      if (erased.type() instanceof SigmaTerm sigma) {
         return new ErasedTerm(sigma.params().get(proj.ix - 1).type());
       } else {
         return new ErasedTerm(ErrorTerm.typeOf(proj), true);
@@ -107,17 +107,10 @@ public sealed interface ElimTerm extends Term {
   record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
   }
 
-  record Match(@NotNull ImmutableSeq<Term> discriminant, @NotNull ImmutableSeq<Matching> clauses) implements ElimTerm {
-    @Override
-    public @NotNull Term of() {
-      return new TupTerm(discriminant);
-    }
-  }
-
   record PathApp(
     @NotNull Term of,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args,
-    @NotNull FormTerm.Cube cube
+    @NotNull PathTerm.Cube cube
   ) implements ElimTerm {
   }
 

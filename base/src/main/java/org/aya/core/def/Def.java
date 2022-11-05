@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
@@ -7,7 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.term.FormTerm;
+import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.distill.CoreDistiller;
@@ -25,7 +25,7 @@ import java.util.Objects;
  */
 public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, TopLevelDef {
   static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar) {
-    return FormTerm.Pi.make(defTele(defVar), defResult(defVar));
+    return PiTerm.make(defTele(defVar), defResult(defVar));
   }
 
   static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar) {

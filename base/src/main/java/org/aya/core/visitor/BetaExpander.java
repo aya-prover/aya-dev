@@ -29,8 +29,8 @@ public interface BetaExpander extends EndoTerm {
   static @NotNull Term simplFormula(@NotNull FormulaTerm mula) {
     return Restr.formulae(mula.asFormula(), FormulaTerm::new);
   }
-  static @NotNull FormTerm.PartTy partialType(@NotNull FormTerm.PartTy ty) {
-    return new FormTerm.PartTy(ty.type(), ty.restr().normalize());
+  static @NotNull PartialTyTerm partialType(@NotNull PartialTyTerm ty) {
+    return new PartialTyTerm(ty.type(), ty.restr().normalize());
   }
   static @NotNull Option<Term> tryMatch(@NotNull ImmutableSeq<Term> scrutinee, @NotNull ImmutableSeq<Term.Matching> clauses) {
     for (var clause : clauses) {
@@ -44,18 +44,18 @@ public interface BetaExpander extends EndoTerm {
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
       case FormulaTerm mula -> simplFormula(mula);
-      case FormTerm.PartTy ty -> partialType(ty);
+      case PartialTyTerm ty -> partialType(ty);
       case MetaPatTerm metaPat -> metaPat.inline();
       case ElimTerm.App app -> {
         var result = ElimTerm.make(app);
         yield result == term ? result : apply(result);
       }
       case ElimTerm.Proj proj -> ElimTerm.proj(proj);
-      case ElimTerm.Match match -> {
+      case MatchTerm match -> {
         var result = tryMatch(match.discriminant(), match.clauses());
         yield result.isDefined() ? result.get() : match;
       }
-      case ElimTerm.PathApp(var of, var args, FormTerm.Cube(var xi, var type, var partial)) -> {
+      case ElimTerm.PathApp(var of, var args, PathTerm.Cube(var xi, var type, var partial)) -> {
         if (of instanceof ErasedTerm) {
           var ui = args.map(Arg::term);
           yield new ErasedTerm(type.subst(new Subst(xi, ui)));
@@ -66,7 +66,7 @@ public interface BetaExpander extends EndoTerm {
           yield apply(lam.body().subst(subst));
         }
         yield switch (partial(partial)) {
-          case Partial.Split<Term> hap -> new ElimTerm.PathApp(of, args, new FormTerm.Cube(xi, type, hap));
+          case Partial.Split<Term> hap -> new ElimTerm.PathApp(of, args, new PathTerm.Cube(xi, type, hap));
           case Partial.Const<Term> sad -> sad.u();
         };
       }
@@ -81,8 +81,8 @@ public interface BetaExpander extends EndoTerm {
         var codom = apply(ElimTerm.make(coe.type(), new Arg<>(new RefTerm(varI), true)));
 
         yield switch (codom) {
-          case FormTerm.Path path -> coe;
-          case FormTerm.Pi pi -> {
+          case PathTerm path -> coe;
+          case PiTerm pi -> {
             var u0Var = new LocalVar("u0");
             var vVar = new LocalVar("v");
             var A = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), pi.param().type());
@@ -96,13 +96,13 @@ public interface BetaExpander extends EndoTerm {
                 ElimTerm.make(new CoeTerm(BSubsted, coe.restr()),
                   new Arg<>(ElimTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
           }
-          case FormTerm.Sigma sigma -> {
+          case SigmaTerm sigma -> {
             var u0Var = new LocalVar("u0");
             var A = new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), sigma.params().first().type());
 
             var B = sigma.params().sizeEquals(2) ?
               new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), sigma.params().get(1).type()) :
-              new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), new FormTerm.Sigma(sigma.params().drop(1)));
+              new LamTerm(new Term.Param(varI, IntervalTerm.INSTANCE, true), new SigmaTerm(sigma.params().drop(1)));
 
             var u00 = new ElimTerm.Proj(new RefTerm(u0Var), 1);
             var u01 = new ElimTerm.Proj(new RefTerm(u0Var), 2);

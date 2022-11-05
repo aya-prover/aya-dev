@@ -18,7 +18,7 @@ public record MetaTerm(
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
 ) implements Callable {
-  public @NotNull FormTerm.Pi asPi(boolean explicit) {
+  public @NotNull PiTerm asPi(boolean explicit) {
     return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, ulift, contextArgs);
   }
 

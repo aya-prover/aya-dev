@@ -167,7 +167,7 @@ public record PatClassifier(
       // The type is sigma type, and do we have any non-catchall patterns?
       // Note that we cannot have ill-typed patterns such as constructor patterns,
       // since patterns here are already well-typed
-      case FormTerm.Sigma sigma -> {
+      case SigmaTerm sigma -> {
         var hasTuple = clauses
           .mapIndexedNotNull((index, subPats) -> head(subPats) instanceof Pat.Tuple tuple
             ? new MCT.SubPats<>(tuple.pats().view(), index) : null);

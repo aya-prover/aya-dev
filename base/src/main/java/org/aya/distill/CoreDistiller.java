@@ -44,7 +44,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case TupTerm term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
-      case FormTerm.Sigma term -> {
+      case SigmaTerm term -> {
         var last = term.params().last();
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Sig")),
@@ -131,14 +131,14 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
       case ElimTerm.Proj term ->
         Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
-      case ElimTerm.Match match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
+      case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
           Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
         Doc.vcat(match.clauses().view()
           .map(clause -> Doc.sep(Doc.symbol("|"),
             Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
             Doc.symbol("=>"), term(Outer.Free, clause.body())))
           .toImmutableSeq()));
-      case FormTerm.Pi term -> {
+      case PiTerm term -> {
         if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
           yield term(outer, term.body());
         }
@@ -149,7 +149,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           term(Outer.Codomain, term.body())
         ), Outer.BinOp);
         var params = MutableList.of(term.param());
-        var body = FormTerm.unpi(term.body(), params);
+        var body = PiTerm.unpi(term.body(), params);
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Pi")),
           visitTele(params, body, Term::findUsages),
@@ -180,11 +180,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
         );
       }
       case StringTerm str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
-      case FormTerm.PartTy ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
+      case PartialTyTerm ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
       case PartialTerm el -> partial(options, el.partial());
       case FormulaTerm mula -> formula(outer, mula.asFormula());
-      case FormTerm.Path path -> cube(options, path.cube());
+      case PathTerm path -> cube(options, path.cube());
       case PLamTerm lam -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
           Doc.sep(lam.params().map(BaseDistiller::varDoc)),

@@ -33,7 +33,7 @@ public record Eta(@NotNull LocalCtx ctx) {
         var firstItem = etaItems.first();
         if (!(firstItem instanceof ElimTerm.Proj proj
           && proj.of() instanceof RefTerm ref
-          && ctx.get(ref.var()) instanceof FormTerm.Sigma sigmaTerm)) yield defaultRes;
+          && ctx.get(ref.var()) instanceof SigmaTerm sigmaTerm)) yield defaultRes;
         // Make sure targetSigma's size is equal to this tuple's size
         if (!sigmaTerm.params().sizeEquals(tuple.items().size())) yield defaultRes;
         // Make sure every Proj.of Term is the same and index match the position

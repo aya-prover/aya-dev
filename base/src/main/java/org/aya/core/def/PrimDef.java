@@ -103,9 +103,9 @@ public final class PrimDef extends TopLevelDef<Term> {
         var paramRestr = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
         var varU = new LocalVar("u");
         var paramFuncU = new Term.Param(varU,
-          new FormTerm.Pi(
+          new PiTerm(
             new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true),
-            new FormTerm.PartTy(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
+            new PartialTyTerm(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
           true);
         var varU0 = new LocalVar("u0");
         var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
@@ -191,7 +191,7 @@ public final class PrimDef extends TopLevelDef<Term> {
             var iExp = prim.args().get(0).term();
             var ty = prim.args().get(1).term();
 
-            return new FormTerm.PartTy(ty, isOne(iExp));
+            return new PartialTyTerm(ty, isOne(iExp));
           },
           ref -> new PrimDef(
             ref,
@@ -273,15 +273,15 @@ public final class PrimDef extends TopLevelDef<Term> {
   }
 
   /** Let A be argument, then <code>A 0 -> A 1</code> */
-  public static @NotNull FormTerm.Pi familyLeftToRight(Term term) {
-    return new FormTerm.Pi(
+  public static @NotNull PiTerm familyLeftToRight(Term term) {
+    return new PiTerm(
       new Term.Param(LocalVar.IGNORED, new ElimTerm.App(term, new Arg<>(FormulaTerm.LEFT, true)), true),
       new ElimTerm.App(term, new Arg<>(FormulaTerm.RIGHT, true)));
   }
 
   public static @NotNull Term intervalToA() {
     var paramI = new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true);
-    return new FormTerm.Pi(paramI, new FormTerm.Type(0));
+    return new PiTerm(paramI, new FormTerm.Type(0));
   }
 
   public enum ID {

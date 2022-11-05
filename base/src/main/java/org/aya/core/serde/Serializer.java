@@ -91,8 +91,8 @@ public record Serializer(@NotNull Serializer.State state) {
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
       case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()));
       case IntervalTerm interval -> new SerTerm.Interval();
-      case FormTerm.Pi pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
-      case FormTerm.Sigma sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
+      case PiTerm pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
+      case SigmaTerm sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
       case ConCall conCall -> new SerTerm.ConCall(
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
@@ -112,7 +112,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeCall(fnCall.ulift(), fnCall.args()));
       case ElimTerm.Proj proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
       case ElimTerm.App app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
-      case ElimTerm.Match match ->
+      case MatchTerm match ->
         new SerTerm.Match(match.discriminant().map(this::serialize), match.clauses().map(this::serialize));
       case TupTerm tuple -> new SerTerm.Tup(tuple.items().map(this::serialize));
       case LamTerm lambda -> new SerTerm.Lam(serialize(lambda.param()), serialize(lambda.body()));
@@ -120,8 +120,8 @@ public record Serializer(@NotNull Serializer.State state) {
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
       case PartialTerm el -> new SerTerm.PartEl(el.partial().fmap(this::serialize), serialize(el.rhsType()));
-      case FormTerm.PartTy ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
-      case FormTerm.Path path -> new SerTerm.Path(serialize(path.cube()));
+      case PartialTyTerm ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
+      case PathTerm path -> new SerTerm.Path(serialize(path.cube()));
       case PLamTerm path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
       case ElimTerm.PathApp app -> new SerTerm.PathApp(serialize(app.of()),
         serializeArgs(app.args()), serialize(app.cube()));
@@ -156,7 +156,7 @@ public record Serializer(@NotNull Serializer.State state) {
     };
   }
 
-  private @NotNull SerTerm.SerCube serialize(@NotNull FormTerm.Cube cube) {
+  private @NotNull SerTerm.SerCube serialize(@NotNull PathTerm.Cube cube) {
     return new SerTerm.SerCube(
       serializeIntervals(cube.params()),
       serialize(cube.type()),

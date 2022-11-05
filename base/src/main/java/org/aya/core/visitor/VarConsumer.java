@@ -62,12 +62,12 @@ public interface VarConsumer extends TermConsumer {
           VarConsumer.super.accept(lambda);
           bound.removeLast();
         }
-        case FormTerm.Pi pi -> {
+        case PiTerm pi -> {
           bound.append(pi.param().ref());
           VarConsumer.super.accept(pi);
           bound.removeLast();
         }
-        case FormTerm.Sigma sigma -> {
+        case SigmaTerm sigma -> {
           var start = bound.size();
           sigma.params().forEach(param -> {
             bound.append(param.ref());
@@ -75,7 +75,7 @@ public interface VarConsumer extends TermConsumer {
           });
           bound.removeInRange(start, start + sigma.params().size());
         }
-        case FormTerm.Path path -> {
+        case PathTerm path -> {
           var start = bound.size();
           path.cube().params().forEach(bound::append);
           accept(path.cube().type());

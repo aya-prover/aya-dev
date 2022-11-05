@@ -41,7 +41,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           .add(DeltaExpander.buildSubst(call.ref().core.telescope(), access.structArgs()));
         yield core.result().subst(subst);
       }
-      case FormTerm.Sigma sigma -> {
+      case SigmaTerm sigma -> {
         var univ = sigma.params().view()
           .map(param -> whnf(term(param.type())))
           .filterIsInstance(FormTerm.Sort.class)
@@ -56,20 +56,20 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
           yield ErrorTerm.typeOf(sigma);
         }
       }
-      case LamTerm lambda -> new FormTerm.Pi(lambda.param(), term(lambda.body()));
+      case LamTerm lambda -> new PiTerm(lambda.param(), term(lambda.body()));
       case ElimTerm.Proj proj -> {
         var sigmaRaw = whnf(term(proj.of()));
-        if (!(sigmaRaw instanceof FormTerm.Sigma sigma)) yield ErrorTerm.typeOf(proj);
+        if (!(sigmaRaw instanceof SigmaTerm sigma)) yield ErrorTerm.typeOf(proj);
         var index = proj.ix() - 1;
         var telescope = sigma.params();
         yield telescope.get(index).type()
           .subst(ElimTerm.Proj.projSubst(proj.of(), index, telescope));
       }
       case NewTerm neu -> neu.struct();
-      case TupTerm tuple -> new FormTerm.Sigma(tuple.items().map(item ->
+      case TupTerm tuple -> new SigmaTerm(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
       case MetaPatTerm metaPat -> metaPat.ref().type();
-      case FormTerm.Pi pi -> {
+      case PiTerm pi -> {
         var paramTyRaw = whnf(term(pi.param().type()));
         var resultParam = new Term.Param(pi.param().ref(), whnf(pi.param().type()), pi.param().explicit());
         var t = new LittleTyper(state, localCtx.deriveMap());
@@ -88,9 +88,9 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case ElimTerm.App app -> {
         var piRaw = whnf(term(app.of()));
-        yield piRaw instanceof FormTerm.Pi pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
+        yield piRaw instanceof PiTerm pi ? pi.substBody(app.arg().term()) : ErrorTerm.typeOf(app);
       }
-      case ElimTerm.Match match -> {
+      case MatchTerm match -> {
         // TODO: Should I normalize match.discriminant() before matching?
         var term = BetaExpander.tryMatch(match.discriminant(), match.clauses());
         yield term.isDefined() ? term(term.get()) : ErrorTerm.typeOf(match);
@@ -101,10 +101,10 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case StringTerm str -> state.primFactory().getCall(PrimDef.ID.STRING);
       case IntegerTerm shaped -> shaped.type();
       case ListTerm shaped -> shaped.type();
-      case FormTerm.PartTy ty -> term(ty.type());
-      case PartialTerm el -> new FormTerm.PartTy(el.rhsType(), el.partial().restr());
-      case FormTerm.Path(var cube) -> term(cube.type());
-      case PLamTerm lam -> new FormTerm.Path(new FormTerm.Cube(
+      case PartialTyTerm ty -> term(ty.type());
+      case PartialTerm el -> new PartialTyTerm(el.rhsType(), el.partial().restr());
+      case PathTerm(var cube) -> term(cube.type());
+      case PLamTerm lam -> new PathTerm(new PathTerm.Cube(
         lam.params(),
         term(lam.body()),
         new Partial.Const<>(term(lam.body()))

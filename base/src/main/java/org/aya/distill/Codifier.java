@@ -46,14 +46,14 @@ public record Codifier(
         term(of);
         builder.append(",").append(ix).append(")");
       }
-      case FormTerm.PartTy(var ty, var restr) -> coePar(ty, restr, "FormTerm.PartTy");
-      case FormTerm.Path(var cube) -> {
+      case PartialTyTerm(var ty, var restr) -> coePar(ty, restr, "FormTerm.PartTy");
+      case PathTerm(var cube) -> {
         builder.append("new FormTerm.Path(");
         cube(cube);
         builder.append(")");
       }
-      case FormTerm.Pi(var param, var body) -> piLam(param, body, "FormTerm.Pi");
-      case FormTerm.Sigma(var items) -> tupSigma(items, this::param, "FormTerm.Sigma");
+      case PiTerm(var param, var body) -> piLam(param, body, "FormTerm.Pi");
+      case SigmaTerm(var items) -> tupSigma(items, this::param, "FormTerm.Sigma");
       case LamTerm(var param, var body) -> piLam(param, body, "IntroTerm.Lambda");
       case PartialTerm(var par, var ty) -> {
         builder.append("new IntroTerm.PartEl(");
@@ -97,7 +97,7 @@ public record Codifier(
     }
   }
 
-  private void cube(FormTerm.@NotNull Cube cube) {
+  private void cube(PathTerm.@NotNull Cube cube) {
     builder.append("new FormTerm.Cube(ImmutableSeq.of(");
     commaSep(cube.params(), this::varDef);
     builder.append("),");

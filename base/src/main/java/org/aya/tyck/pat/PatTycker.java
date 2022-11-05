@@ -244,7 +244,7 @@ public final class PatTycker {
         yield new Pat.Absurd(absurd.explicit());
       }
       case Pattern.Tuple tuple -> {
-        if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Sigma sigma))
+        if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, term);
         var tupleIsProp = sigma.computeType(exprTycker.state, exprTycker.localCtx) instanceof FormTerm.Prop;
         if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));

@@ -88,13 +88,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record Pi(@NotNull SerTerm.SerParam param, @NotNull SerTerm body) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Pi(param.de(state), body.de(state));
+      return new PiTerm(param.de(state), body.de(state));
     }
   }
 
   record Sigma(@NotNull ImmutableSeq<SerParam> params) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Sigma(params.map(p -> p.de(state)));
+      return new SigmaTerm(params.map(p -> p.de(state)));
     }
   }
 
@@ -154,7 +154,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record Match(@NotNull ImmutableSeq<SerTerm> of, ImmutableSeq<SerPat.Clause> clauses) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.Match(of.map(t -> t.de(state)), clauses.map(c -> c.de(state)));
+      return new MatchTerm(of.map(t -> t.de(state)), clauses.map(c -> c.de(state)));
     }
   }
 
@@ -292,13 +292,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record PartTy(@NotNull SerTerm type, @NotNull Restr<SerTerm> restr) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.PartTy(type.de(state), restr.fmap(t -> t.de(state)));
+      return new PartialTyTerm(type.de(state), restr.fmap(t -> t.de(state)));
     }
   }
 
   record Path(@NotNull SerCube cube) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Path(cube.de(state));
+      return new PathTerm(cube.de(state));
     }
   }
 
@@ -332,8 +332,8 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerTerm type,
     @NotNull Partial<SerTerm> partial
   ) implements Serializable {
-    public @NotNull FormTerm.Cube de(@NotNull DeState state) {
-      return new FormTerm.Cube(
+    public @NotNull PathTerm.Cube de(@NotNull DeState state) {
+      return new PathTerm.Cube(
         params.map(p -> p.de(state)),
         type.de(state),
         partial.fmap(t -> t.de(state)));

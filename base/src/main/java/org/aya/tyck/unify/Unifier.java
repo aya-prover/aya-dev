@@ -81,9 +81,9 @@ public final class Unifier extends TermComparator {
     if (preRhs instanceof MetaTerm rcall && lhs.ref() == rcall.ref()) {
       // If we do not know the type, then we do not perform the comparison
       if (meta.result == null) return null;
-      var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
+      var holeTy = PiTerm.make(meta.telescope, meta.result);
       for (var arg : lhs.args().zipView(rcall.args())) {
-        if (!(holeTy instanceof FormTerm.Pi holePi))
+        if (!(holeTy instanceof PiTerm holePi))
           throw new InternalException("meta arg size larger than param size. this should not happen");
         if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
         holeTy = holePi.substBody(arg._1.term());

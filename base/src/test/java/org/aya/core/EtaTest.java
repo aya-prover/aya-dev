@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EtaTest {
-  private static final @NotNull Term SIGMA = new FormTerm.Sigma(ImmutableSeq.of(
+  private static final @NotNull Term SIGMA = new SigmaTerm(ImmutableSeq.of(
     new Term.Param(new LocalVar("A"), FormTerm.Type.ZERO, false),
     new Term.Param(new LocalVar("B"), FormTerm.Type.ZERO, false)));
   private static final @NotNull LocalVar X = new LocalVar("x");

@@ -14,6 +14,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.FormTerm;
+import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.tyck.error.NobodyError;
@@ -212,8 +213,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           var result = tycker.synthesize(prim.result).wellTyped();
           // We assume that there aren't many level parameters in prims (at most 1).
           tycker.unifyTyReported(
-            FormTerm.Pi.make(tele, result),
-            FormTerm.Pi.make(core.telescope, core.result),
+            PiTerm.make(tele, result),
+            PiTerm.make(core.telescope, core.result),
             prim.result);
           prim.signature = new Def.Signature(tele, result);
         } else if (!(prim.result instanceof Expr.Error)) {

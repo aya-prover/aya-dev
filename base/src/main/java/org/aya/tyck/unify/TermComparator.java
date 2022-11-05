@@ -287,7 +287,7 @@ public sealed abstract class TermComparator permits Unifier {
       case TupTerm $ -> throw new InternalException("TupTerm is never type");
       case NewTerm $ -> throw new InternalException("NewTerm is never type");
       case ErrorTerm $ -> true;
-      case FormTerm.Sigma(var paramsSeq) -> {
+      case SigmaTerm(var paramsSeq) -> {
         var params = paramsSeq.view();
         for (int i = 1, size = paramsSeq.size(); i <= size; i++) {
           var l = ElimTerm.proj(lhs, i);
@@ -299,7 +299,7 @@ public sealed abstract class TermComparator permits Unifier {
         ctx.remove(paramsSeq.view().map(Term.Param::ref));
         yield true;
       }
-      case FormTerm.Pi pi -> ctx.with(pi.param(), () -> switch (new Pair(lhs, rhs)) {
+      case PiTerm pi -> ctx.with(pi.param(), () -> switch (new Pair(lhs, rhs)) {
         case Pair(LamTerm(var lp, var lb), LamTerm(var rp, var rb)) -> {
           var ref = pi.param().ref();
           if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
@@ -317,7 +317,7 @@ public sealed abstract class TermComparator permits Unifier {
         case default -> compare(lhs, rhs, lr, rl, null);
       });
       // In this case, both sides have the same type (I hope)
-      case FormTerm.Path(var cube) -> ctx.withIntervals(cube.params().view(), () -> {
+      case PathTerm(var cube) -> ctx.withIntervals(cube.params().view(), () -> {
         if (lhs instanceof PLamTerm lambda) {
           assert lambda.params().sizeEquals(cube.params());
           if (rhs instanceof PLamTerm(var rparams, var rbody)) {
@@ -334,7 +334,7 @@ public sealed abstract class TermComparator permits Unifier {
         // Question: do we need a unification for Pi.body?
         return compare(lhs, rhs, lr, rl, null);
       });
-      case FormTerm.PartTy ty -> {
+      case PartialTyTerm ty -> {
         if (lhs instanceof PartialTerm lel && rhs instanceof PartialTerm rel)
           yield comparePartial(lel, rel, ty, lr, rl);
         else yield false;
@@ -344,7 +344,7 @@ public sealed abstract class TermComparator permits Unifier {
     return ret;
   }
 
-  private boolean compareLambdaBody(LamTerm lambda, Term rhs, Sub lr, Sub rl, FormTerm.Pi pi) {
+  private boolean compareLambdaBody(LamTerm lambda, Term rhs, Sub lr, Sub rl, PiTerm pi) {
     var arg = pi.param().toArg();
     rl.map.put(pi.param().ref(), lambda.param().toTerm());
     var result = ctx.with(lambda.param(), () ->
@@ -353,7 +353,7 @@ public sealed abstract class TermComparator permits Unifier {
     return result;
   }
 
-  private boolean comparePathLamBody(PLamTerm lambda, Term rhs, Sub lr, Sub rl, FormTerm.Cube cube) {
+  private boolean comparePathLamBody(PLamTerm lambda, Term rhs, Sub lr, Sub rl, PathTerm.Cube cube) {
     cube.params().zipView(lambda.params()).forEach(p ->
       rl.map.put(p._1, new RefTerm(p._2)));
     var result = ctx.withIntervals(lambda.params().view(), () ->
@@ -364,7 +364,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private boolean comparePartial(
     @NotNull PartialTerm lhs, @NotNull PartialTerm rhs,
-    @NotNull FormTerm.PartTy type, Sub lr, Sub rl
+    @NotNull PartialTyTerm type, Sub lr, Sub rl
   ) {
     record P(Partial<Term> l, Partial<Term> r) {}
     return switch (new P(lhs.partial(), rhs.partial())) {
@@ -375,12 +375,12 @@ public sealed abstract class TermComparator permits Unifier {
     };
   }
 
-  private boolean compareCube(@NotNull FormTerm.Cube lhs, @NotNull FormTerm.Cube rhs, Sub lr, Sub rl) {
+  private boolean compareCube(@NotNull PathTerm.Cube lhs, @NotNull PathTerm.Cube rhs, Sub lr, Sub rl) {
     return TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, rhs.params(), (lsub, rsub) -> {
       var lPar = (PartialTerm) new PartialTerm(lhs.partial(), lhs.type()).subst(lsub);
       var rPar = (PartialTerm) new PartialTerm(rhs.partial(), rhs.type()).subst(rsub);
-      var lType = new FormTerm.PartTy(lPar.rhsType(), lPar.partial().restr());
-      var rType = new FormTerm.PartTy(rPar.rhsType(), rPar.partial().restr());
+      var lType = new PartialTyTerm(lPar.rhsType(), lPar.partial().restr());
+      var rType = new PartialTyTerm(rPar.rhsType(), rPar.partial().restr());
       if (!compare(lType, rType, lr, rl, null)) return false;
       return comparePartial(lPar, rPar, lType, lr, rl);
     });
@@ -406,14 +406,14 @@ public sealed abstract class TermComparator permits Unifier {
       case ElimTerm.App(var lOf, var lArg) -> {
         if (!(preRhs instanceof ElimTerm.App(var rOf, var rArg))) yield null;
         var preFnType = compareUntyped(lOf, rOf, lr, rl);
-        if (!(preFnType instanceof FormTerm.Pi fnType)) yield null;
+        if (!(preFnType instanceof PiTerm fnType)) yield null;
         if (!compare(lArg.term(), rArg.term(), lr, rl, fnType.param().type())) yield null;
         yield fnType.substBody(lArg.term());
       }
       case ElimTerm.PathApp lhs -> {
         if (!(preRhs instanceof ElimTerm.PathApp rhs)) yield null;
         var prePathType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(prePathType instanceof FormTerm.Path(var cube))) yield null;
+        if (!(prePathType instanceof PathTerm(var cube))) yield null;
         var happy = lhs.args().zipView(rhs.args()).allMatch(t ->
           compare(t._1.term(), t._2.term(), lr, rl, null));
         yield happy ? cube.type() : null;
@@ -421,7 +421,7 @@ public sealed abstract class TermComparator permits Unifier {
       case ElimTerm.Proj lhs -> {
         if (!(preRhs instanceof ElimTerm.Proj(var rof, var rix))) yield null;
         var preTupType = compareUntyped(lhs.of(), rof, lr, rl);
-        if (!(preTupType instanceof FormTerm.Sigma(var tele))) yield null;
+        if (!(preTupType instanceof SigmaTerm(var tele))) yield null;
         if (lhs.ix() != rix) yield null;
         var params = tele.view();
         var subst = new Subst(MutableMap.create());
@@ -435,16 +435,16 @@ public sealed abstract class TermComparator permits Unifier {
         yield params.last().subst(subst).type();
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
-      case FormTerm.Pi(var lParam, var lBody) -> {
-        if (!(preRhs instanceof FormTerm.Pi(var rParam, var rBody))) yield null;
+      case PiTerm(var lParam, var lBody) -> {
+        if (!(preRhs instanceof PiTerm(var rParam, var rBody))) yield null;
         yield checkParam(lParam, rParam, null, new Subst(), new Subst(), lr, rl, () -> null, (lsub, rsub) -> {
           var bodyIsOk = compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null);
           if (!bodyIsOk) return null;
           return FormTerm.Type.ZERO;
         });
       }
-      case FormTerm.Sigma(var lParams) -> {
-        if (!(preRhs instanceof FormTerm.Sigma(var rParams))) yield null;
+      case SigmaTerm(var lParams) -> {
+        if (!(preRhs instanceof SigmaTerm(var rParams))) yield null;
         yield checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> FormTerm.Type.ZERO);
       }
       case FormTerm.Sort lhs -> {
@@ -452,14 +452,14 @@ public sealed abstract class TermComparator permits Unifier {
         if (!compareSort(lhs, rhs)) yield null;
         yield (cmp == Ordering.Lt ? lhs : rhs).succ();
       }
-      case FormTerm.PartTy(var lTy, var lR) -> {
-        if (!(preRhs instanceof FormTerm.PartTy(var rTy, var rR))) yield null;
+      case PartialTyTerm(var lTy, var lR) -> {
+        if (!(preRhs instanceof PartialTyTerm(var rTy, var rR))) yield null;
         var happy = compare(lTy, rTy, lr, rl, null)
           && compareRestr(lR, rR);
         yield happy ? FormTerm.Type.ZERO : null;
       }
-      case FormTerm.Path(var lCube) -> {
-        if (!(preRhs instanceof FormTerm.Path(var rCube))) yield null;
+      case PathTerm(var lCube) -> {
+        if (!(preRhs instanceof PathTerm(var rCube))) yield null;
         yield compareCube(lCube, rCube, lr, rl) ? FormTerm.Type.ZERO : null;
       }
       case IntervalTerm lhs -> preRhs instanceof IntervalTerm ? FormTerm.Type.ZERO : null;
