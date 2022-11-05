@@ -32,7 +32,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
   }
 
   private static final Term I = IntervalTerm.INSTANCE;
-  public @NotNull LamTerm coe(CoeTerm coe, LocalVar i) {
+  public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar i) {
     var t = new RefTerm(new LocalVar("t"));
     assert params.sizeGreaterThanOrEquals(2);
     var items = MutableArrayList.<Arg<Term>>create(params.size());

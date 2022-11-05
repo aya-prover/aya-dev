@@ -85,7 +85,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
     return make(list.view().map(Param::interval), type);
   }
 
-  public @NotNull LamTerm coe(CoeTerm coe, LocalVar varI) {
+  public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar varI) {
     var u0Var = new LocalVar("u0");
     var vVar = new LocalVar("v");
     var A = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), param.type());

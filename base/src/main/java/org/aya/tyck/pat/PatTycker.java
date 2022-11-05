@@ -29,6 +29,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
+import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
@@ -317,7 +318,7 @@ public final class PatTycker {
         yield new Pat.Bind(bind, term);
       }
       case Pattern.CalmFace(var pos) -> new Pat.Meta(MutableValue.create(),
-        new LocalVar(Constants.ANONYMOUS_PREFIX, pos), term);
+        new LocalVar(Constants.ANONYMOUS_PREFIX, pos, GenerateKind.Anonymous.INSTANCE), term);
       case Pattern.Number(var pos, var number) -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
         if (ty instanceof DataCall dataCall) {
