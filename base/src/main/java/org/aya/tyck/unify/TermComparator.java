@@ -376,14 +376,15 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private boolean compareCube(@NotNull PathTerm.Cube lhs, @NotNull PathTerm.Cube rhs, Sub lr, Sub rl) {
-    return TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, rhs.params(), (lsub, rsub) -> {
+    var tyVars = rhs.params();
+    return ctx.withIntervals(tyVars.view(), () -> TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, tyVars, (lsub, rsub) -> {
       var lPar = (PartialTerm) new PartialTerm(lhs.partial(), lhs.type()).subst(lsub);
       var rPar = (PartialTerm) new PartialTerm(rhs.partial(), rhs.type()).subst(rsub);
       var lType = new PartialTyTerm(lPar.rhsType(), lPar.partial().restr());
       var rType = new PartialTyTerm(rPar.rhsType(), rPar.partial().restr());
       if (!compare(lType, rType, lr, rl, null)) return false;
       return comparePartial(lPar, rPar, lType, lr, rl);
-    });
+    }));
   }
 
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
