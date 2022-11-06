@@ -407,6 +407,10 @@ public final class PrimDef extends TopLevelDef<Term> {
     ID(@NotNull String id) {
       this.id = id;
     }
+
+    public static boolean isCoercion(@NotNull ID id) {
+      return id == COE || id == COEFILL || id == COEINV || id == COEINVFILL;
+    }
   }
 
   public final @NotNull DefVar<@NotNull PrimDef, TeleDecl.PrimDecl> ref;

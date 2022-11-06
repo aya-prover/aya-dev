@@ -167,7 +167,7 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.Coe coe -> {
         assert coe.resolvedVar() instanceof DefVar<?, ?> defVar
-          && defVar.core instanceof PrimDef def && def.id == PrimDef.ID.COE : "desugar bug";
+          && defVar.core instanceof PrimDef def && PrimDef.ID.isCoercion(def.id) : "desugar bug";
         var defVar = coe.resolvedVar();
         var mockApp = new Expr.App(coe.sourcePos(), new Expr.App(coe.sourcePos(),
           new Expr.Ref(coe.id().sourcePos(), defVar),
