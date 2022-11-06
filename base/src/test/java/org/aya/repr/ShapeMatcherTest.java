@@ -52,6 +52,17 @@ public class ShapeMatcherTest {
       """);
   }
 
+  @Test
+  public void matchWeirdList() {
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List {A : Type} | nil | cons A (List {A})");
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil | cons {A} (List A)");
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil | cons A {List A}");
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List {A : Type} | nil | cons {A} (List {A})");
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List {A : Type} | nil | cons A {List {A}}");
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List (A : Type) | nil | cons {A} {List A}");
+    match(true, AyaShape.AyaListShape.DATA_LIST, "data List {A : Type} | nil | cons {A} {List {A}}");
+  }
+
   public void match(boolean should, @NotNull CodeShape shape, @Language("Aya") @NonNls @NotNull String code) {
     var def = TyckDeclTest.successTyckDecls(code)._2;
     def.forEach(d -> assertEquals(should, ShapeMatcher.match(shape, d)));

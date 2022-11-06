@@ -77,24 +77,34 @@ public sealed interface CodeShape {
   sealed interface ParamShape {
     record Any() implements ParamShape {}
 
-    record Licit(@NotNull CodeShape.TermShape type, boolean explicit) implements ParamShape {}
+    record Licit(@NotNull CodeShape.TermShape type, Kind kind) implements ParamShape {
+      enum Kind {
+        Any, Ex, Im
+      }
+    }
 
     record Optional(@NotNull CodeShape.ParamShape param) implements ParamShape {}
 
-    static @NotNull CodeShape.ParamShape ex(@NotNull CodeShape.TermShape type) {
-      return new Licit(type, true);
+    static @NotNull CodeShape.ParamShape explicit(@NotNull CodeShape.TermShape type) {
+      return new Licit(type, Licit.Kind.Ex);
     }
 
-    static @NotNull CodeShape.ParamShape im(@NotNull CodeShape.TermShape type) {
-      return new Licit(type, false);
+    static @NotNull CodeShape.ParamShape implicit(@NotNull CodeShape.TermShape type) {
+      return new Licit(type, Licit.Kind.Im);
+    }
+
+    static @NotNull CodeShape.ParamShape anyLicit(@NotNull CodeShape.TermShape type) {
+      return new Licit(type, Licit.Kind.Any);
     }
 
     static @NotNull CodeShape.ParamShape anyEx() {
-      return ex(new TermShape.Any());
+      return explicit(new TermShape.Any());
     }
 
     static @NotNull CodeShape.ParamShape anyIm() {
-      return im(new TermShape.Any());
+      return implicit(new TermShape.Any());
     }
+
+    // anyLicit(TermShape.Any) would be equivalent to ParamShape.Any
   }
 }
