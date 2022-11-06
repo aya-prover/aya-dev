@@ -80,7 +80,7 @@ public final class PrimDef extends TopLevelDef<Term> {
 
   public static class Factory {
     private final class Initializer {
-      public final @NotNull PrimDef.PrimSeed coerce = new PrimSeed(ID.COE, this::coe, ref -> {
+      public final @NotNull PrimDef.PrimSeed coe = new PrimSeed(ID.COE, this::coe, ref -> {
         var varA = new LocalVar("A");
         var paramA = new Term.Param(varA, intervalToA(), true);
         var paramRestr = new Term.Param(new LocalVar("i"), IntervalTerm.INSTANCE, true);
@@ -217,7 +217,7 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.stringConcat,
           init.intervalType,
           init.partialType,
-          init.coerce,
+          init.coe,
           init.hcomp
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();

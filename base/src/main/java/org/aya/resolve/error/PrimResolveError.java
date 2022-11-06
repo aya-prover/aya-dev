@@ -47,9 +47,25 @@ public interface PrimResolveError extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       assert lack.isNotEmpty();
       return Doc.sep(
-        Doc.english("The prim"), Doc.styled(Style.code(), Doc.plain(name)),
-        Doc.english("depends on undeclared prims:"),
+        Doc.english("The primitive"), Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.english("depends on undeclared primitive(s):"),
         Doc.commaList(lack.map(name -> Doc.styled(Style.code(), Doc.plain(name.id)))));
+    }
+  }
+
+  record BadUsage(
+    @NotNull String name,
+    @NotNull SourcePos sourcePos
+  ) implements PrimResolveError {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(Doc.english("The primitive"),
+        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.english("is not designed to be used as a function"));
+    }
+
+    @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
+      return Doc.sep(Doc.english("Use the projection syntax instead, like:"),
+        Doc.styled(Style.code(), Doc.plain("." + name)));
     }
   }
 }

@@ -1,4 +1,4 @@
 prim I
 prim coe
---| test `coe`
+--| test `I`
 --| test `unresolved`
