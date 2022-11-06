@@ -101,25 +101,7 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       public final @NotNull PrimDef.PrimSeed coeFill = new PrimSeed(ID.COEFILL, this::coeFill, ref -> {
         // coeFill (A : I -> Type) (phi : I) : Pi (u : A 0) -> Path A u (coe A phi u)
-        var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, intervalToType(), true);
-        var varPhi = new LocalVar("phi");
-        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, true);
-        var varU = new LocalVar("u");
-        var paramU = new Term.Param(varU, new AppTerm(new RefTerm(varA), new Arg<>(FormulaTerm.LEFT, true)), true);
-        var i = new LocalVar("i");
-        var path = new PathTerm(new PathTerm.Cube(
-          ImmutableSeq.of(i),
-          new AppTerm(new RefTerm(varA), new Arg<>(new RefTerm(i), true)),
-          new Partial.Split<>(ImmutableSeq.of(
-            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), false))), new RefTerm(varU)),
-            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), true))), new AppTerm(getCall(ID.COE, ImmutableSeq.of(
-              new Arg<>(new RefTerm(varA), true),
-              new Arg<>(new RefTerm(varPhi), true))),
-              new Arg<>(new RefTerm(varU), true)))
-          ))));
-        var result = new PiTerm(paramU, path);
-        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi), result, ID.COEFILL);
+        return coeFillFactory(ref, ID.COEFILL, ID.COE, FormulaTerm.LEFT);
       }, ImmutableSeq.of(ID.I, ID.COE));
 
       private @NotNull Term coeFill(@NotNull PrimCall prim, @NotNull TyckState state) {
@@ -148,25 +130,7 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       public final @NotNull PrimDef.PrimSeed eocFill = new PrimSeed(ID.COEINVFILL, this::eocFill, ref -> {
         // coeInvFill (A : I -> Type) (phi : I) : Pi (u : A 1) -> Path A u (coeInv A phi u)
-        var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, intervalToType(), true);
-        var varPhi = new LocalVar("phi");
-        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, true);
-        var varU = new LocalVar("u");
-        var paramU = new Term.Param(varU, new AppTerm(new RefTerm(varA), new Arg<>(FormulaTerm.RIGHT, true)), true);
-        var i = new LocalVar("i");
-        var path = new PathTerm(new PathTerm.Cube(
-          ImmutableSeq.of(i),
-          new AppTerm(new RefTerm(varA), new Arg<>(new RefTerm(i), true)),
-          new Partial.Split<>(ImmutableSeq.of(
-            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), false))), new RefTerm(varU)),
-            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), true))), new AppTerm(getCall(ID.COEINV, ImmutableSeq.of(
-              new Arg<>(new RefTerm(varA), true),
-              new Arg<>(new RefTerm(varPhi), true))),
-              new Arg<>(new RefTerm(varU), true)))
-          ))));
-        var result = new PiTerm(paramU, path);
-        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi), result, ID.COEINVFILL);
+        return coeFillFactory(ref, ID.COEINVFILL, ID.COEINV, FormulaTerm.RIGHT);
       }, ImmutableSeq.of(ID.I, ID.COEINV));
 
       private @NotNull Term eocFill(@NotNull PrimCall prim, @NotNull TyckState state) {
@@ -174,6 +138,29 @@ public final class PrimDef extends TopLevelDef<Term> {
         var restr = prim.args().get(1).term();
         var j = new LocalVar("j");
         return CoeTerm.coeFillInv(type, isOne(restr), new RefTerm(j));
+      }
+
+      private @NotNull PrimDef coeFillFactory(DefVar<PrimDef, TeleDecl.PrimDecl> ref, ID coeFill, ID coe, FormulaTerm start) {
+        // <coeFill> (A : I -> Type) (phi : I) : Pi (u : A <start>) -> Path A u (<coe> A phi u)
+        var varA = new LocalVar("A");
+        var paramA = new Term.Param(varA, intervalToType(), true);
+        var varPhi = new LocalVar("phi");
+        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, true);
+        var varU = new LocalVar("u");
+        var paramU = new Term.Param(varU, new AppTerm(new RefTerm(varA), new Arg<>(start, true)), true);
+        var i = new LocalVar("i");
+        var path = new PathTerm(new PathTerm.Cube(
+          ImmutableSeq.of(i),
+          new AppTerm(new RefTerm(varA), new Arg<>(new RefTerm(i), true)),
+          new Partial.Split<>(ImmutableSeq.of(
+            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), false))), new RefTerm(varU)),
+            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), true))), new AppTerm(getCall(coe, ImmutableSeq.of(
+              new Arg<>(new RefTerm(varA), true),
+              new Arg<>(new RefTerm(varPhi), true))),
+              new Arg<>(new RefTerm(varU), true)))
+          ))));
+        var result = new PiTerm(paramU, path);
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi), result, coeFill);
       }
 
       private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
