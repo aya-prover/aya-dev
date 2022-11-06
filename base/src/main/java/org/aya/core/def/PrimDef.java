@@ -395,7 +395,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       this.id = id;
     }
 
-    public static boolean isCoercion(@NotNull ID id) {
+    public static boolean projSyntax(@NotNull ID id) {
       return id == COE || id == COEFILL || id == COEINV || id == COEINVFILL;
     }
   }

@@ -442,7 +442,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    *
    * @param resolvedVar will be set to the primitive coe's DefVar during resolving
    * @param restr       The cofibration under which the type should be constant
-   * @see org.aya.core.def.PrimDef.ID#isCoercion(PrimDef.ID)
+   * @see org.aya.core.def.PrimDef.ID#projSyntax(PrimDef.ID)
    */
   record Coe(
     @Override @NotNull SourcePos sourcePos,
