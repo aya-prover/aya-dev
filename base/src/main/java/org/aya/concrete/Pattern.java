@@ -13,6 +13,7 @@ import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
+import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
@@ -40,6 +41,8 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     return this;
   }
 
+  @NotNull Pattern licitify(boolean explicit);
+
   default @NotNull Pattern descent(@NotNull Function<@NotNull Pattern, @NotNull Pattern> f) {
     return switch (this) {
       case Pattern.BinOpSeq(var pos, var seq, var as, var ex) -> new Pattern.BinOpSeq(pos, seq.map(f), as, ex);
@@ -58,6 +61,10 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @NotNull ImmutableSeq<Pattern> patterns,
     @Nullable LocalVar as
   ) implements Pattern {
+    @Override
+    public @NotNull Pattern licitify(boolean explicit) {
+      return new Tuple(sourcePos, explicit, patterns, as);
+    }
   }
 
   record Number(
@@ -65,18 +72,30 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     boolean explicit,
     int number
   ) implements Pattern {
+    @Override
+    public @NotNull Pattern licitify(boolean explicit) {
+      return new Number(sourcePos, explicit, number);
+    }
   }
 
   record Absurd(
     @Override @NotNull SourcePos sourcePos,
     boolean explicit
   ) implements Pattern {
+    @Override
+    public @NotNull Pattern licitify(boolean explicit) {
+      return new Absurd(sourcePos, explicit);
+    }
   }
 
   record CalmFace(
     @Override @NotNull SourcePos sourcePos,
     boolean explicit
   ) implements Pattern {
+    @Override
+    public @NotNull Pattern licitify(boolean explicit) {
+      return new CalmFace(sourcePos, explicit);
+    }
   }
 
   record Bind(
@@ -85,6 +104,10 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @NotNull LocalVar bind,
     @ForLSP @NotNull MutableValue<@Nullable Term> type
   ) implements Pattern {
+    @Override
+    public @NotNull Pattern licitify(boolean explicit) {
+      return new Bind(sourcePos, explicit, bind, type);
+    }
   }
 
   record Ctor(
@@ -97,6 +120,11 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     public Ctor(@NotNull Pattern.Bind bind, @NotNull AnyVar maybe) {
       this(bind.sourcePos(), bind.explicit(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty(), null);
     }
+
+    @Override
+    public @NotNull Pattern licitify(boolean explicit) {
+      return new Ctor(sourcePos, explicit, resolved, params, as);
+    }
   }
 
   record BinOpSeq(
@@ -105,6 +133,10 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @Nullable LocalVar as,
     boolean explicit
   ) implements Pattern {
+    @Override
+    public @NotNull Pattern licitify(boolean explicit) {
+      throw new InternalException("unreachable");
+    }
   }
 
   /** Sugared List Pattern */
@@ -114,6 +146,10 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @NotNull ImmutableSeq<Pattern> elements,
     @Nullable LocalVar as
   ) implements Pattern {
+    @Override
+    public @NotNull Pattern licitify(boolean explicit) {
+      return new List(sourcePos, explicit, elements, as);
+    }
   }
 
   /**
@@ -153,23 +189,30 @@ public sealed interface Pattern extends AyaDocile, SourceNode, BinOpParser.Elem<
     @Override @NotNull AyaShape shape,
     @Override @NotNull Term type
   ) implements Shaped.List<Pattern> {
+
     @Override public @NotNull Pattern makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> type) {
       return new Pattern.Ctor(sourcePos, explicit,
         new WithPos<>(sourcePos, nil.ref()), ImmutableSeq.empty(), as);
     }
 
     @Override public @NotNull Pattern
-    makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, Pattern x, Pattern last) {
+    makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, Pattern x, Pattern xs) {
+      var xLicit = cons.selfTele.get(0).explicit();
+      var xsLicit = cons.selfTele.get(1).explicit();
+
+      x = x.licitify(xLicit);
+      xs = xs.licitify(xsLicit);
+
       // x    : Current Pattern
       // xs   : Right Pattern
-      // Goal : consCtor value list
+      // Goal : consCtor x xs
       return new Pattern.Ctor(sourcePos, explicit,
         new WithPos<>(sourcePos, cons.ref()),
-        ImmutableSeq.of(x, last), as);
+        ImmutableSeq.of(x, xs), as);
     }
 
     @Override public @NotNull Pattern destruct(@NotNull ImmutableSeq<Pattern> repr) {
-      return new FakeShapedList(sourcePos, true, null, repr, shape, type)
+      return new FakeShapedList(sourcePos, explicit, null, repr, shape, type)
         .constructorForm();
     }
   }

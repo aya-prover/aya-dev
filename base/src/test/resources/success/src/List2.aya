@@ -3,12 +3,12 @@ open import Paths
 
 -- This test makes sure that `Pattern.List` DO desugar to `Pattern.Ctor` with CodeShape instead of `nil` and `:<`
 
-open data SomeList (A : Type) | cons A (SomeList A) | empty
+open data SomeList {A : Type} | cons {A} {SomeList {A}} | empty
 
-def simpleMatch (x : SomeList Nat) : SomeList Nat
+def simpleMatch (x : SomeList {Nat}) : SomeList {Nat}
 | [ ] => empty
-| [ 1 ] => cons 1 empty
-| [ 1, e2 ] => cons 1 (cons e2 empty)
+| [ 1 ] => cons {Nat} {1} {empty}
+| [ 1, e2 ] => cons {Nat} {1} {cons {Nat} {e2} {empty}}
 | [ 1, e2, _ ] as l' => l'
 | [ _, _, _, _ ] as l' => l'
 | _ => x

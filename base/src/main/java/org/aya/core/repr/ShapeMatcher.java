@@ -50,6 +50,9 @@ public record ShapeMatcher(
 
   private boolean matchTerm(@NotNull CodeShape.TermShape shape, @NotNull Term term) {
     if (shape instanceof CodeShape.TermShape.Any) return true;
+    // TODO[hoshino]: For now, we are unable to match `| Ctor (Data {Im} Ex)` and `| Ctor (Data Ex)`
+    //                by only one `Shape`, I think the solution is
+    //                constructing a Term by Shape and unify them.
     if (shape instanceof CodeShape.TermShape.Call call && term instanceof Callable callable) {
       var superLevel = def.getOrNull(call.superLevel());
       if (superLevel != callable.ref()) return false;                      // implies null check
@@ -100,10 +103,15 @@ public record ShapeMatcher(
     if (shape instanceof CodeShape.ParamShape.Any) return true;
     if (shape instanceof CodeShape.ParamShape.Optional opt) return matchParam(opt.param(), param);
     if (shape instanceof CodeShape.ParamShape.Licit licit) {
-      if (licit.explicit() != param.explicit()) return false;
+      if (! matchLicit(licit.kind(), param.explicit())) return false;
       return matchTerm(licit.type(), param.type());
     }
     return false;
+  }
+
+  private boolean matchLicit(@NotNull CodeShape.ParamShape.Licit.Kind xlicit, boolean isExplicit) {
+    return xlicit == CodeShape.ParamShape.Licit.Kind.Any
+      || (xlicit == CodeShape.ParamShape.Licit.Kind.Ex) == isExplicit;
   }
 
   private boolean matchInside(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar, @NotNull BooleanSupplier matcher) {

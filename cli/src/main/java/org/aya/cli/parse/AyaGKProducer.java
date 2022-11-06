@@ -748,7 +748,14 @@ public record AyaGKProducer(
       var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
 
       return ex -> new Pattern.List(sourcePos, ex,
-        patterns.map(f -> f.apply(true, null)).toImmutableSeq(), asId);
+        patterns.map(f -> {
+          var subpat = f.apply(true, null);
+          if (! subpat.explicit()) {    // [ {a} ] is disallowed
+            reporter.report(new ParseError(subpat.sourcePos(), "Implicit elements in list pattern is disallowed"));
+          }
+
+          return subpat;
+        }).toImmutableSeq(), asId);
     }
     if (node.is(ATOM_NUMBER_PATTERN))
       return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));

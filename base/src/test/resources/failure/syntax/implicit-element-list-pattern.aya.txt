@@ -1,0 +1,11 @@
+In file $FILE:11:8 ->
+
+   9 | def bad {A : Type} (xs : List A) (default : A) : A
+  10 | | nil, default => default
+  11 | | [ _, {y} ], default => y
+               ^^
+
+Error: Parser error: Implicit elements in list pattern is disallowed
+
+1 error(s), 0 warning(s).
+What are you doing?

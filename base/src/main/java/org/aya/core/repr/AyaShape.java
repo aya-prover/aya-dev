@@ -27,7 +27,7 @@ public sealed interface AyaShape {
   record AyaIntLitShape() implements AyaShape {
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
       new CtorShape(ImmutableSeq.empty()),
-      new CtorShape(ImmutableSeq.of(CodeShape.ParamShape.ex(CodeShape.TermShape.Call.justCall(0))))
+      new CtorShape(ImmutableSeq.of(CodeShape.ParamShape.explicit(CodeShape.TermShape.Call.justCall(0))))
     ));
 
     @Override public @NotNull CodeShape codeShape() {
@@ -37,12 +37,12 @@ public sealed interface AyaShape {
 
   record AyaListShape() implements AyaShape {
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
-      ImmutableSeq.of(CodeShape.ParamShape.ex(new CodeShape.TermShape.Sort(null, 0))),
+      ImmutableSeq.of(CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Sort(null, 0))),
       ImmutableSeq.of(
         new CtorShape(ImmutableSeq.empty()),    // nil
         new CtorShape(ImmutableSeq.of(          // cons A (List A)
-          CodeShape.ParamShape.ex(new CodeShape.TermShape.TeleRef(0, 0)),   // A
-          CodeShape.ParamShape.ex(new CodeShape.TermShape.Call(                          // List A
+          CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.TeleRef(0, 0)),   // A
+          CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Call(                          // List A
             0,
             ImmutableSeq.of(new CodeShape.TermShape.TeleRef(0, 0))))))
       ));
