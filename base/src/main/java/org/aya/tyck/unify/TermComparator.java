@@ -486,7 +486,7 @@ public sealed abstract class TermComparator permits Unifier {
       case CoeTerm lhs -> {
         if (!(preRhs instanceof CoeTerm rhs)) yield null;
         if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
-        yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
+        yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToType()) ?
           PrimDef.familyLeftToRight(lhs.type()) : null;
       }
       case ConCall lhs -> switch (preRhs) {
