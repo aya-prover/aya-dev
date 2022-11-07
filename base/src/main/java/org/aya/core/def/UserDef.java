@@ -4,7 +4,7 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.term.FormTerm;
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.reporter.Problem;
@@ -29,9 +29,9 @@ public sealed abstract class UserDef<Ret extends Term>
     super(telescope, result);
   }
 
-  public static abstract sealed class Type extends UserDef<FormTerm.Sort> permits DataDef, StructDef {
+  public static abstract sealed class Type extends UserDef<SortTerm> permits DataDef, StructDef {
 
-    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, FormTerm.Sort result) {
+    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, SortTerm result) {
       super(telescope, result);
     }
   }

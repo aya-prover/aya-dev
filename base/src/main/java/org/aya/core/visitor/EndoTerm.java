@@ -93,8 +93,7 @@ public interface EndoTerm extends UnaryOperator<Term> {
   record Elevator(int lift) implements EndoTerm {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case FormTerm.Type univ -> new FormTerm.Type(univ.lift() + lift);
-        case FormTerm.Set set -> new FormTerm.Set(set.lift() + lift);
+        case SortTerm sort -> sort.elevate(lift);
         case StructCall struct -> new StructCall(struct.ref(), struct.ulift() + lift, struct.args());
         case DataCall data -> new DataCall(data.ref(), data.ulift() + lift, data.args());
         case ConCall con -> {

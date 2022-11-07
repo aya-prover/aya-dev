@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EtaTest {
   private static final @NotNull Term SIGMA = new SigmaTerm(ImmutableSeq.of(
-    new Term.Param(new LocalVar("A"), FormTerm.Type.ZERO, false),
-    new Term.Param(new LocalVar("B"), FormTerm.Type.ZERO, false)));
+    new Term.Param(new LocalVar("A"), SortTerm.Type0, false),
+    new Term.Param(new LocalVar("B"), SortTerm.Type0, false)));
   private static final @NotNull LocalVar X = new LocalVar("x");
   private static final @NotNull LocalVar Y = new LocalVar("y");
   private static final @NotNull Eta ETA = new Eta(new MapLocalCtx());
@@ -28,7 +28,7 @@ public class EtaTest {
 
   // \ x -> f x
   @Test public void oneLambdaUneta() {
-    var xParamTerm = new Term.Param(X, FormTerm.Type.ZERO, false);
+    var xParamTerm = new Term.Param(X, SortTerm.Type0, false);
     var xRefTerm = new RefTerm(X);
     // It's rather tedious to construct a Fn here
     // So let's be lazy here as the type of f doesn't really matter
@@ -44,8 +44,8 @@ public class EtaTest {
 
   // \ x y -> f y x
   @Test public void twoLambdaUneta() {
-    var xParamTerm = new Term.Param(X, FormTerm.Type.ZERO, false);
-    var yParamTerm = new Term.Param(Y, FormTerm.Type.ZERO, false);
+    var xParamTerm = new Term.Param(X, SortTerm.Type0, false);
+    var yParamTerm = new Term.Param(Y, SortTerm.Type0, false);
     var xRefTerm = new RefTerm(X);
     var yRefTerm = new RefTerm(Y);
     var fRefTerm = new RefTerm(new LocalVar("f"));

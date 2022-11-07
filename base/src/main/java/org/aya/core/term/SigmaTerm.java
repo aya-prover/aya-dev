@@ -12,19 +12,19 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author re-xyr
  */
-public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm, StableWHNF {
-  public static @NotNull FormTerm.Sort max(@NotNull FormTerm.Sort x, @NotNull FormTerm.Sort y) {
+public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements StableWHNF, Term {
+  public static @NotNull SortTerm max(@NotNull SortTerm x, @NotNull SortTerm y) {
     int lift = Math.max(x.lift(), y.lift());
     if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
-      return Prop.INSTANCE;
+      return SortTerm.Prop;
     } else if (x.kind() == SortKind.Set || y.kind() == SortKind.Set) {
-      return new Set(lift);
+      return new SortTerm(SortKind.Set, lift);
     } else if (x.kind() == SortKind.Type || y.kind() == SortKind.Type) {
-      return new Type(lift);
-    } else if (x instanceof ISet && y instanceof ISet) {
+      return new SortTerm(SortKind.Type, lift);
+    } else if (x.kind() == SortKind.ISet || y.kind() == SortKind.ISet) {
       // ice: this is controversial, but I think it's fine.
       // See https://github.com/agda/cubical/pull/910#issuecomment-1233113020
-      return ISet.INSTANCE;
+      return SortTerm.ISet;
     }
     throw new AssertionError("unreachable");
   }

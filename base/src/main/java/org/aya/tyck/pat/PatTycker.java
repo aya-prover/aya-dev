@@ -25,6 +25,7 @@ import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Arg;
 import org.aya.generic.Constants;
+import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
@@ -135,7 +136,7 @@ public final class PatTycker {
   private @NotNull ImmutableSeq<LhsResult>
   checkAllLhs(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, @NotNull Def.Signature signature) {
     var inProp = exprTycker.localCtx.with(() ->
-      exprTycker.computeType(signature.result()) instanceof FormTerm.Prop, signature.param().view());
+      exprTycker.computeSort(signature.result()).kind() == SortKind.Prop, signature.param().view());
     return clauses.mapIndexed((index, clause) -> traced(
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
       () -> checkLhs(clause, signature, inProp)));
@@ -246,7 +247,7 @@ public final class PatTycker {
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, term);
-        var tupleIsProp = sigma.computeType(exprTycker.state, exprTycker.localCtx) instanceof FormTerm.Prop;
+        var tupleIsProp = sigma.computeSort(exprTycker.state, exprTycker.localCtx).kind() == SortKind.Prop;
         if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature(sigma.params(),
@@ -263,7 +264,7 @@ public final class PatTycker {
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();
-        var dataIsProp = (ctorRef.core.dataRef.concrete != null ? ctorRef.core.dataRef.concrete.ulift : ctorRef.core.dataRef.core.result) instanceof FormTerm.Prop;
+        var dataIsProp = (ctorRef.core.dataRef.concrete != null ? ctorRef.core.dataRef.concrete.ulift : ctorRef.core.dataRef.core.result).kind() == SortKind.Prop;
         if (!resultIsProp && dataIsProp) foundError(new PatternProblem.IllegalPropPat(ctor));
         var ctorCore = ctorRef.core;
         // generate ownerTele arguments

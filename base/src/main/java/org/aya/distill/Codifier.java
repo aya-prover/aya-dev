@@ -89,10 +89,13 @@ public record Codifier(
       case ErasedTerm erased -> throw new UnsupportedOperationException("Cannot generate erased");
       case Callable call -> throw new UnsupportedOperationException("Cannot generate calls");
       case IntervalTerm interval -> builder.append("PrimTerm.Interval.INSTANCE");
-      case FormTerm.ISet iSet -> builder.append("FormTerm.ISet.INSTANCE");
-      case FormTerm.Prop prop -> builder.append("FormTerm.Prop.INSTANCE");
-      case FormTerm.Set(var lift) -> universe("Set", lift);
-      case FormTerm.Type(var lift) -> universe("Type", lift);
+      case SortTerm sort -> {
+        builder.append("new SortTerm(SortKind.");
+        builder.append(sort.kind().name());
+        builder.append(", ");
+        builder.append(sort.lift());
+        builder.append(")");
+      }
       case default -> throw new UnsupportedOperationException("TODO: " + term.getClass().getCanonicalName());
     }
   }
@@ -240,9 +243,5 @@ public record Codifier(
     builder.append("new Arg<>(");
     term(arg.term());
     builder.append(",").append(arg.explicit()).append(")");
-  }
-
-  private void universe(String s, int lift) {
-    builder.append("new FormTerm.").append(s).append("(").append(lift).append(")");
   }
 }
