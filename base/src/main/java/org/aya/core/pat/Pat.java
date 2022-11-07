@@ -233,8 +233,9 @@ public sealed interface Pat extends AyaDocile {
       return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), ImmutableSeq.empty(), type);
     }
 
-    @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Pat pat) {
-      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat), type);
+    @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Arg<Pat> pat) {
+      // TODO[ice]: Arg<Pat> in core
+      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat.term()), type);
     }
 
     @Override public @NotNull Pat destruct(int repr) {

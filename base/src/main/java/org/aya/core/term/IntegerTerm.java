@@ -19,9 +19,9 @@ public record IntegerTerm(
     return new ConCall(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
   }
 
-  @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Term term) {
+  @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Arg<Term> term) {
     return new ConCall(suc.dataRef, suc.ref, ImmutableSeq.empty(), 0,
-      ImmutableSeq.of(new Arg<>(term, true)));
+      ImmutableSeq.of(term));
   }
 
   @Override public @NotNull Term destruct(int repr) {
