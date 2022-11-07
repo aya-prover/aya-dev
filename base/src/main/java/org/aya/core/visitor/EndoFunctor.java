@@ -93,8 +93,7 @@ public interface EndoFunctor extends Function<Term, Term> {
   record Elevator(int lift) implements EndoFunctor {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case FormTerm.Type univ -> new FormTerm.Type(univ.lift() + lift);
-        case FormTerm.Set set -> new FormTerm.Set(set.lift() + lift);
+        case FormTerm.Sort sort -> sort.elevate(lift);
         case CallTerm.Struct struct -> new CallTerm.Struct(struct.ref(), struct.ulift() + lift, struct.args());
         case CallTerm.Data data -> new CallTerm.Data(data.ref(), data.ulift() + lift, data.args());
         case CallTerm.Con con -> {

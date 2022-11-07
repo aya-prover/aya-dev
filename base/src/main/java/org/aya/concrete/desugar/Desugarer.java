@@ -39,14 +39,14 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
     return switch (expr) {
       case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Type -> {
         try {
-          yield new Expr.TypeExpr(uPos, levelVar(arg.expr()));
+          yield new Expr.SortExpr(uPos, SortKind.Type, levelVar(arg.expr()));
         } catch (DesugarInterruption e) {
           yield new Expr.ErrorExpr(pos, expr);
         }
       }
       case Expr.AppExpr(var pos, Expr.RawSortExpr(var uPos, var kind), var arg)when kind == SortKind.Set -> {
         try {
-          yield new Expr.SetExpr(uPos, levelVar(arg.expr()));
+          yield new Expr.SortExpr(uPos, SortKind.Set,levelVar(arg.expr()));
         } catch (DesugarInterruption e) {
           yield new Expr.ErrorExpr(pos, expr);
         }
@@ -67,12 +67,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
           ? new Expr.AppExpr(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.coeLeft()))
           : projExpr);
       }
-      case Expr.RawSortExpr(var pos, var kind) -> switch (kind) {
-        case Type -> new Expr.TypeExpr(pos, 0);
-        case Set -> new Expr.SetExpr(pos, 0);
-        case Prop -> new Expr.PropExpr(pos);
-        case ISet -> new Expr.ISetExpr(pos);
-      };
+      case Expr.RawSortExpr(var pos, var kind) -> new Expr.SortExpr(pos, kind, 0);
       case Expr.BinOpSeq(var pos, var seq) -> {
         assert seq.isNotEmpty() : pos.toString();
         yield pre(new BinExprParser(info, seq.view()).build(pos));

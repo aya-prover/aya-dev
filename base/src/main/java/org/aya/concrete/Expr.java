@@ -367,41 +367,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record RawSortExpr(@NotNull SourcePos sourcePos, @NotNull SortKind kind) implements Expr {}
 
-  sealed interface SortExpr extends Expr {
-    int lift();
-
-    SortKind kind();
-  }
-
-  record TypeExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
-    @Override public SortKind kind() {
-      return SortKind.Type;
-    }
-  }
-
-  record SetExpr(@NotNull SourcePos sourcePos, @Override int lift) implements SortExpr {
-    @Override public SortKind kind() {
-      return SortKind.Set;
-    }
-  }
-
-  record PropExpr(@NotNull SourcePos sourcePos) implements SortExpr {
-    @Override public int lift() {
-      return 0;
-    }
-
-    @Override public SortKind kind() {
-      return SortKind.Prop;
-    }
-  }
-
-  record ISetExpr(@NotNull SourcePos sourcePos) implements SortExpr {
-    @Override public int lift() {
-      return 0;
-    }
-
-    @Override public SortKind kind() {
-      return SortKind.ISet;
+  record SortExpr(@NotNull SourcePos sourcePos, @NotNull SortKind kind, int lift) implements Expr {
+    public SortExpr(@NotNull SourcePos sourcePos, @NotNull SortKind kind, int lift) {
+      this.sourcePos = sourcePos;
+      this.kind = kind;
+      if (!kind.hasLevel() && lift != 0) throw new IllegalArgumentException("invalid lift");
+      this.lift = lift;
     }
   }
 

@@ -70,23 +70,17 @@ public record Serializer(@NotNull Serializer.State state) {
   }
 
   private @NotNull SerTerm.Sort serialize(@NotNull FormTerm.Sort term) {
-    return switch (term) {
-      case FormTerm.Type ty -> new SerTerm.Type(ty.lift());
-      case FormTerm.Set set -> new SerTerm.Set(set.lift());
-      case FormTerm.Prop prop -> new SerTerm.Prop();
-      case FormTerm.ISet iset -> new SerTerm.ISet();
-    };
+    return new SerTerm.Sort(term.kind(), term.lift());
   }
 
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
       case LitTerm.ShapedInt lit ->
         new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
-      case LitTerm.ShapedList lit ->
-        new SerTerm.ShapedList(
-          lit.repr().map(this::serialize).toImmutableSeq(),
-          SerDef.SerAyaShape.serialize(lit.shape()),
-          serialize(lit.type()));
+      case LitTerm.ShapedList lit -> new SerTerm.ShapedList(
+        lit.repr().map(this::serialize).toImmutableSeq(),
+        SerDef.SerAyaShape.serialize(lit.shape()),
+        serialize(lit.type()));
       case PrimTerm.Mula end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case PrimTerm.Str str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));

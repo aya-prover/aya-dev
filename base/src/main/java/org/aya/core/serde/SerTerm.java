@@ -11,6 +11,7 @@ import kala.tuple.Tuple;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -98,31 +99,9 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  sealed interface Sort extends SerTerm {
-    @Override @NotNull FormTerm.Sort de(@NotNull DeState state);
-  }
-
-  record Type(int ulift) implements Sort {
-    @Override public @NotNull FormTerm.Type de(@NotNull DeState state) {
-      return new FormTerm.Type(ulift);
-    }
-  }
-
-  record Set(int ulift) implements Sort {
-    @Override public @NotNull FormTerm.Set de(@NotNull DeState state) {
-      return new FormTerm.Set(ulift);
-    }
-  }
-
-  record Prop() implements Sort {
-    @Override public @NotNull FormTerm.Prop de(@NotNull DeState state) {
-      return FormTerm.Prop.INSTANCE;
-    }
-  }
-
-  record ISet() implements Sort {
-    @Override public @NotNull FormTerm.ISet de(@NotNull DeState state) {
-      return FormTerm.ISet.INSTANCE;
+  record Sort(@NotNull SortKind kind, int lift) implements SerTerm {
+    @Override public @NotNull FormTerm.Sort de(@NotNull DeState state) {
+      return new FormTerm.Sort(kind, lift);
     }
   }
 

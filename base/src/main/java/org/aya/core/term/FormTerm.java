@@ -11,6 +11,7 @@ import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -62,82 +63,31 @@ public sealed interface FormTerm extends Term {
   /**
    * @author ice1000
    */
-  sealed interface Sort extends FormTerm, StableWHNF {
-    int lift();
-    @NotNull SortKind kind();
-    @NotNull FormTerm.Sort succ();
+  record Sort(@NotNull SortKind kind, int lift) implements FormTerm, StableWHNF {
+    public Sort(@NotNull SortKind kind, int lift) {
+      this.kind = kind;
+      if (!kind.hasLevel() && lift != 0) throw new IllegalArgumentException("invalid lift");
+      this.lift = lift;
+    }
 
-    static @NotNull Sort create(@NotNull SortKind kind, int lift) {
+    public static Sort Type0 = new Sort(SortKind.Type, 0);
+    public static Sort Set0 = new Sort(SortKind.Set, 0);
+    public static Sort Set1 = new Sort(SortKind.Set, 1);
+    public static Sort ISet = new Sort(SortKind.ISet, 0);
+    public static Sort Prop = new Sort(SortKind.Prop, 0);
+
+    public @NotNull FormTerm.Sort succ() {
       return switch (kind) {
-        case Type -> new Type(lift);
-        case Set -> new Set(lift);
-        case Prop -> Prop.INSTANCE;
-        case ISet -> ISet.INSTANCE;
+        case Type -> new Sort(kind, lift + 1);
+        case Set -> new Sort(kind, lift + 1);
+        case Prop -> Type0;
+        case ISet -> Set1;
       };
     }
-  }
 
-  record Type(@Override int lift) implements Sort {
-    public static final @NotNull FormTerm.Type ZERO = new Type(0);
-
-    @Override public @NotNull SortKind kind() {
-      return SortKind.Type;
-    }
-
-    @Override public @NotNull FormTerm.Type succ() {
-      return new FormTerm.Type(lift + 1);
-    }
-  }
-
-  record Set(@Override int lift) implements Sort {
-    public static final @NotNull FormTerm.Set ZERO = new Set(0);
-
-    @Override public @NotNull SortKind kind() {
-      return SortKind.Set;
-    }
-
-    @Override
-    public @NotNull FormTerm.Set succ() {
-      return new FormTerm.Set(lift + 1);
-    }
-  }
-
-  final class Prop implements Sort {
-    public static final @NotNull Prop INSTANCE = new Prop();
-
-    private Prop() {
-    }
-
-    @Override public int lift() {
-      return 0;
-    }
-
-    @Override public @NotNull SortKind kind() {
-      return SortKind.Prop;
-    }
-
-    @Override public @NotNull FormTerm.Type succ() {
-      return new FormTerm.Type(0);
-    }
-  }
-
-  final class ISet implements Sort {
-    public static final @NotNull ISet INSTANCE = new ISet();
-
-    private ISet() {
-
-    }
-
-    @Override public int lift() {
-      return 0;
-    }
-
-    @Override public @NotNull SortKind kind() {
-      return SortKind.ISet;
-    }
-
-    @Override public @NotNull FormTerm.Set succ() {
-      return new FormTerm.Set(1);
+    public @NotNull FormTerm.Sort elevate(int lift) {
+      if (kind.hasLevel()) return new Sort(kind, this.lift + lift);
+      else return this;
     }
   }
 

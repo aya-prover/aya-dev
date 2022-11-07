@@ -98,7 +98,7 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
         var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
+        var paramA = new Term.Param(varA, FormTerm.Sort.Type0, false);
         var varPhi = new LocalVar("phi");
         var paramRestr = new Term.Param(varPhi, PrimTerm.Interval.INSTANCE, false);
         var varU = new LocalVar("u");
@@ -155,7 +155,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed stringType =
         new PrimSeed(ID.STRING,
           ((prim, tyckState) -> prim),
-          ref -> new PrimDef(ref, FormTerm.Type.ZERO, ID.STRING), ImmutableSeq.empty());
+          ref -> new PrimDef(ref, FormTerm.Sort.Type0, ID.STRING), ImmutableSeq.empty());
       public final @NotNull PrimDef.PrimSeed stringConcat =
         new PrimSeed(ID.STRCONCAT, Initializer::concat, ref -> new PrimDef(
           ref,
@@ -182,7 +182,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed intervalType =
         new PrimSeed(ID.I,
           ((prim, state) -> PrimTerm.Interval.INSTANCE),
-          ref -> new PrimDef(ref, FormTerm.ISet.INSTANCE, ID.I),
+          ref -> new PrimDef(ref, FormTerm.Sort.ISet, ID.I),
           ImmutableSeq.empty());
 
       public final @NotNull PrimDef.PrimSeed partialType =
@@ -197,9 +197,9 @@ public final class PrimDef extends TopLevelDef<Term> {
             ref,
             ImmutableSeq.of(
               new Term.Param(new LocalVar("phi"), PrimTerm.Interval.INSTANCE, true),
-              new Term.Param(new LocalVar("A"), FormTerm.Type.ZERO, true)
+              new Term.Param(new LocalVar("A"), FormTerm.Sort.Type0, true)
             ),
-            FormTerm.Type.ZERO, ID.PARTIAL),
+            FormTerm.Sort.Type0, ID.PARTIAL),
           ImmutableSeq.of(ID.I));
     }
 
@@ -281,7 +281,7 @@ public final class PrimDef extends TopLevelDef<Term> {
 
   public static @NotNull Term intervalToA() {
     var paramI = new Term.Param(LocalVar.IGNORED, PrimTerm.Interval.INSTANCE, true);
-    return new FormTerm.Pi(paramI, new FormTerm.Type(0));
+    return new FormTerm.Pi(paramI, FormTerm.Sort.Type0);
   }
 
   public enum ID {

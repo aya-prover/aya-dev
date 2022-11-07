@@ -98,7 +98,7 @@ public interface BetaExpander extends EndoFunctor {
             var coe1 = ElimTerm.make(new PrimTerm.Coe(Bsubsted, coe.restr()), new Arg<>(u01, true));
             yield new IntroTerm.Lambda(coeDom(u0Var, coe.type()), new IntroTerm.Tuple(ImmutableSeq.of(coe0, coe1)));
           }
-          case FormTerm.Type type -> {
+          case FormTerm.Sort type -> {
             var A = new LocalVar("A");
             yield new IntroTerm.Lambda(new Term.Param(A, type, true), new RefTerm(A));
           }
