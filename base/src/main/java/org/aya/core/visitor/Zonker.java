@@ -50,11 +50,41 @@ public record Zonker(
     };
   }
 
+  @Override public @NotNull Term post(@NotNull Term term) {
+    return switch (term) {
+      case MetaLitTerm lit -> {
+        var inline = lit.inline();
+        if (inline instanceof MetaLitTerm unsolved) {
+          tycker.reporter.report(new UnsolvedLit(unsolved));
+          yield new ErrorTerm(lit);
+        }
+        yield inline;
+      }
+      default -> EndoTerm.super.post(term);
+    };
+  }
+
   @Override public @NotNull Term apply(@NotNull Term term) {
     stack.push(term);
     var result = EndoTerm.super.apply(term);
     stack.pop();
     return result;
+  }
+
+  public record UnsolvedLit(
+    @NotNull MetaLitTerm lit
+  ) implements Problem {
+    @Override public @NotNull SourcePos sourcePos() {
+      return lit.sourcePos();
+    }
+
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(Doc.english("Unsolved literal"), Doc.styled(Style.code(), Doc.plain(lit.repr().toString())));
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
   }
 
   public record UnsolvedMeta(

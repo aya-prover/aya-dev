@@ -29,5 +29,14 @@ Error: Unsolved meta A'
        in `514`
        in `some 514`
 
-3 error(s), 0 warning(s).
+In file $FILE:9:17 ->
+
+  7 | 
+  8 | def ok : Option Nat1 => some 114
+  9 | def lit1 => some 514
+                       ^-^
+
+Error: Unsolved literal `514`
+
+4 error(s), 0 warning(s).
 What are you doing?

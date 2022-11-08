@@ -155,7 +155,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       case MetaLitTerm lit -> {
         var type = f.apply(lit.type());
         if (type == lit.type()) yield lit;
-        yield new MetaLitTerm(lit.repr(), lit.candidates(), type);
+        yield new MetaLitTerm(lit.sourcePos(), lit.repr(), lit.candidates(), type);
       }
       case PartialTyTerm ty -> {
         var type = f.apply(ty.type());
