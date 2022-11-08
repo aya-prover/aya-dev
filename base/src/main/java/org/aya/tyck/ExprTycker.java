@@ -19,7 +19,10 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.*;
+import org.aya.generic.Arg;
+import org.aya.generic.AyaDocile;
+import org.aya.generic.Constants;
+import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -259,7 +262,7 @@ public final class ExprTycker extends Tycker {
         // TODO[literal]: int literals. Currently the parser does not allow negative literals.
         var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
-        if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs));
+        if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs.map(t -> t._1)));
         var match = defs.first();
         var type = new DataCall(((DataDef) match._1).ref, 0, ImmutableSeq.empty());
         yield new TermResult(new IntegerTerm(integer, match._2, type), type);
