@@ -18,23 +18,23 @@ import java.util.function.Function;
 public abstract class BinOpParser<
   OpSet extends BinOpSet,
   Expr extends SourceNode,
-  Elem extends BinOpParser.Elem<Expr>> {
+  Elm extends BinOpParser.Elem<Expr>> {
   protected final @NotNull OpSet opSet;
-  private final @NotNull SeqView<@NotNull Elem> seq;
+  private final @NotNull SeqView<@NotNull Elm> seq;
 
-  public BinOpParser(@NotNull OpSet opSet, @NotNull SeqView<@NotNull Elem> seq) {
+  public BinOpParser(@NotNull OpSet opSet, @NotNull SeqView<@NotNull Elm> seq) {
     this.opSet = opSet;
     this.seq = seq;
   }
 
-  private final MutableSinglyLinkedList<Tuple2<Elem, BinOpSet.BinOP>> opStack = MutableSinglyLinkedList.create();
-  private final MutableLinkedList<Elem> prefixes = MutableLinkedList.create();
-  private final MutableMap<Elem, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
+  private final MutableSinglyLinkedList<Tuple2<Elm, BinOpSet.BinOP>> opStack = MutableSinglyLinkedList.create();
+  private final MutableLinkedList<Elm> prefixes = MutableLinkedList.create();
+  private final MutableMap<Elm, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
 
   /** @implSpec equivalent to <code>new BinOpParser(this.opSet, seq)</code>. */
-  protected abstract @NotNull BinOpParser<OpSet, Expr, Elem> replicate(@NotNull SeqView<@NotNull Elem> seq);
+  protected abstract @NotNull BinOpParser<OpSet, Expr, Elm> replicate(@NotNull SeqView<@NotNull Elm> seq);
   /** @implSpec must always return a static instance! */
-  protected abstract @NotNull Elem appOp();
+  protected abstract @NotNull Elm appOp();
 
   public @NotNull Expr build(@NotNull SourcePos sourcePos) {
     // No need to build
@@ -60,9 +60,9 @@ public abstract class BinOpParser<
    * @implSpec should create a lambda expression with
    * <code>lamBody.apply(lamArg)</code> as its body.
    */
-  public abstract @NotNull Elem makeSectionApp(
-    @NotNull SourcePos pos, @NotNull Elem op,
-    @NotNull Function<Elem, Expr> lamBody);
+  public abstract @NotNull Elm makeSectionApp(
+    @NotNull SourcePos pos, @NotNull Elm op,
+    @NotNull Function<Elm, Expr> lamBody);
 
   private @NotNull Expr convertToPrefix(@NotNull SourcePos sourcePos) {
     for (var expr : insertApplication()) {
@@ -108,8 +108,8 @@ public abstract class BinOpParser<
   protected abstract void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos);
   protected abstract @NotNull Expr createErrorExpr(@NotNull SourcePos sourcePos);
 
-  private @NotNull Seq<Elem> insertApplication() {
-    var seqWithApp = MutableList.<Elem>create();
+  private @NotNull Seq<Elm> insertApplication() {
+    var seqWithApp = MutableList.<Elm>create();
     var lastIsOperand = true;
     for (var expr : seq) {
       var isOperand = isOperand(expr, opSet);
@@ -120,15 +120,15 @@ public abstract class BinOpParser<
     return seqWithApp;
   }
 
-  private void markAppliedOperand(@NotNull Elem elem, @NotNull BinOpParser.AppliedSide side) {
+  private void markAppliedOperand(@NotNull Elm elem, @NotNull BinOpParser.AppliedSide side) {
     appliedOperands.getOrPut(elem, MutableSet::of).add(side);
   }
 
-  private @NotNull Set<AppliedSide> getAppliedSides(@NotNull Elem elem) {
+  private @NotNull Set<AppliedSide> getAppliedSides(@NotNull Elm elem) {
     return appliedOperands.getOrPut(elem, MutableSet::of);
   }
 
-  private void foldLhsFor(@NotNull Elem forOp) {
+  private void foldLhsFor(@NotNull Elm forOp) {
     foldTop();
     markAppliedOperand(forOp, AppliedSide.Lhs);
   }
@@ -138,7 +138,7 @@ public abstract class BinOpParser<
     prefixes.append(makeBinApp(op._1));
   }
 
-  private @NotNull Elem makeBinApp(@NotNull Elem op) {
+  private @NotNull Elm makeBinApp(@NotNull Elm op) {
     var assoc = toSetElem(op, opSet).assoc();
     if (assoc.isUnary()) {
       var operand = prefixes.dequeue();
@@ -164,42 +164,42 @@ public abstract class BinOpParser<
     throw new InternalError("unreachable");
   }
 
-  private @NotNull Elem makeBinApp(@NotNull Elem op, @NotNull Elem rhs, @NotNull Elem lhs) {
+  private @NotNull Elm makeBinApp(@NotNull Elm op, @NotNull Elm rhs, @NotNull Elm lhs) {
     var explicit = op.explicit();
     if (op == appOp()) return makeArg(union(lhs, rhs), lhs.term(), rhs, explicit);
     return makeArg(union(op, lhs, rhs), makeArg(union(op, lhs), op.term(), lhs, true).term(), rhs, explicit);
     // ^ `true` above is supposed to be ignored, totally.
   }
 
-  public boolean isOperand(@NotNull Elem elem, @NotNull BinOpSet opSet) {
+  public boolean isOperand(@NotNull Elm elem, @NotNull BinOpSet opSet) {
     if (elem == appOp()) return false;
     var tryOp = underlyingOpDecl(elem);
     return opSet.isOperand(tryOp);
   }
 
-  public BinOpSet.@NotNull BinOP toSetElem(@NotNull Elem elem, @NotNull BinOpSet opSet) {
+  public BinOpSet.@NotNull BinOP toSetElem(@NotNull Elm elem, @NotNull BinOpSet opSet) {
     if (elem == appOp()) return BinOpSet.APP_ELEM;
     var tryOp = underlyingOpDecl(elem);
     assert tryOp != null; // should never fail
     return opSet.ensureHasElem(tryOp);
   }
 
-  protected abstract @Nullable OpDecl underlyingOpDecl(@NotNull Elem elem);
-  protected abstract @NotNull Elem makeArg(@NotNull SourcePos pos, @NotNull Expr func, @NotNull Elem elem, boolean explicit);
+  protected abstract @Nullable OpDecl underlyingOpDecl(@NotNull Elm elem);
+  protected abstract @NotNull Elm makeArg(@NotNull SourcePos pos, @NotNull Expr func, @NotNull Elm elem, boolean explicit);
 
   enum AppliedSide {
     Lhs, Rhs
   }
 
-  private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b, @NotNull Elem c) {
+  private @NotNull SourcePos union(@NotNull Elm a, @NotNull Elm b, @NotNull Elm c) {
     return union(a, b).union(of(c));
   }
 
-  private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b) {
+  private @NotNull SourcePos union(@NotNull Elm a, @NotNull Elm b) {
     return of(a).union(of(b));
   }
 
-  private @NotNull SourcePos of(@NotNull Elem a) {
+  private @NotNull SourcePos of(@NotNull Elm a) {
     return a.term().sourcePos();
   }
 
