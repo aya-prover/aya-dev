@@ -44,7 +44,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         if (seq.sizeEquals(1)) yield term(outer, first);
         yield visitCalls(false,
           term(Outer.AppSpine, first),
-          seq.view().drop(1).map(e -> new Arg<>(e.term(), e.explicit())), outer,
+          seq.view().drop(1), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
@@ -79,7 +79,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           infix = var.isInfix();
         yield visitCalls(infix,
           term(Outer.AppHead, head),
-          args.view().map(arg -> new Arg<>(arg.term(), arg.explicit())), outer,
+          args.view(), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
       case Expr.Lambda expr -> {
@@ -220,8 +220,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Pattern.BinOpSeq seq -> {
         var param = seq.seq();
         if (param.sizeEquals(1)) {
-          var first = param.first();
-          yield pattern(first.term(), first.explicit(), outer);
+          yield pattern(param.first(), outer);
         }
         var ctorDoc = visitMaybeCtorPatterns(param.view(), Outer.AppSpine, Doc.ALT_WS);
         yield ctorDoc(outer, licit, ctorDoc, seq.as(), param.sizeLessThanOrEquals(1));

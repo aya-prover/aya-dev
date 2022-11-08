@@ -19,6 +19,7 @@ import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   public @NotNull Doc visitCalls(
     boolean infix, @NotNull Doc fn,
-    @NotNull SeqView<@NotNull Arg<Term>> args,
+    @NotNull SeqView<? extends BinOpParser.@NotNull Elem<Term>> args,
     @NotNull Outer outer, boolean showImplicits
   ) {
     return visitCalls(infix, fn, this::term, outer, args, showImplicits);
@@ -91,9 +92,9 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    */
   <T extends AyaDocile> @NotNull Doc visitCalls(
     boolean infix, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
-    @NotNull SeqView<@NotNull Arg<@NotNull T>> args, boolean showImplicits
+    @NotNull SeqView<? extends BinOpParser.@NotNull Elem<@NotNull T>> args, boolean showImplicits
   ) {
-    var visibleArgs = (showImplicits ? args : args.filter(Arg::explicit)).toImmutableSeq();
+    var visibleArgs = (showImplicits ? args : args.filter(BinOpParser.Elem::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
     // Print as a binary operator
     if (infix) {
@@ -115,14 +116,14 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    * @see BaseDistiller#visitCalls(boolean, Doc, Fmt, Outer, SeqView, boolean)
    */
   private <T extends AyaDocile> @NotNull Doc
-  prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<Arg<T>> args) {
+  prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<? extends BinOpParser.@NotNull Elem<T>> args) {
     var call = Doc.sep(fn, Doc.sep(args.map(arg ->
       visitArg(fmt, arg, Outer.AppSpine))));
     // If we're in a spine, add parentheses
     return checkParen(outer, call, Outer.AppSpine);
   }
 
-  private <T extends AyaDocile> Doc visitArg(@NotNull Fmt<T> fmt, @NotNull Arg<T> arg, @NotNull Outer outer) {
+  private <T extends AyaDocile> Doc visitArg(@NotNull Fmt<T> fmt, @NotNull BinOpParser.Elem<T> arg, @NotNull Outer outer) {
     if (arg.explicit()) return fmt.apply(outer, arg.term());
     return Doc.braced(fmt.apply(Outer.Free, arg.term()));
   }
