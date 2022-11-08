@@ -147,7 +147,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .from(IntRange.closed(1, expr.lift()).iterator()).view()
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
-      case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
       case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
         Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(cl -> Doc.sep(
           cl._1.toDoc(options), Doc.symbol(":="), cl._2.toDoc(options))
