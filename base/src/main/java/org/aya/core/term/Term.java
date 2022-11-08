@@ -13,7 +13,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.InternalException;
@@ -25,6 +24,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -40,7 +40,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
+  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, MetaLitTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {

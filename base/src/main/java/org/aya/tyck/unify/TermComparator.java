@@ -549,7 +549,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private @Nullable Term compareMetaLiteral(@NotNull MetaLitTerm litLhs, @NotNull Term preRhs, @NotNull Term type, Sub lr, Sub rl) {
     if (!compare(litLhs.type(), type, null)) return null;
-    var inline = litLhs.inline(); // try getting the solved literal
+    var inline = litLhs.freezeHoles(state); // try getting the solved literal
     if (inline == litLhs) return null; // unsolvable?
     return compare(inline, preRhs, lr, rl, null) ? type : null;
   }

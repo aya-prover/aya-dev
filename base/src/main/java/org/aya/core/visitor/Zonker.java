@@ -79,7 +79,12 @@ public record Zonker(
     }
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.sep(Doc.english("Unsolved literal"), Doc.styled(Style.code(), Doc.plain(lit.repr().toString())));
+      return Doc.vcat(
+        Doc.english("Unable to solve the type of this literal:"),
+        Doc.par(1, lit.toDoc(options)),
+        Doc.plain("I'm confused about the following candidates, please help me!"),
+        Doc.par(1, Doc.join(Doc.plain(", "), lit.candidates().map(d -> Doc.styled(Style.code(), d._1.ref().name()))))
+      );
     }
 
     @Override public @NotNull Severity level() {

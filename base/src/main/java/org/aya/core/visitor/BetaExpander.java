@@ -3,10 +3,10 @@
 package org.aya.core.visitor;
 
 import org.aya.core.term.*;
-import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -26,6 +26,7 @@ public interface BetaExpander extends EndoTerm {
       case FormulaTerm mula -> mula.simpl();
       case PartialTyTerm ty -> ty.normalizeRestr();
       case MetaPatTerm metaPat -> metaPat.inline();
+      case MetaLitTerm lit -> lit.inline();
       case AppTerm app -> {
         var result = AppTerm.make(app);
         yield result == term ? result : apply(result);

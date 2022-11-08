@@ -16,7 +16,7 @@ public record MetaLitTerm(
   @NotNull Object repr,
   @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeRecognition>> candidates,
   @NotNull Term type
-) implements StableWHNF {
+) implements Term {
   @SuppressWarnings("unchecked") public @NotNull Term inline() {
     if (!(type instanceof DataCall dataCall)) return this;
     return candidates.find(t -> t._1.ref() == dataCall.ref()).flatMap(t -> {

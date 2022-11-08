@@ -11,10 +11,11 @@ import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.TermFolder;
-import org.aya.util.Arg;
+import org.aya.generic.AyaDocile;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +43,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield Doc.wrap("{?", "?}",
           visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
       }
-      case MetaLitTerm lit -> Doc.plain(lit.repr().toString());
+      case MetaLitTerm lit -> lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
       case TupTerm(var items) -> Doc.parened(Doc.commaList(items.view().map(t -> term(Outer.Free, t))));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
