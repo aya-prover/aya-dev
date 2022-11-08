@@ -15,7 +15,6 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
-import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -28,6 +27,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -551,7 +551,7 @@ public sealed abstract class TermComparator permits Unifier {
     if (!compare(litLhs.type(), type, null)) return null;
     var inline = litLhs.inline(); // try getting the solved literal
     if (inline == litLhs) return null; // unsolvable?
-    return compare(litLhs, preRhs, lr, rl, null) ? type : null;
+    return compare(inline, preRhs, lr, rl, null) ? type : null;
   }
 
   protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs);
