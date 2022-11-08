@@ -7,7 +7,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import org.aya.generic.util.AyaHome;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.reporter.IgnoringReporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,6 +22,7 @@ public class ReplConfig implements AutoCloseable {
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
   public @NotNull DistillerOptions distillerOptions = DistillerOptions.pretty();
+  public @NotNull RenderOptions renderOptions = new RenderOptions(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI);
   public boolean enableUnicode = true;
   /** Disables welcome message, echoing info, etc. */
   public boolean silent = false;
@@ -39,6 +43,8 @@ public class ReplConfig implements AutoCloseable {
     if (Files.notExists(file)) return new ReplConfig(file);
     var config = new GsonBuilder()
       .registerTypeAdapter(ReplConfig.class, (InstanceCreator<ReplConfig>) type -> new ReplConfig(file))
+      .registerTypeAdapter(RenderOptions.class, new RenderOptions.Deserializer(IgnoringReporter.INSTANCE,
+          new RenderOptions(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI)))
       .create()
       .fromJson(Files.newBufferedReader(file), ReplConfig.class);
     if (config == null) return new ReplConfig(file);

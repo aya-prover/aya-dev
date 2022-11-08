@@ -11,7 +11,6 @@ import org.aya.generic.util.AyaHome;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.repl.CmdCompleter;
 import org.aya.repl.ReplUtil;
 import org.aya.repl.gk.ReplHighlighter;
@@ -81,7 +80,10 @@ public final class JlineRepl extends AyaRepl {
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
-    var printerConfig = StringPrinterConfig.unixTerminal(AyaStyleFamily.ADAPTIVE_CLI, prettyPrintWidth, config.enableUnicode);
+    var printerConfig = StringPrinterConfig.unixTerminal(
+      config.renderOptions.colorScheme(),
+      config.renderOptions.styleFamily(),
+      prettyPrintWidth, config.enableUnicode);
     return doc.renderToString(printerConfig);
   }
 
