@@ -4,7 +4,6 @@ package org.aya.parser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
-import org.aya.intellij.psi.concrete.impl.*;
 
 public interface AyaPsiElementTypes {
 

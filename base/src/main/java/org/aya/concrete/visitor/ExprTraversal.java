@@ -28,7 +28,7 @@ public interface ExprTraversal<P> {
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(i -> visitExpr(i, p));
         var clauses = match.clauses().map(c -> {
-          var patterns = c.patterns.map(pat -> visitPattern(pat, p));
+          var patterns = c.patterns.map(arg -> arg.descent(pat -> visitPattern(pat, p)));
           var body = c.expr.map(i -> visitExpr(i, p));
           return new Pattern.Clause(c.sourcePos, patterns, body);
         });
@@ -70,14 +70,14 @@ public interface ExprTraversal<P> {
 
   default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
     return switch (pattern) {
-      case Pattern.BinOpSeq(var pos,var seq,var as,var ex) ->
-        new Pattern.BinOpSeq(pos, seq.map(p -> visitPattern(p, pp)), as, ex);
-      case Pattern.Ctor(var pos,var licit,var resolved,var params,var as) ->
-        new Pattern.Ctor(pos, licit, resolved, params.map(p -> visitPattern(p, pp)), as);
-      case Pattern.Tuple(var pos,var licit,var patterns,var as) ->
-        new Pattern.Tuple(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
-      case Pattern.List(var pos,var licit,var patterns,var as) ->
-        new Pattern.List(pos, licit, patterns.map(p -> visitPattern(p, pp)), as);
+      case Pattern.BinOpSeq(var pos, var seq, var as) ->
+        new Pattern.BinOpSeq(pos, seq.map(arg -> arg.map(p -> visitPattern(p, pp))), as);
+      case Pattern.Ctor(var pos, var resolved, var params, var as) ->
+        new Pattern.Ctor(pos, resolved, params.map(arg -> arg.descent(p -> visitPattern(p, pp))), as);
+      case Pattern.Tuple(var pos, var patterns, var as) ->
+        new Pattern.Tuple(pos, patterns.map(arg -> arg.descent(p -> visitPattern(p, pp))), as);
+      case Pattern.List(var pos, var patterns, var as) ->
+        new Pattern.List(pos, patterns.map(arg -> arg.descent(p -> visitPattern(p, pp))), as);
       default -> pattern;
     };
   }
