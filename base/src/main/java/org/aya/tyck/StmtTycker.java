@@ -12,11 +12,9 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.DataCall;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.PiTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.generic.Modifier;
+import org.aya.generic.SortKind;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.pat.Conquer;
@@ -235,10 +233,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
         var pat = ctor.patterns.isNotEmpty()
-          ? patTycker.visitPatterns(sig, ctor.patterns.view(), null, ctor.dataRef.concrete.ulift instanceof FormTerm.Prop)._1.toImmutableSeq()
+          ? patTycker.visitPatterns(sig, ctor.patterns.view(), null, ctor.dataRef.concrete.ulift.kind() == SortKind.Prop)._1.toImmutableSeq()
           // No patterns, leave it blank
           : ImmutableSeq.<Pat>empty();
-        var ctorSort = dataConcrete.ulift instanceof FormTerm.Prop ? FormTerm.Type.ZERO : dataConcrete.ulift;
+        var ctorSort = dataConcrete.ulift.kind() == SortKind.Prop ? SortTerm.Type0 : dataConcrete.ulift;
         var tele = tele(tycker, ctor.telescope, ctorSort);
         ctor.signature = new Def.Signature(tele, dataCall);
         ctor.yetTycker = patTycker;
@@ -251,7 +249,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structSig = structRef.concrete.signature;
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
-        var fieldSort = structLvl instanceof FormTerm.Prop ? FormTerm.Type.ZERO : structLvl;
+        var fieldSort = structLvl.kind() == SortKind.Prop ? SortTerm.Type0 : structLvl;
         var tele = tele(tycker, field.telescope, structLvl);
         var result = tycker.zonk(tycker.inherit(field.result, fieldSort)).wellTyped();
         field.signature = new Def.Signature(tele, result);
@@ -260,11 +258,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     tracing(TreeBuilder::reduce);
   }
 
-  private FormTerm.Sort resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
-    FormTerm.Sort ret = FormTerm.Type.ZERO;
+  private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
+    SortTerm ret = SortTerm.Type0;
     if (!(data.result instanceof Expr.Hole)) {
       var result = tycker.ty(data.result);
-      ret = (FormTerm.Sort) tycker.zonk(result.wellTyped());
+      ret = (SortTerm) tycker.zonk(result.wellTyped());
     }
     return ret;
   }
@@ -287,7 +285,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
    * @param sort If < 0, apply "synthesize" to the types.
    */
   private @NotNull ImmutableSeq<Term.Param>
-  tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable FormTerm.Sort sort) {
+  tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable SortTerm sort) {
     var okTele = checkTele(tycker, tele, sort);
     tycker.solveMetas();
     return zonkTele(tycker, okTele);
@@ -296,17 +294,18 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
   // similiar to `ExprTycker.sortPi`. `tele` is the domain.
-  private @NotNull ExprTycker.Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull FormTerm.Sort sort) {
+  private @NotNull ExprTycker.Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
     var result = exprTycker.sort(tele);
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
-    switch (result.type()) {
-      case FormTerm.Type ty -> unifier.compareSort(ty, sort);
-      case FormTerm.Set ty -> unifier.compareSort(ty, sort);
-      case FormTerm.Prop ty -> {
-        if (!(sort instanceof FormTerm.Type)) unifier.compareSort(ty, sort);
+    var ty = result.type();
+    switch (ty.kind()) {
+      case Type -> unifier.compareSort(ty, sort);
+      case Set -> unifier.compareSort(ty, sort);
+      case Prop -> {
+        if (sort.kind() != SortKind.Type) unifier.compareSort(ty, sort);
       }
-      case FormTerm.ISet ty -> {
-        if (!(sort instanceof FormTerm.Type || sort instanceof FormTerm.Set)) unifier.compareSort(ty, sort);
+      case ISet -> {
+        if (!(sort.kind() == SortKind.Type || sort.kind() == SortKind.Set)) unifier.compareSort(ty, sort);
       }
     }
     return result;
@@ -316,7 +315,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
    * @param sort If == null, apply "synthesize" to the types.
    */
   private @NotNull ImmutableSeq<TeleResult>
-  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable FormTerm.Sort sort) {
+  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable SortTerm sort) {
     return tele.map(param -> {
       var paramTyped = (sort != null
         ? checkTele(exprTycker, param.type(), sort)

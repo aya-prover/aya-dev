@@ -187,7 +187,7 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
         var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
+        var paramA = new Term.Param(varA, SortTerm.Type0, false);
         var varPhi = new LocalVar("phi");
         var paramRestr = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
         var varU = new LocalVar("u");
@@ -244,7 +244,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed stringType =
         new PrimSeed(ID.STRING,
           ((prim, tyckState) -> prim),
-          ref -> new PrimDef(ref, FormTerm.Type.ZERO, ID.STRING), ImmutableSeq.empty());
+          ref -> new PrimDef(ref, SortTerm.Type0, ID.STRING), ImmutableSeq.empty());
       public final @NotNull PrimDef.PrimSeed stringConcat =
         new PrimSeed(ID.STRCONCAT, Initializer::concat, ref -> new PrimDef(
           ref,
@@ -271,7 +271,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed intervalType =
         new PrimSeed(ID.I,
           ((prim, state) -> IntervalTerm.INSTANCE),
-          ref -> new PrimDef(ref, FormTerm.ISet.INSTANCE, ID.I),
+          ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
           ImmutableSeq.empty());
 
       public final @NotNull PrimDef.PrimSeed partialType =
@@ -286,9 +286,9 @@ public final class PrimDef extends TopLevelDef<Term> {
             ref,
             ImmutableSeq.of(
               new Term.Param(new LocalVar("phi"), IntervalTerm.INSTANCE, true),
-              new Term.Param(new LocalVar("A"), FormTerm.Type.ZERO, true)
+              new Term.Param(new LocalVar("A"), SortTerm.Type0, true)
             ),
-            FormTerm.Type.ZERO, ID.PARTIAL),
+            SortTerm.Type0, ID.PARTIAL),
           ImmutableSeq.of(ID.I));
     }
 
@@ -384,7 +384,7 @@ public final class PrimDef extends TopLevelDef<Term> {
   /** <code>I -> Type</code> */
   public static @NotNull Term intervalToType() {
     var paramI = new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true);
-    return new PiTerm(paramI, new FormTerm.Type(0));
+    return new PiTerm(paramI, SortTerm.Type0);
   }
 
   public enum ID {

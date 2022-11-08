@@ -16,6 +16,7 @@ import org.aya.distill.CoreDistiller;
 import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
@@ -38,7 +39,8 @@ import java.util.function.UnaryOperator;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, Elimination, MatchTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
+  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -52,11 +54,11 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (params.sameElements(sigma.params(), true)) yield sigma;
         yield new SigmaTerm(params);
       }
-      case FormTerm.Sort univ -> univ;
+      case SortTerm univ -> univ;
       case IntervalTerm interval -> interval;
-      case FormulaTerm mula -> {
-        var formula = mula.asFormula().fmap(f);
-        if (formula == mula.asFormula()) yield mula;
+      case FormulaTerm(var mula) -> {
+        var formula = mula.fmap(f);
+        if (formula == mula) yield this;
         yield new FormulaTerm(formula);
       }
       case StringTerm str -> str;
@@ -262,6 +264,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return new LittleTyper(state, ctx).term(this);
+  }
+  default @NotNull SortTerm computeSort(@NotNull TyckState state, @NotNull LocalCtx ctx) {
+    var result = computeType(state, ctx);
+    if (result instanceof SortTerm sort) return sort;
+    if (result instanceof ErrorTerm || result instanceof MetaTerm)
+      return SortTerm.Type0; // TODO: improve LittleTyper and remove this hack
+    throw new InternalException("unreachable");
   }
 
   /**

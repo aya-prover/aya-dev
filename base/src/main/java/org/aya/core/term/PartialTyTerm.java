@@ -6,7 +6,7 @@ import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
 /** partial type */
-public record PartialTyTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements FormTerm {
+public record PartialTyTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements StableWHNF {
   public @NotNull PartialTyTerm normalizeRestr() {
     return new PartialTyTerm(type(), restr().normalize());
   }

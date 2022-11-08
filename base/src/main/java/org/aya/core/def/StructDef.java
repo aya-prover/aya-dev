@@ -4,7 +4,7 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.term.FormTerm;
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ public final class StructDef extends UserDef.Type {
   public StructDef(
     @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,
-    FormTerm.Sort ulift,
+    SortTerm ulift,
     @NotNull ImmutableSeq<FieldDef> fields
   ) {
     super(telescope, ulift);

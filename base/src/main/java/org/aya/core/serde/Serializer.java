@@ -68,13 +68,8 @@ public record Serializer(@NotNull Serializer.State state) {
     };
   }
 
-  private @NotNull SerTerm.Sort serialize(@NotNull FormTerm.Sort term) {
-    return switch (term) {
-      case FormTerm.Type ty -> new SerTerm.Type(ty.lift());
-      case FormTerm.Set set -> new SerTerm.Set(set.lift());
-      case FormTerm.Prop prop -> new SerTerm.Prop();
-      case FormTerm.ISet iset -> new SerTerm.ISet();
-    };
+  private @NotNull SerTerm.Sort serialize(@NotNull SortTerm term) {
+    return new SerTerm.Sort(term.kind(), term.lift());
   }
 
   private @NotNull SerTerm serialize(@NotNull Term term) {
@@ -130,7 +125,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case MetaTerm hole -> throw new InternalException("Shall not have holes serialized.");
       case MetaPatTerm metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
-      case FormTerm.Sort sort -> serialize(sort);
+      case SortTerm sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
     };
