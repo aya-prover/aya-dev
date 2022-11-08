@@ -19,10 +19,10 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -38,6 +38,7 @@ import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -174,7 +175,7 @@ public final class ExprTycker extends Tycker {
           new Expr.NamedArg(true, coe.type())),
           new Expr.NamedArg(true, coe.restr()));
         var res = synthesize(mockApp);
-        if (whnf(res.wellTyped()) instanceof CoeTerm(var type,var restr) && !(type instanceof ErrorTerm)) {
+        if (whnf(res.wellTyped()) instanceof CoeTerm(var type, var restr) && !(type instanceof ErrorTerm)) {
           var bad = new Object() {
             Term typeSubst;
             boolean stuck = false;
@@ -190,8 +191,8 @@ public final class ExprTycker extends Tycker {
               return usages == 0;
             };
             return switch (typeSubst) {
-              case LamTerm(var param,var body) -> post.apply(body.findUsages(param.ref()));
-              case PLamTerm(var params,var body) ->
+              case LamTerm(var param, var body) -> post.apply(body.findUsages(param.ref()));
+              case PLamTerm(var params, var body) ->
                 post.apply(params.view().map(body::findUsages).foldLeft(0, Integer::sum));
               default -> {
                 bad.stuck = true;
@@ -410,7 +411,7 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
-      case Expr.Tuple(var pos,var it) -> {
+      case Expr.Tuple(var pos, var it) -> {
         var items = MutableList.<Term>create();
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
@@ -483,7 +484,7 @@ public final class ExprTycker extends Tycker {
           default -> fail(lam, term, BadTypeError.pi(state, lam, term));
         };
       }
-      case Expr.LitInt(var pos,var end) -> {
+      case Expr.LitInt(var pos, var end) -> {
         var ty = whnf(term);
         if (ty instanceof IntervalTerm) {
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? FormulaTerm.LEFT : FormulaTerm.RIGHT, ty);
