@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -75,8 +74,7 @@ public record AyaGKProducer(
 ) {
   // NOTE: change here is you modified `extends` in `AyaPsiParser.bnf`
   public static final @NotNull TokenSet ARRAY_BLOCK = AyaPsiParser.EXTENDS_SETS_[0];
-  public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[1];
-  public static final @NotNull TokenSet ATOM_PATTERN = AyaPsiParser.EXTENDS_SETS_[2];
+  public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[2];
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
@@ -716,14 +714,17 @@ public record AyaGKProducer(
   }
 
   public Pattern.PatElem unitPattern(@NotNull GenericNode<?> node) {
-    var atom = node.peekChild(ATOM_PATTERN);
-    if (atom != null) return new Pattern.PatElem(true, atomPattern(atom));
-    var explicit = node.peekChild(LPAREN) != null;
-    var patterns = patterns(node.child(PATTERNS));
-    var pat = patterns.sizeEquals(1)
-      ? patterns.first().term()
-      : new Pattern.Tuple(sourcePosOf(node), patterns, null);
-    return new Pattern.PatElem(explicit, pat);
+    var rawPatterns = node.peekChild(PATTERNS);
+    if (rawPatterns != null) {
+      var explicit = node.peekChild(LPAREN) != null;
+      var patterns = patterns(rawPatterns);
+      var pat = patterns.sizeEquals(1)
+        ? newBinOPScope(patterns.first().term(), explicit)
+        : new Pattern.Tuple(sourcePosOf(node), patterns, null);
+      return new Pattern.PatElem(explicit, pat);
+    }
+    var atom = node.childrenView().first();
+    return new Pattern.PatElem(true, atomPattern(atom));
   }
 
   public @NotNull Pattern atomPattern(@NotNull GenericNode<?> node) {
@@ -751,8 +752,8 @@ public record AyaGKProducer(
     }
     if (node.peekChild(NUMBER) != null)
       return new Pattern.Number(sourcePos, Integer.parseInt(node.tokenText()));
-    if (node.is(LPAREN)) return new Pattern.Absurd(sourcePos);
-    if (node.is(CALM_FACE)) return new Pattern.CalmFace(sourcePos);
+    if (node.peekChild(LPAREN) != null) return new Pattern.Absurd(sourcePos);
+    if (node.peekChild(CALM_FACE) != null) return new Pattern.CalmFace(sourcePos);
     return unreachable(node);
   }
 
@@ -882,9 +883,9 @@ public record AyaGKProducer(
       ImmutableSeq.of(new Expr.NamedArg(true, expr)));
   }
 
-  public @NotNull Pattern newBinOPScope(@NotNull Pattern expr, boolean licit, @Nullable LocalVar as) {
+  public @NotNull Pattern newBinOPScope(@NotNull Pattern expr, boolean explicit) {
     return new Pattern.BinOpSeq(expr.sourcePos(),
-      ImmutableSeq.of(new Pattern.PatElem(licit, expr)), as);
+      ImmutableSeq.of(new Pattern.PatElem(explicit, expr)), null);
   }
 
   private @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node) {

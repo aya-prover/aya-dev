@@ -103,19 +103,23 @@ public class ParseTest {
       """);
   }
 
-  @Test public void successExpr() {
-    assertTrue(parseExpr("boy") instanceof Expr.Unresolved);
-    assertTrue(parseExpr("f a") instanceof Expr.BinOpSeq);
-    assertTrue(parseExpr("f a b c") instanceof Expr.BinOpSeq);
-    assertTrue(parseExpr("a.1") instanceof Expr.Proj);
-    assertTrue(parseExpr("a.1.2") instanceof Expr.Proj);
-    assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.BinOpSeq app
+  @Test public void newPat() {
+    Expr expr = parseExpr("f (a.1) (a.2)");
+    assertTrue(expr instanceof Expr.BinOpSeq app
       && app.seq().get(1).expr() instanceof Expr.BinOpSeq proj1
       && proj1.seq().sizeEquals(1)
       && proj1.seq().get(0).expr() instanceof Expr.Proj
       && app.seq().get(2).expr() instanceof Expr.BinOpSeq proj2
       && proj2.seq().sizeEquals(1)
       && proj2.seq().get(0).expr() instanceof Expr.Proj);
+  }
+
+  @Test public void successExpr() {
+    assertTrue(parseExpr("boy") instanceof Expr.Unresolved);
+    assertTrue(parseExpr("f a") instanceof Expr.BinOpSeq);
+    assertTrue(parseExpr("f a b c") instanceof Expr.BinOpSeq);
+    assertTrue(parseExpr("a.1") instanceof Expr.Proj);
+    assertTrue(parseExpr("a.1.2") instanceof Expr.Proj);
     assertTrue(parseExpr("f a.1") instanceof Expr.BinOpSeq app
       && app.seq().get(1).expr() instanceof Expr.Proj);
     assertTrue(parseExpr("(f a).1") instanceof Expr.Proj proj
@@ -229,10 +233,6 @@ public class ParseTest {
       "def im-in-ctor-nested\n  | suc {N} (suc {M} a) => a"
     );
     parseAndPretty(
-      "def final : Nat | (suc {m} {suc x} a, fuck, {114514}) as Outer => a",
-      "def final : Nat\n  | (suc {m} {suc x} a, fuck, {114514}) as Outer => a"
-    );
-    parseAndPretty(
       "struct Very-Simple (A : Type) : Type | x : A | y : Nat",
       """
         struct Very-Simple (A : Type) : Type
@@ -286,8 +286,8 @@ public class ParseTest {
   }
 
   @Test public void exprAndCounterexamples() {
-    parseAndPretty("example def test => Type (lsuc lzero) (lmax lzero)",
-      "example def test => Type (lsuc lzero) (lmax lzero)");
+    parseAndPretty("example def test => Type",
+      "example def test => Type");
     parseAndPretty("counterexample def test => {? Type ?}",
       "counterexample def test => {? Type ?}");
   }

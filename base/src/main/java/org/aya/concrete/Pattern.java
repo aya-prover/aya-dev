@@ -41,7 +41,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
       case Pattern.Ctor(var pos, var resolved, var params, var as) ->
         new Pattern.Ctor(pos, resolved, params.map(x -> x.descent(f)), as);
       case Pattern.Tuple(var pos, var patterns, var as) -> new Pattern.Tuple(pos, patterns.map(x -> x.descent(f)), as);
-      case Pattern.List(var pos, var patterns, var as) -> new Pattern.List(pos, patterns.map(x -> x.descent(f)), as);
+      case Pattern.List(var pos, var patterns, var as) -> new Pattern.List(pos, patterns.map(f), as);
       default -> this;
     };
   }

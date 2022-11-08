@@ -308,7 +308,7 @@ public final class PatTycker {
         }
         yield withError(new PatternProblem.BadLitPattern(num, term), licit, term);
       }
-      case Pattern.List list -> {
+      case Pattern.List(var pos, var el, var as) -> {
         // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !
         // Note: this is a special case (maybe), If there is another similar requirement,
         //       a PatternDesugarer is recommended.
@@ -319,13 +319,12 @@ public final class PatTycker {
           var shape = exprTycker.shapeFactory.find(data);
 
           if (shape.isDefined() && shape.get() == AyaShape.LIST_SHAPE) {
-            yield doTyck(new Pattern.FakeShapedList(
-              list.sourcePos(), list.as(),
-              list.elements(), AyaShape.LIST_SHAPE, ty).constructorForm(), term, licit, resultIsProp);
+            yield doTyck(new Pattern.FakeShapedList(pos, as, el, AyaShape.LIST_SHAPE, ty)
+              .constructorForm(), term, licit, resultIsProp);
           }
         }
 
-        yield withError(new PatternProblem.BadLitPattern(list, term), licit, term);
+        yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
       }
       case Pattern.BinOpSeq ignored -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
