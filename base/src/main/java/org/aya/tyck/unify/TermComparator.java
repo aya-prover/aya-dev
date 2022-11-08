@@ -498,8 +498,9 @@ public sealed abstract class TermComparator permits Unifier {
             yield retType;
           yield null;
         }
-        case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
-        case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
+        // TODO: unify unknown-type literals
+        case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
+        case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         default -> null;
       };
       case PrimCall lhs -> null;
@@ -514,23 +515,21 @@ public sealed abstract class TermComparator permits Unifier {
         case IntegerTerm rhs -> {
           if (!lhs.compareShape(this, rhs)) yield null;
           if (!lhs.compareUntyped(rhs)) yield null;
-          yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
+          yield lhs.type(); // compareShape implies lhs.type() = rhs.type()
         }
-        case ConCall rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
+        case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
       case ListTerm lhs -> switch (preRhs) {
         case ListTerm rhs -> {
           if (!lhs.compareShape(this, rhs)) yield null;
-          if (!lhs.compareUntyped(rhs,
-            (l, r) -> compare(l, r, lr, rl, null))) yield null;
-
+          if (!lhs.compareUntyped(rhs, (l, r) -> compare(l, r, lr, rl, null))) yield null;
           yield lhs.type();
         }
-
-        case ConCall rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
+        case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
+      // TODO: unify unknown-type literals
       case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs);
     };
     traceExit();

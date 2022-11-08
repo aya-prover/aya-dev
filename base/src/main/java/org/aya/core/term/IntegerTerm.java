@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 public record IntegerTerm(
   @Override int repr,
-  @Override @NotNull ShapeRecognition shape,
-  @Override @NotNull Term type
+  @Override @NotNull ShapeRecognition recognition,
+  @Override @NotNull DataCall type
 ) implements StableWHNF, Shaped.Nat<Term> {
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
@@ -25,6 +25,6 @@ public record IntegerTerm(
   }
 
   @Override public @NotNull Term destruct(int repr) {
-    return new IntegerTerm(repr, this.shape, this.type);
+    return new IntegerTerm(repr, this.recognition, this.type);
   }
 }

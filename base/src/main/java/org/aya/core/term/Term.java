@@ -144,13 +144,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       case IntegerTerm shaped -> {
         var type = f.apply(shaped.type());
         if (type == shaped.type()) yield shaped;
-        yield new IntegerTerm(shaped.repr(), shaped.shape(), type);
+        yield new IntegerTerm(shaped.repr(), shaped.recognition(), (DataCall) type);
       }
       case ListTerm shaped -> {
         var type = f.apply(shaped.type());
         var elements = shaped.repr().map(f);
         if (type == shaped.type() && elements.sameElements(shaped.repr(), true)) yield shaped;
-        yield new ListTerm(elements, shaped.shape(), type);
+        yield new ListTerm(elements, shaped.recognition(), (DataCall) type);
       }
       case MetaLitTerm lit -> {
         var type = f.apply(lit.type());

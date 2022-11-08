@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 public record ListTerm(
   @Override @NotNull ImmutableSeq<Term> repr,
-  @Override @NotNull ShapeRecognition shape,
-  @Override @NotNull Term type
+  @Override @NotNull ShapeRecognition recognition,
+  @Override @NotNull DataCall type
 ) implements StableWHNF, Shaped.List<Term> {
 
   @Override
@@ -28,6 +28,6 @@ public record ListTerm(
 
   @Override
   public @NotNull Term destruct(@NotNull ImmutableSeq<Term> repr) {
-    return new ListTerm(repr, shape(), type());
+    return new ListTerm(repr, recognition, type());
   }
 }

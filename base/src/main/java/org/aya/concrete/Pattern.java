@@ -7,6 +7,7 @@ import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.core.def.CtorDef;
 import org.aya.core.repr.ShapeRecognition;
+import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
@@ -140,10 +141,9 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     @NotNull SourcePos sourcePos,
     @Nullable LocalVar as,
     @Override @NotNull ImmutableSeq<Pattern> repr,
-    @Override @NotNull ShapeRecognition shape,
-    @Override @NotNull Term type
+    @Override @NotNull ShapeRecognition recognition,
+    @Override @NotNull DataCall type
   ) implements Shaped.List<Pattern> {
-
     @Override public @NotNull Pattern makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> type) {
       return new Pattern.Ctor(sourcePos, new WithPos<>(sourcePos, nil.ref()), ImmutableSeq.empty(), as);
     }
@@ -153,13 +153,11 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
       // x    : Current Pattern
       // xs   : Right Pattern
       // Goal : consCtor x xs
-      return new Pattern.Ctor(sourcePos,
-        new WithPos<>(sourcePos, cons.ref()), ImmutableSeq.of(x, xs), as);
+      return new Pattern.Ctor(sourcePos, new WithPos<>(sourcePos, cons.ref()), ImmutableSeq.of(x, xs), as);
     }
 
     @Override public @NotNull Pattern destruct(@NotNull ImmutableSeq<Pattern> repr) {
-      return new FakeShapedList(sourcePos, null, repr, shape, type)
-        .constructorForm();
+      return new FakeShapedList(sourcePos, null, repr, recognition, type).constructorForm();
     }
   }
 }

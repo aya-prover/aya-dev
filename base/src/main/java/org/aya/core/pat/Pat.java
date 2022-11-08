@@ -204,14 +204,14 @@ public sealed interface Pat extends AyaDocile {
 
   record ShapedInt(
     @Override int repr,
-    @Override @NotNull ShapeRecognition shape,
+    @Override @NotNull ShapeRecognition recognition,
     @NotNull DataCall type,
     boolean explicit
   ) implements Pat, Shaped.Nat<Pat> {
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       // The cast must succeed
-      return new Pat.ShapedInt(repr, shape, (DataCall) tycker.zonk(type), explicit);
+      return new Pat.ShapedInt(repr, recognition, (DataCall) tycker.zonk(type), explicit);
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
@@ -233,7 +233,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat destruct(int repr) {
-      return new Pat.ShapedInt(repr, this.shape, this.type, true);
+      return new Pat.ShapedInt(repr, this.recognition, this.type, true);
     }
   }
 

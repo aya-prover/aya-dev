@@ -79,13 +79,13 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
-      case IntegerTerm lit ->
-        new SerTerm.ShapedInt(lit.repr(), SerDef.SerShapeResult.serialize(state, lit.shape()), serialize(lit.type()));
-      case ListTerm lit ->
-        new SerTerm.ShapedList(
-          lit.repr().map(this::serialize),
-          SerDef.SerShapeResult.serialize(state, lit.shape()),
-          serialize(lit.type()));
+      case IntegerTerm lit -> new SerTerm.ShapedInt(lit.repr(),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
+        (SerTerm.DataCall) serialize(lit.type()));
+      case ListTerm lit -> new SerTerm.ShapedList(
+        lit.repr().map(this::serialize),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
+        (SerTerm.DataCall) serialize(lit.type()));
       case FormulaTerm end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case StringTerm str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
@@ -152,7 +152,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
       case Pat.ShapedInt lit -> new SerPat.ShapedInt(
         lit.repr(), lit.explicit(),
-        SerDef.SerShapeResult.serialize(state, lit.shape()),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
         serializeDataCall(lit.type()));
     };
   }
