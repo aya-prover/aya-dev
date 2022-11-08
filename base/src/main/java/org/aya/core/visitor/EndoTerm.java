@@ -103,7 +103,7 @@ public interface EndoTerm extends UnaryOperator<Term> {
         }
         case FnCall fn -> new FnCall(fn.ref(), fn.ulift() + lift, fn.args());
         case PrimCall prim -> new PrimCall(prim.ref(), prim.ulift() + lift, prim.args());
-        case MetaTerm hole -> new MetaTerm(hole.ref(), hole.ulift() + lift, hole.contextArgs(), hole.args());
+        case MetaTerm hole -> new MetaTerm(hole.ref(), hole.contextArgs(), hole.args());
         case Term misc -> misc;
       };
     }
