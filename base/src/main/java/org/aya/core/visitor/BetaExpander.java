@@ -3,7 +3,7 @@
 package org.aya.core.visitor;
 
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;

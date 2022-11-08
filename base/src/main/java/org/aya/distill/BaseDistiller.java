@@ -8,7 +8,7 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.PathTerm;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
@@ -31,6 +31,10 @@ import java.util.function.ToIntBiFunction;
  * @author ice1000
  */
 public abstract class BaseDistiller<Term extends AyaDocile> {
+  public static <T extends AyaDocile> @NotNull Doc toDoc(@NotNull DistillerOptions options, @NotNull Arg<T> self) {
+    return Doc.bracedUnless(self.term().toDoc(options), self.explicit());
+  }
+
   @FunctionalInterface
   protected interface Fmt<T extends AyaDocile> extends BiFunction<Outer, T, Doc> {
   }

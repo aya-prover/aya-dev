@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;

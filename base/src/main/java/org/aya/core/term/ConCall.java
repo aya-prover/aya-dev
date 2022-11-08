@@ -6,11 +6,12 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public record ConCall(
   @NotNull ConCall.Head head,
@@ -48,7 +49,7 @@ public record ConCall(
       return new DataCall(dataRef, ulift, dataArgs);
     }
 
-    public @NotNull Head descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+    public @NotNull Head descent(@NotNull UnaryOperator<@NotNull Term> f) {
       var args = dataArgs().map(arg -> arg.descent(f));
       if (args.sameElements(dataArgs(), true)) return this;
       return new Head(dataRef(), ref(), ulift(), args);

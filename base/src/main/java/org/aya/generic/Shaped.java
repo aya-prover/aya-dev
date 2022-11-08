@@ -12,6 +12,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.TermComparator;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

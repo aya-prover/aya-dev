@@ -10,7 +10,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.pretty.doc.Doc;

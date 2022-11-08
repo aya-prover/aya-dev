@@ -14,7 +14,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.ExprConsumer;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;

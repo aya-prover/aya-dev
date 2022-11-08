@@ -19,7 +19,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -254,8 +255,7 @@ public final class ExprTycker extends Tycker {
         // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
         yield new TermResult(newApp, pi.body().subst(subst));
       }
-      case Expr.Hole hole ->
-        inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
+      case Expr.Hole hole -> inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
       case Expr.Error err -> TermResult.error(err.description());
       case Expr.LitInt lit -> {
         int integer = lit.integer();
@@ -839,7 +839,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
-    var checker = new Function<Term, Term>() {
+    var checker = new UnaryOperator<Term>() {
       private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
         var erased = ErasedTerm.underlyingIllegalErasure(term);

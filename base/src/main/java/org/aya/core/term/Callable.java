@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.Contract;

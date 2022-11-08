@@ -3,7 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 public record PAppTerm(

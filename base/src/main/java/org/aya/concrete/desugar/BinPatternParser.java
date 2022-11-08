@@ -6,7 +6,7 @@ import kala.collection.SeqView;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.OperatorError;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;

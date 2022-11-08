@@ -10,7 +10,7 @@ import org.aya.core.term.MetaTerm;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.TyckState;
