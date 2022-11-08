@@ -8,6 +8,7 @@ import kala.control.Either;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
+import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
@@ -141,7 +142,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author AustinZhu
    */
-  record NamedArg(boolean explicit, @Nullable String name, @NotNull Expr expr)
+  record NamedArg(@Override boolean explicit, @Nullable String name, @Override @NotNull Expr term)
     implements AyaDocile, SourceNode, BinOpParser.Elem<Expr> {
 
     public NamedArg(boolean explicit, @NotNull Expr expr) {
@@ -150,21 +151,21 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
 
     public @NotNull NamedArg update(@NotNull Expr expr) {
-      return expr == expr() ? this : new NamedArg(explicit, name, expr);
+      return expr == term() ? this : new NamedArg(explicit, name, expr);
     }
 
     public @NotNull NamedArg descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
-      return update(f.apply(expr));
+      return update(f.apply(term));
     }
 
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      var doc = name == null ? expr.toDoc(options) :
-        Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), expr.toDoc(options)));
+      var doc = name == null ? term.toDoc(options) :
+        Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), term.toDoc(options)));
       return Doc.bracedUnless(doc, explicit);
     }
 
     @Override public @NotNull SourcePos sourcePos() {
-      return expr.sourcePos();
+      return term.sourcePos();
     }
   }
 
@@ -430,10 +431,18 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   }
 
   /**
-   * calls to {@link org.aya.core.def.PrimDef.ID#COE}, desugared from {@link Proj} for simplicity
+   * calls to
+   * <ul>
+   *   <li>{@link org.aya.core.def.PrimDef.ID#COE}</li>
+   *   <li>{@link org.aya.core.def.PrimDef.ID#COEFILL}</li>
+   *   <li>{@link org.aya.core.def.PrimDef.ID#COEINV}</li>
+   *   <li>{@link org.aya.core.def.PrimDef.ID#COEINVFILL}</li>
+   * </ul>
+   * desugared from {@link RawProj} for simplicity.
    *
    * @param resolvedVar will be set to the primitive coe's DefVar during resolving
    * @param restr       The cofibration under which the type should be constant
+   * @see org.aya.core.def.PrimDef.ID#projSyntax(PrimDef.ID)
    */
   record Coe(
     @Override @NotNull SourcePos sourcePos,

@@ -37,7 +37,7 @@ public record BadTypeError(
   @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
     if (expr instanceof Expr.App app && app.function() instanceof Expr.Ref ref
         && ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef) {
-      var fix = new Expr.Proj(SourcePos.NONE, app.argument().expr(),
+      var fix = new Expr.Proj(SourcePos.NONE, app.argument().term(),
         Either.right(new QualifiedID(SourcePos.NONE, defVar.name())));
       return Doc.sep(Doc.english("Did you mean"),
         Doc.styled(Style.code(), fix.toDoc(options)),

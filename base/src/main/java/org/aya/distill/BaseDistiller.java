@@ -8,7 +8,7 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.PathTerm;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
@@ -19,6 +19,7 @@ import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,10 @@ import java.util.function.ToIntBiFunction;
  * @author ice1000
  */
 public abstract class BaseDistiller<Term extends AyaDocile> {
+  public static <T extends AyaDocile> @NotNull Doc toDoc(@NotNull DistillerOptions options, @NotNull Arg<T> self) {
+    return BaseDistiller.arg((outer, d) -> d.toDoc(options), self, Outer.Free);
+  }
+
   @FunctionalInterface
   protected interface Fmt<T extends AyaDocile> extends BiFunction<Outer, T, Doc> {
   }
@@ -54,7 +59,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   public @NotNull Doc visitCalls(
     boolean infix, @NotNull Doc fn,
-    @NotNull SeqView<@NotNull Arg<Term>> args,
+    @NotNull SeqView<? extends BinOpParser.@NotNull Elem<Term>> args,
     @NotNull Outer outer, boolean showImplicits
   ) {
     return visitCalls(infix, fn, this::term, outer, args, showImplicits);
@@ -87,9 +92,9 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    */
   <T extends AyaDocile> @NotNull Doc visitCalls(
     boolean infix, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
-    @NotNull SeqView<@NotNull Arg<@NotNull T>> args, boolean showImplicits
+    @NotNull SeqView<? extends BinOpParser.@NotNull Elem<@NotNull T>> args, boolean showImplicits
   ) {
-    var visibleArgs = (showImplicits ? args : args.filter(Arg::explicit)).toImmutableSeq();
+    var visibleArgs = (showImplicits ? args : args.filter(BinOpParser.Elem::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
     // Print as a binary operator
     if (infix) {
@@ -98,7 +103,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       var first = fmt.apply(Outer.BinOp, firstArg.term());
       // If we're in a binApp/head/spine/etc., add parentheses
       if (visibleArgs.sizeEquals(1)) return checkParen(outer, Doc.sep(first, fn), Outer.BinOp);
-      var triple = Doc.sep(first, fn, visitArg(fmt, visibleArgs.get(1), Outer.BinOp));
+      var triple = Doc.sep(first, fn, arg(fmt, visibleArgs.get(1), Outer.BinOp));
       if (visibleArgs.sizeEquals(2)) return checkParen(outer, triple, Outer.BinOp);
       return prefix(Doc.parened(triple), fmt, outer, visibleArgs.view().drop(2));
     }
@@ -111,14 +116,14 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    * @see BaseDistiller#visitCalls(boolean, Doc, Fmt, Outer, SeqView, boolean)
    */
   private <T extends AyaDocile> @NotNull Doc
-  prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<Arg<T>> args) {
+  prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<? extends BinOpParser.@NotNull Elem<T>> args) {
     var call = Doc.sep(fn, Doc.sep(args.map(arg ->
-      visitArg(fmt, arg, Outer.AppSpine))));
+      arg(fmt, arg, Outer.AppSpine))));
     // If we're in a spine, add parentheses
     return checkParen(outer, call, Outer.AppSpine);
   }
 
-  private <T extends AyaDocile> Doc visitArg(@NotNull Fmt<T> fmt, @NotNull Arg<T> arg, @NotNull Outer outer) {
+  public static <T extends AyaDocile> Doc arg(@NotNull Fmt<T> fmt, @NotNull BinOpParser.Elem<T> arg, @NotNull Outer outer) {
     if (arg.explicit()) return fmt.apply(outer, arg.term());
     return Doc.braced(fmt.apply(Outer.Free, arg.term()));
   }
@@ -202,7 +207,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   private Doc mutableListNames(MutableList<LocalVar> names, ParamLike<?> param) {
-    return param.toDoc(Doc.sep(names.view().map(BaseDistiller::linkDef).toImmutableSeq()), options);
+    return param.toDoc(Doc.sep(names.view().map(BaseDistiller::linkDef)), options);
   }
 
   @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
@@ -271,7 +276,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       case Formula.Inv<Term> inv -> checkParen(outer,
         Doc.sep(Doc.symbol("~"), term(Outer.AppSpine, inv.i())),
         Outer.AppSpine);
-      case Formula.Lit<Term> lit -> Doc.plain(lit.isOne() ? "1" : "0");
+      case Formula.Lit<Term>(var one) -> Doc.plain(one ? "1" : "0");
     };
   }
 
@@ -288,7 +293,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
   restr(@NotNull DistillerOptions options, @NotNull Restr<T> restr) {
     return switch (restr) {
-      case Restr.Const<T> con -> con.isOne() ? Doc.symbol("top") : Doc.symbol("_|_");
+      case Restr.Const<T>(var one) -> one ? Doc.symbol("top") : Doc.symbol("_|_");
       case Restr.Disj<T> v -> Doc.join(Doc.spaced(Doc.symbol("\\/")),
         v.orz().view().map(or -> or.ands().sizeGreaterThan(1) && v.orz().sizeGreaterThan(1)
           ? Doc.parened(cofib(options, or))
@@ -308,6 +313,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   protected static @Nullable Style chooseStyle(Object concrete) {
     return switch (concrete) {
+      case DefVar<?, ?> d -> chooseStyle(d.concrete);
       case TeleDecl.FnDecl d -> FN_CALL;
       case TeleDecl.DataDecl d -> DATA_CALL;
       case TeleDecl.DataCtor d -> CON_CALL;

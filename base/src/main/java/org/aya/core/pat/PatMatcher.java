@@ -11,7 +11,7 @@ import kala.tuple.Tuple2;
 import org.aya.core.term.*;
 import org.aya.core.visitor.PatTraversal;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.tyck.env.LocalCtx;

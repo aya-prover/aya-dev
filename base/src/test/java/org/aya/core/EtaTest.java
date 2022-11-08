@@ -5,7 +5,7 @@ package org.aya.core;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.MapLocalCtx;
 import org.jetbrains.annotations.NotNull;

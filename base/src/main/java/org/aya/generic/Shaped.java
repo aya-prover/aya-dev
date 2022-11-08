@@ -12,6 +12,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.TermComparator;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.function.Supplier;
  *
  * @param <T>
  */
+@SuppressWarnings("JavadocReference")
 public interface Shaped<T> {
   @NotNull AyaShape shape();
   @NotNull Term type();
@@ -58,9 +60,9 @@ public interface Shaped<T> {
     }
   }
 
-  non-sealed interface Nat<T> extends Inductive<T> {
+  non-sealed interface Nat<T extends AyaDocile> extends Inductive<T> {
     @NotNull T makeZero(@NotNull CtorDef zero);
-    @NotNull T makeSuc(@NotNull CtorDef suc, @NotNull T t);
+    @NotNull T makeSuc(@NotNull CtorDef suc, @NotNull Arg<T> t);
     @NotNull T destruct(int repr);
     int repr();
 
@@ -68,7 +70,7 @@ public interface Shaped<T> {
      * Presumption: {@code this} and {@code other} are well-typed terms of the same type.
      * This is true for {@link org.aya.core.pat.PatUnify} and {@link org.aya.core.pat.PatMatcher}.
      */
-    default <O> boolean compareUntyped(@NotNull Shaped<O> other) {
+    default <O extends AyaDocile> boolean compareUntyped(@NotNull Shaped<O> other) {
       assert other instanceof Nat<?>;
       var otherData = (Nat<O>) other;
       return repr() == otherData.repr();
@@ -78,7 +80,7 @@ public interface Shaped<T> {
       int repr = repr();
       return with(state, (zero, suc) -> {
         if (repr == 0) return makeZero(zero);
-        return makeSuc(suc, destruct(repr - 1));
+        return makeSuc(suc, new Arg<>(destruct(repr - 1), true));
       }, () -> {
         // TODO[literal]: how to handle this?
         throw new InternalException("trying to make constructor form without type solved");
@@ -109,10 +111,10 @@ public interface Shaped<T> {
     }
   }
 
-  non-sealed interface List<T> extends Inductive<T> {
+  non-sealed interface List<T extends AyaDocile> extends Inductive<T> {
     @NotNull ImmutableSeq<T> repr();
     @NotNull T makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> type);
-    @NotNull T makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, T x, T xs);
+    @NotNull T makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> type, Arg<T> x, Arg<T> xs);
     @NotNull T destruct(@NotNull ImmutableSeq<T> repr);
 
     /**
@@ -123,7 +125,7 @@ public interface Shaped<T> {
      * @return true if they match (a term matches a pat or two terms are equivalent,
      * which depends on the type parameters {@link T} and {@link O}), false if otherwise.
      */
-    default <O> boolean compareUntyped(@NotNull Shaped.List<O> other, @NotNull BiPredicate<T, O> comparator) {
+    default <O extends AyaDocile> boolean compareUntyped(@NotNull Shaped.List<O> other, @NotNull BiPredicate<T, O> comparator) {
       var lhsRepr = repr();
       var rhsRepr = other.repr();
       // the size should equal.
@@ -137,10 +139,12 @@ public interface Shaped<T> {
     @Override
     default @NotNull T constructorForm(@Nullable TyckState state) {
       return with(state, (nil, cons, dataArg) -> {
+        var xLicit = cons.selfTele.get(0).explicit();
+        var xsLicit = cons.selfTele.get(1).explicit();
         var elements = repr();
         if (elements.isEmpty()) return makeNil(nil, dataArg);
-        return makeCons(cons, dataArg, elements.first(),
-          destruct(elements.drop(1)));
+        return makeCons(cons, dataArg, new Arg<>(elements.first(), xLicit),
+          new Arg<>(destruct(elements.drop(1)), xsLicit));
       }, () -> {
         // TODO[literal]: how to handle this?
         throw new InternalException("trying to make constructor form without type solved");

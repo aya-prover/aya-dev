@@ -13,7 +13,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.InternalException;
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * A well-typed and terminating term.

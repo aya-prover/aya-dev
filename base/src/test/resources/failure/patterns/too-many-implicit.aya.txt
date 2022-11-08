@@ -6,7 +6,7 @@ In file $FILE:4:13 ->
                    ^^
 
 Error: There are too many implicit patterns:
-         {y}
+         y
        should be an explicit pattern matched against
          (y : A)
 

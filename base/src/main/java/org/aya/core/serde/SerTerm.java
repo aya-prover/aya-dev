@@ -10,7 +10,7 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;

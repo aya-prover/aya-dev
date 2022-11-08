@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
 import org.aya.core.repr.AyaShape;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Shaped;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,9 +19,9 @@ public record IntegerTerm(
     return new ConCall(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
   }
 
-  @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Term term) {
+  @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Arg<Term> term) {
     return new ConCall(suc.dataRef, suc.ref, ImmutableSeq.empty(), 0,
-      ImmutableSeq.of(new Arg<>(term, true)));
+      ImmutableSeq.of(term));
   }
 
   @Override public @NotNull Term destruct(int repr) {

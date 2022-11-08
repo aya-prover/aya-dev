@@ -13,7 +13,7 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.generic.util.InternalException;
@@ -233,8 +233,9 @@ public sealed interface Pat extends AyaDocile {
       return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), ImmutableSeq.empty(), type);
     }
 
-    @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Pat pat) {
-      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat), type);
+    @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Arg<Pat> pat) {
+      // TODO[ice]: Arg<Pat> in core
+      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat.term()), type);
     }
 
     @Override public @NotNull Pat destruct(int repr) {

@@ -12,6 +12,7 @@ import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
+import org.aya.util.Arg;
 import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
@@ -125,7 +126,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     /** Similar to {@link Decl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
     public ImmutableSeq<Term.Param> patternTele;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
-    public @NotNull ImmutableSeq<Pattern> patterns;
+    public @NotNull ImmutableSeq<Arg<Pattern>> patterns;
     public final boolean coerce;
 
     /** used when tycking constructor's header */
@@ -143,7 +144,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
-      @NotNull ImmutableSeq<Pattern> patterns,
+      @NotNull ImmutableSeq<Arg<Pattern>> patterns,
       boolean coerce,
       @NotNull BindBlock bindBlock
     ) {

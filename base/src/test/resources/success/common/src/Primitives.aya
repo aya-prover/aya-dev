@@ -6,3 +6,6 @@ prim intervalMax (i j : I) : I
 prim String: Type
 prim strcat (str1 str2: String) : String
 prim coe (A : I -> Type) (i : I) : A 0 -> A 1
+prim coeFill
+prim eoc (A : I -> Type) (i : I) : A 1 -> A 0
+prim eocFill

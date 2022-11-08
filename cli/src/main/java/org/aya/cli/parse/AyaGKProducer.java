@@ -11,7 +11,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
-import kala.function.BooleanFunction;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
@@ -21,6 +21,7 @@ import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
+import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -75,8 +75,7 @@ public record AyaGKProducer(
 ) {
   // NOTE: change here is you modified `extends` in `AyaPsiParser.bnf`
   public static final @NotNull TokenSet ARRAY_BLOCK = AyaPsiParser.EXTENDS_SETS_[0];
-  public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[1];
-  public static final @NotNull TokenSet ATOM_PATTERN = AyaPsiParser.EXTENDS_SETS_[2];
+  public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[2];
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
@@ -224,16 +223,16 @@ public record AyaGKProducer(
 
   public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
     var accessibility = node.peekChild(KW_PRIVATE) == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
-    if (node.is(FN_DECL)) return kala.tuple.Tuple.of(fnDecl(node, accessibility), ImmutableSeq.empty());
+    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, accessibility), ImmutableSeq.empty());
     if (node.is(DATA_DECL)) return dataDecl(node, accessibility);
     if (node.is(STRUCT_DECL)) return structDecl(node, accessibility);
-    if (node.is(PRIM_DECL)) return kala.tuple.Tuple.of(primDecl(node), ImmutableSeq.empty());
+    if (node.is(PRIM_DECL)) return Tuple.of(primDecl(node), ImmutableSeq.empty());
     return unreachable(node);
   }
 
   public TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node, Stmt.Accessibility acc) {
     var sample = sampleModifiers(node.peekChild(SAMPLE_MODIFIERS));
-    var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> kala.tuple.Tuple.of(m, fnModifier(m)))
+    var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> Tuple.of(m, fnModifier(m)))
       .toImmutableSeq();
     var inline = modifiers.find(t -> t._2 == Modifier.Inline);
     var opaque = modifiers.find(t -> t._2 == Modifier.Opaque);
@@ -294,7 +293,7 @@ public record AyaGKProducer(
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
-    return kala.tuple.Tuple.of(data, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+    return Tuple.of(data, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(node.child(OPEN_KW)),
         openAcc,
@@ -337,7 +336,7 @@ public record AyaGKProducer(
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
-    return kala.tuple.Tuple.of(struct, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
+    return Tuple.of(struct, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(node.child(OPEN_KW)),
         openAcc,
@@ -379,7 +378,7 @@ public record AyaGKProducer(
     );
   }
 
-  public @NotNull TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Pattern> patterns, @NotNull GenericNode<?> node) {
+  public @NotNull TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var bind = node.peekChild(BIND_BLOCK);
@@ -467,9 +466,9 @@ public record AyaGKProducer(
   public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> declNameOrInfix(@NotNull GenericNode<?> node) {
     var assoc = node.peekChild(ASSOC);
     var id = weakId(node.child(WEAK_ID));
-    if (assoc == null) return kala.tuple.Tuple.of(id, null);
+    if (assoc == null) return Tuple.of(id, null);
     var infix = new OpDecl.OpInfo(id.data(), assoc(assoc));
-    return kala.tuple.Tuple.of(new WithPos<>(id.sourcePos(), infix.name()), infix);
+    return Tuple.of(new WithPos<>(id.sourcePos(), infix.name()), infix);
   }
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
@@ -546,18 +545,18 @@ public record AyaGKProducer(
         newBody == null
           ? ImmutableSeq.empty()
           : newBody.childrenOfType(NEW_ARG).map(arg -> {
-          var id = newArgField(arg.child(NEW_ARG_FIELD));
-          var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
-            .map(b -> b.map($ -> LocalVar.from(b)))
-            .toImmutableSeq();
-          var body = expr(arg.child(EXPR));
-          return new Expr.Field(id, bindings, body, MutableValue.create());
-        }).toImmutableSeq());
+            var id = newArgField(arg.child(NEW_ARG_FIELD));
+            var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
+              .map(b -> b.map($ -> LocalVar.from(b)))
+              .toImmutableSeq();
+            var body = expr(arg.child(EXPR));
+            return new Expr.Field(id, bindings, body, MutableValue.create());
+          }).toImmutableSeq());
     }
-    if (node.is(PI_EXPR)) return buildPi(pos, false,
+    if (node.is(PI_EXPR)) return buildPi(pos,
       telescope(node.childrenOfType(TELE).map(x -> x)).view(),
       expr(node.child(EXPR)));
-    if (node.is(FORALL_EXPR)) return buildPi(pos, false,
+    if (node.is(FORALL_EXPR)) return buildPi(pos,
       lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(),
       expr(node.child(EXPR)));
     if (node.is(SIGMA_EXPR)) {
@@ -628,8 +627,8 @@ public record AyaGKProducer(
       var fixes = node.childrenOfType(PROJ_FIX);
       var expr = expr(node.child(EXPR));
       var projected = fixes
-        .foldLeft(kala.tuple.Tuple.of(sourcePosOf(node), expr),
-          (acc, proj) -> kala.tuple.Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
+        .foldLeft(Tuple.of(sourcePosOf(node), expr),
+          (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
       return new Expr.NamedArg(true, projected);
     }
@@ -661,7 +660,7 @@ public record AyaGKProducer(
 
   public @NotNull Tuple2<Expr, Expr> subSystem(@NotNull GenericNode<?> node) {
     var exprs = node.childrenOfType(EXPR).map(this::expr);
-    return kala.tuple.Tuple.of(exprs.get(0), exprs.get(1));
+    return Tuple.of(exprs.get(0), exprs.get(1));
   }
 
   private @NotNull Expr buildProj(
@@ -681,7 +680,7 @@ public record AyaGKProducer(
   }
 
   public static @NotNull Expr buildPi(
-    SourcePos sourcePos, boolean co,
+    SourcePos sourcePos,
     SeqView<Expr.Param> params, Expr body
   ) {
     if (params.isEmpty()) return body;
@@ -689,7 +688,7 @@ public record AyaGKProducer(
     return new Expr.Pi(
       sourcePos, params.first(),
       buildPi(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos)), co, drop, body));
+        drop.map(Expr.Param::sourcePos)), drop, body));
   }
 
   public static @NotNull Expr buildLam(SourcePos sourcePos, SeqView<Expr.Param> params, Expr body) {
@@ -701,70 +700,62 @@ public record AyaGKProducer(
         drop.map(Expr.Param::sourcePos)), drop, body));
   }
 
-  public @NotNull Pattern pattern(@NotNull GenericNode<?> node) {
-    return atomPatterns(node.child(ATOM_PATTERNS)).apply(true, null);
-  }
-
-  public BiFunction<Boolean, LocalVar, Pattern> atomPatterns(@NotNull GenericNode<?> node) {
-    var atoms = node.childrenOfType(ATOM_PATTERN)
-      .map(this::atomPattern)
+  public @NotNull Arg<Pattern> pattern(@NotNull GenericNode<?> node) {
+    var unitPats = node.childrenOfType(UNIT_PATTERN)
+      .map(this::unitPattern)
       .toImmutableSeq();
-    if (atoms.sizeEquals(1)) return (ex, as) -> newBinOPScope(atoms.first().apply(ex), as);
-    return (ex, as) -> new Pattern.BinOpSeq(
-      sourcePosOf(node),
-      atoms.map(p -> p.apply(true)),
-      as, ex
-    );
+    var as = Option.ofNullable(node.peekChild(WEAK_ID))
+      .map(this::weakId)
+      .map(LocalVar::from);
+    if (unitPats.sizeEquals(1)) return unitPats.first();
+    return new Arg<>(new Pattern.BinOpSeq(sourcePosOf(node), unitPats, as.getOrNull()), true);
   }
 
-  public @NotNull BooleanFunction<Pattern> atomPattern(@NotNull GenericNode<?> node) {
+  private Arg<Pattern> unitPattern(@NotNull GenericNode<?> node) {
+    var rawPatterns = node.peekChild(PATTERNS);
+    if (rawPatterns != null) {
+      var explicit = node.peekChild(LPAREN) != null;
+      var patterns = patterns(rawPatterns);
+      var pat = patterns.sizeEquals(1)
+        ? newBinOPScope(patterns.first().term(), explicit)
+        : new Pattern.Tuple(sourcePosOf(node), patterns, null);
+      return new Arg<>(pat, explicit);
+    }
+    var atom = node.childrenView().first();
+    return new Arg<>(atomPattern(atom), true);
+  }
+
+  private @NotNull Pattern atomPattern(@NotNull GenericNode<?> node) {
     var sourcePos = sourcePosOf(node);
     if (node.is(ATOM_BIND_PATTERN)) {
       var id = weakId(node.child(WEAK_ID));
-      return ex -> new Pattern.Bind(sourcePos, ex, LocalVar.from(id), MutableValue.create());
-    }
-    if (node.is(ATOM_EX_PATTERN) || node.is(ATOM_IM_PATTERN)) {
-      var forceEx = node.is(ATOM_EX_PATTERN);
-      var patterns = node.child(PATTERNS);
-      var asId = node.peekChild(WEAK_ID);
-      var as = asId == null ? null : LocalVar.from(weakId(asId));
-      var tupElem = patterns.childrenOfType(PATTERN)
-        .map(t -> atomPatterns(t.child(ATOM_PATTERNS)))
-        .toImmutableSeq();
-      return tupElem.sizeEquals(1)
-        ? (ignored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
-        : (ignored -> new Pattern.Tuple(sourcePos, forceEx, tupElem.map(p -> p.apply(true, null)), as));
+      return new Pattern.Bind(sourcePos, LocalVar.from(id), MutableValue.create());
     }
     if (node.is(ATOM_LIST_PATTERN)) {
       var patternsNode = node.peekChild(PATTERNS);    // We allowed empty list pattern (nil)
       var patterns = patternsNode != null
-        ? patternsNode
-        .childrenOfType(PATTERN)
-        .map(x -> x.child(ATOM_PATTERNS))
-        .map(this::atomPatterns)
-        : SeqView.<BiFunction<Boolean, LocalVar, Pattern>>empty();
+        ? patterns(patternsNode).view()
+        : SeqView.<Arg<Pattern>>empty();
 
       var weakId = node.peekChild(WEAK_ID);
       var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
 
-      return ex -> new Pattern.List(sourcePos, ex,
-        patterns.map(f -> {
-          var subpat = f.apply(true, null);
-          if (! subpat.explicit()) {    // [ {a} ] is disallowed
-            reporter.report(new ParseError(subpat.sourcePos(), "Implicit elements in list pattern is disallowed"));
+      return new Pattern.List(sourcePos,
+        patterns.map(pat -> {
+          if (!pat.explicit()) {    // [ {a} ] is disallowed
+            reporter.report(new ParseError(pat.term().sourcePos(), "Implicit elements in list pattern is disallowed"));
           }
-
-          return subpat;
+          return pat.term();
         }).toImmutableSeq(), asId);
     }
-    if (node.is(ATOM_NUMBER_PATTERN))
-      return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(node.tokenText()));
-    if (node.is(ATOM_ABSURD_PATTERN)) return ex -> new Pattern.Absurd(sourcePos, ex);
-    if (node.is(ATOM_CALM_FACE_PATTERN)) return ex -> new Pattern.CalmFace(sourcePos, ex);
+    if (node.peekChild(NUMBER) != null)
+      return new Pattern.Number(sourcePos, Integer.parseInt(node.tokenText()));
+    if (node.peekChild(LPAREN) != null) return new Pattern.Absurd(sourcePos);
+    if (node.peekChild(CALM_FACE) != null) return new Pattern.CalmFace(sourcePos);
     return unreachable(node);
   }
 
-  public @NotNull Expr.Array arrayCompBlock(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
+  private @NotNull Expr.Array arrayCompBlock(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
     // arrayCompBlock ::=
     //   expr  BAR listComp
     // [ x * y  |  x <- xs, y <- ys ]
@@ -781,7 +772,7 @@ public record AyaGKProducer(
     return Expr.Array.newGenerator(entireSourcePos, generator, bindings, bindName, pureName);
   }
 
-  public @NotNull Expr.Array arrayElementList(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
+  private @NotNull Expr.Array arrayElementList(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
     // arrayElementBlock ::=
     //   exprList
     // [ 1, 2, 3 ]
@@ -794,7 +785,7 @@ public record AyaGKProducer(
     return Expr.Array.newList(entireSourcePos, exprs);
   }
 
-  public @NotNull ImmutableSeq<Pattern> patterns(@NotNull GenericNode<?> node) {
+  public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {
     return node.childrenOfType(PATTERN).map(this::pattern).toImmutableSeq();
   }
 
@@ -890,9 +881,9 @@ public record AyaGKProducer(
       ImmutableSeq.of(new Expr.NamedArg(true, expr)));
   }
 
-  public @NotNull Pattern newBinOPScope(@NotNull Pattern expr, @Nullable LocalVar as) {
+  public @NotNull Pattern newBinOPScope(@NotNull Pattern expr, boolean explicit) {
     return new Pattern.BinOpSeq(expr.sourcePos(),
-      ImmutableSeq.of(expr), as, expr.explicit());
+      ImmutableSeq.of(new Arg<>(expr, explicit)), null);
   }
 
   private @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node) {

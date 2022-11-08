@@ -4,7 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
