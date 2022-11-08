@@ -10,7 +10,7 @@ import org.aya.cli.utils.RepoLike;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.repr.ShapeMatcher;
+import org.aya.core.repr.ShapeRecognition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,13 +22,13 @@ public class ReplShapeFactory extends AyaShape.Factory implements RepoLike<ReplS
     this.parent = parent;
   }
 
-  @Override public @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeMatcher.Result>> findImpl(@NotNull AyaShape shape) {
+  @Override public @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeRecognition>> findImpl(@NotNull AyaShape shape) {
     var found = super.findImpl(shape);
     if (found.isNotEmpty()) return found;
     return parent == null ? ImmutableSeq.empty() : parent.findImpl(shape);
   }
 
-  @Override public @NotNull Option<ShapeMatcher.Result> find(@NotNull Def def) {
+  @Override public @NotNull Option<ShapeRecognition> find(@NotNull Def def) {
     var found = super.find(def);
     if (found.isDefined()) return found;
     return parent == null ? Option.none() : parent.find(def);

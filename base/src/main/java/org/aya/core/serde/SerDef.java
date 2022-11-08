@@ -11,7 +11,7 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.CodeShape;
-import org.aya.core.repr.ShapeMatcher;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
@@ -149,17 +149,17 @@ public sealed interface SerDef extends Serializable {
     public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
   }
 
-  /** serialized {@link org.aya.core.repr.ShapeMatcher.Result} */
+  /** serialized {@link ShapeRecognition} */
   record SerShapeResult(
     @NotNull SerAyaShape shape,
     @NotNull ImmutableMap<SerMomentId, QName> captures
   ) implements Serializable {
-    public @NotNull ShapeMatcher.Result de(@NotNull SerTerm.DeState state) {
-      return new ShapeMatcher.Result(shape.de(), captures.view()
+    public @NotNull ShapeRecognition de(@NotNull SerTerm.DeState state) {
+      return new ShapeRecognition(shape.de(), captures.view()
         .map((m, q) -> Tuple.of(m.de(), state.resolve(q))).toImmutableMap());
     }
 
-    public static @NotNull SerShapeResult serialize(@NotNull Serializer.State state, @NotNull ShapeMatcher.Result result) {
+    public static @NotNull SerShapeResult serialize(@NotNull Serializer.State state, @NotNull ShapeRecognition result) {
       return new SerShapeResult(SerAyaShape.serialize(result.shape()), result.captures().view()
         .map((m, q) -> Tuple.of(SerMomentId.serialize(m), state.def(q))).toImmutableMap());
     }

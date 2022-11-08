@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.function.TriFunction;
 import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.repr.ShapeMatcher;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -33,7 +33,7 @@ import java.util.function.Supplier;
  */
 @SuppressWarnings("JavadocReference")
 public interface Shaped<T> {
-  @NotNull ShapeMatcher.Result shape();
+  @NotNull ShapeRecognition shape();
   @NotNull Term type();
   @NotNull T constructorForm(@Nullable TyckState state);
   default @NotNull T constructorForm() {

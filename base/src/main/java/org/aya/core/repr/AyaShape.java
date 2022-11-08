@@ -59,19 +59,19 @@ public sealed interface AyaShape {
   }
 
   class Factory {
-    public @NotNull MutableMap<GenericDef, ShapeMatcher.Result> discovered = MutableLinkedHashMap.of();
+    public @NotNull MutableMap<GenericDef, ShapeRecognition> discovered = MutableLinkedHashMap.of();
 
-    public @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeMatcher.Result>> findImpl(@NotNull AyaShape shape) {
+    public @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeRecognition>> findImpl(@NotNull AyaShape shape) {
       return discovered.view().map(Tuple::of)
         .filter(t -> t._2.shape() == shape)
         .toImmutableSeq();
     }
 
-    public @NotNull Option<ShapeMatcher.Result> find(@NotNull Def def) {
+    public @NotNull Option<ShapeRecognition> find(@NotNull Def def) {
       return discovered.getOption(def);
     }
 
-    public void bonjour(@NotNull GenericDef def, @NotNull ShapeMatcher.Result shape) {
+    public void bonjour(@NotNull GenericDef def, @NotNull ShapeRecognition shape) {
       // TODO[literal]: what if a def has multiple shapes?
       discovered.put(def, shape);
     }

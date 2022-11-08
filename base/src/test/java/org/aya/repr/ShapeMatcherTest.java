@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.GenericDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.ShapeMatcher;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.ref.DefVar;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.util.distill.DistillerOptions;
@@ -86,7 +87,7 @@ public class ShapeMatcherTest {
     match(true, AyaShape.LIST_SHAPE, "data List {A : Type} | nil | cons {A} {List {A}}");
   }
 
-  public @Nullable ShapeMatcher.Result match(boolean should, @NotNull AyaShape shape, @Language("Aya") @NonNls @NotNull String code) {
+  public @Nullable ShapeRecognition match(boolean should, @NotNull AyaShape shape, @Language("Aya") @NonNls @NotNull String code) {
     var def = TyckDeclTest.successTyckDecls(code)._2;
     return check(ImmutableSeq.fill(def.size(), should), shape, def).firstOrNull();
   }
@@ -96,7 +97,7 @@ public class ShapeMatcherTest {
     check(should, shape, def);
   }
 
-  private static ImmutableSeq<ShapeMatcher.Result> check(@NotNull ImmutableSeq<Boolean> should, @NotNull AyaShape shape, @NotNull ImmutableSeq<GenericDef> def) {
+  private static ImmutableSeq<ShapeRecognition> check(@NotNull ImmutableSeq<Boolean> should, @NotNull AyaShape shape, @NotNull ImmutableSeq<GenericDef> def) {
     return def.zipView(should).flatMap(tup -> {
       var match = ShapeMatcher.match(shape, tup._1);
       assertEquals(tup._2, match.isDefined());

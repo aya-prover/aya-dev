@@ -4,14 +4,14 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
-import org.aya.core.repr.ShapeMatcher;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Arg;
 import org.aya.generic.Shaped;
 import org.jetbrains.annotations.NotNull;
 
 public record IntegerTerm(
   @Override int repr,
-  @Override @NotNull ShapeMatcher.Result shape,
+  @Override @NotNull ShapeRecognition shape,
   @Override @NotNull Term type
 ) implements StableWHNF, Shaped.Nat<Term> {
 

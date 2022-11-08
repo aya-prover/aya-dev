@@ -6,9 +6,11 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
-import org.aya.core.repr.ShapeMatcher;
+import org.aya.core.def.Def;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
@@ -85,7 +87,7 @@ public sealed interface Pat extends AyaDocile {
    *
    * @param fakeBind is used when inline if there is no solution.
    *                 So don't add this to {@link LocalCtx} too early
-   *                 and remember to inline Meta in {@link PatTycker#checkLhs}
+   *                 and remember to inline Meta in {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature, boolean)}
    */
   record Meta(
     boolean explicit,
@@ -202,7 +204,7 @@ public sealed interface Pat extends AyaDocile {
 
   record ShapedInt(
     @Override int repr,
-    @Override @NotNull ShapeMatcher.Result shape,
+    @Override @NotNull ShapeRecognition shape,
     @NotNull DataCall type,
     boolean explicit
   ) implements Pat, Shaped.Nat<Pat> {
