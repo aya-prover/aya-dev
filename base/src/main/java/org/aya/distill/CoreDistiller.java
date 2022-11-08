@@ -31,7 +31,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
 
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
     return switch (preterm) {
-      case RefTerm term -> varDoc(term.var());
+      case RefTerm(var var) -> varDoc(var);
       case MetaTerm term -> {
         var name = term.ref();
         var inner = varDoc(name);
@@ -41,23 +41,23 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield Doc.wrap("{?", "?}",
           visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
       }
-      case TupTerm term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
+      case TupTerm(var items) -> Doc.parened(Doc.commaList(items.view().map(t -> term(Outer.Free, t))));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
-      case SigmaTerm term -> {
-        var last = term.params().last();
+      case SigmaTerm(var params) -> {
+        var last = params.last();
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Sig")),
-          visitTele(term.params().dropLast(1), last.type(), Term::findUsages),
+          visitTele(params.dropLast(1), last.type(), Term::findUsages),
           Doc.symbol("**"),
           justType(last, Outer.Codomain)
         );
         // Same as Pi
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case LamTerm term -> {
-        var params = MutableList.of(term.param());
-        var body = LamTerm.unwrap(term.body(), params::append);
+      case LamTerm(var param0, var body0) -> {
+        var params = MutableList.of(param0);
+        var body = LamTerm.unwrap(body0, params::append);
         Doc bodyDoc;
         // Syntactic eta-contraction
         if (body instanceof Callable call && call.ref() instanceof DefVar<?, ?> defVar) {
@@ -74,7 +74,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
             bodyDoc = style != null
               ? visitArgsCalls(defVar, style, args, outer)
               : visitCalls(defVar.isInfix(), varDoc(defVar), args, params.isEmpty() ? outer : Outer.Free,
-              options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+                options.map.get(DistillerOptions.Key.ShowImplicitArgs));
           }
         } else bodyDoc = term(Outer.Free, body);
 
@@ -89,11 +89,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var doc = Doc.sep(list);
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case SortTerm term -> {
-        var fn = Doc.styled(KEYWORD, term.kind().name());
-        if (!term.kind().hasLevel()) yield fn;
+      case SortTerm(var kind, var lift) -> {
+        var fn = Doc.styled(KEYWORD, kind.name());
+        if (!kind.hasLevel()) yield fn;
         yield visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,
-          SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(term.lift())), true)),
+          SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(lift)), true)),
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
@@ -106,18 +106,17 @@ public class CoreDistiller extends BaseDistiller<Term> {
           .toImmutableSeq()));
       case FieldTerm term -> visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
         options.map.get(DistillerOptions.Key.ShowImplicitArgs));
-      case MetaPatTerm metaPat -> {
-        var ref = metaPat.ref();
+      case MetaPatTerm(var ref) -> {
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
         yield Doc.wrap("<", ">", pat(ref, outer));
       }
-      case ErrorTerm term -> {
-        var doc = term.description().toDoc(options);
-        yield term.isReallyError() ? Doc.angled(doc) : doc;
+      case ErrorTerm(var desc, var really) -> {
+        var doc = desc.toDoc(options);
+        yield really ? Doc.angled(doc) : doc;
       }
-      case AppTerm term -> {
-        var args = MutableList.of(term.arg());
-        var head = AppTerm.unapp(term.of(), args);
+      case AppTerm(var of, var arg) -> {
+        var args = MutableList.of(arg);
+        var head = AppTerm.unapp(of, args);
         if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
         var implicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
         // Infix def-calls
@@ -129,8 +128,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case PrimCall prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
-      case ProjTerm term ->
-        Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+      case ProjTerm(var of, var ix) ->
+        Doc.cat(term(Outer.ProjHead, of), Doc.symbol("."), Doc.plain(String.valueOf(ix)));
       case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
           Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
         Doc.vcat(match.clauses().view()
@@ -138,18 +137,18 @@ public class CoreDistiller extends BaseDistiller<Term> {
             Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
             Doc.symbol("=>"), term(Outer.Free, clause.body())))
           .toImmutableSeq()));
-      case PiTerm term -> {
-        if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
-          yield term(outer, term.body());
+      case PiTerm(var params0, var body0) -> {
+        if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !params0.explicit()) {
+          yield term(outer, body0);
         }
         // Try to omit the Pi keyword
-        if (term.body().findUsages(term.param().ref()) == 0) yield checkParen(outer, Doc.sep(
-          Doc.bracedUnless(term.param().type().toDoc(options), term.param().explicit()),
+        if (body0.findUsages(params0.ref()) == 0) yield checkParen(outer, Doc.sep(
+          Doc.bracedUnless(params0.type().toDoc(options), params0.explicit()),
           Doc.symbol("->"),
-          term(Outer.Codomain, term.body())
+          term(Outer.Codomain, body0)
         ), Outer.BinOp);
-        var params = MutableList.of(term.param());
-        var body = PiTerm.unpi(term.body(), params);
+        var params = MutableList.of(params0);
+        var body = PiTerm.unpi(body0, params);
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Pi")),
           visitTele(params, body, Term::findUsages),
@@ -170,33 +169,34 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var subterms = shaped.repr().map(x -> term(Outer.Free, x));
 
         yield shaped.with((nil, cons, dataArg) -> Doc.sep(
-          linkListLit(Doc.symbol("["), nil.ref(), CON_CALL),
-          Doc.join(linkListLit(Doc.COMMA, cons.ref(), CON_CALL), subterms),
-          linkListLit(Doc.symbol("]"), nil.ref(), CON_CALL)
-        ), () -> Doc.sep(
-          Doc.symbol("["),
-          Doc.commaList(subterms),
-          Doc.symbol("]"))
+            linkListLit(Doc.symbol("["), nil.ref(), CON_CALL),
+            Doc.join(linkListLit(Doc.COMMA, cons.ref(), CON_CALL), subterms),
+            linkListLit(Doc.symbol("]"), nil.ref(), CON_CALL)
+          ), () -> Doc.sep(
+            Doc.symbol("["),
+            Doc.commaList(subterms),
+            Doc.symbol("]"))
         );
       }
-      case StringTerm str -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str.string()) + "\"");
-      case PartialTyTerm ty -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
-        term(Outer.AppSpine, ty.type()), Doc.parened(restr(options, ty.restr()))), Outer.AppSpine);
+      case StringTerm(var str) -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str) + "\"");
+      case PartialTyTerm(var ty, var restr) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
+        term(Outer.AppSpine, ty), Doc.parened(restr(options, restr))), Outer.AppSpine);
       case PartialTerm el -> partial(options, el.partial());
-      case FormulaTerm mula -> formula(outer, mula.asFormula());
-      case PathTerm path -> cube(options, path.cube());
-      case PLamTerm lam -> checkParen(outer,
+      case FormulaTerm(var mula) -> formula(outer, mula);
+      case PathTerm(var cube) -> cube(options, cube);
+      case PLamTerm(var params, var body) -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
-          Doc.sep(lam.params().map(BaseDistiller::varDoc)),
+          Doc.sep(params.map(BaseDistiller::varDoc)),
           Doc.symbol("=>"),
-          lam.body().toDoc(options)),
+          body.toDoc(options)),
         Outer.BinOp);
       case PAppTerm app -> visitCalls(false, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
       case HCompTerm hComp -> throw new InternalException("TODO");
-      case ErasedTerm erased -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
+      case ErasedTerm erased ->
+        checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
     };
   }
 
@@ -204,8 +204,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
   private boolean checkUneta(SeqView<Arg<Term>> args, Term.Param param) {
     var arg = args.last();
     if (arg.explicit() != param.explicit()) return false;
-    if (!(arg.term() instanceof RefTerm argRef)) return false;
-    if (argRef.var() != param.ref()) return false;
+    if (!(arg.term() instanceof RefTerm(var argVar))) return false;
+    if (argVar != param.ref()) return false;
     var counter = new TermFolder.Usages(param.ref());
     return args.dropLast(1).allMatch(a -> counter.apply(a.term()) == 0);
   }
