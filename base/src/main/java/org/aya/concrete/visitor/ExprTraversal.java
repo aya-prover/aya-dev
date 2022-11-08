@@ -4,6 +4,7 @@ package org.aya.concrete.visitor;
 
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprTraversal<P> {
@@ -11,13 +12,13 @@ public interface ExprTraversal<P> {
     switch (expr) {
       case Expr.App app -> {
         visitExpr(app.function(), p);
-        visitExpr(app.argument().expr(), p);
+        visitExpr(app.argument().term(), p);
       }
       case Expr.New neo -> {
         neo.fields().forEach(e -> visitExpr(e.body(), p));
         visitExpr(neo.struct(), p);
       }
-      case Expr.BinOpSeq seq -> seq.seq().forEach(e -> visitExpr(e.expr(), p));
+      case Expr.BinOpSeq seq -> seq.seq().forEach(e -> visitExpr(e.term(), p));
       case Expr.Sigma sig -> sig.params().forEach(e -> visitParam(e, p));
       case Expr.Lambda lam -> {
         visitParam(lam.param(), p);
@@ -28,7 +29,7 @@ public interface ExprTraversal<P> {
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(i -> visitExpr(i, p));
         var clauses = match.clauses().map(c -> {
-          var patterns = c.patterns.map(arg -> arg.descent(pat -> visitPattern(pat, p)));
+          var patterns = c.patterns.map(arg -> visitArg(p, arg));
           var body = c.expr.map(i -> visitExpr(i, p));
           return new Pattern.Clause(c.sourcePos, patterns, body);
         });
@@ -71,14 +72,17 @@ public interface ExprTraversal<P> {
   default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
     return switch (pattern) {
       case Pattern.BinOpSeq(var pos, var seq, var as) ->
-        new Pattern.BinOpSeq(pos, seq.map(arg -> arg.map(p -> visitPattern(p, pp))), as);
+        new Pattern.BinOpSeq(pos, seq.map(arg -> visitArg(pp, arg)), as);
       case Pattern.Ctor(var pos, var resolved, var params, var as) ->
-        new Pattern.Ctor(pos, resolved, params.map(arg -> arg.descent(p -> visitPattern(p, pp))), as);
+        new Pattern.Ctor(pos, resolved, params.map(arg -> visitArg(pp, arg)), as);
       case Pattern.Tuple(var pos, var patterns, var as) ->
-        new Pattern.Tuple(pos, patterns.map(arg -> arg.descent(p -> visitPattern(p, pp))), as);
+        new Pattern.Tuple(pos, patterns.map(arg -> visitArg(pp, arg)), as);
       case Pattern.List(var pos, var patterns, var as) ->
         new Pattern.List(pos, patterns.map(arg -> arg.descent(p -> visitPattern(p, pp))), as);
       default -> pattern;
     };
+  }
+  private @NotNull Arg<Pattern> visitArg(P pp, Arg<Pattern> arg) {
+    return arg.descent(p -> visitPattern(p, pp));
   }
 }

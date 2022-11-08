@@ -3,7 +3,7 @@
 package org.aya.core.pat;
 
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 

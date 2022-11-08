@@ -11,7 +11,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.TermFolder;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;

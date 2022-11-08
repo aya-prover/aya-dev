@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.FieldDef;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 

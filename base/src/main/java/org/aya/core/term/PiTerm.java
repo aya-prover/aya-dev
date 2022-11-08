@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.mutable.MutableList;
 import org.aya.core.visitor.BetaExpander;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

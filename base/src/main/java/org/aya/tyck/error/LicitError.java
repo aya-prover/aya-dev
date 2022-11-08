@@ -29,7 +29,7 @@ public sealed interface LicitError extends Problem {
 
   record UnexpectedImplicitArg(@Override @NotNull Expr.NamedArg expr) implements LicitError {
     @Override public @NotNull SourcePos sourcePos() {
-      return expr.expr().sourcePos();
+      return expr.term().sourcePos();
     }
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {

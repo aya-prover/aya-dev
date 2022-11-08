@@ -13,6 +13,7 @@ import org.aya.core.term.IntegerTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.aya.tyck.unify.TermComparator;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiPredicate;

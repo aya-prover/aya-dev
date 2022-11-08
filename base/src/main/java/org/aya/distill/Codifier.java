@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;

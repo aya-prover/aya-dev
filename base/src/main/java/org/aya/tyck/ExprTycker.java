@@ -19,7 +19,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -42,12 +42,12 @@ import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -74,7 +74,7 @@ public final class ExprTycker extends Tycker {
           var ty = localCtx.get(loc);
           return new TermResult(new RefTerm(loc), ty);
         });
-        case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
+        case DefVar<?, ?> defVar -> inferRef(defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
       case Expr.Pi pi -> sort(pi);
@@ -228,7 +228,7 @@ public final class ExprTycker extends Tycker {
           while (pi.param().explicit() != argLicit || argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
-              var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
+              var holeApp = mockArg(pi.param().subst(subst), argument.term().sourcePos());
               // path types are always explicit
               app = AppTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
@@ -243,7 +243,7 @@ public final class ExprTycker extends Tycker {
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
-        var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped();
+        var elabArg = inherit(argument.term(), pi.param().type()).wellTyped();
         subst.addDirectly(pi.param().ref(), elabArg);
         var arg = new Arg<>(elabArg, argLicit);
         var newApp = cube == null
@@ -254,8 +254,7 @@ public final class ExprTycker extends Tycker {
         // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
         yield new TermResult(newApp, pi.body().subst(subst));
       }
-      case Expr.Hole hole ->
-        inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
+      case Expr.Hole hole -> inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
       case Expr.Error err -> TermResult.error(err.description());
       case Expr.LitInt lit -> {
         int integer = lit.integer();
@@ -724,15 +723,15 @@ public final class ExprTycker extends Tycker {
     return new SortResult(new ErrorTerm(expr), FormTerm.Type.ZERO);
   }
 
-  @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var) {
+  @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
     if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
-      return defCall(pos, (DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
+      return defCall((DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall(pos, (DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
+      return defCall((DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
-      return defCall(pos, (DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
+      return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof TeleDecl.StructDecl) {
-      return defCall(pos, (DefVar<StructDef, TeleDecl.StructDecl>) var, StructCall::new);
+      return defCall((DefVar<StructDef, TeleDecl.StructDecl>) var, StructCall::new);
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
@@ -753,7 +752,7 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic> ExprTycker.Result defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, Callable.Factory<D, S> function) {
+  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables
@@ -841,7 +840,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
-    var checker = new Function<Term, Term>() {
+    var checker = new UnaryOperator<Term>() {
       private @NotNull Term post(@NotNull Term term) {
         if (term instanceof FormTerm.Sort) return term;
         var erased = ErasedTerm.underlyingIllegalErasure(term);
@@ -883,10 +882,6 @@ public final class ExprTycker extends Tycker {
    * @author ice1000
    */
   public record TermResult(@Override @NotNull Term wellTyped, @Override @NotNull Term type) implements Result {
-    @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
-      return Tuple.of(type, wellTyped);
-    }
-
     public static @NotNull TermResult error(@NotNull AyaDocile description) {
       return new TermResult(ErrorTerm.unexpected(description), ErrorTerm.typeOf(description));
     }
