@@ -14,7 +14,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -27,6 +26,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -498,7 +498,7 @@ public sealed abstract class TermComparator permits Unifier {
             yield retType;
           yield null;
         }
-        // TODO: unify unknown-type literals
+        case MetaLitTerm rhs -> compareMetaLiteral(rhs, lhs, getType(lhs, lhs.ref()), rl, lr);
         case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         default -> null;
@@ -518,6 +518,7 @@ public sealed abstract class TermComparator permits Unifier {
           yield lhs.type(); // compareShape implies lhs.type() = rhs.type()
         }
         case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
+        case MetaLitTerm rhs -> compareMetaLiteral(rhs, lhs, lhs.type(), rl, lr);
         default -> null;
       };
       case ListTerm lhs -> switch (preRhs) {
@@ -527,13 +528,27 @@ public sealed abstract class TermComparator permits Unifier {
           yield lhs.type();
         }
         case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
+        case MetaLitTerm rhs -> compareMetaLiteral(rhs, lhs, lhs.type(), rl, lr);
         default -> null;
       };
-      // TODO: unify unknown-type literals
+      case MetaLitTerm lhs -> switch (preRhs) {
+        case ConCall rhs -> compareMetaLiteral(lhs, rhs, getType(rhs, rhs.ref()), lr, rl);
+        case IntegerTerm rhs -> compareMetaLiteral(lhs, rhs, rhs.type(), lr, rl);
+        case ListTerm rhs -> compareMetaLiteral(lhs, rhs, rhs.type(), lr, rl);
+        case MetaLitTerm rhs -> compareMetaLiteral(lhs, rhs, rhs.type(), lr, rl);
+        default -> null;
+      };
       case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs);
     };
     traceExit();
     return ret;
+  }
+
+  private @Nullable Term compareMetaLiteral(@NotNull MetaLitTerm litLhs, @NotNull Term preRhs, @NotNull Term type, Sub lr, Sub rl) {
+    if (!compare(litLhs.type(), type, null)) return null;
+    var inline = litLhs.inline(); // try getting the solved literal
+    if (inline == litLhs) return null; // unsolvable?
+    return compare(litLhs, preRhs, lr, rl, null) ? type : null;
   }
 
   protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs);
