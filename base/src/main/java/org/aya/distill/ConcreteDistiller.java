@@ -207,22 +207,21 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield tuple.as() == null ? tup
           : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
       }
-      case Pattern.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);
+      case Pattern.Absurd $ -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);
       case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
-      case Pattern.CalmFace calmFace -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
+      case Pattern.CalmFace $ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
       case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), licit);
       case Pattern.Ctor ctor -> {
         var name = linkRef(ctor.resolved().data(), CON_CALL);
         var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
         yield ctorDoc(outer, licit, ctorDoc, ctor.as(), ctor.params().isEmpty());
       }
-      case Pattern.BinOpSeq seq -> {
-        var param = seq.seq();
+      case Pattern.BinOpSeq(var pos, var param, var as) -> {
         if (param.sizeEquals(1)) {
           yield pattern(param.first(), outer);
         }
         var ctorDoc = visitMaybeCtorPatterns(param.view(), Outer.AppSpine, Doc.ALT_WS);
-        yield ctorDoc(outer, licit, ctorDoc, seq.as(), param.sizeLessThanOrEquals(1));
+        yield ctorDoc(outer, licit, ctorDoc, as, param.sizeLessThanOrEquals(1));
       }
       case Pattern.List list -> {
         var listDoc = Doc.sep(

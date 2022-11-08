@@ -10,7 +10,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.FormTerm;
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.util.Arg;
 import org.aya.generic.Modifier;
@@ -188,7 +188,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     public final @NotNull ImmutableSeq<DataCtor> body;
     /** Yet type-checked constructors */
     public final @NotNull MutableList<@NotNull CtorDef> checkedBody = MutableList.create();
-    public FormTerm.Sort ulift;
+    public SortTerm ulift;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -221,7 +221,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
-    public FormTerm.Sort ulift;
+    public SortTerm ulift;
 
     public StructDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,

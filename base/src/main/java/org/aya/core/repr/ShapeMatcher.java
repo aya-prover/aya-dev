@@ -12,10 +12,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
-import org.aya.core.term.Callable;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +72,7 @@ public record ShapeMatcher(
       var teleVar = teleSubst.getOrNull(tele.ref());
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
     }
-    if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof FormTerm.Sort sortTerm) {
+    if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof SortTerm sortTerm) {
       // kind is null -> any sort
       if (sort.kind() == null) return true;
 

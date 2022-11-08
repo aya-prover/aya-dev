@@ -64,7 +64,7 @@ public interface BetaExpander extends EndoTerm {
           case PathTerm path -> coe;
           case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> sigma.coe(coe, varI);
-          case FormTerm.Type type -> {
+          case SortTerm type -> {
             var A = new LocalVar("A");
             yield new LamTerm(new Term.Param(A, type, true), new RefTerm(A));
           }
