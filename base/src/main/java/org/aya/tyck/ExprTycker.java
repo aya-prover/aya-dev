@@ -239,8 +239,27 @@ public final class ExprTycker extends Tycker {
 
       case Expr.HComp(var sourcePos, var id, var resolvedVar, var u, var u0) -> {
         // 1. infer A and phi
-        // 2. check freezing condition
-        throw new InternalException("unimplemented");
+        // 2. check subtype condition
+        assert resolvedVar instanceof DefVar<?, ?> defVar
+          && defVar.core instanceof PrimDef def && def.id == PrimDef.ID.HCOMP : "desugar bug";
+
+        var uRes = synthesize(u);
+        var u0Res = synthesize(u0);
+        var mockApp = new Expr.App(sourcePos, new Expr.App(sourcePos, new Expr.Ref(id.sourcePos(), resolvedVar),
+          new Expr.NamedArg(true, u)),
+          new Expr.NamedArg(true, u0));
+        var varI = new LocalVar("i");
+        if (!(uRes.type() instanceof ErrorTerm) &&
+          whnf(AppTerm.make(uRes.wellTyped(), new Arg<>(new RefTerm(varI), true))) instanceof PartialTerm(
+            var phi, var A
+          )) {
+          unifyTyReported(A, u0Res.type(), u0);
+          if (checkCubicalSubTy(u0, u0Res.wellTyped(), A, phi, new Subst())) {
+            var hcomp = new HCompTerm(A, phi.restr(), uRes.wellTyped(), u0Res.wellTyped());
+            yield new TermResult(hcomp, A);
+          }
+        }
+        yield synthesize(mockApp);
       }
 
       case Expr.App(var sourcePos, var appF, var argument) -> {
@@ -589,6 +608,14 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
+    };
+  }
+
+  private boolean checkCubicalSubTy(Expr expr, Term term, Term type, Partial<Term> partial, Subst subst) {
+    return switch (partial) {
+      case Partial.Const<Term> sad -> boundary(expr, term, sad.u(), type, subst);
+      case Partial.Split<Term> hap ->
+        hap.clauses().allMatch(c -> CofThy.conv(c.cof(), subst, s -> boundary(expr, term, c.u(), type, s)));
     };
   }
 
