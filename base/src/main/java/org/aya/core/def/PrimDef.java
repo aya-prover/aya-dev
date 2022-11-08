@@ -5,12 +5,15 @@ package org.aya.core.def;
 import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import kala.function.TriFunction;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Partial;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
@@ -81,8 +84,9 @@ public final class PrimDef extends TopLevelDef<Term> {
   public static class Factory {
     private final class Initializer {
       public final @NotNull PrimDef.PrimSeed coe = new PrimSeed(ID.COE, this::coe, ref -> {
+        // coe (A : I -> Type) (phi : I) : A 0 -> A 1
         var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, intervalToA(), true);
+        var paramA = new Term.Param(varA, intervalToType(), true);
         var paramRestr = new Term.Param(new LocalVar("i"), IntervalTerm.INSTANCE, true);
         var result = familyLeftToRight(new RefTerm(varA));
 
@@ -94,6 +98,91 @@ public final class PrimDef extends TopLevelDef<Term> {
         var type = prim.args().get(0).term();
         var restr = prim.args().get(1).term();
         return new CoeTerm(type, isOne(restr));
+      }
+
+      public final @NotNull PrimDef.PrimSeed coeFill = new PrimSeed(ID.COEFILL, this::coeFill, ref -> {
+        // coeFill (A : I -> Type) (phi : I) : Pi (u : A 0) -> Path A u (coe A phi u)
+        return coeFillFactory(ref, ID.COEFILL, ID.COE, FormulaTerm.LEFT, i -> i);
+      }, ImmutableSeq.of(ID.I, ID.COE));
+
+      private @NotNull Term coeFill(@NotNull PrimCall prim, @NotNull TyckState state) {
+        return coeFillHelper(prim, CoeTerm::coeFill, FormulaTerm.LEFT);
+      }
+
+      public final @NotNull PrimDef.PrimSeed eoc = new PrimSeed(ID.COEINV, this::eoc, ref -> {
+        // coeInv (A : I -> Type) (phi : I) : A 1 -> A 0
+        var varA = new LocalVar("A");
+        var paramA = new Term.Param(varA, intervalToType(), true);
+        var paramRestr = new Term.Param(new LocalVar("i"), IntervalTerm.INSTANCE, true);
+        var result = familyRightToLeft(new RefTerm(varA));
+
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramRestr), result, ID.COEINV);
+      }, ImmutableSeq.of(ID.I));
+
+      @Contract("_, _ -> new")
+      private @NotNull Term eoc(@NotNull PrimCall prim, @NotNull TyckState state) {
+        var type = prim.args().get(0).term();
+        var restr = prim.args().get(1).term();
+        var u = new LocalVar("u");
+        var paramU = new Term.Param(u, new AppTerm(type, new Arg<>(FormulaTerm.RIGHT, true)), true);
+        return new LamTerm(paramU, new AppTerm(CoeTerm.coeInv(type, isOne(restr)), new Arg<>(new RefTerm(u), true)));
+      }
+
+      public final @NotNull PrimDef.PrimSeed eocFill = new PrimSeed(ID.COEINVFILL, this::eocFill, ref -> {
+        // coeInvFill (A : I -> Type) (phi : I) : Pi (u : A 1) -> Path (\i => A (~ i)) u (coeInv A phi u)
+        return coeFillFactory(ref, ID.COEINVFILL, ID.COEINV, FormulaTerm.RIGHT, FormulaTerm::inv);
+      }, ImmutableSeq.of(ID.I, ID.COEINV));
+
+      private @NotNull Term eocFill(@NotNull PrimCall prim, @NotNull TyckState state) {
+        return coeFillHelper(prim, CoeTerm::coeFillInv, FormulaTerm.RIGHT);
+      }
+
+      private @NotNull Term coeFillHelper(
+        @NotNull PrimCall prim,
+        @NotNull TriFunction<Term, Restr<Term>, Term, Term> filler,
+        @NotNull FormulaTerm start
+      ) {
+        // from hcomp.pdf:
+        // Γ ⊢ u : A(i/<start>)
+        // ----------------------------------------------
+        // Γ, i : I ⊢ transFill^i A ϕ u := <filler>^y A ϕ u
+        // or take coeFill for example:
+        // Γ, i : I ⊢ transFill^i A ϕ u := trans^y A(i/i ∧ y) (ϕ ∨ (i = 0)) u
+        var type = prim.args().get(0).term();
+        var restr = prim.args().get(1).term();
+        var i = new LocalVar("i");
+        var u = new LocalVar("u");
+        var fill = filler.apply(type, isOne(restr), new RefTerm(i));
+        var path = new PLamTerm(ImmutableSeq.of(i), new AppTerm(fill, new Arg<>(new RefTerm(u), true)));
+        var paramU = new Term.Param(u, new AppTerm(type, new Arg<>(start, true)), true);
+        return new LamTerm(paramU, path);
+      }
+
+      private @NotNull PrimDef coeFillFactory(
+        @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref,
+        ID coeFill, ID coe, @NotNull FormulaTerm start,
+        @NotNull Function<Term, Term> interval
+      ) {
+        // <coeFill> (A : I -> Type) (phi : I) : Pi (u : A <start>) -> Path (\i => A <interval i>) u (<coe> A phi u)
+        var varA = new LocalVar("A");
+        var paramA = new Term.Param(varA, intervalToType(), true);
+        var varPhi = new LocalVar("phi");
+        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, true);
+        var varU = new LocalVar("u");
+        var paramU = new Term.Param(varU, new AppTerm(new RefTerm(varA), new Arg<>(start, true)), true);
+        var i = new LocalVar("i");
+        var path = new PathTerm(new PathTerm.Cube(
+          ImmutableSeq.of(i),
+          new AppTerm(new RefTerm(varA), new Arg<>(interval.apply(new RefTerm(i)), true)),
+          new Partial.Split<>(ImmutableSeq.of(
+            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), false))), new RefTerm(varU)),
+            new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), true))), new AppTerm(getCall(coe, ImmutableSeq.of(
+              new Arg<>(new RefTerm(varA), true),
+              new Arg<>(new RefTerm(varPhi), true))),
+              new Arg<>(new RefTerm(varU), true)))
+          ))));
+        var result = new PiTerm(paramU, path);
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi), result, coeFill);
       }
 
       private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
@@ -218,6 +307,9 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.intervalType,
           init.partialType,
           init.coe,
+          init.coeFill,
+          init.eoc,
+          init.eocFill,
           init.hcomp
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
@@ -274,12 +366,23 @@ public final class PrimDef extends TopLevelDef<Term> {
 
   /** Let A be argument, then <code>A 0 -> A 1</code> */
   public static @NotNull PiTerm familyLeftToRight(Term term) {
-    return new PiTerm(
-      new Term.Param(LocalVar.IGNORED, new AppTerm(term, new Arg<>(FormulaTerm.LEFT, true)), true),
-      new AppTerm(term, new Arg<>(FormulaTerm.RIGHT, true)));
+    return familyI2J(term, FormulaTerm.LEFT, FormulaTerm.RIGHT);
   }
 
-  public static @NotNull Term intervalToA() {
+  /** Let A be argument, then <code>A 1 -> A 0</code> */
+  public static @NotNull PiTerm familyRightToLeft(Term term) {
+    return familyI2J(term, FormulaTerm.RIGHT, FormulaTerm.LEFT);
+  }
+
+  /** Let A be argument, then <code>A i -> A j</code> */
+  private static @NotNull PiTerm familyI2J(Term term, FormulaTerm i, FormulaTerm j) {
+    return new PiTerm(
+      new Term.Param(LocalVar.IGNORED, new AppTerm(term, new Arg<>(i, true)), true),
+      new AppTerm(term, new Arg<>(j, true)));
+  }
+
+  /** <code>I -> Type</code> */
+  public static @NotNull Term intervalToType() {
     var paramI = new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true);
     return new PiTerm(paramI, new FormTerm.Type(0));
   }
@@ -293,6 +396,9 @@ public final class PrimDef extends TopLevelDef<Term> {
     I("I"),
     PARTIAL("Partial"),
     COE("coe"),
+    COEFILL("coeFill"),
+    COEINV("eoc"),
+    COEINVFILL("eocFill"),
     HCOMP("hcomp");
 
     public final @NotNull @NonNls String id;
@@ -309,6 +415,10 @@ public final class PrimDef extends TopLevelDef<Term> {
 
     ID(@NotNull String id) {
       this.id = id;
+    }
+
+    public static boolean projSyntax(@NotNull ID id) {
+      return id == COE || id == COEFILL || id == COEINV || id == COEINVFILL;
     }
   }
 

@@ -54,7 +54,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
       case Expr.RawProj proj -> {
         if (proj.resolvedVar() instanceof DefVar<?, ?> defVar
           && defVar.core instanceof PrimDef primDef
-          && primDef.id == PrimDef.ID.COE) {
+          && PrimDef.ID.projSyntax(primDef.id)) {
           var restr = proj.restr() != null ? proj.restr() : new Expr.LitInt(proj.sourcePos(), 0);
           var coe = new Expr.Coe(proj.sourcePos(), proj.id(), defVar, proj.tup(), restr);
           yield pre(proj.coeLeft() != null

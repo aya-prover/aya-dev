@@ -159,7 +159,7 @@ public record ExprResolver(
           // Collecting tyck order for tycked terms is unnecessary, just skip.
           if (def.concrete == null) assert def.core != null;
           else if (def.concrete instanceof TyckUnit unit) addReference(unit);
-          if (def.core instanceof PrimDef prim && prim.id == PrimDef.ID.COE)
+          if (def.core instanceof PrimDef prim && PrimDef.ID.projSyntax(prim.id))
             ctx.reportAndThrow(new PrimResolveError.BadUsage(name.join(), pos));
           yield new Expr.Ref(pos, def);
         }

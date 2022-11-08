@@ -376,14 +376,15 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private boolean compareCube(@NotNull PathTerm.Cube lhs, @NotNull PathTerm.Cube rhs, Sub lr, Sub rl) {
-    return TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, rhs.params(), (lsub, rsub) -> {
+    var tyVars = rhs.params();
+    return ctx.withIntervals(tyVars.view(), () -> TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, tyVars, (lsub, rsub) -> {
       var lPar = (PartialTerm) new PartialTerm(lhs.partial(), lhs.type()).subst(lsub);
       var rPar = (PartialTerm) new PartialTerm(rhs.partial(), rhs.type()).subst(rsub);
       var lType = new PartialTyTerm(lPar.rhsType(), lPar.partial().restr());
       var rType = new PartialTyTerm(rPar.rhsType(), rPar.partial().restr());
       if (!compare(lType, rType, lr, rl, null)) return false;
       return comparePartial(lPar, rPar, lType, lr, rl);
-    });
+    }));
   }
 
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
@@ -485,7 +486,7 @@ public sealed abstract class TermComparator permits Unifier {
       case CoeTerm lhs -> {
         if (!(preRhs instanceof CoeTerm rhs)) yield null;
         if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
-        yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToA()) ?
+        yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToType()) ?
           PrimDef.familyLeftToRight(lhs.type()) : null;
       }
       case ConCall lhs -> switch (preRhs) {

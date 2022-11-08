@@ -11,7 +11,7 @@ import static org.aya.guest0x0.cubical.CofThy.isOne;
 
 public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements Term {
   /**
-   * <code>coeFill (A: I -> Type) (phi: I) : Path A u (coe A phi u)</code>
+   * <code>coeFill (A : I -> Type) (phi : I) : Pi (u : A 0) -> Path A u (coe A phi u)</code>
    *
    * @param ri the interval abstraction or its inverse
    */
@@ -25,7 +25,7 @@ public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements
     return new CoeTerm(a, cofib);
   }
 
-  // forward (A: I -> Type) (r: I): A r -> A 1
+  // forward (A : I -> Type) (r : I) : A r -> A 1
   private static @NotNull Term forward(@NotNull Term A, @NotNull Term r) {
     var varI = new LocalVar("i");
     var varU = new LocalVar("u");
@@ -54,12 +54,12 @@ public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements
       AppTerm.make(A, new Arg<>(invertedI, true)));
   }
 
-  // coeInv (A : I -> Type) (phi: I) (u: A 1) : A 0
-  private static @NotNull Term coeInv(@NotNull Term A, @NotNull Restr<Term> phi, @NotNull Term u) {
-    return AppTerm.make(new CoeTerm(invertA(A), phi), new Arg<>(u, true));
+  // coeInv (A : I -> Type) (phi : I) : A 1 -> A 0
+  public static @NotNull Term coeInv(@NotNull Term A, @NotNull Restr<Term> phi) {
+    return new CoeTerm(invertA(A), phi);
   }
 
-  // coeFillInv
+  // coeInvFill (A : I -> Type) (phi : I) : Pi (u : A 1) -> Path A u (coeInv A phi u)
   public static @NotNull Term coeFillInv(@NotNull Term type, @NotNull Restr<Term> phi, @NotNull Term ri) {
     return coeFill(invertA(type), phi, FormulaTerm.inv(ri));
   }
