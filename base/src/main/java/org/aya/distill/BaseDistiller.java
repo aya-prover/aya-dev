@@ -206,8 +206,9 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       : Doc.braced(monika.type().toDoc(options));
   }
 
+  /** @implNote do NOT remove the <code>toImmSeq</code> call!!! */
   private Doc mutableListNames(MutableList<LocalVar> names, ParamLike<?> param) {
-    return param.toDoc(Doc.sep(names.view().map(BaseDistiller::linkDef)), options);
+    return param.toDoc(Doc.sep(names.view().map(BaseDistiller::linkDef).toImmutableSeq()), options);
   }
 
   @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {

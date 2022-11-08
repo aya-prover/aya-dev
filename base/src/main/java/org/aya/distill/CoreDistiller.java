@@ -72,7 +72,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           else {
             var style = chooseStyle(defVar);
             bodyDoc = style != null
-              ? visitArgsCalls(defVar, style, args, Outer.Free)
+              ? visitArgsCalls(defVar, style, args, outer)
               : visitCalls(defVar.isInfix(), varDoc(defVar), args, params.isEmpty() ? outer : Outer.Free,
               options.map.get(DistillerOptions.Key.ShowImplicitArgs));
           }
