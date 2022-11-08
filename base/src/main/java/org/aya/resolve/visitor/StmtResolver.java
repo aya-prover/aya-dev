@@ -69,7 +69,7 @@ public interface StmtResolver {
           var bodyResolver = resolver.member(decl);
           bodyResolver.enterHead();
           var mCtx = MutableValue.create(resolver.ctx());
-          ctor.patterns = ctor.patterns.map(pattern -> ExprResolver.resolve(pattern, mCtx));
+          ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> ExprResolver.resolve(pattern, mCtx)));
           ctor.telescope = ctor.telescope.map(param -> bodyResolver.resolve(param, mCtx));
           addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));

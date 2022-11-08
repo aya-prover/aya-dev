@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
+import com.intellij.lang.ASTNode;
+import org.aya.intellij.psi.concrete.impl.*;
 
 public interface AyaPsiElementTypes {
 
@@ -16,17 +16,11 @@ public interface AyaPsiElementTypes {
   IElementType ARRAY_ELEMENTS_BLOCK = new AyaPsiElementType("ARRAY_ELEMENTS_BLOCK");
   IElementType ARROW_EXPR = new AyaPsiElementType("ARROW_EXPR");
   IElementType ASSOC = new AyaPsiElementType("ASSOC");
-  IElementType ATOM_ABSURD_PATTERN = new AyaPsiElementType("ATOM_ABSURD_PATTERN");
   IElementType ATOM_BIND_PATTERN = new AyaPsiElementType("ATOM_BIND_PATTERN");
-  IElementType ATOM_CALM_FACE_PATTERN = new AyaPsiElementType("ATOM_CALM_FACE_PATTERN");
   IElementType ATOM_EXPR = new AyaPsiElementType("ATOM_EXPR");
   IElementType ATOM_EX_ARGUMENT = new AyaPsiElementType("ATOM_EX_ARGUMENT");
-  IElementType ATOM_EX_PATTERN = new AyaPsiElementType("ATOM_EX_PATTERN");
-  IElementType ATOM_IM_PATTERN = new AyaPsiElementType("ATOM_IM_PATTERN");
   IElementType ATOM_LIST_PATTERN = new AyaPsiElementType("ATOM_LIST_PATTERN");
-  IElementType ATOM_NUMBER_PATTERN = new AyaPsiElementType("ATOM_NUMBER_PATTERN");
   IElementType ATOM_PATTERN = new AyaPsiElementType("ATOM_PATTERN");
-  IElementType ATOM_PATTERNS = new AyaPsiElementType("ATOM_PATTERNS");
   IElementType BARE_CLAUSE = new AyaPsiElementType("BARE_CLAUSE");
   IElementType BARE_SUB_SYSTEM = new AyaPsiElementType("BARE_SUB_SYSTEM");
   IElementType BARRED = new AyaPsiElementType("BARRED");
@@ -116,6 +110,7 @@ public interface AyaPsiElementTypes {
   IElementType TYPE = new AyaPsiElementType("TYPE");
   IElementType ULIFT_ATOM = new AyaPsiElementType("ULIFT_ATOM");
   IElementType ULIFT_PREFIX = new AyaPsiElementType("ULIFT_PREFIX");
+  IElementType UNIT_PATTERN = new AyaPsiElementType("UNIT_PATTERN");
   IElementType UNIV_EXPR = new AyaPsiElementType("UNIV_EXPR");
   IElementType USE_AS = new AyaPsiElementType("USE_AS");
   IElementType USE_HIDE = new AyaPsiElementType("USE_HIDE");

@@ -252,7 +252,7 @@ dataCtorClause ::= BAR patterns IMPLIES dataCtor
 
 
 // expressions
-expr ::= aNew
+expr ::= newExpr
        | piExpr
        | forallExpr
        | sigmaExpr
@@ -283,7 +283,7 @@ arrayElementsBlock ::= exprList
 idiomBlock ::= barred* expr
 listComp ::= (doBinding COMMA)* doBinding
 
-aNew ::= KW_NEW expr newBody?
+newExpr ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
 arrowExpr ::= expr TO expr { rightAssociative = true }
 projExpr ::= expr projFix
@@ -328,26 +328,27 @@ bareClause ::= clause
 clause ::= patterns (IMPLIES expr)?
 
 patterns ::= pattern (COMMA pattern)*
-pattern ::= atomPatterns
+// size == 1 ==> the pattern
+// size > 1 ==> BinOpSeq of PatElem
+pattern ::= unitPattern+ (KW_AS weakId)?
 
-atomPatterns ::= atomPattern+
-atomPattern ::= atomExPattern
-              | atomImPattern
-              | atomListPattern
-              | atomNumberPattern
-              | atomAbsurdPattern
+// A PatElem
+// pattern.size == 1 ==> PatElem
+// pattern.size > 1 ==> Tuple
+unitPattern ::= LPAREN patterns RPAREN
+              | LBRACE patterns RBRACE
+              | atomPattern
+// A Pattern
+atomPattern ::= atomListPattern
+              | NUMBER
+              | LPAREN RPAREN
               | atomBindPattern
-              | atomCalmFacePattern
-atomExPattern ::= LPAREN patterns RPAREN (KW_AS weakId)?
-atomImPattern ::= LBRACE patterns RBRACE (KW_AS weakId)?
+              | CALM_FACE
 atomListPattern ::= LARRAY patterns? RARRAY (KW_AS weakId)?
-atomNumberPattern ::= NUMBER
-atomAbsurdPattern ::= LPAREN RPAREN
 atomBindPattern ::= weakId {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }
-atomCalmFacePattern ::= CALM_FACE
 
 literal ::= refExpr
           | holeExpr
