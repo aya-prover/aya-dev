@@ -142,7 +142,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         var contextArgs = hole.contextArgs().map(arg -> arg.descent(f));
         var args = hole.args().map(arg -> arg.descent(f));
         if (contextArgs.sameElements(hole.contextArgs(), true) && args.sameElements(hole.args(), true)) yield hole;
-        yield new MetaTerm(hole.ref(), hole.ulift(), contextArgs, args);
+        yield new MetaTerm(hole.ref(), contextArgs, args);
       }
       case IntegerTerm shaped -> {
         var type = f.apply(shaped.type());
