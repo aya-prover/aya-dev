@@ -3,7 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.mutable.MutableList;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

@@ -13,7 +13,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * A well-typed and terminating term.
@@ -38,7 +39,7 @@ import java.util.function.Function;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, Elimination, MatchTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
-  default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+  default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
         var param = pi.param().descent(f);
@@ -93,7 +94,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
           yield match;
         yield new MatchTerm(discriminant, clauses);
-	    }
+      }
       case ErasedTerm erased -> {
         var type = f.apply(erased.type());
         if (type == erased.type()) yield erased;

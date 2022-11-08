@@ -13,7 +13,7 @@ import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.LocalCtx;

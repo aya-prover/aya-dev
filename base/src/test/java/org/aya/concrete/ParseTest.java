@@ -106,12 +106,12 @@ public class ParseTest {
   @Test public void newPat() {
     Expr expr = parseExpr("f (a.1) (a.2)");
     assertTrue(expr instanceof Expr.BinOpSeq app
-      && app.seq().get(1).expr() instanceof Expr.BinOpSeq proj1
+      && app.seq().get(1).term() instanceof Expr.BinOpSeq proj1
       && proj1.seq().sizeEquals(1)
-      && proj1.seq().get(0).expr() instanceof Expr.Proj
-      && app.seq().get(2).expr() instanceof Expr.BinOpSeq proj2
+      && proj1.seq().get(0).term() instanceof Expr.Proj
+      && app.seq().get(2).term() instanceof Expr.BinOpSeq proj2
       && proj2.seq().sizeEquals(1)
-      && proj2.seq().get(0).expr() instanceof Expr.Proj);
+      && proj2.seq().get(0).term() instanceof Expr.Proj);
   }
 
   @Test public void successExpr() {
@@ -121,7 +121,7 @@ public class ParseTest {
     assertTrue(parseExpr("a.1") instanceof Expr.Proj);
     assertTrue(parseExpr("a.1.2") instanceof Expr.Proj);
     assertTrue(parseExpr("f a.1") instanceof Expr.BinOpSeq app
-      && app.seq().get(1).expr() instanceof Expr.Proj);
+      && app.seq().get(1).term() instanceof Expr.Proj);
     assertTrue(parseExpr("(f a).1") instanceof Expr.Proj proj
       && proj.tup() instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("λ a => a") instanceof Expr.Lambda);
@@ -160,7 +160,7 @@ public class ParseTest {
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app
       && app.seq().sizeEquals(2)
       && !app.toDoc(DistillerOptions.debug()).debugRender().isEmpty()
-      && app.seq().get(1).expr() instanceof Expr.Tuple tup
+      && app.seq().get(1).term() instanceof Expr.Tuple tup
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.New neo
       && !neo.toDoc(DistillerOptions.debug()).debugRender().isEmpty());

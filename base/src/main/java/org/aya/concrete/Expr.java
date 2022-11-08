@@ -142,7 +142,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author AustinZhu
    */
-  record NamedArg(@Override boolean explicit, @Nullable String name, @Override @NotNull Expr expr)
+  record NamedArg(@Override boolean explicit, @Nullable String name, @Override @NotNull Expr term)
     implements AyaDocile, SourceNode, BinOpParser.Elem<Expr> {
 
     public NamedArg(boolean explicit, @NotNull Expr expr) {
@@ -151,21 +151,21 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
 
     public @NotNull NamedArg update(@NotNull Expr expr) {
-      return expr == expr() ? this : new NamedArg(explicit, name, expr);
+      return expr == term() ? this : new NamedArg(explicit, name, expr);
     }
 
     public @NotNull NamedArg descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
-      return update(f.apply(expr));
+      return update(f.apply(term));
     }
 
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      var doc = name == null ? expr.toDoc(options) :
-        Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), expr.toDoc(options)));
+      var doc = name == null ? term.toDoc(options) :
+        Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), term.toDoc(options)));
       return Doc.bracedUnless(doc, explicit);
     }
 
     @Override public @NotNull SourcePos sourcePos() {
-      return expr.sourcePos();
+      return term.sourcePos();
     }
   }
 

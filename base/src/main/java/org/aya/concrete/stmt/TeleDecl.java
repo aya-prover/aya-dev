@@ -12,7 +12,7 @@ import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;

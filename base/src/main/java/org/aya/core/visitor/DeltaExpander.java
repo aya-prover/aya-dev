@@ -9,7 +9,7 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Modifier;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.WithPos;

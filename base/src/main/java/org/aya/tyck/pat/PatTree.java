@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.LocalVar;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
