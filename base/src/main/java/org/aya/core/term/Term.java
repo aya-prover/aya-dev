@@ -39,8 +39,9 @@ import java.util.function.UnaryOperator;
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, PartialTerm, PartialTyTerm, PathTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
-  default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
+  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
+  default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
         var param = pi.param().descent(f);
@@ -55,9 +56,9 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       }
       case SortTerm univ -> univ;
       case IntervalTerm interval -> interval;
-      case FormulaTerm mula -> {
-        var formula = mula.asFormula().fmap(f);
-        if (formula == mula.asFormula()) yield mula;
+      case FormulaTerm(var mula) -> {
+        var formula = mula.fmap(f);
+        if (formula == mula) yield this;
         yield new FormulaTerm(formula);
       }
       case StringTerm str -> str;
@@ -174,12 +175,12 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (newCube == cube) yield path;
         yield new PathTerm(newCube);
       }
-      case PLamTerm(var params,var body) lam -> {
+      case PLamTerm(var params, var body) lam -> {
         var newBody = f.apply(body);
         if (newBody == body) yield lam;
         yield new PLamTerm(params, newBody);
       }
-      case PAppTerm(var of,var args,var cube) app -> {
+      case PAppTerm(var of, var args, var cube) app -> {
         var newOf = f.apply(of);
         var refs = args.map(a -> a.descent(f));
         var newCube = cube.map(f);
@@ -267,7 +268,8 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   default @NotNull SortTerm computeSort(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     var result = computeType(state, ctx);
     if (result instanceof SortTerm sort) return sort;
-    if (result instanceof ErrorTerm || result instanceof MetaTerm) return SortTerm.Type0; // TODO: improve LittleTyper and remove this hack
+    if (result instanceof ErrorTerm || result instanceof MetaTerm)
+      return SortTerm.Type0; // TODO: improve LittleTyper and remove this hack
     throw new InternalException("unreachable");
   }
 

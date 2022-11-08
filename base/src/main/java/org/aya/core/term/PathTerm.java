@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 /** generalized path type */
-public record PathTerm(@NotNull Cube cube) implements StableWHNF, Term {
+public record PathTerm(@NotNull Cube cube) implements StableWHNF {
   /**
    * 'Generalized path' syntax.
    *
