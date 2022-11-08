@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
+import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.LocalVar;
@@ -34,7 +35,7 @@ public sealed interface HoleProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Can't perform pattern unification on hole with the following spine:"),
-        Doc.commaList(term.args().map(a -> a.toDoc(options)))
+        Doc.commaList(term.args().map(a -> Arg.toDoc(options, a)))
       );
     }
   }

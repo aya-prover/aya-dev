@@ -4,6 +4,7 @@ package org.aya.generic;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.util.distill.DistillerOptions;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -13,13 +14,10 @@ import java.util.function.Function;
  *            {@link org.aya.concrete.Expr}.
  * @author ice1000
  */
-public record Arg<T extends AyaDocile>(@NotNull T term, boolean explicit) implements AyaDocile {
-  public @NotNull Arg<T> implicitify() {
-    return new Arg<>(term, false);
-  }
-
-  @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return Doc.bracedUnless(term.toDoc(options), explicit);
+@Debug.Renderer(text = "toDoc(DistillerOptions.debug(), this).debugRender()")
+public record Arg<T>(@NotNull T term, boolean explicit) {
+  public static <T extends AyaDocile> @NotNull Doc toDoc(@NotNull DistillerOptions options, @NotNull Arg<T> self) {
+    return Doc.bracedUnless(self.term.toDoc(options), self.explicit);
   }
 
   public @NotNull Arg<T> update(@NotNull T term) {

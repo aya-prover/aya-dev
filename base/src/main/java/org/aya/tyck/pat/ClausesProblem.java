@@ -8,6 +8,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
+import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
@@ -93,7 +94,8 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull PatClassifier.PatErr pats
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.missing().map(t -> t.toDoc(options))));
+      return Doc.sep(Doc.english("Unhandled case:"),
+        Doc.commaList(pats.missing().map(t -> Arg.toDoc(options, t))));
     }
   }
 
