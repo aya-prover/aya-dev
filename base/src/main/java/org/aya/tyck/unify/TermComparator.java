@@ -501,7 +501,6 @@ public sealed abstract class TermComparator permits Unifier {
             yield retType;
           yield null;
         }
-        case MetaLitTerm rhs -> compareMetaLiteral(rhs, lhs, getType(lhs, lhs.ref()), rl, lr);
         case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         default -> null;
@@ -521,7 +520,6 @@ public sealed abstract class TermComparator permits Unifier {
           yield lhs.type(); // compareShape implies lhs.type() = rhs.type()
         }
         case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
-        case MetaLitTerm rhs -> compareMetaLiteral(rhs, lhs, lhs.type(), rl, lr);
         default -> null;
       };
       case ListTerm lhs -> switch (preRhs) {
@@ -531,27 +529,12 @@ public sealed abstract class TermComparator permits Unifier {
           yield lhs.type();
         }
         case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
-        case MetaLitTerm rhs -> compareMetaLiteral(rhs, lhs, lhs.type(), rl, lr);
-        default -> null;
-      };
-      case MetaLitTerm lhs -> switch (preRhs) {
-        case ConCall rhs -> compareMetaLiteral(lhs, rhs, getType(rhs, rhs.ref()), lr, rl);
-        case IntegerTerm rhs -> compareMetaLiteral(lhs, rhs, rhs.type(), lr, rl);
-        case ListTerm rhs -> compareMetaLiteral(lhs, rhs, rhs.type(), lr, rl);
-        case MetaLitTerm rhs -> compareMetaLiteral(lhs, rhs, rhs.type(), lr, rl);
         default -> null;
       };
       case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs);
     };
     traceExit();
     return ret;
-  }
-
-  private @Nullable Term compareMetaLiteral(@NotNull MetaLitTerm litLhs, @NotNull Term preRhs, @NotNull Term type, Sub lr, Sub rl) {
-    if (!compare(litLhs.type(), type, null)) return null;
-    var inline = litLhs.freezeHoles(state); // try getting the solved literal
-    if (inline == litLhs) return null; // unsolvable?
-    return compare(inline, preRhs, lr, rl, null) ? type : null;
   }
 
   protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs);
