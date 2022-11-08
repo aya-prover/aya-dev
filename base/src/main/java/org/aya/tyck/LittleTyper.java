@@ -68,6 +68,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case TupTerm tuple -> new SigmaTerm(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
       case MetaPatTerm metaPat -> metaPat.ref().type();
+      case MetaLitTerm lit -> lit.type();
       case PiTerm pi -> {
         var paramTyRaw = whnf(term(pi.param().type()));
         var resultParam = new Term.Param(pi.param().ref(), whnf(pi.param().type()), pi.param().explicit());

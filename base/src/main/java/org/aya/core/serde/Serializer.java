@@ -130,6 +130,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case MetaTerm hole -> throw new InternalException("Shall not have holes serialized.");
       case MetaPatTerm metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
+      case MetaLitTerm err -> throw new InternalException("Shall not have metaLiterals serialized.");
       case FormTerm.Sort sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());

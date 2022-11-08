@@ -93,7 +93,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
           yield match;
         yield new MatchTerm(discriminant, clauses);
-	    }
+      }
       case ErasedTerm erased -> {
         var type = f.apply(erased.type());
         if (type == erased.type()) yield erased;
@@ -149,11 +149,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
       case ListTerm shaped -> {
         var type = f.apply(shaped.type());
         var elements = shaped.repr().map(f);
-
-        if (type == shaped.type()
-          && elements.sameElements(shaped.repr(), true)) yield shaped;
-
+        if (type == shaped.type() && elements.sameElements(shaped.repr(), true)) yield shaped;
         yield new ListTerm(elements, shaped.shape(), type);
+      }
+      case MetaLitTerm lit -> {
+        var type = f.apply(lit.type());
+        if (type == lit.type()) yield lit;
+        yield new MetaLitTerm(lit.repr(), lit.candidates(), type);
       }
       case PartialTyTerm ty -> {
         var type = f.apply(ty.type());

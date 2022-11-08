@@ -503,9 +503,8 @@ public final class ExprTycker extends Tycker {
           // When there's more than one Nat, delay the unification for cases like
           // def foo : Option Nat1 => some 0
           // def bar : Option Nat2 => some 1
-          // TODO: unknown type literal
-          // if (nat.sizeGreaterThan(1))
-          //   yield new TermResult(new IntegerTerm(end, AyaShape.NAT_SHAPE, hole), term);
+          if (nat.sizeGreaterThan(1))
+            yield new TermResult(new MetaLitTerm(end, nat, hole), term);
           // fallthrough: When there's only one Nat, solve the hole now.
           // Note: if no Nat was found, errors will be reported in `synthesize(expr)`
         }

@@ -41,6 +41,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield Doc.wrap("{?", "?}",
           visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
       }
+      case MetaLitTerm lit -> Doc.plain(lit.repr().toString());
       case TupTerm term -> Doc.parened(Doc.commaList(term.items().view().map(t -> term(Outer.Free, t))));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
