@@ -51,7 +51,7 @@ public class LspTest {
       assertFalse(testOpt.isEmpty(), "Do not delete the function called test in Vec");
       var testClause = testOpt.get().body.getRightValue().first();
       // vnil, ys => 0
-      var testPat = (Pattern.Bind) testClause.patterns.last();
+      var testPat = (Pattern.Bind) testClause.patterns.last().term();
       var testTy = assertInstanceOf(DataCall.class, testPat.type().get());
       assertNotNull(testTy);
       // ys : Vec A m

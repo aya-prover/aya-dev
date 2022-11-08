@@ -142,7 +142,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @author AustinZhu
    */
-  record NamedArg(boolean explicit, @Nullable String name, @NotNull Expr expr)
+  record NamedArg(@Override boolean explicit, @Nullable String name, @Override @NotNull Expr expr)
     implements AyaDocile, SourceNode, BinOpParser.Elem<Expr> {
 
     public NamedArg(boolean explicit, @NotNull Expr expr) {

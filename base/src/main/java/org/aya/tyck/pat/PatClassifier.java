@@ -16,6 +16,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
+import org.aya.generic.Arg;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.AnyVar;
@@ -50,7 +51,7 @@ public record PatClassifier(
     return classify(clauses, telescope, tycker.state, tycker.reporter, pos, coverage);
   }
 
-  public record PatErr(@NotNull ImmutableSeq<Pattern> missing) {}
+  public record PatErr(@NotNull ImmutableSeq<Arg<Pattern>> missing) {}
 
   public static @NotNull MCT<Term, PatErr> classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,

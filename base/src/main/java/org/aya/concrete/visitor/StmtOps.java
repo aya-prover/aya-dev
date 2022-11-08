@@ -61,7 +61,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
         clauses -> clauses.map(clause -> visitClause(clause, pp))
       );
       case TeleDecl.DataCtor ctor -> {
-        ctor.patterns = ctor.patterns.map(pat -> visitPattern(pat, pp));
+        ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> visitPattern(pattern, pp)));
         ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, pp));
       }
       case TeleDecl.StructField field -> {
@@ -71,6 +71,8 @@ public interface StmtOps<P> extends ExprTraversal<P> {
   }
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {
-    return new Pattern.Clause(c.sourcePos, c.patterns.map(p -> visitPattern(p, pp)), c.expr.map(expr -> visitExpr(expr, pp)));
+    return new Pattern.Clause(c.sourcePos,
+      c.patterns.map(p -> p.descent(pat -> visitPattern(pat, pp))),
+      c.expr.map(expr -> visitExpr(expr, pp)));
   }
 }

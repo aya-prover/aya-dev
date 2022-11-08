@@ -24,7 +24,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
           case TeleDecl.FnDecl fn ->
             fn.body = fn.body.map(this, clauses -> clauses.map(cl -> cl.descent(this, this::apply)));
           case TeleDecl.DataCtor ctor -> {
-            ctor.patterns = ctor.patterns.map(this::apply);
+            ctor.patterns = ctor.patterns.map(cl -> cl.descent(this::apply));
             ctor.clauses = ctor.clauses.map(cl -> cl.descent(this, this::apply));
           }
           case TeleDecl.StructField field -> field.body = field.body.map(this);

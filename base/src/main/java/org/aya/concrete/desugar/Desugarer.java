@@ -134,9 +134,9 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
    */
   @Override public @NotNull Pattern pre(@NotNull Pattern pattern) {
     return switch (pattern) {
-      case Pattern.BinOpSeq(var pos, var seq, var as, var explicit) -> {
+      case Pattern.BinOpSeq(var pos, var seq, var as) -> {
         assert seq.isNotEmpty() : pos.toString();
-        yield pre(new BinPatternParser(explicit, info, seq.view()).build(pos));
+        yield pre(new BinPatternParser(info, seq.view(), as).build(pos));
       }
       default -> StmtConsumer.super.pre(pattern);
     };

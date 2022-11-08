@@ -1,6 +1,3 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -40,9 +37,8 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARRAY_BLOCK, ARRAY_COMP_BLOCK, ARRAY_ELEMENTS_BLOCK),
+    create_token_set_(ATOM_BIND_PATTERN, ATOM_LIST_PATTERN, ATOM_PATTERN),
     create_token_set_(ARGUMENT, ATOM_EX_ARGUMENT, NAMED_IM_ARGUMENT, TUPLE_IM_ARGUMENT),
-    create_token_set_(ATOM_ABSURD_PATTERN, ATOM_BIND_PATTERN, ATOM_CALM_FACE_PATTERN, ATOM_EX_PATTERN,
-      ATOM_IM_PATTERN, ATOM_LIST_PATTERN, ATOM_NUMBER_PATTERN, ATOM_PATTERN),
     create_token_set_(DATA_DECL, DECL, FN_DECL, GENERALIZE,
       IMPORT_CMD, MODULE, OPEN_CMD, PRIM_DECL,
       REMARK, STMT, STRUCT_DECL),
@@ -144,18 +140,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LPAREN RPAREN
-  public static boolean atomAbsurdPattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomAbsurdPattern")) return false;
-    if (!nextTokenIs(b, LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, LPAREN, RPAREN);
-    exit_section_(b, m, ATOM_ABSURD_PATTERN, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // weakId
   public static boolean atomBindPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomBindPattern")) return false;
@@ -164,18 +148,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = weakId(b, l + 1);
     exit_section_(b, m, ATOM_BIND_PATTERN, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // CALM_FACE
-  public static boolean atomCalmFacePattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomCalmFacePattern")) return false;
-    if (!nextTokenIs(b, CALM_FACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, CALM_FACE);
-    exit_section_(b, m, ATOM_CALM_FACE_PATTERN, r);
     return r;
   }
 
@@ -200,72 +172,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "atomExArgument_1", c)) break;
     }
     return true;
-  }
-
-  /* ********************************************************** */
-  // LPAREN patterns RPAREN (KW_AS weakId)?
-  public static boolean atomExPattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomExPattern")) return false;
-    if (!nextTokenIs(b, LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && patterns(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    r = r && atomExPattern_3(b, l + 1);
-    exit_section_(b, m, ATOM_EX_PATTERN, r);
-    return r;
-  }
-
-  // (KW_AS weakId)?
-  private static boolean atomExPattern_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomExPattern_3")) return false;
-    atomExPattern_3_0(b, l + 1);
-    return true;
-  }
-
-  // KW_AS weakId
-  private static boolean atomExPattern_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomExPattern_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, KW_AS);
-    r = r && weakId(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // LBRACE patterns RBRACE (KW_AS weakId)?
-  public static boolean atomImPattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomImPattern")) return false;
-    if (!nextTokenIs(b, LBRACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && patterns(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    r = r && atomImPattern_3(b, l + 1);
-    exit_section_(b, m, ATOM_IM_PATTERN, r);
-    return r;
-  }
-
-  // (KW_AS weakId)?
-  private static boolean atomImPattern_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomImPattern_3")) return false;
-    atomImPattern_3_0(b, l + 1);
-    return true;
-  }
-
-  // KW_AS weakId
-  private static boolean atomImPattern_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomImPattern_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, KW_AS);
-    r = r && weakId(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -309,52 +215,20 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // NUMBER
-  public static boolean atomNumberPattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomNumberPattern")) return false;
-    if (!nextTokenIs(b, NUMBER)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, NUMBER);
-    exit_section_(b, m, ATOM_NUMBER_PATTERN, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // atomExPattern
-  //               | atomImPattern
-  //               | atomListPattern
-  //               | atomNumberPattern
-  //               | atomAbsurdPattern
+  // atomListPattern
+  //               | NUMBER
+  //               | LPAREN RPAREN
   //               | atomBindPattern
-  //               | atomCalmFacePattern
+  //               | CALM_FACE
   public static boolean atomPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomPattern")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, ATOM_PATTERN, "<atom pattern>");
-    r = atomExPattern(b, l + 1);
-    if (!r) r = atomImPattern(b, l + 1);
-    if (!r) r = atomListPattern(b, l + 1);
-    if (!r) r = atomNumberPattern(b, l + 1);
-    if (!r) r = atomAbsurdPattern(b, l + 1);
+    r = atomListPattern(b, l + 1);
+    if (!r) r = consumeToken(b, NUMBER);
+    if (!r) r = parseTokens(b, 0, LPAREN, RPAREN);
     if (!r) r = atomBindPattern(b, l + 1);
-    if (!r) r = atomCalmFacePattern(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // atomPattern+
-  public static boolean atomPatterns(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomPatterns")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, ATOM_PATTERNS, "<atom patterns>");
-    r = atomPattern(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!atomPattern(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "atomPatterns", c)) break;
-    }
+    if (!r) r = consumeToken(b, CALM_FACE);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1510,13 +1384,47 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // atomPatterns
+  // unitPattern+ (KW_AS weakId)?
   public static boolean pattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, PATTERN, "<pattern>");
-    r = atomPatterns(b, l + 1);
+    r = pattern_0(b, l + 1);
+    r = r && pattern_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // unitPattern+
+  private static boolean pattern_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = unitPattern(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!unitPattern(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "pattern_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (KW_AS weakId)?
+  private static boolean pattern_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_1")) return false;
+    pattern_1_0(b, l + 1);
+    return true;
+  }
+
+  // KW_AS weakId
+  private static boolean pattern_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, KW_AS);
+    r = r && weakId(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2342,6 +2250,45 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, KW_ULIFT);
     exit_section_(b, m, ULIFT_PREFIX, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LPAREN patterns RPAREN
+  //               | LBRACE patterns RBRACE
+  //               | atomPattern
+  public static boolean unitPattern(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unitPattern")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, UNIT_PATTERN, "<unit pattern>");
+    r = unitPattern_0(b, l + 1);
+    if (!r) r = unitPattern_1(b, l + 1);
+    if (!r) r = atomPattern(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // LPAREN patterns RPAREN
+  private static boolean unitPattern_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unitPattern_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LPAREN);
+    r = r && patterns(b, l + 1);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LBRACE patterns RBRACE
+  private static boolean unitPattern_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unitPattern_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && patterns(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
     return r;
   }
 
