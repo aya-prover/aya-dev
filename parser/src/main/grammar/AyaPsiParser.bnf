@@ -329,11 +329,10 @@ clause ::= patterns (IMPLIES expr)?
 
 patterns ::= pattern (COMMA pattern)*
 // size == 1 ==> the pattern
-// size > 1 ==> BinOpSeq of PatElem
+// size > 1 ==> BinOpSeq of Arg<Pat>
 pattern ::= unitPattern+ (KW_AS weakId)?
 
-// A PatElem
-// pattern.size == 1 ==> PatElem
+// pattern.size == 1 ==> Arg<Pat>
 // pattern.size > 1 ==> Tuple
 unitPattern ::= LPAREN patterns RPAREN
               | LBRACE patterns RBRACE

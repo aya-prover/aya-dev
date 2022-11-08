@@ -40,11 +40,11 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.Tuple expr -> Doc.parened(Doc.commaList(expr.items().view().map(e -> term(Outer.Free, e))));
       case Expr.BinOpSeq binOpSeq -> {
         var seq = binOpSeq.seq();
-        var first = seq.first().expr();
+        var first = seq.first().term();
         if (seq.sizeEquals(1)) yield term(outer, first);
         yield visitCalls(false,
           term(Outer.AppSpine, first),
-          seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())), outer,
+          seq.view().drop(1).map(e -> new Arg<>(e.term(), e.explicit())), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
@@ -79,7 +79,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           infix = var.isInfix();
         yield visitCalls(infix,
           term(Outer.AppHead, head),
-          args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())), outer,
+          args.view().map(arg -> new Arg<>(arg.term(), arg.explicit())), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
       case Expr.Lambda expr -> {
@@ -221,10 +221,9 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var param = seq.seq();
         if (param.sizeEquals(1)) {
           var first = param.first();
-          yield pattern(first.expr(), first.explicit(), outer);
+          yield pattern(first.term(), first.explicit(), outer);
         }
-        var ctorDoc = visitMaybeCtorPatterns(param.view()
-          .map(el -> new Arg<>(el.expr(), el.explicit())), Outer.AppSpine, Doc.ALT_WS);
+        var ctorDoc = visitMaybeCtorPatterns(param.view(), Outer.AppSpine, Doc.ALT_WS);
         yield ctorDoc(outer, licit, ctorDoc, seq.as(), param.sizeLessThanOrEquals(1));
       }
       case Pattern.List list -> {

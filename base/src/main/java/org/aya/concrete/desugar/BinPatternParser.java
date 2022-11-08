@@ -22,33 +22,33 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pattern.PatElem> {
+public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Arg<Pattern>> {
   private final @NotNull ResolveInfo resolveInfo;
   private final @Nullable LocalVar myAs;
 
-  public BinPatternParser(@NotNull ResolveInfo resolveInfo, @NotNull SeqView<Pattern.@NotNull PatElem> seq, @Nullable LocalVar as) {
+  public BinPatternParser(@NotNull ResolveInfo resolveInfo, @NotNull SeqView<Arg<@NotNull Pattern>> seq, @Nullable LocalVar as) {
     super(resolveInfo.opSet(), seq);
     this.resolveInfo = resolveInfo;
     this.myAs = as;
   }
 
-  @Override protected @NotNull BinOpParser<AyaBinOpSet, Pattern, Pattern.PatElem>
-  replicate(@NotNull SeqView<Pattern.@NotNull PatElem> seq) {
+  @Override protected @NotNull BinOpParser<AyaBinOpSet, Pattern, Arg<Pattern>>
+  replicate(@NotNull SeqView<Arg<@NotNull Pattern>> seq) {
     return new BinPatternParser(resolveInfo, seq, myAs);
   }
 
-  private static final Pattern.PatElem OP_APP = new Pattern.PatElem(true, new Pattern.Bind(
+  private static final Arg<Pattern> OP_APP = new Arg<>(new Pattern.Bind(
     SourcePos.NONE,
     new LocalVar(BinOpSet.APP_ELEM.name()),
-    MutableValue.create()));
+    MutableValue.create()), true);
 
-  @Override protected @NotNull Pattern.PatElem appOp() {
+  @Override protected @NotNull Arg<Pattern> appOp() {
     return OP_APP;
   }
 
-  @Override public @NotNull Pattern.PatElem
-  makeSectionApp(@NotNull SourcePos pos, Pattern.@NotNull PatElem op, @NotNull Function<Pattern.PatElem, Pattern> lamBody) {
-    return new Pattern.PatElem(op.explicit(), createErrorExpr(pos));
+  @Override public @NotNull Arg<Pattern>
+  makeSectionApp(@NotNull SourcePos pos, @NotNull Arg<@NotNull Pattern> op, @NotNull Function<Arg<Pattern>, Pattern> lamBody) {
+    return new Arg<>(createErrorExpr(pos), op.explicit());
   }
 
   @Override protected void reportAmbiguousPred(String op1, String op2, SourcePos pos) {
@@ -63,18 +63,18 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
     return new Pattern.Bind(sourcePos, new LocalVar("a broken constructor pattern"), MutableValue.create());
   }
 
-  @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Pattern.PatElem elem) {
-    return elem.expr() instanceof Pattern.Ctor ref && ref.resolved().data() instanceof DefVar<?, ?> defVar
+  @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Arg<Pattern> elem) {
+    return elem.term() instanceof Pattern.Ctor ref && ref.resolved().data() instanceof DefVar<?, ?> defVar
       ? defVar.resolveOpDecl(resolveInfo.thisModule().moduleName())
       : null;
   }
 
-  @Override protected @NotNull Pattern.PatElem
-  makeArg(@NotNull SourcePos pos, @NotNull Pattern func, Pattern.@NotNull PatElem arg, boolean explicit) {
+  @Override protected @NotNull Arg<Pattern>
+  makeArg(@NotNull SourcePos pos, @NotNull Pattern func, @NotNull Arg<@NotNull Pattern> arg, boolean explicit) {
     // param explicit should be ignored since the BinOpSeq we are processing already specified the explicitness
     if (func instanceof Pattern.Ctor ctor) {
-      var newCtor = new Pattern.Ctor(pos, ctor.resolved(), ctor.params().appended(new Arg<>(arg.expr(), arg.explicit())), myAs);
-      return new Pattern.PatElem(explicit, newCtor);
+      var newCtor = new Pattern.Ctor(pos, ctor.resolved(), ctor.params().appended(new Arg<>(arg.term(), arg.explicit())), myAs);
+      return new Arg<>(newCtor, explicit);
     } else {
       opSet.reporter.report(new PatternProblem.UnknownCtor(func));
       throw new Context.ResolvingInterruptedException();

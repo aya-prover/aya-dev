@@ -42,7 +42,6 @@ import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -229,7 +228,7 @@ public final class ExprTycker extends Tycker {
           while (pi.param().explicit() != argLicit || argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
-              var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
+              var holeApp = mockArg(pi.param().subst(subst), argument.term().sourcePos());
               // path types are always explicit
               app = AppTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
@@ -244,7 +243,7 @@ public final class ExprTycker extends Tycker {
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
-        var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped();
+        var elabArg = inherit(argument.term(), pi.param().type()).wellTyped();
         subst.addDirectly(pi.param().ref(), elabArg);
         var arg = new Arg<>(elabArg, argLicit);
         var newApp = cube == null

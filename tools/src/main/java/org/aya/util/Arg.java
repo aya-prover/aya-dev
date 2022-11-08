@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
+import org.aya.util.binop.BinOpParser;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 @Debug.Renderer(text = "toDoc(org.aya.util.distill.DistillerOptions.debug(), this).debugRender()")
-public record Arg<T>(@NotNull T term, boolean explicit) {
+public record Arg<T>(@Override @NotNull T term, @Override boolean explicit) implements BinOpParser.Elem<T> {
   public @NotNull Arg<T> update(@NotNull T term) {
     return term == term() ? this : new Arg<>(term, explicit);
   }

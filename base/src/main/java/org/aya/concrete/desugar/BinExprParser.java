@@ -55,7 +55,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
   }
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
-    var expr = elem.expr();
+    var expr = elem.term();
     while (expr instanceof Expr.Lift lift) expr = lift.expr();
     return expr instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar
       ? defVar.resolveOpDecl(resolveInfo.thisModule().moduleName())
@@ -70,7 +70,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
   @Override public @NotNull Expr.NamedArg makeSectionApp(
     @NotNull SourcePos pos, Expr.@NotNull NamedArg op, @NotNull Function<Expr.NamedArg, Expr> lamBody
   ) {
-    var missing = Constants.randomlyNamed(op.expr().sourcePos());
+    var missing = Constants.randomlyNamed(op.term().sourcePos());
     var missingElem = new Expr.NamedArg(true, new Expr.Ref(SourcePos.NONE, missing));
     var missingParam = new Expr.Param(missing.definition(), missing, true);
     var term = new Expr.Lambda(pos, missingParam, lamBody.apply(missingElem));

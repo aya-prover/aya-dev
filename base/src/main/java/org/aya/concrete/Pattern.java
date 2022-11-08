@@ -10,14 +10,13 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
-import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.ForLSP;
-import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
@@ -37,13 +36,17 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
 
   default @NotNull Pattern descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
     return switch (this) {
-      case Pattern.BinOpSeq(var pos, var seq, var as) -> new Pattern.BinOpSeq(pos, seq.map(x -> x.map(f)), as);
+      case Pattern.BinOpSeq(var pos, var seq, var as) -> new Pattern.BinOpSeq(pos, descent(f, seq), as);
       case Pattern.Ctor(var pos, var resolved, var params, var as) ->
-        new Pattern.Ctor(pos, resolved, params.map(x -> x.descent(f)), as);
-      case Pattern.Tuple(var pos, var patterns, var as) -> new Pattern.Tuple(pos, patterns.map(x -> x.descent(f)), as);
+        new Pattern.Ctor(pos, resolved, descent(f, params), as);
+      case Pattern.Tuple(var pos, var patterns, var as) -> new Pattern.Tuple(pos, descent(f, patterns), as);
       case Pattern.List(var pos, var patterns, var as) -> new Pattern.List(pos, patterns.map(f), as);
       default -> this;
     };
+  }
+  private static @NotNull ImmutableSeq<Arg<Pattern>>
+  descent(@NotNull UnaryOperator<@NotNull Pattern> f, @NotNull ImmutableSeq<Arg<Pattern>> seq) {
+    return seq.map(x -> x.descent(f));
   }
 
   record Tuple(
@@ -53,17 +56,11 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
   ) implements Pattern {
   }
 
-  record Number(
-    @Override @NotNull SourcePos sourcePos,
-    int number
-  ) implements Pattern {
-  }
+  record Number(@Override @NotNull SourcePos sourcePos, int number) implements Pattern {}
 
-  record Absurd(@Override @NotNull SourcePos sourcePos) implements Pattern {
-  }
+  record Absurd(@Override @NotNull SourcePos sourcePos) implements Pattern {}
 
-  record CalmFace(@Override @NotNull SourcePos sourcePos) implements Pattern {
-  }
+  record CalmFace(@Override @NotNull SourcePos sourcePos) implements Pattern {}
 
   record Bind(
     @NotNull SourcePos sourcePos,
@@ -83,18 +80,9 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     }
   }
 
-  record PatElem(
-    @Override boolean explicit,
-    @Override Pattern expr
-  ) implements BinOpParser.Elem<Pattern> {
-    public @NotNull PatElem map(@NotNull UnaryOperator<@NotNull Pattern> f) {
-      return new PatElem(explicit, f.apply(expr));
-    }
-  }
-
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<PatElem> seq,
+    @NotNull ImmutableSeq<Arg<Pattern>> seq,
     @Nullable LocalVar as
   ) implements Pattern {
   }
@@ -132,7 +120,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     }
 
     public @NotNull Clause descent(@NotNull UnaryOperator<@NotNull Expr> f, @NotNull UnaryOperator<@NotNull Pattern> g) {
-      return update(patterns.map(p -> p.descent(g)), expr.map(f));
+      return update(Pattern.descent(g, patterns), expr.map(f));
     }
   }
 
@@ -158,8 +146,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     }
 
     @Override public @NotNull Pattern destruct(@NotNull ImmutableSeq<Pattern> repr) {
-      return new FakeShapedList(sourcePos, null, repr, shape, type)
-        .constructorForm();
+      return new FakeShapedList(sourcePos, null, repr, shape, type).constructorForm();
     }
   }
 }

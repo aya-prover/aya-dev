@@ -39,14 +39,14 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
     return switch (expr) {
       case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg)when kind == SortKind.Type -> {
         try {
-          yield new Expr.Type(uPos, levelVar(arg.expr()));
+          yield new Expr.Type(uPos, levelVar(arg.term()));
         } catch (DesugarInterruption e) {
           yield new Expr.Error(pos, expr);
         }
       }
       case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg)when kind == SortKind.Set -> {
         try {
-          yield new Expr.Set(uPos, levelVar(arg.expr()));
+          yield new Expr.Set(uPos, levelVar(arg.term()));
         } catch (DesugarInterruption e) {
           yield new Expr.Error(pos, expr);
         }

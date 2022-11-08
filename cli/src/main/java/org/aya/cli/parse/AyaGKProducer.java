@@ -707,14 +707,11 @@ public record AyaGKProducer(
     var as = Option.ofNullable(node.peekChild(WEAK_ID))
       .map(this::weakId)
       .map(LocalVar::from);
-    if (unitPats.sizeEquals(1)) {
-      var elem = unitPats.first();
-      return new Arg<>(elem.expr(), elem.explicit());
-    }
+    if (unitPats.sizeEquals(1)) return unitPats.first();
     return new Arg<>(new Pattern.BinOpSeq(sourcePosOf(node), unitPats, as.getOrNull()), true);
   }
 
-  public Pattern.PatElem unitPattern(@NotNull GenericNode<?> node) {
+  private Arg<Pattern> unitPattern(@NotNull GenericNode<?> node) {
     var rawPatterns = node.peekChild(PATTERNS);
     if (rawPatterns != null) {
       var explicit = node.peekChild(LPAREN) != null;
@@ -722,13 +719,13 @@ public record AyaGKProducer(
       var pat = patterns.sizeEquals(1)
         ? newBinOPScope(patterns.first().term(), explicit)
         : new Pattern.Tuple(sourcePosOf(node), patterns, null);
-      return new Pattern.PatElem(explicit, pat);
+      return new Arg<>(pat, explicit);
     }
     var atom = node.childrenView().first();
-    return new Pattern.PatElem(true, atomPattern(atom));
+    return new Arg<>(atomPattern(atom), true);
   }
 
-  public @NotNull Pattern atomPattern(@NotNull GenericNode<?> node) {
+  private @NotNull Pattern atomPattern(@NotNull GenericNode<?> node) {
     var sourcePos = sourcePosOf(node);
     if (node.is(ATOM_BIND_PATTERN)) {
       var id = weakId(node.child(WEAK_ID));
@@ -758,7 +755,7 @@ public record AyaGKProducer(
     return unreachable(node);
   }
 
-  public @NotNull Expr.Array arrayCompBlock(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
+  private @NotNull Expr.Array arrayCompBlock(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
     // arrayCompBlock ::=
     //   expr  BAR listComp
     // [ x * y  |  x <- xs, y <- ys ]
@@ -775,7 +772,7 @@ public record AyaGKProducer(
     return Expr.Array.newGenerator(entireSourcePos, generator, bindings, bindName, pureName);
   }
 
-  public @NotNull Expr.Array arrayElementList(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
+  private @NotNull Expr.Array arrayElementList(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {
     // arrayElementBlock ::=
     //   exprList
     // [ 1, 2, 3 ]
@@ -886,7 +883,7 @@ public record AyaGKProducer(
 
   public @NotNull Pattern newBinOPScope(@NotNull Pattern expr, boolean explicit) {
     return new Pattern.BinOpSeq(expr.sourcePos(),
-      ImmutableSeq.of(new Pattern.PatElem(explicit, expr)), null);
+      ImmutableSeq.of(new Arg<>(expr, explicit)), null);
   }
 
   private @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node) {
