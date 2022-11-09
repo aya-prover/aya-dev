@@ -67,7 +67,23 @@ example def coeSigma4 (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
   , (\i => B i ((A.coeFill t.1) i)).coe t.2
   , (\i => C i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)).coe t.3
   , (\i => D i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)
-        (((\j => C j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)).coeFill t.3) i)).coe t.4)
+      (((\j => C j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)).coeFill t.3) i)).coe t.4)
+
+example def coeSigma5 (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
+    (C : Pi (i : I) (a : A i) -> B i a -> Type)
+    (D : Pi (i : I) (a : A i) (b : B i a) -> C i a b -> Type)
+    (E : Pi (i : I) (a : A i) (b : B i a) (c : C i a b) -> D i a b c -> Type)
+    (t : Sig (a : A 0) (b : B 0 a) (c : C 0 a b) (d : D 0 a b c) ** E 0 a b c d)
+     : Sig (a : A 1) (b : B 1 a) (c : C 1 a b) (d : D 1 a b c) ** E 1 a b c d =>
+  (A.coe t.1
+  , (\i => B i ((A.coeFill t.1) i)).coe t.2
+  , (\i => C i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)).coe t.3
+  , (\i => D i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)
+      (((\j => C j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)).coeFill t.3) i)).coe t.4
+  , (\i => E i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)
+      (((\j => C j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)).coeFill t.3) i)
+      (((\j => D j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)
+        (((\k => C k ((A.coeFill t.1) k) (((\l => B l ((A.coeFill t.1) l)).coeFill t.2) k)).coeFill t.3) j)).coeFill t.4) i)).coe t.5)
 
 -- is my coeFill primitive elaborated correctly?
 example def coeFillAlt (A : I -> Type) (u : A 0)
