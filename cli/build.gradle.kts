@@ -54,7 +54,3 @@ graalvmNative {
     true
   )
 }
-
-tasks.named<JavaExec>("run") {
-  standardInput = System.`in`
-}

@@ -3,7 +3,6 @@
 package org.aya.cli.repl;
 
 import com.google.gson.*;
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Result;
@@ -17,42 +16,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.Objects;
 
 public record RenderOptions(
   @NotNull ColorScheme colorScheme,
   @NotNull StyleFamily styleFamily
 ) {
-  public final static ImmutableMap<String, ColorScheme> BUILTIN_COLOR_SCHEMES = ImmutableMap.of(
-    "emacs", AyaColorScheme.EMACS,
-    "intellij", AyaColorScheme.INTELLIJ
-  );
-
   public final static class Deserializer implements JsonDeserializer<RenderOptions>, JsonSerializer<RenderOptions> {
     public static class ColorSchemeJson {
-      @Nullable String name;
-      @Nullable java.util.Map<String, String> override;
-
-      public ColorSchemeJson() {
-      }
-
-      public ColorSchemeJson(@Nullable String name, @Nullable java.util.Map<String, String> override) {
-        this.name = name;
-        this.override = override;
-      }
+      public @Nullable java.util.Map<String, String> definedColors;
     }
 
     public static class RenderOptionsJson {
-      @Nullable ColorSchemeJson colorScheme;
-      @Nullable JsonElement styleFamily;    // TODO
-
-      public RenderOptionsJson() {
-      }
-
-      public RenderOptionsJson(@Nullable ColorSchemeJson colorScheme, @Nullable JsonElement styleFamily) {
-        this.colorScheme = colorScheme;
-        this.styleFamily = styleFamily;
-      }
+      public @Nullable ColorSchemeJson colorScheme;
+      public @Nullable JsonElement styleFamily;    // TODO
     }
 
     public @NotNull Reporter reporter;
@@ -64,22 +40,14 @@ public record RenderOptions(
     }
 
     public @NotNull ColorScheme colorSchemeFromJson(@NotNull ColorSchemeJson options) {
-      var name = Objects.toString(options.name);      // "null" if null
-      var builtin = BUILTIN_COLOR_SCHEMES.getOrElse(name.toLowerCase(), () -> {
-        reporter.reportString("\"" + name + "\" is not a valid color scheme name",
-          Problem.Severity.WARN);   // TODO: Problem instead of String
-
-        return fallback.colorScheme();
-      });
-
-      var builder = MutableMap.from(builtin.definedColors());
+      var builder = MutableMap.<String, Integer>create();
       var validKeys = ImmutableSeq.from(AyaColorScheme.Key.values()).map(AyaColorScheme.Key::key);
 
-      var override = options.override == null
+      var definedColors = options.definedColors == null
         ? Map.<String, String>of()
-        : options.override;
+        : options.definedColors;
 
-      for (var pair : override.entrySet()) {
+      for (var pair : definedColors.entrySet()) {
         var key = pair.getKey();
         var value = pair.getValue();
 
@@ -164,18 +132,14 @@ public record RenderOptions(
     public JsonElement serialize(RenderOptions src, Type typeOfSrc, JsonSerializationContext context) {
       assert src != null;
 
-      // serialize to:
-      // "colorScheme": { "name": null, "override": colorScheme.definedColor() }
-
       var colorScheme = new JsonObject();
-      var override = new JsonObject();
+      var definedColors = new JsonObject();
 
       src.colorScheme().definedColors().forEach((k, v) -> {
-        override.add(k, new JsonPrimitive(String.format("#%06X", v)));
+        definedColors.add(k, new JsonPrimitive(String.format("#%06X", v)));
       });
 
-      colorScheme.add("name", JsonNull.INSTANCE);
-      colorScheme.add("override", override);
+      colorScheme.add("definedColors", definedColors);
 
       // TODO: styleFamily
 
