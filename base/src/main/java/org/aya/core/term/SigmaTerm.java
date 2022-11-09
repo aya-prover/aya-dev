@@ -3,10 +3,12 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import org.aya.core.visitor.BetaExpander;
-import org.aya.util.Arg;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,21 +31,34 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
     throw new AssertionError("unreachable");
   }
 
-  public @NotNull LamTerm coe(CoeTerm coe, LocalVar varI) {
-    var u0Var = new LocalVar("u0");
-    var A = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), params.first().type());
+  private static final Term I = IntervalTerm.INSTANCE;
+  public @NotNull LamTerm coe(CoeTerm coe, LocalVar i) {
+    var t = new RefTerm(new LocalVar("t"));
+    assert params.sizeGreaterThanOrEquals(2);
+    var items = MutableArrayList.<Term>create(params.size());
+    record Item(@NotNull CoeTerm coe, @NotNull Arg<Term> arg) {
+      public @NotNull Term fill(@NotNull LocalVar i) {
+        return AppTerm.make(CoeTerm.coeFill(coe.type(), coe.restr(), new RefTerm(i)), arg);
+      }
+      public @NotNull Term app() {
+        return AppTerm.make(coe, arg);
+      }
+    }
+    var subst = new Subst();
 
-    var B = params().sizeEquals(2) ?
-      new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), params.get(1).type()) :
-      new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), new SigmaTerm(params.drop(1)));
-
-    var u00 = new ProjTerm(new RefTerm(u0Var), 1);
-    var u01 = new ProjTerm(new RefTerm(u0Var), 2);
-    var v = AppTerm.make(CoeTerm.coeFill(A, coe.restr(), new RefTerm(varI)), new Arg<>(u00, true));
-
-    var Bsubsted = B.subst(params().first().ref(), v);
-    var coe0 = AppTerm.make(new CoeTerm(A, coe.restr()), new Arg<>(u00, true));
-    var coe1 = AppTerm.make(new CoeTerm(Bsubsted, coe.restr()), new Arg<>(u01, true));
-    return new LamTerm(BetaExpander.coeDom(u0Var, coe.type()), new TupTerm(ImmutableSeq.of(coe0, coe1)));
+    var ix = 1;
+    for (var param : params) {
+      // Item: t.ix
+      var tn = new ProjTerm(t, ix++);
+      // Because i : I |- params, so is i : I |- param, now bound An := \i. param
+      var An = new LamTerm(new Param(i, I, true), param.type());
+      // An.coe(Fill) t.ix
+      var item = new Item(new CoeTerm(An, coe.restr()), new Arg<>(tn, true));
+      // Substitution will take care of renaming
+      subst.add(param.ref(), item.fill(i));
+      items.append(item.app());
+    }
+    return new LamTerm(BetaExpander.coeDom(t.var(), coe.type()),
+      new TupTerm(items.toImmutableArray()));
   }
 }
