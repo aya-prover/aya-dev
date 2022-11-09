@@ -88,7 +88,7 @@ OCT_DIGIT = [0-8]
 // Unicodable keywords, generated from bnf
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-ULIFT = ulift | \u2191
+ULIFT = ulift | \u2191+
 SIGMA = Sig | \u03a3
 LAMBDA = \\ | \u03bb
 PI = Pi | \u03a0

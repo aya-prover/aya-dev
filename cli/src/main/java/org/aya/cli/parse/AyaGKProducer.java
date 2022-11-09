@@ -503,7 +503,11 @@ public record AyaGKProducer(
     }
     if (node.is(ULIFT_ATOM)) {
       var expr = expr(node.child(EXPR));
-      var lifts = node.childrenOfType(ULIFT_PREFIX).toImmutableSeq().size();
+      var lifts = node.childrenOfType(ULIFT_PREFIX).collect(Collectors.summingInt(kw -> {
+        var text = kw.tokenText();
+        if ("ulift".equals(text)) return 1;
+        else return text.length();
+      }));
       return lifts > 0 ? new Expr.Lift(sourcePosOf(node), expr, lifts) : expr;
     }
     if (node.is(TUPLE_ATOM)) {
