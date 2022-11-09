@@ -51,7 +51,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
       // Item: t.ix
       var tn = new ProjTerm(t, ix++);
       // Because i : I |- params, so is i : I |- param, now bound An := \i. param
-      var An = new LamTerm(new Param(i, I, true), param.type());
+      var An = new LamTerm(new Param(i, I, true), param.type().subst(subst));
       // An.coe(Fill) t.ix
       var item = new Item(new CoeTerm(An, coe.restr()), new Arg<>(tn, true));
       // Substitution will take care of renaming
