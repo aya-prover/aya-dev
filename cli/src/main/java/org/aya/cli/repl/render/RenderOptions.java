@@ -93,7 +93,7 @@ public record RenderOptions(
 
     public final static ImmutableMap<String, StyleFamily> BUILTIN_STYLE_FAMILY = ImmutableMap.of(
       KEY_STYLE_FAMILY_DEFAULT, AyaStyleFamily.DEFAULT,
-        KEY_STYLE_FAMILY_CLI, AyaStyleFamily.ADAPTIVE_CLI
+      KEY_STYLE_FAMILY_CLI, AyaStyleFamily.ADAPTIVE_CLI
     );
 
     public @NotNull StyleFamily styleFamilyFromJson(@NotNull String name) {
