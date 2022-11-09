@@ -8,12 +8,14 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.repr.CodeShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.TermFolder;
-import org.aya.util.Arg;
+import org.aya.generic.AyaDocile;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +43,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield Doc.wrap("{?", "?}",
           visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
       }
+      case MetaLitTerm lit -> lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
       case TupTerm(var items) -> Doc.parened(Doc.commaList(items.view().map(t -> term(Outer.Free, t))));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
@@ -160,22 +163,17 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case StructCall structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
       case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
-      case IntegerTerm shaped -> shaped.with(
-        (zero, suc) -> shaped.repr() == 0
-          ? linkLit(0, zero.ref, CON_CALL)
-          : linkLit(shaped.repr(), suc.ref, CON_CALL),
-        () -> Doc.plain(String.valueOf(shaped.repr())));
+      case IntegerTerm shaped -> shaped.repr() == 0
+        ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON_CALL)
+        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.MomentId.SUC), CON_CALL);
       case ListTerm shaped -> {
         var subterms = shaped.repr().map(x -> term(Outer.Free, x));
-
-        yield shaped.with((nil, cons, dataArg) -> Doc.sep(
-            linkListLit(Doc.symbol("["), nil.ref(), CON_CALL),
-            Doc.join(linkListLit(Doc.COMMA, cons.ref(), CON_CALL), subterms),
-            linkListLit(Doc.symbol("]"), nil.ref(), CON_CALL)
-          ), () -> Doc.sep(
-            Doc.symbol("["),
-            Doc.commaList(subterms),
-            Doc.symbol("]"))
+        var nil = shaped.ctorRef(CodeShape.MomentId.NIL);
+        var cons = shaped.ctorRef(CodeShape.MomentId.CONS);
+        yield Doc.sep(
+          linkListLit(Doc.symbol("["), nil, CON_CALL),
+          Doc.join(linkListLit(Doc.COMMA, cons, CON_CALL), subterms),
+          linkListLit(Doc.symbol("]"), nil, CON_CALL)
         );
       }
       case StringTerm(var str) -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str) + "\"");
@@ -237,11 +235,9 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
       case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, end.isOne() ? "1" : "0"), end.explicit());
-      case Pat.ShapedInt lit -> Doc.bracedUnless(lit.with(
-          (zero, suc) -> lit.repr() == 0
-            ? linkLit(0, zero.ref, CON_CALL)
-            : linkLit(lit.repr(), suc.ref, CON_CALL),
-          () -> Doc.plain(String.valueOf(lit.repr()))),
+      case Pat.ShapedInt lit -> Doc.bracedUnless(lit.repr() == 0
+          ? linkLit(0, lit.ctorRef(CodeShape.MomentId.ZERO), CON_CALL)
+          : linkLit(lit.repr(), lit.ctorRef(CodeShape.MomentId.SUC), CON_CALL),
         lit.explicit());
     };
   }

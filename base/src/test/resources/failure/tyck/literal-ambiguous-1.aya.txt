@@ -5,8 +5,8 @@ In file $FILE:9:17 ->
   9 | def lit1 => some 514
                        ^-^
 
-Error: Unsolved meta A'
-       in `Option A'`
+Error: Unsolved meta _ty514'
+       in `Option _ty514'`
 
 In file $FILE:9:17 ->
 
@@ -15,7 +15,7 @@ In file $FILE:9:17 ->
   9 | def lit1 => some 514
                        ^-^
 
-Error: Unsolved meta A'
+Error: Unsolved meta _ty514'
        in `some 514`
 
 In file $FILE:9:17 ->
@@ -25,9 +25,21 @@ In file $FILE:9:17 ->
   9 | def lit1 => some 514
                        ^-^
 
-Error: Unsolved meta A'
+Error: Unsolved meta _ty514'
        in `514`
        in `some 514`
 
-3 error(s), 0 warning(s).
+In file $FILE:9:17 ->
+
+  7 | 
+  8 | def ok : Option Nat1 => some 114
+  9 | def lit1 => some 514
+                       ^-^
+
+Error: Unable to solve the type of this literal:
+         514
+       I'm confused about the following candidates, please help me!
+         `Nat1`, `Nat2`
+
+4 error(s), 0 warning(s).
 What are you doing?

@@ -13,7 +13,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.InternalException;
@@ -25,6 +24,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -40,7 +40,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
+  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, MetaLitTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -147,16 +147,18 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       case IntegerTerm shaped -> {
         var type = f.apply(shaped.type());
         if (type == shaped.type()) yield shaped;
-        yield new IntegerTerm(shaped.repr(), shaped.shape(), type);
+        yield new IntegerTerm(shaped.repr(), shaped.recognition(), (DataCall) type);
       }
       case ListTerm shaped -> {
         var type = f.apply(shaped.type());
         var elements = shaped.repr().map(f);
-
-        if (type == shaped.type()
-          && elements.sameElements(shaped.repr(), true)) yield shaped;
-
-        yield new ListTerm(elements, shaped.shape(), type);
+        if (type == shaped.type() && elements.sameElements(shaped.repr(), true)) yield shaped;
+        yield new ListTerm(elements, shaped.recognition(), (DataCall) type);
+      }
+      case MetaLitTerm lit -> {
+        var type = f.apply(lit.type());
+        if (type == lit.type()) yield lit;
+        yield new MetaLitTerm(lit.sourcePos(), lit.repr(), lit.candidates(), type);
       }
       case PartialTyTerm ty -> {
         var type = f.apply(ty.type());

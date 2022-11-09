@@ -234,25 +234,24 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record ShapedInt(
     int integer,
-    @NotNull SerDef.SerAyaShape shape,
-    @NotNull SerTerm type
+    @NotNull SerDef.SerShapeResult shape,
+    @NotNull SerTerm.DataCall type
   ) implements SerTerm {
     @Override public @NotNull Term de(SerTerm.@NotNull DeState state) {
-      return new IntegerTerm(integer, shape.de(), type.de(state));
+      return new IntegerTerm(integer, shape.de(state), type.de(state));
     }
   }
 
   record ShapedList(
     @NotNull ImmutableSeq<SerTerm> repr,
-    @NotNull SerDef.SerAyaShape shape,
-    @NotNull SerTerm type
+    @NotNull SerDef.SerShapeResult shape,
+    @NotNull SerTerm.DataCall type
   ) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
       var termDesered = repr.map(x -> x.de(state));
-      var shape = shape().de();
+      var shape = shape().de(state);
       var type = type().de(state);
-
       return new ListTerm(termDesered, shape, type);
     }
   }

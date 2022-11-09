@@ -74,13 +74,13 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
-      case IntegerTerm lit ->
-        new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
-      case ListTerm lit ->
-        new SerTerm.ShapedList(
-          lit.repr().map(this::serialize).toImmutableSeq(),
-          SerDef.SerAyaShape.serialize(lit.shape()),
-          serialize(lit.type()));
+      case IntegerTerm lit -> new SerTerm.ShapedInt(lit.repr(),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
+        (SerTerm.DataCall) serialize(lit.type()));
+      case ListTerm lit -> new SerTerm.ShapedList(
+        lit.repr().map(this::serialize),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
+        (SerTerm.DataCall) serialize(lit.type()));
       case FormulaTerm end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case StringTerm str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
@@ -125,6 +125,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case MetaTerm hole -> throw new InternalException("Shall not have holes serialized.");
       case MetaPatTerm metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
+      case MetaLitTerm err -> throw new InternalException("Shall not have metaLiterals serialized.");
       case SortTerm sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
@@ -146,7 +147,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
       case Pat.ShapedInt lit -> new SerPat.ShapedInt(
         lit.repr(), lit.explicit(),
-        SerDef.SerAyaShape.serialize(lit.shape()),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
         serializeDataCall(lit.type()));
     };
   }

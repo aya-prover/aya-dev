@@ -16,7 +16,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
-import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -29,6 +28,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -502,8 +502,8 @@ public sealed abstract class TermComparator permits Unifier {
             yield retType;
           yield null;
         }
-        case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
-        case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(state), lr, rl);
+        case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
+        case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         default -> null;
       };
       case PrimCall lhs -> null;
@@ -518,21 +518,18 @@ public sealed abstract class TermComparator permits Unifier {
         case IntegerTerm rhs -> {
           if (!lhs.compareShape(this, rhs)) yield null;
           if (!lhs.compareUntyped(rhs)) yield null;
-          yield lhs.type(); // What about rhs.type()? A: sameValue implies same type
+          yield lhs.type(); // compareShape implies lhs.type() = rhs.type()
         }
-        case ConCall rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
+        case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
       case ListTerm lhs -> switch (preRhs) {
         case ListTerm rhs -> {
           if (!lhs.compareShape(this, rhs)) yield null;
-          if (!lhs.compareUntyped(rhs,
-            (l, r) -> compare(l, r, lr, rl, null))) yield null;
-
+          if (!lhs.compareUntyped(rhs, (l, r) -> compare(l, r, lr, rl, null))) yield null;
           yield lhs.type();
         }
-
-        case ConCall rhs -> compareUntyped(lhs.constructorForm(state), rhs, lr, rl);
+        case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
       case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs);

@@ -304,7 +304,7 @@ public final class PatTycker {
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
-          if (shape.isDefined() && shape.get() == AyaShape.NAT_SHAPE)
+          if (shape.isDefined() && shape.get().shape() == AyaShape.NAT_SHAPE)
             yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, licit);
         }
         yield withError(new PatternProblem.BadLitPattern(num, term), licit, term);
@@ -313,18 +313,14 @@ public final class PatTycker {
         // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !
         // Note: this is a special case (maybe), If there is another similar requirement,
         //       a PatternDesugarer is recommended.
-
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
-
-          if (shape.isDefined() && shape.get() == AyaShape.LIST_SHAPE) {
-            yield doTyck(new Pattern.FakeShapedList(pos, as, el, AyaShape.LIST_SHAPE, ty)
+          if (shape.isDefined() && shape.get().shape() == AyaShape.LIST_SHAPE)
+            yield doTyck(new Pattern.FakeShapedList(pos, as, el, shape.get(), dataCall)
               .constructorForm(), term, licit, resultIsProp);
-          }
         }
-
         yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
       }
       case Pattern.BinOpSeq ignored -> throw new InternalException("BinOpSeq patterns should be desugared");

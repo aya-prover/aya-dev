@@ -9,7 +9,6 @@ import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.PrimDef;
-import org.aya.core.pat.Pat;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
@@ -523,12 +522,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
   record LitString(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {
     @Override public @NotNull Expr.LitString descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return this;
-    }
-  }
-
-  record MetaPat(@NotNull SourcePos sourcePos, Pat.Meta meta) implements Expr {
-    @Override public @NotNull MetaPat descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }

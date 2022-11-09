@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.repr.AyaShape;
 import org.aya.util.Arg;
 import org.aya.generic.Shaped;
@@ -11,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 public record IntegerTerm(
   @Override int repr,
-  @Override @NotNull AyaShape shape,
-  @Override @NotNull Term type
+  @Override @NotNull ShapeRecognition recognition,
+  @Override @NotNull DataCall type
 ) implements StableWHNF, Shaped.Nat<Term> {
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
@@ -25,6 +26,6 @@ public record IntegerTerm(
   }
 
   @Override public @NotNull Term destruct(int repr) {
-    return new IntegerTerm(repr, this.shape, this.type);
+    return new IntegerTerm(repr, this.recognition, this.type);
   }
 }

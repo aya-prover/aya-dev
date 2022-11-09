@@ -27,6 +27,7 @@ public interface BetaExpander extends EndoTerm {
       case FormulaTerm mula -> mula.simpl();
       case PartialTyTerm ty -> ty.normalizeRestr();
       case MetaPatTerm metaPat -> metaPat.inline();
+      case MetaLitTerm lit -> lit.inline();
       case AppTerm app -> {
         var result = AppTerm.make(app);
         yield result == term ? result : apply(result);
