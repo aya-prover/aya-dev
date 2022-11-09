@@ -58,6 +58,9 @@ example def coeSigma3 (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
   (A.coe t.1
   , (\i => B i ((A.coeFill t.1) i)).coe t.2
   , (\i => C i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)).coe t.3)
+example def coeSigma3Eq (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
+    (C : Pi (i : I) (a : A i) -> B i a -> Type)
+    (t : Sig (a : A 0) (b : B 0 a) ** C 0 a b) : coeSigma3 A B C t = (\i => Sig (a : A i) (b : B i a) ** C i a b).coe t => idp
 
 example def coeSigma4 (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
     (C : Pi (i : I) (a : A i) -> B i a -> Type)
@@ -68,6 +71,11 @@ example def coeSigma4 (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
   , (\i => C i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)).coe t.3
   , (\i => D i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)
       (((\j => C j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)).coeFill t.3) i)).coe t.4)
+example def coeSigma4Eq (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
+    (C : Pi (i : I) (a : A i) -> B i a -> Type)
+    (D : Pi (i : I) (a : A i) (b : B i a) -> C i a b -> Type)
+    (t : Sig (a : A 0) (b : B 0 a) (c : C 0 a b) ** D 0 a b c)
+     : coeSigma4 A B C D t = (\i => Sig (a : A i) (b : B i a) (c : C i a b) ** D i a b c).coe t => idp
 
 example def coeSigma5 (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
     (C : Pi (i : I) (a : A i) -> B i a -> Type)
