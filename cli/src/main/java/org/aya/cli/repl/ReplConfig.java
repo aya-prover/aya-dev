@@ -4,10 +4,10 @@ package org.aya.cli.repl;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import org.aya.cli.repl.render.Color;
+import org.aya.cli.repl.render.RenderOptions;
 import org.aya.generic.util.AyaHome;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.pretty.style.AyaColorScheme;
-import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.reporter.IgnoringReporter;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public class ReplConfig implements AutoCloseable {
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
   public @NotNull DistillerOptions distillerOptions = DistillerOptions.pretty();
-  public @NotNull RenderOptions renderOptions = new RenderOptions(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI);
+  public @NotNull RenderOptions renderOptions = RenderOptions.CLI_DEFAULT;
   public boolean enableUnicode = true;
   /** Disables welcome message, echoing info, etc. */
   public boolean silent = false;
@@ -58,7 +58,8 @@ public class ReplConfig implements AutoCloseable {
 
   private static GsonBuilder newGsonBuilder() {
     return new GsonBuilder()
-      .registerTypeAdapter(RenderOptions.class, new RenderOptions.Deserializer(IgnoringReporter.INSTANCE,
-        new RenderOptions(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI)));
+      .registerTypeAdapter(Color.class, new Color.Adapter())
+      .registerTypeAdapter(RenderOptions.class,
+        new RenderOptions.Adapter(IgnoringReporter.INSTANCE, RenderOptions.CLI_DEFAULT));
   }
 }
