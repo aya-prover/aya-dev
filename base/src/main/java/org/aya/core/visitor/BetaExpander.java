@@ -3,13 +3,13 @@
 package org.aya.core.visitor;
 
 import org.aya.core.term.*;
-import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * We think of all cubical reductions as beta reductions.
@@ -18,9 +18,10 @@ import java.util.function.Function;
  * @see DeltaExpander
  */
 public interface BetaExpander extends EndoTerm {
-  private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
-    return partial.flatMap(Function.identity());
+  private @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
+    return AyaRestrSimplifier.INSTANCE.mapPartial(partial, UnaryOperator.identity());
   }
+
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
       case FormulaTerm mula -> mula.simpl();

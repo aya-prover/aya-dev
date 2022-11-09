@@ -113,7 +113,8 @@ public record Subst(
   }
 
   public @NotNull Restr<Term> restr(@NotNull TyckState state, @NotNull Restr<Term> restr) {
-    return restr.map(t -> t.subst(this).normalize(state, NormalizeMode.WHNF)).normalize();
+    return AyaRestrSimplifier.INSTANCE.normalizeRestr(
+      restr.map(t -> t.subst(this).normalize(state, NormalizeMode.WHNF)));
   }
 
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {

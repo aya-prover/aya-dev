@@ -13,6 +13,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
+import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
 import org.aya.util.Arg;
@@ -469,7 +470,7 @@ public sealed abstract class TermComparator permits Unifier {
       case IntervalTerm lhs -> preRhs instanceof IntervalTerm ? SortTerm.Type0 : null;
       case FormulaTerm lhs -> {
         if (!(preRhs instanceof FormulaTerm rhs)) yield null;
-        if (compareRestr(CofThy.isOne(lhs), CofThy.isOne(rhs)))
+        if (compareRestr(AyaRestrSimplifier.INSTANCE.isOne(lhs), AyaRestrSimplifier.INSTANCE.isOne(rhs)))
           yield IntervalTerm.INSTANCE;
         else yield null;
       }
