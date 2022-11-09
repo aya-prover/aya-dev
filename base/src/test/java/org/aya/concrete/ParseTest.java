@@ -74,6 +74,11 @@ public class ParseTest {
     assertTrue(parseExpr("Type") instanceof Expr.RawSort);
   }
 
+  @Test public void successLift() {
+    assertTrue(parseExpr("\u2191 Type") instanceof Expr.Lift lift && lift.lift() == 1);
+    assertTrue(parseExpr("\u2191\u2191 Type") instanceof Expr.Lift lift && lift.lift() == 2);
+  }
+
   @Test public void successDecl() {
     parseFn("def a => 1");
     parseFn("def a (b : X) => b");
