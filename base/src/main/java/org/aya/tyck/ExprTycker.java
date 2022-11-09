@@ -439,10 +439,12 @@ public final class ExprTycker extends Tycker {
           var ref = first.ref();
           resultTele.append(new Term.Param(ref, result.type(), first.explicit()));
           againstTele = againstTele.drop(1);
-          if (againstTele.isNotEmpty()) subst.add(ref, result.wellTyped());
-          else if (iter.hasNext()) {
+          if (againstTele.isNotEmpty())
+            // LGTM! The show must go on
+            subst.add(ref, result.wellTyped());
+          else if (iter.hasNext())
+            // Too many items
             yield fail(expr, term, new TupleError.ElemMismatchError(pos, params.size(), it.size()));
-          } else items.append(inherit(item, last.subst(subst)).wellTyped());
         }
         var resTy = new SigmaTerm(resultTele.toImmutableSeq());
         yield new TermResult(new TupTerm(items.toImmutableSeq()), resTy);
