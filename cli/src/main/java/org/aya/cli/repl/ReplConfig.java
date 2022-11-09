@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import org.aya.generic.util.AyaHome;
@@ -41,10 +40,8 @@ public class ReplConfig implements AutoCloseable {
 
   public static @NotNull ReplConfig loadFrom(@NotNull Path file) throws IOException {
     if (Files.notExists(file)) return new ReplConfig(file);
-    var config = new GsonBuilder()
+    var config = newGsonBuilder()
       .registerTypeAdapter(ReplConfig.class, (InstanceCreator<ReplConfig>) type -> new ReplConfig(file))
-      .registerTypeAdapter(RenderOptions.class, new RenderOptions.Deserializer(IgnoringReporter.INSTANCE,
-          new RenderOptions(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI)))
       .create()
       .fromJson(Files.newBufferedReader(file), ReplConfig.class);
     if (config == null) return new ReplConfig(file);
@@ -53,7 +50,15 @@ public class ReplConfig implements AutoCloseable {
   }
 
   @Override public void close() throws IOException {
-    var json = new Gson().toJson(this);
+    var json = newGsonBuilder()
+      .create()
+      .toJson(this);
     Files.writeString(configFile, json);
+  }
+
+  private static GsonBuilder newGsonBuilder() {
+    return new GsonBuilder()
+      .registerTypeAdapter(RenderOptions.class, new RenderOptions.Deserializer(IgnoringReporter.INSTANCE,
+        new RenderOptions(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI)));
   }
 }

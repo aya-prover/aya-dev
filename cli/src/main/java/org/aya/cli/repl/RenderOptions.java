@@ -2,10 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
@@ -16,6 +13,7 @@ import org.aya.pretty.style.AyaColorScheme;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -30,15 +28,31 @@ public record RenderOptions(
     "intellij", AyaColorScheme.INTELLIJ
   );
 
-  public final static class Deserializer implements JsonDeserializer<RenderOptions> {
+  public final static class Deserializer implements JsonDeserializer<RenderOptions>, JsonSerializer<RenderOptions> {
     public static class ColorSchemeJson {
-      String name;
-      java.util.Map<String, String> override;
+      @Nullable String name;
+      @Nullable java.util.Map<String, String> override;
+
+      public ColorSchemeJson() {
+      }
+
+      public ColorSchemeJson(@Nullable String name, @Nullable java.util.Map<String, String> override) {
+        this.name = name;
+        this.override = override;
+      }
     }
 
     public static class RenderOptionsJson {
-      ColorSchemeJson colorScheme;
-      JsonElement styleFamily;    // TODO
+      @Nullable ColorSchemeJson colorScheme;
+      @Nullable JsonElement styleFamily;    // TODO
+
+      public RenderOptionsJson() {
+      }
+
+      public RenderOptionsJson(@Nullable ColorSchemeJson colorScheme, @Nullable JsonElement styleFamily) {
+        this.colorScheme = colorScheme;
+        this.styleFamily = styleFamily;
+      }
     }
 
     public @NotNull Reporter reporter;
@@ -50,8 +64,8 @@ public record RenderOptions(
     }
 
     public @NotNull ColorScheme colorSchemeFromJson(@NotNull ColorSchemeJson options) {
-      var name = Objects.toString(options.name);
-      var builtin = BUILTIN_COLOR_SCHEMES.getOrElse(name, () -> {
+      var name = Objects.toString(options.name);      // "null" if null
+      var builtin = BUILTIN_COLOR_SCHEMES.getOrElse(name.toLowerCase(), () -> {
         reporter.reportString("\"" + name + "\" is not a valid color scheme name",
           Problem.Severity.WARN);   // TODO: Problem instead of String
 
@@ -144,6 +158,31 @@ public record RenderOptions(
       }
 
       return new RenderOptions(colorScheme, styleFamily);
+    }
+
+    @Override
+    public JsonElement serialize(RenderOptions src, Type typeOfSrc, JsonSerializationContext context) {
+      assert src != null;
+
+      // serialize to:
+      // "colorScheme": { "name": null, "override": colorScheme.definedColor() }
+
+      var colorScheme = new JsonObject();
+      var override = new JsonObject();
+
+      src.colorScheme().definedColors().forEach((k, v) -> {
+        override.add(k, new JsonPrimitive(String.format("#%06X", v)));
+      });
+
+      colorScheme.add("name", JsonNull.INSTANCE);
+      colorScheme.add("override", override);
+
+      // TODO: styleFamily
+
+      var wholeObj = new JsonObject();
+      wholeObj.add("colorScheme", colorScheme);
+
+      return wholeObj;
     }
   }
 }
