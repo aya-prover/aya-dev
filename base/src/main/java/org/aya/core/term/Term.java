@@ -192,7 +192,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         var type = f.apply(coe.type());
         var restr = coe.restr().map(f);
         if (type == coe.type() && restr == coe.restr()) yield coe;
-        yield new CoeTerm(type, restr.normalize());
+        yield new CoeTerm(type, AyaRestrSimplifier.INSTANCE.normalizeRestr(restr));
       }
       case RefTerm ref -> ref;
       case MetaPatTerm metaPat -> metaPat;

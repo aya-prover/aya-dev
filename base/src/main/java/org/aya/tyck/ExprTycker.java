@@ -17,6 +17,7 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
+import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.AyaDocile;
@@ -348,7 +349,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull SeqView<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType, @NotNull ClauseTyckState clauseState) {
-    return switch (CofThy.isOne(whnf(inherit(lhs, IntervalTerm.INSTANCE).wellTyped()))) {
+    return switch (AyaRestrSimplifier.INSTANCE.isOne(whnf(inherit(lhs, IntervalTerm.INSTANCE).wellTyped()))) {
       case Restr.Disj<Term> restr -> {
         var list = MutableList.<Restr.Side<Term>>create();
         for (var cof : restr.orz()) {

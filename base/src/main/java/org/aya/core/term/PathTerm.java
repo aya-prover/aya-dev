@@ -31,8 +31,8 @@ public record PathTerm(@NotNull Cube cube) implements StableWHNF {
     }
 
     public @NotNull PiTerm computePi() {
-      var iTele = params().view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
-      return (PiTerm) PiTerm.make(iTele, type());
+      var iTele = params.view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
+      return (PiTerm) PiTerm.make(iTele, type);
     }
 
     public @NotNull Term applyDimsTo(@NotNull Term pLam) {
