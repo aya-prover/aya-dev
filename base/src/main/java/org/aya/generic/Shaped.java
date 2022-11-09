@@ -5,7 +5,6 @@ package org.aya.generic;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
@@ -63,8 +62,8 @@ public interface Shaped<T> {
 
     default @Override @NotNull T constructorForm() {
       int repr = repr();
-      var zero = ctorRef(AyaShape.AyaIntShape.ZERO);
-      var suc = ctorRef(AyaShape.AyaIntShape.SUC);
+      var zero = ctorRef(CodeShape.MomentId.ZERO);
+      var suc = ctorRef(CodeShape.MomentId.SUC);
       if (repr == 0) return makeZero(zero.core);
       return makeSuc(suc.core, new Arg<>(destruct(repr - 1), true));
     }
@@ -93,8 +92,8 @@ public interface Shaped<T> {
     }
 
     @Override default @NotNull T constructorForm() {
-      var nil = ctorRef(AyaShape.AyaListShape.NIL).core;
-      var cons = ctorRef(AyaShape.AyaListShape.CONS).core;
+      var nil = ctorRef(CodeShape.MomentId.NIL).core;
+      var cons = ctorRef(CodeShape.MomentId.CONS).core;
       var dataArg = type().args().first(); // Check?
       var xLicit = cons.selfTele.get(0).explicit();
       var xsLicit = cons.selfTele.get(1).explicit();

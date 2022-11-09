@@ -26,12 +26,9 @@ public sealed interface AyaShape {
   @NotNull ImmutableSeq<AyaShape> LITERAL_SHAPES = ImmutableSeq.of(NAT_SHAPE, LIST_SHAPE);
 
   record AyaIntShape() implements AyaShape {
-    public static final @NotNull CodeShape.MomentId ZERO = new CodeShape.MomentId();
-    public static final @NotNull CodeShape.MomentId SUC = new CodeShape.MomentId();
-
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
-      new CtorShape(ZERO, ImmutableSeq.empty()),
-      new CtorShape(SUC, ImmutableSeq.of(CodeShape.ParamShape.explicit(CodeShape.TermShape.Call.justCall(0))))
+      new CtorShape(CodeShape.MomentId.ZERO, ImmutableSeq.empty()),
+      new CtorShape(CodeShape.MomentId.SUC, ImmutableSeq.of(CodeShape.ParamShape.explicit(CodeShape.TermShape.Call.justCall(0))))
     ));
 
     @Override public @NotNull CodeShape codeShape() {
@@ -40,14 +37,11 @@ public sealed interface AyaShape {
   }
 
   record AyaListShape() implements AyaShape {
-    public static final @NotNull CodeShape.MomentId NIL = new CodeShape.MomentId();
-    public static final @NotNull CodeShape.MomentId CONS = new CodeShape.MomentId();
-
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
       ImmutableSeq.of(CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Sort(null, 0))),
       ImmutableSeq.of(
-        new CtorShape(NIL, ImmutableSeq.empty()),
-        new CtorShape(CONS, ImmutableSeq.of(
+        new CtorShape(CodeShape.MomentId.NIL, ImmutableSeq.empty()),
+        new CtorShape(CodeShape.MomentId.CONS, ImmutableSeq.of(
           CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.TeleRef(0, 0)),   // A
           CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Call(0, ImmutableSeq.of(    // List A
             new CodeShape.TermShape.TeleRef(0, 0))))))

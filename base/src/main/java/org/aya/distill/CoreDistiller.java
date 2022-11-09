@@ -8,7 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
-import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.CodeShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
@@ -164,12 +164,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case StructCall structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
       case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
       case IntegerTerm shaped -> shaped.repr() == 0
-        ? linkLit(0, shaped.ctorRef(AyaShape.AyaIntShape.ZERO), CON_CALL)
-        : linkLit(shaped.repr(), shaped.ctorRef(AyaShape.AyaIntShape.SUC), CON_CALL);
+        ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON_CALL)
+        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.MomentId.SUC), CON_CALL);
       case ListTerm shaped -> {
         var subterms = shaped.repr().map(x -> term(Outer.Free, x));
-        var nil = shaped.ctorRef(AyaShape.AyaListShape.NIL);
-        var cons = shaped.ctorRef(AyaShape.AyaListShape.CONS);
+        var nil = shaped.ctorRef(CodeShape.MomentId.NIL);
+        var cons = shaped.ctorRef(CodeShape.MomentId.CONS);
         yield Doc.sep(
           linkListLit(Doc.symbol("["), nil, CON_CALL),
           Doc.join(linkListLit(Doc.COMMA, cons, CON_CALL), subterms),
@@ -236,8 +236,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
       case Pat.End end -> Doc.bracedUnless(Doc.styled(KEYWORD, end.isOne() ? "1" : "0"), end.explicit());
       case Pat.ShapedInt lit -> Doc.bracedUnless(lit.repr() == 0
-          ? linkLit(0, lit.ctorRef(AyaShape.AyaIntShape.ZERO), CON_CALL)
-          : linkLit(lit.repr(), lit.ctorRef(AyaShape.AyaIntShape.SUC), CON_CALL),
+          ? linkLit(0, lit.ctorRef(CodeShape.MomentId.ZERO), CON_CALL)
+          : linkLit(lit.repr(), lit.ctorRef(CodeShape.MomentId.SUC), CON_CALL),
         lit.explicit());
     };
   }

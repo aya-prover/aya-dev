@@ -152,37 +152,16 @@ public sealed interface SerDef extends Serializable {
   /** serialized {@link ShapeRecognition} */
   record SerShapeResult(
     @NotNull SerAyaShape shape,
-    @NotNull ImmutableMap<SerMomentId, QName> captures
+    @NotNull ImmutableMap<CodeShape.MomentId, QName> captures
   ) implements Serializable {
     public @NotNull ShapeRecognition de(@NotNull SerTerm.DeState state) {
       return new ShapeRecognition(shape.de(), captures.view()
-        .map((m, q) -> Tuple.of(m.de(), state.resolve(q))).toImmutableMap());
+        .map((m, q) -> Tuple.of(m, state.resolve(q))).toImmutableMap());
     }
 
     public static @NotNull SerShapeResult serialize(@NotNull Serializer.State state, @NotNull ShapeRecognition result) {
       return new SerShapeResult(SerAyaShape.serialize(result.shape()), result.captures().view()
-        .map((m, q) -> Tuple.of(SerMomentId.serialize(m), state.def(q))).toImmutableMap());
-    }
-  }
-
-  enum SerMomentId implements Serializable {
-    ZERO, SUC, NIL, CONS;
-
-    public @NotNull CodeShape.MomentId de() {
-      return switch (this) {
-        case ZERO -> AyaShape.AyaIntShape.ZERO;
-        case SUC -> AyaShape.AyaIntShape.SUC;
-        case NIL -> AyaShape.AyaListShape.NIL;
-        case CONS -> AyaShape.AyaListShape.CONS;
-      };
-    }
-
-    public static @NotNull SerMomentId serialize(@NotNull CodeShape.MomentId momentId) {
-      if (momentId == AyaShape.AyaIntShape.ZERO) return ZERO;
-      if (momentId == AyaShape.AyaIntShape.SUC) return SUC;
-      if (momentId == AyaShape.AyaListShape.NIL) return NIL;
-      if (momentId == AyaShape.AyaListShape.CONS) return CONS;
-      throw new InternalException("unexpected moment id: " + momentId);
+        .map((m, q) -> Tuple.of(m, state.def(q))).toImmutableMap());
     }
   }
 

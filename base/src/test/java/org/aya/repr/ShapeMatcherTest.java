@@ -5,6 +5,7 @@ package org.aya.repr;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.GenericDef;
 import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeMatcher;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.ref.DefVar;
@@ -59,17 +60,17 @@ public class ShapeMatcherTest {
   public void capture() {
     var match = match(true, AyaShape.NAT_SHAPE, "open data Nat | zero | suc (pred : Nat)");
     assertNotNull(match);
-    assertEquals("| zero", pp(match.captures().get(AyaShape.AyaIntShape.ZERO)));
-    assertEquals("| suc (pred : Nat)", pp(match.captures().get(AyaShape.AyaIntShape.SUC)));
-    assertNull(match.captures().getOrNull(AyaShape.AyaListShape.NIL));
-    assertNull(match.captures().getOrNull(AyaShape.AyaListShape.CONS));
+    assertEquals("| zero", pp(match.captures().get(CodeShape.MomentId.ZERO)));
+    assertEquals("| suc (pred : Nat)", pp(match.captures().get(CodeShape.MomentId.SUC)));
+    assertNull(match.captures().getOrNull(CodeShape.MomentId.NIL));
+    assertNull(match.captures().getOrNull(CodeShape.MomentId.CONS));
 
     match = match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | nil | infixr :< (a : A) (tail : List A)");
     assertNotNull(match);
-    assertEquals("| nil", pp(match.captures().get(AyaShape.AyaListShape.NIL)));
-    assertEquals("| :< (a : A) (tail : List A)", pp(match.captures().get(AyaShape.AyaListShape.CONS)));
-    assertNull(match.captures().getOrNull(AyaShape.AyaIntShape.ZERO));
-    assertNull(match.captures().getOrNull(AyaShape.AyaIntShape.SUC));
+    assertEquals("| nil", pp(match.captures().get(CodeShape.MomentId.NIL)));
+    assertEquals("| :< (a : A) (tail : List A)", pp(match.captures().get(CodeShape.MomentId.CONS)));
+    assertNull(match.captures().getOrNull(CodeShape.MomentId.ZERO));
+    assertNull(match.captures().getOrNull(CodeShape.MomentId.SUC));
   }
 
   private @NotNull String pp(@NotNull DefVar<?, ?> def) {

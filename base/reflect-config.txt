@@ -55,7 +55,7 @@ org.aya.core.serde.SerDef$Ctor
 org.aya.core.serde.SerDef$Struct
 org.aya.core.serde.SerDef$Field
 org.aya.core.serde.SerDef$SerShapeResult
-org.aya.core.serde.SerDef$SerMomentId
+org.aya.core.repr.CodeShape$MomentId
 org.aya.core.serde.SerDef$SerAyaShape
 org.aya.core.serde.SerTerm$SimpVar
 org.aya.core.serde.SerTerm$SerParam

@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
+
 /**
  * @author kiva
  */
@@ -19,8 +21,9 @@ public sealed interface CodeShape {
     @NotNull MomentId name();
   }
 
-  /** Typed capture name, rather than plain strings. Object identity was used to tell different IDs. */
-  final class MomentId {
+  /** Typed capture name, rather than plain strings */
+  enum MomentId implements Serializable {
+    ZERO, SUC, NIL, CONS,
   }
 
   record FnShape(
