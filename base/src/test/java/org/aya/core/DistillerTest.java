@@ -8,7 +8,7 @@ import org.aya.core.term.AppTerm;
 import org.aya.core.term.LamTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckDeclTest;

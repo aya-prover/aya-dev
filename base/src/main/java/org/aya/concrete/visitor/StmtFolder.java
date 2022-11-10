@@ -41,7 +41,8 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
         var fieldRef = field.resolvedField().get();
         return fieldRef != null ? fold(acc1, fieldRef, field.name().sourcePos()) : acc1;
       });
-      case Expr.Match match -> match.clauses().foldLeft(acc, (ac, clause) -> clause.patterns.foldLeft(ac, this::fold));
+      case Expr.Match match -> match.clauses().foldLeft(acc, (ac, clause) -> clause.patterns.foldLeft(ac,
+        (a, p) -> fold(a, p.term())));
       default -> acc;
     };
   }

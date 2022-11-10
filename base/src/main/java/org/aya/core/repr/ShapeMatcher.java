@@ -6,45 +6,49 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
 import kala.collection.mutable.MutableMap;
+import kala.control.Option;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
-import org.aya.core.term.Callable;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 
 /**
  * @author kiva
  */
 public record ShapeMatcher(
   @NotNull MutableLinkedList<DefVar<? extends Def, ? extends Decl.Telescopic>> def,
+  @NotNull MutableMap<CodeShape.MomentId, DefVar<?, ?>> captures,
   @NotNull MutableMap<AnyVar, AnyVar> teleSubst
 ) {
-  public static boolean match(@NotNull CodeShape shape, @NotNull GenericDef def) {
-    if (shape instanceof CodeShape.DataShape dataShape && def instanceof DataDef data)
-      return new ShapeMatcher(MutableLinkedList.create(), MutableMap.create()).matchData(dataShape, data);
-    return false;
+  public ShapeMatcher() {
+    this(MutableLinkedList.create(), MutableMap.create(), MutableMap.create());
+  }
+
+  public static Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
+    var matcher = new ShapeMatcher();
+    if (shape.codeShape() instanceof CodeShape.DataShape dataShape && def instanceof DataDef data)
+      return matcher.matchData(dataShape, data) ? Option.some(new ShapeRecognition(shape, matcher.captures.toImmutableMap())) : Option.none();
+    return Option.none();
   }
 
   private boolean matchData(@NotNull CodeShape.DataShape shape, @NotNull DataDef data) {
     return matchTele(shape.tele(), data.telescope)
-      && matchInside(data.ref, () -> matchMany(false, shape.ctors(), data.body, this::matchCtor));
+      && matchInside(data.ref, () -> matchMany(false, shape.ctors(), data.body,
+      (s, c) -> captured(s, c, this::matchCtor, CtorDef::ref)));
   }
 
   private boolean matchCtor(@NotNull CodeShape.CtorShape shape, @NotNull CtorDef ctor) {
-    if (ctor.pats.isNotEmpty()) {
-      ctor.dataRef.core.telescope.zipView(ctor.ownerTele).forEach(t ->
-        teleSubst.put(t._1.ref(), t._2.ref()));
-    }
+    if (ctor.pats.isNotEmpty()) ctor.dataRef.core.telescope.zipView(ctor.ownerTele)
+      .forEach(t -> teleSubst.put(t._1.ref(), t._2.ref()));
     return matchTele(shape.tele(), ctor.selfTele);
   }
 
@@ -56,12 +60,8 @@ public record ShapeMatcher(
     if (shape instanceof CodeShape.TermShape.Call call && term instanceof Callable callable) {
       var superLevel = def.getOrNull(call.superLevel());
       if (superLevel != callable.ref()) return false;                      // implies null check
-      if (call.args().size() != callable.args().size())
-        return false;      // TODO[hoshino]: do we also match implicit arguments?
-
-      // match each arg
-      return call.args().allMatchWith(callable.args(),
-        // match each term, but lazy
+      // TODO[hoshino]: do we also match implicit arguments when size mismatch?
+      return matchMany(true, call.args(), callable.args(),
         (l, r) -> matchTerm(l, r.term()));
     }
     if (shape instanceof CodeShape.TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
@@ -72,7 +72,7 @@ public record ShapeMatcher(
       var teleVar = teleSubst.getOrNull(tele.ref());
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
     }
-    if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof FormTerm.Sort sortTerm) {
+    if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof SortTerm sortTerm) {
       // kind is null -> any sort
       if (sort.kind() == null) return true;
 
@@ -135,5 +135,15 @@ public record ShapeMatcher(
       remainingShapes.removeAt(index);
     }
     return true;
+  }
+
+  private <S extends CodeShape.Moment, C> boolean captured(
+    @NotNull S shape, @NotNull C core,
+    @NotNull BiFunction<S, C, Boolean> matcher,
+    @NotNull Function<C, DefVar<?, ?>> extract
+  ) {
+    var matched = matcher.apply(shape, core);
+    if (matched) captures.put(shape.name(), extract.apply(core));
+    return matched;
   }
 }

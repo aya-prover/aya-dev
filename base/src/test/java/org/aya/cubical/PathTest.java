@@ -81,7 +81,7 @@ public class PathTest {
       prim Partial
       prim intervalInv
             
-      def ~ => intervalInv
+      def inline ~ => intervalInv
             
       def infix = {A : Type} (a b : A) : Type =>
         [| i |] A {| ~ i := a | i := b |}

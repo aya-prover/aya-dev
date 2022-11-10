@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.repr;
 
@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.jetbrains.annotations.NotNull;
@@ -20,14 +21,14 @@ import static org.aya.core.repr.CodeShape.DataShape;
 public sealed interface AyaShape {
   @NotNull CodeShape codeShape();
 
-  @NotNull AyaShape NAT_SHAPE = new AyaIntLitShape();
+  @NotNull AyaShape NAT_SHAPE = new AyaIntShape();
   @NotNull AyaShape LIST_SHAPE = new AyaListShape();
   @NotNull ImmutableSeq<AyaShape> LITERAL_SHAPES = ImmutableSeq.of(NAT_SHAPE, LIST_SHAPE);
 
-  record AyaIntLitShape() implements AyaShape {
+  record AyaIntShape() implements AyaShape {
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
-      new CtorShape(ImmutableSeq.empty()),
-      new CtorShape(ImmutableSeq.of(CodeShape.ParamShape.explicit(CodeShape.TermShape.Call.justCall(0))))
+      new CtorShape(CodeShape.MomentId.ZERO, ImmutableSeq.empty()),
+      new CtorShape(CodeShape.MomentId.SUC, ImmutableSeq.of(CodeShape.ParamShape.explicit(CodeShape.TermShape.Call.justCall(0))))
     ));
 
     @Override public @NotNull CodeShape codeShape() {
@@ -39,12 +40,11 @@ public sealed interface AyaShape {
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
       ImmutableSeq.of(CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Sort(null, 0))),
       ImmutableSeq.of(
-        new CtorShape(ImmutableSeq.empty()),    // nil
-        new CtorShape(ImmutableSeq.of(          // cons A (List A)
+        new CtorShape(CodeShape.MomentId.NIL, ImmutableSeq.empty()),
+        new CtorShape(CodeShape.MomentId.CONS, ImmutableSeq.of(
           CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.TeleRef(0, 0)),   // A
-          CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Call(                          // List A
-            0,
-            ImmutableSeq.of(new CodeShape.TermShape.TeleRef(0, 0))))))
+          CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Call(0, ImmutableSeq.of(    // List A
+            new CodeShape.TermShape.TeleRef(0, 0))))))
       ));
 
     @Override public @NotNull CodeShape codeShape() {
@@ -53,20 +53,19 @@ public sealed interface AyaShape {
   }
 
   class Factory {
-    public @NotNull MutableMap<GenericDef, AyaShape> discovered = MutableLinkedHashMap.of();
+    public @NotNull MutableMap<GenericDef, ShapeRecognition> discovered = MutableLinkedHashMap.of();
 
-    public @NotNull ImmutableSeq<GenericDef> findImpl(@NotNull AyaShape shape) {
+    public @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeRecognition>> findImpl(@NotNull AyaShape shape) {
       return discovered.view().map(Tuple::of)
-        .filter(t -> t._2 == shape)
-        .map(t -> t._1)
+        .filter(t -> t._2.shape() == shape)
         .toImmutableSeq();
     }
 
-    public @NotNull Option<AyaShape> find(@NotNull Def def) {
+    public @NotNull Option<ShapeRecognition> find(@NotNull Def def) {
       return discovered.getOption(def);
     }
 
-    public void bonjour(@NotNull GenericDef def, @NotNull AyaShape shape) {
+    public void bonjour(@NotNull GenericDef def, @NotNull ShapeRecognition shape) {
       // TODO[literal]: what if a def has multiple shapes?
       discovered.put(def, shape);
     }
@@ -74,7 +73,7 @@ public sealed interface AyaShape {
     /** Discovery of shaped literals */
     public void bonjour(@NotNull GenericDef def) {
       AyaShape.LITERAL_SHAPES.view()
-        .filter(shape -> ShapeMatcher.match(shape.codeShape(), def))
+        .flatMap(shape -> ShapeMatcher.match(shape, def))
         .forEach(shape -> bonjour(def, shape));
     }
 

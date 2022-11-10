@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
-import org.aya.core.term.FormTerm;
+import org.aya.core.term.SortTerm;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 public record SortPiError(
   @Override @NotNull SourcePos sourcePos,
-  @NotNull FormTerm.Sort domain,
-  @NotNull FormTerm.Sort codomain
+  @NotNull SortTerm domain,
+  @NotNull SortTerm codomain
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sepNonEmpty(Doc.english("Trying to check"),

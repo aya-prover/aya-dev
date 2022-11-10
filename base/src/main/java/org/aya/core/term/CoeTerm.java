@@ -2,12 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-import org.aya.generic.Arg;
+import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
-
-import static org.aya.guest0x0.cubical.CofThy.isOne;
 
 public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements Term {
   /**
@@ -31,7 +30,7 @@ public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements
     var varU = new LocalVar("u");
 
     var iOrR = FormulaTerm.or(new RefTerm(varI), r);
-    var cofib = isOne(r);
+    var cofib = AyaRestrSimplifier.INSTANCE.isOne(r);
     var Ar = AppTerm.make(A, new Arg<>(r, true));
     var AiOrR = AppTerm.make(A, new Arg<>(iOrR, true));
     var lam = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), AiOrR);

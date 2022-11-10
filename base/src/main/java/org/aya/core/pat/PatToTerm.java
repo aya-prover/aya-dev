@@ -3,7 +3,7 @@
 package org.aya.core.pat;
 
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ public class PatToTerm {
       case Pat.Tuple tuple -> new TupTerm(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new MetaPatTerm(meta);
       case Pat.End end -> !end.isOne() ? FormulaTerm.LEFT : FormulaTerm.RIGHT;
-      case Pat.ShapedInt lit -> new IntegerTerm(lit.repr(), lit.shape(), lit.type());
+      case Pat.ShapedInt lit -> new IntegerTerm(lit.repr(), lit.recognition(), lit.type());
     };
   }
 

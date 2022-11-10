@@ -10,7 +10,7 @@ import org.aya.core.term.MetaTerm;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.TyckState;
@@ -72,8 +72,8 @@ public final class Meta implements AnyVar {
     assert telescope.isEmpty();
     var domVar = Meta.from(contextTele, domName, result, sourcePos);
     var codVar = Meta.from(contextTele, codName, result, sourcePos);
-    var dom = new MetaTerm(domVar, ulift, contextArgs, ImmutableSeq.empty());
-    var cod = new MetaTerm(codVar, ulift, contextArgs, ImmutableSeq.empty());
+    var dom = new MetaTerm(domVar, contextArgs, ImmutableSeq.empty());
+    var cod = new MetaTerm(codVar, contextArgs, ImmutableSeq.empty());
     var domParam = new Term.Param(Constants.randomlyNamed(sourcePos), dom, explicit);
     return new PiTerm(domParam, cod);
   }

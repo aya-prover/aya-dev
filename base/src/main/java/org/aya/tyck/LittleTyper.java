@@ -7,7 +7,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -43,7 +43,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case SigmaTerm sigma -> {
         var univ = sigma.params().view()
           .map(param -> whnf(term(param.type())))
-          .filterIsInstance(FormTerm.Sort.class)
+          .filterIsInstance(SortTerm.class)
           .toImmutableSeq();
         if (univ.sizeEquals(sigma.params().size())) {
           try {
@@ -68,13 +68,14 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case TupTerm tuple -> new SigmaTerm(tuple.items().map(item ->
         new Term.Param(Constants.anonymous(), term(item), true)));
       case MetaPatTerm metaPat -> metaPat.ref().type();
+      case MetaLitTerm lit -> lit.type();
       case PiTerm pi -> {
         var paramTyRaw = whnf(term(pi.param().type()));
         var resultParam = new Term.Param(pi.param().ref(), whnf(pi.param().type()), pi.param().explicit());
         var t = new LittleTyper(state, localCtx.deriveMap());
         yield t.localCtx.with(resultParam, () -> {
           var retTyRaw = whnf(t.term(pi.body()));
-          if (paramTyRaw instanceof FormTerm.Sort paramTy && retTyRaw instanceof FormTerm.Sort retTy) {
+          if (paramTyRaw instanceof SortTerm paramTy && retTyRaw instanceof SortTerm retTy) {
             try {
               return ExprTycker.sortPi(paramTy, retTy);
             } catch (IllegalArgumentException ignored) {
@@ -94,8 +95,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
         var term = match.tryMatch();
         yield term.isDefined() ? term(term.get()) : ErrorTerm.typeOf(match);
       }
-      case FormTerm.Sort sort -> sort.succ();
-      case IntervalTerm interval -> FormTerm.Type.ZERO;
+      case SortTerm sort -> sort.succ();
+      case IntervalTerm interval -> SortTerm.Type0;
       case FormulaTerm end -> IntervalTerm.INSTANCE;
       case StringTerm str -> state.primFactory().getCall(PrimDef.ID.STRING);
       case IntegerTerm shaped -> shaped.type();

@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.OperatorError;
+import org.aya.util.Arg;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
@@ -21,33 +22,33 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pattern> {
-  private final boolean outerMostLicit;
+public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Arg<Pattern>> {
   private final @NotNull ResolveInfo resolveInfo;
+  private final @Nullable LocalVar myAs;
 
-  public BinPatternParser(boolean outerMostLicit, @NotNull ResolveInfo resolveInfo, @NotNull SeqView<@NotNull Pattern> seq) {
+  public BinPatternParser(@NotNull ResolveInfo resolveInfo, @NotNull SeqView<Arg<@NotNull Pattern>> seq, @Nullable LocalVar as) {
     super(resolveInfo.opSet(), seq);
-    this.outerMostLicit = outerMostLicit;
     this.resolveInfo = resolveInfo;
+    this.myAs = as;
   }
 
-  @Override protected @NotNull BinOpParser<AyaBinOpSet, Pattern, Pattern>
-  replicate(@NotNull SeqView<@NotNull Pattern> seq) {
-    return new BinPatternParser(outerMostLicit, resolveInfo, seq);
+  @Override protected @NotNull BinOpParser<AyaBinOpSet, Pattern, Arg<Pattern>>
+  replicate(@NotNull SeqView<Arg<@NotNull Pattern>> seq) {
+    return new BinPatternParser(resolveInfo, seq, myAs);
   }
 
-  private static final Pattern OP_APP = new Pattern.Bind(
-    SourcePos.NONE, true,
+  private static final Arg<Pattern> OP_APP = new Arg<>(new Pattern.Bind(
+    SourcePos.NONE,
     new LocalVar(BinOpSet.APP_ELEM.name()),
-    MutableValue.create());
+    MutableValue.create()), true);
 
-  @Override protected @NotNull Pattern appOp() {
+  @Override protected @NotNull Arg<Pattern> appOp() {
     return OP_APP;
   }
 
-  @Override public @NotNull Pattern
-  makeSectionApp(@NotNull SourcePos pos, @NotNull Pattern op, @NotNull Function<Pattern, Pattern> lamBody) {
-    return createErrorExpr(pos);
+  @Override public @NotNull Arg<Pattern>
+  makeSectionApp(@NotNull SourcePos pos, @NotNull Arg<@NotNull Pattern> op, @NotNull Function<Arg<Pattern>, Pattern> lamBody) {
+    return new Arg<>(createErrorExpr(pos), op.explicit());
   }
 
   @Override protected void reportAmbiguousPred(String op1, String op2, SourcePos pos) {
@@ -59,20 +60,21 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
   }
 
   @Override protected @NotNull Pattern createErrorExpr(@NotNull SourcePos sourcePos) {
-    return new Pattern.Bind(sourcePos, true, new LocalVar("a broken constructor pattern"), MutableValue.create());
+    return new Pattern.Bind(sourcePos, new LocalVar("a broken constructor pattern"), MutableValue.create());
   }
 
-  @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Pattern elem) {
-    return elem.expr() instanceof Pattern.Ctor ref && ref.resolved().data() instanceof DefVar<?, ?> defVar
+  @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Arg<Pattern> elem) {
+    return elem.term() instanceof Pattern.Ctor ref && ref.resolved().data() instanceof DefVar<?, ?> defVar
       ? defVar.resolveOpDecl(resolveInfo.thisModule().moduleName())
       : null;
   }
 
-  @Override protected @NotNull Pattern
-  makeArg(@NotNull SourcePos pos, @NotNull Pattern func, @NotNull Pattern arg, boolean explicit) {
+  @Override protected @NotNull Arg<Pattern>
+  makeArg(@NotNull SourcePos pos, @NotNull Pattern func, @NotNull Arg<@NotNull Pattern> arg, boolean explicit) {
     // param explicit should be ignored since the BinOpSeq we are processing already specified the explicitness
     if (func instanceof Pattern.Ctor ctor) {
-      return new Pattern.Ctor(pos, outerMostLicit, ctor.resolved(), ctor.params().appended(arg), ctor.as());
+      var newCtor = new Pattern.Ctor(pos, ctor.resolved(), ctor.params().appended(new Arg<>(arg.term(), arg.explicit())), myAs);
+      return new Arg<>(newCtor, explicit);
     } else {
       opSet.reporter.report(new PatternProblem.UnknownCtor(func));
       throw new Context.ResolvingInterruptedException();

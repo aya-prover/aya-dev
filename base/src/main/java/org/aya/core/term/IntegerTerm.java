@@ -4,27 +4,28 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.repr.AyaShape;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Shaped;
 import org.jetbrains.annotations.NotNull;
 
 public record IntegerTerm(
   @Override int repr,
-  @Override @NotNull AyaShape shape,
-  @Override @NotNull Term type
+  @Override @NotNull ShapeRecognition recognition,
+  @Override @NotNull DataCall type
 ) implements StableWHNF, Shaped.Nat<Term> {
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
     return new ConCall(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
   }
 
-  @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Term term) {
+  @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Arg<Term> term) {
     return new ConCall(suc.dataRef, suc.ref, ImmutableSeq.empty(), 0,
-      ImmutableSeq.of(new Arg<>(term, true)));
+      ImmutableSeq.of(term));
   }
 
   @Override public @NotNull Term destruct(int repr) {
-    return new IntegerTerm(repr, this.shape, this.type);
+    return new IntegerTerm(repr, this.recognition, this.type);
   }
 }

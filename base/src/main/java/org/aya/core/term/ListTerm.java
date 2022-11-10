@@ -4,15 +4,16 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.repr.AyaShape;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Shaped;
 import org.jetbrains.annotations.NotNull;
 
 public record ListTerm(
   @Override @NotNull ImmutableSeq<Term> repr,
-  @Override @NotNull AyaShape shape,
-  @Override @NotNull Term type
+  @Override @NotNull ShapeRecognition recognition,
+  @Override @NotNull DataCall type
 ) implements StableWHNF, Shaped.List<Term> {
 
   @Override
@@ -21,15 +22,13 @@ public record ListTerm(
   }
 
   @Override
-  public @NotNull Term makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> dataArg, @NotNull Term x, @NotNull Term last) {
-    return new ConCall(cons.dataRef, cons.ref(), ImmutableSeq.of(dataArg), 0, ImmutableSeq.of(
-      new Arg<>(x, true),
-      new Arg<>(last, true)
-    ));
+  public @NotNull Term makeCons(@NotNull CtorDef cons, @NotNull Arg<Term> dataArg, @NotNull Arg<Term> x, @NotNull Arg<Term> last) {
+    return new ConCall(cons.dataRef, cons.ref(), ImmutableSeq.of(dataArg), 0,
+      ImmutableSeq.of(x, last));
   }
 
   @Override
   public @NotNull Term destruct(@NotNull ImmutableSeq<Term> repr) {
-    return new ListTerm(repr, shape(), type());
+    return new ListTerm(repr, recognition, type());
   }
 }

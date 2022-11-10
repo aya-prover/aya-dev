@@ -74,6 +74,11 @@ public class ParseTest {
     assertTrue(parseExpr("Type") instanceof Expr.RawSort);
   }
 
+  @Test public void successLift() {
+    assertTrue(parseExpr("\u2191 Type") instanceof Expr.Lift lift && lift.lift() == 1);
+    assertTrue(parseExpr("\u2191\u2191 Type") instanceof Expr.Lift lift && lift.lift() == 2);
+  }
+
   @Test public void successDecl() {
     parseFn("def a => 1");
     parseFn("def a (b : X) => b");
@@ -103,21 +108,25 @@ public class ParseTest {
       """);
   }
 
+  @Test public void newPat() {
+    Expr expr = parseExpr("f (a.1) (a.2)");
+    assertTrue(expr instanceof Expr.BinOpSeq app
+      && app.seq().get(1).term() instanceof Expr.BinOpSeq proj1
+      && proj1.seq().sizeEquals(1)
+      && proj1.seq().get(0).term() instanceof Expr.Proj
+      && app.seq().get(2).term() instanceof Expr.BinOpSeq proj2
+      && proj2.seq().sizeEquals(1)
+      && proj2.seq().get(0).term() instanceof Expr.Proj);
+  }
+
   @Test public void successExpr() {
     assertTrue(parseExpr("boy") instanceof Expr.Unresolved);
     assertTrue(parseExpr("f a") instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("f a b c") instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("a.1") instanceof Expr.Proj);
     assertTrue(parseExpr("a.1.2") instanceof Expr.Proj);
-    assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.BinOpSeq app
-      && app.seq().get(1).expr() instanceof Expr.BinOpSeq proj1
-      && proj1.seq().sizeEquals(1)
-      && proj1.seq().get(0).expr() instanceof Expr.Proj
-      && app.seq().get(2).expr() instanceof Expr.BinOpSeq proj2
-      && proj2.seq().sizeEquals(1)
-      && proj2.seq().get(0).expr() instanceof Expr.Proj);
     assertTrue(parseExpr("f a.1") instanceof Expr.BinOpSeq app
-      && app.seq().get(1).expr() instanceof Expr.Proj);
+      && app.seq().get(1).term() instanceof Expr.Proj);
     assertTrue(parseExpr("(f a).1") instanceof Expr.Proj proj
       && proj.tup() instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("λ a => a") instanceof Expr.Lambda);
@@ -156,7 +165,7 @@ public class ParseTest {
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app
       && app.seq().sizeEquals(2)
       && !app.toDoc(DistillerOptions.debug()).debugRender().isEmpty()
-      && app.seq().get(1).expr() instanceof Expr.Tuple tup
+      && app.seq().get(1).term() instanceof Expr.Tuple tup
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.New neo
       && !neo.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
@@ -229,10 +238,6 @@ public class ParseTest {
       "def im-in-ctor-nested\n  | suc {N} (suc {M} a) => a"
     );
     parseAndPretty(
-      "def final : Nat | (suc {m} {suc x} a, fuck, {114514}) as Outer => a",
-      "def final : Nat\n  | (suc {m} {suc x} a, fuck, {114514}) as Outer => a"
-    );
-    parseAndPretty(
       "struct Very-Simple (A : Type) : Type | x : A | y : Nat",
       """
         struct Very-Simple (A : Type) : Type
@@ -286,8 +291,8 @@ public class ParseTest {
   }
 
   @Test public void exprAndCounterexamples() {
-    parseAndPretty("example def test => Type (lsuc lzero) (lmax lzero)",
-      "example def test => Type (lsuc lzero) (lmax lzero)");
+    parseAndPretty("example def test => Type",
+      "example def test => Type");
     parseAndPretty("counterexample def test => {? Type ?}",
       "counterexample def test => {? Type ?}");
   }

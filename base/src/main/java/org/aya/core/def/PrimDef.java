@@ -9,7 +9,7 @@ import kala.function.TriFunction;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
@@ -17,6 +17,7 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
+import org.aya.util.Arg;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -27,8 +28,7 @@ import java.util.EnumMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
-import static org.aya.guest0x0.cubical.CofThy.isOne;
+import java.util.function.UnaryOperator;
 
 /**
  * @author ice1000
@@ -97,7 +97,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       private @NotNull Term coe(@NotNull PrimCall prim, @NotNull TyckState state) {
         var type = prim.args().get(0).term();
         var restr = prim.args().get(1).term();
-        return new CoeTerm(type, isOne(restr));
+        return new CoeTerm(type, AyaRestrSimplifier.INSTANCE.isOne(restr));
       }
 
       public final @NotNull PrimDef.PrimSeed coeFill = new PrimSeed(ID.COEFILL, this::coeFill, ref -> {
@@ -125,7 +125,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var restr = prim.args().get(1).term();
         var u = new LocalVar("u");
         var paramU = new Term.Param(u, new AppTerm(type, new Arg<>(FormulaTerm.RIGHT, true)), true);
-        return new LamTerm(paramU, new AppTerm(CoeTerm.coeInv(type, isOne(restr)), new Arg<>(new RefTerm(u), true)));
+        return new LamTerm(paramU, new AppTerm(CoeTerm.coeInv(type, AyaRestrSimplifier.INSTANCE.isOne(restr)), new Arg<>(new RefTerm(u), true)));
       }
 
       public final @NotNull PrimDef.PrimSeed eocFill = new PrimSeed(ID.COEINVFILL, this::eocFill, ref -> {
@@ -152,7 +152,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var restr = prim.args().get(1).term();
         var i = new LocalVar("i");
         var u = new LocalVar("u");
-        var fill = filler.apply(type, isOne(restr), new RefTerm(i));
+        var fill = filler.apply(type, AyaRestrSimplifier.INSTANCE.isOne(restr), new RefTerm(i));
         var path = new PLamTerm(ImmutableSeq.of(i), new AppTerm(fill, new Arg<>(new RefTerm(u), true)));
         var paramU = new Term.Param(u, new AppTerm(type, new Arg<>(start, true)), true);
         return new LamTerm(paramU, path);
@@ -161,7 +161,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       private @NotNull PrimDef coeFillFactory(
         @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref,
         ID coeFill, ID coe, @NotNull FormulaTerm start,
-        @NotNull Function<Term, Term> interval
+        @NotNull UnaryOperator<Term> interval
       ) {
         // <coeFill> (A : I -> Type) (phi : I) : Pi (u : A <start>) -> Path (\i => A <interval i>) u (<coe> A phi u)
         var varA = new LocalVar("A");
@@ -187,14 +187,14 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
         var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, FormTerm.Type.ZERO, false);
+        var paramA = new Term.Param(varA, SortTerm.Type0, false);
         var varPhi = new LocalVar("phi");
         var paramRestr = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
         var varU = new LocalVar("u");
         var paramFuncU = new Term.Param(varU,
           new PiTerm(
             new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true),
-            new PartialTyTerm(new RefTerm(varA), isOne(new RefTerm(varPhi)))),
+            new PartialTyTerm(new RefTerm(varA), AyaRestrSimplifier.INSTANCE.isOne(new RefTerm(varPhi)))),
           true);
         var varU0 = new LocalVar("u0");
         var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
@@ -229,10 +229,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed intervalInv = formula(ID.INVOL, prim ->
         FormulaTerm.inv(prim.args().first().term()), "i");
 
-      private @NotNull PrimSeed formula(
-        ID id, Function<PrimCall, Term> unfold,
-        String... tele
-      ) {
+      private @NotNull PrimSeed formula(ID id, Function<PrimCall, Term> unfold, String... tele) {
         return new PrimSeed(id, (prim, state) -> unfold.apply(prim), ref -> new PrimDef(
           ref,
           ImmutableSeq.of(tele).map(n -> new Term.Param(new LocalVar(n), IntervalTerm.INSTANCE, true)),
@@ -244,7 +241,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed stringType =
         new PrimSeed(ID.STRING,
           ((prim, tyckState) -> prim),
-          ref -> new PrimDef(ref, FormTerm.Type.ZERO, ID.STRING), ImmutableSeq.empty());
+          ref -> new PrimDef(ref, SortTerm.Type0, ID.STRING), ImmutableSeq.empty());
       public final @NotNull PrimDef.PrimSeed stringConcat =
         new PrimSeed(ID.STRCONCAT, Initializer::concat, ref -> new PrimDef(
           ref,
@@ -271,7 +268,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed intervalType =
         new PrimSeed(ID.I,
           ((prim, state) -> IntervalTerm.INSTANCE),
-          ref -> new PrimDef(ref, FormTerm.ISet.INSTANCE, ID.I),
+          ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
           ImmutableSeq.empty());
 
       public final @NotNull PrimDef.PrimSeed partialType =
@@ -280,15 +277,15 @@ public final class PrimDef extends TopLevelDef<Term> {
             var iExp = prim.args().get(0).term();
             var ty = prim.args().get(1).term();
 
-            return new PartialTyTerm(ty, isOne(iExp));
+            return new PartialTyTerm(ty, AyaRestrSimplifier.INSTANCE.isOne(iExp));
           },
           ref -> new PrimDef(
             ref,
             ImmutableSeq.of(
               new Term.Param(new LocalVar("phi"), IntervalTerm.INSTANCE, true),
-              new Term.Param(new LocalVar("A"), FormTerm.Type.ZERO, true)
+              new Term.Param(new LocalVar("A"), SortTerm.Type0, true)
             ),
-            FormTerm.Type.ZERO, ID.PARTIAL),
+            SortTerm.Type0, ID.PARTIAL),
           ImmutableSeq.of(ID.I));
     }
 
@@ -384,7 +381,7 @@ public final class PrimDef extends TopLevelDef<Term> {
   /** <code>I -> Type</code> */
   public static @NotNull Term intervalToType() {
     var paramI = new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true);
-    return new PiTerm(paramI, new FormTerm.Type(0));
+    return new PiTerm(paramI, SortTerm.Type0);
   }
 
   public enum ID {

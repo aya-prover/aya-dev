@@ -50,11 +50,46 @@ public record Zonker(
     };
   }
 
+  @Override public @NotNull Term post(@NotNull Term term) {
+    return switch (term) {
+      case MetaLitTerm lit -> {
+        var inline = lit.inline();
+        if (inline instanceof MetaLitTerm unsolved) {
+          tycker.reporter.report(new UnsolvedLit(unsolved));
+          yield new ErrorTerm(lit);
+        }
+        yield inline;
+      }
+      default -> EndoTerm.super.post(term);
+    };
+  }
+
   @Override public @NotNull Term apply(@NotNull Term term) {
     stack.push(term);
     var result = EndoTerm.super.apply(term);
     stack.pop();
     return result;
+  }
+
+  public record UnsolvedLit(
+    @NotNull MetaLitTerm lit
+  ) implements Problem {
+    @Override public @NotNull SourcePos sourcePos() {
+      return lit.sourcePos();
+    }
+
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(
+        Doc.english("Unable to solve the type of this literal:"),
+        Doc.par(1, lit.toDoc(options)),
+        Doc.plain("I'm confused about the following candidates, please help me!"),
+        Doc.par(1, Doc.join(Doc.plain(", "), lit.candidates().map(d -> Doc.styled(Style.code(), d._1.ref().name()))))
+      );
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
   }
 
   public record UnsolvedMeta(

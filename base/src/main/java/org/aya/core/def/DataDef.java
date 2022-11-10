@@ -5,7 +5,7 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.ConCall;
-import org.aya.core.term.FormTerm;
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public final class DataDef extends UserDef.Type {
 
   public DataDef(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
-    FormTerm.Sort result, @NotNull ImmutableSeq<CtorDef> body
+    SortTerm result, @NotNull ImmutableSeq<CtorDef> body
   ) {
     super(telescope, result);
     ref.core = this;

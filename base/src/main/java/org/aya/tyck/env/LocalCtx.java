@@ -36,7 +36,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   freshHole(@Nullable Term type, @NotNull String name, @NotNull SourcePos sourcePos) {
     var ctxTele = extract();
     var meta = Meta.from(ctxTele, name, type, sourcePos);
-    var hole = new MetaTerm(meta, 0, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
+    var hole = new MetaTerm(meta, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
     return Tuple.of(hole, LamTerm.make(meta.telescope, hole));
   }
   default <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {

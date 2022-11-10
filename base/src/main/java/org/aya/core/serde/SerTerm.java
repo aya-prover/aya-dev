@@ -10,7 +10,8 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
+import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -98,31 +99,9 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  sealed interface Sort extends SerTerm {
-    @Override @NotNull FormTerm.Sort de(@NotNull DeState state);
-  }
-
-  record Type(int ulift) implements Sort {
-    @Override public @NotNull FormTerm.Type de(@NotNull DeState state) {
-      return new FormTerm.Type(ulift);
-    }
-  }
-
-  record Set(int ulift) implements Sort {
-    @Override public @NotNull FormTerm.Set de(@NotNull DeState state) {
-      return new FormTerm.Set(ulift);
-    }
-  }
-
-  record Prop() implements Sort {
-    @Override public @NotNull FormTerm.Prop de(@NotNull DeState state) {
-      return FormTerm.Prop.INSTANCE;
-    }
-  }
-
-  record ISet() implements Sort {
-    @Override public @NotNull FormTerm.ISet de(@NotNull DeState state) {
-      return FormTerm.ISet.INSTANCE;
+  record Sort(@NotNull SortKind kind, int lift) implements SerTerm {
+    @Override public @NotNull SortTerm de(@NotNull DeState state) {
+      return new SortTerm(kind, lift);
     }
   }
 
@@ -255,25 +234,24 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record ShapedInt(
     int integer,
-    @NotNull SerDef.SerAyaShape shape,
-    @NotNull SerTerm type
+    @NotNull SerDef.SerShapeResult shape,
+    @NotNull SerTerm.DataCall type
   ) implements SerTerm {
     @Override public @NotNull Term de(SerTerm.@NotNull DeState state) {
-      return new IntegerTerm(integer, shape.de(), type.de(state));
+      return new IntegerTerm(integer, shape.de(state), type.de(state));
     }
   }
 
   record ShapedList(
     @NotNull ImmutableSeq<SerTerm> repr,
-    @NotNull SerDef.SerAyaShape shape,
-    @NotNull SerTerm type
+    @NotNull SerDef.SerShapeResult shape,
+    @NotNull SerTerm.DataCall type
   ) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
       var termDesered = repr.map(x -> x.de(state));
-      var shape = shape().de();
+      var shape = shape().de(state);
       var type = type().de(state);
-
       return new ListTerm(termDesered, shape, type);
     }
   }

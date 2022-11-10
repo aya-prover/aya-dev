@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.Meta;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,13 +13,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public record MetaTerm(
   @NotNull Meta ref,
-  // TODO[ice]: remove this below
-  int ulift,
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
 ) implements Callable {
   public @NotNull PiTerm asPi(boolean explicit) {
-    return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, ulift, contextArgs);
+    return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, 0, contextArgs);
   }
 
   public @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {

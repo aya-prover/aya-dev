@@ -88,7 +88,7 @@ public final class Unifier extends TermComparator {
         if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
         holeTy = holePi.substBody(arg._1.term());
       }
-      return holeTy.lift(lhs.ulift());
+      return holeTy;
     }
     // Long time ago I wrote this to generate more unification equations,
     // which solves more universe levels. However, with latest version Aya (0.13),
@@ -97,7 +97,7 @@ public final class Unifier extends TermComparator {
     var resultTy = preRhs.computeType(state, ctx);
     // resultTy might be an ErrorTerm, what to do?
     if (meta.result != null) {
-      compare(resultTy, meta.result.lift(lhs.ulift()), rl, lr, null);
+      compare(resultTy, meta.result, rl, lr, null);
     }
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
@@ -128,8 +128,6 @@ public final class Unifier extends TermComparator {
     // Since we're here, this is definitely an unsolved meta. Assert that just in case
     //  we break the logic.
     assert !state.metas().containsKey(meta);
-    // TODO: purge Hole.ulift
-    assert lhs.ulift() == 0;
     var solved = preRhs.freezeHoles(state).subst(subst);
     var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
     // First, try to scope check without normalization

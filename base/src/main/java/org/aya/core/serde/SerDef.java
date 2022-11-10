@@ -2,12 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
+import kala.tuple.Tuple;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.CodeShape;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
@@ -145,10 +149,25 @@ public sealed interface SerDef extends Serializable {
     public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
   }
 
+  /** serialized {@link ShapeRecognition} */
+  record SerShapeResult(
+    @NotNull SerAyaShape shape,
+    @NotNull ImmutableMap<CodeShape.MomentId, QName> captures
+  ) implements Serializable {
+    public @NotNull ShapeRecognition de(@NotNull SerTerm.DeState state) {
+      return new ShapeRecognition(shape.de(), captures.view()
+        .map((m, q) -> Tuple.of(m, state.resolve(q))).toImmutableMap());
+    }
+
+    public static @NotNull SerShapeResult serialize(@NotNull Serializer.State state, @NotNull ShapeRecognition result) {
+      return new SerShapeResult(SerAyaShape.serialize(result.shape()), result.captures().view()
+        .map((m, q) -> Tuple.of(m, state.def(q))).toImmutableMap());
+    }
+  }
+
   /** serialized {@link AyaShape} */
   enum SerAyaShape implements Serializable {
-    NAT,
-    LIST;
+    NAT, LIST;
 
     public @NotNull AyaShape de() {
       return switch (this) {

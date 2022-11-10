@@ -76,7 +76,8 @@ public record CallResolver(
       }
       case Pat.ShapedInt intPat -> switch (term) {
         case IntegerTerm intTerm -> {
-          if (intTerm.shape() != intPat.shape()) yield Relation.unk();
+          // TODO: compareShape
+          if (intTerm.recognition().shape() != intPat.recognition().shape()) yield Relation.unk();
           yield Relation.fromCompare(Integer.compare(intTerm.repr(), intPat.repr()));
         }
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?

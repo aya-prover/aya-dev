@@ -3,7 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.mutable.MutableList;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,20 +14,16 @@ public record AppTerm(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) impleme
   }
 
   @Contract(pure = true) public static @NotNull Term make(@NotNull AppTerm app) {
-    if (app.of() instanceof MetaTerm hole) {
-      if (hole.args().sizeLessThan(hole.ref().telescope))
-        return new MetaTerm(hole.ref(), hole.ulift(), hole.contextArgs(), hole.args().appended(app.arg()));
-    }
-    if (app.of() instanceof ErasedTerm erased) {
+    return switch (app.of()) {
+      case MetaTerm(var ref, var contextArgs, var args)
+        when args.sizeLessThan(ref.telescope) -> new MetaTerm(ref, contextArgs, args.appended(app.arg()));
       // erased.type() can be an ErrorTerm
-      if (erased.type() instanceof PiTerm pi) {
-        return new ErasedTerm(pi.substBody(app.arg().term()));
-      } else {
-        return new ErasedTerm(ErrorTerm.typeOf(app), true);
-      }
-    }
-    if (app.of() instanceof LamTerm lam) return make(lam, app.arg());
-    return app;
+      case ErasedTerm erased -> erased.type() instanceof PiTerm pi
+        ? new ErasedTerm(pi.substBody(app.arg().term()))
+        : new ErasedTerm(ErrorTerm.typeOf(app), true);
+      case LamTerm lam -> make(lam, app.arg());
+      default -> app;
+    };
   }
 
   public static @NotNull Term make(LamTerm lam, @NotNull Arg<Term> arg) {
@@ -37,9 +33,9 @@ public record AppTerm(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) impleme
   }
 
   public static @NotNull Term unapp(@NotNull Term term, MutableList<Arg<@NotNull Term>> args) {
-    while (term instanceof AppTerm app) {
-      args.append(app.arg);
-      term = app.of;
+    while (term instanceof AppTerm(var of, var arg)) {
+      args.append(arg);
+      term = of;
     }
     args.reverse();
     return term;

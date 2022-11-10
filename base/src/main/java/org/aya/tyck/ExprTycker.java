@@ -17,12 +17,14 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
+import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.core.visitor.Zonker;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -38,16 +40,17 @@ import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -74,7 +77,7 @@ public final class ExprTycker extends Tycker {
           var ty = localCtx.get(loc);
           return new TermResult(new RefTerm(loc), ty);
         });
-        case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
+        case DefVar<?, ?> defVar -> inferRef(defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
       case Expr.Pi pi -> sort(pi);
@@ -228,7 +231,7 @@ public final class ExprTycker extends Tycker {
           while (pi.param().explicit() != argLicit || argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
-              var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
+              var holeApp = mockArg(pi.param().subst(subst), argument.term().sourcePos());
               // path types are always explicit
               app = AppTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
@@ -243,7 +246,7 @@ public final class ExprTycker extends Tycker {
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
-        var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped();
+        var elabArg = inherit(argument.term(), pi.param().type()).wellTyped();
         subst.addDirectly(pi.param().ref(), elabArg);
         var arg = new Arg<>(elabArg, argLicit);
         var newApp = cube == null
@@ -254,17 +257,20 @@ public final class ExprTycker extends Tycker {
         // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
         yield new TermResult(newApp, pi.body().subst(subst));
       }
-      case Expr.Hole hole ->
-        inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
+      case Expr.Hole hole -> inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
       case Expr.Error err -> TermResult.error(err.description());
       case Expr.LitInt lit -> {
         int integer = lit.integer();
         // TODO[literal]: int literals. Currently the parser does not allow negative literals.
         var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
-        if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs));
-        var type = new DataCall(((DataDef) defs.first()).ref, 0, ImmutableSeq.empty());
-        yield new TermResult(new IntegerTerm(integer, AyaShape.NAT_SHAPE, type), type);
+        if (defs.sizeGreaterThan(1)) {
+          var type = localCtx.freshHole(null, "_ty" + lit.integer() + "'", lit.sourcePos());
+          yield new TermResult(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type._1), type._1);
+        }
+        var match = defs.first();
+        var type = new DataCall(((DataDef) match._1).ref, 0, ImmutableSeq.empty());
+        yield new TermResult(new IntegerTerm(integer, match._2, type), type);
       }
       case Expr.LitString litStr -> {
         if (!state.primFactory().have(PrimDef.ID.STRING))
@@ -285,8 +291,12 @@ public final class ExprTycker extends Tycker {
         // find def
         var defs = shapeFactory.findImpl(AyaShape.LIST_SHAPE);
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
-        if (defs.sizeGreaterThan(1)) yield fail(expr, new LiteralError.AmbiguousLit(expr, defs));
-        var def = (DataDef) defs.first();
+        // TODO: can we proceed with ambiguity with MetaLitTerm? see literal-ambiguous-3.aya
+        if (defs.sizeGreaterThan(1)) yield fail(expr, new Zonker.UnsolvedLit(new MetaLitTerm(
+          arr.sourcePos(), arr, defs, ErrorTerm.typeOf(arr))));
+
+        var match = defs.first();
+        var def = (DataDef) match._1;
 
         // preparing
         var dataParam = def.telescope().first();
@@ -297,7 +307,7 @@ public final class ExprTycker extends Tycker {
 
         // do type check
         var results = elements.map(element -> inherit(element, hole._1).wellTyped());
-        yield new TermResult(new ListTerm(results, AyaShape.LIST_SHAPE, type), type);
+        yield new TermResult(new ListTerm(results, match._2, type), type);
       }
       default -> fail(expr, new NoRuleError(expr, null));
     };
@@ -348,7 +358,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull SeqView<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType, @NotNull ClauseTyckState clauseState) {
-    return switch (CofThy.isOne(whnf(inherit(lhs, IntervalTerm.INSTANCE).wellTyped()))) {
+    return switch (AyaRestrSimplifier.INSTANCE.isOne(whnf(inherit(lhs, IntervalTerm.INSTANCE).wellTyped()))) {
       case Restr.Disj<Term> restr -> {
         var list = MutableList.<Restr.Side<Term>>create();
         for (var cof : restr.orz()) {
@@ -429,10 +439,12 @@ public final class ExprTycker extends Tycker {
           var ref = first.ref();
           resultTele.append(new Term.Param(ref, result.type(), first.explicit()));
           againstTele = againstTele.drop(1);
-          if (againstTele.isNotEmpty()) subst.add(ref, result.wellTyped());
-          else if (iter.hasNext()) {
+          if (againstTele.isNotEmpty())
+            // LGTM! The show must go on
+            subst.add(ref, result.wellTyped());
+          else if (iter.hasNext())
+            // Too many items
             yield fail(expr, term, new TupleError.ElemMismatchError(pos, params.size(), it.size()));
-          } else items.append(inherit(item, last.subst(subst)).wellTyped());
         }
         var resTy = new SigmaTerm(resultTele.toImmutableSeq());
         yield new TermResult(new TupTerm(items.toImmutableSeq()), resTy);
@@ -446,7 +458,7 @@ public final class ExprTycker extends Tycker {
       case Expr.Sort sortExpr -> {
         var result = sort(sortExpr);
         var normTerm = whnf(term);
-        if (normTerm instanceof FormTerm.Sort sort) {
+        if (normTerm instanceof SortTerm sort) {
           var unifier = unifier(sortExpr.sourcePos(), Ordering.Lt);
           unifier.compareSort(result.type(), sort);
         } else {
@@ -490,22 +502,6 @@ public final class ExprTycker extends Tycker {
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? FormulaTerm.LEFT : FormulaTerm.RIGHT, ty);
           else yield fail(expr, new PrimError.BadInterval(pos, end));
         }
-        if (ty instanceof DataCall dataCall) {
-          var data = dataCall.ref().core;
-          var shape = shapeFactory.find(data);
-          if (shape.isDefined())
-            yield new TermResult(new IntegerTerm(end, shape.get(), dataCall), term);
-        }
-        if (ty instanceof MetaTerm hole) {
-          var nat = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
-          // When there's more than one Nat, delay the unification for cases like
-          // def foo : Option Nat1 => some 0
-          // def bar : Option Nat2 => some 1
-          if (nat.sizeGreaterThan(1))
-            yield new TermResult(new IntegerTerm(end, AyaShape.NAT_SHAPE, hole), term);
-          // fallthrough: When there's only one Nat, solve the hole now.
-          // Note: if no Nat was found, errors will be reported in `synthesize(expr)`
-        }
         yield unifyTyMaybeInsert(term, synthesize(expr), expr);
       }
       case Expr.PartEl el -> {
@@ -544,7 +540,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull SortResult doSort(@NotNull Expr expr) {
-    var univ = FormTerm.Type.ZERO;
+    var univ = SortTerm.Type0;
     return switch (expr) {
       case Expr.Tuple tuple -> failSort(tuple, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.Hole hole -> {
@@ -553,12 +549,7 @@ public final class ExprTycker extends Tycker {
         yield new SortResult(freshHole._2, univ);
       }
       case Expr.Sort sort -> {
-        var self = switch (sort) {
-          case Expr.Type ty -> new FormTerm.Type(ty.lift());
-          case Expr.Set set -> new FormTerm.Set(set.lift());
-          case Expr.Prop prop -> FormTerm.Prop.INSTANCE;
-          case Expr.ISet iset -> FormTerm.ISet.INSTANCE;
-        };
+        var self = new SortTerm(sort.kind(), sort.lift());
         yield new SortResult(self, self.succ());
       }
       case Expr.Lambda lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
@@ -576,7 +567,7 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.Sigma sigma -> {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
-        var resultTypes = MutableList.<FormTerm.Sort>create();
+        var resultTypes = MutableList.<SortTerm>create();
         for (var tuple : sigma.params()) {
           var result = sort(tuple.type());
           resultTypes.append(result.type());
@@ -586,7 +577,7 @@ public final class ExprTycker extends Tycker {
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
         var maxSort = resultTypes.reduce(SigmaTerm::max);
-        if (!(maxSort instanceof FormTerm.Prop)) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
+        if (maxSort.kind() != SortKind.Prop) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new SortResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
       }
@@ -601,16 +592,16 @@ public final class ExprTycker extends Tycker {
     return new TyResult(ty(expr, sort(expr).wellTyped()));
   }
 
-  private @NotNull FormTerm.Sort ty(@NotNull Expr errorMsg, @NotNull Term term) {
+  private @NotNull SortTerm ty(@NotNull Expr errorMsg, @NotNull Term term) {
     return switch (whnf(term)) {
-      case FormTerm.Sort u -> u;
+      case SortTerm u -> u;
       case MetaTerm hole -> {
-        unifyTyReported(hole, FormTerm.Type.ZERO, errorMsg);
-        yield FormTerm.Type.ZERO;
+        unifyTyReported(hole, SortTerm.Type0, errorMsg);
+        yield SortTerm.Type0;
       }
       default -> {
         reporter.report(BadTypeError.univ(state, errorMsg, term));
-        yield FormTerm.Type.ZERO;
+        yield SortTerm.Type0;
       }
     };
   }
@@ -656,23 +647,23 @@ public final class ExprTycker extends Tycker {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var result = doSort(expr);
     if (upperBound != -1 && upperBound < result.type().lift())
-      reporter.report(new LevelError(expr.sourcePos(), new FormTerm.Type(upperBound), result.type(), true));
+      reporter.report(new LevelError(expr.sourcePos(), new SortTerm(SortKind.Type, upperBound), result.type(), true));
     traceExit(result, expr);
     return result;
   }
 
-  public @NotNull FormTerm.Sort sortPi(@NotNull Expr expr, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) {
+  public @NotNull SortTerm sortPi(@NotNull Expr expr, @NotNull SortTerm domain, @NotNull SortTerm codomain) {
     return sortPiImpl(new SortPiParam(reporter, expr), domain, codomain);
   }
 
-  public static @NotNull FormTerm.Sort sortPi(@NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
+  public static @NotNull SortTerm sortPi(@NotNull SortTerm domain, @NotNull SortTerm codomain) throws IllegalArgumentException {
     return sortPiImpl(null, domain, codomain);
   }
 
   private record SortPiParam(@NotNull Reporter reporter, @NotNull Expr expr) {
   }
 
-  private static @NotNull FormTerm.Sort sortPiImpl(@Nullable SortPiParam p, @NotNull FormTerm.Sort domain, @NotNull FormTerm.Sort codomain) throws IllegalArgumentException {
+  private static @NotNull SortTerm sortPiImpl(@Nullable SortPiParam p, @NotNull SortTerm domain, @NotNull SortTerm codomain) throws IllegalArgumentException {
     var result = PiTerm.max(domain, codomain);
     if (p == null) {
       assert result != null;
@@ -680,7 +671,7 @@ public final class ExprTycker extends Tycker {
     }
     if (result == null) {
       p.reporter.report(new SortPiError(p.expr.sourcePos(), domain, codomain));
-      return FormTerm.Type.ZERO;
+      return SortTerm.Type0;
     } else {
       return result;
     }
@@ -703,8 +694,8 @@ public final class ExprTycker extends Tycker {
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
     var genName = name + Constants.GENERATED_POSTFIX;
     // [ice]: unsure if ZERO is good enough
-    var domain = localCtx.freshHole(FormTerm.Type.ZERO, genName + "ty", pos)._2;
-    var codomain = localCtx.freshHole(FormTerm.Type.ZERO, pos)._2;
+    var domain = localCtx.freshHole(SortTerm.Type0, genName + "ty", pos)._2;
+    var codomain = localCtx.freshHole(SortTerm.Type0, pos)._2;
     return new PiTerm(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
   }
 
@@ -719,18 +710,18 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull SortResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
     reporter.report(prob);
-    return new SortResult(new ErrorTerm(expr), FormTerm.Type.ZERO);
+    return new SortResult(new ErrorTerm(expr), SortTerm.Type0);
   }
 
-  @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var) {
+  @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
     if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
-      return defCall(pos, (DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
+      return defCall((DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall(pos, (DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
+      return defCall((DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
-      return defCall(pos, (DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
+      return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof TeleDecl.StructDecl) {
-      return defCall(pos, (DefVar<StructDef, TeleDecl.StructDecl>) var, StructCall::new);
+      return defCall((DefVar<StructDef, TeleDecl.StructDecl>) var, StructCall::new);
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
@@ -751,7 +742,7 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic> ExprTycker.Result defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, Callable.Factory<D, S> function) {
+  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables
@@ -829,19 +820,19 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
-    if (wellTyped instanceof FormTerm.Sort) return wellTyped;
-    if (computeType(type) instanceof FormTerm.Prop) return wellTyped;
+    if (wellTyped instanceof SortTerm) return wellTyped;
+    if (computeSort(type).kind() == SortKind.Prop) return wellTyped;
     return checkIllegalErasure(sourcePos, wellTyped);
   }
 
-  public @NotNull Term computeType(@NotNull Term type) {
-    return type.computeType(state, localCtx);
+  public @NotNull SortTerm computeSort(@NotNull Term type) {
+    return type.computeSort(state, localCtx);
   }
 
   private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
-    var checker = new Function<Term, Term>() {
+    var checker = new UnaryOperator<Term>() {
       private @NotNull Term post(@NotNull Term term) {
-        if (term instanceof FormTerm.Sort) return term;
+        if (term instanceof SortTerm) return term;
         var erased = ErasedTerm.underlyingIllegalErasure(term);
         if (erased != null) {
           reporter.report(new ErasedError(sourcePos, erased));
@@ -865,9 +856,9 @@ public final class ExprTycker extends Tycker {
     @NotNull Result freezeHoles(@NotNull TyckState state);
 
     private Result checkErased(@NotNull Expr expr, @NotNull ExprTycker tycker) {
-      if (wellTyped() instanceof FormTerm.Sort) return this;
+      if (wellTyped() instanceof SortTerm) return this;
       var type = type();
-      var isProp = tycker.computeType(type) instanceof FormTerm.Prop;
+      var isProp = tycker.computeSort(type).kind() == SortKind.Prop;
       if (isProp || ErasedTerm.isErased(wellTyped()))
         return new TermResult(new ErasedTerm(type, isProp, expr.sourcePos()), type);
       return this;
@@ -881,10 +872,6 @@ public final class ExprTycker extends Tycker {
    * @author ice1000
    */
   public record TermResult(@Override @NotNull Term wellTyped, @Override @NotNull Term type) implements Result {
-    @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
-      return Tuple.of(type, wellTyped);
-    }
-
     public static @NotNull TermResult error(@NotNull AyaDocile description) {
       return new TermResult(ErrorTerm.unexpected(description), ErrorTerm.typeOf(description));
     }
@@ -894,14 +881,14 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  public record SortResult(@Override @NotNull Term wellTyped, @Override @NotNull FormTerm.Sort type) implements Result {
+  public record SortResult(@Override @NotNull Term wellTyped, @Override @NotNull SortTerm type) implements Result {
     @Override public @NotNull SortResult freezeHoles(@NotNull TyckState state) {
       return new SortResult(wellTyped.freezeHoles(state), type);
     }
   }
 
-  public record TyResult(@Override @NotNull FormTerm.Sort wellTyped) implements Result {
-    @Override public @NotNull FormTerm.Sort type() {
+  public record TyResult(@Override @NotNull SortTerm wellTyped) implements Result {
+    @Override public @NotNull SortTerm type() {
       return wellTyped.succ();
     }
 

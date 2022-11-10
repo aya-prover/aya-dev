@@ -13,9 +13,9 @@ import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.generic.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
@@ -24,6 +24,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -31,14 +32,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * A well-typed and terminating term.
  *
  * @author ice1000
  */
-public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Callable, CoeTerm, Elimination, MatchTerm, ErasedTerm, FormTerm, FormulaTerm, HCompTerm, IntervalTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
-  default @NotNull Term descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
+  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, MetaLitTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
+  default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
         var param = pi.param().descent(f);
@@ -51,11 +54,11 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (params.sameElements(sigma.params(), true)) yield sigma;
         yield new SigmaTerm(params);
       }
-      case FormTerm.Sort univ -> univ;
+      case SortTerm univ -> univ;
       case IntervalTerm interval -> interval;
-      case FormulaTerm mula -> {
-        var formula = mula.asFormula().fmap(f);
-        if (formula == mula.asFormula()) yield mula;
+      case FormulaTerm(var mula) -> {
+        var formula = mula.fmap(f);
+        if (formula == mula) yield this;
         yield new FormulaTerm(formula);
       }
       case StringTerm str -> str;
@@ -93,7 +96,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
           yield match;
         yield new MatchTerm(discriminant, clauses);
-	    }
+      }
       case ErasedTerm erased -> {
         var type = f.apply(erased.type());
         if (type == erased.type()) yield erased;
@@ -139,21 +142,23 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         var contextArgs = hole.contextArgs().map(arg -> arg.descent(f));
         var args = hole.args().map(arg -> arg.descent(f));
         if (contextArgs.sameElements(hole.contextArgs(), true) && args.sameElements(hole.args(), true)) yield hole;
-        yield new MetaTerm(hole.ref(), hole.ulift(), contextArgs, args);
+        yield new MetaTerm(hole.ref(), contextArgs, args);
       }
       case IntegerTerm shaped -> {
         var type = f.apply(shaped.type());
         if (type == shaped.type()) yield shaped;
-        yield new IntegerTerm(shaped.repr(), shaped.shape(), type);
+        yield new IntegerTerm(shaped.repr(), shaped.recognition(), (DataCall) type);
       }
       case ListTerm shaped -> {
         var type = f.apply(shaped.type());
         var elements = shaped.repr().map(f);
-
-        if (type == shaped.type()
-          && elements.sameElements(shaped.repr(), true)) yield shaped;
-
-        yield new ListTerm(elements, shaped.shape(), type);
+        if (type == shaped.type() && elements.sameElements(shaped.repr(), true)) yield shaped;
+        yield new ListTerm(elements, shaped.recognition(), (DataCall) type);
+      }
+      case MetaLitTerm lit -> {
+        var type = f.apply(lit.type());
+        if (type == lit.type()) yield lit;
+        yield new MetaLitTerm(lit.sourcePos(), lit.repr(), lit.candidates(), type);
       }
       case PartialTyTerm ty -> {
         var type = f.apply(ty.type());
@@ -189,7 +194,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
         var type = f.apply(coe.type());
         var restr = coe.restr().map(f);
         if (type == coe.type() && restr == coe.restr()) yield coe;
-        yield new CoeTerm(type, restr.normalize());
+        yield new CoeTerm(type, AyaRestrSimplifier.INSTANCE.normalizeRestr(restr));
       }
       case RefTerm ref -> ref;
       case MetaPatTerm metaPat -> metaPat;
@@ -261,6 +266,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term> permits Cal
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return new LittleTyper(state, ctx).term(this);
+  }
+  default @NotNull SortTerm computeSort(@NotNull TyckState state, @NotNull LocalCtx ctx) {
+    var result = computeType(state, ctx);
+    if (result instanceof SortTerm sort) return sort;
+    if (result instanceof ErrorTerm || result instanceof MetaTerm)
+      return SortTerm.Type0; // TODO: improve LittleTyper and remove this hack
+    throw new InternalException("unreachable");
   }
 
   /**

@@ -4,7 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 /** generalized path type */
-public record PathTerm(@NotNull Cube cube) implements FormTerm, StableWHNF {
+public record PathTerm(@NotNull Cube cube) implements StableWHNF {
   /**
    * 'Generalized path' syntax.
    *
@@ -31,8 +31,8 @@ public record PathTerm(@NotNull Cube cube) implements FormTerm, StableWHNF {
     }
 
     public @NotNull PiTerm computePi() {
-      var iTele = params().view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
-      return (PiTerm) PiTerm.make(iTele, type());
+      var iTele = params.view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
+      return (PiTerm) PiTerm.make(iTele, type);
     }
 
     public @NotNull Term applyDimsTo(@NotNull Term pLam) {

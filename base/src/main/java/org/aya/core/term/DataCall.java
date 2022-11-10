@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 

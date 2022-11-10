@@ -6,21 +6,22 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
-import org.aya.core.repr.AyaShape;
+import org.aya.core.def.Def;
+import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
@@ -86,7 +87,7 @@ public sealed interface Pat extends AyaDocile {
    *
    * @param fakeBind is used when inline if there is no solution.
    *                 So don't add this to {@link LocalCtx} too early
-   *                 and remember to inline Meta in {@link PatTycker#checkLhs}
+   *                 and remember to inline Meta in {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature, boolean)}
    */
   record Meta(
     boolean explicit,
@@ -201,23 +202,16 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  /**
-   * TODO[literal]: literal type needs meta-solving for first-class patterns. Possible changes:
-   *  - Make {@link ShapedInt#type} a {@link Term} instead of {@link DataCall}
-   *  - Call {@link ShapedInt#constructorForm()} with a {@link TyckState}
-   *  - Call {@link #compareUntyped(Shaped)} with a {@link TyckState}
-   *  see <a href="https://github.com/aya-prover/aya-dev/pull/400#discussion_r862371935">discussion</a>
-   */
   record ShapedInt(
     @Override int repr,
-    @Override @NotNull AyaShape shape,
+    @Override @NotNull ShapeRecognition recognition,
     @NotNull DataCall type,
     boolean explicit
   ) implements Pat, Shaped.Nat<Pat> {
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       // The cast must succeed
-      return new Pat.ShapedInt(repr, shape, (DataCall) tycker.zonk(type), explicit);
+      return new Pat.ShapedInt(repr, recognition, (DataCall) tycker.zonk(type), explicit);
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
@@ -233,12 +227,13 @@ public sealed interface Pat extends AyaDocile {
       return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), ImmutableSeq.empty(), type);
     }
 
-    @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Pat pat) {
-      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat), type);
+    @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Arg<Pat> pat) {
+      // TODO[ice]: Arg<Pat> in core
+      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat.term()), type);
     }
 
     @Override public @NotNull Pat destruct(int repr) {
-      return new Pat.ShapedInt(repr, this.shape, this.type, true);
+      return new Pat.ShapedInt(repr, this.recognition, this.type, true);
     }
   }
 

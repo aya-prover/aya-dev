@@ -3,13 +3,13 @@
 package org.aya.core.visitor;
 
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * We think of all cubical reductions as beta reductions.
@@ -18,14 +18,16 @@ import java.util.function.Function;
  * @see DeltaExpander
  */
 public interface BetaExpander extends EndoTerm {
-  private static @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
-    return partial.flatMap(Function.identity());
+  private @NotNull Partial<Term> partial(@NotNull Partial<Term> partial) {
+    return AyaRestrSimplifier.INSTANCE.mapPartial(partial, UnaryOperator.identity());
   }
+
   @Override default @NotNull Term post(@NotNull Term term) {
     return switch (term) {
       case FormulaTerm mula -> mula.simpl();
       case PartialTyTerm ty -> ty.normalizeRestr();
       case MetaPatTerm metaPat -> metaPat.inline();
+      case MetaLitTerm lit -> lit.inline();
       case AppTerm app -> {
         var result = AppTerm.make(app);
         yield result == term ? result : apply(result);
@@ -64,7 +66,7 @@ public interface BetaExpander extends EndoTerm {
           case PathTerm path -> coe;
           case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> sigma.coe(coe, varI);
-          case FormTerm.Type type -> {
+          case SortTerm type -> {
             var A = new LocalVar("A");
             yield new LamTerm(new Term.Param(A, type, true), new RefTerm(A));
           }

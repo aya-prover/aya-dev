@@ -9,7 +9,7 @@ import kala.tuple.Tuple;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -68,24 +68,19 @@ public record Serializer(@NotNull Serializer.State state) {
     };
   }
 
-  private @NotNull SerTerm.Sort serialize(@NotNull FormTerm.Sort term) {
-    return switch (term) {
-      case FormTerm.Type ty -> new SerTerm.Type(ty.lift());
-      case FormTerm.Set set -> new SerTerm.Set(set.lift());
-      case FormTerm.Prop prop -> new SerTerm.Prop();
-      case FormTerm.ISet iset -> new SerTerm.ISet();
-    };
+  private @NotNull SerTerm.Sort serialize(@NotNull SortTerm term) {
+    return new SerTerm.Sort(term.kind(), term.lift());
   }
 
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return switch (term) {
-      case IntegerTerm lit ->
-        new SerTerm.ShapedInt(lit.repr(), SerDef.SerAyaShape.serialize(lit.shape()), serialize(lit.type()));
-      case ListTerm lit ->
-        new SerTerm.ShapedList(
-          lit.repr().map(this::serialize).toImmutableSeq(),
-          SerDef.SerAyaShape.serialize(lit.shape()),
-          serialize(lit.type()));
+      case IntegerTerm lit -> new SerTerm.ShapedInt(lit.repr(),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
+        (SerTerm.DataCall) serialize(lit.type()));
+      case ListTerm lit -> new SerTerm.ShapedList(
+        lit.repr().map(this::serialize),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
+        (SerTerm.DataCall) serialize(lit.type()));
       case FormulaTerm end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case StringTerm str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
@@ -130,7 +125,8 @@ public record Serializer(@NotNull Serializer.State state) {
       case MetaTerm hole -> throw new InternalException("Shall not have holes serialized.");
       case MetaPatTerm metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
-      case FormTerm.Sort sort -> serialize(sort);
+      case MetaLitTerm err -> throw new InternalException("Shall not have metaLiterals serialized.");
+      case SortTerm sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
     };
@@ -151,7 +147,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
       case Pat.ShapedInt lit -> new SerPat.ShapedInt(
         lit.repr(), lit.explicit(),
-        SerDef.SerAyaShape.serialize(lit.shape()),
+        SerDef.SerShapeResult.serialize(state, lit.recognition()),
         serializeDataCall(lit.type()));
     };
   }

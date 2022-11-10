@@ -14,7 +14,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.ExprConsumer;
-import org.aya.generic.Arg;
+import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
@@ -40,11 +40,11 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.Tuple expr -> Doc.parened(Doc.commaList(expr.items().view().map(e -> term(Outer.Free, e))));
       case Expr.BinOpSeq binOpSeq -> {
         var seq = binOpSeq.seq();
-        var first = seq.first().expr();
+        var first = seq.first().term();
         if (seq.sizeEquals(1)) yield term(outer, first);
         yield visitCalls(false,
           term(Outer.AppSpine, first),
-          seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())), outer,
+          seq.view().drop(1), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
@@ -79,7 +79,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           infix = var.isInfix();
         yield visitCalls(infix,
           term(Outer.AppHead, head),
-          args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())), outer,
+          args.view(), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
       case Expr.Lambda expr -> {
@@ -147,7 +147,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .from(IntRange.closed(1, expr.lift()).iterator()).view()
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
-      case Expr.MetaPat metaPat -> metaPat.meta().toDoc(options);
       case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
         Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(cl -> Doc.sep(
           cl._1.toDoc(options), Doc.symbol(":="), cl._2.toDoc(options))
@@ -196,33 +195,38 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     };
   }
 
-  public @NotNull Doc pattern(@NotNull Pattern pattern, Outer outer) {
+  public @NotNull Doc pattern(@NotNull Arg<Pattern> pattern, Outer outer) {
+    return pattern(pattern.term(), pattern.explicit(), outer);
+  }
+
+  public @NotNull Doc pattern(@NotNull Pattern pattern, boolean licit, Outer outer) {
     return switch (pattern) {
       case Pattern.Tuple tuple -> {
-        var tup = Doc.licit(tuple.explicit(),
+        var tup = Doc.licit(licit,
           Doc.commaList(tuple.patterns().view().map(p -> pattern(p, Outer.Free))));
         yield tuple.as() == null ? tup
           : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
       }
-      case Pattern.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
-      case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());
-      case Pattern.CalmFace calmFace -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), calmFace.explicit());
-      case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), number.explicit());
+      case Pattern.Absurd $ -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);
+      case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
+      case Pattern.CalmFace $ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
+      case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), licit);
       case Pattern.Ctor ctor -> {
         var name = linkRef(ctor.resolved().data(), CON_CALL);
         var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
-        yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+        yield ctorDoc(outer, licit, ctorDoc, ctor.as(), ctor.params().isEmpty());
       }
-      case Pattern.BinOpSeq seq -> {
-        var param = seq.seq();
-        if (param.sizeEquals(1)) yield pattern(param.first(), outer);
-        var ctorDoc = visitMaybeCtorPatterns(param, Outer.AppSpine, Doc.ALT_WS);
-        yield ctorDoc(outer, seq.explicit(), ctorDoc, seq.as(), param.sizeLessThanOrEquals(1));
+      case Pattern.BinOpSeq(var pos, var param, var as) -> {
+        if (param.sizeEquals(1)) {
+          yield pattern(param.first(), outer);
+        }
+        var ctorDoc = visitMaybeCtorPatterns(param.view(), Outer.AppSpine, Doc.ALT_WS);
+        yield ctorDoc(outer, licit, ctorDoc, as, param.sizeLessThanOrEquals(1));
       }
       case Pattern.List list -> {
-        var listDoc = Doc.sep(      // Copied from ThisClass.term (Expr.Array case)
+        var listDoc = Doc.sep(
           Doc.symbol("["),
-          Doc.commaList(list.elements().map(x -> pattern(x, Outer.Free))),
+          Doc.commaList(list.elements().map(x -> pattern(x, true, Outer.Free))),
           Doc.symbol("]")
         );
 
@@ -235,8 +239,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     };
   }
 
-  private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, Outer outer, @NotNull Doc delim) {
-    patterns = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pattern::explicit);
+  private Doc visitMaybeCtorPatterns(SeqLike<Arg<Pattern>> patterns, Outer outer, @NotNull Doc delim) {
+    patterns = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Arg::explicit);
     return Doc.join(delim, patterns.view().map(p -> pattern(p, outer)));
   }
 
