@@ -20,6 +20,8 @@ public record Version(
   private static final @NotNull Pattern DOT = Pattern.compile("\\.");
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull Version create(@NotNull String version) {
+    // TODO: parse semver in the future, this is a workaround.
+    if (version.endsWith("-SNAPSHOT")) version = version.substring(0, version.length() - "-SNAPSHOT".length());
     var split = DOT.split(version.trim());
     return switch (split.length) {
       case 0 -> throw new IllegalArgumentException("Invalid version: " + version);
