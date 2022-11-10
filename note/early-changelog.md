@@ -2,6 +2,21 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.23
+
+The core and concrete syntax are renamed. The core syntax now have a flat class structure.
+
+Add `--style` option for pretty printing color scheme, build the lexer automatically,
+change `coe` syntax to projection, list representation in the core, fix bind serialization,
+fix a couple of bugs, eta-expand in path type checking, introduce `ErasedTerm` in core for
+propositions, overhaul unification to generate fresh names, `coe` reduction for n-ary sigma,
+reimplement `as` patterns (remove `Expr` subst, introduce internal `let` bindings),
+fix constructor of indexed families (`ownerTele` problems), fix pattern matcher, introduce
+a new command in REPL `:codify` to generate Aya code from a function name, fix sigma type
+elaboration, match expressions in concrete and core, fix nested meta patteriables, refactor
+`Pattern` to `Arg<Pattern>` so they no longer have `explicit` method, overhaul literals
+(split unsolved literals and solved literals), allow `↑↑ f`.
+
 ## 0.22
 
 Improved the shape matcher with normalization, improved performance of `MCT` traversal,

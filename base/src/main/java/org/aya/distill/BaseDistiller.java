@@ -8,7 +8,6 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.PathTerm;
-import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
@@ -19,6 +18,7 @@ import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
@@ -183,7 +183,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       if (!Objects.equals(param.type(), last.type())) {
         if (body != null && names.sizeEquals(1)) {
           var ref = names.first();
-          var used = telescope.sliceView(i + 1, telescope.size())
+          var used = telescope.sliceView(i, telescope.size())
             .map(ParamLike::type).appended(body)
             .anyMatch(p -> altF7.applyAsInt(p, ref) > 0);
           if (!used) buf.append(justType(last, Outer.ProjHead));
