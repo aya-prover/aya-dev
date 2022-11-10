@@ -27,26 +27,22 @@ public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements S
     var blift = codomain.lift();
     return switch (domain.kind()) {
       case Type -> switch (codomain.kind()) {
-        case Type -> new SortTerm(SortKind.Type, Math.max(alift, blift));
-        case Set -> new SortTerm(SortKind.Type, Math.max(alift, blift));
+        case Type, Set -> new SortTerm(SortKind.Type, Math.max(alift, blift));
         case ISet -> new SortTerm(SortKind.Set, alift);
         case Prop -> codomain;
       };
       case ISet -> switch (codomain.kind()) {
         case ISet -> SortTerm.Set0;
-        case Set -> codomain;
-        case Type -> codomain;
+        case Set, Type -> codomain;
         default -> null;
       };
       case Set -> switch (codomain.kind()) {
-        case Set -> new SortTerm(SortKind.Set, Math.max(alift, blift));
-        case Type -> new SortTerm(SortKind.Set, Math.max(alift, blift));
+        case Set, Type -> new SortTerm(SortKind.Set, Math.max(alift, blift));
         case ISet -> new SortTerm(SortKind.Set, alift);
         default -> null;
       };
       case Prop -> switch (codomain.kind()) {
-        case Prop -> codomain;
-        case Type -> codomain;
+        case Prop, Type -> codomain;
         default -> null;
       };
     };

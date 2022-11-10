@@ -299,13 +299,12 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
     var ty = result.type();
     switch (ty.kind()) {
-      case Type -> unifier.compareSort(ty, sort);
-      case Set -> unifier.compareSort(ty, sort);
+      case Type, Set -> unifier.compareSort(ty, sort);
       case Prop -> {
         if (sort.kind() != SortKind.Type) unifier.compareSort(ty, sort);
       }
       case ISet -> {
-        if (!(sort.kind() == SortKind.Type || sort.kind() == SortKind.Set)) unifier.compareSort(ty, sort);
+        if (!sort.kind().hasLevel()) unifier.compareSort(ty, sort);
       }
     }
     return result;
