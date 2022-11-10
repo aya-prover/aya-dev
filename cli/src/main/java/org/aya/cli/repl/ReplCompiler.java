@@ -8,7 +8,7 @@ import kala.value.MutableValue;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
-import org.aya.cli.parse.AyaGKParserImpl;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.Expr;
@@ -120,7 +120,7 @@ public class ReplCompiler {
   public @NotNull Either<ImmutableSeq<GenericDef>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     try {
-      var programOrExpr = new AyaGKParserImpl(reporter).repl(text);
+      var programOrExpr = new AyaParserImpl(reporter).repl(text);
       var loader = createLoader();
       return programOrExpr.map(
         program -> {
@@ -143,7 +143,7 @@ public class ReplCompiler {
 
   public @Nullable Term computeType(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      var parseTree = new AyaGKParserImpl(reporter).repl(text);
+      var parseTree = new AyaParserImpl(reporter).repl(text);
       if (parseTree.isLeft()) {
         reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
         return null;
@@ -155,7 +155,7 @@ public class ReplCompiler {
   }
 
   public @Nullable FnDef codificationObject(@NotNull String text) {
-    var parseTree = new AyaGKParserImpl(reporter).expr(text, SourcePos.NONE);
+    var parseTree = new AyaParserImpl(reporter).expr(text, SourcePos.NONE);
     if (parseTree.resolve(context) instanceof Expr.Ref ref
       && ref.resolvedVar() instanceof DefVar<?, ?> defVar
       && defVar.core instanceof FnDef fn
@@ -169,7 +169,7 @@ public class ReplCompiler {
   private CachedModuleLoader<ModuleListLoader> createLoader() {
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
     return new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
-      new FileModuleLoader(locator, path, reporter, new AyaGKParserImpl(reporter), primFactory, null)).toImmutableSeq()));
+      new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
   }
 
   public @NotNull ReplContext getContext() {

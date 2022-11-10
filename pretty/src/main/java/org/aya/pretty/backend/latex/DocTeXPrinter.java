@@ -31,22 +31,32 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
     Tuple.of("\\", "\\lambda"),
+    Tuple.of("\\/", "\\lor"),
+    Tuple.of("/\\", "\\land"),
     Tuple.of("|", "\\mid"),
     Tuple.of("=>", "\\Rightarrow"),
     Tuple.of("->", "\\to"),
+    Tuple.of("_|_", "\\bot"),
+    Tuple.of("~", "\\neg"),
+    Tuple.of("**", "\\times"),
+    Tuple.of(":", ":"),
+    Tuple.of(".", "."),
+    Tuple.of("(", "("),
+    Tuple.of(")", ")"),
     Tuple.of("{", "\\{"),
     Tuple.of("}", "\\}")
   );
 
   @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {
     for (var k : commandMapping.keysView()) {
-      if (text.contains(k)) {
+      if (text.equals(k)) {
         cursor.invisibleContent("$");
         cursor.visibleContent(commandMapping.get(k));
         cursor.invisibleContent("$");
         return;
       }
     }
+    System.err.println("Warn: unknown symbol " + text);
     renderPlainText(cursor, text);
   }
 

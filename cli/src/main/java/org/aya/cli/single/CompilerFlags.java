@@ -3,6 +3,7 @@
 package org.aya.cli.single;
 
 import kala.collection.SeqLike;
+import org.aya.cli.repl.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ public record CompilerFlags(
   public record DistillInfo(
     @NotNull MainArgs.DistillStage distillStage,
     @NotNull MainArgs.DistillFormat distillFormat,
+    @NotNull RenderOptions renderOptions,
     @NotNull Path distillDir
   ) {
   }

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Try;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
 
 public class CommandManager {
   public record CommandGen(
@@ -41,9 +41,8 @@ public class CommandManager {
   }
 
   private @NotNull CommandGen genCommand(@NotNull Command c) {
-    var entry = Arrays.stream(c.getClass().getDeclaredMethods())
-      .filter(method -> method.isAnnotationPresent(Command.Entry.class))
-      .findFirst();
+    var entry = Seq.of(c.getClass().getDeclaredMethods())
+      .findFirst(method -> method.isAnnotationPresent(Command.Entry.class));
     if (entry.isEmpty()) throw new IllegalArgumentException("no entry found in " + c.getClass());
     try {
       var method = entry.get();

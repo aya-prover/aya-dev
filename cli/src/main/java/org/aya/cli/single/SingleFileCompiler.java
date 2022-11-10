@@ -4,7 +4,7 @@ package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.cli.parse.AyaGKParserImpl;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.stmt.Decl;
@@ -12,8 +12,11 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.AyaDocile;
+import org.aya.pretty.backend.html.DocHtmlPrinter;
+import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.printer.PrinterConfig;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
@@ -63,7 +66,7 @@ public record SingleFileCompiler(
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     var primFactory = new PrimDef.Factory();
     return AyaCompiler.catching(reporter, flags, () -> {
-      var ayaParser = new AyaGKParserImpl(reporter);
+      var ayaParser = new AyaParserImpl(reporter);
       var program = ayaParser.program(locator, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
@@ -91,12 +94,15 @@ public record SingleFileCompiler(
     var distillDir = sourceFile.resolveSibling(flags.distillDir());
     if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
     var fileName = escape(ayaFileName.substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length()));
+    var opt = flags.renderOptions();
     switch (flags.distillFormat()) {
-      case html -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
-      case latex -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, $) -> thisDoc.renderToTeX());
-      case plain -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.debugRender());
-      case unix ->
-        doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.renderToString(StringPrinterConfig.unixTerminal()));
+      case html -> doWrite(doc, distillDir, fileName, ".html", (d, b) -> d.render(new DocHtmlPrinter(),
+        new DocHtmlPrinter.Config(opt.colorScheme(), opt.styleFamily(), b)));
+      case latex -> doWrite(doc, distillDir, fileName, ".tex", (d, $) -> d.render(new DocTeXPrinter(),
+        new DocTeXPrinter.Config(opt.colorScheme(), opt.styleFamily())));
+      case plain -> doWrite(doc, distillDir, fileName, ".txt", (d, $) -> d.debugRender());
+      case unix -> doWrite(doc, distillDir, fileName, ".txt", (d, $) -> d.renderToString(
+        StringPrinterConfig.unixTerminal(opt.colorScheme(), opt.styleFamily(), PrinterConfig.INFINITE_SIZE, true)));
     }
   }
 

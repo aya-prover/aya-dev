@@ -5,7 +5,7 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
-import org.aya.cli.parse.AyaGKParserImpl;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -39,12 +39,12 @@ public class ParseTest {
   }
 
   public static @NotNull Expr parseExpr(@NotNull @NonNls @Language("Aya") String code) {
-    return new AyaGKParserImpl(ThrowingReporter.INSTANCE).expr(code, SourcePos.NONE);
+    return new AyaParserImpl(ThrowingReporter.INSTANCE).expr(code, SourcePos.NONE);
   }
 
   public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("Aya") String code) {
     var file = new SourceFile("main.aya", Option.none(), code);
-    return new AyaGKParserImpl(ThrowingReporter.INSTANCE).program(file);
+    return new AyaParserImpl(ThrowingReporter.INSTANCE).program(file);
   }
 
   public static @NotNull ImmutableSeq<Decl> parseDecl(@NotNull @NonNls @Language("Aya") String code) {

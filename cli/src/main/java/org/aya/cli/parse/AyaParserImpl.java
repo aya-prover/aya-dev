@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public record AyaGKParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
+public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
   private static final @NotNull TokenSet ERROR = TokenSet.create(TokenType.ERROR_ELEMENT, TokenType.BAD_CHARACTER);
 
   public @NotNull GenericNode<?> parseNode(@NotNull String code) {
