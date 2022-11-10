@@ -2,12 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import org.aya.cli.repl.render.Color;
+import org.aya.cli.repl.render.RenderOptions;
 import org.aya.generic.util.AyaHome;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.reporter.IgnoringReporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,6 +21,7 @@ public class ReplConfig implements AutoCloseable {
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
   public @NotNull DistillerOptions distillerOptions = DistillerOptions.pretty();
+  public @NotNull RenderOptions renderOptions = RenderOptions.CLI_DEFAULT;
   public boolean enableUnicode = true;
   /** Disables welcome message, echoing info, etc. */
   public boolean silent = false;
@@ -37,7 +40,7 @@ public class ReplConfig implements AutoCloseable {
 
   public static @NotNull ReplConfig loadFrom(@NotNull Path file) throws IOException {
     if (Files.notExists(file)) return new ReplConfig(file);
-    var config = new GsonBuilder()
+    var config = newGsonBuilder()
       .registerTypeAdapter(ReplConfig.class, (InstanceCreator<ReplConfig>) type -> new ReplConfig(file))
       .create()
       .fromJson(Files.newBufferedReader(file), ReplConfig.class);
@@ -47,7 +50,16 @@ public class ReplConfig implements AutoCloseable {
   }
 
   @Override public void close() throws IOException {
-    var json = new Gson().toJson(this);
+    var json = newGsonBuilder()
+      .create()
+      .toJson(this);
     Files.writeString(configFile, json);
+  }
+
+  private static GsonBuilder newGsonBuilder() {
+    return new GsonBuilder()
+      .registerTypeAdapter(Color.class, new Color.Adapter())
+      .registerTypeAdapter(RenderOptions.class,
+        new RenderOptions.Adapter(IgnoringReporter.INSTANCE, RenderOptions.CLI_DEFAULT));
   }
 }

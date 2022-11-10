@@ -29,4 +29,6 @@ module aya.cli {
 
   opens org.aya.cli.library.json to com.google.gson;
   opens org.aya.cli.repl to aya.repl;
+  exports org.aya.cli.repl.render;
+  opens org.aya.cli.repl.render to aya.repl;
 }

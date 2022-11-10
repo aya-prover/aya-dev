@@ -3,6 +3,7 @@
 package org.aya.pretty.backend.string;
 
 import org.aya.pretty.backend.string.style.UnixTermStylist;
+import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
@@ -19,6 +20,12 @@ public class StringPrinterConfig extends PrinterConfig.Basic {
 
   @Override public @NotNull StringStylist getStylist() {
     return (StringStylist) super.getStylist();
+  }
+
+  public static @NotNull StringPrinterConfig unixTerminal(
+    @NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily,
+    int pageWidth, boolean unicode) {
+    return new StringPrinterConfig(new UnixTermStylist(colorScheme, styleFamily), pageWidth, unicode);
   }
 
   public static @NotNull StringPrinterConfig unixTerminal(@NotNull StyleFamily styleFamily, int pageWidth, boolean unicode) {
