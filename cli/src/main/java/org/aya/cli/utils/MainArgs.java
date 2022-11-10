@@ -76,6 +76,8 @@ public class MainArgs {
   public DistillFormat prettyFormat;
   @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.")
   public String prettyDir;
+  @Option(names = {"--style"}, description = "The color theme of pretty printing." + CANDIDATES, defaultValue = "emacs")
+  public PredefinedStyle renderStyle;
   @Option(names = {"--trace"}, description = "Enable tracing.")
   public boolean enableTrace;
   @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message.")
@@ -90,6 +92,11 @@ public class MainArgs {
 
   public ImmutableSeq<String> modulePaths() {
     return modulePaths == null ? ImmutableSeq.empty() : ImmutableSeq.from(modulePaths);
+  }
+
+  public enum PredefinedStyle {
+    emacs,
+    intellij,
   }
 
   public enum DistillStage {

@@ -7,12 +7,15 @@ import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.plct.PLCTReport;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
+import org.aya.cli.repl.render.RenderOptions;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.printer.PrinterConfig;
+import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
@@ -48,11 +51,21 @@ public class Main extends MainArgs implements Callable<Integer> {
     var outputFile = compile.outputFile;
     var filePath = Paths.get(inputFile);
     var outputPath = outputFile == null ? null : Paths.get(outputFile);
-    var distillOptions = ReplConfig.loadFromDefault().distillerOptions;
+    var replConfig = ReplConfig.loadFromDefault();
+    var distillOptions = replConfig.distillerOptions;
     var reporter = CliReporter.stdio(!asciiOnly, distillOptions, verbosity);
+    var renderOptions = replConfig.renderOptions;
+    if (renderStyle != null) {
+      renderOptions = switch (renderStyle) {
+        case emacs -> new RenderOptions(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT);
+        case intellij -> new RenderOptions(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT);
+      };
+    }
+    replConfig.close();
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
       prettyStage,
       prettyFormat,
+      renderOptions,
       Paths.get(prettyDir != null ? prettyDir : ".")
     ) : null;
     var flags = new CompilerFlags(message, interruptedTrace,
