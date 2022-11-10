@@ -197,7 +197,7 @@ subprojects {
   }
 
   if (hasProperty("signing.keyId") && isRelease) signing {
-    useGpgCmd()
+    if (!hasProperty("signing.useBuiltinGpg")) useGpgCmd()
     sign(publishing.publications["maven"])
   }
 }
