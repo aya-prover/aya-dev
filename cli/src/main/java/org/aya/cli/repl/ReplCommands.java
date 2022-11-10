@@ -3,7 +3,7 @@
 package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.parse.AyaGKParserImpl;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.distill.Codifier;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
@@ -50,7 +50,7 @@ public interface ReplCommands {
 
   @NotNull Command SHOW_PARSE_TREE = new Command(ImmutableSeq.of("parse-tree"), "Show the parse tree of the given expression") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
-      var parseTree = new AyaGKParserImpl(repl.replCompiler.reporter).parseNode(code.code());
+      var parseTree = new AyaParserImpl(repl.replCompiler.reporter).parseNode(code.code());
       return Result.ok(parseTree.toDebugString(), true);
     }
   };
