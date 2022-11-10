@@ -207,18 +207,17 @@ public final class ExprTycker extends Tycker {
         }
         yield res;
       }
-      case Expr.App appE -> {
-        var f = synthesize(appE.function());
+      case Expr.App(var sourcePos, var appF, var argument) -> {
+        var f = synthesize(appF);
         if (f.wellTyped() instanceof ErrorTerm || f.type() instanceof ErrorTerm) yield f;
         var app = f.wellTyped();
-        var argument = appE.argument();
         var fTy = whnf(f.type());
         var argLicit = argument.explicit();
         if (fTy instanceof MetaTerm fTyHole) {
           // [ice] Cannot 'generatePi' because 'generatePi' takes the current contextTele,
           // but it may contain variables absent from the 'contextTele' of 'fTyHole.ref.core'
           var pi = fTyHole.asPi(argLicit);
-          unifier(appE.sourcePos(), Ordering.Eq).compare(fTy, pi, null);
+          unifier(sourcePos, Ordering.Eq).compare(fTy, pi, null);
           fTy = whnf(fTy);
         }
         PathTerm.Cube cube;
@@ -238,7 +237,7 @@ public final class ExprTycker extends Tycker {
               tup = ensurePiOrPath(pi.body());
               pi = tup._1;
               if (tup._2 != null) cube = tup._2;
-            } else yield fail(appE, new ErrorTerm(pi.body()), new LicitError.UnexpectedImplicitArg(argument));
+            } else yield fail(expr, new ErrorTerm(pi.body()), new LicitError.UnexpectedImplicitArg(argument));
           }
           tup = ensurePiOrPath(pi.subst(subst));
           pi = tup._1;
@@ -429,7 +428,6 @@ public final class ExprTycker extends Tycker {
         if (!(typeWHNF instanceof SigmaTerm(var params)))
           yield fail(expr, term, BadTypeError.sigmaCon(state, expr, typeWHNF));
         var againstTele = params.view();
-        var last = params.last().type();
         var subst = new Subst(MutableMap.create());
         for (var iter = it.iterator(); iter.hasNext(); ) {
           var item = iter.next();

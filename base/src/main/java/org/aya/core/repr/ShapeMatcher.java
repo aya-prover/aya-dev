@@ -103,7 +103,7 @@ public record ShapeMatcher(
     if (shape instanceof CodeShape.ParamShape.Any) return true;
     if (shape instanceof CodeShape.ParamShape.Optional opt) return matchParam(opt.param(), param);
     if (shape instanceof CodeShape.ParamShape.Licit licit) {
-      if (! matchLicit(licit.kind(), param.explicit())) return false;
+      if (!matchLicit(licit.kind(), param.explicit())) return false;
       return matchTerm(licit.type(), param.type());
     }
     return false;
@@ -127,7 +127,7 @@ public record ShapeMatcher(
     @NotNull SeqLike<C> cores,
     @NotNull BiFunction<S, C, Boolean> matcher) {
     if (!shapes.sizeEquals(cores)) return false;
-    if (ordered) return shapes.zipView(cores).allMatch(tup -> matcher.apply(tup._1, tup._2));
+    if (ordered) return shapes.allMatchWith(cores, matcher::apply);
     var remainingShapes = MutableLinkedList.from(shapes);
     for (var core : cores) {
       var index = remainingShapes.indexWhere(shape -> matcher.apply(shape, core));
