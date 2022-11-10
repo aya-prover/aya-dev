@@ -11,6 +11,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.reporter.IgnoringReporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -56,7 +57,7 @@ public class ReplConfig implements AutoCloseable {
     Files.writeString(configFile, json);
   }
 
-  private static GsonBuilder newGsonBuilder() {
+  @VisibleForTesting public static GsonBuilder newGsonBuilder() {
     return new GsonBuilder()
       .registerTypeAdapter(Color.class, new Color.Adapter())
       .registerTypeAdapter(RenderOptions.class,
