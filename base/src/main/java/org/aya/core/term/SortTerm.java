@@ -23,8 +23,7 @@ public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF {
 
   public @NotNull SortTerm succ() {
     return switch (kind) {
-      case Type -> new SortTerm(kind, lift + 1);
-      case Set -> new SortTerm(kind, lift + 1);
+      case Type, Set -> new SortTerm(kind, lift + 1);
       case Prop -> Type0;
       case ISet -> Set1;
     };

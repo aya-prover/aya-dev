@@ -97,13 +97,11 @@ public sealed abstract class TermComparator permits Unifier {
     var rift = r.lift();
     return switch (l.kind()) {
       case Type -> switch (r.kind()) {
-        case Type -> lift <= rift;
-        case Set -> lift <= rift;
+        case Type, Set -> lift <= rift;
         case default -> false;
       };
       case ISet -> switch (r.kind()) {
-        case ISet -> true;
-        case Set -> true;
+        case ISet, Set -> true;
         case default -> false;
       };
       case Prop -> r.kind() == SortKind.Prop;
