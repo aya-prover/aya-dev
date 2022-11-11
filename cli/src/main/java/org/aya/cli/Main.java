@@ -54,18 +54,18 @@ public class Main extends MainArgs implements Callable<Integer> {
     var replConfig = ReplConfig.loadFromDefault();
     var distillOptions = replConfig.distillerOptions;
     var reporter = CliReporter.stdio(!asciiOnly, distillOptions, verbosity);
-    var renderOptions = replConfig.renderOptions;
+    var colorScheme = replConfig.renderOptions.colorScheme();
     if (renderStyle != null) {
-      renderOptions = switch (renderStyle) {
-        case emacs -> new RenderOptions(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT);
-        case intellij -> new RenderOptions(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT);
+      colorScheme = switch (renderStyle) {
+        case emacs -> AyaColorScheme.EMACS;
+        case intellij -> AyaColorScheme.INTELLIJ;
       };
     }
     replConfig.close();
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
       prettyStage,
       prettyFormat,
-      renderOptions,
+      colorScheme,
       Paths.get(prettyDir != null ? prettyDir : ".")
     ) : null;
     var flags = new CompilerFlags(message, interruptedTrace,
