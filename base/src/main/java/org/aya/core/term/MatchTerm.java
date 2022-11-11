@@ -13,7 +13,7 @@ public record MatchTerm(
 ) implements Term {
   public @NotNull Option<Term> tryMatch() {
     for (var clause : clauses) {
-      var subst = PatMatcher.tryBuildSubstTerms(null, clause.patterns(), discriminant.view());
+      var subst = PatMatcher.tryBuildSubstTerms(false, clause.patterns(), discriminant.view());
       if (subst.isOk()) {
         return Option.some(clause.body().rename().subst(subst.get()));
       } else if (subst.getErr()) return Option.none();

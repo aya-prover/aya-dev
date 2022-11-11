@@ -26,15 +26,13 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  * @apiNote Use {@link PatMatcher#tryBuildSubstTerms} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
- * <p>
- * FIXME[hoshino]: localCtx is useless now, it can be replaced with a {@code (inferable : Boolean)}
  */
-public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @NotNull UnaryOperator<@NotNull Term> pre) {
+public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull UnaryOperator<@NotNull Term> pre) {
   public static Result<Subst, Boolean> tryBuildSubstTerms(
-    @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
+    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms
   ) {
-    return tryBuildSubstTerms(localCtx, pats, terms, UnaryOperator.identity());
+    return tryBuildSubstTerms(inferMeta, pats, terms, UnaryOperator.identity());
   }
 
   /**
@@ -43,10 +41,10 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
    * err(false) if fails positively, err(true) if fails negatively
    */
   public static Result<Subst, Boolean> tryBuildSubstTerms(
-    @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
+    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms, @NotNull UnaryOperator<Term> pre
   ) {
-    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), localCtx, pre);
+    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), inferMeta, pre);
     try {
       for (var pat : pats.zip(terms)) matchy.match(pat);
       return Result.ok(matchy.subst());
@@ -122,7 +120,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
     // the MetaPat didn't solve
     if (todo == null) {
       // don't infer
-      if (localCtx == null) throw new Mismatch(true);
+      if (!inferMeta) throw new Mismatch(true);
       var bindSubst = new PatTraversal.MetaBind(subst, metaPat.ref().fakeBind().definition());
       var metalized = bindSubst.apply(pat);
       // solve as pat
