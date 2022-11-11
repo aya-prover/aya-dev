@@ -29,7 +29,6 @@ import java.util.function.BiPredicate;
  *
  * @param <T>
  */
-@SuppressWarnings("JavadocReference")
 public interface Shaped<T> {
   @NotNull Term type();
 

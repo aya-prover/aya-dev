@@ -10,7 +10,6 @@ import org.aya.util.Arg;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 public record ConCall(

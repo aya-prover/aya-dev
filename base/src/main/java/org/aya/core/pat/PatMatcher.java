@@ -11,10 +11,10 @@ import kala.tuple.Tuple2;
 import org.aya.core.term.*;
 import org.aya.core.visitor.PatTraversal;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  * @apiNote Use {@link PatMatcher#tryBuildSubstTerms} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
- *
+ * <p>
  * FIXME[hoshino]: localCtx is useless now, it can be replaced with a {@code (inferable : Boolean)}
  */
 public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @NotNull UnaryOperator<@NotNull Term> pre) {
@@ -123,7 +123,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
     if (todo == null) {
       // don't infer
       if (localCtx == null) throw new Mismatch(true);
-      var bindSubst = new PatTraversal.MetaBind(this.subst, metaPat.ref().fakeBind().definition());
+      var bindSubst = new PatTraversal.MetaBind(subst, metaPat.ref().fakeBind().definition());
       var metalized = bindSubst.apply(pat);
       // solve as pat
       metaPat.ref().solution().set(metalized);

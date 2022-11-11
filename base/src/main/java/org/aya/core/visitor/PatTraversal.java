@@ -74,28 +74,19 @@ public interface PatTraversal extends Function<Pat, Pat> {
 
   /**
    * subst all binding to corresponding MetaPat
-   *
+   * <p>
    * TODO[hoshino]: A PatTraversal or a method of Pat?
    */
-  class MetaBind implements NoMeta {
-    public final @NotNull Subst subst;
-    public final @NotNull SourcePos definition;
-
-    public MetaBind(@NotNull Subst subst, @NotNull SourcePos definition) {
-      this.subst = subst;
-      this.definition = definition;
-    }
-
-    @Override
-    public @NotNull Pat post(@NotNull Pat pat) {
-      if (pat instanceof Pat.Bind bind) {
+  record MetaBind(@NotNull Subst subst, @NotNull SourcePos definition) implements NoMeta {
+    @Override public @NotNull Pat post(@NotNull Pat pat) {
+      if (pat instanceof Pat.Bind(var explicit, var bind, var type)) {
         // every new var use the same definition location
-        var newVar = new LocalVar(bind.bind().name(), definition);
+        var newVar = new LocalVar(bind.name(), definition);
         // we are no need to add newVar to some localCtx, this will be done when we inline the Pat.Meta
-        var meta = new Pat.Meta(bind.explicit(), MutableValue.create(), newVar, bind.type());
+        var meta = new Pat.Meta(explicit, MutableValue.create(), newVar, type);
 
         // add to subst
-        subst.addDirectly(bind.bind(), meta.toTerm());
+        subst.addDirectly(bind, meta.toTerm());
 
         return meta;
       }
