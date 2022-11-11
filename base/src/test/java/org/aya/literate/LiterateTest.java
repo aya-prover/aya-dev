@@ -4,10 +4,10 @@ package org.aya.literate;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.repl.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.MainArgs;
+import org.aya.pretty.style.AyaColorScheme;
 import org.aya.test.TestRunner;
 import org.aya.util.error.Global;
 import org.aya.util.reporter.ThrowingReporter;
@@ -35,7 +35,7 @@ public class LiterateTest {
     var distillInfo = new CompilerFlags.DistillInfo(
       MainArgs.DistillStage.scoped,
       MainArgs.DistillFormat.plain,
-      RenderOptions.CLI_DEFAULT,
+      AyaColorScheme.INTELLIJ,
       literate);
     var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, false, distillInfo, ImmutableSeq.empty(), null);
     var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, TestRunner.LOCATOR, null);

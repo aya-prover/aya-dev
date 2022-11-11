@@ -64,9 +64,7 @@ public interface StmtOps<P> extends ExprTraversal<P> {
         ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> visitPattern(pattern, pp)));
         ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, pp));
       }
-      case TeleDecl.StructField field -> {
-        field.body = field.body.map(expr -> visitExpr(expr, pp));
-      }
+      case TeleDecl.StructField field -> field.body = field.body.map(expr -> visitExpr(expr, pp));
     }
   }
 

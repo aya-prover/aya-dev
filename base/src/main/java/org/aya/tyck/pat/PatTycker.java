@@ -507,7 +507,7 @@ public final class PatTycker {
     var body = Def.dataBody(dataRef);
     for (var ctor : body) {
       if (name != null && ctor.ref() != name) continue;
-      var matchy = mischa(dataCall, ctor, exprTycker.localCtx, exprTycker.state);
+      var matchy = mischa(dataCall, ctor, exprTycker.state);
       if (matchy.isOk()) return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
       // For absurd pattern, we look at the next constructor
       if (name == null) {
@@ -532,10 +532,9 @@ public final class PatTycker {
     return null;
   }
 
-  public static Result<Subst, Boolean>
-  mischa(DataCall dataCall, CtorDef ctor, @Nullable LocalCtx ctx, @NotNull TyckState state) {
+  public static Result<Subst, Boolean> mischa(DataCall dataCall, CtorDef ctor, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) {
-      return PatMatcher.tryBuildSubstTerms(ctx, ctor.pats, dataCall.args().view().map(Arg::term), t -> t.normalize(state, NormalizeMode.WHNF));
+      return PatMatcher.tryBuildSubstTerms(ctor.pats, dataCall.args().view().map(Arg::term), t -> t.normalize(state, NormalizeMode.WHNF));
     } else {
       return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
     }

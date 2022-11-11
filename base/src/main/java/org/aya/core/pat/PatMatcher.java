@@ -11,12 +11,10 @@ import kala.tuple.Tuple2;
 import org.aya.core.term.*;
 import org.aya.core.visitor.PatTraversal;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Formula;
-import org.aya.tyck.env.LocalCtx;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -26,27 +24,24 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  * @apiNote Use {@link PatMatcher#tryBuildSubstTerms} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
- *
- * FIXME[hoshino]: localCtx is useless now, it can be replaced with a {@code (inferable : Boolean)}
  */
-public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @NotNull UnaryOperator<@NotNull Term> pre) {
+public record PatMatcher(@NotNull Subst subst, @NotNull UnaryOperator<@NotNull Term> pre) {
   public static Result<Subst, Boolean> tryBuildSubstTerms(
-    @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
+    @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms
   ) {
-    return tryBuildSubstTerms(localCtx, pats, terms, UnaryOperator.identity());
+    return tryBuildSubstTerms(pats, terms, UnaryOperator.identity());
   }
 
   /**
-   * @param localCtx not null only if we expect the presence of {@link MetaPatTerm}
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
   public static Result<Subst, Boolean> tryBuildSubstTerms(
-    @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
+    @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms, @NotNull UnaryOperator<Term> pre
   ) {
-    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), localCtx, pre);
+    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), pre);
     try {
       for (var pat : pats.zip(terms)) matchy.match(pat);
       return Result.ok(matchy.subst());
@@ -84,7 +79,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
       case Pat.Meta ignored -> throw new InternalException("Pat.Meta is not allowed");
       case Pat.End end -> {
         term = pre.apply(term);
-        if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
+        if (!(term.asFormula() instanceof Formula.Lit<Term>(var one) && one == end.isOne())) {
           throw new Mismatch(true);
         }
       }
@@ -121,9 +116,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
 
     // the MetaPat didn't solve
     if (todo == null) {
-      // don't infer
-      if (localCtx == null) throw new Mismatch(true);
-      var bindSubst = new PatTraversal.MetaBind(this.subst, metaPat.ref().fakeBind().definition());
+      var bindSubst = new PatTraversal.MetaBind(subst, metaPat.ref().fakeBind().definition());
       var metalized = bindSubst.apply(pat);
       // solve as pat
       metaPat.ref().solution().set(metalized);
@@ -135,7 +128,7 @@ public record PatMatcher(@NotNull Subst subst, @Nullable LocalCtx localCtx, @Not
 
   private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
-    lpats.view().zip(terms).forEachChecked(this::match);
+    lpats.zipView(terms).forEachChecked(this::match);
   }
 
   private void match(@NotNull Tuple2<Pat, Term> pp) throws Mismatch {

@@ -53,7 +53,7 @@ public record Conquer(
         var conditions = ctor.ref().core.clauses;
         for (int i = 0, size = conditions.size(); i < size; i++) {
           var condition = conditions.get(i);
-          var matchy = PatMatcher.tryBuildSubstTerms(null, params,
+          var matchy = PatMatcher.tryBuildSubstTerms(params,
             condition.patterns().view().map(Pat::toTerm),
             t -> t.normalize(tycker.state, NormalizeMode.WHNF));
           if (matchy.isOk()) {
