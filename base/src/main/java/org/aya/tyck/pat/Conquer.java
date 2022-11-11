@@ -50,9 +50,9 @@ public record Conquer(
       case Pat.Ctor ctor -> {
         var params = ctor.params();
         for (var sub : params) visit(sub, nth);
-        var conditions = ctor.ref().core.clauses;
-        for (int i = 0, size = conditions.size(); i < size; i++) {
-          var condition = conditions.get(i);
+        var faces = ctor.ref().core.clauses.clauses();
+        for (int i = 0, size = faces.size(); i < size; i++) {
+          var condition = faces.get(i);
           var matchy = PatMatcher.tryBuildSubstTerms(params,
             condition.patterns().view().map(Pat::toTerm),
             t -> t.normalize(tycker.state, NormalizeMode.WHNF));

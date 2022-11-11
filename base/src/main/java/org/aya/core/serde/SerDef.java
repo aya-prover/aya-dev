@@ -56,14 +56,14 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerPat> pats,
     @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
     @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
-    @NotNull Partial<SerTerm> clauses,
+    @NotNull Partial.Split<SerTerm> clauses,
     @NotNull SerTerm result, boolean coerce
   ) implements SerDef {
     @Override public @NotNull CtorDef de(SerTerm.@NotNull DeState state) {
       return new CtorDef(
         state.resolve(data), state.newDef(self), pats.map(pat -> pat.de(state)),
         ownerTele.map(tele -> tele.de(state)), selfTele.map(tele -> tele.de(state)),
-        SerTerm.PartEl.de(state, clauses),
+        clauses.fmap(t -> t.de(state)),
         result.de(state), coerce);
     }
   }

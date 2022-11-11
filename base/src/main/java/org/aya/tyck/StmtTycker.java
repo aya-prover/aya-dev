@@ -15,6 +15,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.pat.Conquer;
@@ -124,7 +125,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(ImmutableMap.from(
           dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
         var elabClauses = tycker.elaboratePartial(ctor.clauses, dataCall);
-        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses, dataCall, ctor.coerce);
+        if (!(elabClauses instanceof Partial.Split<Term> split)) {
+          throw new AssertionError("This does not seem right, " + elabClauses);
+        }
+        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, split, dataCall, ctor.coerce);
         dataConcrete.checkedBody.append(elaborated);
         yield elaborated;
       }

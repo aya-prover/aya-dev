@@ -62,7 +62,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serializePats(ctor.pats),
         serializeParams(ctor.ownerTele),
         serializeParams(ctor.selfTele),
-        partial(ctor.clauses),
+        ctor.clauses.fmap(this::serialize),
         serialize(ctor.result),
         ctor.coerce
       );

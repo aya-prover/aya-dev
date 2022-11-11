@@ -18,14 +18,14 @@ import java.util.Objects;
 public final class CtorDef extends SubLevelDef {
   public final @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef;
   public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
-  public final @NotNull Partial<Term> clauses;
+  public final @NotNull Partial.Split<Term> clauses;
   public final @NotNull ImmutableSeq<Pat> pats;
 
   public CtorDef(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef, @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> pats,
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
-    @NotNull Partial<Term> clauses, @NotNull Term result, boolean coerce
+    @NotNull Partial.Split<Term> clauses, @NotNull Term result, boolean coerce
   ) {
     super(ownerTele, selfTele, result, coerce);
     ref.core = this;
