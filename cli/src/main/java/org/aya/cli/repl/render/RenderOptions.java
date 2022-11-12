@@ -10,6 +10,7 @@ import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 public class RenderOptions {
@@ -73,5 +74,17 @@ public class RenderOptions {
       case Default -> AyaStyleFamily.DEFAULT;
       case Cli -> AyaStyleFamily.ADAPTIVE_CLI;
     };
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RenderOptions that = (RenderOptions) o;
+    return colorScheme == that.colorScheme && styleFamily == that.styleFamily && Objects.equals(path, that.path);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(colorScheme, styleFamily, path);
   }
 }

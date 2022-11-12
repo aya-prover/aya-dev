@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class RenderOptionsTest {
   @Test public void serde() {
     var gson = ReplConfig.newGsonBuilder().create();
-    var json = gson.toJson(RenderOptions.CLI_DEFAULT);
+    var json = gson.toJson(new RenderOptions());
     assertEquals(
-      RenderOptions.CLI_DEFAULT,
+      new RenderOptions(),
       gson.fromJson(json, RenderOptions.class));
   }
 }
