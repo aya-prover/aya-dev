@@ -52,7 +52,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var replConfig = ReplConfig.loadFromDefault();
     var distillOptions = replConfig.distillerOptions;
     var reporter = CliReporter.stdio(!asciiOnly, distillOptions, verbosity);
-    var colorScheme = replConfig.renderOptions.colorScheme();
+    var colorScheme = replConfig.renderOptions.buildColorScheme();
     if (renderStyle != null) {
       colorScheme = switch (renderStyle) {
         case emacs -> AyaColorScheme.EMACS;

@@ -161,7 +161,7 @@ public interface ReplCommands {
 
     private static Command.Result invalidColorScheme(@NotNull String argument) {
       // TODO: Generate from RenderOptions.ColorSchemeName ?
-      return Command.Result.err("Invalid color scheme: " + argument + " (valid: Emacs, IntelliJ, <Path>)", true);
+      return Command.Result.err("Invalid color scheme: " + argument + " (valid: Emacs, IntelliJ, \"<Path>\")", true);
     }
 
     /**
@@ -178,7 +178,7 @@ public interface ReplCommands {
      * :color
      * Custom (/home/cirno/vscode/some_color_scheme.json)
      * :color Custom
-     * Invalid color scheme: Custom (valid: Emacs, IntelliJ, &lt;Path&gt;)
+     * Invalid color scheme: Custom (valid: Emacs, IntelliJ, "&lt;Path&gt;")
      * </pre>
      */
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String argument) {

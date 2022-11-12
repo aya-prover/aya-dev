@@ -48,6 +48,16 @@ public class RenderOptions {
     return ctor.apply(generateColorScheme(colorScheme), generateStyleFamily(styleFamily));
   }
 
+  public @NotNull ColorScheme buildColorScheme() {
+    if (colorScheme == null) return generateColorScheme(DEFAULT_COLOR_SCHEME);
+    return generateColorScheme(this.colorScheme);
+  }
+
+  public @NotNull StyleFamily buildStyleFamily() {
+    if (styleFamily == null) return generateStyleFamily(DEFAULT_STYLE_FAMILY);
+    return generateStyleFamily(this.styleFamily);
+  }
+
   public static @NotNull ColorScheme generateColorScheme(@NotNull ColorSchemeName name) {
     return switch (name) {
       case Emacs -> AyaColorScheme.EMACS;
