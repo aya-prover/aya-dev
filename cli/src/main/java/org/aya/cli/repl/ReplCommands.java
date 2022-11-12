@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.repl.render.RenderOptions;
 import org.aya.distill.Codifier;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
@@ -15,7 +17,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public interface ReplCommands {
   record Code(@NotNull String code) {}
@@ -138,6 +142,80 @@ public interface ReplCommands {
   @NotNull Command HELP = new Command(ImmutableSeq.of("?", "help"), "Describe a selected command or show all commands") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable ReplUtil.HelpItem argument) {
       return ReplUtil.invokeHelp(repl.commandManager, argument);
+    }
+  };
+
+  @NotNull Command COLOR = new Command(ImmutableSeq.of("color"), "Display the current color scheme or switch to another") {
+    private static Command.Result displayColorScheme(@NotNull AyaRepl repl) {
+      var options = repl.config.renderOptions;
+      var name = options.colorScheme;
+
+      if (name == null) {
+        return Command.Result.ok(RenderOptions.DEFAULT_COLOR_SCHEME.name() + "(null detected)", true);
+      } if (name == RenderOptions.ColorSchemeName.Custom) {
+        return Command.Result.ok(RenderOptions.ColorSchemeName.Custom.name() + " (" + options.path + ")", true);
+      } else {
+        return Command.Result.ok(name.name(), true);
+      }
+    }
+
+    private static Command.Result invalidColorScheme(@NotNull String argument) {
+      // TODO: Generate from RenderOptions.ColorSchemeName ?
+      return Command.Result.err("Invalid color scheme: " + argument + " (valid: Emacs, IntelliJ, <Path>)", true);
+    }
+
+    /**
+     * Goal:
+     * <pre>
+     * :color
+     * Emacs
+     * :color intellij
+     * IntelliJ
+     * :color
+     * IntelliJ
+     * :color "/home/cirno/vscode/some_color_scheme.json"
+     * Custom (/home/cirno/vscode/some_color_scheme.json)
+     * :color
+     * Custom (/home/cirno/vscode/some_color_scheme.json)
+     * :color Custom
+     * Invalid color scheme: Custom (valid: Emacs, IntelliJ, &lt;Path&gt;)
+     * </pre>
+     */
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String argument) {
+      var nameOrPath = argument == null ? "" : argument.trim();
+
+      if (nameOrPath.isEmpty()) {
+        // Display color scheme name
+        return displayColorScheme(repl);
+      } else {
+        var old = repl.config.getRenderOptions();
+
+        if (nameOrPath.startsWith("\"") && nameOrPath.endsWith("\"")) {
+          // Path case
+          try {
+            var path = Paths.get(nameOrPath.substring(1, nameOrPath.length() - 1));
+
+            old.path = path.toAbsolutePath().toString();
+            old.colorScheme = RenderOptions.ColorSchemeName.Custom;
+          } catch (InvalidPathException e) {
+            return invalidColorScheme(nameOrPath);
+          }
+        } else {
+          // Name case
+          var matches = ImmutableArray.from(RenderOptions.ColorSchemeName.values())
+            .firstOption(x -> x.name().equalsIgnoreCase(nameOrPath));
+
+          if (matches.isEmpty() || matches.get() == RenderOptions.ColorSchemeName.Custom) {
+            return invalidColorScheme(nameOrPath);
+          }
+
+          old.colorScheme = matches.get();
+        }
+
+        repl.config.setRenderOptions(old);
+
+        return displayColorScheme(repl);
+      }
     }
   };
 }
