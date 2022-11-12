@@ -274,7 +274,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           var pats = Doc.commaList(ctor.pats.view().map(pat -> pat(pat, Outer.Free)));
           line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
         } else line1 = Doc.sep(Doc.symbol("|"), doc);
-        yield Doc.cblock(line1, 2, visitClauses(ctor.clauses));
+        yield Doc.cblock(line1, 2, partial(options, ctor.clauses));
       }
       case StructDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
         linkDef(def.ref(), STRUCT_CALL),

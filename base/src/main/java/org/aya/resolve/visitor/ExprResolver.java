@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
+import kala.tuple.Tuple;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -49,13 +50,17 @@ public record ExprResolver(
   @NotNull MutableStack<Where> where,
   @Nullable Consumer<TyckUnit> parentAdd
 ) implements EndoExpr {
+
   public ExprResolver(@NotNull Context ctx, @NotNull Options options) {
     this(ctx, options, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), null);
   }
 
+  public static final @NotNull Options RESTRICTIVE = new Options(false, false);
+  public static final @NotNull Options LAX = new Options(true, true);
+
   @NotNull Expr.PartEl partial(@NotNull Context ctx, Expr.PartEl el) {
     var partial = el.clauses().map(e ->
-      Tuple.of(resolve(e._1, ctx), resolve(e._2, ctx)));
+      Tuple.of(enter(ctx).apply(e._1), enter(ctx).apply(e._2)));
     if (partial.zipView(el.clauses())
       .allMatch(p -> p._1._1 == p._2._1 && p._1._2 == p._2._2)) return el;
     return new Expr.PartEl(el.sourcePos(), partial);
