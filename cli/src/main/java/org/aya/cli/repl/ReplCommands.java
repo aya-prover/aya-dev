@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
+import com.google.gson.JsonParseException;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
@@ -151,8 +152,9 @@ public interface ReplCommands {
       var name = options.colorScheme;
 
       if (name == null) {
-        return Command.Result.ok(RenderOptions.DEFAULT_COLOR_SCHEME.name() + "(null detected)", true);
-      } if (name == RenderOptions.ColorSchemeName.Custom) {
+        return Command.Result.ok(RenderOptions.DEFAULT_COLOR_SCHEME.name() + " (null detected)", true);
+      }
+      if (name == RenderOptions.ColorSchemeName.Custom) {
         return Command.Result.ok(RenderOptions.ColorSchemeName.Custom.name() + " (" + options.path + ")", true);
       } else {
         return Command.Result.ok(name.name(), true);
@@ -184,6 +186,7 @@ public interface ReplCommands {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String argument) {
       var nameOrPath = argument == null ? "" : argument.trim();
 
+      // I don't like to extract the common part...
       if (nameOrPath.isEmpty()) {
         // Display color scheme name
         return displayColorScheme(repl);
@@ -212,9 +215,73 @@ public interface ReplCommands {
           old.colorScheme = matches.get();
         }
 
-        repl.config.setRenderOptions(old);
+        try {
+          repl.config.setRenderOptions(old);
 
-        return displayColorScheme(repl);
+          return displayColorScheme(repl);
+        } catch (IOException | JsonParseException ex) {
+          return Command.Result.err("Failed to switching color scheme, cause: " + ex.getLocalizedMessage(), true);
+        }
+      }
+    }
+  };
+
+  @NotNull Command STYLE = new Command(ImmutableSeq.of("style"), "Display the current style/Switch to another style") {
+    private static @NotNull Command.Result displayStyleFamily(@NotNull AyaRepl repl) {
+      var styleFamily = repl.config.renderOptions.styleFamily;
+
+      if (styleFamily == null) {
+        return Command.Result.ok(RenderOptions.DEFAULT_STYLE_FAMILY.name() + " (null detected)", true);
+      } else {
+        return Command.Result.ok(styleFamily.name(), true);
+      }
+    }
+
+    private static @NotNull Command.Result invalidStyleFamily(@NotNull String argument) {
+      var valid = ImmutableArray.from(RenderOptions.StyleFamilyName.values())
+        .view()
+        .map(Enum::name)
+        .joinToString(", ");
+
+      return Command.Result.err("Invalid style family: " + argument + " (valid: " + valid + ")", true);
+    }
+
+    /**
+     * Goal:
+     * <pre>
+     * :style
+     * Cli
+     * :style default
+     * Default
+     * :style
+     * Default
+     * :style "/home/foo.json"
+     * Invalid style family: "/home/foo.json" (valid: Default, Cli)
+     * </pre>
+     */
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String argument) {
+      var name = argument == null ? "" : argument;
+
+      if (name.isBlank()) {
+        return displayStyleFamily(repl);
+      } else {
+        var matches = ImmutableArray.from(RenderOptions.StyleFamilyName.values())
+          .view()
+          .firstOption(x -> x.name().equalsIgnoreCase(name));
+
+        if (matches.isEmpty()) return invalidStyleFamily(name);
+
+        // do switch
+        var options = repl.config.getRenderOptions();
+        options.styleFamily = matches.get();
+
+        try {
+          repl.config.setRenderOptions(options);
+
+          return displayStyleFamily(repl);
+        } catch (IOException ex) {
+          return Command.Result.err("Failed to switching style family, cause: " + ex.getLocalizedMessage(), true);
+        }
       }
     }
   };

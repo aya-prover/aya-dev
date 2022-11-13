@@ -4,6 +4,7 @@ package org.aya.cli.repl;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import com.google.gson.JsonParseException;
 import org.aya.cli.repl.render.Color;
 import org.aya.cli.repl.render.RenderOptions;
 import org.aya.generic.util.AyaHome;
@@ -31,25 +32,33 @@ public class ReplConfig implements AutoCloseable {
    * DO NOT modify this directly, use setRenderOptions instead.
    */
   public @NotNull RenderOptions renderOptions = new RenderOptions();
-  public transient @NotNull StringStylist stylist = renderOptions.buildStylist(UnixTermStylist::new);
+  public transient @NotNull StringStylist stylist;
 
   public ReplConfig(@NotNull Path file) {
     this.configFile = file;
+    this.stylist = renderOptions.justBuildStylist(UnixTermStylist::new);
   }
 
-  private void checkInitialization() {
+  private void checkInitialization() throws JsonParseException {
     if (distillerOptions.map.isEmpty()) distillerOptions.reset();
 
     // maintain the Nullability, renderOptions is probably null after deserializing
     if (renderOptions == null) renderOptions = new RenderOptions();
-    stylist = renderOptions.buildStylist(UnixTermStylist::new);
+    try {
+      stylist = renderOptions.buildStylist(UnixTermStylist::new);
+    } catch (IOException | JsonParseException ex) {
+      // don't halt loading
+      // TODO: report error but don't stop
+      // use default stylist but not change the user's settings.
+      stylist = new RenderOptions().justBuildStylist(UnixTermStylist::new);
+    }
   }
 
-  public static @NotNull ReplConfig loadFromDefault() throws IOException {
+  public static @NotNull ReplConfig loadFromDefault() throws IOException, JsonParseException {
     return ReplConfig.loadFrom(AyaHome.ayaHome().resolve("repl_config.json"));
   }
 
-  public static @NotNull ReplConfig loadFrom(@NotNull Path file) throws IOException {
+  public static @NotNull ReplConfig loadFrom(@NotNull Path file) throws IOException, JsonParseException {
     if (Files.notExists(file)) return new ReplConfig(file);
     var config = newGsonBuilder()
       .registerTypeAdapter(ReplConfig.class, (InstanceCreator<ReplConfig>) type -> new ReplConfig(file))
@@ -72,7 +81,7 @@ public class ReplConfig implements AutoCloseable {
       .registerTypeAdapter(Color.class, new Color.Adapter());
   }
 
-  public void setRenderOptions(@NotNull RenderOptions options) {
+  public void setRenderOptions(@NotNull RenderOptions options) throws IOException, JsonParseException {
     this.stylist = options.buildStylist(UnixTermStylist::new);
     this.renderOptions = options;
   }

@@ -2,6 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.render;
 
+import com.google.gson.JsonParseException;
+import kala.control.Try;
+import org.aya.cli.repl.render.vscode.ColorTheme;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.printer.Stylist;
@@ -10,6 +13,8 @@ import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
@@ -35,23 +40,23 @@ public class RenderOptions {
   public @Nullable RenderOptions.ColorSchemeName colorScheme = DEFAULT_COLOR_SCHEME;
   public @Nullable RenderOptions.StyleFamilyName styleFamily = DEFAULT_STYLE_FAMILY;
 
-  // TODO: used if colorScheme was set to Custom.
   public @Nullable String path = null;
 
-  public @NotNull <T extends Stylist> T buildStylist(BiFunction<ColorScheme, StyleFamily, T> ctor) {
-    var colorScheme = this.colorScheme == null
-      ? DEFAULT_COLOR_SCHEME
-      : this.colorScheme;
-    var styleFamily = this.styleFamily == null
-      ? DEFAULT_STYLE_FAMILY
-      : this.styleFamily;
-
-    return ctor.apply(generateColorScheme(colorScheme), generateStyleFamily(styleFamily));
+  public @NotNull <T extends Stylist> T buildStylist(@NotNull BiFunction<ColorScheme, StyleFamily, T> ctor) throws IOException, JsonParseException {
+    return ctor.apply(buildColorScheme(), buildStyleFamily());
   }
 
-  public @NotNull ColorScheme buildColorScheme() {
-    if (colorScheme == null) return generateColorScheme(DEFAULT_COLOR_SCHEME);
-    return generateColorScheme(this.colorScheme);
+  public @NotNull <T extends Stylist> T justBuildStylist(@NotNull BiFunction<ColorScheme, StyleFamily, T> ctor) {
+    try {
+      return buildStylist(ctor);
+    } catch (IOException | JsonParseException ex) {
+      return Try.sneakyThrow(ex);
+    }
+  }
+
+  public @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {
+    if (colorScheme == null) return generateColorScheme(DEFAULT_COLOR_SCHEME, null);
+    return generateColorScheme(this.colorScheme, path == null ? null : Path.of(path));
   }
 
   public @NotNull StyleFamily buildStyleFamily() {
@@ -59,12 +64,17 @@ public class RenderOptions {
     return generateStyleFamily(this.styleFamily);
   }
 
-  public static @NotNull ColorScheme generateColorScheme(@NotNull ColorSchemeName name) {
+  public static @NotNull ColorScheme generateColorScheme(@NotNull ColorSchemeName name, @Nullable Path path) throws IOException, JsonParseException {
     return switch (name) {
       case Emacs -> AyaColorScheme.EMACS;
       case IntelliJ -> AyaColorScheme.INTELLIJ;
       case Custom -> {
-        throw new UnsupportedOperationException("TODO");
+        if (path == null) throw new IllegalArgumentException("Unable to generate a custom color scheme without a path");
+
+        // IOException from here
+        var colorTheme = ColorTheme.loadFrom(path).getOrThrow();
+
+        yield colorTheme.buildColorScheme(null);
       }
     };
   }
