@@ -3,6 +3,7 @@
 package org.aya.cli.repl;
 
 import com.google.gson.JsonParseException;
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
@@ -162,8 +163,14 @@ public interface ReplCommands {
     }
 
     private static Command.Result invalidColorScheme(@NotNull String argument) {
-      // TODO: Generate from RenderOptions.ColorSchemeName ?
-      return Command.Result.err("Invalid color scheme: " + argument + " (valid: Emacs, IntelliJ, \"<Path>\")", true);
+      var valids = ImmutableArray.from(RenderOptions.ColorSchemeName.values())
+        .view()
+        .filter(x -> x != RenderOptions.ColorSchemeName.Custom)
+        .map(Enum::name)
+        .concat(Seq.of("\"<Path>\""))
+        .joinToString(", ");
+
+      return Command.Result.err("Invalid color scheme: " + argument + " (valid: " + valids + ")", true);
     }
 
     /**

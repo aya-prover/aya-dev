@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-// TODO: move to another module
 public class EitherAdapter implements JsonSerializer<Either<?, ?>>, JsonDeserializer<Either<?, ?>> {
   /**
    * Avoiding deserialize {@code "123"} to {@code (Integer) 123} instead of {@code (String) "123"}
