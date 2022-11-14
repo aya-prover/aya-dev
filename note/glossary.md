@@ -75,5 +75,10 @@ data Vec (n : Nat) (A : Type)
 + DefEq -- 其实就是 conversion check 或者 unification
   + 很多地方叫 definitional equality 或者 judgmental equality
 
+## 各种同义术语
+
+* `Array` 和 `List`，它们都是指语法上的列表：`[ a, b, c ]`
+* `Hole` 和 `Meta`，它们都是指需要自动推断的 “洞”：`{? expr ?}` 和（aya 生成的） `def foo : _ => ...`
+
 ## 其他
 + LSP -- Language Server Protocol
