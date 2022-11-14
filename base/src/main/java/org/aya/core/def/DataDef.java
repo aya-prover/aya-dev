@@ -8,7 +8,6 @@ import org.aya.core.term.ConCall;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
-import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,27 +42,27 @@ public final class DataDef extends UserDef.Type {
    * @author ice1000
    */
   public record CtorTelescopes(
-    @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<Term.Param> conTele
+    @NotNull ImmutableSeq<Term.Param> ownerTele,
+    @NotNull ImmutableSeq<Term.Param> selfTele
   ) {
     public CtorTelescopes {
-      dataTele = dataTele.map(Term.Param::implicitify);
+      ownerTele = ownerTele.map(Term.Param::implicitify);
     }
 
     public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar, int ulift) {
       return new ConCall(fromCtor(conVar), conVar,
-        dataTele.map(Term.Param::toArg),
+        ownerTele.map(Term.Param::toArg),
         ulift,
-        conTele.map(Term.Param::toArg));
+        selfTele.map(Term.Param::toArg));
     }
 
     public @NotNull CtorTelescopes rename() {
-      return new CtorTelescopes(dataTele.map(Term.Param::rename),
-        conTele.map(Term.Param::rename));
+      return new CtorTelescopes(ownerTele.map(Term.Param::rename),
+        selfTele.map(Term.Param::rename));
     }
 
     public @NotNull ImmutableSeq<Term.Param> params() {
-      return dataTele.concat(conTele);
+      return ownerTele.concat(selfTele);
     }
   }
 }
