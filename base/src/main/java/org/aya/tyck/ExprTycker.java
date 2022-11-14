@@ -150,14 +150,12 @@ public final class ExprTycker extends Tycker {
           var fieldName = sp.justName();
           if (!(projectee.type() instanceof StructCall structCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
-          var structCore = structCall.ref().core;
-          if (structCore == null) throw new UnsupportedOperationException("TODO");
           // TODO[ice]: instantiate the type
           if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
 
-          var structSubst = DeltaExpander.buildSubst(structCore.telescope(), structCall.args());
+          var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
           var teleRenamed = tele.map(Term.Param::rename);
           var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(Term.Param::toArg));
@@ -298,7 +296,7 @@ public final class ExprTycker extends Tycker {
         var def = (DataDef) match._1;
 
         // preparing
-        var dataParam = def.telescope().first();
+        var dataParam = Def.defTele(def.ref).first();
         var sort = dataParam.type();    // the sort of type below.
         var hole = localCtx.freshHole(sort, arr.sourcePos());
         var type = new DataCall(def.ref(), 0, ImmutableSeq.of(

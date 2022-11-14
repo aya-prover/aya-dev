@@ -254,12 +254,12 @@ public sealed abstract class TermComparator permits Unifier {
 
   private record Pair(Term lhs, Term rhs) {}
 
-  private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
+  private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic> lhsRef) {
     var substMap = MutableMap.<AnyVar, Term>create();
-    for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
+    for (var pa : lhs.args().view().zip(Def.defTele(lhsRef))) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
-    return lhsRef.core.result().subst(substMap);
+    return Def.defResult(lhsRef).subst(substMap);
   }
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
@@ -269,7 +269,7 @@ public sealed abstract class TermComparator permits Unifier {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
       case StructCall type1 -> {
         var fieldSigs = type1.ref().core.fields;
-        var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
+        var paramSubst = Def.defTele(type1.ref()).view().zip(type1.args().view()).map(x ->
           Tuple.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
         var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
