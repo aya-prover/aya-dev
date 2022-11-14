@@ -46,12 +46,13 @@ public final class DataDef extends UserDef.Type {
     @NotNull ImmutableSeq<Term.Param> dataTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
+    public CtorTelescopes {
+      dataTele = dataTele.map(Term.Param::implicitify);
+    }
+
     public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar, int ulift) {
       return new ConCall(fromCtor(conVar), conVar,
-        dataTele.view()
-          .map(Term.Param::toArg)
-          .map(Arg::implicitify)
-          .toImmutableSeq(),
+        dataTele.map(Term.Param::toArg),
         ulift,
         conTele.map(Term.Param::toArg));
     }
