@@ -4,6 +4,7 @@ package org.aya.pretty.backend.latex;
 
 import kala.collection.Map;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
@@ -27,6 +28,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
       .replace("_", "\\_"));
   }
 
+  private static @NotNull Tuple2<String, String> id(@NotNull String name) {
+    return Tuple.of(name, name);
+  }
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
@@ -39,10 +43,8 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("_|_", "\\bot"),
     Tuple.of("~", "\\neg"),
     Tuple.of("**", "\\times"),
-    Tuple.of(":", ":"),
-    Tuple.of(".", "."),
-    Tuple.of("(", "("),
-    Tuple.of(")", ")"),
+    id(":"), id("."),
+    id("("), id(")"),
     Tuple.of("{", "\\{"),
     Tuple.of("}", "\\}")
   );
