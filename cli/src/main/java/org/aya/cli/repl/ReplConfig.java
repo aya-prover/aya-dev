@@ -36,7 +36,7 @@ public class ReplConfig implements AutoCloseable {
 
   public ReplConfig(@NotNull Path file) {
     this.configFile = file;
-    this.stylist = renderOptions.justBuildStylist(UnixTermStylist::new);
+    this.stylist = renderOptions.buildStylistUnchecked(UnixTermStylist::new);
   }
 
   private void checkInitialization() throws JsonParseException {
@@ -50,7 +50,7 @@ public class ReplConfig implements AutoCloseable {
       // don't halt loading
       // TODO: report error but don't stop
       // use default stylist but not change the user's settings.
-      stylist = new RenderOptions().justBuildStylist(UnixTermStylist::new);
+      stylist = new RenderOptions().buildStylistUnchecked(UnixTermStylist::new);
     }
   }
 

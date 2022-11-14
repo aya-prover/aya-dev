@@ -46,22 +46,18 @@ public class RenderOptions {
     return ctor.apply(buildColorScheme(), buildStyleFamily());
   }
 
-  public @NotNull <T extends Stylist> T justBuildStylist(@NotNull BiFunction<ColorScheme, StyleFamily, T> ctor) {
-    try {
-      return buildStylist(ctor);
-    } catch (IOException | JsonParseException ex) {
-      return Try.sneakyThrow(ex);
-    }
+  public @NotNull <T extends Stylist> T buildStylistUnchecked(@NotNull BiFunction<ColorScheme, StyleFamily, T> ctor) {
+    return Try.of(() -> buildStylist(ctor)).getOrThrow();
   }
 
   public @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {
     if (colorScheme == null) return generateColorScheme(DEFAULT_COLOR_SCHEME, null);
-    return generateColorScheme(this.colorScheme, path == null ? null : Path.of(path));
+    return generateColorScheme(colorScheme, path == null ? null : Path.of(path));
   }
 
   public @NotNull StyleFamily buildStyleFamily() {
     if (styleFamily == null) return generateStyleFamily(DEFAULT_STYLE_FAMILY);
-    return generateStyleFamily(this.styleFamily);
+    return generateStyleFamily(styleFamily);
   }
 
   public static @NotNull ColorScheme generateColorScheme(@NotNull ColorSchemeName name, @Nullable Path path) throws IOException, JsonParseException {
@@ -72,7 +68,7 @@ public class RenderOptions {
         if (path == null) throw new IllegalArgumentException("Unable to generate a custom color scheme without a path");
 
         // IOException from here
-        var colorTheme = ColorTheme.loadFrom(path).getOrThrow();
+        var colorTheme = ColorTheme.loadFrom(path).<IOException>getOrThrow();
 
         yield colorTheme.buildColorScheme(null);
       }
@@ -91,10 +87,5 @@ public class RenderOptions {
     if (o == null || getClass() != o.getClass()) return false;
     RenderOptions that = (RenderOptions) o;
     return colorScheme == that.colorScheme && styleFamily == that.styleFamily && Objects.equals(path, that.path);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(colorScheme, styleFamily, path);
   }
 }
