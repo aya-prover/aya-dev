@@ -80,8 +80,7 @@ public class RenderOptions {
 
   @Override public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    RenderOptions that = (RenderOptions) o;
+    if (!(o instanceof RenderOptions that)) return false;
     return colorScheme == that.colorScheme && styleFamily == that.styleFamily && Objects.equals(path, that.path);
   }
 }
