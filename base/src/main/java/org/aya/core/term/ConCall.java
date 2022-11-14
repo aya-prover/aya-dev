@@ -52,9 +52,9 @@ public record ConCall(
     }
 
     public @NotNull Head descent(@NotNull UnaryOperator<@NotNull Term> f) {
-      var args = dataArgs().map(arg -> arg.descent(f));
-      if (args.sameElements(dataArgs(), true)) return this;
-      return new Head(dataRef(), ref(), ulift(), args);
+      var args = dataArgs.map(arg -> arg.descent(f));
+      if (args.sameElements(dataArgs, true)) return this;
+      return new Head(dataRef, ref, ulift, args);
     }
   }
 }
