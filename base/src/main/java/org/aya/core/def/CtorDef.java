@@ -44,7 +44,7 @@ public final class CtorDef extends SubLevelDef {
    * @return first component: ctor's owner telescope, second component: ctor's self telescope
    */
   public static @NotNull DataDef.CtorTelescopes
-  telescopes(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> defVar, @NotNull ExprTycker tycker) {
+  telescopes(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> defVar) {
     var concrete = defVar.concrete;
     if (concrete != null) {
       // See StmtTycker.java#L222

@@ -724,7 +724,7 @@ public final class ExprTycker extends Tycker {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
       var type = PiTerm.make(tele, Def.defResult(conVar));
-      var telescopes = CtorDef.telescopes(conVar, this).rename();
+      var telescopes = CtorDef.telescopes(conVar).rename();
       var body = telescopes.toConCall(conVar, 0);
       return new TermResult(LamTerm.make(telescopes.params(), body), type);
     } else if (var.core instanceof FieldDef || var.concrete instanceof TeleDecl.StructField) {
