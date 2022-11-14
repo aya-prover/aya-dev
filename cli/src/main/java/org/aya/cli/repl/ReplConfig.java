@@ -92,6 +92,7 @@ public class ReplConfig implements AutoCloseable {
 
     newOne.colorScheme = this.renderOptions.colorScheme;
     newOne.styleFamily = this.renderOptions.styleFamily;
+    newOne.path = this.renderOptions.path;
 
     return newOne;
   }
