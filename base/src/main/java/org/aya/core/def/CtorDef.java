@@ -7,6 +7,7 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
+import org.aya.tyck.ExprTycker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -40,17 +41,22 @@ public final class CtorDef extends SubLevelDef {
   }
 
   /**
-   * @return first component: data's telescope, second component: con telescope
+   * @return first component: ctor's owner telescope, second component: ctor's self telescope
    */
   public static @NotNull DataDef.CtorTelescopes
   telescopes(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> defVar) {
-    var core = defVar.core;
-    if (core != null) return new DataDef.CtorTelescopes(core.ownerTele, core.selfTele);
-    var dataSignature = defVar.concrete.patternTele;
-    assert dataSignature != null;
-    var conSignature = defVar.concrete.signature;
-    assert conSignature != null;
-    return new DataDef.CtorTelescopes(dataSignature, conSignature.param());
+    var concrete = defVar.concrete;
+    if (concrete != null) {
+      // See the TeleDecl.DataCtor case of StmtTycker#tyckHeader
+      var patternTele = concrete.patternTele;
+      var signature = concrete.signature();
+
+      assert patternTele != null;
+      assert signature != null;
+
+      return new DataDef.CtorTelescopes(patternTele, signature.param());
+    }
+    return new DataDef.CtorTelescopes(defVar.core.ownerTele, defVar.core.selfTele);
   }
 
   public @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref() {

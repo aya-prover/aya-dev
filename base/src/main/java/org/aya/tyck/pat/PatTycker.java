@@ -23,7 +23,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
@@ -37,6 +36,7 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Arg;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -267,19 +267,13 @@ public final class PatTycker {
         var dataIsProp = (ctorRef.core.dataRef.concrete != null ? ctorRef.core.dataRef.concrete.ulift : ctorRef.core.dataRef.core.result).kind() == SortKind.Prop;
         if (!resultIsProp && dataIsProp) foundError(new PatternProblem.IllegalPropPat(ctor));
         var ctorCore = ctorRef.core;
-        // generate ownerTele arguments
-        //
-        // The correctness depends on that the `Param#ref`s of `CtorDef#ownerTele`
-        // are equal to the `Pat.Bind#bind`s (as they should).
-        var ownerTeleArgs = ctorCore.ownerTele.map(x ->
-          new RefTerm(x.ref()).subst(realCtor._2));
 
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp)._1.toImmutableSeq();
         var as = ctor.as();
-        var ret = new Pat.Ctor(licit, realCtor._3.ref(), ownerTeleArgs, patterns, dataCall);
+        var ret = new Pat.Ctor(licit, realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
           // as pattern === let, so don't add to localCtx
           addPatSubst(as, ret, term);
@@ -508,7 +502,9 @@ public final class PatTycker {
     for (var ctor : body) {
       if (name != null && ctor.ref() != name) continue;
       var matchy = mischa(dataCall, ctor, exprTycker.state);
-      if (matchy.isOk()) return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
+      if (matchy.isOk()) {
+        return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
+      }
       // For absurd pattern, we look at the next constructor
       if (name == null) {
         // Is blocked
