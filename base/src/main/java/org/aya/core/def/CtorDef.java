@@ -47,7 +47,7 @@ public final class CtorDef extends SubLevelDef {
   telescopes(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> defVar) {
     var concrete = defVar.concrete;
     if (concrete != null) {
-      // See StmtTycker.java#L222
+      // See the TeleDecl.DataCtor case of StmtTycker#tyckHeader
       var patternTele = concrete.patternTele;
       var signature = concrete.signature();
 

@@ -153,9 +153,6 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  /**
-   *
-   */
   record Ctor(
     boolean explicit,
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
