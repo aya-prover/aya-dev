@@ -8,6 +8,7 @@ import org.aya.core.term.ConCall;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,18 +46,19 @@ public final class DataDef extends UserDef.Type {
     @NotNull ImmutableSeq<Term.Param> dataTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
-    public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar) {
+    public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar, int ulift) {
       return new ConCall(fromCtor(conVar), conVar,
-        dataTele.map(Term.Param::toArg),
-        0, // TODO: is this correct?
+        dataTele.view()
+          .map(Term.Param::toArg)
+          .map(Arg::implicitify)
+          .toImmutableSeq(),
+        ulift,
         conTele.map(Term.Param::toArg));
     }
 
     public @NotNull CtorTelescopes rename() {
-      return new CtorTelescopes(dataTele.view()
-        .map(Term.Param::implicitify)
-        .map(Term.Param::rename)
-        .toImmutableSeq(), conTele.map(Term.Param::rename));
+      return new CtorTelescopes(dataTele.map(Term.Param::rename),
+        conTele.map(Term.Param::rename));
     }
 
     public @NotNull ImmutableSeq<Term.Param> params() {

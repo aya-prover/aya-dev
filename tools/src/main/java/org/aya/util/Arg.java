@@ -13,6 +13,10 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public record Arg<T>(@Override @NotNull T term, @Override boolean explicit) implements BinOpParser.Elem<T> {
+  public @NotNull Arg<T> implicitify() {
+    return new Arg<>(term, false);
+  }
+
   public @NotNull Arg<T> update(@NotNull T term) {
     return term == term() ? this : new Arg<>(term, explicit);
   }

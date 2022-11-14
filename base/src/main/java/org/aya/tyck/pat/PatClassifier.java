@@ -260,8 +260,8 @@ public record PatClassifier(
           var conTele2 = conTele.toImmutableSeq();
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
-          var matches = clauses
-            .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTele2, ctor.ref()));
+          var matches = clauses.mapIndexedNotNull((ix, subPats) ->
+            matches(subPats, ix, conTele2, ctor.ref()));
           // Push this constructor to the error message builder
           builder.shift(new PatTree(ctor.ref().name(), explicit, conTele2.count(Term.Param::explicit)));
           // In case no pattern matches this constructor,

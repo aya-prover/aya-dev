@@ -508,7 +508,9 @@ public final class PatTycker {
     for (var ctor : body) {
       if (name != null && ctor.ref() != name) continue;
       var matchy = mischa(dataCall, ctor, exprTycker.state);
-      if (matchy.isOk()) return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
+      if (matchy.isOk()) {
+        return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
+      }
       // For absurd pattern, we look at the next constructor
       if (name == null) {
         // Is blocked

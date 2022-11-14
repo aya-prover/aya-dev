@@ -6,8 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
-import org.aya.util.Arg;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -38,6 +38,9 @@ public record ConCall(
     return head.dataArgs.view().concat(conArgs).toImmutableSeq();
   }
 
+  /**
+   * @param dataArgs the arguments to the data type, NOT the constructor patterns!!
+   */
   public record Head(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef,
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
