@@ -198,7 +198,7 @@ public interface ReplCommands {
         // Display color scheme name
         return displayColorScheme(repl);
       } else {
-        var old = repl.config.getRenderOptions();
+        var old = repl.config.clone();
 
         if (nameOrPath.startsWith("\"") && nameOrPath.endsWith("\"")) {
           // Path case
@@ -266,29 +266,24 @@ public interface ReplCommands {
      * Invalid style family: "/home/foo.json" (valid: Default, Cli)
      * </pre>
      */
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String argument) {
-      var name = argument == null ? "" : argument;
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String name) {
+      if (name == null || name.isBlank()) return displayStyleFamily(repl);
+      var matches = ImmutableArray.from(RenderOptions.StyleFamilyName.values())
+        .view()
+        .firstOption(x -> name.equalsIgnoreCase(x.name()));
 
-      if (name.isBlank()) {
+      if (matches.isEmpty()) return invalidStyleFamily(name);
+
+      // do switch
+      var options = repl.config.clone();
+      options.styleFamily = matches.get();
+
+      try {
+        repl.config.setRenderOptions(options);
+
         return displayStyleFamily(repl);
-      } else {
-        var matches = ImmutableArray.from(RenderOptions.StyleFamilyName.values())
-          .view()
-          .firstOption(x -> x.name().equalsIgnoreCase(name));
-
-        if (matches.isEmpty()) return invalidStyleFamily(name);
-
-        // do switch
-        var options = repl.config.getRenderOptions();
-        options.styleFamily = matches.get();
-
-        try {
-          repl.config.setRenderOptions(options);
-
-          return displayStyleFamily(repl);
-        } catch (IOException ex) {
-          return Command.Result.err("Failed to switching style family, cause: " + ex.getLocalizedMessage(), true);
-        }
+      } catch (IOException ex) {
+        return Command.Result.err("Failed to switching style family, cause: " + ex.getLocalizedMessage(), true);
       }
     }
   };

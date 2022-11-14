@@ -14,6 +14,7 @@ import org.aya.pretty.backend.string.style.UnixTermStylist;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
@@ -31,7 +32,7 @@ public class ReplConfig implements AutoCloseable {
   /**
    * DO NOT modify this directly, use setRenderOptions instead.
    */
-  public @NotNull RenderOptions renderOptions = new RenderOptions();
+  public @UnknownNullability RenderOptions renderOptions = new RenderOptions();
   public transient @NotNull StringStylist stylist;
 
   public ReplConfig(@NotNull Path file) {
@@ -86,8 +87,8 @@ public class ReplConfig implements AutoCloseable {
     this.renderOptions = options;
   }
 
-  @Contract(" -> new")
-  public @NotNull RenderOptions getRenderOptions() {
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @Contract(" -> new") public @NotNull RenderOptions clone() {
     var newOne = new RenderOptions();
 
     newOne.colorScheme = this.renderOptions.colorScheme;

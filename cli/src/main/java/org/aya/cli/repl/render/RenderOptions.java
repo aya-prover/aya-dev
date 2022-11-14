@@ -12,6 +12,7 @@ import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,8 +38,8 @@ public class RenderOptions {
   public final static @NotNull ColorSchemeName DEFAULT_COLOR_SCHEME = ColorSchemeName.Emacs;
   public final static @NotNull StyleFamilyName DEFAULT_STYLE_FAMILY = StyleFamilyName.Cli;
 
-  public @Nullable RenderOptions.ColorSchemeName colorScheme = DEFAULT_COLOR_SCHEME;
-  public @Nullable RenderOptions.StyleFamilyName styleFamily = DEFAULT_STYLE_FAMILY;
+  public RenderOptions.@UnknownNullability ColorSchemeName colorScheme = DEFAULT_COLOR_SCHEME;
+  public RenderOptions.@UnknownNullability StyleFamilyName styleFamily = DEFAULT_STYLE_FAMILY;
 
   public @Nullable String path = null;
 
