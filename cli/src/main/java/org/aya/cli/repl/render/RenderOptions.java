@@ -3,11 +3,9 @@
 package org.aya.cli.repl.render;
 
 import com.google.gson.JsonParseException;
-import kala.control.Try;
 import org.aya.cli.repl.render.vscode.ColorTheme;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
-import org.aya.pretty.printer.Stylist;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +15,6 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 public class RenderOptions {
   public enum ColorSchemeName {
@@ -46,14 +43,6 @@ public class RenderOptions {
   public void checkInitialize() {
     if (colorScheme == null) colorScheme = DEFAULT_COLOR_SCHEME;
     if (styleFamily == null) styleFamily = DEFAULT_STYLE_FAMILY;
-  }
-
-  public @NotNull <T extends Stylist> T buildStylist(@NotNull BiFunction<ColorScheme, StyleFamily, T> ctor) throws IOException, JsonParseException {
-    return ctor.apply(buildColorScheme(), buildStyleFamily());
-  }
-
-  public @NotNull <T extends Stylist> T buildStylistUnchecked(@NotNull BiFunction<ColorScheme, StyleFamily, T> ctor) {
-    return Try.of(() -> buildStylist(ctor)).getOrThrow();
   }
 
   public @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {

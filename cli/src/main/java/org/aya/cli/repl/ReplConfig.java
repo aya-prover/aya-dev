@@ -11,6 +11,8 @@ import org.aya.generic.util.AyaHome;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.backend.string.style.UnixTermStylist;
+import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +36,11 @@ public class ReplConfig implements AutoCloseable {
    */
   public @UnknownNullability RenderOptions renderOptions = new RenderOptions();
   public transient @NotNull StringStylist stylist;
+  public static final UnixTermStylist DEFAULT_STYLIST = new UnixTermStylist(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI);
 
   public ReplConfig(@NotNull Path file) {
     this.configFile = file;
-    this.stylist = renderOptions.buildStylistUnchecked(UnixTermStylist::new);
+    this.stylist = DEFAULT_STYLIST;
   }
 
   private void checkInitialization() throws JsonParseException {
@@ -47,12 +50,12 @@ public class ReplConfig implements AutoCloseable {
     if (renderOptions == null) renderOptions = new RenderOptions();
     try {
       renderOptions.checkInitialize();
-      stylist = renderOptions.buildStylist(UnixTermStylist::new);
+      stylist = new UnixTermStylist(renderOptions.buildColorScheme(), renderOptions.buildStyleFamily());
     } catch (IOException | JsonParseException ex) {
       // don't halt loading
-      // TODO: report error but don't stop
       // use default stylist but not change the user's settings.
-      stylist = new RenderOptions().buildStylistUnchecked(UnixTermStylist::new);
+      // TODO: report error but don't stop
+      stylist = DEFAULT_STYLIST;
     }
   }
 
@@ -84,7 +87,7 @@ public class ReplConfig implements AutoCloseable {
   }
 
   public void setRenderOptions(@NotNull RenderOptions options) throws IOException, JsonParseException {
-    this.stylist = options.buildStylist(UnixTermStylist::new);
+    this.stylist = new UnixTermStylist(options.buildColorScheme(), options.buildStyleFamily());
     this.renderOptions = options;
   }
 
