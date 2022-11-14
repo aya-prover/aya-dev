@@ -43,6 +43,11 @@ public class RenderOptions {
 
   public @Nullable String path = null;
 
+  public void checkInitialize() {
+    if (colorScheme == null) colorScheme = DEFAULT_COLOR_SCHEME;
+    if (styleFamily == null) styleFamily = DEFAULT_STYLE_FAMILY;
+  }
+
   public @NotNull <T extends Stylist> T buildStylist(@NotNull BiFunction<ColorScheme, StyleFamily, T> ctor) throws IOException, JsonParseException {
     return ctor.apply(buildColorScheme(), buildStyleFamily());
   }
@@ -52,32 +57,22 @@ public class RenderOptions {
   }
 
   public @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {
-    if (colorScheme == null) return generateColorScheme(DEFAULT_COLOR_SCHEME, null);
-    return generateColorScheme(colorScheme, path == null ? null : Path.of(path));
-  }
-
-  public @NotNull StyleFamily buildStyleFamily() {
-    if (styleFamily == null) return generateStyleFamily(DEFAULT_STYLE_FAMILY);
-    return generateStyleFamily(styleFamily);
-  }
-
-  public static @NotNull ColorScheme generateColorScheme(@NotNull ColorSchemeName name, @Nullable Path path) throws IOException, JsonParseException {
-    return switch (name) {
+    return switch (colorScheme) {
       case Emacs -> AyaColorScheme.EMACS;
       case IntelliJ -> AyaColorScheme.INTELLIJ;
       case Custom -> {
         if (path == null) throw new IllegalArgumentException("Unable to generate a custom color scheme without a path");
 
         // IOException from here
-        var colorTheme = ColorTheme.loadFrom(path).<IOException>getOrThrow();
+        var colorTheme = ColorTheme.loadFrom(Path.of(path)).<IOException>getOrThrow();
 
         yield colorTheme.buildColorScheme(null);
       }
     };
   }
 
-  public static @NotNull StyleFamily generateStyleFamily(@NotNull StyleFamilyName name) {
-    return switch (name) {
+  public @NotNull StyleFamily buildStyleFamily() {
+    return switch (styleFamily) {
       case Default -> AyaStyleFamily.DEFAULT;
       case Cli -> AyaStyleFamily.ADAPTIVE_CLI;
     };

@@ -31,6 +31,7 @@ public class VscColorTheme {
   public @Nullable Map<String, Color> colors;
   public @Nullable List<TokenColor> tokenColors;
 
+  // fallback strategy
   public final static Seq<String> SCOPE_KEYWORD = Seq.of("keyword");
   public final static Seq<String> SCOPE_FN_CALL = Seq.of("function", "entity.name.function");
   public final static Seq<String> SCOPE_GENERALIZED = Seq.of("type", "entity.name.type");

@@ -46,6 +46,7 @@ public class ReplConfig implements AutoCloseable {
     // maintain the Nullability, renderOptions is probably null after deserializing
     if (renderOptions == null) renderOptions = new RenderOptions();
     try {
+      renderOptions.checkInitialize();
       stylist = renderOptions.buildStylist(UnixTermStylist::new);
     } catch (IOException | JsonParseException ex) {
       // don't halt loading
