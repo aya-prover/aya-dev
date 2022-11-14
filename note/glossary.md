@@ -37,6 +37,21 @@
 + `Distill` -- pretty print 或格式化代码（format/reformat code）（参见：https://github.com/jonsterling/dreamtt/blob/main/frontend/Distiller.ml ）
 + `Stmt` -- 语句（statement），文件由一组 `Stmt` 组成
 
+## 构造子 Telescope 相关
+
+考虑这样的定义：
+
+```aya
+data Vec (n : Nat) (A : Type)
+| O, A => vnil
+| S n', A => vcons A (Vec n' A)
+```
+
++ `selfTele` -- 一个构造子所定义的参数：对于 `vnil`，它是空列表，对于 `vcons`，它是 `(_ : A) (_ : Vec n' A)`
++ `ownerTele` -- 一个构造子的 pattern 所需要的参数（或者说，它所提供的所有 `binding`）：对于 `vnil`，它是 `(A : Type)`，对于 `vcons`，它是 `(n' : Nat) (A : Type)`；
+                 对于非 simple indexed data types，它是 `dataTele`
++ `dataTele` -- 一个 data 的 telescope，对于 `Vec`，它是 `(n : Nat) (A : Type)` 
+
 ### 各种 Visitor
 
 + Fixpoint -- 输入和返回类型相同的函数，包含 `Substituter`, `Stripper`, `Normalizer` 等
