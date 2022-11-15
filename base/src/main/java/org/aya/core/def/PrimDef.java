@@ -285,7 +285,7 @@ public final class PrimDef extends TopLevelDef<Term> {
               new Term.Param(new LocalVar("phi"), IntervalTerm.INSTANCE, true),
               new Term.Param(new LocalVar("A"), SortTerm.Type0, true)
             ),
-            SortTerm.Type0, ID.PARTIAL),
+            SortTerm.Set0, ID.PARTIAL),
           ImmutableSeq.of(ID.I));
     }
 

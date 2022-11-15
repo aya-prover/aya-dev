@@ -7,12 +7,12 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,10 +35,10 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case FieldTerm access -> {
         var callRaw = whnf(term(access.of()));
         if (!(callRaw instanceof StructCall call)) yield ErrorTerm.typeOf(access);
-        var core = access.ref().core;
-        var subst = DeltaExpander.buildSubst(core.telescope(), access.fieldArgs())
-          .add(DeltaExpander.buildSubst(call.ref().core.telescope(), access.structArgs()));
-        yield core.result().subst(subst);
+        var field = access.ref();
+        var subst = DeltaExpander.buildSubst(Def.defTele(field), access.fieldArgs())
+          .add(DeltaExpander.buildSubst(Def.defTele(call.ref()), access.structArgs()));
+        yield Def.defResult(field).subst(subst);
       }
       case SigmaTerm sigma -> {
         var univ = sigma.params().view()

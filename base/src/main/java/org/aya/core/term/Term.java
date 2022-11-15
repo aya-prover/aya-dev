@@ -112,10 +112,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         if (args.sameElements(data.args(), true)) yield data;
         yield new DataCall(data.ref(), data.ulift(), args);
       }
-      case ConCall con -> {
-        var head = con.head().descent(f);
-        var args = con.conArgs().map(arg -> arg.descent(f));
-        if (head == con.head() && args.sameElements(con.conArgs(), true)) yield con;
+      case ConCall(var head0, var args0) -> {
+        var head = head0.descent(f);
+        var args = args0.map(arg -> arg.descent(f));
+        if (head == head0 && args.sameElements(args0, true)) yield this;
         yield new ConCall(head, args);
       }
       case FnCall fn -> {
@@ -272,7 +272,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
     if (result instanceof SortTerm sort) return sort;
     if (result instanceof ErrorTerm || result instanceof MetaTerm)
       return SortTerm.Type0; // TODO: improve LittleTyper and remove this hack
-    throw new InternalException("unreachable");
+    throw new InternalException("unreachable: " + result.toDoc(DistillerOptions.debug()).debugRender());
   }
 
   /**

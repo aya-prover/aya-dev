@@ -42,25 +42,27 @@ public final class DataDef extends UserDef.Type {
    * @author ice1000
    */
   public record CtorTelescopes(
-    @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<Term.Param> conTele
+    @NotNull ImmutableSeq<Term.Param> ownerTele,
+    @NotNull ImmutableSeq<Term.Param> selfTele
   ) {
-    public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar) {
+    public CtorTelescopes {
+      ownerTele = ownerTele.map(Term.Param::implicitify);
+    }
+
+    public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar, int ulift) {
       return new ConCall(fromCtor(conVar), conVar,
-        dataTele.map(Term.Param::toArg),
-        0, // TODO: is this correct?
-        conTele.map(Term.Param::toArg));
+        ownerTele.map(Term.Param::toArg),
+        ulift,
+        selfTele.map(Term.Param::toArg));
     }
 
     public @NotNull CtorTelescopes rename() {
-      return new CtorTelescopes(dataTele.view()
-        .map(Term.Param::implicitify)
-        .map(Term.Param::rename)
-        .toImmutableSeq(), conTele.map(Term.Param::rename));
+      return new CtorTelescopes(ownerTele.map(Term.Param::rename),
+        selfTele.map(Term.Param::rename));
     }
 
     public @NotNull ImmutableSeq<Term.Param> params() {
-      return dataTele.concat(conTele);
+      return ownerTele.concat(selfTele);
     }
   }
 }

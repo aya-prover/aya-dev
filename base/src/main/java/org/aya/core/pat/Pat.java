@@ -15,7 +15,6 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.util.Arg;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.generic.util.InternalException;
@@ -26,6 +25,7 @@ import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.pat.PatTycker;
+import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
@@ -153,24 +153,18 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  /**
-   * @param ownerArgs the arguments to the owner telescope of this Ctor.
-   */
   record Ctor(
     boolean explicit,
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
-    @NotNull ImmutableSeq<Term> ownerArgs,
     @NotNull ImmutableSeq<Pat> params,
     @NotNull DataCall type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx) {
-      // ownerArgs are not pattern, so they don't introduce any binding.
       params.forEach(pat -> pat.storeBindings(ctx));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       return new Ctor(explicit, ref,
-        ownerArgs.map(tycker::zonk),
         params.map(pat -> pat.zonk(tycker)),
         // The cast must succeed
         (DataCall) tycker.zonk(type));
@@ -178,11 +172,7 @@ public sealed interface Pat extends AyaDocile {
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var params = this.params.map(p -> p.inline(ctx));
-
-      return new Ctor(explicit, ref,
-        ownerArgs.map(PatTycker::inlineTerm),
-        params,
-        (DataCall) PatTycker.inlineTerm(type));
+      return new Ctor(explicit, ref, params, (DataCall) PatTycker.inlineTerm(type));
     }
   }
 
@@ -224,12 +214,12 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat makeZero(@NotNull CtorDef zero) {
-      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), ImmutableSeq.empty(), type);
+      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), type);
     }
 
     @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Arg<Pat> pat) {
       // TODO[ice]: Arg<Pat> in core
-      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.empty(), ImmutableSeq.of(pat.term()), type);
+      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.of(pat.term()), type);
     }
 
     @Override public @NotNull Pat destruct(int repr) {

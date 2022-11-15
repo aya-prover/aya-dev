@@ -23,7 +23,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
@@ -37,6 +36,7 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Arg;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -171,7 +171,7 @@ public final class PatTycker {
   ) {
   }
 
-  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature, boolean inProp) {
+  public LhsResult checkLhs(Pattern.Clause match, Def.Signature signature, boolean inProp) {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
@@ -247,7 +247,7 @@ public final class PatTycker {
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), licit, term);
-        var tupleIsProp = sigma.computeSort(exprTycker.state, exprTycker.localCtx).kind() == SortKind.Prop;
+        var tupleIsProp = exprTycker.computeSort(sigma).kind() == SortKind.Prop;
         if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature(sigma.params(),
@@ -267,19 +267,13 @@ public final class PatTycker {
         var dataIsProp = (ctorRef.core.dataRef.concrete != null ? ctorRef.core.dataRef.concrete.ulift : ctorRef.core.dataRef.core.result).kind() == SortKind.Prop;
         if (!resultIsProp && dataIsProp) foundError(new PatternProblem.IllegalPropPat(ctor));
         var ctorCore = ctorRef.core;
-        // generate ownerTele arguments
-        //
-        // The correctness depends on that the `Param#ref`s of `CtorDef#ownerTele`
-        // are equal to the `Pat.Bind#bind`s (as they should).
-        var ownerTeleArgs = ctorCore.ownerTele.map(x ->
-          new RefTerm(x.ref()).subst(realCtor._2));
 
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp)._1.toImmutableSeq();
         var as = ctor.as();
-        var ret = new Pat.Ctor(licit, realCtor._3.ref(), ownerTeleArgs, patterns, dataCall);
+        var ret = new Pat.Ctor(licit, realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
           // as pattern === let, so don't add to localCtx
           addPatSubst(as, ret, term);
@@ -336,7 +330,7 @@ public final class PatTycker {
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
    * @return (wellTyped patterns, sig.result ())
    */
-  public @NotNull Tuple2<SeqView<Pat>, Term>
+  private @NotNull Tuple2<SeqView<Pat>, Term>
   visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Arg<Pattern>> stream, @Nullable Pattern outerPattern, boolean resultIsProp) {
     var results = MutableList.<Pat>create();
     // last pattern which user given (not aya generated)
@@ -508,7 +502,9 @@ public final class PatTycker {
     for (var ctor : body) {
       if (name != null && ctor.ref() != name) continue;
       var matchy = mischa(dataCall, ctor, exprTycker.state);
-      if (matchy.isOk()) return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
+      if (matchy.isOk()) {
+        return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
+      }
       // For absurd pattern, we look at the next constructor
       if (name == null) {
         // Is blocked
@@ -534,7 +530,7 @@ public final class PatTycker {
 
   public static Result<Subst, Boolean> mischa(DataCall dataCall, CtorDef ctor, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) {
-      return PatMatcher.tryBuildSubstTerms(ctor.pats, dataCall.args().view().map(Arg::term), t -> t.normalize(state, NormalizeMode.WHNF));
+      return PatMatcher.tryBuildSubstTerms(true, ctor.pats, dataCall.args().view().map(Arg::term), t -> t.normalize(state, NormalizeMode.WHNF));
     } else {
       return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
     }

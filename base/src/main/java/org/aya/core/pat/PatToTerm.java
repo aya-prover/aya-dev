@@ -38,7 +38,7 @@ public class PatToTerm {
       .map(p -> new Arg<>(visit(p._1), p._2.explicit()))
       .toImmutableSeq();
     return new ConCall(data.ref(), ctor.ref(),
-      ctor.ownerArgs().map(x -> new Arg<>(x, false)),
+      data.args().map(Arg::implicitify),
       data.ulift(), args);
   }
 }

@@ -85,7 +85,11 @@ public class NormalizeTest {
       def pure {A : Type} (x : A) : List A => x :< nil
       def infix >>= {A B : Type} (l : List A) (f : A -> List B) : List B => join (map f l)
       
-      def t1 => pure zero >>= (\\ a => pure (suc zero) >>= (\\ b => pure (a + b)))
+      def t1 => do {
+        a <- pure zero,
+        b <- pure (suc zero),
+        pure (a + b)
+      }
       def t2 => pure (zero + suc zero)
       """);
     var state = new TyckState(res._1);

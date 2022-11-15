@@ -49,8 +49,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.IntPredicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -150,14 +151,12 @@ public final class ExprTycker extends Tycker {
           var fieldName = sp.justName();
           if (!(projectee.type() instanceof StructCall structCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
-          var structCore = structCall.ref().core;
-          if (structCore == null) throw new UnsupportedOperationException("TODO");
           // TODO[ice]: instantiate the type
           if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
 
-          var structSubst = DeltaExpander.buildSubst(structCore.telescope(), structCall.args());
+          var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
           var teleRenamed = tele.map(Term.Param::rename);
           var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(Term.Param::toArg));
@@ -188,14 +187,14 @@ public final class ExprTycker extends Tycker {
             // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
             // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
             // See also: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
-            Function<Integer, Boolean> post = usages -> {
+            IntPredicate post = usages -> {
               if (usages != 0) bad.typeSubst = typeSubst;
               return usages == 0;
             };
             return switch (typeSubst) {
-              case LamTerm(var param, var body) -> post.apply(body.findUsages(param.ref()));
+              case LamTerm(var param, var body) -> post.test(body.findUsages(param.ref()));
               case PLamTerm(var params, var body) ->
-                post.apply(params.view().map(body::findUsages).foldLeft(0, Integer::sum));
+                post.test(params.collect(Collectors.summingInt(body::findUsages)));
               default -> {
                 bad.stuck = true;
                 yield false;
@@ -222,7 +221,7 @@ public final class ExprTycker extends Tycker {
         }
         PathTerm.Cube cube;
         PiTerm pi;
-        var subst = new Subst(MutableMap.create());
+        var subst = new Subst();
         try {
           var tup = ensurePiOrPath(fTy);
           pi = tup._1;
@@ -298,7 +297,7 @@ public final class ExprTycker extends Tycker {
         var def = (DataDef) match._1;
 
         // preparing
-        var dataParam = def.telescope().first();
+        var dataParam = Def.defTele(def.ref).first();
         var sort = dataParam.type();    // the sort of type below.
         var hole = localCtx.freshHole(sort, arr.sourcePos());
         var type = new DataCall(def.ref(), 0, ImmutableSeq.of(
@@ -725,7 +724,7 @@ public final class ExprTycker extends Tycker {
       var tele = Def.defTele(conVar);
       var type = PiTerm.make(tele, Def.defResult(conVar));
       var telescopes = CtorDef.telescopes(conVar).rename();
-      var body = telescopes.toConCall(conVar);
+      var body = telescopes.toConCall(conVar, 0);
       return new TermResult(LamTerm.make(telescopes.params(), body), type);
     } else if (var.core instanceof FieldDef || var.concrete instanceof TeleDecl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
