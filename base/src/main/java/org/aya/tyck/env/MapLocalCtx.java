@@ -32,7 +32,7 @@ public record MapLocalCtx(
     return localMap.getOrNull(var);
   }
 
-  @Override public void put(@NotNull LocalVar var, @NotNull Term term) {
+  @Override public void putUnchecked(@NotNull LocalVar var, @NotNull Term term) {
     localMap.put(var, term);
   }
 

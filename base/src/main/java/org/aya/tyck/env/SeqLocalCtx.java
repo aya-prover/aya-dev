@@ -34,7 +34,7 @@ public record SeqLocalCtx(
     return localSeq.firstOption(p -> p.var.equals(var)).map(p -> p.type).getOrNull();
   }
 
-  @Override public void put(@NotNull LocalVar var, @NotNull Term term) {
+  @Override public void putUnchecked(@NotNull LocalVar var, @NotNull Term term) {
     localSeq.append(new P(var, term));
   }
 

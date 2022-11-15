@@ -122,13 +122,24 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   @Contract(mutates = "param1") void extractToLocal(@NotNull MutableList<Term.Param> dest);
   @Contract(pure = true) default @NotNull Term get(@NotNull LocalVar var) {
+    var res = getUnchecked(var);
+    if (res != null) return res;
+    throw new InternalException(var.name());
+  }
+
+  @Contract(pure = true) default @Nullable Term getUnchecked(@NotNull LocalVar var) {
     var ctx = this;
     while (ctx != null) {
       var res = ctx.getLocal(var);
       if (res != null) return res;
       ctx = ctx.parent();
     }
-    throw new InternalException(var.name());
+
+    return null;
+  }
+
+  @Contract(pure = true) default boolean contains(@NotNull LocalVar var) {
+    return getUnchecked(var) != null;
   }
 
   @Contract(pure = true) @Nullable Term getLocal(@NotNull LocalVar var);
@@ -136,7 +147,22 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     put(param.ref(), param.type());
   }
 
-  void put(@NotNull LocalVar var, @NotNull Term term);
+  /**
+   * Put a <b>new</b> var into the current local context
+   *
+   * @param var  a <b>new</b> var
+   * @param term the type of that var
+   * @implNote panic is expected when the var is duplicated
+   */
+  default void put(@NotNull LocalVar var, @NotNull Term term) {
+    assert !contains(var);
+    putUnchecked(var, term);
+  }
+
+  /**
+   * DON'T USE THIS, USE {@link LocalCtx#put(LocalVar, Term)} instead.
+   */
+  void putUnchecked(@NotNull LocalVar var, @NotNull Term tern);
   default boolean isEmpty() {
     if (isMeEmpty()) {
       var parent = parent();
