@@ -5,7 +5,9 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.control.Option;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.ClassDecl;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
@@ -230,16 +232,24 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var sig = new Def.Signature(dataSig.param(), dataCall);
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
-        var pat = ctor.patterns.isNotEmpty()
-          ? patTycker.visitPatterns(sig, ctor.patterns.view(), null, ctor.dataRef.concrete.ulift.kind() == SortKind.Prop)._1.toImmutableSeq()
+        PatTycker.LhsResult lhs = null;
+        if (ctor.patterns.isNotEmpty()) {
+          lhs = patTycker.checkLhs(new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false);
+          ctor.yetTyckedPat = lhs.preclause().patterns();
+          // Revert to the "after patterns" state
+          tycker.localCtx = lhs.gamma();
+          tycker.lets = lhs.bodySubst();
+        } else {
           // No patterns, leave it blank
-          : ImmutableSeq.<Pat>empty();
+          ctor.yetTyckedPat = ImmutableSeq.empty();
+        }
         var ctorSort = dataConcrete.ulift.kind() == SortKind.Prop ? SortTerm.Type0 : dataConcrete.ulift;
         var tele = tele(tycker, ctor.telescope, ctorSort);
         ctor.signature = new Def.Signature(tele, dataCall);
         ctor.yetTycker = patTycker;
-        ctor.yetTyckedPat = pat;
-        ctor.patternTele = pat.isEmpty() ? dataSig.param().map(Term.Param::implicitify) : Pat.extractTele(pat);
+        ctor.patternTele = ctor.yetTyckedPat.isEmpty()
+          ? dataSig.param().map(Term.Param::implicitify)
+          : Pat.extractTele(ctor.yetTyckedPat);
       }
       case TeleDecl.StructField field -> {
         if (field.signature != null) return;

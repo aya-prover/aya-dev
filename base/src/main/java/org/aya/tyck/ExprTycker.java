@@ -49,8 +49,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.IntPredicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -186,14 +187,14 @@ public final class ExprTycker extends Tycker {
             // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
             // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
             // See also: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
-            Function<Integer, Boolean> post = usages -> {
+            IntPredicate post = usages -> {
               if (usages != 0) bad.typeSubst = typeSubst;
               return usages == 0;
             };
             return switch (typeSubst) {
-              case LamTerm(var param, var body) -> post.apply(body.findUsages(param.ref()));
+              case LamTerm(var param, var body) -> post.test(body.findUsages(param.ref()));
               case PLamTerm(var params, var body) ->
-                post.apply(params.view().map(body::findUsages).foldLeft(0, Integer::sum));
+                post.test(params.collect(Collectors.summingInt(body::findUsages)));
               default -> {
                 bad.stuck = true;
                 yield false;
@@ -220,7 +221,7 @@ public final class ExprTycker extends Tycker {
         }
         PathTerm.Cube cube;
         PiTerm pi;
-        var subst = new Subst(MutableMap.create());
+        var subst = new Subst();
         try {
           var tup = ensurePiOrPath(fTy);
           pi = tup._1;

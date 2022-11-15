@@ -171,7 +171,7 @@ public final class PatTycker {
   ) {
   }
 
-  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature, boolean inProp) {
+  public LhsResult checkLhs(Pattern.Clause match, Def.Signature signature, boolean inProp) {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
@@ -247,7 +247,7 @@ public final class PatTycker {
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), licit, term);
-        var tupleIsProp = sigma.computeSort(exprTycker.state, exprTycker.localCtx).kind() == SortKind.Prop;
+        var tupleIsProp = exprTycker.computeSort(sigma).kind() == SortKind.Prop;
         if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature(sigma.params(),
@@ -330,7 +330,7 @@ public final class PatTycker {
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
    * @return (wellTyped patterns, sig.result ())
    */
-  public @NotNull Tuple2<SeqView<Pat>, Term>
+  private @NotNull Tuple2<SeqView<Pat>, Term>
   visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Arg<Pattern>> stream, @Nullable Pattern outerPattern, boolean resultIsProp) {
     var results = MutableList.<Pat>create();
     // last pattern which user given (not aya generated)
@@ -530,7 +530,7 @@ public final class PatTycker {
 
   public static Result<Subst, Boolean> mischa(DataCall dataCall, CtorDef ctor, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) {
-      return PatMatcher.tryBuildSubstTerms(ctor.pats, dataCall.args().view().map(Arg::term), t -> t.normalize(state, NormalizeMode.WHNF));
+      return PatMatcher.tryBuildSubstTerms(true, ctor.pats, dataCall.args().view().map(Arg::term), t -> t.normalize(state, NormalizeMode.WHNF));
     } else {
       return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
     }
