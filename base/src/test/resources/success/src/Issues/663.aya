@@ -1,0 +1,8 @@
+open import Data::List
+open import Data::Fin
+open import Arith::Nat
+
+def issue663 (xs : List) (Fin (length xs)) : Nat
+| nil, x => 0
+| cons xs, F1 => 1
+| cons xs, FS x => 2
