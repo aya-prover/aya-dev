@@ -21,6 +21,10 @@ public final class CtorDef extends SubLevelDef {
   public final @NotNull ImmutableSeq<Term.Matching> clauses;
   public final @NotNull ImmutableSeq<Pat> pats;
 
+  /**
+   * @param ownerTele See "/note/glossary.md"
+   * @param selfTele Ditto
+   */
   public CtorDef(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef, @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> pats,

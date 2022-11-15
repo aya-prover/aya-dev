@@ -42,6 +42,23 @@
 + Fixpoint -- 输入和返回类型相同的函数，包含 `Substituter`, `Stripper`, `Normalizer` 等
 + Consumer -- 不直接返回值（而是修改自身状态作为输出）的函数，比如 `UsageCounter`
 
+## 构造子 Telescope 相关
+
+考虑这样的定义：
+
+```aya
+data Vec (n : Nat) (A : Type)
+| O, A => vnil
+| S n', A => vcons A (Vec n' A)
+```
+
++ `selfTele` -- 一个构造子所定义的参数：对于 `vnil`，它是空列表，对于 `vcons`，它是 `(_ : A) (_ : Vec n' A)`
++ `ownerTele` -- 一个构造子的 pattern 所需要的参数（或者说，它所提供的所有 `binding`）：对于 `vnil`，它是 `(A : Type)`，对于 `vcons`，它是 `(n' : Nat) (A : Type)`；
+  对于非 simple indexed data types，它是 `dataTele`
++ `dataTele` -- 一个 data 的 telescope，对于 `Vec`，它是 `(n : Nat) (A : Type)`
+
+> 关于类似的 xxxArgs，也使用这种解释方式。
+
 ## 类型检查时用到的状态
 
 + `Reporter` -- 用来收集错误信息的接口
@@ -59,6 +76,11 @@
   + Agda, Coq, Arend 里面都是这么叫的
 + DefEq -- 其实就是 conversion check 或者 unification
   + 很多地方叫 definitional equality 或者 judgmental equality
+
+## 各种同义术语
+
+* `Array` 和 `List`，它们都是指语法上的列表：`[ a, b, c ]`
+* `Hole` 和 `Meta`，它们都是指需要自动推断的 “洞”：`{? expr ?}` 和（aya 生成的） `def foo : _ => ...`
 
 ## 其他
 + LSP -- Language Server Protocol
