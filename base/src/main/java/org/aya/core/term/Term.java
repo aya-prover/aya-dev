@@ -272,7 +272,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
     if (result instanceof SortTerm sort) return sort;
     if (result instanceof ErrorTerm || result instanceof MetaTerm)
       return SortTerm.Type0; // TODO: improve LittleTyper and remove this hack
-    throw new InternalException("unreachable");
+    throw new InternalException("unreachable: " + result.toDoc(DistillerOptions.debug()).debugRender());
   }
 
   /**

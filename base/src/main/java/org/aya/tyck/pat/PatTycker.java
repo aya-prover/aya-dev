@@ -247,7 +247,7 @@ public final class PatTycker {
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), licit, term);
-        var tupleIsProp = sigma.computeSort(exprTycker.state, exprTycker.localCtx).kind() == SortKind.Prop;
+        var tupleIsProp = exprTycker.computeSort(sigma).kind() == SortKind.Prop;
         if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature(sigma.params(),
