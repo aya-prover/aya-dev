@@ -32,7 +32,6 @@ public sealed interface ClausesProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     int i, int j,
     @NotNull Term lhs, @Nullable Term rhs,
-    @NotNull SourcePos conditionPos,
     @NotNull SourcePos iPos, @Nullable SourcePos jPos
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
@@ -54,7 +53,7 @@ public sealed interface ClausesProblem extends Problem {
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
       var view = Seq.of(
-        new WithPos<>(conditionPos, Doc.plain("relevant condition")),
+        // new WithPos<>(conditionPos, Doc.plain("relevant condition")),
         new WithPos<>(iPos, termToHint(lhs, options))).view();
       return rhs == null || jPos == null ? view : view.concat(Seq.of(new WithPos<>(jPos, termToHint(rhs, options))));
     }
