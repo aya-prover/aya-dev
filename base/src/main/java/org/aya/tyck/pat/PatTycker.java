@@ -171,7 +171,7 @@ public final class PatTycker {
   ) {
   }
 
-  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature, boolean inProp) {
+  public LhsResult checkLhs(Pattern.Clause match, Def.Signature signature, boolean inProp) {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
@@ -330,7 +330,7 @@ public final class PatTycker {
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
    * @return (wellTyped patterns, sig.result ())
    */
-  public @NotNull Tuple2<SeqView<Pat>, Term>
+  private @NotNull Tuple2<SeqView<Pat>, Term>
   visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Arg<Pattern>> stream, @Nullable Pattern outerPattern, boolean resultIsProp) {
     var results = MutableList.<Pat>create();
     // last pattern which user given (not aya generated)
