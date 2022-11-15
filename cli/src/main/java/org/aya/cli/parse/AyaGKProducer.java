@@ -21,7 +21,6 @@ import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
-import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
@@ -31,6 +30,7 @@ import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
@@ -792,16 +792,6 @@ public record AyaGKProducer(
 
   public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {
     return node.childrenOfType(PATTERN).map(this::pattern).toImmutableSeq();
-  }
-
-  public @Nullable Expr.PartEl
-  clauses(@Nullable GenericNode<?> node) {
-    if (node == null) return null;
-    var sourcePos = sourcePosOf(node);
-    return node.childrenView()
-      .filter(c -> c.elementType() == BARE_CLAUSE || c.elementType() == BARRED_CLAUSE)
-      .map(this::bareOrBarredClause)
-      .toImmutableSeq();
   }
 
   public @NotNull Pattern.Clause clause(@NotNull GenericNode<?> node) {
