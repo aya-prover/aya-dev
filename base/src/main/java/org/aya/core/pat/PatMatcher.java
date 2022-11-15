@@ -13,8 +13,10 @@ import org.aya.core.visitor.PatTraversal;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Formula;
+import org.aya.tyck.env.LocalCtx;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -25,23 +27,24 @@ import java.util.function.UnaryOperator;
  * @apiNote Use {@link PatMatcher#tryBuildSubstTerms} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
-public record PatMatcher(@NotNull Subst subst, @NotNull UnaryOperator<@NotNull Term> pre) {
+public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull UnaryOperator<@NotNull Term> pre) {
   public static Result<Subst, Boolean> tryBuildSubstTerms(
-    @NotNull ImmutableSeq<@NotNull Pat> pats,
+    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms
   ) {
-    return tryBuildSubstTerms(pats, terms, UnaryOperator.identity());
+    return tryBuildSubstTerms(inferMeta, pats, terms, UnaryOperator.identity());
   }
 
   /**
+   * @param localCtx not null only if we expect the presence of {@link MetaPatTerm}
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
   public static Result<Subst, Boolean> tryBuildSubstTerms(
-    @NotNull ImmutableSeq<@NotNull Pat> pats,
+    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms, @NotNull UnaryOperator<Term> pre
   ) {
-    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), pre);
+    var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), inferMeta, pre);
     try {
       for (var pat : pats.zip(terms)) matchy.match(pat);
       return Result.ok(matchy.subst());
@@ -79,7 +82,7 @@ public record PatMatcher(@NotNull Subst subst, @NotNull UnaryOperator<@NotNull T
       case Pat.Meta ignored -> throw new InternalException("Pat.Meta is not allowed");
       case Pat.End end -> {
         term = pre.apply(term);
-        if (!(term.asFormula() instanceof Formula.Lit<Term>(var one) && one == end.isOne())) {
+        if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
           throw new Mismatch(true);
         }
       }
@@ -116,6 +119,8 @@ public record PatMatcher(@NotNull Subst subst, @NotNull UnaryOperator<@NotNull T
 
     // the MetaPat didn't solve
     if (todo == null) {
+      // don't infer
+      if (!inferMeta) throw new Mismatch(true);
       var bindSubst = new PatTraversal.MetaBind(subst, metaPat.ref().fakeBind().definition());
       var metalized = bindSubst.apply(pat);
       // solve as pat
@@ -128,7 +133,7 @@ public record PatMatcher(@NotNull Subst subst, @NotNull UnaryOperator<@NotNull T
 
   private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
-    lpats.zipView(terms).forEachChecked(this::match);
+    lpats.view().zip(terms).forEachChecked(this::match);
   }
 
   private void match(@NotNull Tuple2<Pat, Term> pp) throws Mismatch {
