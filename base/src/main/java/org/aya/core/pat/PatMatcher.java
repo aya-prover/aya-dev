@@ -36,7 +36,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
   }
 
   /**
-   * @param localCtx not null only if we expect the presence of {@link MetaPatTerm}
+   * @param inferMeta true only if we expect the presence of {@link MetaPatTerm}
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
