@@ -5,17 +5,3 @@ open data Crash
 | ready
 | go Crash
 | goReady (i : I) { i := go ready | ~ i := ready }
-
-open data OddEven
-  | odd Nat
-  | even Nat
-  | isOdd
-  | isEven
-  -- CHECK: Why we are having zero isOdd here...?
-  -- Also, can the following be encoded in simpler ways?
-  | oddZeroOdd (i : I) { i := odd zero | ~ i := isOdd }
-  | oddSucEven (n : Nat) (i : I) { i := odd (suc n) | ~ i := even n }
-  | evenZeroEven (i : I) { i := even zero | ~ i := isEven }
-  | evenSucOdd (n : Nat) (i : I) { i := even (suc n) | ~ i := odd n }
-
-

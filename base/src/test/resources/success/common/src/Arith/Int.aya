@@ -22,19 +22,12 @@ def succInt Int : Int
 -- TODO: reimplement using univalence
 def predInt (x : Int) : Int => negate (succInt (negate x))
 
--- CHECK: this require showing `neg 0 = pos 0` definitionally for confluence check,
--- which is not possible for higher inductive types?
-{-
-def overlap subNI (a b : Nat) : Int
-| 0, a => neg a
-| a, 0 => pos a
-| suc a, suc b => subNI a b
--}
+def subI (x y : Int) : Int => addI x (negate y)
 
 def addI Int Int : Int
 | signed _ 0, n => n
 | posneg _, n => n
--- CHECK: we need to write out `signed true ...` here,
+-- We need to write out `signed true ...` here,
 -- because the termination checker cannot unfold definition yet?
 | signed true (suc m), n => succInt (addI (signed true m) n)
 | signed false (suc m), n => predInt (addI (signed false m) n)

@@ -74,7 +74,8 @@ public record Conquer(
   private void checkConditions(int nth, int i, Restr.Side<Term> condition, Subst matchy) {
     var ctx = new MapLocalCtx();
     var currentClause = matchings.get(nth);
-    // CHECK: We should also restrict the current clause body under `condition`, right?
+    // We should also restrict the current clause body under `condition`.
+    // TODO: refactor the following to make it completely inside a CofThy.conv call
     var newBody = CofThy.vdash(condition.cof(), matchy, subst -> currentClause.body().subst(subst)).get();
     currentClause.patterns().forEach(p -> p.storeBindings(ctx));
     // They're pre-cof
