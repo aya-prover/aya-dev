@@ -158,6 +158,9 @@ public final class ExprTycker extends Tycker implements Cloneable {
         yield proj.ix().fold(ix -> {
           if (!(projectee.type() instanceof SigmaTerm(var telescope)))
             return fail(struct, projectee.type(), BadTypeError.sigmaAcc(state, struct, ix, projectee.type()));
+          var projecteeIsProp = isPropType(projectee.type());
+          if (!inProp && projecteeIsProp)
+            return fail(struct, projectee.type(), BadTypeError.projProp(state, struct, ix, projectee.type()));
           var index = ix - 1;
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
@@ -172,6 +175,10 @@ public final class ExprTycker extends Tycker implements Cloneable {
           if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
+
+          var structIsProp = fieldRef.core.inProp();
+          if (!inProp && structIsProp)
+            return fail(proj, BadTypeError.projPropStruct(state, struct, fieldName, projectee.type()));
 
           var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
