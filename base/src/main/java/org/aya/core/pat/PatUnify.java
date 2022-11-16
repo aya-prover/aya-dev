@@ -65,7 +65,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
 
   private void visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {
     assert rpats.sizeEquals(lpats.size());
-    lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, ctx));
+    lpats.forEachWith(rpats, (lp, rp) -> unifyPat(lp, rp, lhsSubst, rhsSubst, ctx));
   }
 
   private void visitAs(@NotNull LocalVar as, Pat rhs) {
@@ -107,7 +107,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
     @NotNull LocalCtx ctx
   ) {
     assert rpats.sizeEquals(lpats);
-    lpats.view().zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, ctx));
+    lpats.forEachWith(rpats, (lp, rp) -> unifyPat(lp, rp, lhsSubst, rhsSubst, ctx));
     return ctx;
   }
 }

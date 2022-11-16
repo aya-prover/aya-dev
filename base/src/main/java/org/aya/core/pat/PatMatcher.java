@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.control.Result;
-import kala.tuple.Tuple2;
 import org.aya.core.term.*;
 import org.aya.core.visitor.PatTraversal;
 import org.aya.core.visitor.Subst;
@@ -44,7 +43,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
   ) {
     var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), inferMeta, pre);
     try {
-      for (var pat : pats.zip(terms)) matchy.match(pat);
+      pats.forEachWithChecked(terms, matchy::match);
       return Result.ok(matchy.subst());
     } catch (Mismatch mismatch) {
       return Result.err(mismatch.isBlocked);
@@ -131,11 +130,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
 
   private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
-    lpats.zipView(terms).forEachChecked(this::match);
-  }
-
-  private void match(@NotNull Tuple2<Pat, Term> pp) throws Mismatch {
-    match(pp._1, pp._2);
+    lpats.forEachWithChecked(terms, this::match);
   }
 
   private static final class Mismatch extends Exception {
