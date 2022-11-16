@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl.TopLevel}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
-public final class ExprTycker extends Tycker implements Cloneable {
+public final class ExprTycker extends Tycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
 
   /**

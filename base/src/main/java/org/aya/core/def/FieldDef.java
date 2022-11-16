@@ -39,7 +39,6 @@ public final class FieldDef extends SubLevelDef {
     return structRef.concrete != null ? structRef.concrete.ulift : structRef.core.result;
   }
 
-
   public boolean inProp() {
     return structResult().isProp();
   }
