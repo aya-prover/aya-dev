@@ -18,6 +18,7 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Partial;
@@ -123,12 +124,13 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var dataConcrete = dataRef.concrete;
         var dataSig = dataConcrete.signature;
         assert dataSig != null;
-        var dataCall = ((DataCall) signature.result());
+        var dataCall = (DataCall) signature.result();
         var tele = signature.param();
         var pat = ctor.yetTyckedPat;
         assert pat != null; // header should be checked first
-        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(ImmutableMap.from(
-          dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
+        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(new Subst(
+          dataSig.param().view().map(Term.Param::ref),
+          pat.view().map(Pat::toTerm)));
         var elabClauses = tycker.elaboratePartial(ctor.clauses, dataCall);
         if (!(elabClauses instanceof Partial.Split<Term> split)) {
           throw new AssertionError("This does not seem right, " + elabClauses);
