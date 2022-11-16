@@ -7,7 +7,6 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
-import kala.tuple.Tuple;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -59,11 +58,7 @@ public record ExprResolver(
   public static final @NotNull Options LAX = new Options(true, true);
 
   @NotNull Expr.PartEl partial(@NotNull Context ctx, Expr.PartEl el) {
-    var partial = el.clauses().map(e ->
-      Tuple.of(enter(ctx).apply(e._1), enter(ctx).apply(e._2)));
-    if (partial.zipView(el.clauses())
-      .allMatch(p -> p._1._1 == p._2._1 && p._1._2 == p._2._2)) return el;
-    return new Expr.PartEl(el.sourcePos(), partial);
+    return el.descent(enter(ctx));
   }
 
   public void enterHead() {
