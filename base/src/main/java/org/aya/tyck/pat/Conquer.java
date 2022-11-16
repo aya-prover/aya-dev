@@ -24,7 +24,7 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The name is short for "condition checker"
+ * <code>IApplyConfluence</code> lmao
  *
  * @author ice1000
  */
@@ -79,15 +79,18 @@ public record Conquer(
     var newBody = currentClause.body().subst(matchy);
     currentClause.patterns().forEach(p -> p.storeBindings(ctx));
     // They're pre-cof
-    var anotherClause = CofThy.vdash(condition.cof(), matchy, subst ->
+    var cofResult = CofThy.vdash(condition.cof(), matchy, subst ->
       new Expander.WHNFer(tycker.state).tryUnfoldClauses(orderIndependent,
         currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst))),
-        0, matchings).getOrNull()).getOrNull();
-    if (anotherClause == null) {
+        0, matchings).map(w -> w.map(t -> t.subst(subst))));
+    assert cofResult.isDefined() : "Problem with partials, they have non-RefTerm in cof!";
+    var matchResult = cofResult.get();
+    if (matchResult == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, currentClause.sourcePos(), null));
       return;
     }
+    var anotherClause = matchResult.get();
     if (newBody instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
       hole.ref().conditions.append(Tuple.of(matchy, anotherClause.data()));
     } else if (anotherClause.data() instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
