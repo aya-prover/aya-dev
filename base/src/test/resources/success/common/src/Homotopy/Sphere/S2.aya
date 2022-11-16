@@ -1,0 +1,5 @@
+open import Paths
+
+public open data S²
+| base2
+| surf (i j : I) { ∂(i) := base2 | ∂(j) := base2 }

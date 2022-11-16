@@ -1,7 +1,7 @@
 open import Paths
 open import Homotopy::Sphere::S1
 
-public open data T² : Type
+public open data T²
 | point
 | line1 (i : I) { ∂(i) := point }
 | line2 (i : I) { ∂(i) := point }
