@@ -1,8 +1,8 @@
-open import Arith::Nat
-open import Data::Bool
+public open import Arith::Nat
+public open import Data::Bool
 open import Paths
 
-open data Int
+public open data Int
 | signed Bool Nat
 | posneg (i : I) { i := pos 0 | ~ i := neg 0 }
 
