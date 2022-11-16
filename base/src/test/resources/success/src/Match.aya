@@ -1,8 +1,10 @@
 open import Arith::Nat
+open import Paths
 
 example open data Int : Type
  | pos Nat
- | neg Nat { | 0 => pos 0 }
+ | neg Nat
+ | negpos (i : I) { i := pos 0 | ~ i := neg 0 }
 
 example def abs (n : Int) : Nat
  => match n, n {
@@ -10,4 +12,6 @@ example def abs (n : Int) : Nat
  | neg n, pos m
  | pos n, pos m => n
  | neg n, neg m => n
+ | negpos _, _ => 0
+ | _, negpos _ => 0
  }

@@ -2,20 +2,22 @@ open import Paths
 
 open data S1 : Type
 | base
-| loop I { | 0 => base | 1 => base }
+| loop (i : I) { i := base | ~ i := base }
 
-data Seg : Type
+open data Seg : Type
 | p1 | p2
-| seg I { | 0 => p1 | 1 => p2 }
+| seg (i : I) { i := p2 | ~ i := p1 }
 
 open data Torus : Type
 | point
-| line1 I { | 0 => point | 1 => point }
-| line2 I { | 0 => point | 1 => point }
-| face I I { | 0, i => line2 i
-             | 1, i => line2 i
-             | i, 0 => line1 i
-             | i, 1 => line1 i }
+| line1 (i : I) { i := point | ~ i := point }
+| line2 (i : I) { i := point | ~ i := point }
+| face (i j : I) {
+  | i := line2 j
+  | ~ i := line2 j
+  | j := line1 i
+  | ~ j := line1 i
+}
 
 def idpath {A : Type} (a : A) (i : I) : A
 | a, i => a

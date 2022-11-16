@@ -1,8 +1,8 @@
-In file $FILE:13:10 ->
+In file $FILE:18:10 ->
 
-  11 |  | a, zero => a
-  12 |  | suc a, b => suc (addN a b)
-  13 |  | a, suc ()
+  16 |  | a, zero => a
+  17 |  | suc a, b => suc (addN a b)
+  18 |  | a, suc ()
                  ^^
 
 Error: Absurd pattern does not fit here because `zero` is still available

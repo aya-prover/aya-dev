@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
-import org.aya.core.pat.PatToTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
@@ -16,7 +15,6 @@ import org.aya.core.visitor.Subst;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.util.Arg;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.util.Ordering;
@@ -76,7 +74,8 @@ public record Conquer(
   private void checkConditions(int nth, int i, Restr.Side<Term> condition, Subst matchy) {
     var ctx = new MapLocalCtx();
     var currentClause = matchings.get(nth);
-    var newBody = currentClause.body().subst(matchy);
+    // CHECK: We should also restrict the current clause body under `condition`, right?
+    var newBody = CofThy.vdash(condition.cof(), matchy, subst -> currentClause.body().subst(subst)).get();
     currentClause.patterns().forEach(p -> p.storeBindings(ctx));
     // They're pre-cof
     var cofResult = CofThy.vdash(condition.cof(), matchy, subst ->
