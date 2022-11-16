@@ -15,12 +15,14 @@ public class UsagesTest {
   @Test public void refFinder() {
     assertTrue(TermFolder.RefFinder.HEADER_AND_BODY.withBody());
     TyckDeclTest.successTyckDecls("""
+      prim I
       open data Nat : Type 0 | zero | suc Nat
       def one : Nat => suc zero
-      open data Int : Type 0 | pos Nat | neg Nat { | zero => pos zero }
+      open data Int : Type 0 | pos Nat | neg Nat | posneg (i : I) { i := pos 0 }
       def abs (a : Int) : Nat
        | pos n => n
        | neg n => n
+       | posneg i => zero
       open data Fin (n : Nat) : Type | suc m => fzero | suc m => fsuc (Fin m)
       """)._2.forEach(def -> {
       assertFalse(TermFolder.RefFinder.HEADER_AND_BODY.apply(def).isEmpty());
