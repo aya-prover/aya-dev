@@ -1,8 +1,9 @@
-open data Nat | O | S Nat
+open import Arith::Nat
+
 open data Foo Nat
-| O => foo0
-| S _ => foo1
+| zero => foo0
+| suc _ => foo1
 
 def justMatch {n : Nat} (Foo n) : Nat
-| foo0 => O
-| foo1 => S O
+| foo0 => 0
+| foo1 => 1
