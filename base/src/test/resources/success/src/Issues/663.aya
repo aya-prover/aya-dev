@@ -1,8 +1,9 @@
-open import Data::List
-open import Data::Fin
 open import Arith::Nat
 
-def issue663 (xs : List Nat) (Fin (length xs)) : Nat
-| nil, x => 0
-| x :< xs, fzero => 1
-| _ :< xs, fsuc x => 2
+open data Foo Nat
+| zero => foo0
+| suc _ => foo1
+
+def justMatch {n : Nat} (Foo n) : Nat
+| foo0 => 0
+| foo1 => 1
