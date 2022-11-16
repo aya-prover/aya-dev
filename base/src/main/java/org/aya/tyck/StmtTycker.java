@@ -14,7 +14,10 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.*;
+import org.aya.core.term.DataCall;
+import org.aya.core.term.PiTerm;
+import org.aya.core.term.SortTerm;
+import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Partial;
@@ -90,7 +93,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
               var result = patTycker.elabClausesDirectly(clauses, signature);
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (patTycker.noError())
-                ensureConfluent(tycker, signature, result, pos, true);
+                ensureConfluent(tycker, signature, result, pos);
             } else {
               // First-match semantics.
               var result = patTycker.elabClausesClassified(clauses, signature, pos);
@@ -274,13 +277,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private void ensureConfluent(
     ExprTycker tycker, Def.Signature signature,
-    PatTycker.PatResult elabClauses, SourcePos pos,
-    boolean coverage
+    PatTycker.PatResult elabClauses, SourcePos pos
   ) {
-    if (!coverage && elabClauses.matchings().isEmpty()) return;
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     PatClassifier.confluence(elabClauses, tycker, pos,
-      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos, coverage));
+      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos, true));
     Conquer.against(elabClauses.matchings(), true, tycker, pos, signature);
     tycker.solveMetas();
     tracing(TreeBuilder::reduce);
