@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.IntPredicate;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -58,7 +59,7 @@ import java.util.stream.Collectors;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl.TopLevel}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
-public final class ExprTycker extends Tycker {
+public final class ExprTycker extends Tycker implements Cloneable {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
 
   /**
@@ -67,6 +68,22 @@ public final class ExprTycker extends Tycker {
    */
   public @NotNull TypedSubst lets = new TypedSubst();
   public @NotNull AyaShape.Factory shapeFactory;
+
+  public boolean inProp = false;
+
+  public <T> T withInProp(boolean inProp, @NotNull Supplier<T> supplier) {
+    var origin = this.inProp;
+    this.inProp = inProp;
+    try {
+      return supplier.get();
+    } finally {
+      this.inProp = origin;
+    }
+  }
+
+  public <T> T withResult(@NotNull Term result, @NotNull Supplier<T> supplier) {
+    return withInProp(isPropType(result), supplier);
+  }
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
@@ -193,8 +210,7 @@ public final class ExprTycker extends Tycker {
             };
             return switch (typeSubst) {
               case LamTerm(var param, var body) -> post.test(body.findUsages(param.ref()));
-              case PLamTerm(var params, var body) ->
-                post.test(params.collect(Collectors.summingInt(body::findUsages)));
+              case PLamTerm(var params, var body) -> post.test(params.collect(Collectors.summingInt(body::findUsages)));
               default -> {
                 bad.stuck = true;
                 yield false;
@@ -624,14 +640,14 @@ public final class ExprTycker extends Tycker {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
       result = new TermResult(new LamTerm(implicitParam, body), pi);
-    } else result = doInherit(expr, type).checkErased(expr, this);
+    } else result = doInherit(expr, type);
     traceExit(result, expr);
     return result;
   }
 
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var res = doSynthesize(expr).checkErased(expr, this);
+    var res = doSynthesize(expr);
     traceExit(res, expr);
     return res;
   }
@@ -809,57 +825,21 @@ public final class ExprTycker extends Tycker {
   }
 
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
-    return checkIllegalErasure(expr.sourcePos(), inherit(expr, type));
+    return withResult(type, () -> inherit(expr, type));
   }
 
-  private @NotNull Result checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Result result) {
-    return new TermResult(checkIllegalErasure(sourcePos, result.wellTyped(), result.type()), result.type());
-  }
-
-  private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
-    if (wellTyped instanceof SortTerm) return wellTyped;
-    if (computeSort(type).kind() == SortKind.Prop) return wellTyped;
-    return checkIllegalErasure(sourcePos, wellTyped);
-  }
-
-  public @NotNull SortTerm computeSort(@NotNull Term type) {
-    return type.computeSort(state, localCtx);
-  }
-
-  private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
-    var checker = new UnaryOperator<Term>() {
-      private @NotNull Term post(@NotNull Term term) {
-        if (term instanceof SortTerm) return term;
-        var erased = ErasedTerm.underlyingIllegalErasure(term);
-        if (erased != null) {
-          reporter.report(new ErasedError(sourcePos, erased));
-          return new ErrorTerm(term);
-        }
-        return term;
-      }
-
-      @Override public @NotNull Term apply(@NotNull Term term) {
-        if (term instanceof LamTerm) return term;
-        if (term instanceof ErasedTerm) return post(term);
-        return post(term.descent(this));
-      }
-    };
-    return checker.apply(term);
+  public boolean isPropType(@NotNull Term type) {
+    var sort = type.computeType(state, localCtx);
+    if (sort instanceof MetaTerm) return false;
+    if (sort instanceof SortTerm s) return s.kind() == SortKind.Prop;
+    return false; // TODO: remove this hack
+    //throw new InternalException("Expected a sort, got " + sort);
   }
 
   public interface Result {
     @NotNull Term wellTyped();
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
-
-    private Result checkErased(@NotNull Expr expr, @NotNull ExprTycker tycker) {
-      if (wellTyped() instanceof SortTerm) return this;
-      var type = type();
-      var isProp = tycker.computeSort(type).kind() == SortKind.Prop;
-      if (isProp || ErasedTerm.isErased(wellTyped()))
-        return new TermResult(new ErasedTerm(type, isProp, expr.sourcePos()), type);
-      return this;
-    }
   }
 
 

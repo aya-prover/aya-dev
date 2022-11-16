@@ -136,7 +136,7 @@ public final class PatTycker {
   private @NotNull ImmutableSeq<LhsResult>
   checkAllLhs(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, @NotNull Def.Signature signature) {
     var inProp = exprTycker.localCtx.with(() ->
-      exprTycker.computeSort(signature.result()).kind() == SortKind.Prop, signature.param().view());
+      exprTycker.isPropType(signature.result()), signature.param().view());
     return clauses.mapIndexed((index, clause) -> traced(
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
       () -> checkLhs(clause, signature, inProp)));
@@ -247,7 +247,7 @@ public final class PatTycker {
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), licit, term);
-        var tupleIsProp = exprTycker.computeSort(sigma).kind() == SortKind.Prop;
+        var tupleIsProp = exprTycker.isPropType(sigma);
         if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature(sigma.params(),
