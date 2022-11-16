@@ -243,7 +243,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           // No patterns, leave it blank
           ctor.yetTyckedPat = ImmutableSeq.empty();
         }
-        var ctorSort = dataConcrete.ulift.kind() == SortKind.Prop ? SortTerm.Type0 : dataConcrete.ulift;
+        var ctorSort = dataConcrete.ulift.isProp() ? SortTerm.Type0 : dataConcrete.ulift;
         var tele = tele(tycker, ctor.telescope, ctorSort);
         ctor.signature = new Def.Signature(tele, dataCall);
         ctor.yetTycker = patTycker;
@@ -257,7 +257,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structSig = structRef.concrete.signature;
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
-        var fieldSort = structLvl.kind() == SortKind.Prop ? SortTerm.Type0 : structLvl;
+        var fieldSort = structLvl.isProp() ? SortTerm.Type0 : structLvl;
         var tele = tele(tycker, field.telescope, structLvl);
         var result = tycker.zonk(tycker.inherit(field.result, fieldSort)).wellTyped();
         field.signature = new Def.Signature(tele, result);

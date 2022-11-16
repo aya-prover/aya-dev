@@ -93,7 +93,6 @@ org.aya.core.serde.SerTerm$PathLam
 org.aya.core.serde.SerTerm$PathApp
 org.aya.core.serde.SerTerm$Coe
 org.aya.core.serde.SerTerm$SerCube
-org.aya.core.serde.SerTerm$Erased
 org.aya.core.serde.SerPat$Clause
 org.aya.core.serde.SerPat$Absurd
 org.aya.core.serde.SerPat$Tuple

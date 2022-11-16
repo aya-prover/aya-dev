@@ -38,10 +38,6 @@ public interface BetaExpander extends EndoTerm {
         yield result.isDefined() ? result.get() : match;
       }
       case PAppTerm(var of, var args, PathTerm.Cube(var xi, var type, var partial)) -> {
-        if (of instanceof ErasedTerm) {
-          var ui = args.map(Arg::term);
-          yield new ErasedTerm(type.subst(new Subst(xi, ui)));
-        }
         if (of instanceof PLamTerm lam) {
           var ui = args.map(Arg::term);
           var subst = new Subst(lam.params(), ui);

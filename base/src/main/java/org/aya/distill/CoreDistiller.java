@@ -193,8 +193,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
       case HCompTerm hComp -> throw new InternalException("TODO");
-      case ErasedTerm erased ->
-        checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
     };
   }
 

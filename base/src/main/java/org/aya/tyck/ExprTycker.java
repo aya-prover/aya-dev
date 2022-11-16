@@ -590,7 +590,7 @@ public final class ExprTycker extends Tycker implements Cloneable {
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
         var maxSort = resultTypes.reduce(SigmaTerm::max);
-        if (maxSort.kind() != SortKind.Prop) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
+        if (!maxSort.isProp()) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new SortResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
       }
@@ -831,7 +831,7 @@ public final class ExprTycker extends Tycker implements Cloneable {
   public boolean isPropType(@NotNull Term type) {
     var sort = type.computeType(state, localCtx);
     if (sort instanceof MetaTerm) return false;
-    if (sort instanceof SortTerm s) return s.kind() == SortKind.Prop;
+    if (sort instanceof SortTerm s) return s.isProp();
     return false; // TODO: remove this hack
     //throw new InternalException("Expected a sort, got " + sort);
   }
