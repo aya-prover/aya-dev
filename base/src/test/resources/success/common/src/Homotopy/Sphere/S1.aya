@@ -8,7 +8,6 @@ public open data S¹
 def ΩS¹ => base = base
 def ploop : ΩS¹ => \i => loop i
 def intLoop Int : ΩS¹
-| signed true (suc n) => intLoop (pos n) <==> ploop
-| signed false (suc n) => intLoop (neg n) <==> sym ploop
 | signed _ 0 => idp
+| signed b (suc n) => intLoop (signed b n) <==> ifElse b ploop (sym ploop)
 | posneg i => idp
