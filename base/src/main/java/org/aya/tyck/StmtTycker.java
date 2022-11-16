@@ -257,7 +257,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
-        var result = tycker.zonk(structLvl.isProp() ? tycker.sort(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
+        var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
         field.signature = new Def.Signature(tele, result);
       }
     }
@@ -267,7 +267,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
     SortTerm ret = SortTerm.Type0;
     if (!(data.result instanceof Expr.Hole)) {
-      var result = tycker.ty(data.result);
+      var result = tycker.sort(data.result);
       ret = (SortTerm) tycker.zonk(result.wellTyped());
     }
     return ret;
@@ -301,7 +301,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   // similiar to `ExprTycker.sortPi`. `tele` is the domain.
   private @NotNull ExprTycker.Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
-    var result = exprTycker.sort(tele);
+    var result = exprTycker.ty(tele);
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
     var ty = result.type();
     switch (ty.kind()) {
@@ -324,7 +324,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     return tele.map(param -> {
       var paramTyped = (sort != null
         ? checkTele(exprTycker, param.type(), sort)
-        : exprTycker.sort(param.type())
+        : exprTycker.ty(param.type())
       ).wellTyped();
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
