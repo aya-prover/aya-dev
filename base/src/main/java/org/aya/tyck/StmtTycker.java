@@ -243,8 +243,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           // No patterns, leave it blank
           ctor.yetTyckedPat = ImmutableSeq.empty();
         }
-        var ctorSort = dataConcrete.ulift.isProp() ? SortTerm.Type0 : dataConcrete.ulift;
-        var tele = tele(tycker, ctor.telescope, ctorSort);
+        var tele = tele(tycker, ctor.telescope, dataConcrete.ulift.isProp() ? null : dataConcrete.ulift);
         ctor.signature = new Def.Signature(tele, dataCall);
         ctor.yetTycker = patTycker;
         ctor.patternTele = ctor.yetTyckedPat.isEmpty()
@@ -257,9 +256,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structSig = structRef.concrete.signature;
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
-        var fieldSort = structLvl.isProp() ? SortTerm.Type0 : structLvl;
-        var tele = tele(tycker, field.telescope, structLvl);
-        var result = tycker.zonk(tycker.inherit(field.result, fieldSort)).wellTyped();
+        var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
+        var result = tycker.zonk(structLvl.isProp() ? tycker.sort(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
         field.signature = new Def.Signature(tele, result);
       }
     }
@@ -326,7 +324,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     return tele.map(param -> {
       var paramTyped = (sort != null
         ? checkTele(exprTycker, param.type(), sort)
-        : exprTycker.synthesize(param.type())
+        : exprTycker.sort(param.type())
       ).wellTyped();
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
