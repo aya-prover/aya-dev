@@ -92,10 +92,8 @@ public record CompiledAya(
       serDefs.append(serDef);
       serOp(serDef, def);
       switch (serDef) {
-        case SerDef.Data data -> data.bodies().view().zip(((DataDef) def).body).forEach(tup ->
-          serOp(tup._1, tup._2));
-        case SerDef.Struct struct -> struct.fields().view().zip(((StructDef) def).fields).forEach(tup ->
-          serOp(tup._1, tup._2));
+        case SerDef.Data data -> data.bodies().forEachWith(((DataDef) def).body, this::serOp);
+        case SerDef.Struct struct -> struct.fields().forEachWith(((StructDef) def).fields, this::serOp);
         default -> {}
       }
     }
@@ -229,18 +227,18 @@ public record CompiledAya(
       case SerDef.Data data -> {
         var innerCtx = context.derive(data.name().name());
         if (isExported(data.name())) export(context, data.name().name(), def.ref());
-        data.bodies().view().zip(((DataDef) def).body).forEach(tup -> {
-          if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
-          export(innerCtx, tup._1.self().name(), tup._2.ref);
+        data.bodies().forEachWith(((DataDef) def).body, (ctor, ctorDef) -> {
+          if (isExported(ctor.self())) export(context, drop, ctor.self(), ctorDef.ref);
+          export(innerCtx, ctor.self().name(), ctorDef.ref);
         });
         context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
       }
       case SerDef.Struct struct -> {
         var innerCtx = context.derive(struct.name().name());
         if (isExported(struct.name())) export(context, struct.name().name(), def.ref());
-        struct.fields().view().zip(((StructDef) def).fields).forEach(tup -> {
-          if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
-          export(innerCtx, tup._1.self().name(), tup._2.ref);
+        struct.fields().forEachWith(((StructDef) def).fields, (field, fieldDef) -> {
+          if (isExported(field.self())) export(context, drop, field.self(), fieldDef.ref);
+          export(innerCtx, field.self().name(), fieldDef.ref);
         });
         context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
       }
