@@ -1,15 +1,32 @@
 open import Arith::Nat
+open import Data::Bool
 open import Paths
 
-public open data Int
-| pos Nat
-| neg Nat { | 0 => pos 0 }
+open data Int
+| signed Bool Nat
+| posneg (i : I) { i := pos 0 | ~ i := neg 0 }
+
+def pos => signed true
+def neg => signed false
+
+def succInt Int : Int
+| signed true n => pos (suc n)
+| signed false (suc n) => neg n
+| signed false zero => pos 1
+| posneg i => pos 1
+
+def predInt Int : Int
+| signed true (suc n) => neg n
+| signed true zero => neg 1
+| signed false n => pos (suc n)
+| posneg i => neg 1
 
 def overlap subNI (a b : Nat) : Int
 | 0, a => neg a
 | a, 0 => pos a
 | suc a, suc b => subNI a b
 
+{-
 def overlap addI (a b : Int) : Int
 | pos 0, n => n
 | n, pos 0 => n
@@ -25,3 +42,4 @@ def addI-comm (a b : Int) : addI a b = addI b a
 | neg n, neg m => pmap neg (+-comm n m)
 | pos n, neg m => idp
 | neg n, pos m => idp
+-}

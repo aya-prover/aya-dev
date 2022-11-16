@@ -131,7 +131,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
 
   private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
-    lpats.view().zip(terms).forEachChecked(this::match);
+    lpats.zipView(terms).forEachChecked(this::match);
   }
 
   private void match(@NotNull Tuple2<Pat, Term> pp) throws Mismatch {
