@@ -1,8 +1,8 @@
-In file $FILE:19:19 ->
+In file $FILE:22:19 ->
 
-  17 |  | neg n => n
-  18 | 
-  19 | counterexample def abs2 (n : Int) => abs n
+  20 |  | posneg i => 0
+  21 | 
+  22 | counterexample def abs2 (n : Int) => abs n
                           ^--^
 
 Error: The counterexample abs2 does not raise any type error

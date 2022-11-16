@@ -4,6 +4,7 @@ package org.aya.core;
 
 import kala.collection.Seq;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.PrimDef;
 import org.aya.core.visitor.TermFolder;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckDeclTest;
@@ -25,9 +26,10 @@ public class UsagesTest {
        | posneg i => zero
       open data Fin (n : Nat) : Type | suc m => fzero | suc m => fsuc (Fin m)
       """)._2.forEach(def -> {
-      assertFalse(TermFolder.RefFinder.HEADER_AND_BODY.apply(def).isEmpty());
+      if (!(def instanceof PrimDef))
+        assertTrue(TermFolder.RefFinder.HEADER_AND_BODY.apply(def).isNotEmpty());
       var of = TermFolder.RefFinder.HEADER_ONLY.apply(def);
-      if (Seq.of("Nat", "Int").contains(def.ref().name())) assertTrue(of.isEmpty());
+      if (Seq.of("Nat", "Int", "I").contains(def.ref().name())) assertTrue(of.isEmpty());
       else assertFalse(of.isEmpty());
       if (def instanceof FnDef fn && fn.body.isLeft())
         assertEquals(0, fn.body.getLeftValue().findUsages(new LocalVar("233")));
