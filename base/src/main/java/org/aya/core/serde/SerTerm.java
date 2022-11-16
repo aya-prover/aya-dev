@@ -8,6 +8,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import org.aya.concrete.stmt.Decl;
+import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.util.Arg;
@@ -39,27 +41,29 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       return localCache.getOrPut(var.var, () -> new LocalVar(var.name));
     }
 
-    @SuppressWarnings("unchecked")
-    public <V extends DefVar<?, ?>>
+    @SuppressWarnings("unchecked") public <V extends DefVar<?, ?>>
     @NotNull V resolve(@NotNull SerDef.QName name) {
-      // We assume this cast to be safe
-      var dv = (V) defCache
-        .getOrThrow(name.mod(), () -> new SerDef.DeserializeException("Unable to find module: " + name.mod()))
-        .getOrThrow(name.name(), () -> new SerDef.DeserializeException("Unable to find DefVar: " + name));
-      assert Objects.equals(name.name(), dv.name());
-      return dv;
+      return (V) defCache
+        .getOrPut(name.mod(), MutableHashMap::new)
+        .getOrPut(name.name(), () -> {
+          var empty = DefVar.empty(name.name());
+          empty.module = name.mod();
+          return empty;
+        });
+      // var dv = (V) defCache
+      //   .getOrThrow(name.mod(), () -> new SerDef.DeserializeException("Unable to find module: " + name.mod()))
+      //   .getOrThrow(name.name(), () -> new SerDef.DeserializeException("Unable to find DefVar: " + name));
+      // assert Objects.equals(name.name(), dv.name());
     }
 
-    @SuppressWarnings("unchecked") <V extends DefVar<?, ?>>
-    @NotNull V def(@NotNull SerDef.QName name) {
-      // We assume this cast to be safe
-      var defVar = DefVar.empty(name.name());
-      var old = defCache
-        .getOrPut(name.mod(), MutableHashMap::new)
-        .put(name.name(), defVar);
-      if (old.isDefined()) throw new SerDef.DeserializeException("Same definition deserialized twice: " + name);
-      defVar.module = name.mod();
-      return (V) defVar;
+    <V extends DefVar<?, ?>> @NotNull V def(@NotNull SerDef.QName name) {
+      return resolve(name);
+      // var defVar = DefVar.empty(name.name());
+      // var old = defCache
+      //   .getOrPut(name.mod(), MutableHashMap::new)
+      //   .put(name.name(), defVar);
+      // if (old.isDefined()) throw new SerDef.DeserializeException("Same definition deserialized twice: " + name);
+      // return (V) defVar;
     }
 
     public void putPrim(
