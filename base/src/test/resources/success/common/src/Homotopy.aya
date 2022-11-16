@@ -1,5 +1,0 @@
-open import Paths
-
-open data Seg : Type
-| p1 | p2
-| seg (i : I) { i := p2 | ~ i := p1 }
