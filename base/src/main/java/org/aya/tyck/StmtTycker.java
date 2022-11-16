@@ -14,9 +14,14 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.*;
+import org.aya.core.term.DataCall;
+import org.aya.core.term.PiTerm;
+import org.aya.core.term.SortTerm;
+import org.aya.core.term.Term;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.pat.Conquer;
@@ -89,7 +94,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
               var result = patTycker.elabClausesDirectly(clauses, signature);
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (patTycker.noError())
-                ensureConfluent(tycker, signature, result, pos, true);
+                ensureConfluent(tycker, signature, result, pos);
             } else {
               // First-match semantics.
               var result = patTycker.elabClausesClassified(clauses, signature, pos);
@@ -119,21 +124,19 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var dataConcrete = dataRef.concrete;
         var dataSig = dataConcrete.signature;
         assert dataSig != null;
-        var dataCall = ((DataCall) signature.result());
+        var dataCall = (DataCall) signature.result();
         var tele = signature.param();
-        var patTycker = ctor.yetTycker;
         var pat = ctor.yetTyckedPat;
-        assert patTycker != null && pat != null; // header should be checked first
-        // PatTycker was created when checking the header with another expr tycker,
-        // we should make sure it's the same one here. See comments of ExprTycker.
-        assert tycker == patTycker.exprTycker;
-        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(ImmutableMap.from(
-          dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
-        var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature);
-        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
+        assert pat != null; // header should be checked first
+        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(new Subst(
+          dataSig.param().view().map(Term.Param::ref),
+          pat.view().map(Pat::toTerm)));
+        var elabClauses = tycker.elaboratePartial(ctor.clauses, dataCall);
+        if (!(elabClauses instanceof Partial.Split<Term> split)) {
+          throw new AssertionError("This does not seem right, " + elabClauses);
+        }
+        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, split, dataCall, ctor.coerce);
         dataConcrete.checkedBody.append(elaborated);
-        if (patTycker.noError())
-          ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
         yield elaborated;
       }
       case TeleDecl.StructField field -> {
@@ -246,7 +249,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var ctorSort = dataConcrete.ulift.kind() == SortKind.Prop ? SortTerm.Type0 : dataConcrete.ulift;
         var tele = tele(tycker, ctor.telescope, ctorSort);
         ctor.signature = new Def.Signature(tele, dataCall);
-        ctor.yetTycker = patTycker;
         ctor.patternTele = ctor.yetTyckedPat.isEmpty()
           ? dataSig.param().map(Term.Param::implicitify)
           : Pat.extractTele(ctor.yetTyckedPat);
@@ -277,13 +279,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private void ensureConfluent(
     ExprTycker tycker, Def.Signature signature,
-    PatTycker.PatResult elabClauses, SourcePos pos,
-    boolean coverage
+    PatTycker.PatResult elabClauses, SourcePos pos
   ) {
-    if (!coverage && elabClauses.matchings().isEmpty()) return;
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     PatClassifier.confluence(elabClauses, tycker, pos,
-      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos, coverage));
+      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos, true));
     Conquer.against(elabClauses.matchings(), true, tycker, pos, signature);
     tycker.solveMetas();
     tracing(TreeBuilder::reduce);

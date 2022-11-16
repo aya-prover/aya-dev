@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 @TestOnly
-public record ThrowingReporter() implements Reporter {
+public record ThrowingReporter() implements CountingReporter {
   public static final @NotNull ThrowingReporter INSTANCE = new ThrowingReporter();
 
   public static @NotNull String errorMessage(
@@ -32,5 +32,12 @@ public record ThrowingReporter() implements Reporter {
       return;
     }
     throw new AssertionError("Failed with `" + problem.getClass() + "`: " + render + "\nat " + problem.sourcePos());
+  }
+
+  @Override public int problemSize(Problem.@NotNull Severity severity) {
+    return 0;
+  }
+
+  @Override public void clear() {
   }
 }

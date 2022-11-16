@@ -49,12 +49,17 @@ public record ExprResolver(
   @NotNull MutableStack<Where> where,
   @Nullable Consumer<TyckUnit> parentAdd
 ) implements EndoExpr {
+
   public ExprResolver(@NotNull Context ctx, @NotNull Options options) {
     this(ctx, options, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), null);
   }
 
   public static final @NotNull Options RESTRICTIVE = new Options(false, false);
   public static final @NotNull Options LAX = new Options(true, true);
+
+  @NotNull Expr.PartEl partial(@NotNull Context ctx, Expr.PartEl el) {
+    return el.descent(enter(ctx));
+  }
 
   public void enterHead() {
     where.push(Where.Head);

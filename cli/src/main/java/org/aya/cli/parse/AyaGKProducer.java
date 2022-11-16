@@ -21,7 +21,6 @@ import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
-import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
@@ -31,6 +30,7 @@ import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
@@ -382,14 +382,15 @@ public record AyaGKProducer(
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var bind = node.peekChild(BIND_BLOCK);
-    var clauses = node.peekChild(CLAUSES);
+    var partial = node.peekChild(PARTIAL_BLOCK);
+    var namePos = nameOrInfix._1.sourcePos();
     return new TeleDecl.DataCtor(
-      nameOrInfix._1.sourcePos(),
+      namePos,
       sourcePosOf(node),
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
-      clauses == null ? ImmutableSeq.empty() : clauses(clauses),
+      partial(partial, partial != null ? sourcePosOf(partial) : namePos),
       patterns,
       node.peekChild(KW_COERCE) != null,
       bind == null ? BindBlock.EMPTY : bindBlock(bind)
@@ -791,13 +792,6 @@ public record AyaGKProducer(
 
   public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {
     return node.childrenOfType(PATTERN).map(this::pattern).toImmutableSeq();
-  }
-
-  public @NotNull ImmutableSeq<Pattern.Clause> clauses(@NotNull GenericNode<?> node) {
-    return node.childrenView()
-      .filter(c -> c.elementType() == BARE_CLAUSE || c.elementType() == BARRED_CLAUSE)
-      .map(this::bareOrBarredClause)
-      .toImmutableSeq();
   }
 
   public @NotNull Pattern.Clause clause(@NotNull GenericNode<?> node) {

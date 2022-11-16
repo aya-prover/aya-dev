@@ -321,7 +321,7 @@ public final class ExprTycker extends Tycker {
     // ^ note: `inst` may be ErrorTerm!
   }
 
-  private @NotNull Partial<Term> elaboratePartial(@NotNull Expr.PartEl partial, @NotNull Term type) {
+  public @NotNull Partial<Term> elaboratePartial(@NotNull Expr.PartEl partial, @NotNull Term type) {
     var s = new ClauseTyckState();
     var sides = partial.clauses().flatMap(sys -> clause(sys._1, sys._2, type, s));
     confluence(sides, partial, type);

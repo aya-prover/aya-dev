@@ -9,6 +9,7 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.util.Arg;
 import org.aya.generic.Modifier;
 import org.aya.tyck.TyckState;
@@ -33,8 +34,10 @@ public interface DeltaExpander extends EndoTerm {
       case ConCall con -> {
         var def = con.ref().core;
         if (def == null) yield con;
-        yield tryUnfoldClauses(true, con.conArgs(), con.ulift(), def.clauses)
-          .map(un -> apply(un.data())).getOrDefault(con);
+        var sat = AyaRestrSimplifier.INSTANCE.mapSplit(def.clauses, t ->
+          t.subst(buildSubst(def.selfTele, con.args())));
+        if (sat instanceof Partial.Const<Term> c) yield apply(c.u());
+        yield con;
       }
       case FnCall fn -> {
         var def = fn.ref().core;

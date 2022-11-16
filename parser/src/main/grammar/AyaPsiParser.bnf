@@ -246,10 +246,10 @@ dataBody ::= dataCtorClause
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-dataCtor ::= KW_COERCE? declNameOrInfix tele* clauses? bindBlock?
+dataCtor ::= KW_COERCE? declNameOrInfix tele* partialBlock? bindBlock?
+partialBlock ::= LBRACE partialInner RBRACE { pin=1 }
 
 dataCtorClause ::= BAR patterns IMPLIES dataCtor
-
 
 // expressions
 expr ::= newExpr
@@ -296,7 +296,8 @@ doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
 
-partialExpr ::= LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
+partialExpr ::= LPARTIAL partialInner? RPARTIAL
+private partialInner ::= bareSubSystem? barredSubSystem*
 subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem
 barredSubSystem ::= BAR subSystem

@@ -1,21 +1,7 @@
 open import Arith::Nat
+open import Paths
 
 open data Crash
 | ready
-| go Crash {
-  | ready => ready
-}
-
-open data OddEven
-  | odd Nat {
-    | zero => isOdd
-    | suc n => even n
-  }
-  | even Nat {
-    | zero => isEven
-    | suc n => odd n
-  }
-  | isOdd
-  | isEven
-
-
+| go Crash
+| goReady (i : I) { i := go ready | ~ i := ready }

@@ -79,7 +79,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
       case Pat.Meta ignored -> throw new InternalException("Pat.Meta is not allowed");
       case Pat.End end -> {
         term = pre.apply(term);
-        if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
+        if (!(term.asFormula() instanceof Formula.Lit<Term>(var one) && one == end.isOne())) {
           throw new Mismatch(true);
         }
       }

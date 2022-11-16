@@ -1,6 +1,9 @@
-open data Unit | unit
-open data Eq | true | false Unit { | unit => true }
+open import Paths
 
-def test {A B : Type} (t : Sig A ** B) (eq : Eq) : Sig A ** B
+open data Unit | unit
+open data Equ | true | false Unit | equ (i : I) { i := false unit | ~ i := true }
+
+def test {A B : Type} (t : Sig A ** B) (equ : Equ) : Sig A ** B
  | t, true => t
- | t, false unit => (t.1, t.2)
+ | t, false _ => (t.1, t.2)
+ | t, equ i => idp {_} {t} i

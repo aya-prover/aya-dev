@@ -1,9 +1,9 @@
-In file $FILE:6:13 ->
+In file $FILE:13:13 ->
 
-  4 | def abs (a : Int) : Nat
-  5 |   | pos a => a
-  6 |   | neg a => {??}
-                   ^--^
+  11 |   | pos a => a
+  12 |   | posneg _ => 0
+  13 |   | neg a => {??}
+                    ^--^
 
 Goal: Goal of type
         Nat
@@ -11,14 +11,14 @@ Goal: Goal of type
       Context:
         {a : Nat}
       To ensure confluence:
-        Given (a => zero), we should have: zero
+        Given (i => _), we should have: 0
 
-In file $FILE:6:13 ->
+In file $FILE:13:13 ->
 
-  4 | def abs (a : Int) : Nat
-  5 |   | pos a => a
-  6 |   | neg a => {??}
-                   ^--^
+  11 |   | pos a => a
+  12 |   | posneg _ => 0
+  13 |   | neg a => {??}
+                    ^--^
 
 Error: Unsolved meta _
 

@@ -44,7 +44,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("~", "\\neg"),
     Tuple.of("**", "\\times"),
     id(":"), id("."),
+    id(":="),
     id("("), id(")"),
+    id("[|"), id("|]"),
     Tuple.of("{", "\\{"),
     Tuple.of("}", "\\}")
   );
