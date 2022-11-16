@@ -85,7 +85,7 @@ public record Conquer(
         0, matchings).map(w -> w.map(t -> t.subst(subst))));
     assert cofResult.isDefined() : "Problem with partials, they have non-RefTerm in cof!";
     var matchResult = cofResult.get();
-    if (matchResult == null) {
+    if (matchResult.isEmpty()) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, currentClause.sourcePos(), null));
       return;
