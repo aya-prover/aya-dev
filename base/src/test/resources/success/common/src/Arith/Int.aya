@@ -6,8 +6,8 @@ public open data Int
 | signed Bool Nat
 | posneg (i : I) { i := pos 0 | ~ i := neg 0 }
 
-def pos => signed true
-def neg => signed false
+def inline pos => signed true
+def inline neg => signed false
 
 def negate Int : Int
 | signed b n => signed (not b) n
@@ -29,8 +29,8 @@ def addI Int Int : Int
 | posneg _, n => n
 -- We need to write out `signed true ...` here,
 -- because the termination checker cannot unfold definition yet?
-| signed true (suc m), n => succInt (addI (signed true m) n)
-| signed false (suc m), n => predInt (addI (signed false m) n)
+| signed true (suc m), n => succInt (addI (pos m) n)
+| signed false (suc m), n => predInt (addI (neg m) n)
 
 {-
 def addI-comm (a b : Int) : addI a b = addI b a
