@@ -264,7 +264,7 @@ public final class PatTycker {
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(licit, term);
         var ctorRef = realCtor._3.ref();
-        var dataIsProp = (ctorRef.core.dataRef.concrete != null ? ctorRef.core.dataRef.concrete.ulift : ctorRef.core.dataRef.core.result).isProp();
+        var dataIsProp = ctorRef.core.inProp();
         if (!resultIsProp && dataIsProp) foundError(new PatternProblem.IllegalPropPat(ctor));
         var ctorCore = ctorRef.core;
 
