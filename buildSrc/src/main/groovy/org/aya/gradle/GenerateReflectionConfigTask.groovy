@@ -3,6 +3,8 @@
 package org.aya.gradle
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -11,6 +13,7 @@ import java.nio.file.Files
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 import java.util.stream.IntStream
+import java.util.stream.Stream
 
 class GenerateReflectionConfigTask extends DefaultTask {
   {
@@ -19,6 +22,9 @@ class GenerateReflectionConfigTask extends DefaultTask {
 
   @OutputDirectory File outputDir
   @InputFile File inputFile
+  @InputDirectory File extraDir
+  @Input List<String> classPrefixes = []
+  @Input String packageName
 
   private var pattern = Pattern.compile("\\{(\\d+)\\,\\s*(\\d+)\\}")
 
@@ -27,12 +33,17 @@ class GenerateReflectionConfigTask extends DefaultTask {
       .filter(line -> !line.startsWith("#"))
       .filter(line -> !line.isEmpty())
       .flatMap(line -> expand(line).stream())
-      .toList()
+    var extraLines = extraDir == null ? Stream.<String>empty()
+      : Files.list(extraDir.toPath())
+      .filter { path -> classPrefixes.any(path.getFileName().toString()::startsWith) }
+      .map { it.fileName.toString() }
+      .map { it -> packageName + "." + it.substring(0, it.indexOf(".class")) }
+    var stream = Stream.concat(lines, extraLines).toList()
 
-    var reflectConfig = lines.stream()
+    var reflectConfig = stream.stream()
       .map(line -> generateReflectConfig(line))
       .collect(Collectors.joining(",\n", "[\n", "]\n"))
-    var serializeConfig = lines.stream()
+    var serializeConfig = stream.stream()
       .map(line -> generateSerializeConfig(line))
       .collect(Collectors.joining(",\n", "[\n", "]\n"))
     Files.writeString(outputDir.toPath().resolve("reflect-config.json"), reflectConfig)
