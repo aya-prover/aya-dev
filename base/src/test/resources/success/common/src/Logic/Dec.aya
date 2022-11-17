@@ -8,3 +8,8 @@ public open data Dec (P : Type)
 def forget {P : Type} (d : Dec P) : Bool
 | yes _ => true
 | no _ => false
+
+public open data Tri (A B C : Type)
+| yesA A
+| yesB B
+| yesC C

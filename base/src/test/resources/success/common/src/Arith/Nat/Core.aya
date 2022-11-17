@@ -1,8 +1,13 @@
 open import Paths
+open import Logic::False
 
 public open data Nat
 | zero
 | suc Nat
+
+def pred Nat : Nat
+| 0 => 0
+| suc n => n
 
 def overlap infixl + (a b : Nat) : Nat
 | 0, a => a
@@ -44,3 +49,8 @@ def overlap +-*-distl (n m k : Nat) : (m + k) * n = k * n + m * n
 def *-suc-suc (m n : Nat) : suc m * suc n = suc (m + n + m * n)
   => pmap suc (pmap (n +) (*-suc m n)
     <==> sym +-assoc <==> pmap (+ m * n) (+-comm n m))
+
+def z≠s {a : Nat} (p : 0 = suc a) : False => (\i => diag (p i)).coe a
+def diag Nat : Type
+| 0 => Nat
+| suc a => False
