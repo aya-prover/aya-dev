@@ -3,7 +3,7 @@ open import Sets::Fin
 open import Data::List
 open import Paths
 
-open data Vec (A : Type) (n : Nat) : Type
+public open data Vec (A : Type) (n : Nat) : Type
 | A, 0 => vnil
 | A, suc m => infixr :> A (Vec A m)
 
