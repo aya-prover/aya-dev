@@ -1,4 +1,4 @@
-open import Arith::Nat
+open import Arith::Nat::Core
 open import Paths
 
 def overlap infixl *' (m n : Nat) : Nat
