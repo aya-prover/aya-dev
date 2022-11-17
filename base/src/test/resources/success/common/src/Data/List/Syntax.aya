@@ -4,7 +4,7 @@ open import Data::List::Core
 
 variable A B C : Type
 
------ functorial -----
+// ----- functorial -----
 def fmap {A B : Type} => map {A} {B}
 
 def pure (x : A) : List A => x :< nil
@@ -21,7 +21,7 @@ def infixl <|> (l1 l2 : List A) : List A => l1 ++ l2
   tighter =
   looser  <*>
 
------ monadic -----
+// ----- monadic -----
 def return {A : Type} => pure {A}
 
 def join {A : Type} => concat {A}

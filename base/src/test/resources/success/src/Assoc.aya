@@ -1,8 +1,6 @@
 open import Arith::Nat using (Nat, zero, suc, +)
 open import Paths
 
-// -----------------------------------------
-
 open data Term : Type
   | Bin Term Term
   | Atom Nat
