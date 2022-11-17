@@ -78,7 +78,7 @@ public interface Context {
 
   default @NotNull AnyVar getUnqualified(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getUnqualifiedMaybe(name, sourcePos);
-    if (result == null) reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(name, sourcePos));
+    if (result == null) reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(this, name, sourcePos));
     return result;
   }
 

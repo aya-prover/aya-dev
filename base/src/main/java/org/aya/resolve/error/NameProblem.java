@@ -4,12 +4,16 @@ package org.aya.resolve.error;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
+import org.aya.resolve.context.BindContext;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleContext;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -38,10 +42,12 @@ public interface NameProblem extends Problem {
           Doc.english("The unqualified name"),
           Doc.styled(Style.code(), Doc.plain(name)),
           Doc.english("is ambiguous")),
-        Doc.english("Use one of the following module names to qualify the name to disambiguate:"),
-        Doc.styled(Style.code(), Doc.nest(1, Doc.vcat(disambiguation.view()
-          .map(QualifiedID::join)
-          .map(Doc::plain)))));
+        Doc.english("Did you mean:"),
+        Doc.nest(2, Doc.vcat(didYouMean().map(n -> Doc.styled(Style.code(), n)))));
+    }
+
+    public @NotNull ImmutableSeq<String> didYouMean() {
+      return disambiguation.view().map(mod -> QualifiedID.join(mod.appended(name))).toImmutableSeq();
     }
   }
 
@@ -167,15 +173,32 @@ public interface NameProblem extends Problem {
   }
 
   record UnqualifiedNameNotFoundError(
+    @NotNull Context context,
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.sep(
+      var head = Doc.sep(
         Doc.english("The name"),
         Doc.styled(Style.code(), Doc.plain(name)),
-        Doc.english("is not defined in the current scope")
-      );
+        Doc.english("is not defined in the current scope"));
+      var possible = didYouMean();
+      if (possible.isEmpty()) return head;
+      var tail = possible.sizeEquals(1)
+        ? Doc.sep(Doc.english("Did you mean:"), Doc.styled(Style.code(), possible.first()))
+        : Doc.vcat(Doc.english("Did you mean:"),
+          Doc.nest(2, Doc.vcat(possible.view().map(n -> Doc.styled(Style.code(), n)))));
+      return Doc.vcat(head, tail);
+    }
+
+    public @NotNull ImmutableSeq<String> didYouMean() {
+      var ctx = context;
+      while (ctx instanceof BindContext bindCtx) ctx = bindCtx.parent();
+      var possible = MutableList.<String>create();
+      if (ctx instanceof ModuleContext moduleContext) moduleContext.modules().forEach((modName, mod) -> {
+        if (mod.containsKey(name)) possible.append(QualifiedID.join(modName.appended(name)));
+      });
+      return possible.toImmutableSeq();
     }
   }
 
