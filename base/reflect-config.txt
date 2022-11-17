@@ -42,6 +42,7 @@ kala.collection.immutable.ImmutableSeqs$SeqN
 
 # Serialized core terms, for ObjectOutputStream
 org.aya.core.serde.CompiledAya
+org.aya.core.serde.CompiledAya$SerUseHide
 org.aya.util.binop.OpDecl$OpInfo
 org.aya.core.serde.SerDef
 org.aya.core.serde.SerDef$SerOpDecl
