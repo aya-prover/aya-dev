@@ -1,0 +1,13 @@
+open import Paths
+open import Arith::Int
+
+public open data S¹
+| base
+| loop (i : I) { ∂(i) := base }
+
+def ΩS¹ => base = base
+def ploop : ΩS¹ => \i => loop i
+def intLoop Int : ΩS¹
+| signed _ 0 => idp
+| signed b (suc n) => intLoop (signed b n) <==> ifElse b ploop (sym ploop)
+| posneg i => idp

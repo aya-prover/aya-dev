@@ -127,7 +127,10 @@ public class LibraryCompiler {
     var startTime = System.currentTimeMillis();
     owner.librarySources().forEachChecked(src -> {
       resolveImportsIfNeeded(src);
-      depGraph.sucMut(src).appendAll(src.imports());
+      var known = depGraph.sucMut(src);
+      var dedup = src.imports().filter(s ->
+        known.noneMatch(k -> k.moduleName().equals(s.moduleName())));
+      known.appendAll(dedup);
     });
     reporter.reportNest("Done in " + StringUtil.timeToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);

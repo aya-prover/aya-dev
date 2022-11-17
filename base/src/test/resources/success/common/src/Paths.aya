@@ -1,27 +1,22 @@
 public open import Primitives using
-  ( I
-  , Partial
-  , intervalInv as fixl  ~  tighter = \/ /\
-  , intervalMin as infix /\ tighter \/
-  , intervalMax as infix \/
+  ( Partial
   , coe
   , eoc
   , coeFill
   , eocFill
   )
+public open import Intervals
 
 variable A B C D : Type
-
 def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
 def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
-def infix = {A : Type} => Eq A
+def infix = {A : Type} => Eq A looser ~
 def idp {a : A} : a = a => \i => a
 def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g => \i a => p a i
 def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => \i => f (p i)
 def sym {a b : A} (p : a = b) : b = a => \i => p (~ i)
 
-def psqueeze {a b : A} (p : a = b) (i : I)
- : a = p i => \j => p (i /\ j)
+def isContr (A : Type) => Sig (a : A) ** (forall b -> a = b)
 
 def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b (\i => p i) =>

@@ -5,7 +5,7 @@ package org.aya.resolve;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
+import kala.tuple.Tuple3;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
@@ -39,7 +39,7 @@ public record ResolveInfo(
   @NotNull PrimDef.Factory primFactory,
   @NotNull AyaShape.Factory shapeFactory,
   @NotNull AyaBinOpSet opSet,
-  @NotNull MutableMap<DefVar<?, ?>, Tuple2<RenamedOpDecl, BindBlock>> opRename,
+  @NotNull MutableMap<DefVar<?, ?>, Tuple3<RenamedOpDecl, BindBlock, Boolean>> opRename,
   @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> imports,
   @NotNull MutableMap<ImmutableSeq<String>, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
@@ -50,9 +50,13 @@ public record ResolveInfo(
       MutableMap.create(), MutableGraph.create());
   }
 
-  public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull RenamedOpDecl renamed, @NotNull BindBlock bind) {
+  /**
+   * @param definedHere Is this operator renamed in this module, or publicly renamed by upstream?
+   * @see #open(ResolveInfo, SourcePos, Stmt.Accessibility)
+   */
+  public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull RenamedOpDecl renamed, @NotNull BindBlock bind, boolean definedHere) {
     defVar.opDeclRename.put(thisModule().moduleName(), renamed);
-    opRename.put(defVar, Tuple.of(renamed, bind));
+    opRename.put(defVar, Tuple.of(renamed, bind, definedHere));
   }
 
   public void open(@NotNull ResolveInfo other, @NotNull SourcePos sourcePos, @NotNull Stmt.Accessibility acc) {
@@ -66,7 +70,7 @@ public record ResolveInfo(
         // if it is `public open`, make renamed operators transitively accessible by storing
         // them in my `opRename` bc "my importers" cannot access `other.opRename`.
         // see: https://github.com/aya-prover/aya-dev/issues/519
-        renameOp(defVar, tuple._1, tuple._2);
+        renameOp(defVar, tuple._1, tuple._2, false);
       } else defVar.opDeclRename.put(thisModule().moduleName(), tuple._1);
     });
   }
