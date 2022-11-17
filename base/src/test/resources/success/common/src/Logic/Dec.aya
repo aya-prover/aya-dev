@@ -1,7 +1,7 @@
 open import Logic::False
 open import Data::Bool
 
-open data Dec (P : Type)
+public open data Dec (P : Type)
 | yes P
 | no (¬ P)
 

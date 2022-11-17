@@ -1,6 +1,6 @@
 open import Paths
 open import Arith::Nat
-open import Data::Fin
+open import Sets::Fin
 
 public open data List (A : Type) : Type
 | nil

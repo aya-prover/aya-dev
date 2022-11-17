@@ -1,5 +1,5 @@
 open import Arith::Nat::Core
-open import Data::Empty
+open import Logic::False
 open import Paths
 
 open data infix < Nat Nat
@@ -12,6 +12,6 @@ def trans< (a < b) (b < c) : a < c
 | zc, sc _ => zc
 | sc p1, sc p2 => sc (trans< p1 p2)
 
-def asym (a < b) (b < a) : Empty
+def asym (a < b) (b < a) : False
 | zc, ()
 | sc p1, sc p2 => asym p1 p2
