@@ -1,4 +1,4 @@
--- https://github.com/aya-prover/aya-dev/issues/12
+// https://github.com/aya-prover/aya-dev/issues/12
 open data Unit : Type | unit
 def foo (x : Unit) : Unit => x
 def bar : Unit => foo {unit}

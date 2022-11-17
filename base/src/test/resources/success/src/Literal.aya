@@ -24,11 +24,11 @@ def yes3 : litAdd = ctorAdd => idp
 def e1 : Nat2 => 2147483647
 def e2 => 114514 + 1919810
 
--- e1 is unfolded to constructor when unifying, which is not needed
+// e1 is unfolded to constructor when unifying, which is not needed
 def e1-y : e1 = 2147483647 => idp
 
--- e2 is unfolded to constructor form for applying functions, causing StackOverflow
--- def e2-y : e2 = 1 => idp
+// e2 is unfolded to constructor form for applying functions, causing StackOverflow
+// def e2-y : e2 = 1 => idp
 
 def magic Nat : Nat
   | 0 => 1
@@ -79,5 +79,5 @@ def overlap multi-nodes Nat Nat : Nat
   | 114, 514 => 514
   | 115, 514 => 514
   | a, b => b
---^ should be 3 groups: [0, 4], [1, 2, 4], [3, 4]
+//  ^ should be 3 groups: [0, 4], [1, 2, 4], [3, 4]
 
