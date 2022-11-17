@@ -10,6 +10,7 @@ import kala.tuple.Tuple;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.UseHide;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
@@ -38,11 +39,30 @@ import java.util.function.Function;
 public record CompiledAya(
   @NotNull ImmutableSeq<ImmutableSeq<String>> imports,
   @NotNull ImmutableSeq<SerDef.QName> exports,
-  @NotNull ImmutableMap<ImmutableSeq<String>, ImmutableMap<String, String>> reExports,
+  @NotNull ImmutableMap<ImmutableSeq<String>, SerUseHide> reExports,
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps,
   @NotNull ImmutableMap<SerDef.QName, SerDef.SerRenamedOp> opRename
 ) implements Serializable {
+  /** @see org.aya.concrete.stmt.UseHide */
+  record SerUseHide(
+    boolean isUsing,
+    @NotNull ImmutableSeq<String> names,
+    @NotNull ImmutableMap<String, String> renames
+  ) implements Serializable {
+    public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
+      return new SerUseHide(
+        useHide.strategy() == UseHide.Strategy.Using,
+        useHide.list().map(UseHide.Name::id),
+        ImmutableMap.from(useHide.renaming())
+      );
+    }
+
+    public boolean uses(@NotNull String name) {
+      return isUsing == names.contains(name);
+    }
+  }
+
   public static @NotNull CompiledAya from(
     @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs,
     @NotNull Serializer.State state
@@ -64,7 +84,7 @@ public record CompiledAya(
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
     return new CompiledAya(imports, exports,
       resolveInfo.reExports().view()
-        .map((k, v) -> Tuple.of(k, v.renaming()))
+        .map((k, v) -> Tuple.of(k, SerUseHide.from(v)))
         .toImmutableMap(),
       serialization.serDefs.toImmutableSeq(),
       serialization.serOps.toImmutableSeq(),
@@ -141,11 +161,10 @@ public record CompiledAya(
       thisResolve.imports().put(success.thisModule().moduleName(), success);
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
-      // TODO: use list and hide list?
-      reExports.getOption(modName).forEach(rename -> thisResolve.thisModule().openModule(modName,
+      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modName,
         Stmt.Accessibility.Public,
-        s -> true,
-        rename,
+        useHide::uses,
+        useHide.renames(),
         SourcePos.SER));
       thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
       thisResolve.shapeFactory().importAll(success.shapeFactory());
