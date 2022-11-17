@@ -1,0 +1,9 @@
+data False
+
+def fixr ¬ (A : Type) => A -> False
+
+def elim {A : Type} False : A | ()
+def NonEmpty (A : Type) => ¬ ¬ A
+def Stable (A : Type) => NonEmpty A -> A
+
+def pointed {A : Type} (a : A) : NonEmpty A => \f => f a
