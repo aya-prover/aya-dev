@@ -71,11 +71,11 @@ org.aya.core.serde.SerTerm$Proj
 org.aya.core.serde.SerTerm$SerArg
 org.aya.core.serde.SerTerm$App
 org.aya.core.serde.SerTerm$CallData
-org.aya.core.serde.SerTerm$StructCall
-org.aya.core.serde.SerTerm$FnCall
-org.aya.core.serde.SerTerm$DataCall
-org.aya.core.serde.SerTerm$PrimCall
-org.aya.core.serde.SerTerm$ConCall
+org.aya.core.serde.SerTerm$Struct
+org.aya.core.serde.SerTerm$Fn
+org.aya.core.serde.SerTerm$Data
+org.aya.core.serde.SerTerm$Prim
+org.aya.core.serde.SerTerm$Con
 org.aya.core.serde.SerTerm$Tup
 org.aya.core.serde.SerTerm$Access
 org.aya.core.serde.SerTerm$FieldRef
