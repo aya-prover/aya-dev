@@ -3,7 +3,7 @@ open import Paths
 def par1 (A : Type) (u : A) (i : I) : Partial (~ i) A =>
   {| ~ i := u |}
 
--- By @imkiva, in PR
+// By @imkiva, in PR
 def p1 (A : Type) (a : A) (i : I) : Partial (~ i) A =>
   {| ~ i := a |}
 def p2 (A : Type) (b : A) (j : I) : Partial (~ j) A =>
@@ -17,7 +17,7 @@ def cmp {A : Type} (x : A)
 
 def transport-constant (A : I -> Type) (a : A 0) (i : I) : A i
   => (\j => A (i /\ j)).coe a freeze ~ i
--- ^ `A (i /\ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.
+// ^ `A (i /\ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.
 
 def transp  (A : I -> Type) (a : A 0) : A 1 => A.coe a
 def transp' (A : I -> Type) (a : A 0) : A 1 => A.coe a freeze 0
@@ -93,7 +93,7 @@ example def coeSigma5 (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
       (((\j => D j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)
         (((\k => C k ((A.coeFill t.1) k) (((\l => B l ((A.coeFill t.1) l)).coeFill t.2) k)).coeFill t.3) j)).coeFill t.4) i)).coe t.5)
 
--- is my coeFill primitive elaborated correctly?
+// is my coeFill primitive elaborated correctly?
 example def coeFillAlt (A : I -> Type) (u : A 0)
   : [| i |] A i {| ~ i := u | i := A.coe u freeze 0 |}
   => \i => (\j => A (i /\ j)).coe u freeze (0 \/ ~ i)

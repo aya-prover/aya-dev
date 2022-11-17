@@ -106,10 +106,10 @@ RPATH = \|\] | \u27E7
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Comments, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-LINE_COMMENT        = "--" (.* | {EOL})
-DOC_COMMENT         = "--|" (.* | {EOL})
-BLOCK_COMMENT_START = "{-"
-BLOCK_COMMENT_END   = "-}"
+LINE_COMMENT        = "//" (.* | {EOL})
+DOC_COMMENT         = "///" (.* | {EOL})
+BLOCK_COMMENT_START = "/*"
+BLOCK_COMMENT_END   = "*/"
 
 %%
 <YYINITIAL> {

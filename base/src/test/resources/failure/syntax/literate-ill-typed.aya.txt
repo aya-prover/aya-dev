@@ -1,7 +1,7 @@
 In file $FILE:2:0 ->
 
   1 | open data Nat : Type | zero | suc Nat
-  2 | --| test `suc Nat`
+  2 | /// test `suc Nat`
       ^----------------^
 
 Error: Cannot check the expression

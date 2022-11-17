@@ -1,4 +1,4 @@
--- https://github.com/aya-prover/aya-dev/issues/10#issuecomment-917887640
+// https://github.com/aya-prover/aya-dev/issues/10#issuecomment-917887640
 open import Refparo::Model
 open struct Struct : Type
   | field : Unit

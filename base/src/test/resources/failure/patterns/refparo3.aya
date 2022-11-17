@@ -1,4 +1,4 @@
--- #6 in public repo
+// #6 in public repo
 
 open data Bool : Type | true | false
 

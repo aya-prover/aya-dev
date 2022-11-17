@@ -19,7 +19,7 @@ def succInt Int : Int
 | signed false zero => pos 1
 | posneg i => pos 1
 
--- TODO: reimplement using univalence
+// TODO: reimplement using univalence
 def predInt (x : Int) : Int => negate (succInt (negate x))
 
 def subI (x y : Int) : Int => addI x (negate y)
@@ -30,10 +30,10 @@ def addI Int Int : Int
 | signed true (suc m), n => succInt (addI (pos m) n)
 | signed false (suc m), n => predInt (addI (neg m) n)
 
-{-
+/*
 def addI-comm (a b : Int) : addI a b = addI b a
 | pos n, pos m => pmap pos (+-comm n m)
 | neg n, neg m => pmap neg (+-comm n m)
 | pos n, neg m => idp
 | neg n, pos m => idp
--}
+*/
