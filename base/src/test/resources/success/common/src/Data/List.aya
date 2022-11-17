@@ -39,17 +39,17 @@ def map (f : A -> B) (l : List A) : List B
 | f, nil => nil
 | f, a :< l => f a :< map f l
 
-def length_map (f : A -> B) (l : List A) : length (map f l) = length l
+def lengthMap (f : A -> B) (l : List A) : length (map f l) = length l
 | f, nil => idp
-| f, a :< l => pmap suc (length_map f l)
+| f, a :< l => pmap suc (lengthMap f l)
 
-def map_comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l)
+def mapComp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l)
 | _, _, nil => idp
-| g, f, a :< l => pmap (g _ :<) (map_comp g f l)
+| g, f, a :< l => pmap (g _ :<) (mapComp g f l)
 
-def map_id (l : List A) : map (\x => x) l = l
+def mapId (l : List A) : map (\x => x) l = l
 | nil => idp
-| a :< l => pmap (a :<) (map_id l)
+| a :< l => pmap (a :<) (mapId l)
 
 def headDef (x : A) (xs : List A) : A
 | x, nil => x
