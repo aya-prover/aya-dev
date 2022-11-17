@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
@@ -142,7 +143,23 @@ public class AyaLanguageServer implements LanguageServer {
     if (path == null) return null;
     var ayaJson = path.resolve(Constants.AYA_JSON);
     if (!Files.exists(ayaJson)) return findOwner(path.getParent());
-    return libraries.find(lib -> lib.underlyingLibrary().libraryRoot().equals(path)).getOrNull();
+    var book = MutableSet.<LibraryConfig>create();
+    for (var lib : libraries) {
+      var found = findOwner(book, lib, path);
+      if (found != null) return found;
+    }
+    return null;
+  }
+
+  private @Nullable LibraryOwner findOwner(@NotNull MutableSet<LibraryConfig> book, @NotNull LibraryOwner owner, @NotNull Path libraryRoot) {
+    if (book.contains(owner.underlyingLibrary())) return null;
+    book.add(owner.underlyingLibrary());
+    if (owner.underlyingLibrary().libraryRoot().equals(libraryRoot)) return owner;
+    for (var dep : owner.libraryDeps()) {
+      var found = findOwner(book, dep, libraryRoot);
+      if (found != null) return found;
+    }
+    return null;
   }
 
   private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
