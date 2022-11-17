@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple3;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
@@ -89,11 +90,14 @@ public record CompiledAya(
       serialization.serDefs.toImmutableSeq(),
       serialization.serOps.toImmutableSeq(),
       resolveInfo.opRename().view().map((k, v) -> {
-        var name = state.def(k);
-        var info = v._1.opInfo();
-        var renamed = new SerDef.SerRenamedOp(info.name(), info.assoc(), serialization.serBind(v._2));
-        return Tuple.of(name, renamed);
-      }).toImmutableMap()
+          var name = state.def(k);
+          var info = v._1.opInfo();
+          var renamed = new SerDef.SerRenamedOp(info.name(), info.assoc(), serialization.serBind(v._2));
+          return Tuple.of(v._3, name, renamed);
+        })
+        .filter(Tuple3::head) // should not serialize publicly renamed ops from upstreams
+        .map(Tuple3::tail)
+        .toImmutableMap()
     );
   }
 
@@ -184,12 +188,10 @@ public record CompiledAya(
     // deserialize renamed operator
     opRename.view().forEach((name, serOp) -> {
       var defVar = state.resolve(name);
-      var imported = resolveInfo.opRename().getOrNull(defVar);
-      if (imported != null) return; // already handled in `thisResolve.open()` in `shallowResolve()`
       var asName = serOp.name();
       var asAssoc = serOp.assoc();
       var opDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, asAssoc));
-      resolveInfo.renameOp(defVar, opDecl, BindBlock.EMPTY);
+      resolveInfo.renameOp(defVar, opDecl, BindBlock.EMPTY, true);
       // ^ always use empty bind block bc we will resolve the bind here!
     });
     // and their bindings

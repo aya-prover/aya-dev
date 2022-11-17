@@ -85,7 +85,7 @@ public record StmtShallowResolver(
           var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(use.asName(), use.asAssoc()));
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) bind.context().set(ctx);
-          resolveInfo.renameOp(defVar, renamedOpDecl, bind);
+          resolveInfo.renameOp(defVar, renamedOpDecl, bind, true);
         });
       }
       case Remark remark -> remark.ctx = context;
