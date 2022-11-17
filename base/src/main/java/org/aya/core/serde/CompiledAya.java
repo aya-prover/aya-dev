@@ -166,28 +166,26 @@ public record CompiledAya(
         useHide::uses,
         useHide.renames(),
         SourcePos.SER));
-      thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
-      thisResolve.shapeFactory().importAll(success.shapeFactory());
+      var acc = this.reExports.containsKey(modName)
+        ? Stmt.Accessibility.Public
+        : Stmt.Accessibility.Private;
+      thisResolve.open(success, SourcePos.SER, acc);
     }
   }
 
   /** like {@link StmtResolver} but only resolve operator */
   private void deOp(@NotNull SerTerm.DeState state, @NotNull ResolveInfo resolveInfo) {
-    // deserialize defined operator and their bindings
+    // deserialize defined operator
     serOps.forEach(serOp -> {
       var defVar = state.resolve(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc());
       defVar.opDecl = new SerDef.SerOpDecl(opInfo);
     });
-    serOps.view().forEach(serOp -> {
-      var defVar = state.resolve(serOp.name());
-      var opDecl = defVar.opDecl;
-      assert opDecl != null; // just initialized above
-      deBindDontCare(resolveInfo, state, opDecl, serOp.bind());
-    });
     // deserialize renamed operator
     opRename.view().forEach((name, serOp) -> {
       var defVar = state.resolve(name);
+      var imported = resolveInfo.opRename().getOrNull(defVar);
+      if (imported != null) return; // already handled in `thisResolve.open()` in `shallowResolve()`
       var asName = serOp.name();
       var asAssoc = serOp.assoc();
       var opDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, asAssoc));
@@ -195,6 +193,12 @@ public record CompiledAya(
       // ^ always use empty bind block bc we will resolve the bind here!
     });
     // and their bindings
+    serOps.view().forEach(serOp -> {
+      var defVar = state.resolve(serOp.name());
+      var opDecl = defVar.opDecl;
+      assert opDecl != null; // just initialized above
+      deBindDontCare(resolveInfo, state, opDecl, serOp.bind());
+    });
     opRename.view().forEach((name, serOp) -> {
       var defVar = state.resolve(name);
       var asBind = serOp.bind();
