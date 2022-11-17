@@ -3,11 +3,11 @@ open import Homotopy::Sphere::S1
 
 public open data T²
 | point
-| line1 (i : I) { ∂(i) := point }
-| line2 (i : I) { ∂(i) := point }
+| line1 (i : I) { ∂ i := point }
+| line2 (i : I) { ∂ i := point }
 | face (i j : I) {
-  | ∂(i) := line2 j
-  | ∂(j) := line1 i
+  | ∂ i := line2 j
+  | ∂ j := line1 i
 }
 
 def S¹-T² (s1 s2 : S¹) : T²

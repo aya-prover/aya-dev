@@ -13,14 +13,14 @@ def S¹-T³ (p : S¹) (q : S¹) (r : S¹) : T³
 
 public open data T³
 | base3
-| line1 (i : I) { ∂(i) := base3 }
-| line2 (i : I) { ∂(i) := base3 }
-| line3 (i : I) { ∂(i) := base3 }
-| face1 (i j : I) { ∂(i) := line3 j | ∂(j) := line2 i }
-| face2 (i j : I) { ∂(i) := line3 j | ∂(j) := line1 i }
-| face3 (i j : I) { ∂(i) := line2 j | ∂(j) := line1 i }
+| line1 (i : I) { ∂ i := base3 }
+| line2 (i : I) { ∂ i := base3 }
+| line3 (i : I) { ∂ i := base3 }
+| face1 (i j : I) { ∂ i := line3 j | ∂ j := line2 i }
+| face2 (i j : I) { ∂ i := line3 j | ∂ j := line1 i }
+| face3 (i j : I) { ∂ i := line2 j | ∂ j := line1 i }
 | fill3 (i j k : I) {
-  | ∂(i) := face1 j k
-  | ∂(j) := face2 i k
-  | ∂(k) := face3 i j
+  | ∂ i := face1 j k
+  | ∂ j := face2 i k
+  | ∂ k := face3 i j
 }
