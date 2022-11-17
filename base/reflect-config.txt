@@ -41,11 +41,6 @@ kala.collection.immutable.ImmutableSeqs$Seq{0,5}
 kala.collection.immutable.ImmutableSeqs$SeqN
 
 # Serialized core terms, for ObjectOutputStream
-org.aya.core.serde.CompiledAya
-org.aya.core.serde.CompiledAya$SerUseHide
 org.aya.util.binop.OpDecl$OpInfo
-org.aya.core.serde.SerDef
-org.aya.core.serde.SerPat
-org.aya.core.serde.SerTerm
 org.aya.core.repr.CodeShape$MomentId
 org.aya.generic.SortKind
