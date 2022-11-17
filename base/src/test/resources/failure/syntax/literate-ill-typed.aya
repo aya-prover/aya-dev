@@ -1,2 +1,2 @@
 open data Nat : Type | zero | suc Nat
---| test `suc Nat`
+/// test `suc Nat`

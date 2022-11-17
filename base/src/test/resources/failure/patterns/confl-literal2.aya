@@ -32,4 +32,4 @@ def overlap multi-nodes Nat Nat : Nat
   | 114, 514 => 515
   | 115, 514 => 514
   | a, b => b
---^ should be 3 groups: [0, 4], [1, 2, 4], [3, 4]
+//  ^ should be 3 groups: [0, 4], [1, 2, 4], [3, 4]

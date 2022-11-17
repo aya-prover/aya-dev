@@ -1,7 +1,7 @@
 open import Arith::Nat
 open import Paths
 
--- This test makes sure that `Pattern.List` DO desugar to `Pattern.Ctor` with CodeShape instead of `nil` and `:<`
+// This test makes sure that `Pattern.List` DO desugar to `Pattern.Ctor` with CodeShape instead of `nil` and `:<`
 
 open data SomeList {A : Type} | cons {A} {SomeList {A}} | empty
 

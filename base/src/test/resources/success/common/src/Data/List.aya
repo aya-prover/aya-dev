@@ -83,7 +83,7 @@ def slice-appendLem (l : List A) (i s : Nat)
 | nil, suc i, suc s => idp
 | a :< l, suc i, s => pmap (a :<) (slice-appendLem l i s)
 
------ functorial -----
+// ----- functorial -----
 def fmap {A B : Type} => map {A} {B}
 
 def pure (x : A) : List A => x :< nil
@@ -100,7 +100,7 @@ def infixl <|> (l1 l2 : List A) : List A => l1 ++ l2
   tighter =
   looser  <*>
 
------ monadic -----
+// ----- monadic -----
 def return {A : Type} => pure {A}
 
 def join {A : Type} => concat {A}

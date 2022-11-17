@@ -11,20 +11,20 @@ def inline ~ => intervalInv
 
 def YY (A : I -> Type) (a : A 0) (i : I) : A i
   => (\j => A (i /\ j)).coe a freeze ~ i
--- ^ `A (i /\ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.
+// ^ `A (i /\ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.
 
 def GG (A : I -> Type) (a : A 0) (i : I) : A i
   => (\j => A (i /\ j)).coe a freeze i
--- ^ `A (i /\ j)` normalizes to `A j` under cofibration `i`, which is not a constant.
+// ^ `A (i /\ j)` normalizes to `A j` under cofibration `i`, which is not a constant.
 
 def GG2 (A : I -> Type) (a : A 0) (i : I) : A i
   => (\j => A j).coe a freeze i
--- ^ `A j` normalizes to `A j` under cofibration `i`, which is not a constant.
+// ^ `A j` normalizes to `A j` under cofibration `i`, which is not a constant.
 
 def GG3 (A : I -> Type) (a : A 0) (i : I) : A i
   => A.coe a freeze i
--- ^ `A` is blocked, which is unknown to be constant.
+// ^ `A` is blocked, which is unknown to be constant.
 
 def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
   => (\j => A (i /\ j)).coe a freeze a
--- ^ The cofibration is an ErrorTerm, so we test the error reporter.
+// ^ The cofibration is an ErrorTerm, so we test the error reporter.

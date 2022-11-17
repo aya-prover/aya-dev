@@ -1,2 +1,2 @@
 public open import Paths
--- ^ publicly open Paths, making `~`, `/\` and `\/` available to my importers
+// ^ publicly open Paths, making `~`, `/\` and `\/` available to my importers
