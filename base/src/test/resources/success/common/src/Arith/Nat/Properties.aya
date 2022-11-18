@@ -7,10 +7,14 @@ def overlap infixl *' (m n : Nat) : Nat
 | suc m, suc n => suc (m + n + m *' n)
 tighter +
 
+def *-suc-suc (m n : Nat) : suc m * suc n = suc (m + n + m * n)
+  => pmap suc (pmap (n +) (*-suc m n)
+    <==> sym +-assoc <==> pmap (+ m * n) +-comm)
+
 def overlap *'-*-iso (m n : Nat) : m *' n = m * n
 | 0, n => idp
 | m, 0 => idp
-| suc m, suc n => pmap (\ x => suc (m + n + x)) (*'-*-iso m n)
+| suc m, suc n => pmap (\x => suc (m + n + x)) (*'-*-iso m n)
   <==> sym (*-suc-suc m n)
 
 def *'-*-eq : (*') = (*) => funExt2 (*') (*) *'-*-iso

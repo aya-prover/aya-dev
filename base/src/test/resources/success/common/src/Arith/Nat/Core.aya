@@ -43,13 +43,9 @@ def *-suc (m n : Nat) : m * suc n = m + m * n
 | suc m, n => pmap suc (pmap (n +) (*-suc m n)
   <==> sym +-assoc <==> pmap (+ m * n) +-comm <==> +-assoc)
 
-def overlap +-*-distl (n m k : Nat) : (m + k) * n = k * n + m * n
-| n, m, 0 => idp
-| n, m, suc k => pmap (n +) (+-*-distl n m k) <==> sym +-assoc
-
-def *-suc-suc (m n : Nat) : suc m * suc n = suc (m + n + m * n)
-  => pmap suc (pmap (n +) (*-suc m n)
-    <==> sym +-assoc <==> pmap (+ m * n) +-comm)
+def +-*-distl {n m : Nat} (k : Nat) : (m + k) * n = k * n + m * n
+| 0 => idp
+| suc k => pmap (_ +) (+-*-distl k) <==> sym +-assoc
 
 def z≠s {a : Nat} (p : 0 = suc a) : False => (\i => diag (p i)).coe a
 private def diag Nat : Type
