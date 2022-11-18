@@ -4,6 +4,7 @@
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
 [![tokei]](https://github.com/XAMPPRocky/tokei)
 [![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Faya-prover%2Faya-dev.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Faya-prover%2Faya-dev?ref=badge_shield)
 
 [**Website**](https://www.aya-prover.org) contains:
 
@@ -109,3 +110,7 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
   + The command and argument parsing framework is in `tools-repl`.
     It offers an implementation of ANTLR4-based jline3 parser and relevant facilities.
 + `[latest version]` is what you see on this badge ![maven] .
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Faya-prover%2Faya-dev.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Faya-prover%2Faya-dev?ref=badge_large)
