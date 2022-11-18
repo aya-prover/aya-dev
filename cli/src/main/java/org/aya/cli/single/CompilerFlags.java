@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
 import kala.collection.SeqLike;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
-import org.aya.pretty.printer.ColorScheme;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,8 @@ public record CompilerFlags(
   public record DistillInfo(
     @NotNull MainArgs.DistillStage distillStage,
     @NotNull MainArgs.DistillFormat distillFormat,
-    @NotNull ColorScheme scheme,
+    @NotNull DistillerOptions distillerOptions,
+    @NotNull RenderOptions renderOptions,
     @NotNull Path distillDir
   ) {
   }
