@@ -20,17 +20,17 @@ private def overlap +-assoc-lemma (a b c : Nat) : (a + b) + c = a + (b + c)
 | 0, b, c => idp
 | a, 0, c => idp
 | a, b, 0 => idp
-| suc a, b, c => pmap suc (+-assoc-lemma a b c)
-| a, suc b, c => pmap suc (+-assoc-lemma a b c)
-| a, b, suc c => pmap suc (+-assoc-lemma a b c)
-def +-assoc {a b c : Nat} => +-assoc-lemma a b c
+| suc a, b, c => pmap suc +-assoc
+| a, suc b, c => pmap suc +-assoc
+| a, b, suc c => pmap suc +-assoc
+def inline +-assoc {a b c : Nat} => +-assoc-lemma a b c
 
 private def overlap +-comm-lemma (a b : Nat) : a + b = b + a
 | 0, a => idp
 | a, 0 => idp
-| suc a, b => pmap suc (+-comm-lemma _ _)
-| a, suc b => pmap suc (+-comm-lemma _ _)
-def +-comm {a b : Nat} => +-comm-lemma a b
+| suc a, b => pmap suc +-comm
+| a, suc b => pmap suc +-comm
+def inline +-comm {a b : Nat} => +-comm-lemma a b
 
 def overlap infixl * (m n : Nat) : Nat
 | 0, n => 0
