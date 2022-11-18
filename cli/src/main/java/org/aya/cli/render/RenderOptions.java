@@ -15,7 +15,6 @@ import org.aya.pretty.backend.string.style.DebugStylist;
 import org.aya.pretty.backend.string.style.UnixTermStylist;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.ColorScheme;
-import org.aya.pretty.printer.PrinterConfig;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
@@ -67,7 +66,7 @@ public class RenderOptions {
     return colorScheme.equals(DEFAULT_COLOR_SCHEME) && styleFamily.equals(DEFAULT_STYLE_FAMILY);
   }
 
-  public @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {
+  public static @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {
     return switch (output) {
       case Terminal -> AdaptiveCliStylist.INSTANCE;
       case LaTeX -> TeXStylist.DEFAULT;
@@ -90,17 +89,21 @@ public class RenderOptions {
     try {
       return stylist(output);
     } catch (IOException | JsonParseException e) {
+      // TODO: report error but don't stop
       return defaultStylist(output);
     }
   }
 
   public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader) {
+    return render(output, doc, StringPrinterConfig.INFINITE_SIZE, true, witHeader);
+  }
+
+  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, int pageWidth, boolean unicode, boolean witHeader) {
     var stylist = stylistOrDefault(output);
     return switch (output) {
       case HTML -> doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config((Html5Stylist) stylist, witHeader));
       case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
-      case Terminal -> doc.renderToString(new StringPrinterConfig(stylist, PrinterConfig.INFINITE_SIZE, true));
-      case Plain -> doc.renderToString(new StringPrinterConfig(stylist, PrinterConfig.INFINITE_SIZE, false));
+      case Terminal, Plain -> doc.renderToString(new StringPrinterConfig(stylist, pageWidth, unicode));
     };
   }
 

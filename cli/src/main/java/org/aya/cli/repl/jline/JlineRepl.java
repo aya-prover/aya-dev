@@ -4,12 +4,12 @@ package org.aya.cli.repl.jline;
 
 import com.intellij.lexer.FlexLexer;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.util.AyaHome;
 import org.aya.parser.AyaParserDefinitionBase;
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.CmdCompleter;
 import org.aya.repl.ReplUtil;
@@ -78,8 +78,8 @@ public final class JlineRepl extends AyaRepl {
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
-    var printerConfig = new StringPrinterConfig(config.getStylist(), prettyPrintWidth, config.enableUnicode);
-    return doc.renderToString(printerConfig);
+    return config.renderOptions.render(RenderOptions.OutputTarget.Terminal,
+      doc, prettyPrintWidth, config.enableUnicode, true);
   }
 
   @Override public void println(@NotNull String x) {
