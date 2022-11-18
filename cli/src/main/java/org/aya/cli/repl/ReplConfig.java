@@ -35,7 +35,7 @@ public class ReplConfig implements AutoCloseable {
    * DO NOT modify this directly, use setRenderOptions instead.
    */
   public @UnknownNullability RenderOptions renderOptions = new RenderOptions();
-  public transient @NotNull StringStylist stylist;
+  public transient @NotNull UnixTermStylist stylist;
   public static final UnixTermStylist DEFAULT_STYLIST = new UnixTermStylist(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI);
 
   public ReplConfig(@NotNull Path file) {

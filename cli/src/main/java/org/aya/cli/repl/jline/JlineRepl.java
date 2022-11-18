@@ -26,9 +26,7 @@ import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.terminal.impl.AbstractWindowsTerminal;
 import org.jline.terminal.impl.DumbTerminal;
-import org.jline.utils.AttributedString;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -88,8 +86,7 @@ public final class JlineRepl extends AyaRepl {
   }
 
   @Override public void println(@NotNull String x) {
-    if (terminal instanceof AbstractWindowsTerminal) terminal.writer().println(AttributedString.fromAnsi(x));
-    else terminal.writer().println(x);
+    terminal.writer().println(x);
     terminal.flush();
   }
 
