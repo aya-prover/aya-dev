@@ -15,8 +15,4 @@ public abstract class Stylist {
     this.colorScheme = colorScheme;
     this.styleFamily = styleFamily;
   }
-
-  public @NotNull ColorScheme getColorScheme() {
-    return colorScheme;
-  }
 }
