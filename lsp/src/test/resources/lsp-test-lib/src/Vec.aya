@@ -7,8 +7,8 @@ open data Vec (A : Type) (n : Nat) : Type
 variable A : Type
 variable n m : Nat
 
--- This definition is explicitly tested in the test suite
--- Do not change
+// This definition is explicitly tested in the test suite
+// Do not change
 def test (xs : Vec A n) (ys : Vec A m) : Nat
 | vnil, ys => 0
 | x :> xs, ys => 0
