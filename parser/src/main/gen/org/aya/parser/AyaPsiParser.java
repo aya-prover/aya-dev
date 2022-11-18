@@ -398,6 +398,40 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // <<param>> (',' <<param>> ) *
+  static boolean commaSep(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "commaSep")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = _param.parse(b, l);
+    r = r && commaSep_1(b, l + 1, _param);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (',' <<param>> ) *
+  private static boolean commaSep_1(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "commaSep_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!commaSep_1_0(b, l + 1, _param)) break;
+      if (!empty_element_parsed_guard_(b, "commaSep_1", c)) break;
+    }
+    return true;
+  }
+
+  // ',' <<param>>
+  private static boolean commaSep_1_0(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "commaSep_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && _param.parse(b, l);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // dataCtorClause
   //            | (BAR dataCtor)
   public static boolean dataBody(PsiBuilder b, int l) {
@@ -646,36 +680,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (doBlockContent COMMA)* doBlockContent
+  // <<commaSep doBlockContent>>
   public static boolean doBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "doBlock")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, DO_BLOCK, "<do block>");
-    r = doBlock_0(b, l + 1);
-    r = r && doBlockContent(b, l + 1);
+    r = commaSep(b, l + 1, AyaPsiParser::doBlockContent);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (doBlockContent COMMA)*
-  private static boolean doBlock_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "doBlock_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!doBlock_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "doBlock_0", c)) break;
-    }
-    return true;
-  }
-
-  // doBlockContent COMMA
-  private static boolean doBlock_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "doBlock_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = doBlockContent(b, l + 1);
-    r = r && consumeToken(b, COMMA);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -692,36 +703,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (expr COMMA)* expr
+  // <<commaSep expr>>
   public static boolean exprList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "exprList")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, EXPR_LIST, "<expr list>");
-    r = exprList_0(b, l + 1);
-    r = r && expr(b, l + 1, -1);
+    r = commaSep(b, l + 1, expr_parser_);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (expr COMMA)*
-  private static boolean exprList_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "exprList_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!exprList_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "exprList_0", c)) break;
-    }
-    return true;
-  }
-
-  // expr COMMA
-  private static boolean exprList_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "exprList_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr(b, l + 1, -1);
-    r = r && consumeToken(b, COMMA);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -971,43 +959,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (weakId COMMA)* weakId?
+  // <<commaSep weakId>>?
   public static boolean idsComma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "idsComma")) return false;
-    boolean r;
     Marker m = enter_section_(b, l, _NONE_, IDS_COMMA, "<ids comma>");
-    r = idsComma_0(b, l + 1);
-    r = r && idsComma_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (weakId COMMA)*
-  private static boolean idsComma_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "idsComma_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!idsComma_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "idsComma_0", c)) break;
-    }
-    return true;
-  }
-
-  // weakId COMMA
-  private static boolean idsComma_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "idsComma_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = weakId(b, l + 1);
-    r = r && consumeToken(b, COMMA);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // weakId?
-  private static boolean idsComma_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "idsComma_1")) return false;
-    weakId(b, l + 1);
+    commaSep(b, l + 1, AyaPsiParser::weakId);
+    exit_section_(b, l, m, true, false, null);
     return true;
   }
 
@@ -1113,37 +1070,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (doBinding COMMA)* doBinding
+  // <<commaSep doBinding>>
   public static boolean listComp(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "listComp")) return false;
     if (!nextTokenIs(b, ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = listComp_0(b, l + 1);
-    r = r && doBinding(b, l + 1);
+    r = commaSep(b, l + 1, AyaPsiParser::doBinding);
     exit_section_(b, m, LIST_COMP, r);
-    return r;
-  }
-
-  // (doBinding COMMA)*
-  private static boolean listComp_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listComp_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!listComp_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "listComp_0", c)) break;
-    }
-    return true;
-  }
-
-  // doBinding COMMA
-  private static boolean listComp_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listComp_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = doBinding(b, l + 1);
-    r = r && consumeToken(b, COMMA);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1477,36 +1411,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pattern (COMMA pattern)*
+  // <<commaSep pattern>>
   public static boolean patterns(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "patterns")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, PATTERNS, "<patterns>");
-    r = pattern(b, l + 1);
-    r = r && patterns_1(b, l + 1);
+    r = commaSep(b, l + 1, AyaPsiParser::pattern);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (COMMA pattern)*
-  private static boolean patterns_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "patterns_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!patterns_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "patterns_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA pattern
-  private static boolean patterns_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "patterns_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && pattern(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2469,43 +2380,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (useId COMMA)* useId?
+  // <<commaSep useId>>?
   public static boolean useIdsComma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "useIdsComma")) return false;
-    boolean r;
     Marker m = enter_section_(b, l, _NONE_, USE_IDS_COMMA, "<use ids comma>");
-    r = useIdsComma_0(b, l + 1);
-    r = r && useIdsComma_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (useId COMMA)*
-  private static boolean useIdsComma_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "useIdsComma_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!useIdsComma_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "useIdsComma_0", c)) break;
-    }
-    return true;
-  }
-
-  // useId COMMA
-  private static boolean useIdsComma_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "useIdsComma_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = useId(b, l + 1);
-    r = r && consumeToken(b, COMMA);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // useId?
-  private static boolean useIdsComma_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "useIdsComma_1")) return false;
-    useId(b, l + 1);
+    commaSep(b, l + 1, AyaPsiParser::useId);
+    exit_section_(b, l, m, true, false, null);
     return true;
   }
 
@@ -2941,4 +2821,5 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  static final Parser expr_parser_ = (b, l) -> expr(b, l + 1, -1);
 }
