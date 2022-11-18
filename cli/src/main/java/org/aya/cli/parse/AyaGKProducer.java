@@ -78,7 +78,7 @@ public record AyaGKProducer(
   public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[2];
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
-  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
+  public static final @NotNull TokenSet DECL = TokenSet.create(AyaPsiElementTypes.DECL, DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
@@ -90,11 +90,8 @@ public record AyaGKProducer(
     if (node.is(IMPORT_CMD)) return ImmutableSeq.of(importCmd(node));
     if (node.is(MODULE)) return ImmutableSeq.of(module(node));
     if (node.is(OPEN_CMD)) return openCmd(node);
-    if (node.is(DECL) || node.peekChild(KW_PRIVATE) != null) {
-      var isPrivate = node.peekChild(KW_PRIVATE) != null;
-      var acc = isPrivate ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
-      node = isPrivate ? node.child(DECL) : node;
-      var result = decl(node, acc);
+    if (node.is(DECL)) {
+      var result = decl(node);
       var stmts = result._2.view().prepended(result._1);
       if (result._1 instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
         result._2.firstOption(stmt -> !(stmt instanceof Decl))
@@ -224,7 +221,10 @@ public record AyaGKProducer(
       node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq());
   }
 
-  public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node, @NotNull Stmt.Accessibility acc) {
+  public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
+    var isPrivate = node.peekChild(KW_PRIVATE) != null;
+    var acc = isPrivate ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
+    node = isPrivate ? node.child(DECL) : node;
     if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, acc), ImmutableSeq.empty());
     if (node.is(DATA_DECL)) return dataDecl(node, acc);
     if (node.is(STRUCT_DECL)) return structDecl(node, acc);
