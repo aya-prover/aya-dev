@@ -101,8 +101,8 @@ public class RenderOptions {
     }
   }
 
-  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader) {
-    return render(output, doc, StringPrinterConfig.INFINITE_SIZE, true, witHeader);
+  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader, boolean unicode) {
+    return render(output, doc, StringPrinterConfig.INFINITE_SIZE, unicode, witHeader);
   }
 
   public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, int pageWidth, boolean unicode, boolean witHeader) {

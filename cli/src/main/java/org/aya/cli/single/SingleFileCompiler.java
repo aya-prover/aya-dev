@@ -88,7 +88,7 @@ public record SingleFileCompiler(
     var renderOptions = flags.renderOptions();
     var out = flags.distillFormat().target;
     doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
-      (d, hdr) -> renderOptions.render(out, d, hdr));
+      (d, hdr) -> renderOptions.render(out, d, hdr, !flags.ascii()));
   }
 
   private @NotNull String escape(@NotNull String s) {

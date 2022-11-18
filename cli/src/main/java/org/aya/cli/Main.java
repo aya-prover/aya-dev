@@ -60,6 +60,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     }
     replConfig.close();
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
+      asciiOnly,
       prettyStage,
       prettyFormat,
       distillOptions,

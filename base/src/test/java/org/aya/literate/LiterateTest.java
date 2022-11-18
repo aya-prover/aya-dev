@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class LiterateTest {
@@ -35,12 +34,13 @@ public class LiterateTest {
   @Test public void literate() throws IOException {
     var literate = TestRunner.DEFAULT_TEST_DIR.resolve("literate");
     var distillInfo = new CompilerFlags.DistillInfo(
+      true,
       MainArgs.DistillStage.scoped,
       MainArgs.DistillFormat.plain,
       DistillerOptions.pretty(),
       new RenderOptions(),
       literate);
-    var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, false, distillInfo, ImmutableSeq.empty(), null);
+    var flags = new CompilerFlags(false, false, distillInfo, ImmutableSeq.empty(), null);
     var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, TestRunner.LOCATOR, null);
     compiler.compile(literate.resolve("test.aya"), flags, null);
     var strings = List.of("test.txt", "test.aya", "standard-test.txt");
