@@ -78,7 +78,7 @@ public record AyaGKProducer(
   public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[2];
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
-  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
+  public static final @NotNull TokenSet DECL = TokenSet.create(AyaPsiElementTypes.DECL, DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
@@ -222,10 +222,12 @@ public record AyaGKProducer(
   }
 
   public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
-    var accessibility = node.peekChild(KW_PRIVATE) == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
-    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, accessibility), ImmutableSeq.empty());
-    if (node.is(DATA_DECL)) return dataDecl(node, accessibility);
-    if (node.is(STRUCT_DECL)) return structDecl(node, accessibility);
+    var isPrivate = node.peekChild(KW_PRIVATE) != null;
+    var acc = isPrivate ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
+    node = isPrivate ? node.child(DECL) : node;
+    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, acc), ImmutableSeq.empty());
+    if (node.is(DATA_DECL)) return dataDecl(node, acc);
+    if (node.is(STRUCT_DECL)) return structDecl(node, acc);
     if (node.is(PRIM_DECL)) return Tuple.of(primDecl(node), ImmutableSeq.empty());
     return unreachable(node);
   }
