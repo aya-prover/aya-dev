@@ -231,7 +231,7 @@ public class HighlighterTester {
     reporter.close();
 
     if (anyError) {
-      throw new AssertionError("expected: no error, but actual: error");
+      fail("expected: no error, but actual: error");
     }
 
     var result = HighlighterUtils.highlight(stmts, DistillerOptions.debug());
