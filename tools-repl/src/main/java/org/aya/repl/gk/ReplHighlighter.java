@@ -3,7 +3,6 @@
 package org.aya.repl.gk;
 
 import com.intellij.lexer.FlexLexer;
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.LineReader;
@@ -19,12 +18,10 @@ public abstract class ReplHighlighter extends DefaultHighlighter {
 
   protected abstract @NotNull Doc highlight(String text, @NotNull FlexLexer.Token t);
 
-  @Override
-  public AttributedString highlight(LineReader reader, String buffer) {
+  @Override public AttributedString highlight(LineReader reader, String buffer) {
     lexer.reset(buffer, 0, buffer.length(), 0);
     var tokens = lexer.allTheWayDown();
-
     return AttributedString.fromAnsi(Doc.cat(tokens.map(t -> highlight(t.range().substring(buffer), t)))
-      .renderToString(StringPrinterConfig.unixTerminal()));
+      .renderToTerminal());
   }
 }

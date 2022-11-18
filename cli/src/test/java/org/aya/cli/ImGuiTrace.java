@@ -168,9 +168,9 @@ public class ImGuiTrace {
   public static void main(String[] args) throws IOException {
     var traceBuilder = new Trace.Builder();
     var compiler = new SingleFileCompiler(CliReporter.stdio(true, DistillerOptions.informative(), Problem.Severity.WARN),
-      null, traceBuilder, DistillerOptions.informative());
+      null, traceBuilder);
     var sourceFile = Paths.get("test.aya");
-    var status = compiler.compile(sourceFile,
+    compiler.compile(sourceFile,
       new CompilerFlags(CompilerFlags.Message.EMOJI,
         true, true, null, Seq.of(), null
       ), null);

@@ -1,12 +1,12 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl.render.vscode;
+package org.aya.cli.render.vscode;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
-import org.aya.cli.repl.render.Color;
+import org.aya.cli.render.Color;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

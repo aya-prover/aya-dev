@@ -6,6 +6,8 @@ import kala.collection.Seq;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
+import org.aya.pretty.printer.ColorScheme;
+import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
@@ -14,10 +16,10 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva, ice1000
  */
 public class DebugStylist extends StringStylist {
-  public static final DebugStylist INSTANCE = new DebugStylist();
+  public static final DebugStylist DEFAULT = new DebugStylist(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT);
 
-  private DebugStylist() {
-    super(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT);
+  public DebugStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
+    super(colorScheme, styleFamily);
   }
 
   @Override public void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, @NotNull Runnable inside) {

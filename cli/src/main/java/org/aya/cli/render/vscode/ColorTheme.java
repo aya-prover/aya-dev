@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl.render.vscode;
+package org.aya.cli.render.vscode;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -12,8 +12,8 @@ import kala.control.Either;
 import kala.control.Option;
 import kala.control.Try;
 import kala.value.LazyValue;
-import org.aya.cli.repl.render.Color;
-import org.aya.cli.repl.render.adapter.EitherAdapter;
+import org.aya.cli.render.Color;
+import org.aya.cli.render.adapter.EitherAdapter;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.style.AyaColorScheme;
 import org.jetbrains.annotations.NotNull;

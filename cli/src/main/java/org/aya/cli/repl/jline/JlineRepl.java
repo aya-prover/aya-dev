@@ -4,12 +4,12 @@ package org.aya.cli.repl.jline;
 
 import com.intellij.lexer.FlexLexer;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.util.AyaHome;
 import org.aya.parser.AyaParserDefinitionBase;
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.CmdCompleter;
 import org.aya.repl.ReplUtil;
@@ -26,9 +26,7 @@ import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.terminal.impl.AbstractWindowsTerminal;
 import org.jline.terminal.impl.DumbTerminal;
-import org.jline.utils.AttributedString;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -80,16 +78,12 @@ public final class JlineRepl extends AyaRepl {
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
-    var printerConfig = new StringPrinterConfig(
-      config.getStylist(),
-      prettyPrintWidth,
-      config.enableUnicode);
-    return doc.renderToString(printerConfig);
+    return config.renderOptions.render(RenderOptions.OutputTarget.Terminal,
+      doc, prettyPrintWidth, config.enableUnicode, true);
   }
 
   @Override public void println(@NotNull String x) {
-    if (terminal instanceof AbstractWindowsTerminal) terminal.writer().println(AttributedString.fromAnsi(x));
-    else terminal.writer().println(x);
+    terminal.writer().println(x);
     terminal.flush();
   }
 

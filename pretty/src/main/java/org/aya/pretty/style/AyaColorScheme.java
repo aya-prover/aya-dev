@@ -52,6 +52,4 @@ public record AyaColorScheme(
     Tuple.of(Key.ConCall.key(), 0x067D17),
     Tuple.of(Key.FieldCall.key(), 0x871094)
   ));
-
-  public static final @NotNull AyaColorScheme EMPTY = new AyaColorScheme(MutableMap.create());
 }

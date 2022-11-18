@@ -6,9 +6,13 @@ import org.aya.pretty.backend.string.style.ClosingStylist;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
+import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 
 public class TeXStylist extends ClosingStylist {
+  public static final @NotNull TeXStylist DEFAULT = new TeXStylist(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT);
+
   public TeXStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
     super(colorScheme, styleFamily);
   }
