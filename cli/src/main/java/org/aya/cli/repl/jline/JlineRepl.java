@@ -78,10 +78,7 @@ public final class JlineRepl extends AyaRepl {
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
-    var printerConfig = new StringPrinterConfig(
-      config.getStylist(),
-      prettyPrintWidth,
-      config.enableUnicode);
+    var printerConfig = new StringPrinterConfig(config.getStylist(), prettyPrintWidth, config.enableUnicode);
     return doc.renderToString(printerConfig);
   }
 

@@ -55,7 +55,11 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToTerminal() {
-    return renderToString(new StringPrinterConfig(AdaptiveCliStylist.INSTANCE, INFINITE_SIZE, true));
+    return renderToTerminal(INFINITE_SIZE, true);
+  }
+
+  default @NotNull String renderToTerminal(int pageWidth, boolean unicode) {
+    return renderToString(new StringPrinterConfig(AdaptiveCliStylist.INSTANCE, pageWidth, unicode));
   }
 
   default @NotNull String renderToHtml() {
