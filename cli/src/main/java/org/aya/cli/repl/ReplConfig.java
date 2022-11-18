@@ -75,6 +75,8 @@ public class ReplConfig implements AutoCloseable {
 
   public void setRenderOptions(@NotNull RenderOptions options) throws IOException, JsonParseException {
     this.renderOptions = options;
+    // trigger a load for instantly reporting errors to users
+    renderOptions.stylist(RenderOptions.OutputTarget.Terminal);
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
