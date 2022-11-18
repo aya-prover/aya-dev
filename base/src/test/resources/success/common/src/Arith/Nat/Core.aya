@@ -25,11 +25,12 @@ private def overlap +-assoc-lemma (a b c : Nat) : (a + b) + c = a + (b + c)
 | a, b, suc c => pmap suc (+-assoc-lemma a b c)
 def +-assoc {a b c : Nat} => +-assoc-lemma a b c
 
-def overlap +-comm (a b : Nat) : a + b = b + a
+private def overlap +-comm-lemma (a b : Nat) : a + b = b + a
 | 0, a => idp
 | a, 0 => idp
-| suc a, b => pmap suc (+-comm _ _)
-| a, suc b => pmap suc (+-comm _ _)
+| suc a, b => pmap suc (+-comm-lemma _ _)
+| a, suc b => pmap suc (+-comm-lemma _ _)
+def +-comm {a b : Nat} => +-comm-lemma a b
 
 def overlap infixl * (m n : Nat) : Nat
 | 0, n => 0
@@ -40,7 +41,7 @@ tighter +
 def *-suc (m n : Nat) : m * suc n = m + m * n
 | 0, n => idp
 | suc m, n => pmap suc (pmap (n +) (*-suc m n)
-  <==> sym +-assoc <==> pmap (+ m * n) (+-comm n m) <==> +-assoc)
+  <==> sym +-assoc <==> pmap (+ m * n) +-comm <==> +-assoc)
 
 def overlap +-*-distl (n m k : Nat) : (m + k) * n = k * n + m * n
 | n, m, 0 => idp
@@ -48,7 +49,7 @@ def overlap +-*-distl (n m k : Nat) : (m + k) * n = k * n + m * n
 
 def *-suc-suc (m n : Nat) : suc m * suc n = suc (m + n + m * n)
   => pmap suc (pmap (n +) (*-suc m n)
-    <==> sym +-assoc <==> pmap (+ m * n) (+-comm n m))
+    <==> sym +-assoc <==> pmap (+ m * n) +-comm)
 
 def z≠s {a : Nat} (p : 0 = suc a) : False => (\i => diag (p i)).coe a
 private def diag Nat : Type
