@@ -176,7 +176,7 @@ public class Highlighter implements StmtConsumer {
   @SuppressWarnings("unused")
   public @NotNull Pattern pre(@NotNull Pattern pattern) {
     switch (pattern) {
-      case Pattern.Bind bind -> linkDef(bind.sourcePos(), bind.bind(), null);
+      case Pattern.Bind bind -> linkDef(bind.sourcePos(), bind.bind(), HighlightInfoType.DefKind.Local);
       case Pattern.Ctor ctor -> {
         var resolved = ctor.resolved();
         highlightVarRef(resolved.sourcePos(), resolved.data(), HighlightInfoType.DefKind.Con);
@@ -230,7 +230,7 @@ public class Highlighter implements StmtConsumer {
           case TeleDecl.StructDecl ignored -> HighlightInfoType.DefKind.Struct;
         };
       }
-      case LocalVar ignored -> null;
+      case LocalVar ignored -> HighlightInfoType.DefKind.Local;
       default -> null;
     };
   }

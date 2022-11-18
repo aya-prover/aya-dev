@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 public sealed interface HighlightInfoType {
   enum DefKind {
-    Generalized, Data, Con, Struct, Field, Fn, Prim
+    Generalized, Data, Con, Struct, Field, Fn, Prim, Local
   }
 
   final class Keyword implements HighlightInfoType {
@@ -20,15 +20,15 @@ public sealed interface HighlightInfoType {
 
   /**
    * @param target the reference target, a unique string to the definition (for now, it is {@link Object#hashCode()})
-   * @param style  we have some refs to {@code Data} or {@code Field} which need different styles
+   * @param kind null if not sure
    */
-  record Ref(@NotNull String target, @Nullable HighlightInfoType.DefKind style) implements HighlightInfoType {
+  record Ref(@NotNull String target, @Nullable HighlightInfoType.DefKind kind) implements HighlightInfoType {
   }
 
   /**
    * similar to {@link HighlightInfoType.Ref}, but this is a definition
    */
-  record Def(@NotNull String target, @Nullable HighlightInfoType.DefKind style) implements HighlightInfoType {
+  record Def(@NotNull String target, @Nullable HighlightInfoType.DefKind kind) implements HighlightInfoType {
   }
 
   record Error(@Nullable Doc description) implements HighlightInfoType {
