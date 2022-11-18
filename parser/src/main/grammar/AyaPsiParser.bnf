@@ -178,7 +178,7 @@ module ::= KW_MODULE weakId LBRACE stmt* RBRACE
 useHide ::= KW_USING useList+ | KW_HIDING hideList+
 hideList ::= LPAREN idsComma RPAREN
 useList ::= LPAREN useIdsComma RPAREN
-useIdsComma ::= (useId COMMA)* useId?
+useIdsComma ::= (commaSep useId)?
 useId ::= weakId useAs?
 useAs ::= KW_AS assoc? weakId bindBlock?
 
@@ -281,7 +281,7 @@ arrayBlock ::= arrayCompBlock | arrayElementsBlock
 arrayCompBlock ::= expr BAR listComp
 arrayElementsBlock ::= exprList
 idiomBlock ::= barred* expr
-listComp ::= (doBinding COMMA)* doBinding
+listComp ::= commaSep doBinding
 
 newExpr ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
@@ -302,7 +302,7 @@ subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem
 barredSubSystem ::= BAR subSystem
 
-doBlock ::= (doBlockContent COMMA)* doBlockContent
+doBlock ::= commaSep doBlockContent
 doBlockContent ::= doBinding | expr
 
 newArgField ::= weakId
@@ -328,7 +328,7 @@ barredClause ::= BAR clause
 bareClause ::= clause
 clause ::= patterns (IMPLIES expr)?
 
-patterns ::= pattern (COMMA pattern)*
+patterns ::= commaSep pattern
 // size == 1 ==> the pattern
 // size > 1 ==> BinOpSeq of Arg<Pat>
 pattern ::= unitPattern+ (KW_AS weakId)?
@@ -400,9 +400,10 @@ lambdaTeleBinder ::= teleBinderTyped
 pathTele ::= teleParamName
 
 // utilities
-exprList ::= (expr COMMA)* expr
+exprList ::= commaSep expr
 barred ::= expr BAR
-idsComma ::= (weakId COMMA)* weakId?
+idsComma ::= (commaSep weakId)?
+meta commaSep ::= <<param>> ( ',' <<param>> ) *
 type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
