@@ -49,4 +49,21 @@ public class HighlighterTest {
       localRef(82, 83, "m", "m'")
     );
   }
+
+  @Test
+  public void unformatTest() {
+    @Language("Aya") String code = """
+         open
+      data  Nat |
+      O | S Nat
+      """;
+
+    highlightAndTest(code,
+      keyword(3, 7, "open"),
+      keyword(8, 12, "data"),
+      def(14, 17, "Nat", "nat", HighlightInfoType.DefKind.Data),
+      def(20, 21, "O", HighlightInfoType.DefKind.Con),
+      def(24, 25, "S", HighlightInfoType.DefKind.Con),
+      ref(26, 29, "Nat", "nat", HighlightInfoType.DefKind.Data));
+  }
 }
