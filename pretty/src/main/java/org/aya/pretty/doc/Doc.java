@@ -11,6 +11,7 @@ import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.backend.string.style.AdaptiveCliStylist;
 import org.aya.pretty.backend.string.style.DebugStylist;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
@@ -51,6 +52,10 @@ public sealed interface Doc extends Docile {
   default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
     var printer = new StringPrinter<>();
     return this.render(printer, config);
+  }
+
+  default @NotNull String renderToTerminal() {
+    return renderToString(new StringPrinterConfig(AdaptiveCliStylist.INSTANCE, INFINITE_SIZE, true));
   }
 
   default @NotNull String renderToHtml() {
