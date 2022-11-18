@@ -6,12 +6,12 @@ import kala.collection.SeqView;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.OperatorError;
-import org.aya.util.Arg;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.tyck.pat.PatternProblem;
+import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.binop.BinOpSet;
@@ -57,6 +57,10 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Ar
 
   @Override protected void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos) {
     opSet.reporter.report(new OperatorError.Fixity(currentOp, current, topOp, top, pos));
+  }
+
+  @Override protected void reportMissingOperand(String op, SourcePos pos) {
+    opSet.reporter.report(new OperatorError.MissingOperand(pos, op));
   }
 
   @Override protected @NotNull Pattern createErrorExpr(@NotNull SourcePos sourcePos) {
