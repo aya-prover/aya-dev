@@ -1,0 +1,3 @@
+data False
+def fixl ¬ (A : Type) => A -> False
+def NonEmpty (A : Type) => ¬ ¬ A
