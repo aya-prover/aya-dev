@@ -4,9 +4,7 @@ package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.Tuple;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.stmt.Decl;
@@ -88,14 +86,9 @@ public record SingleFileCompiler(
     if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
     var fileName = escape(ayaFileName.substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length()));
     var renderOptions = flags.renderOptions();
-    var out = switch (flags.distillFormat()) {
-      case html -> Tuple.of(".html",RenderOptions.OutputTarget.HTML);
-      case latex -> Tuple.of(".tex",RenderOptions.OutputTarget.LaTeX);
-      case plain -> Tuple.of(".txt",RenderOptions.OutputTarget.Plain);
-      case unix -> Tuple.of(".txt",RenderOptions.OutputTarget.Terminal);
-    };
-    doWrite(doc, distillDir, flags.distillerOptions(), fileName, out._1,
-      (d, hdr) -> renderOptions.render(out._2, d, hdr));
+    var out = flags.distillFormat().target;
+    doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
+      (d, hdr) -> renderOptions.render(out, d, hdr));
   }
 
   private @NotNull String escape(@NotNull String s) {

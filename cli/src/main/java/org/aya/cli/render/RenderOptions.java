@@ -18,6 +18,7 @@ import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -29,10 +30,16 @@ import java.util.Objects;
 /** Multi-target {@link org.aya.pretty.printer.Stylist}, usually created from json files. */
 public class RenderOptions {
   public enum OutputTarget {
-    Terminal,
-    LaTeX,
-    HTML,
-    Plain,
+    Terminal(".txt"),
+    LaTeX(".tex"),
+    HTML(".html"),
+    Plain(".txt");
+
+    public final @NotNull @NonNls String fileExt;
+
+    OutputTarget(@NotNull String fileExt) {
+      this.fileExt = fileExt;
+    }
   }
 
   public enum ColorSchemeName {
