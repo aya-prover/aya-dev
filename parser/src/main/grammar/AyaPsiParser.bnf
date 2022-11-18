@@ -162,7 +162,7 @@ private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
 private repl ::= REPL_COMMAND? expr
 
 // statements
-stmt ::= decl
+stmt ::= KW_PRIVATE? decl
        | importCmd
        | openCmd
        | module
@@ -189,12 +189,10 @@ generalize ::= KW_VARIABLE generalizeParamName+ type
 
 sampleModifiers ::= KW_EXAMPLE | KW_COUNTEREXAMPLE
 
-decl ::= KW_PRIVATE?
-       ( fnDecl
+decl ::= fnDecl
        | structDecl
        | dataDecl
-       | primDecl
-       ) {
+       | primDecl {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }

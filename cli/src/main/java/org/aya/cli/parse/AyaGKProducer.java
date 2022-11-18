@@ -90,8 +90,11 @@ public record AyaGKProducer(
     if (node.is(IMPORT_CMD)) return ImmutableSeq.of(importCmd(node));
     if (node.is(MODULE)) return ImmutableSeq.of(module(node));
     if (node.is(OPEN_CMD)) return openCmd(node);
-    if (node.is(DECL)) {
-      var result = decl(node);
+    if (node.is(DECL) || node.peekChild(KW_PRIVATE) != null) {
+      var isPrivate = node.peekChild(KW_PRIVATE) != null;
+      var acc = isPrivate ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
+      node = isPrivate ? node.child(DECL) : node;
+      var result = decl(node, acc);
       var stmts = result._2.view().prepended(result._1);
       if (result._1 instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
         result._2.firstOption(stmt -> !(stmt instanceof Decl))
@@ -221,11 +224,10 @@ public record AyaGKProducer(
       node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq());
   }
 
-  public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
-    var accessibility = node.peekChild(KW_PRIVATE) == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
-    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, accessibility), ImmutableSeq.empty());
-    if (node.is(DATA_DECL)) return dataDecl(node, accessibility);
-    if (node.is(STRUCT_DECL)) return structDecl(node, accessibility);
+  public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node, @NotNull Stmt.Accessibility acc) {
+    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, acc), ImmutableSeq.empty());
+    if (node.is(DATA_DECL)) return dataDecl(node, acc);
+    if (node.is(STRUCT_DECL)) return structDecl(node, acc);
     if (node.is(PRIM_DECL)) return Tuple.of(primDecl(node), ImmutableSeq.empty());
     return unreachable(node);
   }

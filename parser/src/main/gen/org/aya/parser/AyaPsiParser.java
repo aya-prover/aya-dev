@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -568,40 +571,19 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_PRIVATE?
-  //        ( fnDecl
-  //        | structDecl
-  //        | dataDecl
-  //        | primDecl
-  //        )
-  public static boolean decl(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "decl")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, DECL, "<decl>");
-    r = decl_0(b, l + 1);
-    r = r && decl_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // KW_PRIVATE?
-  private static boolean decl_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "decl_0")) return false;
-    consumeToken(b, KW_PRIVATE);
-    return true;
-  }
-
   // fnDecl
   //        | structDecl
   //        | dataDecl
   //        | primDecl
-  private static boolean decl_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "decl_1")) return false;
+  public static boolean decl(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "decl")) return false;
     boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, DECL, "<decl>");
     r = fnDecl(b, l + 1);
     if (!r) r = structDecl(b, l + 1);
     if (!r) r = dataDecl(b, l + 1);
     if (!r) r = primDecl(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -1732,7 +1714,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // decl
+  // KW_PRIVATE? decl
   //        | importCmd
   //        | openCmd
   //        | module
@@ -1742,7 +1724,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "stmt")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, STMT, "<stmt>");
-    r = decl(b, l + 1);
+    r = stmt_0(b, l + 1);
     if (!r) r = importCmd(b, l + 1);
     if (!r) r = openCmd(b, l + 1);
     if (!r) r = module(b, l + 1);
@@ -1750,6 +1732,24 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = generalize(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  // KW_PRIVATE? decl
+  private static boolean stmt_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "stmt_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = stmt_0_0(b, l + 1);
+    r = r && decl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // KW_PRIVATE?
+  private static boolean stmt_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "stmt_0_0")) return false;
+    consumeToken(b, KW_PRIVATE);
+    return true;
   }
 
   /* ********************************************************** */
