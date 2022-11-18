@@ -4,13 +4,18 @@ package org.aya.cli.render;
 
 import com.google.gson.JsonParseException;
 import org.aya.cli.render.vscode.ColorTheme;
+import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.Html5Stylist;
+import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.latex.TeXStylist;
+import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.backend.string.style.AdaptiveCliStylist;
 import org.aya.pretty.backend.string.style.DebugStylist;
 import org.aya.pretty.backend.string.style.UnixTermStylist;
+import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.ColorScheme;
+import org.aya.pretty.printer.PrinterConfig;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
@@ -28,7 +33,7 @@ public class RenderOptions {
     Terminal,
     LaTeX,
     HTML,
-    Other,
+    Plain,
   }
 
   public enum ColorSchemeName {
@@ -67,7 +72,7 @@ public class RenderOptions {
       case Terminal -> AdaptiveCliStylist.INSTANCE;
       case LaTeX -> TeXStylist.DEFAULT;
       case HTML -> Html5Stylist.DEFAULT;
-      case Other -> DebugStylist.DEFAULT;
+      case Plain -> DebugStylist.DEFAULT;
     };
   }
 
@@ -77,7 +82,7 @@ public class RenderOptions {
       case Terminal -> new UnixTermStylist(buildColorScheme(), buildStyleFamily());
       case LaTeX -> new TeXStylist(buildColorScheme(), buildStyleFamily());
       case HTML -> new Html5Stylist(buildColorScheme(), buildStyleFamily());
-      case Other -> new DebugStylist(buildColorScheme(), buildStyleFamily());
+      case Plain -> new DebugStylist(buildColorScheme(), buildStyleFamily());
     };
   }
 
@@ -87,6 +92,16 @@ public class RenderOptions {
     } catch (IOException | JsonParseException e) {
       return defaultStylist(output);
     }
+  }
+
+  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader) {
+    var stylist = stylistOrDefault(output);
+    return switch (output) {
+      case HTML -> doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config((Html5Stylist) stylist, witHeader));
+      case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
+      case Terminal -> doc.renderToString(new StringPrinterConfig(stylist, PrinterConfig.INFINITE_SIZE, true));
+      case Plain -> doc.renderToString(new StringPrinterConfig(stylist, PrinterConfig.INFINITE_SIZE, false));
+    };
   }
 
   private @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {

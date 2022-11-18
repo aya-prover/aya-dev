@@ -4,6 +4,7 @@ package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.tuple.Tuple;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.AyaCompiler;
@@ -13,13 +14,7 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.AyaDocile;
-import org.aya.pretty.backend.html.DocHtmlPrinter;
-import org.aya.pretty.backend.html.Html5Stylist;
-import org.aya.pretty.backend.latex.DocTeXPrinter;
-import org.aya.pretty.backend.latex.TeXStylist;
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.printer.PrinterConfig;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
@@ -93,16 +88,14 @@ public record SingleFileCompiler(
     if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
     var fileName = escape(ayaFileName.substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length()));
     var renderOptions = flags.renderOptions();
-    switch (flags.distillFormat()) {
-      case html -> doWrite(doc, distillDir, flags.distillerOptions(), fileName, ".html", (d, b) -> d.render(new DocHtmlPrinter(),
-        new DocHtmlPrinter.Config((Html5Stylist) renderOptions.stylistOrDefault(RenderOptions.OutputTarget.HTML), b)));
-      case latex -> doWrite(doc, distillDir, flags.distillerOptions(), fileName, ".tex", (d, $) -> d.render(new DocTeXPrinter(),
-        new DocTeXPrinter.Config((TeXStylist) renderOptions.stylistOrDefault(RenderOptions.OutputTarget.LaTeX))));
-      case plain -> doWrite(doc, distillDir, flags.distillerOptions(), fileName, ".txt", (d, $) -> d.renderToString(
-        new StringPrinterConfig(renderOptions.defaultStylist(RenderOptions.OutputTarget.Other), PrinterConfig.INFINITE_SIZE, false)));
-      case unix -> doWrite(doc, distillDir, flags.distillerOptions(), fileName, ".txt", (d, $) -> d.renderToString(
-        new StringPrinterConfig(renderOptions.stylistOrDefault(RenderOptions.OutputTarget.Terminal), PrinterConfig.INFINITE_SIZE, true)));
-    }
+    var out = switch (flags.distillFormat()) {
+      case html -> Tuple.of(".html",RenderOptions.OutputTarget.HTML);
+      case latex -> Tuple.of(".tex",RenderOptions.OutputTarget.LaTeX);
+      case plain -> Tuple.of(".txt",RenderOptions.OutputTarget.Plain);
+      case unix -> Tuple.of(".txt",RenderOptions.OutputTarget.Terminal);
+    };
+    doWrite(doc, distillDir, flags.distillerOptions(), fileName, out._1,
+      (d, hdr) -> renderOptions.render(out._2, d, hdr));
   }
 
   private @NotNull String escape(@NotNull String s) {
