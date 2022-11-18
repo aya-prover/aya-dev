@@ -10,10 +10,12 @@
 + Development blogs which are written for general audience
 + [Installation](https://www.aya-prover.org/guide/install.html)
   instructions (basically telling you what to download in [GitHub Releases])
++ [Tutorial for Haskellers](https://www.aya-prover.org/guide/haskeller-tutorial.html)
 
 Aya is under active development, so please expect bugs, usability or performance issues
 (please file issues or create threads in discussions!).
-However, we can share some cool stuffs here:
+
+## Showcase
 
 + Dependent types, including pi-types, sigma types, etc.
   You could write a [type-safe interpreter][gadt].
@@ -34,39 +36,17 @@ However, we can share some cool stuffs here:
   [more definitions][foetus] (which are rejected by, e.g. Arend).
 + Inference of type checking order. That is to say,
   no syntax for forward-declarations is needed for [mutual recursions][mutual].
++ See also stdlib candidates [style guide][stdlib-style].
 
 See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
 [Java 19]: https://jdk.java.net/19
 
-## Build
-
-The minimum required version of Java is [Java 19].
+## Contributing to Aya
 
 Since you need [Java 19] to set this project up, in case your choice
 of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
-If you have problems downloading dependencies (like you are in China),
-check out [how to][proxy] let gradle use a proxy.
-
-```bash
-# build Aya and its language server as applications to lsp/build/image
-# the image is usable in Java-free environments 
-./gradlew jlink --rerun-tasks
-# build Aya and its language server as executable
-# jars to <project>/build/libs/<project>-<version>-fat.jar
-./gradlew fatJar
-# build a platform-dependent installer for Aya and its language
-# server with the jlink artifacts to lsp/build/jpackage
-# requires https://wixtoolset.org/releases on Windows
-./gradlew jpackage
-# run tests and generate coverage report to build/reports
-./gradlew testCodeCoverageReport
-# (Windows only) show the coverage report in your default browser
-./gradlew showCCR
-```
-
-## Contributing to Aya
 
 + Questions or concerns are welcomed in the discussion area.
   We will try our best to answer your questions, but please be nice.
@@ -88,7 +68,6 @@ check out [how to][proxy] let gradle use a proxy.
 [tokei]: https://img.shields.io/tokei/lines/github/aya-prover/aya-dev?logo=java
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
 [oop]: ../base/src/test/resources/success/common/src/Arith/Nat/Core.aya
-[proxy]: https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
 [gadt]: ../base/src/test/resources/success/src/TypeSafeNorm.aya
 [regularity]: ../base/src/test/resources/success/common/src/Paths.aya
 [funExt]: ../base/src/test/resources/success/common/src/Paths.aya
@@ -98,6 +77,7 @@ check out [how to][proxy] let gradle use a proxy.
 [mutual]: ../base/src/test/resources/success/src/Order.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 [Guest0x0]: https://github.com/ice1000/Guest0x0
+[stdlib-style]: ../base/src/test/resources/success/common
 
 ## Use as a library
 

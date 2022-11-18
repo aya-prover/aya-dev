@@ -55,8 +55,7 @@ def headDef (x : A) (xs : List A) : A
 | x, nil => x
 | _, a :< _ => a
 
-def curry (t : Sig A ** B) (f : A -> B -> C) => f t.1 t.2
-
+private def curry (t : Sig A ** B) (f : A -> B -> C) => f t.1 t.2
 def splitAt (n : Nat) (l : List A) : Sig (List A) ** (List A)
 | 0, l => (nil, l)
 | suc n, nil => (nil, nil)
