@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class LiterateTest {
   @BeforeAll public static void enter() {
@@ -47,15 +48,8 @@ public class LiterateTest {
       .filter(path -> !strings.contains(path.getFileName().toString()))
       .forEachChecked(Files::delete);
     var actual = literate.resolve("test.txt");
-    var readString = Files.readAllLines(actual)
-      .stream()
-      .map(s -> s + "\n")
-      .toList();
+    var readString = Files.readAllLines(actual);
     Files.delete(actual);
-    assertEquals(Files.readAllLines(literate.resolve("standard-test.txt"))
-        .stream()
-        .map(s -> s + "\n")
-        .toList()
-      , readString);
+    assertLinesMatch(Files.readAllLines(literate.resolve("standard-test.txt")), readString);
   }
 }
