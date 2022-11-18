@@ -17,26 +17,27 @@ Aya is under active development, so please expect bugs, usability or performance
 
 ## Showcase
 
-+ Dependent types, including pi-types, sigma types, etc.
++ Dependent types, including pi-types, sigma types, indexed families, etc.
   You could write a [type-safe interpreter][gadt].
 + De Morgan cubical type theory with generalized path types
   similar to a bounded cubical subtype.
   + Implementation prototype: [Guest0x0].
+  + Demonstration of higher inductive types: [3-torus] (three dimensional torus!!).
 + Pattern matching with first-match semantics.
-  We can implement [red-black tree][rbtree] (without deletion) elegantly.
-+ Overlapping and order-independent patterns.
-  Very [useful][oop] in theorem proving.
+  Checkout the [red-black tree][rbtree] (without deletion yet).
++ Overlapping and order-independent patterns. Very [useful][oop] in theorem proving.
 + A literate programming mode with inline code fragment support.
   We already have a prototype, but we plan to revise it before sharing demos.
 + Binary operators, with precedence specified by a partial ordering
   (instead of a number, such as in Haskell or Agda)
   which is useful for [equation reasoning][assoc].
-+ Termination checker inspired by Andreas Abel's foetus.
++ A fairly good termination checker that does not assume predicativity.
   We adapted some code from Agda's implementation to accept
   [more definitions][foetus] (which are rejected by, e.g. Arend).
 + Inference of type checking order. That is to say,
-  no syntax for forward-declarations is needed for [mutual recursions][mutual].
-+ See also stdlib candidates [style guide][stdlib-style].
+  no syntax for forward-declarations is needed for [mutual recursions][mutual],
+  induction-recursion, or induction-induction.
++ See also stdlib candidates [style guide][stdlib-style]. We have a grand plan!
 
 See also [use as a library](#use-as-a-library).
 
@@ -59,7 +60,8 @@ of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
   ensure an inclusive and welcoming community atmosphere.
 + Ask [@ice1000] to become an organization member.
   + If you want to contribute, ask before doing anything.
-    We will tell you about our plans.
+    We are reluctant to accept PRs that contradict our design goals.
+    We value your time and enthusiasm, so we don't want to close your PRs :)
 
 [@ice1000]: https://github.com/ice1000
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
@@ -72,6 +74,7 @@ of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
 [regularity]: ../base/src/test/resources/success/common/src/Paths.aya
 [funExt]: ../base/src/test/resources/success/common/src/Paths.aya
 [rbtree]: ../base/src/test/resources/success/common/src/Data/RedBlack.aya
+[3-torus]: ../base/src/test/resources/success/common/src/Spaces/Torus/T3.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
 [mutual]: ../base/src/test/resources/success/src/Order.aya
