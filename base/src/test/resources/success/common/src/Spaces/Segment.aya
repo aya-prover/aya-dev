@@ -3,3 +3,9 @@ open import Paths
 open data Segment
 | left | right
 | seg (i : I) { i := right | ~ i := left }
+
+def uniqueness (b : Segment) : left = b
+| left => idp
+| right => \i => seg i
+| seg i => \j => seg (i /\ j)
+def isContrSegment : isContr Segment => (_, uniqueness)
