@@ -97,4 +97,11 @@ public interface OperatorError extends Problem {
       );
     }
   }
+
+  record MissingOperand(@NotNull SourcePos sourcePos, @NotNull String op) implements OperatorError {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(Doc.english("There is no operand for this operator"),
+        Doc.styled(Style.code(), op));
+    }
+  }
 }
