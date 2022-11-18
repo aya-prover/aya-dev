@@ -35,8 +35,8 @@ public class RenderOptions {
   public final static @NotNull ColorSchemeName DEFAULT_COLOR_SCHEME = ColorSchemeName.Emacs;
   public final static @NotNull StyleFamilyName DEFAULT_STYLE_FAMILY = StyleFamilyName.Cli;
 
-  public RenderOptions.@UnknownNullability ColorSchemeName colorScheme = DEFAULT_COLOR_SCHEME;
-  public RenderOptions.@UnknownNullability StyleFamilyName styleFamily = DEFAULT_STYLE_FAMILY;
+  public @UnknownNullability ColorSchemeName colorScheme = DEFAULT_COLOR_SCHEME;
+  public @UnknownNullability StyleFamilyName styleFamily = DEFAULT_STYLE_FAMILY;
 
   public @Nullable String path = null;
 

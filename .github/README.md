@@ -5,18 +5,11 @@
 [![tokei]](https://github.com/XAMPPRocky/tokei)
 [![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
 
-[Website](https://www.aya-prover.org) contains development blogs which are written for general audience.
+[**Website**](https://www.aya-prover.org) contains:
 
-## Download
-
-You may download the latest build of Aya from [GitHub Releases].
-It's updated for per-commit to the `main` branch,
-but the release date displayed is very old and is an issue of GitHub.
-
-There are prebuilt binaries for Windows, Linux, and macOS that can be used
-in Java-free environments as well as fat-jar files which can be invoked via `java --enable-preview -jar`.
-
-The minimum required version of Java is [Java 19].
++ Development blogs which are written for general audience
++ [Installation](https://www.aya-prover.org/guide/install.html)
+  instructions (basically telling you what to download in [GitHub Releases])
 
 Aya is under active development, so please expect bugs, usability or performance issues
 (please file issues or create threads in discussions!).
@@ -28,7 +21,7 @@ However, we can share some cool stuffs here:
   similar to a bounded cubical subtype.
   + Implementation prototype: [Guest0x0].
 + Pattern matching with first-match semantics.
-  We can implement [redblack tree][rbtree] (without deletion) elegantly.
+  We can implement [red-black tree][rbtree] (without deletion) elegantly.
 + Overlapping and order-independent patterns.
   Very [useful][oop] in theorem proving.
 + A literate programming mode with inline code fragment support.
@@ -49,7 +42,9 @@ See also [use as a library](#use-as-a-library).
 
 ## Build
 
-Since you need [Java 19] to set this project up,  in case your choice
+The minimum required version of Java is [Java 19].
+
+Since you need [Java 19] to set this project up, in case your choice
 of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
 If you have problems downloading dependencies (like you are in China),
 check out [how to][proxy] let gradle use a proxy.
@@ -92,7 +87,7 @@ check out [how to][proxy] let gradle use a proxy.
 [gitter]: https://img.shields.io/gitter/room/aya-prover/community?color=cyan&logo=gitter
 [tokei]: https://img.shields.io/tokei/lines/github/aya-prover/aya-dev?logo=java
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
-[oop]: ../base/src/test/resources/success/common/src/Arith/Nat.aya
+[oop]: ../base/src/test/resources/success/common/src/Arith/Nat/Core.aya
 [proxy]: https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
 [gadt]: ../base/src/test/resources/success/src/TypeSafeNorm.aya
 [regularity]: ../base/src/test/resources/success/common/src/Paths.aya
