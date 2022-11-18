@@ -13,7 +13,9 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
+import org.aya.pretty.backend.html.Html5Stylist;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
+import org.aya.pretty.backend.latex.TeXStylist;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.PrinterConfig;
@@ -98,9 +100,9 @@ public record SingleFileCompiler(
     var scm = flags.scheme();
     switch (flags.distillFormat()) {
       case html -> doWrite(doc, distillDir, fileName, ".html", (d, b) -> d.render(new DocHtmlPrinter(),
-        new DocHtmlPrinter.Config(scm, AyaStyleFamily.DEFAULT, b)));
+        new DocHtmlPrinter.Config(new Html5Stylist(scm, AyaStyleFamily.DEFAULT), b)));
       case latex -> doWrite(doc, distillDir, fileName, ".tex", (d, $) -> d.render(new DocTeXPrinter(),
-        new DocTeXPrinter.Config(scm, AyaStyleFamily.DEFAULT)));
+        new DocTeXPrinter.Config(new TeXStylist(scm, AyaStyleFamily.DEFAULT))));
       case plain -> doWrite(doc, distillDir, fileName, ".txt", (d, $) -> d.debugRender());
       case unix -> doWrite(doc, distillDir, fileName, ".txt", (d, $) -> d.renderToString(
         StringPrinterConfig.unixTerminal(scm, AyaStyleFamily.DEFAULT, PrinterConfig.INFINITE_SIZE, true)));

@@ -1,9 +1,15 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl.render;
+package org.aya.cli.render;
 
 import com.google.gson.JsonParseException;
-import org.aya.cli.repl.render.vscode.ColorTheme;
+import org.aya.cli.render.vscode.ColorTheme;
+import org.aya.pretty.backend.html.Html5Stylist;
+import org.aya.pretty.backend.latex.TeXStylist;
+import org.aya.pretty.backend.string.StringStylist;
+import org.aya.pretty.backend.string.style.AdaptiveCliStylist;
+import org.aya.pretty.backend.string.style.DebugStylist;
+import org.aya.pretty.backend.string.style.UnixTermStylist;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
@@ -16,7 +22,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
+/** Multi-target {@link org.aya.pretty.printer.Stylist}, usually created from json files. */
 public class RenderOptions {
+  public enum OutputTarget {
+    Terminal,
+    LaTeX,
+    HTML,
+    Other,
+  }
+
   public enum ColorSchemeName {
     Emacs,
     IntelliJ,
@@ -28,12 +42,11 @@ public class RenderOptions {
   }
 
   public enum StyleFamilyName {
-    Default,
-    Cli
+    Default
   }
 
   public final static @NotNull ColorSchemeName DEFAULT_COLOR_SCHEME = ColorSchemeName.Emacs;
-  public final static @NotNull StyleFamilyName DEFAULT_STYLE_FAMILY = StyleFamilyName.Cli;
+  public final static @NotNull StyleFamilyName DEFAULT_STYLE_FAMILY = StyleFamilyName.Default;
 
   public @UnknownNullability ColorSchemeName colorScheme = DEFAULT_COLOR_SCHEME;
   public @UnknownNullability StyleFamilyName styleFamily = DEFAULT_STYLE_FAMILY;
@@ -45,25 +58,53 @@ public class RenderOptions {
     if (styleFamily == null) styleFamily = DEFAULT_STYLE_FAMILY;
   }
 
-  public @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {
+  public boolean isDefault() {
+    return colorScheme.equals(DEFAULT_COLOR_SCHEME) && styleFamily.equals(DEFAULT_STYLE_FAMILY);
+  }
+
+  public @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {
+    return switch (output) {
+      case Terminal -> AdaptiveCliStylist.INSTANCE;
+      case LaTeX -> TeXStylist.DEFAULT;
+      case HTML -> Html5Stylist.DEFAULT;
+      case Other -> DebugStylist.DEFAULT;
+    };
+  }
+
+  public @NotNull StringStylist stylist(@NotNull OutputTarget output) throws IOException, JsonParseException {
+    if (isDefault()) return defaultStylist(output);
+    return switch (output) {
+      case Terminal -> new UnixTermStylist(buildColorScheme(), buildStyleFamily());
+      case LaTeX -> new TeXStylist(buildColorScheme(), buildStyleFamily());
+      case HTML -> new Html5Stylist(buildColorScheme(), buildStyleFamily());
+      case Other -> new DebugStylist(buildColorScheme(), buildStyleFamily());
+    };
+  }
+
+  public @NotNull StringStylist stylistOrDefault(@NotNull OutputTarget output) {
+    try {
+      return stylist(output);
+    } catch (IOException | JsonParseException e) {
+      return defaultStylist(output);
+    }
+  }
+
+  private @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {
     return switch (colorScheme) {
       case Emacs -> AyaColorScheme.EMACS;
       case IntelliJ -> AyaColorScheme.INTELLIJ;
       case Custom -> {
         if (path == null) throw new IllegalArgumentException("Unable to generate a custom color scheme without a path");
-
         // IOException from here
         var colorTheme = ColorTheme.loadFrom(Path.of(path)).<IOException>getOrThrow();
-
         yield colorTheme.buildColorScheme(null);
       }
     };
   }
 
-  public @NotNull StyleFamily buildStyleFamily() {
+  private @NotNull StyleFamily buildStyleFamily() {
     return switch (styleFamily) {
       case Default -> AyaStyleFamily.DEFAULT;
-      case Cli -> AyaStyleFamily.ADAPTIVE_CLI;
     };
   }
 

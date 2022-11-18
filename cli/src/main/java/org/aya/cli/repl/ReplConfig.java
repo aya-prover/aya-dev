@@ -5,14 +5,11 @@ package org.aya.cli.repl;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonParseException;
-import org.aya.cli.repl.render.Color;
-import org.aya.cli.repl.render.RenderOptions;
+import org.aya.cli.render.Color;
+import org.aya.cli.render.RenderOptions;
 import org.aya.generic.util.AyaHome;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.backend.string.StringStylist;
-import org.aya.pretty.backend.string.style.UnixTermStylist;
-import org.aya.pretty.style.AyaColorScheme;
-import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ReplConfig implements AutoCloseable {
+  public static final @NotNull RenderOptions.OutputTarget DEFAULT_OUTPUT_TARGET = RenderOptions.OutputTarget.Terminal;
+
   public transient final Path configFile;
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
@@ -35,12 +34,11 @@ public class ReplConfig implements AutoCloseable {
    * DO NOT modify this directly, use setRenderOptions instead.
    */
   public @UnknownNullability RenderOptions renderOptions = new RenderOptions();
-  public transient @NotNull UnixTermStylist stylist;
-  public static final UnixTermStylist DEFAULT_STYLIST = new UnixTermStylist(AyaColorScheme.EMACS, AyaStyleFamily.ADAPTIVE_CLI);
+  public transient @NotNull StringStylist stylist;
 
   public ReplConfig(@NotNull Path file) {
     this.configFile = file;
-    this.stylist = DEFAULT_STYLIST;
+    this.stylist = renderOptions.defaultStylist(DEFAULT_OUTPUT_TARGET);
   }
 
   private void checkInitialization() throws JsonParseException {
@@ -50,12 +48,12 @@ public class ReplConfig implements AutoCloseable {
     if (renderOptions == null) renderOptions = new RenderOptions();
     try {
       renderOptions.checkInitialize();
-      stylist = new UnixTermStylist(renderOptions.buildColorScheme(), renderOptions.buildStyleFamily());
+      stylist = renderOptions.stylist(DEFAULT_OUTPUT_TARGET);
     } catch (IOException | JsonParseException ex) {
       // don't halt loading
       // use default stylist but not change the user's settings.
       // TODO: report error but don't stop
-      stylist = DEFAULT_STYLIST;
+      stylist = renderOptions.defaultStylist(DEFAULT_OUTPUT_TARGET);
     }
   }
 
@@ -87,8 +85,8 @@ public class ReplConfig implements AutoCloseable {
   }
 
   public void setRenderOptions(@NotNull RenderOptions options) throws IOException, JsonParseException {
-    this.stylist = new UnixTermStylist(options.buildColorScheme(), options.buildStyleFamily());
     this.renderOptions = options;
+    this.stylist = options.stylist(DEFAULT_OUTPUT_TARGET);
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")

@@ -7,7 +7,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.cli.repl.render.RenderOptions;
+import org.aya.cli.render.RenderOptions;
 import org.aya.distill.Codifier;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;

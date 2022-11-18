@@ -5,6 +5,7 @@ package org.aya.cli;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.plct.PLCTReport;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.single.CliReporter;
@@ -52,13 +53,11 @@ public class Main extends MainArgs implements Callable<Integer> {
     var replConfig = ReplConfig.loadFromDefault();
     var distillOptions = replConfig.distillerOptions;
     var reporter = CliReporter.stdio(!asciiOnly, distillOptions, verbosity);
-    var colorScheme = replConfig.renderOptions.buildColorScheme();
-    if (renderStyle != null) {
-      colorScheme = switch (renderStyle) {
-        case emacs -> AyaColorScheme.EMACS;
-        case intellij -> AyaColorScheme.INTELLIJ;
-      };
-    }
+    var colorScheme = switch (renderStyle) {
+      case emacs -> AyaColorScheme.EMACS;
+      case intellij -> AyaColorScheme.INTELLIJ;
+      case null -> replConfig.renderOptions.stylistOrDefault(RenderOptions.OutputTarget.Terminal).getColorScheme();
+    };
     replConfig.close();
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
       prettyStage,
