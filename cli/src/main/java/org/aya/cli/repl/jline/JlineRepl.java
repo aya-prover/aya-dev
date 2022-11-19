@@ -11,6 +11,7 @@ import org.aya.cli.repl.gk.GKReplLexer;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.util.AyaHome;
 import org.aya.parser.AyaParserDefinitionBase;
+import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.CmdCompleter;
 import org.aya.repl.ReplHighlighter;
@@ -57,6 +58,10 @@ public final class JlineRepl extends AyaRepl {
             ? Doc.styled(BaseDistiller.KEYWORD, text)
             : Doc.plain(text);
         }
+
+        @Override protected @NotNull String renderToTerminal(@NotNull Doc doc) {
+          return renderDoc(doc, StringPrinterConfig.INFINITE_SIZE);
+        }
       })
       .completer(new AggregateCompleter(
         new CmdCompleter(commandManager, new AyaCompleters.Code(this))
@@ -79,8 +84,12 @@ public final class JlineRepl extends AyaRepl {
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
-    return config.renderOptions.render(RenderOptions.OutputTarget.Terminal,
-      doc, prettyPrintWidth, config.enableUnicode, true);
+    return renderDoc(doc, prettyPrintWidth);
+  }
+
+  private @NotNull String renderDoc(@NotNull Doc doc, int pageWidth) {
+    return config.renderOptions.render(RenderOptions.OutputTarget.Terminal, doc,
+      false, config.enableUnicode, pageWidth);
   }
 
   @Override public void println(@NotNull String x) {

@@ -16,11 +16,12 @@ public abstract class ReplHighlighter<T> extends DefaultHighlighter {
   }
 
   protected abstract @NotNull Doc highlight(String text, @NotNull T t);
+  protected abstract @NotNull String renderToTerminal(@NotNull Doc doc);
 
   @Override public AttributedString highlight(LineReader reader, String buffer) {
     lexer.reset(buffer, 0, buffer.length(), 0);
     var tokens = lexer.allTheWayDown();
-    return AttributedString.fromAnsi(Doc.cat(tokens.map(t -> highlight(lexer.tokenText(buffer, t), t)))
-      .renderToTerminal());
+    var doc = Doc.cat(tokens.map(t -> highlight(lexer.tokenText(buffer, t), t)));
+    return AttributedString.fromAnsi(renderToTerminal(doc));
   }
 }
