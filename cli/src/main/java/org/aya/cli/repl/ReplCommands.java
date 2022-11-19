@@ -165,12 +165,16 @@ public interface ReplCommands {
       var options = repl.config.renderOptions;
       if (nameOrPath.isEmpty())
         return Result.ok(options.prettyColorScheme(), true);
+      var fallback = options.colorScheme;
+      var fallbackPath = options.path;
       try {
-        options.setColorScheme(nameOrPath);
+        options.updateColorScheme(nameOrPath);
         options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
         return Result.ok(options.prettyColorScheme(), true);
       } catch (IllegalArgumentException | IOException e) {
-        return Result.err("Failed to switch color scheme: " + e.getMessage(), true);
+        options.colorScheme = fallback;
+        options.path = fallbackPath;
+        return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
       }
     }
   };
@@ -192,12 +196,14 @@ public interface ReplCommands {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String name) {
       var options = repl.config.renderOptions;
       if (name == null || name.isBlank()) return Result.ok(options.prettyStyleFamily(), true);
+      var fallback = options.styleFamily;
       try {
-        options.setStyleFamily(name);
+        options.updateStyleFamily(name);
         options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
         return Result.ok(repl.config.renderOptions.prettyStyleFamily(), true);
       } catch (IllegalArgumentException | IOException e) {
-        return Result.err("Failed to switch style family: " + e.getMessage(), true);
+        options.styleFamily = fallback;
+        return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
       }
     }
   };
