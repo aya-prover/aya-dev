@@ -299,7 +299,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
    */
   private @NotNull ImmutableSeq<Term.Param>
   tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable SortTerm sort) {
-    var okTele = checkTele(tycker, tele, sort);
+    var okTele = tycker.subscoped(() -> checkTele(tycker, tele, sort));
     tycker.solveMetas();
     return zonkTele(tycker, okTele);
   }
