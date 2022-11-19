@@ -273,6 +273,7 @@ expr ::= newExpr
        | arrowExpr
        | appExpr
        | projExpr
+       | letExpr
 
 // ulift is written here because we want `x ulift + y` to work
 atomExpr ::= uliftAtom
@@ -301,6 +302,14 @@ matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
+letBind ::= weakId type? IMPLIES expr
+/**
+ * let
+ *   a : Type => body0,
+ *   b => body1
+ * in expr
+ */
+letExpr ::= KW_LET <<commaSep letBind>> KW_IN expr
 
 partialExpr ::= LPARTIAL partialInner? RPARTIAL
 private partialInner ::= bareSubSystem? barredSubSystem*

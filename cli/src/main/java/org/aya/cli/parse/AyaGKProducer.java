@@ -630,6 +630,13 @@ public record AyaGKProducer(
       if (arrayBlock.is(ARRAY_COMP_BLOCK)) return arrayCompBlock(arrayBlock, pos);
       if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
+    if (node.is(LET_EXPR)) {
+      var binds = node.childrenOfType(LET_BIND)
+        .map(this::letBind);
+      var body = expr(node.child(EXPR));
+
+      return new Expr.Let(pos, binds.toImmutableSeq(), body);
+    }
 
     return unreachable(node);
   }
@@ -795,6 +802,19 @@ public record AyaGKProducer(
       .toImmutableSeq();
 
     return Expr.Array.newList(entireSourcePos, exprs);
+  }
+
+  public @NotNull Expr.Let.SingleLet letBind(@NotNull GenericNode<?> node) {
+    var pos = sourcePosOf(node);
+    var bind = weakId(node.child(WEAK_ID));
+    var optionType = node.peekChild(TYPE);
+    var body = expr(node.child(EXPR));
+    // IDEA is unable to infer this type
+    Option<Expr> type = optionType == null
+      ? Option.none()
+      : Option.some(type(optionType));
+
+    return new Expr.Let.SingleLet(pos, LocalVar.from(bind), type, body);
   }
 
   public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {
