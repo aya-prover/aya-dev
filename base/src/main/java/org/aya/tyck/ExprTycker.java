@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -847,6 +848,20 @@ public final class ExprTycker extends Tycker {
     return checker.apply(term);
   }
 
+  /// region Helper
+
+  public <R> R subscoped(@NotNull Function<ExprTycker, R> action) {
+    var parent = this.localCtx;
+    this.localCtx = parent.deriveMap();
+
+    var result = action.apply(this);
+    this.localCtx = parent;
+
+    return result;
+  }
+
+  /// endregion
+
   public interface Result {
     @NotNull Term wellTyped();
     @NotNull Term type();
@@ -861,7 +876,6 @@ public final class ExprTycker extends Tycker {
       return this;
     }
   }
-
 
   /**
    * {@link TermResult#type} is the type of {@link TermResult#wellTyped}.
