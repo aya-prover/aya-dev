@@ -34,12 +34,16 @@ public class ReplConfig implements AutoCloseable {
     this.configFile = file;
   }
 
-  private void checkDeserialization() throws IOException, JsonParseException {
+  private void checkDeserialization() {
     if (distillerOptions.map.isEmpty()) distillerOptions.reset();
     // maintain the Nullability, renderOptions is probably null after deserializing
     if (renderOptions == null) renderOptions = new RenderOptions();
     renderOptions.checkDeserialization();
-    renderOptions.stylist(RenderOptions.OutputTarget.Terminal);
+    try {
+      renderOptions.stylist(RenderOptions.OutputTarget.Terminal);
+    } catch (IOException | JsonParseException e) {
+      System.err.println("Failed to load stylist from config file, using default stylist instead.");
+    }
   }
 
   public static @NotNull ReplConfig loadFromDefault() throws IOException, JsonParseException {
