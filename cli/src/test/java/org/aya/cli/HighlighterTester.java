@@ -11,7 +11,6 @@ import org.aya.cli.HighlighterTester.ExpectedHighlightType.Def;
 import org.aya.cli.HighlighterTester.ExpectedHighlightType.LitInt;
 import org.aya.cli.HighlighterTester.ExpectedHighlightType.Ref;
 import org.aya.cli.literate.HighlightInfo;
-import org.aya.cli.literate.HighlightInfoHolder;
 import org.aya.cli.literate.utils.HighlighterUtil;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.desugar.AyaBinOpSet;
@@ -87,7 +86,7 @@ public class HighlighterTester {
   }
 
   public final @NotNull String sourceCode;
-  public final @NotNull HighlightInfoHolder actual;
+  public final @NotNull PriorityQueue<HighlightInfo> actual;
 
   // NotNull array with Nullable element
   public final ExpectedHighlightInfo[] expected;
@@ -97,14 +96,14 @@ public class HighlighterTester {
   public final MutableMap<String, Tuple2<String, Option<DefKind>>> defMap = MutableMap.create();
   public final MutableMap<String, Option<DefKind>> defSet = MutableMap.create();
 
-  public HighlighterTester(@NotNull String sourceCode, @NotNull HighlightInfoHolder actual, @Nullable ExpectedHighlightInfo[] expected) {
+  public HighlighterTester(@NotNull String sourceCode, @NotNull PriorityQueue<HighlightInfo> actual, @Nullable ExpectedHighlightInfo[] expected) {
     this.sourceCode = sourceCode;
     this.actual = actual;
     this.expected = expected;
   }
 
   public void runTest() {
-    runTest(new PriorityQueueIterator<>(actual.queue()), Arrays.stream(expected).iterator());
+    runTest(new PriorityQueueIterator<>(actual), Arrays.stream(expected).iterator());
   }
 
   public void runTest(@NotNull Iterator<HighlightInfo> actuals, @NotNull Iterator<ExpectedHighlightInfo> expecteds) {
@@ -132,7 +131,8 @@ public class HighlighterTester {
         "expected: '" + expectedText + "', but actual: '" + actualText + "' at " + sourcePos);
 
       switch (actual.type()) {
-        case Keyword ignored when expected.expected() instanceof ExpectedHighlightType.Keyword -> {
+        case Lit(var ty)
+          when ty == LitKind.Keyword && expected.expected() instanceof ExpectedHighlightType.Keyword -> {
         }
         case Lit(var ty)
           when ty == LitKind.Int && expected.expected() instanceof LitInt -> {
@@ -142,12 +142,10 @@ public class HighlighterTester {
         }
 
         case SymDef def
-          when expected.expected() instanceof Def expectedDef ->
-          assertDef(sourcePos, def, expectedDef);
+          when expected.expected() instanceof Def expectedDef -> assertDef(sourcePos, def, expectedDef);
 
         case SymRef ref
-          when expected.expected() instanceof Ref expectedRef ->
-          assertRef(sourcePos, ref, expectedRef);
+          when expected.expected() instanceof Ref expectedRef -> assertRef(sourcePos, ref, expectedRef);
 
         case SymError error -> throw new UnsupportedOperationException("TODO");   // TODO
 
@@ -244,12 +242,10 @@ public class HighlighterTester {
     }
 
     var result = HighlighterUtil.highlight(stmts, DistillerOptions.debug());
-    HighlighterUtil.highlightKeywords(result, tokens);
-
-    doTest(code, result, expected);
+    doTest(code, HighlighterUtil.highlightKeywords(result, tokens), expected);
   }
 
-  public static void doTest(@NotNull String sourceCode, @NotNull HighlightInfoHolder actual, @Nullable ExpectedHighlightInfo... expected) {
+  public static void doTest(@NotNull String sourceCode, @NotNull PriorityQueue<HighlightInfo> actual, @Nullable ExpectedHighlightInfo... expected) {
     new HighlighterTester(sourceCode, actual, expected).runTest();
   }
 

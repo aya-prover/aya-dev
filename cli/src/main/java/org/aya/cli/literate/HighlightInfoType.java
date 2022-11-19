@@ -10,20 +10,14 @@ public sealed interface HighlightInfoType {
   enum DefKind {
     Generalized, Data, Con, Struct, Field, Fn, Prim, Local
   }
+
   enum LitKind {
     Int, String, Keyword, Sort
   }
 
-  final class Keyword implements HighlightInfoType {
-    public final static Keyword INSTANCE = new Keyword();
-
-    private Keyword() {
-    }
-  }
-
   /**
    * @param target the reference target, a unique string to the definition (for now, it is {@link Object#hashCode()})
-   * @param kind null if not sure
+   * @param kind   null if not sure
    */
   record SymRef(@NotNull String target, @Nullable DefKind kind) implements HighlightInfoType {
   }

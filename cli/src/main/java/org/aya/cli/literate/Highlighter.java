@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
-import org.aya.cli.literate.HighlightInfoType.Lit;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
@@ -18,10 +17,20 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.PriorityQueue;
+
 import static org.aya.cli.literate.HighlightInfoType.*;
 
 public class Highlighter implements StmtConsumer {
-  private final @NotNull HighlightInfoHolder holder = new HighlightInfoHolder();
+  /**
+   * In fact, we should consider these cases:
+   * <ul>
+   *   <li>{@code <b>a</b>, <a>b</a>}</li>
+   *   <li>{@code <b>a, <a>b</a></b>}</li>
+   *   <li>{@code <b>a, <a> b</b>, c</a>} which is illegal, we won't support it</li>
+   * </ul>
+   */
+  public final @NotNull PriorityQueue<HighlightInfo> holder = new PriorityQueue<>();
   private final @NotNull DistillerOptions options;
 
   public Highlighter(@NotNull DistillerOptions options) {
@@ -205,11 +214,11 @@ public class Highlighter implements StmtConsumer {
   }
 
   private void addInfo(@NotNull HighlightInfo info) {
-    holder.addInfo(info);
+    holder.add(info);
   }
 
   private void addInfo(@NotNull SourcePos sourcePos, @NotNull HighlightInfoType type) {
-    holder.addInfo(new HighlightInfo(sourcePos, type));
+    holder.add(new HighlightInfo(sourcePos, type));
   }
 
   private @Nullable DefKind kindOf(@NotNull AnyVar var) {
@@ -238,14 +247,6 @@ public class Highlighter implements StmtConsumer {
       case LocalVar ignored -> DefKind.Local;
       default -> null;
     };
-  }
-
-  /// endregion
-
-  /// region others
-
-  public @NotNull HighlightInfoHolder result() {
-    return this.holder;
   }
 
   /// endregion
