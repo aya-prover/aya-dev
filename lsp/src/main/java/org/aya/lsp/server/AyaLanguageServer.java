@@ -92,6 +92,8 @@ public class AyaLanguageServer implements LanguageServer {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
       Log.e("Cannot load library. Stack trace:\n%s", s.toString());
+    } catch (LibraryConfigData.BadConfig bad) {
+      client.showMessage(new ShowMessageParams(MessageType.Error, "Cannot load malformed library: " + bad.getMessage()));
     }
     // stop retrying and mocking
     return true;

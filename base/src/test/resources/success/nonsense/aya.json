@@ -1,8 +1,6 @@
 {
   "ayaVersion": "0.13",
   "name": "nonsense",
-  "version": "114.514",
-  
-  "dependency": {
-  }
+  "group": "org.aya-prover",
+  "version": "114.514"
 }
