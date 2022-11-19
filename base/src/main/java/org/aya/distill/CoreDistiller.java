@@ -195,12 +195,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased ->
         checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "erased"), term(Outer.AppSpine, erased.type())), Outer.AppSpine);
-      case LetTerm let -> Doc.sep(
-        Doc.styled(KEYWORD, "let"),
-        Doc.vcommaList(let.letBinds().map(this::visitLetBind)),
-        Doc.styled(KEYWORD, "in"),
-        term(Outer.Free, let.body())
-      );
     };
   }
 
@@ -303,15 +297,5 @@ public class CoreDistiller extends BaseDistiller<Term> {
   private @NotNull Doc visitClauses(@NotNull ImmutableSeq<Term.Matching> clauses) {
     return Doc.vcat(clauses.view().map(matching ->
       Doc.sep(Doc.symbol("|"), matching.toDoc(options))));
-  }
-
-  private @NotNull Doc visitLetBind(@NotNull LetTerm.LetBind letBind) {
-    return Doc.sep(
-      varDoc(letBind.name().ref()),
-      Doc.symbol(":"),
-      term(Outer.Free, letBind.name().type()),
-      Doc.symbol("=>"),
-      term(Outer.Free, letBind.body())
-    );
   }
 }
