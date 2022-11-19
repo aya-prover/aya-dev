@@ -271,7 +271,7 @@ expr ::= newExpr
        | partialExpr
        | pathExpr
        | atomExpr
-       // put rules that does not starts with `expr` below this line
+       // put rules that does not starts with `expr` above this line
        | arrowExpr
        | appExpr
        | projExpr
