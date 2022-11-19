@@ -12,7 +12,6 @@ import org.aya.util.Version;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -63,17 +62,13 @@ public final class LibraryConfigData {
     );
   }
 
-  private static @NotNull LibraryConfigData fromJson(@NotNull Reader jsonReader) throws BadConfig {
-    try {
+  private static @NotNull LibraryConfigData of(@NotNull Path root) throws BadConfig, IOException {
+    var ayaJson = root.resolve(Constants.AYA_JSON);
+    try (var jsonReader = Files.newBufferedReader(ayaJson)) {
       return new Gson().fromJson(jsonReader, LibraryConfigData.class);
     } catch (JsonParseException cause) {
-      throw new BadConfig("Failed to parse " + Constants.AYA_JSON, cause);
+      throw new BadConfig("Failed to parse " + ayaJson, cause);
     }
-  }
-
-  private static @NotNull LibraryConfigData of(@NotNull Path root) throws BadConfig, IOException {
-    var descriptionFile = root.resolve(Constants.AYA_JSON);
-    return fromJson(Files.newBufferedReader(descriptionFile));
   }
 
   public static @NotNull LibraryConfig fromLibraryRoot(@NotNull Path libraryRoot) throws IOException, BadConfig {
