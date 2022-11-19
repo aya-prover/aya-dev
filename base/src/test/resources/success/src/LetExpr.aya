@@ -8,3 +8,7 @@ def slow_plus2 (n : Nat) : Nat =>
   in n2
 
 example def normalize : slow_plus2 7 = 9 => idp
+
+// TODO: should we allow this?
+
+def letInType : (let a := 1 in a = a) => idp
