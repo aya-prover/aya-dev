@@ -30,9 +30,12 @@ tasks.named<Test>("test") {
   inputs.dir(projectDir.resolve("src/test/resources"))
 }
 
+val ayaImageDir = buildDir.resolve("image")
+val jlinkImageDir = ayaImageDir.resolve("jre")
 jlink {
   addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
   addExtraDependencies("jline-terminal-jansi")
+  imageDir.set(jlinkImageDir)
   mergedModule {
     additive = true
     uses("org.jline.terminal.spi.JansiSupport")
@@ -52,19 +55,14 @@ jlink {
 }
 
 val jlinkTask = tasks.named("jlink")
-val imageDir = buildDir.resolve("image")
 @Suppress("unsupported")
 jlinkTask.configure {
   inputs.files("aya.bat", "aya-lsp.bat", "aya.sh", "aya-lsp.sh")
-  fun bin(name: String) = imageDir.resolve("bin").resolve(name)
+  fun bin(name: String) = ayaImageDir.resolve("bin").resolve(name)
   doLast {
     ["aya", "aya-lsp"].forEach { name ->
       file("$name.sh").copyTo(bin(name), overwrite = true).setExecutable(true)
       file("$name.bat").copyTo(bin("$name.bat"), overwrite = true).setExecutable(true)
-    }
-    ["", ".exe"].forEach { ext ->
-      bin("java$ext").takeIf { it.exists() }?.renameTo(bin("jaya$ext"))
-      bin("javaw$ext").takeIf { it.exists() }?.delete()
     }
   }
 }
@@ -83,7 +81,7 @@ tasks.withType<AbstractCopyTask>().configureEach {
 
 if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
   dependsOn(jlinkTask, prepareMergedJarsDirTask)
-  from(imageDir)
+  from(ayaImageDir)
   into(file(rootProject.property("installDir")!!))
 }
 
