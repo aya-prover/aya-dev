@@ -72,7 +72,7 @@ case "`uname`" in
 esac
 
 # Determine the Java command to use to start the JVM.
-JAVACMD="$APP_HOME/java"
+JAVACMD="$APP_HOME/jaya"
 
 # Increase the maximum file descriptors if we can.
 if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then
