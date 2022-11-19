@@ -47,4 +47,11 @@ public sealed interface HighlightInfoType {
     private LitString() {
     }
   }
+
+  final class Sort implements HighlightInfoType {
+    public final static Sort INSTANCE = new Sort();
+
+    private Sort() {
+    }
+  }
 }

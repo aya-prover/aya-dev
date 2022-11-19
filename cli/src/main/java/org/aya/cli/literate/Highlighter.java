@@ -66,20 +66,7 @@ public class Highlighter implements StmtConsumer {
   /// region Var
 
   private void highlightVarDef(@NotNull AnyVar var, @Nullable HighlightInfoType.DefKind kind) {
-    highlightVar(null, var, kind);
-  }
-
-  private void highlightVarRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var) {
-    highlightVarRef(sourcePos, var, kindOf(var));
-  }
-
-  private void highlightVarRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable HighlightInfoType.DefKind kind) {
-    highlightVar(sourcePos, var, kind);
-  }
-
-  private void highlightVar(@Nullable SourcePos sourcePos, @NotNull AnyVar var, @Nullable HighlightInfoType.DefKind kind) {
-    var isDef = sourcePos == null;
-    sourcePos = isDef ? switch (var) {
+    var sourcePos = switch (var) {
       case GeneralizedVar genVar -> genVar.sourcePos;
       case DefVar<?, ?> defVar -> {
         var concrete = defVar.concrete;
@@ -89,13 +76,17 @@ public class Highlighter implements StmtConsumer {
       }
       case LocalVar localVar -> localVar.definition();
       default -> throw new UnsupportedOperationException("Unexpected var: " + var.getClass());
-    } : sourcePos;
+    };
 
-    if (isDef) {
-      linkDef(sourcePos, var, kind);
-    } else {
-      linkRef(sourcePos, var, kind);
-    }
+    linkDef(sourcePos, var, kind);
+  }
+
+  private void highlightVarRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var) {
+    highlightVarRef(sourcePos, var, kindOf(var));
+  }
+
+  private void highlightVarRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable HighlightInfoType.DefKind kind) {
+    linkRef(sourcePos, var, kind);
   }
 
   /**
@@ -125,7 +116,7 @@ public class Highlighter implements StmtConsumer {
     switch (expr) {
       // leaves
       case Expr.Ref ref -> highlightVarRef(ref.sourcePos(), ref.resolvedVar());
-      case Expr.RawSort rawSort -> highlightKeyword(rawSort.sourcePos());
+      case Expr.RawSort rawSort -> highlightSort(rawSort.sourcePos());
       case Expr.Sort sort -> {
         var sourcePos = switch (sort) {
           case Expr.ISet iSet -> iSet.sourcePos();
@@ -135,7 +126,7 @@ public class Highlighter implements StmtConsumer {
           case Expr.Type type -> type.sourcePos();
         };
 
-        highlightKeyword(sourcePos);
+        highlightSort(sourcePos);
       }
       case Expr.LitInt litInt -> addInfo(litInt.sourcePos(), HighlightInfoType.LitInt.INSTANCE);
       case Expr.LitString litString -> addInfo(litString.sourcePos(), HighlightInfoType.LitString.INSTANCE);
@@ -176,7 +167,7 @@ public class Highlighter implements StmtConsumer {
   @SuppressWarnings("unused")
   public @NotNull Pattern pre(@NotNull Pattern pattern) {
     switch (pattern) {
-      case Pattern.Bind bind -> linkDef(bind.sourcePos(), bind.bind(), HighlightInfoType.DefKind.Local);
+      case Pattern.Bind bind -> highlightVarDef(bind.bind(), HighlightInfoType.DefKind.Local);
       case Pattern.Ctor ctor -> {
         var resolved = ctor.resolved();
         highlightVarRef(resolved.sourcePos(), resolved.data(), HighlightInfoType.DefKind.Con);
@@ -203,6 +194,10 @@ public class Highlighter implements StmtConsumer {
 
   private void highlightKeyword(@NotNull SourcePos sourcePos) {
     addInfo(sourcePos, HighlightInfoType.Keyword.INSTANCE);
+  }
+
+  private void highlightSort(@NotNull SourcePos sourcePos) {
+    addInfo(sourcePos, HighlightInfoType.Sort.INSTANCE);
   }
 
   private void addInfo(@NotNull HighlightInfo info) {

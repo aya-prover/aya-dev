@@ -8,6 +8,7 @@ import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.aya.cli.HighlighterTester.*;
 
 public class HighlighterTest {
@@ -65,5 +66,21 @@ public class HighlighterTest {
       def(20, 21, "O", HighlightInfoType.DefKind.Con),
       def(24, 25, "S", HighlightInfoType.DefKind.Con),
       ref(26, 29, "Nat", "nat", HighlightInfoType.DefKind.Data));
+  }
+
+  @Test
+  public void incorrectTest() {
+    assertThrows(Throwable.class, () -> {
+      @Language("Aya") String code = """
+        open data List (A : Type)
+        | nil
+        | cons A (List A)
+        """;
+
+      highlightAndTest(code,
+        whatever(),
+        whatever(),
+        def(10, 14, "L1st", "list", HighlightInfoType.DefKind.Data));
+    });
   }
 }
