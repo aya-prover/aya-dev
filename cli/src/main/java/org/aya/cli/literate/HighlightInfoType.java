@@ -10,6 +10,9 @@ public sealed interface HighlightInfoType {
   enum DefKind {
     Generalized, Data, Con, Struct, Field, Fn, Prim, Local
   }
+  enum LitKind {
+    Int, String, Keyword, Sort
+  }
 
   final class Keyword implements HighlightInfoType {
     public final static Keyword INSTANCE = new Keyword();
@@ -22,36 +25,18 @@ public sealed interface HighlightInfoType {
    * @param target the reference target, a unique string to the definition (for now, it is {@link Object#hashCode()})
    * @param kind null if not sure
    */
-  record Ref(@NotNull String target, @Nullable HighlightInfoType.DefKind kind) implements HighlightInfoType {
+  record SymRef(@NotNull String target, @Nullable DefKind kind) implements HighlightInfoType {
   }
 
   /**
-   * similar to {@link HighlightInfoType.Ref}, but this is a definition
+   * similar to {@link SymRef}, but this is a definition
    */
-  record Def(@NotNull String target, @Nullable HighlightInfoType.DefKind kind) implements HighlightInfoType {
+  record SymDef(@NotNull String target, @Nullable DefKind kind) implements HighlightInfoType {
   }
 
-  record Error(@Nullable Doc description) implements HighlightInfoType {
+  record SymError(@Nullable Doc description) implements HighlightInfoType {
   }
 
-  final class LitInt implements HighlightInfoType {
-    public final static LitInt INSTANCE = new LitInt();
-
-    private LitInt() {
-    }
-  }
-
-  final class LitString implements HighlightInfoType {
-    public final static LitString INSTANCE = new LitString();
-
-    private LitString() {
-    }
-  }
-
-  final class Sort implements HighlightInfoType {
-    public final static Sort INSTANCE = new Sort();
-
-    private Sort() {
-    }
+  record Lit(@NotNull LitKind kind) implements HighlightInfoType {
   }
 }

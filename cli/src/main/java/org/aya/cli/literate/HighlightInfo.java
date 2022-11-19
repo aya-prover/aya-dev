@@ -16,17 +16,13 @@ public record HighlightInfo(
     this(new TextRange(sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex() + 1), type);
   }
 
-  public static class Ord implements Comparator<HighlightInfo> {
+  public static class Ord implements Comparator<@NotNull HighlightInfo> {
     public final static Ord INSTANCE = new Ord();
 
     private Ord() {
     }
 
-    @Override
-    public int compare(HighlightInfo lhs, HighlightInfo rhs) {
-      assert lhs != null;
-      assert rhs != null;
-
+    @Override public int compare(@NotNull HighlightInfo lhs, @NotNull HighlightInfo rhs) {
       return Integer.compare(
         lhs.sourcePos().getStartOffset(),
         rhs.sourcePos().getStartOffset()

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
+import org.aya.cli.literate.HighlightInfoType.Lit;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
@@ -16,6 +17,8 @@ import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static org.aya.cli.literate.HighlightInfoType.*;
 
 public class Highlighter implements StmtConsumer {
   private final @NotNull HighlightInfoHolder holder = new HighlightInfoHolder();
@@ -44,18 +47,18 @@ public class Highlighter implements StmtConsumer {
   }
 
   private void acceptGeneralize(@NotNull Generalize generalize) {
-    generalize.variables.forEach(var -> highlightVarDef(var, HighlightInfoType.DefKind.Generalized));
+    generalize.variables.forEach(var -> highlightVarDef(var, DefKind.Generalized));
   }
 
   @SuppressWarnings("unused")
   private void acceptDecl(@NotNull Decl decl) {
     var kind = switch (decl) {
-      case TeleDecl.DataDecl dataDecl -> HighlightInfoType.DefKind.Data;
-      case TeleDecl.FnDecl fnDecl -> HighlightInfoType.DefKind.Fn;
-      case TeleDecl.PrimDecl primDecl -> HighlightInfoType.DefKind.Prim;
-      case TeleDecl.StructDecl structDecl -> HighlightInfoType.DefKind.Struct;
-      case TeleDecl.DataCtor dataCtor -> HighlightInfoType.DefKind.Con;
-      case TeleDecl.StructField structField -> HighlightInfoType.DefKind.Field;
+      case TeleDecl.DataDecl dataDecl -> DefKind.Data;
+      case TeleDecl.FnDecl fnDecl -> DefKind.Fn;
+      case TeleDecl.PrimDecl primDecl -> DefKind.Prim;
+      case TeleDecl.StructDecl structDecl -> DefKind.Struct;
+      case TeleDecl.DataCtor dataCtor -> DefKind.Con;
+      case TeleDecl.StructField structField -> DefKind.Field;
       case ClassDecl classDecl -> throw new UnsupportedOperationException("TODO");
     };
 
@@ -66,7 +69,7 @@ public class Highlighter implements StmtConsumer {
 
   /// region Var
 
-  private void highlightVarDef(@NotNull AnyVar var, @Nullable HighlightInfoType.DefKind kind) {
+  private void highlightVarDef(@NotNull AnyVar var, @Nullable DefKind kind) {
     var sourcePos = switch (var) {
       case GeneralizedVar genVar -> genVar.sourcePos;
       case DefVar<?, ?> defVar -> {
@@ -86,22 +89,22 @@ public class Highlighter implements StmtConsumer {
     highlightVarRef(sourcePos, var, kindOf(var));
   }
 
-  private void highlightVarRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable HighlightInfoType.DefKind kind) {
+  private void highlightVarRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable DefKind kind) {
     linkRef(sourcePos, var, kind);
   }
 
   /**
    * @see org.aya.pretty.doc.Doc#linkDef(Doc, int)
    */
-  private void linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable HighlightInfoType.DefKind style) {
-    addInfo(sourcePos, new HighlightInfoType.Def(
+  private void linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable DefKind style) {
+    addInfo(sourcePos, new SymDef(
       String.valueOf(var.hashCode()),
       style
     ));
   }
 
-  private void linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable HighlightInfoType.DefKind style) {
-    addInfo(sourcePos, new HighlightInfoType.Ref(
+  private void linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable DefKind style) {
+    addInfo(sourcePos, new SymRef(
       String.valueOf(var.hashCode()),
       style
     ));
@@ -129,8 +132,8 @@ public class Highlighter implements StmtConsumer {
 
         highlightSort(sourcePos);
       }
-      case Expr.LitInt litInt -> addInfo(litInt.sourcePos(), HighlightInfoType.LitInt.INSTANCE);
-      case Expr.LitString litString -> addInfo(litString.sourcePos(), HighlightInfoType.LitString.INSTANCE);
+      case Expr.LitInt litInt -> addInfo(litInt.sourcePos(), new Lit(LitKind.Int));
+      case Expr.LitString litString -> addInfo(litString.sourcePos(), new Lit(LitKind.String));
       case Expr.Error error -> highlightError(error.sourcePos(), error.description().toDoc(options));
       case Expr.Unresolved unresolved -> highlightError(unresolved.sourcePos(), null);
       // TODO: how to impl?
@@ -168,12 +171,12 @@ public class Highlighter implements StmtConsumer {
   @SuppressWarnings("unused")
   public @NotNull Pattern pre(@NotNull Pattern pattern) {
     switch (pattern) {
-      case Pattern.Bind bind -> highlightVarDef(bind.bind(), HighlightInfoType.DefKind.Local);
+      case Pattern.Bind bind -> highlightVarDef(bind.bind(), DefKind.Local);
       case Pattern.Ctor ctor -> {
         var resolved = ctor.resolved();
-        highlightVarRef(resolved.sourcePos(), resolved.data(), HighlightInfoType.DefKind.Con);
+        highlightVarRef(resolved.sourcePos(), resolved.data(), DefKind.Con);
       }
-      case Pattern.Number number -> addInfo(number.sourcePos(), HighlightInfoType.LitInt.INSTANCE);
+      case Pattern.Number number -> addInfo(number.sourcePos(), new Lit(LitKind.Int));
       // no-op
       case Pattern.BinOpSeq binOpSeq -> {}
       case Pattern.CalmFace calmFace -> {}
@@ -190,15 +193,15 @@ public class Highlighter implements StmtConsumer {
   /// region Helper
 
   private void highlightError(@NotNull SourcePos sourcePos, @Nullable Doc description) {
-    addInfo(sourcePos, new HighlightInfoType.Error(description));
+    addInfo(sourcePos, new SymError(description));
   }
 
   private void highlightKeyword(@NotNull SourcePos sourcePos) {
-    addInfo(sourcePos, HighlightInfoType.Keyword.INSTANCE);
+    addInfo(sourcePos, new Lit(LitKind.Keyword));
   }
 
   private void highlightSort(@NotNull SourcePos sourcePos) {
-    addInfo(sourcePos, HighlightInfoType.Sort.INSTANCE);
+    addInfo(sourcePos, new Lit(LitKind.Sort));
   }
 
   private void addInfo(@NotNull HighlightInfo info) {
@@ -209,30 +212,30 @@ public class Highlighter implements StmtConsumer {
     holder.addInfo(new HighlightInfo(sourcePos, type));
   }
 
-  private @Nullable HighlightInfoType.DefKind kindOf(@NotNull AnyVar var) {
+  private @Nullable DefKind kindOf(@NotNull AnyVar var) {
     return switch (var) {
-      case GeneralizedVar ignored -> HighlightInfoType.DefKind.Generalized;
+      case GeneralizedVar ignored -> DefKind.Generalized;
       case DefVar<?, ?> defVar -> {
         var concrete = defVar.concrete;
         var core = defVar.core;
 
         if (concrete instanceof TeleDecl.DataDecl || core instanceof DataDef) {
-          yield HighlightInfoType.DefKind.Data;
+          yield DefKind.Data;
         } else if (concrete instanceof TeleDecl.DataCtor || core instanceof CtorDef) {
-          yield HighlightInfoType.DefKind.Con;
+          yield DefKind.Con;
         } else if (concrete instanceof TeleDecl.StructDecl || core instanceof StructDef) {
-          yield HighlightInfoType.DefKind.Struct;
+          yield DefKind.Struct;
         } else if (concrete instanceof TeleDecl.StructField || core instanceof FieldDef) {
-          yield HighlightInfoType.DefKind.Field;
+          yield DefKind.Field;
         } else if (concrete instanceof TeleDecl.FnDecl || core instanceof FnDef) {
-          yield HighlightInfoType.DefKind.Fn;
+          yield DefKind.Fn;
         } else if (concrete instanceof TeleDecl.PrimDecl || core instanceof PrimDef) {
-          yield HighlightInfoType.DefKind.Prim;
+          yield DefKind.Prim;
         } else {
           yield null;
         }
       }
-      case LocalVar ignored -> HighlightInfoType.DefKind.Local;
+      case LocalVar ignored -> DefKind.Local;
       default -> null;
     };
   }
