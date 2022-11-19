@@ -37,7 +37,7 @@ public final class SyntaxHighlight implements StmtOps<@NotNull MutableList<Highl
     if (program != null) program.forEach(d -> SyntaxHighlight.INSTANCE.visit(d, symbols));
     return new HighlightResult(
       source.file().toUri(),
-      symbols.view().filter(t -> t.range() != LspRange.NONE));
+      symbols.filter(t -> t.range() != LspRange.NONE));
   }
 
   private static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
