@@ -58,7 +58,7 @@ public class ReplCompiler {
     this.reporter = CountingReporter.delegate(reporter);
     this.locator = locator;
     this.primFactory = new PrimDef.Factory();
-    this.shapeFactory = new ReplShapeFactory(null);
+    this.shapeFactory = new ReplShapeFactory();
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
     this.flags = new CompilerFlags(CompilerFlags.Message.EMOJI, false, true, null,
       modulePaths.view(), null);
