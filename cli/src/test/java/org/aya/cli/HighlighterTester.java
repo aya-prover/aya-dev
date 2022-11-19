@@ -16,7 +16,6 @@ import org.aya.cli.literate.utils.HighlighterUtil;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.PrimDef;
 import org.aya.core.def.PrimDef.Factory;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.resolve.ResolveInfo;
@@ -105,7 +104,7 @@ public class HighlighterTester {
   }
 
   public void runTest() {
-    runTest(new PriorityQueueIterator<>(actual.getQueue()), Arrays.stream(expected).iterator());
+    runTest(new PriorityQueueIterator<>(actual.queue()), Arrays.stream(expected).iterator());
   }
 
   public void runTest(@NotNull Iterator<HighlightInfo> actuals, @NotNull Iterator<ExpectedHighlightInfo> expecteds) {
