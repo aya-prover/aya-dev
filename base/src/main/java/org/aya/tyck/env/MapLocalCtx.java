@@ -34,8 +34,8 @@ public record MapLocalCtx(
     localMap.put(var, term);
   }
 
-  @Override public boolean isEmpty() {
-    return localMap.isEmpty() && (parent == null || parent.isEmpty());
+  @Override public boolean isMeEmpty() {
+    return localMap.isEmpty();
   }
 
   @Override public void extractToLocal(@NotNull MutableList<Term.Param> dest) {
