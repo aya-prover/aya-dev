@@ -59,10 +59,13 @@ val jlinkTask = tasks.named("jlink")
 jlinkTask.configure {
   inputs.files("aya.bat", "aya-lsp.bat", "aya.sh", "aya-lsp.sh")
   fun bin(name: String) = ayaImageDir.resolve("bin").resolve(name)
+  fun jlinkBin(name: String) = jlinkImageDir.resolve("bin").resolve(name)
   doLast {
     ["aya", "aya-lsp"].forEach { name ->
       file("$name.sh").copyTo(bin(name), overwrite = true).setExecutable(true)
       file("$name.bat").copyTo(bin("$name.bat"), overwrite = true).setExecutable(true)
+      jlinkBin(name).delete()
+      jlinkBin("$name.bat").delete()
     }
   }
 }
