@@ -1,0 +1,16 @@
+In file $FILE:6:22 ->
+
+  4 | def id (n : Nat) : Nat => n
+  5 | def whichOne : Nat =>
+  6 |   let x => unit in id x
+                            ^^
+
+Error: Cannot check the expression
+         x
+       of type
+         Unit
+       against the type
+         Nat
+
+1 error(s), 0 warning(s).
+What are you doing?

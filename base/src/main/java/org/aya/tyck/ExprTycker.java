@@ -309,32 +309,7 @@ public final class ExprTycker extends Tycker {
         var results = elements.map(element -> inherit(element, hole._1).wellTyped());
         yield new TermResult(new ListTerm(results, match._2, type), type);
       }
-      case Expr.Let let -> {
-        var parent = this.lets;
-        this.lets = parent.derive();
-
-        var wellLet = MutableList.<LetTerm.LetBind>create();
-
-        let.lets().forEach(letBind -> {
-          // tyck a single let
-          // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
-          var type = synthesize(letBind.type()).wellTyped().freezeHoles(state);
-          var bodyResult = check(letBind.body(), type);
-
-          var letBindTerm = new LetTerm.LetBind(
-            new Term.Param(letBind.bind(), bodyResult.type(), true),
-            bodyResult.wellTyped());
-
-          lets.addDirectly(letBindTerm.name().ref(), letBindTerm.body(), letBindTerm.name().type());
-          wellLet.append(letBindTerm);
-        });
-
-        var bodyResult = synthesize(let.body());
-
-        this.lets = parent;
-
-        yield new TermResult(new LetTerm(wellLet.toImmutableSeq(), bodyResult.wellTyped()), bodyResult.type());
-      }
+      case Expr.Let let -> desugarLet(let.lets().view(), let.body());
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -875,17 +850,36 @@ public final class ExprTycker extends Tycker {
     return checker.apply(term);
   }
 
-  /// region Helper
+  /**
+   * @param letBinds not empty
+   */
+  private @NotNull Result desugarLet(@NotNull SeqView<Expr.Let.LetBind> letBinds, @NotNull Expr leaf) {
+    if (letBinds.isEmpty()) {
+      return synthesize(leaf);
+    }
 
-  public <R> R subscoped(@NotNull Supplier<R> action) {
+    var bind = letBinds.first();
+    var remain = letBinds.drop(1);
+    var type = synthesize(bind.type()).wellTyped().freezeHoles(state);
+    var bodyResult = inherit(bind.body(), type);
+    var param = new Term.Param(bind.bind(), bodyResult.type(), true);
+
     var parent = this.localCtx;
     this.localCtx = parent.deriveMap();
-    var result = action.get();
-    this.localCtx = parent;
-    return result;
-  }
+    this.localCtx.put(param);
 
-  /// endregion
+    var result = desugarLet(remain, leaf);
+
+    this.localCtx = parent;
+
+    // (\ (x : Z) => y) : Z -> Y
+    var lam = LamTerm.make(SeqView.of(param), result.wellTyped());
+
+    // (\ (x : Z) => y) z : Y
+    var full = AppTerm.make(lam, new Arg<>(bodyResult.wellTyped(), true));
+
+    return new TermResult(full, result.type());
+  }
 
   public interface Result {
     @NotNull Term wellTyped();
@@ -901,7 +895,19 @@ public final class ExprTycker extends Tycker {
       return this;
     }
   }
+  
+  /// region Helper
 
+  public <R> R subscoped(@NotNull Supplier<R> action) {
+    var parent = this.localCtx;
+    this.localCtx = parent.deriveMap();
+    var result = action.get();
+    this.localCtx = parent;
+    return result;
+  }
+
+  /// endregion
+  
   /**
    * {@link TermResult#type} is the type of {@link TermResult#wellTyped}.
    *

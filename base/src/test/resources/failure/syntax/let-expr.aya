@@ -1,0 +1,6 @@
+open data Nat | O | S Nat
+open data Unit | unit
+
+def id (n : Nat) : Nat => n
+def whichOne : Nat =>
+  let x => unit in id x
