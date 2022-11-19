@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.PriorityQueue;
 
 import static org.aya.cli.literate.HighlightInfoType.*;
@@ -86,13 +84,14 @@ public class HighlighterTester {
   }
 
   public void runTest() {
-    runTest(Seq.generateUntilNull(actual::remove).iterator(), Arrays.stream(expected).iterator());
+    runTest(Seq.generateUntilNull(actual::poll), Seq.of(expected));
   }
 
-  public void runTest(@NotNull Iterator<HighlightInfo> actuals, @NotNull Iterator<ExpectedHighlightInfo> expecteds) {
-    while (actuals.hasNext() && expecteds.hasNext()) {
-      var actual = actuals.next();
-      var expected = expecteds.next();
+  public void runTest(@NotNull Seq<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {
+    assertEquals(actuals.size(), expecteds.size(), "size mismatch");
+    for (var tup : actuals.zipView(expecteds)) {
+      var actual = tup._1;
+      var expected = tup._2;
 
       if (expected == null) {
         switch (actual.type()) {
@@ -110,8 +109,7 @@ public class HighlighterTester {
       var expectedText = expected.expected.display();
       var actualText = sourcePos.substring(sourceCode);
 
-      assertEquals(expectedText, actualText,
-        "expected: '" + expectedText + "', but actual: '" + actualText + "' at " + sourcePos);
+      assertEquals(expectedText, actualText, "at " + sourcePos);
 
       switch (actual.type()) {
         case Lit(var ty)
@@ -134,16 +132,6 @@ public class HighlighterTester {
 
         default ->
           fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());
-      }
-    }
-
-    if (actuals.hasNext() || expecteds.hasNext()) {
-      var noMoreExpected = actuals.hasNext();
-
-      if (noMoreExpected) {
-        fail("No more 'expecteds' data");
-      } else {
-        fail("No more 'actuals' data");
       }
     }
   }
