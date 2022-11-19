@@ -110,7 +110,14 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
 
   void put(@NotNull LocalVar var, @NotNull Term term);
-  boolean isEmpty();
+  default boolean isEmpty() {
+    if (isMeEmpty()) {
+      var parent = parent();
+      return parent == null || parent.isEmpty();
+    }
+    return false;
+  }
+  boolean isMeEmpty();
   @Contract(" -> new") default @NotNull MapLocalCtx deriveMap() {
     return new MapLocalCtx(MutableLinkedHashMap.of(), this);
   }

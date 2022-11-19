@@ -36,7 +36,7 @@ public record SeqLocalCtx(
     localSeq.append(new P(var, term));
   }
 
-  @Override public boolean isEmpty() {
+  @Override public boolean isMeEmpty() {
     return localSeq.isEmpty();
   }
 }
