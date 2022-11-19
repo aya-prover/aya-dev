@@ -3,6 +3,7 @@
 package org.aya.cli;
 
 import com.intellij.openapi.util.TextRange;
+import kala.collection.Seq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
@@ -38,24 +39,6 @@ import static org.aya.cli.literate.HighlightInfoType.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class HighlighterTester {
-  public static class PriorityQueueIterator<T> implements Iterator<T> {
-    public @NotNull PriorityQueue<T> source;
-
-    public PriorityQueueIterator(@NotNull PriorityQueue<T> source) {
-      this.source = new PriorityQueue<>(source);
-    }
-
-    @Override
-    public boolean hasNext() {
-      return !source.isEmpty();
-    }
-
-    @Override
-    public T next() {
-      return source.remove();
-    }
-  }
-
   record ExpectedHighlightInfo(@NotNull TextRange range, @NotNull ExpectedHighlightType expected) {}
 
   public sealed interface ExpectedHighlightType {
@@ -103,7 +86,7 @@ public class HighlighterTester {
   }
 
   public void runTest() {
-    runTest(new PriorityQueueIterator<>(actual), Arrays.stream(expected).iterator());
+    runTest(Seq.generateUntilNull(actual::remove).iterator(), Arrays.stream(expected).iterator());
   }
 
   public void runTest(@NotNull Iterator<HighlightInfo> actuals, @NotNull Iterator<ExpectedHighlightInfo> expecteds) {
