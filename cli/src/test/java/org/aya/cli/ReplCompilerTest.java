@@ -4,13 +4,20 @@ package org.aya.cli;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.ReplCompiler;
+import org.aya.concrete.stmt.QualifiedID;
+import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.AnyVar;
+import org.aya.resolve.context.Context;
+import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.IgnoringReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,8 +31,14 @@ public class ReplCompilerTest {
     ctx.definitions.clear();
   }
 
-  @Test
-  public void issue382() {
+  @Test public void library() throws IOException {
+    compiler.loadToContext(Path.of("../lsp", "src", "test", "resources", "lsp-test-lib"));
+    assertNotNull(findContext("Nat::zero"));
+    assertNotNull(findContext("Vec::vnil"));
+    assertNotNull(findContext("Vec:::>"));
+  }
+
+  @Test public void issue382() {
     // success cases, we can find the definition in the context
     compile("data Nat | zero | suc Nat");
     var nat = findContext("Nat");
@@ -41,10 +54,13 @@ public class ReplCompilerTest {
   }
 
   private @Nullable AnyVar findContext(@NotNull String name) {
-    var ctx = compiler.getContext();
-    var def = ctx.definitions.getOrNull(name);
-    if (def == null) return null;
-    return def.getOrNull(ImmutableSeq.empty());
+    try {
+      var ctx = compiler.getContext();
+      return ctx.getMaybe(new QualifiedID(SourcePos.NONE,
+        ImmutableSeq.of(Constants.SCOPE_SEPARATOR_PATTERN.split(name))));
+    } catch (Context.ResolvingInterruptedException ignored) {
+      return null;
+    }
   }
 
   private void compile(@NotNull String code) {
