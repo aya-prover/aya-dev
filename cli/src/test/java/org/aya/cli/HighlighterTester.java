@@ -150,7 +150,7 @@ public class HighlighterTester {
           assertRef(sourcePos, ref, expectedRef);
 
         case HighlightInfoType.Error error ->
-          throw new UnsupportedOperationException("unreachable");   // TODO[hoshino]: unreachable?
+          throw new UnsupportedOperationException("TODO");   // TODO
 
         default ->
           fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());
