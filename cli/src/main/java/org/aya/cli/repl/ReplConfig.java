@@ -10,7 +10,6 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.generic.util.AyaHome;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.util.distill.DistillerOptions;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -29,21 +28,22 @@ public class ReplConfig implements AutoCloseable {
   public boolean enableUnicode = true;
   /** Disables welcome message, echoing info, etc. */
   public boolean silent = false;
-  /**
-   * DO NOT modify this directly, use setRenderOptions instead.
-   */
   public @UnknownNullability RenderOptions renderOptions = new RenderOptions();
 
   public ReplConfig(@NotNull Path file) {
     this.configFile = file;
   }
 
-  private void checkInitialization() throws JsonParseException {
+  private void checkDeserialization() {
     if (distillerOptions.map.isEmpty()) distillerOptions.reset();
-
     // maintain the Nullability, renderOptions is probably null after deserializing
     if (renderOptions == null) renderOptions = new RenderOptions();
-    renderOptions.checkInitialize();
+    renderOptions.checkDeserialization();
+    try {
+      renderOptions.stylist(RenderOptions.OutputTarget.Terminal);
+    } catch (IOException | JsonParseException e) {
+      System.err.println("Failed to load stylist from config file, using default stylist instead.");
+    }
   }
 
   public static @NotNull ReplConfig loadFromDefault() throws IOException, JsonParseException {
@@ -57,7 +57,7 @@ public class ReplConfig implements AutoCloseable {
       .create()
       .fromJson(Files.newBufferedReader(file), ReplConfig.class);
     if (config == null) return new ReplConfig(file);
-    config.checkInitialization();
+    config.checkDeserialization();
     return config;
   }
 
@@ -71,22 +71,5 @@ public class ReplConfig implements AutoCloseable {
   @VisibleForTesting public static GsonBuilder newGsonBuilder() {
     return new GsonBuilder()
       .registerTypeAdapter(Color.class, new Color.Adapter());
-  }
-
-  public void setRenderOptions(@NotNull RenderOptions options) throws IOException, JsonParseException {
-    this.renderOptions = options;
-    // trigger a load for instantly reporting errors to users
-    renderOptions.stylist(RenderOptions.OutputTarget.Terminal);
-  }
-
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  @Contract(" -> new") public @NotNull RenderOptions clone() {
-    var newOne = new RenderOptions();
-
-    newOne.colorScheme = this.renderOptions.colorScheme;
-    newOne.styleFamily = this.renderOptions.styleFamily;
-    newOne.path = this.renderOptions.path;
-
-    return newOne;
   }
 }

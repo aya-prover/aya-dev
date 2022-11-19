@@ -3,6 +3,7 @@
 package org.aya.cli.render;
 
 import com.google.gson.JsonParseException;
+import kala.control.Either;
 import org.aya.cli.render.vscode.ColorTheme;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.Html5Stylist;
@@ -61,16 +62,51 @@ public class RenderOptions {
 
   public @UnknownNullability ColorSchemeName colorScheme = DEFAULT_COLOR_SCHEME;
   public @UnknownNullability StyleFamilyName styleFamily = DEFAULT_STYLE_FAMILY;
-
   public @Nullable String path = null;
 
-  public void checkInitialize() {
+  /** creating stylist is expensive, so we memorize them */
+  private transient @Nullable ColorScheme colorSchemeCache = null;
+  private transient @Nullable StyleFamily styleFamilyCache = null;
+
+  public void checkDeserialization() {
     if (colorScheme == null) colorScheme = DEFAULT_COLOR_SCHEME;
     if (styleFamily == null) styleFamily = DEFAULT_STYLE_FAMILY;
   }
 
   public boolean isDefault() {
     return colorScheme.equals(DEFAULT_COLOR_SCHEME) && styleFamily.equals(DEFAULT_STYLE_FAMILY);
+  }
+
+  public @NotNull String prettyColorScheme() {
+    return colorScheme == ColorSchemeName.Custom ? Objects.requireNonNull(path) : colorScheme.toString();
+  }
+
+  public @NotNull String prettyStyleFamily() {
+    return styleFamily.toString();
+  }
+
+  public void updateColorScheme(@NotNull Either<ColorSchemeName, Path> nameOrPath) throws IllegalArgumentException {
+    if (nameOrPath.isLeft()) {
+      var color = nameOrPath.getLeftValue();
+      if (color == ColorSchemeName.Custom) throw new IllegalArgumentException(
+        "To set a custom color scheme, just give the path to it :)");
+      this.colorScheme = color;
+    } else {
+      this.colorScheme = ColorSchemeName.Custom;
+      this.path = nameOrPath.getRightValue().toAbsolutePath().toString();
+    }
+    invalidate();
+  }
+
+  public void updateStyleFamily(@NotNull Either<StyleFamilyName, Path> nameOrPath) throws IllegalArgumentException {
+    if (nameOrPath.isRight()) throw new IllegalArgumentException("We don't support custom style family yet :)");
+    this.styleFamily = nameOrPath.getLeftValue();
+    invalidate();
+  }
+
+  public void invalidate() {
+    colorSchemeCache = null;
+    styleFamilyCache = null;
   }
 
   public static @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {
@@ -115,7 +151,8 @@ public class RenderOptions {
   }
 
   private @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {
-    return switch (colorScheme) {
+    if (colorSchemeCache != null) return colorSchemeCache;
+    colorSchemeCache = switch (colorScheme) {
       case Emacs -> AyaColorScheme.EMACS;
       case IntelliJ -> AyaColorScheme.INTELLIJ;
       case Custom -> {
@@ -125,12 +162,15 @@ public class RenderOptions {
         yield colorTheme.buildColorScheme(null);
       }
     };
+    return colorSchemeCache;
   }
 
   private @NotNull StyleFamily buildStyleFamily() {
-    return switch (styleFamily) {
+    if (styleFamilyCache != null) return styleFamilyCache;
+    styleFamilyCache = switch (styleFamily) {
       case Default -> AyaStyleFamily.DEFAULT;
     };
+    return styleFamilyCache;
   }
 
   @Override public boolean equals(Object o) {
