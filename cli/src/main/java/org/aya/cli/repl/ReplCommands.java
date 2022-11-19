@@ -3,12 +3,14 @@
 package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.render.RenderOptions;
 import org.aya.distill.Codifier;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.Command;
+import org.aya.repl.CommandArg;
 import org.aya.repl.ReplUtil;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +24,12 @@ public interface ReplCommands {
   record Code(@NotNull String code) {}
 
   record Prompt(@NotNull String prompt) {}
+
+  record ColorParam(@NotNull Either<RenderOptions.ColorSchemeName, Path> value)
+    implements CommandArg.ArgEither<RenderOptions.ColorSchemeName, Path> {}
+
+  record StyleParam(@NotNull Either<RenderOptions.StyleFamilyName, Path> value)
+    implements CommandArg.ArgEither<RenderOptions.StyleFamilyName, Path> {}
 
   @NotNull Command CHANGE_PROMPT = new Command(ImmutableSeq.of("prompt"), "Change the REPL prompt text") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Prompt argument) {
@@ -143,68 +151,39 @@ public interface ReplCommands {
   };
 
   @NotNull Command COLOR = new Command(ImmutableSeq.of("color"), "Display the current color scheme or switch to another") {
-    /**
-     * Goal:
-     * <pre>
-     * :color
-     * Emacs
-     * :color intellij
-     * IntelliJ
-     * :color
-     * IntelliJ
-     * :color "/home/cirno/vscode/some_color_scheme.json"
-     * Custom (/home/cirno/vscode/some_color_scheme.json)
-     * :color
-     * Custom (/home/cirno/vscode/some_color_scheme.json)
-     * :color Custom
-     * Invalid color scheme: Custom (valid: Emacs, IntelliJ, "&lt;Path&gt;")
-     * </pre>
-     */
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String argument) {
-      var nameOrPath = argument == null ? "" : argument.trim();
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable ColorParam colorParam) {
       var options = repl.config.renderOptions;
-      if (nameOrPath.isEmpty())
+      if (colorParam == null)
         return Result.ok(options.prettyColorScheme(), true);
-      var fallback = options.colorScheme;
-      var fallbackPath = options.path;
-      try {
-        options.updateColorScheme(nameOrPath);
-        options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
-        return Result.ok(options.prettyColorScheme(), true);
-      } catch (IllegalArgumentException | IOException e) {
-        options.colorScheme = fallback;
-        options.path = fallbackPath;
-        return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
-      }
+      return Result.ok(colorParam.toString(), true);
+      // var fallback = options.colorScheme;
+      // var fallbackPath = options.path;
+      // try {
+      //   options.updateColorScheme(nameOrPath);
+      //   options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
+      //   return Result.ok(options.prettyColorScheme(), true);
+      // } catch (IllegalArgumentException | IOException e) {
+      //   options.colorScheme = fallback;
+      //   options.path = fallbackPath;
+      //   return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
+      // }
     }
   };
 
   @NotNull Command STYLE = new Command(ImmutableSeq.of("style"), "Display the current style/Switch to another style") {
-    /**
-     * Goal:
-     * <pre>
-     * :style
-     * Cli
-     * :style default
-     * Default
-     * :style
-     * Default
-     * :style "/home/foo.json"
-     * Invalid style family: "/home/foo.json" (valid: Default, Cli)
-     * </pre>
-     */
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String name) {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable StyleParam styleParam) {
       var options = repl.config.renderOptions;
-      if (name == null || name.isBlank()) return Result.ok(options.prettyStyleFamily(), true);
-      var fallback = options.styleFamily;
-      try {
-        options.updateStyleFamily(name);
-        options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
-        return Result.ok(repl.config.renderOptions.prettyStyleFamily(), true);
-      } catch (IllegalArgumentException | IOException e) {
-        options.styleFamily = fallback;
-        return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
-      }
+      if (styleParam == null) return Result.ok(options.prettyStyleFamily(), true);
+      return Result.ok(styleParam.toString(), true);
+      // var fallback = options.styleFamily;
+      // try {
+      //   options.updateStyleFamily(name);
+      //   options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
+      //   return Result.ok(repl.config.renderOptions.prettyStyleFamily(), true);
+      // } catch (IllegalArgumentException | IOException e) {
+      //   options.styleFamily = fallback;
+      //   return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
+      // }
     }
   };
 }
