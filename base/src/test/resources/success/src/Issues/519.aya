@@ -6,8 +6,8 @@ open import Issues::For519
 def invol-prefix : ~ 0 = 1 => idp
 
 def psqueeze-infix {A : Type} {a b : A} (p : a = b) (i : I)
- : a = p i => \j => p (i /\ j)
+ : a = p i => \j => p (i ∧ j)
 
 def psqueeze-infix' {A : Type} {a b : A} (p : a = b) (i : I)
- : a = p i => \j => p (~((~ i) \/ (~ j)))
+ : a = p i => \j => p (~((~ i) ∨ (~ j)))
 
