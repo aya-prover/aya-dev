@@ -54,28 +54,28 @@ public class HighlighterTester {
     }
   }
 
-  record Expected(@NotNull TextRange range, @NotNull ExpectedHighlight expected) {}
+  record ExpectedHighlightInfo(@NotNull TextRange range, @NotNull HighlighterTester.ExpectedHighlightType expected) {}
 
-  public sealed interface ExpectedHighlight {
+  public sealed interface ExpectedHighlightType {
     @NotNull String display();
 
     record Def(@Override @NotNull String display, @Nullable String name, @Nullable HighlightInfoType.DefKind kind)
-      implements ExpectedHighlight {
+      implements ExpectedHighlightType {
     }
 
     record Ref(@Override @NotNull String display, @Nullable String name,
-               @Nullable HighlightInfoType.DefKind kind) implements ExpectedHighlight {}
+               @Nullable HighlightInfoType.DefKind kind) implements ExpectedHighlightType {}
 
-    record Keyword(@Override @NotNull String display) implements ExpectedHighlight {}
+    record Keyword(@Override @NotNull String display) implements ExpectedHighlightType {}
 
-    record LitString(@NotNull String expected) implements ExpectedHighlight {
+    record LitString(@NotNull String expected) implements ExpectedHighlightType {
       @Override
       public @NotNull String display() {
         return '\"' + expected + '\"';
       }
     }
 
-    record LitInt(int expected) implements ExpectedHighlight {
+    record LitInt(int expected) implements ExpectedHighlightType {
       @Override
       public @NotNull String display() {
         return Integer.toString(expected);
@@ -87,14 +87,14 @@ public class HighlighterTester {
   public final @NotNull HighlightInfoHolder actual;
 
   // NotNull array with Nullable element
-  public final Expected[] expected;
+  public final ExpectedHighlightInfo[] expected;
 
   // TODO[hoshino]: Inductive Defined (allow scope)
   // (User-Defined Name, (Unique ID, Nullable Def Kind))
   public final MutableMap<String, Tuple2<String, Option<HighlightInfoType.DefKind>>> defMap = MutableMap.create();
   public final MutableMap<String, Option<HighlightInfoType.DefKind>> defSet = MutableMap.create();
 
-  public HighlighterTester(@NotNull String sourceCode, @NotNull HighlightInfoHolder actual, @Nullable Expected[] expected) {
+  public HighlighterTester(@NotNull String sourceCode, @NotNull HighlightInfoHolder actual, @Nullable ExpectedHighlightInfo[] expected) {
     this.sourceCode = sourceCode;
     this.actual = actual;
     this.expected = expected;
@@ -104,7 +104,7 @@ public class HighlighterTester {
     runTest(new PriorityQueueIterator<>(actual.getQueue()), Arrays.stream(expected).iterator());
   }
 
-  public void runTest(@NotNull Iterator<HighlightInfo> actuals, @NotNull Iterator<Expected> expecteds) {
+  public void runTest(@NotNull Iterator<HighlightInfo> actuals, @NotNull Iterator<ExpectedHighlightInfo> expecteds) {
     while (actuals.hasNext() && expecteds.hasNext()) {
       var actual = actuals.next();
       var expected = expecteds.next();
@@ -130,23 +130,23 @@ public class HighlighterTester {
 
       switch (actual.type()) {
         case HighlightInfoType.Keyword ignored
-          when expected.expected() instanceof ExpectedHighlight.Keyword -> {
+          when expected.expected() instanceof ExpectedHighlightType.Keyword -> {
         }
 
         case HighlightInfoType.LitInt litInt
-          when expected.expected() instanceof ExpectedHighlight.LitInt -> {
+          when expected.expected() instanceof ExpectedHighlightType.LitInt -> {
         }
 
         case HighlightInfoType.LitString litString
-          when expected.expected() instanceof ExpectedHighlight.LitString -> {
+          when expected.expected() instanceof ExpectedHighlightType.LitString -> {
         }
 
         case HighlightInfoType.Def def
-          when expected.expected() instanceof ExpectedHighlight.Def expectedDef ->
+          when expected.expected() instanceof ExpectedHighlightType.Def expectedDef ->
           assertDef(sourcePos, def, expectedDef);
 
         case HighlightInfoType.Ref ref
-          when expected.expected() instanceof ExpectedHighlight.Ref expectedRef ->
+          when expected.expected() instanceof ExpectedHighlightType.Ref expectedRef ->
           assertRef(sourcePos, ref, expectedRef);
 
         case HighlightInfoType.Error error ->
@@ -178,7 +178,7 @@ public class HighlighterTester {
     defSet.put(def.target(), Option.ofNullable(def.kind()));
   }
 
-  public void assertDef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Def actualDef, @NotNull ExpectedHighlight.Def expectedDef) {
+  public void assertDef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Def actualDef, @NotNull HighlighterTester.ExpectedHighlightType.Def expectedDef) {
     checkDef(sourcePos, actualDef);
 
     assertEquals(expectedDef.kind(), actualDef.kind());
@@ -203,7 +203,7 @@ public class HighlighterTester {
     assertEquals(defData.getOrNull(), ref.kind());
   }
 
-  public void assertRef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Ref actualRef, @NotNull ExpectedHighlight.Ref expectedRef) {
+  public void assertRef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Ref actualRef, @NotNull HighlighterTester.ExpectedHighlightType.Ref expectedRef) {
     checkRef(sourcePos, actualRef);
 
     var name = expectedRef.name();
@@ -219,7 +219,7 @@ public class HighlighterTester {
     assertEquals(actualRef.kind(), expectedRef.kind());
   }
 
-  public static void highlightAndTest(@Language("Aya") @NotNull String code, @Nullable Expected... expected) {
+  public static void highlightAndTest(@Language("Aya") @NotNull String code, @Nullable ExpectedHighlightInfo... expected) {
     var fileName = "null";
     var reporter = newReporter();
 
@@ -250,7 +250,7 @@ public class HighlighterTester {
     doTest(code, result, expected);
   }
 
-  public static void doTest(@NotNull String sourceCode, @NotNull HighlightInfoHolder actual, @Nullable Expected... expected) {
+  public static void doTest(@NotNull String sourceCode, @NotNull HighlightInfoHolder actual, @Nullable ExpectedHighlightInfo... expected) {
     new HighlighterTester(sourceCode, actual, expected).runTest();
   }
 
@@ -263,48 +263,48 @@ public class HighlighterTester {
 
   /// region Helper
 
-  public static @NotNull Expected keyword(int begin, int end, @NotNull String display) {
-    return new Expected(new TextRange(begin, end), new ExpectedHighlight.Keyword(display));
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo keyword(int begin, int end, @NotNull String display) {
+    return new ExpectedHighlightInfo(new TextRange(begin, end), new ExpectedHighlightType.Keyword(display));
   }
 
-  public static @NotNull Expected def(int begin, int end, @NotNull String display, @Nullable String name, @Nullable HighlightInfoType.DefKind defKind) {
-    return new Expected(new TextRange(begin, end), new ExpectedHighlight.Def(display, name, defKind));
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo def(int begin, int end, @NotNull String display, @Nullable String name, @Nullable HighlightInfoType.DefKind defKind) {
+    return new ExpectedHighlightInfo(new TextRange(begin, end), new ExpectedHighlightType.Def(display, name, defKind));
   }
 
-  public static @NotNull Expected def(int begin, int end, @NotNull String display, @Nullable HighlightInfoType.DefKind defKind) {
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo def(int begin, int end, @NotNull String display, @Nullable HighlightInfoType.DefKind defKind) {
     return def(begin, end, display, null, defKind);
   }
 
-  public static @NotNull Expected localDef(int begin, int end, @NotNull String display, @Nullable String name) {
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo localDef(int begin, int end, @NotNull String display, @Nullable String name) {
     return def(begin, end, display, name, HighlightInfoType.DefKind.Local);
   }
 
-  public static @NotNull Expected localDef(int begin, int end, @NotNull String display) {
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo localDef(int begin, int end, @NotNull String display) {
     return localDef(begin, end, display, null);
   }
 
-  public static @NotNull Expected ref(int begin, int end, @NotNull String display, @Nullable String name, HighlightInfoType.DefKind defKind) {
-    return new Expected(new TextRange(begin, end), new ExpectedHighlight.Ref(display, name, defKind));
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo ref(int begin, int end, @NotNull String display, @Nullable String name, HighlightInfoType.DefKind defKind) {
+    return new ExpectedHighlightInfo(new TextRange(begin, end), new ExpectedHighlightType.Ref(display, name, defKind));
   }
 
-  public static @NotNull Expected ref(int begin, int end, @NotNull String display, HighlightInfoType.DefKind defKind) {
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo ref(int begin, int end, @NotNull String display, HighlightInfoType.DefKind defKind) {
     return ref(begin, end, display, null, defKind);
   }
 
-  public static @NotNull Expected localRef(int begin, int end, @NotNull String display, @Nullable String name) {
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo localRef(int begin, int end, @NotNull String display, @Nullable String name) {
     return ref(begin, end, display, name, HighlightInfoType.DefKind.Local);
   }
 
-  public static @NotNull Expected localRef(int begin, int end, @NotNull String display) {
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo localRef(int begin, int end, @NotNull String display) {
     return localRef(begin, end, display, null);
   }
 
-  public static @NotNull Expected litInt(int begin, int end, int display) {
-    return new Expected(new TextRange(begin, end), new ExpectedHighlight.LitInt(display));
+  public static @NotNull HighlighterTester.ExpectedHighlightInfo litInt(int begin, int end, int display) {
+    return new ExpectedHighlightInfo(new TextRange(begin, end), new ExpectedHighlightType.LitInt(display));
   }
 
   @Contract(" -> null")
-  public static @Nullable Expected whatever() {
+  public static @Nullable HighlighterTester.ExpectedHighlightInfo whatever() {
     return null;
   }
 

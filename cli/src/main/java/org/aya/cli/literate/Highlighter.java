@@ -7,6 +7,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtConsumer;
+import org.aya.core.def.*;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
@@ -213,17 +214,23 @@ public class Highlighter implements StmtConsumer {
       case GeneralizedVar ignored -> HighlightInfoType.DefKind.Generalized;
       case DefVar<?, ?> defVar -> {
         var concrete = defVar.concrete;
-        if (concrete == null) yield null;
+        var core = defVar.core;
 
-        yield switch (concrete) {
-          case ClassDecl ignored -> throw new UnsupportedOperationException("TODO");
-          case TeleDecl.DataCtor ignored -> HighlightInfoType.DefKind.Con;
-          case TeleDecl.StructField ignored -> HighlightInfoType.DefKind.Field;
-          case TeleDecl.DataDecl ignored -> HighlightInfoType.DefKind.Data;
-          case TeleDecl.FnDecl ignored -> HighlightInfoType.DefKind.Fn;
-          case TeleDecl.PrimDecl ignored -> HighlightInfoType.DefKind.Prim;
-          case TeleDecl.StructDecl ignored -> HighlightInfoType.DefKind.Struct;
-        };
+        if (concrete instanceof TeleDecl.DataDecl || core instanceof DataDef) {
+          yield HighlightInfoType.DefKind.Data;
+        } else if (concrete instanceof TeleDecl.DataCtor || core instanceof CtorDef) {
+          yield HighlightInfoType.DefKind.Con;
+        } else if (concrete instanceof TeleDecl.StructDecl || core instanceof StructDef) {
+          yield HighlightInfoType.DefKind.Struct;
+        } else if (concrete instanceof TeleDecl.StructField || core instanceof FieldDef) {
+          yield HighlightInfoType.DefKind.Field;
+        } else if (concrete instanceof TeleDecl.FnDecl || core instanceof FnDef) {
+          yield HighlightInfoType.DefKind.Fn;
+        } else if (concrete instanceof TeleDecl.PrimDecl || core instanceof PrimDef) {
+          yield HighlightInfoType.DefKind.Prim;
+        } else {
+          yield null;
+        }
       }
       case LocalVar ignored -> HighlightInfoType.DefKind.Local;
       default -> null;
