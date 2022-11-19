@@ -22,7 +22,7 @@ public interface CommandArg {
    *
    * @return true to parse the argument with the default parser,
    * otherwise to parse with the antlr-based parser.
-   * @see org.aya.repl.gk.ReplParser
+   * @see ReplParser
    */
   boolean shellLike();
 

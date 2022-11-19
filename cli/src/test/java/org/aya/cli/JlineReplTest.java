@@ -2,11 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
+import com.intellij.lexer.FlexLexer;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.pretty.doc.Doc;
-import org.aya.repl.gk.ReplParser;
+import org.aya.repl.ReplParser;
 import org.jline.reader.Candidate;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,12 +19,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class JlineReplTest {
-  private static ReplParser parser;
+  private static ReplParser<FlexLexer.Token> parser;
   private static JlineRepl repl;
 
   @BeforeAll public static void setup() throws IOException {
     repl = new JlineRepl(ImmutableSeq.empty(), PlainReplTest.config);
-    parser = new ReplParser(repl.commandManager, repl.lexer);
+    parser = new ReplParser<>(repl.commandManager, repl.lexer);
   }
 
   @Test public void sanity() {
