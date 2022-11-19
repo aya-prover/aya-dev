@@ -1,8 +1,6 @@
 {
   "ayaVersion": "0.18",
   "name": "lsp-test-lib",
-  "version": "0.1.0",
-
-  "dependency": {
-  }
+  "group": "org.aya-prover",
+  "version": "0.1.0"
 }

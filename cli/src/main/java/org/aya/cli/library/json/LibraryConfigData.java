@@ -10,6 +10,7 @@ import org.aya.prelude.GeneratedVersion;
 import org.aya.util.FileUtil;
 import org.aya.util.Version;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,7 +33,7 @@ public final class LibraryConfigData {
   public String version;
   public Map<String, LibraryDependencyData> dependency;
 
-  private void checkDeserialization(@NotNull Path libraryRoot) {
+  @VisibleForTesting public void checkDeserialization(@NotNull Path libraryRoot) {
     if (ayaVersion == null) ayaVersion = GeneratedVersion.VERSION_STRING;
     if (name == null) throw new BadConfig("Missing `name` in " + libraryRoot);
     if (group == null) throw new BadConfig("Missing `group` in " + libraryRoot);
@@ -64,6 +65,10 @@ public final class LibraryConfigData {
 
   private static @NotNull LibraryConfigData of(@NotNull Path root) throws BadConfig, IOException {
     var ayaJson = root.resolve(Constants.AYA_JSON);
+    return ofAyaJson(ayaJson);
+  }
+
+  @VisibleForTesting public static LibraryConfigData ofAyaJson(Path ayaJson) throws IOException {
     try (var jsonReader = Files.newBufferedReader(ayaJson)) {
       return new Gson().fromJson(jsonReader, LibraryConfigData.class);
     } catch (JsonParseException cause) {
