@@ -118,6 +118,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
       case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> erased.type();
+      case LetTerm let -> term(let.body());
     };
   }
 

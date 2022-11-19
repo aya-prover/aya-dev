@@ -315,4 +315,29 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       return new ErasedTerm(type.de(state), isProp);
     }
   }
+
+  record SerLet(
+    @NotNull ImmutableSeq<SerLetBind> letBinds,
+    @NotNull SerTerm body
+  ) implements SerTerm {
+    record SerLetBind(
+      @NotNull SerParam name,
+      @NotNull SerTerm body
+    ) implements Serializable {
+      public @NotNull LetTerm.LetBind de(@NotNull DeState state) {
+        var name = name().de(state);
+        var body = body().de(state);
+
+        return new LetTerm.LetBind(name, body);
+      }
+    }
+
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      var letBinds = letBinds().map(x -> x.de(state));
+      var body = body().de(state);
+
+      return new LetTerm(letBinds, body);
+    }
+  }
 }

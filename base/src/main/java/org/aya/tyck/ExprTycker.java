@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -307,6 +308,32 @@ public final class ExprTycker extends Tycker {
         // do type check
         var results = elements.map(element -> inherit(element, hole._1).wellTyped());
         yield new TermResult(new ListTerm(results, match._2, type), type);
+      }
+      case Expr.Let let -> {
+        var parent = this.lets;
+        this.lets = parent.derive();
+
+        var wellLet = MutableList.<LetTerm.LetBind>create();
+
+        let.lets().forEach(letBind -> {
+          // tyck a single let
+          // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
+          var type = synthesize(letBind.type()).wellTyped().freezeHoles(state);
+          var bodyResult = check(letBind.body(), type);
+
+          var letBindTerm = new LetTerm.LetBind(
+            new Term.Param(letBind.bind(), bodyResult.type(), true),
+            bodyResult.wellTyped());
+
+          lets.addDirectly(letBindTerm.name().ref(), letBindTerm.body(), letBindTerm.name().type());
+          wellLet.append(letBindTerm);
+        });
+
+        var bodyResult = synthesize(let.body());
+
+        this.lets = parent;
+
+        yield new TermResult(new LetTerm(wellLet.toImmutableSeq(), bodyResult.wellTyped()), bodyResult.type());
       }
       default -> fail(expr, new NoRuleError(expr, null));
     };

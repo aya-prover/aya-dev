@@ -130,6 +130,17 @@ public record Serializer(@NotNull Serializer.State state) {
       case SortTerm sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
+      case LetTerm let -> {
+        var letBinds = let.letBinds().map(letBind -> {
+          var name = serialize(letBind.name());
+          var body = serialize(letBind.body());
+
+          return new SerTerm.SerLet.SerLetBind(name, body);
+        });
+        var body = serialize(let.body());
+
+        yield new SerTerm.SerLet(letBinds, body);
+      }
     };
   }
 

@@ -73,6 +73,7 @@ public interface BetaExpander extends EndoTerm {
           default -> coe;
         };
       }
+      case LetTerm let -> let.body().subst(let.buildSubst());
       default -> term;
     };
   }

@@ -170,6 +170,13 @@ public record ExprResolver(
         }
         case AnyVar var -> new Expr.Ref(pos, var);
       };
+      case Expr.Let let -> {
+        var mCtx = MutableValue.create(ctx);
+        var letBinds = resolveLetBinds(let.lets(), mCtx);
+        var body = enter(mCtx.get()).apply(let.body());
+
+        yield new Expr.Let(let.sourcePos(), letBinds, body);
+      }
       default -> EndoExpr.super.apply(expr);
     };
   }
@@ -239,6 +246,15 @@ public record ExprResolver(
       var b = bind.descent(enter(ctx.get()));
       ctx.set(ctx.get().bind(bind.var(), bind.sourcePos()));
       return b;
+    });
+  }
+
+  public @NotNull ImmutableSeq<Expr.Let.LetBind>
+  resolveLetBinds(@NotNull ImmutableSeq<Expr.Let.LetBind> binds, @NotNull MutableValue<Context> ctx) {
+    return binds.map(bind -> {
+      var newBind = bind.descent(enter(ctx.get()));
+      ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos()));
+      return newBind;
     });
   }
 

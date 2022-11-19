@@ -1,0 +1,10 @@
+open import Arith::Nat
+open import Paths
+
+def slow_plus2 (n : Nat) : Nat =>
+  let
+    n1 => S n,
+    n2 => S n1
+  in n2
+
+example def normalize : slow_plus2 7 = 9 => idp

@@ -40,7 +40,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaPatTerm, MetaLitTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
+        permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, LetTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -201,6 +201,23 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
       case HCompTerm hComp -> hComp; //TODO
+      case LetTerm letTerm -> {
+        var letBinds = letTerm.letBinds().map(letBind -> {
+          var type = f.apply(letBind.name().type());
+          var body = f.apply(letBind.body());
+
+          return letBind.name().type() == type && letBind.body() == body
+            ? letBind
+            : new LetTerm.LetBind(new Param(letBind.name(), type), body);
+        });
+
+        var body = f.apply(letTerm.body());
+
+        if (letTerm.letBinds().sameElements(letBinds, true)
+          && letTerm.body() == body) yield letTerm;
+
+        yield new LetTerm(letBinds, body);
+      }
     };
   }
 
