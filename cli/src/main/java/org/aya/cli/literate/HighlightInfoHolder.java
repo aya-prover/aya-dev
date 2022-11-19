@@ -16,7 +16,7 @@ import java.util.PriorityQueue;
  */
 public record HighlightInfoHolder(@NotNull PriorityQueue<HighlightInfo> queue) {
   public HighlightInfoHolder() {
-    this(new PriorityQueue<>(HighlightInfo.Ord.INSTANCE));
+    this(new PriorityQueue<>());
   }
 
   public void addInfo(@NotNull HighlightInfo info) {
