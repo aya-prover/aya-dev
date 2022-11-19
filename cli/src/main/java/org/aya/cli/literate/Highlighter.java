@@ -136,7 +136,7 @@ public class Highlighter implements StmtConsumer {
       case Expr.Lift lift -> {}
       case Expr.Proj proj -> {}
       case Expr.RawProj rawProj -> {}
-      // only highlight keyword (but this will done in another place)
+      // only highlight keyword (but this will be done in another place)
       case Expr.Coe coe -> {}
       case Expr.Do aDo -> {}
       case Expr.Pi pi -> {}

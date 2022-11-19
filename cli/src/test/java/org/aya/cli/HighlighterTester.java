@@ -38,13 +38,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class HighlighterTester {
   public static class PriorityQueueIterator<T> implements Iterator<T> {
     public @NotNull PriorityQueue<T> source;
+
     public PriorityQueueIterator(@NotNull PriorityQueue<T> source) {
       this.source = new PriorityQueue<>(source);
     }
 
     @Override
     public boolean hasNext() {
-      return ! source.isEmpty();
+      return !source.isEmpty();
     }
 
     @Override
@@ -62,7 +63,8 @@ public class HighlighterTester {
       implements ExpectedHighlight {
     }
 
-    record Ref(@Override @NotNull String display, @Nullable String name, @Nullable HighlightInfoType.DefKind kind) implements ExpectedHighlight {}
+    record Ref(@Override @NotNull String display, @Nullable String name,
+               @Nullable HighlightInfoType.DefKind kind) implements ExpectedHighlight {}
 
     record Keyword(@Override @NotNull String display) implements ExpectedHighlight {}
 
@@ -92,7 +94,7 @@ public class HighlighterTester {
   public final MutableMap<String, Tuple2<String, Option<HighlightInfoType.DefKind>>> defMap = MutableMap.create();
   public final MutableMap<String, Option<HighlightInfoType.DefKind>> defSet = MutableMap.create();
 
-  public HighlighterTester(@NotNull String sourceCode, @NotNull HighlightInfoHolder actual, @NotNull Expected[] expected) {
+  public HighlighterTester(@NotNull String sourceCode, @NotNull HighlightInfoHolder actual, @Nullable Expected[] expected) {
     this.sourceCode = sourceCode;
     this.actual = actual;
     this.expected = expected;
@@ -109,8 +111,8 @@ public class HighlighterTester {
 
       if (expected == null) {
         switch (actual.type()) {
-          case HighlightInfoType.Def def -> assertDef(actual.sourcePos(), def);
-          case HighlightInfoType.Ref ref -> assertRef(actual.sourcePos(), ref);
+          case HighlightInfoType.Def def -> checkDef(actual.sourcePos(), def);
+          case HighlightInfoType.Ref ref -> checkRef(actual.sourcePos(), ref);
           default -> {}
         }
 
@@ -128,7 +130,7 @@ public class HighlighterTester {
 
       switch (actual.type()) {
         case HighlightInfoType.Keyword ignored
-          when expected.expected() instanceof ExpectedHighlight.Keyword-> {
+          when expected.expected() instanceof ExpectedHighlight.Keyword -> {
         }
 
         case HighlightInfoType.LitInt litInt
@@ -147,9 +149,11 @@ public class HighlighterTester {
           when expected.expected() instanceof ExpectedHighlight.Ref expectedRef ->
           assertRef(sourcePos, ref, expectedRef);
 
-        case HighlightInfoType.Error error -> throw new UnsupportedOperationException("unreachable");   // TODO[hoshino]: unreachable?
+        case HighlightInfoType.Error error ->
+          throw new UnsupportedOperationException("unreachable");   // TODO[hoshino]: unreachable?
 
-        default -> fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());
+        default ->
+          fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());
       }
     }
 
@@ -164,7 +168,10 @@ public class HighlighterTester {
     }
   }
 
-  public void assertDef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Def def) {
+  /**
+   * Check no duplicated def.
+   */
+  public void checkDef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Def def) {
     var existDef = defSet.containsKey(def.target());
     assertFalse(existDef, "Duplicated def: " + def.target() + " at " + sourcePos);
 
@@ -172,7 +179,7 @@ public class HighlighterTester {
   }
 
   public void assertDef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Def actualDef, @NotNull ExpectedHighlight.Def expectedDef) {
-    assertDef(sourcePos, actualDef);
+    checkDef(sourcePos, actualDef);
 
     assertEquals(expectedDef.kind(), actualDef.kind());
 
@@ -186,7 +193,10 @@ public class HighlighterTester {
     }
   }
 
-  public void assertRef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Ref ref) {
+  /**
+   * Check the reference
+   */
+  public void checkRef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Ref ref) {
     var defData = defSet.getOrNull(ref.target());
 
     assertNotNull(defData, "Expected def: " + ref.target() + " at " + sourcePos);
@@ -194,7 +204,7 @@ public class HighlighterTester {
   }
 
   public void assertRef(@NotNull TextRange sourcePos, @NotNull HighlightInfoType.Ref actualRef, @NotNull ExpectedHighlight.Ref expectedRef) {
-    assertRef(sourcePos, actualRef);
+    checkRef(sourcePos, actualRef);
 
     var name = expectedRef.name();
 

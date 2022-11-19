@@ -24,7 +24,6 @@ public record HighlightInfo(
 
     @Override
     public int compare(HighlightInfo lhs, HighlightInfo rhs) {
-      // TODO: nullable?
       assert lhs != null;
       assert rhs != null;
 
