@@ -7,6 +7,7 @@ import kala.control.Either;
 import kala.value.MutableValue;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
@@ -86,11 +87,16 @@ public class ReplCompiler {
   }
 
   private int loadLibrary(@NotNull Path libraryRoot) throws IOException {
-    var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
-    int result = compiler.start();
-    var owner = compiler.libraryOwner();
-    importModule(owner);
-    return result;
+    try {
+      var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
+      int result = compiler.start();
+      var owner = compiler.libraryOwner();
+      importModule(owner);
+      return result;
+    } catch (LibraryConfigData.BadConfig bad) {
+      reporter.reportString("Cannot load malformed library: " + bad.getMessage(), Problem.Severity.ERROR);
+      return 1;
+    }
   }
 
   private void importModule(@NotNull LibraryOwner owner) {
