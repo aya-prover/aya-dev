@@ -3,4 +3,4 @@ open data Unit | unit
 
 def id (n : Nat) : Nat => n
 def whichOne : Nat =>
-  let x => unit in id x
+  let x := unit in id x

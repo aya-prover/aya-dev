@@ -1,6 +1,3 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -1070,7 +1067,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // weakId type? IMPLIES expr
+  // weakId type? DEFINE_AS expr
   public static boolean letBind(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "letBind")) return false;
     if (!nextTokenIs(b, ID)) return false;
@@ -1078,7 +1075,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = weakId(b, l + 1);
     r = r && letBind_1(b, l + 1);
-    r = r && consumeToken(b, IMPLIES);
+    r = r && consumeToken(b, DEFINE_AS);
     r = r && expr(b, l + 1, -1);
     exit_section_(b, m, LET_BIND, r);
     return r;

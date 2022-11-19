@@ -3,8 +3,8 @@ open import Paths
 
 def slow_plus2 (n : Nat) : Nat =>
   let
-    n1 => suc n,
-    n2 => suc n1
+    n1 := suc n,
+    n2 := suc n1
   in n2
 
 example def normalize : slow_plus2 7 = 9 => idp

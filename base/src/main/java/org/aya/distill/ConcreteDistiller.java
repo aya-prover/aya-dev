@@ -190,12 +190,35 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           Doc.symbol("]")
         )
       );
-      case Expr.Let let -> Doc.sep(
-        Doc.styled(KEYWORD, "let"),
-        Doc.vcommaList(let.lets().map(this::visitLetBind)),
-        Doc.styled(KEYWORD, "in"),
-        term(Outer.Free, let.body())
-      );
+      case Expr.Let let -> {
+        assert let.lets().isNotEmpty();
+        var oneLine = let.lets().sizeEquals(1);
+        var letSeq = oneLine
+          ? visitLetBind(let.lets().first())
+          : Doc.vcommaList(let.lets().map(this::visitLetBind).map(x -> Doc.nest(2, x)));
+
+        var docs = ImmutableSeq.of(
+          Doc.styled(KEYWORD, "let"),
+          letSeq,
+          Doc.styled(KEYWORD, "in")
+        );
+
+        // ```
+        // let a := b in
+        // ```
+        //
+        // or
+        //
+        // ```
+        // let
+        //   a := b,
+        //   c := d
+        // in
+        // ```
+        var fullLet = oneLine ? Doc.sep(docs) : Doc.vcat(docs);
+
+        yield Doc.sep(fullLet, term(Outer.Free, let.body()));
+      }
     };
   }
 
@@ -436,7 +459,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     );
 
     appendResult(prelude, letBind.type());
-    prelude.append(Doc.symbol("=>"));
+    prelude.append(Doc.symbol(":="));
     prelude.append(term(Outer.Free, letBind.body()));
 
     return Doc.sep(prelude);
