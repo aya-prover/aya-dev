@@ -3,9 +3,7 @@
 package org.aya.cli.render;
 
 import com.google.gson.JsonParseException;
-import kala.collection.mutable.MutableHashMap;
 import kala.control.Either;
-import kala.control.Try;
 import org.aya.cli.render.vscode.ColorTheme;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.Html5Stylist;
@@ -67,7 +65,8 @@ public class RenderOptions {
   public @Nullable String path = null;
 
   /** creating stylist is expensive, so we memorize them */
-  private final transient @NotNull MutableHashMap<OutputTarget, StringStylist> stylistCaches = MutableHashMap.create();
+  private transient @Nullable ColorScheme colorSchemeCache = null;
+  private transient @Nullable StyleFamily styleFamilyCache = null;
 
   public void checkDeserialization() {
     if (colorScheme == null) colorScheme = DEFAULT_COLOR_SCHEME;
@@ -106,7 +105,8 @@ public class RenderOptions {
   }
 
   public void invalidate() {
-    stylistCaches.clear();
+    colorSchemeCache = null;
+    styleFamilyCache = null;
   }
 
   public static @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {
@@ -119,15 +119,13 @@ public class RenderOptions {
   }
 
   public @NotNull StringStylist stylist(@NotNull OutputTarget output) throws IOException, JsonParseException {
-    return stylistCaches.getOrPut(output, () -> Try.of(() -> {
-      if (isDefault()) return defaultStylist(output);
-      return switch (output) {
-        case Terminal -> new UnixTermStylist(buildColorScheme(), buildStyleFamily());
-        case LaTeX -> new TeXStylist(buildColorScheme(), buildStyleFamily());
-        case HTML -> new Html5Stylist(buildColorScheme(), buildStyleFamily());
-        case Plain -> new DebugStylist(buildColorScheme(), buildStyleFamily());
-      };
-    }).getOrThrow());
+    if (isDefault()) return defaultStylist(output);
+    return switch (output) {
+      case Terminal -> new UnixTermStylist(buildColorScheme(), buildStyleFamily());
+      case LaTeX -> new TeXStylist(buildColorScheme(), buildStyleFamily());
+      case HTML -> new Html5Stylist(buildColorScheme(), buildStyleFamily());
+      case Plain -> new DebugStylist(buildColorScheme(), buildStyleFamily());
+    };
   }
 
   public @NotNull StringStylist stylistOrDefault(@NotNull OutputTarget output) {
@@ -153,7 +151,8 @@ public class RenderOptions {
   }
 
   private @NotNull ColorScheme buildColorScheme() throws IOException, JsonParseException {
-    return switch (colorScheme) {
+    if (colorSchemeCache != null) return colorSchemeCache;
+    colorSchemeCache = switch (colorScheme) {
       case Emacs -> AyaColorScheme.EMACS;
       case IntelliJ -> AyaColorScheme.INTELLIJ;
       case Custom -> {
@@ -163,12 +162,15 @@ public class RenderOptions {
         yield colorTheme.buildColorScheme(null);
       }
     };
+    return colorSchemeCache;
   }
 
   private @NotNull StyleFamily buildStyleFamily() {
-    return switch (styleFamily) {
+    if (styleFamilyCache != null) return styleFamilyCache;
+    styleFamilyCache = switch (styleFamily) {
       case Default -> AyaStyleFamily.DEFAULT;
     };
+    return styleFamilyCache;
   }
 
   @Override public boolean equals(Object o) {
