@@ -190,6 +190,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           Doc.symbol("]")
         )
       );
+      case Expr.Let let -> Doc.sep(
+        Doc.styled(KEYWORD, "let"),
+        Doc.vcommaList(let.lets().map(this::visitLetBind)),
+        Doc.styled(KEYWORD, "in"),
+        term(Outer.Free, let.body())
+      );
     };
   }
 
@@ -422,6 +428,18 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::defVar)),
       Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BaseDistiller::defVar))
     )))));
+  }
+
+  public Doc visitLetBind(@NotNull Expr.Let.LetBind letBind) {
+    var prelude = MutableList.of(
+      varDoc(letBind.bind())
+    );
+
+    appendResult(prelude, letBind.type());
+    prelude.append(Doc.symbol("=>"));
+    prelude.append(term(Outer.Free, letBind.body()));
+
+    return Doc.sep(prelude);
   }
 
   private @NotNull Doc visitModifier(@NotNull Modifier modifier) {

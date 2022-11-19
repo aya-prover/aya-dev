@@ -710,22 +710,22 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record Let(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<SingleLet> lets,
+    @NotNull ImmutableSeq<LetBind> lets,
     @NotNull Expr body
   ) implements Expr {
-    public record SingleLet(@NotNull SourcePos sourcePos, @NotNull LocalVar bind, @NotNull Option<Expr> type, @NotNull Expr body) {
-      public @NotNull SingleLet update(@NotNull Option<Expr> type, @NotNull Expr body) {
-        return type().sameElements(type, true) && body() == body
+    public record LetBind(@NotNull SourcePos sourcePos, @NotNull LocalVar bind, @NotNull Expr type, @NotNull Expr body) {
+      public @NotNull Expr.Let.LetBind update(@NotNull Expr type, @NotNull Expr body) {
+        return type() == type && body() == body
           ? this
-          : new SingleLet(sourcePos(), bind(), type, body);
+          : new LetBind(sourcePos(), bind(), type, body);
       }
 
-      public @NotNull SingleLet descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-        return update(type().map(f), f.apply(body()));
+      public @NotNull Expr.Let.LetBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+        return update(f.apply(type()), f.apply(body()));
       }
     }
 
-    public @NotNull Let update(@NotNull ImmutableSeq<SingleLet> lets, @NotNull Expr body) {
+    public @NotNull Let update(@NotNull ImmutableSeq<LetBind> lets, @NotNull Expr body) {
       return lets().sameElements(lets, true) && body() == body
         ? this
         : new Let(sourcePos, lets, body);

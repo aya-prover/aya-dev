@@ -804,17 +804,13 @@ public record AyaGKProducer(
     return Expr.Array.newList(entireSourcePos, exprs);
   }
 
-  public @NotNull Expr.Let.SingleLet letBind(@NotNull GenericNode<?> node) {
+  public @NotNull Expr.Let.LetBind letBind(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
     var bind = weakId(node.child(WEAK_ID));
-    var optionType = node.peekChild(TYPE);
+    var result = typeOrHole(node.peekChild(TYPE), pos);
     var body = expr(node.child(EXPR));
-    // IDEA is unable to infer this type
-    Option<Expr> type = optionType == null
-      ? Option.none()
-      : Option.some(type(optionType));
 
-    return new Expr.Let.SingleLet(pos, LocalVar.from(bind), type, body);
+    return new Expr.Let.LetBind(pos, LocalVar.from(bind), result, body);
   }
 
   public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {
