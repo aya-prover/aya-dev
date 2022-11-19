@@ -3,8 +3,8 @@
 package org.aya.cli.render;
 
 import com.google.gson.JsonParseException;
-import kala.collection.Seq;
 import kala.collection.mutable.MutableHashMap;
+import kala.control.Either;
 import kala.control.Try;
 import org.aya.cli.render.vscode.ColorTheme;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
@@ -86,35 +86,27 @@ public class RenderOptions {
     return styleFamily.toString();
   }
 
-  public void updateColorScheme(@NotNull String nameOrPath) throws IllegalArgumentException {
-    var maybeEnum = chooseOne(ColorSchemeName.class, nameOrPath);
-    if (maybeEnum != null) {
-      if (maybeEnum == ColorSchemeName.Custom) throw new IllegalArgumentException(
+  public void updateColorScheme(@NotNull Either<ColorSchemeName, Path> nameOrPath) throws IllegalArgumentException {
+    if (nameOrPath.isLeft()) {
+      var color = nameOrPath.getLeftValue();
+      if (color == ColorSchemeName.Custom) throw new IllegalArgumentException(
         "To set a custom color scheme, just give the path to it :)");
-      this.colorScheme = maybeEnum;
+      this.colorScheme = color;
     } else {
       this.colorScheme = ColorSchemeName.Custom;
-      this.path = Path.of(nameOrPath).toAbsolutePath().toString();
+      this.path = nameOrPath.getRightValue().toAbsolutePath().toString();
     }
     invalidate();
   }
 
-  public void updateStyleFamily(@NotNull String name) throws IllegalArgumentException {
-    var style = chooseOne(StyleFamilyName.class, name);
-    if (style == null) throw new IllegalArgumentException(
-      "There's no style family named %s, possible values: %s".formatted(name,
-        Seq.of(StyleFamilyName.values()).map(Enum::name).joinToString()));
-    this.styleFamily = style;
+  public void updateStyleFamily(@NotNull Either<StyleFamilyName, Path> nameOrPath) throws IllegalArgumentException {
+    if (nameOrPath.isRight()) throw new IllegalArgumentException("We don't support custom style family yet :)");
+    this.styleFamily = nameOrPath.getLeftValue();
     invalidate();
   }
 
   public void invalidate() {
     stylistCaches.clear();
-  }
-
-  private <T extends Enum<T>> @Nullable T chooseOne(@NotNull Class<T> enumClass, @NotNull String name) {
-    return Seq.of(enumClass.getEnumConstants()).view()
-      .firstOrNull(n -> n.name().toLowerCase().startsWith(name.toLowerCase()));
   }
 
   public static @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {

@@ -155,18 +155,17 @@ public interface ReplCommands {
       var options = repl.config.renderOptions;
       if (colorParam == null)
         return Result.ok(options.prettyColorScheme(), true);
-      return Result.ok(colorParam.toString(), true);
-      // var fallback = options.colorScheme;
-      // var fallbackPath = options.path;
-      // try {
-      //   options.updateColorScheme(nameOrPath);
-      //   options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
-      //   return Result.ok(options.prettyColorScheme(), true);
-      // } catch (IllegalArgumentException | IOException e) {
-      //   options.colorScheme = fallback;
-      //   options.path = fallbackPath;
-      //   return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
-      // }
+      var fallback = options.colorScheme;
+      var fallbackPath = options.path;
+      try {
+        options.updateColorScheme(colorParam.value);
+        options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
+        return Result.ok(options.prettyColorScheme(), true);
+      } catch (IllegalArgumentException | IOException e) {
+        options.colorScheme = fallback;
+        options.path = fallbackPath;
+        return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
+      }
     }
   };
 
@@ -174,16 +173,15 @@ public interface ReplCommands {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable StyleParam styleParam) {
       var options = repl.config.renderOptions;
       if (styleParam == null) return Result.ok(options.prettyStyleFamily(), true);
-      return Result.ok(styleParam.toString(), true);
-      // var fallback = options.styleFamily;
-      // try {
-      //   options.updateStyleFamily(name);
-      //   options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
-      //   return Result.ok(repl.config.renderOptions.prettyStyleFamily(), true);
-      // } catch (IllegalArgumentException | IOException e) {
-      //   options.styleFamily = fallback;
-      //   return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
-      // }
+      var fallback = options.styleFamily;
+      try {
+        options.updateStyleFamily(styleParam.value);
+        options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
+        return Result.ok(repl.config.renderOptions.prettyStyleFamily(), true);
+      } catch (IllegalArgumentException | IOException e) {
+        options.styleFamily = fallback;
+        return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);
+      }
     }
   };
 }
