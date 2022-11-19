@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
@@ -22,6 +21,8 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Partial;
+import org.aya.tyck.env.MapLocalCtx;
+import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.pat.Conquer;
@@ -56,11 +57,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private <S extends Decl, D extends GenericDef> D
   traced(@NotNull S yeah, ExprTycker p, @NotNull BiFunction<S, ExprTycker, D> f) {
     tracing(builder -> builder.shift(new Trace.DeclT(yeah.ref(), yeah.sourcePos())));
-    var parent = p.localCtx;
-    p.localCtx = parent.deriveMap();
-    var r = f.apply(yeah, p);
+    var r = p.subscoped(() -> f.apply(yeah, p));
     tracing(Trace.Builder::reduce);
-    p.localCtx = parent;
     return r;
   }
 
@@ -159,15 +157,19 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull FnDef doSimpleFn(TeleDecl.FnDecl fn, @NotNull ExprTycker tycker) {
-    var okTele = checkTele(tycker, fn.telescope, null);
-    var preresult = tycker.synthesize(fn.result).wellTyped();
-    var bodyExpr = fn.body.getLeftValue();
-    var prebody = tycker.check(bodyExpr, preresult).wellTyped();
-    tycker.solveMetas();
-    var result = tycker.zonk(preresult);
-    var tele = zonkTele(tycker, okTele);
+    record Tmp(ImmutableSeq<TeleResult> okTele, Term preresult, Term prebody) {}
+    var tmp = tycker.subscoped(() -> {
+      var okTele = checkTele(tycker, fn.telescope, null);
+      var preresult = tycker.synthesize(fn.result).wellTyped();
+      var bodyExpr = fn.body.getLeftValue();
+      var prebody = tycker.check(bodyExpr, preresult).wellTyped();
+      tycker.solveMetas();
+      return new Tmp(okTele, preresult, prebody);
+    });
+    var tele = zonkTele(tycker, tmp.okTele);
+    var result = tycker.zonk(tmp.preresult);
     fn.signature = new Def.Signature(tele, result);
-    var body = tycker.zonk(prebody);
+    var body = tycker.zonk(tmp.prebody);
     return new FnDef(fn.ref, tele, result, fn.modifiers, Either.left(body));
   }
 
@@ -202,6 +204,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         struct.ulift = result;
       }
       case TeleDecl.PrimDecl prim -> {
+        // This directly corresponds to the tycker.localCtx = new LocalCtx();
+        //  at the end of this case clause.
         assert tycker.localCtx.isEmpty();
         var core = prim.ref.core;
         var tele = tele(tycker, prim.telescope, null);
@@ -223,6 +227,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           tycker.unifyTyReported(result, core.result, prim.result);
         } else prim.signature = new Def.Signature(core.telescope, core.result);
         tycker.solveMetas();
+        tycker.localCtx = new SeqLocalCtx();
       }
       case TeleDecl.DataCtor ctor -> {
         if (ctor.signature != null) return;

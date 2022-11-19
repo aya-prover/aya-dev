@@ -108,6 +108,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   default void put(@NotNull Term.Param param) {
     put(param.ref(), param.type());
   }
+
   void put(@NotNull LocalVar var, @NotNull Term term);
   boolean isEmpty();
   @Contract(" -> new") default @NotNull MapLocalCtx deriveMap() {
