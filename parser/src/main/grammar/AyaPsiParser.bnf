@@ -142,7 +142,7 @@
   ]
 
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
-  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
+  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|letExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|lit.+Expr|univExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
@@ -265,15 +265,16 @@ expr ::= newExpr
        | sigmaExpr
        | lambdaExpr
        | matchExpr
+       | letExpr
        | doExpr
        | thisExpr
        | partialExpr
        | pathExpr
        | atomExpr
+       // put rules that does not starts with `expr` below this line
        | arrowExpr
        | appExpr
        | projExpr
-       | letExpr
 
 // ulift is written here because we want `x ulift + y` to work
 atomExpr ::= uliftAtom
