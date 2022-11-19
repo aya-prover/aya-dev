@@ -59,6 +59,7 @@ public interface AyaPsiElementTypes {
   IElementType LAMBDA_TELE_IM = new AyaPsiElementType("LAMBDA_TELE_IM");
   IElementType LAMBDA_TELE_LIT = new AyaPsiElementType("LAMBDA_TELE_LIT");
   IElementType LET_BIND = new AyaPsiElementType("LET_BIND");
+  IElementType LET_BIND_BLOCK = new AyaPsiElementType("LET_BIND_BLOCK");
   IElementType LET_EXPR = new AyaPsiElementType("LET_EXPR");
   IElementType LIST_COMP = new AyaPsiElementType("LIST_COMP");
   IElementType LITERAL = new AyaPsiElementType("LITERAL");

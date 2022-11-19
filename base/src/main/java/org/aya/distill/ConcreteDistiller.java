@@ -453,12 +453,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     )))));
   }
 
-  public Doc visitLetBind(@NotNull Expr.Let.LetBind letBind) {
+  public Doc visitLetBind(@NotNull Expr.Let.Bind letBind) {
     var prelude = MutableList.of(
       varDoc(letBind.bind())
     );
 
-    appendResult(prelude, letBind.type());
+    appendResult(prelude, letBind.result());
     prelude.append(Doc.symbol(":="));
     prelude.append(term(Outer.Free, letBind.body()));
 

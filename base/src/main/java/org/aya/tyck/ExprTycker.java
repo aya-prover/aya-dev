@@ -49,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -853,15 +852,22 @@ public final class ExprTycker extends Tycker {
   /**
    * @param letBinds not empty
    */
-  private @NotNull Result desugarLet(@NotNull SeqView<Expr.Let.LetBind> letBinds, @NotNull Expr leaf) {
+  private @NotNull Result desugarLet(@NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr leaf) {
     if (letBinds.isEmpty()) {
       return synthesize(leaf);
     }
 
     var bind = letBinds.first();
     var remain = letBinds.drop(1);
-    var type = synthesize(bind.type()).wellTyped().freezeHoles(state);
-    var bodyResult = inherit(bind.body(), type);
+    var exprOrLambda = bind.tryBuildLambda();
+    var bodyExpr = exprOrLambda._1;
+    var typeExpr = exprOrLambda._2;
+
+    // All things like `let f x := g` was converted to `let f := (\ x => g)`
+    // So consider we are desugaring `let f : G := g`
+
+    var type = synthesize(typeExpr).wellTyped().freezeHoles(state);
+    var bodyResult = inherit(bodyExpr, type);
     var param = new Term.Param(bind.bind(), bodyResult.type(), true);
 
     var parent = this.localCtx;

@@ -249,12 +249,20 @@ public record ExprResolver(
     });
   }
 
-  public @NotNull ImmutableSeq<Expr.Let.LetBind>
-  resolveLetBinds(@NotNull ImmutableSeq<Expr.Let.LetBind> binds, @NotNull MutableValue<Context> ctx) {
+  public @NotNull ImmutableSeq<Expr.Let.Bind>
+  resolveLetBinds(@NotNull ImmutableSeq<Expr.Let.Bind> binds, @NotNull MutableValue<Context> ctx) {
     return binds.map(bind -> {
-      var newBind = bind.descent(enter(ctx.get()));
+      var localCtx = MutableValue.create(ctx.get());
+      // visit telescope
+      var newParams = bind.telescope().map(param -> resolve(param, localCtx));
+      var newResolver = enter(localCtx.get());
+      // visit result
+      var newResult = newResolver.apply(bind.result());
+      // visit body
+      var newBody = newResolver.apply(bind.body());
+      // update the outer ctx
       ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos()));
-      return newBind;
+      return new Expr.Let.Bind(bind.sourcePos(), bind.bind(), newParams, newResult, newBody);
     });
   }
 

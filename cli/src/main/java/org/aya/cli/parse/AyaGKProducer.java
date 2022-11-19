@@ -631,7 +631,8 @@ public record AyaGKProducer(
       if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
     if (node.is(LET_EXPR)) {
-      var binds = node.childrenOfType(LET_BIND)
+      var bindBlock = node.child(LET_BIND_BLOCK);
+      var binds = bindBlock.childrenOfType(LET_BIND)
         .map(this::letBind);
       var body = expr(node.child(EXPR));
 
@@ -804,13 +805,15 @@ public record AyaGKProducer(
     return Expr.Array.newList(entireSourcePos, exprs);
   }
 
-  public @NotNull Expr.Let.LetBind letBind(@NotNull GenericNode<?> node) {
+  public @NotNull Expr.Let.Bind letBind(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
     var bind = weakId(node.child(WEAK_ID));
+    // make IDEA happy
+    var teles = lambdaTelescope((SeqView<GenericNode<?>>) node.childrenOfType(LAMBDA_TELE));
     var result = typeOrHole(node.peekChild(TYPE), pos);
     var body = expr(node.child(EXPR));
 
-    return new Expr.Let.LetBind(pos, LocalVar.from(bind), result, body);
+    return new Expr.Let.Bind(pos, LocalVar.from(bind), teles, result, body);
   }
 
   public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {

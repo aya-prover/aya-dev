@@ -303,14 +303,9 @@ matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
-letBind ::= weakId type? DEFINE_AS expr
-/**
- * let
- *   a : Type := body0,
- *   b := body1
- * in expr
- */
-letExpr ::= KW_LET <<commaSep letBind>> KW_IN expr
+letBind ::= weakId lambdaTele* type? DEFINE_AS expr
+letBindBlock ::= letBind | (BAR letBind)+
+letExpr ::= KW_LET letBindBlock KW_IN expr
 
 partialExpr ::= LPARTIAL partialInner? RPARTIAL
 private partialInner ::= bareSubSystem? barredSubSystem*

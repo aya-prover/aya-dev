@@ -5,7 +5,6 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
-import kala.control.Option;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
@@ -710,22 +709,56 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record Let(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<LetBind> lets,
+    @NotNull ImmutableSeq<Bind> lets,
     @NotNull Expr body
   ) implements Expr {
-    public record LetBind(@NotNull SourcePos sourcePos, @NotNull LocalVar bind, @NotNull Expr type, @NotNull Expr body) {
-      public @NotNull Expr.Let.LetBind update(@NotNull Expr type, @NotNull Expr body) {
-        return type() == type && body() == body
+    public record Bind(
+      @NotNull SourcePos sourcePos,
+      @NotNull LocalVar bind,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
+      @NotNull Expr result,
+      @NotNull Expr body) {
+      public @NotNull Expr.Let.Bind update(@NotNull ImmutableSeq<Expr.Param> tele, @NotNull Expr result, @NotNull Expr body) {
+        return telescope().sameElements(tele, true) && result() == result && body() == body
           ? this
-          : new LetBind(sourcePos(), bind(), type, body);
+          : new Bind(sourcePos(), bind(), tele, result, body);
       }
 
-      public @NotNull Expr.Let.LetBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-        return update(f.apply(type()), f.apply(body()));
+      public @NotNull Expr.Let.Bind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+        return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(body()));
+      }
+
+      /**
+       * Convert
+       * <pre>
+       *   let f (x : X) : F := g in h
+       * </pre>
+       * to
+       * <pre>
+       *   let f : X -> F := ( \ x => g ) in h
+       * </pre>
+       * and do not convert
+       * <pre>
+       *   let f := g in h
+       * </pre>
+       *
+       * @return (lambda, pi type to the lambda) or (expr, type of the expr)
+       */
+      public @NotNull Tuple2<Expr, Expr> tryBuildLambda() {
+        return telescope().foldRight(
+          new Tuple2<>(body(), result()), (param, r) -> {
+            var lambda = r._1;
+            var piType = r._2;
+
+            var newLam = new Lambda(sourcePos(), param, lambda);
+            var newPiType = new Pi(sourcePos(), param, piType);
+
+            return new Tuple2<>(newLam, newPiType);
+          });
       }
     }
 
-    public @NotNull Let update(@NotNull ImmutableSeq<LetBind> lets, @NotNull Expr body) {
+    public @NotNull Let update(@NotNull ImmutableSeq<Bind> lets, @NotNull Expr body) {
       return lets().sameElements(lets, true) && body() == body
         ? this
         : new Let(sourcePos, lets, body);
