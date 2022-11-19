@@ -2,9 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import com.google.gson.JsonParseException;
-import kala.collection.Seq;
-import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.render.RenderOptions;
@@ -19,9 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public interface ReplCommands {
   record Code(@NotNull String code) {}
@@ -148,31 +143,6 @@ public interface ReplCommands {
   };
 
   @NotNull Command COLOR = new Command(ImmutableSeq.of("color"), "Display the current color scheme or switch to another") {
-    private static Command.Result displayColorScheme(@NotNull AyaRepl repl) {
-      var options = repl.config.renderOptions;
-      var name = options.colorScheme;
-
-      if (name == null) {
-        return Command.Result.ok(RenderOptions.DEFAULT_COLOR_SCHEME.name() + " (null detected)", true);
-      }
-      if (name == RenderOptions.ColorSchemeName.Custom) {
-        return Command.Result.ok(RenderOptions.ColorSchemeName.Custom.name() + " (" + options.path + ")", true);
-      } else {
-        return Command.Result.ok(name.name(), true);
-      }
-    }
-
-    private static Command.Result invalidColorScheme(@NotNull String argument) {
-      var valids = ImmutableArray.from(RenderOptions.ColorSchemeName.values())
-        .view()
-        .filter(x -> x != RenderOptions.ColorSchemeName.Custom)
-        .map(Enum::name)
-        .concat(Seq.of("\"<Path>\""))
-        .joinToString(", ");
-
-      return Command.Result.err("Invalid color scheme: " + argument + " (valid: " + valids + ")", true);
-    }
-
     /**
      * Goal:
      * <pre>
@@ -192,67 +162,20 @@ public interface ReplCommands {
      */
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String argument) {
       var nameOrPath = argument == null ? "" : argument.trim();
-
-      // I don't like to extract the common part...
-      if (nameOrPath.isEmpty()) {
-        // Display color scheme name
-        return displayColorScheme(repl);
-      } else {
-        var old = repl.config.clone();
-
-        if (nameOrPath.startsWith("\"") && nameOrPath.endsWith("\"")) {
-          // Path case
-          try {
-            var path = Paths.get(nameOrPath.substring(1, nameOrPath.length() - 1));
-
-            old.path = path.toAbsolutePath().toString();
-            old.colorScheme = RenderOptions.ColorSchemeName.Custom;
-          } catch (InvalidPathException e) {
-            return invalidColorScheme(nameOrPath);
-          }
-        } else {
-          // Name case
-          var matches = ImmutableArray.from(RenderOptions.ColorSchemeName.values())
-            .firstOption(x -> x.name().equalsIgnoreCase(nameOrPath));
-
-          if (matches.isEmpty() || matches.get() == RenderOptions.ColorSchemeName.Custom) {
-            return invalidColorScheme(nameOrPath);
-          }
-
-          old.colorScheme = matches.get();
-        }
-
-        try {
-          repl.config.setRenderOptions(old);
-
-          return displayColorScheme(repl);
-        } catch (IOException | JsonParseException ex) {
-          return Command.Result.err("Failed to switching color scheme, cause: " + ex.getLocalizedMessage(), true);
-        }
+      var options = repl.config.renderOptions;
+      if (nameOrPath.isEmpty())
+        return Result.ok(options.prettyColorScheme(), true);
+      try {
+        options.setColorScheme(nameOrPath);
+        options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
+        return Result.ok(options.prettyColorScheme(), true);
+      } catch (IllegalArgumentException | IOException e) {
+        return Result.err("Failed to switch color scheme: " + e.getMessage(), true);
       }
     }
   };
 
   @NotNull Command STYLE = new Command(ImmutableSeq.of("style"), "Display the current style/Switch to another style") {
-    private static @NotNull Command.Result displayStyleFamily(@NotNull AyaRepl repl) {
-      var styleFamily = repl.config.renderOptions.styleFamily;
-
-      if (styleFamily == null) {
-        return Command.Result.ok(RenderOptions.DEFAULT_STYLE_FAMILY.name() + " (null detected)", true);
-      } else {
-        return Command.Result.ok(styleFamily.name(), true);
-      }
-    }
-
-    private static @NotNull Command.Result invalidStyleFamily(@NotNull String argument) {
-      var valid = ImmutableArray.from(RenderOptions.StyleFamilyName.values())
-        .view()
-        .map(Enum::name)
-        .joinToString(", ");
-
-      return Command.Result.err("Invalid style family: " + argument + " (valid: " + valid + ")", true);
-    }
-
     /**
      * Goal:
      * <pre>
@@ -267,23 +190,14 @@ public interface ReplCommands {
      * </pre>
      */
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable String name) {
-      if (name == null || name.isBlank()) return displayStyleFamily(repl);
-      var matches = ImmutableArray.from(RenderOptions.StyleFamilyName.values())
-        .view()
-        .firstOption(x -> name.equalsIgnoreCase(x.name()));
-
-      if (matches.isEmpty()) return invalidStyleFamily(name);
-
-      // do switch
-      var options = repl.config.clone();
-      options.styleFamily = matches.get();
-
+      var options = repl.config.renderOptions;
+      if (name == null || name.isBlank()) return Result.ok(options.prettyStyleFamily(), true);
       try {
-        repl.config.setRenderOptions(options);
-
-        return displayStyleFamily(repl);
-      } catch (IOException ex) {
-        return Command.Result.err("Failed to switching style family, cause: " + ex.getLocalizedMessage(), true);
+        options.setStyleFamily(name);
+        options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
+        return Result.ok(repl.config.renderOptions.prettyStyleFamily(), true);
+      } catch (IllegalArgumentException | IOException e) {
+        return Result.err("Failed to switch style family: " + e.getMessage(), true);
       }
     }
   };

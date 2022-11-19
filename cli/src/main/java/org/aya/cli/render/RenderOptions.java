@@ -3,6 +3,9 @@
 package org.aya.cli.render;
 
 import com.google.gson.JsonParseException;
+import kala.collection.Seq;
+import kala.collection.mutable.MutableHashMap;
+import kala.control.Try;
 import org.aya.cli.render.vscode.ColorTheme;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.Html5Stylist;
@@ -61,16 +64,56 @@ public class RenderOptions {
 
   public @UnknownNullability ColorSchemeName colorScheme = DEFAULT_COLOR_SCHEME;
   public @UnknownNullability StyleFamilyName styleFamily = DEFAULT_STYLE_FAMILY;
-
   public @Nullable String path = null;
 
-  public void checkInitialize() {
+  /** creating stylist is expensive, so we memorize them */
+  private final transient @NotNull MutableHashMap<OutputTarget, StringStylist> stylistCaches = MutableHashMap.create();
+
+  public void checkDeserialization() {
     if (colorScheme == null) colorScheme = DEFAULT_COLOR_SCHEME;
     if (styleFamily == null) styleFamily = DEFAULT_STYLE_FAMILY;
   }
 
   public boolean isDefault() {
     return colorScheme.equals(DEFAULT_COLOR_SCHEME) && styleFamily.equals(DEFAULT_STYLE_FAMILY);
+  }
+
+  public @NotNull String prettyColorScheme() {
+    return colorScheme == ColorSchemeName.Custom ? Objects.requireNonNull(path) : colorScheme.toString();
+  }
+
+  public @NotNull String prettyStyleFamily() {
+    return styleFamily.toString();
+  }
+
+  public void setColorScheme(@NotNull String nameOrPath) throws IllegalArgumentException {
+    var maybeEnum = chooseOne(ColorSchemeName.class, nameOrPath);
+    if (maybeEnum != null) {
+      if (maybeEnum == ColorSchemeName.Custom) throw new IllegalArgumentException(
+        "To set a custom color scheme, just give the path to it :)");
+      this.colorScheme = maybeEnum;
+    } else {
+      this.colorScheme = ColorSchemeName.Custom;
+      this.path = Path.of(nameOrPath).toAbsolutePath().toString();
+    }
+    invalidate();
+  }
+
+  public void setStyleFamily(@NotNull String name) throws IllegalArgumentException {
+    var style = chooseOne(StyleFamilyName.class, name);
+    if (style == null) throw new IllegalArgumentException("There's no style family named %s, possible values: %s".formatted(
+      name, Seq.of(StyleFamilyName.values()).map(Enum::name)));
+    this.styleFamily = style;
+    invalidate();
+  }
+
+  public void invalidate() {
+    stylistCaches.clear();
+  }
+
+  private <T extends Enum<T>> @Nullable T chooseOne(@NotNull Class<T> enumClass, @NotNull String name) {
+    return Seq.of(enumClass.getEnumConstants()).view()
+      .firstOrNull(n -> n.name().toLowerCase().startsWith(name));
   }
 
   public static @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {
@@ -83,13 +126,15 @@ public class RenderOptions {
   }
 
   public @NotNull StringStylist stylist(@NotNull OutputTarget output) throws IOException, JsonParseException {
-    if (isDefault()) return defaultStylist(output);
-    return switch (output) {
-      case Terminal -> new UnixTermStylist(buildColorScheme(), buildStyleFamily());
-      case LaTeX -> new TeXStylist(buildColorScheme(), buildStyleFamily());
-      case HTML -> new Html5Stylist(buildColorScheme(), buildStyleFamily());
-      case Plain -> new DebugStylist(buildColorScheme(), buildStyleFamily());
-    };
+    return stylistCaches.getOrPut(output, () -> Try.of(() -> {
+      if (isDefault()) return defaultStylist(output);
+      return switch (output) {
+        case Terminal -> new UnixTermStylist(buildColorScheme(), buildStyleFamily());
+        case LaTeX -> new TeXStylist(buildColorScheme(), buildStyleFamily());
+        case HTML -> new Html5Stylist(buildColorScheme(), buildStyleFamily());
+        case Plain -> new DebugStylist(buildColorScheme(), buildStyleFamily());
+      };
+    }).getOrThrow());
   }
 
   public @NotNull StringStylist stylistOrDefault(@NotNull OutputTarget output) {
