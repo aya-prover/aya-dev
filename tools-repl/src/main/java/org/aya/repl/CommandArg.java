@@ -67,6 +67,7 @@ public interface CommandArg {
     return from(type, leftArg.shellLike || rightArg.shellLike,
       new AggregateCompleter(completer.asJava()),
       input -> {
+        if (input.trim().isEmpty()) throw new IllegalArgumentException("Empty input");
         try {
           return createLeft.apply(leftArg.parse(input));
         } catch (IllegalArgumentException ignored) {

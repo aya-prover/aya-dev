@@ -68,4 +68,18 @@ public class PlainReplTest extends ReplTestBase {
     var repl = repl("data Nat : Type | suc Nat | zero\n:type Nat::suc")._1.trim();
     assertEquals("Nat -> Nat", repl);
   }
+
+  @Test public void color() {
+    assertTrue(repl(":color i")._1.contains("IntelliJ"));
+    assertTrue(repl(":color e")._1.contains("Emacs"));
+    assertTrue(repl(":color")._1.contains("Emacs"));
+    assertTrue(repl(":color Custom")._2.contains("give"));
+    assertTrue(repl(":color " + VscColorThemeTest.TEST_DATA)._1.contains(VscColorThemeTest.TEST_DATA.getFileName().toString()));
+  }
+
+  @Test public void style() {
+    assertTrue(repl(":style d")._1.contains("Default"));
+    assertTrue(repl(":style")._1.contains("Default"));
+    assertTrue(repl(":style " + VscColorThemeTest.TEST_DATA)._2.contains("support"));
+  }
 }
