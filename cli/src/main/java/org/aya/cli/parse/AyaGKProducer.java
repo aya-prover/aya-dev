@@ -412,13 +412,13 @@ public record AyaGKProducer(
 
   public @NotNull ImmutableSeq<Expr.Param> tele(@NotNull GenericNode<?> node) {
     var tele = node.peekChild(LICIT);
-    if (tele != null) return licit(tele, TELE_BINDER, (licit, child) -> teleBinder(child, licit));
+    if (tele != null) return licit(tele, TELE_BINDER, this::teleBinder);
     var type = expr(node.child(EXPR));
     var pos = sourcePosOf(node);
     return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), type, true));
   }
 
-  public @NotNull ImmutableSeq<Expr.Param> teleBinder(@NotNull GenericNode<?> node, boolean explicit) {
+  public @NotNull ImmutableSeq<Expr.Param> teleBinder(boolean explicit, @NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
     var typed = node.peekChild(TELE_BINDER_TYPED);
     if (typed != null) return teleBinderTyped(typed, explicit);
@@ -444,7 +444,7 @@ public record AyaGKProducer(
   public @NotNull ImmutableSeq<Expr.Param> lambdaTele(@NotNull GenericNode<?> node) {
     var teleParamName = node.peekChild(TELE_PARAM_NAME);
     if (teleParamName != null) return lambdaTeleLit(teleParamName, true, sourcePosOf(node));
-    return licit(node.child(LICIT), LAMBDA_TELE_BINDER, (licit, child) -> lambdaTeleBinder(child, licit));
+    return licit(node.child(LICIT), LAMBDA_TELE_BINDER, this::lambdaTeleBinder);
   }
 
   @FunctionalInterface
@@ -456,7 +456,7 @@ public record AyaGKProducer(
     return parser.apply(node.peekChild(LBRACE) == null, child);
   }
 
-  public @NotNull ImmutableSeq<Expr.Param> lambdaTeleBinder(@NotNull GenericNode<?> node, boolean explicit) {
+  public @NotNull ImmutableSeq<Expr.Param> lambdaTeleBinder(boolean explicit, @NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
     var typed = node.peekChild(TELE_BINDER_TYPED);
     if (typed != null) return teleBinderTyped(typed, explicit);
@@ -785,7 +785,8 @@ public record AyaGKProducer(
     // [ 1, 2, 3 ]
 
     // Do we have to extract the producing of EXPR_LIST as a new function?
-    var exprs = node.child(EXPR_LIST).childrenOfType(EXPR)
+    var exprs = node.child(EXPR_LIST)
+      .childrenOfType(EXPR)
       .map(this::expr)
       .toImmutableSeq();
 
