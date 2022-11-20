@@ -365,13 +365,7 @@ litStringExpr ::= STRING
 univExpr ::= KW_TYPE | KW_SET | KW_PROP | KW_ISET
 
 // tele is always typed
-tele ::= teleLit
-       | teleEx
-       | teleIm
-
-teleLit ::= literal
-teleEx ::= LPAREN teleBinder RPAREN
-teleIm ::= LBRACE teleBinder RBRACE
+tele ::= literal | <<licit teleBinder>>
 
 // Explicit arguments may be anonymous
 teleBinder ::= teleBinderTyped
@@ -385,16 +379,10 @@ teleParamName ::= weakId {
 }
 
 // lambda tele is always named
-lambdaTele ::= lambdaTeleLit
-             | lambdaTeleEx
-             | lambdaTeleIm
-
-lambdaTeleLit ::= teleParamName
-lambdaTeleEx ::= LPAREN lambdaTeleBinder RPAREN
-lambdaTeleIm ::= LBRACE lambdaTeleBinder RBRACE
+lambdaTele ::= teleParamName | <<licit lambdaTeleBinder>>
 
 lambdaTeleBinder ::= teleBinderTyped
-                   | lambdaTeleLit
+                   | teleParamName
 
 // path type tele
 pathTele ::= teleParamName
@@ -403,8 +391,6 @@ pathTele ::= teleParamName
 exprList ::= <<commaSep expr>>
 barred ::= expr BAR
 idsComma ::= <<commaSep weakId>>?
-// we can improve the parsing by producing generically from a 'commaSep' rule
-private meta commaSep ::= <<param>> (',' <<param>>) *
 type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
@@ -414,3 +400,8 @@ doBinding ::= weakId LARROW expr {
 qualifiedId ::= weakId (COLON2 weakId)*
 weakId ::= ID
 
+// meta rules
+
+// we can improve the parsing by producing generically from a 'commaSep' rule
+private meta commaSep ::= <<param>> (',' <<param>>) *
+meta licit ::= LBRACE <<param>> RBRACE | LPAREN <<param>> RPAREN
