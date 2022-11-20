@@ -2165,41 +2165,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LPAREN patterns RPAREN
-  //               | LBRACE patterns RBRACE
+  // <<licit patterns>>
   //               | atomPattern
   public static boolean unitPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unitPattern")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, UNIT_PATTERN, "<unit pattern>");
-    r = unitPattern_0(b, l + 1);
-    if (!r) r = unitPattern_1(b, l + 1);
+    r = licit(b, l + 1, AyaPsiParser::patterns);
     if (!r) r = atomPattern(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // LPAREN patterns RPAREN
-  private static boolean unitPattern_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unitPattern_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && patterns(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // LBRACE patterns RBRACE
-  private static boolean unitPattern_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unitPattern_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && patterns(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, null, r);
     return r;
   }
 

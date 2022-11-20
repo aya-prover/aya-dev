@@ -715,17 +715,15 @@ public record AyaGKProducer(
   }
 
   private Arg<Pattern> unitPattern(@NotNull GenericNode<?> node) {
-    var rawPatterns = node.peekChild(PATTERNS);
-    if (rawPatterns != null) {
-      var explicit = node.peekChild(LPAREN) != null;
-      var patterns = patterns(rawPatterns);
+    var rawPatterns = node.peekChild(LICIT);
+    if (rawPatterns != null) return licit(rawPatterns, PATTERNS, (explicit, child) -> {
+      var patterns = patterns(child);
       var pat = patterns.sizeEquals(1)
         ? newBinOPScope(patterns.first().term(), explicit)
         : new Pattern.Tuple(sourcePosOf(node), patterns, null);
       return new Arg<>(pat, explicit);
-    }
-    var atom = node.childrenView().first();
-    return new Arg<>(atomPattern(atom), true);
+    });
+    return new Arg<>(atomPattern(node.childrenView().first()), true);
   }
 
   private @NotNull Pattern atomPattern(@NotNull GenericNode<?> node) {

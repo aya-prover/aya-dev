@@ -335,8 +335,7 @@ pattern ::= unitPattern+ (KW_AS weakId)?
 
 // pattern.size == 1 ==> Arg<Pat>
 // pattern.size > 1 ==> Tuple
-unitPattern ::= LPAREN patterns RPAREN
-              | LBRACE patterns RBRACE
+unitPattern ::= <<licit patterns>>
               | atomPattern
 // A Pattern
 atomPattern ::= atomListPattern
