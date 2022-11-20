@@ -8,8 +8,10 @@ import org.junit.jupiter.api.Test;
 
 public class PlctReportTest {
   @Test public void generateReport() throws Exception {
-    var args = new MainArgs.PlctAction();
-    args.plctReport = true;
-    System.out.println(new PLCTReport().run(args));
+    if ("true".equals(System.getenv("CI"))) {
+      var args = new MainArgs.PlctAction();
+      args.plctReport = true;
+      System.out.println(new PLCTReport().run(args));
+    }
   }
 }
