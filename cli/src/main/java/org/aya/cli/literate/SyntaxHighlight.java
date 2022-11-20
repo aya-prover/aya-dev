@@ -4,8 +4,11 @@ package org.aya.cli.literate;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.parse.AyaGKProducer;
+import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
@@ -19,10 +22,8 @@ import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.PriorityQueue;
-
-/** @implNote Use {@link java.util.PriorityQueue} instead of {@link SeqView} for performance consideration. */
-public class SyntaxHighlight implements StmtFolder<PriorityQueue<HighlightInfo>> {
+/** @implNote Use {@link MutableList} instead of {@link SeqView} for performance consideration. */
+public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   /** @param sourceFile If not null, provide keyword highlights too */
   public static @NotNull ImmutableSeq<HighlightInfo> highlight(
     @NotNull Option<SourceFile> sourceFile,
@@ -34,36 +35,63 @@ public class SyntaxHighlight implements StmtFolder<PriorityQueue<HighlightInfo>>
       var file = sourceFile.get();
       var lexer = AyaParserDefinitionBase.createLexer(false);
       lexer.reset(file.sourceCode(), 0, file.sourceCode().length(), 0);
-      var keywords = lexer.allTheWayDown().map(token -> new HighlightInfo(
-        AyaGKProducer.sourcePosOf(token, file),
-        new HighlightInfo.SymLit(HighlightInfo.LitKind.Keyword)));
+      var keywords = lexer.allTheWayDown()
+        .view()
+        .filter(x -> AyaParserDefinitionBase.KEYWORDS.contains(x.type()))
+        .map(token -> {
+          var sourcePos = AyaGKProducer.sourcePosOf(token, file);
+          var type = new HighlightInfo.SymLit(HighlightInfo.LitKind.Keyword);
+          return new HighlightInfo(sourcePos, type);
+        });
       semantics = semantics.concat(keywords);
     }
     return semantics.sorted();
   }
 
-  @Override public @NotNull PriorityQueue<HighlightInfo> init() {
-    return new PriorityQueue<>();
+  private @NotNull MutableList<HighlightInfo> add(@NotNull MutableList<HighlightInfo> x, @NotNull HighlightInfo info) {
+    x.append(info);
+    return x;
+  }
+
+  @Override public @NotNull MutableList<HighlightInfo> init() {
+    return MutableList.create();
   }
 
   @Override
-  public @NotNull PriorityQueue<HighlightInfo> fold(@NotNull PriorityQueue<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
-    acc.add(linkRef(pos, var));
-    return acc;
+  public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
+    return add(acc, linkRef(pos, var));
   }
 
   @Override
-  public @NotNull PriorityQueue<HighlightInfo> fold(@NotNull PriorityQueue<HighlightInfo> acc, @NotNull Stmt stmt) {
-    switch (stmt) {
-      case Generalize g -> g.variables.forEach(var -> acc.add(linkDef(var.sourcePos, var)));
-      case Command.Import i -> acc.add(linkModuleDef(i.path()));
-      case Command.Module m -> acc.add(linkModuleDef(new QualifiedID(m.sourcePos(), m.name())));
-      case Command.Open o -> acc.add(linkModuleRef(o.path()));
-      case ClassDecl decl -> acc.add(linkDef(decl.sourcePos, decl.ref()));
-      case Decl decl -> acc.add(linkDef(decl.sourcePos(), decl.ref()));
-      case Remark remark -> {} // TODO: highlight literate
-    }
-    return acc;
+  public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Expr expr) {
+    return switch (expr) {
+      case Expr.LitInt lit -> add(acc, HighlightInfo.LitKind.Int.toLit(lit.sourcePos()));
+      case Expr.LitString lit -> add(acc, HighlightInfo.LitKind.String.toLit(lit.sourcePos()));
+      default -> StmtFolder.super.fold(acc, expr);
+    };
+  }
+
+  @Override
+  public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Pattern pat) {
+    return switch (pat) {
+      case Pattern.Number num -> add(acc, HighlightInfo.LitKind.Int.toLit(num.sourcePos()));
+      case Pattern.Bind bind -> add(acc, linkDef(bind.sourcePos(), bind.bind()));
+      default -> StmtFolder.super.fold(acc, pat);
+    };
+  }
+
+  @Override
+  public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Stmt stmt) {
+    return switch (stmt) {
+      case Generalize g -> g.variables.foldLeft(acc, (a, var) -> add(a, linkDef(var.sourcePos, var)));
+      case Command.Module m -> add(acc, linkModuleDef(new QualifiedID(m.sourcePos(), m.name())));
+      case Command.Import i -> add(acc, linkModuleRef(i.path()));
+      // case Command.Open o -> add(acc, linkModuleRef(o.path()));
+      case Command.Open o -> acc; // TODO: distinguish between `open data/import` and plain `open`. We need the last one
+      case ClassDecl decl -> add(acc, linkDef(decl.sourcePos, decl.ref()));
+      case Decl decl -> add(acc, linkDef(decl.sourcePos(), decl.ref()));
+      case Remark remark -> acc; // TODO: highlight literate
+    };
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var) {
