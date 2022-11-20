@@ -207,7 +207,7 @@ public class AyaLanguageServer implements LanguageServer {
       Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
     }
     publishProblems(reporter, DistillerOptions.pretty());
-    return SyntaxHighlight.invoke(owner);
+    return SemanticHighlight.invoke(owner);
   }
 
   public void publishProblems(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {

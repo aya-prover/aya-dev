@@ -7,10 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
@@ -60,6 +57,7 @@ public interface Resolver {
       }
       case LocalVar localVar -> new WithPos<>(pos.sourcePos(), localVar);
       case ModuleVar moduleVar -> new WithPos<>(pos.sourcePos(), moduleVar);
+      case GeneralizedVar gVar -> new WithPos<>(pos.sourcePos(), gVar);
       case null, default -> null;
     });
   }
@@ -126,6 +124,7 @@ public interface Resolver {
             .foldLeft(targets, (ac, p) -> fold(ac, p.ref(), p.sourcePos()));
           yield fold(targets, decl.ref(), decl.sourcePos());
         }
+        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> fold(t, v, v.sourcePos));
         default -> StmtFolder.super.fold(targets, stmt);
       };
     }

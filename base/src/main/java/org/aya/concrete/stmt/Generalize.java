@@ -33,7 +33,7 @@ public final class Generalize implements Stmt {
   }
 
   public @NotNull Expr.Param toExpr(boolean explicit, @NotNull LocalVar ref) {
-    return new Expr.Param(sourcePos, ref, type, explicit);
+    return new Expr.Param(ref.definition(), ref, type, explicit);
   }
 
   public @NotNull ImmutableSeq<Expr.Param> toExpr() {
