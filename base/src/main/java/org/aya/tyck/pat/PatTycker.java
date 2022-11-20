@@ -414,9 +414,6 @@ public final class PatTycker {
     @NotNull MutableList<Pat> results,
     @NotNull Term.Param param
   ) {
-    public @NotNull SourcePos paramPos() {
-      return param.ref().definition();
-    }
   }
 
   private @NotNull PatData beforeTyck(@NotNull PatData data) {

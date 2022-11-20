@@ -169,7 +169,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var result = tycker.zonk(tmp.preresult);
     fn.signature = new Def.Signature(tele, result);
     var body = tycker.zonk(tmp.prebody);
-    return new FnDef(fn.ref, tele, result, fn.modifiers, Either.left(body));
+    return new FnDef(fn.ref, fn.signature.param(), fn.signature.result(), fn.modifiers, Either.left(body));
   }
 
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
