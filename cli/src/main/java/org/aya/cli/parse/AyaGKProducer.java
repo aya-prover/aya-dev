@@ -158,18 +158,17 @@ public record AyaGKProducer(
   }
 
   public UseHide hideList(SeqView<GenericNode<?>> hideLists, UseHide.Strategy strategy) {
-    return new UseHide(
-      hideLists
-        .map(h -> h.child(COMMA_SEP))
-        .flatMap(this::idsComma)
-        .map(id -> new UseHide.Name(id, id, Assoc.Invalid, BindBlock.EMPTY))
-        .toImmutableSeq(),
+    return new UseHide(hideLists
+      .mapNotNull(h -> h.peekChild(COMMA_SEP))
+      .flatMap(this::idsComma)
+      .map(id -> new UseHide.Name(id, id, Assoc.Invalid, BindBlock.EMPTY))
+      .toImmutableSeq(),
       strategy);
   }
 
   public UseHide useList(SeqView<GenericNode<?>> useLists, UseHide.Strategy strategy) {
     return new UseHide(useLists
-      .map(u -> u.child(COMMA_SEP))
+      .mapNotNull(u -> u.peekChild(COMMA_SEP))
       .flatMap(this::useIdsComma)
       .toImmutableSeq(),
       strategy);
