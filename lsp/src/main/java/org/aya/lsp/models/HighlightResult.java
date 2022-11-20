@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.models;
 
-import kala.collection.SeqLike;
+import kala.collection.Seq;
 import kala.control.Option;
 import kala.value.TransientVar;
 import org.aya.cli.literate.HighlightInfo;
@@ -13,14 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public record HighlightResult(
-  @NotNull URI uri,
-  @NotNull List<Symbol> symbols
-) {
-  public HighlightResult(@NotNull URI uri, @NotNull SeqLike<Symbol> symbols) {
-    this(uri, symbols.collect(Collectors.toList()));
+public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
+  public HighlightResult(@NotNull URI uri, @NotNull Seq<Symbol> symbols) {
+    this(uri, symbols.asJava());
   }
 
   public enum Kind {

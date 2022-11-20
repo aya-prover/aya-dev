@@ -13,6 +13,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
+import kala.function.BooleanObjBiFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
@@ -406,17 +407,11 @@ public record AyaGKProducer(
   }
 
   public @NotNull ImmutableSeq<Expr.Param> tele(@NotNull GenericNode<?> node) {
-    var teleLit = node.peekChild(TELE_LIT);
-    if (teleLit != null) {
-      var type = expr(teleLit.child(EXPR));
-      var pos = sourcePosOf(node);
-      return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), type, true));
-    }
-    var teleEx = node.peekChild(TELE_EX);
-    if (teleEx != null) return teleBinder(teleEx.child(TELE_BINDER), true);
-    var teleIm = node.peekChild(TELE_IM);
-    if (teleIm != null) return teleBinder(teleIm.child(TELE_BINDER), false);
-    return unreachable(node);
+    var tele = node.peekChild(LICIT);
+    if (tele != null) return licit(tele, TELE_BINDER, (licit, child) -> teleBinder(child, licit));
+    var type = expr(node.child(EXPR));
+    var pos = sourcePosOf(node);
+    return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), type, true));
   }
 
   public @NotNull ImmutableSeq<Expr.Param> teleBinder(@NotNull GenericNode<?> node, boolean explicit) {
@@ -443,29 +438,30 @@ public record AyaGKProducer(
   }
 
   public @NotNull ImmutableSeq<Expr.Param> lambdaTele(@NotNull GenericNode<?> node) {
-    var lamTeleLit = node.peekChild(LAMBDA_TELE_LIT);
-    if (lamTeleLit != null) return lambdaTeleLit(lamTeleLit, true, sourcePosOf(node));
-    var lamTeleEx = node.peekChild(LAMBDA_TELE_EX);
-    if (lamTeleEx != null) return lambdaTeleBinder(lamTeleEx.child(LAMBDA_TELE_BINDER), true);
-    var lamTeleIm = node.peekChild(LAMBDA_TELE_IM);
-    if (lamTeleIm != null) return lambdaTeleBinder(lamTeleIm.child(LAMBDA_TELE_BINDER), false);
-    return unreachable(node);
+    var teleParamName = node.peekChild(TELE_PARAM_NAME);
+    if (teleParamName != null) return lambdaTeleLit(teleParamName, true, sourcePosOf(node));
+    return licit(node.child(LICIT), LAMBDA_TELE_BINDER, (licit, child) -> lambdaTeleBinder(child, licit));
+  }
+
+  @FunctionalInterface
+  private interface LicitParser<T> extends BooleanObjBiFunction<GenericNode<?>, T> {
+  }
+
+  private <T> @NotNull T licit(@NotNull GenericNode<?> node, @NotNull IElementType type, @NotNull LicitParser<T> parser) {
+    var child = node.child(type);
+    return parser.apply(node.peekChild(LBRACE) == null, child);
   }
 
   public @NotNull ImmutableSeq<Expr.Param> lambdaTeleBinder(@NotNull GenericNode<?> node, boolean explicit) {
     var pos = sourcePosOf(node);
     var typed = node.peekChild(TELE_BINDER_TYPED);
     if (typed != null) return teleBinderTyped(typed, explicit);
-    var lamTeleLit = node.peekChild(LAMBDA_TELE_LIT);
-    if (lamTeleLit != null) return lambdaTeleLit(lamTeleLit, explicit, pos);
-    return unreachable(node);
+    return lambdaTeleLit(node.child(TELE_PARAM_NAME), explicit, pos);
   }
 
   private @NotNull ImmutableSeq<Expr.Param> lambdaTeleLit(GenericNode<?> node, boolean explicit, SourcePos pos) {
     return ImmutableSeq.of(new Expr.Param(pos,
-      LocalVar.from(teleParamName(node.child(TELE_PARAM_NAME))),
-      typeOrHole(null, pos),
-      explicit));
+      LocalVar.from(teleParamName(node)), typeOrHole(null, pos), explicit));
   }
 
   public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> declNameOrInfix(@NotNull GenericNode<?> node) {
@@ -721,17 +717,15 @@ public record AyaGKProducer(
   }
 
   private Arg<Pattern> unitPattern(@NotNull GenericNode<?> node) {
-    var rawPatterns = node.peekChild(PATTERNS);
-    if (rawPatterns != null) {
-      var explicit = node.peekChild(LPAREN) != null;
-      var patterns = patterns(rawPatterns);
+    var rawPatterns = node.peekChild(LICIT);
+    if (rawPatterns != null) return licit(rawPatterns, PATTERNS, (explicit, child) -> {
+      var patterns = patterns(child);
       var pat = patterns.sizeEquals(1)
         ? newBinOPScope(patterns.first().term(), explicit)
         : new Pattern.Tuple(sourcePosOf(node), patterns, null);
       return new Arg<>(pat, explicit);
-    }
-    var atom = node.childrenView().first();
-    return new Arg<>(atomPattern(atom), true);
+    });
+    return new Arg<>(atomPattern(node.childrenView().first()), true);
   }
 
   private @NotNull Pattern atomPattern(@NotNull GenericNode<?> node) {

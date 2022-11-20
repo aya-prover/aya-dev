@@ -55,9 +55,7 @@ public interface AyaPsiElementTypes {
   IElementType LAMBDA_EXPR = new AyaPsiElementType("LAMBDA_EXPR");
   IElementType LAMBDA_TELE = new AyaPsiElementType("LAMBDA_TELE");
   IElementType LAMBDA_TELE_BINDER = new AyaPsiElementType("LAMBDA_TELE_BINDER");
-  IElementType LAMBDA_TELE_EX = new AyaPsiElementType("LAMBDA_TELE_EX");
-  IElementType LAMBDA_TELE_IM = new AyaPsiElementType("LAMBDA_TELE_IM");
-  IElementType LAMBDA_TELE_LIT = new AyaPsiElementType("LAMBDA_TELE_LIT");
+  IElementType LICIT = new AyaPsiElementType("LICIT");
   IElementType LIST_COMP = new AyaPsiElementType("LIST_COMP");
   IElementType LITERAL = new AyaPsiElementType("LITERAL");
   IElementType LIT_INT_EXPR = new AyaPsiElementType("LIT_INT_EXPR");
@@ -97,9 +95,6 @@ public interface AyaPsiElementTypes {
   IElementType TELE_BINDER = new AyaPsiElementType("TELE_BINDER");
   IElementType TELE_BINDER_ANONYMOUS = new AyaPsiElementType("TELE_BINDER_ANONYMOUS");
   IElementType TELE_BINDER_TYPED = new AyaPsiElementType("TELE_BINDER_TYPED");
-  IElementType TELE_EX = new AyaPsiElementType("TELE_EX");
-  IElementType TELE_IM = new AyaPsiElementType("TELE_IM");
-  IElementType TELE_LIT = new AyaPsiElementType("TELE_LIT");
   IElementType TELE_PARAM_NAME = new AyaPsiElementType("TELE_PARAM_NAME");
   IElementType THIS_EXPR = new AyaPsiElementType("THIS_EXPR");
   IElementType TIGHTERS = new AyaPsiElementType("TIGHTERS");
