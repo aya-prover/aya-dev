@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
+import com.intellij.lexer.FlexLexer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
@@ -891,13 +893,21 @@ public record AyaGKProducer(
   }
 
   public static @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
-    var start = StringUtil.offsetToLineColumn(file.sourceCode(), node.range().getStartOffset());
-    var length = node.range().getLength();
-    var endOffset = node.range().getEndOffset() - (length == 0 ? 0 : 1);
-    var end = node.isTerminalNode() || length == 0
+    return sourcePosOf(node.range(), file, node.isTerminalNode());
+  }
+
+  public static @NotNull SourcePos sourcePosOf(@NotNull FlexLexer.Token token, @NotNull SourceFile file) {
+    return sourcePosOf(token.range(), file, true);
+  }
+
+  public static @NotNull SourcePos sourcePosOf(@NotNull TextRange range, @NotNull SourceFile file, boolean isTerminal) {
+    var start = StringUtil.offsetToLineColumn(file.sourceCode(), range.getStartOffset());
+    var length = range.getLength();
+    var endOffset = range.getEndOffset() - (length == 0 ? 0 : 1);
+    var end = isTerminal || length == 0
       ? LineColumn.of(start.line, start.column + length - 1)
       : StringUtil.offsetToLineColumn(file.sourceCode(), endOffset);
-    return new SourcePos(file, node.range().getStartOffset(), endOffset,
+    return new SourcePos(file, range.getStartOffset(), endOffset,
       start.line + 1, start.column, end.line + 1, end.column);
   }
 }
