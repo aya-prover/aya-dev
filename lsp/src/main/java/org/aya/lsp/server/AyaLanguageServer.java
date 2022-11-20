@@ -29,6 +29,7 @@ import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.prim.LspPrimFactory;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
+import org.aya.lsp.utils.XY;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.FileUtil;
 import org.aya.util.distill.DistillerOptions;
@@ -385,10 +386,14 @@ public class AyaLanguageServer implements LanguageServer {
     return computeTerm(input, ComputeTerm.Kind.nf());
   }
 
-  public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
-    var source = find(input.uri);
-    if (source == null) return ComputeTermResult.bad(input);
-    return new ComputeTerm(source, type, primFactory(source.owner())).invoke(input);
+  public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params params, ComputeTerm.Kind type) {
+    var source = find(params.uri);
+    if (source == null) return ComputeTermResult.bad(params);
+    var program = source.program().get();
+    if (program == null) return ComputeTermResult.bad(params);
+    var computer = new ComputeTerm(source, type, primFactory(source.owner()), new XY(params.position));
+    program.forEach(computer);
+    return computer.result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, computer.result);
   }
 
   private @NotNull LspPrimFactory primFactory(@NotNull LibraryOwner owner) {
