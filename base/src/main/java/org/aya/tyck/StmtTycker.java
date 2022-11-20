@@ -21,7 +21,6 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Partial;
-import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimError;
@@ -129,7 +128,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(new Subst(
           dataSig.param().view().map(Term.Param::ref),
           pat.view().map(Pat::toTerm)));
-        var elabClauses = tycker.elaboratePartial(ctor.clauses, dataCall);
+        var elabClauses = tycker.zonk(tycker.elaboratePartial(ctor.clauses, dataCall));
         if (!(elabClauses instanceof Partial.Split<Term> split)) {
           throw new AssertionError("This does not seem right, " + elabClauses);
         }
@@ -240,9 +239,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var sig = new Def.Signature(dataSig.param(), dataCall);
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
-        PatTycker.LhsResult lhs = null;
         if (ctor.patterns.isNotEmpty()) {
-          lhs = patTycker.checkLhs(new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false);
+          var lhs = patTycker.checkLhs(new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false);
           ctor.yetTyckedPat = lhs.preclause().patterns();
           // Revert to the "after patterns" state
           tycker.localCtx = lhs.gamma();

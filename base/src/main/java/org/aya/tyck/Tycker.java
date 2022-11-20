@@ -5,6 +5,7 @@ package org.aya.tyck;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
@@ -38,6 +39,11 @@ public abstract class Tycker {
 
   public @NotNull Term zonk(@NotNull Term term) {
     return Zonker.make(this).apply(term);
+  }
+
+  public @NotNull Partial<Term> zonk(@NotNull Partial<Term> term) {
+    solveMetas();
+    return term.fmap(Zonker.make(this));
   }
 
   public void solveMetas() {
