@@ -45,7 +45,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
         });
       semantics = semantics.concat(keywords);
     }
-    return semantics.sorted();
+    return semantics;
   }
 
   private @NotNull MutableList<HighlightInfo> add(@NotNull MutableList<HighlightInfo> x, @NotNull HighlightInfo info) {
