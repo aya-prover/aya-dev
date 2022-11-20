@@ -19,6 +19,10 @@ def succInt Int : Int
 | signed false zero => pos 1
 | posneg i => pos 1
 
+def abs Int : Nat
+| signed _ n => n
+| posneg i => 0
+
 // TODO: reimplement using univalence
 def predInt (x : Int) : Int => negate (succInt (negate x))
 

@@ -69,6 +69,7 @@ jlinkTask.configure {
     }
   }
 }
+
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
 prepareMergedJarsDirTask.configure {
   val libs = listOf("cli", "base", "pretty", "tools", "tools-repl", "parser")
@@ -82,10 +83,16 @@ tasks.withType<AbstractCopyTask>().configureEach {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
-  dependsOn(jlinkTask, prepareMergedJarsDirTask)
-  from(ayaImageDir)
-  into(file(rootProject.property("installDir")!!))
+if (rootProject.hasProperty("installDir")) {
+  val destDir = file(rootProject.property("installDir")!!)
+  // val dbi = tasks.register<Delete>("deleteBeforeInstall") {
+  //   delete(File.listFiles(destDir))
+  // }
+  tasks.register<Copy>("install") {
+    dependsOn(jlinkTask, prepareMergedJarsDirTask)
+    from(ayaImageDir)
+    into(destDir)
+  }
 }
 
 tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }
