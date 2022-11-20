@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -31,14 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * parts are extracted into {@link CommonDecl} for all concrete definitions,
  * {@link TeleDecl} for all top-level telescopic concrete definitions and
  * {@link ClassDecl} for all top-level class-able concrete definitions.
- *
- * <p>
- * For visitors that may need to visit a certain property, it is recommended to
- * provide an extra proof object that implements the property. For example, visiting
- * a {@link Telescopic} concrete definition requires a proof object of type {@link Telescopic}
- * in addition to the original definition object of type {@link Decl}.
- * Checkout {@link org.aya.concrete.visitor.StmtOps#visitTelescopic(Decl, Telescopic, Object)}
- * for detailed code example.
  *
  * @author kiva, zaoqi
  * @see CommonDecl

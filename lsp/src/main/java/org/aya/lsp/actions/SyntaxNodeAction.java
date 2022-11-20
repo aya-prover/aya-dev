@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.visitor.StmtOps;
+import org.aya.concrete.visitor.EndoPattern;
+import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.lsp.utils.XY;
 import org.aya.lsp.utils.XYXY;
 import org.aya.util.error.SourcePos;
@@ -18,19 +18,18 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @implNote This does not modify the AST.
  */
-public interface SyntaxNodeAction<P> extends StmtOps<P> {
-  boolean accept(@NotNull P xy, @NotNull SourcePos sourcePos);
+public interface SyntaxNodeAction<Location> extends StmtConsumer, EndoPattern {
+  @NotNull Location location();
+  boolean accept(@NotNull Location xy, @NotNull SourcePos sourcePos);
 
-  default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P xy) {
-    stmts.forEach(stmt -> {
-      if (!(stmt instanceof Decl decl) || accept(xy, decl.entireSourcePos()))
-        visit(stmt, xy);
-    });
+  @Override default void accept(@NotNull Stmt stmt) {
+    if (!(stmt instanceof Decl decl) || accept(location(), decl.entireSourcePos()))
+      StmtConsumer.super.accept(stmt);
   }
 
-  @Override default @NotNull Expr visitExpr(@NotNull Expr expr, P xy) {
-    if (!accept(xy, expr.sourcePos())) return expr;
-    return StmtOps.super.visitExpr(expr, xy);
+  @Override default @NotNull Expr apply(@NotNull Expr expr) {
+    if (!accept(location(), expr.sourcePos())) return expr;
+    return StmtConsumer.super.apply(expr);
   }
 
   /** Need to visit the decl/expr placed at the cursor position XY */
