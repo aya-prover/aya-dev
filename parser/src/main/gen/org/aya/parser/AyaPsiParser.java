@@ -398,7 +398,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<param>> (',' <<param>> ) *
+  // <<param>> (',' <<param>>) *
   static boolean commaSep(PsiBuilder b, int l, Parser _param) {
     if (!recursion_guard_(b, l, "commaSep")) return false;
     boolean r;
@@ -409,7 +409,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (',' <<param>> ) *
+  // (',' <<param>>) *
   private static boolean commaSep_1(PsiBuilder b, int l, Parser _param) {
     if (!recursion_guard_(b, l, "commaSep_1")) return false;
     while (true) {
@@ -1001,71 +1001,65 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // lambdaTeleLit
-  //              | lambdaTeleEx
-  //              | lambdaTeleIm
+  // teleParamName | <<licit lambdaTeleBinder>>
   public static boolean lambdaTele(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTele")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LAMBDA_TELE, "<lambda tele>");
-    r = lambdaTeleLit(b, l + 1);
-    if (!r) r = lambdaTeleEx(b, l + 1);
-    if (!r) r = lambdaTeleIm(b, l + 1);
+    r = teleParamName(b, l + 1);
+    if (!r) r = licit(b, l + 1, AyaPsiParser::lambdaTeleBinder);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   /* ********************************************************** */
   // teleBinderTyped
-  //                    | lambdaTeleLit
+  //                    | teleParamName
   public static boolean lambdaTeleBinder(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTeleBinder")) return false;
     if (!nextTokenIs(b, ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = teleBinderTyped(b, l + 1);
-    if (!r) r = lambdaTeleLit(b, l + 1);
+    if (!r) r = teleParamName(b, l + 1);
     exit_section_(b, m, LAMBDA_TELE_BINDER, r);
     return r;
   }
 
   /* ********************************************************** */
-  // LPAREN lambdaTeleBinder RPAREN
-  public static boolean lambdaTeleEx(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaTeleEx")) return false;
-    if (!nextTokenIs(b, LPAREN)) return false;
+  // LBRACE <<param>> RBRACE | LPAREN <<param>> RPAREN
+  public static boolean licit(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "licit")) return false;
+    if (!nextTokenIs(b, "", LBRACE, LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && lambdaTeleBinder(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, LAMBDA_TELE_EX, r);
+    r = licit_0(b, l + 1, _param);
+    if (!r) r = licit_1(b, l + 1, _param);
+    exit_section_(b, m, LICIT, r);
     return r;
   }
 
-  /* ********************************************************** */
-  // LBRACE lambdaTeleBinder RBRACE
-  public static boolean lambdaTeleIm(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaTeleIm")) return false;
-    if (!nextTokenIs(b, LBRACE)) return false;
+  // LBRACE <<param>> RBRACE
+  private static boolean licit_0(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "licit_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LBRACE);
-    r = r && lambdaTeleBinder(b, l + 1);
+    r = r && _param.parse(b, l);
     r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, LAMBDA_TELE_IM, r);
+    exit_section_(b, m, null, r);
     return r;
   }
 
-  /* ********************************************************** */
-  // teleParamName
-  public static boolean lambdaTeleLit(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaTeleLit")) return false;
-    if (!nextTokenIs(b, ID)) return false;
+  // LPAREN <<param>> RPAREN
+  private static boolean licit_1(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "licit_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = teleParamName(b, l + 1);
-    exit_section_(b, m, LAMBDA_TELE_LIT, r);
+    r = consumeToken(b, LPAREN);
+    r = r && _param.parse(b, l);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1990,16 +1984,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // teleLit
-  //        | teleEx
-  //        | teleIm
+  // literal | <<licit teleBinder>>
   public static boolean tele(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tele")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, TELE, "<tele>");
-    r = teleLit(b, l + 1);
-    if (!r) r = teleEx(b, l + 1);
-    if (!r) r = teleIm(b, l + 1);
+    r = literal(b, l + 1);
+    if (!r) r = licit(b, l + 1, AyaPsiParser::teleBinder);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -2053,45 +2044,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "teleBinderTyped_0", c)) break;
     }
     exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // LPAREN teleBinder RPAREN
-  public static boolean teleEx(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "teleEx")) return false;
-    if (!nextTokenIs(b, LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && teleBinder(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, TELE_EX, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // LBRACE teleBinder RBRACE
-  public static boolean teleIm(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "teleIm")) return false;
-    if (!nextTokenIs(b, LBRACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && teleBinder(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, TELE_IM, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // literal
-  public static boolean teleLit(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "teleLit")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TELE_LIT, "<tele lit>");
-    r = literal(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -2213,41 +2165,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LPAREN patterns RPAREN
-  //               | LBRACE patterns RBRACE
+  // <<licit patterns>>
   //               | atomPattern
   public static boolean unitPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unitPattern")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, UNIT_PATTERN, "<unit pattern>");
-    r = unitPattern_0(b, l + 1);
-    if (!r) r = unitPattern_1(b, l + 1);
+    r = licit(b, l + 1, AyaPsiParser::patterns);
     if (!r) r = atomPattern(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // LPAREN patterns RPAREN
-  private static boolean unitPattern_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unitPattern_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && patterns(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // LBRACE patterns RBRACE
-  private static boolean unitPattern_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unitPattern_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && patterns(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
