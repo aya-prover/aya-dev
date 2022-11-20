@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.concrete.Expr;
@@ -185,7 +186,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         //  and it doesn't make sense to solve a "substituted meta"
         // In the future, we may generate a "constant" meta and try to solve it
         //  if the result type is a pure meta.
-        if (fn.body.isRight()) resultRes = tycker.zonk(resultRes);
+        if (fn.body.isRight()) {
+          var tele = MutableArrayList.from(resultTele);
+          resultRes = PiTerm.unpi(tycker.zonk(resultRes), tele);
+          resultTele = tele.toImmutableArray();
+        }
         fn.signature = new Def.Signature(resultTele, resultRes);
         if (resultTele.isEmpty() && fn.body.isRight() && fn.body.getRightValue().isEmpty())
           reporter.report(new NobodyError(decl.sourcePos(), fn.ref));
