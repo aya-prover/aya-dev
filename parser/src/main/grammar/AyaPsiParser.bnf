@@ -4,6 +4,14 @@
  */
 
 {
+  // only for the compiler, not the IDE
+  generate=[
+    java='11'
+    psi-factory='no'
+    visitor='no'
+  ]
+  generatePsi=false
+
   // we only need the parser and element types.
   parserClass='org.aya.parser.AyaPsiParser'
   elementTypeHolderClass='org.aya.parser.AyaPsiElementTypes'
@@ -176,9 +184,8 @@ openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
 module ::= KW_MODULE weakId LBRACE stmt* RBRACE
 
 useHide ::= KW_USING useList+ | KW_HIDING hideList+
-hideList ::= LPAREN idsComma RPAREN
-useList ::= LPAREN useIdsComma RPAREN
-useIdsComma ::= <<commaSep useId>>?
+hideList ::= LPAREN <<commaSep weakId>>? RPAREN
+useList ::= LPAREN <<commaSep useId>>? RPAREN
 useId ::= weakId useAs?
 useAs ::= KW_AS assoc? weakId bindBlock?
 
@@ -222,7 +229,7 @@ openKw::= KW_OPEN
 
 structDecl
   ::=  sampleModifiers? (KW_PUBLIC? openKw)?
-       KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)?
+       KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS <<commaSep weakId>>)?
        (BAR structField)* bindBlock?
 
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
@@ -278,10 +285,9 @@ uliftPrefix ::= KW_ULIFT
 idiomAtom ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
 arrayAtom ::= LARRAY arrayBlock? RARRAY { pin=1 }
 arrayBlock ::= arrayCompBlock | arrayElementsBlock
-arrayCompBlock ::= expr BAR listComp
+arrayCompBlock ::= expr BAR <<commaSep doBinding>>
 arrayElementsBlock ::= exprList
 idiomBlock ::= barred* expr
-listComp ::= <<commaSep doBinding>>
 
 newExpr ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
@@ -292,7 +298,7 @@ forallExpr ::= KW_FORALL lambdaTele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
-doExpr ::= KW_DO LBRACE? doBlock RBRACE?
+doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
 
@@ -302,7 +308,6 @@ subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem
 barredSubSystem ::= BAR subSystem
 
-doBlock ::= <<commaSep doBlockContent>>
 doBlockContent ::= doBinding | expr
 
 newArgField ::= weakId
@@ -387,9 +392,8 @@ lambdaTeleBinder ::= teleBinderTyped
 pathTele ::= teleParamName
 
 // utilities
-exprList ::= <<commaSep expr>>
+private exprList ::= <<commaSep expr>>
 barred ::= expr BAR
-idsComma ::= <<commaSep weakId>>?
 type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
@@ -402,5 +406,5 @@ weakId ::= ID
 // meta rules
 
 // we can improve the parsing by producing generically from a 'commaSep' rule
-private meta commaSep ::= <<param>> (',' <<param>>) *
+meta commaSep ::= <<param>> (',' <<param>>) *
 meta licit ::= LBRACE <<param>> RBRACE | LPAREN <<param>> RPAREN
