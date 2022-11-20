@@ -5,6 +5,7 @@ package org.aya.lsp.actions;
 import kala.collection.SeqView;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.ModuleVar;
@@ -50,6 +51,7 @@ public interface GotoDefinition {
         case DefVar<?, ?> defVar -> defVar.concrete.sourcePos();
         case LocalVar localVar -> localVar.definition();
         case ModuleVar moduleVar -> mockSourcePos(libraries, moduleVar);
+        case GeneralizedVar gVar -> gVar.sourcePos;
         case default -> null;
       };
       if (target == null) return null;
