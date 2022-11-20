@@ -200,12 +200,16 @@ public record AyaGKProducer(
   public @NotNull BindBlock bindBlock(@NotNull GenericNode<?> node) {
     return new BindBlock(sourcePosOf(node), MutableValue.create(),
       node.childrenOfType(LOOSERS)
-        .flatMap(c -> c.childrenOfType(QUALIFIED_ID).map(this::qualifiedId))
+        .flatMap(this::qualifiedIDs)
         .toImmutableSeq(),
       node.childrenOfType(TIGHTERS)
-        .flatMap(c -> c.childrenOfType(QUALIFIED_ID).map(this::qualifiedId))
+        .flatMap(this::qualifiedIDs)
         .toImmutableSeq(),
       MutableValue.create(), MutableValue.create());
+  }
+
+  private @NotNull SeqView<QualifiedID> qualifiedIDs(GenericNode<?> c) {
+    return c.childrenOfType(QUALIFIED_ID).map(this::qualifiedId);
   }
 
   public @NotNull UseHide useHide(@NotNull GenericNode<?> node) {

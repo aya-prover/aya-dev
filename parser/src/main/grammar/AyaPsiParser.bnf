@@ -4,6 +4,14 @@
  */
 
 {
+  // only for the compiler, not the IDE
+  generate=[
+    java='11'
+    psi-factory='no'
+    visitor='no'
+  ]
+  generatePsi=false
+
   // we only need the parser and element types.
   parserClass='org.aya.parser.AyaPsiParser'
   elementTypeHolderClass='org.aya.parser.AyaPsiElementTypes'
