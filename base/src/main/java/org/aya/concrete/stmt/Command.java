@@ -34,7 +34,8 @@ public sealed interface Command extends Stmt {
     @NotNull Accessibility accessibility,
     @NotNull QualifiedID path,
     @NotNull UseHide useHide,
-    boolean openExample
+    boolean openExample,
+    boolean fromSugar
   ) implements Command {
   }
 

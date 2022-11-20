@@ -86,8 +86,8 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case Generalize g -> g.variables.foldLeft(acc, (a, var) -> add(a, linkDef(var.sourcePos, var)));
       case Command.Module m -> add(acc, linkModuleDef(new QualifiedID(m.sourcePos(), m.name())));
       case Command.Import i -> add(acc, linkModuleRef(i.path()));
-      // case Command.Open o -> add(acc, linkModuleRef(o.path()));
-      case Command.Open o -> acc; // TODO: distinguish between `open data/import` and plain `open`. We need the last one
+      case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
+      case Command.Open o -> add(acc, linkModuleRef(o.path()));
       case ClassDecl decl -> add(acc, linkDef(decl.sourcePos, decl.ref()));
       case Decl decl -> add(acc, linkDef(decl.sourcePos(), decl.ref()));
       case Remark remark -> acc; // TODO: highlight literate

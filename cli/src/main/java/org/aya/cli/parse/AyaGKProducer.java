@@ -143,14 +143,16 @@ public record AyaGKProducer(
     var modNameNode = node.child(QUALIFIED_ID);
     var namePos = sourcePosOf(modNameNode);
     var modName = qualifiedId(modNameNode);
+    var openImport = node.peekChild(KW_IMPORT) != null;
     var open = new Command.Open(
       namePos,
       accessibility,
       modName,
       useHide != null ? useHide(useHide) : UseHide.EMPTY,
-      false
+      false,
+      openImport
     );
-    return node.peekChild(KW_IMPORT) != null
+    return openImport
       ? ImmutableSeq.of(new Command.Import(namePos, modName, null), open)
       : ImmutableSeq.of(open);
   }
@@ -304,7 +306,8 @@ public record AyaGKProducer(
         openAcc,
         new QualifiedID(entire, nameOrInfix._1.data()),
         UseHide.EMPTY,
-        sample == Decl.Personality.EXAMPLE
+        sample == Decl.Personality.EXAMPLE,
+        true
       )
     ));
   }
@@ -347,7 +350,8 @@ public record AyaGKProducer(
         openAcc,
         new QualifiedID(entire, nameOrInfix._1.data()),
         UseHide.EMPTY,
-        sample == Decl.Personality.EXAMPLE
+        sample == Decl.Personality.EXAMPLE,
+        true
       )
     ));
   }

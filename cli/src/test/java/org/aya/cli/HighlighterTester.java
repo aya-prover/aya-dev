@@ -21,10 +21,8 @@ import org.aya.pretty.backend.string.LinkId;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.EmptyModuleLoader;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
-import org.aya.util.reporter.DelayedReporter;
 import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Contract;
@@ -202,7 +200,7 @@ public class HighlighterTester {
 
   public static void highlightAndTest(@Language("Aya") @NotNull String code, @Nullable ExpectedHighlightInfo... expected) {
     var sourceFile = new SourceFile("test.aya", Option.none(), code);
-    var reporter = newReporter();
+    var reporter = ThrowingReporter.INSTANCE;
 
     var parser = new AyaParserImpl(reporter);
     var stmts = parser.program(sourceFile);
@@ -214,22 +212,8 @@ public class HighlighterTester {
 
     Stmt.resolveWithoutDesugar(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
 
-    var anyError = reporter.anyError();
-    reporter.close();
-
-    if (anyError) {
-      fail("expected: no error, but actual: error");
-    }
-
     var result = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
     new HighlighterTester(code, result, expected).runTest();
-  }
-
-  public static @NotNull DelayedReporter newReporter() {
-    return new DelayedReporter(problem ->
-      System.err.println(ThrowingReporter.errorMessage(
-        problem, DistillerOptions.informative(), false, false, 80))
-    );
   }
 
   /// region Helper

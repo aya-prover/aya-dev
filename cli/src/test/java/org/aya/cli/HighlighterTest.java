@@ -11,8 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("UnknownLanguage")
 public class HighlighterTest {
-  @Test
-  public void commonTests() {
+  @Test public void commonTests() {
     @Language("Aya") String code = """
       open data Nat
       | O | S Nat
@@ -48,8 +47,7 @@ public class HighlighterTest {
     );
   }
 
-  @Test
-  public void unformatTest() {
+  @Test public void unformatTest() {
     @Language("Aya") String code = """
          open
       data  Nat |
@@ -65,8 +63,7 @@ public class HighlighterTest {
       ref(26, 28, "Nat", "nat", HighlightInfo.DefKind.Data));
   }
 
-  @Test
-  public void incorrectTest() {
+  @Test public void incorrectTest() {
     assertThrows(Throwable.class, () -> {
       @Language("Aya") String code = """
         open data List (A : Type)
@@ -79,5 +76,22 @@ public class HighlighterTest {
         whatever(),
         def(10, 13, "L1st", "list", HighlightInfo.DefKind.Data));
     });
+  }
+
+  @Test public void module() {
+    @Language("Aya") String code = """
+      module X {}
+      open X
+      open data Y
+      """;
+
+    highlightAndTest(code,
+      keyword(0, 5, "module"),
+      def(7, 7, "X", "x", HighlightInfo.DefKind.Module),
+      keyword(12, 15, "open"),
+      ref(17, 17, "X", "x", HighlightInfo.DefKind.Module),
+      keyword(19, 22, "open"),
+      keyword(24, 27, "data"),
+      def(29, 29, "Y", "y", HighlightInfo.DefKind.Data));
   }
 }
