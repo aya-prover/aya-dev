@@ -1,0 +1,36 @@
+In file $FILE:7:2 ->
+
+  5 |   let a := 1 in
+  6 |   let b := 2 in
+  7 |   3
+        ^^
+
+Error: Cannot check the expression
+         let
+        | a := 1
+        | b := 2
+        in 3
+       of type
+         Nat
+       against the type
+         Unit
+
+In file $FILE:13:5 ->
+
+  11 |   | a := 1
+  12 |   | b := 2
+  13 |   in 3
+            ^^
+
+Error: Cannot check the expression
+         let
+        | a := 1
+        | b := 2
+        in 3
+       of type
+         Nat
+       against the type
+         Unit
+
+2 error(s), 0 warning(s).
+What are you doing?
