@@ -7,11 +7,9 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
-import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
-import org.aya.core.repr.AyaShape;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
@@ -58,8 +56,6 @@ public record SingleFileCompiler(
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     var primFactory = new PrimDef.Factory();
-    var shapeFactory = new AyaShape.Factory();
-    var opSet = new AyaBinOpSet(reporter);
     return AyaCompiler.catching(reporter, flags, () -> {
       var ayaParser = new AyaParserImpl(reporter);
       var program = ayaParser.program(locator, sourceFile);
@@ -67,7 +63,7 @@ public record SingleFileCompiler(
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new FileModuleLoader(locator, path, reporter, ayaParser, primFactory, builder)).toImmutableSeq()));
-      loader.tyckModule(primFactory, shapeFactory, opSet, ctx, program, builder, (moduleResolve, defs) -> {
+      loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
         distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
         distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
         if (flags.outputFile() != null)

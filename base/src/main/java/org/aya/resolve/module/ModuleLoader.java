@@ -24,14 +24,12 @@ import org.jetbrains.annotations.Nullable;
 public interface ModuleLoader {
   default <E extends Exception> @NotNull ResolveInfo tyckModule(
     @NotNull PrimDef.Factory primFactory,
-    @NotNull AyaShape.Factory shapeFactory,
-    @NotNull AyaBinOpSet opSet,
     @NotNull ModuleContext context,
     @NotNull ImmutableSeq<Stmt> program,
     @Nullable Trace.Builder builder,
     @Nullable ModuleCallback<E> onTycked
   ) throws E {
-    return tyckModule(builder, resolveModule(primFactory, shapeFactory, opSet, context, program, this), onTycked);
+    return tyckModule(builder, resolveModule(primFactory, context, program, this), onTycked);
   }
 
   default <E extends Exception> @NotNull ResolveInfo
@@ -47,6 +45,17 @@ public interface ModuleLoader {
         resolveInfo, sccTycker.sccTycker().wellTyped().toImmutableSeq());
     }
     return resolveInfo;
+  }
+
+  default @NotNull ResolveInfo resolveModule(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull ModuleContext context,
+    @NotNull ImmutableSeq<Stmt> program,
+    @NotNull ModuleLoader recurseLoader
+  ) {
+    var shapeFactory = new AyaShape.Factory();
+    var opSet = new AyaBinOpSet(reporter());
+    return resolveModule(primFactory, shapeFactory, opSet, context, program, recurseLoader);
   }
 
   default @NotNull ResolveInfo resolveModule(
