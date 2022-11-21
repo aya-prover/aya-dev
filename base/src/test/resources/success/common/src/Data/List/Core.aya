@@ -61,9 +61,7 @@ def splitAt (n : Nat) (l : List A) : Sig (List A) ** (List A)
 | suc n, a :< l => let
   // No pattern let yet, sorry!
   | t := splitAt n l
-  | l1 := t.1
-  | l2 := t.2
-  in (a :< l1, l2)
+  in (a :< t.1, t.2)
 
 def take (n : Nat) (l : List A) => (splitAt n l).1
 
@@ -72,9 +70,7 @@ def drop (n : Nat) (l : List A) => (splitAt n l).2
 def replace (l : List A) (i s : Nat) (r : List A) =>
   let
   | t := splitAt i l
-  | l1 := t.1
-  | l2 := t.2
-  in l1 ++ r ++ drop s l2
+  in t.1 ++ r ++ drop s t.2
 
 def splitAt-appendLem (n : Nat) (l : List A) : take n l ++ drop n l = l
 | 0, l => idp
