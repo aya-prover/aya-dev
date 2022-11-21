@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.ModuleContext;
@@ -52,7 +53,20 @@ public interface ModuleLoader {
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ModuleLoader recurseLoader
   ) {
-    var resolveInfo = new ResolveInfo(primFactory, context, program, new AyaBinOpSet(reporter()));
+    var shapeFactory = new AyaShape.Factory();
+    var opSet = new AyaBinOpSet(reporter());
+    return resolveModule(primFactory, shapeFactory, opSet, context, program, recurseLoader);
+  }
+
+  default @NotNull ResolveInfo resolveModule(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull AyaShape.Factory shapeFactory,
+    @NotNull AyaBinOpSet opSet,
+    @NotNull ModuleContext context,
+    @NotNull ImmutableSeq<Stmt> program,
+    @NotNull ModuleLoader recurseLoader
+  ) {
+    var resolveInfo = new ResolveInfo(primFactory, shapeFactory, opSet, context, program);
     Stmt.resolve(program, resolveInfo, recurseLoader);
     return resolveInfo;
   }

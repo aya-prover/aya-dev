@@ -26,12 +26,13 @@ public record FileModuleLoader(
   @NotNull PrimDef.Factory primFactory,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
-  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  @Override
+  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path);
     try {
       var program = parser.program(locator, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(builder, resolveModule(primFactory, context, program, recurseLoader),  null);
+      return tyckModule(builder, resolveModule(primFactory, context, program, recurseLoader), null);
     } catch (IOException e) {
       return null;
     }

@@ -8,7 +8,6 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple3;
-import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
@@ -149,7 +148,7 @@ public record CompiledAya(
   }
 
   public @NotNull ResolveInfo toResolveInfo(@NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull SerTerm.DeState state) {
-    var resolveInfo = new ResolveInfo(state.primFactory(), context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
+    var resolveInfo = new ResolveInfo(state.primFactory(), context, ImmutableSeq.empty());
     shallowResolve(loader, resolveInfo);
     serDefs.forEach(serDef -> de(resolveInfo.shapeFactory(), context, serDef, state));
     deOp(state, resolveInfo);
