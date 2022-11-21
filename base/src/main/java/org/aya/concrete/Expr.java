@@ -708,7 +708,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    * <ul>
    *   <li>{@link Let.Bind#bindName} = f</li>
    *   <li>{@link Let.Bind#telescope} = (x : X)</li>
-   *   <li>{@link Let,Bind#result} = G</li>
+   *   <li>{@link Let.Bind#result} = G</li>
    *   <li>{@link Let.Bind#definedAs} = g</li>
    *   <li>{@link Let#body} = expr</li>
    * </ul>
