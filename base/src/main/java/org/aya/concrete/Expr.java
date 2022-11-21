@@ -712,11 +712,31 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    *   <li>{@link Let.Bind#definedAs} = g</li>
    *   <li>{@link Let#body} = expr</li>
    * </ul>
+   *
+   * @param sourcePos to the source pos of body (source code level), consider this code
+   *                  <pre>
+   *                  let a := b in
+   *                  let c := d in
+   *                  e
+   *                  </pre>
+   *                  The source pos of the
+   *                  `let a := b in let c := d in e`
+   *                  and
+   *                  `let c := d in e`
+   *                  are both the source pos of e.
+   *                  If you are looking for the source pos of `a := b` or `c := d`, see {@link Let.Bind#sourcePos()}
    */
   record Let(
+    @NotNull SourcePos sourcePos,
     @NotNull Let.Bind bind,
     @NotNull Expr body
   ) implements Expr {
+    public Let {
+      if (body instanceof Let let) {
+        sourcePos = let.sourcePos();
+      }
+    }
+
     public record Bind(
       @NotNull SourcePos sourcePos,
       @NotNull LocalVar bindName,
@@ -761,7 +781,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       }
 
       /**
-       * @see Let.Bind#tryBuildLambda(SourcePos)
+       * @see Let.Bind#tryBuildLambda()
        */
       public @NotNull Expr tryBuildPiType() {
         return telescope().foldRight(result(), (p, r) -> {
@@ -774,15 +794,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       }
     }
 
-    @Override
-    public @NotNull SourcePos sourcePos() {
-      return bind.sourcePos();
-    }
-
     public @NotNull Let update(@NotNull Bind bind, @NotNull Expr body) {
       return bind() == bind && body() == body
         ? this
-        : new Let(bind, body);
+        : new Let(sourcePos(), bind, body);
     }
 
     @Override

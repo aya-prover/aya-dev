@@ -39,3 +39,11 @@ def double_let (n : Nat) : Nat =>
   n2
 
 example def normalize'''' : double_let 7 = 9 => idp
+
+def no-fix-let (n : Nat) : Nat =>
+  let
+  | n := suc n
+  | n := suc n
+  in n
+
+example def normalize''''' : no-fix-let 7 = 9 => idp

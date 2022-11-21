@@ -639,7 +639,7 @@ public record AyaGKProducer(
         .map(this::letBind);
       var body = expr(node.child(EXPR));
 
-      return buildLet(binds, body);
+      return buildLet(body.sourcePos(), binds, body);
     }
 
     return unreachable(node);
@@ -808,7 +808,7 @@ public record AyaGKProducer(
     return Expr.Array.newList(entireSourcePos, exprs);
   }
 
-  public @NotNull Expr.Let buildLet(@NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr body) {
+  public @NotNull Expr.Let buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr body) {
     // letBinds is not empty
     assert letBinds.isNotEmpty();
 
@@ -817,7 +817,7 @@ public record AyaGKProducer(
       // Right : The body
       // Goal : let l in r
 
-      return new Expr.Let(l, r);
+      return new Expr.Let(sourcePos, l, r);
     });
   }
 
