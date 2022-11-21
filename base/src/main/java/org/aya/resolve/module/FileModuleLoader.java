@@ -4,7 +4,9 @@ package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.GenericAyaParser;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.core.def.PrimDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.generic.util.AyaFiles;
 import org.aya.generic.util.InternalException;
 import org.aya.resolve.ResolveInfo;
@@ -26,12 +28,15 @@ public record FileModuleLoader(
   @NotNull PrimDef.Factory primFactory,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
-  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  @Override
+  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path);
     try {
       var program = parser.program(locator, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(builder, resolveModule(primFactory, context, program, recurseLoader),  null);
+      var shapeFactory = new AyaShape.Factory();
+      var opSet = new AyaBinOpSet(reporter);
+      return tyckModule(builder, resolveModule(primFactory, shapeFactory, opSet, context, program, recurseLoader), null);
     } catch (IOException e) {
       return null;
     }

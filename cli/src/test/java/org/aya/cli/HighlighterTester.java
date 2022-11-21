@@ -14,7 +14,6 @@ import org.aya.cli.HighlighterTester.ExpectedHighlightType.Ref;
 import org.aya.cli.literate.HighlightInfo;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef.Factory;
 import org.aya.pretty.backend.string.LinkId;
@@ -207,7 +206,7 @@ public class HighlighterTester {
     var resolveInfo = new ResolveInfo(
       new Factory(),
       new EmptyContext(reporter, Path.of(".")).derive("main"),
-      stmts, new AyaBinOpSet(reporter)
+      stmts
     );
 
     Stmt.resolveWithoutDesugar(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);

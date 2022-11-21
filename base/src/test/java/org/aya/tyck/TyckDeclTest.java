@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.ParseTest;
-import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.GenericDef;
@@ -46,7 +45,7 @@ public class TyckDeclTest {
 
   private static @NotNull PrimDef.Factory resolve(@NotNull ImmutableSeq<Stmt> decls, @NotNull ModuleContext module) {
     var primFactory = new PrimDef.Factory();
-    Stmt.resolve(decls, new ResolveInfo(primFactory, module, decls, new AyaBinOpSet(ThrowingReporter.INSTANCE)), EmptyModuleLoader.INSTANCE);
+    Stmt.resolve(decls, new ResolveInfo(primFactory, module, decls), EmptyModuleLoader.INSTANCE);
     assertNotNull(module.underlyingFile());
     return primFactory;
   }

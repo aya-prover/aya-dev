@@ -4,6 +4,7 @@ package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.function.CheckedFunction;
 import kala.value.MutableValue;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
@@ -11,7 +12,6 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
@@ -23,6 +23,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
+import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.PhysicalModuleContext;
@@ -43,25 +44,25 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Function;
 
 public class ReplCompiler {
   final @NotNull CountingReporter reporter;
-  private final @Nullable SourceFileLocator locator;
+  private final @NotNull SourceFileLocator locator;
   private final @NotNull ReplContext context;
   private final @NotNull ImmutableSeq<Path> modulePaths;
-  private final @NotNull CompilerFlags flags;
   private final @NotNull PrimDef.Factory primFactory;
   private final @NotNull ReplShapeFactory shapeFactory;
+  private final @NotNull AyaBinOpSet opSet;
 
   public ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.modulePaths = modulePaths;
     this.reporter = CountingReporter.delegate(reporter);
-    this.locator = locator;
+    this.locator = locator != null ? locator : new SourceFileLocator.Module(this.modulePaths);
     this.primFactory = new PrimDef.Factory();
     this.shapeFactory = new ReplShapeFactory();
+    this.opSet = new AyaBinOpSet(this.reporter);
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
-    this.flags = new CompilerFlags(CompilerFlags.Message.EMOJI, false, true, null,
-      modulePaths.view(), null);
   }
 
   private @NotNull ExprTycker.Result tyckExpr(@NotNull Expr expr) {
@@ -75,27 +76,26 @@ public class ReplCompiler {
   }
 
   private @NotNull Expr desugarExpr(@NotNull Expr expr, @NotNull Reporter reporter) {
-    var resolveInfo = new ResolveInfo(primFactory,
+    var resolveInfo = new ResolveInfo(primFactory, shapeFactory, opSet,
       new EmptyContext(reporter, Path.of("dummy")).derive("dummy"),
-      ImmutableSeq.empty(), new AyaBinOpSet(reporter));
+      ImmutableSeq.empty());
     return new Desugarer(resolveInfo).apply(expr);
   }
 
-  public int loadToContext(@NotNull Path file) throws IOException {
-    if (Files.isDirectory(file)) return loadLibrary(file);
-    return loadFile(file);
+  public void loadToContext(@NotNull Path file) throws IOException {
+    if (Files.isDirectory(file)) loadLibrary(file);
+    else loadFile(file);
   }
 
-  private int loadLibrary(@NotNull Path libraryRoot) throws IOException {
+  private void loadLibrary(@NotNull Path libraryRoot) throws IOException {
+    var flags = new CompilerFlags(CompilerFlags.Message.EMOJI, false, true, null, modulePaths.view(), null);
     try {
       var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
-      int result = compiler.start();
+      compiler.start();
       var owner = compiler.libraryOwner();
       importModule(owner);
-      return result;
     } catch (LibraryConfigData.BadConfig bad) {
       reporter.reportString("Cannot load malformed library: " + bad.getMessage(), Problem.Severity.ERROR);
-      return 1;
     }
   }
 
@@ -112,26 +112,34 @@ public class ReplCompiler {
     owner.libraryDeps().forEach(this::importModule);
   }
 
-  private int loadFile(@NotNull Path file) throws IOException {
-    return new SingleFileCompiler(reporter, null, null)
-      .compile(file, r -> context, flags, null);
+  /** @see org.aya.cli.single.SingleFileCompiler#compile(Path, Function, CompilerFlags, ModuleCallback) */
+  private void loadFile(@NotNull Path file) {
+    compileToContext(parser -> Either.left(parser.program(locator, file)), NormalizeMode.WHNF);
+  }
+
+  /** @param text the text of code to compile, witch might either be a `program` or an `expr`. */
+  public @NotNull Either<ImmutableSeq<GenericDef>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
+    if (text.isBlank()) return Either.left(ImmutableSeq.empty());
+    return compileToContext(parser -> parser.repl(text), normalizeMode);
   }
 
   /**
    * Copied and adapted.
    *
-   * @param text the text of code to compile, witch might either be a `program` or an `expr`.
    * @see org.aya.cli.single.SingleFileCompiler#compile
    */
-  public @NotNull Either<ImmutableSeq<GenericDef>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
-    if (text.isBlank()) return Either.left(ImmutableSeq.empty());
+  public @NotNull Either<ImmutableSeq<GenericDef>, Term> compileToContext(
+    @NotNull CheckedFunction<AyaParserImpl, Either<ImmutableSeq<Stmt>, Expr>, IOException> parsing,
+    @NotNull NormalizeMode normalizeMode
+  ) {
     try {
-      var programOrExpr = new AyaParserImpl(reporter).repl(text);
+      var parser = new AyaParserImpl(reporter);
+      var programOrExpr = parsing.apply(parser);
       var loader = createLoader();
       return programOrExpr.map(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<GenericDef>>create();
-          var resolveInfo = loader.resolveModule(primFactory, context.fork(), program, loader);
+          var resolveInfo = loader.resolveModule(primFactory, shapeFactory, opSet, context.fork(), program, loader);
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(null, resolveInfo, ((moduleResolve, defs) -> newDefs.set(defs)));
           if (reporter.anyError()) return ImmutableSeq.empty();
@@ -173,7 +181,6 @@ public class ReplCompiler {
   }
 
   private CachedModuleLoader<ModuleListLoader> createLoader() {
-    var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
     return new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
       new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
   }

@@ -6,8 +6,10 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.util.AyaFiles;
@@ -74,7 +76,9 @@ record LibraryModuleLoader(
     var program = source.program().get();
     assert program != null;
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
-    var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
+    var shapeFactory = new AyaShape.Factory();
+    var opSet = new AyaBinOpSet(reporter());
+    var resolveInfo = resolveModule(states.primFactory, shapeFactory, opSet, context, program, recurseLoader);
     source.resolveInfo().set(resolveInfo);
     return tyckModule(null, resolveInfo, (moduleResolve, defs) -> {
       source.tycked().set(defs);
