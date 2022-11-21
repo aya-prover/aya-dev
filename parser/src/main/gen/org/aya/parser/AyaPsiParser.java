@@ -45,10 +45,10 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     create_token_set_(APP_EXPR, ARRAY_ATOM, ARROW_EXPR, ATOM_EXPR,
       CALM_FACE_EXPR, DO_EXPR, EXPR, FORALL_EXPR,
       GOAL_EXPR, HOLE_EXPR, IDIOM_ATOM, LAMBDA_EXPR,
-      LITERAL, LIT_INT_EXPR, LIT_STRING_EXPR, MATCH_EXPR,
-      NEW_EXPR, PARTIAL_EXPR, PATH_EXPR, PI_EXPR,
-      PROJ_EXPR, REF_EXPR, SIGMA_EXPR, THIS_EXPR,
-      TUPLE_ATOM, ULIFT_ATOM, UNIV_EXPR),
+      LET_EXPR, LITERAL, LIT_INT_EXPR, LIT_STRING_EXPR,
+      MATCH_EXPR, NEW_EXPR, PARTIAL_EXPR, PATH_EXPR,
+      PI_EXPR, PROJ_EXPR, REF_EXPR, SIGMA_EXPR,
+      THIS_EXPR, TUPLE_ATOM, ULIFT_ATOM, UNIV_EXPR),
   };
 
   /* ********************************************************** */
@@ -1001,6 +1001,79 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = teleBinderTyped(b, l + 1);
     if (!r) r = teleParamName(b, l + 1);
     exit_section_(b, m, LAMBDA_TELE_BINDER, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // weakId lambdaTele* type? DEFINE_AS expr
+  public static boolean letBind(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBind")) return false;
+    if (!nextTokenIs(b, ID)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = weakId(b, l + 1);
+    r = r && letBind_1(b, l + 1);
+    r = r && letBind_2(b, l + 1);
+    r = r && consumeToken(b, DEFINE_AS);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, LET_BIND, r);
+    return r;
+  }
+
+  // lambdaTele*
+  private static boolean letBind_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBind_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!lambdaTele(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "letBind_1", c)) break;
+    }
+    return true;
+  }
+
+  // type?
+  private static boolean letBind_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBind_2")) return false;
+    type(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // letBind | (BAR letBind)+
+  public static boolean letBindBlock(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBindBlock")) return false;
+    if (!nextTokenIs(b, "<let bind block>", BAR, ID)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, LET_BIND_BLOCK, "<let bind block>");
+    r = letBind(b, l + 1);
+    if (!r) r = letBindBlock_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (BAR letBind)+
+  private static boolean letBindBlock_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBindBlock_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = letBindBlock_1_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!letBindBlock_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "letBindBlock_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // BAR letBind
+  private static boolean letBindBlock_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBindBlock_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, BAR);
+    r = r && letBind(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2313,14 +2386,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // 3: PREFIX(sigmaExpr)
   // 4: ATOM(lambdaExpr)
   // 5: ATOM(matchExpr)
-  // 6: ATOM(doExpr)
-  // 7: ATOM(thisExpr)
-  // 8: ATOM(partialExpr)
-  // 9: ATOM(pathExpr)
-  // 10: ATOM(atomExpr)
-  // 11: BINARY(arrowExpr)
-  // 12: POSTFIX(appExpr)
-  // 13: POSTFIX(projExpr)
+  // 6: PREFIX(letExpr)
+  // 7: ATOM(doExpr)
+  // 8: ATOM(thisExpr)
+  // 9: ATOM(partialExpr)
+  // 10: ATOM(pathExpr)
+  // 11: ATOM(atomExpr)
+  // 12: BINARY(arrowExpr)
+  // 13: POSTFIX(appExpr)
+  // 14: POSTFIX(projExpr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -2332,6 +2406,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = sigmaExpr(b, l + 1);
     if (!r) r = lambdaExpr(b, l + 1);
     if (!r) r = matchExpr(b, l + 1);
+    if (!r) r = letExpr(b, l + 1);
     if (!r) r = doExpr(b, l + 1);
     if (!r) r = thisExpr(b, l + 1);
     if (!r) r = partialExpr(b, l + 1);
@@ -2348,15 +2423,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 11 && consumeTokenSmart(b, TO)) {
-        r = expr(b, l, 10);
+      if (g < 12 && consumeTokenSmart(b, TO)) {
+        r = expr(b, l, 11);
         exit_section_(b, l, m, ARROW_EXPR, r, true, null);
       }
-      else if (g < 12 && appExpr_0(b, l + 1)) {
+      else if (g < 13 && appExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, APP_EXPR, r, true, null);
       }
-      else if (g < 13 && projFix(b, l + 1)) {
+      else if (g < 14 && projFix(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROJ_EXPR, r, true, null);
       }
@@ -2561,6 +2636,30 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = r && exprList(b, l + 1);
     r = r && clauses(b, l + 1);
     exit_section_(b, m, MATCH_EXPR, r);
+    return r;
+  }
+
+  public static boolean letExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letExpr")) return false;
+    if (!nextTokenIsSmart(b, KW_LET)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = letExpr_0(b, l + 1);
+    p = r;
+    r = p && expr(b, l, 6);
+    exit_section_(b, l, m, LET_EXPR, r, p, null);
+    return r || p;
+  }
+
+  // KW_LET letBindBlock KW_IN
+  private static boolean letExpr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letExpr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, KW_LET);
+    r = r && letBindBlock(b, l + 1);
+    r = r && consumeToken(b, KW_IN);
+    exit_section_(b, m, null, r);
     return r;
   }
 

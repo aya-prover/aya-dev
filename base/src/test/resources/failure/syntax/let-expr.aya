@@ -1,0 +1,13 @@
+open data Nat | O | S Nat
+open data Unit | unit
+
+def id (n : Nat) : Nat => n
+def whichOne : Nat =>
+  let x := unit in id x
+
+def whichOne' : Nat =>
+  let
+  | x0 : Nat := 1
+  | x1 : Unit := 2
+  | x2 : Nat := 3
+  in 4

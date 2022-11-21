@@ -25,6 +25,38 @@ public class DistillerTest {
       """);
   }
 
+  @Test
+  public void letExprAndSaveSomeCoverage() {
+    parseAndPretty("""
+      def foo =>
+        let | a := A | b := B in c
+      """, """
+      def foo => let
+      | a := A
+      | b := B
+      in c
+      """);
+
+    parseAndPretty("""
+      def foo =>
+        let a := A in b
+      """, """
+      def foo => let a := A in b
+      """);
+
+    parseAndPretty("""
+      def foo =>
+        let a := A in
+        let b := B in
+        c
+      """, """
+      def foo => let
+      | a := A
+      | b := B
+      in c
+      """);
+  }
+
   // we test pretty instead of parsing
   public static void parseAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     ParseTest.parseAndPretty(code, pretty);

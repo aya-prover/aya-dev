@@ -142,7 +142,7 @@
   ]
 
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
-  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
+  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|letExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|lit.+Expr|univExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
@@ -265,11 +265,13 @@ expr ::= newExpr
        | sigmaExpr
        | lambdaExpr
        | matchExpr
+       | letExpr
        | doExpr
        | thisExpr
        | partialExpr
        | pathExpr
        | atomExpr
+       // put rules that do not start with `expr` above this line
        | arrowExpr
        | appExpr
        | projExpr
@@ -301,6 +303,9 @@ matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
+letBind ::= weakId lambdaTele* type? DEFINE_AS expr
+letBindBlock ::= letBind | (BAR letBind)+
+letExpr ::= KW_LET letBindBlock KW_IN expr
 
 partialExpr ::= LPARTIAL partialInner? RPARTIAL
 private partialInner ::= bareSubSystem? barredSubSystem*

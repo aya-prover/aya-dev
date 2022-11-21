@@ -170,6 +170,30 @@ public record ExprResolver(
         }
         case AnyVar var -> new Expr.Ref(pos, var);
       };
+      case Expr.Let(var letBind, var body) let -> {
+        // resolve letBind
+
+        var mCtx = MutableValue.create(ctx);
+        // visit telescope
+        var telescope = letBind.telescope().map(param -> resolve(param, mCtx));
+        // for things that can refer the telescope (like result and definedAs)
+        var resolver = enter(mCtx.get());
+        // visit result
+        var result = resolver.apply(letBind.result());
+        // visit definedAs
+        var definedAs = resolver.apply(letBind.definedAs());
+
+        // end resolve letBind
+
+        // resolve body
+        var newBody = enter(ctx.bind(letBind.bindName(), letBind.bindName().definition()))
+          .apply(body);
+
+        yield let.update(
+          letBind.update(telescope, result, definedAs),
+          newBody
+        );
+      }
       default -> EndoExpr.super.apply(expr);
     };
   }
