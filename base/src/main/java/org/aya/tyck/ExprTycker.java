@@ -309,29 +309,52 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new ListTerm(results, match._2, type), type);
       }
       case Expr.Let let -> {
+        // `let` can be either
+        // ```aya
+        // let f : G := g in h
+        // ```
+        // or
+        // ```aya
+        // let f (x : X) : G := g in h
+        // ```
+
+        // But the second form can be desugared to
+        // ```aya
+        // let f : X -> G := (\ (x : X) => g) in h
+        // ```
+        // So we desugar it!
         var definedAsExpr = let.bind().tryBuildLambda();
         var typeExpr = let.bind().tryBuildPiType();
 
-        // All things like `let f x := g` was converted to `let f := (\ x => g)`
-        // So consider we are desugaring `let f : G := g`
+        // All things like `let f (x : X) : G := g in h` was converted to `let f : X -> G := (\ (x : X) => g) in h`
+        // So consider we are handling `let f : G := g in h`
 
         // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
         var type = synthesize(typeExpr).wellTyped().freezeHoles(state);
         var definedAsResult = inherit(definedAsExpr, type);
         var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 
-        var parent = this.localCtx;
-        this.localCtx = parent.deriveMap();
-        this.localCtx.put(nameAndType);
+        var bodyResult = subscoped(() -> {
+          localCtx.put(nameAndType);
+          return synthesize(let.body());
+        });
 
-        var bodyResult = synthesize(let.body());
+        // desugar the "normal form let" to a lambda
+        // All `let` like
+        // ```aya
+        // let f : G := g in h
+        // ```
+        // can be desugared to
+        // ```aya
+        // (\ (f : G) => h) g
+        // ```
+        // So we build the lambda first
 
-        this.localCtx = parent;
-
-        // (\ (x : Z) => y) : Z -> Y
+        // (\ (f : G) => h) : G -> {??}
         var lam = LamTerm.make(SeqView.of(nameAndType), bodyResult.wellTyped());
 
-        // (\ (x : Z) => y) z : Y
+        // then apply a `g`
+        // (\ (f : G) => h) g : {??}
         var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
 
         yield new TermResult(full, bodyResult.type());
