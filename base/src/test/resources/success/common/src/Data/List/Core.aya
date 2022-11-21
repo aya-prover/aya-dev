@@ -55,18 +55,22 @@ def headDef (x : A) (xs : List A) : A
 | x, nil => x
 | _, a :< _ => a
 
-private def curry (t : Sig A ** B) (f : A -> B -> C) => f t.1 t.2
 def splitAt (n : Nat) (l : List A) : Sig (List A) ** (List A)
 | 0, l => (nil, l)
 | suc n, nil => (nil, nil)
-| suc n, a :< l => curry (splitAt n l) (\l1 l2 => (a :< l1, l2))
+| suc n, a :< l => let
+  // No pattern let yet, sorry!
+  | t := splitAt n l
+  in (a :< t.1, t.2)
 
 def take (n : Nat) (l : List A) => (splitAt n l).1
 
 def drop (n : Nat) (l : List A) => (splitAt n l).2
 
 def replace (l : List A) (i s : Nat) (r : List A) =>
-  curry (splitAt i l) (\l1 l2 => l1 ++ r ++ drop s l2)
+  let
+  | t := splitAt i l
+  in t.1 ++ r ++ drop s t.2
 
 def splitAt-appendLem (n : Nat) (l : List A) : take n l ++ drop n l = l
 | 0, l => idp
