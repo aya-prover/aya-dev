@@ -700,73 +700,94 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    *
    * <pre>
    *   let
-   *     a : Type => body0,
-   *     b => body1 in
-   *   expr
+   *     f (x : X) : G := g
+   *   in expr
    * </pre>
    *
-   * @param sourcePos
+   * where:
+   * <ul>
+   *   <li>{@link Let.Bind#bindName} = f</li>
+   *   <li>{@link Let.Bind#telescope} = (x : X)</li>
+   *   <li>{@link Let,Bind#result} = G</li>
+   *   <li>{@link Let.Bind#definedAs} = g</li>
+   *   <li>{@link Let#body} = expr</li>
+   * </ul>
    */
   record Let(
-    @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Bind> lets,
+    @NotNull Let.Bind bind,
     @NotNull Expr body
   ) implements Expr {
     public record Bind(
       @NotNull SourcePos sourcePos,
-      @NotNull LocalVar bind,
+      @NotNull LocalVar bindName,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
-      @NotNull Expr body) {
-      public @NotNull Expr.Let.Bind update(@NotNull ImmutableSeq<Expr.Param> tele, @NotNull Expr result, @NotNull Expr body) {
-        return telescope().sameElements(tele, true) && result() == result && body() == body
+      @NotNull Expr definedAs
+    ) {
+      public @NotNull Let.Bind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull Expr result, @NotNull Expr definedAs) {
+        return telescope().sameElements(telescope, true)
+          && result() == result
+          && definedAs() == definedAs
           ? this
-          : new Bind(sourcePos(), bind(), tele, result, body);
+          : new Let.Bind(sourcePos(), bindName(), telescope, result, definedAs);
       }
 
-      public @NotNull Expr.Let.Bind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-        return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(body()));
+      public @NotNull Bind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+        return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(definedAs()));
       }
 
       /**
        * Convert
        * <pre>
-       *   let f (x : X) : F := g in h
+       *   let f (x : X) : G := g in h
        * </pre>
        * to
        * <pre>
-       *   let f : X -> F := ( \ x => g ) in h
+       *  let f : Pi (x : X) -> G := \ (x : X) => g in h
        * </pre>
-       * and do not convert
+       * and keep
        * <pre>
-       *   let f := g in h
+       *   let f : G := g in h
        * </pre>
-       *
-       * @return (lambda, pi type to the lambda) or (expr, type of the expr)
        */
-      public @NotNull Tuple2<Expr, Expr> tryBuildLambda() {
-        return telescope().foldRight(
-          new Tuple2<>(body(), result()), (param, r) -> {
-            var lambda = r._1;
-            var piType = r._2;
+      public @NotNull Expr tryBuildLambda() {
+        return telescope().foldRight(definedAs(), (p, r) -> {
+          // Left  : Param
+          // Right : body
+          // Goal  : \ p => r
 
-            var newLam = new Lambda(sourcePos(), param, lambda);
-            var newPiType = new Pi(sourcePos(), param, piType);
+          return new Expr.Lambda(sourcePos, p, r);
+        });
+      }
 
-            return new Tuple2<>(newLam, newPiType);
-          });
+      /**
+       * @see Let.Bind#tryBuildLambda(SourcePos)
+       */
+      public @NotNull Expr tryBuildPiType() {
+        return telescope().foldRight(result(), (p, r) -> {
+          // Left  : Param
+          // Right : Type of Body
+          // Goal  : Pi p -> r
+
+          return new Expr.Pi(sourcePos, p, r);
+        });
       }
     }
 
-    public @NotNull Let update(@NotNull ImmutableSeq<Bind> lets, @NotNull Expr body) {
-      return lets().sameElements(lets, true) && body() == body
+    @Override
+    public @NotNull SourcePos sourcePos() {
+      return bind.sourcePos();
+    }
+
+    public @NotNull Let update(@NotNull Bind bind, @NotNull Expr body) {
+      return bind() == bind && body() == body
         ? this
-        : new Let(sourcePos, lets, body);
+        : new Let(bind, body);
     }
 
     @Override
     public @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return update(lets().map(x -> x.descent(f)), f.apply(body()));
+      return update(bind().descent(f), f.apply(body()));
     }
   }
 }

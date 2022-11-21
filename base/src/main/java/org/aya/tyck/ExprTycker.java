@@ -308,7 +308,34 @@ public final class ExprTycker extends Tycker {
         var results = elements.map(element -> inherit(element, hole._1).wellTyped());
         yield new TermResult(new ListTerm(results, match._2, type), type);
       }
-      case Expr.Let let -> desugarLet(let.lets().view(), let.body());
+      case Expr.Let let -> {
+        var definedAsExpr = let.bind().tryBuildLambda();
+        var typeExpr = let.bind().tryBuildPiType();
+
+        // All things like `let f x := g` was converted to `let f := (\ x => g)`
+        // So consider we are desugaring `let f : G := g`
+
+        // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
+        var type = synthesize(typeExpr).wellTyped().freezeHoles(state);
+        var definedAsResult = inherit(definedAsExpr, type);
+        var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
+
+        var parent = this.localCtx;
+        this.localCtx = parent.deriveMap();
+        this.localCtx.put(nameAndType);
+
+        var bodyResult = synthesize(let.body());
+
+        this.localCtx = parent;
+
+        // (\ (x : Z) => y) : Z -> Y
+        var lam = LamTerm.make(SeqView.of(nameAndType), bodyResult.wellTyped());
+
+        // (\ (x : Z) => y) z : Y
+        var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
+
+        yield new TermResult(full, bodyResult.type());
+      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -847,44 +874,6 @@ public final class ExprTycker extends Tycker {
       }
     };
     return checker.apply(term);
-  }
-
-  /**
-   * @param letBinds not empty
-   */
-  private @NotNull Result desugarLet(@NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr leaf) {
-    if (letBinds.isEmpty()) {
-      return synthesize(leaf);
-    }
-
-    var bind = letBinds.first();
-    var remain = letBinds.drop(1);
-    var exprOrLambda = bind.tryBuildLambda();
-    var bodyExpr = exprOrLambda._1;
-    var typeExpr = exprOrLambda._2;
-
-    // All things like `let f x := g` was converted to `let f := (\ x => g)`
-    // So consider we are desugaring `let f : G := g`
-
-    var type = synthesize(typeExpr).wellTyped().freezeHoles(state);
-    var bodyResult = inherit(bodyExpr, type);
-    var param = new Term.Param(bind.bind(), bodyResult.type(), true);
-
-    var parent = this.localCtx;
-    this.localCtx = parent.deriveMap();
-    this.localCtx.put(param);
-
-    var result = desugarLet(remain, leaf);
-
-    this.localCtx = parent;
-
-    // (\ (x : Z) => y) : Z -> Y
-    var lam = LamTerm.make(SeqView.of(param), result.wellTyped());
-
-    // (\ (x : Z) => y) z : Y
-    var full = AppTerm.make(lam, new Arg<>(bodyResult.wellTyped(), true));
-
-    return new TermResult(full, result.type());
   }
 
   public interface Result {

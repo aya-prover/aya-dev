@@ -12,5 +12,19 @@ Error: Cannot check the expression
        against the type
          Nat
 
-1 error(s), 0 warning(s).
+In file $FILE:11:17 ->
+
+   9 |   let
+  10 |   | x0 : Nat := 1
+  11 |   | x1 : Unit := 2
+                        ^^
+
+Error: Cannot check the expression
+         2
+       of type
+         Nat
+       against the type
+         Unit
+
+2 error(s), 0 warning(s).
 What are you doing?

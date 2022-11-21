@@ -16,6 +16,8 @@ import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import kala.tuple.Tuple4;
+import kala.tuple.Tuple5;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -632,11 +634,12 @@ public record AyaGKProducer(
     }
     if (node.is(LET_EXPR)) {
       var bindBlock = node.child(LET_BIND_BLOCK);
+      // According to the grammar, this is always not empty.
       var binds = bindBlock.childrenOfType(LET_BIND)
         .map(this::letBind);
       var body = expr(node.child(EXPR));
 
-      return new Expr.Let(pos, binds.toImmutableSeq(), body);
+      return buildLet(binds, body);
     }
 
     return unreachable(node);
@@ -805,14 +808,28 @@ public record AyaGKProducer(
     return Expr.Array.newList(entireSourcePos, exprs);
   }
 
+  public @NotNull Expr.Let buildLet(@NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr body) {
+    // letBinds is not empty
+    assert letBinds.isNotEmpty();
+
+    return (Expr.Let) letBinds.foldRight(body, (l, r) -> {
+      // Left  : The let bind
+      // Right : The body
+      // Goal : let l in r
+
+      return new Expr.Let(l, r);
+    });
+  }
+
   public @NotNull Expr.Let.Bind letBind(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
     var bind = weakId(node.child(WEAK_ID));
     // make IDEA happy
-    var teles = lambdaTelescope((SeqView<GenericNode<?>>) node.childrenOfType(LAMBDA_TELE));
+    var teles = lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x));
     var result = typeOrHole(node.peekChild(TYPE), pos);
     var body = expr(node.child(EXPR));
 
+    // The last element is a placeholder, which is meaningless
     return new Expr.Let.Bind(pos, LocalVar.from(bind), teles, result, body);
   }
 

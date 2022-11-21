@@ -9,8 +9,6 @@ def slow_plus2 (n : Nat) : Nat =>
 
 example def normalize : slow_plus2 7 = 9 => idp
 
-// TODO: should we allow this?
-
 def letInType : (let a := 1 in a = a) => idp
 
 def slow_plus2' (n : Nat) : Nat =>
@@ -34,3 +32,10 @@ def typed_let' (n : Nat) : Nat =>
   in f n
 
 example def normalize''' : typed_let' 7 = 9 => idp
+
+def double_let (n : Nat) : Nat =>
+  let n1 := suc n in
+  let n2 := suc n1 in
+  n2
+
+example def normalize'''' : double_let 7 = 9 => idp

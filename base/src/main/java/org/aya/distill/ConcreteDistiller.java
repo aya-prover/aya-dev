@@ -9,6 +9,8 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.range.primitive.IntRange;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
@@ -191,11 +193,16 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         )
       );
       case Expr.Let let -> {
-        assert let.lets().isNotEmpty();
-        var oneLine = let.lets().sizeEquals(1);
+        var letsAndBody = sugarLet(let);
+        var lets = letsAndBody._1;
+        var body = letsAndBody._2;
+        var oneLine = lets.sizeEquals(1);
         var letSeq = oneLine
-          ? visitLetBind(let.lets().first())
-          : Doc.vcommaList(let.lets().map(this::visitLetBind).map(x -> Doc.nest(2, x)));
+          ? visitLetBind(lets.first())
+          : Doc.vcat(lets.map(this::visitLetBind).map(x ->
+            // | f := g
+            Doc.sep(Doc.symbol("|"), x)
+          ));
 
         var docs = ImmutableSeq.of(
           Doc.styled(KEYWORD, "let"),
@@ -211,13 +218,13 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         //
         // ```
         // let
-        //   a := b,
-        //   c := d
+        // | a := b
+        // | c := d
         // in
         // ```
-        var fullLet = oneLine ? Doc.sep(docs) : Doc.vcat(docs);
+        var halfLet = oneLine ? Doc.sep(docs) : Doc.vcat(docs);
 
-        yield Doc.sep(fullLet, term(Outer.Free, let.body()));
+        yield Doc.sep(halfLet, term(Outer.Free, body));
       }
     };
   }
@@ -453,14 +460,32 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     )))));
   }
 
-  public Doc visitLetBind(@NotNull Expr.Let.Bind letBind) {
+  // Convert a parsing-time-desguared let to a sugared let
+  private @NotNull Tuple2<ImmutableSeq<Expr.Let.Bind>, Expr> sugarLet(@NotNull Expr.Let let) {
+    var letBinds = MutableList.<Expr.Let.Bind>create();
+
+    Expr letOrExpr = let;
+    while (letOrExpr instanceof Expr.Let mLet) {
+      letBinds.append(mLet.bind());
+      letOrExpr = mLet.body();
+    }
+
+    return Tuple.of(letBinds.toImmutableSeq(), letOrExpr);
+  }
+
+  private @NotNull Doc visitLetBind(@NotNull Expr.Let.Bind letBind) {
+    // f : G := g
     var prelude = MutableList.of(
-      varDoc(letBind.bind())
+      varDoc(letBind.bindName())
     );
+
+    if (letBind.telescope().isNotEmpty()) {
+      prelude.append(visitTele(letBind.telescope()));
+    }
 
     appendResult(prelude, letBind.result());
     prelude.append(Doc.symbol(":="));
-    prelude.append(term(Outer.Free, letBind.body()));
+    prelude.append(term(Outer.Free, letBind.definedAs()));
 
     return Doc.sep(prelude);
   }

@@ -170,12 +170,29 @@ public record ExprResolver(
         }
         case AnyVar var -> new Expr.Ref(pos, var);
       };
-      case Expr.Let let -> {
-        var mCtx = MutableValue.create(ctx);
-        var letBinds = resolveLetBinds(let.lets(), mCtx);
-        var body = enter(mCtx.get()).apply(let.body());
+      case Expr.Let(var letBind, var body) let -> {
+        // resolve letBind
 
-        yield new Expr.Let(let.sourcePos(), letBinds, body);
+        var mCtx = MutableValue.create(ctx);
+        // visit telescope
+        var telescope = letBind.telescope().map(param -> resolve(param, mCtx));
+        // for things that can refer the telescope (like result and definedAs)
+        var resolver = enter(mCtx.get());
+        // visit result
+        var result = resolver.apply(letBind.result());
+        // visit definedAs
+        var definedAs = resolver.apply(letBind.definedAs());
+
+        // end resolve letBind
+
+        // resolve body
+        var newBody = enter(ctx.bind(letBind.bindName(), letBind.bindName().definition()))
+          .apply(body);
+
+        yield let.update(
+          letBind.update(telescope, result, definedAs),
+          newBody
+        );
       }
       default -> EndoExpr.super.apply(expr);
     };
@@ -246,23 +263,6 @@ public record ExprResolver(
       var b = bind.descent(enter(ctx.get()));
       ctx.set(ctx.get().bind(bind.var(), bind.sourcePos()));
       return b;
-    });
-  }
-
-  public @NotNull ImmutableSeq<Expr.Let.Bind>
-  resolveLetBinds(@NotNull ImmutableSeq<Expr.Let.Bind> binds, @NotNull MutableValue<Context> ctx) {
-    return binds.map(bind -> {
-      var localCtx = MutableValue.create(ctx.get());
-      // visit telescope
-      var newParams = bind.telescope().map(param -> resolve(param, localCtx));
-      var newResolver = enter(localCtx.get());
-      // visit result
-      var newResult = newResolver.apply(bind.result());
-      // visit body
-      var newBody = newResolver.apply(bind.body());
-      // update the outer ctx
-      ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos()));
-      return new Expr.Let.Bind(bind.sourcePos(), bind.bind(), newParams, newResult, newBody);
     });
   }
 

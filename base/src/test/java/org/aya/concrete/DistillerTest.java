@@ -29,11 +29,11 @@ public class DistillerTest {
   public void letExprAndSaveSomeCoverage() {
     parseAndPretty("""
       def foo =>
-        let a := A, b := B in c
+        let | a := A | b := B in c
       """, """
       def foo => let
-        a := A,
-        b := B
+      | a := A
+      | b := B
       in c
       """);
 
@@ -42,6 +42,18 @@ public class DistillerTest {
         let a := A in b
       """, """
       def foo => let a := A in b
+      """);
+
+    parseAndPretty("""
+      def foo =>
+        let a := A in
+        let b := B in
+        c
+      """, """
+      def foo => let
+      | a := A
+      | b := B
+      in c
       """);
   }
 
