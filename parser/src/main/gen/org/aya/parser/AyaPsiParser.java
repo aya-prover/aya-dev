@@ -101,14 +101,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // expr BAR listComp
+  // expr BAR <<commaSep doBinding>>
   public static boolean arrayCompBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arrayCompBlock")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, ARRAY_COMP_BLOCK, "<array comp block>");
     r = expr(b, l + 1, -1);
     r = r && consumeToken(b, BAR);
-    r = r && listComp(b, l + 1);
+    r = r && commaSep(b, l + 1, AyaPsiParser::doBinding);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -396,13 +396,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // <<param>> (',' <<param>>) *
-  static boolean commaSep(PsiBuilder b, int l, Parser _param) {
+  public static boolean commaSep(PsiBuilder b, int l, Parser _param) {
     if (!recursion_guard_(b, l, "commaSep")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = _param.parse(b, l);
     r = r && commaSep_1(b, l + 1, _param);
-    exit_section_(b, m, null, r);
+    exit_section_(b, m, COMMA_SEP, r);
     return r;
   }
 
@@ -677,17 +677,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<commaSep doBlockContent>>
-  public static boolean doBlock(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "doBlock")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, DO_BLOCK, "<do block>");
-    r = commaSep(b, l + 1, AyaPsiParser::doBlockContent);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
   // doBinding | expr
   public static boolean doBlockContent(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "doBlockContent")) return false;
@@ -701,13 +690,8 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // <<commaSep expr>>
-  public static boolean exprList(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "exprList")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, EXPR_LIST, "<expr list>");
-    r = commaSep(b, l + 1, expr_parser_);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+  static boolean exprList(PsiBuilder b, int l) {
+    return commaSep(b, l + 1, expr_parser_);
   }
 
   /* ********************************************************** */
@@ -884,17 +868,24 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LPAREN idsComma RPAREN
+  // LPAREN <<commaSep weakId>>? RPAREN
   public static boolean hideList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "hideList")) return false;
     if (!nextTokenIs(b, LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LPAREN);
-    r = r && idsComma(b, l + 1);
+    r = r && hideList_1(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     exit_section_(b, m, HIDE_LIST, r);
     return r;
+  }
+
+  // <<commaSep weakId>>?
+  private static boolean hideList_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "hideList_1")) return false;
+    commaSep(b, l + 1, AyaPsiParser::weakId);
+    return true;
   }
 
   /* ********************************************************** */
@@ -956,16 +947,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<commaSep weakId>>?
-  public static boolean idsComma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "idsComma")) return false;
-    Marker m = enter_section_(b, l, _NONE_, IDS_COMMA, "<ids comma>");
-    commaSep(b, l + 1, AyaPsiParser::weakId);
-    exit_section_(b, l, m, true, false, null);
-    return true;
-  }
-
-  /* ********************************************************** */
   // KW_IMPORT qualifiedId (KW_AS weakId)?
   public static boolean importCmd(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "importCmd")) return false;
@@ -998,71 +979,28 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // lambdaTeleLit
-  //              | lambdaTeleEx
-  //              | lambdaTeleIm
+  // teleParamName | <<licit lambdaTeleBinder>>
   public static boolean lambdaTele(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTele")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LAMBDA_TELE, "<lambda tele>");
-    r = lambdaTeleLit(b, l + 1);
-    if (!r) r = lambdaTeleEx(b, l + 1);
-    if (!r) r = lambdaTeleIm(b, l + 1);
+    r = teleParamName(b, l + 1);
+    if (!r) r = licit(b, l + 1, AyaPsiParser::lambdaTeleBinder);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   /* ********************************************************** */
   // teleBinderTyped
-  //                    | lambdaTeleLit
+  //                    | teleParamName
   public static boolean lambdaTeleBinder(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTeleBinder")) return false;
     if (!nextTokenIs(b, ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = teleBinderTyped(b, l + 1);
-    if (!r) r = lambdaTeleLit(b, l + 1);
+    if (!r) r = teleParamName(b, l + 1);
     exit_section_(b, m, LAMBDA_TELE_BINDER, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // LPAREN lambdaTeleBinder RPAREN
-  public static boolean lambdaTeleEx(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaTeleEx")) return false;
-    if (!nextTokenIs(b, LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && lambdaTeleBinder(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, LAMBDA_TELE_EX, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // LBRACE lambdaTeleBinder RBRACE
-  public static boolean lambdaTeleIm(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaTeleIm")) return false;
-    if (!nextTokenIs(b, LBRACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && lambdaTeleBinder(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, LAMBDA_TELE_IM, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // teleParamName
-  public static boolean lambdaTeleLit(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaTeleLit")) return false;
-    if (!nextTokenIs(b, ID)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = teleParamName(b, l + 1);
-    exit_section_(b, m, LAMBDA_TELE_LIT, r);
     return r;
   }
 
@@ -1140,14 +1078,39 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<commaSep doBinding>>
-  public static boolean listComp(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listComp")) return false;
-    if (!nextTokenIs(b, ID)) return false;
+  // LBRACE <<param>> RBRACE | LPAREN <<param>> RPAREN
+  public static boolean licit(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "licit")) return false;
+    if (!nextTokenIs(b, "", LBRACE, LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = commaSep(b, l + 1, AyaPsiParser::doBinding);
-    exit_section_(b, m, LIST_COMP, r);
+    r = licit_0(b, l + 1, _param);
+    if (!r) r = licit_1(b, l + 1, _param);
+    exit_section_(b, m, LICIT, r);
+    return r;
+  }
+
+  // LBRACE <<param>> RBRACE
+  private static boolean licit_0(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "licit_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && _param.parse(b, l);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LPAREN <<param>> RPAREN
+  private static boolean licit_1(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "licit_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LPAREN);
+    r = r && _param.parse(b, l);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1822,7 +1785,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // sampleModifiers? (KW_PUBLIC? openKw)?
-  //        KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)?
+  //        KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS <<commaSep weakId>>)?
   //        (BAR structField)* bindBlock?
   public static boolean structDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "structDecl")) return false;
@@ -1891,20 +1854,20 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (KW_EXTENDS idsComma)?
+  // (KW_EXTENDS <<commaSep weakId>>)?
   private static boolean structDecl_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "structDecl_6")) return false;
     structDecl_6_0(b, l + 1);
     return true;
   }
 
-  // KW_EXTENDS idsComma
+  // KW_EXTENDS <<commaSep weakId>>
   private static boolean structDecl_6_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "structDecl_6_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, KW_EXTENDS);
-    r = r && idsComma(b, l + 1);
+    r = r && commaSep(b, l + 1, AyaPsiParser::weakId);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2060,16 +2023,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // teleLit
-  //        | teleEx
-  //        | teleIm
+  // literal | <<licit teleBinder>>
   public static boolean tele(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tele")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, TELE, "<tele>");
-    r = teleLit(b, l + 1);
-    if (!r) r = teleEx(b, l + 1);
-    if (!r) r = teleIm(b, l + 1);
+    r = literal(b, l + 1);
+    if (!r) r = licit(b, l + 1, AyaPsiParser::teleBinder);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -2123,45 +2083,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "teleBinderTyped_0", c)) break;
     }
     exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // LPAREN teleBinder RPAREN
-  public static boolean teleEx(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "teleEx")) return false;
-    if (!nextTokenIs(b, LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && teleBinder(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, TELE_EX, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // LBRACE teleBinder RBRACE
-  public static boolean teleIm(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "teleIm")) return false;
-    if (!nextTokenIs(b, LBRACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && teleBinder(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, TELE_IM, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // literal
-  public static boolean teleLit(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "teleLit")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TELE_LIT, "<tele lit>");
-    r = literal(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -2283,41 +2204,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LPAREN patterns RPAREN
-  //               | LBRACE patterns RBRACE
+  // <<licit patterns>>
   //               | atomPattern
   public static boolean unitPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unitPattern")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, UNIT_PATTERN, "<unit pattern>");
-    r = unitPattern_0(b, l + 1);
-    if (!r) r = unitPattern_1(b, l + 1);
+    r = licit(b, l + 1, AyaPsiParser::patterns);
     if (!r) r = atomPattern(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // LPAREN patterns RPAREN
-  private static boolean unitPattern_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unitPattern_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && patterns(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // LBRACE patterns RBRACE
-  private static boolean unitPattern_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unitPattern_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && patterns(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2450,27 +2345,24 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<commaSep useId>>?
-  public static boolean useIdsComma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "useIdsComma")) return false;
-    Marker m = enter_section_(b, l, _NONE_, USE_IDS_COMMA, "<use ids comma>");
-    commaSep(b, l + 1, AyaPsiParser::useId);
-    exit_section_(b, l, m, true, false, null);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // LPAREN useIdsComma RPAREN
+  // LPAREN <<commaSep useId>>? RPAREN
   public static boolean useList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "useList")) return false;
     if (!nextTokenIs(b, LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LPAREN);
-    r = r && useIdsComma(b, l + 1);
+    r = r && useList_1(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     exit_section_(b, m, USE_LIST, r);
     return r;
+  }
+
+  // <<commaSep useId>>?
+  private static boolean useList_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "useList_1")) return false;
+    commaSep(b, l + 1, AyaPsiParser::useId);
+    return true;
   }
 
   /* ********************************************************** */
@@ -2771,7 +2663,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // KW_DO LBRACE? doBlock RBRACE?
+  // KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
   public static boolean doExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "doExpr")) return false;
     if (!nextTokenIsSmart(b, KW_DO)) return false;
@@ -2779,7 +2671,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_DO);
     r = r && doExpr_1(b, l + 1);
-    r = r && doBlock(b, l + 1);
+    r = r && commaSep(b, l + 1, AyaPsiParser::doBlockContent);
     r = r && doExpr_3(b, l + 1);
     exit_section_(b, m, DO_EXPR, r);
     return r;

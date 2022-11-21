@@ -27,6 +27,7 @@ public interface AyaPsiElementTypes {
   IElementType CALM_FACE_EXPR = new AyaPsiElementType("CALM_FACE_EXPR");
   IElementType CLAUSE = new AyaPsiElementType("CLAUSE");
   IElementType CLAUSES = new AyaPsiElementType("CLAUSES");
+  IElementType COMMA_SEP = new AyaPsiElementType("COMMA_SEP");
   IElementType DATA_BODY = new AyaPsiElementType("DATA_BODY");
   IElementType DATA_CTOR = new AyaPsiElementType("DATA_CTOR");
   IElementType DATA_CTOR_CLAUSE = new AyaPsiElementType("DATA_CTOR_CLAUSE");
@@ -34,11 +35,9 @@ public interface AyaPsiElementTypes {
   IElementType DECL = new AyaPsiElementType("DECL");
   IElementType DECL_NAME_OR_INFIX = new AyaPsiElementType("DECL_NAME_OR_INFIX");
   IElementType DO_BINDING = new AyaPsiElementType("DO_BINDING");
-  IElementType DO_BLOCK = new AyaPsiElementType("DO_BLOCK");
   IElementType DO_BLOCK_CONTENT = new AyaPsiElementType("DO_BLOCK_CONTENT");
   IElementType DO_EXPR = new AyaPsiElementType("DO_EXPR");
   IElementType EXPR = new AyaPsiElementType("EXPR");
-  IElementType EXPR_LIST = new AyaPsiElementType("EXPR_LIST");
   IElementType FN_BODY = new AyaPsiElementType("FN_BODY");
   IElementType FN_DECL = new AyaPsiElementType("FN_DECL");
   IElementType FN_MODIFIERS = new AyaPsiElementType("FN_MODIFIERS");
@@ -50,18 +49,14 @@ public interface AyaPsiElementTypes {
   IElementType HOLE_EXPR = new AyaPsiElementType("HOLE_EXPR");
   IElementType IDIOM_ATOM = new AyaPsiElementType("IDIOM_ATOM");
   IElementType IDIOM_BLOCK = new AyaPsiElementType("IDIOM_BLOCK");
-  IElementType IDS_COMMA = new AyaPsiElementType("IDS_COMMA");
   IElementType IMPORT_CMD = new AyaPsiElementType("IMPORT_CMD");
   IElementType LAMBDA_EXPR = new AyaPsiElementType("LAMBDA_EXPR");
   IElementType LAMBDA_TELE = new AyaPsiElementType("LAMBDA_TELE");
   IElementType LAMBDA_TELE_BINDER = new AyaPsiElementType("LAMBDA_TELE_BINDER");
-  IElementType LAMBDA_TELE_EX = new AyaPsiElementType("LAMBDA_TELE_EX");
-  IElementType LAMBDA_TELE_IM = new AyaPsiElementType("LAMBDA_TELE_IM");
-  IElementType LAMBDA_TELE_LIT = new AyaPsiElementType("LAMBDA_TELE_LIT");
   IElementType LET_BIND = new AyaPsiElementType("LET_BIND");
   IElementType LET_BIND_BLOCK = new AyaPsiElementType("LET_BIND_BLOCK");
   IElementType LET_EXPR = new AyaPsiElementType("LET_EXPR");
-  IElementType LIST_COMP = new AyaPsiElementType("LIST_COMP");
+  IElementType LICIT = new AyaPsiElementType("LICIT");
   IElementType LITERAL = new AyaPsiElementType("LITERAL");
   IElementType LIT_INT_EXPR = new AyaPsiElementType("LIT_INT_EXPR");
   IElementType LIT_STRING_EXPR = new AyaPsiElementType("LIT_STRING_EXPR");
@@ -100,9 +95,6 @@ public interface AyaPsiElementTypes {
   IElementType TELE_BINDER = new AyaPsiElementType("TELE_BINDER");
   IElementType TELE_BINDER_ANONYMOUS = new AyaPsiElementType("TELE_BINDER_ANONYMOUS");
   IElementType TELE_BINDER_TYPED = new AyaPsiElementType("TELE_BINDER_TYPED");
-  IElementType TELE_EX = new AyaPsiElementType("TELE_EX");
-  IElementType TELE_IM = new AyaPsiElementType("TELE_IM");
-  IElementType TELE_LIT = new AyaPsiElementType("TELE_LIT");
   IElementType TELE_PARAM_NAME = new AyaPsiElementType("TELE_PARAM_NAME");
   IElementType THIS_EXPR = new AyaPsiElementType("THIS_EXPR");
   IElementType TIGHTERS = new AyaPsiElementType("TIGHTERS");
@@ -116,7 +108,6 @@ public interface AyaPsiElementTypes {
   IElementType USE_AS = new AyaPsiElementType("USE_AS");
   IElementType USE_HIDE = new AyaPsiElementType("USE_HIDE");
   IElementType USE_ID = new AyaPsiElementType("USE_ID");
-  IElementType USE_IDS_COMMA = new AyaPsiElementType("USE_IDS_COMMA");
   IElementType USE_LIST = new AyaPsiElementType("USE_LIST");
   IElementType WEAK_ID = new AyaPsiElementType("WEAK_ID");
 
