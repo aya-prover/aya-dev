@@ -303,7 +303,10 @@ matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
-letBind ::= weakId lambdaTele* type? DEFINE_AS expr
+letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
+}
 letBindBlock ::= letBind | (BAR letBind)+
 letExpr ::= KW_LET letBindBlock KW_IN expr
 
@@ -355,7 +358,7 @@ atomPattern ::= atomListPattern
               | CALM_FACE
 atomListPattern ::= LARRAY patterns? RARRAY (KW_AS weakId)?
 atomBindPattern ::= weakId {
-  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl.AtomBindPattern"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }
 
