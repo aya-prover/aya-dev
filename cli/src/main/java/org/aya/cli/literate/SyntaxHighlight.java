@@ -96,7 +96,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
         if (decl instanceof Decl.Telescopic teleDecl) {
           teleDecl.telescope().view()
             .map(Expr.Param::ref)
-            .filter(x -> !x.isGenerated())
+            .filterNot(LocalVar::isGenerated)
             .forEach(def -> add(acc, linkDef(def.definition(), def)));
         }
 
