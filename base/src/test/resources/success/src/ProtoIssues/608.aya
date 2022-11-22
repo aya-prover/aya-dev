@@ -5,5 +5,5 @@ example def test1 (A B : Type) (x : A) (y : B) => wow A B x y
 example def test2 (A B : Type) (x : A) (y : B) => wow A B x x
 example def test4 (A B : Type) (x : A) (y : B) => wow A B y y
 
--- ^ see issue608.aya, issue602.aya in proto repo
--- https://github.com/aya-prover/aya-prover-proto/issues/608
+// ^ see issue608.aya, issue602.aya in proto repo
+// https://github.com/aya-prover/aya-prover-proto/issues/608

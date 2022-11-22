@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
@@ -14,9 +13,15 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.*;
+import org.aya.core.term.DataCall;
+import org.aya.core.term.PiTerm;
+import org.aya.core.term.SortTerm;
+import org.aya.core.term.Term;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
+import org.aya.guest0x0.cubical.Partial;
+import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.pat.Conquer;
@@ -51,11 +56,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private <S extends Decl, D extends GenericDef> D
   traced(@NotNull S yeah, ExprTycker p, @NotNull BiFunction<S, ExprTycker, D> f) {
     tracing(builder -> builder.shift(new Trace.DeclT(yeah.ref(), yeah.sourcePos())));
-    var parent = p.localCtx;
-    p.localCtx = parent.deriveMap();
-    var r = f.apply(yeah, p);
+    var r = p.subscoped(() -> f.apply(yeah, p));
     tracing(Trace.Builder::reduce);
-    p.localCtx = parent;
     return r;
   }
 
@@ -89,7 +91,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
               var result = patTycker.elabClausesDirectly(clauses, signature);
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (patTycker.noError())
-                ensureConfluent(tycker, signature, result, pos, true);
+                ensureConfluent(tycker, signature, result, pos);
             } else {
               // First-match semantics.
               var result = patTycker.elabClausesClassified(clauses, signature, pos);
@@ -119,21 +121,19 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var dataConcrete = dataRef.concrete;
         var dataSig = dataConcrete.signature;
         assert dataSig != null;
-        var dataCall = ((DataCall) signature.result());
+        var dataCall = (DataCall) signature.result();
         var tele = signature.param();
-        var patTycker = ctor.yetTycker;
         var pat = ctor.yetTyckedPat;
-        assert patTycker != null && pat != null; // header should be checked first
-        // PatTycker was created when checking the header with another expr tycker,
-        // we should make sure it's the same one here. See comments of ExprTycker.
-        assert tycker == patTycker.exprTycker;
-        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(ImmutableMap.from(
-          dataSig.param().view().map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
-        var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature);
-        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
+        assert pat != null; // header should be checked first
+        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(new Subst(
+          dataSig.param().view().map(Term.Param::ref),
+          pat.view().map(Pat::toTerm)));
+        var elabClauses = tycker.zonk(tycker.elaboratePartial(ctor.clauses, dataCall));
+        if (!(elabClauses instanceof Partial.Split<Term> split)) {
+          throw new AssertionError("This does not seem right, " + elabClauses);
+        }
+        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, split, dataCall, ctor.coerce);
         dataConcrete.checkedBody.append(elaborated);
-        if (patTycker.noError())
-          ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
         yield elaborated;
       }
       case TeleDecl.StructField field -> {
@@ -156,15 +156,19 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull FnDef doSimpleFn(TeleDecl.FnDecl fn, @NotNull ExprTycker tycker) {
-    var okTele = checkTele(tycker, fn.telescope, null);
-    var preresult = tycker.synthesize(fn.result).wellTyped();
-    var bodyExpr = fn.body.getLeftValue();
-    var prebody = tycker.check(bodyExpr, preresult).wellTyped();
-    tycker.solveMetas();
-    var result = tycker.zonk(preresult);
-    var tele = zonkTele(tycker, okTele);
+    record Tmp(ImmutableSeq<TeleResult> okTele, Term preresult, Term prebody) {}
+    var tmp = tycker.subscoped(() -> {
+      var okTele = checkTele(tycker, fn.telescope, null);
+      var preresult = tycker.synthesize(fn.result).wellTyped();
+      var bodyExpr = fn.body.getLeftValue();
+      var prebody = tycker.check(bodyExpr, preresult).wellTyped();
+      tycker.solveMetas();
+      return new Tmp(okTele, preresult, prebody);
+    });
+    var tele = zonkTele(tycker, tmp.okTele);
+    var result = tycker.zonk(tmp.preresult);
     fn.signature = new Def.Signature(tele, result);
-    var body = tycker.zonk(prebody);
+    var body = tycker.zonk(tmp.prebody);
     return new FnDef(fn.ref, tele, result, fn.modifiers, Either.left(body));
   }
 
@@ -199,6 +203,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         struct.ulift = result;
       }
       case TeleDecl.PrimDecl prim -> {
+        // This directly corresponds to the tycker.localCtx = new LocalCtx();
+        //  at the end of this case clause.
         assert tycker.localCtx.isEmpty();
         var core = prim.ref.core;
         var tele = tele(tycker, prim.telescope, null);
@@ -220,6 +226,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           tycker.unifyTyReported(result, core.result, prim.result);
         } else prim.signature = new Def.Signature(core.telescope, core.result);
         tycker.solveMetas();
+        tycker.localCtx = new SeqLocalCtx();
       }
       case TeleDecl.DataCtor ctor -> {
         if (ctor.signature != null) return;
@@ -232,9 +239,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var sig = new Def.Signature(dataSig.param(), dataCall);
         var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
-        PatTycker.LhsResult lhs = null;
         if (ctor.patterns.isNotEmpty()) {
-          lhs = patTycker.checkLhs(new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false);
+          var lhs = patTycker.checkLhs(new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false);
           ctor.yetTyckedPat = lhs.preclause().patterns();
           // Revert to the "after patterns" state
           tycker.localCtx = lhs.gamma();
@@ -245,7 +251,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         }
         var tele = tele(tycker, ctor.telescope, dataConcrete.ulift.isProp() ? null : dataConcrete.ulift);
         ctor.signature = new Def.Signature(tele, dataCall);
-        ctor.yetTycker = patTycker;
         ctor.patternTele = ctor.yetTyckedPat.isEmpty()
           ? dataSig.param().map(Term.Param::implicitify)
           : Pat.extractTele(ctor.yetTyckedPat);
@@ -275,13 +280,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private void ensureConfluent(
     ExprTycker tycker, Def.Signature signature,
-    PatTycker.PatResult elabClauses, SourcePos pos,
-    boolean coverage
+    PatTycker.PatResult elabClauses, SourcePos pos
   ) {
-    if (!coverage && elabClauses.matchings().isEmpty()) return;
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     PatClassifier.confluence(elabClauses, tycker, pos,
-      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos, coverage));
+      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos, true));
     Conquer.against(elabClauses.matchings(), true, tycker, pos, signature);
     tycker.solveMetas();
     tracing(TreeBuilder::reduce);
@@ -292,7 +295,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
    */
   private @NotNull ImmutableSeq<Term.Param>
   tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable SortTerm sort) {
-    var okTele = checkTele(tycker, tele, sort);
+    var okTele = tycker.subscoped(() -> checkTele(tycker, tele, sort));
     tycker.solveMetas();
     return zonkTele(tycker, okTele);
   }

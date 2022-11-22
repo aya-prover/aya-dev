@@ -1,12 +1,15 @@
 open import Arith::Nat
+open import Paths
 
 example open data Int : Type
  | pos Nat
- | neg Nat { | 0 => pos 0 }
+ | neg Nat
+ | posneg (i : I) { i := pos 0 | ~ i := neg 0 }
 
 example def abs (n : Int) : Nat
  | pos n => n
  | neg n => n
+ | posneg _ => 0
 
 example def abs2 (n : Int) => abs n
 
@@ -14,3 +17,4 @@ counterexample def overlap absBad (n : Int) : Nat
  | pos (suc n) => 1
  | pos zero => 1
  | neg n => 0
+ | posneg _ => 0

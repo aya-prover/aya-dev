@@ -64,10 +64,10 @@ WHITE_SPACE         = [ \t\r\n]+
 // Identifier, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-AYA_SIMPLE_LETTER = [~!@#$%\^&*+=<>?/|\[\]a-zA-Z_\u2200-\u22FF]
+AYA_SIMPLE_LETTER = [~!@#$%\^&*+=<>?/\[\]a-zA-Z_\u2200-\u22FF]
 AYA_UNICODE = [\u0080-\uFEFE] | [\uFF00-\u{10FFFF}]
 AYA_LETTER = {AYA_SIMPLE_LETTER} | {AYA_UNICODE}
-AYA_LETTER_FOLLOW = {AYA_LETTER} | [0-9'-]
+AYA_LETTER_FOLLOW = {AYA_LETTER} | [0-9'|-]
 REPL_COMMAND = : {AYA_LETTER_FOLLOW}+
 ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \/\\ | \\\/
 
@@ -106,10 +106,10 @@ RPATH = \|\] | \u27E7
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Comments, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-LINE_COMMENT        = "--" (.* | {EOL})
-DOC_COMMENT         = "--|" (.* | {EOL})
-BLOCK_COMMENT_START = "{-"
-BLOCK_COMMENT_END   = "-}"
+LINE_COMMENT        = "//" (.* | {EOL})
+DOC_COMMENT         = "///" (.* | {EOL})
+BLOCK_COMMENT_START = "/*"
+BLOCK_COMMENT_END   = "*/"
 
 %%
 <YYINITIAL> {

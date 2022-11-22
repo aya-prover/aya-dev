@@ -7,16 +7,13 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.control.Result;
-import kala.tuple.Tuple2;
 import org.aya.core.term.*;
 import org.aya.core.visitor.PatTraversal;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Formula;
-import org.aya.tyck.env.LocalCtx;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -46,7 +43,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
   ) {
     var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), inferMeta, pre);
     try {
-      for (var pat : pats.zip(terms)) matchy.match(pat);
+      pats.forEachWithChecked(terms, matchy::match);
       return Result.ok(matchy.subst());
     } catch (Mismatch mismatch) {
       return Result.err(mismatch.isBlocked);
@@ -82,7 +79,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
       case Pat.Meta ignored -> throw new InternalException("Pat.Meta is not allowed");
       case Pat.End end -> {
         term = pre.apply(term);
-        if (!(term.asFormula() instanceof Formula.Lit<Term> termEnd && termEnd.isOne() == end.isOne())) {
+        if (!(term.asFormula() instanceof Formula.Lit<Term>(var one) && one == end.isOne())) {
           throw new Mismatch(true);
         }
       }
@@ -133,11 +130,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
 
   private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
-    lpats.view().zip(terms).forEachChecked(this::match);
-  }
-
-  private void match(@NotNull Tuple2<Pat, Term> pp) throws Mismatch {
-    match(pp._1, pp._2);
+    lpats.forEachWithChecked(terms, this::match);
   }
 
   private static final class Mismatch extends Exception {

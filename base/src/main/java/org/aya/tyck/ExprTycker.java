@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -329,6 +330,57 @@ public final class ExprTycker extends Tycker {
         var results = elements.map(element -> inherit(element, hole._1).wellTyped());
         yield new TermResult(new ListTerm(results, match._2, type), type);
       }
+      case Expr.Let let -> {
+        // `let` can be either
+        // ```aya
+        // let f : G := g in h
+        // ```
+        // or
+        // ```aya
+        // let f (x : X) : G := g in h
+        // ```
+
+        // But the second form can be desugared to
+        // ```aya
+        // let f : X -> G := (\ (x : X) => g) in h
+        // ```
+        // So we desugar it!
+        var definedAsExpr = let.bind().tryBuildLambda();
+        var typeExpr = let.bind().tryBuildPiType();
+
+        // All things like `let f (x : X) : G := g in h` was converted to `let f : X -> G := (\ (x : X) => g) in h`
+        // So consider we are handling `let f : G := g in h`
+
+        // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
+        var type = synthesize(typeExpr).wellTyped().freezeHoles(state);
+        var definedAsResult = inherit(definedAsExpr, type);
+        var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
+
+        var bodyResult = subscoped(() -> {
+          localCtx.put(nameAndType);
+          return synthesize(let.body());
+        });
+
+        // desugar the "normal form let" to a lambda
+        // All `let` like
+        // ```aya
+        // let f : G := g in h
+        // ```
+        // can be desugared to
+        // ```aya
+        // (\ (f : G) => h) g
+        // ```
+        // So we build the lambda first
+
+        // (\ (f : G) => h) : G -> {??}
+        var lam = LamTerm.make(SeqView.of(nameAndType), bodyResult.wellTyped());
+
+        // then apply a `g`
+        // (\ (f : G) => h) g : {??}
+        var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
+
+        yield new TermResult(full, bodyResult.type());
+      }
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -343,7 +395,7 @@ public final class ExprTycker extends Tycker {
     // ^ note: `inst` may be ErrorTerm!
   }
 
-  private @NotNull Partial<Term> elaboratePartial(@NotNull Expr.PartEl partial, @NotNull Term type) {
+  public @NotNull Partial<Term> elaboratePartial(@NotNull Expr.PartEl partial, @NotNull Term type) {
     var s = new ClauseTyckState();
     var sides = partial.clauses().flatMap(sys -> clause(sys._1, sys._2, type, s));
     confluence(sides, partial, type);
@@ -847,8 +899,19 @@ public final class ExprTycker extends Tycker {
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
   }
+  
+  /// region Helper
 
+  public <R> R subscoped(@NotNull Supplier<R> action) {
+    var parent = this.localCtx;
+    this.localCtx = parent.deriveMap();
+    var result = action.get();
+    this.localCtx = parent;
+    return result;
+  }
 
+  /// endregion
+  
   /**
    * {@link TermResult#type} is the type of {@link TermResult#wellTyped}.
    *

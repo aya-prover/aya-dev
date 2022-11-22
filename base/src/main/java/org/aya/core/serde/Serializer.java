@@ -9,10 +9,11 @@ import kala.tuple.Tuple;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.aya.util.Arg;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +62,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serializePats(ctor.pats),
         serializeParams(ctor.ownerTele),
         serializeParams(ctor.selfTele),
-        ctor.clauses.map(this::serialize),
+        ctor.clauses.fmap(this::serialize),
         serialize(ctor.result),
         ctor.coerce
       );
@@ -76,11 +77,11 @@ public record Serializer(@NotNull Serializer.State state) {
     return switch (term) {
       case IntegerTerm lit -> new SerTerm.ShapedInt(lit.repr(),
         SerDef.SerShapeResult.serialize(state, lit.recognition()),
-        (SerTerm.DataCall) serialize(lit.type()));
+        (SerTerm.Data) serialize(lit.type()));
       case ListTerm lit -> new SerTerm.ShapedList(
         lit.repr().map(this::serialize),
         SerDef.SerShapeResult.serialize(state, lit.recognition()),
-        (SerTerm.DataCall) serialize(lit.type()));
+        (SerTerm.Data) serialize(lit.type()));
       case FormulaTerm end -> new SerTerm.Mula(end.asFormula().fmap(this::serialize));
       case StringTerm str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
@@ -88,13 +89,13 @@ public record Serializer(@NotNull Serializer.State state) {
       case IntervalTerm interval -> new SerTerm.Interval();
       case PiTerm pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
       case SigmaTerm sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
-      case ConCall conCall -> new SerTerm.ConCall(
+      case ConCall conCall -> new SerTerm.Con(
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
         serializeArgs(conCall.conArgs()));
       case StructCall structCall -> serializeStructCall(structCall);
       case DataCall dataCall -> serializeDataCall(dataCall);
-      case PrimCall prim -> new SerTerm.PrimCall(
+      case PrimCall prim -> new SerTerm.Prim(
         state.def(prim.ref()),
         prim.id(),
         serializeCall(prim.ulift(), prim.args()));
@@ -102,7 +103,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serialize(access.of()), state.def(access.ref()),
         serializeArgs(access.structArgs()),
         serializeArgs(access.fieldArgs()));
-      case FnCall fnCall -> new SerTerm.FnCall(
+      case FnCall fnCall -> new SerTerm.Fn(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
       case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
@@ -114,7 +115,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case NewTerm newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
-      case PartialTerm el -> new SerTerm.PartEl(el.partial().fmap(this::serialize), serialize(el.rhsType()));
+      case PartialTerm el -> new SerTerm.PartEl(partial(el.partial()), serialize(el.rhsType()));
       case PartialTyTerm ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
       case PathTerm path -> new SerTerm.Path(serialize(path.cube()));
       case PLamTerm path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
@@ -129,6 +130,10 @@ public record Serializer(@NotNull Serializer.State state) {
       case SortTerm sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
     };
+  }
+
+  private @NotNull Partial<SerTerm> partial(Partial<Term> el) {
+    return el.fmap(this::serialize);
   }
 
   private @NotNull SerPat serialize(@NotNull Pat pat) {
@@ -154,17 +159,17 @@ public record Serializer(@NotNull Serializer.State state) {
     return new SerTerm.SerCube(
       serializeIntervals(cube.params()),
       serialize(cube.type()),
-      cube.partial().fmap(this::serialize));
+      partial(cube.partial()));
   }
 
-  private @NotNull SerTerm.DataCall serializeDataCall(@NotNull DataCall dataCall) {
-    return new SerTerm.DataCall(
+  private @NotNull SerTerm.Data serializeDataCall(@NotNull DataCall dataCall) {
+    return new SerTerm.Data(
       state.def(dataCall.ref()),
       serializeCall(dataCall.ulift(), dataCall.args()));
   }
 
-  private @NotNull SerTerm.StructCall serializeStructCall(@NotNull StructCall structCall) {
-    return new SerTerm.StructCall(
+  private @NotNull SerTerm.Struct serializeStructCall(@NotNull StructCall structCall) {
+    return new SerTerm.Struct(
       state.def(structCall.ref()),
       serializeCall(structCall.ulift(), structCall.args()));
   }
@@ -177,12 +182,9 @@ public record Serializer(@NotNull Serializer.State state) {
     return new SerTerm.SerArg(serialize(termArg.term()), termArg.explicit());
   }
 
-  public record State(
-    @NotNull MutableMap<LocalVar, Integer> localCache,
-    @NotNull MutableMap<DefVar<?, ?>, Integer> defCache
-  ) {
+  public record State(@NotNull MutableMap<LocalVar, Integer> localCache) {
     public State() {
-      this(MutableMap.create(), MutableMap.create());
+      this(MutableMap.create());
     }
 
     public @NotNull SerTerm.SimpVar local(@NotNull LocalVar var) {

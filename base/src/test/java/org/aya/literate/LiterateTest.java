@@ -1,14 +1,15 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.MainArgs;
-import org.aya.pretty.style.AyaColorScheme;
 import org.aya.test.TestRunner;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.Global;
 import org.aya.util.reporter.ThrowingReporter;
 import org.junit.jupiter.api.AfterAll;
@@ -19,7 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class LiterateTest {
   @BeforeAll public static void enter() {
@@ -33,11 +34,13 @@ public class LiterateTest {
   @Test public void literate() throws IOException {
     var literate = TestRunner.DEFAULT_TEST_DIR.resolve("literate");
     var distillInfo = new CompilerFlags.DistillInfo(
+      true,
       MainArgs.DistillStage.scoped,
       MainArgs.DistillFormat.plain,
-      AyaColorScheme.INTELLIJ,
+      DistillerOptions.pretty(),
+      new RenderOptions(),
       literate);
-    var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, false, distillInfo, ImmutableSeq.empty(), null);
+    var flags = new CompilerFlags(false, false, distillInfo, ImmutableSeq.empty(), null);
     var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, TestRunner.LOCATOR, null);
     compiler.compile(literate.resolve("test.aya"), flags, null);
     var strings = List.of("test.txt", "test.aya", "standard-test.txt");
@@ -45,15 +48,8 @@ public class LiterateTest {
       .filter(path -> !strings.contains(path.getFileName().toString()))
       .forEachChecked(Files::delete);
     var actual = literate.resolve("test.txt");
-    var readString = Files.readAllLines(actual)
-      .stream()
-      .map(s -> s + "\n")
-      .toList();
+    var readString = Files.readAllLines(actual);
     Files.delete(actual);
-    assertEquals(Files.readAllLines(literate.resolve("standard-test.txt"))
-        .stream()
-        .map(s -> s + "\n")
-        .toList()
-      , readString);
+    assertLinesMatch(Files.readAllLines(literate.resolve("standard-test.txt")), readString);
   }
 }

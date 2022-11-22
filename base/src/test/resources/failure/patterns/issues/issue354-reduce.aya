@@ -8,11 +8,15 @@ def overlap addN (a b : Nat) : Nat
  | suc a, b => suc (addN a b)
  | a, suc b => suc (addN a b)
 
+prim I
+
 open data Int : Type
  | pos Nat
- | neg Nat { | n => pos (addN n n) }
+ | neg Nat
+ | posneg (n : Nat) (i : I) { i := pos n }
 
 def abs (n : Int) : Nat
  | pos (suc n) => suc zero
  | pos zero => suc zero
  | neg n => zero
+ | posneg n i => zero

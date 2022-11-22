@@ -47,8 +47,7 @@ public class PathTest {
         (f : A -> B)
         (a b : A)
         (p : a = b)
-        : --------------
-        f a = f b
+        : f a = f b
         => \\i => f (p i)
       """);
   }
@@ -69,8 +68,7 @@ public class PathTest {
         {A B : Type}
         (f g : A -> B)
         (p : Pi (a : A) -> f a = g a)
-        : ---------------------------------
-        f = g
+        : f = g
         => \\i a => p a i
       """);
   }

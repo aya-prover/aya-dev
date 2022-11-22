@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.cli.library.LibraryCompiler;
@@ -28,6 +29,7 @@ import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.prim.LspPrimFactory;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
+import org.aya.lsp.utils.XY;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.FileUtil;
 import org.aya.util.distill.DistillerOptions;
@@ -91,6 +93,8 @@ public class AyaLanguageServer implements LanguageServer {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
       Log.e("Cannot load library. Stack trace:\n%s", s.toString());
+    } catch (LibraryConfigData.BadConfig bad) {
+      client.showMessage(new ShowMessageParams(MessageType.Error, "Cannot load malformed library: " + bad.getMessage()));
     }
     // stop retrying and mocking
     return true;
@@ -142,7 +146,23 @@ public class AyaLanguageServer implements LanguageServer {
     if (path == null) return null;
     var ayaJson = path.resolve(Constants.AYA_JSON);
     if (!Files.exists(ayaJson)) return findOwner(path.getParent());
-    return libraries.find(lib -> lib.underlyingLibrary().libraryRoot().equals(path)).getOrNull();
+    var book = MutableSet.<LibraryConfig>create();
+    for (var lib : libraries) {
+      var found = findOwner(book, lib, path);
+      if (found != null) return found;
+    }
+    return null;
+  }
+
+  private @Nullable LibraryOwner findOwner(@NotNull MutableSet<LibraryConfig> book, @NotNull LibraryOwner owner, @NotNull Path libraryRoot) {
+    if (book.contains(owner.underlyingLibrary())) return null;
+    book.add(owner.underlyingLibrary());
+    if (owner.underlyingLibrary().libraryRoot().equals(libraryRoot)) return owner;
+    for (var dep : owner.libraryDeps()) {
+      var found = findOwner(book, dep, libraryRoot);
+      if (found != null) return found;
+    }
+    return null;
   }
 
   private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
@@ -188,7 +208,7 @@ public class AyaLanguageServer implements LanguageServer {
       Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
     }
     publishProblems(reporter, DistillerOptions.pretty());
-    return SyntaxHighlight.invoke(owner);
+    return SemanticHighlight.invoke(owner);
   }
 
   public void publishProblems(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
@@ -366,10 +386,14 @@ public class AyaLanguageServer implements LanguageServer {
     return computeTerm(input, ComputeTerm.Kind.nf());
   }
 
-  public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
-    var source = find(input.uri);
-    if (source == null) return ComputeTermResult.bad(input);
-    return new ComputeTerm(source, type, primFactory(source.owner())).invoke(input);
+  public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params params, ComputeTerm.Kind type) {
+    var source = find(params.uri);
+    if (source == null) return ComputeTermResult.bad(params);
+    var program = source.program().get();
+    if (program == null) return ComputeTermResult.bad(params);
+    var computer = new ComputeTerm(source, type, primFactory(source.owner()), new XY(params.position));
+    program.forEach(computer);
+    return computer.result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, computer.result);
   }
 
   private @NotNull LspPrimFactory primFactory(@NotNull LibraryOwner owner) {

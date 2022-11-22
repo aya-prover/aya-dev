@@ -20,17 +20,18 @@ module aya.cli {
   exports org.aya.cli.library.json;
   exports org.aya.cli.library.source;
   exports org.aya.cli.library;
+  exports org.aya.cli.literate;
   exports org.aya.cli.parse;
   exports org.aya.cli.plct;
+  exports org.aya.cli.render.vscode;
+  exports org.aya.cli.render;
   exports org.aya.cli.repl;
   exports org.aya.cli.single;
   exports org.aya.cli.utils;
   exports org.aya.cli;
-  exports org.aya.cli.repl.render;
-  exports org.aya.cli.repl.render.vscode;
 
   opens org.aya.cli.library.json to com.google.gson;
   opens org.aya.cli.repl to aya.repl;
-  opens org.aya.cli.repl.render to aya.repl;
-  opens org.aya.cli.repl.render.vscode to aya.repl;
+  opens org.aya.cli.render to aya.repl;
+  opens org.aya.cli.render.vscode to aya.repl;
 }

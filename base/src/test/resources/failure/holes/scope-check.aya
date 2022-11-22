@@ -8,5 +8,5 @@ variable A : Type
 def infix = {A : Type} => Eq A
 def refl {a : A} : a = a => \i => a
 
--- https://cstheory.stackexchange.com/a/49160/50892
+// https://cstheory.stackexchange.com/a/49160/50892
 def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0

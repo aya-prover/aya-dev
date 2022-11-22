@@ -11,6 +11,7 @@ import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.backend.string.style.AdaptiveCliStylist;
 import org.aya.pretty.backend.string.style.DebugStylist;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
@@ -53,6 +54,14 @@ public sealed interface Doc extends Docile {
     return this.render(printer, config);
   }
 
+  default @NotNull String renderToTerminal() {
+    return renderToTerminal(INFINITE_SIZE, true);
+  }
+
+  default @NotNull String renderToTerminal(int pageWidth, boolean unicode) {
+    return renderToString(new StringPrinterConfig(AdaptiveCliStylist.INSTANCE, pageWidth, unicode));
+  }
+
   default @NotNull String renderToHtml() {
     return renderToHtml(true);
   }
@@ -71,7 +80,7 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderWithPageWidth(int pageWidth, boolean unicode) {
-    var config = new StringPrinterConfig(DebugStylist.INSTANCE, pageWidth, unicode);
+    var config = new StringPrinterConfig(DebugStylist.DEFAULT, pageWidth, unicode);
     return this.renderToString(config);
   }
 

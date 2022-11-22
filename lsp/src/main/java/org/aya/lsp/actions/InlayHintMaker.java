@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -16,17 +16,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public record InlayHintMaker(@NotNull MutableList<InlayHint> hints) implements SyntaxNodeAction.Ranged {
+public record InlayHintMaker(
+  @NotNull XYXY location,
+  @NotNull MutableList<InlayHint> hints
+) implements SyntaxNodeAction.Ranged {
   public static @NotNull List<InlayHint> invoke(@NotNull LibrarySource source, @NotNull Range range) {
     var program = source.program().get();
     if (program == null) return Collections.emptyList();
     var xyxy = new XYXY(range);
-    var maker = new InlayHintMaker(MutableList.create());
-    maker.visitAll(program, xyxy);
+    var maker = new InlayHintMaker(xyxy, MutableList.create());
+    program.forEach(maker);
     return maker.hints.asJava();
   }
 
-  @Override public @NotNull Pattern visitPattern(@NotNull Pattern pattern, XYXY pp) {
+  @Override public @NotNull Pattern pre(@NotNull Pattern pattern) {
     if (pattern instanceof Pattern.Bind bind && bind.type().get() != null) {
       var type = bind.type().get().toDoc(DistillerOptions.pretty()).commonRender();
       var range = LspRange.toRange(bind.sourcePos());
@@ -35,6 +38,6 @@ public record InlayHintMaker(@NotNull MutableList<InlayHint> hints) implements S
       hint.paddingLeft = true;
       hints.append(hint);
     }
-    return Ranged.super.visitPattern(pattern, pp);
+    return Ranged.super.pre(pattern);
   }
 }

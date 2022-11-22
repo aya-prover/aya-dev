@@ -33,6 +33,12 @@ sourceSets.main {
 
 tasks.compileJava { dependsOn(generateVersion) }
 tasks.sourcesJar { dependsOn(generateVersion) }
+tasks.withType<org.aya.gradle.GenerateReflectionConfigTask>().configureEach {
+  extraDir = file("src/main/java/org/aya/core/serde")
+  classPrefixes = listOf("SerTerm", "SerPat", "SerDef", "CompiledAya")
+  excludeNamesSuffix = listOf("SerTerm\$DeState", "CompiledAya\$CompiledAya", "CompiledAya\$Serialization")
+  packageName = "org.aya.core.serde"
+}
 
 val cleanGenerated = tasks.register("cleanGenerated") {
   group = "build"

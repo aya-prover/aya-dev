@@ -1,9 +1,9 @@
 open import Arith::Nat
-open import Data::Fin
+open import Sets::Fin
 open import Data::List
 open import Paths
 
-open data Vec (A : Type) (n : Nat) : Type
+public open data Vec (A : Type) (n : Nat) : Type
 | A, 0 => vnil
 | A, suc m => infixr :> A (Vec A m)
 
@@ -25,7 +25,7 @@ def overlap ++v-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
 | vnil, ys, zs => idp
 | xs, vnil, zs => idp
 | xs, ys, vnil => idp
--- | x :> xs, ys, zs => pmapd (Vec _) (x :>) (++v-assoc xs ys zs)
+// | x :> xs, ys, zs => pmapd (Vec _) (x :>) (++v-assoc xs ys zs)
 | x :> xs, ys, zs => \i => x :> (++v-assoc xs ys zs) i
 
 def infix !!v (l : Vec A n) (i : Fin n) : A
@@ -38,8 +38,8 @@ def fold (f : Pi B A -> B) (init : B) (xs : Vec A n) : B
 
 def last (Vec A (suc n)) : A
 | x :> vnil => x
--- | _ :> xs => last xs
--- ^ The purpose of #243 is to make this work
+// | _ :> xs => last xs
+// ^ The purpose of #243 is to make this work
 | _ :> (x :> xs) => last (x :> xs)
 
 def tail (Vec A (suc n)) : Vec A n

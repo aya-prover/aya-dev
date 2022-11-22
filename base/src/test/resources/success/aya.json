@@ -1,5 +1,6 @@
 {
-  "ayaVersion": "0.13",
+  "ayaVersion": "0.23",
+  "group": "org.aya-prover",
   "name": "tests",
   "version": "0.1.0",
 

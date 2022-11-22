@@ -1,7 +1,7 @@
 open import Issues::For519
 
 
--- The following are copied from 289.aya
+// The following are copied from 289.aya
 
 def invol-prefix : ~ 0 = 1 => idp
 

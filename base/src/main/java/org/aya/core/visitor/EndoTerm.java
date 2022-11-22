@@ -91,6 +91,11 @@ public interface EndoTerm extends UnaryOperator<Term> {
 
   /** A lift but in American English. */
   record Elevator(int lift) implements EndoTerm {
+    @Override public @NotNull Term apply(@NotNull Term term) {
+      if (lift == 0) return term;
+      return EndoTerm.super.apply(term);
+    }
+
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case SortTerm sort -> sort.elevate(lift);

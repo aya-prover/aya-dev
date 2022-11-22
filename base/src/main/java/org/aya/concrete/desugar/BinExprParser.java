@@ -54,6 +54,10 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     opSet.reporter.report(new OperatorError.Fixity(currentOp, current, topOp, top, pos));
   }
 
+  @Override protected void reportMissingOperand(String op, SourcePos pos) {
+    opSet.reporter.report(new OperatorError.MissingOperand(pos, op));
+  }
+
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
     var expr = elem.term();
     while (expr instanceof Expr.Lift lift) expr = lift.expr();

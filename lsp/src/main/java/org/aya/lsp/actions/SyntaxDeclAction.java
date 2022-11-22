@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
 import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.visitor.StmtOps;
+import org.aya.concrete.visitor.StmtConsumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,16 +13,10 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  * @implNote This does not modify the AST.
  */
-public interface SyntaxDeclAction<P> extends StmtOps<P> {
-  @Override default void visit(@NotNull Stmt stmt, P pp) {
-    switch (stmt) {
-      case Decl decl -> visitDecl(decl, pp);
-      case Command cmd -> visitCommand(cmd, pp);
-      case Stmt misc -> {}
-    }
-  }
-
-  @Override default void visitDecl(@NotNull Decl decl, P pp) {
-    // should not call super
+public interface SyntaxDeclAction extends StmtConsumer {
+  @Override default void accept(@NotNull Stmt stmt) {
+    if (stmt instanceof Command.Module module)
+      StmtConsumer.super.accept(module);
+    // should not call super on other cases
   }
 }

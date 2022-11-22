@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
-import org.aya.cli.repl.render.vscode.ColorTheme;
+import org.aya.cli.render.vscode.ColorTheme;
 import org.aya.pretty.style.AyaColorScheme;
 import org.junit.jupiter.api.Test;
 

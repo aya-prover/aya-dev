@@ -72,8 +72,10 @@ public abstract class BinOpParser<
         while (opStack.isNotEmpty()) {
           var top = opStack.peek();
           var cmp = opSet.compare(top._2, currentOp);
-          if (cmp == BinOpSet.PredCmp.Tighter) foldLhsFor(expr);
-          else if (cmp == BinOpSet.PredCmp.Equal) {
+          if (cmp == BinOpSet.PredCmp.Tighter) {
+            if (!foldLhsFor(expr))
+              return createErrorExpr(sourcePos);
+          } else if (cmp == BinOpSet.PredCmp.Equal) {
             // associativity should be specified to both left/right when their share
             // the same precedence. Or a parse error should be reported.
             var topAssoc = top._2.assoc();
@@ -82,8 +84,9 @@ public abstract class BinOpParser<
               reportFixityError(topAssoc, currentAssoc, top._2.name(), currentOp.name(), of(top._1));
               return createErrorExpr(sourcePos);
             }
-            if (topAssoc.leftAssoc()) foldLhsFor(expr);
-            else break;
+            if (topAssoc.leftAssoc()) {
+              if (!foldLhsFor(expr)) return createErrorExpr(sourcePos);
+            } else break;
           } else if (cmp == BinOpSet.PredCmp.Looser) {
             break;
           } else {
@@ -106,6 +109,7 @@ public abstract class BinOpParser<
 
   protected abstract void reportAmbiguousPred(String op1, String op2, SourcePos pos);
   protected abstract void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos);
+  protected abstract void reportMissingOperand(String op, SourcePos pos);
   protected abstract @NotNull Expr createErrorExpr(@NotNull SourcePos sourcePos);
 
   private @NotNull Seq<Elm> insertApplication() {
@@ -128,39 +132,46 @@ public abstract class BinOpParser<
     return appliedOperands.getOrPut(elem, MutableSet::of);
   }
 
-  private void foldLhsFor(@NotNull Elm forOp) {
-    foldTop();
-    markAppliedOperand(forOp, AppliedSide.Lhs);
+  private boolean foldLhsFor(@NotNull Elm forOp) {
+    var ok = foldTop();
+    if (ok) markAppliedOperand(forOp, AppliedSide.Lhs);
+    return ok;
   }
 
-  private void foldTop() {
-    var op = opStack.pop();
-    prefixes.append(makeBinApp(op._1));
-  }
-
-  private @NotNull Elm makeBinApp(@NotNull Elm op) {
-    var assoc = toSetElem(op, opSet).assoc();
-    if (assoc.isUnary()) {
-      var operand = prefixes.dequeue();
-      return makeArg(union(operand, op), op.term(), operand, op.explicit());
-    } else if (assoc.isBinary()) {
-      if (prefixes.sizeGreaterThanOrEquals(2)) {
-        var rhs = prefixes.dequeue();
-        var lhs = prefixes.dequeue();
-        return makeBinApp(op, rhs, lhs);
-      } else if (prefixes.sizeEquals(1)) {
-        // BinOP section
-        var sides = getAppliedSides(op);
-        var applied = prefixes.dequeue();
-        var side = sides.isEmpty() ? AppliedSide.Lhs : sides.elementAt(0);
-        // ^ a unary operator is used as binary section, report here or in type checker?
-        return makeSectionApp(union(op, applied), op, elem -> (switch (side) {
-          case Lhs -> makeBinApp(op, elem, applied);
-          case Rhs -> makeBinApp(op, applied, elem);
-        }).term());
+  private boolean foldTop() {
+    var opDef = opStack.pop();
+    if (opDef._2.assoc().isBinary()) {
+      prefixes.append(foldTopBinary(opDef._1));
+    } else { // implies isUnary()
+      var op = opDef._1;
+      if (prefixes.isEmpty()) {
+        // we don't support unary section -- just raise an error.
+        reportMissingOperand(opDef._2.name(), op.term().sourcePos());
+        return false;
       }
+      var operand = prefixes.dequeue();
+      var app = makeArg(union(operand, op), op.term(), operand, op.explicit());
+      prefixes.append(app);
     }
+    return true;
+  }
 
+  private @NotNull Elm foldTopBinary(@NotNull Elm op) {
+    if (prefixes.sizeGreaterThanOrEquals(2)) {
+      var rhs = prefixes.dequeue();
+      var lhs = prefixes.dequeue();
+      return makeBinApp(op, rhs, lhs);
+    } else if (prefixes.sizeEquals(1)) {
+      // BinOP section
+      var sides = getAppliedSides(op);
+      var applied = prefixes.dequeue();
+      var side = sides.isEmpty() ? AppliedSide.Lhs : sides.elementAt(0);
+      // ^ a unary operator is used as binary section, report here or in type checker?
+      return makeSectionApp(union(op, applied), op, elem -> (switch (side) {
+        case Lhs -> makeBinApp(op, elem, applied);
+        case Rhs -> makeBinApp(op, applied, elem);
+      }).term());
+    }
     throw new InternalError("unreachable");
   }
 

@@ -356,8 +356,7 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private boolean comparePathLamBody(PLamTerm lambda, Term rhs, Sub lr, Sub rl, PathTerm.Cube cube) {
-    cube.params().zipView(lambda.params()).forEach(p ->
-      rl.map.put(p._1, new RefTerm(p._2)));
+    cube.params().forEachWith(lambda.params(), (a, b) -> rl.map.put(a, new RefTerm(b)));
     var result = ctx.withIntervals(lambda.params().view(), () ->
       compare(cube.applyDimsTo(lambda), cube.applyDimsTo(rhs), lr, rl, cube.type()));
     rl.map.removeAll(cube.params());

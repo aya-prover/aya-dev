@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
+import org.aya.guest0x0.cubical.Partial;
 import org.jetbrains.annotations.NotNull;
 
 public interface DefConsumer extends TermConsumer {
@@ -50,8 +51,8 @@ public interface DefConsumer extends TermConsumer {
       case CtorDef ctor -> {
         ctor.pats.forEach(this::visitPat);
         tele(ctor.selfTele);
-        this.accept(ctor.result);
-        ctor.clauses.forEach(this::visitMatching);
+        accept(ctor.result);
+        partial(ctor.clauses);
       }
       case FieldDef field -> {
         tele(field.selfTele);
@@ -61,5 +62,8 @@ public interface DefConsumer extends TermConsumer {
       case PrimDef prim -> visitDef(prim);
       default -> {}
     }
+  }
+  default void partial(Partial<Term> clauses) {
+    clauses.termsView().forEach(this);
   }
 }

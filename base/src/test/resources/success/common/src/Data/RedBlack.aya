@@ -3,7 +3,7 @@ open import Data::List
 open import Data::Bool
 variable A : Type
 
----- Red black tree, extrinsic ----
+// ---- Red black tree, extrinsic ----
 
 public open data Color | red | black
 def Decider (A : Type) => Pi (x y : A) -> Bool
@@ -45,7 +45,7 @@ module RedBlackEx {
   def tree-sort (dec< : Decider A) (l : List A) => rbTreeToList (aux l rbLeaf dec<) nil
 }
 
----- Red black tree, intrinsic ----
+// ---- Red black tree, intrinsic ----
 
 module RedBlackIn {
   open data Tree (A : Type) Color Nat : Type
@@ -76,19 +76,19 @@ module RedBlackIn {
   | l, x, hBlack r => (_, alRed l x r)
 
   def balanceLeftBlack (AlmostTree A n) A (Tree A c n) : HTree A (suc n)
-  -- rotation
+  // rotation
   | (red, alRed (rbRed a x b) y c), z, d => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
   | (red, alRed a x (rbRed b y c)), z, d => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
-  -- expand catch-all for different proofs
+  // expand catch-all for different proofs
   | (red, alRed rbLeaf x rbLeaf), y, r => hBlack (rbBlack (rbRed rbLeaf x rbLeaf) y r)
   | (red, alRed {black} {black} l x r), y, c => hBlack (rbBlack (rbRed l x r) y c)
   | (black, alBlack a x b), y, r => hBlack (rbBlack (rbBlack a x b) y r)
 
   def balanceRightBlack (Tree A c n) A (AlmostTree A n) : HTree A (suc n)
-  -- rotation
+  // rotation
   | a, x, (red, alRed (rbRed b y c) z d) => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
   | a, x, (red, alRed b y (rbRed c z d)) => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
-  -- ditto
+  // ditto
   | a, x, (red, alRed rbLeaf y rbLeaf) => hBlack (rbBlack a x (rbRed rbLeaf y rbLeaf))
   | a, x, (red, alRed {black} {black} l y r) => hBlack (rbBlack a x (rbRed l y r))
   | a, x, (black, alBlack b y c) => hBlack (rbBlack a x (rbBlack b y c))

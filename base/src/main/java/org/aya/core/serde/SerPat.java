@@ -44,7 +44,7 @@ public sealed interface SerPat extends Serializable {
     boolean explicit,
     @NotNull SerDef.QName name,
     @NotNull ImmutableSeq<SerPat> params,
-    @NotNull SerTerm.DataCall ty
+    @NotNull SerTerm.Data ty
   ) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
       return new Pat.Ctor(explicit, state.resolve(name),
@@ -67,7 +67,7 @@ public sealed interface SerPat extends Serializable {
     int integer,
     boolean explicit,
     @NotNull SerDef.SerShapeResult shape,
-    @NotNull SerTerm.DataCall type
+    @NotNull SerTerm.Data type
   ) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
       return new Pat.ShapedInt(integer, shape.de(state), type.de(state), explicit);

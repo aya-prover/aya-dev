@@ -236,7 +236,7 @@ public record AyaSccTycker(
     var targets = MutableSet.<Def>from(fn);
     if (targets.isEmpty()) return;
     var graph = CallGraph.<Def, Term.Param>create();
-    fn.forEach(def -> new CallResolver(def, targets, graph).accept(def));
+    fn.forEach(def -> new CallResolver(resolveInfo.primFactory(), def, targets, graph).accept(def));
     var bads = graph.findBadRecursion();
     bads.view()
       .sorted(Comparator.comparing(a -> a.matrix().domain().ref().concrete.sourcePos()))

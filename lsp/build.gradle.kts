@@ -30,9 +30,12 @@ tasks.named<Test>("test") {
   inputs.dir(projectDir.resolve("src/test/resources"))
 }
 
+val ayaImageDir = buildDir.resolve("image")
+val jlinkImageDir = ayaImageDir.resolve("jre")
 jlink {
   addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
   addExtraDependencies("jline-terminal-jansi")
+  imageDir.set(jlinkImageDir)
   mergedModule {
     additive = true
     uses("org.jline.terminal.spi.JansiSupport")
@@ -52,21 +55,21 @@ jlink {
 }
 
 val jlinkTask = tasks.named("jlink")
-val imageDir = buildDir.resolve("image")
+@Suppress("unsupported")
 jlinkTask.configure {
-  fun copyBat(f: String) {
-    doFirst {
-      file(f).copyTo(imageDir.resolve("bin/$f"), overwrite = true)
+  inputs.files("aya.bat", "aya-lsp.bat", "aya.sh", "aya-lsp.sh")
+  fun bin(name: String) = ayaImageDir.resolve("bin").resolve(name)
+  fun jlinkBin(name: String) = jlinkImageDir.resolve("bin").resolve(name)
+  doLast {
+    ["aya", "aya-lsp"].forEach { name ->
+      file("$name.sh").copyTo(bin(name), overwrite = true).setExecutable(true)
+      file("$name.bat").copyTo(bin("$name.bat"), overwrite = true).setExecutable(true)
+      jlinkBin(name).delete()
+      jlinkBin("$name.bat").delete()
     }
-    inputs.file(file(f))
-  }
-  copyBat("aya.bat")
-  copyBat("aya-lsp.bat")
-  doFirst {
-    file("aya.sh").copyTo(imageDir.resolve("bin/aya"), overwrite = true).setExecutable(true)
-    file("aya-lsp.sh").copyTo(imageDir.resolve("bin/aya-lsp"), overwrite = true).setExecutable(true)
   }
 }
+
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
 prepareMergedJarsDirTask.configure {
   val libs = listOf("cli", "base", "pretty", "tools", "tools-repl", "parser")
@@ -80,10 +83,16 @@ tasks.withType<AbstractCopyTask>().configureEach {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
-  dependsOn(jlinkTask, prepareMergedJarsDirTask)
-  from(imageDir)
-  into(file(rootProject.property("installDir")!!))
+if (rootProject.hasProperty("installDir")) {
+  val destDir = file(rootProject.property("installDir")!!)
+  // val dbi = tasks.register<Delete>("deleteBeforeInstall") {
+  //   delete(File.listFiles(destDir))
+  // }
+  tasks.register<Copy>("install") {
+    dependsOn(jlinkTask, prepareMergedJarsDirTask)
+    from(ayaImageDir)
+    into(destDir)
+  }
 }
 
 tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 #
-# Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+# Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 # Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 #
 
@@ -72,7 +72,7 @@ case "`uname`" in
 esac
 
 # Determine the Java command to use to start the JVM.
-JAVACMD="$APP_HOME/java"
+JAVACMD="$APP_HOME/../jre/bin/java"
 
 # Increase the maximum file descriptors if we can.
 if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then

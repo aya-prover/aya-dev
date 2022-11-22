@@ -70,7 +70,7 @@ public class LibraryCompiler {
     @NotNull CompilerFlags flags,
     @NotNull CompilerAdvisor advisor,
     @NotNull Path libraryRoot
-  ) throws IOException {
+  ) throws IOException, LibraryConfigData.BadConfig {
     var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
     var owner = DiskLibraryOwner.from(config);
     return newCompiler(primFactory, reporter, flags, advisor, owner);
@@ -87,7 +87,12 @@ public class LibraryCompiler {
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
-    return newCompiler(primFactory, reporter, flags, advisor, libraryRoot).start();
+    try {
+      return newCompiler(primFactory, reporter, flags, advisor, libraryRoot).start();
+    } catch (LibraryConfigData.BadConfig bad) {
+      reporter.reportString("Cannot load malformed library: " + bad.getMessage());
+      return 1;
+    }
   }
 
   private void parse(@NotNull LibrarySource source) throws IOException {
@@ -127,7 +132,10 @@ public class LibraryCompiler {
     var startTime = System.currentTimeMillis();
     owner.librarySources().forEachChecked(src -> {
       resolveImportsIfNeeded(src);
-      depGraph.sucMut(src).appendAll(src.imports());
+      var known = depGraph.sucMut(src);
+      var dedup = src.imports().filter(s ->
+        known.noneMatch(k -> k.moduleName().equals(s.moduleName())));
+      known.appendAll(dedup);
     });
     reporter.reportNest("Done in " + StringUtil.timeToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);

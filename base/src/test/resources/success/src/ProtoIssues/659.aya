@@ -7,4 +7,4 @@ def idId {A : Type} : Pi (x : A) -> A => (id id)
 def idS {A : Type} (x : Sig A ** A) : Sig A ** A => x
 def idIdS {A : Type} : Pi (x : Sig A ** A) -> Sig A ** A => (id id)
 
--- https://github.com/aya-prover/aya-prover-proto/issues/659
+// https://github.com/aya-prover/aya-prover-proto/issues/659

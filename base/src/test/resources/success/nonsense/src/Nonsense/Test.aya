@@ -1,4 +1,4 @@
--- https://github.com/aya-prover/aya-dev/issues/557#issuecomment-1269273847
+// https://github.com/aya-prover/aya-dev/issues/557#issuecomment-1269273847
 
 public open data Single (A : Type)
   | intro A
@@ -8,7 +8,7 @@ def doPatternMatch {A : Type} (t : Single A) : Single A
 
 def forward {A : Type} => doPatternMatch {A}
 
--- double forwarding is required!
+// double forwarding is required!
 def forwardTwice {A : Type} (t : Single A) => forward (forward t)
 
 def forwardOnce {A : Type} (t : Single A) => forward t

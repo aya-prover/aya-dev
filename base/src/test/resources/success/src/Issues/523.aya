@@ -1,4 +1,4 @@
--- Some memorial code
+// Some memorial code
 open import Paths
 open struct PseudoPath (A : I -> Type) (a : A 0) (b : A 1) : Type
  | at (i : I) : A i

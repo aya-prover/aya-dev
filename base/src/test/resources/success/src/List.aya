@@ -9,7 +9,7 @@ def termList : List Nat => [ 1, y 2, x ]
 def termListComp : List Nat => [ a + b | a <- [ 1, 2, 3 ] , b <- [ 4, 5, 6 ] ]
 
 def termDesuList : List Nat => 1 :< (y 2) :< x :< nil
--- do { a <- [ 1, 2, 3 ], b <- [ 4, 5, 6 ], return (a + b) }
+// do { a <- [ 1, 2, 3 ], b <- [ 4, 5, 6 ], return (a + b) }
 def termDesuListComp : List Nat => [ 1, 2, 3 ] >>= (\ a => [ 4, 5, 6 ] >>= (\ b => pure (a + b)))
 
 def testSimpleList : [ 4, 5, 6 ] = [ 4, 5, 6 ] => idp

@@ -1,4 +1,3 @@
-open import Arith::Nat
 open import Arith::Int
 open import Data::List
 

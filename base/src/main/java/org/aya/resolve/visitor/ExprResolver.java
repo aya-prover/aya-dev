@@ -49,12 +49,17 @@ public record ExprResolver(
   @NotNull MutableStack<Where> where,
   @Nullable Consumer<TyckUnit> parentAdd
 ) implements EndoExpr {
+
   public ExprResolver(@NotNull Context ctx, @NotNull Options options) {
     this(ctx, options, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), null);
   }
 
   public static final @NotNull Options RESTRICTIVE = new Options(false, false);
   public static final @NotNull Options LAX = new Options(true, true);
+
+  @NotNull Expr.PartEl partial(@NotNull Context ctx, Expr.PartEl el) {
+    return el.descent(enter(ctx));
+  }
 
   public void enterHead() {
     where.push(Where.Head);
@@ -165,6 +170,30 @@ public record ExprResolver(
         }
         case AnyVar var -> new Expr.Ref(pos, var);
       };
+      case Expr.Let(var letBind, var body) let -> {
+        // resolve letBind
+
+        var mCtx = MutableValue.create(ctx);
+        // visit telescope
+        var telescope = letBind.telescope().map(param -> resolve(param, mCtx));
+        // for things that can refer the telescope (like result and definedAs)
+        var resolver = enter(mCtx.get());
+        // visit result
+        var result = resolver.apply(letBind.result());
+        // visit definedAs
+        var definedAs = resolver.apply(letBind.definedAs());
+
+        // end resolve letBind
+
+        // resolve body
+        var newBody = enter(ctx.bind(letBind.bindName(), letBind.bindName().definition()))
+          .apply(body);
+
+        yield let.update(
+          letBind.update(telescope, result, definedAs),
+          newBody
+        );
+      }
       default -> EndoExpr.super.apply(expr);
     };
   }

@@ -1,0 +1,20 @@
+open import Arith::Nat::Core
+open import Paths
+
+def overlap infixl *' (m n : Nat) : Nat
+| 0, n => 0
+| m, 0 => 0
+| suc m, suc n => suc (m + n + m *' n)
+tighter +
+
+def *-suc-suc (m n : Nat) : suc m * suc n = suc (m + n + m * n)
+  => pmap suc (pmap (n +) (*-suc m n)
+    <==> sym +-assoc <==> pmap (+ m * n) +-comm)
+
+def overlap *'-*-iso (m n : Nat) : m *' n = m * n
+| 0, n => idp
+| m, 0 => idp
+| suc m, suc n => pmap (\x => suc (m + n + x)) (*'-*-iso m n)
+  <==> sym (*-suc-suc m n)
+
+def *'-*-eq : (*') = (*) => funExt2 (*') (*) *'-*-iso

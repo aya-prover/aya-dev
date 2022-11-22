@@ -12,12 +12,7 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.Serializer;
 import org.aya.generic.AyaDocile;
-import org.aya.pretty.backend.html.DocHtmlPrinter;
-import org.aya.pretty.backend.latex.DocTeXPrinter;
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.printer.PrinterConfig;
-import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
@@ -41,13 +36,8 @@ import java.util.function.Function;
 public record SingleFileCompiler(
   @NotNull Reporter reporter,
   @Nullable SourceFileLocator locator,
-  @Nullable Trace.Builder builder,
-  @NotNull DistillerOptions distillerOptions
+  @Nullable Trace.Builder builder
 ) {
-  public SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator, @Nullable Trace.Builder builder) {
-    this(reporter, locator, builder, DistillerOptions.pretty());
-  }
-
   public <E extends IOException> int compile(
     @NotNull Path sourceFile,
     @NotNull CompilerFlags flags,
@@ -95,16 +85,10 @@ public record SingleFileCompiler(
     var distillDir = sourceFile.resolveSibling(flags.distillDir());
     if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
     var fileName = escape(ayaFileName.substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length()));
-    var scm = flags.scheme();
-    switch (flags.distillFormat()) {
-      case html -> doWrite(doc, distillDir, fileName, ".html", (d, b) -> d.render(new DocHtmlPrinter(),
-        new DocHtmlPrinter.Config(scm, AyaStyleFamily.DEFAULT, b)));
-      case latex -> doWrite(doc, distillDir, fileName, ".tex", (d, $) -> d.render(new DocTeXPrinter(),
-        new DocTeXPrinter.Config(scm, AyaStyleFamily.DEFAULT)));
-      case plain -> doWrite(doc, distillDir, fileName, ".txt", (d, $) -> d.debugRender());
-      case unix -> doWrite(doc, distillDir, fileName, ".txt", (d, $) -> d.renderToString(
-        StringPrinterConfig.unixTerminal(scm, AyaStyleFamily.DEFAULT, PrinterConfig.INFINITE_SIZE, true)));
-    }
+    var renderOptions = flags.renderOptions();
+    var out = flags.distillFormat().target;
+    doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
+      (d, hdr) -> renderOptions.render(out, d, hdr, !flags.ascii()));
   }
 
   private @NotNull String escape(@NotNull String s) {
@@ -114,13 +98,14 @@ public record SingleFileCompiler(
 
   private void doWrite(
     ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
-    String fileName, String fileExt, BiFunction<Doc, Boolean, String> toString
+    @NotNull DistillerOptions options, String fileName, String fileExt,
+    BiFunction<Doc, Boolean, String> toString
   ) throws IOException {
     var docs = MutableList.<Doc>create();
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
       // Skip uninteresting items
-      var thisDoc = item.toDoc(distillerOptions);
+      var thisDoc = item.toDoc(options);
       docs.append(thisDoc);
       if (item instanceof PrimDef) continue;
       Files.writeString(distillDir.resolve(fileName + "-" + escape(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));

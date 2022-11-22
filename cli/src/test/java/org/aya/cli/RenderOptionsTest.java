@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.ReplConfig;
-import org.aya.cli.repl.render.RenderOptions;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,5 +17,15 @@ public class RenderOptionsTest {
     assertEquals(
       new RenderOptions(),
       gson.fromJson(json, RenderOptions.class));
+  }
+
+  @Test public void target() {
+    var doc = Doc.styled(Style.code(), "hello");
+    var opt = new RenderOptions();
+    opt.checkDeserialization();
+    assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.Terminal, doc, false, true));
+    assertEquals("\\noindent\\fbox{hello}", opt.render(RenderOptions.OutputTarget.LaTeX, doc, false, true));
+    assertEquals("<pre class=\"Aya\"><code>hello</code></pre>", opt.render(RenderOptions.OutputTarget.HTML, doc, false, true));
+    assertEquals("`hello`", opt.render(RenderOptions.OutputTarget.Plain, doc, false, true));
   }
 }

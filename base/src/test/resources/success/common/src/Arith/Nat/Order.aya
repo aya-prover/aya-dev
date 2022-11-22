@@ -1,5 +1,6 @@
-open import Arith::Nat
-open import Data::Empty
+open import Arith::Nat::Core
+open import Logic::False
+open import Logic::Dec
 open import Paths
 
 open data infix < Nat Nat
@@ -12,6 +13,20 @@ def trans< (a < b) (b < c) : a < c
 | zc, sc _ => zc
 | sc p1, sc p2 => sc (trans< p1 p2)
 
-def asym (a < b) (b < a) : Empty
+def asym (a < b) (b < a) : False
 | zc, ()
 | sc p1, sc p2 => asym p1 p2
+
+def unequal (a < b) (a = b) : False
+| zc, p => z≠s p
+| sc p1, p => unequal p1 (pmap pred p)
+
+def dichotomy (a b : Nat) : Tri (b < a) (a = b) (a < b)
+| 0, 0 => yesB idp
+| 0, suc b => yesC zc
+| suc a, 0 => yesA zc
+| suc a, suc b => match dichotomy a b
+   { yesA p => yesA (sc p)
+   | yesB p => yesB (pmap suc p)
+   | yesC p => yesC (sc p)
+   }

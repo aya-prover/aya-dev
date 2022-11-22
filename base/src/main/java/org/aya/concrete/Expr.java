@@ -694,4 +694,100 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       );
     }
   }
+
+  /**
+   * <h1>Let Expression</h1>
+   *
+   * <pre>
+   *   let
+   *     f (x : X) : G := g
+   *   in expr
+   * </pre>
+   *
+   * where:
+   * <ul>
+   *   <li>{@link Let.Bind#bindName} = f</li>
+   *   <li>{@link Let.Bind#telescope} = (x : X)</li>
+   *   <li>{@link Let,Bind#result} = G</li>
+   *   <li>{@link Let.Bind#definedAs} = g</li>
+   *   <li>{@link Let#body} = expr</li>
+   * </ul>
+   */
+  record Let(
+    @NotNull Let.Bind bind,
+    @NotNull Expr body
+  ) implements Expr {
+    public record Bind(
+      @NotNull SourcePos sourcePos,
+      @NotNull LocalVar bindName,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
+      @NotNull Expr result,
+      @NotNull Expr definedAs
+    ) {
+      public @NotNull Let.Bind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull Expr result, @NotNull Expr definedAs) {
+        return telescope().sameElements(telescope, true)
+          && result() == result
+          && definedAs() == definedAs
+          ? this
+          : new Let.Bind(sourcePos(), bindName(), telescope, result, definedAs);
+      }
+
+      public @NotNull Bind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+        return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(definedAs()));
+      }
+
+      /**
+       * Convert
+       * <pre>
+       *   let f (x : X) : G := g in h
+       * </pre>
+       * to
+       * <pre>
+       *  let f : Pi (x : X) -> G := \ (x : X) => g in h
+       * </pre>
+       * and keep
+       * <pre>
+       *   let f : G := g in h
+       * </pre>
+       */
+      public @NotNull Expr tryBuildLambda() {
+        return telescope().foldRight(definedAs(), (p, r) -> {
+          // Left  : Param
+          // Right : body
+          // Goal  : \ p => r
+
+          return new Expr.Lambda(sourcePos, p, r);
+        });
+      }
+
+      /**
+       * @see Let.Bind#tryBuildLambda(SourcePos)
+       */
+      public @NotNull Expr tryBuildPiType() {
+        return telescope().foldRight(result(), (p, r) -> {
+          // Left  : Param
+          // Right : Type of Body
+          // Goal  : Pi p -> r
+
+          return new Expr.Pi(sourcePos, p, r);
+        });
+      }
+    }
+
+    @Override
+    public @NotNull SourcePos sourcePos() {
+      return bind.sourcePos();
+    }
+
+    public @NotNull Let update(@NotNull Bind bind, @NotNull Expr body) {
+      return bind() == bind && body() == body
+        ? this
+        : new Let(bind, body);
+    }
+
+    @Override
+    public @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(bind().descent(f), f.apply(body()));
+    }
+  }
 }

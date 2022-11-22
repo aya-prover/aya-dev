@@ -179,7 +179,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case StringTerm(var str) -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str) + "\"");
       case PartialTyTerm(var ty, var restr) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty), Doc.parened(restr(options, restr))), Outer.AppSpine);
-      case PartialTerm el -> partial(options, el.partial());
+      case PartialTerm el -> partial(options, el.partial(), true);
       case FormulaTerm(var mula) -> formula(outer, mula);
       case PathTerm(var cube) -> cube(options, cube);
       case PLamTerm(var params, var body) -> checkParen(outer,
@@ -272,7 +272,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           var pats = Doc.commaList(ctor.pats.view().map(pat -> pat(pat, Outer.Free)));
           line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
         } else line1 = Doc.sep(Doc.symbol("|"), doc);
-        yield Doc.cblock(line1, 2, visitClauses(ctor.clauses));
+        yield Doc.cblock(line1, 2, partial(options, ctor.clauses, false));
       }
       case StructDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
         linkDef(def.ref(), STRUCT_CALL),

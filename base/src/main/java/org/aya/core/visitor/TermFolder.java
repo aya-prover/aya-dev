@@ -87,7 +87,7 @@ public interface TermFolder<R> extends Function<Term, R> {
             ? fn.body.fold(this, clauses -> clauses.view().flatMap(this::matchy))
             : SeqView.empty());
         case CtorDef ctor ->
-          tele(ctor.selfTele).concat(withBody ? ctor.clauses.flatMap(this::matchy) : SeqView.empty());
+          tele(ctor.selfTele).concat(withBody ? ctor.clauses.termsView().flatMap(this) : SeqView.empty());
         case StructDef struct ->
           tele(struct.telescope).concat(withBody ? struct.fields.flatMap(this::apply) : SeqView.empty());
         case FieldDef field -> tele(field.telescope())

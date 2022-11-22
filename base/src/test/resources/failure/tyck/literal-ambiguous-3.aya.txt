@@ -1,7 +1,7 @@
 In file $FILE:6:24 ->
 
   4 | 
-  5 | -- TODO: make this work
+  5 | // TODO: make this work
   6 | def good : List Unit => [ ]
                               ^-^
 

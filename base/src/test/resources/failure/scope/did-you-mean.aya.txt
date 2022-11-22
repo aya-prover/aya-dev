@@ -1,0 +1,12 @@
+In file $FILE:2:11 ->
+
+  1 | data Nat | zero | suc Nat
+  2 | def one => suc zero
+                 ^-^
+
+Error: The name `suc` is not defined in the current scope
+       Did you mean: `Nat::suc`
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?

@@ -1,0 +1,53 @@
+open import Paths
+open import Logic::False
+
+public open data Nat
+| zero
+| suc Nat
+
+def pred Nat : Nat
+| 0 => 0
+| suc n => n
+
+def overlap infixl + (a b : Nat) : Nat
+| 0, a => a
+| a, 0 => a
+| suc a, b => suc (a + b)
+| a, suc b => suc (a + b)
+tighter =
+
+private def overlap +-assoc-lemma (a b c : Nat) : (a + b) + c = a + (b + c)
+| 0, b, c => idp
+| a, 0, c => idp
+| a, b, 0 => idp
+| suc a, b, c => pmap suc +-assoc
+| a, suc b, c => pmap suc +-assoc
+| a, b, suc c => pmap suc +-assoc
+def inline +-assoc {a b c : Nat} => +-assoc-lemma a b c
+
+private def overlap +-comm-lemma (a b : Nat) : a + b = b + a
+| 0, a => idp
+| a, 0 => idp
+| suc a, b => pmap suc +-comm
+| a, suc b => pmap suc +-comm
+def inline +-comm {a b : Nat} => +-comm-lemma a b
+
+def overlap infixl * (m n : Nat) : Nat
+| 0, n => 0
+| m, 0 => 0
+| suc m, n => n + m * n
+tighter +
+
+def *-suc (m n : Nat) : m * suc n = m + m * n
+| 0, n => idp
+| suc m, n => pmap suc (pmap (n +) (*-suc m n)
+  <==> sym +-assoc <==> pmap (+ m * n) +-comm <==> +-assoc)
+
+def +-*-distl {n m : Nat} (k : Nat) : (m + k) * n = k * n + m * n
+| 0 => idp
+| suc k => pmap (_ +) (+-*-distl k) <==> sym +-assoc
+
+def z≠s {a : Nat} (p : 0 = suc a) : False => (\i => diag (p i)).coe a
+private def diag Nat : Type
+| 0 => Nat
+| suc a => False

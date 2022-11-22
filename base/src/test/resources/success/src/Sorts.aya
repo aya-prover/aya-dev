@@ -19,7 +19,7 @@ open data Disj (A B : Prop) : Prop
 
 variable A : Type
 
--- Leibniz equality using impredicative universe of propositions
+// Leibniz equality using impredicative universe of propositions
 def Leibniz (x y : A) : Prop
   => Pi (P : A → Prop) → P x → P y
 

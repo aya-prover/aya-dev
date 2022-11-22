@@ -9,6 +9,8 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.range.primitive.IntRange;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
@@ -148,9 +150,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
-        Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(cl -> Doc.sep(
-          cl._1.toDoc(options), Doc.symbol(":="), cl._2.toDoc(options))
-        )),
+        partial(el),
         Doc.symbol("|}"));
       case Expr.Path path -> Doc.sep(
         Doc.symbol("[|"),
@@ -192,7 +192,47 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           Doc.symbol("]")
         )
       );
+      case Expr.Let let -> {
+        var letsAndBody = sugarLet(let);
+        var lets = letsAndBody._1;
+        var body = letsAndBody._2;
+        var oneLine = lets.sizeEquals(1);
+        var letSeq = oneLine
+          ? visitLetBind(lets.first())
+          : Doc.vcat(lets.map(this::visitLetBind).map(x ->
+            // | f := g
+            Doc.sep(Doc.symbol("|"), x)
+          ));
+
+        var docs = ImmutableSeq.of(
+          Doc.styled(KEYWORD, "let"),
+          letSeq,
+          Doc.styled(KEYWORD, "in")
+        );
+
+        // ```
+        // let a := b in
+        // ```
+        //
+        // or
+        //
+        // ```
+        // let
+        // | a := b
+        // | c := d
+        // in
+        // ```
+        var halfLet = oneLine ? Doc.sep(docs) : Doc.vcat(docs);
+
+        yield Doc.sep(halfLet, term(Outer.Free, body));
+      }
     };
+  }
+
+  private Doc partial(Expr.PartEl el) {
+    return Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(cl -> Doc.sep(
+      term(Outer.Free, cl._1), Doc.symbol(":="), term(Outer.Free, cl._2))
+    ));
   }
 
   public @NotNull Doc pattern(@NotNull Arg<Pattern> pattern, Outer outer) {
@@ -359,7 +399,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var doc = Doc.cblock(Doc.sepNonEmpty(
           coe(ctor.coerce),
           linkDef(ctor.ref, CON_CALL),
-          visitTele(ctor.telescope)), 2, visitClauses(ctor.clauses));
+          visitTele(ctor.telescope)), 2, partial(ctor.clauses));
         if (ctor.patterns.isNotEmpty()) {
           var pats = Doc.commaList(ctor.patterns.view().map(pattern -> pattern(pattern, Outer.Free)));
           yield Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);
@@ -418,6 +458,36 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::defVar)),
       Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BaseDistiller::defVar))
     )))));
+  }
+
+  // Convert a parsing-time-desguared let to a sugared let
+  private @NotNull Tuple2<ImmutableSeq<Expr.Let.Bind>, Expr> sugarLet(@NotNull Expr.Let let) {
+    var letBinds = MutableList.<Expr.Let.Bind>create();
+
+    Expr letOrExpr = let;
+    while (letOrExpr instanceof Expr.Let mLet) {
+      letBinds.append(mLet.bind());
+      letOrExpr = mLet.body();
+    }
+
+    return Tuple.of(letBinds.toImmutableSeq(), letOrExpr);
+  }
+
+  private @NotNull Doc visitLetBind(@NotNull Expr.Let.Bind letBind) {
+    // f : G := g
+    var prelude = MutableList.of(
+      varDoc(letBind.bindName())
+    );
+
+    if (letBind.telescope().isNotEmpty()) {
+      prelude.append(visitTele(letBind.telescope()));
+    }
+
+    appendResult(prelude, letBind.result());
+    prelude.append(Doc.symbol(":="));
+    prelude.append(term(Outer.Free, letBind.definedAs()));
+
+    return Doc.sep(prelude);
   }
 
   private @NotNull Doc visitModifier(@NotNull Modifier modifier) {

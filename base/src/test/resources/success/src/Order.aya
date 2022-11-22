@@ -45,8 +45,8 @@ def g Nat : Nat
   | zero => 0
   | suc n => f n
 
--- interleaved arguments
+// interleaved arguments
 def add Nat Nat : Nat
-  | suc a, b => suc (add b a)   -- swap arguments
+  | suc a, b => suc (add b a)   // swap arguments
   | zero,  b => b
 

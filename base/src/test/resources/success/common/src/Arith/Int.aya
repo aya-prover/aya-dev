@@ -1,27 +1,43 @@
-open import Arith::Nat
+public open import Arith::Nat
+public open import Data::Bool
 open import Paths
 
 public open data Int
-| pos Nat
-| neg Nat { | 0 => pos 0 }
+| signed Bool Nat
+| posneg (i : I) { i := pos 0 | ~ i := neg 0 }
 
-def overlap subNI (a b : Nat) : Int
-| 0, a => neg a
-| a, 0 => pos a
-| suc a, suc b => subNI a b
+def pos => signed true
+def neg => signed false
 
-def overlap addI (a b : Int) : Int
-| pos 0, n => n
-| n, pos 0 => n
-| neg 0, n => n
-| n, neg 0 => n
-| pos n, pos m => pos (n + m)
-| neg n, neg m => neg (n + m)
-| neg n, pos m => subNI m n
-| pos n, neg m => subNI n m
+def negate Int : Int
+| signed b n => signed (not b) n
+| posneg i => posneg (~ i)
 
+def succInt Int : Int
+| signed true n => pos (suc n)
+| signed false (suc n) => neg n
+| signed false zero => pos 1
+| posneg i => pos 1
+
+def abs Int : Nat
+| signed _ n => n
+| posneg i => 0
+
+// TODO: reimplement using univalence
+def predInt (x : Int) : Int => negate (succInt (negate x))
+
+def subI (x y : Int) : Int => addI x (negate y)
+
+def addI Int Int : Int
+| signed _ 0, n => n
+| posneg _, n => n
+| signed true (suc m), n => succInt (addI (pos m) n)
+| signed false (suc m), n => predInt (addI (neg m) n)
+
+/*
 def addI-comm (a b : Int) : addI a b = addI b a
 | pos n, pos m => pmap pos (+-comm n m)
 | neg n, neg m => pmap neg (+-comm n m)
 | pos n, neg m => idp
 | neg n, pos m => idp
+*/

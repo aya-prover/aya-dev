@@ -31,7 +31,7 @@ public interface ComputeSignature {
   @SuppressWarnings("unchecked")
   static @NotNull Doc computeSignature(@NotNull AnyVar target, boolean withResult) {
     return switch (target) {
-      case LocalVar localVar -> BaseDistiller.varDoc(localVar);
+      case LocalVar localVar -> BaseDistiller.varDoc(localVar); // TODO: compute type of local vars
       case DefVar<?, ?> ref -> {
         // #299: hovering a mouse on a definition whose header is failed to tyck
         if (!(ref.concrete instanceof Decl.Telescopic concrete) || concrete.signature() == null) yield Doc.empty();

@@ -1,7 +1,7 @@
 In file $FILE:12:45 ->
 
   10 | 
-  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  11 | // https://cstheory.stackexchange.com/a/49160/50892
   12 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
                                                     ^^
 
@@ -13,7 +13,7 @@ Error: The solution
 In file $FILE:12:14 ->
 
   10 | 
-  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  11 | // https://cstheory.stackexchange.com/a/49160/50892
   12 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
                      ^^
 
@@ -22,7 +22,7 @@ Error: Unsolved meta _
 In file $FILE:12:14 ->
 
   10 | 
-  11 | -- https://cstheory.stackexchange.com/a/49160/50892
+  11 | // https://cstheory.stackexchange.com/a/49160/50892
   12 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
                      ^^
 

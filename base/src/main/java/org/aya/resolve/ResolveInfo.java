@@ -5,7 +5,7 @@ package org.aya.resolve;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
+import kala.tuple.Tuple3;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
@@ -23,9 +23,9 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @param primFactory  all primitives shared among all modules in a compilation task.
- * @param shapeFactory {@link CodeShape} that are discovered during tycking this module, modified by tycker.
- * @param opSet        binary operators.
+ * @param primFactory  (global) all primitives shared among all modules in a compilation task.
+ * @param shapeFactory (scoped per file/ResolveInfo) {@link CodeShape} that are discovered during tycking this module, modified by tycker.
+ * @param opSet        (scoped per file/ResolveInfo) binary operators.
  * @param opRename     rename-as-operators, only stores names that renamed in current module (and re-exported ops).
  * @param imports      modules imported using `import` command.
  * @param reExports    modules re-exported using `public open` command.
@@ -39,20 +39,38 @@ public record ResolveInfo(
   @NotNull PrimDef.Factory primFactory,
   @NotNull AyaShape.Factory shapeFactory,
   @NotNull AyaBinOpSet opSet,
-  @NotNull MutableMap<DefVar<?, ?>, Tuple2<RenamedOpDecl, BindBlock>> opRename,
+  @NotNull MutableMap<DefVar<?, ?>, Tuple3<RenamedOpDecl, BindBlock, Boolean>> opRename,
   @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> imports,
   @NotNull MutableMap<ImmutableSeq<String>, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {
-  public ResolveInfo(@NotNull PrimDef.Factory primFactory, @NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {
-    this(thisModule, thisProgram, primFactory, new AyaShape.Factory(),
-      opSet, MutableMap.create(), MutableMap.create(),
+  public ResolveInfo(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull AyaShape.Factory shapeFactory,
+    @NotNull AyaBinOpSet opSet,
+    @NotNull ModuleContext thisModule,
+    @NotNull ImmutableSeq<Stmt> thisProgram
+  ) {
+    this(thisModule, thisProgram, primFactory, shapeFactory, opSet,
+      MutableMap.create(), MutableMap.create(),
       MutableMap.create(), MutableGraph.create());
   }
 
-  public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull RenamedOpDecl renamed, @NotNull BindBlock bind) {
+  public ResolveInfo(
+    @NotNull PrimDef.Factory primFactory,
+    @NotNull ModuleContext thisModule,
+    @NotNull ImmutableSeq<Stmt> thisProgram
+  ) {
+    this(primFactory, new AyaShape.Factory(), new AyaBinOpSet(thisModule.reporter()), thisModule, thisProgram);
+  }
+
+  /**
+   * @param definedHere Is this operator renamed in this module, or publicly renamed by upstream?
+   * @see #open(ResolveInfo, SourcePos, Stmt.Accessibility)
+   */
+  public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull RenamedOpDecl renamed, @NotNull BindBlock bind, boolean definedHere) {
     defVar.opDeclRename.put(thisModule().moduleName(), renamed);
-    opRename.put(defVar, Tuple.of(renamed, bind));
+    opRename.put(defVar, Tuple.of(renamed, bind, definedHere));
   }
 
   public void open(@NotNull ResolveInfo other, @NotNull SourcePos sourcePos, @NotNull Stmt.Accessibility acc) {
@@ -66,7 +84,7 @@ public record ResolveInfo(
         // if it is `public open`, make renamed operators transitively accessible by storing
         // them in my `opRename` bc "my importers" cannot access `other.opRename`.
         // see: https://github.com/aya-prover/aya-dev/issues/519
-        renameOp(defVar, tuple._1, tuple._2);
+        renameOp(defVar, tuple._1, tuple._2, false);
       } else defVar.opDeclRename.put(thisModule().moduleName(), tuple._1);
     });
   }

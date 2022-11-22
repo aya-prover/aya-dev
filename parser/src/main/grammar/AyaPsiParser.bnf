@@ -4,6 +4,14 @@
  */
 
 {
+  // only for the compiler, not the IDE
+  generate=[
+    java='11'
+    psi-factory='no'
+    visitor='no'
+  ]
+  generatePsi=false
+
   // we only need the parser and element types.
   parserClass='org.aya.parser.AyaPsiParser'
   elementTypeHolderClass='org.aya.parser.AyaPsiElementTypes'
@@ -134,7 +142,7 @@
   ]
 
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
-  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
+  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|letExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|lit.+Expr|univExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
@@ -176,9 +184,8 @@ openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
 module ::= KW_MODULE weakId LBRACE stmt* RBRACE
 
 useHide ::= KW_USING useList+ | KW_HIDING hideList+
-hideList ::= LPAREN idsComma RPAREN
-useList ::= LPAREN useIdsComma RPAREN
-useIdsComma ::= (useId COMMA)* useId?
+hideList ::= LPAREN <<commaSep weakId>>? RPAREN
+useList ::= LPAREN <<commaSep useId>>? RPAREN
 useId ::= weakId useAs?
 useAs ::= KW_AS assoc? weakId bindBlock?
 
@@ -222,7 +229,7 @@ openKw::= KW_OPEN
 
 structDecl
   ::=  sampleModifiers? (KW_PUBLIC? openKw)?
-       KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)?
+       KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS <<commaSep weakId>>)?
        (BAR structField)* bindBlock?
 
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
@@ -246,10 +253,10 @@ dataBody ::= dataCtorClause
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-dataCtor ::= KW_COERCE? declNameOrInfix tele* clauses? bindBlock?
+dataCtor ::= KW_COERCE? declNameOrInfix tele* partialBlock? bindBlock?
+partialBlock ::= LBRACE partialInner RBRACE { pin=1 }
 
 dataCtorClause ::= BAR patterns IMPLIES dataCtor
-
 
 // expressions
 expr ::= newExpr
@@ -258,11 +265,13 @@ expr ::= newExpr
        | sigmaExpr
        | lambdaExpr
        | matchExpr
+       | letExpr
        | doExpr
        | thisExpr
        | partialExpr
        | pathExpr
        | atomExpr
+       // put rules that do not start with `expr` above this line
        | arrowExpr
        | appExpr
        | projExpr
@@ -278,10 +287,9 @@ uliftPrefix ::= KW_ULIFT
 idiomAtom ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
 arrayAtom ::= LARRAY arrayBlock? RARRAY { pin=1 }
 arrayBlock ::= arrayCompBlock | arrayElementsBlock
-arrayCompBlock ::= expr BAR listComp
+arrayCompBlock ::= expr BAR <<commaSep doBinding>>
 arrayElementsBlock ::= exprList
 idiomBlock ::= barred* expr
-listComp ::= (doBinding COMMA)* doBinding
 
 newExpr ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
@@ -292,16 +300,22 @@ forallExpr ::= KW_FORALL lambdaTele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
-doExpr ::= KW_DO LBRACE? doBlock RBRACE?
+doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
+letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
+}
+letBindBlock ::= letBind | (BAR letBind)+
+letExpr ::= KW_LET letBindBlock KW_IN expr
 
-partialExpr ::= LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
+partialExpr ::= LPARTIAL partialInner? RPARTIAL
+private partialInner ::= bareSubSystem? barredSubSystem*
 subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem
 barredSubSystem ::= BAR subSystem
 
-doBlock ::= (doBlockContent COMMA)* doBlockContent
 doBlockContent ::= doBinding | expr
 
 newArgField ::= weakId
@@ -327,15 +341,14 @@ barredClause ::= BAR clause
 bareClause ::= clause
 clause ::= patterns (IMPLIES expr)?
 
-patterns ::= pattern (COMMA pattern)*
+patterns ::= <<commaSep pattern>>
 // size == 1 ==> the pattern
 // size > 1 ==> BinOpSeq of Arg<Pat>
 pattern ::= unitPattern+ (KW_AS weakId)?
 
 // pattern.size == 1 ==> Arg<Pat>
 // pattern.size > 1 ==> Tuple
-unitPattern ::= LPAREN patterns RPAREN
-              | LBRACE patterns RBRACE
+unitPattern ::= <<licit patterns>>
               | atomPattern
 // A Pattern
 atomPattern ::= atomListPattern
@@ -345,7 +358,7 @@ atomPattern ::= atomListPattern
               | CALM_FACE
 atomListPattern ::= LARRAY patterns? RARRAY (KW_AS weakId)?
 atomBindPattern ::= weakId {
-  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl.AtomBindPattern"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }
 
@@ -364,13 +377,7 @@ litStringExpr ::= STRING
 univExpr ::= KW_TYPE | KW_SET | KW_PROP | KW_ISET
 
 // tele is always typed
-tele ::= teleLit
-       | teleEx
-       | teleIm
-
-teleLit ::= literal
-teleEx ::= LPAREN teleBinder RPAREN
-teleIm ::= LBRACE teleBinder RBRACE
+tele ::= literal | <<licit teleBinder>>
 
 // Explicit arguments may be anonymous
 teleBinder ::= teleBinderTyped
@@ -384,24 +391,17 @@ teleParamName ::= weakId {
 }
 
 // lambda tele is always named
-lambdaTele ::= lambdaTeleLit
-             | lambdaTeleEx
-             | lambdaTeleIm
-
-lambdaTeleLit ::= teleParamName
-lambdaTeleEx ::= LPAREN lambdaTeleBinder RPAREN
-lambdaTeleIm ::= LBRACE lambdaTeleBinder RBRACE
+lambdaTele ::= teleParamName | <<licit lambdaTeleBinder>>
 
 lambdaTeleBinder ::= teleBinderTyped
-                   | lambdaTeleLit
+                   | teleParamName
 
 // path type tele
 pathTele ::= teleParamName
 
 // utilities
-exprList ::= (expr COMMA)* expr
+private exprList ::= <<commaSep expr>>
 barred ::= expr BAR
-idsComma ::= (weakId COMMA)* weakId?
 type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
@@ -411,3 +411,8 @@ doBinding ::= weakId LARROW expr {
 qualifiedId ::= weakId (COLON2 weakId)*
 weakId ::= ID
 
+// meta rules
+
+// we can improve the parsing by producing generically from a 'commaSep' rule
+meta commaSep ::= <<param>> (',' <<param>>) *
+meta licit ::= LBRACE <<param>> RBRACE | LPAREN <<param>> RPAREN

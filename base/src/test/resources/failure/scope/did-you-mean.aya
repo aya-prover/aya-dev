@@ -1,0 +1,2 @@
+data Nat | zero | suc Nat
+def one => suc zero

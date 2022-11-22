@@ -1,17 +1,15 @@
-In file $FILE:15:4 ->
+In file $FILE:18:4 ->
 
-  11 | open data Int : Type
-  12 |  | pos Nat
-  13 |  | neg Nat { | n => pos (addN n n) }
-                      ^-----------------^ relevant condition
-  14 | 
-  15 | def abs (n : Int) : Nat
-  16 |  | pos (suc n) => suc zero
-  17 |  | pos zero => suc zero
-  18 |  | neg n => zero
-          ^-----------^ substituted to `zero`
+  16 |  | posneg (n : Nat) (i : I) { i := pos n }
+  17 | 
+  18 | def abs (n : Int) : Nat
+  19 |  | pos (suc n) => suc zero
+  20 |  | pos zero => suc zero
+  21 |  | neg n => zero
+  22 |  | posneg n i => zero
+          ^----------------^ substituted to `zero`
 
-Error: The 3rd clause matches on a constructor with condition(s). When checking the
+Error: The 4th clause matches on a constructor with condition(s). When checking the
        1st condition, we failed to even reduce one of the clause(s) to check condition
 
 1 error(s), 0 warning(s).

@@ -1,4 +1,4 @@
--- https://github.com/aya-prover/aya-dev/issues/10
+// https://github.com/aya-prover/aya-dev/issues/10
 open struct Unit : Type
 open data Foo (x : Unit) : Type | foo
 def foo' : Foo (new Unit {}) => foo

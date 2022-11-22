@@ -1,18 +1,16 @@
-In file $FILE:9:4 ->
+In file $FILE:13:4 ->
 
-   5 | open data Int : Type
-   6 |  | pos Nat
-   7 |  | neg Nat { | zero => pos zero }
-                      ^--------------^ relevant condition
-   8 | 
-   9 | def abs (n : Int) : Nat
-  10 |  | pos n => suc n
-          ^------------^ substituted to `suc zero`
-  11 |  | neg n => n
-          ^--------^ substituted to `zero`
+  11 |    { i := pos 0 | ~ i := neg 0 }
+  12 | 
+  13 | def abs (n : Int) : Nat
+  14 |  | pos n => suc n
+          ^------------^ substituted to `suc 0`
+  15 |  | neg n => n
+  16 |  | posneg _ => 0
+          ^-----------^ substituted to `0`
 
-Error: The 2nd clause matches on a constructor with condition(s). When checking the
-       1st condition, we failed to unify `zero` and `suc zero`
+Error: The 3rd clause matches on a constructor with condition(s). When checking the
+       1st condition, we failed to unify `0` and `suc 0`
 
 1 error(s), 0 warning(s).
 What are you doing?

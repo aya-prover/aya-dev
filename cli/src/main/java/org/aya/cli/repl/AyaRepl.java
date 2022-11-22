@@ -3,6 +3,8 @@
 package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.cli.single.CliReporter;
@@ -39,16 +41,27 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   }
 
   public CommandManager makeCommand() {
+    var pathArg = CommandArg.shellLike(Path.class, new Completers.FileNameCompleter(), this::resolveFile);
     return new CommandManager(AyaRepl.class, ImmutableSeq.of(
       CommandArg.STRING,
       CommandArg.STRICT_BOOLEAN,
       CommandArg.STRICT_INT,
-      CommandArg.shellLike(Path.class, new Completers.FileNameCompleter(), this::resolveFile),
+      pathArg,
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.Code(this), ReplCommands.Code::new),
       CommandArg.from(ReplUtil.HelpItem.class, new ReplCompleters.Help(() -> commandManager), ReplUtil.HelpItem::new),
       CommandArg.from(ReplCommands.Prompt.class, null, ReplCommands.Prompt::new),
       CommandArg.fromEnum(DistillerOptions.Key.class),
-      CommandArg.fromEnum(NormalizeMode.class)
+      CommandArg.fromEnum(NormalizeMode.class),
+      CommandArg.fromEither(ReplCommands.ColorParam.class,
+        CommandArg.fromEnum(RenderOptions.ColorSchemeName.class),
+        pathArg,
+        l -> new ReplCommands.ColorParam(Either.left(l)),
+        r -> new ReplCommands.ColorParam(Either.right(r))),
+      CommandArg.fromEither(ReplCommands.StyleParam.class,
+        CommandArg.fromEnum(RenderOptions.StyleFamilyName.class),
+        pathArg,
+        l -> new ReplCommands.StyleParam(Either.left(l)),
+        r -> new ReplCommands.StyleParam(Either.right(r)))
     ), ImmutableSeq.of(
       ReplCommands.HELP,
       ReplCommands.QUIT,

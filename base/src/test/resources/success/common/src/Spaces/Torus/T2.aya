@@ -1,0 +1,23 @@
+open import Paths
+open import Spaces::Sphere::S1
+
+public open data T²
+| point
+| line1 (i : I) { ∂ i := point }
+| line2 (i : I) { ∂ i := point }
+| face (i j : I) {
+  | ∂ i := line2 j
+  | ∂ j := line1 i
+}
+
+def S¹-T² (s1 s2 : S¹) : T²
+| base, base => point
+| loop i, base => line1 i
+| base, loop i => line2 i
+| loop i, loop j => face i j
+
+def T²-S¹ (t : T²) : Sig S¹ ** S¹
+| point => (base, base)
+| line1 i => (loop i, base)
+| line2 i => (base, loop i)
+| face i j => (loop i, loop j)

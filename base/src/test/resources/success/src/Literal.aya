@@ -1,17 +1,15 @@
 open import Paths
 open import Arith::Nat
+open import Data::Bool
+open import Data::Vec
 
 open data Nat2 | zero2 | suc2 Nat2
-
-open data Vec (A : Type) (n : Nat) : Type
-  | A, 0 => vnil
-  | A, suc m => infixr :> A (Vec A m)
 
 open data Vec2 (A : Type) (n : Nat2) : Type
   | A, 0 => vnil2
   | A, suc2 m => infixr :>2 A (Vec2 A m)
 
-def vec1 : Vec Nat2 1 => 114 :>  vnil
+example def vec1 : Vec Nat2 1 => 114 :>  vnil
 def vec2 : Vec2 Nat 1 => 514 :>2 vnil2
 
 def litAdd  : Nat => 1 + 1
@@ -24,11 +22,11 @@ def yes3 : litAdd = ctorAdd => idp
 def e1 : Nat2 => 2147483647
 def e2 => 114514 + 1919810
 
--- e1 is unfolded to constructor when unifying, which is not needed
+// e1 is unfolded to constructor when unifying, which is not needed
 def e1-y : e1 = 2147483647 => idp
 
--- e2 is unfolded to constructor form for applying functions, causing StackOverflow
--- def e2-y : e2 = 1 => idp
+// e2 is unfolded to constructor form for applying functions, causing StackOverflow
+// def e2-y : e2 = 1 => idp
 
 def magic Nat : Nat
   | 0 => 1
@@ -48,12 +46,6 @@ def magic-is-ok-5 : magic 5 = 4 => idp
 def magic-is-ok-6 : magic 6 = 6 => idp
 def magic-is-ok-9 : magic 9 = 9 => idp
 
-def overlap prev Nat : Nat
-  | 0 => 0
-  | suc a => a
-
-open data Bool | true | false
-
 def odd Nat : Bool
   | 0 => false
   | 1 => even 0
@@ -64,7 +56,7 @@ def even Nat : Bool
   | 1 => odd 0
   | suc n => odd n
 
-def overlap largeInt Nat : Nat
+def largeInt Nat : Nat
   | 0 => 0
   | 2147483647 => 2147483647
   | suc a => suc a
@@ -73,11 +65,11 @@ def overlap largeInt2 Nat Nat : Nat
   | a, b => a
   | 114514, 1919810 => 114514
 
-def overlap multi-nodes Nat Nat : Nat
+def multi-nodes Nat Nat : Nat
   | 114, 0 => 0
   | 114, suc b => suc b
   | 114, 514 => 514
   | 115, 514 => 514
   | a, b => b
---^ should be 3 groups: [0, 4], [1, 2, 4], [3, 4]
+//  ^ should be 3 groups: [0, 4], [1, 2, 4], [3, 4]
 

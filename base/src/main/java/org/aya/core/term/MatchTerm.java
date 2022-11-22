@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.core.pat.PatMatcher;
+import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
 
 public record MatchTerm(

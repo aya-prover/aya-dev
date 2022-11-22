@@ -1,6 +1,5 @@
 open import Arith::Nat using (Nat, zero, suc, +)
 open import Paths
------------------------------------------
 
 open data Term : Type
   | Bin Term Term
@@ -23,7 +22,7 @@ def term2Ast : Term => Bin _1 (Bin _2 _3)
 def test1 : term1 = term1Ast => idp
 def test2 : term2 = term2Ast => idp
 
------------------------------------------
+// -----------------------------------------
 
 def infixr >== {A : Type} {a b c : A} (p : a = b) (q : b = c) => p <==> q
   looser qed ==<
@@ -31,7 +30,7 @@ def infix  ==< {A : Type} (a : A) {b : A} (p : a = b) => p
 
 def fixr qed {A : Type} (a : A) : a = a => idp {A} {a}
 
------------------------------------------
+// -----------------------------------------
 
 def overlap infix +' (a b : Nat) : Nat
  | a, 0 => a
@@ -53,7 +52,7 @@ def +'-comm (a b : Nat) : a +' b = b +' a
   qed
   )
 
------------------------------------------
+// -----------------------------------------
 
 def a (b : Nat) : Nat => suc b
 def fixl suc' (a : Nat) : Term => Atom a
@@ -64,7 +63,7 @@ def what-if-they're-prefixed' : (suc' a 0) = (Atom (suc 0))  => idp
 def what-if-they're-xjbfixed : (suc' a 0) = (a 0 suc')  => idp
 def what-if-they're-xjbfixed' : (a 0 suc') = (Atom (suc 0))  => idp
 
------------------------------------------
+// -----------------------------------------
 
 open data Dir : Type | L | R
 def infixl ====> (a b : Dir) : Sig Dir ** Dir => (a, b)

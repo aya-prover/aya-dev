@@ -1,0 +1,8 @@
+open import Paths
+
+public open data S²
+| base2
+| surf (i j : I) { ∂ i \/ ∂ j := base2 }
+
+def ΩS² => base2 = base2
+// def isContrΩS² : isContr ΩS² => {??}

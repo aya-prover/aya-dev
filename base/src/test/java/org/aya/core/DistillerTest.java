@@ -38,8 +38,9 @@ public class DistillerTest {
 
   @Test public void data() {
     @Language("Aya") var code = """
+      prim I
       open data Nat : Type | zero | suc Nat
-      open data Int : Type | pos Nat | neg Nat { | zero => pos zero }
+      open data Int : Type | pos Nat | neg Nat | posneg (i : I) { i := pos 0 }
       open data Fin (n : Nat) : Type | suc m => fzero | suc m => fsuc (Fin m)
       """;
     assertFalse(declDoc(code).renderToHtml().isEmpty());

@@ -1,9 +1,0 @@
-open data Nat : Type
- | zero
- | suc Nat
-open data Blah : Type
- | pos Nat
- | neg Nat Nat {
-   | a, zero => pos (suc a)
-   | zero, a => pos zero
- }

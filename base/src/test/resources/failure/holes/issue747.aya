@@ -1,6 +1,13 @@
+prim I
+prim intervalInv
+def inline ~ => intervalInv
 open data Nat : Type | zero | suc Nat
-open data Int : Type | pos Nat | neg Nat { | zero => pos zero }
+open data Int : Type
+ | pos Nat | neg Nat
+ | posneg (i : I)
+   { i := pos 0 | ~ i := neg 0 }
 
 def abs (a : Int) : Nat
   | pos a => a
+  | posneg _ => 0
   | neg a => {??}

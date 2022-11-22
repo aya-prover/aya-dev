@@ -2,9 +2,9 @@ In file $FILE:3:0 ->
 
   1 | prim I
   2 | prim coe
-  3 | --| test `I`
+  3 | /// test `I`
       ^-------------------^
-  4 | --| test `unresolved`
+  4 | /// test `unresolved`
 
 Error: The name `unresolved` is not defined in the current scope
 

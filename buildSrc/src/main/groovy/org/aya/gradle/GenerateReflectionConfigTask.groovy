@@ -3,14 +3,14 @@
 package org.aya.gradle
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 import java.util.stream.IntStream
+import java.util.stream.Stream
 
 class GenerateReflectionConfigTask extends DefaultTask {
   {
@@ -19,20 +19,38 @@ class GenerateReflectionConfigTask extends DefaultTask {
 
   @OutputDirectory File outputDir
   @InputFile File inputFile
+  @Optional @InputDirectory File extraDir
+  @Input List<String> classPrefixes = []
+  @Input List<String> excludeNamesSuffix = []
+  @Optional @Input String packageName
 
-  private var pattern = Pattern.compile("\\{(\\d+)\\,\\s*(\\d+)\\}")
+  private static var pattern = Pattern.compile("\\{(\\d+)\\,\\s*(\\d+)\\}")
+  private static var serializable = Pattern.compile("(record|enum)\\s*([a-zA-Z0-9_]+)")
 
   @TaskAction def run() {
     var lines = Files.lines(inputFile.toPath())
       .filter(line -> !line.startsWith("#"))
       .filter(line -> !line.isEmpty())
       .flatMap(line -> expand(line).stream())
-      .toList()
+    var extraLines = extraDir == null ? Stream.<String> empty()
+      : Files.list(extraDir.toPath())
+      .filter { path -> classPrefixes.any(path.getFileName().toString()::startsWith) }
+      .flatMap { path ->
+        var className = path.getFileName().toString()
+        className = className.substring(0, className.indexOf(".java"))
+        var subClasses = serializable.matcher(Files.readString(path, StandardCharsets.UTF_8)).results()
+          .map { it -> it.group(2) }
+          .map { name -> className + "\$" + name }
+          .filter { name -> !excludeNamesSuffix.contains(name) }
+          .map { name -> packageName + "." + name }
+        return Stream.concat(Stream.of(packageName + "." + className), subClasses)
+      }
+    var stream = Stream.concat(lines, extraLines).toList()
 
-    var reflectConfig = lines.stream()
+    var reflectConfig = stream.stream()
       .map(line -> generateReflectConfig(line))
       .collect(Collectors.joining(",\n", "[\n", "]\n"))
-    var serializeConfig = lines.stream()
+    var serializeConfig = stream.stream()
       .map(line -> generateSerializeConfig(line))
       .collect(Collectors.joining(",\n", "[\n", "]\n"))
     Files.writeString(outputDir.toPath().resolve("reflect-config.json"), reflectConfig)

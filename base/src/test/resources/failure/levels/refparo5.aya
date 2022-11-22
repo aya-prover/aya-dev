@@ -1,4 +1,4 @@
--- #4 in public repo
+// #4 in public repo
 
 struct TypeStruct : Type
   | type : Type

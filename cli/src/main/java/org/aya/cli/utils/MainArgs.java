@@ -3,8 +3,10 @@
 package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.render.RenderOptions;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.util.reporter.Problem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -106,10 +108,16 @@ public class MainArgs {
   }
 
   public enum DistillFormat {
-    html,
-    plain,
-    latex,
-    unix,
+    html(RenderOptions.OutputTarget.HTML),
+    plain(RenderOptions.OutputTarget.Plain),
+    latex(RenderOptions.OutputTarget.LaTeX),
+    unix(RenderOptions.OutputTarget.Terminal);
+
+    public final @NotNull RenderOptions.OutputTarget target;
+
+    DistillFormat(RenderOptions.@NotNull OutputTarget target) {
+      this.target = target;
+    }
   }
 
   public enum ReplType {

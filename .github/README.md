@@ -5,73 +5,49 @@
 [![tokei]](https://github.com/XAMPPRocky/tokei)
 [![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
 
-[Website](https://www.aya-prover.org) contains development blogs which are written for general audience.
+[**Website**](https://www.aya-prover.org) contains:
 
-## Download
-
-You may download the latest build of Aya from [GitHub Releases].
-It's updated for per-commit to the `main` branch,
-but the release date displayed is very old and is an issue of GitHub.
-
-There are prebuilt binaries for Windows, Linux, and macOS that can be used
-in Java-free environments as well as fat-jar files which can be invoked via `java --enable-preview -jar`.
-
-The minimum required version of Java is [Java 19].
++ Development blogs which are written for general audience
++ [Installation](https://www.aya-prover.org/guide/install.html)
+  instructions (basically telling you what to download in [GitHub Releases])
++ [Tutorial for Haskellers](https://www.aya-prover.org/guide/haskeller-tutorial.html)
 
 Aya is under active development, so please expect bugs, usability or performance issues
 (please file issues or create threads in discussions!).
-However, we can share some cool stuffs here:
 
-+ Dependent types, including pi-types, sigma types, etc.
+## Showcase
+
++ Dependent types, including pi-types, sigma types, indexed families, etc.
   You could write a [type-safe interpreter][gadt].
 + De Morgan cubical type theory with generalized path types
   similar to a bounded cubical subtype.
   + Implementation prototype: [Guest0x0].
+  + Demonstration of higher inductive types: [3-torus] (three dimensional torus!!).
 + Pattern matching with first-match semantics.
-  We can implement [redblack tree][rbtree] (without deletion) elegantly.
-+ Overlapping and order-independent patterns.
-  Very [useful][oop] in theorem proving.
+  Checkout the [red-black tree][rbtree] (without deletion yet).
++ Overlapping and order-independent patterns. Very [useful][oop] in theorem proving.
 + A literate programming mode with inline code fragment support.
   We already have a prototype, but we plan to revise it before sharing demos.
 + Binary operators, with precedence specified by a partial ordering
   (instead of a number, such as in Haskell or Agda)
   which is useful for [equation reasoning][assoc].
-+ Termination checker inspired by Andreas Abel's foetus.
++ A fairly good termination checker that does not assume predicativity.
   We adapted some code from Agda's implementation to accept
   [more definitions][foetus] (which are rejected by, e.g. Arend).
 + Inference of type checking order. That is to say,
-  no syntax for forward-declarations is needed for [mutual recursions][mutual].
+  no syntax for forward-declarations is needed for [mutual recursions][mutual],
+  induction-recursion, or induction-induction.
++ See also stdlib candidates [style guide][stdlib-style]. We have a grand plan!
 
 See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
 [Java 19]: https://jdk.java.net/19
 
-## Build
-
-Since you need [Java 19] to set this project up,  in case your choice
-of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
-If you have problems downloading dependencies (like you are in China),
-check out [how to][proxy] let gradle use a proxy.
-
-```bash
-# build Aya and its language server as applications to lsp/build/image
-# the image is usable in Java-free environments 
-./gradlew jlink --rerun-tasks
-# build Aya and its language server as executable
-# jars to <project>/build/libs/<project>-<version>-fat.jar
-./gradlew fatJar
-# build a platform-dependent installer for Aya and its language
-# server with the jlink artifacts to lsp/build/jpackage
-# requires https://wixtoolset.org/releases on Windows
-./gradlew jpackage
-# run tests and generate coverage report to build/reports
-./gradlew testCodeCoverageReport
-# (Windows only) show the coverage report in your default browser
-./gradlew showCCR
-```
-
 ## Contributing to Aya
+
+Since you need [Java 19] to set this project up, in case your choice
+of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
 
 + Questions or concerns are welcomed in the discussion area.
   We will try our best to answer your questions, but please be nice.
@@ -84,7 +60,8 @@ check out [how to][proxy] let gradle use a proxy.
   ensure an inclusive and welcoming community atmosphere.
 + Ask [@ice1000] to become an organization member.
   + If you want to contribute, ask before doing anything.
-    We will tell you about our plans.
+    We are reluctant to accept PRs that contradict our design goals.
+    We value your time and enthusiasm, so we don't want to close your PRs :)
 
 [@ice1000]: https://github.com/ice1000
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
@@ -92,17 +69,18 @@ check out [how to][proxy] let gradle use a proxy.
 [gitter]: https://img.shields.io/gitter/room/aya-prover/community?color=cyan&logo=gitter
 [tokei]: https://img.shields.io/tokei/lines/github/aya-prover/aya-dev?logo=java
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
-[oop]: ../base/src/test/resources/success/common/src/Arith/Nat.aya
-[proxy]: https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
+[oop]: ../base/src/test/resources/success/common/src/Arith/Nat/Core.aya
 [gadt]: ../base/src/test/resources/success/src/TypeSafeNorm.aya
 [regularity]: ../base/src/test/resources/success/common/src/Paths.aya
 [funExt]: ../base/src/test/resources/success/common/src/Paths.aya
 [rbtree]: ../base/src/test/resources/success/common/src/Data/RedBlack.aya
+[3-torus]: ../base/src/test/resources/success/common/src/Spaces/Torus/T3.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
 [mutual]: ../base/src/test/resources/success/src/Order.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 [Guest0x0]: https://github.com/ice1000/Guest0x0
+[stdlib-style]: ../base/src/test/resources/success/common
 
 ## Use as a library
 

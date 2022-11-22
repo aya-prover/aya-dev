@@ -2,14 +2,14 @@ open import Paths using (coe as primCoe, =, idp, I, ~)
 
 public open data Unit | unit
 
--- we cannot eta-contract this, same problem as Cubical Agda
+// we cannot eta-contract this, same problem as Cubical Agda
 def coe {A B : Type} (eq : A ↑ = B) (x : A) : B
   => (\y => eq y).primCoe x
 
 def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
   => λ i => (λ j => A).primCoe x freeze (~ i)
 
--- *** Types
+// *** Types
 
 public open struct EventT : Type 1
   | AgentT : Type => Unit
@@ -19,7 +19,7 @@ def SetterT => Type -> EventT -> EventT
 def Invariant (GetT : GetterT) (SetT : SetterT)
   => Pi (T : EventT) (E : Type) -> E ↑ = GetT (SetT E T)
 
--- wish these getter/setters could be generated automatically
+// wish these getter/setters could be generated automatically
 def GetAgentT (T : EventT) => T.AgentT
 def SetAgentT (E : Type) (T : EventT) : EventT
   => new EventT { | AgentT => E }
@@ -39,23 +39,23 @@ def Quantifier (E : Type) : Type 1
 def mkConstQ {E : Type} (x : E) : (E -> Type) -> Type
   => \f => f x
 
--- verbs are event quantifiers
+// verbs are event quantifiers
 def Verb (T : EventT) : Type 1
   => (Event T -> Type) -> Type
 
 def mkVerb {T : EventT} (p : Event T -> Type) : Verb T
   => \f => Sig (e : Event T) (p e) ** (f e)
 
--- VPs (verb phrases) behave just like verbs
+// VPs (verb phrases) behave just like verbs
 def VP (T : EventT) => Verb T
 
--- bare DPs (determiner phrases) are just entity quantifiers
+// bare DPs (determiner phrases) are just entity quantifiers
 def BDP (E : Type) => Quantifier E
 
 def DP (SetT : SetterT) (E : Type)
   => Pi {T : EventT} -> VP (SetT E T) -> VP (SetT E T)
 
--- thetas transform a BDP into a DP with that thematic role
+// thetas transform a BDP into a DP with that thematic role
 def Theta (SetT : SetterT) : Type 1
   => Pi {E : Type} -> BDP E -> DP SetT E
 
@@ -64,9 +64,9 @@ def mkTheta (GetT : GetterT)
   (SetT : SetterT)
   (inv : Invariant GetT SetT)
   : Theta SetT
-  => \{E : Type} (q : BDP E) -- from Theta
-  => \{T : EventT} (p : VP (SetT E T)) -- from DP
-  => \(f : Event (SetT E T) -> Type) -- from VP
+  => \{E : Type} (q : BDP E) // from Theta
+  => \{T : EventT} (p : VP (SetT E T)) // from DP
+  => \(f : Event (SetT E T) -> Type) // from VP
   => q (\(x : E) => p (\(e : Event (SetT E T))
     => Sig (get e = coe (inv T E) x) ** (f e)))
 
