@@ -303,4 +303,11 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       return new CoeTerm(type.de(state), restr.fmap(t -> t.de(state)));
     }
   }
+
+  record Sub(@NotNull SerTerm type, @NotNull Restr<SerTerm> restr,
+             @NotNull Partial<SerTerm> partial) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new SubTerm(type.de(state), restr.fmap(t -> t.de(state)), partial.fmap(t -> t.de(state)));
+    }
+  }
 }
