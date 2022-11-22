@@ -565,10 +565,10 @@ public record AyaGKProducer(
             return new Expr.Field(id, bindings, body, MutableValue.create());
           }).toImmutableSeq());
     }
-    if (node.is(PI_EXPR)) return buildPi(pos,
+    if (node.is(PI_EXPR)) return Expr.buildPi(pos,
       telescope(node.childrenOfType(TELE).map(x -> x)).view(),
       expr(node.child(EXPR)));
-    if (node.is(FORALL_EXPR)) return buildPi(pos,
+    if (node.is(FORALL_EXPR)) return Expr.buildPi(pos,
       lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(),
       expr(node.child(EXPR)));
     if (node.is(SIGMA_EXPR)) {
@@ -585,7 +585,7 @@ public record AyaGKProducer(
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
         result = new Expr.Hole(bodyHolePos, false, null);
       } else result = expr(bodyExpr);
-      return buildLam(pos, lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(), result);
+      return Expr.buildLam(pos, lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(), result);
     }
     if (node.is(PARTIAL_EXPR)) return partial(node, pos);
     if (node.is(PATH_EXPR)) {
@@ -633,7 +633,7 @@ public record AyaGKProducer(
       var bindBlock = node.child(LET_BIND_BLOCK);
       var binds = bindBlock.childrenOfType(LET_BIND).map(this::letBind);
       var body = expr(node.child(EXPR));
-      return buildLet(pos, binds, body);
+      return Expr.buildLet(pos, binds, body);
     }
     return unreachable(node);
   }
@@ -693,37 +693,6 @@ public record AyaGKProducer(
     return new Expr.RawProj(sourcePos, projectee, qid, null,
       coeLeft.map(this::expr).getOrNull(),
       restr.map(this::expr).getOrNull());
-  }
-
-  public static @NotNull Expr buildPi(
-    SourcePos sourcePos,
-    SeqView<Expr.Param> params, Expr body
-  ) {
-    if (params.isEmpty()) return body;
-    var drop = params.drop(1);
-    return new Expr.Pi(
-      sourcePos, params.first(),
-      buildPi(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos)), drop, body));
-  }
-
-  public static @NotNull Expr buildLam(SourcePos sourcePos, SeqView<Expr.Param> params, Expr body) {
-    if (params.isEmpty()) return body;
-    var drop = params.drop(1);
-    return new Expr.Lambda(
-      sourcePos, params.first(),
-      buildLam(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos)), drop, body));
-  }
-
-  public static @NotNull Expr buildLet(@NotNull SourcePos sourcePos, SeqView<Expr.LetBind> binds, Expr body) {
-    if (binds.isEmpty()) return body;
-    var drop = binds.drop(1);
-    return new Expr.Let(
-      sourcePos, binds.first(),
-      buildLet(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.LetBind::sourcePos)), drop, body)
-    );
   }
 
   public @NotNull Arg<Pattern> pattern(@NotNull GenericNode<?> node) {

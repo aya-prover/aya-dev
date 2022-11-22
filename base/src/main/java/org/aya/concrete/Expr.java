@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
@@ -703,7 +704,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    *     f (x : X) : G := g
    *   in expr
    * </pre>
-   *
+   * <p>
    * where:
    * <ul>
    *   <li>{@link LetBind#bindName} = f</li>
@@ -746,42 +747,45 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     public @NotNull Expr.LetBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(definedAs()));
     }
+  }
 
-    /**
-     * Convert
-     * <pre>
-     *   let f (x : X) : G := g in h
-     * </pre>
-     * to
-     * <pre>
-     *  let f : Pi (x : X) -> G := \ (x : X) => g in h
-     * </pre>
-     * and keep
-     * <pre>
-     *   let f : G := g in h
-     * </pre>
-     */
-    public @NotNull Expr tryBuildLambda() {
-      return telescope().foldRight(definedAs(), (p, r) -> {
-        // Left  : Param
-        // Right : body
-        // Goal  : \ p => r
+  static @NotNull Expr buildPi(
+    @NotNull SourcePos sourcePos,
+    @NotNull SeqView<Param> params,
+    @NotNull Expr body
+  ) {
+    if (params.isEmpty()) return body;
+    var drop = params.drop(1);
+    return new Expr.Pi(
+      sourcePos, params.first(),
+      buildPi(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.Param::sourcePos)), drop, body));
+  }
 
-        return new Expr.Lambda(sourcePos, p, r);
-      });
-    }
+  static @NotNull Expr buildLam(
+    @NotNull SourcePos sourcePos,
+    @NotNull SeqView<Expr.Param> params,
+    @NotNull Expr body
+  ) {
+    if (params.isEmpty()) return body;
+    var drop = params.drop(1);
+    return new Expr.Lambda(
+      sourcePos, params.first(),
+      buildLam(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.Param::sourcePos)), drop, body));
+  }
 
-    /**
-     * @see LetBind#tryBuildLambda()
-     */
-    public @NotNull Expr tryBuildPiType() {
-      return telescope().foldRight(result(), (p, r) -> {
-        // Left  : Param
-        // Right : Type of Body
-        // Goal  : Pi p -> r
-
-        return new Expr.Pi(sourcePos, p, r);
-      });
-    }
+  static @NotNull Expr buildLet(
+    @NotNull SourcePos sourcePos,
+    @NotNull SeqView<Expr.LetBind> binds,
+    @NotNull Expr body
+  ) {
+    if (binds.isEmpty()) return body;
+    var drop = binds.drop(1);
+    return new Expr.Let(
+      sourcePos, binds.first(),
+      buildLet(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.LetBind::sourcePos)), drop, body)
+    );
   }
 }
