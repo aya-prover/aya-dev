@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
+import kala.function.TriFunction;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
@@ -582,7 +583,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull LocalVar ref,
     @NotNull Expr type,
     boolean explicit
-  ) implements ParamLike<Expr> {
+  ) implements ParamLike<Expr>, SourceNode {
     public Param(@NotNull Param param, @NotNull Expr type) {
       this(param.sourcePos, param.ref, type, param.explicit);
     }
@@ -737,7 +738,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull ImmutableSeq<Expr.Param> telescope,
     @NotNull Expr result,
     @NotNull Expr definedAs
-  ) {
+  ) implements SourceNode {
     public @NotNull Expr.LetBind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull Expr result, @NotNull Expr definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
         ? this
@@ -749,43 +750,29 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
   }
 
-  static @NotNull Expr buildPi(
+  static @NotNull Expr buildPi(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull Expr body) {
+    return buildNested(sourcePos, params, body, Expr.Pi::new);
+  }
+
+  static @NotNull Expr buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull Expr body) {
+    return buildNested(sourcePos, params, body, Expr.Lambda::new);
+  }
+
+  static @NotNull Expr buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<LetBind> binds, @NotNull Expr body) {
+    return buildNested(sourcePos, binds, body, Expr.Let::new);
+  }
+
+  private static <P extends SourceNode> @NotNull Expr buildNested(
     @NotNull SourcePos sourcePos,
-    @NotNull SeqView<Param> params,
-    @NotNull Expr body
+    @NotNull SeqView<P> params,
+    @NotNull Expr body,
+    @NotNull TriFunction<SourcePos, P, Expr, Expr> constructor
   ) {
     if (params.isEmpty()) return body;
     var drop = params.drop(1);
-    return new Expr.Pi(
-      sourcePos, params.first(),
-      buildPi(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos)), drop, body));
-  }
-
-  static @NotNull Expr buildLam(
-    @NotNull SourcePos sourcePos,
-    @NotNull SeqView<Expr.Param> params,
-    @NotNull Expr body
-  ) {
-    if (params.isEmpty()) return body;
-    var drop = params.drop(1);
-    return new Expr.Lambda(
-      sourcePos, params.first(),
-      buildLam(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos)), drop, body));
-  }
-
-  static @NotNull Expr buildLet(
-    @NotNull SourcePos sourcePos,
-    @NotNull SeqView<Expr.LetBind> binds,
-    @NotNull Expr body
-  ) {
-    if (binds.isEmpty()) return body;
-    var drop = binds.drop(1);
-    return new Expr.Let(
-      sourcePos, binds.first(),
-      buildLet(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.LetBind::sourcePos)), drop, body)
-    );
+    var subPos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+      drop.map(SourceNode::sourcePos));
+    return constructor.apply(sourcePos, params.first(),
+      buildNested(subPos, drop, body, constructor));
   }
 }
