@@ -40,7 +40,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
+  permits Callable, CoeTerm, Elimination, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF, SubTerm {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -190,6 +190,14 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         var restr = coe.restr().map(f);
         if (type == coe.type() && restr == coe.restr()) yield coe;
         yield new CoeTerm(type, AyaRestrSimplifier.INSTANCE.normalizeRestr(restr));
+      }
+
+      case SubTerm sub -> {
+        var type = f.apply(sub.type());
+        var restr = sub.restr().map(f);
+        var partial = sub.partial().map(f);
+        if (type == sub.type() && restr == sub.restr() && partial == sub.partial()) yield sub;
+        yield new SubTerm(type, AyaRestrSimplifier.INSTANCE.normalizeRestr(restr), partial);
       }
       case RefTerm ref -> ref;
       case MetaPatTerm metaPat -> metaPat;
