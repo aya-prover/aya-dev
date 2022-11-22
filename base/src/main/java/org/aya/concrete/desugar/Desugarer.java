@@ -84,7 +84,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
           yield new Expr.Error(sourcePos, expr);
         }
         var rest = binds.view().dropLast(1);
-        // `do x <- xs, continued` is desugared as `xs >>= (\x => e)`,
+        // `do x <- xs, continued` is desugared as `xs >>= (\x => continued)`,
         // where `x <- xs` is denoted `thisBind` and `continued` can also be a do-notation
         var desugared = Expr.buildNested(sourcePos, rest, last.expr(),
           (pos, thisBind, continued) -> new Expr.App(pos, new Expr.App(pos,
