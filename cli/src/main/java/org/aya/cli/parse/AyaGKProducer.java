@@ -16,8 +16,6 @@ import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import kala.tuple.Tuple4;
-import kala.tuple.Tuple5;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -639,7 +637,7 @@ public record AyaGKProducer(
         .map(this::letBind);
       var body = expr(node.child(EXPR));
 
-      return buildLet(body.sourcePos(), binds, body);
+      return buildLet(pos, binds, body);
     }
 
     return unreachable(node);
@@ -808,7 +806,7 @@ public record AyaGKProducer(
     return Expr.Array.newList(entireSourcePos, exprs);
   }
 
-  public @NotNull Expr.Let buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr body) {
+  public @NotNull Expr.Let buildLet(@NotNull SourcePos entireSourcePos, @NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr body) {
     // letBinds is not empty
     assert letBinds.isNotEmpty();
 
@@ -817,7 +815,7 @@ public record AyaGKProducer(
       // Right : The body
       // Goal : let l in r
 
-      return new Expr.Let(sourcePos, l, r);
+      return new Expr.Let(entireSourcePos, l, r);
     });
   }
 
@@ -829,7 +827,6 @@ public record AyaGKProducer(
     var result = typeOrHole(node.peekChild(TYPE), pos);
     var body = expr(node.child(EXPR));
 
-    // The last element is a placeholder, which is meaningless
     return new Expr.Let.Bind(pos, LocalVar.from(bind), teles, result, body);
   }
 
