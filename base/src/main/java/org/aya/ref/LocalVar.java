@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public record LocalVar(@NotNull String name, @NotNull SourcePos definition, boolean isGenerated) implements AnyVar {
-  public static final @NotNull LocalVar IGNORED = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE);
+  public static final @NotNull LocalVar IGNORED = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE, true);
 
   public LocalVar(@NotNull String name, @NotNull SourcePos definition) {
     this(name, definition, false);
