@@ -1,9 +1,11 @@
-In file $FILE:7:2 ->
+In file $FILE:5:2 ->
 
+  3 | 
+  4 | def wrong-type : Unit =>
   5 |   let a := 1 in
+        ^^
   6 |   let b := 2 in
   7 |   3
-        ^^
 
 Error: Cannot check the expression
          let
@@ -15,12 +17,15 @@ Error: Cannot check the expression
        against the type
          Unit
 
-In file $FILE:13:5 ->
+In file $FILE:10:2 ->
 
+   8 | 
+   9 | def wrong-type-again : Unit =>
+  10 |   let
+         ^--^
   11 |   | a := 1
   12 |   | b := 2
   13 |   in 3
-            ^^
 
 Error: Cannot check the expression
          let
