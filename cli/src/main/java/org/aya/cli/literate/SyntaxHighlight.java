@@ -24,7 +24,10 @@ import org.jetbrains.annotations.NotNull;
 
 /** @implNote Use {@link MutableList} instead of {@link SeqView} for performance consideration. */
 public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
-  /** @param sourceFile If not null, provide keyword highlights too */
+  /**
+   * @param sourceFile If not null, provide keyword highlights too
+   * @return a list of {@link HighlightInfo}, no order was expected, the elements may be duplicated
+   */
   public static @NotNull ImmutableSeq<HighlightInfo> highlight(
     @NotNull Option<SourceFile> sourceFile,
     @NotNull ImmutableSeq<Stmt> program
@@ -89,7 +92,16 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
       case Command.Open o -> add(acc, linkModuleRef(o.path()));
       case ClassDecl decl -> add(acc, linkDef(decl.sourcePos, decl.ref()));
-      case Decl decl -> add(acc, linkDef(decl.sourcePos(), decl.ref()));
+      case Decl decl -> {
+        if (decl instanceof Decl.Telescopic teleDecl) {
+          teleDecl.telescope().view()
+            .map(Expr.Param::ref)
+            .filterNot(LocalVar::isGenerated)
+            .forEach(def -> add(acc, linkDef(def.definition(), def)));
+        }
+
+        yield add(acc, linkDef(decl.sourcePos(), decl.ref()));
+      }
       case Remark remark -> acc; // TODO: highlight literate
     };
   }

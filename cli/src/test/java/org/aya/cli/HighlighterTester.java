@@ -4,6 +4,7 @@ package org.aya.cli;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
@@ -92,7 +93,7 @@ public class HighlighterTester {
   }
 
   public void runTest() {
-    runTest(actual.sorted(), Seq.of(expected));
+    runTest(ImmutableSet.from(actual).toImmutableSeq().sorted(), Seq.of(expected));
   }
 
   public void runTest(@NotNull Seq<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {

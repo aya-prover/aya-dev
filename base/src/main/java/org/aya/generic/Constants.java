@@ -56,7 +56,7 @@ public interface Constants {
     return new LocalVar(ANONYMOUS_PREFIX, SourcePos.NONE);
   }
   static @NotNull LocalVar randomlyNamed(@NotNull SourcePos pos) {
-    return new LocalVar(randomName(pos), pos);
+    return new LocalVar(randomName(pos), pos, true);
   }
   static @NotNull String randomName(@NotNull Object pos) {
     if (Global.NO_RANDOM_NAME) return ANONYMOUS_PREFIX;
