@@ -123,7 +123,6 @@ public class HighlighterTest {
       localDef(73, 73, "a", "Locala"),
       localDef(75, 75, "b"),
       localRef(79, 79, "A", "LocalA'"),
-      localRef(79, 79, "A", "LocalA'"),   // TODO: .distinct in tester
       localRef(84, 84, "A", "LocalA'"),
       localRef(89, 89, "a", "Locala"));
   }
