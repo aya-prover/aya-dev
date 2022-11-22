@@ -16,12 +16,12 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.ExprConsumer;
-import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -461,8 +461,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
   }
 
   // Convert a parsing-time-desguared let to a sugared let
-  private @NotNull Tuple2<ImmutableSeq<Expr.Let.Bind>, Expr> sugarLet(@NotNull Expr.Let let) {
-    var letBinds = MutableList.<Expr.Let.Bind>create();
+  private @NotNull Tuple2<ImmutableSeq<Expr.LetBind>, Expr> sugarLet(@NotNull Expr.Let let) {
+    var letBinds = MutableList.<Expr.LetBind>create();
 
     Expr letOrExpr = let;
     while (letOrExpr instanceof Expr.Let mLet) {
@@ -473,7 +473,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
     return Tuple.of(letBinds.toImmutableSeq(), letOrExpr);
   }
 
-  private @NotNull Doc visitLetBind(@NotNull Expr.Let.Bind letBind) {
+  private @NotNull Doc visitLetBind(@NotNull Expr.LetBind letBind) {
     // f : G := g
     var prelude = MutableList.of(
       varDoc(letBind.bindName())

@@ -16,8 +16,6 @@ import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import kala.tuple.Tuple4;
-import kala.tuple.Tuple5;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -627,21 +625,16 @@ public record AyaGKProducer(
     }
     if (node.is(ARRAY_ATOM)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
-
       if (arrayBlock == null) return Expr.Array.newList(pos, ImmutableSeq.empty());
       if (arrayBlock.is(ARRAY_COMP_BLOCK)) return arrayCompBlock(arrayBlock, pos);
       if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
     if (node.is(LET_EXPR)) {
       var bindBlock = node.child(LET_BIND_BLOCK);
-      // According to the grammar, this is always not empty.
-      var binds = bindBlock.childrenOfType(LET_BIND)
-        .map(this::letBind);
+      var binds = bindBlock.childrenOfType(LET_BIND).map(this::letBind);
       var body = expr(node.child(EXPR));
-
-      return buildLet(body.sourcePos(), binds, body);
+      return buildLet(pos, binds, body);
     }
-
     return unreachable(node);
   }
 
@@ -721,6 +714,16 @@ public record AyaGKProducer(
       sourcePos, params.first(),
       buildLam(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
         drop.map(Expr.Param::sourcePos)), drop, body));
+  }
+
+  public static @NotNull Expr buildLet(@NotNull SourcePos sourcePos, SeqView<Expr.LetBind> binds, Expr body) {
+    if (binds.isEmpty()) return body;
+    var drop = binds.drop(1);
+    return new Expr.Let(
+      sourcePos, binds.first(),
+      buildLet(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+        drop.map(Expr.LetBind::sourcePos)), drop, body)
+    );
   }
 
   public @NotNull Arg<Pattern> pattern(@NotNull GenericNode<?> node) {
@@ -808,20 +811,7 @@ public record AyaGKProducer(
     return Expr.Array.newList(entireSourcePos, exprs);
   }
 
-  public @NotNull Expr.Let buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr body) {
-    // letBinds is not empty
-    assert letBinds.isNotEmpty();
-
-    return (Expr.Let) letBinds.foldRight(body, (l, r) -> {
-      // Left  : The let bind
-      // Right : The body
-      // Goal : let l in r
-
-      return new Expr.Let(sourcePos, l, r);
-    });
-  }
-
-  public @NotNull Expr.Let.Bind letBind(@NotNull GenericNode<?> node) {
+  public @NotNull Expr.LetBind letBind(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
     var bind = weakId(node.child(WEAK_ID));
     // make IDEA happy
@@ -830,7 +820,7 @@ public record AyaGKProducer(
     var body = expr(node.child(EXPR));
 
     // The last element is a placeholder, which is meaningless
-    return new Expr.Let.Bind(pos, LocalVar.from(bind), teles, result, body);
+    return new Expr.LetBind(pos, LocalVar.from(bind), teles, result, body);
   }
 
   public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {
