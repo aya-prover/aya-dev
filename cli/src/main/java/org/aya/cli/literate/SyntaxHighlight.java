@@ -89,7 +89,17 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
       case Command.Open o -> add(acc, linkModuleRef(o.path()));
       case ClassDecl decl -> add(acc, linkDef(decl.sourcePos, decl.ref()));
-      case Decl decl -> add(acc, linkDef(decl.sourcePos(), decl.ref()));
+      case Decl decl -> {
+        if (decl instanceof Decl.Telescopic teleDecl) {
+          teleDecl.telescope().view()
+            .map(Expr.Param::ref)
+            .filter(x -> x != LocalVar.IGNORED && !x.isGenerated())
+            .forEach(def ->
+              add(acc, linkDef(def.definition(), def)));
+        }
+
+        yield add(acc, linkDef(decl.sourcePos(), decl.ref()));
+      }
       case Remark remark -> acc; // TODO: highlight literate
     };
   }

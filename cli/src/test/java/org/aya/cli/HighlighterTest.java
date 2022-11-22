@@ -94,4 +94,37 @@ public class HighlighterTest {
       keyword(24, 27, "data"),
       def(29, 29, "Y", "y", HighlightInfo.DefKind.Data));
   }
+
+  @Test public void params() {
+    @Language("Aya") String code = """
+      open data Either (A B : Type)
+      | Left A
+      | Right B
+            
+      def constA {A : Type} (a b : A) : A => a
+      """;
+
+    highlightAndTest(code,
+      keyword(0, 3, "open"),
+      keyword(5, 8, "data"),
+      def(10, 15, "Either", "DefEither", HighlightInfo.DefKind.Data),
+      localDef(18, 18, "A", "LocalA"),
+      localDef(20, 20, "B", "LocalB"),
+      keyword(24, 27, "Type"),
+      def(32, 35, "Left", HighlightInfo.DefKind.Con),
+      localRef(37, 37, "A", "LocalA"),
+      def(41, 45, "Right", HighlightInfo.DefKind.Con),
+      localRef(47, 47, "B", "LocalB"),
+
+      keyword(50, 52, "def"),
+      def(54, 59, "constA", HighlightInfo.DefKind.Fn),
+      localDef(62, 62, "A", "LocalA'"),
+      keyword(66, 69, "Type"),
+      localDef(73, 73, "a", "Locala"),
+      localDef(75, 75, "b"),
+      localRef(79, 79, "A", "LocalA'"),
+      localRef(79, 79, "A", "LocalA'"),   // TODO: .distinct in tester
+      localRef(84, 84, "A", "LocalA'"),
+      localRef(89, 89, "a", "Locala"));
+  }
 }

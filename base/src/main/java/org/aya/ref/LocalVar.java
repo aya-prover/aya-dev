@@ -11,8 +11,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ice1000
  */
-public record LocalVar(@NotNull String name, @NotNull SourcePos definition) implements AnyVar {
+public record LocalVar(@NotNull String name, @NotNull SourcePos definition, boolean isGenerated) implements AnyVar {
   public static final @NotNull LocalVar IGNORED = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE);
+
+  public LocalVar(@NotNull String name, @NotNull SourcePos definition) {
+    this(name, definition, false);
+  }
 
   public LocalVar(@NotNull String name) {
     this(name, SourcePos.NONE);
