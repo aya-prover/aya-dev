@@ -611,7 +611,7 @@ public record AyaGKProducer(
         .toImmutableSeq());
     }
     if (node.is(DO_EXPR)) {
-      return new Expr.Do(pos, Constants.monadBind(pos),
+      return new Expr.Do(pos, Constants.monadBind(SourcePos.NONE),
         node.child(COMMA_SEP).childrenOfType(DO_BLOCK_CONTENT)
           .map(e -> {
             var bind = e.peekChild(DO_BINDING);

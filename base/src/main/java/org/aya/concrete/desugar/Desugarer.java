@@ -77,23 +77,24 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         assert seq.isNotEmpty() : pos.toString();
         yield pre(new BinExprParser(info, seq.view()).build(pos));
       }
-      case Expr.Do doNotation -> {
-        var last = doNotation.binds().last();
+      case Expr.Do(var sourcePos, var monadBind, var binds) -> {
+        var last = binds.last();
         if (last.var() != LocalVar.IGNORED) {
           info.opSet().reporter.report(new DoNotationError(last.sourcePos(), expr));
+          yield new Expr.Error(sourcePos, expr);
         }
-        var rest = doNotation.binds().view().dropLast(1);
-        yield pre(rest.foldRight(last.expr(),
-          // Upper: x <- a from last line
-          // Lower: current line
-          // Goal: >>=(a, \x -> rest)
-          (upper, lower) -> new Expr.App(upper.sourcePos(),
-            new Expr.App(
-              upper.sourcePos(), doNotation.bindName(),
-              new Expr.NamedArg(true, upper.expr())),
-            new Expr.NamedArg(true, new Expr.Lambda(lower.sourcePos(),
-              new Expr.Param(lower.sourcePos(), upper.var(), true),
-              lower)))));
+        var rest = binds.view().dropLast(1);
+        // `do x <- xs, continued` is desugared as `xs >>= (\x => continued)`,
+        // where `x <- xs` is denoted `thisBind` and `continued` can also be a do-notation
+        var desugared = Expr.buildNested(sourcePos, rest, last.expr(),
+          (pos, thisBind, continued) -> new Expr.App(pos, new Expr.App(pos,
+            monadBind,
+            new Expr.NamedArg(true, thisBind.expr())),
+            new Expr.NamedArg(true,
+              new Expr.Lambda(pos,
+                new Expr.Param(thisBind.var().definition(), thisBind.var(), true),
+                continued))));
+        yield pre(desugared);
       }
       case Expr.Idiom(
         var pos, Expr.IdiomNames(var empty, var or, var ap, var pure), var barred

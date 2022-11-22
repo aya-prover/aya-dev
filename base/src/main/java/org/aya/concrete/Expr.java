@@ -206,7 +206,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar var,
     @NotNull Expr expr
-  ) {
+  ) implements SourceNode {
     public @NotNull DoBind update(@NotNull Expr expr) {
       return expr == expr() ? this : new DoBind(sourcePos, var, expr);
     }
@@ -762,7 +762,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     return buildNested(sourcePos, binds, body, Expr.Let::new);
   }
 
-  private static <P extends SourceNode> @NotNull Expr buildNested(
+  /** convert flattened terms into nested right-associate terms */
+  static <P extends SourceNode> @NotNull Expr buildNested(
     @NotNull SourcePos sourcePos,
     @NotNull SeqView<P> params,
     @NotNull Expr body,
