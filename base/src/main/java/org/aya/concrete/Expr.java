@@ -2,9 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
+import kala.function.TriFunction;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
@@ -581,7 +583,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull LocalVar ref,
     @NotNull Expr type,
     boolean explicit
-  ) implements ParamLike<Expr> {
+  ) implements ParamLike<Expr>, SourceNode {
     public Param(@NotNull Param param, @NotNull Expr type) {
       this(param.sourcePos, param.ref, type, param.explicit);
     }
@@ -703,91 +705,74 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    *     f (x : X) : G := g
    *   in expr
    * </pre>
-   *
+   * <p>
    * where:
    * <ul>
-   *   <li>{@link Let.Bind#bindName} = f</li>
-   *   <li>{@link Let.Bind#telescope} = (x : X)</li>
-   *   <li>{@link Let,Bind#result} = G</li>
-   *   <li>{@link Let.Bind#definedAs} = g</li>
+   *   <li>{@link LetBind#bindName} = f</li>
+   *   <li>{@link LetBind#telescope} = (x : X)</li>
+   *   <li>{@link LetBind#result} = G</li>
+   *   <li>{@link LetBind#definedAs} = g</li>
    *   <li>{@link Let#body} = expr</li>
    * </ul>
    */
   record Let(
-    @NotNull Let.Bind bind,
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr.LetBind bind,
     @NotNull Expr body
   ) implements Expr {
-    public record Bind(
-      @NotNull SourcePos sourcePos,
-      @NotNull LocalVar bindName,
-      @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result,
-      @NotNull Expr definedAs
-    ) {
-      public @NotNull Let.Bind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull Expr result, @NotNull Expr definedAs) {
-        return telescope().sameElements(telescope, true)
-          && result() == result
-          && definedAs() == definedAs
-          ? this
-          : new Let.Bind(sourcePos(), bindName(), telescope, result, definedAs);
-      }
-
-      public @NotNull Bind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-        return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(definedAs()));
-      }
-
-      /**
-       * Convert
-       * <pre>
-       *   let f (x : X) : G := g in h
-       * </pre>
-       * to
-       * <pre>
-       *  let f : Pi (x : X) -> G := \ (x : X) => g in h
-       * </pre>
-       * and keep
-       * <pre>
-       *   let f : G := g in h
-       * </pre>
-       */
-      public @NotNull Expr tryBuildLambda() {
-        return telescope().foldRight(definedAs(), (p, r) -> {
-          // Left  : Param
-          // Right : body
-          // Goal  : \ p => r
-
-          return new Expr.Lambda(sourcePos, p, r);
-        });
-      }
-
-      /**
-       * @see Let.Bind#tryBuildLambda(SourcePos)
-       */
-      public @NotNull Expr tryBuildPiType() {
-        return telescope().foldRight(result(), (p, r) -> {
-          // Left  : Param
-          // Right : Type of Body
-          // Goal  : Pi p -> r
-
-          return new Expr.Pi(sourcePos, p, r);
-        });
-      }
-    }
-
-    @Override
-    public @NotNull SourcePos sourcePos() {
-      return bind.sourcePos();
-    }
-
-    public @NotNull Let update(@NotNull Bind bind, @NotNull Expr body) {
+    public @NotNull Let update(@NotNull Expr.LetBind bind, @NotNull Expr body) {
       return bind() == bind && body() == body
         ? this
-        : new Let(bind, body);
+        : new Let(sourcePos(), bind, body);
     }
 
     @Override
     public @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(bind().descent(f), f.apply(body()));
     }
+  }
+
+  record LetBind(
+    @NotNull SourcePos sourcePos,
+    @NotNull LocalVar bindName,
+    @NotNull ImmutableSeq<Expr.Param> telescope,
+    @NotNull Expr result,
+    @NotNull Expr definedAs
+  ) implements SourceNode {
+    public @NotNull Expr.LetBind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull Expr result, @NotNull Expr definedAs) {
+      return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
+        ? this
+        : new LetBind(sourcePos(), bindName(), telescope, result, definedAs);
+    }
+
+    public @NotNull Expr.LetBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(definedAs()));
+    }
+  }
+
+  static @NotNull Expr buildPi(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull Expr body) {
+    return buildNested(sourcePos, params, body, Expr.Pi::new);
+  }
+
+  static @NotNull Expr buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull Expr body) {
+    return buildNested(sourcePos, params, body, Expr.Lambda::new);
+  }
+
+  static @NotNull Expr buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<LetBind> binds, @NotNull Expr body) {
+    return buildNested(sourcePos, binds, body, Expr.Let::new);
+  }
+
+  private static <P extends SourceNode> @NotNull Expr buildNested(
+    @NotNull SourcePos sourcePos,
+    @NotNull SeqView<P> params,
+    @NotNull Expr body,
+    @NotNull TriFunction<SourcePos, P, Expr, Expr> constructor
+  ) {
+    if (params.isEmpty()) return body;
+    var drop = params.drop(1);
+    var subPos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+      drop.map(SourceNode::sourcePos));
+    return constructor.apply(sourcePos, params.first(),
+      buildNested(subPos, drop, body, constructor));
   }
 }
