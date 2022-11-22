@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.error;
 
@@ -15,10 +15,6 @@ public interface Span {
     int endLine,
     int endCol
   ) {
-    public boolean contains(int line, int column) {
-      return line >= startLine && line <= endLine && column >= startCol && column <= endCol;
-    }
-
     public @NotNull Data union(@NotNull Data other) {
       return new Data(
         Math.min(startLine, other.startLine),

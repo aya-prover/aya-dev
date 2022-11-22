@@ -3,9 +3,10 @@ In file $FILE:5:2 ->
   3 | 
   4 | def wrong-type : Unit =>
   5 |   let a := 1 in
-        ^^
+        ^------------^ Begin of the error
   6 |   let b := 2 in
   7 |   3
+        ^^ End of the error
 
 Error: Cannot check the expression
          let
@@ -22,10 +23,11 @@ In file $FILE:10:2 ->
    8 | 
    9 | def wrong-type-again : Unit =>
   10 |   let
-         ^--^
+         ^--^ Begin of the error
   11 |   | a := 1
   12 |   | b := 2
   13 |   in 3
+         ^---^ End of the error
 
 Error: Cannot check the expression
          let
