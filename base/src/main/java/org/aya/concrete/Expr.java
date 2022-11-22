@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -268,6 +269,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @Override public @NotNull Expr.Lambda descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(param.descent(f), f.apply(body));
     }
+  }
+
+  static @NotNull Expr unlam(@NotNull Expr expr, int max, @NotNull Consumer<Param> params) {
+    while (expr instanceof Lambda lambda && max --> 0) {
+      params.accept(lambda.param);
+      expr = lambda.body;
+    }
+    return expr;
   }
 
   /**

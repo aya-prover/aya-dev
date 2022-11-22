@@ -72,11 +72,11 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
   record Bind(
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar bind,
-    @Nullable Term userType,
+    @Nullable Expr userType,
     @ForLSP @NotNull MutableValue<@Nullable Term> type
   ) implements Pattern {
-    public Bind(@NotNull SourcePos sourcePos, @NotNull LocalVar bind, @NotNull MutableValue<@Nullable Term> type) {
-      this(sourcePos, bind, null, type);
+    public Bind(@NotNull SourcePos sourcePos, @NotNull LocalVar bind) {
+      this(sourcePos, bind, null, MutableValue.create());
     }
   }
 
