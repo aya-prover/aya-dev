@@ -712,20 +712,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    *   <li>{@link LetBind#definedAs} = g</li>
    *   <li>{@link Let#body} = expr</li>
    * </ul>
-   *
-   * @param sourcePos to the source pos of body, consider this code
-   *                  <pre>
-   *                  let a := b in<br/>
-   *                  let c := d in<br/>
-   *                  e
-   *                  </pre>
-   *                  The source pos of the
-   *                  {@code let a := b in let c := d in e}
-   *                  and
-   *                  {@code let c := d in e}
-   *                  are both the source pos of e.
-   *                  If you are looking for the source pos of {@code a := b} or {@code c := d},
-   *                  see {@link LetBind#sourcePos()}
    */
   record Let(
     @NotNull SourcePos sourcePos,
