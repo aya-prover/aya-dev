@@ -203,21 +203,21 @@ public final class PatTycker {
 
   private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
     var parent = exprTycker.localCtx;
-    var parentLets = exprTycker.lets;
     exprTycker.localCtx = lhsResult.gamma;
-    // We `addDirectly` to `parentLets`.
-    // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
-    // IDEA said that this line is useless...
-    exprTycker.lets = parentLets.derive().addDirectly(lhsResult.bodySubst());
-    var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
-      // In case the patterns are malformed, do not check the body
-      // as we bind local variables in the pattern checker,
-      // and in case the patterns are malformed, some bindings may
-      // not be added to the localCtx of tycker, causing assertion errors
-      ? new ErrorTerm(e, false)
-      : exprTycker.check(e, lhsResult.type).wellTyped());
+    var term = exprTycker.withSubSubst(() -> {
+      // We `addDirectly` to `parentLets`.
+      // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
+      // IDEA said that this line is useless...
+      exprTycker.lets.addDirectly(lhsResult.bodySubst());
+      return lhsResult.preclause.expr().map(e -> lhsResult.hasError
+        // In case the patterns are malformed, do not check the body
+        // as we bind local variables in the pattern checker,
+        // and in case the patterns are malformed, some bindings may
+        // not be added to the localCtx of tycker, causing assertion errors
+        ? new ErrorTerm(e, false)
+        : exprTycker.check(e, lhsResult.type).wellTyped());
+    });
     exprTycker.localCtx = parent;
-    exprTycker.lets = parentLets;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
   }
 
@@ -280,28 +280,32 @@ public final class PatTycker {
         }
         yield ret;
       }
-      case Pattern.Bind bind -> {
-        var v = bind.bind();
-        exprTycker.localCtx.put(v, term);
-        bind.type().set(term);
-        yield new Pat.Bind(licit, v, term);
+      case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
+        exprTycker.localCtx.put(bind, term);
+        if (tyExpr != null) exprTycker.withSubSubst(() -> {
+          exprTycker.lets.addDirectly(patSubst).addDirectly(sigSubst);
+          var syn = exprTycker.synthesize(tyExpr);
+          exprTycker.unifyTyReported(term, syn.wellTyped(), tyExpr);
+          return null;
+        });
+        tyRef.set(term);
+        yield new Pat.Bind(licit, bind, term);
       }
-      case Pattern.CalmFace face -> new Pat.Meta(licit, MutableValue.create(),
-        new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
-      case Pattern.Number num -> {
+      case Pattern.CalmFace(var pos) -> new Pat.Meta(licit, MutableValue.create(),
+        new LocalVar(Constants.ANONYMOUS_PREFIX, pos), term);
+      case Pattern.Number(var pos, var number) -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
         if (ty instanceof IntervalTerm) {
-          var end = num.number();
-          if (end == 0 || end == 1) yield new Pat.End(num.number() == 1, licit);
-          yield withError(new PrimError.BadInterval(num.sourcePos(), end), licit, term);
+          if (number == 0 || number == 1) yield new Pat.End(number == 1, licit);
+          yield withError(new PrimError.BadInterval(pos, number), licit, term);
         }
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined() && shape.get().shape() == AyaShape.NAT_SHAPE)
-            yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, licit);
+            yield new Pat.ShapedInt(number, shape.get(), dataCall, licit);
         }
-        yield withError(new PatternProblem.BadLitPattern(num, term), licit, term);
+        yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
       }
       case Pattern.List(var pos, var el, var as) -> {
         // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !

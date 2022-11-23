@@ -81,6 +81,14 @@ public final class ExprTycker extends Tycker {
     }
   }
 
+  public <T> T withSubSubst(Supplier<T> supplier) {
+    var oldLets = lets;
+    lets = oldLets.derive();
+    var result = supplier.get();
+    lets = oldLets;
+    return result;
+  }
+
   public <T> T withResult(@NotNull Term result, @NotNull Supplier<T> supplier) {
     return withInProp(isPropType(result), supplier);
   }
@@ -827,7 +835,7 @@ public final class ExprTycker extends Tycker {
    *
    * @see ExprTycker#unifyTyMaybeInsert(Term, Result, Expr)
    */
-  void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
+  public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
     if (unification != null) reporter.report(new UnifyError.Type(loc, upper, lower, unification, state));
   }
@@ -873,7 +881,7 @@ public final class ExprTycker extends Tycker {
     var sort = type.computeType(state, localCtx).normalize(state, NormalizeMode.WHNF);
     if (sort instanceof MetaTerm meta) {
       var value = state.metas().getOption(meta.ref());
-      if(value.isDefined()) return isPropType(value.get());
+      if (value.isDefined()) return isPropType(value.get());
       state.metaNotProps().add(meta.ref()); // assert not Prop
       return false;
     }
@@ -887,7 +895,7 @@ public final class ExprTycker extends Tycker {
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
   }
-  
+
   /// region Helper
 
   public <R> R subscoped(@NotNull Supplier<R> action) {
@@ -899,7 +907,7 @@ public final class ExprTycker extends Tycker {
   }
 
   /// endregion
-  
+
   /**
    * {@link TermResult#type} is the type of {@link TermResult#wellTyped}.
    *
