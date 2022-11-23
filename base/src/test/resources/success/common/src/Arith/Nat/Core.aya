@@ -10,7 +10,7 @@ def pred Nat : Nat
 | 0 => 0
 | suc n => n
 
-def overlap infixl + (a b : Nat) : Nat
+def overlap infixl + : BinOp Nat
 | 0, a => a
 | a, 0 => a
 | suc a, b => suc (a + b)
@@ -33,7 +33,7 @@ private def overlap +-comm-lemma : Commutative (+)
 | a, suc b => pmap suc +-comm
 def inline +-comm {a b : Nat} => +-comm-lemma a b
 
-def overlap infixl * (m n : Nat) : Nat
+def overlap infixl * : BinOp Nat
 | 0, n => 0
 | m, 0 => 0
 | suc m, n => n + m * n
@@ -55,13 +55,13 @@ private def diag Nat : Type
 | 0 => Nat
 | suc a => False
 
-private def *-comm-lemma (m n : Nat) : m * n = n * m
+private def *-comm-lemma : Commutative (*)
 | 0, n => idp
 // | m, 0 => idp
 | suc m, n => pmap (n +) *-comm <==> *-suc
 // | m, suc n => sym *-suc <==> pmap (m +) *-comm
 def inline *-comm {m n : Nat} => *-comm-lemma m n
 
-private def overlap *-assoc (m : Nat) {n k : Nat} : (m * n) * k = m * (n * k)
-| 0 => idp
-| suc m => <=3=> (+-*-distl _) (pmap (+ _) (*-assoc _)) +-comm
+private def overlap *-assoc : Associative (*)
+| 0, _, _ => idp
+| suc m, _, _ => <=3=> (+-*-distl _) (pmap (+ _) (*-assoc _ _ _)) +-comm
