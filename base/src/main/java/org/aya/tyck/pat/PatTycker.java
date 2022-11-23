@@ -351,20 +351,25 @@ public final class PatTycker {
     while (sig.param().isNotEmpty()) {
       var param = sig.param().first();
       Arg<Pattern> pat;
-      if (param.explicit()) {
-        if (stream.isEmpty()) {
-          Pattern errorPattern;
+      // Type explicit, does not have pattern
+      if (stream.isEmpty() && param.explicit()) {
+        Pattern errorPattern;
 
-          if (lastPat == null) {
-            assert outerPattern != null;
-            errorPattern = outerPattern;
-          } else {
-            errorPattern = lastPat.term();
-          }
-
-          foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
-          return done(results, sig.result(), body);
+        if (lastPat == null) {
+          assert outerPattern != null;
+          errorPattern = outerPattern;
+        } else {
+          errorPattern = lastPat.term();
         }
+
+        foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
+        return done(results, sig.result(), body);
+        // Type is implicit, does not have pattern
+      } else if (stream.isEmpty()) {
+        sig = generatePat(new PatData(sig, results, param));
+        continue;
+        // Type explicit, does have pattern
+      } else if (param.explicit()) {
         pat = stream.first();
         lastPat = pat;
         stream = stream.drop(1);
@@ -372,12 +377,8 @@ public final class PatTycker {
           foundError(new PatternProblem.TooManyImplicitPattern(pat.term(), param));
           return done(results, sig.result(), body);
         }
+        // Type is implicit, does have pattern
       } else {
-        // Type is implicit, so....?
-        if (stream.isEmpty()) {
-          sig = generatePat(new PatData(sig, results, param));
-          continue;
-        }
         pat = stream.first();
         if (pat.explicit()) {
           // Pattern is explicit, so we leave it to the next type, do not "consume" it
