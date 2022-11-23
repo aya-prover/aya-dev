@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Option;
 import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple3;
@@ -192,9 +193,8 @@ public final class PatTycker {
     match.patterns.view().map(Arg::term).forEach(consumer::accept);
 
     var subst = patSubst.derive().addDirectly(sigSubst);
-    var step1 = new LhsResult(exprTycker.localCtx, type, subst,
-      match.hasError,
-      new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
+    var step1 = new LhsResult(exprTycker.localCtx, type, subst, match.hasError,
+      new Pat.Preclause<>(match.sourcePos, patterns, Option.ofNullable(step0.newBody)));
     exprTycker.localCtx = parent;
     patSubst.clear();
     sigSubst.clear();
