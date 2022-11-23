@@ -38,10 +38,11 @@ def overlap infixl * (m n : Nat) : Nat
 | suc m, n => n + m * n
 tighter +
 
-def *-suc (m n : Nat) : m * suc n = m + m * n
+def *-suc (m n : Nat) : m + m * n = m * suc n
 | 0, n => idp
-| suc m, n => pmap suc (pmap (n +) (*-suc m n)
-  <==> sym +-assoc <==> pmap (+ m * n) +-comm <==> +-assoc)
+| suc m, n => pmap suc
+  (<=3=> (sym +-assoc) (pmap (+ m * n) +-comm) +-assoc
+   <==> pmap (n +) (*-suc m n))
 
 def +-*-distl {n m : Nat} (k : Nat) : (m + k) * n = k * n + m * n
 | 0 => idp
@@ -51,3 +52,7 @@ def z≠s {a : Nat} (p : 0 = suc a) : False => (\i => diag (p i)).coe a
 private def diag Nat : Type
 | 0 => Nat
 | suc a => False
+
+// private def overlap *-comm-lemma (m n : Nat) : m * n = n * m
+// | 0, n => idp
+// | suc m, n => sym (*-suc _ _)

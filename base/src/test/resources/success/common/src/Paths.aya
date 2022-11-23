@@ -48,8 +48,9 @@ def hcomp2d
   (r : a = c) : c = d
   => \i => ((\ k => r k = q k).coe p) i
 
-def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c =>
-  \k => hcomp2d p q idp k
+def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c => <=3=> idp p q
+def <=3=> {a b c d : A} (p : a = b) (q : b = c) (r : c = d) : a = d =>
+  \k => hcomp2d q r (sym p) k
 
 def infixr <==>'
   (p : [| i |] A)
