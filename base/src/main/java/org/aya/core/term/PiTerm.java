@@ -6,17 +6,19 @@ import kala.collection.SeqLike;
 import kala.collection.mutable.MutableList;
 import org.aya.core.visitor.BetaExpander;
 import org.aya.generic.SortKind;
-import org.aya.util.Arg;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.UnaryOperator;
 
 /**
  * @author re-xyr, kiva, ice1000
  */
 public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements StableWHNF, Term {
-  public static @NotNull Term unpi(@NotNull Term term, @NotNull MutableList<Param> params) {
-    while (term instanceof PiTerm(var param, var body)) {
+  public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params) {
+    while (fmap.apply(term) instanceof PiTerm(var param, var body)) {
       params.append(param);
       term = body;
     }

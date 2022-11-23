@@ -1,6 +1,7 @@
 public open import Arith::Nat
 public open import Data::Bool
 open import Paths
+open import Algebra::Formula
 
 public open data Int
 | signed Bool Nat
@@ -28,7 +29,7 @@ def predInt (x : Int) : Int => negate (succInt (negate x))
 
 def subI (x y : Int) : Int => addI x (negate y)
 
-def addI Int Int : Int
+def addI : BinOp Int
 | signed _ 0, n => n
 | posneg _, n => n
 | signed true (suc m), n => succInt (addI (pos m) n)
