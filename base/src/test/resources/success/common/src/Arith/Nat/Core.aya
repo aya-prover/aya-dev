@@ -1,5 +1,6 @@
 open import Paths
 open import Logic::False
+open import Algebra::Formula
 
 public open data Nat
 | zero
@@ -16,7 +17,7 @@ def overlap infixl + (a b : Nat) : Nat
 | a, suc b => suc (a + b)
 tighter =
 
-private def overlap +-assoc-lemma (a b c : Nat) : (a + b) + c = a + (b + c)
+private def overlap +-assoc-lemma : Associative (+)
 | 0, b, c => idp
 | a, 0, c => idp
 | a, b, 0 => idp
@@ -25,7 +26,7 @@ private def overlap +-assoc-lemma (a b c : Nat) : (a + b) + c = a + (b + c)
 | a, b, suc c => pmap suc +-assoc
 def inline +-assoc {a b c : Nat} => +-assoc-lemma a b c
 
-private def overlap +-comm-lemma (a b : Nat) : a + b = b + a
+private def overlap +-comm-lemma : Commutative (+)
 | 0, a => idp
 | a, 0 => idp
 | suc a, b => pmap suc +-comm

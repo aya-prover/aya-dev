@@ -19,6 +19,8 @@ import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * It's called distiller, and it serves as the pretty printer.
  * Credit after <a href="https://github.com/jonsterling/dreamtt/blob/main/frontend/Distiller.ml">Jon Sterling</a>
@@ -151,7 +153,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           term(Outer.Codomain, body0)
         ), Outer.BinOp);
         var params = MutableList.of(params0);
-        var body = PiTerm.unpi(body0, params);
+        var body = PiTerm.unpi(body0, UnaryOperator.identity(), params);
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Pi")),
           visitTele(params, body, Term::findUsages),

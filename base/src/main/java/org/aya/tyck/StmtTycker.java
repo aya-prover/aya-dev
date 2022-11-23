@@ -188,7 +188,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         //  if the result type is a pure meta.
         if (fn.body.isRight()) {
           var tele = MutableArrayList.from(resultTele);
-          resultRes = PiTerm.unpi(tycker.zonk(resultRes), tele);
+          resultRes = PiTerm.unpi(tycker.zonk(resultRes), tycker::whnf, tele);
           resultTele = tele.toImmutableArray();
         }
         fn.signature = new Def.Signature(resultTele, resultRes);

@@ -1,0 +1,4 @@
+open import Paths
+
+def Commutative {A : Type} (op : A -> A -> A) => Pi (a b : A) -> op a b = op b a
+def Associative {A : Type} (op : A -> A -> A) => Pi (a b c : A) -> op (op a b) c = op a (op b c)
