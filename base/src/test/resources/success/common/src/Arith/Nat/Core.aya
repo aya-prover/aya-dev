@@ -54,6 +54,13 @@ private def diag Nat : Type
 | 0 => Nat
 | suc a => False
 
-// private def overlap *-comm-lemma (m n : Nat) : m * n = n * m
-// | 0, n => idp
-// | suc m, n => *-suc _ _
+private def *-comm-lemma (m n : Nat) : m * n = n * m
+| 0, n => idp
+// | m, 0 => idp
+| suc m, n => pmap (n +) *-comm <==> *-suc
+// | m, suc n => sym *-suc <==> pmap (m +) *-comm
+def inline *-comm {m n : Nat} => *-comm-lemma m n
+
+private def overlap *-assoc (m : Nat) {n k : Nat} : (m * n) * k = m * (n * k)
+| 0 => idp
+| suc m => <=3=> (+-*-distl _) (pmap (+ _) (*-assoc _)) +-comm
