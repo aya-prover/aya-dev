@@ -170,7 +170,7 @@ public record ExprResolver(
         }
         case AnyVar var -> new Expr.Ref(pos, var);
       };
-      case Expr.Let(var letBind, var body) let -> {
+      case Expr.Let(var $, var letBind, var body) let -> {
         // resolve letBind
 
         var mCtx = MutableValue.create(ctx);

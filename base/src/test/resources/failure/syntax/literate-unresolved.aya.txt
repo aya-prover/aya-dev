@@ -3,8 +3,9 @@ In file $FILE:3:0 ->
   1 | prim I
   2 | prim coe
   3 | /// test `I`
-      ^-------------------^
+      ^-----------^ Begin of the error
   4 | /// test `unresolved`
+      ^--------------------^ End of the error
 
 Error: The name `unresolved` is not defined in the current scope
 

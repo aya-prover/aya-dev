@@ -1,0 +1,13 @@
+open data Nat | O | S Nat
+open data Unit | unit
+
+def wrong-type : Unit =>
+  let a := 1 in
+  let b := 2 in
+  3
+
+def wrong-type-again : Unit =>
+  let
+  | a := 1
+  | b := 2
+  in 3

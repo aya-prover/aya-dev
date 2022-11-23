@@ -331,25 +331,17 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new ListTerm(results, match._2, type), type);
       }
       case Expr.Let let -> {
-        // `let` can be either
-        // ```aya
-        // let f : G := g in h
-        // ```
-        // or
-        // ```aya
-        // let f (x : X) : G := g in h
-        // ```
+        // pushing telescopes into lambda params, for example:
+        // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
+        var letBind = let.bind();
+        var typeExpr = Expr.buildPi(letBind.sourcePos(),
+          letBind.telescope().view(), letBind.result());
+        // as well as the body of the binding, for example:
+        // `let f x := g` is desugared to `let f := \x => g`
+        var definedAsExpr = Expr.buildLam(letBind.sourcePos(),
+          letBind.telescope().view(), letBind.definedAs());
 
-        // But the second form can be desugared to
-        // ```aya
-        // let f : X -> G := (\ (x : X) => g) in h
-        // ```
-        // So we desugar it!
-        var definedAsExpr = let.bind().tryBuildLambda();
-        var typeExpr = let.bind().tryBuildPiType();
-
-        // All things like `let f (x : X) : G := g in h` was converted to `let f : X -> G := (\ (x : X) => g) in h`
-        // So consider we are handling `let f : G := g in h`
+        // Now everything is in the form of `let f : G := g in h`
 
         // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
         var type = synthesize(typeExpr).wellTyped().freezeHoles(state);
@@ -361,16 +353,7 @@ public final class ExprTycker extends Tycker {
           return synthesize(let.body());
         });
 
-        // desugar the "normal form let" to a lambda
-        // All `let` like
-        // ```aya
-        // let f : G := g in h
-        // ```
-        // can be desugared to
-        // ```aya
-        // (\ (f : G) => h) g
-        // ```
-        // So we build the lambda first
+        // `let f : G := g in h` is desugared to `(\ (f : G) => h) g`
 
         // (\ (f : G) => h) : G -> {??}
         var lam = LamTerm.make(SeqView.of(nameAndType), bodyResult.wellTyped());

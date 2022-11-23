@@ -1,41 +1,49 @@
 open import Arith::Nat
 open import Paths
 
-def slow_plus2 (n : Nat) : Nat =>
+def slowPlus2 (n : Nat) : Nat =>
   let
   | n1 := suc n
   | n2 := suc n1
   in n2
 
-example def normalize : slow_plus2 7 = 9 => idp
+example def normalize : slowPlus2 7 = 9 => idp
 
 def letInType : (let a := 1 in a = a) => idp
 
-def slow_plus2' (n : Nat) : Nat =>
+def slowPlus2' (n : Nat) : Nat =>
   let
   | f x := suc (suc x)
   in f n
 
-example def normalize' : slow_plus2' 7 = 9 => idp
+example def normalize' : slowPlus2' 7 = 9 => idp
 
-def typed_let (n : Nat) : Nat =>
+def typedLet (n : Nat) : Nat =>
   let
   | n1 : Nat := suc n
   | n2 : Nat := suc n1
   in n2
 
-example def normalize'' : typed_let 7 = 9 => idp
+example def normalize'' : typedLet 7 = 9 => idp
 
-def typed_let' (n : Nat) : Nat =>
+def typedLet' (n : Nat) : Nat =>
   let
   | f (x : Nat) : Nat := suc (suc x)
   in f n
 
-example def normalize''' : typed_let' 7 = 9 => idp
+example def normalize''' : typedLet' 7 = 9 => idp
 
-def double_let (n : Nat) : Nat =>
+def doubleLet (n : Nat) : Nat =>
   let n1 := suc n in
   let n2 := suc n1 in
   n2
 
-example def normalize'''' : double_let 7 = 9 => idp
+example def normalize'''' : doubleLet 7 = 9 => idp
+
+def no-fix-let (n : Nat) : Nat =>
+  let
+  | n := suc n
+  | n := suc n
+  in n
+
+example def normalize''''' : no-fix-let 7 = 9 => idp

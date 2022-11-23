@@ -2,6 +2,39 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.24
+
+New features and big changes:
+
+- New higher inductive type syntax is finally merged. Conditions are completely gone.
+- Reorganization of the library candidate, together with a draft style guide. You have root packages like `Data`, `Sets`, `Spaces`, `Logic`, etc.
+- Comment syntax is now `//` instead of `--`.
+- `|` is no longer allowed at the beginning of identifiers. This makes `|suc a => ...` work, but `||` is no longer a valid identifier. On the other hand, `<|>` is still valid.
+- Aya now tries to guess a qualified name on unresolved references ("did you mean ...").
+- Added `group` field in `aya.json`.
+- `let` expressions.
+- A pure syntax highlighter. This is a preparation for a new pretty printer.
+
+Bug fixes:
+
+- Indexed families "owner tele" scoping is now correctly handled.
+- Induction-recursion is now correctly handled.
+- `Pat.Meta` in indexed families is correctly handled.
+- VS Code language server now recognizes new files in subfolders.
+- `private` declarations are now correctly parsed.
+- Improved error handling of `fixl` in the parser.
+- No longer put ridiculous amounts of duplicate local variables.
+- REPL now correctly handles literal patterns.
+- Do notations source positions are not correctly generated.
+
+Improvements:
+
+- Improved color scheme handling in the REPL.
+- The jlink installation is much better now: there will be two dirs: `bin` with Aya scripts and `jre` with the JRE. This will prevent Aya in the Path from polluting the `java` executable.
+- The parser now makes good use of `meta` rules provided by Grammar-Kit.
+- Some GraalVM configuration is now done in the build script.
+- Refactored `ColorScheme` and `StyleFamily` in REPL.
+
 ## 0.23
 
 The core and concrete syntax are renamed. The core syntax now have a flat class structure.

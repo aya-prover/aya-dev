@@ -16,8 +16,6 @@ import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import kala.tuple.Tuple4;
-import kala.tuple.Tuple5;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -567,10 +565,10 @@ public record AyaGKProducer(
             return new Expr.Field(id, bindings, body, MutableValue.create());
           }).toImmutableSeq());
     }
-    if (node.is(PI_EXPR)) return buildPi(pos,
+    if (node.is(PI_EXPR)) return Expr.buildPi(pos,
       telescope(node.childrenOfType(TELE).map(x -> x)).view(),
       expr(node.child(EXPR)));
-    if (node.is(FORALL_EXPR)) return buildPi(pos,
+    if (node.is(FORALL_EXPR)) return Expr.buildPi(pos,
       lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(),
       expr(node.child(EXPR)));
     if (node.is(SIGMA_EXPR)) {
@@ -587,7 +585,7 @@ public record AyaGKProducer(
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
         result = new Expr.Hole(bodyHolePos, false, null);
       } else result = expr(bodyExpr);
-      return buildLam(pos, lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(), result);
+      return Expr.buildLam(pos, lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(), result);
     }
     if (node.is(PARTIAL_EXPR)) return partial(node, pos);
     if (node.is(PATH_EXPR)) {
@@ -613,7 +611,7 @@ public record AyaGKProducer(
         .toImmutableSeq());
     }
     if (node.is(DO_EXPR)) {
-      return new Expr.Do(pos, Constants.monadBind(pos),
+      return new Expr.Do(pos, Constants.monadBind(SourcePos.NONE),
         node.child(COMMA_SEP).childrenOfType(DO_BLOCK_CONTENT)
           .map(e -> {
             var bind = e.peekChild(DO_BINDING);
@@ -627,21 +625,16 @@ public record AyaGKProducer(
     }
     if (node.is(ARRAY_ATOM)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
-
       if (arrayBlock == null) return Expr.Array.newList(pos, ImmutableSeq.empty());
       if (arrayBlock.is(ARRAY_COMP_BLOCK)) return arrayCompBlock(arrayBlock, pos);
       if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
     if (node.is(LET_EXPR)) {
       var bindBlock = node.child(LET_BIND_BLOCK);
-      // According to the grammar, this is always not empty.
-      var binds = bindBlock.childrenOfType(LET_BIND)
-        .map(this::letBind);
+      var binds = bindBlock.childrenOfType(LET_BIND).map(this::letBind);
       var body = expr(node.child(EXPR));
-
-      return buildLet(binds, body);
+      return Expr.buildLet(pos, binds, body);
     }
-
     return unreachable(node);
   }
 
@@ -700,27 +693,6 @@ public record AyaGKProducer(
     return new Expr.RawProj(sourcePos, projectee, qid, null,
       coeLeft.map(this::expr).getOrNull(),
       restr.map(this::expr).getOrNull());
-  }
-
-  public static @NotNull Expr buildPi(
-    SourcePos sourcePos,
-    SeqView<Expr.Param> params, Expr body
-  ) {
-    if (params.isEmpty()) return body;
-    var drop = params.drop(1);
-    return new Expr.Pi(
-      sourcePos, params.first(),
-      buildPi(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos)), drop, body));
-  }
-
-  public static @NotNull Expr buildLam(SourcePos sourcePos, SeqView<Expr.Param> params, Expr body) {
-    if (params.isEmpty()) return body;
-    var drop = params.drop(1);
-    return new Expr.Lambda(
-      sourcePos, params.first(),
-      buildLam(body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-        drop.map(Expr.Param::sourcePos)), drop, body));
   }
 
   public @NotNull Arg<Pattern> pattern(@NotNull GenericNode<?> node) {
@@ -808,20 +780,7 @@ public record AyaGKProducer(
     return Expr.Array.newList(entireSourcePos, exprs);
   }
 
-  public @NotNull Expr.Let buildLet(@NotNull SeqView<Expr.Let.Bind> letBinds, @NotNull Expr body) {
-    // letBinds is not empty
-    assert letBinds.isNotEmpty();
-
-    return (Expr.Let) letBinds.foldRight(body, (l, r) -> {
-      // Left  : The let bind
-      // Right : The body
-      // Goal : let l in r
-
-      return new Expr.Let(l, r);
-    });
-  }
-
-  public @NotNull Expr.Let.Bind letBind(@NotNull GenericNode<?> node) {
+  public @NotNull Expr.LetBind letBind(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
     var bind = weakId(node.child(WEAK_ID));
     // make IDEA happy
@@ -830,7 +789,7 @@ public record AyaGKProducer(
     var body = expr(node.child(EXPR));
 
     // The last element is a placeholder, which is meaningless
-    return new Expr.Let.Bind(pos, LocalVar.from(bind), teles, result, body);
+    return new Expr.LetBind(pos, LocalVar.from(bind), teles, result, body);
   }
 
   public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {
