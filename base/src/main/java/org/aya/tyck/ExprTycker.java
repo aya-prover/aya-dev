@@ -870,11 +870,16 @@ public final class ExprTycker extends Tycker {
   }
 
   public boolean isPropType(@NotNull Term type) {
-    var sort = type.computeType(state, localCtx);
-    if (sort instanceof MetaTerm) return false;
+    var sort = type.computeType(state, localCtx).normalize(state, NormalizeMode.WHNF);
+    if (sort instanceof MetaTerm meta) {
+      var value = state.metas().getOption(meta.ref());
+      if(value.isDefined()) return isPropType(value.get());
+      state.metaNotProps().add(meta.ref()); // assert not Prop
+      return false;
+    }
     if (sort instanceof SortTerm s) return s.isProp();
-    return false; // TODO: remove this hack
-    //throw new InternalException("Expected a sort, got " + sort);
+    if (sort instanceof ErrorTerm) return false;
+    throw new InternalException("Expected a sort, got " + sort);
   }
 
   public interface Result {

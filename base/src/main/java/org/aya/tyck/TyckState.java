@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.MetaTerm;
@@ -31,10 +32,11 @@ public record TyckState(
   @NotNull MutableList<Eqn> eqns,
   @NotNull MutableList<WithPos<Meta>> activeMetas,
   @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas,
+  @NotNull MutableSet<@NotNull Meta> metaNotProps,
   @NotNull PrimDef.Factory primFactory
 ) {
   public TyckState(@NotNull PrimDef.Factory primFactory) {
-    this(MutableList.create(), MutableList.create(), MutableMap.create(), primFactory);
+    this(MutableList.create(), MutableList.create(), MutableMap.create(), MutableSet.create(), primFactory);
   }
 
   /**
