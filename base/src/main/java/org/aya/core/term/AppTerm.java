@@ -17,10 +17,6 @@ public record AppTerm(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) impleme
     return switch (app.of()) {
       case MetaTerm(var ref, var contextArgs, var args)
         when args.sizeLessThan(ref.telescope) -> new MetaTerm(ref, contextArgs, args.appended(app.arg()));
-      // erased.type() can be an ErrorTerm
-      case ErasedTerm erased -> erased.type() instanceof PiTerm pi
-        ? new ErasedTerm(pi.substBody(app.arg().term()))
-        : new ErasedTerm(ErrorTerm.typeOf(app), true);
       case LamTerm lam -> make(lam, app.arg());
       default -> app;
     };

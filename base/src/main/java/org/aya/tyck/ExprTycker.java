@@ -69,10 +69,26 @@ public final class ExprTycker extends Tycker {
   public @NotNull TypedSubst lets = new TypedSubst();
   public @NotNull AyaShape.Factory shapeFactory;
 
+  public boolean inProp = false;
+
+  public <T> T withInProp(boolean inProp, @NotNull Supplier<T> supplier) {
+    var origin = this.inProp;
+    this.inProp = inProp;
+    try {
+      return supplier.get();
+    } finally {
+      this.inProp = origin;
+    }
+  }
+
+  public <T> T withResult(@NotNull Term result, @NotNull Supplier<T> supplier) {
+    return withInProp(isPropType(result), supplier);
+  }
+
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Lambda lam -> inherit(lam, generatePi(lam));
-      case Expr.Sort sort -> sort(sort);
+      case Expr.Sort sort -> ty(sort);
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
           // not defined in lets, search localCtx
@@ -82,8 +98,8 @@ public final class ExprTycker extends Tycker {
         case DefVar<?, ?> defVar -> inferRef(defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
-      case Expr.Pi pi -> sort(pi);
-      case Expr.Sigma sigma -> sort(sigma);
+      case Expr.Pi pi -> ty(pi);
+      case Expr.Sigma sigma -> ty(sigma);
       case Expr.Lift lift -> {
         var result = synthesize(lift.expr());
         var levels = lift.lift();
@@ -142,6 +158,9 @@ public final class ExprTycker extends Tycker {
         yield proj.ix().fold(ix -> {
           if (!(projectee.type() instanceof SigmaTerm(var telescope)))
             return fail(struct, projectee.type(), BadTypeError.sigmaAcc(state, struct, ix, projectee.type()));
+          var projecteeIsProp = isPropType(projectee.type());
+          if (!inProp && projecteeIsProp)
+            return fail(struct, projectee.type(), BadTypeError.projProp(state, struct, ix, projectee.type()));
           var index = ix - 1;
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
@@ -156,6 +175,10 @@ public final class ExprTycker extends Tycker {
           if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
+
+          var structIsProp = fieldRef.core.inProp();
+          if (!inProp && structIsProp)
+            return fail(proj, BadTypeError.projPropStruct(state, struct, fieldName, projectee.type()));
 
           var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
@@ -194,8 +217,7 @@ public final class ExprTycker extends Tycker {
             };
             return switch (typeSubst) {
               case LamTerm(var param, var body) -> post.test(body.findUsages(param.ref()));
-              case PLamTerm(var params, var body) ->
-                post.test(params.collect(Collectors.summingInt(body::findUsages)));
+              case PLamTerm(var params, var body) -> post.test(params.collect(Collectors.summingInt(body::findUsages)));
               default -> {
                 bad.stuck = true;
                 yield false;
@@ -488,7 +510,7 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(freshHole._2, term);
       }
       case Expr.Sort sortExpr -> {
-        var result = sort(sortExpr);
+        var result = ty(sortExpr);
         var normTerm = whnf(term);
         if (normTerm instanceof SortTerm sort) {
           var unifier = unifier(sortExpr.sourcePos(), Ordering.Lt);
@@ -571,18 +593,18 @@ public final class ExprTycker extends Tycker {
     });
   }
 
-  private @NotNull SortResult doSort(@NotNull Expr expr) {
+  private @NotNull ExprTycker.TyResult doTy(@NotNull Expr expr) {
     var univ = SortTerm.Type0;
     return switch (expr) {
       case Expr.Tuple tuple -> failSort(tuple, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.Hole hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield new SortResult(freshHole._2, univ);
+        yield new TyResult(freshHole._2, univ);
       }
       case Expr.Sort sort -> {
         var self = new SortTerm(sort.kind(), sort.lift());
-        yield new SortResult(self, self.succ());
+        yield new TyResult(self, self.succ());
       }
       case Expr.Lambda lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failSort(el, BadTypeError.partTy(state, el, univ));
@@ -590,18 +612,18 @@ public final class ExprTycker extends Tycker {
         var param = pi.param();
         final var var = param.ref();
         var domTy = param.type();
-        var domRes = sort(domTy);
+        var domRes = ty(domTy);
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
-          var cod = sort(pi.last());
-          return new SortResult(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
+          var cod = ty(pi.last());
+          return new TyResult(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
         });
       }
       case Expr.Sigma sigma -> {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
         var resultTypes = MutableList.<SortTerm>create();
         for (var tuple : sigma.params()) {
-          var result = sort(tuple.type());
+          var result = ty(tuple.type());
           resultTypes.append(result.type());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
@@ -609,22 +631,22 @@ public final class ExprTycker extends Tycker {
         }
         var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
         var maxSort = resultTypes.reduce(SigmaTerm::max);
-        if (maxSort.kind() != SortKind.Prop) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
+        if (!maxSort.isProp()) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new SortResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
+        yield new TyResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
       }
       default -> {
         var result = synthesize(expr);
-        yield new SortResult(result.wellTyped(), ty(expr, result.type()));
+        yield new TyResult(result.wellTyped(), sort(expr, result.type()));
       }
     };
   }
 
-  public @NotNull TyResult ty(@NotNull Expr expr) {
-    return new TyResult(ty(expr, sort(expr).wellTyped()));
+  public @NotNull ExprTycker.SortResult sort(@NotNull Expr expr) {
+    return new SortResult(sort(expr, ty(expr).wellTyped()));
   }
 
-  private @NotNull SortTerm ty(@NotNull Expr errorMsg, @NotNull Term term) {
+  private @NotNull SortTerm sort(@NotNull Expr errorMsg, @NotNull Term term) {
     return switch (whnf(term)) {
       case SortTerm u -> u;
       case MetaTerm hole -> {
@@ -659,25 +681,25 @@ public final class ExprTycker extends Tycker {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
       result = new TermResult(new LamTerm(implicitParam, body), pi);
-    } else result = doInherit(expr, type).checkErased(expr, this);
+    } else result = doInherit(expr, type);
     traceExit(result, expr);
     return result;
   }
 
   public @NotNull Result synthesize(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var res = doSynthesize(expr).checkErased(expr, this);
+    var res = doSynthesize(expr);
     traceExit(res, expr);
     return res;
   }
 
-  public @NotNull SortResult sort(@NotNull Expr expr) {
-    return sort(expr, -1);
+  public @NotNull ExprTycker.TyResult ty(@NotNull Expr expr) {
+    return ty(expr, -1);
   }
 
-  public @NotNull SortResult sort(@NotNull Expr expr, int upperBound) {
+  public @NotNull ExprTycker.TyResult ty(@NotNull Expr expr, int upperBound) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var result = doSort(expr);
+    var result = doTy(expr);
     if (upperBound != -1 && upperBound < result.type().lift())
       reporter.report(new LevelError(expr.sourcePos(), new SortTerm(SortKind.Type, upperBound), result.type(), true));
     traceExit(result, expr);
@@ -740,9 +762,9 @@ public final class ExprTycker extends Tycker {
     return new TermResult(new ErrorTerm(expr), term);
   }
 
-  private @NotNull SortResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
+  private @NotNull ExprTycker.TyResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
     reporter.report(prob);
-    return new SortResult(new ErrorTerm(expr), SortTerm.Type0);
+    return new TyResult(new ErrorTerm(expr), SortTerm.Type0);
   }
 
   @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
@@ -844,57 +866,26 @@ public final class ExprTycker extends Tycker {
   }
 
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
-    return checkIllegalErasure(expr.sourcePos(), inherit(expr, type));
+    return withResult(type, () -> inherit(expr, type));
   }
 
-  private @NotNull Result checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Result result) {
-    return new TermResult(checkIllegalErasure(sourcePos, result.wellTyped(), result.type()), result.type());
-  }
-
-  private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term wellTyped, @NotNull Term type) {
-    if (wellTyped instanceof SortTerm) return wellTyped;
-    if (computeSort(type).kind() == SortKind.Prop) return wellTyped;
-    return checkIllegalErasure(sourcePos, wellTyped);
-  }
-
-  public @NotNull SortTerm computeSort(@NotNull Term type) {
-    return type.computeSort(state, localCtx);
-  }
-
-  private @NotNull Term checkIllegalErasure(@NotNull SourcePos sourcePos, @NotNull Term term) {
-    var checker = new UnaryOperator<Term>() {
-      private @NotNull Term post(@NotNull Term term) {
-        if (term instanceof SortTerm) return term;
-        var erased = ErasedTerm.underlyingIllegalErasure(term);
-        if (erased != null) {
-          reporter.report(new ErasedError(sourcePos, erased));
-          return new ErrorTerm(term);
-        }
-        return term;
-      }
-
-      @Override public @NotNull Term apply(@NotNull Term term) {
-        if (term instanceof LamTerm) return term;
-        if (term instanceof ErasedTerm) return post(term);
-        return post(term.descent(this));
-      }
-    };
-    return checker.apply(term);
+  public boolean isPropType(@NotNull Term type) {
+    var sort = type.computeType(state, localCtx).normalize(state, NormalizeMode.WHNF);
+    if (sort instanceof MetaTerm meta) {
+      var value = state.metas().getOption(meta.ref());
+      if(value.isDefined()) return isPropType(value.get());
+      state.metaNotProps().add(meta.ref()); // assert not Prop
+      return false;
+    }
+    if (sort instanceof SortTerm s) return s.isProp();
+    if (sort instanceof ErrorTerm) return false;
+    throw new InternalException("Expected a sort, got " + sort);
   }
 
   public interface Result {
     @NotNull Term wellTyped();
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
-
-    private Result checkErased(@NotNull Expr expr, @NotNull ExprTycker tycker) {
-      if (wellTyped() instanceof SortTerm) return this;
-      var type = type();
-      var isProp = tycker.computeSort(type).kind() == SortKind.Prop;
-      if (isProp || ErasedTerm.isErased(wellTyped()))
-        return new TermResult(new ErasedTerm(type, isProp, expr.sourcePos()), type);
-      return this;
-    }
   }
   
   /// region Helper
@@ -924,18 +915,18 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  public record SortResult(@Override @NotNull Term wellTyped, @Override @NotNull SortTerm type) implements Result {
-    @Override public @NotNull SortResult freezeHoles(@NotNull TyckState state) {
-      return new SortResult(wellTyped.freezeHoles(state), type);
+  public record TyResult(@Override @NotNull Term wellTyped, @Override @NotNull SortTerm type) implements Result {
+    @Override public @NotNull ExprTycker.TyResult freezeHoles(@NotNull TyckState state) {
+      return new TyResult(wellTyped.freezeHoles(state), type);
     }
   }
 
-  public record TyResult(@Override @NotNull SortTerm wellTyped) implements Result {
+  public record SortResult(@Override @NotNull SortTerm wellTyped) implements Result {
     @Override public @NotNull SortTerm type() {
       return wellTyped.succ();
     }
 
-    @Override public @NotNull TyResult freezeHoles(@NotNull TyckState state) {
+    @Override public @NotNull ExprTycker.SortResult freezeHoles(@NotNull TyckState state) {
       return this;
     }
   }

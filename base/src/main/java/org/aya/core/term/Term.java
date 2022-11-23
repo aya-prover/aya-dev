@@ -40,7 +40,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, ErasedTerm, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
+  permits Callable, CoeTerm, Elimination, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -96,11 +96,6 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         if (match.discriminant().sameElements(discriminant, true) && match.clauses().sameElements(clauses, true))
           yield match;
         yield new MatchTerm(discriminant, clauses);
-      }
-      case ErasedTerm erased -> {
-        var type = f.apply(erased.type());
-        if (type == erased.type()) yield erased;
-        yield new ErasedTerm(type, erased.isProp(), erased.sourcePos());
       }
       case StructCall struct -> {
         var args = struct.args().map(arg -> arg.descent(f));

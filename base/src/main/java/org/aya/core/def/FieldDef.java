@@ -5,6 +5,7 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -32,5 +33,13 @@ public final class FieldDef extends SubLevelDef {
 
   public @NotNull DefVar<FieldDef, TeleDecl.StructField> ref() {
     return ref;
+  }
+
+  private @NotNull SortTerm structResult() {
+    return structRef.concrete != null ? structRef.concrete.ulift : structRef.core.result;
+  }
+
+  public boolean inProp() {
+    return structResult().isProp();
   }
 }

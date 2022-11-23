@@ -6,10 +6,9 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
-import org.aya.core.term.MetaTerm;
-import org.aya.core.term.PiTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
@@ -37,6 +36,13 @@ public final class Meta implements AnyVar {
 
   public boolean solve(@NotNull TyckState state, @NotNull Term t) {
     if (t.findUsages(this) > 0) return false;
+    if (state.metaNotProps().contains(this)) {
+      var term = t.normalize(state, NormalizeMode.WHNF);
+      if (!(term instanceof ErrorTerm)) {
+        if (!(term instanceof SortTerm sort)) throw new IllegalStateException("expected a sort: " + t);
+        if (sort.isProp()) throw new IllegalStateException("expected a non-Prop sort"); // TODO: better reporting
+      }
+    }
     state.metas().put(this, t);
     return true;
   }

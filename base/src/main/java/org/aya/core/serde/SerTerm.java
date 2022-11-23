@@ -309,10 +309,4 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
         PartEl.de(state, partial));
     }
   }
-
-  record Erased(@NotNull SerTerm type, boolean isProp) implements SerTerm {
-    public @NotNull ErasedTerm de(@NotNull DeState state) {
-      return new ErasedTerm(type.de(state), isProp);
-    }
-  }
 }

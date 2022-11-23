@@ -129,7 +129,6 @@ public record Serializer(@NotNull Serializer.State state) {
       case MetaLitTerm err -> throw new InternalException("Shall not have metaLiterals serialized.");
       case SortTerm sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
-      case ErasedTerm erased -> new SerTerm.Erased(serialize(erased.type()), erased.isProp());
     };
   }
 

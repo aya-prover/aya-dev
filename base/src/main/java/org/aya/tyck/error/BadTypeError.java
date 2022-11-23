@@ -36,7 +36,7 @@ public record BadTypeError(
 
   @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
     if (expr instanceof Expr.App app && app.function() instanceof Expr.Ref ref
-        && ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef) {
+      && ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef) {
       var fix = new Expr.Proj(SourcePos.NONE, app.argument().term(),
         Either.right(new QualifiedID(SourcePos.NONE, defVar.name())));
       return Doc.sep(Doc.english("Did you mean"),
@@ -59,6 +59,14 @@ public record BadTypeError(
       state);
   }
 
+  public static @NotNull BadTypeError projProp(@NotNull TyckState state, @NotNull Expr expr, int ix, @NotNull Term type) {
+    return new BadTypeError(expr, type,
+      Doc.sep(Doc.english("project the"), Doc.ordinal(ix), Doc.english("element of")),
+      Doc.english("of what you projected on"),
+      options -> Doc.english("non-Prop Sigma type"),
+      state);
+  }
+
   public static @NotNull BadTypeError sigmaCon(@NotNull TyckState state, @NotNull Expr expr, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
       Doc.sep(Doc.plain("construct")),
@@ -72,6 +80,14 @@ public record BadTypeError(
       Doc.sep(Doc.english("access field"), Doc.styled(Style.code(), Doc.plain(fieldName)), Doc.plain("of")),
       Doc.english("of what you accessed"),
       options -> Doc.english("struct type"),
+      state);
+  }
+
+  public static @NotNull BadTypeError projPropStruct(@NotNull TyckState state, @NotNull Expr expr, @NotNull String fieldName, @NotNull Term actualType) {
+    return new BadTypeError(expr, actualType,
+      Doc.sep(Doc.english("access field"), Doc.styled(Style.code(), Doc.plain(fieldName)), Doc.plain("of")),
+      Doc.english("of what you accessed"),
+      options -> Doc.english("non-Prop struct type"),
       state);
   }
 

@@ -86,7 +86,6 @@ public record Codifier(
         builder.append(")");
       }
       case ErrorTerm error -> throw new UnsupportedOperationException("Cannot generate error");
-      case ErasedTerm erased -> throw new UnsupportedOperationException("Cannot generate erased");
       case Callable call -> throw new UnsupportedOperationException("Cannot generate calls");
       case IntervalTerm interval -> builder.append("PrimTerm.Interval.INSTANCE");
       case SortTerm sort -> {

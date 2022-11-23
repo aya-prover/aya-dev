@@ -249,8 +249,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           // No patterns, leave it blank
           ctor.yetTyckedPat = ImmutableSeq.empty();
         }
-        var ctorSort = dataConcrete.ulift.kind() == SortKind.Prop ? SortTerm.Type0 : dataConcrete.ulift;
-        var tele = tele(tycker, ctor.telescope, ctorSort);
+        var tele = tele(tycker, ctor.telescope, dataConcrete.ulift.isProp() ? null : dataConcrete.ulift);
         ctor.signature = new Def.Signature(tele, dataCall);
         ctor.patternTele = ctor.yetTyckedPat.isEmpty()
           ? dataSig.param().map(Term.Param::implicitify)
@@ -262,9 +261,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structSig = structRef.concrete.signature;
         assert structSig != null;
         var structLvl = structRef.concrete.ulift;
-        var fieldSort = structLvl.kind() == SortKind.Prop ? SortTerm.Type0 : structLvl;
-        var tele = tele(tycker, field.telescope, structLvl);
-        var result = tycker.zonk(tycker.inherit(field.result, fieldSort)).wellTyped();
+        var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
+        var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
         field.signature = new Def.Signature(tele, result);
       }
     }
@@ -274,7 +272,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
     SortTerm ret = SortTerm.Type0;
     if (!(data.result instanceof Expr.Hole)) {
-      var result = tycker.ty(data.result);
+      var result = tycker.sort(data.result);
       ret = (SortTerm) tycker.zonk(result.wellTyped());
     }
     return ret;
@@ -306,7 +304,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   // similiar to `ExprTycker.sortPi`. `tele` is the domain.
   private @NotNull ExprTycker.Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
-    var result = exprTycker.sort(tele);
+    var result = exprTycker.ty(tele);
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
     var ty = result.type();
     switch (ty.kind()) {
@@ -329,7 +327,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     return tele.map(param -> {
       var paramTyped = (sort != null
         ? checkTele(exprTycker, param.type(), sort)
-        : exprTycker.synthesize(param.type())
+        : exprTycker.ty(param.type())
       ).wellTyped();
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
