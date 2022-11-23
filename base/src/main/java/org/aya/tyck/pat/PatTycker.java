@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
@@ -25,7 +24,6 @@ import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
-import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
@@ -43,6 +41,7 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -176,11 +175,11 @@ public final class PatTycker {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
-    var step0 = visitPatterns(signature, match.patterns.view(), null, inProp);
+    var step0 = visitPatterns(signature, match.patterns.view(), null, match.expr.getOrNull(), inProp);
 
     /// inline
-    var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
-    var type = inlineTerm(step0._2);
+    var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+    var type = inlineTerm(step0.codomain);
     patSubst.inline();
     sigSubst.inline();
     var consumer = new PatternConsumer() {
@@ -254,7 +253,7 @@ public final class PatTycker {
         var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        var ret = new Pat.Tuple(licit, visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp)._1.toImmutableSeq());
+        var ret = new Pat.Tuple(licit, visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp).wellTyped.toImmutableSeq());
         if (as != null) {
           addPatSubst(as, ret, term);
         }
@@ -272,7 +271,7 @@ public final class PatTycker {
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
-        var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp)._1.toImmutableSeq();
+        var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp).wellTyped.toImmutableSeq();
         var as = ctor.as();
         var ret = new Pat.Ctor(licit, realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
@@ -322,6 +321,13 @@ public final class PatTycker {
     };
   }
 
+  private record VisitPatterns(
+    @NotNull SeqView<Pat> wellTyped,
+    @NotNull Term codomain,
+    @UnknownNullability Expr newBody
+  ) {
+  }
+
   /**
    * Tyck each {@link Pattern} with {@link Def.Signature}.
    * {@param outerPattern} should be specified if stream is empty.
@@ -330,9 +336,15 @@ public final class PatTycker {
    *                     For now, {@param outerPattern} is used when {@param sig} is not empty
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
    * @return (wellTyped patterns, sig.result ())
+   * @see PatTycker#visitInnerPatterns(Def.Signature, SeqView, Pattern, boolean)
    */
-  private @NotNull Tuple2<SeqView<Pat>, Term>
-  visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Arg<Pattern>> stream, @Nullable Pattern outerPattern, boolean resultIsProp) {
+  private @NotNull VisitPatterns visitPatterns(
+    @NotNull Def.Signature sig,
+    @NotNull SeqView<Arg<Pattern>> stream,
+    @Nullable Pattern outerPattern,
+    @Nullable Expr body,
+    boolean resultIsProp
+  ) {
     var results = MutableList.<Pat>create();
     // last pattern which user given (not aya generated)
     @Nullable Arg<Pattern> lastPat = null;
@@ -389,16 +401,18 @@ public final class PatTycker {
     return done(results, sig.result());
   }
 
-  private @NotNull Tuple2<SeqView<Pat>, Term>
-  visitInnerPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Arg<Pattern>> stream, @NotNull Pattern outerPattern, boolean resultIsProp) {
+  private @NotNull VisitPatterns visitInnerPatterns(
+    @NotNull Def.Signature sig,
+    @NotNull SeqView<Arg<Pattern>> stream,
+    @NotNull Pattern outerPattern,
+    boolean resultIsProp
+  ) {
     var oldSigSubst = this.sigSubst;
     this.sigSubst = new TypedSubst();
-
-    var result = visitPatterns(sig, stream, outerPattern, resultIsProp);
+    var result = visitPatterns(sig, stream, outerPattern, null, resultIsProp);
 
     // recover
     this.sigSubst = oldSigSubst;
-
     return result;
   }
 
@@ -431,8 +445,8 @@ public final class PatTycker {
     );
   }
 
-  private @NotNull Tuple2<SeqView<Pat>, Term> done(@NotNull SeqLike<Pat> results, @NotNull Term type) {
-    return Tuple.of(results.view(), type.subst(sigSubst.map()));
+  private @NotNull VisitPatterns done(@NotNull SeqLike<Pat> results, @NotNull Term type) {
+    return new VisitPatterns(results.view(), type.subst(sigSubst.map()), null);
   }
 
   /**
