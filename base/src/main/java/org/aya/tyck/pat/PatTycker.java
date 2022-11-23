@@ -356,24 +356,21 @@ public final class PatTycker {
           Pattern errorPattern;
 
           if (lastPat == null) {
-            if (outerPattern == null) {
-              throw new InternalException("outerPattern should not be null when stream is empty");
-            }
-
+            assert outerPattern != null;
             errorPattern = outerPattern;
           } else {
             errorPattern = lastPat.term();
           }
 
           foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
-          return done(results, sig.result());
+          return done(results, sig.result(), body);
         }
         pat = stream.first();
         lastPat = pat;
         stream = stream.drop(1);
         if (!pat.explicit()) {
           foundError(new PatternProblem.TooManyImplicitPattern(pat.term(), param));
-          return done(results, sig.result());
+          return done(results, sig.result(), body);
         }
       } else {
         // Type is implicit, so....?
@@ -398,7 +395,7 @@ public final class PatTycker {
       foundError(new PatternProblem
         .TooManyPattern(stream.first().term(), sig.result().freezeHoles(exprTycker.state)));
     }
-    return done(results, sig.result());
+    return done(results, sig.result(), body);
   }
 
   private @NotNull VisitPatterns visitInnerPatterns(
@@ -445,8 +442,8 @@ public final class PatTycker {
     );
   }
 
-  private @NotNull VisitPatterns done(@NotNull SeqLike<Pat> results, @NotNull Term type) {
-    return new VisitPatterns(results.view(), type.subst(sigSubst.map()), null);
+  private @NotNull VisitPatterns done(@NotNull SeqLike<Pat> results, @NotNull Term type, @Nullable Expr body) {
+    return new VisitPatterns(results.view(), type.subst(sigSubst.map()), body);
   }
 
   /**
