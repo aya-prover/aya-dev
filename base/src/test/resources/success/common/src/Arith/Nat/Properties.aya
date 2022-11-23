@@ -1,7 +1,8 @@
 open import Arith::Nat::Core
 open import Paths
+open import Algebra::Formula
 
-def overlap infixl *' (m n : Nat) : Nat
+def overlap infixl *' : BinOp Nat
 | 0, n => 0
 | m, 0 => 0
 | suc m, suc n => suc (m + n + m *' n)

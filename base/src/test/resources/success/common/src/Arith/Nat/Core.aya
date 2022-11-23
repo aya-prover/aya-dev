@@ -62,6 +62,7 @@ private def *-comm-lemma : Commutative (*)
 // | m, suc n => sym *-suc <==> pmap (m +) *-comm
 def inline *-comm {m n : Nat} => *-comm-lemma m n
 
-private def overlap *-assoc : Associative (*)
+private def overlap *-assoc-lemma : Associative (*)
 | 0, _, _ => idp
-| suc m, _, _ => <=3=> (+-*-distl _) (pmap (+ _) (*-assoc _ _ _)) +-comm
+| suc m, _, _ => <=3=> (+-*-distl _) (pmap (+ _) *-assoc) +-comm
+def inline *-assoc {m n k : Nat} => *-assoc-lemma m n k
