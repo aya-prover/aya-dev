@@ -352,24 +352,32 @@ public final class PatTycker {
       var param = sig.param().first();
       Arg<Pattern> pat;
       // Type explicit, does not have pattern
-      if (stream.isEmpty() && param.explicit()) {
-        Pattern errorPattern;
+      if (stream.isEmpty()) {
+        if (body instanceof Expr.Lambda(
+          var lamPos, var lamParam, var lamBody
+        ) && lamParam.explicit() == param.explicit()) {
+          body = lamBody;
+          var pattern = new Pattern.Bind(lamPos, lamParam.ref(), lamParam.type(), MutableValue.create());
+          pat = new Arg<>(pattern, param.explicit());
+        } else if (param.explicit()) {
+          Pattern errorPattern;
 
-        if (lastPat == null) {
-          assert outerPattern != null;
-          errorPattern = outerPattern;
+          if (lastPat == null) {
+            assert outerPattern != null;
+            errorPattern = outerPattern;
+          } else {
+            errorPattern = lastPat.term();
+          }
+
+          foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
+          return done(results, sig.result(), body);
         } else {
-          errorPattern = lastPat.term();
+          // Type is implicit, does not have pattern
+          sig = generatePat(new PatData(sig, results, param));
+          continue;
         }
-
-        foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
-        return done(results, sig.result(), body);
-        // Type is implicit, does not have pattern
-      } else if (stream.isEmpty()) {
-        sig = generatePat(new PatData(sig, results, param));
-        continue;
-        // Type explicit, does have pattern
       } else if (param.explicit()) {
+        // Type explicit, does have pattern
         pat = stream.first();
         lastPat = pat;
         stream = stream.drop(1);
@@ -377,8 +385,8 @@ public final class PatTycker {
           foundError(new PatternProblem.TooManyImplicitPattern(pat.term(), param));
           return done(results, sig.result(), body);
         }
-        // Type is implicit, does have pattern
       } else {
+        // Type is implicit, does have pattern
         pat = stream.first();
         if (pat.explicit()) {
           // Pattern is explicit, so we leave it to the next type, do not "consume" it
