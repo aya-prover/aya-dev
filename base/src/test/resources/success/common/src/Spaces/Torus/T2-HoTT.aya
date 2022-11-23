@@ -1,0 +1,11 @@
+open import Paths
+
+// Alternative definition of torus from the HoTT book
+public open data T²
+| point
+| line1 (i : I) { ∂ i := point }
+| line2 (i : I) { ∂ i := point }
+| face (i j : I) {
+  | i := ((\x => line1 x) <==> (\x => line2 x)) j
+  | ~ i := ((\x => line2 x) <==> (\x => line1 x)) j
+}
