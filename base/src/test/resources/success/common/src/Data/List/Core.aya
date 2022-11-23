@@ -1,6 +1,7 @@
 open import Paths
 open import Arith::Nat
 open import Sets::Fin
+open import Algebra::Formula
 
 public open data List (A : Type) : Type
 | nil
@@ -17,7 +18,7 @@ def infix !! (l : List A) (i : Fin (length l)) : A
 | a :< _, fzero => a
 | _ :< l, fsuc i => l !! i
 
-def overlap infixr ++ (xs ys : List A) : List A
+def overlap infixr ++ : BinOp (List A)
 | nil, ys => ys
 | xs, nil => xs
 | a :< xs, ys => a :< (xs ++ ys)
@@ -27,9 +28,10 @@ def concat (l : List (List A)) : List A
 | nil => nil
 | xs :< xss => xs ++ concat xss
 
-def ++-assoc {xs ys zs : List A} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
-| {A}, {nil} => idp
-| {A}, {x :< xs} => pmap (x :<) ++-assoc
+private def ++-assoc-lemma : Associative {A := List A} (++)
+| nil, _, _ => idp
+| x :< xs, _, _ => pmap (x :<) ++-assoc
+def inline ++-assoc {xs ys zs : List A} => ++-assoc-lemma xs ys zs
 
 def ++nil {l : List A} : l ++ nil = l
 | {A}, {nil} => idp
