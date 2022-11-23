@@ -42,7 +42,6 @@ public final class LibraryConfigData {
   }
 
   private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot) throws JsonParseException {
-    checkDeserialization(libraryRoot.resolve(Constants.AYA_JSON));
     return asConfig(libraryRoot, config -> libraryRoot.resolve("build"));
   }
 
