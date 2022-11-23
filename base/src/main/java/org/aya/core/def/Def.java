@@ -15,7 +15,6 @@ import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.distill.DistillerOptions;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -64,16 +63,6 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements AyaDocile {
-
-    /**
-     * drop the first one and subst the remains
-     *
-     * @see Def#substParams(SeqLike, Subst)
-     */
-    @Contract("_ -> new") public @NotNull Signature inst(@NotNull Subst subst) {
-      return new Signature(substParams(param, subst), result.subst(subst));
-    }
-
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.sep(param.view().map(p -> p.toDoc(options))), Doc.symbol("->"), result.toDoc(options));
     }

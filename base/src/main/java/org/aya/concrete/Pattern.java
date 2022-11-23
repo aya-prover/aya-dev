@@ -28,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.UnaryOperator;
 
 /**
- * @author kiva, ice1000
+ * Patterns in the concrete syntax.
+ *
+ * @author kiva, ice1000, HoshinoTented
  */
 public sealed interface Pattern extends AyaDocile, SourceNode {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
@@ -63,11 +65,19 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
 
   record CalmFace(@Override @NotNull SourcePos sourcePos) implements Pattern {}
 
+  /**
+   * @param userType only generated when a typed lambda is pushed into the patterns
+   * @param type used in the LSP server
+   */
   record Bind(
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar bind,
+    @Nullable Expr userType,
     @ForLSP @NotNull MutableValue<@Nullable Term> type
   ) implements Pattern {
+    public Bind(@NotNull SourcePos sourcePos, @NotNull LocalVar bind) {
+      this(sourcePos, bind, null, MutableValue.create());
+    }
   }
 
   record Ctor(

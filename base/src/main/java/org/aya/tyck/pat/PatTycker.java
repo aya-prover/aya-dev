@@ -6,9 +6,9 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Option;
 import kala.control.Result;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
@@ -25,7 +25,6 @@ import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
-import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
@@ -43,6 +42,7 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -176,11 +176,11 @@ public final class PatTycker {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = parent.deriveMap();
     currentClause = match;
-    var step0 = visitPatterns(signature, match.patterns.view(), null, inProp);
+    var step0 = visitPatterns(signature, match.patterns.view(), null, match.expr.getOrNull(), inProp);
 
     /// inline
-    var patterns = step0._1.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
-    var type = inlineTerm(step0._2);
+    var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+    var type = inlineTerm(step0.codomain);
     patSubst.inline();
     sigSubst.inline();
     var consumer = new PatternConsumer() {
@@ -193,9 +193,8 @@ public final class PatTycker {
     match.patterns.view().map(Arg::term).forEach(consumer::accept);
 
     var subst = patSubst.derive().addDirectly(sigSubst);
-    var step1 = new LhsResult(exprTycker.localCtx, type, subst,
-      match.hasError,
-      new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
+    var step1 = new LhsResult(exprTycker.localCtx, type, subst, match.hasError,
+      new Pat.Preclause<>(match.sourcePos, patterns, Option.ofNullable(step0.newBody)));
     exprTycker.localCtx = parent;
     patSubst.clear();
     sigSubst.clear();
@@ -204,21 +203,21 @@ public final class PatTycker {
 
   private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
     var parent = exprTycker.localCtx;
-    var parentLets = exprTycker.lets;
     exprTycker.localCtx = lhsResult.gamma;
-    // We `addDirectly` to `parentLets`.
-    // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
-    // IDEA said that this line is useless...
-    exprTycker.lets = parentLets.derive().addDirectly(lhsResult.bodySubst());
-    var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
-      // In case the patterns are malformed, do not check the body
-      // as we bind local variables in the pattern checker,
-      // and in case the patterns are malformed, some bindings may
-      // not be added to the localCtx of tycker, causing assertion errors
-      ? new ErrorTerm(e, false)
-      : exprTycker.check(e, lhsResult.type).wellTyped());
+    var term = exprTycker.withSubSubst(() -> {
+      // We `addDirectly` to `parentLets`.
+      // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
+      // IDEA said that this line is useless...
+      exprTycker.lets.addDirectly(lhsResult.bodySubst());
+      return lhsResult.preclause.expr().map(e -> lhsResult.hasError
+        // In case the patterns are malformed, do not check the body
+        // as we bind local variables in the pattern checker,
+        // and in case the patterns are malformed, some bindings may
+        // not be added to the localCtx of tycker, causing assertion errors
+        ? new ErrorTerm(e, false)
+        : exprTycker.check(e, lhsResult.type).wellTyped());
+    });
     exprTycker.localCtx = parent;
-    exprTycker.lets = parentLets;
     return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
   }
 
@@ -254,7 +253,7 @@ public final class PatTycker {
         var sig = new Def.Signature(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        var ret = new Pat.Tuple(licit, visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp)._1.toImmutableSeq());
+        var ret = new Pat.Tuple(licit, visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp).wellTyped.toImmutableSeq());
         if (as != null) {
           addPatSubst(as, ret, term);
         }
@@ -272,7 +271,7 @@ public final class PatTycker {
         final var dataCall = realCtor._1;
         var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
-        var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp)._1.toImmutableSeq();
+        var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp).wellTyped.toImmutableSeq();
         var as = ctor.as();
         var ret = new Pat.Ctor(licit, realCtor._3.ref(), patterns, dataCall);
         if (as != null) {
@@ -281,28 +280,32 @@ public final class PatTycker {
         }
         yield ret;
       }
-      case Pattern.Bind bind -> {
-        var v = bind.bind();
-        exprTycker.localCtx.put(v, term);
-        bind.type().set(term);
-        yield new Pat.Bind(licit, v, term);
+      case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
+        exprTycker.localCtx.put(bind, term);
+        if (tyExpr != null) exprTycker.withSubSubst(() -> {
+          exprTycker.lets.addDirectly(patSubst).addDirectly(sigSubst);
+          var syn = exprTycker.synthesize(tyExpr);
+          exprTycker.unifyTyReported(term, syn.wellTyped(), tyExpr);
+          return null;
+        });
+        tyRef.set(term);
+        yield new Pat.Bind(licit, bind, term);
       }
-      case Pattern.CalmFace face -> new Pat.Meta(licit, MutableValue.create(),
-        new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
-      case Pattern.Number num -> {
+      case Pattern.CalmFace(var pos) -> new Pat.Meta(licit, MutableValue.create(),
+        new LocalVar(Constants.ANONYMOUS_PREFIX, pos), term);
+      case Pattern.Number(var pos, var number) -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
         if (ty instanceof IntervalTerm) {
-          var end = num.number();
-          if (end == 0 || end == 1) yield new Pat.End(num.number() == 1, licit);
-          yield withError(new PrimError.BadInterval(num.sourcePos(), end), licit, term);
+          if (number == 0 || number == 1) yield new Pat.End(number == 1, licit);
+          yield withError(new PrimError.BadInterval(pos, number), licit, term);
         }
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined() && shape.get().shape() == AyaShape.NAT_SHAPE)
-            yield new Pat.ShapedInt(num.number(), shape.get(), dataCall, licit);
+            yield new Pat.ShapedInt(number, shape.get(), dataCall, licit);
         }
-        yield withError(new PatternProblem.BadLitPattern(num, term), licit, term);
+        yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
       }
       case Pattern.List(var pos, var el, var as) -> {
         // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !
@@ -322,6 +325,13 @@ public final class PatTycker {
     };
   }
 
+  private record VisitPatterns(
+    @NotNull SeqView<Pat> wellTyped,
+    @NotNull Term codomain,
+    @UnknownNullability Expr newBody
+  ) {
+  }
+
   /**
    * Tyck each {@link Pattern} with {@link Def.Signature}.
    * {@param outerPattern} should be specified if stream is empty.
@@ -330,45 +340,57 @@ public final class PatTycker {
    *                     For now, {@param outerPattern} is used when {@param sig} is not empty
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
    * @return (wellTyped patterns, sig.result ())
+   * @see PatTycker#visitInnerPatterns(Def.Signature, SeqView, Pattern, boolean)
    */
-  private @NotNull Tuple2<SeqView<Pat>, Term>
-  visitPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Arg<Pattern>> stream, @Nullable Pattern outerPattern, boolean resultIsProp) {
+  private @NotNull VisitPatterns visitPatterns(
+    @NotNull Def.Signature sig,
+    @NotNull SeqView<Arg<Pattern>> stream,
+    @Nullable Pattern outerPattern,
+    @Nullable Expr body,
+    boolean resultIsProp
+  ) {
     var results = MutableList.<Pat>create();
     // last pattern which user given (not aya generated)
     @Nullable Arg<Pattern> lastPat = null;
     while (sig.param().isNotEmpty()) {
       var param = sig.param().first();
       Arg<Pattern> pat;
-      if (param.explicit()) {
-        if (stream.isEmpty()) {
+      // Type explicit, does not have pattern
+      if (stream.isEmpty()) {
+        if (body instanceof Expr.Lambda(
+          var lamPos, var lamParam, var lamBody
+        ) && lamParam.explicit() == param.explicit()) {
+          body = lamBody;
+          var pattern = new Pattern.Bind(lamPos, lamParam.ref(), lamParam.type(), MutableValue.create());
+          pat = new Arg<>(pattern, param.explicit());
+        } else if (param.explicit()) {
           Pattern errorPattern;
 
           if (lastPat == null) {
-            if (outerPattern == null) {
-              throw new InternalException("outerPattern should not be null when stream is empty");
-            }
-
+            assert outerPattern != null;
             errorPattern = outerPattern;
           } else {
             errorPattern = lastPat.term();
           }
 
           foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
-          return done(results, sig.result());
+          return done(results, sig.result(), body);
+        } else {
+          // Type is implicit, does not have pattern
+          sig = generatePat(new PatData(sig, results, param));
+          continue;
         }
+      } else if (param.explicit()) {
+        // Type explicit, does have pattern
         pat = stream.first();
         lastPat = pat;
         stream = stream.drop(1);
         if (!pat.explicit()) {
           foundError(new PatternProblem.TooManyImplicitPattern(pat.term(), param));
-          return done(results, sig.result());
+          return done(results, sig.result(), body);
         }
       } else {
-        // Type is implicit, so....?
-        if (stream.isEmpty()) {
-          sig = generatePat(new PatData(sig, results, param));
-          continue;
-        }
+        // Type is implicit, does have pattern
         pat = stream.first();
         if (pat.explicit()) {
           // Pattern is explicit, so we leave it to the next type, do not "consume" it
@@ -386,19 +408,21 @@ public final class PatTycker {
       foundError(new PatternProblem
         .TooManyPattern(stream.first().term(), sig.result().freezeHoles(exprTycker.state)));
     }
-    return done(results, sig.result());
+    return done(results, sig.result(), body);
   }
 
-  private @NotNull Tuple2<SeqView<Pat>, Term>
-  visitInnerPatterns(@NotNull Def.Signature sig, @NotNull SeqView<Arg<Pattern>> stream, @NotNull Pattern outerPattern, boolean resultIsProp) {
+  private @NotNull VisitPatterns visitInnerPatterns(
+    @NotNull Def.Signature sig,
+    @NotNull SeqView<Arg<Pattern>> stream,
+    @NotNull Pattern outerPattern,
+    boolean resultIsProp
+  ) {
     var oldSigSubst = this.sigSubst;
     this.sigSubst = new TypedSubst();
-
-    var result = visitPatterns(sig, stream, outerPattern, resultIsProp);
+    var result = visitPatterns(sig, stream, outerPattern, null, resultIsProp);
 
     // recover
     this.sigSubst = oldSigSubst;
-
     return result;
   }
 
@@ -414,9 +438,6 @@ public final class PatTycker {
     @NotNull MutableList<Pat> results,
     @NotNull Term.Param param
   ) {
-    public @NotNull SourcePos paramPos() {
-      return param.ref().definition();
-    }
   }
 
   private @NotNull PatData beforeTyck(@NotNull PatData data) {
@@ -434,8 +455,8 @@ public final class PatTycker {
     );
   }
 
-  private @NotNull Tuple2<SeqView<Pat>, Term> done(@NotNull SeqLike<Pat> results, @NotNull Term type) {
-    return Tuple.of(results.view(), type.subst(sigSubst.map()));
+  private @NotNull VisitPatterns done(@NotNull SeqLike<Pat> results, @NotNull Term type, @Nullable Expr body) {
+    return new VisitPatterns(results.view(), type.subst(sigSubst.map()), body);
   }
 
   /**

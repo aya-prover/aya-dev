@@ -3,7 +3,6 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.SeqView;
-import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.OperatorError;
 import org.aya.ref.DefVar;
@@ -39,8 +38,7 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Ar
 
   private static final Arg<Pattern> OP_APP = new Arg<>(new Pattern.Bind(
     SourcePos.NONE,
-    new LocalVar(BinOpSet.APP_ELEM.name()),
-    MutableValue.create()), true);
+    new LocalVar(BinOpSet.APP_ELEM.name())), true);
 
   @Override protected @NotNull Arg<Pattern> appOp() {
     return OP_APP;
@@ -64,7 +62,7 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Ar
   }
 
   @Override protected @NotNull Pattern createErrorExpr(@NotNull SourcePos sourcePos) {
-    return new Pattern.Bind(sourcePos, new LocalVar("a broken constructor pattern"), MutableValue.create());
+    return new Pattern.Bind(sourcePos, new LocalVar("a broken constructor pattern"));
   }
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Arg<Pattern> elem) {

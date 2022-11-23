@@ -33,7 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author kiva, ice1000
+ * Patterns in the core syntax.
+ *
+ * @author kiva, ice1000, HoshinoTented
  */
 @Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
