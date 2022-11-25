@@ -1,0 +1,15 @@
+In file $FILE:7:9 ->
+
+  5 | 
+  6 | def test : Pi {x : Nat} (fin : Fin x) (z : Nat) -> Nat
+  7 |   | {0}, ()
+               ^^
+
+Error: Cannot push this parameter:
+         (z : Nat)
+       to the match result of this pattern:
+         {0}, ()
+       as no match result is provided.
+
+1 error(s), 0 warning(s).
+What are you doing?

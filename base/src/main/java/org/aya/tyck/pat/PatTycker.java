@@ -367,7 +367,7 @@ public final class PatTycker {
           if (body == null) {
             var errorPattern = lastPat != null ? lastPat.term() : outerPattern;
             assert errorPattern != null;
-            foundError(new PatternProblem.CannotPush(results.toImmutableSeq(), errorPattern, param));
+            foundError(new PatternProblem.CannotPush(results.toImmutableSeq(), errorPattern, outerPattern, param));
             return done(results, sig.result(), null);
           }
           // Type explicit, does not have pattern, and failed to obtain pattern from lambda

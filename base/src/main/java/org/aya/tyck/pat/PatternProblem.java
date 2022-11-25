@@ -3,6 +3,7 @@
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.concrete.Pattern;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.ConCall;
@@ -15,6 +16,7 @@ import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public sealed interface PatternProblem extends Problem {
   @NotNull Pattern pattern();
@@ -114,15 +116,26 @@ public sealed interface PatternProblem extends Problem {
   record CannotPush(
     @NotNull ImmutableSeq<Pat> results,
     @Override @NotNull Pattern pattern,
+    @Nullable Pattern outerPattern,
     @NotNull Term.Param param
   ) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.vcat(Doc.english("Cannot push this parameter:"),
-        Doc.par(1, param.toDoc(options)),
-        Doc.english("to the match result of this pattern:"),
-        Doc.par(1, Doc.commaList(results.view().map(p -> p.toDoc(options)))),
-        Doc.english("as no match result is provided.")
-      );
+      var doc = MutableList.of(
+        Doc.english("Cannot push this parameter:"),
+        Doc.par(1, param.toDoc(options)));
+      if (results.isNotEmpty()) {
+        doc.append(Doc.english("to the match result of this pattern:"));
+        doc.append(Doc.par(1, Doc.commaList(results.view().map(p -> p.toDoc(options)))));
+        doc.append(Doc.english("as no match result is provided."));
+      } else {
+        if (outerPattern == null)
+          doc.append(Doc.english("to the match result, which is not provided."));
+        else {
+          doc.append(Doc.english("to the match result, as this pattern is a sub-pattern of:"));
+          doc.append(Doc.par(1, outerPattern.toDoc(options)));
+        }
+      }
+      return Doc.vcat(doc);
     }
   }
 

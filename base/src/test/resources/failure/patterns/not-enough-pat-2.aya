@@ -1,0 +1,7 @@
+open data Nat | zero | suc Nat
+open data Fin (n : Nat)
+  | suc n => fzero
+  | suc n => fsuc (Fin n)
+
+def test : Pi {x : Nat} (fin : Fin x) (z : Nat) -> Nat
+  | {0}, ()

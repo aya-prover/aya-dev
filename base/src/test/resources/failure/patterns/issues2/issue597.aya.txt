@@ -4,8 +4,10 @@ In file $FILE:2:22 ->
   2 | def bad Nat : Nat | S S O => O | _ => O
                             ^^
 
-Error: There is no pattern for the parameter
+Error: Cannot push this parameter:
          (_ : Nat)
+       to the match result, as this pattern is a sub-pattern of:
+         S
 
 In file $FILE:2:24 ->
 
