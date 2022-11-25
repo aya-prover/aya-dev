@@ -61,6 +61,9 @@ public final class PatTycker {
 
   /**
    * An {@code as pattern} map.
+   * We are unable to merge {@link PatTycker#patSubst} and {@link PatTycker#sigSubst}.
+   * Consider this pattern: {@code Ctor (somepat as bind)},
+   * the {@code bind} inside the {@link Pat.Ctor} is used in the outside scope (not the {@code Ctor}'s scope).
    */
   private final @NotNull TypedSubst patSubst;
 
@@ -71,10 +74,9 @@ public final class PatTycker {
    * and the substs for that signature become useless after tycking {@link Pat.Ctor}
    * (Also, the substs for the function we tycking is useless when we tyck the {@link Pat.Ctor}).
    */
-  private @NotNull TypedSubst sigSubst;
+  private final @NotNull TypedSubst sigSubst;
   private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
-  private Pattern.Clause currentClause = null;
 
   public PatTycker(
     @NotNull ExprTycker exprTycker,
@@ -88,15 +90,23 @@ public final class PatTycker {
     this.traceBuilder = traceBuilder;
   }
 
-  private <R> R traced(@NotNull Supplier<Trace> trace, @NotNull Supplier<R> computation) {
-    tracing(builder -> builder.shift(trace.get()));
+  // TODO: refactor these (traced and tracing)
+  private static <R> R traced(
+    @Nullable Trace.Builder traceBuilder,
+    @NotNull Supplier<Trace> trace,
+    @NotNull Supplier<R> computation) {
+    tracing(traceBuilder, builder -> builder.shift(trace.get()));
     var res = computation.get();
-    tracing(TreeBuilder::reduce);
+    tracing(traceBuilder, TreeBuilder::reduce);
     return res;
   }
 
+  private static void tracing(@Nullable Trace.Builder builder, @NotNull Consumer<Trace.Builder> consumer) {
+    if (builder != null) consumer.accept(builder);
+  }
+
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
-    if (traceBuilder != null) consumer.accept(traceBuilder);
+    tracing(traceBuilder, consumer);
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
@@ -106,56 +116,76 @@ public final class PatTycker {
   public record PatResult(
     @NotNull Term result,
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
-    @NotNull ImmutableSeq<Term.Matching> matchings
+    @NotNull ImmutableSeq<Term.Matching> matchings,
+    boolean hasLhsError
   ) {
   }
 
-  public @NotNull PatResult elabClausesDirectly(
+  public static @NotNull PatResult elabClausesDirectly(
+    @NotNull ExprTycker exprTycker,
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature signature
   ) {
-    return checkAllRhs(checkAllLhs(clauses, signature), signature.result());
+    return checkAllRhs(exprTycker, checkAllLhs(exprTycker, clauses, signature), signature.result());
   }
 
-  public @NotNull PatResult elabClausesClassified(
+  public static @NotNull PatResult elabClausesClassified(
+    @NotNull ExprTycker exprTycker,
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature signature,
     @NotNull SourcePos overallPos
   ) {
-    var lhsResults = checkAllLhs(clauses, signature);
-    if (noError()) {
-      var classes = PatClassifier.classify(lhsResults.view().map(LhsResult::preclause),
+    var lhsResults = checkAllLhs(exprTycker, clauses, signature);
+    if (!lhsResults.hasError()) {
+      var classes = PatClassifier.classify(lhsResults.lhsResult().view().map(LhsResult::preclause),
         signature.param(), exprTycker, overallPos, true);
       if (clauses.isNotEmpty()) {
         var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
         // refinePatterns(lhsResults, usages, classes);
+        // TODO: remove the comment above?
       }
     }
-    return checkAllRhs(lhsResults, signature.result());
+
+    return checkAllRhs(exprTycker, lhsResults, signature.result());
   }
 
-  private @NotNull ImmutableSeq<LhsResult>
-  checkAllLhs(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, @NotNull Def.Signature signature) {
+  private static @NotNull AllLhsResult checkAllLhs(
+    @NotNull ExprTycker exprTycker,
+    @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
+    @NotNull Def.Signature signature) {
     var inProp = exprTycker.localCtx.with(() ->
       exprTycker.isPropType(signature.result()), signature.param().view());
-    return clauses.mapIndexed((index, clause) -> traced(
+    var lhsResults = clauses.mapIndexed((index, clause) -> traced(exprTycker.traceBuilder,
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
-      () -> checkLhs(clause, signature, inProp)));
+      () -> checkLhs(exprTycker, clause, signature, inProp)));
+
+    return new AllLhsResult(lhsResults);
   }
 
-  private @NotNull PatResult checkAllRhs(
-    @NotNull ImmutableSeq<LhsResult> clauses,
+  private static @NotNull PatResult checkAllRhs(
+    @NotNull ExprTycker exprTycker,
+    @NotNull AllLhsResult lhsResult,
     @NotNull Term result
   ) {
-    var res = clauses.mapIndexed((index, lhs) -> traced(
+    var clauses = lhsResult.lhsResult();
+    var res = clauses.mapIndexed((index, lhs) -> traced(exprTycker.traceBuilder,
       () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
-      () -> checkRhs(lhs)));
+      () -> checkRhs(exprTycker, lhs)));
     exprTycker.solveMetas();
     var preclauses = res.map(c -> new Pat.Preclause<>(
       c.sourcePos(), c.patterns().map(p -> p.zonk(exprTycker)),
       c.expr().map(exprTycker::zonk)));
     return new PatResult(exprTycker.zonk(result), preclauses,
-      preclauses.flatMap(Pat.Preclause::lift));
+      preclauses.flatMap(Pat.Preclause::lift), lhsResult.hasError());
+  }
+
+  public record AllLhsResult(
+    @NotNull ImmutableSeq<LhsResult> lhsResult,
+    boolean hasError
+  ) {
+    public AllLhsResult(@NotNull ImmutableSeq<LhsResult> lhsResults) {
+      this(lhsResults, lhsResults.anyMatch(LhsResult::hasError));
+    }
   }
 
   /**
@@ -172,53 +202,55 @@ public final class PatTycker {
   ) {
   }
 
-  public LhsResult checkLhs(Pattern.Clause match, Def.Signature signature, boolean inProp) {
-    var parent = exprTycker.localCtx;
-    exprTycker.localCtx = parent.deriveMap();
-    currentClause = match;
-    var step0 = visitPatterns(signature, match.patterns.view(), null, match.expr.getOrNull(), inProp);
+  public static @NotNull LhsResult checkLhs(
+    @NotNull ExprTycker exprTycker,
+    @NotNull Pattern.Clause match,
+    @NotNull Def.Signature signature,
+    boolean inProp) {
+    var patTycker = new PatTycker(exprTycker);
+    return exprTycker.subscoped(() -> {
+      var step0 = patTycker
+        .visitPatterns(signature, match.patterns.view(), null, match.expr.getOrNull(), inProp);
+      match.hasError = patTycker.hasError;
 
-    /// inline
-    var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
-    var type = inlineTerm(step0.codomain);
-    patSubst.inline();
-    sigSubst.inline();
-    var consumer = new PatternConsumer() {
-      @Override public void pre(@NotNull Pattern pat) {
-        if (pat instanceof Pattern.Bind bind)
-          bind.type().update(t -> t == null ? null : inlineTerm(t));
-        PatternConsumer.super.pre(pat);
-      }
-    };
-    match.patterns.view().map(Arg::term).forEach(consumer::accept);
+      var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+      var type = inlineTerm(step0.codomain);
+      // inline these after inline patterns
+      patTycker.patSubst.inline();
+      patTycker.sigSubst.inline();
+      var consumer = new PatternConsumer() {
+        @Override public void pre(@NotNull Pattern pat) {
+          if (pat instanceof Pattern.Bind bind)
+            bind.type().update(t -> t == null ? null : inlineTerm(t));
+          PatternConsumer.super.pre(pat);
+        }
+      };
+      match.patterns.view().map(Arg::term).forEach(consumer::accept);
 
-    var subst = patSubst.derive().addDirectly(sigSubst);
-    var step1 = new LhsResult(exprTycker.localCtx, type, subst, match.hasError,
-      new Pat.Preclause<>(match.sourcePos, patterns, Option.ofNullable(step0.newBody)));
-    exprTycker.localCtx = parent;
-    patSubst.clear();
-    sigSubst.clear();
-    return step1;
+      return new LhsResult(exprTycker.localCtx, type, patTycker.allSubst(), patTycker.hasError,
+        new Pat.Preclause<>(match.sourcePos, patterns, Option.ofNullable(step0.newBody)));
+    });
   }
 
-  private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
-    var parent = exprTycker.localCtx;
-    exprTycker.localCtx = lhsResult.gamma;
-    var term = exprTycker.withSubSubst(() -> {
-      // We `addDirectly` to `parentLets`.
-      // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
-      // IDEA said that this line is useless...
-      exprTycker.lets.addDirectly(lhsResult.bodySubst());
-      return lhsResult.preclause.expr().map(e -> lhsResult.hasError
-        // In case the patterns are malformed, do not check the body
-        // as we bind local variables in the pattern checker,
-        // and in case the patterns are malformed, some bindings may
-        // not be added to the localCtx of tycker, causing assertion errors
-        ? new ErrorTerm(e, false)
-        : exprTycker.check(e, lhsResult.type).wellTyped());
+  private static Pat.Preclause<Term> checkRhs(@NotNull ExprTycker exprTycker, @NotNull LhsResult lhsResult) {
+    return exprTycker.subscoped(() -> {
+      exprTycker.localCtx = lhsResult.gamma;
+      var term = exprTycker.withSubSubst(() -> {
+        // We `addDirectly` to `parentLets`.
+        // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
+        // IDEA said that this line is useless...
+        exprTycker.lets.addDirectly(lhsResult.bodySubst());
+        return lhsResult.preclause.expr().map(e -> lhsResult.hasError
+          // In case the patterns are malformed, do not check the body
+          // as we bind local variables in the pattern checker,
+          // and in case the patterns are malformed, some bindings may
+          // not be added to the localCtx of tycker, causing assertion errors
+          ? new ErrorTerm(e, false)
+          : exprTycker.check(e, lhsResult.type).wellTyped());
+      });
+
+      return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
     });
-    exprTycker.localCtx = parent;
-    return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
   }
 
   /// region Tyck
@@ -283,7 +315,7 @@ public final class PatTycker {
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
         exprTycker.localCtx.put(bind, term);
         if (tyExpr != null) exprTycker.withSubSubst(() -> {
-          exprTycker.lets.addDirectly(patSubst).addDirectly(sigSubst);
+          exprTycker.lets.addDirectly(allSubst());
           var syn = exprTycker.synthesize(tyExpr);
           exprTycker.unifyTyReported(term, syn.wellTyped(), tyExpr);
           return null;
@@ -417,12 +449,11 @@ public final class PatTycker {
     @NotNull Pattern outerPattern,
     boolean resultIsProp
   ) {
-    var oldSigSubst = this.sigSubst;
-    this.sigSubst = new TypedSubst();
-    var result = visitPatterns(sig, stream, outerPattern, null, resultIsProp);
+    var sub = new PatTycker(this.exprTycker, this.patSubst, new TypedSubst(), this.traceBuilder);
+    var result = sub.visitPatterns(sig, stream, outerPattern, null, resultIsProp);
 
-    // recover
-    this.sigSubst = oldSigSubst;
+    this.hasError = hasError || sub.hasError;
+
     return result;
   }
 
@@ -479,7 +510,7 @@ public final class PatTycker {
   /**
    * For every implicit parameter that not explicitly (no user given pattern) matched,
    * we generate a MetaPat for each,
-   * so that they can be inferred during {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature, boolean)}
+   * so that they can be inferred during {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean)}
    */
   private @NotNull Def.Signature generatePat(@NotNull PatData data) {
     data = beforeTyck(data);
@@ -564,7 +595,6 @@ public final class PatTycker {
 
   private void foundError(@Nullable Problem problem) {
     hasError = true;
-    if (currentClause != null) currentClause.hasError = true;
     if (problem != null) exprTycker.reporter.report(problem);
   }
 
@@ -574,13 +604,13 @@ public final class PatTycker {
     return randomPat(licit, param);
   }
 
-  public boolean noError() {
-    return !hasError;
-  }
-
   /// endregion
 
   public static @NotNull Term inlineTerm(@NotNull Term term) {
     return META_PAT_INLINER.apply(term);
+  }
+
+  public @NotNull TypedSubst allSubst() {
+    return patSubst.derive().addDirectly(sigSubst);
   }
 }

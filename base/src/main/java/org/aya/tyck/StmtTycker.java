@@ -84,20 +84,20 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             return factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
           },
           clauses -> {
-            var patTycker = new PatTycker(newTycker(tycker.state.primFactory(), tycker.shapeFactory));
+            var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
             var pos = decl.sourcePos;
             if (decl.modifiers.contains(Modifier.Overlap)) {
               // Order-independent.
-              var result = patTycker.elabClausesDirectly(clauses, signature);
+              var result = PatTycker.elabClausesDirectly(exprTycker, clauses, signature);
               def = factory.apply(result.result(), Either.right(result.matchings()));
-              if (patTycker.noError())
+              if (!result.hasLhsError())
                 ensureConfluent(tycker, signature, result, pos);
             } else {
               // First-match semantics.
-              var result = patTycker.elabClausesClassified(clauses, signature, pos);
+              var result = PatTycker.elabClausesClassified(exprTycker, clauses, signature, pos);
               def = factory.apply(result.result(), Either.right(result.matchings()));
-              if (patTycker.noError()) Conquer.against(result.matchings(), true, tycker, pos, signature);
+              if (!result.hasLhsError()) Conquer.against(result.matchings(), true, tycker, pos, signature);
             }
             return def;
           }
@@ -242,10 +242,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var dataArgs = dataSig.param().map(Term.Param::toArg);
         var dataCall = new DataCall(dataRef, 0, dataArgs);
         var sig = new Def.Signature(dataSig.param(), dataCall);
-        var patTycker = new PatTycker(tycker);
         // There might be patterns in the constructor
         if (ctor.patterns.isNotEmpty()) {
-          var lhs = patTycker.checkLhs(new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false);
+          var lhs = PatTycker.checkLhs(tycker,
+            new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false);
           ctor.yetTyckedPat = lhs.preclause().patterns();
           // Revert to the "after patterns" state
           tycker.localCtx = lhs.gamma();
