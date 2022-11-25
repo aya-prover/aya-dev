@@ -37,15 +37,11 @@ import org.aya.tyck.error.PrimError;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Arg;
-import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
-
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * @author ice1000
@@ -61,7 +57,7 @@ public final class PatTycker {
 
   /**
    * An {@code as pattern} map.
-   * We are unable to merge {@link PatTycker#patSubst} and {@link PatTycker#sigSubst}.
+   * We are unable to merge this and {@link PatTycker#sigSubst}.
    * Consider this pattern: {@code Ctor (somepat as bind)},
    * the {@code bind} inside the {@link Pat.Ctor} is used in the outside scope (not the {@code Ctor}'s scope).
    */
@@ -75,42 +71,20 @@ public final class PatTycker {
    * (Also, the substs for the function we tycking is useless when we tyck the {@link Pat.Ctor}).
    */
   private final @NotNull TypedSubst sigSubst;
-  private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
 
   public PatTycker(
     @NotNull ExprTycker exprTycker,
     @NotNull TypedSubst patSubst,
-    @NotNull TypedSubst sigSubst,
-    @Nullable Trace.Builder traceBuilder
+    @NotNull TypedSubst sigSubst
   ) {
     this.exprTycker = exprTycker;
     this.patSubst = patSubst;
     this.sigSubst = sigSubst;
-    this.traceBuilder = traceBuilder;
-  }
-
-  // TODO: refactor these (traced and tracing)
-  private static <R> R traced(
-    @Nullable Trace.Builder traceBuilder,
-    @NotNull Supplier<Trace> trace,
-    @NotNull Supplier<R> computation) {
-    tracing(traceBuilder, builder -> builder.shift(trace.get()));
-    var res = computation.get();
-    tracing(traceBuilder, TreeBuilder::reduce);
-    return res;
-  }
-
-  private static void tracing(@Nullable Trace.Builder builder, @NotNull Consumer<Trace.Builder> consumer) {
-    if (builder != null) consumer.accept(builder);
-  }
-
-  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
-    tracing(traceBuilder, consumer);
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new TypedSubst(), new TypedSubst(), exprTycker.traceBuilder);
+    this(exprTycker, new TypedSubst(), new TypedSubst());
   }
 
   public record PatResult(
@@ -142,7 +116,6 @@ public final class PatTycker {
       if (clauses.isNotEmpty()) {
         var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
         // refinePatterns(lhsResults, usages, classes);
-        // TODO: remove the comment above?
       }
     }
 
@@ -152,14 +125,13 @@ public final class PatTycker {
   private static @NotNull AllLhsResult checkAllLhs(
     @NotNull ExprTycker exprTycker,
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature) {
+    @NotNull Def.Signature signature
+  ) {
     var inProp = exprTycker.localCtx.with(() ->
       exprTycker.isPropType(signature.result()), signature.param().view());
-    var lhsResults = clauses.mapIndexed((index, clause) -> traced(exprTycker.traceBuilder,
+    return new AllLhsResult(clauses.mapIndexed((index, clause) -> exprTycker.traced(
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
-      () -> checkLhs(exprTycker, clause, signature, inProp)));
-
-    return new AllLhsResult(lhsResults);
+      () -> checkLhs(exprTycker, clause, signature, inProp))));
   }
 
   private static @NotNull PatResult checkAllRhs(
@@ -168,7 +140,7 @@ public final class PatTycker {
     @NotNull Term result
   ) {
     var clauses = lhsResult.lhsResult();
-    var res = clauses.mapIndexed((index, lhs) -> traced(exprTycker.traceBuilder,
+    var res = clauses.mapIndexed((index, lhs) -> exprTycker.traced(
       () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
       () -> checkRhs(exprTycker, lhs)));
     exprTycker.solveMetas();
@@ -206,7 +178,8 @@ public final class PatTycker {
     @NotNull ExprTycker exprTycker,
     @NotNull Pattern.Clause match,
     @NotNull Def.Signature signature,
-    boolean inProp) {
+    boolean inProp
+  ) {
     var patTycker = new PatTycker(exprTycker);
     return exprTycker.subscoped(() -> {
       var step0 = patTycker
@@ -449,7 +422,7 @@ public final class PatTycker {
     @NotNull Pattern outerPattern,
     boolean resultIsProp
   ) {
-    var sub = new PatTycker(this.exprTycker, this.patSubst, new TypedSubst(), this.traceBuilder);
+    var sub = new PatTycker(this.exprTycker, this.patSubst, new TypedSubst());
     var result = sub.visitPatterns(sig, stream, outerPattern, null, resultIsProp);
 
     this.hasError = hasError || sub.hasError;
@@ -498,9 +471,8 @@ public final class PatTycker {
 
     var type = data.param.type();
     var pat = arg.term();
-    tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
-    var res = doTyck(pat, type, arg.explicit(), resultIsProp);
-    tracing(TreeBuilder::reduce);
+    var res = exprTycker.traced(() -> new Trace.PatT(type, pat, pat.sourcePos()),
+      () -> doTyck(pat, type, arg.explicit(), resultIsProp));
     addSigSubst(data.param(), res);
     data.results.append(res);
 

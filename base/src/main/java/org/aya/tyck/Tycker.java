@@ -10,12 +10,14 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
+import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * This is a lightweight abstraction of a tycker,
@@ -54,8 +56,15 @@ public abstract class Tycker {
     return term.normalize(state, NormalizeMode.WHNF);
   }
 
-  protected void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+  public void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  public <R> R traced(@NotNull Supplier<@NotNull Trace> trace, @NotNull Supplier<R> computation) {
+    tracing(builder -> builder.shift(trace.get()));
+    var res = computation.get();
+    tracing(TreeBuilder::reduce);
+    return res;
   }
 
   public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
