@@ -9,4 +9,17 @@ def +-assoc-redo2 (n : Nat) : Pi (m p : Nat) → n + (m + p) = (n + m) + p
 | zero, m, p => idp
 | suc n, m, p => pmap suc (+-assoc-redo2 n m p)
 
-// TODO: test implicit patterns and implicit lambdas
+def +-redo : Pi (a : Nat) {b : Nat} -> Nat
+  | zero  => \{i} => i
+  | suc n => \{i} => suc (+-redo n {i})
+
+def id {A : Type} (a : A) => a
+def +-redo2 : Pi (a : Nat) (b : Nat) -> Nat
+  | zero  => id
+  | suc n => \i => suc (+-redo2 n i)
+
+// TODO: make this work
+//def +-redo3 : Pi (a : Nat) {b : Nat} -> Nat
+//  | zero  => id
+//  | suc n => \{i} => suc (+-redo3 n {i})
+
