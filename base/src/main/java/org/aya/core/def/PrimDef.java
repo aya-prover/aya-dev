@@ -145,6 +145,30 @@ public final class PrimDef extends TopLevelDef<Term> {
   }
 
   public static class Factory {
+    public Factory() {
+      var init = new Initializer();
+      seeds = ImmutableSeq.of(
+          init.intervalMin,
+          init.intervalMax,
+          init.intervalInv,
+          init.stringType,
+          init.stringConcat,
+          init.intervalType,
+          init.partialType,
+          init.coe,
+          init.coeFill,
+          init.eoc,
+          init.eocFill,
+          init.hcomp,
+          init.sub
+        ).map(seed -> Tuple.of(seed.name, seed))
+        .toImmutableMap();
+    }
+
+    private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
+
+    private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
+
     private final class Initializer {
       public final @NotNull PrimDef.PrimSeed coe = new PrimSeed(ID.COE, this::coe, ref -> {
         // coe (A : I -> Type) (phi : I) : A 0 -> A 1
@@ -262,6 +286,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var result = new PiTerm(paramU, path);
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi), result, coeFill);
       }
+
       public final @NotNull PrimDef.PrimSeed partialType =
         new PrimSeed(ID.PARTIAL,
           (prim, state) -> {
@@ -326,9 +351,14 @@ public final class PrimDef extends TopLevelDef<Term> {
       private Term sub(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
         var A = prim.args().get(0).term();
         var phi = prim.args().get(1).term();
-        var u = (PartialTerm) prim.args().get(2).term();
-        return new SubTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), u.partial());
+        var u = prim.args().get(2).term();
+
+        if (u instanceof PartialTerm partialTerm)
+          return new SubTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), partialTerm.partial());
+        else
+          return prim;
       }
+
       public final @NotNull PrimDef.PrimSeed stringConcat =
         new PrimSeed(ID.STRCONCAT, Initializer::concat, ref -> new PrimDef(
           ref,
@@ -365,29 +395,6 @@ public final class PrimDef extends TopLevelDef<Term> {
         var u0 = prim.args().get(3).term();
         return new HCompTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), u, u0);
       }
-    }
-
-    private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
-
-    private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
-
-    public Factory() {
-      var init = new Initializer();
-      seeds = ImmutableSeq.of(
-          init.intervalMin,
-          init.intervalMax,
-          init.intervalInv,
-          init.stringType,
-          init.stringConcat,
-          init.intervalType,
-          init.partialType,
-          init.coe,
-          init.coeFill,
-          init.eoc,
-          init.eocFill,
-          init.hcomp
-        ).map(seed -> Tuple.of(seed.name, seed))
-        .toImmutableMap();
     }
 
     public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
