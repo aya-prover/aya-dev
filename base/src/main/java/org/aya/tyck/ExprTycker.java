@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -577,10 +576,9 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new PartialTerm(partial, rhsType), ty);
       }
       case Expr.Match match -> {
-        var patTyck = new PatTycker(this);
         var discriminant = match.discriminant().map(this::synthesize);
         var sig = new Def.Signature(discriminant.map(r -> new Term.Param(new LocalVar("_"), r.type(), true)), term);
-        var result = patTyck.elabClausesClassified(match.clauses(), sig, match.sourcePos());
+        var result = PatTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
         yield new TermResult(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
