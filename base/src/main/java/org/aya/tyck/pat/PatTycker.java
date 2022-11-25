@@ -364,17 +364,18 @@ public final class PatTycker {
           var pattern = new Pattern.Bind(lamPos, lamParam.ref(), lamParam.type(), MutableValue.create());
           pat = new Arg<>(pattern, param.explicit());
         } else if (param.explicit()) {
-          Pattern errorPattern;
-
-          if (lastPat == null) {
-            assert outerPattern != null;
-            errorPattern = outerPattern;
-          } else {
-            errorPattern = lastPat.term();
+          if (body == null) {
+            var errorPattern = lastPat != null ? lastPat.term() : outerPattern;
+            assert errorPattern != null;
+            foundError(new PatternProblem.CannotPush(results.toImmutableSeq(), errorPattern, param));
+            return done(results, sig.result(), null);
           }
-
-          foundError(new PatternProblem.InsufficientPattern(errorPattern, param));
-          return done(results, sig.result(), body);
+          // Type explicit, does not have pattern, and failed to obtain pattern from lambda
+          var sourcePos = body.sourcePos();
+          var var = param.renameVar();
+          var pattern = new Pattern.Bind(sourcePos, var);
+          pat = new Arg<>(pattern, true);
+          body = new Expr.App(sourcePos, body, new Expr.NamedArg(true, new Expr.Ref(sourcePos, var)));
         } else {
           // Type is implicit, does not have pattern
           sig = generatePat(new PatData(sig, results, param));

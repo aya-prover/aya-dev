@@ -2,7 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Pattern;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.ConCall;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
@@ -109,11 +111,18 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record InsufficientPattern(@Override @NotNull Pattern pattern, @NotNull Term.Param param) implements PatternProblem {
+  record CannotPush(
+    @NotNull ImmutableSeq<Pat> results,
+    @Override @NotNull Pattern pattern,
+    @NotNull Term.Param param
+  ) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.vcat(
-        Doc.english("There is no pattern for the parameter"),
-        Doc.par(1, param.toDoc(options)));
+      return Doc.vcat(Doc.english("Cannot push this parameter:"),
+        Doc.par(1, param.toDoc(options)),
+        Doc.english("to the match result of this pattern:"),
+        Doc.par(1, Doc.commaList(results.view().map(p -> p.toDoc(options)))),
+        Doc.english("as no match result is provided.")
+      );
     }
   }
 
