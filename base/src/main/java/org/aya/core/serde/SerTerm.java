@@ -304,6 +304,22 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
+  record inS(@NotNull SerTerm phi, @NotNull SerTerm u) implements SerTerm {
+
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new InSTerm(phi.de(state), u.de(state));
+    }
+  }
+
+  record outS(@NotNull SerTerm phi, @NotNull SerTerm u) implements SerTerm {
+
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new OutSTerm(phi.de(state), u.de(state));
+    }
+  }
+
   record SerCube(
     @NotNull ImmutableSeq<SimpVar> params,
     @NotNull SerTerm type,
