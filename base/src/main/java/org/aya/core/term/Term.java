@@ -39,7 +39,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF, SubTerm {
+  permits Callable, CoeTerm, Elimination, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF, SubTerm, InSTerm, OutSTerm {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -199,6 +199,18 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
       case HCompTerm hComp -> hComp; //TODO
+      case InSTerm inSTerm -> {
+        var phi = f.apply(inSTerm.phi());
+        var u = f.apply(inSTerm.u());
+        if (phi == inSTerm.phi() && u == inSTerm.u()) yield inSTerm;
+        yield new InSTerm(phi, u);
+      }
+      case OutSTerm outSTerm -> {
+        var phi = f.apply(outSTerm.phi());
+        var u = f.apply(outSTerm.u());
+        if (phi == outSTerm.phi() && u == outSTerm.u()) yield outSTerm;
+        yield new OutSTerm(phi, u);
+      }
     };
   }
 

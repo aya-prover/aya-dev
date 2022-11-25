@@ -238,6 +238,10 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case SubTerm(var ty, var restr, var partial) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Sub"),
         term(Outer.AppSpine, ty), Doc.parened(restr(options, restr)),
         Doc.parened(partial(options, partial, true, Doc.symbol("{|"), Doc.symbol("|}")))), Outer.AppSpine);
+      case InSTerm(var phi, var u) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "inS"),
+        term(Outer.AppSpine, phi), term(Outer.AppSpine, u)), Outer.AppSpine);
+      case OutSTerm(var phi, var u) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "outS"),
+        term(Outer.AppSpine, phi), term(Outer.AppSpine, u)), Outer.AppSpine);
     };
   }
 

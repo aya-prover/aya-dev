@@ -117,6 +117,8 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
       case HCompTerm hComp -> throw new InternalException("TODO");
       case SubTerm subTerm -> throw new InternalException("TODO");
+      case InSTerm inSTerm -> throw new InternalException("TODO");
+      case OutSTerm outSTerm -> throw new InternalException("TODO");
     };
   }
 
