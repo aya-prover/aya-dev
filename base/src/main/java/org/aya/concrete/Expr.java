@@ -132,6 +132,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     }
   }
 
+  static @NotNull Expr app(@NotNull Expr function, @NotNull SeqView<WithPos<NamedArg>> arguments) {
+    return arguments.foldLeft(function, (f, arg) -> new App(arg.sourcePos(), f, arg.data()));
+  }
+
   static @NotNull Expr unapp(@NotNull Expr expr, @Nullable MutableList<NamedArg> args) {
     while (expr instanceof App app) {
       if (args != null) args.append(app.argument);

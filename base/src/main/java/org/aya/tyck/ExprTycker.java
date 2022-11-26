@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -43,6 +44,7 @@ import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -199,13 +200,14 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new TupTerm(items.map(Result::wellTyped)), new SigmaTerm(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
       }
       case Expr.Coe coe -> {
-        assert coe.resolvedVar() instanceof DefVar<?, ?> defVar
-          && defVar.core instanceof PrimDef def && PrimDef.ID.projSyntax(def.id) : "desugar bug";
         var defVar = coe.resolvedVar();
-        var mockApp = new Expr.App(coe.sourcePos(), new Expr.App(coe.sourcePos(),
-          new Expr.Ref(coe.id().sourcePos(), defVar),
-          new Expr.NamedArg(true, coe.type())),
-          new Expr.NamedArg(true, coe.restr()));
+        assert defVar instanceof DefVar<?, ?> res
+          && res.core instanceof PrimDef def && PrimDef.ID.projSyntax(def.id) : "desugar bug";
+        var mockApp = Expr.app(
+          new Expr.Ref(coe.id().sourcePos(), defVar), Seq.of(
+            new WithPos<>(coe.sourcePos(), new Expr.NamedArg(true, coe.type())),
+            new WithPos<>(coe.sourcePos(), new Expr.NamedArg(true, coe.restr()))
+          ).view());
         var res = synthesize(mockApp);
         if (whnf(res.wellTyped()) instanceof CoeTerm(var type, var restr) && !(type instanceof ErrorTerm)) {
           var bad = new Object() {
@@ -224,7 +226,7 @@ public final class ExprTycker extends Tycker {
             };
             return switch (typeSubst) {
               case LamTerm(var param, var body) -> post.test(body.findUsages(param.ref()));
-              case PLamTerm(var params, var body) -> post.test(params.collect(Collectors.summingInt(body::findUsages)));
+              case PLamTerm(var params, var body) -> post.test(body.findUsages(params.first()));
               default -> {
                 bad.stuck = true;
                 yield false;
