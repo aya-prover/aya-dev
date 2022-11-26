@@ -122,7 +122,7 @@ public interface StmtResolver {
     addReferences(info, decl, resolver.reference().view());
   }
 
-  private static @NotNull ExprResolver resolveDeclSignature(@NotNull TeleDecl decl, ExprResolver.@NotNull Options options) {
+  private static @NotNull ExprResolver resolveDeclSignature(@NotNull TeleDecl<?> decl, ExprResolver.@NotNull Options options) {
     assert decl.ctx != null;
     var resolver = new ExprResolver(decl.ctx, options);
     resolver.enterHead();

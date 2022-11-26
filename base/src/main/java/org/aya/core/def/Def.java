@@ -23,11 +23,11 @@ import java.util.Objects;
  * @author ice1000
  */
 public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, TopLevelDef {
-  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar) {
+  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> defVar) {
     return PiTerm.make(defTele(defVar), defResult(defVar));
   }
 
-  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar) {
+  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature()).param;
@@ -37,7 +37,7 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
       // guaranteed as this is already a core term
     else return defVar.concrete.checkedBody;
   }
-  static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic> defVar) {
+  static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> defVar) {
     if (defVar.core != null) return defVar.core.result();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature()).result;
@@ -59,9 +59,9 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
    *
    * @author ice1000
    */
-  record Signature(
+  record Signature<T extends Term>(
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
-    @NotNull Term result
+    @NotNull T result
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.sep(param.view().map(p -> p.toDoc(options))), Doc.symbol("->"), result.toDoc(options));

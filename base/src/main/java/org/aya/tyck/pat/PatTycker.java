@@ -106,7 +106,7 @@ public final class PatTycker {
   public static @NotNull PatResult elabClausesClassified(
     @NotNull ExprTycker exprTycker,
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature,
+    @NotNull Def.Signature<?> signature,
     @NotNull SourcePos overallPos
   ) {
     var lhsResults = checkAllLhs(exprTycker, clauses, signature);
@@ -125,7 +125,7 @@ public final class PatTycker {
   private static @NotNull AllLhsResult checkAllLhs(
     @NotNull ExprTycker exprTycker,
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature
+    @NotNull Def.Signature<?> signature
   ) {
     var inProp = exprTycker.localCtx.with(() ->
       exprTycker.isPropType(signature.result()), signature.param().view());
@@ -177,7 +177,7 @@ public final class PatTycker {
   public static @NotNull LhsResult checkLhs(
     @NotNull ExprTycker exprTycker,
     @NotNull Pattern.Clause match,
-    @NotNull Def.Signature signature,
+    @NotNull Def.Signature<?> signature,
     boolean inProp
   ) {
     var patTycker = new PatTycker(exprTycker);
@@ -255,7 +255,7 @@ public final class PatTycker {
         var tupleIsProp = exprTycker.isPropType(sigma);
         if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
-        var sig = new Def.Signature(sigma.params(),
+        var sig = new Def.Signature<>(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
         var ret = new Pat.Tuple(licit, visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp).wellTyped.toImmutableSeq());
@@ -274,7 +274,7 @@ public final class PatTycker {
         var ctorCore = ctorRef.core;
 
         final var dataCall = realCtor._1;
-        var sig = new Def.Signature(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
+        var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp).wellTyped.toImmutableSeq();
         var as = ctor.as();
@@ -348,7 +348,7 @@ public final class PatTycker {
    * @see PatTycker#visitInnerPatterns(Def.Signature, SeqView, Pattern, boolean)
    */
   private @NotNull VisitPatterns visitPatterns(
-    @NotNull Def.Signature sig,
+    @NotNull Def.Signature<?> sig,
     @NotNull SeqView<Arg<Pattern>> stream,
     @Nullable Pattern outerPattern,
     @Nullable Expr body,
@@ -417,7 +417,7 @@ public final class PatTycker {
   }
 
   private @NotNull VisitPatterns visitInnerPatterns(
-    @NotNull Def.Signature sig,
+    @NotNull Def.Signature<?> sig,
     @NotNull SeqView<Arg<Pattern>> stream,
     @NotNull Pattern outerPattern,
     boolean resultIsProp
@@ -438,7 +438,7 @@ public final class PatTycker {
    * @param param   the parameter we want to match
    */
   private record PatData(
-    @NotNull Def.Signature sig,
+    @NotNull Def.Signature<?> sig,
     @NotNull MutableList<Pat> results,
     @NotNull Term.Param param
   ) {
@@ -453,7 +453,7 @@ public final class PatTycker {
 
   private @NotNull PatData afterTyck(@NotNull PatData data) {
     return new PatData(
-      new Def.Signature(data.sig().param().drop(1), data.sig().result()),
+      new Def.Signature<>(data.sig().param().drop(1), data.sig().result()),
       data.results(),
       data.param()
     );
@@ -466,7 +466,7 @@ public final class PatTycker {
   /**
    * A user given pattern matches a parameter, we update the signature.
    */
-  private @NotNull Def.Signature updateSig(PatData data, Arg<Pattern> arg, boolean resultIsProp) {
+  private @NotNull Def.Signature<?> updateSig(PatData data, Arg<Pattern> arg, boolean resultIsProp) {
     data = beforeTyck(data);
 
     var type = data.param.type();
@@ -484,7 +484,7 @@ public final class PatTycker {
    * we generate a MetaPat for each,
    * so that they can be inferred during {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean)}
    */
-  private @NotNull Def.Signature generatePat(@NotNull PatData data) {
+  private @NotNull Def.Signature<?> generatePat(@NotNull PatData data) {
     data = beforeTyck(data);
 
     var ref = data.param.ref();

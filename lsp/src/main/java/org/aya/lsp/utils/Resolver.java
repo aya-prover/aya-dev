@@ -119,7 +119,7 @@ public interface Resolver {
       return switch (stmt) {
         case Command.Import imp -> fold(targets, new ModuleVar(imp.path()), imp.path().sourcePos());
         case Command.Open open -> fold(targets, new ModuleVar(open.path()), open.path().sourcePos());
-        case Decl decl when decl instanceof Decl.Telescopic tele -> {
+        case Decl decl when decl instanceof Decl.Telescopic<?> tele -> {
           targets = tele.telescope().filterNot(p -> p.ref().name().startsWith(Constants.ANONYMOUS_PREFIX))
             .foldLeft(targets, (ac, p) -> fold(ac, p.ref(), p.sourcePos()));
           yield fold(targets, decl.ref(), decl.sourcePos());

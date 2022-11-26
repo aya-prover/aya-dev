@@ -10,6 +10,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.term.DataCall;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
@@ -30,13 +31,14 @@ import java.util.EnumSet;
  * @author re-xyr
  * @see Decl
  */
-public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telescopic, Decl.TopLevel, Decl.Resulted {
+public sealed abstract class TeleDecl<RetTy extends Term>
+  extends CommonDecl implements Decl.Telescopic<RetTy>, Decl.TopLevel, Decl.Resulted {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
-  public @Nullable Def.Signature signature;
+  public @Nullable Def.Signature<RetTy> signature;
 
   @Override public @NotNull Decl.Personality personality() {
     return personality;
@@ -66,11 +68,11 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     this.telescope = telescope;
   }
 
-  @Override public @Nullable Def.Signature signature() {
-    return signature;
+  @Override public Def.@Nullable Signature<RetTy> signature() {
+    return null;
   }
 
-  @Override public void setSignature(@Nullable Def.Signature signature) {
+  @Override public void setSignature(Def.@Nullable Signature<RetTy> signature) {
     this.signature = signature;
   }
 
@@ -89,7 +91,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     this.telescope = telescope;
   }
 
-  @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends TeleDecl> ref();
+  @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends TeleDecl<RetTy>> ref();
 
   /**
    * @author ice1000
@@ -97,7 +99,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
    * which means it's unspecified in the concrete syntax.
    * @see PrimDef
    */
-  public static final class PrimDecl extends TeleDecl {
+  public static final class PrimDecl extends TeleDecl<Term> {
     public final @NotNull DefVar<PrimDef, PrimDecl> ref;
 
     public PrimDecl(
@@ -119,7 +121,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     }
   }
 
-  public static final class DataCtor extends CommonDecl implements Decl.Telescopic {
+  public static final class DataCtor extends CommonDecl implements Decl.Telescopic<DataCall> {
     public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     /** Similar to {@link Decl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
@@ -133,7 +135,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
 
     // will change after resolve
     public @NotNull ImmutableSeq<Expr.Param> telescope;
-    public @Nullable Def.Signature signature;
+    public @Nullable Def.Signature<DataCall> signature;
 
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -165,11 +167,11 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
       this.telescope = telescope;
     }
 
-    @Override public @Nullable Def.Signature signature() {
+    @Override public @Nullable Def.Signature<DataCall> signature() {
       return signature;
     }
 
-    @Override public void setSignature(Def.@Nullable Signature signature) {
+    @Override public void setSignature(Def.@Nullable Signature<DataCall> signature) {
       this.signature = signature;
     }
   }
@@ -180,7 +182,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
    * @author kiva
    * @see DataDef
    */
-  public static final class DataDecl extends TeleDecl {
+  public static final class DataDecl extends TeleDecl<SortTerm> {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public final @NotNull ImmutableSeq<DataCtor> body;
     /** Yet type-checked constructors */
@@ -214,10 +216,9 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
    *
    * @author vont
    */
-  public static final class StructDecl extends TeleDecl {
+  public static final class StructDecl extends TeleDecl<SortTerm> {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
-    public @NotNull
-    final ImmutableSeq<StructField> fields;
+    public final @NotNull ImmutableSeq<StructField> fields;
     public SortTerm ulift;
 
     public StructDecl(
@@ -243,7 +244,8 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
     }
   }
 
-  public static final class StructField extends CommonDecl implements Decl.Telescopic, Decl.Resulted {
+  public static final class StructField
+    extends CommonDecl implements Decl.Telescopic<Term>, Decl.Resulted {
     public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull Expr result;
@@ -252,7 +254,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
 
     // will change after resolve
     public @NotNull ImmutableSeq<Expr.Param> telescope;
-    public @Nullable Def.Signature signature;
+    public @Nullable Def.Signature<Term> signature;
 
     public StructField(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -284,11 +286,11 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
       this.telescope = telescope;
     }
 
-    @Override public @Nullable Def.Signature signature() {
+    @Override public Def.@Nullable Signature<Term> signature() {
       return signature;
     }
 
-    @Override public void setSignature(Def.@Nullable Signature signature) {
+    @Override public void setSignature(Def.@Nullable Signature<Term> signature) {
       this.signature = signature;
     }
 
@@ -307,7 +309,7 @@ public sealed abstract class TeleDecl extends CommonDecl implements Decl.Telesco
    * @author re-xyr
    * @see FnDef
    */
-  public static final class FnDecl extends TeleDecl {
+  public static final class FnDecl extends TeleDecl<Term> {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;

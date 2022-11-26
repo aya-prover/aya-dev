@@ -15,7 +15,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
         if (remark.literate != null) remark.literate.modify(this);
       }
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic telescopic)
+        if (decl instanceof Decl.Telescopic<?> telescopic)
           telescopic.setTelescope(telescopic.telescope().map(param -> param.descent(this)));
         if (decl instanceof Decl.Resulted resulted) resulted.setResult(this.apply(resulted.result()));
         switch (decl) {

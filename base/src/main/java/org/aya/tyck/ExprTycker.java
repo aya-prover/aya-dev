@@ -802,7 +802,7 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
+  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables
