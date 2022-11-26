@@ -34,8 +34,8 @@ public interface ComputeSignature {
       case LocalVar localVar -> BaseDistiller.varDoc(localVar); // TODO: compute type of local vars
       case DefVar<?, ?> ref -> {
         // #299: hovering a mouse on a definition whose header is failed to tyck
-        if (!(ref.concrete instanceof Decl.Telescopic concrete) || concrete.signature() == null) yield Doc.empty();
-        var defVar = (DefVar<? extends Def, ? extends Decl.Telescopic>) ref;
+        if (!(ref.concrete instanceof Decl.Telescopic<?> concrete) || concrete.signature() == null) yield Doc.empty();
+        var defVar = (DefVar<? extends Def, ? extends Decl.Telescopic<?>>) ref;
         yield computeSignature(Def.defTele(defVar), Def.defResult(defVar), withResult);
       }
       default -> Doc.empty();

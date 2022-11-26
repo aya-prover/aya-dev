@@ -5,6 +5,7 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.core.def.Def;
+import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.tyck.order.TyckUnit;
@@ -63,11 +64,11 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface Telescopic permits TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
+  sealed interface Telescopic<RetTy extends Term> permits TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
     @NotNull ImmutableSeq<Expr.Param> telescope();
     void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope);
-    @Nullable Def.Signature signature();
-    void setSignature(@Nullable Def.Signature signature);
+    @Nullable Def.Signature<RetTy> signature();
+    void setSignature(@Nullable Def.Signature<RetTy> signature);
   }
 
   /**

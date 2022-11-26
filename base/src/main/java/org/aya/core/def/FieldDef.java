@@ -10,6 +10,8 @@ import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public final class FieldDef extends SubLevelDef {
   public final @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef;
   public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
@@ -36,7 +38,8 @@ public final class FieldDef extends SubLevelDef {
   }
 
   private @NotNull SortTerm structResult() {
-    return structRef.concrete != null ? structRef.concrete.ulift : structRef.core.result;
+    return structRef.concrete == null ? structRef.core.result
+      : Objects.requireNonNull(structRef.concrete.signature).result();
   }
 
   public boolean inProp() {

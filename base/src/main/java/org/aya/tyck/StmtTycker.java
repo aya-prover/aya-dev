@@ -67,11 +67,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull GenericDef doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
-    if (predecl instanceof Decl.Telescopic decl && decl.signature() == null) tyckHeader(predecl, tycker);
-    var signature = predecl instanceof Decl.Telescopic decl ? decl.signature() : null;
+    if (predecl instanceof Decl.Telescopic<?> decl && decl.signature() == null) tyckHeader(predecl, tycker);
     return switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl decl -> {
+        var signature = decl.signature;
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
@@ -104,25 +104,28 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         );
       }
       case TeleDecl.DataDecl decl -> {
+        var signature = decl.signature;
         assert signature != null;
         var body = decl.body.map(clause -> (CtorDef) tyck(clause, tycker));
-        yield new DataDef(decl.ref, signature.param(), decl.ulift, body);
+        yield new DataDef(decl.ref, signature.param(), signature.result(), body);
       }
       case TeleDecl.PrimDecl decl -> decl.ref.core;
       case TeleDecl.StructDecl decl -> {
+        var signature = decl.signature;
         assert signature != null;
         var body = decl.fields.map(field -> (FieldDef) tyck(field, tycker));
-        yield new StructDef(decl.ref, signature.param(), decl.ulift, body);
+        yield new StructDef(decl.ref, signature.param(), signature.result(), body);
       }
       case TeleDecl.DataCtor ctor -> {
         // TODO[ice]: remove this hack
         if (ctor.ref.core != null) yield ctor.ref.core;
-        assert signature == ctor.signature && signature != null; // already handled in the entrance of this method
+        var signature = ctor.signature;
+        assert signature != null; // already handled in the entrance of this method
         var dataRef = ctor.dataRef;
         var dataConcrete = dataRef.concrete;
         var dataSig = dataConcrete.signature;
         assert dataSig != null;
-        var dataCall = (DataCall) signature.result();
+        var dataCall = signature.result();
         var tele = signature.param();
         var pat = ctor.yetTyckedPat;
         assert pat != null; // header should be checked first
@@ -140,7 +143,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       case TeleDecl.StructField field -> {
         // TODO[ice]: remove this hack
         if (field.ref.core != null) yield field.ref.core;
-        assert signature == field.signature && signature != null; // already handled in the entrance of this method
+        var signature = field.signature;
+        assert signature != null; // already handled in the entrance of this method
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
@@ -168,7 +172,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     });
     var tele = zonkTele(tycker, tmp.okTele);
     var result = tycker.zonk(tmp.preresult);
-    fn.signature = new Def.Signature(tele, result);
+    fn.signature = new Def.Signature<>(tele, result);
     var body = tycker.zonk(tmp.prebody);
     return new FnDef(fn.ref, fn.signature.param(), fn.signature.result(), fn.modifiers, Either.left(body));
   }
@@ -191,21 +195,19 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           resultRes = PiTerm.unpi(tycker.zonk(resultRes), tycker::whnf, tele);
           resultTele = tele.toImmutableArray();
         }
-        fn.signature = new Def.Signature(resultTele, resultRes);
+        fn.signature = new Def.Signature<>(resultTele, resultRes);
         if (resultTele.isEmpty() && fn.body.isRight() && fn.body.getRightValue().isEmpty())
           reporter.report(new NobodyError(decl.sourcePos(), fn.ref));
       }
       case TeleDecl.DataDecl data -> {
         var tele = tele(tycker, data.telescope, null);
         var resultTy = resultTy(tycker, data);
-        data.ulift = resultTy;
-        data.signature = new Def.Signature(tele, resultTy);
+        data.signature = new Def.Signature<>(tele, resultTy);
       }
       case TeleDecl.StructDecl struct -> {
         var tele = tele(tycker, struct.telescope, null);
         var result = resultTy(tycker, struct);
-        struct.signature = new Def.Signature(tele, result);
-        struct.ulift = result;
+        struct.signature = new Def.Signature<>(tele, result);
       }
       case TeleDecl.PrimDecl prim -> {
         // This directly corresponds to the tycker.localCtx = new LocalCtx();
@@ -225,11 +227,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             PiTerm.make(tele, result),
             PiTerm.make(core.telescope, core.result),
             prim.result);
-          prim.signature = new Def.Signature(tele, result);
+          prim.signature = new Def.Signature<>(tele, result);
         } else if (!(prim.result instanceof Expr.Error)) {
           var result = tycker.synthesize(prim.result).wellTyped();
           tycker.unifyTyReported(result, core.result, prim.result);
-        } else prim.signature = new Def.Signature(core.telescope, core.result);
+        } else prim.signature = new Def.Signature<>(core.telescope, core.result);
         tycker.solveMetas();
         tycker.localCtx = new SeqLocalCtx();
       }
@@ -241,7 +243,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert dataSig != null;
         var dataArgs = dataSig.param().map(Term.Param::toArg);
         var dataCall = new DataCall(dataRef, 0, dataArgs);
-        var sig = new Def.Signature(dataSig.param(), dataCall);
+        var sig = new Def.Signature<>(dataSig.param(), dataCall);
         // There might be patterns in the constructor
         if (ctor.patterns.isNotEmpty()) {
           var lhs = PatTycker.checkLhs(tycker,
@@ -254,8 +256,9 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           // No patterns, leave it blank
           ctor.yetTyckedPat = ImmutableSeq.empty();
         }
-        var tele = tele(tycker, ctor.telescope, dataConcrete.ulift.isProp() ? null : dataConcrete.ulift);
-        ctor.signature = new Def.Signature(tele, dataCall);
+        var ulift = dataConcrete.signature.result();
+        var tele = tele(tycker, ctor.telescope, ulift.isProp() ? null : ulift);
+        ctor.signature = new Def.Signature<>(tele, dataCall);
         ctor.patternTele = ctor.yetTyckedPat.isEmpty()
           ? dataSig.param().map(Term.Param::implicitify)
           : Pat.extractTele(ctor.yetTyckedPat);
@@ -265,26 +268,25 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
-        var structLvl = structRef.concrete.ulift;
+        var structLvl = structSig.result();
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
         var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
-        field.signature = new Def.Signature(tele, result);
+        field.signature = new Def.Signature<>(tele, result);
       }
     }
     tracing(TreeBuilder::reduce);
   }
 
-  private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl data) {
-    SortTerm ret = SortTerm.Type0;
+  private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl<SortTerm> data) {
     if (!(data.result instanceof Expr.Hole)) {
       var result = tycker.sort(data.result);
-      ret = (SortTerm) tycker.zonk(result.wellTyped());
+      return (SortTerm) tycker.zonk(result.wellTyped());
     }
-    return ret;
+    return SortTerm.Type0;
   }
 
   private void ensureConfluent(
-    ExprTycker tycker, Def.Signature signature,
+    ExprTycker tycker, Def.Signature<?> signature,
     PatTycker.PatResult elabClauses, SourcePos pos
   ) {
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));

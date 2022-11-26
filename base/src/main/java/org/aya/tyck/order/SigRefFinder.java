@@ -24,7 +24,7 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
   public void accept(@NotNull TyckUnit sn) {
     switch (sn) {
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic proof)
+        if (decl instanceof Decl.Telescopic<?> proof)
           proof.telescope().mapNotNull(Expr.Param::type).forEach(this);
         if (decl instanceof Decl.Resulted proof) accept(proof.result());
       }

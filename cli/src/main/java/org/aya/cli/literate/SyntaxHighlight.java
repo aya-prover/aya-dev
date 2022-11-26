@@ -93,7 +93,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case Command.Open o -> add(acc, linkModuleRef(o.path()));
       case ClassDecl decl -> add(acc, linkDef(decl.sourcePos, decl.ref()));
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic teleDecl) {
+        if (decl instanceof Decl.Telescopic<?> teleDecl) {
           teleDecl.telescope().view()
             .map(Expr.Param::ref)
             .filterNot(LocalVar::isGenerated)

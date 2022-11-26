@@ -577,7 +577,7 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(this::synthesize);
-        var sig = new Def.Signature(discriminant.map(r -> new Term.Param(new LocalVar("_"), r.type(), true)), term);
+        var sig = new Def.Signature<>(discriminant.map(r -> new Term.Param(new LocalVar("_"), r.type(), true)), term);
         var result = PatTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
         yield new TermResult(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
@@ -802,7 +802,7 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
+  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables

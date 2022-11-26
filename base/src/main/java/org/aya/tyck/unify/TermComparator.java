@@ -242,7 +242,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private @Nullable Term visitCall(
     @NotNull Callable lhs, @NotNull Callable rhs, Sub lr, Sub rl,
-    @NotNull DefVar<? extends Def, ? extends Decl.Telescopic> lhsRef, int ulift
+    @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef, int ulift
   ) {
     var retType = getType(lhs, lhsRef);
     // Lossy comparison
@@ -254,7 +254,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private record Pair(Term lhs, Term rhs) {}
 
-  private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic> lhsRef) {
+  private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef) {
     var substMap = MutableMap.<AnyVar, Term>create();
     for (var pa : lhs.args().view().zip(Def.defTele(lhsRef))) {
       substMap.set(pa._2.ref(), pa._1.term());
