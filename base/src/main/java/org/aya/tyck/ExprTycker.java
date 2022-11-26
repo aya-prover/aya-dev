@@ -489,7 +489,7 @@ public final class ExprTycker extends Tycker {
         var items = MutableList.<Term>create();
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
-        if (typeWHNF instanceof MetaTerm hole) yield unifyTyMaybeInsert(hole, synthesize(expr), expr);
+        if (typeWHNF instanceof MetaTerm hole) yield inheritFallbackUnify(hole, synthesize(expr), expr);
         if (!(typeWHNF instanceof SigmaTerm(var params)))
           yield fail(expr, term, BadTypeError.sigmaCon(state, expr, typeWHNF));
         var againstTele = params.view();
@@ -565,7 +565,7 @@ public final class ExprTycker extends Tycker {
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? FormulaTerm.LEFT : FormulaTerm.RIGHT, ty);
           else yield fail(expr, new PrimError.BadInterval(pos, end));
         }
-        yield unifyTyMaybeInsert(term, synthesize(expr), expr);
+        yield inheritFallbackUnify(term, synthesize(expr), expr);
       }
       case Expr.PartEl el -> {
         if (!(whnf(term) instanceof PartialTyTerm ty)) yield fail(el, term, BadTypeError.partTy(state, el, term));
@@ -583,7 +583,7 @@ public final class ExprTycker extends Tycker {
         var result = PatTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
         yield new TermResult(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
-      default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
+      default -> inheritFallbackUnify(term, synthesize(expr), expr);
     };
   }
 
@@ -833,7 +833,7 @@ public final class ExprTycker extends Tycker {
    * Check if <code>lower</code> is a subtype of <code>upper</code>,
    * and report a type error if it's not the case.
    *
-   * @see ExprTycker#unifyTyMaybeInsert(Term, Result, Expr)
+   * @see ExprTycker#inheritFallbackUnify(Term, Result, Expr)
    */
   public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
@@ -847,7 +847,7 @@ public final class ExprTycker extends Tycker {
    * @return the term and type after insertion
    * @see ExprTycker#unifyTyReported(Term, Term, Expr)
    */
-  private Result unifyTyMaybeInsert(@NotNull Term upper, @NotNull Result result, Expr loc) {
+  private Result inheritFallbackUnify(@NotNull Term upper, @NotNull Result result, Expr loc) {
     var inst = instImplicits(result, loc.sourcePos());
     var term = inst.wellTyped();
     var lower = inst.type();
@@ -856,6 +856,17 @@ public final class ExprTycker extends Tycker {
       return lower instanceof PathTerm actualPath
         ? new TermResult(actualPath.cube().eta(checked.wellTyped()), actualPath)
         : new TermResult(path.cube().eta(checked.wellTyped()), checked.type);
+    }
+    // TODO: also support n-ary path
+    if (lower instanceof PathTerm(var cube) && cube.params().sizeEquals(1)) {
+      if (upper instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
+        var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
+        var body = AppTerm.make(term, new Arg<>(lamBind, true));
+        var inner = inheritFallbackUnify(pi.substBody(lamBind),
+          new TermResult(body, cube.substType(SeqView.of(lamBind))), loc);
+        var lamParam = new Term.Param(lamBind.var(), IntervalTerm.INSTANCE, true);
+        return new TermResult(new LamTerm(lamParam, inner.wellTyped()), pi);
+      }
     }
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return inst;

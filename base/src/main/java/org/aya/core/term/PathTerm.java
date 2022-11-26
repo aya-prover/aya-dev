@@ -2,11 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -33,6 +34,10 @@ public record PathTerm(@NotNull Cube cube) implements StableWHNF {
     public @NotNull PiTerm computePi() {
       var iTele = params.view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
       return (PiTerm) PiTerm.make(iTele, type);
+    }
+
+    public @NotNull Term substType(@NotNull SeqView<Term> dimensions) {
+      return type.subst(params.zipView(dimensions).toImmutableMap());
     }
 
     public @NotNull Term applyDimsTo(@NotNull Term pLam) {
