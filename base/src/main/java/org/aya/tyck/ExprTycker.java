@@ -861,7 +861,7 @@ public final class ExprTycker extends Tycker {
     if (lower instanceof PathTerm(var cube) && cube.params().sizeEquals(1)) {
       if (upper instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
         var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
-        var body = AppTerm.make(term, new Arg<>(lamBind, true));
+        var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
         var inner = inheritFallbackUnify(pi.substBody(lamBind),
           new TermResult(body, cube.substType(SeqView.of(lamBind))), loc);
         var lamParam = new Term.Param(lamBind.var(), IntervalTerm.INSTANCE, true);
