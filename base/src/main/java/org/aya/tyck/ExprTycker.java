@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
@@ -852,10 +853,8 @@ public final class ExprTycker extends Tycker {
     var term = inst.wellTyped();
     var lower = inst.type();
     if (upper instanceof PathTerm path) {
-      var checked = checkBoundaries(loc, path, new Subst(), term);
-      return lower instanceof PathTerm actualPath
-        ? new TermResult(actualPath.cube().eta(checked.wellTyped()), actualPath)
-        : new TermResult(path.cube().eta(checked.wellTyped()), checked.type);
+      var res = tryEtaCompatiblePath(loc, term, lower, path);
+      if (res != null) return res;
     }
     // TODO: also support n-ary path
     if (lower instanceof PathTerm(var cube) && cube.params().sizeEquals(1)) {
@@ -871,6 +870,20 @@ public final class ExprTycker extends Tycker {
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return inst;
     return fail(term.freezeHoles(state), upper, new UnifyError.Type(loc, upper.freezeHoles(state), lower.freezeHoles(state), failureData, state));
+  }
+
+  private @Nullable TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
+    var cube = path.cube();
+    int sizeLimit = cube.params().size();
+    var list = MutableArrayList.<LocalVar>create(sizeLimit);
+    var innerMost = PiTerm.unpiOrPath(lower, term, this::whnf, list, sizeLimit);
+    if (!list.sizeEquals(sizeLimit)) return null;
+    unifyTyReported(cube.type(), innerMost.type.subst(cube.params()
+      .zipView(list.map(RefTerm::new)).toImmutableMap()), loc);
+    var checked = checkBoundaries(loc, path, new Subst(), innerMost.wellTyped);
+    return lower instanceof PathTerm actualPath
+      ? new TermResult(actualPath.cube().eta(checked.wellTyped), actualPath)
+      : new TermResult(cube.eta(checked.wellTyped), checked.type);
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {

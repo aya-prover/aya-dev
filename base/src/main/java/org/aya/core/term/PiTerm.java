@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.core.visitor.BetaExpander;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.ExprTycker;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +19,39 @@ import java.util.function.UnaryOperator;
  */
 public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements StableWHNF, Term {
   public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params) {
-    return unpi(term, fmap, params, Integer.MAX_VALUE);
+    if (fmap.apply(term) instanceof PiTerm(var param, var body)) {
+      params.append(param);
+      return unpi(body, fmap, params);
+    } else return term;
   }
 
-  public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params, int limit) {
-    if (limit >= 0 && fmap.apply(term) instanceof PiTerm(var param, var body)) {
-      params.append(param);
-      return unpi(body, fmap, params, limit - 1);
-    } else return term;
+  /**
+   * @param fmap   usually whnf or identity
+   * @param params will be of size unequal to limit in case of failure
+   */
+  public static @NotNull ExprTycker.TermResult unpiOrPath(
+    @NotNull Term ty, @NotNull Term term, @NotNull UnaryOperator<Term> fmap,
+    @NotNull MutableList<LocalVar> params, int limit
+  ) {
+    if (limit <= 0) return new ExprTycker.TermResult(term, ty);
+    return switch (fmap.apply(ty)) {
+      case PiTerm(var param, var body) when param.explicit() -> {
+        if (param.type() != IntervalTerm.INSTANCE) yield new ExprTycker.TermResult(term, ty);
+        params.append(param.ref());
+        yield unpiOrPath(body, AppTerm.make(term, param.toArg()), fmap, params, limit - 1);
+      }
+      case PathTerm(var cube) -> {
+        var cubeParams = cube.params();
+        int delta = limit - cubeParams.size();
+        if (delta >= 0) {
+          params.appendAll(cubeParams);
+          yield unpiOrPath(cube.type(), cube.applyDimsTo(term), fmap, params, delta);
+        } else {
+          throw new UnsupportedOperationException("TODO");
+        }
+      }
+      case Term anyway -> new ExprTycker.TermResult(term, anyway);
+    };
   }
 
   public static @Nullable SortTerm max(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
