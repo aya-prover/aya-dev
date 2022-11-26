@@ -8,6 +8,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.resolve.ResolveInfo;
+import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +35,10 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
    */
   public @NotNull MutableMap<ImmutableSeq<String>, OpDecl> opDeclRename = MutableMap.create();
 
-
-  @Contract(pure = true) public boolean isInfix() {
-    return opDecl != null && opDecl.opInfo() != null;
+  @Contract(pure = true) public @Nullable Assoc assoc() {
+    if (opDecl == null) return null;
+    if (opDecl.opInfo() == null) return null;
+    return opDecl.opInfo().assoc();
   }
 
   @Contract(pure = true) public @NotNull String name() {
@@ -61,7 +63,7 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
     return new DefVar<>(null, null, name);
   }
 
-  public @Nullable OpDecl resolveOpDecl(@NotNull ImmutableSeq<String> moduleName){
+  public @Nullable OpDecl resolveOpDecl(@NotNull ImmutableSeq<String> moduleName) {
     return opDeclRename.getOrDefault(moduleName, opDecl);
   }
 

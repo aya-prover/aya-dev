@@ -22,6 +22,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.binop.Assoc;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var seq = binOpSeq.seq();
         var first = seq.first().term();
         if (seq.sizeEquals(1)) yield term(outer, first);
-        yield visitCalls(false,
+        yield visitCalls(null,
           term(Outer.AppSpine, first),
           seq.view().drop(1), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
@@ -76,10 +77,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.App expr -> {
         var args = MutableList.of(expr.argument());
         var head = Expr.unapp(expr.function(), args);
-        var infix = false;
+        Assoc assoc = null;
         if (head instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> var)
-          infix = var.isInfix();
-        yield visitCalls(infix,
+          assoc = var.assoc();
+        yield visitCalls(assoc,
           term(Outer.AppHead, head),
           args.view(), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitArgs));
@@ -142,7 +143,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.Sort expr -> {
         var fn = Doc.styled(KEYWORD, expr.kind().name());
         if (!expr.kind().hasLevel()) yield fn;
-        yield visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
+        yield visitCalls(null, fn, (nc, l) -> l.toDoc(options), outer,
           SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(expr.lift())), true)), true);
       }
       case Expr.Lift expr -> Doc.sep(Seq
