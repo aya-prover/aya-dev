@@ -55,28 +55,27 @@ jlink {
 }
 
 val jlinkTask = tasks.named("jlink")
+
 @Suppress("unsupported")
-jlinkTask.configure {
-  inputs.files("aya.bat", "aya-lsp.bat", "aya.sh", "aya-lsp.sh")
-  fun bin(name: String) = ayaImageDir.resolve("bin").resolve(name)
-  fun jlinkBin(name: String) = jlinkImageDir.resolve("bin").resolve(name)
-  doLast {
-    ["aya", "aya-lsp"].forEach { name ->
-      file("$name.sh").copyTo(bin(name), overwrite = true).setExecutable(true)
-      file("$name.bat").copyTo(bin("$name.bat"), overwrite = true).setExecutable(true)
-      jlinkBin(name).delete()
-      jlinkBin("$name.bat").delete()
-    }
+val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables") {
+  dependsOn(jlinkTask)
+  from(file("src/main/shell")) {
+    // https://ss64.com/bash/chmod.html
+    fileMode = "755".toInt(8)
+    rename { it.removeSuffix(".sh") }
   }
+  into(ayaImageDir.resolve("bin"))
 }
 
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
 prepareMergedJarsDirTask.configure {
-  val libs = listOf("cli", "base", "pretty", "tools", "tools-repl", "parser")
-  libs.map { ":$it:jar" }.mapNotNull(tasks::findByPath).forEach {
-    dependsOn(it)
-    inputs.files(it.outputs.files)
-  }
+  rootProject.subprojects
+    .map { ":${it.name}:jar" }
+    .mapNotNull(tasks::findByPath)
+    .forEach {
+      dependsOn(it)
+      inputs.files(it.outputs.files)
+    }
 }
 
 tasks.withType<AbstractCopyTask>().configureEach {
@@ -89,7 +88,7 @@ if (rootProject.hasProperty("installDir")) {
   //   delete(File.listFiles(destDir))
   // }
   tasks.register<Copy>("install") {
-    dependsOn(jlinkTask, prepareMergedJarsDirTask)
+    dependsOn(jlinkTask, copyAyaExecutables, prepareMergedJarsDirTask)
     from(ayaImageDir)
     into(destDir)
   }
