@@ -69,7 +69,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   }
 
   @Override public Def.@Nullable Signature<RetTy> signature() {
-    return null;
+    return signature;
   }
 
   @Override public void setSignature(Def.@Nullable Signature<RetTy> signature) {
@@ -187,7 +187,6 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     public final @NotNull ImmutableSeq<DataCtor> body;
     /** Yet type-checked constructors */
     public final @NotNull MutableList<@NotNull CtorDef> checkedBody = MutableList.create();
-    public SortTerm ulift;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -219,7 +218,6 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   public static final class StructDecl extends TeleDecl<SortTerm> {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public final @NotNull ImmutableSeq<StructField> fields;
-    public SortTerm ulift;
 
     public StructDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,

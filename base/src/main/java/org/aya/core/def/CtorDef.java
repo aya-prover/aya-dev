@@ -9,7 +9,6 @@ import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
-import org.aya.tyck.ExprTycker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -74,7 +73,8 @@ public final class CtorDef extends SubLevelDef {
   }
 
   private @NotNull SortTerm dataResult() {
-    return dataRef.concrete != null ? dataRef.concrete.ulift : dataRef.core.result;
+    return dataRef.concrete == null ? dataRef.core.result
+      : Objects.requireNonNull(dataRef.concrete.signature).result();
   }
 
   public boolean inProp() {
