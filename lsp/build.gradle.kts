@@ -55,8 +55,6 @@ jlink {
 }
 
 val jlinkTask = tasks.named("jlink")
-
-@Suppress("unsupported")
 val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables") {
   dependsOn(jlinkTask)
   from(file("src/main/shell")) {
@@ -65,6 +63,12 @@ val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables") {
     rename { it.removeSuffix(".sh") }
   }
   into(ayaImageDir.resolve("bin"))
+}
+
+val copyAyaLibrary = tasks.register<Copy>("copyAyaLibrary") {
+  dependsOn(jlinkTask)
+  from(rootProject.file("base/src/test/resources/success/common"))
+  into(ayaImageDir.resolve("std"))
 }
 
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
@@ -88,7 +92,7 @@ if (rootProject.hasProperty("installDir")) {
   //   delete(File.listFiles(destDir))
   // }
   tasks.register<Copy>("install") {
-    dependsOn(jlinkTask, copyAyaExecutables, prepareMergedJarsDirTask)
+    dependsOn(jlinkTask, copyAyaExecutables, copyAyaLibrary, prepareMergedJarsDirTask)
     from(ayaImageDir)
     into(destDir)
   }
