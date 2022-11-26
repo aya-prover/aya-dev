@@ -105,3 +105,6 @@ example def coeFillAlt=coeFillPrim (A : I -> Type) (u : A 0)
   : coeFillAlt A u = A.coeFill u
   => idp
 
+example def piFromPath (A : Type) (a b : A) (p : a = b) : Pi (i : I) -> A => p
+example def piFromPathH (A : I -> Type) (a : A 0) (b : A 1)
+  (p : Path A a b) : Pi (i : I) -> A i => p
