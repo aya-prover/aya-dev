@@ -24,7 +24,7 @@ def transp' (A : I -> Type) (a : A 0) : A 1 => A.coe a freeze 0
 def transpInv  (A : I -> Type) (a : A 1) : A 0 => A.eoc a
 def transpInv' (A : I -> Type) (a : A 1) : A 0 => A.eoc a freeze 0
 
-example def coeFill0  (A : I -> Type) (u : A 0) : Path (\i => A i)     u (A.coe u) => A.coeFill u
+example def coeFill0  (A : I -> Type) (u : A 0) : Path A               u (A.coe u) => A.coeFill u
 example def eocFill0  (A : I -> Type) (u : A 1) : Path (\i => A (~ i)) u (A.eoc u) => A.eocFill u
 
 example def coeFillLeft (A : I -> Type) (u : A 0) : (A.coeFill u) 0 = u => idp

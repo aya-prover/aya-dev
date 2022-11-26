@@ -18,14 +18,18 @@ import java.util.function.UnaryOperator;
  */
 public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements StableWHNF, Term {
   public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params) {
-    while (fmap.apply(term) instanceof PiTerm(var param, var body)) {
-      params.append(param);
-      term = body;
-    }
-    return term;
+    return unpi(term, fmap, params, Integer.MAX_VALUE);
   }
 
-  public static @Nullable SortTerm max(@NotNull SortTerm domain, @NotNull SortTerm codomain) {var alift = domain.lift();
+  public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params, int limit) {
+    if (limit >= 0 && fmap.apply(term) instanceof PiTerm(var param, var body)) {
+      params.append(param);
+      return unpi(body, fmap, params, limit - 1);
+    } else return term;
+  }
+
+  public static @Nullable SortTerm max(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
+    var alift = domain.lift();
     var blift = codomain.lift();
     return switch (domain.kind()) {
       case Type -> switch (codomain.kind()) {
