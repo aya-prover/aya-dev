@@ -73,6 +73,7 @@ esac
 
 # Determine the Java command to use to start the JVM.
 JAVACMD="$APP_HOME/../jre/bin/java"
+EXTRA_ARGS="--module-path $APP_HOME/../std/src"
 
 # Increase the maximum file descriptors if we can.
 if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then
@@ -147,6 +148,6 @@ save () {
 APP_ARGS=`save "$@"`
 
 # Collect all arguments for the java command, following the shell quoting and substitution rules
-eval set -- $DEFAULT_JVM_OPTS $AYA_VM_OPTS -p "$APP_HOME/../app" -m "$AYA_MODULE/$AYA_MAIN" "$APP_ARGS"
+eval set -- $DEFAULT_JVM_OPTS $AYA_VM_OPTS -p "$APP_HOME/../app" -m "$AYA_MODULE/$AYA_MAIN" "$APP_ARGS" "$EXTRA_ARGS"
 
 exec "$JAVACMD" "$@"
