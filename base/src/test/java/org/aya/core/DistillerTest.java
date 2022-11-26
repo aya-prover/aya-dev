@@ -116,6 +116,19 @@ public class DistillerTest {
     assertEquals("g (n ·)", t.toDoc(DistillerOptions.informative()).debugRender());
   }
 
+  @Test public void unary() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      data False
+
+      def fixr ¬ (A : Type) => A -> False
+
+      def elim {A : Type} False : A | ()
+      def NonEmpty (A : Type) => ¬ ¬ A
+      """)._2;
+    var t = ((FnDef) decls.get(3)).body.getLeftValue();
+    assertEquals("¬ (¬ A)", t.toDoc(DistillerOptions.informative()).debugRender());
+  }
+
   @Test public void elimBinOP() {
     var decls = TyckDeclTest.successTyckDecls("""
       prim I

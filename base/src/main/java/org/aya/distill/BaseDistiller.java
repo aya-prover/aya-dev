@@ -97,16 +97,20 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   ) {
     var visibleArgs = (showImplicits ? args : args.filter(BinOpParser.Elem::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return assoc != null ? Doc.parened(fn) : fn;
-    // Print as a binary operator
-    if (assoc != null && assoc.isBinary()) {
+    if (assoc != null) {
       var firstArg = visibleArgs.first();
       if (!firstArg.explicit()) return prefix(Doc.parened(fn), fmt, outer, visibleArgs.view());
       var first = fmt.apply(Outer.BinOp, firstArg.term());
-      // If we're in a binApp/head/spine/etc., add parentheses
-      if (visibleArgs.sizeEquals(1)) return checkParen(outer, Doc.sep(first, fn), Outer.BinOp);
-      var triple = Doc.sep(first, fn, arg(fmt, visibleArgs.get(1), Outer.BinOp));
-      if (visibleArgs.sizeEquals(2)) return checkParen(outer, triple, Outer.BinOp);
-      return prefix(Doc.parened(triple), fmt, outer, visibleArgs.view().drop(2));
+      if (assoc.isBinary()) {
+        // If we're in a binApp/head/spine/etc., add parentheses
+        if (visibleArgs.sizeEquals(1)) return checkParen(outer, Doc.sep(first, fn), Outer.BinOp);
+        var triple = Doc.sep(first, fn, arg(fmt, visibleArgs.get(1), Outer.BinOp));
+        if (visibleArgs.sizeEquals(2)) return checkParen(outer, triple, Outer.BinOp);
+        return prefix(Doc.parened(triple), fmt, outer, visibleArgs.view().drop(2));
+      }
+      if (assoc.isUnary() && visibleArgs.sizeEquals(1)) {
+        return checkParen(outer, Doc.sep(fn, first), Outer.BinOp);
+      }
     }
     return prefix(fn, fmt, outer, visibleArgs.view());
   }
