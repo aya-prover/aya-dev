@@ -2,8 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.CommonTasks
 
-val mainClassQName = "org.aya.lsp.LspMain"
-CommonTasks.fatJar(project, mainClassQName)
+CommonTasks.fatJar(project, Constants.mainClassQName)
 
 dependencies {
   val deps: java.util.Properties by rootProject.ext
@@ -30,8 +29,13 @@ tasks.named<Test>("test") {
   inputs.dir(projectDir.resolve("src/test/resources"))
 }
 
+object Constants {
+  const val jreDirName = "jre"
+  const val mainClassQName = "org.aya.lsp.LspMain"
+}
+
 val ayaImageDir = buildDir.resolve("image")
-val jlinkImageDir = ayaImageDir.resolve("jre")
+val jlinkImageDir = ayaImageDir.resolve(Constants.jreDirName)
 jlink {
   addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
   addExtraDependencies("jline-terminal-jansi")
@@ -41,7 +45,7 @@ jlink {
     uses("org.jline.terminal.spi.JansiSupport")
   }
   launcher {
-    mainClass.set(mainClassQName)
+    mainClass.set(Constants.mainClassQName)
     name = "aya-lsp"
     jvmArgs = mutableListOf("--enable-preview")
   }
@@ -95,6 +99,7 @@ if (rootProject.hasProperty("installDir")) {
     dependsOn(jlinkTask, copyAyaExecutables, copyAyaLibrary, prepareMergedJarsDirTask)
     from(ayaImageDir)
     into(destDir)
+    doFirst { destDir.resolve(Constants.jreDirName).deleteRecursively() }
   }
 }
 

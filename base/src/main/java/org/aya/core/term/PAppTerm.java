@@ -11,4 +11,7 @@ public record PAppTerm(
   @NotNull ImmutableSeq<Arg<@NotNull Term>> args,
   @NotNull PathTerm.Cube cube
 ) implements Elimination {
+  @SafeVarargs public PAppTerm(@NotNull Term of, @NotNull PathTerm.Cube cube, Arg<@NotNull Term> @NotNull ... args) {
+    this(of, ImmutableSeq.of(args), cube);
+  }
 }

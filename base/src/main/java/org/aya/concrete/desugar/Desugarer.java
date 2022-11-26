@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
+import kala.collection.Seq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.value.MutableValue;
@@ -16,6 +17,7 @@ import org.aya.generic.SortKind;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -87,13 +89,12 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         // `do x <- xs, continued` is desugared as `xs >>= (\x => continued)`,
         // where `x <- xs` is denoted `thisBind` and `continued` can also be a do-notation
         var desugared = Expr.buildNested(sourcePos, rest, last.expr(),
-          (pos, thisBind, continued) -> new Expr.App(pos, new Expr.App(pos,
-            monadBind,
-            new Expr.NamedArg(true, thisBind.expr())),
-            new Expr.NamedArg(true,
-              new Expr.Lambda(pos,
+          (pos, thisBind, continued) -> Expr.app(monadBind,
+            Seq.of(
+              new WithPos<>(pos, new Expr.NamedArg(true, thisBind.expr())),
+              new WithPos<>(pos, new Expr.NamedArg(true, new Expr.Lambda(pos,
                 new Expr.Param(thisBind.var().definition(), thisBind.var(), true),
-                continued))));
+                continued)))).view()));
         yield pre(desugared);
       }
       case Expr.Idiom(
@@ -101,14 +102,14 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
       ) -> barred.view().map(app -> {
         var list = MutableList.<Expr.NamedArg>create();
         var pre = Expr.unapp(pre(app), list);
-        var head = new Expr.App(pos, pure, new Expr.NamedArg(true, pre));
-        return list.foldLeft(head, (e, arg) -> new Expr.App(e.sourcePos(),
-          new Expr.App(e.sourcePos(), ap,
-            new Expr.NamedArg(true, e)), arg));
+        Expr head = new Expr.App(pos, pure, new Expr.NamedArg(true, pre));
+        return list.foldLeft(head, (e, arg) -> Expr.app(ap, Seq.of(
+          new WithPos<>(e.sourcePos(), new Expr.NamedArg(true, e))
+          , new WithPos<>(pos, arg)).view()));
       }).foldLeft(empty, (e, arg) ->
-        new Expr.App(e.sourcePos(), new Expr.App(e.sourcePos(),
-          or, new Expr.NamedArg(true, e)),
-          new Expr.NamedArg(true, arg)));
+        Expr.app(or, Seq.of(
+          new WithPos<>(e.sourcePos(), new Expr.NamedArg(true, e)),
+          new WithPos<>(pos, new Expr.NamedArg(true, arg))).view()));
       case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
         left -> {
           // desugar `[ expr | x <- xs, y <- ys ]` to `do; x <- xs; y <- ys; return expr`

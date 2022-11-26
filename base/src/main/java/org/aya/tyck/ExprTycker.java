@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -43,6 +44,7 @@ import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -199,13 +200,14 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(new TupTerm(items.map(Result::wellTyped)), new SigmaTerm(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
       }
       case Expr.Coe coe -> {
-        assert coe.resolvedVar() instanceof DefVar<?, ?> defVar
-          && defVar.core instanceof PrimDef def && PrimDef.ID.projSyntax(def.id) : "desugar bug";
         var defVar = coe.resolvedVar();
-        var mockApp = new Expr.App(coe.sourcePos(), new Expr.App(coe.sourcePos(),
-          new Expr.Ref(coe.id().sourcePos(), defVar),
-          new Expr.NamedArg(true, coe.type())),
-          new Expr.NamedArg(true, coe.restr()));
+        assert defVar instanceof DefVar<?, ?> res
+          && res.core instanceof PrimDef def && PrimDef.ID.projSyntax(def.id) : "desugar bug";
+        var mockApp = Expr.app(
+          new Expr.Ref(coe.id().sourcePos(), defVar), Seq.of(
+            new WithPos<>(coe.sourcePos(), new Expr.NamedArg(true, coe.type())),
+            new WithPos<>(coe.sourcePos(), new Expr.NamedArg(true, coe.restr()))
+          ).view());
         var res = synthesize(mockApp);
         if (whnf(res.wellTyped()) instanceof CoeTerm(var type, var restr) && !(type instanceof ErrorTerm)) {
           var bad = new Object() {
@@ -224,7 +226,7 @@ public final class ExprTycker extends Tycker {
             };
             return switch (typeSubst) {
               case LamTerm(var param, var body) -> post.test(body.findUsages(param.ref()));
-              case PLamTerm(var params, var body) -> post.test(params.collect(Collectors.summingInt(body::findUsages)));
+              case PLamTerm(var params, var body) -> post.test(body.findUsages(params.first()));
               default -> {
                 bad.stuck = true;
                 yield false;
@@ -487,7 +489,7 @@ public final class ExprTycker extends Tycker {
         var items = MutableList.<Term>create();
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
-        if (typeWHNF instanceof MetaTerm hole) yield unifyTyMaybeInsert(hole, synthesize(expr), expr);
+        if (typeWHNF instanceof MetaTerm hole) yield inheritFallbackUnify(hole, synthesize(expr), expr);
         if (!(typeWHNF instanceof SigmaTerm(var params)))
           yield fail(expr, term, BadTypeError.sigmaCon(state, expr, typeWHNF));
         var againstTele = params.view();
@@ -563,7 +565,7 @@ public final class ExprTycker extends Tycker {
           if (end == 0 || end == 1) yield new TermResult(end == 0 ? FormulaTerm.LEFT : FormulaTerm.RIGHT, ty);
           else yield fail(expr, new PrimError.BadInterval(pos, end));
         }
-        yield unifyTyMaybeInsert(term, synthesize(expr), expr);
+        yield inheritFallbackUnify(term, synthesize(expr), expr);
       }
       case Expr.PartEl el -> {
         if (!(whnf(term) instanceof PartialTyTerm ty)) yield fail(el, term, BadTypeError.partTy(state, el, term));
@@ -581,7 +583,7 @@ public final class ExprTycker extends Tycker {
         var result = PatTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
         yield new TermResult(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
-      default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
+      default -> inheritFallbackUnify(term, synthesize(expr), expr);
     };
   }
 
@@ -831,7 +833,7 @@ public final class ExprTycker extends Tycker {
    * Check if <code>lower</code> is a subtype of <code>upper</code>,
    * and report a type error if it's not the case.
    *
-   * @see ExprTycker#unifyTyMaybeInsert(Term, Result, Expr)
+   * @see ExprTycker#inheritFallbackUnify(Term, Result, Expr)
    */
   public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
@@ -845,7 +847,7 @@ public final class ExprTycker extends Tycker {
    * @return the term and type after insertion
    * @see ExprTycker#unifyTyReported(Term, Term, Expr)
    */
-  private Result unifyTyMaybeInsert(@NotNull Term upper, @NotNull Result result, Expr loc) {
+  private Result inheritFallbackUnify(@NotNull Term upper, @NotNull Result result, Expr loc) {
     var inst = instImplicits(result, loc.sourcePos());
     var term = inst.wellTyped();
     var lower = inst.type();
@@ -854,6 +856,17 @@ public final class ExprTycker extends Tycker {
       return lower instanceof PathTerm actualPath
         ? new TermResult(actualPath.cube().eta(checked.wellTyped()), actualPath)
         : new TermResult(path.cube().eta(checked.wellTyped()), checked.type);
+    }
+    // TODO: also support n-ary path
+    if (lower instanceof PathTerm(var cube) && cube.params().sizeEquals(1)) {
+      if (upper instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
+        var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
+        var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
+        var inner = inheritFallbackUnify(pi.substBody(lamBind),
+          new TermResult(body, cube.substType(SeqView.of(lamBind))), loc);
+        var lamParam = new Term.Param(lamBind.var(), IntervalTerm.INSTANCE, true);
+        return new TermResult(new LamTerm(lamParam, inner.wellTyped()), pi);
+      }
     }
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return inst;
