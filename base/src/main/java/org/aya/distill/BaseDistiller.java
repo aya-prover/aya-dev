@@ -19,6 +19,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +59,11 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   protected abstract @NotNull Doc term(@NotNull Outer outer, @NotNull Term term);
 
   public @NotNull Doc visitCalls(
-    boolean infix, @NotNull Doc fn,
+    @Nullable Assoc assoc, @NotNull Doc fn,
     @NotNull SeqView<? extends BinOpParser.@NotNull Elem<Term>> args,
     @NotNull Outer outer, boolean showImplicits
   ) {
-    return visitCalls(infix, fn, this::term, outer, args, showImplicits);
+    return visitCalls(assoc, fn, this::term, outer, args, showImplicits);
   }
 
   public @NotNull Doc visitCalls(
@@ -70,7 +71,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     @NotNull SeqLike<@NotNull Arg<Term>> args,
     @NotNull Outer outer, boolean showImplicits
   ) {
-    return visitCalls(var.isInfix(), linkRef(var, style), args.view(), outer, showImplicits);
+    return visitCalls(var.assoc(), linkRef(var, style), args.view(), outer, showImplicits);
   }
 
   public @NotNull Doc visitArgsCalls(
@@ -84,20 +85,20 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    * Pretty-print an application in a smart way.
    * If an infix operator is applied by two arguments, we use operator syntax.
    *
-   * @param infix Whether the applied function is an infix operator.
+   * @param assoc Assoc of the applied function (if it is a operator)
    * @param fn    The applied function, pretty-printed.
    * @param fmt   Mostly just {@link #term(Outer, AyaDocile)}, but can be overridden.
    * @param <T>   Mostly <code>Term</code>.
    * @see BaseDistiller#prefix(Doc, Fmt, Outer, SeqView)
    */
   <T extends AyaDocile> @NotNull Doc visitCalls(
-    boolean infix, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
+    @Nullable Assoc assoc, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
     @NotNull SeqView<? extends BinOpParser.@NotNull Elem<@NotNull T>> args, boolean showImplicits
   ) {
     var visibleArgs = (showImplicits ? args : args.filter(BinOpParser.Elem::explicit)).toImmutableSeq();
-    if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
+    if (visibleArgs.isEmpty()) return assoc != null ? Doc.parened(fn) : fn;
     // Print as a binary operator
-    if (infix) {
+    if (assoc != null && assoc.isBinary()) {
       var firstArg = visibleArgs.first();
       if (!firstArg.explicit()) return prefix(Doc.parened(fn), fmt, outer, visibleArgs.view());
       var first = fmt.apply(Outer.BinOp, firstArg.term());
@@ -113,7 +114,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   /**
    * Pretty-print an application in a dumb (but conservative) way, using prefix syntax.
    *
-   * @see BaseDistiller#visitCalls(boolean, Doc, Fmt, Outer, SeqView, boolean)
+   * @see BaseDistiller#visitCalls(Assoc, Doc, Fmt, Outer, SeqView, boolean)
    */
   private <T extends AyaDocile> @NotNull Doc
   prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<? extends BinOpParser.@NotNull Elem<T>> args) {
@@ -285,7 +286,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   partial(@NotNull DistillerOptions options, @NotNull Partial<T> partial, boolean showEmpty) {
     return switch (partial) {
       case Partial.Const<T> sad -> Doc.sep(Doc.symbol("{|"), sad.u().toDoc(options), Doc.symbol("|}"));
-      case Partial.Split<T> hap when !showEmpty && hap.clauses().isEmpty() -> Doc.empty();
+      case Partial.Split<T> hap when!showEmpty && hap.clauses().isEmpty() -> Doc.empty();
       case Partial.Split<T> hap -> Doc.sep(Doc.symbol("{|"),
         Doc.join(Doc.spaced(Doc.symbol("|")), hap.clauses().map(s -> side(options, s))),
         Doc.symbol("|}"));

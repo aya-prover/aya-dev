@@ -41,9 +41,9 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var inner = varDoc(name);
         var showImplicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
         if (options.map.get(DistillerOptions.Key.InlineMetas))
-          yield visitCalls(false, inner, term.args().view(), outer, showImplicits);
+          yield visitCalls(null, inner, term.args().view(), outer, showImplicits);
         yield Doc.wrap("{?", "?}",
-          visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
+          visitCalls(null, inner, term.args().view(), Outer.Free, showImplicits));
       }
       case MetaLitTerm lit -> lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
       case TupTerm(var items) -> Doc.parened(Doc.commaList(items.view().map(t -> term(Outer.Free, t))));
@@ -78,7 +78,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
             var style = chooseStyle(defVar);
             bodyDoc = style != null
               ? visitArgsCalls(defVar, style, args, outer)
-              : visitCalls(defVar.isInfix(), varDoc(defVar), args, params.isEmpty() ? outer : Outer.Free,
+              : visitCalls(defVar.assoc(), varDoc(defVar), args, params.isEmpty() ? outer : Outer.Free,
                 options.map.get(DistillerOptions.Key.ShowImplicitArgs));
           }
         } else bodyDoc = term(Outer.Free, body);
@@ -97,7 +97,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case SortTerm(var kind, var lift) -> {
         var fn = Doc.styled(KEYWORD, kind.name());
         if (!kind.hasLevel()) yield fn;
-        yield visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,
+        yield visitCalls(null, fn, (nest, t) -> t.toDoc(options), outer,
           SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(lift)), true)),
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
@@ -109,7 +109,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
             linkRef(k, FIELD_CALL),
             Doc.symbol("=>"), term(Outer.Free, v)))
           .toImmutableSeq()));
-      case FieldTerm term -> visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
+      case FieldTerm term -> visitCalls(null, visitAccessHead(term), term.fieldArgs().view(), outer,
         options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case MetaPatTerm(var ref) -> {
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
@@ -125,11 +125,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
         if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
         var implicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
         // Infix def-calls
-        if (head instanceof Callable call && call.ref() instanceof DefVar<?, ?> var && var.isInfix()) {
-          yield visitCalls(true, defVar(var),
+        if (head instanceof Callable call && call.ref() instanceof DefVar<?, ?> var) {
+          yield visitCalls(var.assoc(), defVar(var),
             call.args().view().appendedAll(args), outer, implicits);
         }
-        yield visitCalls(false, term(Outer.AppHead, head), args.view(), outer, implicits);
+        yield visitCalls(null, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
       case PrimCall prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
       case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
@@ -190,7 +190,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           Doc.symbol("=>"),
           body.toDoc(options)),
         Outer.BinOp);
-      case PAppTerm app -> visitCalls(false, term(Outer.AppHead, app.of()),
+      case PAppTerm app -> visitCalls(null, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
