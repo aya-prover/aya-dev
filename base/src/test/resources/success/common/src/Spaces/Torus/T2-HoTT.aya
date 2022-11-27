@@ -6,6 +6,6 @@ public open data T²
 | line1 (i : I) { ∂ i := point }
 | line2 (i : I) { ∂ i := point }
 | face (i j : I) {
-  | i := ((\x => line1 x) <==> (\x => line2 x)) j
-  | ~ i := ((\x => line2 x) <==> (\x => line1 x)) j
+  | i := (line1 <==> line2) j
+  | ~ i := (line2 <==> line1) j
 }

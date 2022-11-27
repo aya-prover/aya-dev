@@ -11,7 +11,7 @@ def pure (x : A) : List A => x :< nil
 
 def infixl <*> (fs : List (A -> B)) (xs : List A) : List B
 | nil, _ => nil
-| f :< fs, xs => (fmap f xs) ++ (fs <*> xs)
+| f :< fs, xs => fmap f xs ++ (fs <*> xs)
   tighter =
   looser  +
 
