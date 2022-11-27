@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.mutable.MutableList;
 import org.aya.core.visitor.BetaExpander;
@@ -17,7 +18,7 @@ import java.util.function.UnaryOperator;
 /**
  * @author re-xyr, kiva, ice1000
  */
-public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements StableWHNF, Term {
+public record PiTerm(@NotNull Param param, @NotNull Term body) implements StableWHNF, Term {
   public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params) {
     if (fmap.apply(term) instanceof PiTerm(var param, var body)) {
       params.append(param);
@@ -78,6 +79,10 @@ public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements S
         default -> null;
       };
     };
+  }
+
+  public static Term makeIntervals(Seq<LocalVar> list, Term type) {
+    return make(list.view().map(i -> new Param(i, IntervalTerm.INSTANCE, true)), type);
   }
 
   public @NotNull LamTerm coe(CoeTerm coe, LocalVar varI) {
