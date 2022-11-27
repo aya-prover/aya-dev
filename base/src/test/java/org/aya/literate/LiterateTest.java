@@ -32,6 +32,11 @@ public class LiterateTest {
   }
 
   @Test public void literate() throws IOException {
+    var files = ImmutableSeq.of(
+      "test.aya", "test.txt", "standard-test.txt",
+      "issue596.aya", "issue596.txt", "standard-issue596.txt"
+    );
+
     var literate = TestRunner.DEFAULT_TEST_DIR.resolve("literate");
     var distillInfo = new CompilerFlags.DistillInfo(
       true,
@@ -42,14 +47,22 @@ public class LiterateTest {
       literate);
     var flags = new CompilerFlags(false, false, distillInfo, ImmutableSeq.empty(), null);
     var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, TestRunner.LOCATOR, null);
-    compiler.compile(literate.resolve("test.aya"), flags, null);
-    var strings = List.of("test.txt", "test.aya", "standard-test.txt");
-    Seq.from(Files.list(literate).toList()).view()
-      .filter(path -> !strings.contains(path.getFileName().toString()))
-      .forEachChecked(Files::delete);
-    var actual = literate.resolve("test.txt");
-    var readString = Files.readAllLines(actual);
-    Files.delete(actual);
-    assertLinesMatch(Files.readAllLines(literate.resolve("standard-test.txt")), readString);
+
+    var it = files.iterator();
+
+    while (it.hasNext()) {
+      var ayaFile = it.next();
+      var actualOutput = it.next();
+      var expectedOutput = it.next();
+
+      compiler.compile(literate.resolve(ayaFile), flags, null);
+      Seq.from(Files.list(literate).toList()).view()
+        .filter(path -> !files.contains(path.getFileName().toString()))
+        .forEachChecked(Files::delete);
+      var actual = literate.resolve(actualOutput);
+      var readString = Files.readAllLines(actual);
+      Files.delete(actual);
+      assertLinesMatch(Files.readAllLines(literate.resolve(expectedOutput)), readString);
+    }
   }
 }
