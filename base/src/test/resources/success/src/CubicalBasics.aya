@@ -16,8 +16,8 @@ def cmp {A : Type} (x : A)
   => \i => \j => p2 A x j
 
 def transport-constant (A : I -> Type) (a : A 0) (i : I) : A i
-  => (\j => A (i /\ j)).coe a freeze ~ i
-// ^ `A (i /\ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.
+  => (\j => A (i ∧ j)).coe a freeze ~ i
+// ^ `A (i ∧ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.
 
 def transp  (A : I -> Type) (a : A 0) : A 1 => A.coe a
 def transp' (A : I -> Type) (a : A 0) : A 1 => A.coe a freeze 0
@@ -35,7 +35,7 @@ def transportID {A : Type} (a: A) : A => (transp (\ i => A -> A) id) a
 
 def coePi (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
     (f : Pi (a : A 0) -> B 0 a) : Pi (a : A 1) -> B 1 a
-    => \a => (\i => B i ((\j => A ((~ j) \/ i)).coe a freeze i)).coe f
+    => \a => (\i => B i ((\j => A ((~ j) ∨ i)).coe a freeze i)).coe f
       ((\i => A (~ i)).coe a)
 
 example def coePiEq (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
@@ -96,7 +96,7 @@ example def coeSigma5 (A : I -> Type) (B : Pi (i : I) -> A i -> Type)
 // is my coeFill primitive elaborated correctly?
 example def coeFillAlt (A : I -> Type) (u : A 0)
   : [| i |] A i {| ~ i := u | i := A.coe u freeze 0 |}
-  => \i => (\j => A (i /\ j)).coe u freeze (0 \/ ~ i)
+  => \i => (\j => A (i ∧ j)).coe u freeze (0 ∨ ~ i)
 
 example def coeFillAltLeft (A : I -> Type) (u : A 0) : (coeFillAlt A u) 0 = u => idp
 example def coeFillAltRight (A : I -> Type) (u : A 0) : (coeFillAlt A u) 1 = A.coe u => idp

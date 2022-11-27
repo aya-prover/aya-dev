@@ -151,17 +151,17 @@ public class DistillerTest {
       prim intervalMin
       prim intervalMax
       def inline ~ => intervalInv
-      def inline infixl /\\ => intervalMin
-      def inline infixl \\/ => intervalMax
+      def inline infixl ∧ => intervalMin
+      def inline infixl ∨ => intervalMax
       def Eq (A : Type) (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
       def infix = {A : Type} => Eq A
-      def test1 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i \\/ j \\/ k) /\\ (k \\/ j \\/ i))
-      def test2 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i /\\ j /\\ k) \\/ (k /\\ j /\\ i))
+      def test1 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i ∨ j ∨ k) ∧ (k ∨ j ∨ i))
+      def test2 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i ∧ j ∧ k) ∨ (k ∧ j ∧ i))
       """)._2;
     var t1 = ((FnDef) decls.get(9)).body.getLeftValue();
     var t2 = ((FnDef) decls.get(10)).body.getLeftValue();
-    assertEquals("p ((i \\/ j \\/ k) /\\ (k \\/ j \\/ i))", t1.toDoc(DistillerOptions.informative()).debugRender());
-    assertEquals("p (i /\\ j /\\ k \\/ k /\\ j /\\ i)", t2.toDoc(DistillerOptions.informative()).debugRender());
+    assertEquals("p ((i ∨ j ∨ k) ∧ (k ∨ j ∨ i))", t1.toDoc(DistillerOptions.informative()).commonRender());
+    assertEquals("p (i ∧ j ∧ k ∨ k ∧ j ∧ i)", t2.toDoc(DistillerOptions.informative()).commonRender());
   }
 
   @Test public void lambdaApp() {

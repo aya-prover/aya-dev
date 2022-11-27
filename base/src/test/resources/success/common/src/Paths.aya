@@ -20,7 +20,7 @@ def isContr (A : Type) => Sig (a : A) ** (forall b -> a = b)
 
 def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b (\i => p i) =>
-      (\ i => B (p i) (\j => p (j /\ i))).coe r
+      (\ i => B (p i) (\j => p (j ∧ i))).coe r
 
 def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
   => J (\b' p' => B b') x p
