@@ -852,15 +852,13 @@ public final class ExprTycker extends Tycker {
     var inst = instImplicits(result, loc.sourcePos());
     var term = inst.wellTyped();
     var lower = inst.type();
-    upper = whnf(upper);
-    lower = whnf(lower);
-    if (upper instanceof PathTerm path) {
+    var upperWHNF = whnf(upper);
+    if (upperWHNF instanceof PathTerm path) {
       var res = tryEtaCompatiblePath(loc, term, lower, path);
       if (res != null) return res;
-    }
-    // TODO: also support n-ary path
-    if (lower instanceof PathTerm(var cube) && cube.params().sizeEquals(1)) {
-      if (upper instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
+    } else if (whnf(lower) instanceof PathTerm(var cube) && cube.params().sizeEquals(1)) {
+      // TODO: also support n-ary path
+      if (upperWHNF instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
         var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
         var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
         var inner = inheritFallbackUnify(pi.substBody(lamBind),
