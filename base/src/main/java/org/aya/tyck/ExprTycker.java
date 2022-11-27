@@ -879,7 +879,7 @@ public final class ExprTycker extends Tycker {
     var innerMost = PiTerm.unpiOrPath(lower, term, this::whnf, list, sizeLimit);
     if (!list.sizeEquals(sizeLimit)) return null;
     unifyTyReported(cube.computePi(), PiTerm.makeIntervals(list, innerMost.type), loc);
-    var checked = checkBoundaries(loc, path, new Subst(), innerMost.wellTyped);
+    var checked = checkBoundaries(loc, path, new Subst(), LamTerm.makeIntervals(list, innerMost.wellTyped));
     return lower instanceof PathTerm actualPath
       ? new TermResult(actualPath.cube().eta(checked.wellTyped), actualPath)
       : new TermResult(cube.eta(checked.wellTyped), checked.type);
