@@ -852,6 +852,8 @@ public final class ExprTycker extends Tycker {
     var inst = instImplicits(result, loc.sourcePos());
     var term = inst.wellTyped();
     var lower = inst.type();
+    upper = whnf(upper);
+    lower = whnf(lower);
     if (upper instanceof PathTerm path) {
       var res = tryEtaCompatiblePath(loc, term, lower, path);
       if (res != null) return res;
