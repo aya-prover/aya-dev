@@ -28,7 +28,7 @@ public record PathTerm(@NotNull Cube cube) implements StableWHNF {
     @NotNull Partial<Term> partial
   ) {
     public @NotNull Term eta(@NotNull Term term) {
-      return new PLamTerm(params(), applyDimsTo(term)).rename();
+      return new PLamTerm(params, applyDimsTo(term)).rename();
     }
 
     public @NotNull PiTerm computePi() {

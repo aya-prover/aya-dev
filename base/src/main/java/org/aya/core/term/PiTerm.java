@@ -2,11 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.mutable.MutableList;
 import org.aya.core.visitor.BetaExpander;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.ExprTycker;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,16 +18,45 @@ import java.util.function.UnaryOperator;
 /**
  * @author re-xyr, kiva, ice1000
  */
-public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements StableWHNF, Term {
+public record PiTerm(@NotNull Param param, @NotNull Term body) implements StableWHNF, Term {
   public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params) {
-    while (fmap.apply(term) instanceof PiTerm(var param, var body)) {
+    if (fmap.apply(term) instanceof PiTerm(var param, var body)) {
       params.append(param);
-      term = body;
-    }
-    return term;
+      return unpi(body, fmap, params);
+    } else return term;
   }
 
-  public static @Nullable SortTerm max(@NotNull SortTerm domain, @NotNull SortTerm codomain) {var alift = domain.lift();
+  /**
+   * @param fmap   usually whnf or identity
+   * @param params will be of size unequal to limit in case of failure
+   */
+  public static @NotNull ExprTycker.TermResult unpiOrPath(
+    @NotNull Term ty, @NotNull Term term, @NotNull UnaryOperator<Term> fmap,
+    @NotNull MutableList<LocalVar> params, int limit
+  ) {
+    if (limit <= 0) return new ExprTycker.TermResult(term, ty);
+    return switch (fmap.apply(ty)) {
+      case PiTerm(var param, var body) when param.explicit() -> {
+        if (param.type() != IntervalTerm.INSTANCE) yield new ExprTycker.TermResult(term, ty);
+        params.append(param.ref());
+        yield unpiOrPath(body, AppTerm.make(term, param.toArg()), fmap, params, limit - 1);
+      }
+      case PathTerm(var cube) -> {
+        var cubeParams = cube.params();
+        int delta = limit - cubeParams.size();
+        if (delta >= 0) {
+          params.appendAll(cubeParams);
+          yield unpiOrPath(cube.type(), cube.applyDimsTo(term), fmap, params, delta);
+        } else {
+          throw new UnsupportedOperationException("TODO");
+        }
+      }
+      case Term anyway -> new ExprTycker.TermResult(term, anyway);
+    };
+  }
+
+  public static @Nullable SortTerm max(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
+    var alift = domain.lift();
     var blift = codomain.lift();
     return switch (domain.kind()) {
       case Type -> switch (codomain.kind()) {
@@ -48,6 +79,10 @@ public record PiTerm(@NotNull Term.Param param, @NotNull Term body) implements S
         default -> null;
       };
     };
+  }
+
+  public static Term makeIntervals(Seq<LocalVar> list, Term type) {
+    return make(list.view().map(Param::interval), type);
   }
 
   public @NotNull LamTerm coe(CoeTerm coe, LocalVar varI) {

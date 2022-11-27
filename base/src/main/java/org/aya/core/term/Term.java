@@ -339,6 +339,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
     public @NotNull Param subst(@NotNull Subst subst, int ulift) {
       return new Param(ref, type.subst(subst, ulift), explicit);
     }
+
+    public static @NotNull Param interval(@NotNull LocalVar i) {
+      return new Param(i, IntervalTerm.INSTANCE, true);
+    }
   }
 
   record Matching(

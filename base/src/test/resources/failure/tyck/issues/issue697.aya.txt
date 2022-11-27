@@ -23,7 +23,11 @@ Error: Unsolved meta a'
        in `idp {[| i |] A {| ~ i := a | i := a |}} {a'}`
        in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
        in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (idp {A} {a}) p`
+        <a>) (\ i => idp {A} {a} i) (\ i => p i)`
+       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
+        <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
+       in `\ i => hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i :=
+        a |}} {a'} <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
 
 In file $FILE:17:65 ->
 
@@ -35,7 +39,11 @@ In file $FILE:17:65 ->
 Error: Unsolved meta a'
        in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
        in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (idp {A} {a}) p`
+        <a>) (\ i => idp {A} {a} i) (\ i => p i)`
+       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
+        <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
+       in `\ i => hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i :=
+        a |}} {a'} <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
 
 In file $FILE:17:65 ->
 
@@ -47,7 +55,11 @@ In file $FILE:17:65 ->
 Error: Unsolved meta a'
        in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
        in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (idp {A} {a}) p`
+        <a>) (\ i => idp {A} {a} i) (\ i => p i)`
+       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
+        <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
+       in `\ i => hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i :=
+        a |}} {a'} <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
 
 4 error(s), 0 warning(s).
 What are you doing?

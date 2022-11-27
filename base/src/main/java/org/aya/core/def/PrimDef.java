@@ -28,7 +28,6 @@ import java.util.EnumMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 /**
  * @author ice1000
@@ -102,7 +101,7 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       public final @NotNull PrimDef.PrimSeed coeFill = new PrimSeed(ID.COEFILL, this::coeFill, ref -> {
         // coeFill (A : I -> Type) (phi : I) : Pi (u : A 0) -> Path A u (coe A phi u)
-        return coeFillFactory(ref, ID.COEFILL, ID.COE, FormulaTerm.LEFT, i -> i);
+        return coeFillFactory(ref, ID.COEFILL, ID.COE, FormulaTerm.LEFT);
       }, ImmutableSeq.of(ID.I, ID.COE));
 
       private @NotNull Term coeFill(@NotNull PrimCall prim, @NotNull TyckState state) {
@@ -129,8 +128,8 @@ public final class PrimDef extends TopLevelDef<Term> {
       }
 
       public final @NotNull PrimDef.PrimSeed eocFill = new PrimSeed(ID.COEINVFILL, this::eocFill, ref -> {
-        // coeInvFill (A : I -> Type) (phi : I) : Pi (u : A 1) -> Path (\i => A (~ i)) u (coeInv A phi u)
-        return coeFillFactory(ref, ID.COEINVFILL, ID.COEINV, FormulaTerm.RIGHT, FormulaTerm::inv);
+        // coeInvFill (A : I -> Type) (phi : I) : Pi (u : A 1) -> Path A (coeInv A phi u) u
+        return coeFillFactory(ref, ID.COEINVFILL, ID.COEINV, FormulaTerm.RIGHT);
       }, ImmutableSeq.of(ID.I, ID.COEINV));
 
       private @NotNull Term eocFill(@NotNull PrimCall prim, @NotNull TyckState state) {
@@ -160,8 +159,7 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       private @NotNull PrimDef coeFillFactory(
         @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref,
-        ID coeFill, ID coe, @NotNull FormulaTerm start,
-        @NotNull UnaryOperator<Term> interval
+        ID coeFill, ID coe, @NotNull FormulaTerm start
       ) {
         // <coeFill> (A : I -> Type) (phi : I) : Pi (u : A <start>) -> Path (\i => A <interval i>) u (<coe> A phi u)
         var varA = new LocalVar("A");
@@ -173,7 +171,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var i = new LocalVar("i");
         var path = new PathTerm(new PathTerm.Cube(
           ImmutableSeq.of(i),
-          new AppTerm(new RefTerm(varA), new Arg<>(interval.apply(new RefTerm(i)), true)),
+          new AppTerm(new RefTerm(varA), new Arg<>(new RefTerm(i), true)),
           new Partial.Split<>(ImmutableSeq.of(
             new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), false))), new RefTerm(varU)),
             new Restr.Side<>(new Restr.Conj<>(ImmutableSeq.of(new Restr.Cond<>(new RefTerm(i), true))), new AppTerm(getCall(coe, ImmutableSeq.of(
