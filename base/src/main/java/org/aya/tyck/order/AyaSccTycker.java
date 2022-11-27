@@ -151,7 +151,7 @@ public record AyaSccTycker(
       reporter.report(new BadRecursion(fn.sourcePos, fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
-    decideTyckResult(fn, fn, tycker.simpleFn(newExprTycker(), fn));
+    decideTyckResult(fn, fn, tycker.simpleFn(reuseTopLevel(fn), fn));
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
