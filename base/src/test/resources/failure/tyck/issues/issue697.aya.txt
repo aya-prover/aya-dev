@@ -1,8 +1,8 @@
-In file $FILE:17:65 ->
+In file $FILE:4:66 ->
 
-  15 | def idp {a : A} : a = a => \i => a
-  16 | 
-  17 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+  2 | variable A : Type
+  3 | 
+  4 | def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
                                                                         ^^
 
 Error: Cannot check the expression
@@ -12,54 +12,52 @@ Error: Cannot check the expression
        against the type
          I
 
-In file $FILE:17:65 ->
+In file $FILE:4:73 ->
 
-  15 | def idp {a : A} : a = a => \i => a
-  16 | 
-  17 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+  2 | variable A : Type
+  3 | 
+  4 | def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+                                                                               ^^
+
+Error: The boundary
+         p i
+       disagrees with
+         a' 0
+       In particular, we failed to unify
+         a
+       with
+         a' 0
+
+In file $FILE:4:53 ->
+
+  2 | variable A : Type
+  3 | 
+  4 | def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+                                                           ^-------------------^
+
+Error: The boundary
+         hcomp2d {A'} {c'} {d'} (idp {A'} {a'} <a>) (\ i => idp {A'} {a'} i) (\ i =>
+        <unexpected `p`> i) i
+         (Normalized: coe (\ k => [| i |] A { ~ i := <unexpected `p`> k | i := a' 1
+        }) (_|_) (\ i => a' i) i)
+       disagrees with
+         a
+       In particular, we failed to unify
+         a' 1
+       with
+         a
+
+In file $FILE:4:66 ->
+
+  2 | variable A : Type
+  3 | 
+  4 | def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
                                                                         ^^
 
 Error: Unsolved meta a'
-       in `idp {[| i |] A {| ~ i := a | i := a |}} {a'}`
-       in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
-       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (\ i => idp {A} {a} i) (\ i => p i)`
-       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
-       in `\ i => hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i :=
-        a |}} {a'} <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
-
-In file $FILE:17:65 ->
-
-  15 | def idp {a : A} : a = a => \i => a
-  16 | 
-  17 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-                                                                        ^^
-
-Error: Unsolved meta a'
-       in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
-       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (\ i => idp {A} {a} i) (\ i => p i)`
-       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
-       in `\ i => hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i :=
-        a |}} {a'} <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
-
-In file $FILE:17:65 ->
-
-  15 | def idp {a : A} : a = a => \i => a
-  16 | 
-  17 | def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-                                                                        ^^
-
-Error: Unsolved meta a'
-       in `idp {[| i |] A {| ~ i := a | i := a |}} {a'} <a>`
-       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (\ i => idp {A} {a} i) (\ i => p i)`
-       in `hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i := a |}} {a'}
-        <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
-       in `\ i => hcomp2d {A} {a} {a} {b} {a} (idp {[| i |] A {| ~ i := a | i :=
-        a |}} {a'} <a>) (\ i => idp {A} {a} i) (\ i => p i) i`
+       in `a' 1`
+       in `<unexpected `hcomp2d (idp a) idp p`> i`
+       in `\ i => <unexpected `hcomp2d (idp a) idp p`> i`
 
 4 error(s), 0 warning(s).
 What are you doing?

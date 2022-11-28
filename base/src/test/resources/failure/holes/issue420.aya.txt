@@ -1,9 +1,9 @@
-In file $FILE:18:56 ->
+In file $FILE:12:59 ->
 
-  16 |  | a, suc b => suc (addN a b)
-  17 | 
-  18 | def addN-identity (a : Nat) : Eq (addN a zero) a => idp {? ?}
-                                                               ^---^
+  10 |  | a, suc b => suc (addN a b)
+  11 | 
+  12 | def addN-identity (a : Nat) : addN a zero = a => idp {a := {? ?}}
+                                                                  ^---^
 
 Goal: Candidate exists:
         a
@@ -11,6 +11,7 @@ Goal: Candidate exists:
         Nat
         (Normalized: Nat)
       Context:
+        {a : Nat}
         {a : Nat}
 
 That looks right!

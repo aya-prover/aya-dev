@@ -1,4 +1,4 @@
-open data List (A : Type) | nil | cons A (List A)
+open import Data::List::Core
 open data Nat | O | S Nat
 open data Mat | zero | suc Mat
 

@@ -1,6 +1,4 @@
-prim I
-prim intervalInv
-def inline ~ => intervalInv
+open import Paths
 open data Nat : Type | zero | suc Nat
 open data Int : Type
  | pos Nat | neg Nat

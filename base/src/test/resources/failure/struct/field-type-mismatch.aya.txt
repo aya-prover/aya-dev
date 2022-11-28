@@ -1,8 +1,8 @@
-In file $FILE:14:30 ->
+In file $FILE:12:30 ->
 
-  12 | 
-  13 | def test-nat-pair : Pair Nat Nat =>
-  14 |   new Pair Nat Nat { | fst => make-pair Nat Nat zero zero | snd => suc zero }
+  10 | 
+  11 | def test-nat-pair : Pair Nat Nat =>
+  12 |   new Pair Nat Nat { | fst => make-pair Nat Nat zero zero | snd => suc zero }
                                      ^-------------------------^
 
 Error: Cannot check the expression

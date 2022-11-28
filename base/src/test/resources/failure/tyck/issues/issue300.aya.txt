@@ -1,16 +1,30 @@
-In file $FILE:6:35 ->
+In file $FILE:4:20 ->
+
+  2 | open import Data::Unit
+  3 | def max (a : Sig Nat ** Nat) (b : Unit) : Nat
+  4 |   | (zero, b), unit x => b
+                          ^^
+
+Error: There is no parameter for the pattern
+         x
+       to match against, given the return type
+         Unit
+       (and in case it's a function type, you may want to move its parameters before
+       the `:` in the signature)
+
+In file $FILE:6:25 ->
 
   4 |   | (zero, b), unit x => b
   5 |   | (a, zero), y => a
   6 |   | (suc a, suc b), unit y => suc (max (a, b))
-                                         ^--------^
+                               ^^
 
-Error: Cannot check the expression
-         max (a, b)
-       of type
-         Unit -> Nat
-       against the type
-         Nat
+Error: There is no parameter for the pattern
+         y
+       to match against, given the return type
+         Unit
+       (and in case it's a function type, you may want to move its parameters before
+       the `:` in the signature)
 
-1 error(s), 0 warning(s).
+2 error(s), 0 warning(s).
 What are you doing?

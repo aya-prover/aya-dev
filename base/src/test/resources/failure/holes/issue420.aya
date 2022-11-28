@@ -1,11 +1,5 @@
-prim I
-prim coe
-prim intervalInv
-def inline ~ => intervalInv
-def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+open import Paths
 variable A : Type
-def Eq (a b : A) : Type => Path (\ i => A) a b
-def idp (a : A) : Eq a a => \i => a
 
 open data Nat : Type | zero | suc Nat
 
@@ -15,4 +9,4 @@ def overlap addN (a b : Nat) : Nat
  | suc a, b => suc (addN a b)
  | a, suc b => suc (addN a b)
 
-def addN-identity (a : Nat) : Eq (addN a zero) a => idp {? ?}
+def addN-identity (a : Nat) : addN a zero = a => idp {a := {? ?}}

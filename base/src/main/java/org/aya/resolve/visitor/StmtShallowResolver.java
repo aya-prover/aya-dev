@@ -52,7 +52,8 @@ public record StmtShallowResolver(
       case Command.Import cmd -> {
         var ids = cmd.path().ids();
         var success = loader.load(ids);
-        if (success == null) context.reportAndThrow(new NameProblem.ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
+        if (success == null)
+          context.reportAndThrow(new NameProblem.ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
         var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
         var as = cmd.asName();
         var importedName = as != null ? ImmutableSeq.of(as) : ids;
@@ -101,17 +102,17 @@ public record StmtShallowResolver(
     switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.DataDecl decl -> {
-        var ctx = resolveTopLevelDecl(decl, decl, context);
+        var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), this::resolveDecl);
         resolveOpInfo(decl, innerCtx);
       }
       case TeleDecl.StructDecl decl -> {
-        var ctx = resolveTopLevelDecl(decl, decl, context);
+        var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), this::resolveDecl);
         resolveOpInfo(decl, innerCtx);
       }
       case TeleDecl.FnDecl decl -> {
-        var ctx = resolveTopLevelDecl(decl, decl, context);
+        var ctx = resolveTopLevelDecl(decl, context);
         resolveOpInfo(decl, ctx);
       }
       case TeleDecl.PrimDecl decl -> {
@@ -126,7 +127,7 @@ public record StmtShallowResolver(
         else if (factory.have(primID) && !factory.suppressRedefinition())
           context.reportAndThrow(new PrimResolveError.Redefinition(name, sourcePos));
         factory.factory(primID, decl.ref);
-        resolveTopLevelDecl(decl, decl, context);
+        resolveTopLevelDecl(decl, context);
       }
       case TeleDecl.DataCtor ctor -> {
         ctor.ref().module = context.moduleName();
@@ -175,14 +176,14 @@ public record StmtShallowResolver(
     }
   }
 
-  private @NotNull ModuleContext resolveTopLevelDecl(@NotNull Decl decl, @NotNull Decl.TopLevel proof, @NotNull ModuleContext context) {
-    assert decl == proof;
-    var ctx = switch (proof.personality()) {
+  private <D extends Decl & Decl.TopLevel> @NotNull ModuleContext
+  resolveTopLevelDecl(@NotNull D decl, @NotNull ModuleContext context) {
+    var ctx = switch (decl.personality()) {
       case NORMAL -> context;
       case EXAMPLE -> exampleContext(context);
       case COUNTEREXAMPLE -> exampleContext(context).derive(decl.ref().name());
     };
-    proof.setCtx(ctx);
+    decl.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
     ctx.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
     return ctx;

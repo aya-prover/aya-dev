@@ -1,12 +1,5 @@
-prim I
-prim intervalInv
-def inline ~ => intervalInv
-prim coe
-def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
-def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
+open import Paths
 variable A : Type
-def infix = {A : Type} => Eq A
-def refl {a : A} : a = a => \i => a
 
 // https://cstheory.stackexchange.com/a/49160/50892
 def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0

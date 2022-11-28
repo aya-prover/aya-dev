@@ -1,8 +1,7 @@
-In file $FILE:9:80 ->
+In file $FILE:2:80 ->
 
-  7 | def infix = {A : Type} => Eq A
-  8 | 
-  9 | def psqueeze {A : Type} {a a' : A} (p : a = a') (i : I) : a = p i => \j => p (I.squeeze i j)
+  1 | open import Paths
+  2 | def psqueeze {A : Type} {a a' : A} (p : a = a') (i : I) : a = p i => \j => p (I.squeeze i j)
                                                                                       ^-----^
 
 Error: Unknown field `squeeze` projected

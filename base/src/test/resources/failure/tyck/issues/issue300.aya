@@ -1,5 +1,5 @@
-open data Nat : Type | zero | suc Nat
-open data Unit : Type | unit Nat
+open import Arith::Nat
+open import Data::Unit
 def max (a : Sig Nat ** Nat) (b : Unit) : Nat
   | (zero, b), unit x => b
   | (a, zero), y => a

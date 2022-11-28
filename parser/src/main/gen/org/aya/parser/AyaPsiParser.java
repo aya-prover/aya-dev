@@ -320,6 +320,20 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // LBRACE <<param>> RBRACE
+  static boolean braced(PsiBuilder b, int l, Parser _param) {
+    if (!recursion_guard_(b, l, "braced")) return false;
+    if (!nextTokenIs(b, LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && _param.parse(b, l);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // CALM_FACE
   public static boolean calmFaceExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "calmFaceExpr")) return false;
@@ -362,34 +376,42 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE bareClause? barredClause* RBRACE
+  // <<braced (bareClause? barredClause*)>>
   public static boolean clauses(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "clauses")) return false;
     if (!nextTokenIs(b, LBRACE)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && clauses_1(b, l + 1);
-    r = r && clauses_2(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
+    r = braced(b, l + 1, AyaPsiParser::clauses_0_0);
     exit_section_(b, m, CLAUSES, r);
     return r;
   }
 
+  // bareClause? barredClause*
+  private static boolean clauses_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "clauses_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = clauses_0_0_0(b, l + 1);
+    r = r && clauses_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // bareClause?
-  private static boolean clauses_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "clauses_1")) return false;
+  private static boolean clauses_0_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "clauses_0_0_0")) return false;
     bareClause(b, l + 1);
     return true;
   }
 
   // barredClause*
-  private static boolean clauses_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "clauses_2")) return false;
+  private static boolean clauses_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "clauses_0_0_1")) return false;
     while (true) {
       int c = current_position_(b);
       if (!barredClause(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "clauses_2", c)) break;
+      if (!empty_element_parsed_guard_(b, "clauses_0_0_1", c)) break;
     }
     return true;
   }
@@ -1078,27 +1100,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE <<param>> RBRACE | LPAREN <<param>> RPAREN
+  // <<braced <<param>>>> | LPAREN <<param>> RPAREN
   public static boolean licit(PsiBuilder b, int l, Parser _param) {
     if (!recursion_guard_(b, l, "licit")) return false;
     if (!nextTokenIs(b, "", LBRACE, LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = licit_0(b, l + 1, _param);
+    r = braced(b, l + 1, _param);
     if (!r) r = licit_1(b, l + 1, _param);
     exit_section_(b, m, LICIT, r);
-    return r;
-  }
-
-  // LBRACE <<param>> RBRACE
-  private static boolean licit_0(PsiBuilder b, int l, Parser _param) {
-    if (!recursion_guard_(b, l, "licit_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && _param.parse(b, l);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1213,18 +1223,26 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE weakId DEFINE_AS expr RBRACE
+  // <<braced (weakId DEFINE_AS expr)>>
   public static boolean namedImArgument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "namedImArgument")) return false;
     if (!nextTokenIs(b, LBRACE)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && weakId(b, l + 1);
+    r = braced(b, l + 1, AyaPsiParser::namedImArgument_0_0);
+    exit_section_(b, m, NAMED_IM_ARGUMENT, r);
+    return r;
+  }
+
+  // weakId DEFINE_AS expr
+  private static boolean namedImArgument_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "namedImArgument_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = weakId(b, l + 1);
     r = r && consumeToken(b, DEFINE_AS);
     r = r && expr(b, l + 1, -1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, NAMED_IM_ARGUMENT, r);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1268,26 +1286,24 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE newArg* RBRACE
+  // <<braced newArg*>>
   public static boolean newBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "newBody")) return false;
     if (!nextTokenIs(b, LBRACE)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && newBody_1(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
+    r = braced(b, l + 1, AyaPsiParser::newBody_0_0);
     exit_section_(b, m, NEW_BODY, r);
     return r;
   }
 
   // newArg*
-  private static boolean newBody_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "newBody_1")) return false;
+  private static boolean newBody_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "newBody_0_0")) return false;
     while (true) {
       int c = current_position_(b);
       if (!newArg(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "newBody_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "newBody_0_0", c)) break;
     }
     return true;
   }
@@ -1342,18 +1358,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE partialInner RBRACE
+  // <<braced partialInner>>
   public static boolean partialBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "partialBlock")) return false;
     if (!nextTokenIs(b, LBRACE)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, PARTIAL_BLOCK, null);
-    r = consumeToken(b, LBRACE);
-    p = r; // pin = 1
-    r = r && report_error_(b, partialInner(b, l + 1));
-    r = p && consumeToken(b, RBRACE) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = braced(b, l + 1, AyaPsiParser::partialInner);
+    exit_section_(b, m, PARTIAL_BLOCK, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2141,15 +2154,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE exprList RBRACE
+  // <<braced exprList>>
   public static boolean tupleImArgument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tupleImArgument")) return false;
     if (!nextTokenIs(b, LBRACE)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && exprList(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
+    r = braced(b, l + 1, AyaPsiParser::exprList);
     exit_section_(b, m, TUPLE_IM_ARGUMENT, r);
     return r;
   }
@@ -2390,7 +2401,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // 7: ATOM(doExpr)
   // 8: ATOM(thisExpr)
   // 9: ATOM(partialExpr)
-  // 10: ATOM(pathExpr)
+  // 10: PREFIX(pathExpr)
   // 11: ATOM(atomExpr)
   // 12: BINARY(arrowExpr)
   // 13: POSTFIX(appExpr)
@@ -2741,40 +2752,50 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // LPATH pathTele+ RPATH expr partialExpr?
   public static boolean pathExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pathExpr")) return false;
     if (!nextTokenIsSmart(b, LPATH)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = pathExpr_0(b, l + 1);
+    p = r;
+    r = p && expr(b, l, 10);
+    r = p && report_error_(b, pathExpr_1(b, l + 1)) && r;
+    exit_section_(b, l, m, PATH_EXPR, r, p, null);
+    return r || p;
+  }
+
+  // LPATH pathTele+ RPATH
+  private static boolean pathExpr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pathExpr_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, LPATH);
-    r = r && pathExpr_1(b, l + 1);
+    r = r && pathExpr_0_1(b, l + 1);
     r = r && consumeToken(b, RPATH);
-    r = r && expr(b, l + 1, -1);
-    r = r && pathExpr_4(b, l + 1);
-    exit_section_(b, m, PATH_EXPR, r);
+    exit_section_(b, m, null, r);
     return r;
   }
 
   // pathTele+
-  private static boolean pathExpr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pathExpr_1")) return false;
+  private static boolean pathExpr_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pathExpr_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = pathTele(b, l + 1);
     while (r) {
       int c = current_position_(b);
       if (!pathTele(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "pathExpr_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "pathExpr_0_1", c)) break;
     }
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // partialExpr?
-  private static boolean pathExpr_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pathExpr_4")) return false;
-    partialExpr(b, l + 1);
+  // partialBlock?
+  private static boolean pathExpr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pathExpr_1")) return false;
+    partialBlock(b, l + 1);
     return true;
   }
 

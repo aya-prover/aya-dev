@@ -1,62 +1,72 @@
-In file $FILE:10:4 ->
+In file $FILE:4:4 ->
 
-   8 | 
-   9 | variable A B : Type
-  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
-           ^----^
+  2 | 
+  3 | variable A B : Type
+  4 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+          ^----^
+
+Warning: The name `funExt` introduces ambiguity and can only be accessed through
+         a qualified name
+
+In file $FILE:4:4 ->
+
+  2 | 
+  3 | variable A B : Type
+  4 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+          ^----^
 
 Error: The parameter:
          {A : Type 0}
          (Normalized: Type 0)
        requires a binding in the patterns
 
-In file $FILE:10:4 ->
+In file $FILE:4:4 ->
 
-   8 | 
-   9 | variable A B : Type
-  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
-           ^----^
+  2 | 
+  3 | variable A B : Type
+  4 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+          ^----^
 
 Error: The parameter:
          {B : Type 0}
          (Normalized: Type 0)
        requires a binding in the patterns
 
-In file $FILE:10:4 ->
+In file $FILE:4:4 ->
 
-   8 | 
-   9 | variable A B : Type
-  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
-           ^----^
+  2 | 
+  3 | variable A B : Type
+  4 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+          ^----^
 
 Error: The parameter:
          (f : A -> B)
          (Normalized: A -> B)
        requires a binding in the patterns
 
-In file $FILE:10:4 ->
+In file $FILE:4:4 ->
 
-   8 | 
-   9 | variable A B : Type
-  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
-           ^----^
+  2 | 
+  3 | variable A B : Type
+  4 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+          ^----^
 
 Error: The parameter:
          (g : A -> B)
          (Normalized: A -> B)
        requires a binding in the patterns
 
-In file $FILE:10:4 ->
+In file $FILE:4:4 ->
 
-   8 | 
-   9 | variable A B : Type
-  10 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
-           ^----^
+  2 | 
+  3 | variable A B : Type
+  4 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+          ^----^
 
 Error: The parameter:
          (p : Pi (a : A) -> (=) {B} (f a) (g a))
          (Normalized: Pi (a : A) -> (=) {B} (f a) (g a))
        requires a binding in the patterns
 
-5 error(s), 0 warning(s).
+5 error(s), 1 warning(s).
 What are you doing?

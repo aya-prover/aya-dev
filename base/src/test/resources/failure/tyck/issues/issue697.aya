@@ -1,17 +1,4 @@
-prim I
-prim coe
-prim intervalInv
-def inline ~ => intervalInv
-def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
-def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
+open import Paths
 variable A : Type
-def infix = {A : Type} => Eq A
-def hcomp2d
-  {a b c d : A}
-  (p : a = b)
-  (q : b = d)
-  (r : a = c) : c = d
-  => \i => ((\ k => r k = q k).coe p) i
-def idp {a : A} : a = a => \i => a
 
-def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p

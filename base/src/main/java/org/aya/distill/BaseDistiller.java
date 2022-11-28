@@ -265,7 +265,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
       Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
       Doc.symbol("|]"),
       cube.type().toDoc(options),
-      partial(options, cube.partial(), false)
+      partial(options, cube.partial(), false, "{", "}")
     );
   }
 
@@ -287,13 +287,13 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  partial(@NotNull DistillerOptions options, @NotNull Partial<T> partial, boolean showEmpty) {
+  partial(@NotNull DistillerOptions options, @NotNull Partial<T> partial, boolean showEmpty, String lbr, String rbr) {
     return switch (partial) {
-      case Partial.Const<T> sad -> Doc.sep(Doc.symbol("{|"), sad.u().toDoc(options), Doc.symbol("|}"));
+      case Partial.Const<T> sad -> Doc.sep(Doc.symbol(lbr), sad.u().toDoc(options), Doc.symbol(rbr));
       case Partial.Split<T> hap when!showEmpty && hap.clauses().isEmpty() -> Doc.empty();
-      case Partial.Split<T> hap -> Doc.sep(Doc.symbol("{|"),
+      case Partial.Split<T> hap -> Doc.sep(Doc.symbol(lbr),
         Doc.join(Doc.spaced(Doc.symbol("|")), hap.clauses().map(s -> side(options, s))),
-        Doc.symbol("|}"));
+        Doc.symbol(rbr));
     };
   }
 

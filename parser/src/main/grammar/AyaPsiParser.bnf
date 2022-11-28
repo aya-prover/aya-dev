@@ -254,7 +254,7 @@ dataBody ::= dataCtorClause
 }
 
 dataCtor ::= KW_COERCE? declNameOrInfix tele* partialBlock? bindBlock?
-partialBlock ::= LBRACE partialInner RBRACE { pin=1 }
+partialBlock ::= <<braced partialInner>>
 
 dataCtorClause ::= BAR patterns IMPLIES dataCtor
 
@@ -302,7 +302,7 @@ lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
-pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
+pathExpr ::= LPATH pathTele+ RPATH expr partialBlock?
 letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
@@ -321,19 +321,19 @@ doBlockContent ::= doBinding | expr
 newArgField ::= weakId
 newArg ::= BAR newArgField teleParamName* IMPLIES expr
 // New body new body but you!
-newBody ::= LBRACE newArg* RBRACE
+newBody ::= <<braced newArg*>>
 
 argument ::= atomExArgument
            | tupleImArgument
            | namedImArgument
 atomExArgument ::= atomExpr projFix*
-tupleImArgument ::= LBRACE exprList RBRACE
-namedImArgument ::= LBRACE weakId DEFINE_AS expr RBRACE
+tupleImArgument ::= <<braced exprList>>
+namedImArgument ::= <<braced (weakId DEFINE_AS expr)>>
 
 projFix ::= DOT NUMBER | DOT projFixId (expr (KW_FREEZE expr)?)?
 projFixId ::= qualifiedId
 
-clauses ::= LBRACE bareClause? barredClause* RBRACE
+clauses ::= <<braced (bareClause? barredClause*)>>
 
 // barredClause and bareClause made inspection quick fix easier
 // see: DominationInspection
@@ -415,4 +415,5 @@ weakId ::= ID
 
 // we can improve the parsing by producing generically from a 'commaSep' rule
 meta commaSep ::= <<param>> (',' <<param>>) *
-meta licit ::= LBRACE <<param>> RBRACE | LPAREN <<param>> RPAREN
+meta licit ::= <<braced <<param>>>> | LPAREN <<param>> RPAREN
+private meta braced ::= LBRACE <<param>> RBRACE

@@ -18,13 +18,13 @@ public class PathTest {
       prim intervalInv
       def inline ~ => intervalInv
       def infix = {A : Type} (a b : A) : Type =>
-        [| i |] A {| ~ i := a | i := b |}
+        [| i |] A { ~ i := a | i := b }
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
       """);
     IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
-    assertEquals("def = {A : Type 0} (a b : A) : Type 0 => [| i |] A {| ~ i := a | i := b |}",
+    assertEquals("def = {A : Type 0} (a b : A) : Type 0 => [| i |] A { ~ i := a | i := b }",
       distiller.apply(3).debugRender());
     assertEquals("def idp {A : Type 0} {a : A} : (=) {A} a a => \\ i => a",
       distiller.apply(4).debugRender());
@@ -37,7 +37,7 @@ public class PathTest {
       def ~ => intervalInv
             
       def infix = {A : Type} (a b : A) : Type =>
-      [| i |] A {| ~ i := a | i := b |}
+      [| i |] A { ~ i := a | i := b }
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
@@ -59,7 +59,7 @@ public class PathTest {
             
       def ~ => intervalInv
       def infix = {A : Type} (a b : A) : Type =>
-      [| i |] A {| ~ i := a | i := b |}
+      [| i |] A { ~ i := a | i := b }
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
@@ -82,7 +82,7 @@ public class PathTest {
       def inline ~ => intervalInv
             
       def infix = {A : Type} (a b : A) : Type =>
-        [| i |] A {| ~ i := a | i := b |}
+        [| i |] A { ~ i := a | i := b }
           
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
@@ -95,7 +95,7 @@ public class PathTest {
         idp
           
       def cmp {A : Type} (x : A)
-        : [| i j |] (Partial (~ j) A) {| ~ i := p1 A x j |}
+        : [| i j |] (Partial (~ j) A) { ~ i := p1 A x j }
         => \\i j => p2 A x j
       """);
   }
