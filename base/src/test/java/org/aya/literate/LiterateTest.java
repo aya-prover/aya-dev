@@ -48,10 +48,11 @@ public class LiterateTest {
     var flags = new CompilerFlags(false, false, distillInfo, ImmutableSeq.empty(), null);
     var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, TestRunner.LOCATOR, null);
 
+    var allFiles = files.flatMap(i -> Seq.of(i.in, i.out, i.exp));
     for (var f : files) {
       compiler.compile(literate.resolve(f.in), flags, null);
       Seq.from(Files.list(literate).toList()).view()
-        .filter(path -> !files.contains(path.getFileName().toString()))
+        .filterNot(path -> allFiles.contains(path.getFileName().toString()))
         .forEachChecked(Files::delete);
       var actual = literate.resolve(f.out);
       var readString = Files.readAllLines(actual);
