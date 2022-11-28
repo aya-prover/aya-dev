@@ -54,7 +54,7 @@ public final class Remark implements Stmt {
     return children.toImmutableSeq();
   }
 
-  private static @Nullable Literate mapAST(
+  private static @NotNull Literate mapAST(
     @NotNull Node node, @NotNull SourcePos pos,
     @NotNull GenericAyaParser producer
   ) {
@@ -76,7 +76,7 @@ public final class Remark implements Stmt {
       else return new Literate.Many(null, children);
     } else {
       producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
-      return null;
+      return new Literate.Unsupported(mapChildren(node, pos, producer));
     }
   }
 

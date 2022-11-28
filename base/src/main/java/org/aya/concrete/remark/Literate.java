@@ -135,4 +135,16 @@ public sealed interface Literate extends Docile {
       });
     }
   }
+
+  record Unsupported(@NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override
+    public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
+      return ImmutableSeq.empty();
+    }
+
+    @Override
+    public @NotNull Doc toDoc() {
+      return Doc.vcat(children.map(Docile::toDoc));
+    }
+  }
 }

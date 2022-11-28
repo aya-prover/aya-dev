@@ -102,7 +102,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           options.map.get(DistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case IntervalTerm term -> Doc.styled(KEYWORD, "I");
+      case IntervalTerm term -> Doc.styled(PRIM_CALL, "I");
       case NewTerm newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
