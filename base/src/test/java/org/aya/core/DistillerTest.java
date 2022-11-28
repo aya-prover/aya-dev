@@ -68,7 +68,7 @@ public class DistillerTest {
       prim coe
       prim intervalInv
       def inline ~ => intervalInv
-      def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+      def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i { ~ i := a | i := b }
       def Eq (A : Type) (a b : A) : Type => Path (\\ i => A) a b
       variable A : Type
       def infix = {A : Type} => Eq A
@@ -134,7 +134,7 @@ public class DistillerTest {
       prim I
       prim intervalInv
       def inline ~ => intervalInv
-      def Eq (A : Type) (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
+      def Eq (A : Type) (a b : A) : Type => [| i |] A { ~ i := a | i := b }
       def infix = {A : Type} => Eq A
       open data Nat | zero | suc Nat
       def test => zero = zero
@@ -153,7 +153,7 @@ public class DistillerTest {
       def inline ~ => intervalInv
       def inline infixl ∧ => intervalMin
       def inline infixl ∨ => intervalMax
-      def Eq (A : Type) (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
+      def Eq (A : Type) (a b : A) : Type => [| i |] A { ~ i := a | i := b }
       def infix = {A : Type} => Eq A
       def test1 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i ∨ j ∨ k) ∧ (k ∨ j ∨ i))
       def test2 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i ∧ j ∧ k) ∨ (k ∧ j ∧ i))
@@ -177,7 +177,7 @@ public class DistillerTest {
       prim I
       prim intervalInv
       def inline ~ => intervalInv
-      def infix = {A : Type} (a b : A) : Type => [| i |] A {| ~ i := a | i := b |}
+      def infix = {A : Type} (a b : A) : Type => [| i |] A { ~ i := a | i := b }
       def idp {A : Type} {a : A} : a = a => \\i => a
       def test {A : Type} {a b : A} (p : a = b) : a = b => \\i => p i
       """)._2;
