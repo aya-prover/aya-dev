@@ -593,7 +593,7 @@ public record AyaGKProducer(
         var n = teleParamName(t.child(TELE_PARAM_NAME));
         return LocalVar.from(n);
       }).toImmutableSeq();
-      return new Expr.Path(pos, params, expr(node.child(EXPR)), partial(node.peekChild(PARTIAL_EXPR), pos));
+      return new Expr.Path(pos, params, expr(node.child(EXPR)), partial(node.peekChild(PARTIAL_BLOCK), pos));
     }
     if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);
