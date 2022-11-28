@@ -87,7 +87,9 @@ public class TestRunner {
   }
 
   public static @NotNull CompilerFlags flags() {
-    return new CompilerFlags(CompilerFlags.Message.ASCII, false, false, null, ImmutableSeq.empty(), null);
+    var modulePaths = ImmutableSeq.of(
+      DEFAULT_TEST_DIR.resolve("success/common/src"));
+    return new CompilerFlags(CompilerFlags.Message.ASCII, false, false, null, modulePaths, null);
   }
 
   private void postRun(@NotNull Path file, boolean expectSuccess, String output, CountingReporter reporter) {

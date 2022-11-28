@@ -1,6 +1,4 @@
-open data Nat : Type
-  | zero
-  | suc Nat
+open import Arith::Nat::Core
 
 struct Pair (A : Type) (B : Type) : Type
   | fst : A

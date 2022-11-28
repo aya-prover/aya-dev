@@ -1,7 +1,7 @@
 // https://github.com/aya-prover/aya-dev/issues/471
 // adapted from: https://github.com/agda/agda/blob/master/test/Fail/Issue6059.agda
 
-open data Nat | zero | suc Nat
+open import Arith::Nat
 open data D   | infix · Nat Nat
 
 // The termination checker faultily accepts this call pattern

@@ -1,8 +1,8 @@
-In file $FILE:13:13 ->
+In file $FILE:11:13 ->
 
-  11 |   | pos a => a
-  12 |   | posneg _ => 0
-  13 |   | neg a => {??}
+   9 |   | pos a => a
+  10 |   | posneg _ => 0
+  11 |   | neg a => {??}
                     ^--^
 
 Goal: Goal of type
@@ -13,11 +13,11 @@ Goal: Goal of type
       To ensure confluence:
         Given (i => _), we should have: 0
 
-In file $FILE:13:13 ->
+In file $FILE:11:13 ->
 
-  11 |   | pos a => a
-  12 |   | posneg _ => 0
-  13 |   | neg a => {??}
+   9 |   | pos a => a
+  10 |   | posneg _ => 0
+  11 |   | neg a => {??}
                     ^--^
 
 Error: Unsolved meta _

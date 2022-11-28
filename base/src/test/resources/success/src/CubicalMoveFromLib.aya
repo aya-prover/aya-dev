@@ -15,12 +15,12 @@ def HeteroSquare {A : Pi (i j : I) -> Type}
   (cd : Path (A 1) c d)
   (ac : Path (\x => A x 0) a c)
   (bd : Path (\x => A x 1) b d) : Type
-  => [| i j |] A i j {|
+  => [| i j |] A i j {
     | ~ i := ab j
     | i := cd j
     | ~ j := ac i
     | j := bd i
-  |}
+  }
 
 // TODO: eta
 def heteroSquare {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j)

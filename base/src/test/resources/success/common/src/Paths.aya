@@ -8,13 +8,13 @@ public open import Primitives using
 public open import Intervals
 
 variable A B C D : Type
-def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
+def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i { ~ i := a | i := b }
 def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
 def infix = {A : Type} => Eq A looser ~
 def idp {a : A} : a = a => \i => a
 def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g => \i a => p a i
 def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => \i => f (p i)
-def sym (p : [| i |] A) : [| i |] A {| i := p 0 | ~ i := p 1 |} => \i => p (~ i)
+def sym (p : [| i |] A) : [| i |] A { i := p 0 | ~ i := p 1 } => \i => p (~ i)
 
 def isContr (A : Type) => Sig (a : A) ** (forall b -> a = b)
 
@@ -53,5 +53,5 @@ def <=3=> {c d : A} (p : [| i |] A) (q : p 1 = c) (r : c = d) : p 0 = d =>
 
 def infixr <==>
   (p : [| i |] A)
-  (q : [| i |] A {| ~ i := p 1 |})
+  (q : [| i |] A { ~ i := p 1 })
   : p 0 = q 1 => <=3=> idp p q

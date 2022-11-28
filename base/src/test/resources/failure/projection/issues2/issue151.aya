@@ -1,13 +1,6 @@
-prim I
-prim coe
-prim intervalInv
-def inline ~ => intervalInv
-def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
-def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
+open import Paths
 variable A : Type
-def infix = {A : Type} => Eq A
-def idp {a : A} : a = a => \i => a
-open data Nat | zero | suc Nat
+open import Arith::Nat::Core
 
 struct Monoid : Type
   | op (a b : Nat) : Nat

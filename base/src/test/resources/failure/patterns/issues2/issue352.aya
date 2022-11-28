@@ -1,10 +1,4 @@
-prim I
-prim intervalInv
-def inline ~ => intervalInv
-prim coe
-def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i {| ~ i := a | i := b |}
-def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
-def infix = {A : Type} => Eq A
+open import Paths
 
 variable A B : Type
 def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g

@@ -1,9 +1,3 @@
-open data Nat : Type
-  | zero
-  | suc Nat
-
-open data Bool : Type
-  | true
-  | false
-
+open import Arith::Nat::Core
+open import Data::Bool
 def u : Nat => true

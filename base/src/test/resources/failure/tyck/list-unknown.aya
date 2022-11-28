@@ -1,5 +1,5 @@
-open data List (A : Type) | nil | cons A (List A)
-open data Unit | unit
+open import Data::List::Core
+open import Data::Unit
 
 def good : List Unit => [ ]
 def bad => [ ]

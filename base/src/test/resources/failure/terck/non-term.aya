@@ -1,4 +1,4 @@
-open data Nat | zero | suc Nat
+open import Arith::Nat::Core
 
 def f Nat : Nat
   | n => g (suc n)

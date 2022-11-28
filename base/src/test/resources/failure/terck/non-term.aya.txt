@@ -1,6 +1,6 @@
 In file $FILE:3:4 ->
 
-  1 | open data Nat | zero | suc Nat
+  1 | open import Arith::Nat::Core
   2 | 
   3 | def f Nat : Nat
           ^^
