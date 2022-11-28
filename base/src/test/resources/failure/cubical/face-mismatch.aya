@@ -4,12 +4,12 @@ prim intervalMin
 prim intervalMax
 prim intervalInv
 
-def inline infix /\ => intervalMin
-tighter \/
+def inline infix ∧ => intervalMin
+tighter ∨
 
-def inline infix \/ => intervalMax
+def inline infix ∨ => intervalMax
 
 def inline ~ => intervalInv
 
-def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial (~ i \/ i) A =>
-  {| ~ i  := u | i /\ j := v |}
+def counter (A : Type) (u : A) (v : A) (i : I) (j : I) : Partial (~ i ∨ i) A =>
+  {| ~ i  := u | i ∧ j := v |}

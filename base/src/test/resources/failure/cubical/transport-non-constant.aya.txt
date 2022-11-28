@@ -2,8 +2,8 @@ In file $FILE:17:6 ->
 
   15 | 
   16 | def GG (A : I -> Type) (a : A 0) (i : I) : A i
-  17 |   => (\j => A (i /\ j)).coe a freeze i
-             ^--------------^
+  17 |   => (\j => A (i ∧ j)).coe a freeze i
+             ^-------------^
 
 Error: Under the cofibration:
          i
@@ -39,12 +39,12 @@ Error: Under the cofibration:
          A
        which is not allowed in coercion
 
-In file $FILE:29:37 ->
+In file $FILE:29:36 ->
 
   27 | 
   28 | def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
-  29 |   => (\j => A (i /\ j)).coe a freeze a
-                                            ^^
+  29 |   => (\j => A (i ∧ j)).coe a freeze a
+                                           ^^
 
 Error: Cannot check the expression
          a
@@ -57,8 +57,8 @@ In file $FILE:29:6 ->
 
   27 | 
   28 | def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
-  29 |   => (\j => A (i /\ j)).coe a freeze a
-             ^--------------^
+  29 |   => (\j => A (i ∧ j)).coe a freeze a
+             ^-------------^
 
 Error: Under the cofibration:
          <a>
