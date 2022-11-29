@@ -40,7 +40,6 @@ import java.util.function.Function;
 /**
  * Tyck statements in SCC.
  *
- * @param tyckerReuse headers and bodies should be checked using the same tycker.
  * @author kiva
  * @see ExprTycker
  */
@@ -49,12 +48,11 @@ public record AyaSccTycker(
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull MutableList<@NotNull GenericDef> wellTyped,
-  @NotNull MutableMap<Decl.TopLevel, ExprTycker> tyckerReuse,
   @NotNull MutableMap<Decl.TopLevel, CollectingReporter> sampleReporters
 ) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
-    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, MutableList.create(), MutableMap.create(), MutableMap.create());
+    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, MutableList.create(), MutableMap.create());
   }
 
   public @NotNull ImmutableSeq<TyckOrder> tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) {
@@ -203,9 +201,9 @@ public record AyaSccTycker(
     // prevent counterexample errors from being reported to the user reporter
     if (decl.personality() == Decl.Personality.COUNTEREXAMPLE) {
       var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);
-      return tyckerReuse.getOrPut(decl, () -> newExprTycker(reporter));
+      return newExprTycker(reporter);
     }
-    return tyckerReuse.getOrPut(decl, () -> newExprTycker(reporter));
+    return newExprTycker(reporter);
   }
 
   private @NotNull ExprTycker newExprTycker(@NotNull Reporter reporter) {
