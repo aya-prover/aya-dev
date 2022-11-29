@@ -197,11 +197,19 @@ public sealed interface Doc extends Docile {
 
   //region DocFactory functions
   static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode) {
-    return new HyperLinked(doc, new LinkId("#" + hashCode), String.valueOf(hashCode));
+    return linkDef(doc, String.valueOf(hashCode));
   }
 
   static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode) {
-    return new HyperLinked(doc, new LinkId("#" + hashCode), null);
+    return linkRef(doc, String.valueOf(hashCode));
+  }
+
+  static @NotNull Doc linkDef(@NotNull Doc doc, String uniqueId) {
+    return new HyperLinked(doc, new LinkId("#" + uniqueId), uniqueId);
+  }
+
+  static @NotNull Doc linkRef(@NotNull Doc doc, String uniqueId) {
+    return new HyperLinked(doc, new LinkId("#" + uniqueId), null);
   }
 
   static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId link) {

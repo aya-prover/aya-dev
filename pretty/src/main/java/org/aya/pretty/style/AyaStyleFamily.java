@@ -31,6 +31,10 @@ public record AyaStyleFamily(
     public String key() {
       return key;
     }
+
+    public Style preset() {
+      return Style.preset(key());
+    }
   }
 
   public static final @NotNull AyaStyleFamily DEFAULT = new AyaStyleFamily(MutableMap.ofEntries(
