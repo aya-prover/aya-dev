@@ -55,9 +55,18 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   default <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
     return with(param.ref(), param.type(), action);
   }
+  default <T> T with(@NotNull Seq<Term.Param> params, @NotNull Supplier<T> action) {
+    if (params.isEmpty()) return action.get();
+    params.forEach(x -> putIgnoreAware(x.ref(), x.type()));
+    try {
+      return action.get();
+    } finally {
+      remove(params.view().map(Term.Param::ref));
+    }
+  }
   default <T> T withIntervals(@NotNull SeqView<LocalVar> params, @NotNull Supplier<T> action) {
     if (params.isEmpty()) return action.get();
-    params.forEach(x -> put(x, IntervalTerm.INSTANCE));
+    params.forEach(x -> putIgnoreAware(x, IntervalTerm.INSTANCE));
     try {
       return action.get();
     } finally {
@@ -81,12 +90,15 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     }.accept(term);
   }
   default <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
-    if (var != LocalVar.IGNORED) put(var, type);
+    putIgnoreAware(var, type);
     try {
       return action.get();
     } finally {
       remove(SeqView.of(var));
     }
+  }
+  private void putIgnoreAware(@NotNull LocalVar var, @NotNull Term type) {
+    if (var != LocalVar.IGNORED) put(var, type);
   }
   default <T> T with(@NotNull Supplier<T> action, @NotNull Term.Param... param) {
     return with(action, Seq.of(param).view());
