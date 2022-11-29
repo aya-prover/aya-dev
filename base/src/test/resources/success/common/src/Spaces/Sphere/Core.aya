@@ -13,7 +13,10 @@ def Sphere1-S¹ (Sphere 1) : S¹
 | merid false i => loop i
 | _ => base
 
-// def test => merid false <==> sym (merid true)
-// def S¹-Sphere1 S¹ : Sphere 1
-// | base => north
-// | loop i => (merid false <==> sym (merid true)) i
+def S¹-Sphere1 S¹ : Sphere 1
+| base => north
+| loop i => (merid false <==> sym (merid true)) i
+
+def SuspS¹-S² (Susp S¹) : S²
+| merid (loop i) j => surf i j
+| _ => base2
