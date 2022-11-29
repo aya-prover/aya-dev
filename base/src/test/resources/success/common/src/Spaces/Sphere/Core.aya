@@ -1,0 +1,19 @@
+open import Data::Bool
+open import Arith::Nat::Core
+open import Spaces::Susp
+open import Spaces::Sphere::S1::Core
+open import Spaces::Sphere::S2::Core
+open import Paths
+
+def Sphere Nat : Type
+| 0 => Bool
+| suc n => Susp (Sphere n)
+
+def Sphere1-S¹ (Sphere 1) : S¹
+| merid false i => loop i
+| _ => base
+
+// def test => merid false <==> sym (merid true)
+// def S¹-Sphere1 S¹ : Sphere 1
+// | base => north
+// | loop i => (merid false <==> sym (merid true)) i

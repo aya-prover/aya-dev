@@ -4,8 +4,8 @@ public open data Susp (A : Type)
 | north
 | south
 | merid A (i : I) {
-  | i := north
-  | ~ i := south
+  | i := south
+  | ~ i := north
 }
 
 variable A B : Type
