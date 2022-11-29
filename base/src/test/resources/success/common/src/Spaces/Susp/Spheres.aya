@@ -9,6 +9,10 @@ def Sphere Nat : Type
 | 0 => Bool
 | suc n => Susp (Sphere n)
 
+def point (n : Nat) : Sphere n
+| 0 => true
+| suc n => north
+
 def Sphere1-S¹ (Sphere 1) : S¹
 | merid false i => loop i
 | _ => base
