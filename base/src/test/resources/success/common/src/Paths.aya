@@ -12,11 +12,11 @@ def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i { ~ i := a | 
 def Eq (A : Type) (a b : A) : Type => Path (\ i => A) a b
 def infix = {A : Type} => Eq A looser ~
 def idp {a : A} : a = a => \i => a
-def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g => \i a => p a i
+def funExt (f g : A -> B) (p : ∀ a -> f a = g a) : f = g => \i a => p a i
 def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => \i => f (p i)
 def sym (p : [| i |] A) : p 1 = p 0 => \i => p (~ i)
 
-def isContr (A : Type) => Sig (a : A) ** (forall b -> a = b)
+def isContr (A : Type) => Sig (a : A) ** (∀ b -> a = b)
 
 def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b (\i => p i) =>
@@ -29,10 +29,10 @@ def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
 // def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
 //         (r : B a idp) : J B r idp = r => idp
 
-def funExt2 (f g : A -> B -> C) (p : forall a b -> f a b = g a b) : f = g
+def funExt2 (f g : A -> B -> C) (p : ∀ a b -> f a b = g a b) : f = g
   => \ i a b => p a b i
 
-def funExt3 (f g : A -> B -> C -> D) (p : forall a b c -> f a b c = g a b c) : f = g
+def funExt3 (f g : A -> B -> C -> D) (p : ∀ a b c -> f a b c = g a b c) : f = g
   => \ i a b c => p a b c i
 
 // The most general path mapping

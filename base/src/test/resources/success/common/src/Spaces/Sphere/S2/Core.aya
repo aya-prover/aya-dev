@@ -5,4 +5,4 @@ public open data S²
 | surf (i j : I) { ∂ i ∨ ∂ j := base2 }
 
 def ΩS² => base2 = base2
-// def isContrΩS² : isContr ΩS² => {??}
+// def isContrΩS² : isContr ΩS² => (idp, {??})

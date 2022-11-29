@@ -4,9 +4,8 @@ open import Paths
 open import Algebra::Formula
 
 def S¹×S¹→S² (x y : S¹) : S²
-| base, y => base2
-| loop i, base => base2
 | loop i, loop j => surf i j
+| _, _ => base2
 
 def invS² S² : S²
 | base2 => base2
