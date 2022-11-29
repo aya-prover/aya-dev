@@ -1,6 +1,6 @@
 open import Data::Bool
 open import Arith::Nat::Core
-open import Spaces::Susp
+open import Spaces::Susp::Core
 open import Spaces::Sphere::S1::Core
 open import Spaces::Sphere::S2::Core
 open import Paths
