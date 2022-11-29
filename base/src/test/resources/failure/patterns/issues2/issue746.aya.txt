@@ -1,0 +1,12 @@
+In file $FILE:5:2 ->
+
+  3 | 
+  4 | def test Test1 : Test1
+  5 | | test2 => test1
+        ^---^
+
+Error: Unknown constructor
+         test2
+
+1 error(s), 0 warning(s).
+What are you doing?

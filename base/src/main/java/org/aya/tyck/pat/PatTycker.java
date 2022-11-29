@@ -98,7 +98,7 @@ public final class PatTycker {
   public static @NotNull PatResult elabClausesDirectly(
     @NotNull ExprTycker exprTycker,
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature
+    @NotNull Def.Signature<?> signature
   ) {
     return checkAllRhs(exprTycker, checkAllLhs(exprTycker, clauses, signature), signature.result());
   }
@@ -550,6 +550,7 @@ public final class PatTycker {
       foundError(new TyckOrderError.NotYetTyckedError(pos.sourcePos(), name));
       return null;
     }
+    if (name != null) foundError(new PatternProblem.UnknownCtor(pos));
     return null;
   }
 

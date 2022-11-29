@@ -1,0 +1,5 @@
+open import Paths
+open import Spaces::Susp
+open import Data::Bool
+
+def test => merid false <==> sym (merid true)
