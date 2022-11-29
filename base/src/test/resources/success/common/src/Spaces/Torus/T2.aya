@@ -1,5 +1,5 @@
 open import Paths
-open import Spaces::Sphere::S1
+open import Spaces::Sphere::S1::Core
 
 public open data T²
 | point

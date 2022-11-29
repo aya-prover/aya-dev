@@ -9,10 +9,10 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
-import org.aya.guest0x0.cubical.Partial;
-import org.aya.util.Arg;
 import org.aya.generic.Modifier;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.TyckState;
+import org.aya.util.Arg;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,9 +24,9 @@ public interface DeltaExpander extends EndoTerm {
   @NotNull TyckState state();
 
   static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, @NotNull SeqLike<Arg<Term>> args) {
-    var entries = self.view().zip(args)
-      .map(t -> Tuple.of(t._1.ref(), t._2.term()));
-    return new Subst(MutableMap.from(entries));
+    assert self.sizeEquals(args);
+    return new Subst(MutableMap.from(
+      self.zipView(args).map(t -> Tuple.of(t._1.ref(), t._2.term()))));
   }
 
   @Override default @NotNull Term post(@NotNull Term term) {
@@ -35,7 +35,7 @@ public interface DeltaExpander extends EndoTerm {
         var def = con.ref().core;
         if (def == null) yield con;
         var sat = AyaRestrSimplifier.INSTANCE.mapSplit(def.clauses, t ->
-          t.subst(buildSubst(def.selfTele, con.args())));
+          t.subst(buildSubst(def.selfTele, con.conArgs())));
         if (sat instanceof Partial.Const<Term> c) yield apply(c.u());
         yield con;
       }

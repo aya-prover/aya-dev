@@ -1,0 +1,4 @@
+open import Paths
+open import CubicalBasics using (eocFill0)
+
+def test => \ (A : I -> Type) x => eocFill0 A x 0

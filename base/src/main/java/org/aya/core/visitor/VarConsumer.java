@@ -67,26 +67,26 @@ public interface VarConsumer extends TermConsumer {
           VarConsumer.super.accept(pi);
           bound.removeLast();
         }
-        case SigmaTerm sigma -> {
+        case SigmaTerm(var params) -> {
           var start = bound.size();
-          sigma.params().forEach(param -> {
+          params.forEach(param -> {
             bound.append(param.ref());
             accept(param.type());
           });
-          bound.removeInRange(start, start + sigma.params().size());
+          bound.removeInRange(start, start + params.size());
         }
-        case PathTerm path -> {
+        case PathTerm(var cube) -> {
           var start = bound.size();
-          path.cube().params().forEach(bound::append);
-          accept(path.cube().type());
-          path.cube().partial().termsView().forEach(this);
-          bound.removeInRange(start, start + path.cube().params().size());
+          cube.params().forEach(bound::append);
+          accept(cube.type());
+          cube.partial().termsView().forEach(this);
+          bound.removeInRange(start, start + cube.params().size());
         }
-        case PLamTerm lam -> {
+        case PLamTerm(var params, var body) -> {
           var start = bound.size();
-          lam.params().forEach(bound::append);
-          accept(lam.body());
-          bound.removeInRange(start, start + lam.params().size());
+          params.forEach(bound::append);
+          accept(body);
+          bound.removeInRange(start, start + params.size());
         }
         case MetaTerm hole -> {
           var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);

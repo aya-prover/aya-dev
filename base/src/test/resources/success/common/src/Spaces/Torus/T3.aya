@@ -1,5 +1,5 @@
 open import Paths
-open import Spaces::Sphere::S1
+open import Spaces::Sphere::S1::Core
 
 def S¹-T³ (p : S¹) (q : S¹) (r : S¹) : T³
 | base, base, base => base3

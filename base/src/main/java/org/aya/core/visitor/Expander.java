@@ -20,7 +20,7 @@ public interface Expander extends DeltaExpander, BetaExpander {
   record WHNFer(@Override @NotNull TyckState state) implements Expander {
     @Override public @NotNull Term apply(@NotNull Term term) {
       return switch (term) {
-        case StableWHNF whnf -> term;
+        case StableWHNF whnf -> whnf;
         case ConCall con when (con.ref().core == null || con.ref().core.clauses.clauses().isEmpty()) -> con;
         default -> Expander.super.apply(term);
       };

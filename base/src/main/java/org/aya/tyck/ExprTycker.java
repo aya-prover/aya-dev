@@ -96,7 +96,16 @@ public final class ExprTycker extends Tycker {
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.Lambda lam -> inherit(lam, generatePi(lam));
+      case Expr.Lambda lam when lam.param().type() instanceof Expr.Hole -> inherit(lam, generatePi(lam));
+      case Expr.Lambda lam -> {
+        var paramTy = ty(lam.param().type()).wellTyped;
+        yield localCtx.with(lam.param().ref(), paramTy, () -> {
+          var body = synthesize(lam.body());
+          var param = new Term.Param(lam.param(), paramTy);
+          var pi = new PiTerm(param, body.type()).freezeHoles(state).rename();
+          return new TermResult(new LamTerm(param, body.wellTyped()), pi);
+        });
+      }
       case Expr.Sort sort -> ty(sort);
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
@@ -531,7 +540,11 @@ public final class ExprTycker extends Tycker {
         yield new TermResult(result.wellTyped(), normTerm);
       }
       case Expr.Lambda lam -> {
-        if (term instanceof MetaTerm) unifyTy(term, generatePi(lam), lam.sourcePos());
+        if (term instanceof MetaTerm) {
+          if (lam.param().type() instanceof Expr.Hole)
+            unifyTy(term, generatePi(lam), lam.param().sourcePos());
+          else yield inheritFallbackUnify(term, synthesize(lam), lam);
+        }
         yield switch (whnf(term)) {
           case PiTerm dt -> {
             var param = lam.param();
@@ -620,8 +633,7 @@ public final class ExprTycker extends Tycker {
       case Expr.Pi pi -> {
         var param = pi.param();
         final var var = param.ref();
-        var domTy = param.type();
-        var domRes = ty(domTy);
+        var domRes = ty(param.type());
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
           var cod = ty(pi.last());

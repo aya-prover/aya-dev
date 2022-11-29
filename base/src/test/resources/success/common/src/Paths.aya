@@ -14,7 +14,7 @@ def infix = {A : Type} => Eq A looser ~
 def idp {a : A} : a = a => \i => a
 def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g => \i a => p a i
 def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => \i => f (p i)
-def sym (p : [| i |] A) : [| i |] A { i := p 0 | ~ i := p 1 } => \i => p (~ i)
+def sym (p : [| i |] A) : p 1 = p 0 => \i => p (~ i)
 
 def isContr (A : Type) => Sig (a : A) ** (forall b -> a = b)
 
