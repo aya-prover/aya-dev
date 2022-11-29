@@ -35,7 +35,7 @@ public interface DeltaExpander extends EndoTerm {
         var def = con.ref().core;
         if (def == null) yield con;
         var sat = AyaRestrSimplifier.INSTANCE.mapSplit(def.clauses, t ->
-          t.subst(buildSubst(def.selfTele, con.conArgs())));
+          t.subst(buildSubst(def.fullTelescope(), con.args())));
         if (sat instanceof Partial.Const<Term> c) yield apply(c.u());
         yield con;
       }
