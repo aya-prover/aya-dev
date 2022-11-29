@@ -1,0 +1,8 @@
+open import Data::List::Core
+open import Data::Tree::RedBlack::Base using (Decider)
+open import Data::Tree::RedBlack::Direct using (tree-sort)
+open import Logic::Dec
+
+variable A : Type
+
+def sort (p : Decider A) => tree-sort p

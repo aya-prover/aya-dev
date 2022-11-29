@@ -1,4 +1,5 @@
 open import Paths using (=)
+open import Logic::HProp
 
 data False
 
@@ -12,3 +13,5 @@ def pointed {A : Type} (a : A) : NonEmpty A => \f => f a
 
 def infix ≠ {A : Type} (a b : A) => ¬ (a = b)
 tighter =
+
+def FalseProp : isProp False => \a b => elim a

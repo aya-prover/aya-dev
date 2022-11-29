@@ -1,0 +1,19 @@
+open import Spaces::Sphere::S1::Core
+open import Spaces::Sphere::S2::Core
+open import Paths
+open import Algebra::Formula
+
+def S¹×S¹→S² (x y : S¹) : S²
+| loop i, loop j => surf i j
+| _, _ => base2
+
+def invS² S² : S²
+| base2 => base2
+| surf i j => surf j i
+
+// TODO: prove using tactics like mcases once we have them
+def S¹×S¹→S²-anticomm (x y : S¹) : invS² (S¹×S¹→S² x y) = S¹×S¹→S² y x
+| base, base => idp
+| base, loop _ => idp
+| loop _, base => idp
+| loop _, loop _ => idp

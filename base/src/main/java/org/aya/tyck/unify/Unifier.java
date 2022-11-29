@@ -4,6 +4,7 @@ package org.aya.tyck.unify;
 
 import kala.collection.Seq;
 import kala.collection.mutable.MutableArrayList;
+import kala.control.Option;
 import org.aya.core.Meta;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
@@ -78,18 +79,8 @@ public final class Unifier extends TermComparator {
 
   @Override @Nullable protected Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs) {
     var meta = lhs.ref();
-    if (preRhs instanceof MetaTerm rcall && lhs.ref() == rcall.ref()) {
-      // If we do not know the type, then we do not perform the comparison
-      if (meta.result == null) return null;
-      var holeTy = PiTerm.make(meta.telescope, meta.result);
-      for (var arg : lhs.args().zipView(rcall.args())) {
-        if (!(holeTy instanceof PiTerm holePi))
-          throw new InternalException("meta arg size larger than param size. this should not happen");
-        if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type())) return null;
-        holeTy = holePi.substBody(arg._1.term());
-      }
-      return holeTy;
-    }
+    var sameMeta = sameMeta(lr, rl, lhs, meta, preRhs);
+    if (sameMeta.isDefined()) return sameMeta.get();
     // Long time ago I wrote this to generate more unification equations,
     // which solves more universe levels. However, with latest version Aya (0.13),
     // removing this does not break anything.
@@ -129,6 +120,8 @@ public final class Unifier extends TermComparator {
     //  we break the logic.
     assert !state.metas().containsKey(meta);
     var solved = preRhs.freezeHoles(state).subst(subst);
+    sameMeta = sameMeta(lr, rl, lhs, meta, solved);
+    if (sameMeta.isDefined()) return sameMeta.get();
     var allowedVars = meta.fullTelescope().map(Term.Param::ref).toImmutableSeq();
     // First, try to scope check without normalization
     var scopeCheck = solved.scopeCheck(allowedVars);
@@ -154,6 +147,24 @@ public final class Unifier extends TermComparator {
     }
     tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
     return resultTy;
+  }
+
+  /**
+   * @return none if not the same meta, some(null) if return null directly
+   */
+  private @NotNull Option<@Nullable Term> sameMeta(Sub lr, Sub rl, @NotNull MetaTerm lhs, Meta meta, Term preRhs) {
+    if (!(preRhs instanceof MetaTerm rcall && meta == rcall.ref())) return Option.none();
+    // If we do not know the type, then we do not perform the comparison
+    if (meta.result == null) return Option.some(null);
+    var holeTy = PiTerm.make(meta.telescope, meta.result);
+    for (var arg : lhs.args().zipView(rcall.args())) {
+      if (!(holeTy instanceof PiTerm holePi))
+        throw new InternalException("meta arg size larger than param size. this should not happen");
+      if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type()))
+        return Option.some(null);
+      holeTy = holePi.substBody(arg._1.term());
+    }
+    return Option.some(holeTy);
   }
 
   public void checkEqn(@NotNull TyckState.Eqn eqn) {
