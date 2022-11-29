@@ -3,7 +3,7 @@ open import Arith::Int
 
 public open data S¹
 | base
-| loop (i : I) { ∂(i) := base }
+| loop (i : I) { ∂ i := base }
 
 def ΩS¹ => base = base
 def ploop : ΩS¹ => \i => loop i
