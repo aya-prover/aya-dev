@@ -63,9 +63,8 @@ public class AyaMdParserTest {
     var parser = new AyaMdParser(mdFile);
     var literate = parser.parseLiterate(new AyaParserImpl(ThrowingReporter.INSTANCE));
     var actualCode = AyaMdParser.extractAya(literate);
-    ;
 
-    assertEquals(ayaFile.sourceCode(), actualCode);
+    assertLinesMatch(ayaFile.sourceCode().lines(), actualCode.lines());
   }
 
   @Test
