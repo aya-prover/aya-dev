@@ -15,7 +15,6 @@ public interface LiterateConsumer extends Consumer<Literate> {
       case Literate.Code code -> {}
       case Literate.CodeBlock codeBlock -> {}
       case Literate.Err err -> {}
-      case Literate.ErrorLiterate errorLiterate -> {}
       case Literate.Many many -> many.children().forEach(this);
       case Literate.Raw raw -> {}
       case Literate.Unsupported(var children) -> children.forEach(this);

@@ -46,19 +46,6 @@ public sealed interface Literate extends Docile {
     }
   }
 
-  final class ErrorLiterate implements Literate {
-    public static final ErrorLiterate INSTANCE = new ErrorLiterate();
-
-    private ErrorLiterate() {
-    }
-
-    @Override
-    public @NotNull Doc toDoc() {
-      // TODO
-      throw new UnsupportedOperationException("TODO");
-    }
-  }
-
   // TODO
   final class Code implements Literate {
     public @NotNull Expr expr;
