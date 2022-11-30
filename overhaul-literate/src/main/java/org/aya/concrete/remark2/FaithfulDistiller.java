@@ -30,13 +30,8 @@ public interface FaithfulDistiller {
    */
   static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull SeqView<HighlightInfo> highlights) {
     var docs = MutableList.<Doc>create();
-    HighlightInfo current;
 
-    // TODO: maybe iterator?
-    while (highlights.isNotEmpty()) {
-      current = highlights.first();
-      highlights = highlights.drop(1);
-
+    for (var current : highlights) {
       var parts = twoKnifeThreeParts(raw, base, current.sourcePos());
       var plainPart = parts._1.isEmpty() ? Doc.empty() : Doc.plain(parts._1);
       var highlightPart = parts._2.isEmpty() ? Doc.empty() : doHighlight(parts._2, current.type());
