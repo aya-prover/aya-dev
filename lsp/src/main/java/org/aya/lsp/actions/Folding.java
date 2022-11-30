@@ -26,12 +26,10 @@ public record Folding(@NotNull MutableList<FoldingRange> foldingRanges) implemen
 
   @Override public void accept(@NotNull Stmt stmt) {
     switch (stmt) {
-      case Decl maybe -> {
-        Resolver.withChildren(maybe).filter(dv -> dv.concrete != null)
-          .map(dv -> dv.concrete.entireSourcePos())
-          .filter(pos -> pos.linesOfCode() >= 3)
-          .forEach(pos -> foldingRanges.append(toFoldingRange(pos)));
-      }
+      case Decl maybe -> Resolver.withChildren(maybe).filter(dv -> dv.concrete != null)
+        .map(dv -> dv.concrete.entireSourcePos())
+        .filter(pos -> pos.linesOfCode() >= 3)
+        .forEach(pos -> foldingRanges.append(toFoldingRange(pos)));
       case Command.Module mod -> foldingRanges.append(toFoldingRange(mod.entireSourcePos()));
       default -> {}
     }

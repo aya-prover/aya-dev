@@ -15,11 +15,11 @@ public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF {
     this.lift = lift;
   }
 
-  public static SortTerm Type0 = new SortTerm(SortKind.Type, 0);
-  public static SortTerm Set0 = new SortTerm(SortKind.Set, 0);
-  public static SortTerm Set1 = new SortTerm(SortKind.Set, 1);
-  public static SortTerm ISet = new SortTerm(SortKind.ISet, 0);
-  public static SortTerm Prop = new SortTerm(SortKind.Prop, 0);
+  public static final @NotNull SortTerm Type0 = new SortTerm(SortKind.Type, 0);
+  public static final @NotNull SortTerm Set0 = new SortTerm(SortKind.Set, 0);
+  public static final @NotNull SortTerm Set1 = new SortTerm(SortKind.Set, 1);
+  public static final @NotNull SortTerm ISet = new SortTerm(SortKind.ISet, 0);
+  public static final @NotNull SortTerm Prop = new SortTerm(SortKind.Prop, 0);
 
   public @NotNull SortTerm succ() {
     return switch (kind) {
