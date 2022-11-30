@@ -74,33 +74,31 @@ public record Conquer(
   private void checkConditions(int nth, int i, Restr.Side<Term> condition, Subst matchy) {
     var ctx = new MapLocalCtx();
     var currentClause = matchings.get(nth);
-    // We should also restrict the current clause body under `condition`.
-    var newBodyAndCofResult = CofThy.vdash(condition.cof(), matchy, subst ->
-      Tuple.of(
-        currentClause.body().subst(subst),
-        new Expander.WHNFer(tycker.state).tryUnfoldClauses(orderIndependent,
-          currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst))),
-          0, matchings).map(w -> w.map(t -> t.subst(subst)))
-      )).get();
-    currentClause.patterns().forEach(p -> p.storeBindings(ctx));
-    var newBody = newBodyAndCofResult._1;
-    var matchResult = newBodyAndCofResult._2;
-    if (matchResult.isEmpty()) {
-      tycker.reporter.report(new ClausesProblem.Conditions(
-        sourcePos, nth + 1, i, newBody, null, currentClause.sourcePos(), null));
-      return;
-    }
-    var anotherClause = matchResult.get();
-    if (newBody instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-      hole.ref().conditions.append(Tuple.of(matchy, anotherClause.data()));
-    } else if (anotherClause.data() instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-      hole.ref().conditions.append(Tuple.of(matchy, newBody));
-    }
-    var unification = tycker.unifier(sourcePos, Ordering.Eq, ctx)
-      .compare(newBody, anotherClause.data(), signature.result().subst(matchy));
-    if (!unification) {
-      tycker.reporter.report(new ClausesProblem.Conditions(
-        sourcePos, nth + 1, i, newBody, anotherClause.data(), currentClause.sourcePos(), anotherClause.sourcePos()));
-    }
+    CofThy.conv(condition.cof(), matchy, subst -> {
+      // We should also restrict the current clause body under `condition`.
+      var newBody = currentClause.body().subst(subst);
+      var matchResult = new Expander.WHNFer(tycker.state).tryUnfoldClauses(orderIndependent,
+        currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst))),
+        0, matchings).map(w -> w.map(t -> t.subst(subst)));
+      currentClause.patterns().forEach(p -> p.storeBindings(ctx));
+      if (matchResult.isEmpty()) {
+        tycker.reporter.report(new ClausesProblem.Conditions(
+          sourcePos, nth + 1, i, newBody, null, currentClause.sourcePos(), null));
+        return true;
+      }
+      var anotherClause = matchResult.get();
+      if (newBody instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
+        hole.ref().conditions.append(Tuple.of(matchy, anotherClause.data()));
+      } else if (anotherClause.data() instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
+        hole.ref().conditions.append(Tuple.of(matchy, newBody));
+      }
+      var unification = tycker.unifier(sourcePos, Ordering.Eq, ctx)
+        .compare(newBody, anotherClause.data(), signature.result().subst(matchy));
+      if (!unification) {
+        tycker.reporter.report(new ClausesProblem.Conditions(
+          sourcePos, nth + 1, i, newBody, anotherClause.data(), currentClause.sourcePos(), anotherClause.sourcePos()));
+      }
+      return unification;
+    });
   }
 }
