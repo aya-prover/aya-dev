@@ -184,17 +184,17 @@ public class AyaMdParser {
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {
-      return new Literate.Many(Style.italic(), mapChildren(emphasis, producer));
+      return new Literate.Many(Style.italic(), mapChildren(emphasis, producer), false);
     } else if (node instanceof HardLineBreak || node instanceof SoftLineBreak) {
       return new Literate.Raw(Doc.line());
     } else if (node instanceof StrongEmphasis emphasis) {
-      return new Literate.Many(Style.bold(), mapChildren(emphasis, producer));
+      return new Literate.Many(Style.bold(), mapChildren(emphasis, producer), false);
     } else if (node instanceof Paragraph) {
-      return new Literate.Many(null, mapChildren(node, producer));
+      return new Literate.Many(null, mapChildren(node, producer), false);
     } else if (node instanceof Document) {
       var children = mapChildren(node, producer);
       if (children.sizeEquals(1)) return children.first();
-      else return new Literate.Many(null, children);
+      else return new Literate.Many(null, children, true);
     } else if (node instanceof FencedCodeBlock codeBlock) {
       var language = codeBlock.getInfo();
       var raw = codeBlock.getLiteral();

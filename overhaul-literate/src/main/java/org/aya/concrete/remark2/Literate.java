@@ -27,9 +27,10 @@ public sealed interface Literate extends Docile {
   record Raw(@NotNull Doc toDoc) implements Literate {
   }
 
-  record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
+  record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children, boolean isBlock) implements Literate {
     @Override public @NotNull Doc toDoc() {
-      var cat = Doc.cat(children.map(Literate::toDoc));
+      var docs = children().map(Literate::toDoc);
+      var cat = isBlock ? Doc.vcat(docs) : Doc.cat(docs);
       return style == null ? cat : Doc.styled(style, cat);
     }
   }
