@@ -2,14 +2,18 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark2;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.literate.HighlightInfo;
+import org.aya.util.error.SourcePos;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
 public interface LiterateConsumer extends Consumer<Literate> {
+  @MustBeInvokedByOverriders
   default void accept(@NotNull Literate literate) {
     switch (literate) {
       case Literate.Code code -> {}
@@ -56,39 +60,25 @@ public interface LiterateConsumer extends Consumer<Literate> {
       LiterateConsumer.super.accept(literate);
     }
 
-    public @NotNull ImmutableSeq<Literate.Code> codes() {
-      return codes.toImmutableSeq();
+    public @NotNull SeqView<Literate.Code> codes() {
+      return codes.view();
     }
   }
 
-  class Highlight implements LiterateConsumer {
-    public final @NotNull ImmutableSeq<HighlightInfo> highlights;
-
-    /**
-     * @param highlights natural ordered
-     */
-    public Highlight(@NotNull ImmutableSeq<HighlightInfo> highlights) {
-      this.highlights = highlights;
-    }
-
-    @Override
-    public void accept(@NotNull Literate literate) {
+  /**
+   * @param highlights natural ordered
+   */
+  record Highlight(@NotNull ImmutableSeq<HighlightInfo> highlights) implements LiterateConsumer {
+    @Override public void accept(@NotNull Literate literate) {
       if (literate instanceof Literate.CodeBlock codeBlock) {
-        if (codeBlock.isAya() && codeBlock.sourcePos != null) {
-          var sourcePos = codeBlock.sourcePos;
-          var highlights = this.highlights.view().filter(x -> {
-            // TODO: new method
-            var isInside = sourcePos.tokenStartIndex() <= x.sourcePos().tokenStartIndex()
-              && sourcePos.tokenEndIndex() >= x.sourcePos().tokenEndIndex();
-
-            return isInside;
-          });
-
+        if (codeBlock.isAya() && codeBlock.sourcePos instanceof SourcePos sourcePos) {
+          var highlights = this.highlights.view().filter(x -> sourcePos.containsIndex(x.sourcePos()));
           codeBlock.highlighted = FaithfulDistiller.highlight(codeBlock.raw, sourcePos.tokenStartIndex(), highlights);
         }
       }
 
       LiterateConsumer.super.accept(literate);
     }
+
   }
 }

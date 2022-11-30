@@ -34,6 +34,10 @@ public record SourcePos(
   /** Source pos used in serialized core */
   public static final SourcePos SER = new SourcePos(SourceFile.SER, -1, -1, -1, -1, -1, -1);
 
+  public boolean containsIndex(@NotNull SourcePos x) {
+    return tokenStartIndex <= x.tokenStartIndex && tokenEndIndex >= x.tokenEndIndex;
+  }
+
   public @NotNull Span toSpan() {
     return new LineColSpan(file().sourceCode(), startLine, startColumn, endLine, endColumn);
   }
