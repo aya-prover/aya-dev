@@ -180,9 +180,12 @@ public class ReplCompiler {
     return null;
   }
 
+  private @Nullable CachedModuleLoader<ModuleListLoader> loader;
+
   private CachedModuleLoader<ModuleListLoader> createLoader() {
-    return new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
+    if (loader == null) loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
       new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
+    return loader;
   }
 
   public @NotNull ReplContext getContext() {
