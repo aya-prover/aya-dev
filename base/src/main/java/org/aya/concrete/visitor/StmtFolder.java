@@ -7,6 +7,7 @@ import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.CommonDecl;
 import org.aya.concrete.stmt.Stmt;
@@ -52,19 +53,19 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
     };
   }
 
+  private R bindBlock(@NotNull R acc, BindBlock bb) {
+    var t = Option.ofNullable(bb.resolvedTighters().get()).getOrElse(ImmutableSeq::empty);
+    var l = Option.ofNullable(bb.resolvedLoosers().get()).getOrElse(ImmutableSeq::empty);
+    return t.zipView(bb.tighters()).concat(l.zipView(bb.loosers()))
+      .foldLeft(acc, (ac, v) -> fold(ac, v._1, v._2.sourcePos()));
+  }
+
   @MustBeInvokedByOverriders
   default @NotNull R fold(@NotNull R acc, @NotNull Stmt stmt) {
     switch (stmt) {
-      case CommonDecl decl -> {
-        var bb = decl.bindBlock;
-        var t = Option.ofNullable(bb.resolvedTighters().get()).getOrElse(ImmutableSeq::empty);
-        var l = Option.ofNullable(bb.resolvedLoosers().get()).getOrElse(ImmutableSeq::empty);
-        acc = t.zipView(bb.tighters()).concat(l.zipView(bb.loosers()))
-          .foldLeft(acc, (ac, v) -> fold(ac, v._1, v._2.sourcePos()));
-      }
-      case Command.Open open -> {
-        // TODO: #721
-      }
+      case CommonDecl decl -> acc = bindBlock(acc, decl.bindBlock);
+      // TODO: #721
+      case Command.Open open -> open.useHide().list().foldLeft(acc, (ac, v) -> bindBlock(ac, v.asBind()));
       default -> {}
     }
     return acc;
