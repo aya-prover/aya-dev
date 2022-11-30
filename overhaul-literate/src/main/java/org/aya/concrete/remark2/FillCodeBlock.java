@@ -11,12 +11,9 @@ import org.commonmark.parser.PostProcessor;
  */
 public class FillCodeBlock implements PostProcessor {
   public static final class Visitor extends AbstractVisitor {
-    public final static Visitor INSTANCE = new Visitor();
-
     private Visitor() {}
 
-    @Override
-    public void visit(FencedCodeBlock codeBlock) {
+    @Override public void visit(FencedCodeBlock codeBlock) {
       if (codeBlock != null) {
         var sourceSpans = codeBlock.getSourceSpans();
 
@@ -49,15 +46,13 @@ public class FillCodeBlock implements PostProcessor {
   }
 
   public final static FillCodeBlock INSTANCE = new FillCodeBlock();
+  public final static Visitor VISITOR = new Visitor();
 
   private FillCodeBlock() {}
 
   @Override
   public Node process(Node node) {
-    if (node instanceof Document doc) {
-      Visitor.INSTANCE.visit(doc);
-    }
-
+    if (node instanceof Document doc) VISITOR.visit(doc);
     return node;
   }
 }

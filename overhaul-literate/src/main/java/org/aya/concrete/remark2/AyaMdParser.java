@@ -21,17 +21,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class AyaMdParser {
   public static final char LINE_SEPARATOR = '\n';
-  private @NotNull
-  final String code;
+  private final @NotNull String code;
 
   /**
    * For empty line that end with EOF, the index points to EOF<br/>
    * For empty line that end with \n, the index points to \n
    */
-  private @NotNull
-  final ImmutableSeq<Integer> linesIndex;
-  private @NotNull
-  final SourceFile file;
+  private final @NotNull ImmutableSeq<Integer> linesIndex;
+  private final @NotNull SourceFile file;
 
   public AyaMdParser(@NotNull SourceFile file) {
     this.file = file;
@@ -50,8 +47,7 @@ public class AyaMdParser {
   }
 
   public @NotNull Literate parseLiterate(@NotNull GenericAyaParser producer) {
-    var node = parseMd();
-    return mapAST(node, producer);
+    return mapAST(parseMd(), producer);
   }
 
   /**
@@ -76,39 +72,33 @@ public class AyaMdParser {
       var lineTarget = sourcePos.startLine() - 1;
       while (line < lineTarget) {
         builder.append(LINE_SEPARATOR);
-        line = line + 1;
-        index = index + 1;
+        line++;
+        index++;
       }
 
       // line = lineTarget
       // We want to reach the character that before the tokenStartIndex.
       var indexTarget = sourcePos.tokenStartIndex() - 1;
-      if (indexTarget <= index) {
-        // This case is probably impossible, because a code block always begin with at least '```'
-        throw new InternalException("BUG!");
-      }
+      // This case is probably impossible, because a code block always begin with at least '```'
+      assert indexTarget > index : "BUG!";
 
       // We are at the line above the code block --- The '```' line
       // reach to indexTarget - 1 (1 is for line separator)
       var count = 0;
       while (index < indexTarget - 1) {
-        index = index + 1;
+        index++;
         // It is impossible that we only append one or no '/', because a code block always start with three '`'
         // TODO: '///' is a Stmt, it would make aya unhappy
-        if (count < 2) {
-          builder.append('/');
-        } else {
-          builder.append('\\');
-        }
+        builder.append(count < 2 ? '/' : '\\');
 
-        count = count + 1;
+        count++;
       }
 
       var content = block.raw;
       // index = indexTarget - 1
       builder.append(LINE_SEPARATOR);
-      index = index + 1;
-      line = line + 1;
+      index++;
+      line++;
       // index = indexTarget
       // line = sourcePos.startLine
       // The cursor is now before the sourcePos.tokenStartIndex
@@ -119,9 +109,9 @@ public class AyaMdParser {
       builder.append(content);
 
       // update line and index
-      index = index + content.length();
+      index += content.length();
       // the cursor is now after the last character
-      line = line + sourcePos.linesOfCode() - 1;
+      line += sourcePos.linesOfCode() - 1;
     }
 
     return builder.toString();
@@ -184,9 +174,7 @@ public class AyaMdParser {
         var inner = ImmutableSeq.from(sourceSpans).view().drop(1).dropLast(1).toImmutableSeq();
         // remove the last line break if not empty
         if (!raw.isEmpty()) raw = raw.substring(0, raw.length() - 1);
-        return new Literate.CodeBlock(
-          fromSourceSpans(inner),
-          language, raw);
+        return new Literate.CodeBlock(fromSourceSpans(inner), language, raw);
       }
 
       throw new InternalException("Not Enough SourceSpans");
@@ -222,11 +210,8 @@ public class AyaMdParser {
    * @param sourceSpans a not null sequence
    * @return null if a empty sourceSpans
    */
-  @Contract(pure = true)
-  public static @Nullable SourcePos fromSourceSpans(
-    @NotNull SourceFile file,
-    int startFrom,
-    @NotNull Seq<SourceSpan> sourceSpans) {
+  @Contract(pure = true) public static @Nullable SourcePos
+  fromSourceSpans(@NotNull SourceFile file, int startFrom, @NotNull Seq<SourceSpan> sourceSpans) {
     if (sourceSpans.isEmpty()) return null;
 
     var it = sourceSpans.iterator();
@@ -241,15 +226,15 @@ public class AyaMdParser {
 
       // Continuous?
       while (endSpan.getLineIndex() + 1 != curSpan.getLineIndex()) {
-        totalLength = totalLength + 1;
+        totalLength++;
         endSpan = SourceSpan.of(endSpan.getLineIndex() + 1, -1, 0);
       }
 
       // Now continuous!
       endLine = curSpan.getLineIndex();
       endColumn = curSpan.getLength() - 1;
-      totalLength = totalLength + 1 // 1 is for line separator
-        + curSpan.getLength();
+      // 1 is for line separator
+      totalLength += 1 + curSpan.getLength();
 
       endSpan = curSpan;
     }

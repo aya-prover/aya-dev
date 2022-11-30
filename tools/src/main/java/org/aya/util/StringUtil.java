@@ -4,7 +4,6 @@ package org.aya.util;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableSeq;
 import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
