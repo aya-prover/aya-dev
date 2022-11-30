@@ -36,25 +36,7 @@ public class AyaMdParser {
   public AyaMdParser(@NotNull SourceFile file) {
     this.file = file;
     this.code = StringUtil.trimCRLF(file.sourceCode());
-
-    // build linesIndex
-    // The line separator is 1 character wide.
-    var linesIndex = MutableList.<Integer>create();
-    var lastLineIndex = -1;   // H0 : -1 <=> linesIndex.isEmpty
-    var lastLineLength = -1;   // H1 : -1 <=> linesIndex.isEmpty, text length (exclude line separator)
-
-    for (var line : ImmutableSeq.from(code.lines())) {
-      var lineIndex = lastLineIndex == -1
-        ? 0
-        : lastLineIndex + lastLineLength + 1;   // 1 is for line separator
-      // lastLineLength is not -1 now
-
-      linesIndex.append(lineIndex);
-      lastLineIndex = lineIndex;
-      lastLineLength = line.length();
-    }
-
-    this.linesIndex = linesIndex.toImmutableSeq();
+    this.linesIndex = StringUtil.indexedLines(code).map(x -> x._2);
   }
 
   private Node parseMd() {
