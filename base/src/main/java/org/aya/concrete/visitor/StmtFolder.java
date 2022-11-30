@@ -2,12 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.CommonDecl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -47,7 +52,21 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
     };
   }
 
+  @MustBeInvokedByOverriders
   default @NotNull R fold(@NotNull R acc, @NotNull Stmt stmt) {
+    switch (stmt) {
+      case CommonDecl decl -> {
+        var bb = decl.bindBlock;
+        var t = Option.ofNullable(bb.resolvedTighters().get()).getOrElse(ImmutableSeq::empty);
+        var l = Option.ofNullable(bb.resolvedLoosers().get()).getOrElse(ImmutableSeq::empty);
+        acc = t.zipView(bb.tighters()).concat(l.zipView(bb.loosers()))
+          .foldLeft(acc, (ac, v) -> fold(ac, v._1, v._2.sourcePos()));
+      }
+      case Command.Open open -> {
+        // TODO: #721
+      }
+      default -> {}
+    }
     return acc;
   }
 

@@ -72,8 +72,10 @@ public interface Resolver {
 
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
-      case TeleDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
-      case TeleDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
+      case TeleDecl.DataDecl data ->
+        SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
+      case TeleDecl.StructDecl struct ->
+        SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
       default -> SeqView.of(def.ref());
     };
   }
@@ -114,8 +116,9 @@ public interface Resolver {
       return xy.inside(pos) ? targets.appended(new WithPos<>(pos, var)) : StmtFolder.super.fold(targets, var, pos);
     }
 
-    @Override
-    public @NotNull SeqView<WithPos<AnyVar>> fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
+    @Override public @NotNull SeqView<WithPos<AnyVar>>
+    fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
+      targets = StmtFolder.super.fold(targets, stmt);
       return switch (stmt) {
         case Command.Import imp -> fold(targets, new ModuleVar(imp.path()), imp.path().sourcePos());
         case Command.Open open -> fold(targets, new ModuleVar(open.path()), open.path().sourcePos());

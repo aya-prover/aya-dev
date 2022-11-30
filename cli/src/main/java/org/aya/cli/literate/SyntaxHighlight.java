@@ -85,6 +85,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
 
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Stmt stmt) {
+    acc = StmtFolder.super.fold(acc, stmt);
     return switch (stmt) {
       case Generalize g -> g.variables.foldLeft(acc, (a, var) -> add(a, linkDef(var.sourcePos, var)));
       case Command.Module m -> add(acc, linkModuleDef(new QualifiedID(m.sourcePos(), m.name())));
@@ -97,7 +98,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
           teleDecl.telescope().view()
             .map(Expr.Param::ref)
             .filterNot(LocalVar::isGenerated)
-            .forEach(def -> add(acc, linkDef(def.definition(), def)));
+            .foldLeft(acc, (ac, def) -> add(ac, linkDef(def.definition(), def)));
         }
 
         yield add(acc, linkDef(decl.sourcePos(), decl.ref()));
