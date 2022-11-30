@@ -9,6 +9,7 @@ import org.aya.concrete.GenericAyaParser;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.StringUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.commonmark.node.*;
@@ -34,9 +35,7 @@ public class AyaMdParser {
 
   public AyaMdParser(@NotNull SourceFile file) {
     this.file = file;
-    this.code = file.sourceCode()
-      .replace("\r\n", "\n")    // TODO: any elegant way?
-      .replace('\r', '\n');
+    this.code = StringUtil.trimCRLF(file.sourceCode());
 
     // build linesIndex
     // The line separator is 1 character wide.

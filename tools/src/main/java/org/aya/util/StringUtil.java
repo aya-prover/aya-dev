@@ -12,4 +12,8 @@ public interface StringUtil {
     var seconds = time / 1000;
     return (seconds / 60) + "m" + (seconds % 60) + "s";
   }
+
+  static @NotNull String trimCRLF(@NotNull String string) {
+    return string.replaceAll("\\r\\n?", "\n");
+  }
 }
