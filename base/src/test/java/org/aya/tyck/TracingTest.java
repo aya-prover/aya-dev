@@ -15,7 +15,6 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-@SuppressWarnings("UnknownLanguage")
 public class TracingTest {
   @Language("Aya")
   public static final String CODE = """
@@ -38,7 +37,7 @@ public class TracingTest {
     var builder = new Trace.Builder();
     var shapes = new AyaShape.Factory();
     decls.forEach(decl -> {
-      if (decl instanceof TeleDecl signatured) TyckDeclTest.tyck(res._1, signatured, builder, shapes);
+      if (decl instanceof TeleDecl<?> signatured) TyckDeclTest.tyck(res._1, signatured, builder, shapes);
     });
     return builder;
   }

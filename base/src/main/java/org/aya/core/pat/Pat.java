@@ -21,6 +21,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
@@ -89,7 +90,7 @@ public sealed interface Pat extends AyaDocile {
    *
    * @param fakeBind is used when inline if there is no solution.
    *                 So don't add this to {@link LocalCtx} too early
-   *                 and remember to inline Meta in {@link PatTycker#checkLhs(Pattern.Clause, Def.Signature, boolean)}
+   *                 and remember to inline Meta in {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean)}
    */
   record Meta(
     boolean explicit,

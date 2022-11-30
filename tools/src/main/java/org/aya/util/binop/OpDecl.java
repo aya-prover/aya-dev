@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.binop;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +11,7 @@ public interface OpDecl {
     Tighter, Looser
   }
 
-  @Nullable OpInfo opInfo();
+  @Contract(pure = true) @Nullable OpInfo opInfo();
 
   record OpInfo(@NotNull String name, @NotNull Assoc assoc) {
   }

@@ -69,7 +69,7 @@ public final class ExprTycker extends Tycker {
    * {@code let ... in HERE}
    */
   public @NotNull TypedSubst lets = new TypedSubst();
-  public @NotNull AyaShape.Factory shapeFactory;
+  public final @NotNull AyaShape.Factory shapeFactory;
 
   public boolean inProp = false;
 

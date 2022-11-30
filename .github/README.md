@@ -73,7 +73,7 @@ of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
 [gadt]: ../base/src/test/resources/success/src/TypeSafeNorm.aya
 [regularity]: ../base/src/test/resources/success/common/src/Paths.aya
 [funExt]: ../base/src/test/resources/success/common/src/Paths.aya
-[rbtree]: ../base/src/test/resources/success/common/src/Data/RedBlack.aya
+[rbtree]: ../base/src/test/resources/success/common/src/Data/Tree/RedBlack/Direct.aya
 [3-torus]: ../base/src/test/resources/success/common/src/Spaces/Torus/T3.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya

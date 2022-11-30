@@ -22,13 +22,13 @@ import org.jetbrains.annotations.Nullable;
 
 public record ProjectSymbol(@NotNull MutableList<ProjectSymbol.Symbol> symbols) implements SyntaxDeclAction {
   public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull LibrarySource source) {
-    var symbol = new ProjectSymbol(MutableList.<Symbol>create());
+    var symbol = new ProjectSymbol(MutableList.create());
     collect(source, symbol);
     return symbol.symbols.toImmutableSeq();
   }
 
   public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull SeqView<LibraryOwner> libraries) {
-    var symbol = new ProjectSymbol(MutableList.<Symbol>create());
+    var symbol = new ProjectSymbol(MutableList.create());
     libraries.forEach(lib -> collect(lib, symbol));
     return symbol.symbols.toImmutableSeq();
   }
@@ -45,7 +45,7 @@ public record ProjectSymbol(@NotNull MutableList<ProjectSymbol.Symbol> symbols) 
 
   @Override public void accept(@NotNull Stmt stmt) {
     if (stmt instanceof Decl decl) {
-      var children = new ProjectSymbol(MutableList.<Symbol>create());
+      var children = new ProjectSymbol(MutableList.create());
       Resolver.withChildren(decl)
         .filter(dv -> dv.concrete != decl && dv.concrete != null)
         .forEach(dv -> collect(children, dv, null));

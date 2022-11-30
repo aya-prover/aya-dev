@@ -5,6 +5,7 @@ package org.aya.lsp.actions;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Pattern;
+import org.aya.core.term.Term;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.XYXY;
 import org.aya.util.distill.DistillerOptions;
@@ -30,8 +31,8 @@ public record InlayHintMaker(
   }
 
   @Override public @NotNull Pattern pre(@NotNull Pattern pattern) {
-    if (pattern instanceof Pattern.Bind bind && bind.type().get() != null) {
-      var type = bind.type().get().toDoc(DistillerOptions.pretty()).commonRender();
+    if (pattern instanceof Pattern.Bind bind && bind.type().get() instanceof Term term) {
+      var type = term.toDoc(DistillerOptions.pretty()).commonRender();
       var range = LspRange.toRange(bind.sourcePos());
       var hint = new InlayHint(range.end, ": " + type);
       hint.kind = InlayHintKind.Type;
