@@ -29,13 +29,13 @@ import org.jetbrains.annotations.NotNull;
 public record Conquer(
   @NotNull ImmutableSeq<Term.Matching> matchings,
   @NotNull SourcePos sourcePos,
-  @NotNull Def.Signature signature,
+  @NotNull Def.Signature<?> signature,
   boolean orderIndependent,
   @NotNull ExprTycker tycker
 ) {
   public static void against(
     @NotNull ImmutableSeq<Term.Matching> matchings, boolean orderIndependent,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
+    @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature<?> signature
   ) {
     var conquer = new Conquer(matchings, pos, signature, orderIndependent, tycker);
     for (int i = 0, size = matchings.size(); i < size; i++) {
@@ -75,16 +75,16 @@ public record Conquer(
     var ctx = new MapLocalCtx();
     var currentClause = matchings.get(nth);
     // We should also restrict the current clause body under `condition`.
-    // TODO: refactor the following to make it completely inside a CofThy.conv call
-    var newBody = CofThy.vdash(condition.cof(), matchy, subst -> currentClause.body().subst(subst)).get();
+    var newBodyAndCofResult = CofThy.vdash(condition.cof(), matchy, subst ->
+      Tuple.of(
+        currentClause.body().subst(subst),
+        new Expander.WHNFer(tycker.state).tryUnfoldClauses(orderIndependent,
+          currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst))),
+          0, matchings).map(w -> w.map(t -> t.subst(subst)))
+      )).get();
     currentClause.patterns().forEach(p -> p.storeBindings(ctx));
-    // They're pre-cof
-    var cofResult = CofThy.vdash(condition.cof(), matchy, subst ->
-      new Expander.WHNFer(tycker.state).tryUnfoldClauses(orderIndependent,
-        currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst))),
-        0, matchings).map(w -> w.map(t -> t.subst(subst))));
-    assert cofResult.isDefined() : "Problem with partials, they have non-RefTerm in cof!";
-    var matchResult = cofResult.get();
+    var newBody = newBodyAndCofResult._1;
+    var matchResult = newBodyAndCofResult._2;
     if (matchResult.isEmpty()) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, currentClause.sourcePos(), null));
