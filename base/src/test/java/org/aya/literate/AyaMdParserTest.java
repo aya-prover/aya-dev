@@ -78,7 +78,8 @@ public class AyaMdParserTest {
   @Test
   public void testExtract() throws IOException {
     var cases = Seq.of(
-      new Case("test")
+      new Case("test"),
+      new Case("wow")
     );
 
     for (var oneCase : cases) {
@@ -97,7 +98,8 @@ public class AyaMdParserTest {
   @Test
   public void testHighlight() throws IOException {
     var cases = Seq.of(
-      new Case("test")
+      new Case("test"),
+      new Case("wow")
     );
 
     for (var oneCase : cases) {
