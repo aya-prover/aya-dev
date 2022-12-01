@@ -53,7 +53,7 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
     };
   }
 
-  private R bindBlock(@NotNull R acc, BindBlock bb) {
+  private R bindBlock(@NotNull R acc, @NotNull BindBlock bb) {
     var t = Option.ofNullable(bb.resolvedTighters().get()).getOrElse(ImmutableSeq::empty);
     var l = Option.ofNullable(bb.resolvedLoosers().get()).getOrElse(ImmutableSeq::empty);
     return t.zipView(bb.tighters()).concat(l.zipView(bb.loosers()))
@@ -62,13 +62,12 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
 
   @MustBeInvokedByOverriders
   default @NotNull R fold(@NotNull R acc, @NotNull Stmt stmt) {
-    switch (stmt) {
-      case CommonDecl decl -> acc = bindBlock(acc, decl.bindBlock);
+    return switch (stmt) {
+      case CommonDecl decl -> bindBlock(acc, decl.bindBlock);
       // TODO: #721
       case Command.Open open -> open.useHide().list().foldLeft(acc, (ac, v) -> bindBlock(ac, v.asBind()));
-      default -> {}
-    }
-    return acc;
+      default -> acc;
+    };
   }
 
   default @NotNull R apply(@NotNull Stmt stmt) {
