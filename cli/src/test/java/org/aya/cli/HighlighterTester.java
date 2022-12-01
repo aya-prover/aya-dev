@@ -210,7 +210,7 @@ public class HighlighterTester {
       stmts
     );
 
-    Stmt.resolveWithoutDesugar(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
+    Stmt.resolve(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
 
     var result = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
     new HighlighterTester(code, result, expected).runTest();

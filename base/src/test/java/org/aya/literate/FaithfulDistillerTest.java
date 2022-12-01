@@ -36,7 +36,7 @@ public class FaithfulDistillerTest {
       new EmptyContext(reporter, root).derive(modName),
       stmts);
 
-    Stmt.resolveWithoutDesugar(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
+    Stmt.resolve(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
 
     var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
     var doc = FaithfulDistiller.highlight(sourceFile.sourceCode(), 0, highlights);

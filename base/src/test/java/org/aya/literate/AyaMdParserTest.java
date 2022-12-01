@@ -3,11 +3,14 @@
 package org.aya.literate;
 
 import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
@@ -23,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class AyaMdParserTest {
@@ -109,7 +113,7 @@ public class AyaMdParserTest {
       // parse aya code
       var ayaFile = file(oneCase.ayaFile());
       var stmts = ayaParser.program(ayaFile);
-      Stmt.resolveWithoutDesugar(stmts, new ResolveInfo(
+      Stmt.resolve(stmts, new ResolveInfo(
         new PrimDef.Factory(),
         new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName()),
         stmts
@@ -117,7 +121,22 @@ public class AyaMdParserTest {
 
       var highlights = SyntaxHighlight.highlight(Option.some(ayaFile), stmts);
       new LiterateConsumer.Highlights(highlights).accept(literate);
-      Files.writeString(oneCase.htmlFile(), literate.toDoc().renderToHtml());
+      var expectedHtml = literate.toDoc().renderToHtml();
+      Files.writeString(oneCase.htmlFile(), expectedHtml);
+
+      // test single file compiler
+      var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, null, null);
+      compiler.compile(oneCase.mdFile(), new CompilerFlags(
+        CompilerFlags.Message.ASCII, false, false, null, SeqView.empty(),
+        oneCase.htmlFile()
+      ), null);
+      var actualHtml = Files.readString(oneCase.htmlFile());
+      assertEquals(trimIdHref(expectedHtml), trimIdHref(actualHtml));
     }
+  }
+
+  private @NotNull String trimIdHref(@NotNull String input) {
+    return input.replaceAll("id=\"[^\"]+\"", "id=\"\"")
+      .replaceAll("href=\"[^\"]+\"", "href=\"\"");
   }
 }
