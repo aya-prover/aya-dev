@@ -99,7 +99,8 @@ public class AyaMdParserTest {
   public void testHighlight() throws IOException {
     var cases = Seq.of(
       new Case("test"),
-      new Case("wow")
+      new Case("wow"),
+      new Case("unsupported")
     );
 
     for (var oneCase : cases) {
@@ -114,7 +115,7 @@ public class AyaMdParserTest {
 
       // parse aya code
       var ayaFile = file(oneCase.ayaFile());
-      var stmts = ayaParser.program(ayaFile);
+      var stmts = ayaParser.program(ayaFile, mdFile);
       Stmt.resolve(stmts, new ResolveInfo(
         new PrimDef.Factory(),
         new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName()),

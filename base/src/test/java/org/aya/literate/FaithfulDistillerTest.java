@@ -30,7 +30,7 @@ public class FaithfulDistillerTest {
 
     var sourceFile = new SourceFile(fileName, root, Files.readString(root.resolve(fileName)));
     var parser = new AyaParserImpl(reporter);
-    var stmts = parser.program(sourceFile);
+    var stmts = parser.program(sourceFile, sourceFile);
     var resolveInfo = new ResolveInfo(
       new PrimDef.Factory(),
       new EmptyContext(reporter, root).derive(modName),

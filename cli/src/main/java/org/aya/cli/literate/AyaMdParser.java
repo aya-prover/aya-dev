@@ -56,7 +56,7 @@ public class AyaMdParser {
     var codeBlocks = LiterateConsumer.AyaCodeBlocks.codeBlocks(literate);
     var builder = new StringBuilder();
     var index = -1;  // current index (the index of the last character)
-    var line = 0;   // current line
+    var line = 1;   // current line (1 based)
 
     for (var block : codeBlocks) {
       // block.isAya = true
@@ -226,7 +226,7 @@ public class AyaMdParser {
 
     return new SourcePos(file,
       startFrom, startFrom + totalLength - 1,
-      beginSpan.getLineIndex(), beginSpan.getColumnIndex(),
-      endLine, endColumn);
+      beginSpan.getLineIndex() + 1, beginSpan.getColumnIndex(),
+      endLine + 1, endColumn);
   }
 }

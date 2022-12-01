@@ -44,7 +44,7 @@ public class ParseTest {
 
   public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("Aya") String code) {
     var file = new SourceFile("main.aya", Option.none(), code);
-    return new AyaParserImpl(ThrowingReporter.INSTANCE).program(file);
+    return new AyaParserImpl(ThrowingReporter.INSTANCE).program(file, file);
   }
 
   public static @NotNull ImmutableSeq<Decl> parseDecl(@NotNull @NonNls @Language("Aya") String code) {
