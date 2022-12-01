@@ -12,7 +12,8 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
   default void accept(@NotNull Stmt stmt) {
     switch (stmt) {
       case Remark remark -> {
-        if (remark.literate != null) remark.literate.modify(this);
+        // TODO[CHECK]: recurse into remark
+        // if (remark.literate != null) remark.literate.modify(this);
       }
       case Decl decl -> {
         if (decl instanceof Decl.Telescopic<?> telescopic)

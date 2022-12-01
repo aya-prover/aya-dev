@@ -1,9 +1,12 @@
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+package org.aya.literate;
+
 import kala.collection.Set;
 import kala.control.Option;
+import org.aya.cli.literate.FaithfulDistiller;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.remark2.FaithfulDistiller;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef;
 import org.aya.resolve.ResolveInfo;
@@ -15,16 +18,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 public class FaithfulDistillerTest {
   @Test
   public void test() throws IOException {
     var reporter = ThrowingReporter.INSTANCE;
 
-    var root = Path.of("src", "test", "resources");
+    var root = AyaMdParserTest.TEST_DIR;
     var modName = "Main";
     var fileName = modName + ".aya";
     var outputFileName = modName + ".html";

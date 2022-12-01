@@ -8,6 +8,7 @@ module aya.cli {
   requires aya.ij.parsing.core;
   requires com.google.gson;
   requires info.picocli;
+  requires org.commonmark;
   requires org.fusesource.jansi;
   requires org.jline.builtins;
   requires org.jline.reader;

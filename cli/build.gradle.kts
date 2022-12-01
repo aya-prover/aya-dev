@@ -18,6 +18,7 @@ dependencies {
   val jlineVersion = deps.getProperty("version.jline")
   implementation("org.jline", "jline-terminal-jansi", version = jlineVersion)
   implementation("org.jline", "jline-builtins", version = jlineVersion)
+  implementation("org.aya-prover", "commonmark", version = deps.getProperty("version.commonmark"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
   testImplementation("org.ice1000.jimgui", "core", version = deps.getProperty("version.jimgui"))

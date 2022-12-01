@@ -1,12 +1,11 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.remark2;
+package org.aya.cli.literate;
 
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
-import org.aya.cli.literate.HighlightInfo;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.style.AyaStyleFamily;

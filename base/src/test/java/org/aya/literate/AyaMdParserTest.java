@@ -1,12 +1,12 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-import kala.collection.Seq;
+package org.aya.literate;import kala.collection.Seq;
 import kala.collection.Set;
 import kala.control.Option;
+import org.aya.cli.literate.AyaMdParser;
+import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.concrete.remark2.AyaMdParser;
-import org.aya.concrete.remark2.LiterateConsumer;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class AyaMdParserTest {
-  public final static @NotNull Path TEST_DIR = Path.of("src", "test", "resources");
+  public final static @NotNull Path TEST_DIR = Path.of("src", "test", "resources", "literate");
 
   record Case(@NotNull String modName) {
     public final static @NotNull String PREFIX_EXPECTED = "expected-";

@@ -17,5 +17,4 @@ include(
   "pretty",
   "parser",
   "lsp",
-  "overhaul-literate",
 )

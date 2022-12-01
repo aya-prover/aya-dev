@@ -7,8 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import kala.control.Option;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.Def;
@@ -173,7 +171,8 @@ public record AyaSccTycker(
         var def = tycker.tyck(decl, reuse(decl));
         if (decl instanceof Decl.TopLevel topLevel) decideTyckResult(decl, topLevel, def);
       }
-      case Remark remark -> Option.ofNullable(remark.literate).forEach(l -> l.tyck(newExprTycker()));
+      // TODO[CHECK]: tyck remark
+      // case Remark remark -> Option.ofNullable(remark.literate).forEach(l -> l.tyck(newExprTycker()));
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));

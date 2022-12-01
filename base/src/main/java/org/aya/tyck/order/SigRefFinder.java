@@ -32,7 +32,8 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
       case Command cmd -> {}
       case Remark remark -> {
         assert remark.literate != null;
-        remark.literate.visit(this);
+        // TODO[CHECK]: recurse into remark
+        // remark.literate.visit(this);
       }
       case Generalize variables -> accept(variables.type);
     }
