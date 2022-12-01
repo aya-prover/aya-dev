@@ -27,24 +27,13 @@ public record SourcePos(
   int endLine,
   int endColumn
 ) implements Comparable<SourcePos> {
-  public static final int UNAVAILABLE_AND_FUCK_ANTLR4 = -114514;
-
   /** Single instance SourcePos for mocking tests and other usages. */
   public static final SourcePos NONE = new SourcePos(SourceFile.NONE, -1, -1, -1, -1, -1, -1);
   /** Source pos used in serialized core */
   public static final SourcePos SER = new SourcePos(SourceFile.SER, -1, -1, -1, -1, -1, -1);
 
-  public boolean containsIndex(@NotNull SourcePos x) {
-    return tokenStartIndex <= x.tokenStartIndex && tokenEndIndex >= x.tokenEndIndex;
-  }
-
   public @NotNull Span toSpan() {
     return new LineColSpan(file().sourceCode(), startLine, startColumn, endLine, endColumn);
-  }
-
-  private boolean indexAvailable() {
-    return tokenStartIndex != UNAVAILABLE_AND_FUCK_ANTLR4
-      && tokenEndIndex != UNAVAILABLE_AND_FUCK_ANTLR4;
   }
 
   private static int min(int x, int y) {
@@ -109,6 +98,10 @@ public record SourcePos(
     return pos >= tokenStartIndex && pos <= tokenEndIndex;
   }
 
+  public boolean containsIndex(@NotNull SourcePos x) {
+    return tokenStartIndex <= x.tokenStartIndex && tokenEndIndex >= x.tokenEndIndex;
+  }
+
   public boolean belongsToSomeFile() {
     return this != SourcePos.NONE && file.isSomeFile();
   }
@@ -151,9 +144,6 @@ public record SourcePos(
   }
 
   @Override public int compareTo(@NotNull SourcePos o) {
-    if (indexAvailable()) return Integer.compare(tokenStartIndex, o.tokenStartIndex);
-    var line = Integer.compare(startLine, o.startLine);
-    if (line != 0) return line;
-    return Integer.compare(startColumn, o.startColumn);
+    return Integer.compare(tokenStartIndex, o.tokenStartIndex);
   }
 }

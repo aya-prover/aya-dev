@@ -1,3 +1,5 @@
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import kala.collection.Seq;
 import kala.collection.Set;
 import kala.control.Option;
@@ -7,6 +9,7 @@ import org.aya.concrete.remark2.AyaMdParser;
 import org.aya.concrete.remark2.LiterateConsumer;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef;
+import org.aya.generic.Constants;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.EmptyModuleLoader;
@@ -19,17 +22,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 public class AyaMdParserTest {
   public final static @NotNull Path TEST_DIR = Path.of("src", "test", "resources");
 
   record Case(@NotNull String modName) {
     public final static @NotNull String PREFIX_EXPECTED = "expected-";
-    public final static @NotNull String EXTENSION_AYA_MD = ".aya.md";
-    public final static @NotNull String EXTENSION_AYA = ".aya";
+    public final static @NotNull String EXTENSION_AYA_MD = Constants.AYA_LITERATE_POSTFIX;
+    public final static @NotNull String EXTENSION_AYA = Constants.AYA_POSTFIX;
     public final static @NotNull String EXTENSION_HTML = EXTENSION_AYA_MD + ".html";
 
     public @NotNull String mdName() {

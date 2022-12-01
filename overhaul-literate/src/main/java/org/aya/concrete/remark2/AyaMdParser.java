@@ -32,7 +32,7 @@ public class AyaMdParser {
   public AyaMdParser(@NotNull SourceFile file) {
     this.file = file;
     this.code = StringUtil.trimCRLF(file.sourceCode());
-    this.linesIndex = StringUtil.indexedLines(code).map(x -> x._2);
+    this.linesIndex = StringUtil.indexedLines(code).map(x -> x._1);
   }
 
   private Node parseMd() {
