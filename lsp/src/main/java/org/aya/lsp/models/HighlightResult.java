@@ -21,9 +21,9 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
 
   public enum Kind {
     // definitions
-    ModuleDef, FnDef, DataDef, StructDef, ConDef, FieldDef, PrimDef,
+    ModuleDef, FnDef, DataDef, StructDef, ConDef, FieldDef, PrimDef, GeneralizeDef,
     // expressions
-    Generalize, FnCall, DataCall, StructCall, ConCall, FieldCall, PrimCall,
+    FnRef, DataRef, StructRef, ConRef, FieldRef, PrimRef, ModuleRef, GeneralizeRef,
   }
 
   public record Symbol(
@@ -43,7 +43,7 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
       return switch (symbol) {
         case HighlightInfo.SymDef symDef -> switch (symDef.kind()) {
           case LocalVar -> Option.none(); // maybe rainbow local variables
-          case Generalized -> Option.some(Kind.Generalize);
+          case Generalized -> Option.some(Kind.GeneralizeDef);
           case Module -> Option.some(Kind.ModuleDef);
           case Fn -> Option.some(Kind.FnDef);
           case Data -> Option.some(Kind.DataDef);
@@ -55,14 +55,14 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
         };
         case HighlightInfo.SymRef symRef -> switch (symRef.kind()) {
           case LocalVar -> Option.none(); // maybe rainbow local variables
-          case Generalized -> Option.none(); // TODO: highlight generalized var references
-          case Module -> Option.none(); // TODO: highlight module references
-          case Fn -> Option.some(Kind.FnCall);
-          case Data -> Option.some(Kind.DataCall);
-          case Struct -> Option.some(Kind.StructCall);
-          case Con -> Option.some(Kind.ConCall);
-          case Field -> Option.some(Kind.FieldCall);
-          case Prim -> Option.some(Kind.PrimCall);
+          case Generalized -> Option.some(Kind.GeneralizeRef);
+          case Module -> Option.some(Kind.ModuleRef);
+          case Fn -> Option.some(Kind.FnRef);
+          case Data -> Option.some(Kind.DataRef);
+          case Struct -> Option.some(Kind.StructRef);
+          case Con -> Option.some(Kind.ConRef);
+          case Field -> Option.some(Kind.FieldRef);
+          case Prim -> Option.some(Kind.PrimRef);
           case Unknown -> Option.none();
         };
         case HighlightInfo.SymLit $ -> Option.none();   // handled by client
