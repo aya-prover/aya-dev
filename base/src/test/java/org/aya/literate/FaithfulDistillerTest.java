@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
-import kala.collection.Set;
 import kala.control.Option;
 import org.aya.cli.literate.FaithfulDistiller;
 import org.aya.cli.literate.SyntaxHighlight;
@@ -37,12 +36,11 @@ public class FaithfulDistillerTest {
       new EmptyContext(reporter, root).derive(modName),
       stmts);
 
-    Stmt.resolveWithoutDesugar(stmts.view(), resolveInfo, EmptyModuleLoader.INSTANCE);
+    Stmt.resolveWithoutDesugar(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
 
     var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
-    var doc = FaithfulDistiller.highlight(sourceFile, Set.from(highlights).toImmutableSeq().view().sorted());
+    var doc = FaithfulDistiller.highlight(sourceFile.sourceCode(), 0, highlights);
     var output = doc.renderToHtml(true);
-
     Files.writeString(root.resolve(outputFileName), output);
   }
 }

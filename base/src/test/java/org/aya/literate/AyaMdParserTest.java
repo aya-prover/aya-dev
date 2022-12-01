@@ -1,7 +1,8 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.literate;import kala.collection.Seq;
-import kala.collection.Set;
+package org.aya.literate;
+
+import kala.collection.Seq;
 import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateConsumer;
@@ -114,10 +115,8 @@ public class AyaMdParserTest {
         stmts
       ), EmptyModuleLoader.INSTANCE);
 
-      var highlights = Set.from(SyntaxHighlight.highlight(Option.some(ayaFile), stmts)).toImmutableSeq()
-        .sorted();
+      var highlights = SyntaxHighlight.highlight(Option.some(ayaFile), stmts);
       new LiterateConsumer.Highlight(highlights).accept(literate);
-
       Files.writeString(oneCase.htmlFile(), literate.toDoc().renderToHtml());
     }
   }

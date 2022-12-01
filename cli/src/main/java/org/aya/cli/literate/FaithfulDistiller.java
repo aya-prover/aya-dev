@@ -2,14 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
-import kala.collection.SeqView;
+import com.intellij.openapi.util.text.StringUtil;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.style.AyaStyleFamily;
-import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,27 +24,25 @@ public interface FaithfulDistiller {
   @NotNull Style STYLE_FIELD_CALL = AyaStyleFamily.Key.FieldCall.preset();
   @NotNull Style STYLE_GENERALIZE = AyaStyleFamily.Key.Generalized.preset();
 
-  static @NotNull Doc highlight(@NotNull SourceFile file, @NotNull SeqView<HighlightInfo> highlights) {
-    return highlight(file.sourceCode(), highlights);
-  }
-
-  static @NotNull Doc highlight(@NotNull String raw, @NotNull SeqView<HighlightInfo> highlights) {
-    return FaithfulDistiller.highlight(raw, 0, highlights);
-  }
-
   /**
+   * Apply highlights to source code string.
+   *
    * @param raw        the source code
    * @param base       where the raw start from (the 'raw' might be a piece of the source code,
-   *                   so it probably not starts from 0.
-   * @param highlights the highlights for the source code (ordered)
+   *                   so it probably not starts from 0).
+   * @param highlights the highlights for the source code
    */
-  static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull SeqView<HighlightInfo> highlights) {
+  static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
+    return doHighlight(raw, base, ImmutableSet.from(highlights).toImmutableSeq().sorted());
+  }
+
+  private static @NotNull Doc doHighlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {
       var parts = twoKnifeThreeParts(raw, base, current.sourcePos());
       var plainPart = parts._1.isEmpty() ? Doc.empty() : Doc.plain(parts._1);
-      var highlightPart = parts._2.isEmpty() ? Doc.empty() : doHighlight(parts._2, current.type());
+      var highlightPart = parts._2.isEmpty() ? Doc.empty() : highlightOne(parts._2, current.type());
       var remainPart = parts._3;
       var newBase = parts._4;
 
@@ -68,7 +67,7 @@ public interface FaithfulDistiller {
     return Doc.cat(docs);
   }
 
-  private static @NotNull Doc doHighlight(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
+  private static @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
     return switch (highlight) {
       case HighlightInfo.SymDef symDef -> Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target().id());
       case HighlightInfo.SymRef symRef -> Doc.linkRef(highlightVar(raw, symRef.kind()), symRef.target().id());
@@ -99,7 +98,7 @@ public interface FaithfulDistiller {
   private static @NotNull Doc highlightLit(@NotNull String raw, @NotNull HighlightInfo.LitKind litKind) {
     return switch (litKind) {
       case Int -> Doc.plain(raw);
-      case String -> Doc.plain(raw);    // TODO
+      case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
       case Keyword -> Doc.styled(STYLE_KEYWORD, raw);
     };
   }
