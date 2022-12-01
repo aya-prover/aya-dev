@@ -1,9 +1,8 @@
+import kala.collection.Seq;
 import kala.collection.Set;
 import kala.control.Option;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.cli.single.SingleFileCompiler;
-import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.remark2.AyaMdParser;
 import org.aya.concrete.remark2.LiterateConsumer;
 import org.aya.concrete.stmt.Stmt;
@@ -13,7 +12,6 @@ import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.EmptyModuleLoader;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -28,16 +26,26 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AyaMdParserTest {
   public final static @NotNull Path TEST_DIR = Path.of("src", "test", "resources");
 
-  record Case(@NotNull String fileName, @NotNull String expectedFileName) {
+  record Case(@NotNull String modName) {
+    public final static @NotNull String PREFIX_EXPECTED = "expected-";
     public final static @NotNull String EXTENSION_AYA_MD = ".aya.md";
     public final static @NotNull String EXTENSION_AYA = ".aya";
+    public final static @NotNull String EXTENSION_HTML = EXTENSION_AYA_MD + ".html";
 
     public @NotNull String mdName() {
-      return fileName + EXTENSION_AYA_MD;
+      return modName + EXTENSION_AYA_MD;
     }
 
     public @NotNull String ayaName() {
-      return fileName + EXTENSION_AYA;
+      return modName + EXTENSION_AYA;
+    }
+
+    public @NotNull String expectedAyaName() {
+      return PREFIX_EXPECTED + ayaName();
+    }
+
+    public @NotNull String htmlName() {
+      return modName + EXTENSION_HTML;
     }
 
     public @NotNull Path mdFile() {
@@ -47,48 +55,69 @@ public class AyaMdParserTest {
     public @NotNull Path ayaFile() {
       return TEST_DIR.resolve(ayaName());
     }
+
+    public @NotNull Path expectedAyaFile() {
+      return TEST_DIR.resolve(expectedAyaName());
+    }
+
+    public @NotNull Path htmlFile() {
+      return TEST_DIR.resolve(htmlName());
+    }
   }
 
-  public static @NotNull SourceFile file(@NotNull String fileName) throws IOException {
-    var path = TEST_DIR.resolve(fileName);
-    var content = Files.readString(path);
-
-    return new SourceFile(fileName, path, content);
+  public static @NotNull SourceFile file(@NotNull Path path) throws IOException {
+    return new SourceFile(path.toFile().getName(), path, Files.readString(path));
   }
 
   @Test
   public void testExtract() throws IOException {
-    var mdFile = file("test.aya.md");
-    var ayaFile = file("test.aya");
-    var parser = new AyaMdParser(mdFile);
-    var literate = parser.parseLiterate(new AyaParserImpl(ThrowingReporter.INSTANCE));
-    var actualCode = AyaMdParser.extractAya(literate);
+    var cases = Seq.of(
+      new Case("test")
+    );
 
-    assertLinesMatch(ayaFile.sourceCode().lines(), actualCode.lines());
+    for (var oneCase : cases) {
+      var mdFile = file(oneCase.mdFile());
+      var expAyaFile = file(oneCase.expectedAyaFile());
+
+      var parser = new AyaMdParser(mdFile);
+      var literate = parser.parseLiterate(new AyaParserImpl(ThrowingReporter.INSTANCE));
+      var actualCode = AyaMdParser.extractAya(literate);
+
+      Files.writeString(oneCase.ayaFile(), actualCode);
+      assertLinesMatch(expAyaFile.sourceCode().lines(), actualCode.lines());
+    }
   }
 
   @Test
   public void testHighlight() throws IOException {
-    var mdFile = file("test.aya.md");
+    var cases = Seq.of(
+      new Case("test")
+    );
 
-    var ayaParser = new AyaParserImpl(ThrowingReporter.INSTANCE);
-    var mdParser = new AyaMdParser(mdFile);
-    var literate = mdParser.parseLiterate(ayaParser);
-    var ayaCode = AyaMdParser.extractAya(literate);
+    for (var oneCase : cases) {
+      var mdFile = file(oneCase.mdFile());
 
-    // parse aya code
-    var fakeFile = new SourceFile("test.aya", Option.none(), ayaCode);
-    var stmts = ayaParser.program(fakeFile);
-    Stmt.resolveWithoutDesugar(stmts, new ResolveInfo(
-      new PrimDef.Factory(),
-      new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive("test"),
-      stmts
-    ), EmptyModuleLoader.INSTANCE);
+      var ayaParser = new AyaParserImpl(ThrowingReporter.INSTANCE);
+      var mdParser = new AyaMdParser(mdFile);
+      var literate = mdParser.parseLiterate(ayaParser);
+      var ayaCode = AyaMdParser.extractAya(literate);
 
-    var highlights = Set.from(SyntaxHighlight.highlight(Option.some(fakeFile), stmts)).toImmutableSeq()
-      .sorted();
-    new LiterateConsumer.Highlight(highlights).accept(literate);
+      Files.writeString(oneCase.ayaFile(), ayaCode);
 
-    Files.writeString(TEST_DIR.resolve("test.aya.md.html"), literate.toDoc().renderToHtml());
+      // parse aya code
+      var ayaFile = file(oneCase.ayaFile());
+      var stmts = ayaParser.program(ayaFile);
+      Stmt.resolveWithoutDesugar(stmts, new ResolveInfo(
+        new PrimDef.Factory(),
+        new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName()),
+        stmts
+      ), EmptyModuleLoader.INSTANCE);
+
+      var highlights = Set.from(SyntaxHighlight.highlight(Option.some(ayaFile), stmts)).toImmutableSeq()
+        .sorted();
+      new LiterateConsumer.Highlight(highlights).accept(literate);
+
+      Files.writeString(oneCase.htmlFile(), literate.toDoc().renderToHtml());
+    }
   }
 }
