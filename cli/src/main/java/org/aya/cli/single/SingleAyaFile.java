@@ -61,7 +61,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   }
 
   record CodeAyaFile(@NotNull SourceFileLocator locator, @NotNull Path underlyingFile) implements SingleAyaFile {
-    @Override public @NotNull SourceFile toSourceFile() throws IOException {
+    @Override public @NotNull SourceFile sourceFile() throws IOException {
       return SourceFile.from(locator, underlyingFile);
     }
 
@@ -128,7 +128,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       return file;
     }
 
-    @Override public @NotNull SourceFile toSourceFile() throws IOException {
+    @Override public @NotNull SourceFile sourceFile() throws IOException {
       var aya = extractedAya.get();
       if (aya == null) {
         var mdParser = new AyaMdParser(asMarkdownFile());
@@ -141,10 +141,14 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       return aya;
     }
 
+    @Override public @NotNull SourceFile errorReportSourceFile() throws IOException {
+      return asMarkdownFile();
+    }
+
     private void render(@NotNull Path outputFile, @NotNull ImmutableSeq<Stmt> program) throws IOException {
       var lit = literate.get();
       if (lit == null) return;
-      var highlights = SyntaxHighlight.highlight(Option.some(toSourceFile()), program);
+      var highlights = SyntaxHighlight.highlight(Option.some(sourceFile()), program);
       new LiterateConsumer.Highlights(highlights).accept(lit);
       Files.writeString(outputFile, lit.toDoc().renderToHtml());
     }
