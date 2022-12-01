@@ -8,12 +8,22 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
 import org.aya.cli.literate.HighlightInfo;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public interface FaithfulDistiller {
+  @NotNull Style STYLE_KEYWORD = AyaStyleFamily.Key.Keyword.preset();
+  @NotNull Style STYLE_PRIM_CALL = AyaStyleFamily.Key.PrimCall.preset();
+  @NotNull Style STYLE_FN_CALL = AyaStyleFamily.Key.FnCall.preset();
+  @NotNull Style STYLE_DATA_CALL = AyaStyleFamily.Key.DataCall.preset();
+  @NotNull Style STYLE_STRUCT_CALL = AyaStyleFamily.Key.StructCall.preset();
+  @NotNull Style STYLE_CON_CALL = AyaStyleFamily.Key.ConCall.preset();
+  @NotNull Style STYLE_FIELD_CALL = AyaStyleFamily.Key.FieldCall.preset();
+  @NotNull Style STYLE_GENERALIZE = AyaStyleFamily.Key.Generalized.preset();
+
   static @NotNull Doc highlight(@NotNull SourceFile file, @NotNull SeqView<HighlightInfo> highlights) {
     return highlight(file.sourceCode(), highlights);
   }
@@ -70,13 +80,13 @@ public interface FaithfulDistiller {
 
   private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {
     var style = switch (defKind) {
-      case Data -> AyaStyleFamily.Key.DataCall.preset();
-      case Con -> AyaStyleFamily.Key.ConCall.preset();
-      case Struct -> AyaStyleFamily.Key.StructCall.preset();
-      case Field -> AyaStyleFamily.Key.FieldCall.preset();
-      case Fn -> AyaStyleFamily.Key.FnCall.preset();
-      case Prim -> AyaStyleFamily.Key.PrimCall.preset();
-      case Generalized -> AyaStyleFamily.Key.Generalized.preset();
+      case Data -> STYLE_DATA_CALL;
+      case Con -> STYLE_CON_CALL;
+      case Struct -> STYLE_STRUCT_CALL;
+      case Field -> STYLE_FIELD_CALL;
+      case Fn -> STYLE_FN_CALL;
+      case Prim -> STYLE_PRIM_CALL;
+      case Generalized -> STYLE_GENERALIZE;
       case LocalVar, Unknown, Module -> null;
     };
 
@@ -91,7 +101,7 @@ public interface FaithfulDistiller {
     return switch (litKind) {
       case Int -> Doc.plain(raw);
       case String -> Doc.plain(raw);    // TODO
-      case Keyword -> Doc.styled(AyaStyleFamily.Key.Keyword.preset(), raw);
+      case Keyword -> Doc.styled(STYLE_KEYWORD, raw);
     };
   }
 
