@@ -44,10 +44,7 @@ public interface LiterateConsumer extends Consumer<Literate> {
     }
   }
 
-  /**
-   * @param highlights natural ordered
-   */
-  record Highlight(@NotNull ImmutableSeq<HighlightInfo> highlights) implements LiterateConsumer {
+  record Highlights(@NotNull ImmutableSeq<HighlightInfo> highlights) implements LiterateConsumer {
     @Override public void accept(@NotNull Literate literate) {
       if (literate instanceof Literate.CodeBlock codeBlock && codeBlock.isAya() && codeBlock.sourcePos != null) {
         var hl = highlights.filter(x -> codeBlock.sourcePos.containsIndex(x.sourcePos()));

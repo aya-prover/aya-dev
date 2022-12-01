@@ -116,7 +116,7 @@ public class AyaMdParserTest {
       ), EmptyModuleLoader.INSTANCE);
 
       var highlights = SyntaxHighlight.highlight(Option.some(ayaFile), stmts);
-      new LiterateConsumer.Highlight(highlights).accept(literate);
+      new LiterateConsumer.Highlights(highlights).accept(literate);
       Files.writeString(oneCase.htmlFile(), literate.toDoc().renderToHtml());
     }
   }
