@@ -49,6 +49,7 @@ import java.util.function.Function;
 public class ReplCompiler {
   final @NotNull CountingReporter reporter;
   private final @NotNull SourceFileLocator locator;
+  private final @NotNull CachedModuleLoader<ModuleListLoader> loader;
   private final @NotNull ReplContext context;
   private final @NotNull ImmutableSeq<Path> modulePaths;
   private final @NotNull PrimDef.Factory primFactory;
@@ -63,6 +64,8 @@ public class ReplCompiler {
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(this.reporter);
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
+    this.loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter, this.modulePaths.map(path ->
+      new FileModuleLoader(this.locator, path, this.reporter, new AyaParserImpl(this.reporter), primFactory, null))));
   }
 
   private @NotNull ExprTycker.Result tyckExpr(@NotNull Expr expr) {
@@ -135,7 +138,6 @@ public class ReplCompiler {
     try {
       var parser = new AyaParserImpl(reporter);
       var programOrExpr = parsing.apply(parser);
-      var loader = createLoader();
       return programOrExpr.map(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<GenericDef>>create();
@@ -178,14 +180,6 @@ public class ReplCompiler {
     }
     System.out.println(parseTree);
     return null;
-  }
-
-  private @Nullable CachedModuleLoader<ModuleListLoader> loader;
-
-  private CachedModuleLoader<ModuleListLoader> createLoader() {
-    if (loader == null) loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, modulePaths.view().map(path ->
-      new FileModuleLoader(locator, path, reporter, new AyaParserImpl(reporter), primFactory, null)).toImmutableSeq()));
-    return loader;
   }
 
   public @NotNull ReplContext getContext() {
