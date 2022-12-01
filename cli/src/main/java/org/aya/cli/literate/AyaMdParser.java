@@ -27,9 +27,7 @@ public class AyaMdParser {
   public static final char LINE_SEPARATOR = '\n';
   private final @NotNull String code;
 
-  /**
-   * For empty line that end with \n, the index points to \n
-   */
+  /** For empty line that end with \n, the index points to \n */
   private final @NotNull ImmutableSeq<Integer> linesIndex;
   private final @NotNull SourceFile file;
 
@@ -39,18 +37,13 @@ public class AyaMdParser {
     this.linesIndex = StringUtil.indexedLines(code).map(x -> x._1);
   }
 
-  private Node parseMd() {
+  public @NotNull Literate parseLiterate(@NotNull GenericAyaParser producer) {
     var parser = Parser.builder()
       .customDelimiterProcessor(CodeAttrProcessor.INSTANCE)
       .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
       .postProcessor(FillCodeBlock.INSTANCE)
       .build();
-
-    return parser.parse(code);
-  }
-
-  public @NotNull Literate parseLiterate(@NotNull GenericAyaParser producer) {
-    return mapAST(parseMd(), producer);
+    return mapAST(parser.parse(code), producer);
   }
 
   /**
@@ -142,63 +135,50 @@ public class AyaMdParser {
     @NotNull Node node,
     @NotNull GenericAyaParser producer
   ) {
-    if (node instanceof Code inlineCode) {
-      var sourceSpans = inlineCode.getSourceSpans();
-
-      if (sourceSpans != null && sourceSpans.size() == 1) {
-        var sourceSpan = sourceSpans.get(0);
-        var lineIndex = linesIndex.get(sourceSpan.getLineIndex());
-        var startFrom = lineIndex + sourceSpan.getColumnIndex();
-        var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
-
-        assert sourcePos != null;
-
-        return CodeOptions.analyze(inlineCode, producer.expr(inlineCode.getLiteral(), sourcePos));
+    return switch (node) {
+      case Text text -> new Literate.Raw(Doc.plain(text.getLiteral()));
+      case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis, producer), false);
+      case HardLineBreak $ -> new Literate.Raw(Doc.line());
+      case SoftLineBreak $ -> new Literate.Raw(Doc.line());
+      case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis, producer), false);
+      case Paragraph $ -> new Literate.Many(null, mapChildren(node, producer), false);
+      case Document $ -> {
+        var children = mapChildren(node, producer);
+        yield children.sizeEquals(1) ? children.first() : new Literate.Many(null, children, true);
       }
-
-      throw new InternalException("SourceSpans");
-    } else if (node instanceof Text text) {
-      return new Literate.Raw(Doc.plain(text.getLiteral()));
-    } else if (node instanceof Emphasis emphasis) {
-      return new Literate.Many(Style.italic(), mapChildren(emphasis, producer), false);
-    } else if (node instanceof HardLineBreak || node instanceof SoftLineBreak) {
-      return new Literate.Raw(Doc.line());
-    } else if (node instanceof StrongEmphasis emphasis) {
-      return new Literate.Many(Style.bold(), mapChildren(emphasis, producer), false);
-    } else if (node instanceof Paragraph) {
-      return new Literate.Many(null, mapChildren(node, producer), false);
-    } else if (node instanceof Document) {
-      var children = mapChildren(node, producer);
-      if (children.sizeEquals(1)) return children.first();
-      else return new Literate.Many(null, children, true);
-    } else if (node instanceof FencedCodeBlock codeBlock) {
-      var language = codeBlock.getInfo();
-      var raw = codeBlock.getLiteral();
-      var sourceSpans = codeBlock.getSourceSpans();
-      if (sourceSpans != null && sourceSpans.size() >= 2) {   // always contains '```aya' and '```'
-        var inner = ImmutableSeq.from(sourceSpans).view().drop(1).dropLast(1).toImmutableSeq();
-        // remove the last line break if not empty
-        if (!raw.isEmpty()) raw = raw.substring(0, raw.length() - 1);
-        return new Literate.CodeBlock(fromSourceSpans(inner), language, raw);
-      }
-
-      throw new InternalException("SourceSpans");
-    } else {
-      var spans = node.getSourceSpans();
-
-      if (spans != null) {
-        var pos = fromSourceSpans(Seq.from(spans));
-
-        if (pos == null) {
-          throw new UnsupportedOperationException("TODO: Which do the nodes have not source spans?");
+      case FencedCodeBlock codeBlock -> {
+        var language = codeBlock.getInfo();
+        var raw = codeBlock.getLiteral();
+        var spans = codeBlock.getSourceSpans();
+        if (spans != null && spans.size() >= 2) {   // always contains '```aya' and '```'
+          var inner = ImmutableSeq.from(spans).view().drop(1).dropLast(1).toImmutableSeq();
+          // remove the last line break if not empty
+          if (!raw.isEmpty()) raw = raw.substring(0, raw.length() - 1);
+          yield new Literate.CodeBlock(fromSourceSpans(inner), language, raw);
         }
-
-        producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
-        return new Literate.Unsupported(mapChildren(node, producer));
-      } else {
         throw new InternalException("SourceSpans");
       }
-    }
+      case Code inlineCode -> {
+        var spans = inlineCode.getSourceSpans();
+        if (spans != null && spans.size() == 1) {
+          var sourceSpan = spans.get(0);
+          var lineIndex = linesIndex.get(sourceSpan.getLineIndex());
+          var startFrom = lineIndex + sourceSpan.getColumnIndex();
+          var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
+          assert sourcePos != null;
+          yield CodeOptions.analyze(inlineCode, producer.expr(inlineCode.getLiteral(), sourcePos));
+        }
+        throw new InternalException("SourceSpans");
+      }
+      default -> {
+        var spans = node.getSourceSpans();
+        if (spans == null) throw new InternalException("SourceSpans");
+        var pos = fromSourceSpans(Seq.from(spans));
+        if (pos == null) throw new UnsupportedOperationException("TODO: Which do the nodes have not source spans?");
+        producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
+        yield new Literate.Unsupported(mapChildren(node, producer));
+      }
+    };
   }
 
   public @Nullable SourcePos fromSourceSpans(@NotNull Seq<SourceSpan> sourceSpans) {
