@@ -24,7 +24,6 @@ public class AyaMdParser {
   private final @NotNull String code;
 
   /**
-   * For empty line that end with EOF, the index points to EOF<br/>
    * For empty line that end with \n, the index points to \n
    */
   private final @NotNull ImmutableSeq<Integer> linesIndex;
@@ -51,10 +50,10 @@ public class AyaMdParser {
   }
 
   /**
-   * Extract all aya code blocks, keep source pos.
+   * Extract all aya code blocks, keep source poses.
    * Fill the space between two code blocks with comment.
    * <p>
-   * TODO: Another strategy: create a lexer that can tokenize some pieces of source code
+   * Another strategy: create a lexer that can tokenize some pieces of source code
    */
   public static @NotNull String extractAya(@NotNull Literate literate) {
     var codeBlocks = LiterateConsumer.AyaCodeBlocks.codeBlocks(literate);
@@ -63,6 +62,8 @@ public class AyaMdParser {
     var line = 0;   // current line
 
     for (var block : codeBlocks) {
+      // block.isAya = true
+
       var sourcePos = block.sourcePos;
 
       // A code block that doesn't matter, skip
@@ -137,8 +138,8 @@ public class AyaMdParser {
     @NotNull Node node,
     @NotNull GenericAyaParser producer
   ) {
-    if (node instanceof Code code) {
-      var sourceSpans = code.getSourceSpans();
+    if (node instanceof Code inlineCode) {
+      var sourceSpans = inlineCode.getSourceSpans();
 
       if (sourceSpans != null && sourceSpans.size() == 1) {
         var sourceSpan = sourceSpans.get(0);
@@ -148,10 +149,10 @@ public class AyaMdParser {
 
         assert sourcePos != null;
 
-        return CodeOptions.analyze(code, producer.expr(code.getLiteral(), sourcePos));
+        return CodeOptions.analyze(inlineCode, producer.expr(inlineCode.getLiteral(), sourcePos));
       }
 
-      throw new InternalException("Not Enough SourceSpans");
+      throw new InternalException("SourceSpans");
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {
@@ -177,7 +178,7 @@ public class AyaMdParser {
         return new Literate.CodeBlock(fromSourceSpans(inner), language, raw);
       }
 
-      throw new InternalException("Not Enough SourceSpans");
+      throw new InternalException("SourceSpans");
     } else {
       var spans = node.getSourceSpans();
 
@@ -191,7 +192,7 @@ public class AyaMdParser {
         producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
         return new Literate.Unsupported(mapChildren(node, producer));
       } else {
-        throw new InternalException("source spans == null");
+        throw new InternalException("SourceSpans");
       }
     }
   }
@@ -208,7 +209,7 @@ public class AyaMdParser {
    *
    * @param startFrom   the SourcePos should start from. (inclusive)
    * @param sourceSpans a not null sequence
-   * @return null if a empty sourceSpans
+   * @return null if an empty sourceSpans
    */
   @Contract(pure = true) public static @Nullable SourcePos
   fromSourceSpans(@NotNull SourceFile file, int startFrom, @NotNull Seq<SourceSpan> sourceSpans) {

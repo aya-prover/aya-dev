@@ -77,11 +77,11 @@ public class AyaMdParserTest {
     var ayaCode = AyaMdParser.extractAya(literate);
 
     // parse aya code
-    var fakeFile = new SourceFile("<null>.aya", Option.none(), ayaCode);
+    var fakeFile = new SourceFile("test.aya", Option.none(), ayaCode);
     var stmts = ayaParser.program(fakeFile);
     Stmt.resolveWithoutDesugar(stmts, new ResolveInfo(
       new PrimDef.Factory(),
-      new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive("<null>"),
+      new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive("test"),
       stmts
     ), EmptyModuleLoader.INSTANCE);
 
@@ -89,6 +89,6 @@ public class AyaMdParserTest {
       .sorted();
     new LiterateConsumer.Highlight(highlights).accept(literate);
 
-    Files.writeString(TEST_DIR.resolve("null.aya.md.html"), literate.toDoc().renderToHtml());
+    Files.writeString(TEST_DIR.resolve("test.aya.md.html"), literate.toDoc().renderToHtml());
   }
 }
