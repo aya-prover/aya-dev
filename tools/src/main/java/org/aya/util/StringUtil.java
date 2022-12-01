@@ -23,7 +23,7 @@ public interface StringUtil {
   /**
    * all line separators are treat as 1 character long
    *
-   * @return a (line, index of the first character) list
+   * @return a (index of the first character, line) list
    */
   static @NotNull ImmutableSeq<IntObjTuple2<String>> indexedLines(@NotNull String str) {
     var lines = ImmutableSeq.from(str.lines());
