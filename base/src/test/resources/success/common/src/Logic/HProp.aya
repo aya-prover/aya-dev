@@ -1,0 +1,5 @@
+open import Paths
+
+def isProp (A : Type) => Pi (a b : A) -> a = b
+
+def HProp => Sig (A : Type) ** isProp A

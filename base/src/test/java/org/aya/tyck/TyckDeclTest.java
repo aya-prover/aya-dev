@@ -27,9 +27,8 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SuppressWarnings("UnknownLanguage")
 public class TyckDeclTest {
-  public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull TeleDecl decl, Trace.@Nullable Builder builder, @NotNull AyaShape.Factory shapes) {
+  public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull TeleDecl<?> decl, Trace.@Nullable Builder builder, @NotNull AyaShape.Factory shapes) {
     var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
     var def = tycker.tyck(decl, tycker.newTycker(factory, shapes));
     shapes.bonjour(def);
@@ -54,7 +53,7 @@ public class TyckDeclTest {
     var res = successDesugarDecls(text);
     var shapes = new AyaShape.Factory();
     return Tuple.of(res._1, res._2.view()
-      .map(i -> i instanceof TeleDecl s ? tyck(res._1, s, null, shapes) : null)
+      .map(i -> i instanceof TeleDecl<?> s ? tyck(res._1, s, null, shapes) : null)
       .filter(Objects::nonNull).toImmutableSeq());
   }
 }

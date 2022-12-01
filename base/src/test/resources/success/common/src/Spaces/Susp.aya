@@ -1,15 +1,2 @@
-open import Paths
-
-public open data Susp (A : Type)
-| north
-| south
-| merid A (i : I) {
-  | i := south
-  | ~ i := north
-}
-
-variable A B : Type
-def mapSusp (A → B) (Susp A) : Susp B
-| f, north => north
-| f, south => south
-| f, merid a i => merid (f a) i
+public open import Spaces::Susp::Core
+public open import Spaces::Susp::Spheres

@@ -7,12 +7,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
-import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -46,8 +46,8 @@ public interface Resolver {
     return program.view().flatMap(new PositionResolver(new XY(position))).mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete != null) yield new WithPos<>(pos.sourcePos(), defVar);
-          // defVar is an imported and serialized symbol, so we need to find the original one
         else if (defVar.module != null) {
+          // defVar is an imported and serialized symbol, so we need to find the original one
           yield Resolver.resolveDef(source.owner(), defVar.module, defVar.name())
             .map(target -> new WithPos<AnyVar>(pos.sourcePos(), target.ref()))
             .getOrNull();
@@ -72,8 +72,10 @@ public interface Resolver {
 
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
-      case TeleDecl.DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
-      case TeleDecl.StructDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
+      case TeleDecl.DataDecl data ->
+        SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
+      case TeleDecl.StructDecl struct ->
+        SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
       default -> SeqView.of(def.ref());
     };
   }
@@ -114,18 +116,21 @@ public interface Resolver {
       return xy.inside(pos) ? targets.appended(new WithPos<>(pos, var)) : StmtFolder.super.fold(targets, var, pos);
     }
 
-    @Override
-    public @NotNull SeqView<WithPos<AnyVar>> fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
+    @Override public @NotNull SeqView<WithPos<AnyVar>>
+    fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
+      targets = StmtFolder.super.fold(targets, stmt);
       return switch (stmt) {
+        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> fold(t, v, v.sourcePos));
         case Command.Import imp -> fold(targets, new ModuleVar(imp.path()), imp.path().sourcePos());
         case Command.Open open -> fold(targets, new ModuleVar(open.path()), open.path().sourcePos());
-        case Decl decl when decl instanceof Decl.Telescopic<?> tele -> {
-          targets = tele.telescope().filterNot(p -> p.ref().name().startsWith(Constants.ANONYMOUS_PREFIX))
-            .foldLeft(targets, (ac, p) -> fold(ac, p.ref(), p.sourcePos()));
+        case Decl decl -> {
+          if (decl instanceof Decl.Telescopic<?> tele) targets = tele.telescope().view()
+            .map(Expr.Param::ref)
+            .filterNot(LocalVar::isGenerated)
+            .foldLeft(targets, (ac, def) -> fold(ac, def, def.definition()));
           yield fold(targets, decl.ref(), decl.sourcePos());
         }
-        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> fold(t, v, v.sourcePos));
-        default -> StmtFolder.super.fold(targets, stmt);
+        default -> targets;
       };
     }
   }

@@ -200,10 +200,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var oneLine = lets.sizeEquals(1);
         var letSeq = oneLine
           ? visitLetBind(lets.first())
-          : Doc.vcat(lets.map(this::visitLetBind).map(x ->
+          : Doc.vcat(lets.view()
+            .map(this::visitLetBind)
             // | f := g
-            Doc.sep(Doc.symbol("|"), x)
-          ));
+            .map(x -> Doc.sep(Doc.symbol("|"), x)));
 
         var docs = ImmutableSeq.of(
           Doc.styled(KEYWORD, "let"),

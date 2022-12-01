@@ -372,8 +372,8 @@ public final class PrimDef extends TopLevelDef<Term> {
   /** Let A be argument, then <code>A i -> A j</code> */
   private static @NotNull PiTerm familyI2J(Term term, FormulaTerm i, FormulaTerm j) {
     return new PiTerm(
-      new Term.Param(LocalVar.IGNORED, new AppTerm(term, new Arg<>(i, true)), true),
-      new AppTerm(term, new Arg<>(j, true)));
+      new Term.Param(LocalVar.IGNORED, AppTerm.make(term, new Arg<>(i, true)), true),
+      AppTerm.make(term, new Arg<>(j, true)));
   }
 
   /** <code>I -> Type</code> */

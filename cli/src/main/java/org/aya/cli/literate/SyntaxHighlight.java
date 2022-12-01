@@ -85,21 +85,18 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
 
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Stmt stmt) {
+    acc = StmtFolder.super.fold(acc, stmt);
     return switch (stmt) {
       case Generalize g -> g.variables.foldLeft(acc, (a, var) -> add(a, linkDef(var.sourcePos, var)));
       case Command.Module m -> add(acc, linkModuleDef(new QualifiedID(m.sourcePos(), m.name())));
       case Command.Import i -> add(acc, linkModuleRef(i.path()));
       case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
       case Command.Open o -> add(acc, linkModuleRef(o.path()));
-      case ClassDecl decl -> add(acc, linkDef(decl.sourcePos, decl.ref()));
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic<?> teleDecl) {
-          teleDecl.telescope().view()
-            .map(Expr.Param::ref)
-            .filterNot(LocalVar::isGenerated)
-            .forEach(def -> add(acc, linkDef(def.definition(), def)));
-        }
-
+        if (decl instanceof Decl.Telescopic<?> teleDecl) acc = teleDecl.telescope().view()
+          .map(Expr.Param::ref)
+          .filterNot(LocalVar::isGenerated)
+          .foldLeft(acc, (ac, def) -> add(ac, linkDef(def.definition(), def)));
         yield add(acc, linkDef(decl.sourcePos(), decl.ref()));
       }
       case Remark remark -> acc; // TODO: highlight literate

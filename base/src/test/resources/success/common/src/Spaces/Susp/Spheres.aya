@@ -1,6 +1,6 @@
 open import Data::Bool
 open import Arith::Nat::Core
-open import Spaces::Susp
+open import Spaces::Susp::Core
 open import Spaces::Sphere::S1::Core
 open import Spaces::Sphere::S2::Core
 open import Paths
@@ -8,6 +8,10 @@ open import Paths
 def Sphere Nat : Type
 | 0 => Bool
 | suc n => Susp (Sphere n)
+
+def point (n : Nat) : Sphere n
+| 0 => true
+| suc n => north
 
 def Sphere1-S¹ (Sphere 1) : S¹
 | merid false i => loop i

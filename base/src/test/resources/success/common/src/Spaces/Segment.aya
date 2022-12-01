@@ -1,6 +1,6 @@
 open import Paths
 
-open data Segment
+public open data Segment
 | left | right
 | seg (i : I) { i := right | ~ i := left }
 
@@ -9,3 +9,11 @@ def uniqueness (b : Segment) : left = b
 | right => \i => seg i
 | seg i => \j => seg (i ∧ j)
 def isContrSegment : isContr Segment => (_, uniqueness)
+
+private def funExt-lemma {A B : Type} (f g : A → B) (p : ∀ x → f x = g x) : A -> Segment -> B
+| f, g, p, a, left => f a
+| f, g, p, a, right => g a
+| f, g, p, a, seg i => p a i
+
+example def funExt' {A B : Type} (f g : A → B) (p : ∀ x → f x = g x) : f = g
+  => \i x => funExt-lemma f g p x (seg i)
