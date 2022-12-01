@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
@@ -15,6 +15,11 @@ import java.nio.file.Path;
 import java.util.Comparator;
 
 public interface FileUtil {
+  static @NotNull String escapeFileName(@NotNull String s) {
+    // Escape file names, see https://stackoverflow.com/a/41108758/7083401
+    return s.replaceAll("[\\\\/:*?\"<>|]", "_");
+  }
+
   static @NotNull Path canonicalize(@NotNull Path path) {
     try {
       return path.toRealPath();

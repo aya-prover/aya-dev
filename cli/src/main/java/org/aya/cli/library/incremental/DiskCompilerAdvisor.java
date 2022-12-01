@@ -27,7 +27,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     try {
       var core = source.compiledCorePath();
       if (!Files.exists(core)) return true;
-      return Files.getLastModifiedTime(source.file())
+      return Files.getLastModifiedTime(source.underlyingFile())
         .compareTo(Files.getLastModifiedTime(core)) > 0;
     } catch (IOException ignore) {
       return true;
@@ -37,7 +37,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
   @Override public void updateLastModified(@NotNull LibrarySource source) {
     try {
       var core = source.compiledCorePath();
-      Files.setLastModifiedTime(core, Files.getLastModifiedTime(source.file()));
+      Files.setLastModifiedTime(core, Files.getLastModifiedTime(source.underlyingFile()));
     } catch (IOException ignore) {
     }
   }

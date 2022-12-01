@@ -31,7 +31,7 @@ import java.util.stream.IntStream;
 @Debug.Renderer(text = "file")
 public record LibrarySource(
   @NotNull LibraryOwner owner,
-  @NotNull Path file,
+  @NotNull Path underlyingFile,
   @NotNull MutableList<LibrarySource> imports,
   @NotNull MutableValue<ImmutableSeq<Stmt>> program,
   @NotNull MutableValue<ImmutableSeq<GenericDef>> tycked,
@@ -52,15 +52,15 @@ public record LibrarySource(
   }
 
   public @NotNull Path displayPath() {
-    return owner.locator().displayName(file);
+    return owner.locator().displayName(underlyingFile);
   }
 
   public @NotNull SourceFile toSourceFile(@NotNull String sourceCode) {
-    return new SourceFile(displayPath().toString(), file, sourceCode);
+    return new SourceFile(displayPath().toString(), underlyingFile, sourceCode);
   }
 
   @Override public @NotNull SourceFile toSourceFile() throws IOException {
-    return toSourceFile(Files.readString(file));
+    return toSourceFile(Files.readString(underlyingFile));
   }
 
   public @NotNull Path compiledCorePath() {
@@ -69,17 +69,17 @@ public record LibrarySource(
   }
 
   @Override public String toString() {
-    return file.toString();
+    return underlyingFile.toString();
   }
 
   @Override public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     LibrarySource that = (LibrarySource) o;
-    return owner.underlyingLibrary() == that.owner.underlyingLibrary() && file.equals(that.file);
+    return owner.underlyingLibrary() == that.owner.underlyingLibrary() && underlyingFile.equals(that.underlyingFile);
   }
 
   @Override public int hashCode() {
-    return Objects.hash(owner.underlyingLibrary(), file);
+    return Objects.hash(owner.underlyingLibrary(), underlyingFile);
   }
 }

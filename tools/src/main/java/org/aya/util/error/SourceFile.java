@@ -5,6 +5,8 @@ package org.aya.util.error;
 import kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -17,6 +19,14 @@ public record SourceFile(
   @NotNull Option<Path> underlying,
   @NotNull String sourceCode
 ) {
+  public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {
+    return from(locator, path, Files.readString(path));
+  }
+
+  public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path, @NotNull String sourceCode) {
+    return new SourceFile(locator.displayName(path).toString(), path, sourceCode);
+  }
+
   public SourceFile(@NotNull String display, @NotNull Path underlying, @NotNull String sourceCode) {
     this(display, Option.some(underlying), sourceCode);
   }

@@ -16,4 +16,5 @@ public interface GenericAyaFile {
 
   /** @return The source file that contains only aya source code */
   @NotNull SourceFile toSourceFile() throws IOException;
+  @NotNull Path underlyingFile();
 }

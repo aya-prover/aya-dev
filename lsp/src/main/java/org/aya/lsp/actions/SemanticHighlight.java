@@ -34,7 +34,7 @@ public class SemanticHighlight {
         .forEach(symbols::append);
     }
     return new HighlightResult(
-      source.file().toUri(),
+      source.underlyingFile().toUri(),
       symbols.filter(t -> t.range() != LspRange.NONE));
   }
 }

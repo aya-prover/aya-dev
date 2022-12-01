@@ -166,7 +166,7 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
-    var found = owner.librarySources().find(src -> src.file().equals(moduleFile));
+    var found = owner.librarySources().find(src -> src.underlyingFile().equals(moduleFile));
     if (found.isDefined()) return found.get();
     for (var dep : owner.libraryDeps()) {
       var foundDep = find(dep, moduleFile);
@@ -226,7 +226,7 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   private void clearProblems(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
-    var files = affected.flatMap(i -> i.map(LibrarySource::file));
+    var files = affected.flatMap(i -> i.map(LibrarySource::underlyingFile));
     client.clearAyaProblems(files);
   }
 
@@ -251,7 +251,7 @@ public class AyaLanguageServer implements LanguageServer {
         case FileChangeType.Deleted -> {
           var src = find(change.uri);
           if (src == null) return;
-          Log.d("Deleted file: %s, removed from owner: %s", src.file(), src.owner().underlyingLibrary().name());
+          Log.d("Deleted file: %s, removed from owner: %s", src.underlyingFile(), src.owner().underlyingLibrary().name());
           switch (src.owner()) {
             case MutableLibraryOwner owner -> owner.removeLibrarySource(src);
             case WsLibrary owner -> libraries.removeIf(o -> o == owner);
@@ -318,7 +318,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<DocumentHighlight> documentHighlight(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    var currentFile = Option.ofNullable(source.file());
+    var currentFile = Option.ofNullable(source.underlyingFile());
     return FindReferences.findOccurrences(source, params.position, SeqView.of(source.owner()))
       // only highlight references in the current file
       .filter(pos -> pos.file().underlying().equals(currentFile))

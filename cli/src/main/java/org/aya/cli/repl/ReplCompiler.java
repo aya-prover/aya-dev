@@ -56,7 +56,7 @@ public class ReplCompiler {
   private final @NotNull ImmutableSeq<Path> modulePaths;
   private final @NotNull PrimDef.Factory primFactory;
   private final @NotNull ReplShapeFactory shapeFactory;
-  private final @NotNull GenericAyaFile.Factory fileManager = new SingleAyaFile.Factory();
+  private final @NotNull GenericAyaFile.Factory fileManager;
   private final @NotNull AyaBinOpSet opSet;
 
   public ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
@@ -67,8 +67,10 @@ public class ReplCompiler {
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(this.reporter);
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
+    var parser = new AyaParserImpl(this.reporter);
+    this.fileManager = new SingleAyaFile.Factory(parser);
     this.loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter, this.modulePaths.map(path ->
-      new FileModuleLoader(this.locator, path, this.reporter, new AyaParserImpl(this.reporter), fileManager, primFactory, null))));
+      new FileModuleLoader(this.locator, path, this.reporter, parser, fileManager, primFactory, null))));
   }
 
   private @NotNull ExprTycker.Result tyckExpr(@NotNull Expr expr) {
