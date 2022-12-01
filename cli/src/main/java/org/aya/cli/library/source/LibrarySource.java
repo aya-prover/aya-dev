@@ -5,6 +5,7 @@ package org.aya.cli.library.source;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
+import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.GenericDef;
 import org.aya.generic.util.AyaFiles;
@@ -14,6 +15,8 @@ import org.aya.util.error.SourceFile;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -33,7 +36,7 @@ public record LibrarySource(
   @NotNull MutableValue<ImmutableSeq<Stmt>> program,
   @NotNull MutableValue<ImmutableSeq<GenericDef>> tycked,
   @NotNull MutableValue<ResolveInfo> resolveInfo
-) {
+) implements GenericAyaFile {
   public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {
     this(owner, FileUtil.canonicalize(file), MutableList.create(), MutableValue.create(), MutableValue.create(), MutableValue.create());
   }
@@ -54,6 +57,10 @@ public record LibrarySource(
 
   public @NotNull SourceFile toSourceFile(@NotNull String sourceCode) {
     return new SourceFile(displayPath().toString(), file, sourceCode);
+  }
+
+  @Override public @NotNull SourceFile toSourceFile() throws IOException {
+    return toSourceFile(Files.readString(file));
   }
 
   public @NotNull Path compiledCorePath() {

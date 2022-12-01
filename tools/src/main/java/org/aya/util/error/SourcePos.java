@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
- * Position in source code.
- * This class is usually constructed using antlr4's utility function
- * {@code ctx.getStart()} and {@code ctx.getStop()}.
+ * Position in source code for error reporting only.
  *
  * @author kiva
  */

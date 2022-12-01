@@ -55,14 +55,15 @@ public record SingleFileCompiler(
     var reporter = CountingReporter.of(this.reporter);
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
+    var fileManager = new SingleAyaFile.Factory();
     var primFactory = new PrimDef.Factory();
     return AyaCompiler.catching(reporter, flags, () -> {
       var ayaParser = new AyaParserImpl(reporter);
-      var program = ayaParser.program(locator, sourceFile);
+      var program = ayaParser.program(fileManager.createAyaFile(locator, sourceFile));
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
-        new FileModuleLoader(locator, path, reporter, ayaParser, primFactory, builder)).toImmutableSeq()));
+        new FileModuleLoader(locator, path, reporter, ayaParser, fileManager, primFactory, builder)).toImmutableSeq()));
       loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
         distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
         distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);

@@ -96,8 +96,7 @@ public class LibraryCompiler {
   }
 
   private void parse(@NotNull LibrarySource source) throws IOException {
-    var owner = source.owner();
-    var program = advisor.createParser(reporter).program(owner.locator(), source.file());
+    var program = advisor.createParser(reporter).program(source);
     source.program().set(program);
   }
 
