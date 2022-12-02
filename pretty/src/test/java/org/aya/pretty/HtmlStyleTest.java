@@ -8,6 +8,7 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class HtmlStyleTest {
@@ -28,5 +29,17 @@ public class HtmlStyleTest {
     var e = Doc.styled(Style.strike(), Doc.cat(a, b, c, d, sym));
     var f = Doc.cat(e, Doc.hyperLink("Click me", new LinkId("https://google.com")));
     return Doc.cat(f, Doc.hyperLink("Show dialog", new LinkId("javascript:alert('hello world');")));
+  }
+
+  @NotNull private Doc escapeDoc() {
+    return Doc.plain("&<>\"");
+  }
+
+  @Test
+  public void testEscape() {
+    var actual = escapeDoc().renderToHtml(false);
+    var expected = "<pre class=\"Aya\">&amp;&lt;&gt;&quot;</pre>";
+
+    assertEquals(expected, actual);
   }
 }

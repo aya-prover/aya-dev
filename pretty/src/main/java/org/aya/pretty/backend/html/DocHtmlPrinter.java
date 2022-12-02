@@ -2,12 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
+import kala.collection.immutable.ImmutableMap;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.regex.Pattern;
 
 /**
  * Html backend, which ignores page width.
@@ -50,6 +53,14 @@ public class DocHtmlPrinter extends StringPrinter<DocHtmlPrinter.Config> {
     <pre class="Aya">
     """;
 
+  // https://developer.mozilla.org/en-US/docs/Glossary/Entity
+  public static final @NotNull ImmutableMap<String, String> entityMapping = ImmutableMap.of(
+    "&", "&amp;",
+    "<", "&lt;",
+    ">", "&gt;",
+    "\"", "&quot;"
+  );
+
   @Override protected void renderHeader(@NotNull Cursor cursor) {
     if (config.withHeader) cursor.invisibleContent(HEAD);
     else cursor.invisibleContent("<pre class=\"Aya\">");
@@ -58,6 +69,14 @@ public class DocHtmlPrinter extends StringPrinter<DocHtmlPrinter.Config> {
   @Override protected void renderFooter(@NotNull Cursor cursor) {
     cursor.invisibleContent("</pre>");
     if (config.withHeader) cursor.invisibleContent("</body></html>");
+  }
+
+  @Override
+  protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
+    content = Pattern.compile("[&<>\"]").matcher(content).replaceAll(result ->
+      entityMapping.get(result.group()));   // fail if bug
+
+    super.renderPlainText(cursor, content);
   }
 
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text) {
