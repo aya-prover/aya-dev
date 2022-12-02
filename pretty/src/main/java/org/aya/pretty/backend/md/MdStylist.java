@@ -33,6 +33,12 @@ public class MdStylist extends Html5Stylist {
   }
 
   @Override protected @NotNull StyleToken formatCodeBlock(@NotNull String language) {
-    return new StyleToken("```" + language, "```", false);
+    return new StyleToken(c -> {
+      c.invisibleContent("```" + language);
+      c.lineBreakWith("\n");
+    }, c -> {
+      c.lineBreakWith("\n");
+      c.invisibleContent("```");
+    });
   }
 }

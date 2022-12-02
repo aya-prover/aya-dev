@@ -34,22 +34,20 @@ public class UnixTermStylist extends ClosingStylist {
   }
 
   @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
-    if (style instanceof UnixTermStyle termStyle) {
-      return switch (termStyle) {
-        case Dim -> new StyleToken("\033[2m", "\033[22m", false);
-        case DoubleUnderline -> new StyleToken("\033[21m", "\033[24m", false);
-        case CurlyUnderline -> new StyleToken("\033[4:3m", "\033[4:0m", false);
-        case Overline -> new StyleToken("\033[53m", "\033[55m", false);
-        case Blink -> new StyleToken("\033[5m", "\033[25m", false);
-        case Reverse -> new StyleToken("\033[7m", "\033[27m", false);
-        case TerminalRed -> new StyleToken("\033[31m", "\033[39m", false);
-        case TerminalGreen -> new StyleToken("\033[32m", "\033[39m", false);
-        case TerminalBlue -> new StyleToken("\033[34m", "\033[39m", false);
-        case TerminalYellow -> new StyleToken("\033[33m", "\033[39m", false);
-        case TerminalPurple -> new StyleToken("\033[35m", "\033[39m", false);
-        case TerminalCyan -> new StyleToken("\033[36m", "\033[39m", false);
-      };
-    }
+    if (style instanceof UnixTermStyle termStyle) return switch (termStyle) {
+      case Dim -> new StyleToken("\033[2m", "\033[22m", false);
+      case DoubleUnderline -> new StyleToken("\033[21m", "\033[24m", false);
+      case CurlyUnderline -> new StyleToken("\033[4:3m", "\033[4:0m", false);
+      case Overline -> new StyleToken("\033[53m", "\033[55m", false);
+      case Blink -> new StyleToken("\033[5m", "\033[25m", false);
+      case Reverse -> new StyleToken("\033[7m", "\033[27m", false);
+      case TerminalRed -> new StyleToken("\033[31m", "\033[39m", false);
+      case TerminalGreen -> new StyleToken("\033[32m", "\033[39m", false);
+      case TerminalBlue -> new StyleToken("\033[34m", "\033[39m", false);
+      case TerminalYellow -> new StyleToken("\033[33m", "\033[39m", false);
+      case TerminalPurple -> new StyleToken("\033[35m", "\033[39m", false);
+      case TerminalCyan -> new StyleToken("\033[36m", "\033[39m", false);
+    };
     return StyleToken.NULL;
   }
 

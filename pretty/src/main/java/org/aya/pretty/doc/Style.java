@@ -28,7 +28,6 @@ public sealed interface Style extends Serializable {
   record CodeBlock(@NotNull String language) implements Style {
   }
 
-  /** Inline code, for some backends like Markdown and HTML */
   record InlineCode(@NotNull String language) implements Style {
   }
 

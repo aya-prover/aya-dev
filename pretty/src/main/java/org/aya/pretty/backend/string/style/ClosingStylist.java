@@ -4,6 +4,7 @@ package org.aya.pretty.backend.string.style;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringStylist;
@@ -12,13 +13,19 @@ import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Consumer;
+
 public abstract class ClosingStylist extends StringStylist {
   public ClosingStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
     super(colorScheme, styleFamily);
   }
 
-  public record StyleToken(@NotNull CharSequence start, @NotNull CharSequence end, boolean visible) {
-    public static final @NotNull StyleToken NULL = new StyleToken("", "", false);
+  public record StyleToken(@NotNull Consumer<Cursor> start, @NotNull Consumer<Cursor> end) {
+    public StyleToken(@NotNull String start, @NotNull String end, boolean visible) {
+      this(c -> c.content(start, visible), c -> c.content(end, visible));
+    }
+
+    public static final @NotNull StyleToken NULL = new StyleToken(c -> {}, c -> {});
   }
 
   @Override
@@ -33,19 +40,12 @@ public abstract class ClosingStylist extends StringStylist {
     }
 
     var style = styles.first();
-    if (style instanceof Style.Preset preset) {
-      formatMany(styles, cursor, inside, formatPreset(preset.styleName()));
-    } else {
-      formatMany(styles, cursor, inside, SeqView.of(formatOne(style)));
-    }
-  }
-
-  private void formatMany(@NotNull SeqView<Style> styles, @NotNull Cursor cursor,
-                          @NotNull Runnable inside,
-                          @NotNull SeqView<StyleToken> formats) {
-    formats.forEach(format -> cursor.content(format.start, format.visible));
+    var formats = style instanceof Style.Preset preset
+      ? formatPreset(preset.styleName())
+      : ImmutableSeq.of(formatOne(style));
+    formats.forEach(format -> format.start.accept(cursor));
     formatInternal(styles.drop(1), cursor, inside);
-    formats.reversed().forEach(format -> cursor.content(format.end, format.visible));
+    formats.reversed().forEach(format -> format.end.accept(cursor));
   }
 
   protected @NotNull StyleToken formatOne(@NotNull Style style) {
@@ -69,10 +69,10 @@ public abstract class ClosingStylist extends StringStylist {
     return colorScheme.definedColors().getOption(colorName);
   }
 
-  protected @NotNull SeqView<StyleToken> formatPreset(String styleName) {
+  protected @NotNull ImmutableSeq<StyleToken> formatPreset(String styleName) {
     var style = styleFamily.definedStyles().getOption(styleName);
-    if (style.isEmpty()) return SeqView.empty();
-    return style.get().styles().view().map(this::formatOne);
+    if (style.isEmpty()) return ImmutableSeq.empty();
+    return style.get().styles().map(this::formatOne);
   }
 
   protected @NotNull StyleToken formatColorName(@NotNull Style.ColorName color, boolean background) {
