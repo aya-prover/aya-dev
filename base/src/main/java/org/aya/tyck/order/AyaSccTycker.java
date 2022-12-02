@@ -71,7 +71,7 @@ public record AyaSccTycker(
   }
 
   private void checkMutual(@NotNull ImmutableSeq<TyckOrder> scc) {
-    var unit = scc.stream().map(TyckOrder::unit).distinct().collect(ImmutableSeq.factory());
+    var unit = scc.view().map(TyckOrder::unit).distinct().toImmutableSeq();
     // the flattened dependency graph (FDG) lose information about header order, in other words,
     // FDG treats all order as body order, so it allows all kinds of mutual recursion to be generated.
     // To detect circular dependency in signatures which we forbid, we have to apply the old way,
