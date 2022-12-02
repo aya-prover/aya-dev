@@ -85,8 +85,8 @@ public class LspTest {
     var actual = advisor.lastCompiled()
       .map(s -> s.moduleName().joinToString(Constants.SCOPE_SEPARATOR))
       .concat(actualInDep)
-      .stream().distinct()
-      .collect(ImmutableSeq.factory());
+      .distinct()
+      .toImmutableSeq();
     var expected = ImmutableSeq.from(modules);
     assertEquals(expected.sorted(), actual.sorted());
   }

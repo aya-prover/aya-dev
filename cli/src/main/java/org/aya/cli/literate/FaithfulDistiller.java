@@ -4,7 +4,6 @@ package org.aya.cli.literate;
 
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
@@ -33,7 +32,7 @@ public interface FaithfulDistiller {
    * @param highlights the highlights for the source code
    */
   static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
-    return doHighlight(raw, base, ImmutableSet.from(highlights).toImmutableSeq().sorted());
+    return doHighlight(raw, base, highlights.sorted().distinct());
   }
 
   private static @NotNull Doc doHighlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
