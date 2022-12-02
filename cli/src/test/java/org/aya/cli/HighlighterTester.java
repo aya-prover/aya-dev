@@ -203,7 +203,7 @@ public class HighlighterTester {
     var reporter = ThrowingReporter.INSTANCE;
 
     var parser = new AyaParserImpl(reporter);
-    var stmts = parser.program(sourceFile, sourceFile);
+    var stmts = parser.program(sourceFile);
     var resolveInfo = new ResolveInfo(
       new Factory(),
       new EmptyContext(reporter, Path.of(".")).derive("main"),

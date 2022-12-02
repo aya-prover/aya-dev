@@ -8,12 +8,16 @@ import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 
 public interface GenericAyaParser {
   @NotNull Expr expr(@NotNull String code, @NotNull SourcePos overridingSourcePos);
-  @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReporting);
+  @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport);
+  @TestOnly default @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile) {
+    return program(sourceFile, sourceFile);
+  }
   default @NotNull ImmutableSeq<Stmt> program(@NotNull GenericAyaFile ayaFile) throws IOException {
     return program(ayaFile.sourceFile(), ayaFile.errorReportSourceFile());
   }

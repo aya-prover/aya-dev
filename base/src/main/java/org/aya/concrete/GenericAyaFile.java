@@ -19,5 +19,4 @@ public interface GenericAyaFile {
   default @NotNull SourceFile errorReportSourceFile() throws IOException {
     return sourceFile();
   }
-  @NotNull Path underlyingFile();
 }
