@@ -144,7 +144,7 @@ public class RenderOptions {
   public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader, boolean unicode, int pageWidth) {
     var stylist = stylistOrDefault(output);
     return switch (output) {
-      case HTML -> doc.render(new DocHtmlPrinter(), new DocHtmlPrinter.Config((Html5Stylist) stylist, witHeader));
+      case HTML -> doc.render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config((Html5Stylist) stylist, witHeader));
       case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
       case Terminal, Plain -> doc.renderToString(new StringPrinterConfig(stylist, pageWidth, unicode));
     };

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * Html backend, which ignores page width.
  */
-public class DocHtmlPrinter extends StringPrinter<DocHtmlPrinter.Config> {
+public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends StringPrinter<Config> {
   @Language(value = "HTML")
   private static final @NotNull String HEAD = """
     <!DOCTYPE html><html lang="en"><head>

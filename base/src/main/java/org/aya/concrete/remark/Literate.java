@@ -8,6 +8,7 @@ import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
+import org.aya.pretty.backend.md.MdStyle;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
@@ -107,9 +108,8 @@ public sealed interface Literate extends Docile {
 
     @Override
     public @NotNull Doc toDoc() {
-      // TODO: wrap in code block
       if (isAya() && highlighted != null) {
-        return highlighted;
+        return Doc.styled(new MdStyle.CodeBlock("aya"), highlighted);
       }
 
       return Doc.plain(raw);

@@ -147,7 +147,7 @@ public class AyaMdParserTest {
       ), null);
       var actualHtml = Files.readString(oneCase.htmlFile());
       assertEquals(trimIdHref(expectedHtml), trimIdHref(actualHtml));
-      Files.writeString(oneCase.outMdFile(), doc.renderToMd());
+      Files.writeString(oneCase.outMdFile(), doc.renderToAyaMd());
     }
   }
 
