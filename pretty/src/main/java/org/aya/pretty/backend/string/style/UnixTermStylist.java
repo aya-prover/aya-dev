@@ -48,7 +48,7 @@ public class UnixTermStylist extends ClosingStylist {
       case TerminalPurple -> new StyleToken("\033[35m", "\033[39m", false);
       case TerminalCyan -> new StyleToken("\033[36m", "\033[39m", false);
     };
-    return StyleToken.NULL;
+    return super.formatCustom(style);
   }
 
   @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean bg) {

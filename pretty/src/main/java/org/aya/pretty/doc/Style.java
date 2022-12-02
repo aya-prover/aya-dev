@@ -25,9 +25,6 @@ public sealed interface Style extends Serializable {
     Underline,
   }
 
-  record CodeBlock(@NotNull String language) implements Style {
-  }
-
   record InlineCode(@NotNull String language) implements Style {
   }
 

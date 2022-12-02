@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
+import org.aya.pretty.backend.md.DocMdPrinter;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
@@ -68,6 +69,10 @@ public sealed interface Doc extends Docile {
 
   default @NotNull String renderToHtml(boolean withHeader) {
     return render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(withHeader));
+  }
+
+  default @NotNull String renderToMd() {
+    return render(new DocMdPrinter(), new DocMdPrinter.Config());
   }
 
   default @NotNull String renderToTeX() {

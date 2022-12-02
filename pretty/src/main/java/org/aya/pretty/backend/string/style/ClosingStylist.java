@@ -56,8 +56,7 @@ public abstract class ClosingStylist extends StringStylist {
         case Strike -> formatStrike();
         case Underline -> formatUnderline();
       };
-      case Style.CodeBlock code -> formatInlineCode(code.language());
-      case Style.InlineCode code -> formatCodeBlock(code.language());
+      case Style.InlineCode code -> formatInlineCode(code.language());
       case Style.ColorName color -> formatColorName(color, color.background());
       case Style.ColorHex hex -> formatColorHex(hex.color(), hex.background());
       case Style.CustomStyle custom -> formatCustom(custom);
@@ -81,10 +80,6 @@ public abstract class ClosingStylist extends StringStylist {
 
   protected @NotNull StyleToken formatCustom(@NotNull Style.CustomStyle style) {
     return StyleToken.NULL;
-  }
-
-  protected @NotNull StyleToken formatCodeBlock(@NotNull String language) {
-    return formatInlineCode(language);
   }
 
   protected abstract @NotNull StyleToken formatInlineCode(@NotNull String language);
