@@ -23,3 +23,17 @@ This is an illegal code, because you should write something in the function body
 ```
 
 Umm, now it looks good!
+
+Also, we can use some special characters as identifier:
+
+```aya
+open data Bool | True | False
+
+def > (lhs rhs : Unit) : Bool =>
+```
+
+It probably always false, I think.
+
+```aya
+  False
+```

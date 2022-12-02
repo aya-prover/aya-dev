@@ -88,14 +88,21 @@ public class AyaMdParserTest {
 
     for (var oneCase : cases) {
       var mdFile = file(oneCase.mdFile());
-      var expAyaFile = file(oneCase.expectedAyaFile());
-
       var parser = new AyaMdParser(mdFile);
       var literate = parser.parseLiterate(new AyaParserImpl(ThrowingReporter.INSTANCE));
       var actualCode = AyaMdParser.extractAya(literate);
 
       Files.writeString(oneCase.ayaFile(), actualCode);
-      assertLinesMatch(expAyaFile.sourceCode().lines(), actualCode.lines());
+
+      var expPath = oneCase.expectedAyaFile();
+
+      if (!expPath.toFile().exists()) {
+        System.err.println("Test Data " + expPath + " not exists, skip.");
+      } else {
+        var expAyaFile = file(expPath);
+
+        assertLinesMatch(expAyaFile.sourceCode().lines(), actualCode.lines());
+      }
     }
   }
 
