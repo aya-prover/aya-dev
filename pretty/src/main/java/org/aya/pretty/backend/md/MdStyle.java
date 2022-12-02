@@ -8,9 +8,14 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface MdStyle extends Style.CustomStyle {
   /** GitHub flavored markdown */
   enum GFM implements MdStyle {
-    H1, H2, H3, H4, H5, H6,
     BlockQuote, Paragraph,
   }
+
+  static @NotNull Heading h(int level) {
+    return new Heading(level);
+  }
+
+  record Heading(int level) implements MdStyle {}
 
   record CodeBlock(@NotNull String language) implements MdStyle {}
 }

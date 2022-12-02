@@ -1,7 +1,5 @@
-Main.html
 test.aya
-test.aya.md.html
 wow.aya
-wow.aya.md.html
-unsupported.aya
-unsupported.aya.md.html
+heading.aya
+*.html
+*.out.md

@@ -41,13 +41,13 @@ public class MdStyleTest {
 
   @NotNull private Doc doc() {
     return Doc.cat(
-      Doc.styled(MdStyle.GFM.H1, "H1"),
+      Doc.styled(MdStyle.h(1), "H1"),
       Doc.styled(MdStyle.GFM.Paragraph, Doc.hyperLink("Click me", new LinkId("https://google.com"))),
-      Doc.styled(MdStyle.GFM.H2, "H2"),
-      Doc.styled(MdStyle.GFM.H3, "H3"),
-      Doc.styled(MdStyle.GFM.H4, "H4"),
-      Doc.styled(MdStyle.GFM.H5, "H5"),
-      Doc.styled(MdStyle.GFM.H6, "H6"),
+      Doc.styled(MdStyle.h(2), "H2"),
+      Doc.styled(MdStyle.h(3), "H3"),
+      Doc.styled(MdStyle.h(4), "H4"),
+      Doc.styled(MdStyle.h(5), "H5"),
+      Doc.styled(MdStyle.h(6), "H6"),
       Doc.styled(MdStyle.GFM.BlockQuote, "BlockQuote"),
       Doc.plain("I love Java."),
       Doc.plain("I love Aya."),

@@ -6,6 +6,7 @@ module aya.pretty {
 
   exports org.aya.pretty.backend.latex;
   exports org.aya.pretty.backend.html;
+  exports org.aya.pretty.backend.md;
   exports org.aya.pretty.backend.string.custom;
   exports org.aya.pretty.backend.string.style;
   exports org.aya.pretty.backend.string;

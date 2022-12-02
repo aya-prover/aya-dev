@@ -5,6 +5,7 @@ package org.aya.cli.literate;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.remark.Literate;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,5 +53,9 @@ public interface LiterateConsumer extends Consumer<Literate> {
       }
       LiterateConsumer.super.accept(literate);
     }
+  }
+
+  record MarkdownDoc(@NotNull MutableList<Doc> docs) implements LiterateConsumer {
+
   }
 }

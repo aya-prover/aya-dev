@@ -36,15 +36,10 @@ public class MdStylist extends Html5Stylist {
   @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
     if (style instanceof MdStyle md) return switch (md) {
       case MdStyle.GFM gfm -> switch (gfm) {
-        case H1 -> formatH(1);
-        case H2 -> formatH(2);
-        case H3 -> formatH(3);
-        case H4 -> formatH(4);
-        case H5 -> formatH(5);
-        case H6 -> formatH(6);
         case BlockQuote -> new StyleToken(c -> c.invisibleContent("> "), c -> c.lineBreakWith("\n\n"));
         case Paragraph -> new StyleToken(c -> {}, c -> c.lineBreakWith("\n\n"));
       };
+      case MdStyle.Heading(int level) -> formatH(level);
       case MdStyle.CodeBlock(var lang) -> new StyleToken(c -> {
         c.lineBreakWith("\n");
         c.invisibleContent("```" + lang);

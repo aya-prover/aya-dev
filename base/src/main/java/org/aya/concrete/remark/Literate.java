@@ -65,7 +65,7 @@ public sealed interface Literate extends Docile {
     }
 
     @Override public @NotNull Doc toDoc() {
-      if (tyckResult == null) return Doc.plain("Error");
+      if (tyckResult == null) return Doc.styled(Style.code(), "Error");
       return Doc.styled(Style.code(), switch (options.showCode()) {
         case Concrete -> expr.toDoc(options.options());
         case Core -> normalize(tyckResult.wellTyped());
@@ -107,6 +107,7 @@ public sealed interface Literate extends Docile {
 
     @Override
     public @NotNull Doc toDoc() {
+      // TODO: wrap in code block
       if (isAya() && highlighted != null) {
         return highlighted;
       }

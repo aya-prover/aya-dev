@@ -11,6 +11,8 @@ import org.aya.concrete.remark.CodeOptions;
 import org.aya.concrete.remark.Literate;
 import org.aya.concrete.remark.UnsupportedMarkdown;
 import org.aya.generic.util.InternalException;
+import org.aya.pretty.backend.md.MdStyle;
+import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.StringUtil;
@@ -141,7 +143,10 @@ public class AyaMdParser {
       case HardLineBreak $ -> new Literate.Raw(Doc.line());
       case SoftLineBreak $ -> new Literate.Raw(Doc.line());
       case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis, producer), false);
-      case Paragraph $ -> new Literate.Many(null, mapChildren(node, producer), false);
+      case Paragraph $ -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node, producer), false);
+      case BlockQuote $ -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node, producer), false);
+      case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node, producer), false);
+      case Link h -> new Literate.Raw(Doc.hyperLink(h.getTitle(), new LinkId(h.getDestination())));
       case Document $ -> {
         var children = mapChildren(node, producer);
         yield children.sizeEquals(1) ? children.first() : new Literate.Many(null, children, true);

@@ -69,6 +69,10 @@ public class AyaMdParserTest {
     public @NotNull Path htmlFile() {
       return TEST_DIR.resolve(htmlName());
     }
+
+    public @NotNull Path outMdFile() {
+      return TEST_DIR.resolve(htmlName() + ".out.md");
+    }
   }
 
   public static @NotNull SourceFile file(@NotNull Path path) throws IOException {
@@ -100,7 +104,7 @@ public class AyaMdParserTest {
     var cases = Seq.of(
       new Case("test"),
       new Case("wow"),
-      new Case("unsupported")
+      new Case("heading")
     );
 
     for (var oneCase : cases) {
@@ -124,7 +128,8 @@ public class AyaMdParserTest {
 
       var highlights = SyntaxHighlight.highlight(Option.some(ayaFile), stmts);
       new LiterateConsumer.Highlights(highlights).accept(literate);
-      var expectedHtml = literate.toDoc().renderToHtml();
+      var doc = literate.toDoc();
+      var expectedHtml = doc.renderToHtml();
       Files.writeString(oneCase.htmlFile(), expectedHtml);
 
       // test single file compiler
@@ -135,6 +140,7 @@ public class AyaMdParserTest {
       ), null);
       var actualHtml = Files.readString(oneCase.htmlFile());
       assertEquals(trimIdHref(expectedHtml), trimIdHref(actualHtml));
+      Files.writeString(oneCase.outMdFile(), doc.renderToMd());
     }
   }
 
