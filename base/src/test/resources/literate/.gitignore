@@ -1,5 +1,4 @@
-test.aya
-wow.aya
-heading.aya
+*.aya
+!expected-*.aya
 *.html
 *.out.md
