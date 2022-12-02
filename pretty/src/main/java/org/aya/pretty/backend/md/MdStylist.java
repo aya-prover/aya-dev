@@ -10,7 +10,7 @@ import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 
 public class MdStylist extends Html5Stylist {
-  public static final @NotNull Html5Stylist DEFAULT = new Html5Stylist(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT);
+  public static final @NotNull MdStylist DEFAULT = new MdStylist(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT);
 
   public MdStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
     super(colorScheme, styleFamily);
@@ -28,7 +28,11 @@ public class MdStylist extends Html5Stylist {
     return new StyleToken("~~", "~~", false);
   }
 
-  @Override protected @NotNull StyleToken formatCode() {
-    return new StyleToken("```", "```", false);
+  @Override protected @NotNull StyleToken formatInlineCode(@NotNull String language) {
+    return new StyleToken("`", "`", false);
+  }
+
+  @Override protected @NotNull StyleToken formatCodeBlock(@NotNull String language) {
+    return new StyleToken("```" + language, "```", false);
   }
 }

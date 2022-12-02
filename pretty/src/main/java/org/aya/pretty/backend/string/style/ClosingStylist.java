@@ -48,24 +48,21 @@ public abstract class ClosingStylist extends StringStylist {
     formats.reversed().forEach(format -> cursor.content(format.end, format.visible));
   }
 
-  protected @NotNull StyleToken formatOne(Style style) {
-    if (style instanceof Style.Attr attr) {
-      return switch (attr) {
-        case Code -> formatCode();
+  protected @NotNull StyleToken formatOne(@NotNull Style style) {
+    return switch (style) {
+      case Style.Attr attr -> switch (attr) {
         case Italic -> formatItalic();
         case Bold -> formatBold();
         case Strike -> formatStrike();
         case Underline -> formatUnderline();
       };
-    } else if (style instanceof Style.ColorName color) {
-      return formatColorName(color, color.background());
-    } else if (style instanceof Style.ColorHex color) {
-      return formatColorHex(color.color(), color.background());
-    } else if (style instanceof Style.CustomStyle custom) {
-      return formatCustom(custom);
-    }
-
-    throw new IllegalArgumentException("Unsupported style: " + style.getClass().getName());
+      case Style.CodeBlock code -> formatInlineCode(code.language());
+      case Style.InlineCode code -> formatCodeBlock(code.language());
+      case Style.ColorName color -> formatColorName(color, color.background());
+      case Style.ColorHex hex -> formatColorHex(hex.color(), hex.background());
+      case Style.CustomStyle custom -> formatCustom(custom);
+      default -> StyleToken.NULL;
+    };
   }
 
   private @NotNull Option<Integer> getColor(@NotNull String colorName) {
@@ -82,11 +79,18 @@ public abstract class ClosingStylist extends StringStylist {
     return getColor(color.colorName()).getOrDefault(it -> formatColorHex(it, background), StyleToken.NULL);
   }
 
+  protected @NotNull StyleToken formatCustom(@NotNull Style.CustomStyle style) {
+    return StyleToken.NULL;
+  }
+
+  protected @NotNull StyleToken formatCodeBlock(@NotNull String language) {
+    return formatInlineCode(language);
+  }
+
+  protected abstract @NotNull StyleToken formatInlineCode(@NotNull String language);
   protected abstract @NotNull StyleToken formatItalic();
-  protected abstract @NotNull StyleToken formatCode();
   protected abstract @NotNull StyleToken formatBold();
   protected abstract @NotNull StyleToken formatStrike();
   protected abstract @NotNull StyleToken formatUnderline();
   protected abstract @NotNull StyleToken formatColorHex(int rgb, boolean background);
-  protected abstract @NotNull StyleToken formatCustom(@NotNull Style.CustomStyle style);
 }

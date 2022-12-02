@@ -19,11 +19,17 @@ public sealed interface Style extends Serializable {
   }
 
   enum Attr implements Style {
-    Code,
     Italic,
     Bold,
     Strike,
     Underline,
+  }
+
+  record CodeBlock(@NotNull String language) implements Style {
+  }
+
+  /** Inline code, for some backends like Markdown and HTML */
+  record InlineCode(@NotNull String language) implements Style {
   }
 
   record ColorName(@NotNull String colorName, boolean background) implements Style {
@@ -59,8 +65,12 @@ public sealed interface Style extends Serializable {
     return Attr.Strike;
   }
 
+  static @NotNull Style code(@NotNull String language) {
+    return new InlineCode(language);
+  }
+
   static @NotNull Style code() {
-    return Attr.Code;
+    return code("");
   }
 
   static @NotNull Style underline() {

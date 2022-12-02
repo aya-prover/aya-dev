@@ -17,7 +17,7 @@ public class UnixTermStylist extends ClosingStylist {
     return new StyleToken("\033[3m", "\033[23m", false);
   }
 
-  @Override protected @NotNull StyleToken formatCode() {
+  @Override protected @NotNull StyleToken formatInlineCode(@NotNull String language) {
     return new StyleToken("`", "'", true);
   }
 

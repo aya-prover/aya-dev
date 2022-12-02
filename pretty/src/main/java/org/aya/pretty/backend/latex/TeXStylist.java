@@ -3,7 +3,6 @@
 package org.aya.pretty.backend.latex;
 
 import org.aya.pretty.backend.string.style.ClosingStylist;
-import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
@@ -33,16 +32,12 @@ public class TeXStylist extends ClosingStylist {
     return new StyleToken("\\underline{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatCode() {
+  @Override protected @NotNull StyleToken formatInlineCode(@NotNull String language) {
     return new StyleToken("\\fbox{", "}", false);
   }
 
   @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
     return new StyleToken("\\%s[HTML]{%06x}{".formatted(
       background ? "colorbox" : "textcolor", rgb), "}", false);
-  }
-
-  @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
-    return new StyleToken("", "", false);
   }
 }
