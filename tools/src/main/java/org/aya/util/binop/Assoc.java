@@ -35,7 +35,7 @@ public enum Assoc {
     return this == Infix;
   }
 
-  public static boolean assocAmbitious(Assoc a, Assoc b) {
+  public static boolean assocAmbiguous(Assoc a, Assoc b) {
     //noinspection ConstantConditions: I know, I know. But we should also plan for the future.
     return a != b || a.noAssoc() || b.noAssoc();
   }
