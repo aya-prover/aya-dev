@@ -126,4 +126,23 @@ public class HighlighterTest {
       localRef(84, 84, "A", "LocalA'"),
       localRef(89, 89, "a", "Locala"));
   }
+
+  @Test public void variables() {
+    @Language("Aya") String code = """
+      variable A : Type
+            
+      def id (a : A) : A => a
+      """;
+
+    highlightAndTest(code,
+      keyword(0, 7, "variable"),
+      def(9, 9, "A", "GA", HighlightInfo.DefKind.Generalized),
+      keyword(13, 16, "Type"),
+      keyword(19, 21, "def"),
+      def(23, 24, "id", HighlightInfo.DefKind.Fn),
+      localDef(27, 27, "a", "a"),
+      ref(31, 31, "A", "GA", HighlightInfo.DefKind.Generalized),
+      ref(36, 36, "A", "GA", HighlightInfo.DefKind.Generalized),
+      localRef(41, 41, "a", "a"));
+  }
 }

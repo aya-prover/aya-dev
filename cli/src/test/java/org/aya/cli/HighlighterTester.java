@@ -93,7 +93,7 @@ public class HighlighterTester {
   }
 
   public void runTest() {
-    runTest(ImmutableSet.from(actual).toImmutableSeq().sorted(), Seq.of(expected));
+    runTest(actual.view().sorted().distinct().toImmutableSeq(), Seq.of(expected));
   }
 
   public void runTest(@NotNull Seq<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {

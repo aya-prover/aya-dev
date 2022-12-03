@@ -17,6 +17,7 @@ import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
+import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
@@ -108,6 +109,11 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var) {
+    if (var instanceof LocalVar localVar
+      && localVar.generateKind() instanceof GenerateKind.Generalized generalized) {
+      return linkRef(sourcePos, generalized.origin());
+    }
+
     return kindOf(var).toRef(sourcePos, new LinkId("#" + var.hashCode()));
   }
 
@@ -139,6 +145,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
         case P(var $, PrimDef $$) -> HighlightInfo.DefKind.Prim;
         default -> HighlightInfo.DefKind.Unknown;
       };
+      case LocalVar(var $, var $$, GenerateKind.Generalized(var $$$)) -> HighlightInfo.DefKind.Generalized;
       case LocalVar ignored -> HighlightInfo.DefKind.LocalVar;
       default -> HighlightInfo.DefKind.Unknown;
     };
