@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *                       <li>
  *                       `variable A : Type` is a generalized variable,
  *                       but a local var is generated when some one reference to it. For example:
- *                       `def foo : A => {??}` actually is `def foo {A : Type} : A {??}`
+ *                       `def foo : A => {??}` actually is `def foo {A : Type} : A => {??}`
  *                       where `A` is a generated local var
  *                       </li>
  *                     </ul>
