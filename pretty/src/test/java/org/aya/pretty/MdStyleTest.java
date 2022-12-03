@@ -23,16 +23,18 @@ public class MdStyleTest {
       ###### H6
       > BlockQuote
             
-      I love Java\\.I love Aya\\.I love Aya\\'s pretty printer\\.I love Java
+      1\\. fake list
+            
+      I love Java.I love Aya.I love Aya's pretty printer.I love Java
             
       I love Aya
             
-      I love Aya\\'s pretty printer\\.
+      I love Aya's pretty printer.
             
       ```aya
       data Nat | zero | suc Nat
       ```
-      Look\\! She is beautiful
+      Look! She is beautiful
             
       """.stripIndent(), doc().renderToMd());
   }
@@ -47,6 +49,8 @@ public class MdStyleTest {
       Doc.styled(MdStyle.h(5), "H5"),
       Doc.styled(MdStyle.h(6), "H6"),
       Doc.styled(MdStyle.GFM.BlockQuote, "BlockQuote"),
+      Doc.plain("1. "),
+      Doc.styled(MdStyle.GFM.Paragraph, "fake list"),
       Doc.plain("I love Java."),
       Doc.plain("I love Aya."),
       Doc.plain("I love Aya's pretty printer."),

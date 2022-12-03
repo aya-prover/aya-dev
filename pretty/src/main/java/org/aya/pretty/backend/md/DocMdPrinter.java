@@ -22,16 +22,28 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected @NotNull String escapePlainText(@NotNull String content) {
     // We are not need to call `super.escapePlainText`, we will escape them in markdown way.
     // I wish you can understand this genius regexp
-    return Pattern
-      .compile("[!\"#$%&'()*+,-./:;<=>?@\\[\\\\\\]^_`{|}~]")
+    // What we will escape:
+    // .
+    // What we won't escape, which are not special characters
+    // or don't matter in plain text (like `:` and `"` work in footnotes only):
+    // ":,%$'=@?^{}/
+    // What we should escape, but we don't:
+    // `!`: `!` is only used in `![]()`, but we already escape `[`, `]`, `(`, `)`, so `!` doesn't work.
+    content = Pattern
+      .compile("[#&()*+\\-;<>\\[\\\\\\]_`|~]")
       .matcher(content)
       .replaceAll(result -> {
         var chara = result.group();
         // special characters, see Matcher#appendReplacement
         if (chara.equals("\\")) chara = "\\\\";
-        if (chara.equals("$")) chara = "\\$";
         return "\\\\" + chara;
       });
+
+    // avoiding escape `\`.
+    content = Pattern.compile("(^\\s*\\d+)\\.( |$)").matcher(content)
+      .replaceAll("$1\\\\.$2");
+
+    return content;
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
