@@ -62,7 +62,7 @@ public record SingleFileCompiler(
       loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
         ayaFile.distill(distillOut, distillInfo, program, MainArgs.DistillStage.scoped);
         ayaFile.distill(distillOut, distillInfo, defs, MainArgs.DistillStage.typed);
-        if (flags.outputFile() != null) ayaFile.saveOutput(flags.outputFile(), flags, moduleResolve, defs);
+        if (flags.outputFile() != null && reporter.noError()) ayaFile.saveOutput(flags.outputFile(), flags, moduleResolve, defs);
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
       });
     });
