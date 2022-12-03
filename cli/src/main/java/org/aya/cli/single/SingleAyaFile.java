@@ -150,7 +150,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       if (lit == null) return;
       var highlights = SyntaxHighlight.highlight(Option.some(sourceFile()), program);
       new LiterateConsumer.Highlights(highlights).accept(lit);
-      Files.writeString(outputFile, lit.toDoc().renderToHtml());
+      Files.writeString(outputFile, lit.toDoc().renderToAyaMd());
     }
 
     @Override public void saveOutput(
