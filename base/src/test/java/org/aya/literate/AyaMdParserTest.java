@@ -137,17 +137,18 @@ public class AyaMdParserTest {
       new LiterateConsumer.Highlights(highlights).accept(literate);
       var doc = literate.toDoc();
       var expectedHtml = doc.renderToHtml();
+      var expectedMd = doc.renderToAyaMd();
       Files.writeString(oneCase.htmlFile(), expectedHtml);
+      Files.writeString(oneCase.outMdFile(), expectedMd);
 
       // test single file compiler
       var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, null, null);
       compiler.compile(oneCase.mdFile(), new CompilerFlags(
         CompilerFlags.Message.ASCII, false, false, null, SeqView.empty(),
-        oneCase.htmlFile()
+        oneCase.outMdFile()
       ), null);
-      var actualHtml = Files.readString(oneCase.htmlFile());
-      assertEquals(trimIdHref(expectedHtml), trimIdHref(actualHtml));
-      Files.writeString(oneCase.outMdFile(), doc.renderToAyaMd());
+      var actualMd = Files.readString(oneCase.outMdFile());
+      assertEquals(trimIdHref(expectedMd), trimIdHref(actualMd));
     }
   }
 

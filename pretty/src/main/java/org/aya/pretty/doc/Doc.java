@@ -134,7 +134,10 @@ public sealed interface Doc extends Docile {
   /**
    * A clickable text line without '\n'.
    */
-  record HyperLinked(@NotNull Doc doc, @NotNull LinkId link, @Nullable String id) implements Doc {
+  record HyperLinked(
+    @NotNull Doc doc, @NotNull LinkId href,
+    @Nullable String id, @Nullable String hover
+  ) implements Doc {
     @Override public String toString() {
       return doc.toString();
     }
@@ -215,19 +218,27 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc linkDef(@NotNull Doc doc, String uniqueId) {
-    return new HyperLinked(doc, new LinkId("#" + uniqueId), uniqueId);
+    return new HyperLinked(doc, new LinkId("#" + uniqueId), uniqueId, null);
   }
 
   static @NotNull Doc linkRef(@NotNull Doc doc, String uniqueId) {
-    return new HyperLinked(doc, new LinkId("#" + uniqueId), null);
+    return new HyperLinked(doc, new LinkId("#" + uniqueId), null, null);
   }
 
-  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId link) {
-    return new HyperLinked(doc, link, null);
+  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href) {
+    return hyperLink(doc, href, null);
   }
 
-  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId link) {
-    return hyperLink(plain(plain), link);
+  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href, @Nullable String hover) {
+    return new HyperLinked(doc, href, null, hover);
+  }
+
+  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href) {
+    return hyperLink(plain(plain), href);
+  }
+
+  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href, @Nullable String hover) {
+    return hyperLink(plain(plain), href, hover);
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {

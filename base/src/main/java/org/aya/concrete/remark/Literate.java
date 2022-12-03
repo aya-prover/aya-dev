@@ -9,6 +9,7 @@ import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.backend.md.MdStyle;
+import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
@@ -28,11 +29,17 @@ public sealed interface Literate extends Docile {
   record Raw(@NotNull Doc toDoc) implements Literate {
   }
 
+  record Link(@NotNull String href, @Nullable String hover, @NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override public @NotNull Doc toDoc() {
+      var child = Doc.cat(this.children().map(Literate::toDoc));
+      return Doc.hyperLink(child, new LinkId(href), hover);
+    }
+  }
+
   record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {
-      var docs = children().map(Literate::toDoc);
-      var cat = Doc.cat(docs);
-      return style == null ? cat : Doc.styled(style, cat);
+      var child = Doc.cat(this.children().map(Literate::toDoc));
+      return style == null ? child : Doc.styled(style, child);
     }
   }
 

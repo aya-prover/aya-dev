@@ -80,11 +80,12 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text) {
-    var link = text.link();
+    var href = text.href();
     cursor.invisibleContent("<a ");
     if (text.id() != null) cursor.invisibleContent("id=\"" + text.id() + "\" ");
+    if (text.hover() != null) cursor.invisibleContent("title=\"" + text.hover() + "\" ");
     cursor.invisibleContent("href=\"");
-    cursor.invisibleContent(link.id());
+    cursor.invisibleContent(href.id());
     cursor.invisibleContent("\">");
     renderDoc(cursor, text.doc());
     cursor.invisibleContent("</a>");

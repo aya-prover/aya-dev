@@ -12,7 +12,6 @@ import org.aya.concrete.remark.Literate;
 import org.aya.concrete.remark.UnsupportedMarkdown;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.backend.md.MdStyle;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.StringUtil;
@@ -146,7 +145,7 @@ public class AyaMdParser {
       case Paragraph $ -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node, producer));
       case BlockQuote $ -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node, producer));
       case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node, producer));
-      case Link h -> new Literate.Raw(Doc.hyperLink(h.getTitle(), new LinkId(h.getDestination())));
+      case Link h -> new Literate.Link(h.getDestination(), h.getTitle(), mapChildren(node, producer));
       case Document $ -> {
         var children = mapChildren(node, producer);
         yield children.sizeEquals(1) ? children.first() : new Literate.Many(null, children);
@@ -171,7 +170,7 @@ public class AyaMdParser {
           var startFrom = lineIndex + sourceSpan.getColumnIndex();
           var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
           assert sourcePos != null;
-          yield CodeOptions.analyze(inlineCode, producer.expr(inlineCode.getLiteral(), sourcePos));
+          yield CodeOptions.analyze(inlineCode, producer, sourcePos);
         }
         throw new InternalException("SourceSpans");
       }
