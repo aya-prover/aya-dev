@@ -23,16 +23,16 @@ public class MdStyleTest {
       ###### H6
       > BlockQuote
             
-      I love Java.I love Aya.I love Aya's pretty printer.I love Java
+      I love Java\\.I love Aya\\.I love Aya\\'s pretty printer\\.I love Java
             
       I love Aya
             
-      I love Aya's pretty printer.
+      I love Aya\\'s pretty printer\\.
             
       ```aya
       data Nat | zero | suc Nat
       ```
-      Look! She is beautiful
+      Look\\! She is beautiful
             
       """.stripIndent(), doc().renderToMd());
   }
