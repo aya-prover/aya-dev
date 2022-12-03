@@ -21,16 +21,6 @@ public record Styles(@NotNull MutableList<Style> styles) {
     return this;
   }
 
-  public @NotNull Styles code(@NotNull String language) {
-    styles.append(Style.code(language));
-    return this;
-  }
-
-  public @NotNull Styles code() {
-    styles.append(Style.code());
-    return this;
-  }
-
   public @NotNull Styles underline() {
     styles.append(Style.underline());
     return this;

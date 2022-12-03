@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
-import org.aya.pretty.backend.string.style.ClosingStylist;
+import org.aya.pretty.backend.string.ClosingStylist;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
@@ -26,10 +26,6 @@ public class Html5Stylist extends ClosingStylist {
 
   @Override protected @NotNull StyleToken formatStrike() {
     return new StyleToken("<s>", "</s>", false);
-  }
-
-  @Override protected @NotNull StyleToken formatInlineCode(@NotNull String language) {
-    return new StyleToken("<code>", "</code>", false);
   }
 
   @Override protected @NotNull StyleToken formatUnderline() {

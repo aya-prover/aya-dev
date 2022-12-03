@@ -1,8 +1,8 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.pretty.backend.string.style;
+package org.aya.pretty.backend.terminal;
 
-import org.aya.pretty.backend.string.custom.UnixTermStyle;
+import org.aya.pretty.backend.string.ClosingStylist;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
@@ -15,10 +15,6 @@ public class UnixTermStylist extends ClosingStylist {
 
   @Override protected @NotNull StyleToken formatItalic() {
     return new StyleToken("\033[3m", "\033[23m", false);
-  }
-
-  @Override protected @NotNull StyleToken formatInlineCode(@NotNull String language) {
-    return new StyleToken("`", "'", true);
   }
 
   @Override protected @NotNull StyleToken formatBold() {

@@ -9,7 +9,6 @@ import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
@@ -54,7 +53,7 @@ public sealed interface HoleProblem extends Problem {
           Doc.ONE_WS,
           Doc.commaList(scopeCheck.view()
             .map(BaseDistiller::varDoc)
-            .map(doc -> Doc.styled(Style.code(), doc)))));
+            .map(doc -> Doc.code(doc)))));
     }
   }
 
@@ -70,7 +69,7 @@ public sealed interface HoleProblem extends Problem {
       return Doc.vcat(
         Doc.sep(
           Doc.english("Trying to solve hole"),
-          Doc.styled(Style.code(), BaseDistiller.linkDef(term.ref())),
+          Doc.code(BaseDistiller.linkDef(term.ref())),
           Doc.plain("as")),
         Doc.par(1, sol.toDoc(options)),
         Doc.english("which is recursive"));

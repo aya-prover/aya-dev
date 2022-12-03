@@ -16,6 +16,4 @@ public sealed interface MdStyle extends Style.CustomStyle {
   }
 
   record Heading(int level) implements MdStyle {}
-
-  record CodeBlock(@NotNull String language) implements MdStyle {}
 }

@@ -8,6 +8,7 @@ import kala.tuple.Tuple2;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -67,6 +68,16 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
     cursor.lineBreakWith("\\\\\n");
+  }
+
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code) {
+    cursor.invisibleContent("\\fbox{");
+    renderDoc(cursor, code.code());
+    cursor.invisibleContent("}");
+  }
+
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block) {
+    super.renderCodeBlock(cursor, block);
   }
 
   /**

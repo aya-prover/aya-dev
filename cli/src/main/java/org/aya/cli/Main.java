@@ -82,7 +82,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var status = compiler.compile(filePath, flags, null);
     if (traceBuilder != null)
       System.err.println(new MarkdownTrace(2, distillOptions, asciiOnly)
-        .docify(traceBuilder).renderWithPageWidth(PrinterConfig.INFINITE_SIZE, !asciiOnly));
+        .docify(traceBuilder).renderToString(PrinterConfig.INFINITE_SIZE, !asciiOnly));
     return status;
   }
 }

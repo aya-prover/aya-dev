@@ -9,7 +9,6 @@ import org.aya.concrete.stmt.QualifiedID;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.context.BindContext;
 import org.aya.resolve.context.Context;
@@ -40,10 +39,10 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(Doc.sep(
           Doc.english("The unqualified name"),
-          Doc.styled(Style.code(), Doc.plain(name)),
+          Doc.code(Doc.plain(name)),
           Doc.english("is ambiguous")),
         Doc.english("Did you mean:"),
-        Doc.nest(2, Doc.vcat(didYouMean().map(n -> Doc.styled(Style.code(), n)))));
+        Doc.nest(2, Doc.vcat(didYouMean().map(n -> Doc.code(n)))));
     }
 
     public @NotNull ImmutableSeq<String> didYouMean() {
@@ -58,7 +57,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(Doc.sep(
         Doc.english("The name"),
-        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.code(Doc.plain(name)),
         Doc.english("introduces ambiguity and can only be accessed through a qualified name")));
     }
   }
@@ -70,7 +69,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("The name"),
-        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.code(Doc.plain(name)),
         Doc.english("being exported clashes with another exported definition with the same name"));
     }
 
@@ -86,7 +85,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),
+        Doc.code(Doc.plain(QualifiedID.join(modName))),
         Doc.english("is already defined elsewhere")
       );
     }
@@ -100,7 +99,7 @@ public interface NameProblem extends Problem {
       return Doc.sep(
         Doc.english("The name"),
         Doc.plain(name),
-        Doc.parened(Doc.styled(Style.code(), BaseDistiller.varDoc(ref))),
+        Doc.parened(Doc.code(BaseDistiller.varDoc(ref))),
         Doc.english("is already defined elsewhere")
       );
     }
@@ -113,7 +112,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),
+        Doc.code(Doc.plain(QualifiedID.join(modName))),
         Doc.english("is not defined in the current scope")
       );
     }
@@ -126,7 +125,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),
+        Doc.code(Doc.plain(QualifiedID.join(modName))),
         Doc.english("is not found")
       );
     }
@@ -139,7 +138,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),
+        Doc.code(Doc.plain(QualifiedID.join(modName))),
         Doc.english("shadows a previous definition from outer scope")
       );
     }
@@ -151,7 +150,7 @@ public interface NameProblem extends Problem {
   ) implements NameProblem.Warn {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("The name"),
-        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.code(Doc.plain(name)),
         Doc.english("shadows a previous local definition from outer scope")
       );
     }
@@ -165,8 +164,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("The qualified name"),
-        Doc.styled(Style.code(),
-          Doc.cat(Doc.plain(QualifiedID.join(modName)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
+        Doc.code(Doc.cat(Doc.plain(QualifiedID.join(modName)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
         Doc.english("is not defined in the current scope")
       );
     }
@@ -180,14 +178,14 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       var head = Doc.sep(
         Doc.english("The name"),
-        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.code(Doc.plain(name)),
         Doc.english("is not defined in the current scope"));
       var possible = didYouMean();
       if (possible.isEmpty()) return head;
       var tail = possible.sizeEquals(1)
-        ? Doc.sep(Doc.english("Did you mean:"), Doc.styled(Style.code(), possible.first()))
+        ? Doc.sep(Doc.english("Did you mean:"), Doc.code(possible.first()))
         : Doc.vcat(Doc.english("Did you mean:"),
-          Doc.nest(2, Doc.vcat(possible.view().map(n -> Doc.styled(Style.code(), n)))));
+          Doc.nest(2, Doc.vcat(possible.view().map(n -> Doc.code(n)))));
       return Doc.vcat(head, tail);
     }
 
@@ -209,7 +207,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Unknown operator"),
-        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.code(Doc.plain(name)),
         Doc.english("used in bind statement")
       );
     }

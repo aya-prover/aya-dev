@@ -14,16 +14,15 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author kiva
  */
-public class StringPrinter<StringConfig extends StringPrinterConfig>
-  implements Printer<String, StringConfig>, Cursor.CursorAPI {
-  protected StringConfig config;
+public class StringPrinter<Config extends StringPrinterConfig> implements Printer<String, Config> {
+  protected Config config;
 
-  @Override public @NotNull String makeIndent(int indent) {
+  public @NotNull String makeIndent(int indent) {
     return " ".repeat(indent);
   }
 
   @Override
-  public @NotNull String render(@NotNull StringConfig config, @NotNull Doc doc) {
+  public @NotNull String render(@NotNull Config config, @NotNull Doc doc) {
     this.config = config;
     var cursor = new Cursor(this);
     renderHeader(cursor);
@@ -52,6 +51,8 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
       case Doc.Column column -> predictWidth(cursor, column.docBuilder().apply(cursor.getCursor()));
       case Doc.Nesting nesting -> predictWidth(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
       case Doc.PageWidth pageWidth -> predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
+      case Doc.CodeBlock codeBlock -> predictWidth(cursor, codeBlock.code());
+      case Doc.InlineCode inlineCode -> predictWidth(cursor, inlineCode.code());
     };
   }
 
@@ -83,8 +84,9 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
       case Doc.Column column -> renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()));
       case Doc.Nesting nesting -> renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
       case Doc.PageWidth pageWidth -> renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
-      default -> {
-      }
+      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock);
+      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode);
+      case Doc.Empty $ -> {}
     }
   }
 
@@ -145,5 +147,15 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderHardLineBreak(@NotNull Cursor cursor) {
     cursor.lineBreakWith("\n");
+  }
+
+  protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block) {
+    renderDoc(cursor, block.code());
+  }
+
+  protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code) {
+    cursor.visibleContent("`");
+    renderDoc(cursor, code.code());
+    cursor.visibleContent("`");
   }
 }

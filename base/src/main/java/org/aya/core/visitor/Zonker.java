@@ -7,7 +7,6 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.tyck.Tycker;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -83,7 +82,7 @@ public record Zonker(
         Doc.english("Unable to solve the type of this literal:"),
         Doc.par(1, lit.toDoc(options)),
         Doc.plain("I'm confused about the following candidates, please help me!"),
-        Doc.par(1, Doc.join(Doc.plain(", "), lit.candidates().map(d -> Doc.styled(Style.code(), d._1.ref().name()))))
+        Doc.par(1, Doc.join(Doc.plain(", "), lit.candidates().map(d -> Doc.code(d._1.ref().name()))))
       );
     }
 
@@ -99,7 +98,7 @@ public record Zonker(
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       var lines = MutableList.of(Doc.english("Unsolved meta " + name));
       for (var term : termStack) {
-        var buf = MutableList.of(Doc.plain("in"), Doc.par(1, Doc.styled(Style.code(), term.toDoc(options))));
+        var buf = MutableList.of(Doc.plain("in"), Doc.par(1, Doc.code(term.toDoc(options))));
         if (term instanceof RefTerm) {
           buf.append(Doc.ALT_WS);
           buf.append(Doc.parened(Doc.english("in the type")));

@@ -4,7 +4,6 @@ package org.aya.resolve.error;
 
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -21,7 +20,7 @@ public record GeneralizedNotAvailableError(
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The generalized variable"),
-      Doc.styled(Style.code(), BaseDistiller.varDoc(var)),
+      Doc.code(BaseDistiller.varDoc(var)),
       Doc.english("is not available here")
     );
   }

@@ -3,14 +3,13 @@
 package org.aya.pretty;
 
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Reproduction {
   @Test public void mock() {
-    var doc = Doc.nest(2, Doc.styled(Style.code(), Doc.plain("hey")));
+    var doc = Doc.nest(2, Doc.code(Doc.plain("hey")));
     assertEquals("  `hey'", doc.renderToTerminal());
     assertEquals("\\noindent\\hspace*{1.0em}\\fbox{hey}", doc.renderToTeX());
   }

@@ -26,12 +26,4 @@ public class MdStylist extends AyaMdStylist {
   @Override protected @NotNull StyleToken formatStrike() {
     return new StyleToken("~~", "~~", false);
   }
-
-  @Override protected @NotNull StyleToken formatInlineCode(@NotNull String language) {
-    return new StyleToken("`", "`", false);
-  }
-
-  @Override protected @NotNull StyleToken formatAyaCodeBlock() {
-    return super.formatCodeBlock("aya");
-  }
 }

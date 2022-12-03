@@ -6,7 +6,6 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,12 +34,12 @@ public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) i
   public static @NotNull ErrorTerm typeOf(@NotNull AyaDocile origin) {
     return new ErrorTerm(options -> Doc.sep(
       Doc.plain("type of"),
-      Doc.styled(Style.code(), origin.toDoc(options))));
+      Doc.code(origin.toDoc(options))));
   }
 
   public static @NotNull ErrorTerm unexpected(@NotNull AyaDocile origin) {
     return new ErrorTerm(options -> Doc.sep(
       Doc.plain("unexpected"),
-      Doc.styled(Style.code(), origin.toDoc(options))));
+      Doc.code(origin.toDoc(options))));
   }
 }

@@ -8,7 +8,6 @@ import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
-import org.aya.pretty.backend.md.MdStyle;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -29,7 +28,8 @@ public sealed interface Literate extends Docile {
   record Raw(@NotNull Doc toDoc) implements Literate {
   }
 
-  record Link(@NotNull String href, @Nullable String hover, @NotNull ImmutableSeq<Literate> children) implements Literate {
+  record Link(@NotNull String href, @Nullable String hover,
+              @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
       return Doc.hyperLink(child, new LinkId(href), hover);
@@ -73,8 +73,8 @@ public sealed interface Literate extends Docile {
     }
 
     @Override public @NotNull Doc toDoc() {
-      if (tyckResult == null) return Doc.styled(Style.code(), "Error");
-      return Doc.styled(Style.code(), switch (options.showCode()) {
+      if (tyckResult == null) return Doc.code("Error");
+      return Doc.code(switch (options.showCode()) {
         case Concrete -> expr.toDoc(options.options());
         case Core -> normalize(tyckResult.wellTyped());
         case Type -> normalize(tyckResult.type());
@@ -116,7 +116,7 @@ public sealed interface Literate extends Docile {
     @Override
     public @NotNull Doc toDoc() {
       var doc = isAya() && highlighted != null ? highlighted : Doc.plain(raw);
-      return Doc.styled(new MdStyle.CodeBlock(language), doc);
+      return Doc.codeBlock(language, doc);
     }
   }
 

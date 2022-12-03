@@ -6,7 +6,6 @@ import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -34,7 +33,7 @@ public sealed interface LicitError extends Problem {
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Unexpected implicit argument"),
-        Doc.styled(Style.code(), expr.toDoc(options)));
+        Doc.code(expr.toDoc(options)));
     }
   }
 }

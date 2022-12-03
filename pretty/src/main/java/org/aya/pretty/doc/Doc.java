@@ -10,11 +10,12 @@ import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.md.AyaMdStylist;
 import org.aya.pretty.backend.md.DocMdPrinter;
+import org.aya.pretty.backend.string.DebugStylist;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
-import org.aya.pretty.backend.string.style.AdaptiveCliStylist;
-import org.aya.pretty.backend.string.style.DebugStylist;
+import org.aya.pretty.backend.terminal.AdaptiveCliStylist;
+import org.aya.pretty.backend.terminal.DocTermPrinter;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
 import org.jetbrains.annotations.Contract;
@@ -53,7 +54,11 @@ public sealed interface Doc extends Docile {
   //region Doc APIs
   default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
     var printer = new StringPrinter<>();
-    return this.render(printer, config);
+    return render(printer, config);
+  }
+
+  default @NotNull String renderToString(int pageWidth, boolean unicode) {
+    return renderToString(new StringPrinterConfig(DebugStylist.DEFAULT, pageWidth, unicode));
   }
 
   default @NotNull String renderToTerminal() {
@@ -61,7 +66,7 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToTerminal(int pageWidth, boolean unicode) {
-    return renderToString(new StringPrinterConfig(AdaptiveCliStylist.INSTANCE, pageWidth, unicode));
+    return render(new DocTermPrinter(), new DocTermPrinter.Config(AdaptiveCliStylist.INSTANCE, pageWidth, unicode));
   }
 
   default @NotNull String renderToHtml() {
@@ -89,19 +94,14 @@ public sealed interface Doc extends Docile {
     return printer.render(config, this);
   }
 
-  default @NotNull String renderWithPageWidth(int pageWidth, boolean unicode) {
-    var config = new StringPrinterConfig(DebugStylist.DEFAULT, pageWidth, unicode);
-    return this.renderToString(config);
-  }
-
   /** Produce ASCII and infinite-width output */
   default @NotNull String debugRender() {
-    return renderWithPageWidth(INFINITE_SIZE, false);
+    return renderToString(INFINITE_SIZE, false);
   }
 
   /** Produce unicode and 80-width output */
   default @NotNull String commonRender() {
-    return renderWithPageWidth(80, true);
+    return renderToString(80, true);
   }
 
   //endregion
@@ -141,6 +141,14 @@ public sealed interface Doc extends Docile {
     @Override public String toString() {
       return doc.toString();
     }
+  }
+
+  /** Inline code, with special escape settings compared to {@link PlainText} */
+  record InlineCode(@NotNull String language, @NotNull Doc code) implements Doc {
+  }
+
+  /** Code block, with special escape settings compared to {@link PlainText} */
+  record CodeBlock(@NotNull String language, @NotNull Doc code) implements Doc {
   }
 
   /**
@@ -239,6 +247,30 @@ public sealed interface Doc extends Docile {
 
   static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href, @Nullable String hover) {
     return hyperLink(plain(plain), href, hover);
+  }
+
+  static @NotNull Doc code(@NotNull String code) {
+    return code("aya", plain(code));
+  }
+
+  static @NotNull Doc code(@NotNull Doc code) {
+    return code("aya", code);
+  }
+
+  static @NotNull Doc code(@NotNull String language, @NotNull Doc code) {
+    return new InlineCode(language, code);
+  }
+
+  static @NotNull Doc codeBlock(@NotNull String code) {
+    return codeBlock("aya", plain(code));
+  }
+
+  static @NotNull Doc codeBlock(@NotNull Doc code) {
+    return codeBlock("aya", code);
+  }
+
+  static @NotNull Doc codeBlock(@NotNull String language, @NotNull Doc code) {
+    return new CodeBlock(language, code);
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {

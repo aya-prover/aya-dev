@@ -1,10 +1,9 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.pretty.backend.string.style;
+package org.aya.pretty.backend.terminal;
 
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import org.aya.pretty.backend.string.custom.UnixTermStyle;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;

@@ -9,11 +9,12 @@ import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.Html5Stylist;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.latex.TeXStylist;
+import org.aya.pretty.backend.string.DebugStylist;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.StringStylist;
-import org.aya.pretty.backend.string.style.AdaptiveCliStylist;
-import org.aya.pretty.backend.string.style.DebugStylist;
-import org.aya.pretty.backend.string.style.UnixTermStylist;
+import org.aya.pretty.backend.terminal.AdaptiveCliStylist;
+import org.aya.pretty.backend.terminal.DocTermPrinter;
+import org.aya.pretty.backend.terminal.UnixTermStylist;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
@@ -146,7 +147,8 @@ public class RenderOptions {
     return switch (output) {
       case HTML -> doc.render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config((Html5Stylist) stylist, witHeader));
       case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
-      case Terminal, Plain -> doc.renderToString(new StringPrinterConfig(stylist, pageWidth, unicode));
+      case Terminal -> doc.render(new DocTermPrinter(), new DocTermPrinter.Config((UnixTermStylist) stylist, pageWidth, unicode));
+      case Plain -> doc.renderToString(new StringPrinterConfig(stylist, pageWidth, unicode));
     };
   }
 

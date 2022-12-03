@@ -5,7 +5,6 @@ package org.aya.concrete.remark;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.commonmark.node.Code;
@@ -25,7 +24,7 @@ public record CodeOptions(
   public static @NotNull Literate analyze(@NotNull Code code, @NotNull GenericAyaParser parser, @NotNull SourcePos sourcePos) {
     if (code.getFirstChild() instanceof CodeAttrProcessor.Attr attr) {
       return new Literate.Code(parser.expr(code.getLiteral(), sourcePos), attr.options);
-    } else return new Literate.Raw(Doc.styled(Style.code(), code.getLiteral()));
+    } else return new Literate.Raw(Doc.code(code.getLiteral()));
   }
 
   public enum ShowCode {

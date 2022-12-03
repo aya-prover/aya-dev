@@ -19,7 +19,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text) {
-    if (config.getStylist() instanceof MdStylist) {
+    runSwitch(() -> {
       // use markdown typesetting only when the stylist is pure markdown
       var href = text.href();
       cursor.invisibleContent("[");
@@ -28,7 +28,35 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       cursor.invisibleContent(href.id());
       cursor.invisibleContent(")");
       // TODO: text.id(), text.hover()
-    } else super.renderHyperLinked(cursor, text);
+    }, () -> super.renderHyperLinked(cursor, text));
+  }
+
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code) {
+    runSwitch(() -> {
+      cursor.invisibleContent("`");
+      renderDoc(cursor, code.code());
+      cursor.invisibleContent("`");
+    }, () -> super.renderInlineCode(cursor, code));
+  }
+
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block) {
+    runSwitch(
+      () -> formatCodeBlock(cursor, block.code(), "```" + block.language(), "```"),
+      () -> formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>"));
+  }
+
+  public @NotNull void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end) {
+    cursor.invisibleContent(begin);
+    cursor.lineBreakWith("\n");
+    renderDoc(cursor, code);
+    cursor.lineBreakWith("\n");
+    cursor.invisibleContent(end);
+    cursor.lineBreakWith("\n");
+  }
+
+  private void runSwitch(@NotNull Runnable pureMd, @NotNull Runnable ayaMd) {
+    if (config.getStylist() instanceof MdStylist) pureMd.run();
+    else ayaMd.run();
   }
 
   public static class Config extends DocHtmlPrinter.Config {

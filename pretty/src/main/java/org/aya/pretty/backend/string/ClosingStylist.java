@@ -1,13 +1,11 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.pretty.backend.string.style;
+package org.aya.pretty.backend.string;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import org.aya.pretty.backend.string.Cursor;
-import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
@@ -56,7 +54,6 @@ public abstract class ClosingStylist extends StringStylist {
         case Strike -> formatStrike();
         case Underline -> formatUnderline();
       };
-      case Style.InlineCode code -> formatInlineCode(code.language());
       case Style.ColorName color -> formatColorName(color, color.background());
       case Style.ColorHex hex -> formatColorHex(hex.color(), hex.background());
       case Style.CustomStyle custom -> formatCustom(custom);
@@ -82,7 +79,6 @@ public abstract class ClosingStylist extends StringStylist {
     return StyleToken.NULL;
   }
 
-  protected abstract @NotNull StyleToken formatInlineCode(@NotNull String language);
   protected abstract @NotNull StyleToken formatItalic();
   protected abstract @NotNull StyleToken formatBold();
   protected abstract @NotNull StyleToken formatStrike();

@@ -53,7 +53,7 @@ public class MdStyleTest {
       Doc.styled(MdStyle.GFM.Paragraph, "I love Java"),
       Doc.styled(MdStyle.GFM.Paragraph, "I love Aya"),
       Doc.styled(MdStyle.GFM.Paragraph, "I love Aya's pretty printer."),
-      Doc.styled(new MdStyle.CodeBlock("aya"), "data Nat | zero | suc Nat"),
+      Doc.codeBlock("data Nat | zero | suc Nat"),
       Doc.styled(MdStyle.GFM.Paragraph, "Look! She is beautiful")
     );
   }

@@ -25,9 +25,6 @@ public sealed interface Style extends Serializable {
     Underline,
   }
 
-  record InlineCode(@NotNull String language) implements Style {
-  }
-
   record ColorName(@NotNull String colorName, boolean background) implements Style {
   }
 
@@ -59,14 +56,6 @@ public sealed interface Style extends Serializable {
 
   static @NotNull Style strike() {
     return Attr.Strike;
-  }
-
-  static @NotNull Style code(@NotNull String language) {
-    return new InlineCode(language);
-  }
-
-  static @NotNull Style code() {
-    return code("");
   }
 
   static @NotNull Style underline() {

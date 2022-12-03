@@ -5,7 +5,6 @@ package org.aya.tyck.trace;
 import kala.collection.mutable.MutableList;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,32 +38,32 @@ public class MarkdownTrace {
       case Trace.LabelT t -> Doc.vcatNonEmpty(Doc.sep(plus, Doc.english(t.label())),
         indentedChildren(t.children()));
       case Trace.ExprT t -> {
-        var buf = MutableList.of(plus, vdash, Doc.styled(Style.code(), t.expr().toDoc(options)));
+        var buf = MutableList.of(plus, vdash, Doc.code(t.expr().toDoc(options)));
         if (t.term() != null) {
           buf.append(colon);
-          buf.append(Doc.styled(Style.code(), t.term().toDoc(options)));
+          buf.append(Doc.code(t.term().toDoc(options)));
         }
         yield Doc.vcatNonEmpty(Doc.sep(buf), indentedChildren(t.children()));
       }
       case Trace.PatT t -> Doc.vcatNonEmpty(Doc.sep(plus, Doc.plain("pat"), vdash,
-          Doc.styled(Style.code(), t.pat().toDoc(options)), colon,
-          Doc.styled(Style.code(), t.type().toDoc(options))),
+          Doc.code(t.pat().toDoc(options)), colon,
+          Doc.code(t.type().toDoc(options))),
         indentedChildren(t.children()));
       case Trace.TyckT t -> {
         assert t.children().isEmpty();
         yield Doc.sep(plus, Doc.plain("result"), vdash,
-          Doc.styled(Style.code(), t.term().toDoc(options)), uparr,
-          Doc.styled(Style.code(), t.type().toDoc(options)));
+          Doc.code(t.term().toDoc(options)), uparr,
+          Doc.code(t.type().toDoc(options)));
       }
       case Trace.UnifyT t -> {
         var buf = MutableList.of(plus,
           vdash,
-          Doc.styled(Style.code(), t.lhs().toDoc(options)),
+          Doc.code(t.lhs().toDoc(options)),
           equiv,
-          Doc.styled(Style.code(), t.rhs().toDoc(options)));
+          Doc.code(t.rhs().toDoc(options)));
         if (t.type() != null) {
           buf.append(colon);
-          buf.append(Doc.styled(Style.code(), t.type().toDoc(options)));
+          buf.append(Doc.code(t.type().toDoc(options)));
         }
         yield Doc.vcatNonEmpty(Doc.sep(buf), indentedChildren(t.children()));
       }

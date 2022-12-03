@@ -27,29 +27,7 @@ public class AyaMdStylist extends Html5Stylist {
         c.invisibleContent("#".repeat(level));
         c.invisibleContent(" ");
       }, c -> c.lineBreakWith("\n"));
-      case MdStyle.CodeBlock(var lang) -> "aya".equalsIgnoreCase(lang)
-        ? formatAyaCodeBlock()
-        : formatCodeBlock(lang);
     };
     return super.formatCustom(style);
-  }
-
-  private @NotNull StyleToken formatCodeBlock(@NotNull String begin, @NotNull String end) {
-    return new StyleToken(c -> {
-      c.invisibleContent(begin);
-      c.lineBreakWith("\n");
-    }, c -> {
-      c.lineBreakWith("\n");
-      c.invisibleContent(end);
-      c.lineBreakWith("\n");
-    });
-  }
-
-  protected @NotNull StyleToken formatAyaCodeBlock() {
-    return formatCodeBlock("<pre class=\"Aya\">", "</pre>");
-  }
-
-  protected @NotNull StyleToken formatCodeBlock(@NotNull String lang) {
-    return formatCodeBlock("```" + lang, "```");
   }
 }

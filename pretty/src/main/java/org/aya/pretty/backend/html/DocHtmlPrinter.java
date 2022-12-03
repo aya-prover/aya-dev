@@ -94,6 +94,18 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.lineBreakWith("<br>");
   }
 
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code) {
+    cursor.invisibleContent("<code>");
+    renderDoc(cursor, code.code());
+    cursor.invisibleContent("</code>");
+  }
+
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block) {
+    cursor.invisibleContent("<pre class=\"" + block.language() + "\">");
+    renderDoc(cursor, block.code());
+    cursor.invisibleContent("</pre>");
+  }
+
   public static class Config extends StringPrinterConfig {
     public final boolean withHeader;
 
