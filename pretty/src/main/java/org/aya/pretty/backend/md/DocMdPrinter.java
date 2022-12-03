@@ -23,7 +23,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, Outer outer) {
-    runSwitch(() -> {
+    Runnable pureMd = () -> {
       // use markdown typesetting only when the stylist is pure markdown
       var href = text.href();
       cursor.invisibleContent("[");
@@ -32,15 +32,18 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       cursor.invisibleContent(href.id());
       cursor.invisibleContent(")");
       // TODO: text.id(), text.hover()
-    }, () -> super.renderHyperLinked(cursor, text, outer));
+    };
+    runSwitch(pureMd, () -> {
+      if (outer == Outer.Code) super.renderHyperLinked(cursor, text, outer);
+      else pureMd.run();
+    });
   }
 
   @Override protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, Outer outer) {
-    runSwitch(() -> {
-      cursor.invisibleContent("`");
-      renderDoc(cursor, code.code(), outer);
-      cursor.invisibleContent("`");
-    }, () -> super.renderInlineCode(cursor, code, outer));
+    // assumption: inline code cannot be nested in code block
+    cursor.invisibleContent("`");
+    renderDoc(cursor, code.code(), outer);
+    cursor.invisibleContent("`");
   }
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, Outer outer) {
