@@ -25,7 +25,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     // What we will escape:
     // .
     // What we won't escape, which are not special characters
-    // or don't matter in plain text (like `:` and `"` work in footnotes only):
+    // or don't matter in a plain text (like `:` and `"` work in footnotes only):
     // ":,%$'=@?^{}/
     // What we should escape, but we don't:
     // `!`: `!` is only used in `![]()`, but we already escape `[`, `]`, `(`, `)`, so `!` doesn't work.
