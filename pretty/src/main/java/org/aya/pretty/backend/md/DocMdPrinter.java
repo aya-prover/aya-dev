@@ -7,6 +7,8 @@ import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
   }
@@ -14,8 +16,20 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderFooter(@NotNull Cursor cursor) {
   }
 
+  // markdown escape: https://spec.commonmark.org/0.30/#backslash-escapes
   @Override protected @NotNull String escapePlainText(@NotNull String content) {
-    return content; // TODO: markdown escape: https://spec.commonmark.org/0.30/#backslash-escapes
+    // We are not need to call `super.escapePlainText`, we will escape them in markdown way.
+    // I wish you can understand this genius regexp
+    return Pattern
+      .compile("[!\"#$%&'()*+,-./:;<=>?@\\[\\\\\\]^_`{|}~]")
+      .matcher(content)
+      .replaceAll(result -> {
+        var chara = result.group();
+        // special characters, see Matcher#appendReplacement
+        if (chara.equals("\\")) chara = "\\\\";
+        if (chara.equals("$")) chara = "\\$";
+        return "\\\\" + chara;
+      });
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
