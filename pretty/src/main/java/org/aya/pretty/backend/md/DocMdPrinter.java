@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    if (config.withHeader) {
+    if (config.withHeader) {    // TODO[hoshino]: Maybe another boolean?
       cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_STYLE);
       cursor.invisibleContent(DocHtmlPrinter.HOVER_POPUP_STYLE);
     }
