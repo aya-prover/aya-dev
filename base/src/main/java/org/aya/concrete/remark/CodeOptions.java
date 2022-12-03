@@ -24,7 +24,8 @@ public record CodeOptions(
   public static @NotNull Literate analyze(@NotNull Code code, @NotNull GenericAyaParser parser, @NotNull SourcePos sourcePos) {
     if (code.getFirstChild() instanceof CodeAttrProcessor.Attr attr) {
       return new Literate.Code(parser.expr(code.getLiteral(), sourcePos), attr.options);
-    } else return new Literate.Raw(Doc.code(code.getLiteral()));
+    } else return new Literate.Raw(Doc.code("", Doc.plain(code.getLiteral())));
+    // ^ should not use `Doc.code()` because it assumes valid aya code.
   }
 
   public enum ShowCode {

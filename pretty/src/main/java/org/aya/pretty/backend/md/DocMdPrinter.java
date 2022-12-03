@@ -40,13 +40,21 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   @Override protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, Outer outer) {
-    // assumption: inline code cannot be nested in code block
-    cursor.invisibleContent("`");
-    renderDoc(cursor, code.code(), outer);
-    cursor.invisibleContent("`");
+    // assumption: inline code cannot be nested in markdown, but don't assert it.
+    Runnable pureMd = () -> {
+      cursor.invisibleContent("`");
+      renderDoc(cursor, code.code(), outer);
+      cursor.invisibleContent("`");
+    };
+    runSwitch(pureMd, () -> {
+      var isAya = code.language().equalsIgnoreCase("aya");
+      if (isAya) super.renderInlineCode(cursor, code, outer);
+      else pureMd.run();
+    });
   }
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, Outer outer) {
+    // assumption: code block cannot be nested in markdown, but don't assert it.
     Runnable pureMd = () -> formatCodeBlock(cursor, block.code(), "```" + block.language(), "```", outer);
     runSwitch(
       pureMd,
@@ -67,17 +75,20 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   private void runSwitch(@NotNull Runnable pureMd, @NotNull Runnable ayaMd) {
-    if (config.getStylist() instanceof MdStylist) pureMd.run();
-    else ayaMd.run();
+    if (config.ayaFlavored) ayaMd.run();
+    else pureMd.run();
   }
 
   public static class Config extends DocHtmlPrinter.Config {
-    public Config() {
-      this(MdStylist.DEFAULT);
+    public boolean ayaFlavored;
+
+    public Config(boolean ayaFlavored) {
+      this(MdStylist.DEFAULT, ayaFlavored);
     }
 
-    public Config(@NotNull AyaMdStylist stylist) {
+    public Config(@NotNull MdStylist stylist, boolean ayaFlavored) {
       super(stylist, false);
+      this.ayaFlavored = ayaFlavored;
     }
   }
 }

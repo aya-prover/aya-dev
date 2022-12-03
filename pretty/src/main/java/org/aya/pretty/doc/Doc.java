@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
-import org.aya.pretty.backend.md.AyaMdStylist;
 import org.aya.pretty.backend.md.DocMdPrinter;
 import org.aya.pretty.backend.string.DebugStylist;
 import org.aya.pretty.backend.string.LinkId;
@@ -78,11 +77,11 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToMd() {
-    return render(new DocMdPrinter(), new DocMdPrinter.Config());
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(false));
   }
 
   default @NotNull String renderToAyaMd() {
-    return render(new DocMdPrinter(), new DocMdPrinter.Config(AyaMdStylist.DEFAULT));
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(true));
   }
 
   default @NotNull String renderToTeX() {

@@ -27,11 +27,11 @@ public abstract class ClosingStylist extends StringStylist {
   }
 
   @Override
-  public void format(@NotNull Seq<Style> styles, @NotNull Cursor cursor, @NotNull Runnable inside) {
-    formatInternal(styles.view(), cursor, inside);
+  public void format(@NotNull Seq<Style> styles, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside) {
+    formatInternal(styles.view(), cursor, outer, inside);
   }
 
-  private void formatInternal(@NotNull SeqView<Style> styles, @NotNull Cursor cursor, @NotNull Runnable inside) {
+  private void formatInternal(@NotNull SeqView<Style> styles, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside) {
     if (styles.isEmpty()) {
       inside.run();
       return;
@@ -39,20 +39,20 @@ public abstract class ClosingStylist extends StringStylist {
 
     var style = styles.first();
     var formats = style instanceof Style.Preset preset
-      ? formatPreset(preset.styleName())
-      : ImmutableSeq.of(formatOne(style));
+      ? formatPreset(preset.styleName(), outer)
+      : ImmutableSeq.of(formatOne(style, outer));
     formats.forEach(format -> format.start.accept(cursor));
-    formatInternal(styles.drop(1), cursor, inside);
+    formatInternal(styles.drop(1), cursor, outer, inside);
     formats.reversed().forEach(format -> format.end.accept(cursor));
   }
 
-  protected @NotNull StyleToken formatOne(@NotNull Style style) {
+  protected @NotNull StyleToken formatOne(@NotNull Style style, StringPrinter.Outer outer) {
     return switch (style) {
       case Style.Attr attr -> switch (attr) {
-        case Italic -> formatItalic();
-        case Bold -> formatBold();
-        case Strike -> formatStrike();
-        case Underline -> formatUnderline();
+        case Italic -> formatItalic(outer);
+        case Bold -> formatBold(outer);
+        case Strike -> formatStrike(outer);
+        case Underline -> formatUnderline(outer);
       };
       case Style.ColorName color -> formatColorName(color, color.background());
       case Style.ColorHex hex -> formatColorHex(hex.color(), hex.background());
@@ -65,10 +65,10 @@ public abstract class ClosingStylist extends StringStylist {
     return colorScheme.definedColors().getOption(colorName);
   }
 
-  protected @NotNull ImmutableSeq<StyleToken> formatPreset(String styleName) {
+  protected @NotNull ImmutableSeq<StyleToken> formatPreset(String styleName, StringPrinter.Outer outer) {
     var style = styleFamily.definedStyles().getOption(styleName);
     if (style.isEmpty()) return ImmutableSeq.empty();
-    return style.get().styles().map(this::formatOne);
+    return style.get().styles().map(style1 -> formatOne(style1, outer));
   }
 
   protected @NotNull StyleToken formatColorName(@NotNull Style.ColorName color, boolean background) {
@@ -79,9 +79,9 @@ public abstract class ClosingStylist extends StringStylist {
     return StyleToken.NULL;
   }
 
-  protected abstract @NotNull StyleToken formatItalic();
-  protected abstract @NotNull StyleToken formatBold();
-  protected abstract @NotNull StyleToken formatStrike();
-  protected abstract @NotNull StyleToken formatUnderline();
+  protected abstract @NotNull StyleToken formatItalic(StringPrinter.Outer outer);
+  protected abstract @NotNull StyleToken formatBold(StringPrinter.Outer outer);
+  protected abstract @NotNull StyleToken formatStrike(StringPrinter.Outer outer);
+  protected abstract @NotNull StyleToken formatUnderline(StringPrinter.Outer outer);
   protected abstract @NotNull StyleToken formatColorHex(int rgb, boolean background);
 }

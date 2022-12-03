@@ -20,7 +20,7 @@ public class DebugStylist extends StringStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override public void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, @NotNull Runnable inside) {
+  @Override public void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside) {
     inside.run();
   }
 }

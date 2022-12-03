@@ -3,6 +3,7 @@
 package org.aya.pretty.backend.terminal;
 
 import org.aya.pretty.backend.string.ClosingStylist;
+import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
@@ -13,19 +14,19 @@ public class UnixTermStylist extends ClosingStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override protected @NotNull StyleToken formatItalic() {
+  @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
     return new StyleToken("\033[3m", "\033[23m", false);
   }
 
-  @Override protected @NotNull StyleToken formatBold() {
+  @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
     return new StyleToken("\033[1m", "\033[22m", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike() {
+  @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
     return new StyleToken("\033[9m", "\033[29m", false);
   }
 
-  @Override protected @NotNull StyleToken formatUnderline() {
+  @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
     return new StyleToken("\033[4m", "\033[24m", false);
   }
 

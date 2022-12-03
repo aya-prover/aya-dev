@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StringPrinter<Config extends StringPrinterConfig> implements Printer<String, Config> {
   /** renderer: where am I? */
-  protected enum Outer {
+  public enum Outer {
     Free,
     Code,
   }
@@ -144,7 +144,7 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
 
   protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled, Outer outer) {
     var stylist = config.getStylist();
-    stylist.format(styled.styles(), cursor, () -> renderDoc(cursor, styled.doc(), outer));
+    stylist.format(styled.styles(), cursor, outer, () -> renderDoc(cursor, styled.doc(), outer));
   }
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {

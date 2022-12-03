@@ -3,6 +3,7 @@
 package org.aya.pretty.backend.latex;
 
 import org.aya.pretty.backend.string.ClosingStylist;
+import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
@@ -16,19 +17,19 @@ public class TeXStylist extends ClosingStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override protected @NotNull StyleToken formatItalic() {
+  @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
     return new StyleToken("\\textit{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatBold() {
+  @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
     return new StyleToken("\\textbf{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike() {
+  @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
     return new StyleToken("\\sout{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatUnderline() {
+  @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
     return new StyleToken("\\underline{", "}", false);
   }
 
