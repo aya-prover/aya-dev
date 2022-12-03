@@ -11,8 +11,10 @@ import java.util.regex.Pattern;
 
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_STYLE);
-    cursor.invisibleContent(DocHtmlPrinter.HOVER_POPUP_STYLE);
+    if (config.withHeader) {
+      cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_STYLE);
+      cursor.invisibleContent(DocHtmlPrinter.HOVER_POPUP_STYLE);
+    }
   }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
