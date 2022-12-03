@@ -28,7 +28,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
         var links = document.getElementsByTagName('a');
         for (var i = 0; i < links.length; i++) {
           var that = links[i];
-          if (this.href != that.href) continue;
+          if (this.href !== that.href) continue;
           if (on) that.classList.add("hover-highlight");
           else that.classList.remove("hover-highlight");
         }
@@ -54,6 +54,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     """;
 
   // https://developer.mozilla.org/en-US/docs/Glossary/Entity
+  public static final @NotNull Pattern entityPattern = Pattern.compile("[&<>\"]");
   public static final @NotNull ImmutableMap<String, String> entityMapping = ImmutableMap.of(
     "&", "&amp;",
     "<", "&lt;",
@@ -71,11 +72,9 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (config.withHeader) cursor.invisibleContent("</body></html>");
   }
 
-  @Override
-  protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
-    content = Pattern.compile("[&<>\"]").matcher(content).replaceAll(result ->
+  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
+    content = entityPattern.matcher(content).replaceAll(result ->
       entityMapping.get(result.group()));   // fail if bug
-
     super.renderPlainText(cursor, content);
   }
 

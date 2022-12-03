@@ -14,7 +14,7 @@ public class MdStyleTest {
   @Test public void testMdStyle() {
     assertEquals("""
       # H1
-      <a href="https://google.com">Click me</a>
+      [Click me](https://google.com)
             
       ## H2
       ### H3
