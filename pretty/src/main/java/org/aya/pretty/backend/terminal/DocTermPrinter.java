@@ -9,9 +9,9 @@ import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public class DocTermPrinter extends StringPrinter<DocTermPrinter.Config> {
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code) {
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
     cursor.invisibleContent("`");
-    renderDoc(cursor, code.code());
+    renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("'");
   }
 

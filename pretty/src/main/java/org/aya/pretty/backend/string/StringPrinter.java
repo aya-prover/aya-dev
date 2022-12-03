@@ -15,6 +15,12 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public class StringPrinter<Config extends StringPrinterConfig> implements Printer<String, Config> {
+  /** renderer: where am I? */
+  protected enum Outer {
+    Free,
+    Code,
+  }
+
   protected Config config;
 
   public @NotNull String makeIndent(int indent) {
@@ -26,7 +32,7 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
     this.config = config;
     var cursor = new Cursor(this);
     renderHeader(cursor);
-    renderDoc(cursor, doc);
+    renderDoc(cursor, doc, Outer.Free);
     renderFooter(cursor);
     return cursor.result().toString();
   }
@@ -70,22 +76,22 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
   protected void renderFooter(@NotNull Cursor cursor) {
   }
 
-  protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc) {
+  protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc, Outer outer) {
     switch (doc) {
-      case Doc.PlainText text -> renderPlainText(cursor, text.text());
-      case Doc.SpecialSymbol symbol -> renderSpecialSymbol(cursor, symbol.text());
-      case Doc.HyperLinked text -> renderHyperLinked(cursor, text);
-      case Doc.Styled styled -> renderStyled(cursor, styled);
+      case Doc.PlainText text -> renderPlainText(cursor, text.text(), outer);
+      case Doc.SpecialSymbol symbol -> renderSpecialSymbol(cursor, symbol.text(), outer);
+      case Doc.HyperLinked text -> renderHyperLinked(cursor, text, outer);
+      case Doc.Styled styled -> renderStyled(cursor, styled, outer);
       case Doc.Line d -> renderHardLineBreak(cursor);
-      case Doc.FlatAlt alt -> renderFlatAlt(cursor, alt);
-      case Doc.Cat cat -> cat.inner().forEach(inner -> renderDoc(cursor, inner));
-      case Doc.Nest nest -> renderNest(cursor, nest);
-      case Doc.Union union -> renderUnionDoc(cursor, union);
-      case Doc.Column column -> renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()));
-      case Doc.Nesting nesting -> renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
-      case Doc.PageWidth pageWidth -> renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
-      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock);
-      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode);
+      case Doc.FlatAlt alt -> renderFlatAlt(cursor, alt, outer);
+      case Doc.Cat cat -> cat.inner().forEach(inner -> renderDoc(cursor, inner, outer));
+      case Doc.Nest nest -> renderNest(cursor, nest, outer);
+      case Doc.Union union -> renderUnionDoc(cursor, union, outer);
+      case Doc.Column column -> renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()), outer);
+      case Doc.Nesting nesting -> renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()), outer);
+      case Doc.PageWidth pageWidth -> renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()), outer);
+      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock, Outer.Code);
+      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode, Outer.Code);
       case Doc.Empty $ -> {}
     }
   }
@@ -110,38 +116,38 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
     Tuple.of("|]", "\u27E7")
   );
 
-  protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {
+  protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, Outer outer) {
     if (config.unicode) for (var k : unicodeMapping.keysView()) {
       if (text.trim().equals(k)) {
         cursor.visibleContent(text.replace(k, unicodeMapping.get(k)));
         return;
       }
     }
-    renderPlainText(cursor, text);
+    renderPlainText(cursor, text, outer);
   }
 
-  protected void renderNest(@NotNull Cursor cursor, @NotNull Doc.Nest nest) {
-    cursor.nested(nest.indent(), () -> renderDoc(cursor, nest.doc()));
+  protected void renderNest(@NotNull Cursor cursor, @NotNull Doc.Nest nest, Outer outer) {
+    cursor.nested(nest.indent(), () -> renderDoc(cursor, nest.doc(), outer));
   }
 
-  protected void renderUnionDoc(@NotNull Cursor cursor, @NotNull Doc.Union union) {
-    renderDoc(cursor, fitsBetter(cursor, union.shorterOne(), union.longerOne()));
+  protected void renderUnionDoc(@NotNull Cursor cursor, @NotNull Doc.Union union, Outer outer) {
+    renderDoc(cursor, fitsBetter(cursor, union.shorterOne(), union.longerOne()), outer);
   }
 
-  protected void renderFlatAlt(@NotNull Cursor cursor, @NotNull Doc.FlatAlt alt) {
-    renderDoc(cursor, fitsBetter(cursor, alt.defaultDoc(), alt.preferWhenFlatten()));
+  protected void renderFlatAlt(@NotNull Cursor cursor, @NotNull Doc.FlatAlt alt, Outer outer) {
+    renderDoc(cursor, fitsBetter(cursor, alt.defaultDoc(), alt.preferWhenFlatten()), outer);
   }
 
-  protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text) {
-    renderDoc(cursor, text.doc());
+  protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, Outer outer) {
+    renderDoc(cursor, text.doc(), outer);
   }
 
-  protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled) {
+  protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled, Outer outer) {
     var stylist = config.getStylist();
-    stylist.format(styled.styles(), cursor, () -> renderDoc(cursor, styled.doc()));
+    stylist.format(styled.styles(), cursor, () -> renderDoc(cursor, styled.doc(), outer));
   }
 
-  protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
+  protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {
     cursor.visibleContent(content);
   }
 
@@ -149,13 +155,13 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
     cursor.lineBreakWith("\n");
   }
 
-  protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block) {
-    renderDoc(cursor, block.code());
+  protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, Outer outer) {
+    renderDoc(cursor, block.code(), outer);
   }
 
-  protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code) {
+  protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, Outer outer) {
     cursor.visibleContent("`");
-    renderDoc(cursor, code.code());
+    renderDoc(cursor, code.code(), outer);
     cursor.visibleContent("`");
   }
 }

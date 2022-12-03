@@ -18,37 +18,37 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     cursor.lineBreakWith("\n");
   }
 
-  @Override protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text) {
+  @Override protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, Outer outer) {
     runSwitch(() -> {
       // use markdown typesetting only when the stylist is pure markdown
       var href = text.href();
       cursor.invisibleContent("[");
-      renderDoc(cursor, text.doc());
+      renderDoc(cursor, text.doc(), outer);
       cursor.invisibleContent("](");
       cursor.invisibleContent(href.id());
       cursor.invisibleContent(")");
       // TODO: text.id(), text.hover()
-    }, () -> super.renderHyperLinked(cursor, text));
+    }, () -> super.renderHyperLinked(cursor, text, outer));
   }
 
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code) {
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, Outer outer) {
     runSwitch(() -> {
       cursor.invisibleContent("`");
-      renderDoc(cursor, code.code());
+      renderDoc(cursor, code.code(), outer);
       cursor.invisibleContent("`");
-    }, () -> super.renderInlineCode(cursor, code));
+    }, () -> super.renderInlineCode(cursor, code, outer));
   }
 
-  @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block) {
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, Outer outer) {
     runSwitch(
-      () -> formatCodeBlock(cursor, block.code(), "```" + block.language(), "```"),
-      () -> formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>"));
+      () -> formatCodeBlock(cursor, block.code(), "```" + block.language(), "```", outer),
+      () -> formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", outer));
   }
 
-  public @NotNull void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end) {
+  public void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, Outer outer) {
     cursor.invisibleContent(begin);
     cursor.lineBreakWith("\n");
-    renderDoc(cursor, code);
+    renderDoc(cursor, code, outer);
     cursor.lineBreakWith("\n");
     cursor.invisibleContent(end);
     cursor.lineBreakWith("\n");

@@ -72,13 +72,13 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (config.withHeader) cursor.invisibleContent("</body></html>");
   }
 
-  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
+  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {
     content = entityPattern.matcher(content).replaceAll(result ->
       entityMapping.get(result.group()));   // fail if bug
-    super.renderPlainText(cursor, content);
+    super.renderPlainText(cursor, content, outer);
   }
 
-  @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text) {
+  @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text, Outer outer) {
     var href = text.href();
     cursor.invisibleContent("<a ");
     if (text.id() != null) cursor.invisibleContent("id=\"" + text.id() + "\" ");
@@ -86,7 +86,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("href=\"");
     cursor.invisibleContent(href.id());
     cursor.invisibleContent("\">");
-    renderDoc(cursor, text.doc());
+    renderDoc(cursor, text.doc(), outer);
     cursor.invisibleContent("</a>");
   }
 
@@ -94,15 +94,15 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.lineBreakWith("<br>");
   }
 
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code) {
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
     cursor.invisibleContent("<code>");
-    renderDoc(cursor, code.code());
+    renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("</code>");
   }
 
-  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block) {
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, Outer outer) {
     cursor.invisibleContent("<pre class=\"" + block.language() + "\">");
-    renderDoc(cursor, block.code());
+    renderDoc(cursor, block.code(), outer);
     cursor.invisibleContent("</pre>");
   }
 

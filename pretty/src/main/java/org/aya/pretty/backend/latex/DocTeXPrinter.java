@@ -19,15 +19,16 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.invisibleContent("\\noindent");
   }
 
-  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
+  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {
     super.renderPlainText(cursor, content
       .replace("\\", "")
-      .replace("_", "\\_"));
+      .replace("_", "\\_"), outer);
   }
 
   private static @NotNull Tuple2<String, String> id(@NotNull String name) {
     return Tuple.of(name, name);
   }
+
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
@@ -48,7 +49,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("}", "\\}")
   );
 
-  @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {
+  @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, Outer outer) {
     for (var k : commandMapping.keysView()) {
       if (text.equals(k)) {
         cursor.invisibleContent("$");
@@ -58,7 +59,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
       }
     }
     System.err.println("Warn: unknown symbol " + text);
-    renderPlainText(cursor, text);
+    renderPlainText(cursor, text, outer);
   }
 
   @Override public @NotNull String makeIndent(int indent) {
@@ -70,14 +71,14 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.lineBreakWith("\\\\\n");
   }
 
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code) {
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
     cursor.invisibleContent("\\fbox{");
-    renderDoc(cursor, code.code());
+    renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("}");
   }
 
-  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block) {
-    super.renderCodeBlock(cursor, block);
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, Outer outer) {
+    super.renderCodeBlock(cursor, block, outer);
   }
 
   /**
@@ -87,6 +88,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     public Config() {
       this(TeXStylist.DEFAULT);
     }
+
     public Config(@NotNull TeXStylist stylist) {
       super(stylist, INFINITE_SIZE, false);
     }
