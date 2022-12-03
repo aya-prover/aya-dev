@@ -29,11 +29,9 @@ public class MdStyleTest {
             
       I love Aya's pretty printer.
             
-            
       ```aya
       data Nat | zero | suc Nat
       ```
-      
       Look! She is beautiful
             
       """.stripIndent(), doc().renderToMd());
