@@ -17,11 +17,47 @@ import java.util.regex.Pattern;
  */
 public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends StringPrinter<Config> {
   @Language(value = "HTML")
-  private static final @NotNull String HEAD = """
-    <!DOCTYPE html><html lang="en"><head>
-    <title>Aya file</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  public static final @NotNull String HOVER_POPUP_STYLE = """
+    <style>
+    .Aya .hovertip {
+      /* make absolute position available for hover popup */
+      position: relative;
+      cursor: pointer;
+    }
+    .Aya [aya-type]:after {
+      /* hover text */
+      content: attr(aya-type);
+      visibility: hidden;
+      /* above the text, aligned to left */
+      position: absolute;
+      top: 0;
+      left: 0; /* 0% for left-aligned, 100% for right-aligned*/
+      transform: translate(0px, -110%);
+      /* spacing */
+      white-space: pre;
+      padding: 5px 10px;
+      background-color: rgba(18,26,44,0.8);
+      color: #fff;
+      box-shadow: 1px 1px 14px rgba(0,0,0,0.1)
+    }
+    .Aya .hovertip:hover:after {
+      /* show on hover */
+      transform: translate(0px, -110%);
+      visibility: visible;
+      display: block;
+    }
+    </style>
+    """;
+  @Language(value = "HTML")
+  public static final @NotNull String HOVER_HIGHLIGHT_STYLE = """
+    <style>
+    .Aya a { text-decoration: none; color: black; }
+    .Aya a[href]:hover { background-color: #B4EEB4; }
+    .Aya [href].hover-highlight { background-color: #B4EEB4; }
+    </style>
+    """;
+  @Language(value = "HTML")
+  public static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS = """
     <script>
     var highlight = function (on) {
       return function () {
@@ -44,11 +80,15 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
       }
     };
     </script>
-    <style>
-    .Aya a { text-decoration: none; color: black; }
-    .Aya a[href]:hover { background-color: #B4EEB4; }
-    .Aya [href].hover-highlight { background-color: #B4EEB4; }
-    </style>
+    """;
+
+  @Language(value = "HTML")
+  private static final @NotNull String HEAD = """
+    <!DOCTYPE html><html lang="en"><head>
+    <title>Aya file</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    """ + HOVER_HIGHLIGHT_ALL_OCCURS + HOVER_HIGHLIGHT_STYLE + HOVER_POPUP_STYLE + """
     </head><body>
     <pre class="Aya">
     """;
@@ -81,7 +121,10 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     var href = text.href();
     cursor.invisibleContent("<a ");
     if (text.id() != null) cursor.invisibleContent("id=\"" + text.id() + "\" ");
-    if (text.hover() != null) cursor.invisibleContent("title=\"" + text.hover() + "\" ");
+    if (text.hover() != null) {
+      cursor.invisibleContent("class=\"hovertip\" ");
+      cursor.invisibleContent("aya-type=\"" + text.hover() + "\" ");
+    }
     cursor.invisibleContent("href=\"");
     cursor.invisibleContent(href.id());
     cursor.invisibleContent("\">");

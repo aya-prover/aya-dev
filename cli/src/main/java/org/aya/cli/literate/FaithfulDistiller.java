@@ -7,11 +7,14 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
+import org.aya.concrete.Expr;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.style.AyaStyleFamily;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface FaithfulDistiller {
   @NotNull Style STYLE_KEYWORD = AyaStyleFamily.Key.Keyword.preset();
@@ -68,11 +71,20 @@ public interface FaithfulDistiller {
 
   private static @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
     return switch (highlight) {
-      case HighlightInfo.SymDef symDef -> Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target().id());
-      case HighlightInfo.SymRef symRef -> Doc.linkRef(highlightVar(raw, symRef.kind()), symRef.target().id());
+      case HighlightInfo.SymDef symDef ->
+        Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target().id(), hover(symDef.term()));
+      case HighlightInfo.SymRef symRef ->
+        Doc.linkRef(highlightVar(raw, symRef.kind()), symRef.target().id(), hover(symRef.term()));
       case HighlightInfo.SymLit symLit -> highlightLit(raw, symLit.kind());
       case HighlightInfo.SymError symError -> Doc.plain(raw);   // TODO: any style for error?
     };
+  }
+
+  private static @Nullable String hover(@Nullable Expr.WithTerm term) {
+    if (term == null) return null;
+    var core = term.core();
+    if (core == null) return null;
+    return core.type().toDoc(DistillerOptions.pretty()).commonRender(); // TODO: distiller options
   }
 
   private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {

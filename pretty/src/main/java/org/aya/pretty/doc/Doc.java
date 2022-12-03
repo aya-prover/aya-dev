@@ -217,19 +217,19 @@ public sealed interface Doc extends Docile {
 
   //region DocFactory functions
   static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode) {
-    return linkDef(doc, String.valueOf(hashCode));
+    return linkDef(doc, String.valueOf(hashCode), null);
   }
 
   static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode) {
-    return linkRef(doc, String.valueOf(hashCode));
+    return linkRef(doc, String.valueOf(hashCode), null);
   }
 
-  static @NotNull Doc linkDef(@NotNull Doc doc, String uniqueId) {
-    return new HyperLinked(doc, new LinkId("#" + uniqueId), uniqueId, null);
+  static @NotNull Doc linkDef(@NotNull Doc doc, String uniqueId, @Nullable String hover) {
+    return new HyperLinked(doc, new LinkId("#" + uniqueId), uniqueId, hover);
   }
 
-  static @NotNull Doc linkRef(@NotNull Doc doc, String uniqueId) {
-    return new HyperLinked(doc, new LinkId("#" + uniqueId), null, null);
+  static @NotNull Doc linkRef(@NotNull Doc doc, String uniqueId, @Nullable String hover) {
+    return new HyperLinked(doc, new LinkId("#" + uniqueId), null, hover);
   }
 
   static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href) {
@@ -242,10 +242,6 @@ public sealed interface Doc extends Docile {
 
   static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href) {
     return hyperLink(plain(plain), href);
-  }
-
-  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href, @Nullable String hover) {
-    return hyperLink(plain(plain), href, hover);
   }
 
   static @NotNull Doc code(@NotNull String code) {

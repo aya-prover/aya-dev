@@ -22,6 +22,7 @@ import org.aya.ref.LocalVar;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /** @implNote Use {@link MutableList} instead of {@link SeqView} for performance consideration. */
 public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
@@ -63,7 +64,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
 
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
-    return add(acc, linkRef(pos, var));
+    return add(acc, linkRef(pos, var, null));
   }
 
   @Override
@@ -71,6 +72,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     return switch (expr) {
       case Expr.LitInt lit -> add(acc, HighlightInfo.LitKind.Int.toLit(lit.sourcePos()));
       case Expr.LitString lit -> add(acc, HighlightInfo.LitKind.String.toLit(lit.sourcePos()));
+      case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(), ref));
       default -> StmtFolder.super.fold(acc, expr);
     };
   }
@@ -105,24 +107,21 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var) {
-    return kindOf(var).toDef(sourcePos, new LinkId("#" + var.hashCode()));
+    return kindOf(var).toDef(sourcePos, new LinkId("#" + var.hashCode()), null); // TODO: term
   }
 
-  private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var) {
-    if (var instanceof LocalVar localVar
-      && localVar.generateKind() instanceof GenerateKind.Generalized generalized) {
-      return linkRef(sourcePos, generalized.origin());
-    }
-
-    return kindOf(var).toRef(sourcePos, new LinkId("#" + var.hashCode()));
+  private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable Expr.WithTerm term) {
+    if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
+      return linkRef(sourcePos, origin, term);
+    return kindOf(var).toRef(sourcePos, new LinkId("#" + var.hashCode()), term);
   }
 
   private @NotNull HighlightInfo linkModuleRef(@NotNull QualifiedID id) {
-    return HighlightInfo.DefKind.Module.toRef(id.sourcePos(), new LinkId("#" + id.join().hashCode()));
+    return HighlightInfo.DefKind.Module.toRef(id.sourcePos(), new LinkId("#" + id.join().hashCode()), null);
   }
 
   private @NotNull HighlightInfo linkModuleDef(@NotNull QualifiedID id) {
-    return HighlightInfo.DefKind.Module.toDef(id.sourcePos(), new LinkId("#" + id.join().hashCode()));
+    return HighlightInfo.DefKind.Module.toDef(id.sourcePos(), new LinkId("#" + id.join().hashCode()), null);
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")
