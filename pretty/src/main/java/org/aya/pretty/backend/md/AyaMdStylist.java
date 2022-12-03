@@ -23,40 +23,33 @@ public class AyaMdStylist extends Html5Stylist {
         case BlockQuote -> new StyleToken(c -> c.invisibleContent("> "), c -> c.lineBreakWith("\n\n"));
         case Paragraph -> new StyleToken(c -> {}, c -> c.lineBreakWith("\n\n"));
       };
-      case MdStyle.Heading(int level) -> formatH(level);
-      case MdStyle.CodeBlock(var lang) -> "aya".equalsIgnoreCase(lang) ? formatAyaCodeBlock() : formatCodeBlock(lang);
+      case MdStyle.Heading(int level) -> new StyleToken(c -> {
+        c.invisibleContent("#".repeat(level));
+        c.invisibleContent(" ");
+      }, c -> c.lineBreakWith("\n"));
+      case MdStyle.CodeBlock(var lang) -> "aya".equalsIgnoreCase(lang)
+        ? formatAyaCodeBlock()
+        : formatCodeBlock(lang);
     };
     return super.formatCustom(style);
   }
 
-  protected @NotNull StyleToken formatAyaCodeBlock() {
+  private @NotNull StyleToken formatCodeBlock(@NotNull String begin, @NotNull String end) {
     return new StyleToken(c -> {
-      c.lineBreakWith("\n");
-      c.invisibleContent("<pre class=\"Aya\">");
+      c.invisibleContent(begin);
       c.lineBreakWith("\n");
     }, c -> {
       c.lineBreakWith("\n");
-      c.invisibleContent("</pre>");
-      c.lineBreakWith("\n\n");
+      c.invisibleContent(end);
+      c.lineBreakWith("\n");
     });
+  }
+
+  protected @NotNull StyleToken formatAyaCodeBlock() {
+    return formatCodeBlock("<pre class=\"Aya\">", "</pre>");
   }
 
   protected @NotNull StyleToken formatCodeBlock(@NotNull String lang) {
-    return new StyleToken(c -> {
-      c.lineBreakWith("\n");
-      c.invisibleContent("```" + lang);
-      c.lineBreakWith("\n");
-    }, c -> {
-      c.lineBreakWith("\n");
-      c.invisibleContent("```");
-      c.lineBreakWith("\n\n");
-    });
-  }
-
-  private @NotNull StyleToken formatH(int h) {
-    return new StyleToken(c -> {
-      c.invisibleContent("#".repeat(h));
-      c.invisibleContent(" ");
-    }, c -> c.lineBreakWith("\n"));
+    return formatCodeBlock("```" + lang, "```");
   }
 }

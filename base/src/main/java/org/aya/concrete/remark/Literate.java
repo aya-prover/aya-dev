@@ -28,10 +28,10 @@ public sealed interface Literate extends Docile {
   record Raw(@NotNull Doc toDoc) implements Literate {
   }
 
-  record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children, boolean isBlock) implements Literate {
+  record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {
       var docs = children().map(Literate::toDoc);
-      var cat = isBlock ? Doc.vcat(docs) : Doc.cat(docs);
+      var cat = Doc.cat(docs);
       return style == null ? cat : Doc.styled(style, cat);
     }
   }
@@ -108,11 +108,8 @@ public sealed interface Literate extends Docile {
 
     @Override
     public @NotNull Doc toDoc() {
-      if (isAya() && highlighted != null) {
-        return Doc.styled(new MdStyle.CodeBlock("aya"), highlighted);
-      }
-
-      return Doc.plain(raw);
+      var doc = isAya() && highlighted != null ? highlighted : Doc.plain(raw);
+      return Doc.styled(new MdStyle.CodeBlock(language), doc);
     }
   }
 

@@ -15,7 +15,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
-    cursor.lineBreakWith("\n\n");
+    cursor.lineBreakWith("\n");
   }
 
   public static class Config extends DocHtmlPrinter.Config {

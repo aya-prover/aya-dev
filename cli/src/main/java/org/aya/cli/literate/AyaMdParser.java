@@ -139,17 +139,17 @@ public class AyaMdParser {
   ) {
     return switch (node) {
       case Text text -> new Literate.Raw(Doc.plain(text.getLiteral()));
-      case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis, producer), false);
+      case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis, producer));
       case HardLineBreak $ -> new Literate.Raw(Doc.line());
       case SoftLineBreak $ -> new Literate.Raw(Doc.line());
-      case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis, producer), false);
-      case Paragraph $ -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node, producer), false);
-      case BlockQuote $ -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node, producer), false);
-      case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node, producer), false);
+      case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis, producer));
+      case Paragraph $ -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node, producer));
+      case BlockQuote $ -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node, producer));
+      case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node, producer));
       case Link h -> new Literate.Raw(Doc.hyperLink(h.getTitle(), new LinkId(h.getDestination())));
       case Document $ -> {
         var children = mapChildren(node, producer);
-        yield children.sizeEquals(1) ? children.first() : new Literate.Many(null, children, true);
+        yield children.sizeEquals(1) ? children.first() : new Literate.Many(null, children);
       }
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
