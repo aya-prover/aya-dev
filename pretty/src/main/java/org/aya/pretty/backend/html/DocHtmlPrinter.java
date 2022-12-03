@@ -72,10 +72,9 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (config.withHeader) cursor.invisibleContent("</body></html>");
   }
 
-  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {
-    content = entityPattern.matcher(content).replaceAll(result ->
-      entityMapping.get(result.group()));   // fail if bug
-    super.renderPlainText(cursor, content, outer);
+  @Override protected @NotNull String escapePlainText(@NotNull String content) {
+    return entityPattern.matcher(content).replaceAll(
+      result -> entityMapping.get(result.group()));   // fail if bug
   }
 
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text, Outer outer) {

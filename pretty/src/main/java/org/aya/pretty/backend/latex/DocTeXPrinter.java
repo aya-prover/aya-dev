@@ -19,10 +19,8 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.invisibleContent("\\noindent");
   }
 
-  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {
-    super.renderPlainText(cursor, content
-      .replace("\\", "")
-      .replace("_", "\\_"), outer);
+  @Override protected @NotNull String escapePlainText(@NotNull String content) {
+    return content.replace("\\", "").replace("_", "\\_");
   }
 
   private static @NotNull Tuple2<String, String> id(@NotNull String name) {

@@ -14,6 +14,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderFooter(@NotNull Cursor cursor) {
   }
 
+  @Override protected @NotNull String escapePlainText(@NotNull String content) {
+    return content; // TODO: markdown escape: https://spec.commonmark.org/0.30/#backslash-escapes
+  }
+
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
     cursor.lineBreakWith("\n");
   }
