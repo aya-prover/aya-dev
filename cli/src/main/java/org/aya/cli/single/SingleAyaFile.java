@@ -135,16 +135,17 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
 
     @Override public @NotNull SourceFile sourceFile() throws IOException {
       var aya = data.get();
-      if (aya == null) {
-        var mdParser = new AyaMdParser(asMarkdownFile());
-        var lit = mdParser.parseLiterate(parser);
-        var ayaCode = AyaMdParser.extractAya(lit);
-        var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
-        var code = SourceFile.from(locator, underlyingFile, ayaCode);
-        aya = new Data(lit, exprs, code);
-        data.set(aya);
-      }
+      if (aya == null) data.set(aya = createData(asMarkdownFile(), parser, new CodeAyaFile(locator, underlyingFile)));
       return aya.extractedAya;
+    }
+
+    private static @NotNull Data createData(@NotNull SourceFile mdFile, @NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
+      var mdParser = new AyaMdParser(mdFile);
+      var lit = mdParser.parseLiterate(parser);
+      var ayaCode = AyaMdParser.extractAya(lit);
+      var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
+      var code = SourceFile.from(template.locator, template.underlyingFile, ayaCode);
+      return new Data(lit, exprs, code);
     }
 
     @Override public @NotNull SourceFile errorReportSourceFile() throws IOException {
