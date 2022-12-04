@@ -48,10 +48,10 @@ public record SingleFileCompiler(
     return AyaCompiler.catching(reporter, flags, () -> {
       var ctx = context.apply(reporter);
       var ayaParser = new AyaParserImpl(reporter);
-      var fileManager = new SingleAyaFile.Factory(ayaParser);
+      var fileManager = new SingleAyaFile.Factory(reporter);
       var primFactory = new PrimDef.Factory();
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
-      var program = ayaParser.program(ayaFile);
+      var program = ayaFile.parseMe(ayaParser);
       ayaFile.distill(flags, program, MainArgs.DistillStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new FileModuleLoader(locator, path, reporter, ayaParser, fileManager, primFactory, builder)).toImmutableSeq()));

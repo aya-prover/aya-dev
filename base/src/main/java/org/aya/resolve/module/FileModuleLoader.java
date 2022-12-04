@@ -32,7 +32,7 @@ public record FileModuleLoader(
   public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path);
     try {
-      var program = parser.program(fileManager.createAyaFile(locator, sourcePath));
+      var program = fileManager.createAyaFile(locator, sourcePath).parseMe(parser);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
       return tyckModule(builder, resolveModule(primFactory, context, program, recurseLoader), null);
     } catch (IOException e) {

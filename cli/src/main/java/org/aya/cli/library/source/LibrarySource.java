@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
 import org.aya.concrete.GenericAyaFile;
+import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.GenericDef;
 import org.aya.generic.util.AyaFiles;
@@ -57,6 +58,12 @@ public record LibrarySource(
 
   public @NotNull SourceFile toSourceFile(@NotNull String sourceCode) {
     return new SourceFile(displayPath().toString(), underlyingFile, sourceCode);
+  }
+
+  @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
+    var stmts = GenericAyaFile.super.parseMe(parser);
+    program.set(stmts);
+    return stmts;
   }
 
   @Override public @NotNull SourceFile originalFile() throws IOException {

@@ -96,8 +96,7 @@ public class LibraryCompiler {
   }
 
   private void parse(@NotNull LibrarySource source) throws IOException {
-    var program = advisor.createParser(reporter).program(source);
-    source.program().set(program);
+    source.parseMe(advisor.createParser(reporter));
   }
 
   /** @return whether the source file is already parsed. */

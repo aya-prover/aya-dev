@@ -122,7 +122,7 @@ public class ReplCompiler {
 
   /** @see org.aya.cli.single.SingleFileCompiler#compile(Path, Function, CompilerFlags, ModuleCallback) */
   private void loadFile(@NotNull Path file) {
-    compileToContext(parser -> Either.left(parser.program(fileManager.createAyaFile(locator, file))), NormalizeMode.WHNF);
+    compileToContext(parser -> Either.left(fileManager.createAyaFile(locator, file).parseMe(parser)), NormalizeMode.WHNF);
   }
 
   /** @param text the text of code to compile, witch might either be a `program` or an `expr`. */

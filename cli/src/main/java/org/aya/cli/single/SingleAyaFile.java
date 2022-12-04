@@ -12,6 +12,7 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
 import org.aya.cli.utils.MainArgs.DistillFormat;
 import org.aya.concrete.GenericAyaFile;
+import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.remark.Literate;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -45,7 +46,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       null);
     return null;
   }
-  @NotNull static DistillFormat detectFormat(@NotNull Path outputFile) {
+  private static @NotNull DistillFormat detectFormat(@NotNull Path outputFile) {
     var name = outputFile.getFileName().toString();
     if (name.endsWith(".md")) return DistillFormat.markdown;
     if (name.endsWith(".tex")) return DistillFormat.latex;
@@ -105,7 +106,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     FileUtil.writeString(distillDir.resolve(fileName), toString.apply(Doc.vcat(docs), true));
   }
 
-  @NotNull private String nameOf(int i, AyaDocile item) {
+  private static @NotNull String nameOf(int i, AyaDocile item) {
     return item instanceof Def def ? def.ref().name()
       : item instanceof Decl decl ? decl.ref().name() : String.valueOf(i);
   }
@@ -136,8 +137,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
 
   private static @NotNull MarkdownAyaFile
   createLiterateFile(@NotNull CodeAyaFile template, @NotNull Reporter reporter) {
-    var data = createData(template, reporter);
-    return new MarkdownAyaFile(template.originalFile, data);
+    return new MarkdownAyaFile(template.originalFile, createData(template, reporter));
   }
 
   record MarkdownAyaFile(@Override @NotNull SourceFile originalFile, @NotNull Data data) implements SingleAyaFile {
@@ -146,6 +146,11 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       @NotNull ImmutableSeq<Literate.Code> extractedExprs,
       @NotNull SourceFile extractedAya
     ) {}
+
+    @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
+      data.extractedExprs.forEach(code -> code.expr = parser.expr(code.code, code.sourcePos));
+      return SingleAyaFile.super.parseMe(parser);
+    }
 
     @Override public @NotNull SourceFile codeFile() {
       return data.extractedAya;
