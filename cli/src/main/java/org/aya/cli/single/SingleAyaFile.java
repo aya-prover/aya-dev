@@ -5,7 +5,6 @@ package org.aya.cli.single;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.value.MutableValue;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
@@ -52,11 +51,12 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   ) throws IOException;
 
   record Factory(@NotNull GenericAyaParser parser) implements GenericAyaFile.Factory {
-    @Override public @NotNull SingleAyaFile createAyaFile(@NotNull SourceFileLocator locator, @NotNull Path path) {
+    @Override public @NotNull SingleAyaFile
+    createAyaFile(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {
       var fileName = path.getFileName().toString();
+      var ayaFile = new CodeAyaFile(locator, path);
       return fileName.endsWith(Constants.AYA_LITERATE_POSTFIX)
-        ? new MarkdownAyaFile(parser, locator, path, MutableValue.create(), MutableValue.create())
-        : new CodeAyaFile(locator, path);
+        ? createFile(ayaFile.sourceFile(), parser, ayaFile) : ayaFile;
     }
   }
 
@@ -112,11 +112,25 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     }
   }
 
+  private static @NotNull MarkdownAyaFile.Data
+  createData(@NotNull SourceFile mdFile, @NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
+    var mdParser = new AyaMdParser(mdFile);
+    var lit = mdParser.parseLiterate(parser);
+    var ayaCode = AyaMdParser.extractAya(lit);
+    var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
+    var code = SourceFile.from(template.locator, template.underlyingFile, ayaCode);
+    return new MarkdownAyaFile.Data(lit, exprs, code);
+  }
+
+  private static @NotNull MarkdownAyaFile
+  createFile(@NotNull SourceFile mdFile, @NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
+    var data = createData(mdFile, parser, template);
+    return new MarkdownAyaFile(template.locator, template.underlyingFile, mdFile, data);
+  }
+
   record MarkdownAyaFile(
-    @NotNull GenericAyaParser parser,
     @NotNull SourceFileLocator locator, @NotNull Path underlyingFile,
-    @NotNull MutableValue<SourceFile> markdownFile,
-    @NotNull MutableValue<Data> data
+    @Override @NotNull SourceFile errorReportSourceFile, @NotNull Data data
   ) implements SingleAyaFile {
     record Data(
       @NotNull Literate literate,
@@ -124,40 +138,14 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       @NotNull SourceFile extractedAya
     ) {}
 
-    private @NotNull SourceFile asMarkdownFile() throws IOException {
-      var file = markdownFile.get();
-      if (file == null) {
-        file = SourceFile.from(locator, underlyingFile);
-        markdownFile.set(file);
-      }
-      return file;
-    }
-
-    @Override public @NotNull SourceFile sourceFile() throws IOException {
-      var aya = data.get();
-      if (aya == null) data.set(aya = createData(asMarkdownFile(), parser, new CodeAyaFile(locator, underlyingFile)));
-      return aya.extractedAya;
-    }
-
-    private static @NotNull Data createData(@NotNull SourceFile mdFile, @NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
-      var mdParser = new AyaMdParser(mdFile);
-      var lit = mdParser.parseLiterate(parser);
-      var ayaCode = AyaMdParser.extractAya(lit);
-      var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
-      var code = SourceFile.from(template.locator, template.underlyingFile, ayaCode);
-      return new Data(lit, exprs, code);
-    }
-
-    @Override public @NotNull SourceFile errorReportSourceFile() throws IOException {
-      return asMarkdownFile();
+    @Override public @NotNull SourceFile sourceFile() {
+      return data.extractedAya;
     }
 
     private void render(@NotNull Path outputFile, @NotNull ImmutableSeq<Stmt> program) throws IOException {
-      var lit = data.get();
-      if (lit == null) return;
       var highlights = SyntaxHighlight.highlight(Option.some(sourceFile()), program);
-      new LiterateConsumer.Highlights(highlights).accept(lit.literate);
-      Files.writeString(outputFile, lit.literate.toDoc().renderToAyaMd());
+      new LiterateConsumer.Highlights(highlights).accept(data.literate);
+      Files.writeString(outputFile, data.literate.toDoc().renderToAyaMd());
     }
 
     @Override public void saveOutput(
