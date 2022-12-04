@@ -10,6 +10,7 @@ import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.single.SingleAyaFile;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.generic.Constants;
 import org.aya.resolve.context.EmptyContext;
@@ -76,19 +77,16 @@ public class AyaMdParserTest {
     return new SourceFile(path.toFile().getName(), path, Files.readString(path));
   }
 
-  @Test
-  public void testExtract() throws IOException {
+  @Test public void testExtract() throws IOException {
     var cases = Seq.of(
       new Case("test"),
       new Case("wow")
     );
 
     for (var oneCase : cases) {
-      var mdFile = file(oneCase.mdFile());
-      var parser = new AyaMdParser(mdFile, ThrowingReporter.INSTANCE);
-      var literate = parser.parseLiterate();
-      var actualCode = AyaMdParser.extractAya(literate);
-
+      var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
+      var literate = SingleAyaFile.createLiterateFile(mdFile, ThrowingReporter.INSTANCE);
+      var actualCode = literate.codeFile().sourceCode();
       Files.writeString(oneCase.ayaFile(), actualCode);
 
       var expPath = oneCase.expectedAyaFile();
@@ -103,8 +101,7 @@ public class AyaMdParserTest {
     }
   }
 
-  @Test
-  public void testHighlight() throws IOException {
+  @Test public void testHighlight() throws IOException {
     var cases = Seq.of(
       new Case("test"),
       new Case("wow"),

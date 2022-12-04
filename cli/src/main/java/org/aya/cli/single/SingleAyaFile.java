@@ -31,6 +31,7 @@ import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -140,7 +141,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     return new MarkdownAyaFile.Data(lit, exprs, code);
   }
 
-  private static @NotNull MarkdownAyaFile
+  @VisibleForTesting static @NotNull MarkdownAyaFile
   createLiterateFile(@NotNull CodeAyaFile template, @NotNull Reporter reporter) {
     return new MarkdownAyaFile(template.originalFile, createData(template, reporter));
   }
