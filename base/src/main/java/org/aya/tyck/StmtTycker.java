@@ -42,7 +42,7 @@ import java.util.function.Consumer;
 /**
  * @author ice1000, kiva
  * @apiNote this class does not create {@link ExprTycker} instances itself,
- * but use the one passed to it. {@link StmtTycker#newTycker(PrimDef.Factory, AyaShape.Factory)} creates instances
+ * but use the one passed to it. {@link StmtTycker#newTycker} creates instances
  * of expr tyckers.
  */
 public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {

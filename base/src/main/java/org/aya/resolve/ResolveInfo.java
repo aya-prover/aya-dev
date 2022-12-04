@@ -15,12 +15,16 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.CodeShape;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.order.TyckOrder;
+import org.aya.tyck.trace.Trace;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.MutableGraph;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @param primFactory  (global) all primitives shared among all modules in a compilation task.
@@ -87,6 +91,10 @@ public record ResolveInfo(
         renameOp(defVar, tuple._1, tuple._2, false);
       } else defVar.opDeclRename.put(thisModule().moduleName(), tuple._1);
     });
+  }
+
+  public @NotNull ExprTycker newTycker(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
+    return new ExprTycker(primFactory, shapeFactory, reporter, builder);
   }
 
   @Debug.Renderer(text = "opInfo.name()")
