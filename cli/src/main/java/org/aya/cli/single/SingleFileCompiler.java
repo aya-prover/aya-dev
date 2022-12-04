@@ -46,12 +46,12 @@ public record SingleFileCompiler(
     @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
     var reporter = CountingReporter.of(this.reporter);
-    var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
-    var ayaParser = new AyaParserImpl(reporter);
-    var fileManager = new SingleAyaFile.Factory(ayaParser);
-    var primFactory = new PrimDef.Factory();
     return AyaCompiler.catching(reporter, flags, () -> {
+      var ctx = context.apply(reporter);
+      var ayaParser = new AyaParserImpl(reporter);
+      var fileManager = new SingleAyaFile.Factory(ayaParser);
+      var primFactory = new PrimDef.Factory();
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaParser.program(ayaFile);
       var distillInfo = flags.distillInfo();

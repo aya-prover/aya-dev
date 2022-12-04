@@ -83,14 +83,10 @@ public class AyaMdParser {
 
       // We are at the line above the code block --- The '```' line
       // reach to indexTarget - 1 (1 is for line separator)
-      var count = 0;
       while (index < indexTarget - 1) {
         index++;
         // It is impossible that we only append one or no '/', because a code block always start with three '`'
-        // TODO: '///' is a Stmt, it would make aya unhappy
-        builder.append(count < 2 ? '/' : '\\');
-
-        count++;
+        builder.append('/');
       }
 
       var content = block.raw;
