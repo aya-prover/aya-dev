@@ -70,7 +70,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       fileName = compilerFlags.outputFile().getFileName().toString();
     } else {
       distillDir = flags.distillDir() != null ? Path.of(flags.distillDir()) : Path.of(".");
-      fileName = FileUtil.escapeFileName(AyaFiles.stripAyaSourcePostfix(originalFile().display())) + out.fileExt;
+      fileName = AyaFiles.stripAyaSourcePostfix(originalFile().display()) + out.fileExt;
     }
     Files.createDirectories(distillDir);
 
