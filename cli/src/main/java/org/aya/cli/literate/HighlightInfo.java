@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
-import org.aya.concrete.Expr;
 import org.aya.generic.AyaDocile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -21,12 +20,12 @@ public record HighlightInfo(
     Generalized, LocalVar, Module,
     Unknown;
 
-    public @NotNull HighlightInfo toRef(@NotNull SourcePos sourcePos, int target, @Nullable Expr.WithTerm term) {
-      return new HighlightInfo(sourcePos, new HighlightInfo.SymRef(target, this, term));
+    public @NotNull HighlightInfo toRef(@NotNull SourcePos sourcePos, int target, @Nullable AyaDocile type) {
+      return new HighlightInfo(sourcePos, new HighlightInfo.SymRef(target, this, type));
     }
 
-    public @NotNull HighlightInfo toDef(@NotNull SourcePos sourcePos, int target, @Nullable Expr.WithTerm term) {
-      return new HighlightInfo(sourcePos, new HighlightInfo.SymDef(target, this, term));
+    public @NotNull HighlightInfo toDef(@NotNull SourcePos sourcePos, int target, @Nullable AyaDocile type) {
+      return new HighlightInfo(sourcePos, new HighlightInfo.SymDef(target, this, type));
     }
   }
 
@@ -45,7 +44,7 @@ public record HighlightInfo(
   public record SymRef(
     int target,
     @NotNull HighlightInfo.DefKind kind,
-    @Nullable Expr.WithTerm term
+    @Nullable AyaDocile type
   ) implements HighlightSymbol {
   }
 
@@ -53,7 +52,7 @@ public record HighlightInfo(
   public record SymDef(
     int target,
     @NotNull HighlightInfo.DefKind kind,
-    @Nullable Expr.WithTerm term
+    @Nullable AyaDocile type
   ) implements HighlightSymbol {
   }
 

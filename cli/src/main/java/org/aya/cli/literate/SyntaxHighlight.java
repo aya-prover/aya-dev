@@ -6,17 +6,22 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.cli.parse.AyaGKProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
+import org.aya.core.term.PiTerm;
+import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.ExprTycker;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +67,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
 
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
-    return add(acc, linkRef(pos, var, null));
+    return add(acc, linkRef(pos, var, varType(var)));
   }
 
   @Override
@@ -70,7 +75,8 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     return switch (expr) {
       case Expr.LitInt lit -> add(acc, HighlightInfo.LitKind.Int.toLit(lit.sourcePos()));
       case Expr.LitString lit -> add(acc, HighlightInfo.LitKind.String.toLit(lit.sourcePos()));
-      case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(), ref));
+      case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(),
+        Option.ofNullable(ref.theCore().get()).map(ExprTycker.Result::type).getOrNull()));
       default -> StmtFolder.super.fold(acc, expr);
     };
   }
@@ -79,7 +85,13 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Pattern pat) {
     return switch (pat) {
       case Pattern.Number num -> add(acc, HighlightInfo.LitKind.Int.toLit(num.sourcePos()));
-      case Pattern.Bind bind -> add(acc, linkDef(bind.sourcePos(), bind.bind()));
+      case Pattern.Bind bind -> add(acc, linkDef(bind.sourcePos(), bind.bind(), bind.type().get()));
+      case Pattern.Ctor ctor -> {
+        var resolved = ctor.resolved().data();
+        var type = varType(resolved);
+        acc = add(acc, linkRef(ctor.resolved().sourcePos(), resolved, type));
+        yield ctor.as() != null ? add(acc, linkDef(ctor.as().definition(), ctor.as(), type)) : acc;
+      }
       default -> StmtFolder.super.fold(acc, pat);
     };
   }
@@ -88,29 +100,46 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Stmt stmt) {
     acc = StmtFolder.super.fold(acc, stmt);
     return switch (stmt) {
-      case Generalize g -> g.variables.foldLeft(acc, (a, var) -> add(a, linkDef(var.sourcePos, var)));
+      case Generalize g -> g.variables.foldLeft(acc, (a, var) -> add(a, linkDef(var.sourcePos, var, null)));
       case Command.Module m -> add(acc, linkModuleDef(new QualifiedID(m.sourcePos(), m.name())));
       case Command.Import i -> add(acc, linkModuleRef(i.path()));
       case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
       case Command.Open o -> add(acc, linkModuleRef(o.path()));
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic<?> teleDecl) acc = teleDecl.telescope().view()
-          .map(Expr.Param::ref)
-          .filterNot(LocalVar::isGenerated)
-          .foldLeft(acc, (ac, def) -> add(ac, linkDef(def.definition(), def)));
-        yield add(acc, linkDef(decl.sourcePos(), decl.ref()));
+        var declType = declType(decl);
+        acc = declType._2
+          .filterNot(p -> p._1.isGenerated())
+          .foldLeft(acc, (ac, p) -> add(ac, linkDef(p._1.definition(), p._1, p._2)));
+        yield add(acc, linkDef(decl.sourcePos(), decl.ref(), declType._1));
       }
     };
   }
 
-  private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var) {
-    return kindOf(var).toDef(sourcePos, var.hashCode(), null); // TODO: term
+  private Tuple2<AyaDocile, SeqView<Tuple2<LocalVar, AyaDocile>>> declType(@NotNull Decl decl) {
+    var type = varType(decl.ref());
+    // If it has core term, type is available.
+    if (decl.ref().core instanceof Def def) return Tuple.of(type,
+      def.telescope().view().map(p -> Tuple.of(p.ref(), p.type())));
+    // If it is telescopic, type is unavailable.
+    if (decl instanceof Decl.Telescopic<?> teleDecl) return Tuple.of(type,
+      teleDecl.telescope().view().map(p -> Tuple.of(p.ref(), null)));
+    return Tuple.of(null, SeqView.empty());
   }
 
-  private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable Expr.WithTerm term) {
+  private @Nullable AyaDocile varType(@NotNull AnyVar var) {
+    if (var instanceof DefVar<?, ?> defVar && defVar.core instanceof Def def)
+      return PiTerm.make(def.telescope(), def.result());
+    return null;
+  }
+
+  private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
+    return kindOf(var).toDef(sourcePos, var.hashCode(), type);
+  }
+
+  private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
     if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
-      return linkRef(sourcePos, origin, term);
-    return kindOf(var).toRef(sourcePos, var.hashCode(), term);
+      return linkRef(sourcePos, origin, type);
+    return kindOf(var).toRef(sourcePos, var.hashCode(), type);
   }
 
   private @NotNull HighlightInfo linkModuleRef(@NotNull QualifiedID id) {
