@@ -15,6 +15,12 @@ import java.nio.file.Path;
 import java.util.Comparator;
 
 public interface FileUtil {
+  static void writeString(@NotNull Path path, @NotNull String content) throws IOException {
+    var parent = path.toAbsolutePath().getParent();
+    if (parent != null && Files.notExists(parent)) Files.createDirectories(parent);
+    Files.writeString(path, content);
+  }
+
   static @NotNull String escapeFileName(@NotNull String s) {
     // Escape file names, see https://stackoverflow.com/a/41108758/7083401
     return s.replaceAll("[\\\\/:*?\"<>|]", "_");

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
 
@@ -72,7 +71,6 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       distillDir = flags.distillDir() != null ? Path.of(flags.distillDir()) : Path.of(".");
       fileName = AyaFiles.stripAyaSourcePostfix(originalFile().display()) + out.fileExt;
     }
-    Files.createDirectories(distillDir);
 
     var renderOptions = flags.renderOptions();
     if (currentStage == MainArgs.DistillStage.literate) {
@@ -81,7 +79,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       var literate = literate();
       new LiterateConsumer.Highlights(highlights).accept(literate);
       var text = renderOptions.render(out, literate.toDoc(), true, !flags.ascii());
-      Files.writeString(distillDir.resolve(fileName), text);
+      FileUtil.writeString(distillDir.resolve(fileName), text);
     } else {
       doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
         (d, hdr) -> renderOptions.render(out, d, hdr, !flags.ascii()));
@@ -95,16 +93,15 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   ) throws IOException {
     var docs = MutableList.<Doc>create();
     var eachDistillDir = distillDir.resolve(fileName + ".each");
-    Files.createDirectories(eachDistillDir);
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
       // Skip uninteresting items
       var thisDoc = item.toDoc(options);
       docs.append(thisDoc);
       if (item instanceof PrimDef) continue;
-      Files.writeString(eachDistillDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
+      FileUtil.writeString(eachDistillDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
     }
-    Files.writeString(distillDir.resolve(fileName), toString.apply(Doc.vcat(docs), true));
+    FileUtil.writeString(distillDir.resolve(fileName), toString.apply(Doc.vcat(docs), true));
   }
 
   @NotNull private String nameOf(int i, AyaDocile item) {
