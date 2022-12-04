@@ -120,6 +120,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   ) implements SingleAyaFile {
     record Data(
       @NotNull Literate literate,
+      @NotNull ImmutableSeq<Literate.Code> extractedExprs,
       @NotNull SourceFile extractedAya
     ) {}
 
@@ -138,8 +139,9 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
         var mdParser = new AyaMdParser(asMarkdownFile());
         var lit = mdParser.parseLiterate(parser);
         var ayaCode = AyaMdParser.extractAya(lit);
+        var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
         var code = SourceFile.from(locator, underlyingFile, ayaCode);
-        aya = new Data(lit, code);
+        aya = new Data(lit, exprs, code);
         data.set(aya);
       }
       return aya.extractedAya;
@@ -166,7 +168,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       render(outputFile, resolveInfo.program());
     }
 
-    @Override public void distill(
+    @SuppressWarnings("unchecked") @Override public void distill(
       @NotNull String outputFileName,
       CompilerFlags.@Nullable DistillInfo flags,
       @NotNull ImmutableSeq<? extends AyaDocile> doc,
@@ -175,7 +177,6 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       if (flags == null || currentStage != MainArgs.DistillStage.scoped) return;
       var distillDir = underlyingFile.resolveSibling(flags.distillDir());
       if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
-      //noinspection unchecked
       render(distillDir.resolve(outputFileName + ".html"), (ImmutableSeq<Stmt>) doc);
     }
   }

@@ -54,7 +54,7 @@ public class AyaMdParser {
    * Another strategy: create a lexer that can tokenize some pieces of source code
    */
   public static @NotNull String extractAya(@NotNull Literate literate) {
-    var codeBlocks = LiterateConsumer.AyaCodeBlocks.codeBlocks(literate);
+    var codeBlocks = new LiterateConsumer.AyaCodeBlocks(MutableList.create()).extract(literate);
     var builder = new StringBuilder();
     var index = -1;  // current index (the index of the last character)
     var line = 1;   // current line (1 based)

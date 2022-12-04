@@ -21,27 +21,33 @@ public interface LiterateConsumer extends Consumer<Literate> {
     }
   }
 
-  record AyaCodeBlocks(@NotNull MutableList<Literate.CodeBlock> codeBlocks) implements LiterateConsumer {
-    public static @NotNull ImmutableSeq<Literate.CodeBlock> codeBlocks(@NotNull Literate literate) {
-      var consumer = new AyaCodeBlocks(MutableList.create());
-      consumer.accept(literate);
-      return consumer.codeBlocks().toImmutableSeq();
-    }
+  interface LiterateExtractinator<T> extends LiterateConsumer {
+    @NotNull MutableList<T> result();
 
-    @Override public void accept(@NotNull Literate literate) {
-      if (literate instanceof Literate.CodeBlock codeBlock && codeBlock.isAya()) {
-        codeBlocks.append(codeBlock);
-      }
-      LiterateConsumer.super.accept(literate);
+    default @NotNull ImmutableSeq<T> extract(Literate literate) {
+      accept(literate);
+      return result().toImmutableSeq();
     }
   }
 
-  record Codes(@NotNull MutableList<Literate.Code> codes) implements LiterateConsumer {
+
+  record AyaCodeBlocks(@NotNull MutableList<Literate.CodeBlock> result)
+    implements LiterateExtractinator<Literate.CodeBlock> {
+    @Override public void accept(@NotNull Literate literate) {
+      if (literate instanceof Literate.CodeBlock codeBlock && codeBlock.isAya()) {
+        result.append(codeBlock);
+      }
+      LiterateExtractinator.super.accept(literate);
+    }
+  }
+
+  record Codes(@NotNull MutableList<Literate.Code> result)
+    implements LiterateExtractinator<Literate.Code> {
     @Override public void accept(@NotNull Literate literate) {
       if (literate instanceof Literate.Code code) {
-        codes.append(code);
+        result.append(code);
       }
-      LiterateConsumer.super.accept(literate);
+      LiterateExtractinator.super.accept(literate);
     }
   }
 
