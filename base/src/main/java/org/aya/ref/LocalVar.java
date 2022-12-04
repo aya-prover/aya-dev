@@ -45,6 +45,10 @@ public record LocalVar(
     return new LocalVar(name.data(), name.sourcePos());
   }
 
+  public @NotNull LocalVar rename() {
+    return new LocalVar(this.name, this.definition, this.generateKind);
+  }
+
   public boolean isGenerated() {
     return generateKind != GenerateKind.None.INSTANCE;
   }

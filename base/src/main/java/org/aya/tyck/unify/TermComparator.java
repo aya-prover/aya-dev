@@ -273,8 +273,7 @@ public sealed abstract class TermComparator permits Unifier {
           Tuple.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
         var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
-          var dummyVars = fieldSig.selfTele.map(par ->
-            new LocalVar(par.ref().name(), par.ref().definition()));
+          var dummyVars = fieldSig.selfTele.map(par -> par.ref().rename());
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
             new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
           var l = new FieldTerm(lhs, fieldSig.ref(), type1.args(), dummy);

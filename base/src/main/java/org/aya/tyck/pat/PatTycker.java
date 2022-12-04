@@ -489,7 +489,7 @@ public final class PatTycker {
 
     var ref = data.param.ref();
     Pat bind;
-    var freshVar = new LocalVar(ref.name(), ref.definition());
+    var freshVar = ref.rename();
     if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof DataCall dataCall) {
       bind = new Pat.Meta(false, MutableValue.create(), freshVar, dataCall);
     } else {

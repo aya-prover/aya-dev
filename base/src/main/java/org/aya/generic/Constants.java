@@ -54,7 +54,7 @@ public interface Constants {
   }
 
   static @NotNull LocalVar anonymous() {
-    return new LocalVar(ANONYMOUS_PREFIX, SourcePos.NONE);
+    return new LocalVar(ANONYMOUS_PREFIX, SourcePos.NONE, GenerateKind.Anonymous.INSTANCE);
   }
   static @NotNull LocalVar randomlyNamed(@NotNull SourcePos pos) {
     return new LocalVar(randomName(pos), pos, GenerateKind.Anonymous.INSTANCE);
