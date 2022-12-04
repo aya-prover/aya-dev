@@ -143,7 +143,6 @@ public final class PatTycker {
     var res = clauses.mapIndexed((index, lhs) -> exprTycker.traced(
       () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
       () -> checkRhs(exprTycker, lhs)));
-    exprTycker.solveMetas();
     var preclauses = res.map(c -> new Pat.Preclause<>(
       c.sourcePos(), c.patterns().map(p -> p.zonk(exprTycker)),
       c.expr().map(exprTycker::zonk)));
