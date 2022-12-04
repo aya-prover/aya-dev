@@ -929,6 +929,9 @@ public final class ExprTycker extends Tycker {
     @NotNull Term wellTyped();
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
+    default @NotNull Result normalize(@NotNull NormalizeMode mode, @NotNull TyckState state) {
+      return new TermResult(wellTyped().normalize(state, mode), type().normalize(state, mode));
+    }
   }
 
   /// region Helper

@@ -7,7 +7,6 @@ import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
-import org.aya.generic.util.InternalException;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -54,13 +53,11 @@ public sealed interface Literate extends Docile {
     }
   }
 
-  // TODO
   final class Code implements Literate {
     public final @NotNull String code;
     public final @NotNull SourcePos sourcePos;
     public @Nullable Expr expr;
     public @Nullable ExprTycker.Result tyckResult;
-    public @Nullable TyckState state;
     public final @NotNull CodeOptions options;
 
     public Code(@NotNull String code, @NotNull SourcePos sourcePos, @NotNull CodeOptions options) {
@@ -69,19 +66,18 @@ public sealed interface Literate extends Docile {
       this.options = options;
     }
 
-    private @NotNull Doc normalize(@NotNull Term term) {
+    public @NotNull Doc normalize(@NotNull Term term, @NotNull TyckState state) {
       var mode = options.mode();
-      if (state == null) throw new InternalException("No tyck state");
       return term.normalize(state, mode).toDoc(options.options());
     }
 
     @Override public @NotNull Doc toDoc() {
       if (tyckResult == null || expr == null) return Doc.code("Error");
-      return Doc.code(switch (options.showCode()) {
-        case Concrete -> expr.toDoc(options.options());
-        case Core -> normalize(tyckResult.wellTyped());
-        case Type -> normalize(tyckResult.type());
-      });
+      return Doc.code((switch (options.showCode()) {
+        case Concrete -> expr;
+        case Core -> tyckResult.wellTyped();
+        case Type -> tyckResult.type();
+      }).toDoc(options.options()));
     }
   }
 

@@ -160,8 +160,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       data.extractedExprs.forEach(c -> {
         assert c.expr != null;
         c.expr = resolver.apply(c.expr);
-        c.tyckResult = tycker.zonk(tycker.synthesize(c.expr));
-        c.state = tycker.state;
+        c.tyckResult = tycker.zonk(tycker.synthesize(c.expr)).normalize(c.options.mode(), tycker.state);
       });
     }
 
