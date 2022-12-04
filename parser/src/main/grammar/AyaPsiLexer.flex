@@ -107,13 +107,11 @@ RPATH = \|\] | \u27E7
 // Comments, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 LINE_COMMENT        = "//" (.* | {EOL})
-DOC_COMMENT         = "///" (.* | {EOL})
 BLOCK_COMMENT_START = "/*"
 BLOCK_COMMENT_END   = "*/"
 
 %%
 <YYINITIAL> {
-  {DOC_COMMENT}         { return AyaParserDefinitionBase.DOC_COMMENT; }
   {LINE_COMMENT}        { return AyaParserDefinitionBase.LINE_COMMENT; }
   {BLOCK_COMMENT_START} { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
 

@@ -153,7 +153,7 @@
   extends("atom.+Pattern") = atomPattern
 
   extends(".+Decl") = decl
-  extends("stmt|decl|.+Cmd|module|remark|generalize") = stmt
+  extends("stmt|decl|.+Cmd|module|generalize") = stmt
 }
 
 program ::= repl | stmts
@@ -174,10 +174,7 @@ stmt ::= decl
        | importCmd
        | openCmd
        | module
-       | remark
        | generalize
-
-remark ::= DOC_COMMENT+
 
 importCmd ::= KW_IMPORT qualifiedId (KW_AS weakId)?
 openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?

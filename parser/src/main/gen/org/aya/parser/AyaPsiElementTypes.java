@@ -84,7 +84,6 @@ public interface AyaPsiElementTypes {
   IElementType PROJ_FIX_ID = new AyaPsiElementType("PROJ_FIX_ID");
   IElementType QUALIFIED_ID = new AyaPsiElementType("QUALIFIED_ID");
   IElementType REF_EXPR = new AyaPsiElementType("REF_EXPR");
-  IElementType REMARK = new AyaPsiElementType("REMARK");
   IElementType SAMPLE_MODIFIERS = new AyaPsiElementType("SAMPLE_MODIFIERS");
   IElementType SIGMA_EXPR = new AyaPsiElementType("SIGMA_EXPR");
   IElementType STMT = new AyaPsiElementType("STMT");
