@@ -55,7 +55,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     @Override public @NotNull SingleAyaFile createAyaFile(@NotNull SourceFileLocator locator, @NotNull Path path) {
       var fileName = path.getFileName().toString();
       return fileName.endsWith(Constants.AYA_LITERATE_POSTFIX)
-        ? new MarkdownAyaFile(parser, locator, path, MutableValue.create(), MutableValue.create(), MutableValue.create())
+        ? new MarkdownAyaFile(parser, locator, path, MutableValue.create(), MutableValue.create())
         : new CodeAyaFile(locator, path);
     }
   }
@@ -116,9 +116,13 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     @NotNull GenericAyaParser parser,
     @NotNull SourceFileLocator locator, @NotNull Path underlyingFile,
     @NotNull MutableValue<SourceFile> markdownFile,
-    @NotNull MutableValue<SourceFile> extractedAya,
-    @NotNull MutableValue<Literate> literate
+    @NotNull MutableValue<Data> data
   ) implements SingleAyaFile {
+    record Data(
+      @NotNull Literate literate,
+      @NotNull SourceFile extractedAya
+    ) {}
+
     private @NotNull SourceFile asMarkdownFile() throws IOException {
       var file = markdownFile.get();
       if (file == null) {
@@ -129,16 +133,16 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     }
 
     @Override public @NotNull SourceFile sourceFile() throws IOException {
-      var aya = extractedAya.get();
+      var aya = data.get();
       if (aya == null) {
         var mdParser = new AyaMdParser(asMarkdownFile());
         var lit = mdParser.parseLiterate(parser);
         var ayaCode = AyaMdParser.extractAya(lit);
-        aya = SourceFile.from(locator, underlyingFile, ayaCode);
-        literate.set(lit);
-        extractedAya.set(aya);
+        var code = SourceFile.from(locator, underlyingFile, ayaCode);
+        aya = new Data(lit, code);
+        data.set(aya);
       }
-      return aya;
+      return aya.extractedAya;
     }
 
     @Override public @NotNull SourceFile errorReportSourceFile() throws IOException {
@@ -146,11 +150,11 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     }
 
     private void render(@NotNull Path outputFile, @NotNull ImmutableSeq<Stmt> program) throws IOException {
-      var lit = literate.get();
+      var lit = data.get();
       if (lit == null) return;
       var highlights = SyntaxHighlight.highlight(Option.some(sourceFile()), program);
-      new LiterateConsumer.Highlights(highlights).accept(lit);
-      Files.writeString(outputFile, lit.toDoc().renderToAyaMd());
+      new LiterateConsumer.Highlights(highlights).accept(lit.literate);
+      Files.writeString(outputFile, lit.literate.toDoc().renderToAyaMd());
     }
 
     @Override public void saveOutput(
