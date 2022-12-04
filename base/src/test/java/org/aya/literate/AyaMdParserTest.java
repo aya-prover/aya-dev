@@ -5,16 +5,18 @@ package org.aya.literate;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.control.Option;
-import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
+import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.tyck.TyckDeclTest;
+import org.aya.resolve.module.EmptyModuleLoader;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -109,23 +111,19 @@ public class AyaMdParserTest {
     );
 
     for (var oneCase : cases) {
-      var mdFile = file(oneCase.mdFile());
+      var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
 
-      var ayaParser = new AyaParserImpl(ThrowingReporter.INSTANCE);
-      var mdParser = new AyaMdParser(mdFile, ThrowingReporter.INSTANCE);
-      var literate = mdParser.parseLiterate();
-      var ayaCode = AyaMdParser.extractAya(literate);
+      var literate = SingleAyaFile.createLiterateFile(mdFile, ThrowingReporter.INSTANCE);
 
-      Files.writeString(oneCase.ayaFile(), ayaCode);
+      var stmts = literate.parseMe(new AyaParserImpl(ThrowingReporter.INSTANCE));
+      var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
+      var info = new ResolveInfo(new PrimDef.Factory(), ctx, stmts);
+      Stmt.resolve(stmts, info, EmptyModuleLoader.INSTANCE);
+      literate.tyckAdditional(info);
 
-      // parse aya code
-      var ayaFile = file(oneCase.ayaFile());
-      var stmts = ayaParser.program(ayaFile, mdFile);
-      TyckDeclTest.resolve(stmts, new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName()));
-
-      var highlights = SyntaxHighlight.highlight(Option.some(ayaFile), stmts);
-      new LiterateConsumer.Highlights(highlights).accept(literate);
-      var doc = literate.toDoc();
+      var highlights = SyntaxHighlight.highlight(Option.some(literate.codeFile()), stmts);
+      new LiterateConsumer.Highlights(highlights).accept(literate.literate());
+      var doc = literate.literate().toDoc();
       var expectedHtml = doc.renderToHtml();
       var expectedMd = doc.renderToAyaMd();
       Files.writeString(oneCase.htmlFile(), expectedHtml);
