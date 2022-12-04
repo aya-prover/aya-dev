@@ -11,12 +11,9 @@ import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
-import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.resolve.module.EmptyModuleLoader;
+import org.aya.tyck.TyckDeclTest;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -127,11 +124,7 @@ public class AyaMdParserTest {
       // parse aya code
       var ayaFile = file(oneCase.ayaFile());
       var stmts = ayaParser.program(ayaFile, mdFile);
-      Stmt.resolve(stmts, new ResolveInfo(
-        new PrimDef.Factory(),
-        new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName()),
-        stmts
-      ), EmptyModuleLoader.INSTANCE);
+      TyckDeclTest.resolve(stmts, new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName()));
 
       var highlights = SyntaxHighlight.highlight(Option.some(ayaFile), stmts);
       new LiterateConsumer.Highlights(highlights).accept(literate);

@@ -6,11 +6,8 @@ import kala.control.Option;
 import org.aya.cli.literate.FaithfulDistiller;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.PrimDef;
-import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.resolve.module.EmptyModuleLoader;
+import org.aya.tyck.TyckDeclTest;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.junit.jupiter.api.Test;
@@ -31,12 +28,7 @@ public class FaithfulDistillerTest {
     var sourceFile = new SourceFile(fileName, root, Files.readString(root.resolve(fileName)));
     var parser = new AyaParserImpl(reporter);
     var stmts = parser.program(sourceFile);
-    var resolveInfo = new ResolveInfo(
-      new PrimDef.Factory(),
-      new EmptyContext(reporter, root).derive(modName),
-      stmts);
-
-    Stmt.resolve(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
+    TyckDeclTest.resolve(stmts, new EmptyContext(reporter, root).derive(modName));
 
     var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
     var doc = FaithfulDistiller.highlight(sourceFile.sourceCode(), 0, highlights);

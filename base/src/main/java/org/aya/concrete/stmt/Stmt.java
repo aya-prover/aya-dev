@@ -3,6 +3,7 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
@@ -24,7 +25,7 @@ public sealed interface Stmt extends AyaDocile, TyckUnit permits Decl, Command, 
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
   @Contract(mutates = "param1")
-  static void resolve(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader loader) {
+  static void resolve(@NotNull ImmutableSeq<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader loader) {
     resolveWithoutDesugar(statements, resolveInfo, loader);
     statements.forEach(s -> s.desugar(resolveInfo));
   }

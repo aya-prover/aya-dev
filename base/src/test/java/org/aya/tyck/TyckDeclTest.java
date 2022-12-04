@@ -42,7 +42,7 @@ public class TyckDeclTest {
     return Tuple.of(factory, decls);
   }
 
-  private static @NotNull PrimDef.Factory resolve(@NotNull ImmutableSeq<Stmt> decls, @NotNull ModuleContext module) {
+  public static @NotNull PrimDef.Factory resolve(@NotNull ImmutableSeq<Stmt> decls, @NotNull ModuleContext module) {
     var primFactory = new PrimDef.Factory();
     Stmt.resolve(decls, new ResolveInfo(primFactory, module, decls), EmptyModuleLoader.INSTANCE);
     assertNotNull(module.underlyingFile());
