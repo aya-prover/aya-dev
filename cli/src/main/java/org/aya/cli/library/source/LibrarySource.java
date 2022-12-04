@@ -59,7 +59,7 @@ public record LibrarySource(
     return new SourceFile(displayPath().toString(), underlyingFile, sourceCode);
   }
 
-  @Override public @NotNull SourceFile sourceFile() throws IOException {
+  @Override public @NotNull SourceFile originalFile() throws IOException {
     return toSourceFile(Files.readString(underlyingFile));
   }
 

@@ -54,17 +54,13 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     @Override public @NotNull SingleAyaFile
     createAyaFile(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {
       var fileName = path.getFileName().toString();
-      var ayaFile = new CodeAyaFile(locator, path);
+      var codeFile = new CodeAyaFile(SourceFile.from(locator, path));
       return fileName.endsWith(Constants.AYA_LITERATE_POSTFIX)
-        ? createFile(ayaFile.sourceFile(), parser, ayaFile) : ayaFile;
+        ? createLiterateFile(parser, codeFile) : codeFile;
     }
   }
 
-  record CodeAyaFile(@NotNull SourceFileLocator locator, @NotNull Path underlyingFile) implements SingleAyaFile {
-    @Override public @NotNull SourceFile sourceFile() throws IOException {
-      return SourceFile.from(locator, underlyingFile);
-    }
-
+  record CodeAyaFile(@NotNull SourceFile originalFile) implements SingleAyaFile {
     @Override public void saveOutput(
       @NotNull Path outputFile,
       @NotNull CompilerFlags compilerFlags,
@@ -81,7 +77,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       MainArgs.@NotNull DistillStage currentStage
     ) throws IOException {
       if (flags == null || currentStage != flags.distillStage()) return;
-      var distillDir = underlyingFile.resolveSibling(flags.distillDir());
+      var distillDir = originalFile.resolveSibling(flags.distillDir());
       if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
       var renderOptions = flags.renderOptions();
       var out = flags.distillFormat().target;
@@ -113,37 +109,34 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   }
 
   private static @NotNull MarkdownAyaFile.Data
-  createData(@NotNull SourceFile mdFile, @NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
+  createData(@NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
+    var mdFile = template.originalFile;
     var mdParser = new AyaMdParser(mdFile);
     var lit = mdParser.parseLiterate(parser);
     var ayaCode = AyaMdParser.extractAya(lit);
     var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
-    var code = SourceFile.from(template.locator, template.underlyingFile, ayaCode);
+    var code = new SourceFile(mdFile.display(), mdFile.underlying(), ayaCode);
     return new MarkdownAyaFile.Data(lit, exprs, code);
   }
 
   private static @NotNull MarkdownAyaFile
-  createFile(@NotNull SourceFile mdFile, @NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
-    var data = createData(mdFile, parser, template);
-    return new MarkdownAyaFile(template.locator, template.underlyingFile, mdFile, data);
+  createLiterateFile(@NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
+    var data = createData(parser, template);
+    return new MarkdownAyaFile(template.originalFile, data);
   }
 
-  record MarkdownAyaFile(
-    @NotNull SourceFileLocator locator, @NotNull Path underlyingFile,
-    @Override @NotNull SourceFile errorReportSourceFile, @NotNull Data data
-  ) implements SingleAyaFile {
+  record MarkdownAyaFile(@Override @NotNull SourceFile originalFile, @NotNull Data data) implements SingleAyaFile {
     record Data(
       @NotNull Literate literate,
       @NotNull ImmutableSeq<Literate.Code> extractedExprs,
       @NotNull SourceFile extractedAya
     ) {}
-
-    @Override public @NotNull SourceFile sourceFile() {
+    @Override public @NotNull SourceFile codeFile() {
       return data.extractedAya;
     }
 
     private void render(@NotNull Path outputFile, @NotNull ImmutableSeq<Stmt> program) throws IOException {
-      var highlights = SyntaxHighlight.highlight(Option.some(sourceFile()), program);
+      var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
       new LiterateConsumer.Highlights(highlights).accept(data.literate);
       Files.writeString(outputFile, data.literate.toDoc().renderToAyaMd());
     }
@@ -164,7 +157,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       MainArgs.@NotNull DistillStage currentStage
     ) throws IOException {
       if (flags == null || currentStage != MainArgs.DistillStage.scoped) return;
-      var distillDir = underlyingFile.resolveSibling(flags.distillDir());
+      var distillDir = originalFile.resolveSibling(flags.distillDir());
       if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
       render(distillDir.resolve(outputFileName + ".html"), (ImmutableSeq<Stmt>) doc);
     }

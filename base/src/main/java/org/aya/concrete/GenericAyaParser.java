@@ -19,7 +19,7 @@ public interface GenericAyaParser {
     return program(sourceFile, sourceFile);
   }
   default @NotNull ImmutableSeq<Stmt> program(@NotNull GenericAyaFile ayaFile) throws IOException {
-    return program(ayaFile.sourceFile(), ayaFile.errorReportSourceFile());
+    return program(ayaFile.codeFile(), ayaFile.originalFile());
   }
   @NotNull Reporter reporter();
 }

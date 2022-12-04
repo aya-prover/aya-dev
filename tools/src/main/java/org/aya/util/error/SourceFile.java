@@ -37,4 +37,8 @@ public record SourceFile(
   public boolean isSomeFile() {
     return underlying.isDefined();
   }
+
+  public @NotNull Path resolveSibling(@NotNull Path sibling) {
+    return underlying().getOrElse(() -> Path.of(".")).resolveSibling(sibling);
+  }
 }
