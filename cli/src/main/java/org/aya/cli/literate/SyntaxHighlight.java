@@ -13,7 +13,6 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
 import org.aya.parser.AyaParserDefinitionBase;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
@@ -105,21 +104,21 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var) {
-    return kindOf(var).toDef(sourcePos, new LinkId("#" + var.hashCode()), null); // TODO: term
+    return kindOf(var).toDef(sourcePos, var.hashCode(), null); // TODO: term
   }
 
   private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable Expr.WithTerm term) {
     if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, term);
-    return kindOf(var).toRef(sourcePos, new LinkId("#" + var.hashCode()), term);
+    return kindOf(var).toRef(sourcePos, var.hashCode(), term);
   }
 
   private @NotNull HighlightInfo linkModuleRef(@NotNull QualifiedID id) {
-    return HighlightInfo.DefKind.Module.toRef(id.sourcePos(), new LinkId("#" + id.join().hashCode()), null);
+    return HighlightInfo.DefKind.Module.toRef(id.sourcePos(), id.join().hashCode(), null);
   }
 
   private @NotNull HighlightInfo linkModuleDef(@NotNull QualifiedID id) {
-    return HighlightInfo.DefKind.Module.toDef(id.sourcePos(), new LinkId("#" + id.join().hashCode()), null);
+    return HighlightInfo.DefKind.Module.toDef(id.sourcePos(), id.join().hashCode(), null);
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")

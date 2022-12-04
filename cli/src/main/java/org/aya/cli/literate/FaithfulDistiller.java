@@ -72,9 +72,9 @@ public interface FaithfulDistiller {
   private static @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
     return switch (highlight) {
       case HighlightInfo.SymDef symDef ->
-        Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target().id(), hover(symDef.term()));
+        Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target(), hover(symDef.term()));
       case HighlightInfo.SymRef symRef ->
-        Doc.linkRef(highlightVar(raw, symRef.kind()), symRef.target().id(), hover(symRef.term()));
+        Doc.linkRef(highlightVar(raw, symRef.kind()), symRef.target(), hover(symRef.term()));
       case HighlightInfo.SymLit symLit -> highlightLit(raw, symLit.kind());
       case HighlightInfo.SymError symError -> Doc.plain(raw);   // TODO: any style for error?
     };

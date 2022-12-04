@@ -4,7 +4,6 @@ package org.aya.cli;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
@@ -17,7 +16,6 @@ import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef.Factory;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.EmptyModuleLoader;
@@ -83,8 +81,8 @@ public class HighlighterTester {
 
   // TODO[hoshino]: Inductive Defined (allow scope)
   // (User-Defined Name, (Unique ID, Nullable Def Kind))
-  public final MutableMap<String, Tuple2<LinkId, Option<HighlightInfo.DefKind>>> defMap = MutableMap.create();
-  public final MutableMap<LinkId, Option<HighlightInfo.DefKind>> defSet = MutableMap.create();
+  public final MutableMap<String, Tuple2<Integer, Option<HighlightInfo.DefKind>>> defMap = MutableMap.create();
+  public final MutableMap<Integer, Option<HighlightInfo.DefKind>> defSet = MutableMap.create();
 
   public HighlighterTester(@NotNull String sourceCode, @NotNull ImmutableSeq<HighlightInfo> actual, @Nullable ExpectedHighlightInfo[] expected) {
     this.sourceCode = sourceCode;

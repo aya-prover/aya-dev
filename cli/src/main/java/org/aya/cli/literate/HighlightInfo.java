@@ -4,7 +4,6 @@ package org.aya.cli.literate;
 
 import org.aya.concrete.Expr;
 import org.aya.generic.AyaDocile;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +21,12 @@ public record HighlightInfo(
     Generalized, LocalVar, Module,
     Unknown;
 
-    public @NotNull HighlightInfo toRef(@NotNull SourcePos sourcePos, @NotNull LinkId linkId, @Nullable Expr.WithTerm term) {
-      return new HighlightInfo(sourcePos, new HighlightInfo.SymRef(linkId, this, term));
+    public @NotNull HighlightInfo toRef(@NotNull SourcePos sourcePos, int target, @Nullable Expr.WithTerm term) {
+      return new HighlightInfo(sourcePos, new HighlightInfo.SymRef(target, this, term));
     }
 
-    public @NotNull HighlightInfo toDef(@NotNull SourcePos sourcePos, @NotNull LinkId linkId, @Nullable Expr.WithTerm term) {
-      return new HighlightInfo(sourcePos, new HighlightInfo.SymDef(linkId, this, term));
+    public @NotNull HighlightInfo toDef(@NotNull SourcePos sourcePos, int target, @Nullable Expr.WithTerm term) {
+      return new HighlightInfo(sourcePos, new HighlightInfo.SymDef(target, this, term));
     }
   }
 
@@ -44,7 +43,7 @@ public record HighlightInfo(
 
   /** A reference to a symbol */
   public record SymRef(
-    @NotNull LinkId target,
+    int target,
     @NotNull HighlightInfo.DefKind kind,
     @Nullable Expr.WithTerm term
   ) implements HighlightSymbol {
@@ -52,7 +51,7 @@ public record HighlightInfo(
 
   /** A definition of a symbol */
   public record SymDef(
-    @NotNull LinkId target,
+    int target,
     @NotNull HighlightInfo.DefKind kind,
     @Nullable Expr.WithTerm term
   ) implements HighlightSymbol {
