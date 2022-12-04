@@ -88,8 +88,8 @@ public class AyaMdParserTest {
 
     for (var oneCase : cases) {
       var mdFile = file(oneCase.mdFile());
-      var parser = new AyaMdParser(mdFile);
-      var literate = parser.parseLiterate(new AyaParserImpl(ThrowingReporter.INSTANCE));
+      var parser = new AyaMdParser(mdFile, ThrowingReporter.INSTANCE);
+      var literate = parser.parseLiterate();
       var actualCode = AyaMdParser.extractAya(literate);
 
       Files.writeString(oneCase.ayaFile(), actualCode);
@@ -118,8 +118,8 @@ public class AyaMdParserTest {
       var mdFile = file(oneCase.mdFile());
 
       var ayaParser = new AyaParserImpl(ThrowingReporter.INSTANCE);
-      var mdParser = new AyaMdParser(mdFile);
-      var literate = mdParser.parseLiterate(ayaParser);
+      var mdParser = new AyaMdParser(mdFile, ThrowingReporter.INSTANCE);
+      var literate = mdParser.parseLiterate();
       var ayaCode = AyaMdParser.extractAya(literate);
 
       Files.writeString(oneCase.ayaFile(), ayaCode);

@@ -5,7 +5,6 @@ package org.aya.cli.literate;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.remark.CodeAttrProcessor;
 import org.aya.concrete.remark.CodeOptions;
 import org.aya.concrete.remark.Literate;
@@ -17,6 +16,7 @@ import org.aya.pretty.doc.Style;
 import org.aya.util.StringUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.commonmark.node.*;
 import org.commonmark.parser.IncludeSourceSpans;
 import org.commonmark.parser.Parser;
@@ -31,20 +31,22 @@ public class AyaMdParser {
   /** For empty line that end with \n, the index points to \n */
   private final @NotNull ImmutableSeq<Integer> linesIndex;
   private final @NotNull SourceFile file;
+  private final @NotNull Reporter reporter;
 
-  public AyaMdParser(@NotNull SourceFile file) {
+  public AyaMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
     this.file = file;
     this.code = StringUtil.trimCRLF(file.sourceCode());
+    this.reporter = reporter;
     this.linesIndex = StringUtil.indexedLines(code).map(x -> x._1);
   }
 
-  public @NotNull Literate parseLiterate(@NotNull GenericAyaParser producer) {
+  public @NotNull Literate parseLiterate() {
     var parser = Parser.builder()
       .customDelimiterProcessor(CodeAttrProcessor.INSTANCE)
       .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
       .postProcessor(FillCodeBlock.INSTANCE)
       .build();
-    return mapAST(parser.parse(code), producer);
+    return mapAST(parser.parse(code));
   }
 
   /**
@@ -112,10 +114,7 @@ public class AyaMdParser {
     return builder.toString();
   }
 
-  private @NotNull ImmutableSeq<Literate> mapChildren(
-    @NotNull Node parent,
-    @NotNull GenericAyaParser producer
-  ) {
+  private @NotNull ImmutableSeq<Literate> mapChildren(@NotNull Node parent) {
     Node next;
     var children = MutableList.<Literate>create();
     for (var node = parent.getFirstChild(); node != null; node = next) {
@@ -123,27 +122,24 @@ public class AyaMdParser {
         children.append(new Literate.Raw(Doc.line()));
       }
       next = node.getNext();
-      children.append(mapAST(node, producer));
+      children.append(mapAST(node));
     }
     return children.toImmutableSeq();
   }
 
-  private @NotNull Literate mapAST(
-    @NotNull Node node,
-    @NotNull GenericAyaParser producer
-  ) {
+  private @NotNull Literate mapAST(@NotNull Node node) {
     return switch (node) {
       case Text text -> new Literate.Raw(Doc.plain(text.getLiteral()));
-      case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis, producer));
+      case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis));
       case HardLineBreak $ -> new Literate.Raw(Doc.line());
       case SoftLineBreak $ -> new Literate.Raw(Doc.line());
-      case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis, producer));
-      case Paragraph $ -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node, producer));
-      case BlockQuote $ -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node, producer));
-      case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node, producer));
-      case Link h -> new Literate.Link(h.getDestination(), h.getTitle(), mapChildren(node, producer));
+      case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis));
+      case Paragraph $ -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node));
+      case BlockQuote $ -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node));
+      case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node));
+      case Link h -> new Literate.Link(h.getDestination(), h.getTitle(), mapChildren(node));
       case Document $ -> {
-        var children = mapChildren(node, producer);
+        var children = mapChildren(node);
         yield children.sizeEquals(1) ? children.first() : new Literate.Many(null, children);
       }
       case FencedCodeBlock codeBlock -> {
@@ -166,7 +162,7 @@ public class AyaMdParser {
           var startFrom = lineIndex + sourceSpan.getColumnIndex();
           var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
           assert sourcePos != null;
-          yield CodeOptions.analyze(inlineCode, producer, sourcePos);
+          yield CodeOptions.analyze(inlineCode, sourcePos);
         }
         throw new InternalException("SourceSpans");
       }
@@ -175,8 +171,8 @@ public class AyaMdParser {
         if (spans == null) throw new InternalException("SourceSpans");
         var pos = fromSourceSpans(Seq.from(spans));
         if (pos == null) throw new UnsupportedOperationException("TODO: Which do the nodes have not source spans?");
-        producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
-        yield new Literate.Unsupported(mapChildren(node, producer));
+        reporter.report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
+        yield new Literate.Unsupported(mapChildren(node));
       }
     };
   }

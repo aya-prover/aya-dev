@@ -56,13 +56,16 @@ public sealed interface Literate extends Docile {
 
   // TODO
   final class Code implements Literate {
-    public @NotNull Expr expr;
+    public final @NotNull String code;
+    public final @NotNull SourcePos sourcePos;
+    public @Nullable Expr expr;
     public @Nullable ExprTycker.Result tyckResult;
     public @Nullable TyckState state;
     public final @NotNull CodeOptions options;
 
-    public Code(@NotNull Expr expr, @NotNull CodeOptions options) {
-      this.expr = expr;
+    public Code(@NotNull String code, @NotNull SourcePos sourcePos, @NotNull CodeOptions options) {
+      this.code = code;
+      this.sourcePos = sourcePos;
       this.options = options;
     }
 
@@ -73,7 +76,7 @@ public sealed interface Literate extends Docile {
     }
 
     @Override public @NotNull Doc toDoc() {
-      if (tyckResult == null) return Doc.code("Error");
+      if (tyckResult == null || expr == null) return Doc.code("Error");
       return Doc.code(switch (options.showCode()) {
         case Concrete -> expr.toDoc(options.options());
         case Core -> normalize(tyckResult.wellTyped());

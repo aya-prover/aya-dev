@@ -10,8 +10,8 @@ import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
+import org.aya.cli.utils.MainArgs.DistillFormat;
 import org.aya.concrete.GenericAyaFile;
-import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.remark.Literate;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -25,6 +25,7 @@ import org.aya.util.FileUtil;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +45,12 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       null);
     return null;
   }
-  @NotNull static MainArgs.DistillFormat detectFormat(@NotNull Path outputFile) {
+  @NotNull static DistillFormat detectFormat(@NotNull Path outputFile) {
     var name = outputFile.getFileName().toString();
-    if (name.endsWith(".md")) return MainArgs.DistillFormat.markdown;
-    if (name.endsWith(".tex")) return MainArgs.DistillFormat.latex;
-    if (name.endsWith(".html")) return MainArgs.DistillFormat.html;
-    return MainArgs.DistillFormat.plain;
+    if (name.endsWith(".md")) return DistillFormat.markdown;
+    if (name.endsWith(".tex")) return DistillFormat.latex;
+    if (name.endsWith(".html")) return DistillFormat.html;
+    return DistillFormat.plain;
   }
 
   @SuppressWarnings("unchecked") default void distill(
@@ -109,13 +110,13 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       : item instanceof Decl decl ? decl.ref().name() : String.valueOf(i);
   }
 
-  record Factory(@NotNull GenericAyaParser parser) implements GenericAyaFile.Factory {
+  record Factory(@NotNull Reporter reporter) implements GenericAyaFile.Factory {
     @Override public @NotNull SingleAyaFile
     createAyaFile(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {
       var fileName = path.getFileName().toString();
       var codeFile = new CodeAyaFile(SourceFile.from(locator, path));
       return fileName.endsWith(Constants.AYA_LITERATE_POSTFIX)
-        ? createLiterateFile(parser, codeFile) : codeFile;
+        ? createLiterateFile(codeFile, reporter) : codeFile;
     }
   }
 
@@ -123,10 +124,10 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   }
 
   private static @NotNull MarkdownAyaFile.Data
-  createData(@NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
+  createData(@NotNull CodeAyaFile template, @NotNull Reporter reporter) {
     var mdFile = template.originalFile;
-    var mdParser = new AyaMdParser(mdFile);
-    var lit = mdParser.parseLiterate(parser);
+    var mdParser = new AyaMdParser(mdFile, reporter);
+    var lit = mdParser.parseLiterate();
     var ayaCode = AyaMdParser.extractAya(lit);
     var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
     var code = new SourceFile(mdFile.display(), mdFile.underlying(), ayaCode);
@@ -134,8 +135,8 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   }
 
   private static @NotNull MarkdownAyaFile
-  createLiterateFile(@NotNull GenericAyaParser parser, @NotNull CodeAyaFile template) {
-    var data = createData(parser, template);
+  createLiterateFile(@NotNull CodeAyaFile template, @NotNull Reporter reporter) {
+    var data = createData(template, reporter);
     return new MarkdownAyaFile(template.originalFile, data);
   }
 
