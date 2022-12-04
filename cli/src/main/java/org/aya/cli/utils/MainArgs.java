@@ -74,7 +74,7 @@ public class MainArgs {
   public boolean interruptedTrace;
   @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage." + CANDIDATES)
   public DistillStage prettyStage;
-  @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES, defaultValue = "html")
+  @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES, defaultValue = "markdown")
   public DistillFormat prettyFormat;
   @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.", defaultValue = ".")
   public String prettyDir;
