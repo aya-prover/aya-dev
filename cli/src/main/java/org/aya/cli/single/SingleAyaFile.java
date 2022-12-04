@@ -13,6 +13,7 @@ import org.aya.cli.utils.MainArgs;
 import org.aya.cli.utils.MainArgs.DistillFormat;
 import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
+import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Literate;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -23,7 +24,6 @@ import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.visitor.ExprResolver;
 import org.aya.util.FileUtil;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceFile;
@@ -154,12 +154,11 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
 
     /** Must be called after {@link #parseMe} */
     @Override public void tyckAdditional(@NotNull ResolveInfo info) {
-      var resolver = new ExprResolver(info.thisModule(), ExprResolver.RESTRICTIVE);
       var reporter = info.thisModule().reporter();
       var tycker = info.newTycker(reporter, null);
       data.extractedExprs.forEach(c -> {
         assert c.expr != null;
-        c.expr = resolver.apply(c.expr);
+        c.expr = new Desugarer(info).apply(c.expr.resolve(info.thisModule()));
         c.tyckResult = tycker.zonk(tycker.synthesize(c.expr)).normalize(c.options.mode(), tycker.state);
       });
     }
