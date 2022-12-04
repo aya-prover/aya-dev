@@ -148,12 +148,14 @@ public class AyaMdParserTest {
         oneCase.outMdFile()
       ), null);
       var actualMd = Files.readString(oneCase.outMdFile());
-      assertEquals(trimIdHref(expectedMd), trimIdHref(actualMd));
+      assertEquals(trim(expectedMd), trim(actualMd));
     }
   }
 
-  private @NotNull String trimIdHref(@NotNull String input) {
+  private @NotNull String trim(@NotNull String input) {
     return input.replaceAll("id=\"[^\"]+\"", "id=\"\"")
-      .replaceAll("href=\"[^\"]+\"", "href=\"\"");
+      .replaceAll("href=\"[^\"]+\"", "href=\"\"")
+      .replaceAll("class=\"aya-hover\" ", "")
+      .replaceAll("aya-type=\"[^\"]+\" ", "");
   }
 }

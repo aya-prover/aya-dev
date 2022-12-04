@@ -19,7 +19,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Language(value = "HTML")
   public static final @NotNull String HOVER_POPUP_STYLE = """
     <style>
-    .Aya .hovertip {
+    .Aya .aya-hover {
       /* make absolute position available for hover popup */
       position: relative;
       cursor: pointer;
@@ -40,7 +40,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
       color: #fff;
       box-shadow: 1px 1px 14px rgba(0,0,0,0.1)
     }
-    .Aya .hovertip:hover:after {
+    .Aya .aya-hover:hover:after {
       /* show on hover */
       transform: translate(0px, -110%);
       visibility: visible;
@@ -122,7 +122,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("<a ");
     if (text.id() != null) cursor.invisibleContent("id=\"" + text.id() + "\" ");
     if (text.hover() != null) {
-      cursor.invisibleContent("class=\"hovertip\" ");
+      cursor.invisibleContent("class=\"aya-hover\" ");
       cursor.invisibleContent("aya-type=\"" + text.hover() + "\" ");
     }
     cursor.invisibleContent("href=\"");

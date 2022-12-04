@@ -112,12 +112,12 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   public static class Config extends DocHtmlPrinter.Config {
     public boolean ayaFlavored;
 
-    public Config(boolean ayaFlavored) {
-      this(MdStylist.DEFAULT, ayaFlavored);
+    public Config(boolean withHeader, boolean ayaFlavored) {
+      this(MdStylist.DEFAULT, withHeader, ayaFlavored);
     }
 
-    public Config(@NotNull MdStylist stylist, boolean ayaFlavored) {
-      super(stylist, false);
+    public Config(@NotNull MdStylist stylist, boolean withHeader, boolean ayaFlavored) {
+      super(stylist, withHeader);
       this.ayaFlavored = ayaFlavored;
     }
   }
