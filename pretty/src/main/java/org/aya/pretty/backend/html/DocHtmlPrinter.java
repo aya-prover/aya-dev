@@ -112,7 +112,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (config.withHeader) cursor.invisibleContent("</body></html>");
   }
 
-  @Override protected @NotNull String escapePlainText(@NotNull String content) {
+  @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
     return entityPattern.matcher(content).replaceAll(
       result -> entityMapping.get(result.group()));   // fail if bug
   }
@@ -128,7 +128,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("href=\"");
     cursor.invisibleContent(href.id());
     cursor.invisibleContent("\">");
-    renderDoc(cursor, text.doc(), outer);
+    renderDoc(cursor, text.doc(), Outer.EnclosingTag);
     cursor.invisibleContent("</a>");
   }
 
@@ -138,13 +138,13 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
     cursor.invisibleContent("<code>");
-    renderDoc(cursor, code.code(), outer);
+    renderDoc(cursor, code.code(), Outer.EnclosingTag); // Even in code mode, we still need to escape
     cursor.invisibleContent("</code>");
   }
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, Outer outer) {
     cursor.invisibleContent("<pre class=\"" + block.language() + "\">");
-    renderDoc(cursor, block.code(), outer);
+    renderDoc(cursor, block.code(), Outer.EnclosingTag); // Even in code mode, we still need to escape
     cursor.invisibleContent("</pre>");
   }
 

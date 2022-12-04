@@ -19,6 +19,7 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
   public enum Outer {
     Free,
     Code,
+    EnclosingTag,
   }
 
   protected Config config;
@@ -148,11 +149,11 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
   }
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {
-    var escaped = outer == Outer.Code ? content : escapePlainText(content);
+    var escaped = outer == Outer.Code ? content : escapePlainText(content, outer);
     cursor.visibleContent(escaped);
   }
 
-  protected @NotNull String escapePlainText(@NotNull String content) {
+  protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
     return content;
   }
 

@@ -22,7 +22,11 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   // markdown escape: https://spec.commonmark.org/0.30/#backslash-escapes
-  @Override protected @NotNull String escapePlainText(@NotNull String content) {
+  @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
+    if (outer == Outer.EnclosingTag) {
+      // If we are in HTML tag (like rendered Aya code), use HTML escape settings.
+      return super.escapePlainText(content, outer);
+    }
     // We are not need to call `super.escapePlainText`, we will escape them in markdown way.
     // I wish you can understand this genius regexp
     // What we will escape:

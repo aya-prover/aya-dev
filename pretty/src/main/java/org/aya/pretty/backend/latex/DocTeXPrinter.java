@@ -19,7 +19,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.invisibleContent("\\noindent");
   }
 
-  @Override protected @NotNull String escapePlainText(@NotNull String content) {
+  @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
     return content.replace("\\", "").replace("_", "\\_");
   }
 
