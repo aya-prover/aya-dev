@@ -7,7 +7,6 @@ import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,10 +26,10 @@ public interface GenericAyaFile {
     return originalFile();
   }
   /**
-   * @return the parsed literate output, null if the file is not parsed
+   * @return the parsed literate output
    * @implNote This method wraps the file in a code block by default. Literate files should override this method.
    */
-  default @Nullable Literate literate() throws IOException {
+  default @NotNull Literate literate() throws IOException {
     var code = originalFile().sourceCode();
     var mockPos = new SourcePos(originalFile(), 0, code.length(), -1, -1, -1, -1);
     // ^ we only need index, so it's fine to use a mocked line/column

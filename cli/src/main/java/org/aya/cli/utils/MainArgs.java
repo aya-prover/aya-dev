@@ -41,7 +41,7 @@ public class MainArgs {
     public boolean isNoCode;
     @Parameters(paramLabel = "<input-file>", description = "File to compile")
     public String inputFile;
-    @Option(names = {"-o", "--output"}, description = "Set output file")
+    @Option(names = {"-o", "--output"}, description = "Set literate output file")
     public String outputFile;
   }
 
@@ -76,7 +76,7 @@ public class MainArgs {
   public DistillStage prettyStage;
   @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES, defaultValue = "html")
   public DistillFormat prettyFormat;
-  @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.")
+  @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.", defaultValue = ".")
   public String prettyDir;
   @Option(names = {"--style"}, description = "The color theme of pretty printing." + CANDIDATES, defaultValue = "emacs")
   public PredefinedStyle renderStyle;
@@ -105,12 +105,14 @@ public class MainArgs {
     raw,
     scoped,
     typed,
+    literate,
   }
 
   public enum DistillFormat {
     html(RenderOptions.OutputTarget.HTML),
     plain(RenderOptions.OutputTarget.Plain),
     latex(RenderOptions.OutputTarget.LaTeX),
+    markdown(RenderOptions.OutputTarget.AyaMd),
     unix(RenderOptions.OutputTarget.Terminal);
 
     public final @NotNull RenderOptions.OutputTarget target;

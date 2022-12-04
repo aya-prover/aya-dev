@@ -142,8 +142,6 @@ public class LibraryCompiler {
   }
 
   public int start() throws IOException {
-    if (flags.outputFile() != null) reporter.reportString(
-      "Warning: command-line specified output file is ignored when compiling libraries.");
     if (flags.modulePaths().isNotEmpty()) reporter.reportString(
       "Warning: command-line specified module path is ignored when compiling libraries.");
     if (flags.distillInfo() != null) reporter.reportString(

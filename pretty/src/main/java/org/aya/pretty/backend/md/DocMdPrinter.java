@@ -11,13 +11,14 @@ import java.util.regex.Pattern;
 
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
+  }
+
+  @Override protected void renderFooter(@NotNull Cursor cursor) {
+    // put generated styles at the end of the file
     if (config.withHeader) {    // TODO[hoshino]: Maybe another boolean?
       cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_STYLE);
       cursor.invisibleContent(DocHtmlPrinter.HOVER_POPUP_STYLE);
     }
-  }
-
-  @Override protected void renderFooter(@NotNull Cursor cursor) {
   }
 
   // markdown escape: https://spec.commonmark.org/0.30/#backslash-escapes

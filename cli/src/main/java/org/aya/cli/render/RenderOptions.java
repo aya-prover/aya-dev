@@ -9,6 +9,8 @@ import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.Html5Stylist;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.latex.TeXStylist;
+import org.aya.pretty.backend.md.DocMdPrinter;
+import org.aya.pretty.backend.md.MdStylist;
 import org.aya.pretty.backend.string.DebugStylist;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.StringStylist;
@@ -34,6 +36,7 @@ public class RenderOptions {
   public enum OutputTarget {
     Terminal(".txt"),
     LaTeX(".tex"),
+    AyaMd(".md"),
     HTML(".html"),
     Plain(".txt");
 
@@ -114,6 +117,7 @@ public class RenderOptions {
     return switch (output) {
       case Terminal -> AdaptiveCliStylist.INSTANCE;
       case LaTeX -> TeXStylist.DEFAULT;
+      case AyaMd -> MdStylist.DEFAULT;
       case HTML -> Html5Stylist.DEFAULT;
       case Plain -> DebugStylist.DEFAULT;
     };
@@ -124,6 +128,7 @@ public class RenderOptions {
     return switch (output) {
       case Terminal -> new UnixTermStylist(buildColorScheme(), buildStyleFamily());
       case LaTeX -> new TeXStylist(buildColorScheme(), buildStyleFamily());
+      case AyaMd -> new MdStylist(buildColorScheme(), buildStyleFamily());
       case HTML -> new Html5Stylist(buildColorScheme(), buildStyleFamily());
       case Plain -> new DebugStylist(buildColorScheme(), buildStyleFamily());
     };
@@ -147,6 +152,7 @@ public class RenderOptions {
     return switch (output) {
       case HTML -> doc.render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config((Html5Stylist) stylist, witHeader));
       case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
+      case AyaMd -> doc.render(new DocMdPrinter(), new DocMdPrinter.Config((MdStylist) stylist, witHeader, true));
       case Terminal -> doc.render(new DocTermPrinter(), new DocTermPrinter.Config((UnixTermStylist) stylist, pageWidth, unicode));
       case Plain -> doc.renderToString(new StringPrinterConfig(stylist, pageWidth, unicode));
     };

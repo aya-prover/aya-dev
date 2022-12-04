@@ -65,7 +65,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       prettyFormat,
       distillOptions,
       renderOptions,
-      Paths.get(prettyDir != null ? prettyDir : ".")
+      prettyDir
     ) : null;
     var flags = new CompilerFlags(message, interruptedTrace,
       compile.isRemake, distillation,

@@ -25,7 +25,7 @@ public record CompilerFlags(
     @NotNull MainArgs.DistillFormat distillFormat,
     @NotNull DistillerOptions distillerOptions,
     @NotNull RenderOptions renderOptions,
-    @NotNull Path distillDir
+    @Nullable String distillDir
   ) {
   }
 

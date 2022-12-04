@@ -8,7 +8,7 @@ import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
-import org.aya.cli.utils.AyaCompiler;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
@@ -16,13 +16,11 @@ import org.aya.concrete.remark.Literate;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
-import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
-import org.aya.core.serde.Serializer;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
+import org.aya.generic.util.AyaFiles;
 import org.aya.pretty.doc.Doc;
-import org.aya.resolve.ResolveInfo;
 import org.aya.util.FileUtil;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceFile;
@@ -36,19 +34,83 @@ import java.nio.file.Path;
 import java.util.function.BiFunction;
 
 public sealed interface SingleAyaFile extends GenericAyaFile {
-  void distill(
-    @NotNull String outputFileName,
-    @Nullable CompilerFlags.DistillInfo flags,
+  private static @Nullable CompilerFlags.DistillInfo parseDistillInfo(@NotNull CompilerFlags flags) {
+    if (flags.distillInfo() != null) return flags.distillInfo();
+    if (flags.outputFile() != null) return new CompilerFlags.DistillInfo(
+      false,
+      MainArgs.DistillStage.literate,
+      detectFormat(flags.outputFile()),
+      DistillerOptions.pretty(),
+      new RenderOptions(),
+      null);
+    return null;
+  }
+  @NotNull static MainArgs.DistillFormat detectFormat(@NotNull Path outputFile) {
+    var name = outputFile.getFileName().toString();
+    if (name.endsWith(".md")) return MainArgs.DistillFormat.markdown;
+    if (name.endsWith(".tex")) return MainArgs.DistillFormat.latex;
+    if (name.endsWith(".html")) return MainArgs.DistillFormat.html;
+    return MainArgs.DistillFormat.plain;
+  }
+
+  @SuppressWarnings("unchecked") default void distill(
+    @NotNull CompilerFlags compilerFlags,
     @NotNull ImmutableSeq<? extends AyaDocile> doc,
     @NotNull MainArgs.DistillStage currentStage
-  ) throws IOException;
+  ) throws IOException {
+    var flags = parseDistillInfo(compilerFlags);
+    if (flags == null || currentStage != flags.distillStage()) return;
 
-  void saveOutput(
-    @NotNull Path outputFile,
-    @NotNull CompilerFlags compilerFlags,
-    @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<GenericDef> defs
-  ) throws IOException;
+    var out = flags.distillFormat().target;
+    String fileName;
+    Path distillDir;
+
+    if (compilerFlags.outputFile() != null) {
+      distillDir = compilerFlags.outputFile().getParent();
+      fileName = compilerFlags.outputFile().getFileName().toString();
+    } else {
+      distillDir = flags.distillDir() != null ? Path.of(flags.distillDir()) : Path.of(".");
+      fileName = FileUtil.escapeFileName(AyaFiles.stripAyaSourcePostfix(originalFile().display())) + out.fileExt;
+    }
+    Files.createDirectories(distillDir);
+
+    var renderOptions = flags.renderOptions();
+    if (currentStage == MainArgs.DistillStage.literate) {
+      var program = (ImmutableSeq<Stmt>) doc;
+      var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
+      var literate = literate();
+      new LiterateConsumer.Highlights(highlights).accept(literate);
+      var text = renderOptions.render(out, literate.toDoc(), true, !flags.ascii());
+      Files.writeString(distillDir.resolve(fileName), text);
+    } else {
+      doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
+        (d, hdr) -> renderOptions.render(out, d, hdr, !flags.ascii()));
+    }
+  }
+
+  private void doWrite(
+    ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
+    @NotNull DistillerOptions options, String fileName, String fileExt,
+    BiFunction<Doc, Boolean, String> toString
+  ) throws IOException {
+    var docs = MutableList.<Doc>create();
+    var eachDistillDir = distillDir.resolve(fileName + ".each");
+    Files.createDirectories(eachDistillDir);
+    for (int i = 0; i < doc.size(); i++) {
+      var item = doc.get(i);
+      // Skip uninteresting items
+      var thisDoc = item.toDoc(options);
+      docs.append(thisDoc);
+      if (item instanceof PrimDef) continue;
+      Files.writeString(eachDistillDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
+    }
+    Files.writeString(distillDir.resolve(fileName), toString.apply(Doc.vcat(docs), true));
+  }
+
+  @NotNull private String nameOf(int i, AyaDocile item) {
+    return item instanceof Def def ? def.ref().name()
+      : item instanceof Decl decl ? decl.ref().name() : String.valueOf(i);
+  }
 
   record Factory(@NotNull GenericAyaParser parser) implements GenericAyaFile.Factory {
     @Override public @NotNull SingleAyaFile
@@ -61,51 +123,6 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   }
 
   record CodeAyaFile(@NotNull SourceFile originalFile) implements SingleAyaFile {
-    @Override public void saveOutput(
-      @NotNull Path outputFile,
-      @NotNull CompilerFlags compilerFlags,
-      @NotNull ResolveInfo resolveInfo,
-      @NotNull ImmutableSeq<GenericDef> defs
-    ) throws IOException {
-      AyaCompiler.saveCompiledCore(outputFile, resolveInfo, defs, new Serializer.State());
-    }
-
-    @Override public void distill(
-      @NotNull String outputFileName,
-      CompilerFlags.@Nullable DistillInfo flags,
-      @NotNull ImmutableSeq<? extends AyaDocile> doc,
-      MainArgs.@NotNull DistillStage currentStage
-    ) throws IOException {
-      if (flags == null || currentStage != flags.distillStage()) return;
-      var distillDir = originalFile.resolveSibling(flags.distillDir());
-      if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
-      var renderOptions = flags.renderOptions();
-      var out = flags.distillFormat().target;
-      doWrite(doc, distillDir, flags.distillerOptions(), outputFileName, out.fileExt,
-        (d, hdr) -> renderOptions.render(out, d, hdr, !flags.ascii()));
-    }
-
-    private void doWrite(
-      ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
-      @NotNull DistillerOptions options, String fileName, String fileExt,
-      BiFunction<Doc, Boolean, String> toString
-    ) throws IOException {
-      var docs = MutableList.<Doc>create();
-      for (int i = 0; i < doc.size(); i++) {
-        var item = doc.get(i);
-        // Skip uninteresting items
-        var thisDoc = item.toDoc(options);
-        docs.append(thisDoc);
-        if (item instanceof PrimDef) continue;
-        Files.writeString(distillDir.resolve(fileName + "-" + FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
-      }
-      Files.writeString(distillDir.resolve(fileName + fileExt), toString.apply(Doc.vcat(docs), true));
-    }
-
-    @NotNull private String nameOf(int i, AyaDocile item) {
-      return item instanceof Def def ? def.ref().name()
-        : item instanceof Decl decl ? decl.ref().name() : String.valueOf(i);
-    }
   }
 
   private static @NotNull MarkdownAyaFile.Data
@@ -131,35 +148,13 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       @NotNull ImmutableSeq<Literate.Code> extractedExprs,
       @NotNull SourceFile extractedAya
     ) {}
+
     @Override public @NotNull SourceFile codeFile() {
       return data.extractedAya;
     }
 
-    private void render(@NotNull Path outputFile, @NotNull ImmutableSeq<Stmt> program) throws IOException {
-      var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
-      new LiterateConsumer.Highlights(highlights).accept(data.literate);
-      Files.writeString(outputFile, data.literate.toDoc().renderToAyaMd());
-    }
-
-    @Override public void saveOutput(
-      @NotNull Path outputFile,
-      @NotNull CompilerFlags compilerFlags,
-      @NotNull ResolveInfo resolveInfo,
-      @NotNull ImmutableSeq<GenericDef> defs
-    ) throws IOException {
-      render(outputFile, resolveInfo.program());
-    }
-
-    @SuppressWarnings("unchecked") @Override public void distill(
-      @NotNull String outputFileName,
-      CompilerFlags.@Nullable DistillInfo flags,
-      @NotNull ImmutableSeq<? extends AyaDocile> doc,
-      MainArgs.@NotNull DistillStage currentStage
-    ) throws IOException {
-      if (flags == null || currentStage != MainArgs.DistillStage.scoped) return;
-      var distillDir = originalFile.resolveSibling(flags.distillDir());
-      if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
-      render(distillDir.resolve(outputFileName + ".html"), (ImmutableSeq<Stmt>) doc);
+    @Override public @NotNull Literate literate() throws IOException {
+      return data.literate;
     }
   }
 }

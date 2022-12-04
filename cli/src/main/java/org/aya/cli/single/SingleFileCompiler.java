@@ -7,7 +7,6 @@ import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.core.def.PrimDef;
-import org.aya.generic.util.AyaFiles;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
@@ -15,7 +14,6 @@ import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleListLoader;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
@@ -54,15 +52,13 @@ public record SingleFileCompiler(
       var primFactory = new PrimDef.Factory();
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaParser.program(ayaFile);
-      var distillInfo = flags.distillInfo();
-      var distillOut = FileUtil.escapeFileName(AyaFiles.stripAyaSourcePostfix(sourceFile.getFileName().toString()));
-      ayaFile.distill(distillOut, distillInfo, program, MainArgs.DistillStage.raw);
+      ayaFile.distill(flags, program, MainArgs.DistillStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new FileModuleLoader(locator, path, reporter, ayaParser, fileManager, primFactory, builder)).toImmutableSeq()));
       loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
-        ayaFile.distill(distillOut, distillInfo, program, MainArgs.DistillStage.scoped);
-        ayaFile.distill(distillOut, distillInfo, defs, MainArgs.DistillStage.typed);
-        if (flags.outputFile() != null && reporter.noError()) ayaFile.saveOutput(flags.outputFile(), flags, moduleResolve, defs);
+        ayaFile.distill(flags, program, MainArgs.DistillStage.scoped);
+        ayaFile.distill(flags, defs, MainArgs.DistillStage.typed);
+        if (reporter.noError()) ayaFile.distill(flags, program, MainArgs.DistillStage.literate);
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
       });
     });
