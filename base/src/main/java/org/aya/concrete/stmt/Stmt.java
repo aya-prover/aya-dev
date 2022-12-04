@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
-import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.distill.ConcreteDistiller;
@@ -31,7 +30,7 @@ public sealed interface Stmt extends AyaDocile, TyckUnit permits Decl, Command, 
   }
 
   @Contract(mutates = "param1")
-  static void resolveWithoutDesugar(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader loader) {
+  static void resolveWithoutDesugar(@NotNull ImmutableSeq<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader loader) {
     var shallowResolver = new StmtShallowResolver(loader, resolveInfo);
     shallowResolver.resolveStmt(statements, resolveInfo.thisModule());
     StmtResolver.resolveStmt(statements, resolveInfo);

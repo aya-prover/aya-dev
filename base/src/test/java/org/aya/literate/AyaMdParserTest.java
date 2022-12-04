@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class AyaMdParserTest {
@@ -118,8 +117,8 @@ public class AyaMdParserTest {
       var stmts = literate.parseMe(new AyaParserImpl(ThrowingReporter.INSTANCE));
       var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
       var info = new ResolveInfo(new PrimDef.Factory(), ctx, stmts);
-      Stmt.resolve(stmts, info, EmptyModuleLoader.INSTANCE);
-      literate.tyckAdditional(info);
+      Stmt.resolveWithoutDesugar(stmts, info, EmptyModuleLoader.INSTANCE);
+      literate.resolveAdditional(info);
 
       var highlights = SyntaxHighlight.highlight(Option.some(literate.codeFile()), stmts);
       new LiterateConsumer.Highlights(highlights).accept(literate.literate());
@@ -136,7 +135,7 @@ public class AyaMdParserTest {
         oneCase.outMdFile()
       ), null);
       var actualMd = Files.readString(oneCase.outMdFile());
-      assertEquals(trim(expectedMd), trim(actualMd));
+      assertLinesMatch(trim(expectedMd).lines(), trim(actualMd).lines());
     }
   }
 

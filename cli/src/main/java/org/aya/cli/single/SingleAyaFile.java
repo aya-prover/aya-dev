@@ -114,7 +114,12 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       : item instanceof Decl decl ? decl.ref().name() : String.valueOf(i);
   }
 
+  /** Must be called after {@link #parseMe} */
+  default void resolveAdditional(@NotNull ResolveInfo info) {
+  }
+
   default void tyckAdditional(@NotNull ResolveInfo info) {
+    resolveAdditional(info);
   }
 
   record Factory(@NotNull Reporter reporter) implements GenericAyaFile.Factory {
@@ -153,13 +158,18 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       @NotNull SourceFile extractedAya
     ) {}
 
-    /** Must be called after {@link #parseMe} */
-    @Override public void tyckAdditional(@NotNull ResolveInfo info) {
-      var reporter = info.thisModule().reporter();
-      var tycker = info.newTycker(reporter, null);
+    @Override public void resolveAdditional(@NotNull ResolveInfo info) {
+      SingleAyaFile.super.resolveAdditional(info);
       data.extractedExprs.forEach(c -> {
         assert c.expr != null;
         c.expr = new Desugarer(info).apply(c.expr.resolve(info.thisModule()));
+      });
+    }
+
+    @Override public void tyckAdditional(@NotNull ResolveInfo info) {
+      var tycker = info.newTycker(info.thisModule().reporter(), null);
+      data.extractedExprs.forEach(c -> {
+        assert c.expr != null;
         c.tyckResult = tycker.zonk(tycker.synthesize(c.expr)).normalize(c.options.mode(), tycker.state);
       });
     }

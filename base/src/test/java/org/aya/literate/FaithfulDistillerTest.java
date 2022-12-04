@@ -16,8 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class FaithfulDistillerTest {
-  @Test
-  public void test() throws IOException {
+  @Test public void test() throws IOException {
     var reporter = ThrowingReporter.INSTANCE;
 
     var root = AyaMdParserTest.TEST_DIR;
