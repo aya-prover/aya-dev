@@ -42,7 +42,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       });
 
     // avoiding escape `\`.
-    content = Pattern.compile("(^\\s*\\d+)\\.( |$)").matcher(content)
+    content = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE)
+      .matcher(content)
       .replaceAll("$1\\\\.$2");
 
     return content;

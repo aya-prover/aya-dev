@@ -64,20 +64,20 @@ public class MdStyleTest {
 
   @Test
   public void testEscapeDocs() {
-    assertEquals("\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\`\\{\\|\\}\\~",
+    assertEquals("!\"\\#$%\\&'\\(\\)\\*\\+,\\-./:\\;\\<=\\>?@\\[\\\\\\]^\\_\\`{\\|}\\~",
       escapeDoc12().renderToMd());
     // In fact, the markdown: `\→\A\a\ \3\φ\«` also produces the text as escapeDoc1 describes,
     // but it makes the Java/Markdown code more complex/confusing (for me at least)
     assertEquals("\\\\→\\\\A\\\\a\\\\ \\\\3\\\\φ\\\\«", escapeDoc13().renderToMd());
     assertEquals("""
       \\*not emphasized\\*
-      \\<br\\/\\> not a tag
-      \\[not a link\\]\\(\\/foo\\)
+      \\<br/\\> not a tag
+      \\[not a link\\]\\(/foo\\)
       \\`not code\\`
       1\\. not a list
       \\* not a list
       \\# not a heading
-      \\[foo\\]\\: \\/url \\"not a reference\\"
+      \\[foo\\]: /url "not a reference"
       \\&ouml\\; not a character entity
       """, escapeDoc14().renderToMd());
     assertEquals("`\\[\\``", escapeDoc17().renderToMd());
