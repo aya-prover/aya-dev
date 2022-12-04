@@ -4,7 +4,6 @@ package org.aya.concrete.stmt;
 
 import kala.collection.SeqLike;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.remark.Remark;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-public sealed interface Stmt extends AyaDocile, TyckUnit permits Remark, Decl, Command, Generalize {
+public sealed interface Stmt extends AyaDocile, TyckUnit permits Decl, Command, Generalize {
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 

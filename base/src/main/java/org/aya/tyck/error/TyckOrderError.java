@@ -3,7 +3,6 @@
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.util.InternalException;
@@ -20,7 +19,6 @@ public interface TyckOrderError extends TyckError {
   default @NotNull String nameOf(@NotNull TyckUnit stmt) {
     return switch (stmt) {
       case Decl decl -> decl.ref().name();
-      case Remark remark -> "a remark";
       default -> throw new InternalException("Unexpected stmt seen in SCCTycker: " + stmt);
     };
   }

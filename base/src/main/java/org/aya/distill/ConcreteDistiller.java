@@ -13,7 +13,6 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.generic.Constants;
@@ -307,10 +306,6 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield Doc.sep(prelude);
       }
       case Generalize variables -> Doc.sep(Doc.styled(KEYWORD, "variables"), visitTele(variables.toExpr()));
-      case Remark remark -> {
-        var literate = remark.literate;
-        yield literate != null ? literate.toDoc() : Doc.plain(remark.raw);
-      }
       case Command.Open cmd -> Doc.sepNonEmpty(
         visitAccess(cmd.accessibility(), Stmt.Accessibility.Private),
         Doc.styled(KEYWORD, "open"),

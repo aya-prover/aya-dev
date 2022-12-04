@@ -9,7 +9,6 @@ import kala.control.Option;
 import org.aya.cli.parse.AyaGKProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
@@ -102,7 +101,6 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
           .foldLeft(acc, (ac, def) -> add(ac, linkDef(def.definition(), def)));
         yield add(acc, linkDef(decl.sourcePos(), decl.ref()));
       }
-      case Remark remark -> acc; // TODO: highlight literate
     };
   }
 

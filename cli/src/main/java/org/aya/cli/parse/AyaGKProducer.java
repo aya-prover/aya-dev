@@ -22,7 +22,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadCounterexampleWarn;
 import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -104,16 +103,7 @@ public record AyaGKProducer(
       return stmts.toImmutableSeq();
     }
     if (node.is(GENERALIZE)) return ImmutableSeq.of(generalize(node));
-    if (node.is(REMARK)) return ImmutableSeq.of(remark(node));
     return unreachable(node);
-  }
-
-  public @NotNull Remark remark(@NotNull GenericNode<?> node) {
-    var sb = new StringBuilder();
-    for (var docComment : node.childrenOfType(DOC_COMMENT)) {
-      sb.append(docComment.tokenText().substring(3)).append("\n");
-    }
-    return Remark.make(sb.toString(), sourcePosOf(node), new AyaParserImpl(reporter));
   }
 
   public @NotNull Generalize generalize(@NotNull GenericNode<?> node) {
