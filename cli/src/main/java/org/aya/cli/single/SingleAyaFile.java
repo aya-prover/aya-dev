@@ -66,7 +66,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     Path distillDir;
 
     if (compilerFlags.outputFile() != null) {
-      distillDir = compilerFlags.outputFile().getParent();
+      distillDir = compilerFlags.outputFile().toAbsolutePath().getParent();
       fileName = compilerFlags.outputFile().getFileName().toString();
     } else {
       distillDir = flags.distillDir() != null ? Path.of(flags.distillDir()) : Path.of(".");
