@@ -4,19 +4,21 @@ package org.aya.literate;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.resolve.module.EmptyModuleLoader;
+import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.error.SourceFile;
+import org.aya.util.reporter.Reporter;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -113,9 +115,10 @@ public class AyaMdParserTest {
 
       var stmts = literate.parseMe(new AyaParserImpl(ThrowingReporter.INSTANCE));
       var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
-      var info = new ResolveInfo(new PrimDef.Factory(), ctx, stmts);
-      Stmt.resolveWithoutDesugar(stmts, info, EmptyModuleLoader.INSTANCE);
-      literate.resolveAdditional(info);
+      var loader = ThrowingModuleLoader.INSTANCE;
+      var info = loader.resolveModule(new PrimDef.Factory(), ctx, stmts, loader);
+      loader.tyckModule(null, info, null);
+      literate.tyckAdditional(info);
 
       var doc = literate.docitfy(stmts).toDoc();
       var expectedMd = doc.renderToAyaMd();
@@ -135,8 +138,19 @@ public class AyaMdParserTest {
 
   private @NotNull String trim(@NotNull String input) {
     return input.replaceAll("id=\"[^\"]+\"", "id=\"\"")
-      .replaceAll("href=\"[^\"]+\"", "href=\"\"")
-      .replaceAll("class=\"aya-hover\" ", "")
-      .replaceAll("aya-type=\"[^\"]+\" ", "");
+      .replaceAll("href=\"[^\"]+\"", "href=\"\"");
+  }
+
+  public static final class ThrowingModuleLoader implements ModuleLoader {
+    public static final @NotNull ThrowingModuleLoader INSTANCE = new ThrowingModuleLoader();
+
+    @Override public @NotNull Reporter reporter() {
+      return ThrowingReporter.INSTANCE;
+    }
+
+    @Override
+    public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+      return null;
+    }
   }
 }
