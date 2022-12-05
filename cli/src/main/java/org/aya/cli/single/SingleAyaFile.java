@@ -29,6 +29,7 @@ import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.Reporter;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -118,6 +119,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   default void resolveAdditional(@NotNull ResolveInfo info) {
   }
 
+  @MustBeInvokedByOverriders
   default void tyckAdditional(@NotNull ResolveInfo info) {
     resolveAdditional(info);
   }
@@ -167,6 +169,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     }
 
     @Override public void tyckAdditional(@NotNull ResolveInfo info) {
+      SingleAyaFile.super.tyckAdditional(info);
       var tycker = info.newTycker(info.thisModule().reporter(), null);
       data.extractedExprs.forEach(c -> {
         assert c.expr != null;
