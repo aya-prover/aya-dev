@@ -77,14 +77,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
 
   @Override protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, Outer outer) {
     // assumption: inline code cannot be nested in markdown, but don't assert it.
-    Runnable pureMd = () -> {
-      cursor.invisibleContent("`");
-      renderDoc(cursor, code.code(), outer);
-      cursor.invisibleContent("`");
-    };
+    Runnable pureMd = () -> formatInlineCode(cursor, code.code(), "`", "`", outer);
     runSwitch(pureMd, () -> {
       var isAya = code.language().equalsIgnoreCase("aya");
-      if (isAya) super.renderInlineCode(cursor, code, outer);
+      if (isAya) formatInlineCode(cursor, code.code(), "<code class=\"Aya\">", "</code>", Outer.EnclosingTag);
       else pureMd.run();
     });
   }
@@ -92,11 +88,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, Outer outer) {
     // assumption: code block cannot be nested in markdown, but don't assert it.
     Runnable pureMd = () -> formatCodeBlock(cursor, block.code(), "```" + block.language(), "```", outer);
-    runSwitch(
-      pureMd,
+    runSwitch(pureMd,
       () -> {
         var isAya = block.language().equalsIgnoreCase("aya");
-        if (isAya) formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", outer);
+        if (isAya) formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", Outer.EnclosingTag);
         else pureMd.run();
       });
   }
@@ -108,6 +103,12 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     cursor.lineBreakWith("\n");
     cursor.invisibleContent(end);
     cursor.lineBreakWith("\n");
+  }
+
+  public void formatInlineCode(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, Outer outer) {
+    cursor.invisibleContent(begin);
+    renderDoc(cursor, code, outer);
+    cursor.invisibleContent(end);
   }
 
   private void runSwitch(@NotNull Runnable pureMd, @NotNull Runnable ayaMd) {
