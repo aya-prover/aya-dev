@@ -19,20 +19,25 @@ public class MdStylist extends Html5Stylist {
   }
 
   @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
+    // Actually, we are abusing the undefined behavior (outer != Free) of markdown.
     // Typical markdown does not allow italic/bold/strike/... in code segments,
-    // but Literate Aya uses HTML tag `<pre>` and `<code>` for rendered Aya code,
-    // which allows more HTML typesetting to be applied.
-    return outer == StringPrinter.Outer.Code ? super.formatItalic(outer) : new StyleToken("_", "_", false);
+    // which means the `outer` should always be `Free`, but Literate Aya uses
+    // HTML tag `<pre>` and `<code>` for rendered Aya code, which allows more
+    // HTML typesetting to be applied.
+    // A solution may be a separate `AyaMdStylist` for Literate Aya only, and
+    // the standard markdown backend should always use markdown typesetting
+    // and assume `outer == Free` (but don't assert it).
+    return outer != StringPrinter.Outer.Free ? super.formatItalic(outer) : new StyleToken("_", "_", false);
   }
 
   @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
     // see comments in `formatItalic`
-    return outer == StringPrinter.Outer.Code ? super.formatBold(outer) : new StyleToken("**", "**", false);
+    return outer != StringPrinter.Outer.Free ? super.formatBold(outer) : new StyleToken("**", "**", false);
   }
 
   @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
     // see comments in `formatItalic`
-    return outer == StringPrinter.Outer.Code ? super.formatStrike(outer) : new StyleToken("~~", "~~", false);
+    return outer != StringPrinter.Outer.Free ? super.formatStrike(outer) : new StyleToken("~~", "~~", false);
   }
 
   @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {

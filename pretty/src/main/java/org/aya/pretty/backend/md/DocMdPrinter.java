@@ -70,7 +70,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       // TODO: text.id(), text.hover()
     };
     runSwitch(pureMd, () -> {
-      if (outer == Outer.Code) super.renderHyperLinked(cursor, text, outer);
+      if (outer != Outer.Free) super.renderHyperLinked(cursor, text, outer);
       else pureMd.run();
     });
   }
