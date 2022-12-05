@@ -82,6 +82,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     };
     runSwitch(pureMd, () -> {
       if (!outer.isEmpty()) super.renderHyperLinked(cursor, text, outer);
+        // ^ In AyaMd mode, `outer != Free` (Free means empty) means whether:
+        // 1. we are in rendered Aya code block,
+        // 2. we are in an HTML tag (like `<a>`).
+        // In both cases, markdown typesetting does not work.
       else pureMd.run();
     });
   }

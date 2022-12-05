@@ -50,8 +50,9 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   protected int predictWidth(@NotNull Cursor cursor, @NotNull Doc doc) {
     return switch (doc) {
       case Doc.Empty d -> 0;
-      case Doc.PlainText text -> text.text().length();
-      case Doc.SpecialSymbol symbol -> symbol.text().length();
+      case Doc.PlainText(var text) -> text.length();
+      case Doc.EscapedText(var text) -> text.length();
+      case Doc.SpecialSymbol(var text) -> text.length();
       case Doc.HyperLinked text -> predictWidth(cursor, text.doc());
       case Doc.Styled styled -> predictWidth(cursor, styled.doc());
       case Doc.Line d -> 0;
@@ -85,6 +86,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc, EnumSet<Outer> outer) {
     switch (doc) {
       case Doc.PlainText(var text) -> renderPlainText(cursor, text, outer);
+      case Doc.EscapedText(var text) -> cursor.visibleContent(text);
       case Doc.SpecialSymbol(var symbol) -> renderSpecialSymbol(cursor, symbol, outer);
       case Doc.HyperLinked text -> renderHyperLinked(cursor, text, outer);
       case Doc.Styled styled -> renderStyled(cursor, styled, outer);
@@ -194,7 +196,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       var pre = list.isOrdered() ? (idx + 1) + "." : "+";
       // The item content
       var content = Doc.nest(pre.length() + 1, item);
-      return Doc.stickySep(Doc.plain(pre), content);
+      return Doc.stickySep(Doc.escaped(pre), content);
     }));
     printer.renderDoc(cursor, items, EnumSet.of(Outer.List));
 

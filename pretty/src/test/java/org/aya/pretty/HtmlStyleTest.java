@@ -9,8 +9,6 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import java.util.function.UnaryOperator;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -38,11 +36,20 @@ public class HtmlStyleTest {
     return Doc.plain("&<>\"\\");
   }
 
-  @Test
-  public void testEscape() {
+  @NotNull private Doc unescapeDoc() {
+    return Doc.escaped("&<>\"\\");
+  }
+
+  @Test public void testEscape() {
     var actual = escapeDoc().renderToHtml(false);
     var expected = "&amp;&lt;&gt;&quot;&bsol;";
 
+    assertEquals(expected, actual);
+  }
+
+  @Test public void testUnescape() {
+    var actual = unescapeDoc().renderToHtml(false);
+    var expected = "&<>\"\\";
     assertEquals(expected, actual);
   }
 

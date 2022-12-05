@@ -117,9 +117,16 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * A plain text line without '\n'.
+   * A plain text line without '\n'. which may be escaped by backend.
    */
   record PlainText(@NotNull String text) implements Doc {
+  }
+
+  /**
+   * Already escaped text, which will not be escaped by backend.
+   * Callers should be responsible for escaping the text (like '\n').
+   */
+  record EscapedText(@NotNull String text) implements Doc {
   }
 
   /**
@@ -483,7 +490,8 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * Plain text document
+   * Plain text document. Backend will escape the text if it
+   * contains offending characters.
    *
    * @param text text that may not contain '\n'
    * @return text document of the whole text
@@ -491,6 +499,22 @@ public sealed interface Doc extends Docile {
   @Contract("_ -> new") static @NotNull Doc plain(String text) {
     if (text.isEmpty()) return empty();
     return new PlainText(text);
+  }
+
+  /**
+   * Already escaped text that will be rendered as-is.
+   * Callers should be responsible for escaping offending characters (like '\n', '<', etc.)
+   * depending on the backend. Use with care as this may result in invalid output format.
+   * <p>
+   * Note that this is not the same as {@link Doc#code} or {@link Doc#codeBlock}.
+   * Although in most cases code segments are treated as "already escaped" text
+   * that will be rendered as-is. But for HTML, code segments is still escaped because
+   * they are placed in `<code>` and `<pre>`.
+   *
+   * @param text text that will be rendered as-is.
+   */
+  @Contract("_ -> new") static @NotNull Doc escaped(String text) {
+    return new EscapedText(text);
   }
 
   @Contract("_ -> new") static @NotNull Doc english(String text) {
