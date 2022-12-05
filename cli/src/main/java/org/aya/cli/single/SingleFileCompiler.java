@@ -56,11 +56,11 @@ public record SingleFileCompiler(
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new FileModuleLoader(locator, path, reporter, ayaParser, fileManager, primFactory, builder)).toImmutableSeq()));
       loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
+        ayaFile.tyckAdditional(moduleResolve);
         ayaFile.distill(flags, program, MainArgs.DistillStage.scoped);
         ayaFile.distill(flags, defs, MainArgs.DistillStage.typed);
         if (reporter.noError()) ayaFile.distill(flags, program, MainArgs.DistillStage.literate);
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
-        ayaFile.tyckAdditional(moduleResolve);
       });
     });
   }
