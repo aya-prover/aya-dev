@@ -758,7 +758,6 @@ public final class ExprTycker extends Tycker {
   }
 
   public @NotNull Result zonk(@NotNull Result result) {
-    solveMetas();
     return new TermResult(zonk(result.wellTyped()), zonk(result.type()));
   }
 
@@ -930,6 +929,9 @@ public final class ExprTycker extends Tycker {
     @NotNull Term wellTyped();
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
+    default @NotNull Result normalize(@NotNull NormalizeMode mode, @NotNull TyckState state) {
+      return new TermResult(wellTyped().normalize(state, mode), type().normalize(state, mode));
+    }
   }
 
   /// region Helper

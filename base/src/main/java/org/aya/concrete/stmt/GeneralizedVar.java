@@ -3,6 +3,7 @@
 package org.aya.concrete.stmt;
 
 import org.aya.ref.AnyVar;
+import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ public final class GeneralizedVar implements AnyVar {
   }
 
   public @NotNull LocalVar toLocal() {
-    return new LocalVar(name, sourcePos);
+    return new LocalVar(name, sourcePos, new GenerateKind.Generalized(this));
   }
 
   public @NotNull String name() {

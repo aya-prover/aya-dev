@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
@@ -46,6 +46,6 @@ public class ArgsParserTest {
     var cliArgs = new MainArgs();
     new CommandLine(cliArgs).parseArgs("boy.aya");
     assertFalse(cliArgs.interruptedTrace);
-    assertEquals(DistillFormat.html, cliArgs.prettyFormat);
+    assertEquals(DistillFormat.markdown, cliArgs.prettyFormat);
   }
 }

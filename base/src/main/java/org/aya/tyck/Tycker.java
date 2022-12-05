@@ -40,6 +40,7 @@ public abstract class Tycker {
   }
 
   public @NotNull Term zonk(@NotNull Term term) {
+    solveMetas();
     return Zonker.make(this).apply(term);
   }
 

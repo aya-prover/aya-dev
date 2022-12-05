@@ -5,39 +5,34 @@ package org.aya.pretty.doc;
 import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
 
-public record Styles(MutableList<Style> styles) {
+public record Styles(@NotNull MutableList<Style> styles) {
   public @NotNull Styles italic() {
-    styles.append(Style.Attr.Italic);
+    styles.append(Style.italic());
     return this;
   }
 
   public @NotNull Styles bold() {
-    styles.append(Style.Attr.Bold);
+    styles.append(Style.bold());
     return this;
   }
 
   public @NotNull Styles strike() {
-    styles.append(Style.Attr.Strike);
-    return this;
-  }
-
-  public @NotNull Styles code() {
-    styles.append(Style.Attr.Code);
+    styles.append(Style.strike());
     return this;
   }
 
   public @NotNull Styles underline() {
-    styles.append(Style.Attr.Underline);
+    styles.append(Style.underline());
     return this;
   }
 
   public @NotNull Styles color(@NotNull String colorName) {
-    styles.append(new Style.ColorName(colorName, false));
+    styles.append(Style.color(colorName));
     return this;
   }
 
   public @NotNull Styles colorBG(@NotNull String colorName) {
-    styles.append(new Style.ColorName(colorName, true));
+    styles.append(Style.colorBg(colorName));
     return this;
   }
 
@@ -52,7 +47,7 @@ public record Styles(MutableList<Style> styles) {
   }
 
   public @NotNull Styles colorBG(int color) {
-    styles.append(new Style.ColorHex(color, true));
+    styles.append(Style.colorBg(color));
     return this;
   }
 
@@ -62,7 +57,7 @@ public record Styles(MutableList<Style> styles) {
   }
 
   public @NotNull Styles preset(@NotNull String styleName) {
-    styles.append(new Style.Preset(styleName));
+    styles.append(Style.preset(styleName));
     return this;
   }
 }

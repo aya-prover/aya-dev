@@ -143,7 +143,6 @@ public final class PatTycker {
     var res = clauses.mapIndexed((index, lhs) -> exprTycker.traced(
       () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
       () -> checkRhs(exprTycker, lhs)));
-    exprTycker.solveMetas();
     var preclauses = res.map(c -> new Pat.Preclause<>(
       c.sourcePos(), c.patterns().map(p -> p.zonk(exprTycker)),
       c.expr().map(exprTycker::zonk)));
@@ -489,7 +488,7 @@ public final class PatTycker {
 
     var ref = data.param.ref();
     Pat bind;
-    var freshVar = new LocalVar(ref.name(), ref.definition());
+    var freshVar = ref.rename();
     if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof DataCall dataCall) {
       bind = new Pat.Meta(false, MutableValue.create(), freshVar, dataCall);
     } else {

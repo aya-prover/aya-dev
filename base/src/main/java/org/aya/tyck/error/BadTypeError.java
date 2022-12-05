@@ -11,7 +11,6 @@ import org.aya.generic.AyaDocile;
 import org.aya.generic.ExprProblem;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.ref.DefVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
@@ -40,7 +39,7 @@ public record BadTypeError(
       var fix = new Expr.Proj(SourcePos.NONE, app.argument().term(),
         Either.right(new QualifiedID(SourcePos.NONE, defVar.name())));
       return Doc.sep(Doc.english("Did you mean"),
-        Doc.styled(Style.code(), fix.toDoc(options)),
+        Doc.code(fix.toDoc(options)),
         Doc.english("?"));
     }
     return Doc.empty();
@@ -77,7 +76,7 @@ public record BadTypeError(
 
   public static @NotNull BadTypeError structAcc(@NotNull TyckState state, @NotNull Expr expr, @NotNull String fieldName, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
-      Doc.sep(Doc.english("access field"), Doc.styled(Style.code(), Doc.plain(fieldName)), Doc.plain("of")),
+      Doc.sep(Doc.english("access field"), Doc.code(Doc.plain(fieldName)), Doc.plain("of")),
       Doc.english("of what you accessed"),
       options -> Doc.english("struct type"),
       state);
@@ -85,7 +84,7 @@ public record BadTypeError(
 
   public static @NotNull BadTypeError projPropStruct(@NotNull TyckState state, @NotNull Expr expr, @NotNull String fieldName, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
-      Doc.sep(Doc.english("access field"), Doc.styled(Style.code(), Doc.plain(fieldName)), Doc.plain("of")),
+      Doc.sep(Doc.english("access field"), Doc.code(Doc.plain(fieldName)), Doc.plain("of")),
       Doc.english("of what you accessed"),
       options -> Doc.english("non-Prop struct type"),
       state);

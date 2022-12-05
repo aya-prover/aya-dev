@@ -7,8 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import kala.control.Option;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.Def;
@@ -168,13 +166,9 @@ public record AyaSccTycker(
   }
 
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
-    switch (stmt) {
-      case Decl decl -> {
-        var def = tycker.tyck(decl, reuse(decl));
-        if (decl instanceof Decl.TopLevel topLevel) decideTyckResult(decl, topLevel, def);
-      }
-      case Remark remark -> Option.ofNullable(remark.literate).forEach(l -> l.tyck(newExprTycker()));
-      default -> {}
+    if (stmt instanceof Decl decl) {
+      var def = tycker.tyck(decl, reuse(decl));
+      if (decl instanceof Decl.TopLevel topLevel) decideTyckResult(decl, topLevel, def);
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
@@ -210,15 +204,11 @@ public record AyaSccTycker(
       var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);
       return tyckerReuse.getOrPut(decl, () -> newExprTycker(reporter));
     }
-    return tyckerReuse.getOrPut(decl, this::newExprTycker);
-  }
-
-  private @NotNull ExprTycker newExprTycker() {
-    return tycker.newTycker(resolveInfo.primFactory(), resolveInfo.shapeFactory());
+    return tyckerReuse.getOrPut(decl, () -> newExprTycker(reporter));
   }
 
   private @NotNull ExprTycker newExprTycker(@NotNull Reporter reporter) {
-    return new ExprTycker(resolveInfo.primFactory(), resolveInfo.shapeFactory(), reporter, tycker.traceBuilder());
+    return resolveInfo.newTycker(reporter, tycker.traceBuilder());
   }
 
   private void terck(@NotNull SeqView<TyckOrder> units) {

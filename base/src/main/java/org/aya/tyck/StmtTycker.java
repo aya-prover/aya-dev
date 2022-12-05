@@ -42,7 +42,7 @@ import java.util.function.Consumer;
 /**
  * @author ice1000, kiva
  * @apiNote this class does not create {@link ExprTycker} instances itself,
- * but use the one passed to it. {@link StmtTycker#newTycker(PrimDef.Factory, AyaShape.Factory)} creates instances
+ * but use the one passed to it. {@link StmtTycker#newTycker} creates instances
  * of expr tyckers.
  */
 public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
@@ -78,7 +78,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         yield decl.body.fold(
           body -> {
             var nobody = tycker.check(body, signature.result()).wellTyped();
-            tycker.solveMetas();
             // It may contain unsolved metas. See `checkTele`.
             var resultTy = tycker.zonk(signature.result());
             return factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
@@ -167,7 +166,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       var preresult = tycker.synthesize(fn.result).wellTyped();
       var bodyExpr = fn.body.getLeftValue();
       var prebody = tycker.check(bodyExpr, preresult).wellTyped();
-      tycker.solveMetas();
       return new Tmp(okTele, preresult, prebody);
     });
     var tele = zonkTele(tycker, tmp.okTele);
@@ -303,7 +301,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private @NotNull ImmutableSeq<Term.Param>
   tele(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable SortTerm sort) {
     var okTele = tycker.subscoped(() -> checkTele(tycker, tele, sort));
-    tycker.solveMetas();
     return zonkTele(tycker, okTele);
   }
 

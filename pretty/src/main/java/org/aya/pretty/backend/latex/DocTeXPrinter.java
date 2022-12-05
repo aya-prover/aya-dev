@@ -8,6 +8,7 @@ import kala.tuple.Tuple2;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,15 +19,14 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.invisibleContent("\\noindent");
   }
 
-  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
-    super.renderPlainText(cursor, content
-      .replace("\\", "")
-      .replace("_", "\\_"));
+  @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
+    return content.replace("\\", "").replace("_", "\\_");
   }
 
   private static @NotNull Tuple2<String, String> id(@NotNull String name) {
     return Tuple.of(name, name);
   }
+
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
@@ -47,7 +47,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("}", "\\}")
   );
 
-  @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {
+  @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, Outer outer) {
     for (var k : commandMapping.keysView()) {
       if (text.equals(k)) {
         cursor.invisibleContent("$");
@@ -57,7 +57,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
       }
     }
     System.err.println("Warn: unknown symbol " + text);
-    renderPlainText(cursor, text);
+    renderPlainText(cursor, text, outer);
   }
 
   @Override public @NotNull String makeIndent(int indent) {
@@ -69,6 +69,16 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.lineBreakWith("\\\\\n");
   }
 
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
+    cursor.invisibleContent("\\fbox{");
+    renderDoc(cursor, code.code(), outer);
+    cursor.invisibleContent("}");
+  }
+
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, Outer outer) {
+    super.renderCodeBlock(cursor, block, outer);
+  }
+
   /**
    * @author ice1000
    */
@@ -76,6 +86,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     public Config() {
       this(TeXStylist.DEFAULT);
     }
+
     public Config(@NotNull TeXStylist stylist) {
       super(stylist, INFINITE_SIZE, false);
     }

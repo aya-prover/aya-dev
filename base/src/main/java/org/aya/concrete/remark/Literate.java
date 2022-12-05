@@ -7,77 +7,42 @@ import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
-import org.aya.generic.util.InternalException;
+import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.Context;
-import org.aya.resolve.visitor.ExprResolver;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.order.TyckOrder;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * @author ice1000
  */
 public sealed interface Literate extends Docile {
-  default void modify(@NotNull Function<Expr, Expr> fixpoint) {
-  }
-  default void visit(@NotNull Consumer<Expr> consumer) {
-  }
-  default void tyck(@NotNull ExprTycker tycker) {
-  }
-
-  @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context);
-
   record Raw(@NotNull Doc toDoc) implements Literate {
-    @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
-      return ImmutableSeq.empty();
+  }
+
+  record Link(@NotNull String href, @Nullable String hover,
+              @NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override public @NotNull Doc toDoc() {
+      var child = Doc.cat(this.children().map(Literate::toDoc));
+      return Doc.hyperLink(child, new LinkId(href), hover);
     }
   }
 
   record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
-    @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
-      children.forEach(child -> child.resolve(info, context));
-      return ImmutableSeq.empty();
-    }
-
-    @Override public void modify(@NotNull Function<Expr, Expr> fixpoint) {
-      children.forEach(literate -> literate.modify(fixpoint));
-    }
-
-    @Override public void visit(@NotNull Consumer<Expr> consumer) {
-      children.forEach(child -> child.visit(consumer));
-    }
-
-    @Override public void tyck(@NotNull ExprTycker tycker) {
-      children.forEach(literate -> literate.tyck(tycker));
-    }
-
     @Override public @NotNull Doc toDoc() {
-      var cat = Doc.cat(children.map(Literate::toDoc));
-      return style == null ? cat : Doc.styled(style, cat);
+      var child = Doc.cat(this.children().map(Literate::toDoc));
+      return style == null ? child : Doc.styled(style, child);
     }
   }
 
   record Err(@NotNull MutableValue<AnyVar> def, @Override @NotNull SourcePos sourcePos) implements Literate {
-    @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
-      def.set(context.getUnqualified(def.get().name(), sourcePos));
-      // TODO: add to dependency?
-      return ImmutableSeq.empty();
-    }
-
     @Override public @NotNull Doc toDoc() {
       if (def.get() instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef<?> userDef) {
         var problems = userDef.problems;
@@ -89,62 +54,79 @@ public sealed interface Literate extends Docile {
   }
 
   final class Code implements Literate {
-    public @NotNull Expr expr;
+    public final @NotNull String code;
+    public final @NotNull SourcePos sourcePos;
+    public @Nullable Expr expr;
     public @Nullable ExprTycker.Result tyckResult;
-    public @Nullable TyckState state;
     public final @NotNull CodeOptions options;
 
-    public Code(@NotNull Expr expr, @NotNull CodeOptions options) {
-      this.expr = expr;
+    public Code(@NotNull String code, @NotNull SourcePos sourcePos, @NotNull CodeOptions options) {
+      this.code = code;
+      this.sourcePos = sourcePos;
       this.options = options;
     }
 
-    @Override @Contract(mutates = "this")
-    public void modify(@NotNull Function<Expr, Expr> fixpoint) {
-      expr = fixpoint.apply(expr);
-    }
-
-    @Override public void visit(@NotNull Consumer<Expr> consumer) {
-      consumer.accept(expr);
-    }
-
-    @Override public void tyck(@NotNull ExprTycker tycker) {
-      tyckResult = tycker.zonk(tycker.synthesize(expr));
-      state = tycker.state;
-    }
-
-    @Override public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
-      var resolver = new ExprResolver(context, ExprResolver.RESTRICTIVE);
-      resolver.enterBody();
-      modify(resolver);
-      return resolver.reference().toImmutableSeq();
-    }
-
-    private @NotNull Doc normalize(@NotNull Term term) {
+    public @NotNull Doc normalize(@NotNull Term term, @NotNull TyckState state) {
       var mode = options.mode();
-      if (state == null) throw new InternalException("No tyck state");
       return term.normalize(state, mode).toDoc(options.options());
     }
 
     @Override public @NotNull Doc toDoc() {
-      if (tyckResult == null) return Doc.plain("Error");
-      return Doc.styled(Style.code(), switch (options.showCode()) {
-        case Concrete -> expr.toDoc(options.options());
-        case Core -> normalize(tyckResult.wellTyped());
-        case Type -> normalize(tyckResult.type());
-      });
+      if (tyckResult == null) {
+        if (expr != null) return Doc.code(expr.toDoc(options.options()));
+        else return Doc.code("Error");
+      }
+      assert expr != null;
+      return Doc.code((switch (options.showCode()) {
+        case Concrete -> expr;
+        case Core -> tyckResult.wellTyped();
+        case Type -> tyckResult.type();
+      }).toDoc(options.options()));
+    }
+  }
+
+  /**
+   * A code block
+   *
+   * @implNote the content which this code block hold can be illegal, like
+   * <pre>
+   * ```aya<br/>
+   * def foo : Nat =>
+   * ```<br/>
+   * </pre>
+   */
+  final class CodeBlock implements Literate {
+    public final @NotNull String language;
+    public final @NotNull String raw;
+    public @Nullable Doc highlighted;
+
+    /**
+     * The source pos of the code block ( without beginning '```', and ending '\n```' )
+     * null if this code block is empty (length 0)
+     */
+    public final @Nullable SourcePos sourcePos;
+
+    public CodeBlock(@Nullable SourcePos sourcePos, @NotNull String language, @NotNull String raw) {
+      this.language = language;
+      this.raw = raw;
+      this.sourcePos = sourcePos;
+    }
+
+    public boolean isAya() {
+      return language.equalsIgnoreCase("aya");
+    }
+
+    @Override
+    public @NotNull Doc toDoc() {
+      var doc = isAya() && highlighted != null ? highlighted : Doc.plain(raw);
+      return Doc.codeBlock(language, doc);
     }
   }
 
   record Unsupported(@NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override
-    public @NotNull ImmutableSeq<TyckOrder> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
-      return ImmutableSeq.empty();
-    }
-
-    @Override
     public @NotNull Doc toDoc() {
-      return Doc.vcat(children.map(Docile::toDoc));
+      return Doc.vcat(children.map(Literate::toDoc));
     }
   }
 }

@@ -16,13 +16,17 @@ def repaint (RBTree A) : RBTree A
 | rbLeaf => rbLeaf
 
 def balanceLeft Color (RBTree A) A (RBTree A) : RBTree A
-| black, rbNode red (rbNode red a x b) y c, v, r => rbNode red (rbNode black a x b) y (rbNode black c v r)
-| black, rbNode red a x (rbNode red b y c), v, r => rbNode red (rbNode black a x b) y (rbNode black c v r)
+| black, rbNode red (rbNode red a x b) y c, v, r =>
+    rbNode red (rbNode black a x b) y (rbNode black c v r)
+| black, rbNode red a x (rbNode red b y c), v, r =>
+    rbNode red (rbNode black a x b) y (rbNode black c v r)
 | c, a, v, r => rbNode c a v r
 
 def balanceRight Color (RBTree A) A (RBTree A) : RBTree A
-| black, l, v, rbNode red (rbNode red b y c) z d => rbNode red (rbNode black l v b) y (rbNode black c z d)
-| black, l, v, rbNode red b y (rbNode red c z d) => rbNode red (rbNode black l v b) y (rbNode black c z d)
+| black, l, v, rbNode red (rbNode red b y c) z d =>
+    rbNode red (rbNode black l v b) y (rbNode black c z d)
+| black, l, v, rbNode red b y (rbNode red c z d) =>
+    rbNode red (rbNode black l v b) y (rbNode black c z d)
 | c, l, v, b => rbNode c l v b
 
 def insert A (RBTree A) (Decider A) : RBTree A

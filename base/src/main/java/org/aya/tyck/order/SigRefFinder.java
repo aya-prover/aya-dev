@@ -4,7 +4,6 @@ package org.aya.tyck.order;
 
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
@@ -30,10 +29,6 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
       }
       case Command.Module module -> {}
       case Command cmd -> {}
-      case Remark remark -> {
-        assert remark.literate != null;
-        remark.literate.visit(this);
-      }
       case Generalize variables -> accept(variables.type);
     }
   }

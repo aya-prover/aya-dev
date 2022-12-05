@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
-import org.aya.pretty.backend.string.style.ClosingStylist;
-import org.aya.pretty.doc.Style;
+import org.aya.pretty.backend.string.ClosingStylist;
+import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
@@ -17,23 +17,19 @@ public class Html5Stylist extends ClosingStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override protected @NotNull StyleToken formatItalic() {
+  @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
     return new StyleToken("<i>", "</i>", false);
   }
 
-  @Override protected @NotNull StyleToken formatBold() {
+  @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
     return new StyleToken("<b>", "</b>", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike() {
+  @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
     return new StyleToken("<s>", "</s>", false);
   }
 
-  @Override protected @NotNull StyleToken formatCode() {
-    return new StyleToken("<code>", "</code>", false);
-  }
-
-  @Override protected @NotNull StyleToken formatUnderline() {
+  @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
     return new StyleToken("<u>", "</u>", false);
   }
 
@@ -43,10 +39,5 @@ public class Html5Stylist extends ClosingStylist {
       "</span>",
       false
     );
-  }
-
-  @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
-    // TODO: html custom style?
-    return StyleToken.NULL;
   }
 }

@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
@@ -89,7 +88,6 @@ public record StmtShallowResolver(
           resolveInfo.renameOp(defVar, renamedOpDecl, bind, true);
         });
       }
-      case Remark remark -> remark.ctx = context;
       case Generalize variables -> {
         variables.ctx = context;
         for (var variable : variables.variables)

@@ -44,8 +44,8 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     return new AyaGKProducer(Either.right(sourcePos), reporter).type(type);
   }
 
-  @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile) {
-    var parse = parse(sourceFile);
+  @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport) {
+    var parse = parse(sourceFile.sourceCode(), errorReport);
     if (parse.isRight()) {
       reporter.reportString("Expect statement, got repl expression", Problem.Severity.ERROR);
       return ImmutableSeq.empty();
@@ -53,13 +53,13 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     return parse.getLeftValue();
   }
 
-  private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull SourceFile sourceFile) {
-    var node = reportErrorElements(parseNode(sourceFile.sourceCode()), sourceFile);
-    return new AyaGKProducer(Either.left(sourceFile), reporter).program(node);
+  private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull String code, @NotNull SourceFile errorReport) {
+    var node = reportErrorElements(parseNode(code), errorReport);
+    return new AyaGKProducer(Either.left(errorReport), reporter).program(node);
   }
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull String code) {
-    return parse(replSourceFile(code));
+    return parse(code, replSourceFile(code));
   }
 
   private static @NotNull SourceFile replSourceFile(@NotNull String text) {

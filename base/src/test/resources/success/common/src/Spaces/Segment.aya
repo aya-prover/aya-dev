@@ -1,5 +1,6 @@
 open import Paths
 
+// Also known as "Interval" in the HoTT book
 public open data Segment
 | left | right
 | seg (i : I) { i := right | ~ i := left }
@@ -10,10 +11,14 @@ def uniqueness (b : Segment) : left = b
 | seg i => \j => seg (i ∧ j)
 def isContrSegment : isContr Segment => (_, uniqueness)
 
-private def funExt-lemma {A B : Type} (f g : A → B) (p : ∀ x → f x = g x) : A -> Segment -> B
-| f, g, p, a, left => f a
-| f, g, p, a, right => g a
-| f, g, p, a, seg i => p a i
+// The induction principle for Segment implies funExt. Here is a lemma.
+private def funExt-lemma {A B : Type} (f g : A → B) (p : ∀ x → f x = g x) : Segment -> A -> B
+// | f, g, p, left => f
+// | f, g, p, right => g
+| f, g, p, left, a => f a
+| f, g, p, right, a => g a
+| f, g, p, seg i, a => p a i
 
+// Using theorems in MLTT and funExt-lemma to derive funExt
 example def funExt' {A B : Type} (f g : A → B) (p : ∀ x → f x = g x) : f = g
-  => \i x => funExt-lemma f g p x (seg i)
+  => pmap (funExt-lemma f g p) seg

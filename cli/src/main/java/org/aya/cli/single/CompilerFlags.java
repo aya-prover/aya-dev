@@ -19,18 +19,13 @@ public record CompilerFlags(
   @NotNull SeqLike<Path> modulePaths,
   @Nullable Path outputFile
 ) {
-  public CompilerFlags(boolean interruptedTrace, boolean remake, @NotNull DistillInfo distillInfo, @NotNull SeqLike<Path> modulePaths, @Nullable Path outputFile) {
-    this(distillInfo.ascii ? Message.ASCII : Message.EMOJI,
-      interruptedTrace, remake, distillInfo, modulePaths, outputFile);
-  }
-
   public record DistillInfo(
     boolean ascii,
     @NotNull MainArgs.DistillStage distillStage,
     @NotNull MainArgs.DistillFormat distillFormat,
     @NotNull DistillerOptions distillerOptions,
     @NotNull RenderOptions renderOptions,
-    @NotNull Path distillDir
+    @Nullable String distillDir
   ) {
   }
 

@@ -41,7 +41,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     create_token_set_(ARGUMENT, ATOM_EX_ARGUMENT, NAMED_IM_ARGUMENT, TUPLE_IM_ARGUMENT),
     create_token_set_(DATA_DECL, DECL, FN_DECL, GENERALIZE,
       IMPORT_CMD, MODULE, OPEN_CMD, PRIM_DECL,
-      REMARK, STMT, STRUCT_DECL),
+      STMT, STRUCT_DECL),
     create_token_set_(APP_EXPR, ARRAY_ATOM, ARROW_EXPR, ATOM_EXPR,
       CALM_FACE_EXPR, DO_EXPR, EXPR, FORALL_EXPR,
       GOAL_EXPR, HOLE_EXPR, IDIOM_ATOM, LAMBDA_EXPR,
@@ -1643,23 +1643,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // DOC_COMMENT+
-  public static boolean remark(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "remark")) return false;
-    if (!nextTokenIs(b, DOC_COMMENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, DOC_COMMENT);
-    while (r) {
-      int c = current_position_(b);
-      if (!consumeToken(b, DOC_COMMENT)) break;
-      if (!empty_element_parsed_guard_(b, "remark", c)) break;
-    }
-    exit_section_(b, m, REMARK, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // REPL_COMMAND? expr
   static boolean repl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "repl")) return false;
@@ -1696,7 +1679,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   //        | importCmd
   //        | openCmd
   //        | module
-  //        | remark
   //        | generalize
   public static boolean stmt(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "stmt")) return false;
@@ -1706,7 +1688,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = importCmd(b, l + 1);
     if (!r) r = openCmd(b, l + 1);
     if (!r) r = module(b, l + 1);
-    if (!r) r = remark(b, l + 1);
     if (!r) r = generalize(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;

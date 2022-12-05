@@ -5,7 +5,6 @@ package org.aya.cli;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,7 +19,7 @@ public class RenderOptionsTest {
   }
 
   @Test public void target() {
-    var doc = Doc.styled(Style.code(), "hello");
+    var doc = Doc.code("hello");
     var opt = new RenderOptions();
     opt.checkDeserialization();
     assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.Terminal, doc, false, true));

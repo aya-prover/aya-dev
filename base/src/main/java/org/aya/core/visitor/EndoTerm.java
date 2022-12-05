@@ -47,7 +47,7 @@ public interface EndoTerm extends UnaryOperator<Term> {
     }
 
     private @NotNull LocalVar handleBinder(@NotNull LocalVar localVar) {
-      var v = new LocalVar(localVar.name(), localVar.definition());
+      var v = localVar.rename();
       subst.addDirectly(localVar, new RefTerm(v));
       return v;
     }

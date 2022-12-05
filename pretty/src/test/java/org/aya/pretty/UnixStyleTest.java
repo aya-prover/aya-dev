@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty;
 
-import org.aya.pretty.backend.string.custom.UnixTermStyle;
+import org.aya.pretty.backend.terminal.UnixTermStyle;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.junit.jupiter.api.Test;

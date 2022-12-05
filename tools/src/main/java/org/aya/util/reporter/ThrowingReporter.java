@@ -18,7 +18,7 @@ public record ThrowingReporter() implements CountingReporter {
     var doc = problem.sourcePos() == SourcePos.NONE ? problem.describe(options) : problem.toPrettyError(options).toDoc();
     return supportAnsi
       ? doc.renderToTerminal(pageWidth, unicode)
-      : doc.renderWithPageWidth(pageWidth, unicode);
+      : doc.renderToString(pageWidth, unicode);
   }
 
   @Override public void report(@NotNull Problem problem) {

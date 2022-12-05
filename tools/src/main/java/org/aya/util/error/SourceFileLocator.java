@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
+/** module path aware file name normalizer for error reporting. */
 public interface SourceFileLocator {
   /**
    * Resolve absolute source file path to module-root.

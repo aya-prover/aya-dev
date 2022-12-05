@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.latex;
 
-import org.aya.pretty.backend.string.style.ClosingStylist;
-import org.aya.pretty.doc.Style;
+import org.aya.pretty.backend.string.ClosingStylist;
+import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
@@ -17,32 +17,24 @@ public class TeXStylist extends ClosingStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override protected @NotNull StyleToken formatItalic() {
+  @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
     return new StyleToken("\\textit{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatBold() {
+  @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
     return new StyleToken("\\textbf{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike() {
+  @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
     return new StyleToken("\\sout{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatUnderline() {
+  @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
     return new StyleToken("\\underline{", "}", false);
-  }
-
-  @Override protected @NotNull StyleToken formatCode() {
-    return new StyleToken("\\fbox{", "}", false);
   }
 
   @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
     return new StyleToken("\\%s[HTML]{%06x}{".formatted(
       background ? "colorbox" : "textcolor", rgb), "}", false);
-  }
-
-  @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
-    return new StyleToken("", "", false);
   }
 }

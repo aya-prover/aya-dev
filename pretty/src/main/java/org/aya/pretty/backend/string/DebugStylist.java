@@ -1,10 +1,8 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.pretty.backend.string.style;
+package org.aya.pretty.backend.string;
 
 import kala.collection.Seq;
-import org.aya.pretty.backend.string.Cursor;
-import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
@@ -22,11 +20,7 @@ public class DebugStylist extends StringStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override public void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, @NotNull Runnable inside) {
-    if (style.contains(Style.code())) {
-      cursor.visibleContent("`");
-      inside.run();
-      cursor.visibleContent("`");
-    } else inside.run();
+  @Override public void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside) {
+    inside.run();
   }
 }

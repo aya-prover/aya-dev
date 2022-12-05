@@ -3,6 +3,7 @@
 package org.aya.generic;
 
 import org.aya.concrete.Expr;
+import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourcePos;
@@ -53,10 +54,10 @@ public interface Constants {
   }
 
   static @NotNull LocalVar anonymous() {
-    return new LocalVar(ANONYMOUS_PREFIX, SourcePos.NONE);
+    return new LocalVar(ANONYMOUS_PREFIX, SourcePos.NONE, GenerateKind.Anonymous.INSTANCE);
   }
   static @NotNull LocalVar randomlyNamed(@NotNull SourcePos pos) {
-    return new LocalVar(randomName(pos), pos, true);
+    return new LocalVar(randomName(pos), pos, GenerateKind.Anonymous.INSTANCE);
   }
   static @NotNull String randomName(@NotNull Object pos) {
     if (Global.NO_RANDOM_NAME) return ANONYMOUS_PREFIX;

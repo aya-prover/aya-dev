@@ -8,7 +8,6 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -36,7 +35,7 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Absurd pattern does not fit here because"),
-        Doc.styled(Style.code(), BaseDistiller.varDoc(available.ref())),
+        Doc.code(BaseDistiller.varDoc(available.ref())),
         Doc.english("is still available")
       );
     }
@@ -104,7 +103,7 @@ public sealed interface PatternProblem extends Problem {
         Doc.par(1, retTy.toDoc(options)),
         Doc.parened(Doc.sep(
           Doc.english("and in case it's a function type, you may want to move its parameters before the"),
-          Doc.styled(Style.code(), ":"),
+          Doc.code(":"),
           Doc.english("in the signature"))));
     }
   }

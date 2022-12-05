@@ -14,5 +14,5 @@ public abstract class StringStylist extends Stylist {
     super(colorScheme, styleFamily);
   }
 
-  public abstract void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, @NotNull Runnable inside);
+  public abstract void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside);
 }

@@ -301,7 +301,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
     }
 
     @Contract(" -> new") public @NotNull LocalVar renameVar() {
-      return new LocalVar(ref.name(), ref.definition());
+      return ref.rename();
     }
 
     @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {

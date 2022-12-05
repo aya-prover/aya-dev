@@ -96,9 +96,7 @@ public class LibraryCompiler {
   }
 
   private void parse(@NotNull LibrarySource source) throws IOException {
-    var owner = source.owner();
-    var program = advisor.createParser(reporter).program(owner.locator(), source.file());
-    source.program().set(program);
+    source.parseMe(advisor.createParser(reporter));
   }
 
   /** @return whether the source file is already parsed. */
@@ -143,8 +141,6 @@ public class LibraryCompiler {
   }
 
   public int start() throws IOException {
-    if (flags.outputFile() != null) reporter.reportString(
-      "Warning: command-line specified output file is ignored when compiling libraries.");
     if (flags.modulePaths().isNotEmpty()) reporter.reportString(
       "Warning: command-line specified module path is ignored when compiling libraries.");
     if (flags.distillInfo() != null) reporter.reportString(

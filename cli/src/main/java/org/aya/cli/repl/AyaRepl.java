@@ -135,7 +135,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
-    return doc.renderWithPageWidth(prettyPrintWidth, config.enableUnicode);
+    return doc.renderToString(prettyPrintWidth, config.enableUnicode);
   }
 
   @Override public void close() throws IOException {

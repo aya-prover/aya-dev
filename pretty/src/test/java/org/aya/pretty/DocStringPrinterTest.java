@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty;
 
@@ -53,13 +53,13 @@ public class DocStringPrinterTest {
   @Test
   public void testHSepNarrow() {
     var doc = stickySep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
-    assertEquals("boynext next door doooor", doc.renderWithPageWidth(5, false));
+    assertEquals("boynext next door doooor", doc.renderToString(5, false));
   }
 
   @Test
   public void testFillSepNarrow() {
     var doc = sep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
-    assertEquals("boynext\nnext door\ndoooor", doc.renderWithPageWidth(7, false));
+    assertEquals("boynext\nnext door\ndoooor", doc.renderToString(7, false));
   }
 
   @Test

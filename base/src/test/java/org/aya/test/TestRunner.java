@@ -7,6 +7,7 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.generic.util.AyaFiles;
 import org.aya.prelude.GeneratedVersion;
+import org.aya.util.StringUtil;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.CountingReporter;
@@ -143,8 +144,8 @@ public class TestRunner {
 
   private void checkOutput(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
     try {
-      var output = trimCRLF(hookOut);
-      var expected = instantiateVars(testFile, trimCRLF(Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
+      var output = StringUtil.trimCRLF(hookOut);
+      var expected = instantiateVars(testFile, StringUtil.trimCRLF(Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
       assertEquals(expected, output, testFile.getFileName().toString());
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
@@ -157,9 +158,5 @@ public class TestRunner {
 
   private String instantiateHoles(@NotNull Path testFile, String template) {
     return template.replace(testFile.toString(), "$FILE");
-  }
-
-  private String trimCRLF(String string) {
-    return string.replaceAll("\\r\\n?", "\n");
   }
 }

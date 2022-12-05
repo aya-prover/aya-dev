@@ -12,7 +12,9 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.single.SingleAyaFile;
 import org.aya.concrete.Expr;
+import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.stmt.Stmt;
@@ -54,6 +56,7 @@ public class ReplCompiler {
   private final @NotNull ImmutableSeq<Path> modulePaths;
   private final @NotNull PrimDef.Factory primFactory;
   private final @NotNull ReplShapeFactory shapeFactory;
+  private final @NotNull GenericAyaFile.Factory fileManager;
   private final @NotNull AyaBinOpSet opSet;
 
   public ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
@@ -64,8 +67,10 @@ public class ReplCompiler {
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(this.reporter);
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
+    this.fileManager = new SingleAyaFile.Factory(this.reporter);
+    var parser = new AyaParserImpl(this.reporter);
     this.loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter, this.modulePaths.map(path ->
-      new FileModuleLoader(this.locator, path, this.reporter, new AyaParserImpl(this.reporter), primFactory, null))));
+      new FileModuleLoader(this.locator, path, this.reporter, parser, fileManager, primFactory, null))));
   }
 
   private @NotNull ExprTycker.Result tyckExpr(@NotNull Expr expr) {
@@ -117,7 +122,7 @@ public class ReplCompiler {
 
   /** @see org.aya.cli.single.SingleFileCompiler#compile(Path, Function, CompilerFlags, ModuleCallback) */
   private void loadFile(@NotNull Path file) {
-    compileToContext(parser -> Either.left(parser.program(locator, file)), NormalizeMode.WHNF);
+    compileToContext(parser -> Either.left(fileManager.createAyaFile(locator, file).parseMe(parser)), NormalizeMode.WHNF);
   }
 
   /** @param text the text of code to compile, witch might either be a `program` or an `expr`. */

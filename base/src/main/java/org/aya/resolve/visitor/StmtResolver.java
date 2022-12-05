@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.value.MutableValue;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.error.OperatorError;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
@@ -37,7 +36,6 @@ public interface StmtResolver {
     switch (stmt) {
       case Decl decl -> resolveDecl(decl, info);
       case Command.Module mod -> resolveStmt(mod.contents(), info);
-      case Remark remark -> info.depGraph().sucMut(new TyckOrder.Body(remark)).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize variables -> {
         assert variables.ctx != null;
@@ -192,7 +190,6 @@ public interface StmtResolver {
       case TeleDecl.StructField field -> visitBind(field.ref, field.bindBlock, info);
       case TeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
       case TeleDecl.PrimDecl decl -> {}
-      case Remark remark -> {}
       case Command cmd -> {}
       case Generalize generalize -> {}
     }

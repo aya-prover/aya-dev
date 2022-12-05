@@ -1,23 +1,18 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
 import org.jetbrains.annotations.NotNull;
 
 public class Cursor {
-  @FunctionalInterface
-  public interface CursorAPI {
-    @NotNull String makeIndent(int indent);
-  }
-
   private int cursor;
   private int nestLevel;
   private int lineStartCursor;
   private final StringBuilder builder = new StringBuilder();
-  private final CursorAPI api;
+  private final StringPrinter<?> printer;
 
-  public Cursor(CursorAPI api) {
-    this.api = api;
+  public Cursor(StringPrinter<?> printer) {
+    this.printer = printer;
   }
 
   public @NotNull CharSequence result() {
@@ -49,13 +44,13 @@ public class Cursor {
 
   private void checkLineStart() {
     if (isAtLineStart()) {
-      builder.append(api.makeIndent(nestLevel));
+      builder.append(printer.makeIndent(nestLevel));
       moveForward(nestLevel);
     }
   }
 
   public void lineBreakWith(@NotNull CharSequence lineBreak) {
-    visibleContent(lineBreak);
+    invisibleContent(lineBreak);
     moveToNewLine();
   }
 

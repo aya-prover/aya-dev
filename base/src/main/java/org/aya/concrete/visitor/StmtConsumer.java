@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,9 +10,6 @@ import java.util.function.Consumer;
 public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
   default void accept(@NotNull Stmt stmt) {
     switch (stmt) {
-      case Remark remark -> {
-        if (remark.literate != null) remark.literate.modify(this);
-      }
       case Decl decl -> {
         if (decl instanceof Decl.Telescopic<?> telescopic)
           telescopic.setTelescope(telescopic.telescope().map(param -> param.descent(this)));

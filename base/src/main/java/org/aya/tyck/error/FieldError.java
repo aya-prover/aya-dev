@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.FieldDef;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -20,7 +19,7 @@ public sealed interface FieldError extends TyckError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Missing field(s):"), Doc.commaList(missing.view()
         .map(BaseDistiller::varDoc)
-        .map(m -> Doc.styled(Style.code(), m))));
+        .map(m -> Doc.code(m))));
     }
   }
   record NoSuchField(
@@ -30,7 +29,7 @@ public sealed interface FieldError extends TyckError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("No such field(s):"),
         Doc.commaList(notFound.view()
-          .map(m -> Doc.styled(Style.code(), Doc.plain(m))))
+          .map(m -> Doc.code(Doc.plain(m))))
       );
     }
   }
@@ -42,7 +41,7 @@ public sealed interface FieldError extends TyckError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Unknown field"),
-        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.code(Doc.plain(name)),
         Doc.english("projected")
       );
     }

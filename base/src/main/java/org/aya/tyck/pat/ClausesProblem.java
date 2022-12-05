@@ -10,7 +10,6 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -25,7 +24,7 @@ public sealed interface ClausesProblem extends Problem {
 
   private static @NotNull Doc termToHint(@Nullable Term term, @NotNull DistillerOptions options) {
     return term == null ? Doc.empty() : Doc.sep(Doc.english("substituted to"),
-      Doc.styled(Style.code(), term.toDoc(options)));
+      Doc.code(term.toDoc(options)));
   }
 
   record Conditions(
@@ -37,9 +36,9 @@ public sealed interface ClausesProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       var result = rhs != null ? Doc.sep(
         Doc.plain("unify"),
-        Doc.styled(Style.code(), lhs.toDoc(options)),
+        Doc.code(lhs.toDoc(options)),
         Doc.plain("and"),
-        Doc.styled(Style.code(), rhs.toDoc(options))
+        Doc.code(rhs.toDoc(options))
       ) : Doc.english("even reduce one of the clause(s) to check condition");
       return Doc.sep(
         Doc.plain("The"),
@@ -118,7 +117,7 @@ public sealed interface ClausesProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Cannot perform pattern matching"),
-        Doc.styled(Style.code(), pat.toDoc(options))
+        Doc.code(pat.toDoc(options))
       );
     }
   }

@@ -5,7 +5,6 @@ package org.aya.concrete.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpSet;
 import org.aya.util.distill.DistillerOptions;
@@ -34,10 +33,10 @@ public interface OperatorError extends Problem {
     public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Cannot figure out computation order because"),
-        Doc.styled(Style.code(), Doc.plain(op1)),
+        Doc.code(Doc.plain(op1)),
         Doc.parened(Doc.plain(assoc1.name())),
         Doc.plain("and"),
-        Doc.styled(Style.code(), Doc.plain(op2)),
+        Doc.code(Doc.plain(op2)),
         Doc.parened(Doc.plain(assoc1.name())),
         reason()
       );
@@ -62,15 +61,15 @@ public interface OperatorError extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Ambiguous operator precedence detected between"),
-        Doc.styled(Style.code(), Doc.plain(op1)),
+        Doc.code(Doc.plain(op1)),
         Doc.plain("and"),
-        Doc.styled(Style.code(), Doc.plain(op2))
+        Doc.code(Doc.plain(op2))
       );
     }
 
     @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.plain("Use"),
-        Doc.styled(BaseDistiller.KEYWORD.and().code(), Doc.plain("tighter/looser")),
+        Doc.code(Doc.styled(BaseDistiller.KEYWORD, Doc.plain("tighter/looser"))),
         Doc.english("clause or insert parentheses to make it clear."));
     }
   }
@@ -101,7 +100,7 @@ public interface OperatorError extends Problem {
   record MissingOperand(@NotNull SourcePos sourcePos, @NotNull String op) implements OperatorError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("There is no operand for this operator"),
-        Doc.styled(Style.code(), op));
+        Doc.code(op));
     }
   }
 }

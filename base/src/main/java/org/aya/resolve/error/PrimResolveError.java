@@ -5,7 +5,6 @@ package org.aya.resolve.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -22,7 +21,7 @@ public interface PrimResolveError extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Unknown primitive"),
-        Doc.styled(Style.code(), Doc.plain(name)));
+        Doc.code(Doc.plain(name)));
     }
   }
 
@@ -32,7 +31,7 @@ public interface PrimResolveError extends Problem {
   ) implements PrimResolveError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Redefinition of primitive"),
-        Doc.styled(Style.code(), Doc.plain(name)));
+        Doc.code(Doc.plain(name)));
     }
   }
 
@@ -47,9 +46,9 @@ public interface PrimResolveError extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       assert lack.isNotEmpty();
       return Doc.sep(
-        Doc.english("The primitive"), Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.english("The primitive"), Doc.code(Doc.plain(name)),
         Doc.english("depends on undeclared primitive(s):"),
-        Doc.commaList(lack.map(name -> Doc.styled(Style.code(), Doc.plain(name.id)))));
+        Doc.commaList(lack.map(name -> Doc.code(Doc.plain(name.id)))));
     }
   }
 
@@ -59,13 +58,13 @@ public interface PrimResolveError extends Problem {
   ) implements PrimResolveError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("The primitive"),
-        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.code(Doc.plain(name)),
         Doc.english("is not designed to be used as a function"));
     }
 
     @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Use the projection syntax instead, like:"),
-        Doc.styled(Style.code(), Doc.plain("." + name)));
+        Doc.code(Doc.plain("." + name)));
     }
   }
 }

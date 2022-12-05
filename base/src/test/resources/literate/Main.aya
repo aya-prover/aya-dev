@@ -1,0 +1,9 @@
+open data Nat
+| O
+| S Nat
+
+def infixl + (m n : Nat) : Nat
+| O, n   => n
+| S m', n => S (m' + n)
+
+def id (n : Nat) : Nat => n

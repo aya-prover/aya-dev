@@ -80,7 +80,7 @@ public abstract class BinOpParser<
             // the same precedence. Or a parse error should be reported.
             var topAssoc = top._2.assoc();
             var currentAssoc = currentOp.assoc();
-            if (Assoc.assocAmbitious(topAssoc, currentAssoc)) {
+            if (Assoc.assocAmbiguous(topAssoc, currentAssoc)) {
               reportFixityError(topAssoc, currentAssoc, top._2.name(), currentOp.name(), of(top._1));
               return createErrorExpr(sourcePos);
             }

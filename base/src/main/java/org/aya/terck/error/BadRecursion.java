@@ -7,7 +7,6 @@ import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.ref.DefVar;
 import org.aya.terck.Diagonal;
 import org.aya.util.distill.DistillerOptions;
@@ -26,7 +25,7 @@ public record BadRecursion(
 
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(Doc.english("The recursive definition"),
-      Doc.styled(Style.code(), BaseDistiller.defVar(name)),
+      Doc.code(BaseDistiller.defVar(name)),
       Doc.english("is not structurally recursive"));
   }
 

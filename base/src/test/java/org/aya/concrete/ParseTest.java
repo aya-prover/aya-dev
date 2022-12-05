@@ -360,7 +360,7 @@ public class ParseTest {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
         .map(s -> s.toDoc(DistillerOptions.debug())))
-      .renderWithPageWidth(80, false)
+      .renderToString(80, false)
       .trim());
   }
 

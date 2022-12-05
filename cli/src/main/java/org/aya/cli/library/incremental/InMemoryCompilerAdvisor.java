@@ -25,7 +25,7 @@ public class InMemoryCompilerAdvisor implements CompilerAdvisor {
   protected final @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> compiledCore = MutableMap.create();
   
   protected @NotNull Path timestampKey(@NotNull LibrarySource source) {
-    return source.file();
+    return source.underlyingFile();
   }
 
   @Override public boolean isSourceModified(@NotNull LibrarySource source) {

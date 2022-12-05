@@ -8,11 +8,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
+import org.aya.pretty.backend.md.DocMdPrinter;
+import org.aya.pretty.backend.string.DebugStylist;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
-import org.aya.pretty.backend.string.style.AdaptiveCliStylist;
-import org.aya.pretty.backend.string.style.DebugStylist;
+import org.aya.pretty.backend.terminal.AdaptiveCliStylist;
+import org.aya.pretty.backend.terminal.DocTermPrinter;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
 import org.jetbrains.annotations.Contract;
@@ -51,7 +53,11 @@ public sealed interface Doc extends Docile {
   //region Doc APIs
   default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
     var printer = new StringPrinter<>();
-    return this.render(printer, config);
+    return render(printer, config);
+  }
+
+  default @NotNull String renderToString(int pageWidth, boolean unicode) {
+    return renderToString(new StringPrinterConfig(DebugStylist.DEFAULT, pageWidth, unicode));
   }
 
   default @NotNull String renderToTerminal() {
@@ -59,7 +65,7 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToTerminal(int pageWidth, boolean unicode) {
-    return renderToString(new StringPrinterConfig(AdaptiveCliStylist.INSTANCE, pageWidth, unicode));
+    return render(new DocTermPrinter(), new DocTermPrinter.Config(AdaptiveCliStylist.INSTANCE, pageWidth, unicode));
   }
 
   default @NotNull String renderToHtml() {
@@ -67,7 +73,19 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToHtml(boolean withHeader) {
-    return render(new DocHtmlPrinter(), new DocHtmlPrinter.Config(withHeader));
+    return render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(withHeader));
+  }
+
+  default @NotNull String renderToMd() {
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(false, false));
+  }
+
+  default @NotNull String renderToAyaMd() {
+    return renderToAyaMd(true);
+  }
+
+  default @NotNull String renderToAyaMd(boolean withHeader) {
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(withHeader, true));
   }
 
   default @NotNull String renderToTeX() {
@@ -79,19 +97,14 @@ public sealed interface Doc extends Docile {
     return printer.render(config, this);
   }
 
-  default @NotNull String renderWithPageWidth(int pageWidth, boolean unicode) {
-    var config = new StringPrinterConfig(DebugStylist.DEFAULT, pageWidth, unicode);
-    return this.renderToString(config);
-  }
-
   /** Produce ASCII and infinite-width output */
   default @NotNull String debugRender() {
-    return renderWithPageWidth(INFINITE_SIZE, false);
+    return renderToString(INFINITE_SIZE, false);
   }
 
   /** Produce unicode and 80-width output */
   default @NotNull String commonRender() {
-    return renderWithPageWidth(80, true);
+    return renderToString(80, true);
   }
 
   //endregion
@@ -124,10 +137,21 @@ public sealed interface Doc extends Docile {
   /**
    * A clickable text line without '\n'.
    */
-  record HyperLinked(@NotNull Doc doc, @NotNull LinkId link, @Nullable String id) implements Doc {
+  record HyperLinked(
+    @NotNull Doc doc, @NotNull LinkId href,
+    @Nullable String id, @Nullable String hover
+  ) implements Doc {
     @Override public String toString() {
       return doc.toString();
     }
+  }
+
+  /** Inline code, with special escape settings compared to {@link PlainText} */
+  record InlineCode(@NotNull String language, @NotNull Doc code) implements Doc {
+  }
+
+  /** Code block, with special escape settings compared to {@link PlainText} */
+  record CodeBlock(@NotNull String language, @NotNull Doc code) implements Doc {
   }
 
   /**
@@ -197,19 +221,55 @@ public sealed interface Doc extends Docile {
 
   //region DocFactory functions
   static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode) {
-    return new HyperLinked(doc, new LinkId("#" + hashCode), String.valueOf(hashCode));
+    return linkDef(doc, hashCode, null);
   }
 
   static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode) {
-    return new HyperLinked(doc, new LinkId("#" + hashCode), null);
+    return linkRef(doc, hashCode, null);
   }
 
-  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId link) {
-    return new HyperLinked(doc, link, null);
+  static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode, @Nullable String hover) {
+    return new HyperLinked(doc, new LinkId("#" + hashCode), String.valueOf(hashCode), hover);
   }
 
-  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId link) {
-    return hyperLink(plain(plain), link);
+  static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode, @Nullable String hover) {
+    return new HyperLinked(doc, new LinkId("#" + hashCode), null, hover);
+  }
+
+  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href) {
+    return hyperLink(doc, href, null);
+  }
+
+  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href, @Nullable String hover) {
+    return new HyperLinked(doc, href, null, hover);
+  }
+
+  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href) {
+    return hyperLink(plain(plain), href);
+  }
+
+  static @NotNull Doc code(@NotNull String code) {
+    return code("aya", plain(code));
+  }
+
+  static @NotNull Doc code(@NotNull Doc code) {
+    return code("aya", code);
+  }
+
+  static @NotNull Doc code(@NotNull String language, @NotNull Doc code) {
+    return new InlineCode(language, code);
+  }
+
+  static @NotNull Doc codeBlock(@NotNull String code) {
+    return codeBlock("aya", plain(code));
+  }
+
+  static @NotNull Doc codeBlock(@NotNull Doc code) {
+    return codeBlock("aya", code);
+  }
+
+  static @NotNull Doc codeBlock(@NotNull String language, @NotNull Doc code) {
+    return new CodeBlock(language, code);
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {

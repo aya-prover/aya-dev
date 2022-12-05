@@ -35,7 +35,7 @@ public interface WidthPreviewToy {
       manager.add(unicode);
       while (!imgui.windowShouldClose()) {
         imgui.initNewFrame();
-        imgui.text(doc.renderWithPageWidth(width.accessValue(), unicode.accessValue()));
+        imgui.text(doc.renderToString(width.accessValue(), unicode.accessValue()));
         imgui.sliderInt("Width", width, 1, maxWidth);
         imgui.checkbox("Unicode", unicode);
         imgui.render();
