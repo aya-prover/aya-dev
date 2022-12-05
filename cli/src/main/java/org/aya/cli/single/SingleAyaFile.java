@@ -80,16 +80,18 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
 
     var renderOptions = flags.renderOptions();
     if (currentStage == MainArgs.DistillStage.literate) {
-      var program = (ImmutableSeq<Stmt>) doc;
-      var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
-      var literate = literate();
-      new LiterateConsumer.Highlights(highlights).accept(literate);
-      var text = renderOptions.render(out, literate.toDoc(), true, !flags.ascii());
+      var text = renderOptions.render(out, docitfy((ImmutableSeq<Stmt>) doc), true, !flags.ascii());
       FileUtil.writeString(distillDir.resolve(fileName), text);
     } else {
       doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
         (d, hdr) -> renderOptions.render(out, d, hdr, !flags.ascii()));
     }
+  }
+  @VisibleForTesting default @NotNull Doc docitfy(ImmutableSeq<Stmt> program) throws IOException {
+    var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
+    var literate = literate();
+    new LiterateConsumer.Highlights(highlights).accept(literate);
+    return literate.toDoc();
   }
 
   private void doWrite(

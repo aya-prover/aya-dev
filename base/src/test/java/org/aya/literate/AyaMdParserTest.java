@@ -4,9 +4,6 @@ package org.aya.literate;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
-import kala.control.Option;
-import org.aya.cli.literate.LiterateConsumer;
-import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
@@ -120,12 +117,9 @@ public class AyaMdParserTest {
       Stmt.resolveWithoutDesugar(stmts, info, EmptyModuleLoader.INSTANCE);
       literate.resolveAdditional(info);
 
-      var highlights = SyntaxHighlight.highlight(Option.some(literate.codeFile()), stmts);
-      new LiterateConsumer.Highlights(highlights).accept(literate.literate());
-      var doc = literate.literate().toDoc();
-      var expectedHtml = doc.renderToHtml();
+      var doc = literate.docitfy(stmts).toDoc();
       var expectedMd = doc.renderToAyaMd();
-      Files.writeString(oneCase.htmlFile(), expectedHtml);
+      Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
       Files.writeString(oneCase.outMdFile(), expectedMd);
 
       // test single file compiler

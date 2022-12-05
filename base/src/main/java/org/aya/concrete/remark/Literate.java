@@ -76,6 +76,7 @@ public sealed interface Literate extends Docile {
         if (expr != null) return Doc.code(expr.toDoc(options.options()));
         else return Doc.code("Error");
       }
+      assert expr != null;
       return Doc.code((switch (options.showCode()) {
         case Concrete -> expr;
         case Core -> tyckResult.wellTyped();
