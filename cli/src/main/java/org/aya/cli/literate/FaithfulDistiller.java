@@ -35,7 +35,9 @@ public interface FaithfulDistiller {
    * @param highlights the highlights for the source code
    */
   static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
-    return doHighlight(raw, base, highlights.sorted().distinct());
+    return doHighlight(raw, base, highlights
+      .filter(h -> h.sourcePos() != SourcePos.NONE)
+      .sorted().distinct());
   }
 
   private static @NotNull Doc doHighlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
