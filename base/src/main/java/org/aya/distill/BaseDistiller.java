@@ -141,18 +141,18 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    * This function does the following if necessary:
    * <ul>
    *   <li>Wrap the constructor with parentheses or braces</li>
-   *   <li>Append an 'as' at the end</li>
    * </ul>
    *
    * @param ctorDoc  The constructor pretty-printed doc, without the 'as' or parentheses.
    * @param noParams Whether the constructor has no parameters or not.
    */
-  @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, @Nullable LocalVar ctorAs, boolean noParams) {
-    boolean as = ctorAs != null;
+  @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, boolean noParams) {
     var withEx = Doc.bracedUnless(ctorDoc, ex);
-    var withAs = !as ? withEx :
-      Doc.sep(Doc.parened(withEx), Doc.plain("as"), linkDef(ctorAs));
-    return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
+    return !ex
+      ? withEx
+      : outer != Outer.Free && !noParams
+        ? Doc.parened(withEx)
+        : withEx;
   }
 
   /**

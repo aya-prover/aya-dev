@@ -39,11 +39,11 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
 
   default @NotNull Pattern descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
     return switch (this) {
-      case Pattern.BinOpSeq(var pos, var seq, var as) -> new Pattern.BinOpSeq(pos, descent(f, seq), as);
-      case Pattern.Ctor(var pos, var resolved, var params, var as) ->
-        new Pattern.Ctor(pos, resolved, descent(f, params), as);
-      case Pattern.Tuple(var pos, var patterns, var as) -> new Pattern.Tuple(pos, descent(f, patterns), as);
-      case Pattern.List(var pos, var patterns, var as) -> new Pattern.List(pos, patterns.map(f), as);
+      case Pattern.BinOpSeq(var pos, var seq) -> new Pattern.BinOpSeq(pos, descent(f, seq));
+      case Pattern.Ctor(var pos, var resolved, var params) -> new Pattern.Ctor(pos, resolved, descent(f, params));
+      case Pattern.Tuple(var pos, var patterns) -> new Pattern.Tuple(pos, descent(f, patterns));
+      case Pattern.List(var pos, var patterns) -> new Pattern.List(pos, patterns.map(f));
+      case Pattern.As(var pos, var inner, var as) -> new Pattern.As(pos, f.apply(inner), as);
       default -> this;
     };
   }
@@ -54,8 +54,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
 
   record Tuple(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Arg<Pattern>> patterns,
-    @Nullable LocalVar as
+    @NotNull ImmutableSeq<Arg<Pattern>> patterns
   ) implements Pattern {
   }
 
@@ -83,26 +82,36 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
   record Ctor(
     @Override @NotNull SourcePos sourcePos,
     @NotNull WithPos<@NotNull AnyVar> resolved,
-    @NotNull ImmutableSeq<Arg<Pattern>> params,
-    @Nullable LocalVar as
+    @NotNull ImmutableSeq<Arg<Pattern>> params
   ) implements Pattern {
     public Ctor(@NotNull Pattern.Bind bind, @NotNull AnyVar maybe) {
-      this(bind.sourcePos(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty(), null);
+      this(bind.sourcePos(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty());
     }
   }
 
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Arg<Pattern>> seq,
-    @Nullable LocalVar as
+    @NotNull ImmutableSeq<Arg<Pattern>> seq
   ) implements Pattern {
+  }
+
+  /**
+   * Represent a {@code (Pattern) as bind} pattern
+   */
+  record As(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull Pattern pattern,
+    @NotNull LocalVar as
+  ) implements Pattern {
+    public static Arg<Pattern> wrap(@NotNull SourcePos pos, @NotNull Arg<Pattern> pattern, @NotNull LocalVar var) {
+      return new Arg<>(new As(pos, pattern.term(), var), pattern.explicit());
+    }
   }
 
   /** Sugared List Pattern */
   record List(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Pattern> elements,
-    @Nullable LocalVar as
+    @NotNull ImmutableSeq<Pattern> elements
   ) implements Pattern {
   }
 
@@ -137,13 +146,12 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
 
   record FakeShapedList(
     @NotNull SourcePos sourcePos,
-    @Nullable LocalVar as,
     @Override @NotNull ImmutableSeq<Pattern> repr,
     @Override @NotNull ShapeRecognition recognition,
     @Override @NotNull DataCall type
   ) implements Shaped.List<Pattern> {
     @Override public @NotNull Pattern makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> type) {
-      return new Pattern.Ctor(sourcePos, new WithPos<>(sourcePos, nil.ref()), ImmutableSeq.empty(), as);
+      return new Pattern.Ctor(sourcePos, new WithPos<>(sourcePos, nil.ref()), ImmutableSeq.empty());
     }
 
     @Override public @NotNull Pattern
@@ -151,11 +159,11 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
       // x    : Current Pattern
       // xs   : Right Pattern
       // Goal : consCtor x xs
-      return new Pattern.Ctor(sourcePos, new WithPos<>(sourcePos, cons.ref()), ImmutableSeq.of(x, xs), as);
+      return new Pattern.Ctor(sourcePos, new WithPos<>(sourcePos, cons.ref()), ImmutableSeq.of(x, xs));
     }
 
     @Override public @NotNull Pattern destruct(@NotNull ImmutableSeq<Pattern> repr) {
-      return new FakeShapedList(sourcePos, null, repr, recognition, type).constructorForm();
+      return new FakeShapedList(sourcePos, repr, recognition, type).constructorForm();
     }
   }
 }

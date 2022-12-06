@@ -175,7 +175,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LARRAY patterns? RARRAY (KW_AS weakId)?
+  // LARRAY patterns? RARRAY
   public static boolean atomListPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomListPattern")) return false;
     if (!nextTokenIs(b, LARRAY)) return false;
@@ -184,7 +184,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, LARRAY);
     r = r && atomListPattern_1(b, l + 1);
     r = r && consumeToken(b, RARRAY);
-    r = r && atomListPattern_3(b, l + 1);
     exit_section_(b, m, ATOM_LIST_PATTERN, r);
     return r;
   }
@@ -194,24 +193,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "atomListPattern_1")) return false;
     patterns(b, l + 1);
     return true;
-  }
-
-  // (KW_AS weakId)?
-  private static boolean atomListPattern_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomListPattern_3")) return false;
-    atomListPattern_3_0(b, l + 1);
-    return true;
-  }
-
-  // KW_AS weakId
-  private static boolean atomListPattern_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atomListPattern_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, KW_AS);
-    r = r && weakId(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */

@@ -686,14 +686,21 @@ public record AyaGKProducer(
   }
 
   public @NotNull Arg<Pattern> pattern(@NotNull GenericNode<?> node) {
+    var entirePos = sourcePosOf(node);
     var unitPats = node.childrenOfType(UNIT_PATTERN)
       .map(this::unitPattern)
       .toImmutableSeq();
     var as = Option.ofNullable(node.peekChild(WEAK_ID))
       .map(this::weakId)
       .map(LocalVar::from);
-    if (unitPats.sizeEquals(1)) return unitPats.first();
-    return new Arg<>(new Pattern.BinOpSeq(sourcePosOf(node), unitPats, as.getOrNull()), true);
+    // if (unitPats.sizeEquals(1)) return unitPats.first();
+    Arg<Pattern> pattern = unitPats.sizeEquals(1)
+      ? new Arg<>(unitPats.first().term(), unitPats.first().explicit())
+      // TODO: source pos: excluding `as pattern`
+      : new Arg<>(new Pattern.BinOpSeq(entirePos, unitPats), true);
+    return as.isDefined()
+      ? Pattern.As.wrap(entirePos, pattern, as.get())
+      : pattern;
   }
 
   private Arg<Pattern> unitPattern(@NotNull GenericNode<?> node) {
@@ -703,7 +710,7 @@ public record AyaGKProducer(
       var patterns = patterns(child);
       var pat = patterns.sizeEquals(1)
         ? newBinOPScope(patterns.first().term(), explicit)
-        : new Pattern.Tuple(sourcePosOf(node), patterns, null);
+        : new Pattern.Tuple(sourcePosOf(node), patterns);
       return new Arg<>(pat, explicit);
     });
     return new Arg<>(atomPattern(node.childrenView().first()), true);
@@ -721,16 +728,13 @@ public record AyaGKProducer(
         ? patterns(patternsNode.child(COMMA_SEP)).view()
         : SeqView.<Arg<Pattern>>empty();
 
-      var weakId = node.peekChild(WEAK_ID);
-      var asId = weakId == null ? null : LocalVar.from(weakId(weakId));
-
       return new Pattern.List(sourcePos,
         patterns.map(pat -> {
           if (!pat.explicit()) {    // [ {a} ] is disallowed
-            reporter.report(new ParseError(pat.term().sourcePos(), "Implicit elements in list pattern is disallowed"));
+            reporter.report(new ParseError(pat.term().sourcePos(), "Implicit elements in a list pattern is disallowed"));
           }
           return pat.term();
-        }).toImmutableSeq(), asId);
+        }).toImmutableSeq());
     }
     if (node.peekChild(NUMBER) != null)
       return new Pattern.Number(sourcePos, Integer.parseInt(node.tokenText()));
@@ -873,7 +877,7 @@ public record AyaGKProducer(
 
   public @NotNull Pattern newBinOPScope(@NotNull Pattern expr, boolean explicit) {
     return new Pattern.BinOpSeq(expr.sourcePos(),
-      ImmutableSeq.of(new Arg<>(expr, explicit)), null);
+      ImmutableSeq.of(new Arg<>(expr, explicit)));
   }
 
   private @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node) {

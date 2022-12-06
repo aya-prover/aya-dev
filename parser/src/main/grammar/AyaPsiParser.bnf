@@ -353,7 +353,7 @@ atomPattern ::= atomListPattern
               | LPAREN RPAREN
               | atomBindPattern
               | CALM_FACE
-atomListPattern ::= LARRAY patterns? RARRAY (KW_AS weakId)?
+atomListPattern ::= LARRAY patterns? RARRAY
 atomBindPattern ::= weakId {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl.AtomBindPattern"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"

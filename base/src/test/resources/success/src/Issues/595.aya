@@ -1,0 +1,20 @@
+open import Paths
+
+open data Nat | O | S Nat
+def what (n : Nat) : Nat | (O) as o => o | (S n) as sn => sn
+
+def normalize (a : Nat) : what a = a
+| O => idp
+| S n => idp
+
+open data ImCtor (A : Type)
+| imCtor {A}
+
+def elimIt {A : Type} (x : ImCtor A) : A
+| imCtor {a} => a
+
+def matchIt {A : Type} (x : ImCtor A) : Pi A -> A
+| {A} as A', imCtor {a as a'} => \ (x : A') => a'
+
+def proofIt (A : Type) (x : ImCtor A) (a : A) : matchIt x a = elimIt x
+| A, imCtor {a'}, a => idp

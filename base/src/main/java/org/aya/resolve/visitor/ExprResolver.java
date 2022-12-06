@@ -229,17 +229,9 @@ public record ExprResolver(
             ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
             yield bind;
           }
-          case Pattern.Tuple tuple -> {
-            ctx.set(bindAs(tuple.as(), ctx.get(), tuple.sourcePos()));
-            yield tuple;
-          }
-          case Pattern.BinOpSeq seq -> {
-            ctx.set(bindAs(seq.as(), ctx.get(), seq.sourcePos()));
-            yield seq;
-          }
-          case Pattern.List list -> {
-            ctx.set(bindAs(list.as(), ctx.get(), list.sourcePos()));
-            yield list;
+          case Pattern.As as -> {
+            ctx.set(bindAs(as.as(), ctx.get(), as.sourcePos()));
+            yield as;
           }
           default -> EndoPattern.super.post(pattern);
         };
@@ -247,8 +239,8 @@ public record ExprResolver(
     }.apply(pattern);
   }
 
-  private static Context bindAs(LocalVar as, Context ctx, SourcePos sourcePos) {
-    return as != null ? ctx.bind(as, sourcePos) : ctx;
+  private static Context bindAs(@NotNull LocalVar as, @NotNull Context ctx, @NotNull SourcePos sourcePos) {
+    return ctx.bind(as, sourcePos);
   }
 
   public @NotNull Expr.Param resolve(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {

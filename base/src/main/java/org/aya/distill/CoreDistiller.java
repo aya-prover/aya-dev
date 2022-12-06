@@ -229,7 +229,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Ctor ctor -> {
         var ctorDoc = visitCalls(ctor.ref(), CON_CALL, ctor.params().view().map(Pat::toArg), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitPats));
-        yield ctorDoc(outer, ctor.explicit(), ctorDoc, null, ctor.params().isEmpty());
+        yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.params().isEmpty());
       }
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
       case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),

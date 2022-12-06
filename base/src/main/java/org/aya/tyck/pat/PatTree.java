@@ -28,7 +28,7 @@ public record PatTree(
     var childPatterns = children.isEmpty()
       ? ImmutableSeq.<Arg<Pattern>>fill(argsCount, new Arg<>(new Pattern.Bind(SourcePos.NONE, new LocalVar("_")), true))
       : children.view().map(PatTree::toPattern).toImmutableSeq();
-    var ctor = new Pattern.Ctor(SourcePos.NONE, new WithPos<>(SourcePos.NONE, new LocalVar(s)), childPatterns, null);
+    var ctor = new Pattern.Ctor(SourcePos.NONE, new WithPos<>(SourcePos.NONE, new LocalVar(s)), childPatterns);
     return new Arg<>(ctor, explicit);
   }
 
