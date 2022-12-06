@@ -5,3 +5,8 @@ def sum (List Nat) : Nat
   | nil => 0
   | suc x :< xs => suc (sum (x :< xs))
   | 0 :< xs => sum xs
+
+// interleaved arguments
+def add Nat Nat : Nat
+  | suc a, b => suc (add b a)   // swap arguments
+  | zero,  b => b

@@ -32,21 +32,3 @@ open data Forest (A : Type) : Type
   | empty
   | infixr :< (Rose A) (Forest A)
 
-def ack Nat Nat : Nat
-  | 0, n      => suc n
-  | suc m, 0  => ack m 1
-  | suc m, suc n => ack m (ack (suc m) n)
-
-def f Nat : Nat
-  | 0 => zero
-  | suc n => g (suc n)
-
-def g Nat : Nat
-  | zero => 0
-  | suc n => f n
-
-// interleaved arguments
-def add Nat Nat : Nat
-  | suc a, b => suc (add b a)   // swap arguments
-  | zero,  b => b
-
