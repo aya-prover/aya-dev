@@ -1,5 +1,5 @@
 open import Arith::Nat
-open import Data::Bool
+open import Arith::Bool
 
 def odd Nat : Bool
   | zero => false

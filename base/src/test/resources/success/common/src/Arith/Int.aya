@@ -1,5 +1,5 @@
 public open import Arith::Nat
-public open import Data::Bool
+public open import Arith::Bool
 open import Paths
 open import Algebra::Formula
 

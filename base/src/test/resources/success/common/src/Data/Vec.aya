@@ -1,6 +1,6 @@
 open import Arith::Nat
 open import Sets::Fin
-open import Data::List
+open import Data::List hiding (++, ++-assoc, !!)
 open import Paths
 
 public open data Vec (A : Type) (n : Nat) : Type
@@ -14,23 +14,22 @@ def vmap (f : A -> B) (xs : Vec A n) : Vec B n
 | f, vnil => vnil
 | f, x :> xs => f x :> vmap f xs
 
-def overlap infix ++v (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
+def overlap infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 | vnil, ys => ys
 | xs, vnil => xs
-| x :> xs, ys => x :> (xs ++v ys)
+| x :> xs, ys => x :> (xs ++ ys)
 tighter =
 
-def overlap ++v-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
-  : Path (\i => Vec A (+-assoc i)) ((xs ++v ys) ++v zs) (xs ++v (ys ++v zs))
+def overlap ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
+  : Path (\i => Vec A (+-assoc i)) ((xs ++ ys) ++ zs) (xs ++ (ys ++ zs))
 | vnil, ys, zs => idp
 | xs, vnil, zs => idp
 | xs, ys, vnil => idp
-// | x :> xs, ys, zs => pmapd (Vec _) (x :>) (++v-assoc xs ys zs)
-| x :> xs, ys, zs => \i => x :> (++v-assoc xs ys zs) i
+| x :> xs, ys, zs => pmapd (Vec _) (x :>) (++-assoc xs ys zs)
 
-def infix !!v (l : Vec A n) (i : Fin n) : A
+def infix !! (l : Vec A n) (i : Fin n) : A
 | a :> l, fzero => a
-| a :> l, fsuc i => l !!v i
+| a :> l, fsuc i => l !! i
 
 def fold (f : Pi B A -> B) (init : B) (xs : Vec A n) : B
 | f, init, vnil => init
