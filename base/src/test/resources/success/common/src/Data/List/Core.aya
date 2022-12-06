@@ -1,6 +1,5 @@
 open import Paths
-open import Arith::Nat
-open import Sets::Fin
+open import Arith::Fin
 open import Algebra::Formula
 
 public open data List (A : Type) : Type

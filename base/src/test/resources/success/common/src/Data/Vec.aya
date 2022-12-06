@@ -1,5 +1,4 @@
-open import Arith::Nat
-open import Sets::Fin
+open import Arith::Fin
 open import Data::List hiding (++, ++-assoc, !!)
 open import Paths
 
@@ -40,6 +39,9 @@ def last (Vec A (suc n)) : A
 // | _ :> xs => last xs
 // ^ The purpose of #243 is to make this work
 | _ :> (x :> xs) => last (x :> xs)
+
+def head (Vec A (suc n)) : A
+| x :> _ => x
 
 def tail (Vec A (suc n)) : Vec A n
 | _ :> xs => xs
