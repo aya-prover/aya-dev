@@ -77,6 +77,8 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case Expr.LitString lit -> add(acc, HighlightInfo.LitKind.String.toLit(lit.sourcePos()));
       case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(),
         Option.ofNullable(ref.theCore().get()).map(ExprTycker.Result::type).getOrNull()));
+      case Expr.Lambda lam -> tryLinkLocalDef(acc, lam.param());
+      case Expr.Pi pi -> tryLinkLocalDef(acc, pi.param());
       default -> StmtFolder.super.fold(acc, expr);
     };
   }
@@ -107,8 +109,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case Decl decl -> {
         var declType = declType(decl);
         acc = declType._2
-          .filterNot(p -> p._1.isGenerated())
-          .foldLeft(acc, (ac, p) -> add(ac, linkDef(p._1.definition(), p._1, p._2)));
+          .foldLeft(acc, (ac, p) -> tryLinkLocalDef(ac, p._1, p._2));
         yield add(acc, linkDef(decl.sourcePos(), decl.ref(), declType._1));
       }
     };
@@ -129,6 +130,25 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     if (var instanceof DefVar<?, ?> defVar && defVar.core instanceof Def def)
       return PiTerm.make(def.telescope(), def.result());
     return null;
+  }
+
+  private @NotNull MutableList<HighlightInfo> tryLinkLocalDef(
+    @NotNull MutableList<HighlightInfo> acc,
+    @NotNull Expr.Param param
+  ) {
+    return tryLinkLocalDef(acc, param.ref(), param.type());
+  }
+
+  private @NotNull MutableList<HighlightInfo> tryLinkLocalDef(
+    @NotNull MutableList<HighlightInfo> acc,
+    @NotNull LocalVar var,
+    @Nullable AyaDocile type
+  ) {
+    if (var.isGenerated()) {
+      return acc;
+    }
+
+    return add(acc, linkDef(var.definition(), var, type));
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
