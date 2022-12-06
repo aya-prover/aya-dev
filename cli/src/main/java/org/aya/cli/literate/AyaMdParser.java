@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class AyaMdParser {
   public static final char LINE_SEPARATOR = '\n';
-  private final @NotNull String code;
 
   /** For empty line that end with \n, the index points to \n */
   private final @NotNull ImmutableSeq<Integer> linesIndex;
@@ -35,9 +34,8 @@ public class AyaMdParser {
 
   public AyaMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
     this.file = file;
-    this.code = StringUtil.trimCRLF(file.sourceCode());
     this.reporter = reporter;
-    this.linesIndex = StringUtil.indexedLines(code).map(x -> x._1);
+    this.linesIndex = StringUtil.indexedLines(file.sourceCode()).map(x -> x._1);
   }
 
   public @NotNull Literate parseLiterate() {
@@ -46,7 +44,7 @@ public class AyaMdParser {
       .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
       .postProcessor(FillCodeBlock.INSTANCE)
       .build();
-    return mapAST(parser.parse(code));
+    return mapAST(parser.parse(file.sourceCode()));
   }
 
   /**
@@ -55,9 +53,9 @@ public class AyaMdParser {
    * <p>
    * Another strategy: create a lexer that can tokenize some pieces of source code
    */
-  public static @NotNull String extractAya(@NotNull Literate literate) {
+  public @NotNull String extractAya(@NotNull Literate literate) {
     var codeBlocks = new LiterateConsumer.AyaCodeBlocks(MutableList.create()).extract(literate);
-    var builder = new StringBuilder();
+    var builder = new StringBuilder(file.sourceCode().length());
     var index = -1;  // current index (the index of the last character)
     var line = 1;   // current line (1 based)
 
