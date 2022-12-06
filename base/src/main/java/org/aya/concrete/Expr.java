@@ -45,12 +45,15 @@ import java.util.function.UnaryOperator;
 public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr> {
   @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f);
   /**
+   * Do !!!NOT!!! use in the type checker.
+   * This is solely for cosmetic features, such as literate mode inline expressions, or repl.
+   *
    * @see org.aya.concrete.stmt.Stmt#resolve
    * @see StmtShallowResolver
    */
   @Contract(pure = true)
-  default Expr resolve(@NotNull ModuleContext context) {
-    var exprResolver = new ExprResolver(context, ExprResolver.RESTRICTIVE);
+  default Expr resolveLax(@NotNull ModuleContext context) {
+    var exprResolver = new ExprResolver(context, ExprResolver.LAX);
     exprResolver.enterBody();
     return exprResolver.apply(this);
   }
@@ -276,7 +279,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   }
 
   static @NotNull Expr unlam(@NotNull Expr expr, int max, @NotNull Consumer<Param> params) {
-    while (expr instanceof Lambda lambda && max --> 0) {
+    while (expr instanceof Lambda lambda && max-- > 0) {
       params.accept(lambda.param);
       expr = lambda.body;
     }

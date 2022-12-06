@@ -74,7 +74,7 @@ public class ReplCompiler {
   }
 
   private @NotNull ExprTycker.Result tyckExpr(@NotNull Expr expr) {
-    var resolvedExpr = expr.resolve(context);
+    var resolvedExpr = expr.resolveLax(context);
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var tycker = new ExprTycker(primFactory, shapeFactory, delayedReporter, null);
@@ -177,7 +177,7 @@ public class ReplCompiler {
 
   public @Nullable FnDef codificationObject(@NotNull String text) {
     var parseTree = new AyaParserImpl(reporter).expr(text, SourcePos.NONE);
-    if (parseTree.resolve(context) instanceof Expr.Ref ref
+    if (parseTree.resolveLax(context) instanceof Expr.Ref ref
       && ref.resolvedVar() instanceof DefVar<?, ?> defVar
       && defVar.core instanceof FnDef fn
       && fn.body.isLeft()) {
