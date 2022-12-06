@@ -4,6 +4,7 @@ package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
+import kala.tuple.Tuple;
 import kala.value.MutableValue;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -50,9 +51,16 @@ public record CallResolver(
 
   private void fillMatrix(@NotNull Callable callable, @NotNull Def callee, CallMatrix<Def, Term.Param> matrix) {
     var matching = currentMatching.get();
-    if (matching == null) return;
-    for (var domThing : matching.patterns().zipView(caller.telescope)) {
-      for (var codomThing : callable.args().zipView(callee.telescope())) {
+    var domThings = matching != null
+      // If we are in a matching, the caller is defined by pattern matching.
+      // We should compare patterns with callee arguments.
+      ? matching.patterns().zipView(caller.telescope)
+      // No matching, the caller is a simple function (not defined by pattern matching).
+      // We should compare caller telescope with callee arguments.
+      : caller.telescope.view().map(p -> Tuple.of(p.toPat(), p));
+    var codomThings = callable.args().zip(callee.telescope());
+    for (var domThing : domThings) {
+      for (var codomThing : codomThings) {
         var relation = compare(codomThing._1.term(), domThing._1);
         matrix.set(domThing._2, codomThing._2, relation);
       }
