@@ -85,11 +85,10 @@ public class AyaMdParser {
 
       // We are at the line above the code block --- The '```' line
       // reach to indexTarget - 1 (1 is for line separator)
-      while (index < indexTarget - 1) {
-        index++;
-        // It is impossible that we only append one or no '/', because a code block always start with three '`'
-        builder.append('/');
-      }
+
+      // It is impossible that we only append one or no '/', because a code block always start with three '`'
+      builder.append("/".repeat(indexTarget - 1 - index));
+      index = indexTarget - 1;
 
       var content = block.raw;
       // index = indexTarget - 1
