@@ -57,7 +57,7 @@ private def diag Nat : Type
 
 private def *-comm-lemma : Commutative (*)
 | 0, n => idp
-// | m, 0 => idp
+| m, 0 => idp
 | suc m, n => pmap (n +) *-comm <==> *-suc
 // | m, suc n => sym *-suc <==> pmap (m +) *-comm
 def inline *-comm {m n : Nat} => *-comm-lemma m n
