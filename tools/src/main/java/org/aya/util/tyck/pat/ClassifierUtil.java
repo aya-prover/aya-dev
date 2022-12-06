@@ -28,9 +28,9 @@ public interface ClassifierUtil<Subst, Term, Param, Pat, Var> {
   ) {
     if (params.isEmpty()) return ImmutableSeq.of(new PatClass<>(
       ImmutableSeq.empty(), Indexed.indices(clauses)));
-    var first = params.first();
+    var first = params.getFirst();
     var cls = classify1(subst, subst(subst, first),
-      clauses.mapIndexed((ix, it) -> new Indexed<>(normalize(it.pat().first()), ix)), fuel);
+      clauses.mapIndexed((ix, it) -> new Indexed<>(normalize(it.pat().getFirst()), ix)), fuel);
     return cls.flatMap(subclauses ->
       classifyN(add(subst, ref(first), subclauses.term().term()),
         // Drop heads of both

@@ -76,7 +76,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
     var subst = new Subst();
     for (var iter = it.iterator(); iter.hasNext(); ) {
       var item = iter.next();
-      var first = againstTele.first().subst(subst);
+      var first = againstTele.getFirst().subst(subst);
       var result = inherit.apply(item, first.type());
       items.append(new Arg<>(result, first.explicit()));
       var ref = first.ref();

@@ -260,7 +260,7 @@ public record AyaProducer(
   ) {
     public @Nullable String checkName(@NotNull AyaProducer self, boolean require) {
       if (name != null) return name;
-      if (require) return self.error(node.childrenView().first(), "Expect a name");
+      if (require) return self.error(node.childrenView().getFirst(), "Expect a name");
       return Constants.randomName(info.sourcePos());
     }
   }
@@ -290,7 +290,7 @@ public record AyaProducer(
     if (name == null) return null;
 
     var fnBodyNode = node.peekChild(FN_BODY);
-    if (fnBodyNode == null) return error(node.childrenView().first(), "Expect a function body");
+    if (fnBodyNode == null) return error(node.childrenView().getFirst(), "Expect a function body");
     var dynamite = fnBody(fnBodyNode);
     if (dynamite == null) return null;
     var inline = info.modifier.misc(ModifierParser.Modifier.Inline);
@@ -351,7 +351,7 @@ public record AyaProducer(
       dataCtorClause.child(DATA_CTOR));
     var dataCtor = node.peekChild(DATA_CTOR);
     if (dataCtor != null) return dataCtor(ImmutableSeq.empty(), dataCtor);
-    return error(node.childrenView().first(), "Expect a data constructor");
+    return error(node.childrenView().getFirst(), "Expect a data constructor");
   }
 
   public @Nullable ClassDecl classDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
@@ -385,7 +385,7 @@ public record AyaProducer(
 
   public @Nullable TeleDecl.PrimDecl primDecl(@NotNull GenericNode<?> node) {
     var nameEl = node.peekChild(PRIM_NAME);
-    if (nameEl == null) return error(node.childrenView().first(), "Expect a primitive's name");
+    if (nameEl == null) return error(node.childrenView().getFirst(), "Expect a primitive's name");
     var id = weakId(nameEl.child(WEAK_ID));
     return new TeleDecl.PrimDecl(
       id.sourcePos(),
@@ -668,7 +668,7 @@ public record AyaProducer(
     }
     if (node.is(TUPLE_IM_ARGUMENT)) {
       var items = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
-      if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.first()));
+      if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.getFirst()));
       var tupExpr = new Expr.Tuple(sourcePosOf(node), items);
       return new Expr.NamedArg(false, tupExpr);
     }
@@ -721,7 +721,7 @@ public record AyaProducer(
     // when no as, entirePos == innerPatternPos
 
     Arg<Pattern> pattern = unitPats.sizeEquals(1)
-      ? unitPats.first()
+      ? unitPats.getFirst()
       : new Arg<>(new Pattern.BinOpSeq(innerPatternPos, unitPats), true);
     return as.isDefined()
       ? Pattern.As.wrap(entirePos, pattern, as.get())
@@ -740,11 +740,11 @@ public record AyaProducer(
       child = child.child(COMMA_SEP);
       var patterns = patterns(child);
       var pat = patterns.sizeEquals(1)
-        ? newBinOPScope(patterns.first().term(), explicit)
+        ? newBinOPScope(patterns.getFirst().term(), explicit)
         : new Pattern.Tuple(sourcePosOf(node), patterns);
       return new Arg<>(pat, explicit);
     });
-    return new Arg<>(atomPattern(node.childrenView().first()), true);
+    return new Arg<>(atomPattern(node.childrenView().getFirst()), true);
   }
 
   private @NotNull Pattern atomPattern(@NotNull GenericNode<?> node) {

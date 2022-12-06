@@ -97,7 +97,7 @@ public sealed abstract class UnifiedTycker extends LetListTycker permits ExprTyc
     } else if (whnf(lower) instanceof PathTerm cube && cube.params().sizeEquals(1)) {
       // TODO: also support n-ary path
       if (upperWHNF instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
-        var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
+        var lamBind = new RefTerm(new LocalVar(cube.params().getFirst().name()));
         var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
         var inner = inheritFallbackUnify(pi.substBody(lamBind),
           new Result.Default(body, cube.substType(SeqView.of(lamBind))), loc);

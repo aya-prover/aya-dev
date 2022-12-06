@@ -4,6 +4,7 @@ package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.function.BooleanObjBiFunction;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.LiterateData;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.function.BiFunction;
 
 public sealed interface SingleAyaFile extends GenericAyaFile {
   private static @Nullable CompilerFlags.PrettyInfo parsePrettyInfo(@NotNull CompilerFlags flags) {
@@ -69,7 +69,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
       doWrite(doc, prettyDir, flags.prettierOptions(), fileName, out.fileExt,
-        (d, hdr) -> renderOptions.render(out, d, flags.backendOpts(hdr)));
+        (hdr, d) -> renderOptions.render(out, d, flags.backendOpts(hdr)));
     }
   }
   @VisibleForTesting default @NotNull Doc toDoc(
@@ -83,7 +83,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   private void doWrite(
     ImmutableSeq<? extends AyaDocile> doc, Path prettyDir,
     @NotNull PrettierOptions options, String fileName, String fileExt,
-    BiFunction<Doc, Boolean, String> toString
+    BooleanObjBiFunction<Doc, String> toString
   ) throws IOException {
     var docs = MutableList.<Doc>create();
     var eachPrettyDir = prettyDir.resolve(fileName + ".each");
@@ -93,9 +93,9 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       var thisDoc = item.toDoc(options);
       docs.append(thisDoc);
       if (item instanceof PrimDef) continue;
-      FileUtil.writeString(eachPrettyDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
+      FileUtil.writeString(eachPrettyDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(false, thisDoc));
     }
-    FileUtil.writeString(prettyDir.resolve(fileName), toString.apply(Doc.vcat(docs), true));
+    FileUtil.writeString(prettyDir.resolve(fileName), toString.apply(true, Doc.vcat(docs)));
   }
 
   private static @NotNull String nameOf(int i, AyaDocile item) {

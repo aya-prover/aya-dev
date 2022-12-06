@@ -93,7 +93,7 @@ public record PathTerm(
         case LamTerm lam -> {
           // TODO: replace with error report¿
           assert lam.param().explicit();
-          pLam = AppTerm.make(lam, new Arg<>(args.first(), true));
+          pLam = AppTerm.make(lam, new Arg<>(args.getFirst(), true));
           args = args.drop(1);
         }
         default -> {

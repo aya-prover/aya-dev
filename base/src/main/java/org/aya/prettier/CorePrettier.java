@@ -73,7 +73,7 @@ public class CorePrettier extends BasePrettier<Term> {
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case SigmaTerm(var params) -> {
-        var last = params.last();
+        var last = params.getLast();
         var doc = Doc.sep(
           Doc.styled(KEYWORD, Doc.symbol("Sig")),
           visitTele(params.dropLast(1), last.type(), Term::findUsages),
@@ -91,7 +91,7 @@ public class CorePrettier extends BasePrettier<Term> {
         if (body instanceof Callable call && call.ref() instanceof DefVar<?, ?> defVar) {
           var args = visibleArgsOf(call).view();
           while (params.isNotEmpty() && args.isNotEmpty()) {
-            if (checkUneta(args, params.last())) {
+            if (checkUneta(args, params.getLast())) {
               args = args.dropLast(1);
               params.removeLast();
             } else break;
@@ -248,7 +248,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
   /** @return if we can eta-contract the last argument */
   private boolean checkUneta(SeqView<Arg<Term>> args, LamTerm.Param param) {
-    var arg = args.last();
+    var arg = args.getLast();
     if (arg.explicit() != param.explicit()) return false;
     if (!(arg.term() instanceof RefTerm(var argVar))) return false;
     if (argVar != param.ref()) return false;

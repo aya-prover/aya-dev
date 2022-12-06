@@ -9,8 +9,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.range.primitive.IntRange;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
@@ -49,7 +47,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case Expr.Tuple expr -> Doc.parened(Doc.commaList(expr.items().view().map(e -> term(Outer.Free, e))));
       case Expr.BinOpSeq binOpSeq -> {
         var seq = binOpSeq.seq();
-        var first = seq.first().term();
+        var first = seq.getFirst().term();
         if (seq.sizeEquals(1)) yield term(outer, first);
         yield visitCalls(null,
           term(Outer.AppSpine, first),
@@ -147,7 +145,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         Doc.styled(KEYWORD, Doc.symbol("Sig")),
         visitTele(expr.params().dropLast(1)),
         Doc.symbol("**"),
-        term(Outer.Codomain, expr.params().last().type())), Outer.BinOp);
+        term(Outer.Codomain, expr.params().getLast().type())), Outer.BinOp);
       // ^ Same as Pi
       case Expr.Sort expr -> {
         var fn = Doc.styled(KEYWORD, expr.kind().name());
@@ -208,7 +206,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         var body = letsAndBody.component2();
         var oneLine = lets.sizeEquals(1);
         var letSeq = oneLine
-          ? visitLetBind(lets.first())
+          ? visitLetBind(lets.getFirst())
           : Doc.vcat(lets.view()
             .map(this::visitLetBind)
             // | f := g
@@ -274,7 +272,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case Pattern.QualifiedRef qref -> Doc.bracedUnless(Doc.plain(qref.qualifiedID().join()), licit);
       case Pattern.BinOpSeq(var pos, var param) -> {
         if (param.sizeEquals(1)) {
-          yield pattern(param.first(), outer);
+          yield pattern(param.getFirst(), outer);
         }
         var ctorDoc = visitMaybeCtorPatterns(param.view(), Outer.AppSpine, Doc.ALT_WS);
         yield ctorDoc(outer, licit, ctorDoc, param.sizeLessThanOrEquals(1));

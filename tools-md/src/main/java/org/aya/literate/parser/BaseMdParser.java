@@ -147,7 +147,7 @@ public class BaseMdParser {
   }
 
   protected Literate flatten(@NotNull Seq<Literate> children) {
-    return children.sizeEquals(1) ? children.first()
+    return children.sizeEquals(1) ? children.getFirst()
       : new Literate.Many(null, children.toImmutableSeq());
   }
 
@@ -169,7 +169,7 @@ public class BaseMdParser {
     codeBlocks = codeBlocks.filter(x -> x.sourcePos != null);
 
     var builder = new StringBuilder(file.sourceCode().length());
-    @Nullable Literate.CodeBlock next = codeBlocks.firstOrNull();
+    @Nullable Literate.CodeBlock next = codeBlocks.getFirstOrNull();
     codeBlocks = codeBlocks.drop(1);
 
     for (var idx = 0; idx < file.sourceCode().length(); ++idx) {
@@ -179,7 +179,7 @@ public class BaseMdParser {
         assert next.sourcePos != null : "Physical doesn't exist!!";
         if (next.sourcePos.tokenEndIndex() < idx) {
           assert idx - next.sourcePos.tokenEndIndex() == 1;
-          next = codeBlocks.firstOrNull();
+          next = codeBlocks.getFirstOrNull();
           codeBlocks = codeBlocks.drop(1);
         }
 
@@ -198,7 +198,7 @@ public class BaseMdParser {
 
   public @Nullable SourcePos fromSourceSpans(@NotNull Seq<SourceSpan> sourceSpans) {
     if (sourceSpans.isEmpty()) return null;
-    var startFrom = linesIndex.get(sourceSpans.first().getLineIndex());
+    var startFrom = linesIndex.get(sourceSpans.getFirst().getLineIndex());
 
     return fromSourceSpans(file, startFrom, sourceSpans);
   }

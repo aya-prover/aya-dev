@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.binop;
 
@@ -104,7 +104,7 @@ public abstract class BinOpParser<
     }
 
     assert prefixes.sizeEquals(1);
-    return prefixes.first().term();
+    return prefixes.getFirst().term();
   }
 
   protected abstract void reportAmbiguousPred(String op1, String op2, SourcePos pos);

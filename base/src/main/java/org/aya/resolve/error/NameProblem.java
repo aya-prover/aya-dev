@@ -194,7 +194,7 @@ public interface NameProblem extends Problem {
       var possible = didYouMean();
       if (possible.isEmpty()) return head;
       var tail = possible.sizeEquals(1)
-        ? Doc.sep(Doc.english("Did you mean:"), Doc.code(possible.first()))
+        ? Doc.sep(Doc.english("Did you mean:"), Doc.code(possible.getFirst()))
         : Doc.vcat(Doc.english("Did you mean:"),
           Doc.nest(2, Doc.vcat(possible.view().map(Doc::code))));
       return Doc.vcat(head, tail);

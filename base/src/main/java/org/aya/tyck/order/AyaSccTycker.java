@@ -60,7 +60,7 @@ public record AyaSccTycker(
   public @NotNull ImmutableSeq<TyckOrder> tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) {
     try {
       if (scc.isEmpty()) return ImmutableSeq.empty();
-      if (scc.sizeEquals(1)) checkUnit(scc.first());
+      if (scc.sizeEquals(1)) checkUnit(scc.getFirst());
       else checkMutual(scc);
       return ImmutableSeq.empty();
     } catch (SCCTyckingFailed failed) {
@@ -77,7 +77,7 @@ public record AyaSccTycker(
     // that is, what we did before https://github.com/aya-prover/aya-dev/pull/326
     var headerOrder = headerOrder(scc, unit);
     if (headerOrder.sizeEquals(1)) {
-      checkUnit(new TyckOrder.Body(headerOrder.first()));
+      checkUnit(new TyckOrder.Body(headerOrder.getFirst()));
     } else {
       var tyckTasks = headerOrder.view()
         .<TyckOrder>map(TyckOrder.Head::new)

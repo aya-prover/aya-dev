@@ -776,7 +776,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     var drop = params.drop(1);
     var subPos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
       drop.map(SourceNode::sourcePos));
-    return constructor.apply(sourcePos, params.first(),
+    return constructor.apply(sourcePos, params.getFirst(),
       buildNested(subPos, drop, body, constructor));
   }
 }

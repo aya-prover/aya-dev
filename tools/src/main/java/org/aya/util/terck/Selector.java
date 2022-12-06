@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.terck;
 
@@ -21,7 +21,7 @@ public interface Selector {
 
   static <A extends Candidate<A>> @NotNull Result<A> select(@NotNull A a, @NotNull SeqView<A> had) {
     if (had.isEmpty()) return new Evolve<>(SeqView.empty(), SeqView.empty());
-    var b = had.first();
+    var b = had.getFirst();
     var bs = had.drop(1);
     // The code below looks confusing on "what is better?".
     // In Relation class, we say `a` is better than `b` if a decreases more.
