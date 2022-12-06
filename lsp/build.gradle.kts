@@ -58,9 +58,7 @@ jlink {
   }
 }
 
-val jlinkTask = tasks.named("jlink")
 val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables") {
-  dependsOn(jlinkTask)
   from(file("src/main/shell")) {
     // https://ss64.com/bash/chmod.html
     fileMode = "755".toInt(8)
@@ -70,9 +68,14 @@ val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables") {
 }
 
 val copyAyaLibrary = tasks.register<Copy>("copyAyaLibrary") {
-  dependsOn(jlinkTask)
   from(rootProject.file("base/src/test/resources/success/common"))
   into(ayaImageDir.resolve("std"))
+}
+
+val jlinkTask = tasks.named("jlink")
+jlinkTask.configure {
+  dependsOn(copyAyaExecutables)
+  dependsOn(copyAyaLibrary)
 }
 
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
