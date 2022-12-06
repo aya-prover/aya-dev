@@ -79,6 +79,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
         Option.ofNullable(ref.theCore().get()).map(ExprTycker.Result::type).getOrNull()));
       case Expr.Lambda lam -> tryLinkLocalDef(acc, lam.param());
       case Expr.Pi pi -> tryLinkLocalDef(acc, pi.param());
+      case Expr.Sigma sigma -> sigma.params().foldLeft(acc, this::tryLinkLocalDef);
       default -> StmtFolder.super.fold(acc, expr);
     };
   }
