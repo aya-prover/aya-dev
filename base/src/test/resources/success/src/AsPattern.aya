@@ -1,0 +1,28 @@
+open import Paths
+
+open data ImNat | O | S {ImNat}
+
+def infixl + (m n : ImNat) : ImNat
+| O, n => n
+| S {m}, n => S {m + n}
+tighter =
+
+def moreComplex {x : ImNat} (y : ImNat) : ImNat
+| {O} as x, O as y => x + y
+| {O as x}, S {_} as y => x + y
+| {S {x' as x}}, O as y => S {x} + y
+| {S {x'} as x}, S {y' as y} => x + S {y}
+
+def zero => O
+def one => S {zero}
+def two => S {one}
+
+def normalize0 : moreComplex {zero} zero = zero => idp
+def normalize1 : moreComplex {zero} one  = one  => idp
+def normalize2 : moreComplex {one}  zero = one  => idp
+def normalize3 : moreComplex {one}  one  = two  => idp
+
+def doubleAs (x : ImNat) : ImNat
+| (x as y) as z => y + z
+
+def normalize4 : doubleAs one = two => idp
