@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
-import kala.collection.Seq;
 import kala.collection.SeqView;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.single.CompilerFlags;
@@ -12,10 +11,13 @@ import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.EmptyModuleLoader;
+import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,6 +27,11 @@ import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class AyaMdParserTest {
   public final static @NotNull Path TEST_DIR = Path.of("src", "test", "resources", "literate");
+
+  @BeforeEach public void setUp() throws IOException {
+    Files.createDirectories(TEST_DIR);
+    Global.NO_RANDOM_NAME = true;
+  }
 
   record Case(@NotNull String modName) {
     public final static @NotNull String PREFIX_EXPECTED = "expected-";
@@ -73,64 +80,54 @@ public class AyaMdParserTest {
     return new SourceFile(path.toFile().getName(), path, Files.readString(path));
   }
 
-  @Test public void testExtract() throws IOException {
-    var cases = Seq.of(
-      new Case("test"),
-      new Case("wow")
-    );
+  @ParameterizedTest
+  @ValueSource(strings = {"test", "wow"})
+  public void testExtract(String caseName) throws IOException {
+    var oneCase = new Case(caseName);
+    var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
+    var literate = SingleAyaFile.createLiterateFile(mdFile, ThrowingReporter.INSTANCE);
+    var actualCode = literate.codeFile().sourceCode();
+    Files.writeString(oneCase.ayaFile(), actualCode);
 
-    for (var oneCase : cases) {
-      var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
-      var literate = SingleAyaFile.createLiterateFile(mdFile, ThrowingReporter.INSTANCE);
-      var actualCode = literate.codeFile().sourceCode();
-      Files.writeString(oneCase.ayaFile(), actualCode);
+    var expPath = oneCase.expectedAyaFile();
 
-      var expPath = oneCase.expectedAyaFile();
+    if (!expPath.toFile().exists()) {
+      System.err.println("Test Data " + expPath + " doesn't exist, skip.");
+    } else {
+      var expAyaFile = file(expPath);
 
-      if (!expPath.toFile().exists()) {
-        System.err.println("Test Data " + expPath + " doesn't exist, skip.");
-      } else {
-        var expAyaFile = file(expPath);
-
-        assertLinesMatch(expAyaFile.sourceCode().lines(), actualCode.lines());
-      }
+      assertLinesMatch(expAyaFile.sourceCode().lines(), actualCode.lines());
     }
   }
 
-  @Test public void testHighlight() throws IOException {
-    var cases = Seq.of(
-      new Case("test"),
-      new Case("wow"),
-      new Case("heading"),
-      new Case("as")
-    );
+  @ParameterizedTest
+  @ValueSource(strings = {"test", "wow", "hoshino-said", "heading", "as"})
+  public void testHighlight(String caseName) throws IOException {
+    var oneCase = new Case(caseName);
+    var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
 
-    for (var oneCase : cases) {
-      var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
+    var literate = SingleAyaFile.createLiterateFile(mdFile, ThrowingReporter.INSTANCE);
 
-      var literate = SingleAyaFile.createLiterateFile(mdFile, ThrowingReporter.INSTANCE);
+    var stmts = literate.parseMe(new AyaParserImpl(ThrowingReporter.INSTANCE));
+    var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
+    var loader = EmptyModuleLoader.INSTANCE;
+    var info = loader.resolveModule(new PrimDef.Factory(), ctx, stmts, loader);
+    loader.tyckModule(null, info, null);
+    literate.tyckAdditional(info);
 
-      var stmts = literate.parseMe(new AyaParserImpl(ThrowingReporter.INSTANCE));
-      var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
-      var loader = EmptyModuleLoader.INSTANCE;
-      var info = loader.resolveModule(new PrimDef.Factory(), ctx, stmts, loader);
-      loader.tyckModule(null, info, null);
-      literate.tyckAdditional(info);
+    var doc = literate.docitfy(stmts).toDoc();
+    var expectedMd = doc.renderToAyaMd();
+    Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
+    Files.writeString(oneCase.outMdFile(), expectedMd);
 
-      var doc = literate.docitfy(stmts).toDoc();
-      var expectedMd = doc.renderToAyaMd();
-      Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
-      Files.writeString(oneCase.outMdFile(), expectedMd);
-
-      // test single file compiler
-      var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, null, null);
-      compiler.compile(oneCase.mdFile(), new CompilerFlags(
-        CompilerFlags.Message.ASCII, false, false, null, SeqView.empty(),
-        oneCase.outMdFile()
-      ), null);
-      var actualMd = Files.readString(oneCase.outMdFile());
-      assertLinesMatch(trim(expectedMd).lines(), trim(actualMd).lines());
-    }
+    // test single file compiler
+    var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, null, null);
+    compiler.compile(oneCase.mdFile(), new CompilerFlags(
+      CompilerFlags.Message.ASCII, false, false, null, SeqView.empty(),
+      oneCase.outMdFile()
+    ), null);
+    var actualMd = Files.readString(oneCase.outMdFile());
+    assertLinesMatch(trim(expectedMd).lines(), trim(actualMd).lines());
   }
 
   private @NotNull String trim(@NotNull String input) {

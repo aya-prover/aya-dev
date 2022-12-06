@@ -147,7 +147,7 @@ public record ExprResolver(
       case Expr.Unresolved(var pos, var name) -> switch (ctx.get(name)) {
         case GeneralizedVar generalized -> {
           if (!allowedGeneralizes.containsKey(generalized)) {
-            if (options.allowGeneralized()) {
+            if (options.allowGeneralized) {
               // Ordered set semantics. Do not expect too many generalized vars.
               var owner = generalized.owner;
               assert owner != null : "Sainty check";

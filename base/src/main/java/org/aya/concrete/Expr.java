@@ -5,12 +5,10 @@ package org.aya.concrete;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.function.TriFunction;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
-import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.PrimDef;
 import org.aya.distill.BaseDistiller;
@@ -57,9 +55,9 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   default Expr resolveLax(@NotNull ModuleContext context) {
     var resolver = new ExprResolver(context, ExprResolver.LAX);
     resolver.enterBody();
-    var view = resolver.allowedGeneralizes()
-      .valuesView().toImmutableSeq().view();
-    return Expr.buildLam(sourcePos(), view, resolver.apply(this));
+    var inner = resolver.apply(this);
+    var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq().view();
+    return Expr.buildLam(sourcePos(), view, inner);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
