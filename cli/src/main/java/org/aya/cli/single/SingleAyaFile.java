@@ -166,7 +166,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       SingleAyaFile.super.resolveAdditional(info);
       data.extractedExprs.forEach(c -> {
         assert c.expr != null;
-        c.expr = new Desugarer(info).apply(c.expr.resolve(info.thisModule()));
+        c.expr = new Desugarer(info).apply(c.expr.resolveLax(info.thisModule()));
       });
     }
 

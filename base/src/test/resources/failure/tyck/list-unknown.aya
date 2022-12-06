@@ -1,5 +1,5 @@
 open import Data::List::Core
-open import Data::Unit
+open import Sets::Unit
 
 def good : List Unit => [ ]
 def bad => [ ]

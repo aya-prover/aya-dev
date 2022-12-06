@@ -1,6 +1,6 @@
 open import Paths
 open import Arith::Nat
-open import Data::Bool
+open import Arith::Bool
 open import Data::Vec
 
 open data Nat2 | zero2 | suc2 Nat2

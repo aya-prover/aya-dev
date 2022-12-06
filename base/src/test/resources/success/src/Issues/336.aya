@@ -1,4 +1,4 @@
-open import Data::Unit
+open import Sets::Unit
 open data Data : Type 1
   | mkData (a : Type)
 

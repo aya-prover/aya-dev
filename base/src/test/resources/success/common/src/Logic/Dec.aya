@@ -1,5 +1,5 @@
 open import Logic::False
-open import Data::Bool
+open import Arith::Bool
 
 public open data Dec (P : Type)
 | yes P

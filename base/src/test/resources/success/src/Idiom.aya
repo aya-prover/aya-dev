@@ -1,4 +1,5 @@
 open import Data::List
+open import Data::List::Syntax
 open import Arith::Nat
 
 def result : List Nat => (| (+) [ 1, 2, 3 ]  [ 4, 5, 6 ] |)

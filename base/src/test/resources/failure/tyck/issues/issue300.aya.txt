@@ -1,6 +1,6 @@
 In file $FILE:4:20 ->
 
-  2 | open import Data::Unit
+  2 | open import Sets::Unit
   3 | def max (a : Sig Nat ** Nat) (b : Unit) : Nat
   4 |   | (zero, b), unit x => b
                           ^^

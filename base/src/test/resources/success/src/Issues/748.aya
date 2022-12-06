@@ -1,5 +1,5 @@
 open import Paths
 open import Spaces::Susp
-open import Data::Bool
+open import Arith::Bool
 
 def test => merid false <==> sym (merid true)

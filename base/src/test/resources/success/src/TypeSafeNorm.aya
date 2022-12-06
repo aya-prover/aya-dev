@@ -1,5 +1,5 @@
 open import Arith::Nat
-open import Data::Bool
+open import Arith::Bool
 
 open data TermTy | natT | boolT
 def termTy (t : TermTy) : Type 0

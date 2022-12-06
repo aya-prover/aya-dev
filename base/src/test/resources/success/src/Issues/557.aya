@@ -1,4 +1,5 @@
 open import Data::List
+open import Data::List::Syntax
 open import Arith::Nat
 open import Paths
 open import Nonsense::Test

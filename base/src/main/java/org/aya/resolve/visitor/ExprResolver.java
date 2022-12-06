@@ -54,8 +54,8 @@ public record ExprResolver(
     this(ctx, options, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), null);
   }
 
-  public static final @NotNull Options RESTRICTIVE = new Options(false, false);
-  public static final @NotNull Options LAX = new Options(true, true);
+  public static final @NotNull Options RESTRICTIVE = new Options(false);
+  public static final @NotNull Options LAX = new Options(true);
 
   @NotNull Expr.PartEl partial(@NotNull Context ctx, Expr.PartEl el) {
     return el.descent(enter(ctx));
@@ -262,9 +262,6 @@ public record ExprResolver(
     Head, Body
   }
 
-  /**
-   * @param allowLevels true for signatures, false for bodies
-   */
-  public record Options(boolean allowLevels, boolean allowGeneralized) {
+  public record Options(boolean allowGeneralized) {
   }
 }

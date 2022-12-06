@@ -77,6 +77,7 @@ public class CodeAttrProcessor implements DelimiterProcessor {
     var mode = NormalizeMode.NULL;
     var show = CodeOptions.ShowCode.Core;
     for (var s : DELIM.split(content.toString())) {
+      if (s.isBlank()) continue;
       var attribute = EQ.split(s, 2);
       if (attribute.length > 1) {
         var key = attribute[0];

@@ -1,7 +1,7 @@
 In file $FILE:3:15 ->
 
   1 | open import Arith::Nat::Core
-  2 | open import Data::Bool
+  2 | open import Arith::Bool
   3 | def u : Nat => true
                      ^--^
 
