@@ -144,7 +144,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     var mdFile = template.originalFile;
     var mdParser = new AyaMdParser(mdFile, reporter);
     var lit = mdParser.parseLiterate();
-    var ayaCode = AyaMdParser.extractAya(lit);
+    var ayaCode = mdParser.extractAya(lit);
     var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
     var code = new SourceFile(mdFile.display(), mdFile.underlying(), ayaCode);
     return new MarkdownAyaFile.Data(lit, exprs, code);

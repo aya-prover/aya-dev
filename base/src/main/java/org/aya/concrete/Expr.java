@@ -53,9 +53,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   @Contract(pure = true)
   default Expr resolveLax(@NotNull ModuleContext context) {
-    var exprResolver = new ExprResolver(context, ExprResolver.LAX);
-    exprResolver.enterBody();
-    return exprResolver.apply(this);
+    var resolver = new ExprResolver(context, ExprResolver.LAX);
+    resolver.enterBody();
+    var inner = resolver.apply(this);
+    var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq().view();
+    return Expr.buildLam(sourcePos(), view, inner);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

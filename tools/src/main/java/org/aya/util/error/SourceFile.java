@@ -3,6 +3,7 @@
 package org.aya.util.error;
 
 import kala.control.Option;
+import org.aya.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ public record SourceFile(
   @NotNull String sourceCode
 ) {
   public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {
-    return from(locator, path, Files.readString(path));
+    return from(locator, path, StringUtil.trimCRLF(Files.readString(path)));
   }
 
   public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path, @NotNull String sourceCode) {

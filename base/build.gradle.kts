@@ -11,6 +11,7 @@ dependencies {
   implementation("org.aya-prover", "commonmark", version = deps.getProperty("version.commonmark"))
   implementation("org.aya-prover.upstream", "ij-parsing-core", version = deps.getProperty("version.aya-upstream"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
+  testImplementation("org.junit.jupiter", "junit-jupiter-params", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
   testImplementation(project(":cli"))
   testImplementation(project(":lsp"))
