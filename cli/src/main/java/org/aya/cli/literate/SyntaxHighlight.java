@@ -89,8 +89,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case Pattern.Ctor ctor -> {
         var resolved = ctor.resolved().data();
         var type = varType(resolved);
-        acc = add(acc, linkRef(ctor.resolved().sourcePos(), resolved, type));
-        yield ctor.as() != null ? add(acc, linkDef(ctor.as().definition(), ctor.as(), type)) : acc;
+        yield add(acc, linkRef(ctor.resolved().sourcePos(), resolved, type));
       }
       default -> StmtFolder.super.fold(acc, pat);
     };

@@ -256,11 +256,7 @@ public final class PatTycker {
         // sig.result is a dummy term
         var sig = new Def.Signature<>(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
-        var as = tuple.as();
         var ret = new Pat.Tuple(licit, visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp).wellTyped.toImmutableSeq());
-        if (as != null) {
-          addPatSubst(as, ret, term);
-        }
         yield ret;
       }
       case Pattern.Ctor ctor -> {
@@ -276,12 +272,7 @@ public final class PatTycker {
         var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp).wellTyped.toImmutableSeq();
-        var as = ctor.as();
         var ret = new Pat.Ctor(licit, realCtor._3.ref(), patterns, dataCall);
-        if (as != null) {
-          // as pattern === let, so don't add to localCtx
-          addPatSubst(as, ret, term);
-        }
         yield ret;
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
@@ -311,7 +302,7 @@ public final class PatTycker {
         }
         yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
       }
-      case Pattern.List(var pos, var el, var as) -> {
+      case Pattern.List(var pos, var el) -> {
         // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !
         // Note: this is a special case (maybe), If there is another similar requirement,
         //       a PatternDesugarer is recommended.
@@ -320,10 +311,17 @@ public final class PatTycker {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined() && shape.get().shape() == AyaShape.LIST_SHAPE)
-            yield doTyck(new Pattern.FakeShapedList(pos, as, el, shape.get(), dataCall)
+            yield doTyck(new Pattern.FakeShapedList(pos, el, shape.get(), dataCall)
               .constructorForm(), term, licit, resultIsProp);
         }
         yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
+      }
+      case Pattern.As(var pos, var inner, var as) -> {
+        var innerPat = doTyck(inner, term, licit, resultIsProp);
+
+        addPatSubst(as, innerPat, term);
+
+        yield innerPat;
       }
       case Pattern.BinOpSeq ignored -> throw new InternalException("BinOpSeq patterns should be desugared");
     };

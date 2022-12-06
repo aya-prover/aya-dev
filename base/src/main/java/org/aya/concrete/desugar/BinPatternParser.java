@@ -23,17 +23,15 @@ import java.util.function.Function;
 
 public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Arg<Pattern>> {
   private final @NotNull ResolveInfo resolveInfo;
-  private final @Nullable LocalVar myAs;
 
-  public BinPatternParser(@NotNull ResolveInfo resolveInfo, @NotNull SeqView<Arg<@NotNull Pattern>> seq, @Nullable LocalVar as) {
+  public BinPatternParser(@NotNull ResolveInfo resolveInfo, @NotNull SeqView<Arg<@NotNull Pattern>> seq) {
     super(resolveInfo.opSet(), seq);
     this.resolveInfo = resolveInfo;
-    this.myAs = as;
   }
 
   @Override protected @NotNull BinOpParser<AyaBinOpSet, Pattern, Arg<Pattern>>
   replicate(@NotNull SeqView<Arg<@NotNull Pattern>> seq) {
-    return new BinPatternParser(resolveInfo, seq, myAs);
+    return new BinPatternParser(resolveInfo, seq);
   }
 
   private static final Arg<Pattern> OP_APP = new Arg<>(new Pattern.Bind(
@@ -75,7 +73,7 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Ar
   makeArg(@NotNull SourcePos pos, @NotNull Pattern func, @NotNull Arg<@NotNull Pattern> arg, boolean explicit) {
     // param explicit should be ignored since the BinOpSeq we are processing already specified the explicitness
     if (func instanceof Pattern.Ctor ctor) {
-      var newCtor = new Pattern.Ctor(pos, ctor.resolved(), ctor.params().appended(new Arg<>(arg.term(), arg.explicit())), myAs);
+      var newCtor = new Pattern.Ctor(pos, ctor.resolved(), ctor.params().appended(new Arg<>(arg.term(), arg.explicit())));
       return new Arg<>(newCtor, explicit);
     } else {
       opSet.reporter.report(new PatternProblem.UnknownCtor(func));

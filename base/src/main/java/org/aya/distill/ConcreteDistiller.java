@@ -241,12 +241,8 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
   public @NotNull Doc pattern(@NotNull Pattern pattern, boolean licit, Outer outer) {
     return switch (pattern) {
-      case Pattern.Tuple tuple -> {
-        var tup = Doc.licit(licit,
-          Doc.commaList(tuple.patterns().view().map(p -> pattern(p, Outer.Free))));
-        yield tuple.as() == null ? tup
-          : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
-      }
+      case Pattern.Tuple tuple -> Doc.licit(licit,
+        Doc.commaList(tuple.patterns().view().map(p -> pattern(p, Outer.Free))));
       case Pattern.Absurd $ -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);
       case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
       case Pattern.CalmFace $ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
@@ -254,27 +250,35 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Pattern.Ctor ctor -> {
         var name = linkRef(ctor.resolved().data(), CON_CALL);
         var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
-        yield ctorDoc(outer, licit, ctorDoc, ctor.as(), ctor.params().isEmpty());
+        yield ctorDoc(outer, licit, ctorDoc, ctor.params().isEmpty());
       }
-      case Pattern.BinOpSeq(var pos, var param, var as) -> {
+      case Pattern.BinOpSeq(var pos, var param) -> {
         if (param.sizeEquals(1)) {
           yield pattern(param.first(), outer);
         }
         var ctorDoc = visitMaybeCtorPatterns(param.view(), Outer.AppSpine, Doc.ALT_WS);
-        yield ctorDoc(outer, licit, ctorDoc, as, param.sizeLessThanOrEquals(1));
+        // TODO: ditto
+        yield ctorDoc(outer, licit, ctorDoc, param.sizeLessThanOrEquals(1));
       }
-      case Pattern.List list -> {
-        var listDoc = Doc.sep(
-          Doc.symbol("["),
-          Doc.commaList(list.elements().map(x -> pattern(x, true, Outer.Free))),
-          Doc.symbol("]")
+      case Pattern.List list -> Doc.sep(
+        Doc.symbol("["),
+        Doc.commaList(list.elements().map(x -> pattern(x, true, Outer.Free))),
+        Doc.symbol("]")
+      );
+      case Pattern.As as -> {
+        var asBind = Seq.of(
+          Doc.styled(KEYWORD, "as"),
+          linkDef(as.as())
         );
 
-        yield list.as() == null ? listDoc : Doc.sep(
-          listDoc,
-          Doc.styled(KEYWORD, "as"),
-          linkDef(list.as())
-        );
+        if (outer == Outer.AppSpine) {
+          // {pattern as bind}
+          var inner = pattern(as.pattern(), true, Outer.Free);
+          yield Doc.licit(licit, Doc.sep(SeqView.of(inner).concat(asBind)));
+        } else {
+          var inner = pattern(as.pattern(), licit, Outer.Free);
+          yield Doc.sep(SeqView.of(inner).concat(asBind));
+        }
       }
     };
   }

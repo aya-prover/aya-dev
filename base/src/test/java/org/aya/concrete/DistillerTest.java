@@ -57,6 +57,27 @@ public class DistillerTest {
       """);
   }
 
+  @Test
+  public void as() {
+    parseAndPretty("""
+      open data ImNat | O | S {n : ImNat}
+            
+      def matchIt {x : ImNat} (y : ImNat) : ImNat
+      | {O} as x, y => y
+      | {O as x}, S {_} as y => y
+      | {S x' as x}, S {y' as y} => S y
+      """, """
+      data ImNat
+        | O
+        | S {n : ImNat}
+      open ImNat hiding ()
+      def matchIt {x : ImNat} (y : ImNat) : ImNat
+        | {O} as x, y => y
+        | {O} as x, S {_} as y => y
+        | {S x'} as x, S {y' as y} => S y
+      """);
+  }
+
   // we test pretty instead of parsing
   public static void parseAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     ParseTest.parseAndPretty(code, pretty);

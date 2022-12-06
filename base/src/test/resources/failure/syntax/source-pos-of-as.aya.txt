@@ -1,0 +1,14 @@
+In file $FILE:5:8 ->
+
+  3 | 
+  4 | def matchIt (x : SomeType) : SomeType
+  5 | | con0 (100 as x') => con0 x'
+              ^-^
+
+Error: The literal
+         100
+       cannot be encoded as a term of type:
+         Unit
+
+1 error(s), 0 warning(s).
+What are you doing?

@@ -103,6 +103,7 @@ public interface AyaPsiElementTypes {
   IElementType ULIFT_ATOM = new AyaPsiElementType("ULIFT_ATOM");
   IElementType ULIFT_PREFIX = new AyaPsiElementType("ULIFT_PREFIX");
   IElementType UNIT_PATTERN = new AyaPsiElementType("UNIT_PATTERN");
+  IElementType UNIT_PATTERNS = new AyaPsiElementType("UNIT_PATTERNS");
   IElementType UNIV_EXPR = new AyaPsiElementType("UNIV_EXPR");
   IElementType USE_AS = new AyaPsiElementType("USE_AS");
   IElementType USE_HIDE = new AyaPsiElementType("USE_HIDE");

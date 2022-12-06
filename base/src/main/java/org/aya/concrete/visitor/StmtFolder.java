@@ -27,11 +27,9 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
 
   default @NotNull R fold(@NotNull R acc, @NotNull Pattern pat) {
     return switch (pat) {
-      case Pattern.Ctor ctor -> {
-        acc = fold(acc, ctor.resolved().data(), ctor.resolved().sourcePos());
-        yield ctor.as() != null ? fold(acc, ctor.as(), ctor.as().definition()) : acc;
-      }
+      case Pattern.Ctor ctor -> fold(acc, ctor.resolved().data(), ctor.resolved().sourcePos());
       case Pattern.Bind bind -> fold(acc, bind.bind(), bind.sourcePos());
+      case Pattern.As as -> fold(acc, as.as(), as.as().definition());
       default -> acc;
     };
   }

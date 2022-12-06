@@ -5,6 +5,8 @@ package org.aya.concrete.visitor;
 import org.aya.concrete.Pattern;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public interface EndoPattern {
   default @NotNull Pattern pre(@NotNull Pattern pattern) {
     return pattern;
