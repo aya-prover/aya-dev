@@ -1,4 +1,4 @@
-open import Data::Unit
+open import Sets::Unit
 
 open data UnitPred Unit | blah
 def mk (a : Unit) : UnitPred a => blah

@@ -1,5 +1,5 @@
 open import Arith::Nat
-open import Sets::Fin
+open import Arith::Fin
 
 def cover1 (f : Fin 0) : Nat
 

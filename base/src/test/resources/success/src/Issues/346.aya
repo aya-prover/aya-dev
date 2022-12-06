@@ -1,4 +1,4 @@
-open import Data::Unit
+open import Sets::Unit
 
 data Test {A : Type} (x : Unit) : Type
 | unit => test
