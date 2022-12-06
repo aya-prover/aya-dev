@@ -698,7 +698,7 @@ public record AyaGKProducer(
     // when no as, entirePos == innerPatternPos
 
     Arg<Pattern> pattern = unitPats.sizeEquals(1)
-      ? new Arg<>(unitPats.first().term(), unitPats.first().explicit())
+      ? unitPats.first()
       : new Arg<>(new Pattern.BinOpSeq(innerPatternPos, unitPats), true);
     return as.isDefined()
       ? Pattern.As.wrap(entirePos, pattern, as.get())
