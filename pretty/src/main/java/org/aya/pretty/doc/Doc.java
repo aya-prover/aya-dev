@@ -494,6 +494,7 @@ public sealed interface Doc extends Docile {
    * @return text document of the whole text
    */
   @Contract("_ -> new") static @NotNull Doc plain(String text) {
+    if (text.isEmpty()) return empty();
     return new PlainText(text);
   }
 

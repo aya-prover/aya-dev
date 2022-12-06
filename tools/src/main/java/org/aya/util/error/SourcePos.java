@@ -25,6 +25,10 @@ public record SourcePos(
   int endLine,
   int endColumn
 ) implements Comparable<SourcePos> {
+  public SourcePos {
+    assert tokenEndIndex >= tokenStartIndex;
+  }
+
   /** Single instance SourcePos for mocking tests and other usages. */
   public static final SourcePos NONE = new SourcePos(SourceFile.NONE, -1, -1, -1, -1, -1, -1);
   /** Source pos used in serialized core */
@@ -143,5 +147,13 @@ public record SourcePos(
 
   @Override public int compareTo(@NotNull SourcePos o) {
     return Integer.compare(tokenStartIndex, o.tokenStartIndex);
+  }
+
+  public boolean isEmpty() {
+    return size() <= 0;
+  }
+
+  private int size() {
+    return tokenEndIndex - tokenStartIndex;
   }
 }

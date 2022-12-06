@@ -43,14 +43,10 @@ public interface FaithfulDistiller {
 
     for (var current : highlights) {
       var parts = twoKnifeThreeParts(raw, base, current.sourcePos());
-      var plainPart = parts._1.isEmpty() ? Doc.empty() : Doc.plain(parts._1);
-      var highlightPart = parts._2.isEmpty() ? Doc.empty() : highlightOne(parts._2, current.type());
+      if (!parts._1.isEmpty()) docs.append(Doc.plain(parts._1));
+      var highlightPart = highlightOne(parts._2, current.type());
       var remainPart = parts._3;
       var newBase = parts._4;
-
-      if (plainPart != Doc.empty()) {
-        docs.append(plainPart);
-      }
 
       if (highlightPart != Doc.empty()) {
         // Hit if:
@@ -62,14 +58,13 @@ public interface FaithfulDistiller {
       base = newBase;
     }
 
-    if (!raw.isEmpty()) {
-      docs.append(Doc.plain(raw));
-    }
+    if (!raw.isEmpty()) docs.append(Doc.plain(raw));
 
     return Doc.cat(docs);
   }
 
   private static @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
+    if (raw.isEmpty()) return Doc.empty();
     return switch (highlight) {
       case HighlightInfo.SymDef symDef ->
         Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target(), hover(symDef.type()));
