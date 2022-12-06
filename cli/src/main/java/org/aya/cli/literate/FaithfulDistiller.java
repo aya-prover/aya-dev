@@ -3,6 +3,7 @@
 package org.aya.cli.literate;
 
 import com.intellij.openapi.util.text.StringUtil;
+import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
@@ -26,6 +27,24 @@ public interface FaithfulDistiller {
   @NotNull Style STYLE_FIELD_CALL = AyaStyleFamily.Key.FieldCall.preset();
   @NotNull Style STYLE_GENERALIZE = AyaStyleFamily.Key.Generalized.preset();
 
+  static void checkHighlights(@NotNull SeqLike<HighlightInfo> highlights) {
+    var lastEndIndex = -1;
+
+    for (var highlight : highlights) {
+      var sp = highlight.sourcePos();
+
+      if (!(sp.tokenStartIndex() <= sp.tokenEndIndex())) {
+        throw new IllegalArgumentException("Invalid source pos: " + sp);
+      }
+
+      if (!(lastEndIndex < sp.tokenStartIndex())) {
+        throw new IllegalArgumentException("Intersect with previous source pos: " + sp);
+      }
+
+      lastEndIndex = sp.tokenEndIndex();
+    }
+  }
+
   /**
    * Apply highlights to source code string.
    *
@@ -35,7 +54,10 @@ public interface FaithfulDistiller {
    * @param highlights the highlights for the source code
    */
   static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
-    return doHighlight(raw, base, highlights.sorted().distinct());
+    highlights = highlights.sorted().distinct();
+    checkHighlights(highlights);
+
+    return doHighlight(raw, base, highlights);
   }
 
   private static @NotNull Doc doHighlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
