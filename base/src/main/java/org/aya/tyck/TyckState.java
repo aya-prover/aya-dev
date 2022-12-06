@@ -8,10 +8,13 @@ import kala.collection.mutable.MutableSet;
 import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.MetaTerm;
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.util.InternalException;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.HoleProblem;
@@ -49,6 +52,10 @@ public record TyckState(
     switch (preEqn) {
       case TermEqn eqn ->
         new Unifier(eqn.cmp, reporter, !trying, trying, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
+      case IsTy isTy -> {
+        var univ = isTy.term.computeType(this, isTy.ctx).normalize(this, NormalizeMode.WHNF);
+        if (!(univ instanceof SortTerm)) throw new InternalException("There should be an error message");
+      }
     }
   }
 
@@ -59,7 +66,7 @@ public record TyckState(
       if (metas.containsKey(activeMeta.data())) {
         var usageCounter = new TermFolder.Usages(activeMeta.data());
         eqns.retainIf(eqn -> {
-          if (eqn.cata(usageCounter) > 0) {
+          if (eqn.fold(usageCounter) > 0) {
             solveEqn(reporter, tracer, eqn, true);
             return false;
           } else return true;
@@ -84,24 +91,41 @@ public record TyckState(
     }
   }
 
-  public void addEqn(@NotNull TermEqn eqn) {
+  public void addEqn(@NotNull Eqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
-    var consumer = new TermConsumer() {
+    eqn.consume(new TermConsumer() {
       @Override public void pre(@NotNull Term tm) {
         if (tm instanceof MetaTerm hole && !metas.containsKey(hole.ref()))
-          activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
+          activeMetas.append(new WithPos<>(eqn.pos(), hole.ref()));
         TermConsumer.super.pre(tm);
       }
-    };
-    consumer.accept(eqn.lhs);
-    consumer.accept(eqn.rhs);
+    });
     assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 
   public sealed interface Eqn extends AyaDocile {
-    int cata(@NotNull TermFolder<Integer> folder);
+    int fold(@NotNull TermFolder<Integer> folder);
+    void consume(@NotNull TermConsumer consumer);
     @NotNull SourcePos pos();
+  }
+
+  public record IsTy(
+    @NotNull Term term,
+    @Override @NotNull SourcePos pos,
+    @NotNull LocalCtx ctx
+  ) implements Eqn {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      return Doc.stickySep(Doc.code(term.toDoc(options)), Doc.plain("type"));
+    }
+
+    @Override public int fold(@NotNull TermFolder<Integer> folder) {
+      return folder.apply(term);
+    }
+
+    @Override public void consume(@NotNull TermConsumer consumer) {
+      consumer.accept(term);
+    }
   }
 
   public record TermEqn(
@@ -114,8 +138,13 @@ public record TyckState(
       return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
     }
 
-    @Override public int cata(@NotNull TermFolder<Integer> folder) {
+    @Override public int fold(@NotNull TermFolder<Integer> folder) {
       return folder.apply(lhs) + folder.apply(rhs);
+    }
+
+    @Override public void consume(@NotNull TermConsumer consumer) {
+      consumer.accept(lhs);
+      consumer.accept(rhs);
     }
   }
 }

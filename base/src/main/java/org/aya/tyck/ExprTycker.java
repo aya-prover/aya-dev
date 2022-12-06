@@ -633,9 +633,11 @@ public final class ExprTycker extends Tycker {
   private @NotNull TyResult doTy(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Hole hole -> {
-        var freshHole = localCtx.freshHole(SortTerm.Type0, Constants.randomName(hole), hole.sourcePos());
+        var freshHole = localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        // TODO: implement type-only hole
+        var local = new MapLocalCtx();
+        freshHole._1.ref().contextTele.forEach(p -> local.put(p.ref(), p.type()));
+        state.addEqn(new TyckState.IsTy(freshHole._1, hole.sourcePos(), local));
         yield new TyResult(freshHole._2, SortTerm.Type0);
       }
       case Expr.Sort sort -> {

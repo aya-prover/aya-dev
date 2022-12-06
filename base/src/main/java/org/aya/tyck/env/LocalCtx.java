@@ -21,10 +21,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Debug;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -121,7 +118,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     }
     return false;
   }
-  boolean isMeEmpty();
+  @ApiStatus.Internal boolean isMeEmpty();
   @Contract(" -> new") default @NotNull MapLocalCtx deriveMap() {
     return new MapLocalCtx(MutableLinkedHashMap.of(), this);
   }
