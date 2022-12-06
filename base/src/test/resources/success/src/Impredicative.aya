@@ -1,0 +1,4 @@
+def Nat => Pi (P : Prop) (P -> P) P -> P
+
+def zero : Nat => \P s z => z
+def suc (x : Nat) : Nat => \P s z => s (x P s z)

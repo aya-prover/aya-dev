@@ -3,6 +3,7 @@
 package org.aya.cli.literate;
 
 import com.intellij.openapi.util.text.StringUtil;
+import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
@@ -26,6 +27,24 @@ public interface FaithfulDistiller {
   @NotNull Style STYLE_FIELD_CALL = AyaStyleFamily.Key.FieldCall.preset();
   @NotNull Style STYLE_GENERALIZE = AyaStyleFamily.Key.Generalized.preset();
 
+  static void checkHighlights(@NotNull SeqLike<HighlightInfo> highlights) {
+    var lastEndIndex = -1;
+
+    for (var highlight : highlights) {
+      var sp = highlight.sourcePos();
+
+      if (!(sp.tokenStartIndex() <= sp.tokenEndIndex())) {
+        throw new IllegalArgumentException("Invalid source pos: " + sp);
+      }
+
+      if (!(lastEndIndex < sp.tokenStartIndex())) {
+        throw new IllegalArgumentException("Intersect with previous source pos: " + sp);
+      }
+
+      lastEndIndex = sp.tokenEndIndex();
+    }
+  }
+
   /**
    * Apply highlights to source code string.
    *
@@ -35,7 +54,12 @@ public interface FaithfulDistiller {
    * @param highlights the highlights for the source code
    */
   static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
-    return doHighlight(raw, base, highlights.sorted().distinct());
+    highlights = highlights.sorted().distinct();
+    checkHighlights(highlights);
+
+    return doHighlight(raw, base, highlights
+      .filter(h -> h.sourcePos() != SourcePos.NONE)
+      );
   }
 
   private static @NotNull Doc doHighlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
@@ -43,14 +67,10 @@ public interface FaithfulDistiller {
 
     for (var current : highlights) {
       var parts = twoKnifeThreeParts(raw, base, current.sourcePos());
-      var plainPart = parts._1.isEmpty() ? Doc.empty() : Doc.plain(parts._1);
-      var highlightPart = parts._2.isEmpty() ? Doc.empty() : highlightOne(parts._2, current.type());
+      if (!parts._1.isEmpty()) docs.append(Doc.plain(parts._1));
+      var highlightPart = highlightOne(parts._2, current.type());
       var remainPart = parts._3;
       var newBase = parts._4;
-
-      if (plainPart != Doc.empty()) {
-        docs.append(plainPart);
-      }
 
       if (highlightPart != Doc.empty()) {
         // Hit if:
@@ -62,14 +82,13 @@ public interface FaithfulDistiller {
       base = newBase;
     }
 
-    if (!raw.isEmpty()) {
-      docs.append(Doc.plain(raw));
-    }
+    if (!raw.isEmpty()) docs.append(Doc.plain(raw));
 
     return Doc.cat(docs);
   }
 
   private static @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
+    if (raw.isEmpty()) return Doc.empty();
     return switch (highlight) {
       case HighlightInfo.SymDef symDef ->
         Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target(), hover(symDef.type()));

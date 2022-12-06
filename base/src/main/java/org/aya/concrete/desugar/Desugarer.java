@@ -17,6 +17,7 @@ import org.aya.generic.SortKind;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
+import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         if (proj.resolvedVar() instanceof DefVar<?, ?> defVar
           && defVar.core instanceof PrimDef primDef
           && PrimDef.ID.projSyntax(primDef.id)) {
-          var restr = proj.restr() != null ? proj.restr() : new Expr.LitInt(proj.sourcePos(), 0);
+          var restr = proj.restr() != null ? proj.restr() : new Expr.LitInt(SourcePos.NONE, 0);
           var coe = new Expr.Coe(proj.sourcePos(), proj.id(), defVar, proj.tup(), restr);
           yield pre(proj.coeLeft() != null
             ? new Expr.App(proj.sourcePos(), coe, new Expr.NamedArg(true, proj.coeLeft()))

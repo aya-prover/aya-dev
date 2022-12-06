@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 public record HighlightInfo(
   @NotNull SourcePos sourcePos,
-  @NotNull HighlightInfo.HighlightSymbol type
+  @NotNull HighlightSymbol type
 ) implements Comparable<HighlightInfo> {
   @Override public int compareTo(@NotNull HighlightInfo o) {
     return sourcePos.compareTo(o.sourcePos);
@@ -21,11 +21,11 @@ public record HighlightInfo(
     Unknown;
 
     public @NotNull HighlightInfo toRef(@NotNull SourcePos sourcePos, int target, @Nullable AyaDocile type) {
-      return new HighlightInfo(sourcePos, new HighlightInfo.SymRef(target, this, type));
+      return new HighlightInfo(sourcePos, new SymRef(target, this, type));
     }
 
     public @NotNull HighlightInfo toDef(@NotNull SourcePos sourcePos, int target, @Nullable AyaDocile type) {
-      return new HighlightInfo(sourcePos, new HighlightInfo.SymDef(target, this, type));
+      return new HighlightInfo(sourcePos, new SymDef(target, this, type));
     }
   }
 
@@ -33,7 +33,7 @@ public record HighlightInfo(
     Int, String, Keyword;
 
     public @NotNull HighlightInfo toLit(@NotNull SourcePos sourcePos) {
-      return new HighlightInfo(sourcePos, new HighlightInfo.SymLit(this));
+      return new HighlightInfo(sourcePos, new SymLit(this));
     }
   }
 
@@ -41,19 +41,11 @@ public record HighlightInfo(
   }
 
   /** A reference to a symbol */
-  public record SymRef(
-    int target,
-    @NotNull HighlightInfo.DefKind kind,
-    @Nullable AyaDocile type
-  ) implements HighlightSymbol {
+  public record SymRef(int target, @NotNull DefKind kind, @Nullable AyaDocile type) implements HighlightSymbol {
   }
 
   /** A definition of a symbol */
-  public record SymDef(
-    int target,
-    @NotNull HighlightInfo.DefKind kind,
-    @Nullable AyaDocile type
-  ) implements HighlightSymbol {
+  public record SymDef(int target, @NotNull DefKind kind, @Nullable AyaDocile type) implements HighlightSymbol {
   }
 
   /** An error element */
@@ -61,6 +53,6 @@ public record HighlightInfo(
   }
 
   /** A literal */
-  public record SymLit(@NotNull HighlightInfo.LitKind kind) implements HighlightSymbol {
+  public record SymLit(@NotNull LitKind kind) implements HighlightSymbol {
   }
 }
