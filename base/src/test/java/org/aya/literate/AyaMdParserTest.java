@@ -101,7 +101,8 @@ public class AyaMdParserTest {
     var cases = Seq.of(
       new Case("test"),
       new Case("wow"),
-      new Case("heading")
+      new Case("heading"),
+      new Case("as")
     );
 
     for (var oneCase : cases) {

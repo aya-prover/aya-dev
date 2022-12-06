@@ -29,7 +29,7 @@ public interface StmtFolder<R> extends Function<Stmt, R> {
     return switch (pat) {
       case Pattern.Ctor ctor -> fold(acc, ctor.resolved().data(), ctor.resolved().sourcePos());
       case Pattern.Bind bind -> fold(acc, bind.bind(), bind.sourcePos());
-      case Pattern.As as -> fold(acc, as.as(), as.sourcePos());
+      case Pattern.As as -> fold(acc, as.as(), as.as().definition());
       default -> acc;
     };
   }
