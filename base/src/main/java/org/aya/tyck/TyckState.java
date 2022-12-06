@@ -44,21 +44,22 @@ public record TyckState(
    */
   public void solveEqn(
     @NotNull Reporter reporter, Trace.@Nullable Builder tracer,
-    @NotNull Eqn eqn, boolean trying
+    @NotNull Eqn preEqn, boolean trying
   ) {
-    new Unifier(eqn.cmp, reporter, !trying, trying, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
+    switch (preEqn) {
+      case TermEqn eqn ->
+        new Unifier(eqn.cmp, reporter, !trying, trying, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
+    }
   }
 
   /** @return true if <code>this.eqns</code> and <code>this.activeMetas</code> are mutated. */
-  public boolean simplify(
-    @NotNull Reporter reporter, @Nullable Trace.Builder tracer
-  ) {
+  public boolean simplify(@NotNull Reporter reporter, @Nullable Trace.Builder tracer) {
     var removingMetas = MutableList.<WithPos<Meta>>create();
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
         var usageCounter = new TermFolder.Usages(activeMeta.data());
         eqns.retainIf(eqn -> {
-          if (usageCounter.apply(eqn.lhs) + usageCounter.apply(eqn.rhs) > 0) {
+          if (eqn.cata(usageCounter) > 0) {
             solveEqn(reporter, tracer, eqn, true);
             return false;
           } else return true;
@@ -83,13 +84,13 @@ public record TyckState(
     }
   }
 
-  public void addEqn(@NotNull Eqn eqn) {
+  public void addEqn(@NotNull TermEqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
     var consumer = new TermConsumer() {
       @Override public void pre(@NotNull Term tm) {
         if (tm instanceof MetaTerm hole && !metas.containsKey(hole.ref()))
-            activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
+          activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
         TermConsumer.super.pre(tm);
       }
     };
@@ -98,14 +99,23 @@ public record TyckState(
     assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 
-  public record Eqn(
+  public sealed interface Eqn extends AyaDocile {
+    int cata(@NotNull TermFolder<Integer> folder);
+    @NotNull SourcePos pos();
+  }
+
+  public record TermEqn(
     @NotNull Term lhs, @NotNull Term rhs,
-    @NotNull Ordering cmp, @NotNull SourcePos pos,
+    @NotNull Ordering cmp, @Override @NotNull SourcePos pos,
     @NotNull LocalCtx localCtx,
     @NotNull Unifier.Sub lr, @NotNull Unifier.Sub rl
-  ) implements AyaDocile {
+  ) implements Eqn {
     public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
+    }
+
+    @Override public int cata(@NotNull TermFolder<Integer> folder) {
+      return folder.apply(lhs) + folder.apply(rhs);
     }
   }
 }

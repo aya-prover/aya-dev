@@ -51,11 +51,11 @@ public final class Unifier extends TermComparator {
     uneta = new Eta(ctx);
   }
 
-  private @NotNull TyckState.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
+  private @NotNull TyckState.TermEqn createEqn(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     var local = new MapLocalCtx();
     ctx.forward(local, lhs, state);
     ctx.forward(local, rhs, state);
-    return new TyckState.Eqn(lhs, rhs, cmp, pos, local, lr.clone(), rl.clone());
+    return new TyckState.TermEqn(lhs, rhs, cmp, pos, local, lr.clone(), rl.clone());
   }
 
   /**
@@ -167,7 +167,7 @@ public final class Unifier extends TermComparator {
     return Option.some(holeTy);
   }
 
-  public void checkEqn(@NotNull TyckState.Eqn eqn) {
+  public void checkEqn(@NotNull TyckState.TermEqn eqn) {
     compareUntyped(
       eqn.lhs().normalize(state, NormalizeMode.WHNF),
       eqn.rhs().normalize(state, NormalizeMode.WHNF),

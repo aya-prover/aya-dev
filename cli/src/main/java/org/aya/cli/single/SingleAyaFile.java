@@ -5,7 +5,7 @@ package org.aya.cli.single;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import org.aya.cli.Main;
+import kala.function.BooleanObjBiFunction;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.function.BiFunction;
 
 public sealed interface SingleAyaFile extends GenericAyaFile {
   private static @Nullable CompilerFlags.DistillInfo parseDistillInfo(@NotNull CompilerFlags flags) {
@@ -72,7 +71,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       FileUtil.writeString(distillDir.resolve(fileName), text);
     } else {
       doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
-        (d, hdr) -> renderOptions.render(out, d, hdr, withStyleDef, !flags.ascii()));
+        (hdr, d) -> renderOptions.render(out, hdr, d, withStyleDef, !flags.ascii()));
     }
   }
   @VisibleForTesting default @NotNull Doc docitfy(ImmutableSeq<Stmt> program) throws IOException {
@@ -85,7 +84,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   private void doWrite(
     ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
     @NotNull DistillerOptions options, String fileName, String fileExt,
-    BiFunction<Doc, Boolean, String> toString
+    BooleanObjBiFunction<Doc, String> toString
   ) throws IOException {
     var docs = MutableList.<Doc>create();
     var eachDistillDir = distillDir.resolve(fileName + ".each");
@@ -95,9 +94,9 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       var thisDoc = item.toDoc(options);
       docs.append(thisDoc);
       if (item instanceof PrimDef) continue;
-      FileUtil.writeString(eachDistillDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
+      FileUtil.writeString(eachDistillDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(false, thisDoc));
     }
-    FileUtil.writeString(distillDir.resolve(fileName), toString.apply(Doc.vcat(docs), true));
+    FileUtil.writeString(distillDir.resolve(fileName), toString.apply(true, Doc.vcat(docs)));
   }
 
   private static @NotNull String nameOf(int i, AyaDocile item) {
