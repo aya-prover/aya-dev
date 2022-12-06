@@ -686,21 +686,29 @@ public record AyaGKProducer(
   }
 
   public @NotNull Arg<Pattern> pattern(@NotNull GenericNode<?> node) {
+    var innerPattern = node.child(UNIT_PATTERNS);
     var entirePos = sourcePosOf(node);
-    var unitPats = node.childrenOfType(UNIT_PATTERN)
-      .map(this::unitPattern)
-      .toImmutableSeq();
+    var innerPatternPos = sourcePosOf(innerPattern);
+
+    var unitPats = unitPatterns(innerPattern);
     var as = Option.ofNullable(node.peekChild(WEAK_ID))
       .map(this::weakId)
       .map(LocalVar::from);
-    // if (unitPats.sizeEquals(1)) return unitPats.first();
+
+    // when no as, entirePos == innerPatternPos
+
     Arg<Pattern> pattern = unitPats.sizeEquals(1)
       ? new Arg<>(unitPats.first().term(), unitPats.first().explicit())
-      // TODO: source pos: excluding `as pattern`
-      : new Arg<>(new Pattern.BinOpSeq(entirePos, unitPats), true);
+      : new Arg<>(new Pattern.BinOpSeq(innerPatternPos, unitPats), true);
     return as.isDefined()
       ? Pattern.As.wrap(entirePos, pattern, as.get())
       : pattern;
+  }
+
+  private @NotNull ImmutableSeq<Arg<Pattern>> unitPatterns(@NotNull GenericNode<?> node) {
+    return node.childrenOfType(UNIT_PATTERN)
+      .map(this::unitPattern)
+      .toImmutableSeq();
   }
 
   private Arg<Pattern> unitPattern(@NotNull GenericNode<?> node) {

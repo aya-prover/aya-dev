@@ -341,10 +341,11 @@ clause ::= patterns (IMPLIES expr)?
 patterns ::= <<commaSep pattern>>
 // size == 1 ==> the pattern
 // size > 1 ==> BinOpSeq of Arg<Pat>
-pattern ::= unitPattern+ (KW_AS weakId)?
+pattern ::= unitPatterns (KW_AS weakId)?
 
 // pattern.size == 1 ==> Arg<Pat>
 // pattern.size > 1 ==> Tuple
+unitPatterns ::= unitPattern+
 unitPattern ::= <<licit patterns>>
               | atomPattern
 // A Pattern

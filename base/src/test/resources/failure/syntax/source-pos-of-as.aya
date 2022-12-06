@@ -1,0 +1,6 @@
+open data Unit | unit
+open data SomeType | con0 Unit | con1 Unit
+
+def matchIt (x : SomeType) : SomeType
+| con0 (100 as x') => con0 x'
+| con1 _ as x' => x'
