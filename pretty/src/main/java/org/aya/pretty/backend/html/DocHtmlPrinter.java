@@ -125,13 +125,13 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text, Outer outer) {
     var href = text.href();
     cursor.invisibleContent("<a ");
-    if (text.id() != null) cursor.invisibleContent("id=\"" + text.id() + "\" ");
+    if (text.id() != null) cursor.invisibleContent("id=\"" + text.id().normalize() + "\" ");
     if (text.hover() != null) {
       cursor.invisibleContent("class=\"aya-hover\" ");
       cursor.invisibleContent("aya-type=\"" + text.hover() + "\" ");
     }
-    cursor.invisibleContent("href=\"");
-    cursor.invisibleContent(href.id());
+    cursor.invisibleContent("href=\"#");
+    cursor.invisibleContent(href.normalize());
     cursor.invisibleContent("\">");
     renderDoc(cursor, text.doc(), Outer.EnclosingTag);
     cursor.invisibleContent("</a>");

@@ -42,7 +42,7 @@ public class MdStyleTest {
   @NotNull private Doc doc() {
     return Doc.cat(
       Doc.styled(MdStyle.h(1), "H1"),
-      Doc.styled(MdStyle.GFM.Paragraph, Doc.hyperLink("Click me", new LinkId("https://google.com"))),
+      Doc.styled(MdStyle.GFM.Paragraph, Doc.hyperLink("Click me", new LinkId.FromString("https://google.com"))),
       Doc.styled(MdStyle.h(2), "H2"),
       Doc.styled(MdStyle.h(3), "H3"),
       Doc.styled(MdStyle.h(4), "H4"),
