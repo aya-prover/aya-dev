@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** @implNote Use {@link MutableList} instead of {@link SeqView} for performance consideration. */
+// TODO: Simplify the logic on handling variable declaration by using the improved Folder API.
 public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   /**
    * @param sourceFile If not null, provide keyword highlights too
@@ -67,7 +68,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   @Override
-  public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
+  public @NotNull MutableList<HighlightInfo> foldVarRef(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
     return add(acc, linkRef(pos, var, varType(var)));
   }
 
