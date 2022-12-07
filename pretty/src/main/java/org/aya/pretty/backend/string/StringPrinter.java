@@ -149,8 +149,7 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
   }
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {
-    var escaped = outer == Outer.Code ? content : escapePlainText(content, outer);
-    cursor.visibleContent(escaped);
+    cursor.visibleContent(escapePlainText(content, outer));
   }
 
   protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
