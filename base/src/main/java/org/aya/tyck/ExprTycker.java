@@ -53,9 +53,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -623,7 +623,7 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull TyResult doTy(@NotNull Expr expr, int upperBound) {
-    Function<TyResult, TyResult> checkBound = (TyResult result) -> {
+    UnaryOperator<TyResult> checkBound = result -> {
       if (upperBound != -1 && upperBound < result.type().lift())
         reporter.report(new LevelError(expr.sourcePos(), new SortTerm(SortKind.Type, upperBound), result.type(), true));
       return result;
@@ -634,6 +634,7 @@ public final class ExprTycker extends Tycker {
       case Expr.Hole hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
+        // TODO: this is definitely a bug
         yield checkBound.apply(new TyResult(freshHole._2, univ));
       }
       case Expr.Sort sort -> {
