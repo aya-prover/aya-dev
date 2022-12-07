@@ -93,8 +93,11 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     <pre class="Aya">
     """;
 
-  // https://developer.mozilla.org/en-US/docs/Glossary/Entity
-  public static final @NotNull Pattern entityPattern = Pattern.compile("[&<>\"]");
+  /**
+   * <a href="https://developer.mozilla.org/en-US/docs/Glossary/Entity">Mozilla doc: entity</a>
+   * Added backslash for vitepress compatibility.
+   */
+  public static final @NotNull Pattern entityPattern = Pattern.compile("[&<>\"\\\\]");
   public static final @NotNull ImmutableMap<String, String> entityMapping = ImmutableMap.of(
     "&", "&amp;",
     "<", "&lt;",

@@ -54,7 +54,7 @@ def forget (HTree A n) : AlmostTree A n
 | hBlack (rbBlack l x r) => (_, alBlack l x r)
 
 def insertBlack (Tree A black n) A (Decider A) : HTree A n
-| rbLeaf, x, dec< => hRed (rbRed rbLeaf x rbLeaf)
+| rbLeaf, x, _ => hRed (rbRed rbLeaf x rbLeaf)
 | rbBlack l y r, x, dec< => match dec< x y {
   | true => balanceLeftBlack (insertRed l x dec<) y r
   | false => balanceRightBlack l x (insertRed r x dec<)

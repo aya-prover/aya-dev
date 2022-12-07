@@ -30,14 +30,14 @@ def balanceRight Color (RBTree A) A (RBTree A) : RBTree A
 | c, l, v, b => rbNode c l v b
 
 def insert A (RBTree A) (Decider A) : RBTree A
-| a, rbLeaf, dec< => rbNode red rbLeaf a rbLeaf
+| a, rbLeaf, _ => rbNode red rbLeaf a rbLeaf
 | a, rbNode c l1 a1 l2, dec< => match dec< a1 a {
 | true => balanceRight c l1 a1 (insert a l2 dec<)
 | false => balanceLeft c (insert a l1 dec<) a1 l2
 }
 
 private def aux (List A) (RBTree A) (Decider A) : RBTree A
-| nil, r, dec< => r
+| nil, r, _ => r
 | a :< l, r, dec< => aux l (repaint (insert a r dec<)) dec<
 
 def tree-sort (dec< : Decider A) (l : List A) => rbTreeToList (aux l rbLeaf dec<) nil
