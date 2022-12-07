@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -143,7 +144,7 @@ public record PatClassifier(
   private static @NotNull Pat head(@NotNull MCT.SubPats<Pat> subPats) {
     var head = subPats.head();
     // This 'inline' is actually a 'dereference'
-    return head.inline(null);
+    return head.inline(null, UnaryOperator.identity());
   }
 
   /**

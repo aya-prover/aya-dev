@@ -44,7 +44,7 @@ public record Zonker(
         }
         yield pre(metas.get(sol));
       }
-      case MetaPatTerm metaPat -> metaPat.inline();
+      case MetaPatTerm metaPat -> metaPat.inline(this);
       case Term misc -> misc;
     };
   }

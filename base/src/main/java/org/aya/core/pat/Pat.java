@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.UnaryOperator;
+
 /**
  * Patterns in the core syntax.
  *
@@ -55,10 +57,11 @@ public sealed interface Pat extends AyaDocile {
   /**
    * Make sure you are inline all patterns in order
    *
-   * @param ctx when null, the solutions will not be inlined
+   * @param ctx     when null, the solutions will not be inlined
+   * @param inliner derefs all {@link org.aya.core.term.MetaPatTerm}
    * @return inlined patterns
    */
-  @NotNull Pat inline(@Nullable LocalCtx ctx);
+  @NotNull Pat inline(@Nullable LocalCtx ctx, UnaryOperator<Term> inliner);
   void storeBindings(@NotNull LocalCtx ctx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
     var localCtx = new SeqLocalCtx();
@@ -79,8 +82,10 @@ public sealed interface Pat extends AyaDocile {
       return new Bind(explicit, bind, tycker.zonk(type));
     }
 
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return this;
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx, UnaryOperator<Term> inliner) {
+      var newTy = inliner.apply(type);
+      if (newTy == type) return this;
+      return new Bind(explicit, bind, newTy);
     }
   }
 
@@ -108,7 +113,7 @@ public sealed interface Pat extends AyaDocile {
       throw new InternalException("unreachable");
     }
 
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx, UnaryOperator<Term> inliner) {
       var value = solution.get();
       if (value == null) {
         var type = PatTycker.inlineTerm(this.type);
@@ -119,7 +124,7 @@ public sealed interface Pat extends AyaDocile {
         ctx.put(fakeBind, type);
         return bind;
       } else {
-        return value.inline(ctx);
+        return value.inline(ctx, inliner);
       }
     }
 
@@ -134,7 +139,7 @@ public sealed interface Pat extends AyaDocile {
       return this;
     }
 
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx, UnaryOperator<Term> inliner) {
       return this;
     }
   }
@@ -151,8 +156,8 @@ public sealed interface Pat extends AyaDocile {
       return new Tuple(explicit, pats.map(pat -> pat.zonk(tycker)));
     }
 
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return new Tuple(explicit, pats.map(p -> p.inline(ctx)));
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx, UnaryOperator<Term> inliner) {
+      return new Tuple(explicit, pats.map(p -> p.inline(ctx, inliner)));
     }
   }
 
@@ -173,8 +178,8 @@ public sealed interface Pat extends AyaDocile {
         (DataCall) tycker.zonk(type));
     }
 
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      var params = this.params.map(p -> p.inline(ctx));
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx, UnaryOperator<Term> inliner) {
+      var params = this.params.map(p -> p.inline(ctx, inliner));
       return new Ctor(explicit, ref, params, (DataCall) PatTycker.inlineTerm(type));
     }
   }
@@ -186,7 +191,7 @@ public sealed interface Pat extends AyaDocile {
       return this;
     }
 
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx, UnaryOperator<Term> inliner) {
       return this;
     }
 
@@ -207,7 +212,7 @@ public sealed interface Pat extends AyaDocile {
       return new Pat.ShapedInt(repr, recognition, (DataCall) tycker.zonk(type), explicit);
     }
 
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
+    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx, UnaryOperator<Term> inliner) {
       // We are no need to inline type here, because the type of Nat doesn't (mustn't) have any type parameter.
       return this;
     }

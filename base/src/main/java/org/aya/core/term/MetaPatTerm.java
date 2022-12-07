@@ -5,9 +5,11 @@ package org.aya.core.term;
 import org.aya.core.pat.Pat;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record MetaPatTerm(@NotNull Pat.Meta ref) implements Term {
-  public @NotNull Term inline() {
+  public @NotNull Term inline(@NotNull UnaryOperator<Term> afterwards) {
     var sol = ref.solution().get();
-    return sol != null ? sol.toTerm() : this;
+    return sol != null ? afterwards.apply(sol.toTerm()) : this;
   }
 }

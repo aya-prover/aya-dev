@@ -49,7 +49,7 @@ import org.jetbrains.annotations.UnknownNullability;
 public final class PatTycker {
   public static final EndoTerm META_PAT_INLINER = new EndoTerm() {
     @Override public @NotNull Term post(@NotNull Term term) {
-      return term instanceof MetaPatTerm metaPat ? metaPat.inline() : term;
+      return term instanceof MetaPatTerm metaPat ? metaPat.inline(this) : term;
     }
   };
 
@@ -185,7 +185,7 @@ public final class PatTycker {
         .visitPatterns(signature, match.patterns.view(), null, match.expr.getOrNull(), inProp);
       match.hasError = patTycker.hasError;
 
-      var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+      var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx, META_PAT_INLINER)).toImmutableSeq();
       // inline these after inline patterns
       patTycker.patSubst.inline();
       patTycker.sigSubst.inline();
