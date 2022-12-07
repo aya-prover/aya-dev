@@ -185,6 +185,7 @@ public final class PatTycker {
         .visitPatterns(signature, match.patterns.view(), null, match.expr.getOrNull(), inProp);
       match.hasError = patTycker.hasError;
 
+      exprTycker.localCtx.modifyMyTerms(META_PAT_INLINER);
       var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
       // inline these after inline patterns
       patTycker.patSubst.inline();

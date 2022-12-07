@@ -9,6 +9,8 @@ import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.UnaryOperator;
+
 public record SeqLocalCtx(
   @NotNull MutableList<P> localSeq,
   @Override @Nullable LocalCtx parent
@@ -38,5 +40,9 @@ public record SeqLocalCtx(
 
   @Override public boolean isMeEmpty() {
     return localSeq.isEmpty();
+  }
+
+  @Override public void modifyMyTerms(@NotNull UnaryOperator<Term> u) {
+    localSeq.replaceAll(p -> new P(p.var, u.apply(p.type)));
   }
 }

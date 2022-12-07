@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 @Debug.Renderer(hasChildren = "true", childrenArray = "extract().toArray()")
 public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
@@ -128,4 +129,5 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     return new SeqLocalCtx(MutableList.create(), this);
   }
   @Nullable LocalCtx parent();
+  @Contract(mutates = "this") void modifyMyTerms(@NotNull UnaryOperator<Term> u);
 }
