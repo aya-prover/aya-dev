@@ -9,6 +9,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableTreeSet;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -52,6 +53,7 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
@@ -71,6 +73,13 @@ public final class ExprTycker extends Tycker {
    */
   public @NotNull TypedSubst lets = new TypedSubst();
   public final @NotNull AyaShape.Factory shapeFactory;
+  public final @NotNull MutableTreeSet<Expr.WithTerm> withTerms =
+    MutableTreeSet.create(Comparator.comparing(Expr::sourcePos));
+
+  @Override public void solveMetas() {
+    super.solveMetas();
+    withTerms.forEach(w -> w.theCore().update(r -> r.freezeHoles(state)));
+  }
 
   public boolean inProp = false;
 
@@ -288,7 +297,10 @@ public final class ExprTycker extends Tycker {
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
-        if (appF instanceof Expr.WithTerm withTerm) withTerm.theCore().set(new TermResult(app, pi));
+        if (appF instanceof Expr.WithTerm withTerm) {
+          withTerms.add(withTerm);
+          withTerm.theCore().set(new TermResult(app, pi));
+        }
         var elabArg = inherit(argument.term(), pi.param().type()).wellTyped();
         subst.addDirectly(pi.param().ref(), elabArg);
         var arg = new Arg<>(elabArg, argLicit);
@@ -700,8 +712,10 @@ public final class ExprTycker extends Tycker {
       builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
       builder.reduce();
     });
-    if (expr instanceof Expr.WithTerm withTerm)
+    if (expr instanceof Expr.WithTerm withTerm) {
+      withTerms.add(withTerm);
       withTerm.theCore().set(frozen.get());
+    }
   }
 
   public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory shapeFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
