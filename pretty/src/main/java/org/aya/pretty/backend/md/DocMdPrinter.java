@@ -29,10 +29,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
 
   // markdown escape: https://spec.commonmark.org/0.30/#backslash-escapes
   @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
-    var inHtmlTag = outer == Outer.EnclosingTag;
-    var inRenderedAya = config.ayaFlavored && outer == Outer.Code;
-    // If we are in HTML tag or rendered Aya code, use HTML escape settings.
-    if (inHtmlTag || inRenderedAya) {
+    if (outer == Outer.EnclosingTag) {
+      // If we are in HTML tag (like rendered Aya code), use HTML escape settings.
       return super.escapePlainText(content, outer);
     }
     // If we are in Markdown, do not escape text in code block.
