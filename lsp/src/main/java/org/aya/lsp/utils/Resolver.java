@@ -106,29 +106,30 @@ public interface Resolver {
    *
    * @author ice1000, kiva
    */
+  // TODO: Double check the usage of foldVar here.
   record PositionResolver(XY xy) implements StmtFolder<SeqView<WithPos<AnyVar>>> {
     @Override public @NotNull SeqView<WithPos<AnyVar>> init() {
       return SeqView.empty();
     }
 
     @Override public @NotNull SeqView<WithPos<AnyVar>>
-    fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull AnyVar var, @NotNull SourcePos pos) {
-      return xy.inside(pos) ? targets.appended(new WithPos<>(pos, var)) : StmtFolder.super.fold(targets, var, pos);
+    foldVar(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull AnyVar var, @NotNull SourcePos pos) {
+      return xy.inside(pos) ? targets.appended(new WithPos<>(pos, var)) : targets;
     }
 
     @Override public @NotNull SeqView<WithPos<AnyVar>>
     fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
       targets = StmtFolder.super.fold(targets, stmt);
       return switch (stmt) {
-        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> fold(t, v, v.sourcePos));
-        case Command.Import imp -> fold(targets, new ModuleVar(imp.path()), imp.path().sourcePos());
-        case Command.Open open -> fold(targets, new ModuleVar(open.path()), open.path().sourcePos());
+        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> foldVarRef(t, v, v.sourcePos));
+        case Command.Import imp -> foldVarRef(targets, new ModuleVar(imp.path()), imp.path().sourcePos());
+        case Command.Open open -> foldVarRef(targets, new ModuleVar(open.path()), open.path().sourcePos());
         case Decl decl -> {
           if (decl instanceof Decl.Telescopic<?> tele) targets = tele.telescope().view()
             .map(Expr.Param::ref)
             .filterNot(LocalVar::isGenerated)
-            .foldLeft(targets, (ac, def) -> fold(ac, def, def.definition()));
-          yield fold(targets, decl.ref(), decl.sourcePos());
+            .foldLeft(targets, (ac, def) -> foldVarRef(ac, def, def.definition()));
+          yield foldVarRef(targets, decl.ref(), decl.sourcePos());
         }
         default -> targets;
       };
@@ -142,7 +143,7 @@ public interface Resolver {
     }
 
     @Override
-    public @NotNull SeqView<SourcePos> fold(@NotNull SeqView<SourcePos> refs, @NotNull AnyVar var, @NotNull SourcePos pos) {
+    public @NotNull SeqView<SourcePos> foldVarRef(@NotNull SeqView<SourcePos> refs, @NotNull AnyVar var, @NotNull SourcePos pos) {
       // for imported serialized definitions, let's compare by qualified name
       var usage = (target == var)
         || var instanceof DefVar<?, ?> def
