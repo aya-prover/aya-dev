@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import org.aya.cli.literate.HighlightInfo.LitKind;
 import org.aya.cli.parse.AyaGKProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -48,7 +49,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
         .filter(x -> AyaParserDefinitionBase.KEYWORDS.contains(x.type()))
         .map(token -> {
           var sourcePos = AyaGKProducer.sourcePosOf(token, file);
-          var type = new HighlightInfo.SymLit(HighlightInfo.LitKind.Keyword);
+          var type = new HighlightInfo.SymLit(LitKind.Keyword);
           return new HighlightInfo(sourcePos, type);
         });
       semantics = semantics.concat(keywords);
@@ -73,8 +74,8 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Expr expr) {
     return switch (expr) {
-      case Expr.LitInt lit -> add(acc, HighlightInfo.LitKind.Int.toLit(lit.sourcePos()));
-      case Expr.LitString lit -> add(acc, HighlightInfo.LitKind.String.toLit(lit.sourcePos()));
+      case Expr.LitInt lit -> add(acc, LitKind.Int.toLit(lit.sourcePos()));
+      case Expr.LitString lit -> add(acc, LitKind.String.toLit(lit.sourcePos()));
       case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(),
         Option.ofNullable(ref.theCore().get()).map(ExprTycker.Result::type).getOrNull()));
       case Expr.Lambda lam -> tryLinkLocalDef(acc, lam.param());
@@ -87,7 +88,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Pattern pat) {
     return switch (pat) {
-      case Pattern.Number num -> add(acc, HighlightInfo.LitKind.Int.toLit(num.sourcePos()));
+      case Pattern.Number num -> add(acc, LitKind.Int.toLit(num.sourcePos()));
       case Pattern.Bind bind -> add(acc, linkDef(bind.sourcePos(), bind.bind(), bind.type().get()));
       case Pattern.Ctor ctor -> {
         var resolved = ctor.resolved().data();
