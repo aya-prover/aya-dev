@@ -30,26 +30,8 @@ public interface VarConsumer extends TermConsumer {
     TermConsumer.super.accept(term);
   }
 
-  final class ScopeChecker implements VarConsumer {
-    public final @NotNull ImmutableSeq<LocalVar> allowed;
-    public final @NotNull MutableList<LocalVar> invalid;
-    public final @NotNull MutableList<LocalVar> confused;
-    private final @NotNull MutableList<LocalVar> bound = MutableList.create();
-
-    @Contract(pure = true) public ScopeChecker(@NotNull ImmutableSeq<LocalVar> allowed) {
-      this(allowed, MutableList.create(), MutableList.create());
-    }
-
-    @Contract(pure = true)
-    private ScopeChecker(
-      @NotNull ImmutableSeq<LocalVar> allowed,
-      @NotNull MutableList<LocalVar> confused,
-      @NotNull MutableList<LocalVar> invalid
-    ) {
-      this.allowed = allowed;
-      this.confused = confused;
-      this.invalid = invalid;
-    }
+  abstract class Scoped implements VarConsumer {
+    protected final @NotNull MutableList<LocalVar> bound = MutableList.create();
 
     @TestOnly @VisibleForTesting public boolean isCleared() {
       return bound.isEmpty();
@@ -88,13 +70,38 @@ public interface VarConsumer extends TermConsumer {
           accept(body);
           bound.removeInRange(start, start + params.size());
         }
-        case MetaTerm hole -> {
-          var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);
-          hole.contextArgs().forEach(arg -> checker.accept(arg.term()));
-          hole.args().forEach(arg -> accept(arg.term()));
-        }
         default -> VarConsumer.super.accept(term);
       }
+    }
+  }
+
+  final class ScopeChecker extends Scoped {
+    public final @NotNull ImmutableSeq<LocalVar> allowed;
+    public final @NotNull MutableList<LocalVar> invalid;
+    public final @NotNull MutableList<LocalVar> confused;
+
+    @Contract(pure = true) public ScopeChecker(@NotNull ImmutableSeq<LocalVar> allowed) {
+      this(allowed, MutableList.create(), MutableList.create());
+    }
+
+    @Override public void accept(@NotNull Term term) {
+      if (term instanceof MetaTerm hole) {
+        var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);
+        hole.contextArgs().forEach(arg -> checker.accept(arg.term()));
+        hole.args().forEach(arg -> accept(arg.term()));
+      }
+      super.accept(term);
+    }
+
+    @Contract(pure = true)
+    private ScopeChecker(
+      @NotNull ImmutableSeq<LocalVar> allowed,
+      @NotNull MutableList<LocalVar> confused,
+      @NotNull MutableList<LocalVar> invalid
+    ) {
+      this.allowed = allowed;
+      this.confused = confused;
+      this.invalid = invalid;
     }
 
     @Contract(mutates = "this") @Override public void var(@NotNull AnyVar v) {

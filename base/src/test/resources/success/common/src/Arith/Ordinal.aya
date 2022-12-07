@@ -1,0 +1,45 @@
+open import Arith::Nat using (Nat)
+open import Relation::Formula
+
+// https://choukh.github.io/agda-lvo/NonWellFormed.Ordinal.html
+open data Ord
+| zero | suc Ord
+| lim (Nat -> Ord)
+
+open data Depth Ord
+| suc α => empty
+| suc α => next (Depth α)
+| lim f => exist (n : Nat) (Depth (f n))
+
+variable α β : Ord
+def pred (Depth α) : Ord
+| {suc α}, empty => α
+| next d => pred d
+| exist n d => pred d
+
+open data infix ≤ Ord Ord
+| zero, β => z≤
+| suc α, β => s≤ (d : Depth β) (α ≤ pred d)
+| lim f, β => l≤ (∀ n → f n ≤ β)
+
+def ≤f⇒≤l (f : _) (n : Nat) (α ≤ f n) : α ≤ lim f
+| _, _, z≤ => z≤
+| _, _, s≤ _ ≤∸ => s≤ (exist {f} _ _) ≤∸
+| f, n, l≤ f≤ => l≤ (λ m => ≤f⇒≤l f n (f≤ m))
+
+def ≤∸⇒≤ {d : Depth β} (α ≤ pred d) : α ≤ β
+| {_}, z≤ => z≤
+| {_}, s≤ _ ≤∸ => s≤ d (≤∸⇒≤ ≤∸)
+| {_}, {lim f}, l≤ f≤ => l≤ (λ n => ≤∸⇒≤ (f≤ n))
+
+def ≤⇒∸≤ (d : Depth α) (α ≤ β) : pred d ≤ β
+| empty, s≤ _ ≤∸ => ≤∸⇒≤ ≤∸
+| next d, s≤ _ ≤∸ => ≤⇒∸≤ d (≤∸⇒≤ ≤∸)
+| exist n d, l≤ f≤ => ≤⇒∸≤ d (f≤ n)
+
+def s≤s (p : α ≤ β) : suc α ≤ suc β => s≤ empty p
+
+def ≤-refl : Reflexive (≤)
+| {zero} => z≤
+| {suc α} => s≤s ≤-refl
+| {lim f} => l≤ {f := f} (λ n => ≤f⇒≤l f n ≤-refl)

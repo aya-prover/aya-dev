@@ -35,7 +35,6 @@ public interface PatTraversal extends Function<Pat, Pat> {
         if (params.sameElements(ctor.params(), true)) yield ctor;
         yield new Pat.Ctor(ctor.explicit(), ctor.ref(), params, ctor.type());
       }
-      case Pat.End end -> end;
       case Pat.Meta meta -> {
         var solution = meta.solution().get();
         if (solution != null) {

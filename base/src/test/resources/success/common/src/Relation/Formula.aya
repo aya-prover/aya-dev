@@ -1,0 +1,14 @@
+def Rel' (A : Type) (B : Type) => A → B → Type
+def Rel (A : Type) => Rel' A A
+
+variable A B C : Type
+def Reflexive (r : Rel A) => Pi {x : A} -> r x x
+
+//  Generalised transitivity.
+def Trans (P : Rel' A B) (Q : Rel' B C) (R : Rel' A C) => ∀ {x} {y} {z} -> P x y -> Q y z -> R x z
+
+// A flipped variant of generalised transitivity.
+def TransFlip (P : Rel' A B) (Q : Rel' B C) (R : Rel' A C) => ∀ {x} {y} {z} -> Q y z -> P x y -> R x z
+
+def Transitive (r : Rel A) => Trans r r r
+

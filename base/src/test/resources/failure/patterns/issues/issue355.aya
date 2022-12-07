@@ -1,7 +1,0 @@
-prim I
-open data Nat : Type 0
- | zero
- | suc Nat
-
-def addN (a : I) : Nat
- | 0 => zero

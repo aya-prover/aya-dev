@@ -53,7 +53,7 @@ public sealed interface HoleProblem extends Problem {
           Doc.ONE_WS,
           Doc.commaList(scopeCheck.view()
             .map(BaseDistiller::varDoc)
-            .map(doc -> Doc.code(doc)))));
+            .map(Doc::code))));
     }
   }
 

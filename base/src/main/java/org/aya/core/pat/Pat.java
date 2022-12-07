@@ -80,7 +80,9 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return this;
+      var newTy = PatTycker.inlineTerm(type);
+      if (newTy == type) return this;
+      return new Bind(explicit, bind, newTy);
     }
   }
 
@@ -176,22 +178,6 @@ public sealed interface Pat extends AyaDocile {
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var params = this.params.map(p -> p.inline(ctx));
       return new Ctor(explicit, ref, params, (DataCall) PatTycker.inlineTerm(type));
-    }
-  }
-
-  record End(boolean isOne, boolean explicit) implements Pat {
-
-    @Override
-    public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return this;
-    }
-
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return this;
-    }
-
-    @Override public void storeBindings(@NotNull LocalCtx ctx) {
-      // do nothing
     }
   }
 

@@ -33,7 +33,6 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.error.PrimError;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Arg;
@@ -49,7 +48,7 @@ import org.jetbrains.annotations.UnknownNullability;
 public final class PatTycker {
   public static final EndoTerm META_PAT_INLINER = new EndoTerm() {
     @Override public @NotNull Term post(@NotNull Term term) {
-      return term instanceof MetaPatTerm metaPat ? metaPat.inline() : term;
+      return term instanceof MetaPatTerm metaPat ? metaPat.inline(this) : term;
     }
   };
 
@@ -112,7 +111,7 @@ public final class PatTycker {
     var lhsResults = checkAllLhs(exprTycker, clauses, signature);
     if (!lhsResults.hasError()) {
       var classes = PatClassifier.classify(lhsResults.lhsResult().view().map(LhsResult::preclause),
-        signature.param(), exprTycker, overallPos, true);
+        signature.param(), exprTycker, overallPos);
       if (clauses.isNotEmpty()) {
         var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
         // refinePatterns(lhsResults, usages, classes);
@@ -186,10 +185,11 @@ public final class PatTycker {
       match.hasError = patTycker.hasError;
 
       var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
-      var type = inlineTerm(step0.codomain);
       // inline these after inline patterns
       patTycker.patSubst.inline();
       patTycker.sigSubst.inline();
+      var type = inlineTerm(step0.codomain);
+      exprTycker.localCtx.modifyMyTerms(META_PAT_INLINER);
       var consumer = new PatternConsumer() {
         @Override public void pre(@NotNull Pattern pat) {
           if (pat instanceof Pattern.Bind bind)
@@ -290,10 +290,6 @@ public final class PatTycker {
         new LocalVar(Constants.ANONYMOUS_PREFIX, pos), term);
       case Pattern.Number(var pos, var number) -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
-        if (ty instanceof IntervalTerm) {
-          if (number == 0 || number == 1) yield new Pat.End(number == 1, licit);
-          yield withError(new PrimError.BadInterval(pos, number), licit, term);
-        }
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);

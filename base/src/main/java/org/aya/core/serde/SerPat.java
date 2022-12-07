@@ -53,16 +53,6 @@ public sealed interface SerPat extends Serializable {
     }
   }
 
-  record End(
-    boolean isOne,
-    boolean explicit
-  ) implements SerPat {
-    @Override
-    public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.End(isOne, explicit);
-    }
-  }
-
   record ShapedInt(
     int integer,
     boolean explicit,

@@ -5,7 +5,6 @@ package org.aya.tyck.pat;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import org.aya.core.def.CtorDef;
-import org.aya.core.pat.Pat;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
@@ -94,31 +93,6 @@ public sealed interface ClausesProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Unhandled case:"),
         Doc.commaList(pats.missing().map(t -> BaseDistiller.toDoc(options, t))));
-    }
-  }
-
-  /**
-   * @author ice1000
-   */
-  record MissingBindCase(
-    @Override @NotNull SourcePos sourcePos,
-    @NotNull Term.Param param,
-    @NotNull Term typeNF
-  ) implements ClausesProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.vcat(Doc.english("The parameter:"),
-        Doc.par(1, param.toDoc(options)),
-        Doc.par(1, Doc.parened(Doc.sep(Doc.english("Normalized:"), typeNF.toDoc(options)))),
-        Doc.english("requires a binding in the patterns"));
-    }
-  }
-
-  record SplitInterval(@Override @NotNull SourcePos sourcePos, @NotNull Pat pat) implements ClausesProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.sep(
-        Doc.english("Cannot perform pattern matching"),
-        Doc.code(pat.toDoc(options))
-      );
     }
   }
 

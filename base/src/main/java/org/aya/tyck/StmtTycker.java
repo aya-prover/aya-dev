@@ -289,7 +289,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   ) {
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     PatClassifier.confluence(elabClauses, tycker, pos,
-      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos, true));
+      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos));
     Conquer.against(elabClauses.matchings(), true, tycker, pos, signature);
     tycker.solveMetas();
     tracing(TreeBuilder::reduce);

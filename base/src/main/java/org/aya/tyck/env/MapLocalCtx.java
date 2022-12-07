@@ -11,6 +11,8 @@ import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @author re-xyr, ice1000
  */
@@ -36,6 +38,10 @@ public record MapLocalCtx(
 
   @Override public boolean isMeEmpty() {
     return localMap.isEmpty();
+  }
+
+  @Override public void modifyMyTerms(@NotNull UnaryOperator<Term> u) {
+    localMap.edit().replaceAll((__, term) -> u.apply(term));
   }
 
   @Override public void extractToLocal(@NotNull MutableList<Term.Param> dest) {
