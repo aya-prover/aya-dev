@@ -99,6 +99,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     "&", "&amp;",
     "<", "&lt;",
     ">", "&gt;",
+    "\\", "&bsol;",
     "\"", "&quot;"
   );
 
