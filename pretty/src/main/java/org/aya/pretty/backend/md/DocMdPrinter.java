@@ -98,15 +98,26 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     runSwitch(pureMd,
       () -> {
         var isAya = block.language().equalsIgnoreCase("aya");
-        if (isAya) formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", Outer.EnclosingTag);
+        if (isAya) formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", "<code>", "</code>", Outer.EnclosingTag);
         else pureMd.run();
       });
   }
 
   public void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, Outer outer) {
+    formatCodeBlock(cursor, code, begin, end, "", "", outer);
+  }
+
+  public void formatCodeBlock(
+    @NotNull Cursor cursor, @NotNull Doc code,
+    @NotNull String begin, @NotNull String end,
+    @NotNull String begin2, @NotNull String end2,
+    Outer outer
+  ) {
     cursor.invisibleContent(begin);
     cursor.lineBreakWith("\n");
+    cursor.invisibleContent(begin2);
     renderDoc(cursor, code, outer);
+    cursor.invisibleContent(end2);
     cursor.lineBreakWith("\n");
     cursor.invisibleContent(end);
     cursor.lineBreakWith("\n");
