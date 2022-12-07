@@ -112,7 +112,7 @@ public final class PatTycker {
     var lhsResults = checkAllLhs(exprTycker, clauses, signature);
     if (!lhsResults.hasError()) {
       var classes = PatClassifier.classify(lhsResults.lhsResult().view().map(LhsResult::preclause),
-        signature.param(), exprTycker, overallPos, true);
+        signature.param(), exprTycker, overallPos);
       if (clauses.isNotEmpty()) {
         var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
         // refinePatterns(lhsResults, usages, classes);

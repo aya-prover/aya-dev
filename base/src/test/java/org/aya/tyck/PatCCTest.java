@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PatCCTest {
   public static @NotNull ImmutableSeq<MCT.PatClass<Term, PatClassifier.PatErr>> testClassify(@NotNull PrimDef.Factory factory, @NotNull FnDef fnDef) {
     var clauses = fnDef.body.getRightValue().map(Pat.Preclause::weaken);
-    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(factory), ThrowingReporter.INSTANCE, SourcePos.NONE, true).toSeq();
+    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(factory), ThrowingReporter.INSTANCE, SourcePos.NONE).toSeq();
   }
 
   @Test public void addCC() {

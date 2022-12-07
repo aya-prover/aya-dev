@@ -27,6 +27,10 @@ def ≤f⇒≤l (f : _) (n : Nat) (α ≤ f n) : α ≤ lim f
 | _, _, s≤ _ ≤∸ => s≤ (exist {f} _ _) ≤∸
 | f, n, l≤ f≤ => l≤ (λ m => ≤f⇒≤l f n (f≤ m))
 
+def ≤∸⇒≤ {d : Depth β} (α ≤ pred d) : α ≤ β
+| {_}, z≤ => z≤
+| {_}, s≤ _ ≤∸ => s≤ d (≤∸⇒≤ ≤∸)
+| {_}, {lim f}, l≤ f≤ => l≤ (λ n => ≤∸⇒≤ (f≤ n))
 
 def s≤s (p : α ≤ β) : suc α ≤ suc β => s≤ empty p
 
