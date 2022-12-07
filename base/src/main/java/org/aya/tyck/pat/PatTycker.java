@@ -186,10 +186,10 @@ public final class PatTycker {
       match.hasError = patTycker.hasError;
 
       var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
-      var type = inlineTerm(step0.codomain);
       // inline these after inline patterns
       patTycker.patSubst.inline();
       patTycker.sigSubst.inline();
+      var type = inlineTerm(step0.codomain);
       var consumer = new PatternConsumer() {
         @Override public void pre(@NotNull Pattern pat) {
           if (pat instanceof Pattern.Bind bind)
