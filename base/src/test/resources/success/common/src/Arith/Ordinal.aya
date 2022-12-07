@@ -43,3 +43,17 @@ def ≤-refl : Reflexive (≤)
 | {zero} => z≤
 | {suc α} => s≤s ≤-refl
 | {lim f} => l≤ {f := f} (λ n => ≤f⇒≤l f n ≤-refl)
+
+def ≤-trans : Transitive (≤)
+| z≤, _ => z≤
+| s≤ empty α≤β, s≤ _ β≤γ => s≤ _ (≤-trans α≤β β≤γ)
+| s≤ (next d) α≤β, s≤ _ β≤γ => s≤ _ (≤-trans α≤β (≤⇒∸≤ d β≤γ))
+| s≤ (exist n d) α≤β, l≤ f≤γ => ≤-trans (s≤ d α≤β) (f≤γ n)
+| {lim f}, l≤ f≤β, β≤γ => l≤ (λ n => ≤-trans (f≤β n) β≤γ)
+// Agda does not need this explicitly
+| {suc _}, {zero}, s≤ () q, z≤
+
+def s∸≤ (d : Depth α) : suc (pred d) ≤ α
+| empty => ≤-refl
+| next d => s≤s (≤⇒∸≤ d ≤-refl)
+| exist n _ as dd => s≤ dd ≤-refl
