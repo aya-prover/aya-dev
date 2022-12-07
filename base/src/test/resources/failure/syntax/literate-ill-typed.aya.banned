@@ -1,3 +1,0 @@
-open data Nat : Type | zero | suc Nat
-// TODO[CHECK]: implement Remark.make(String, SourcePos, GenericAyaParser)
-/// test `suc Nat`
