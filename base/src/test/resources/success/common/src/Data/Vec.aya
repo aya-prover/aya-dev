@@ -25,7 +25,7 @@ def overlap ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
 | xs, vnil, zs => idp
 | xs, ys, vnil => idp
 // | x :> xs, ys, zs => pmapd (\i => x :>) (++-assoc xs ys zs)
-| x :> xs, ys, zs => \i => (x :>) (++-assoc xs ys zs i)
+| x :> xs, ys, zs => \i => x :> (++-assoc xs ys zs i)
 
 def infix !! (l : Vec A n) (i : Fin n) : A
 | a :> l, fzero => a

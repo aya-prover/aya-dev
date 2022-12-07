@@ -16,7 +16,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.AnyVar;
@@ -24,6 +23,7 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
 import org.aya.tyck.error.TyckOrderError;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -152,8 +152,7 @@ public record PatClassifier(
    */
   private @Nullable MCT<Term, PatErr> classifySubImpl(
     @NotNull SeqView<Term.Param> telescope,
-    @NotNull ImmutableSeq<MCT.SubPats<Pat>> clauses,
-    int fuel
+    @NotNull ImmutableSeq<MCT.SubPats<Pat>> clauses, int fuel
   ) {
     // We're going to split on this type
     var target = telescope.first();
@@ -186,41 +185,6 @@ public record PatClassifier(
           return classifySub(sigma.params().view(), hasTuple, fuel).flatMap(pat -> pat.propagate(
             // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
             classifySub(newTele, MCT.extract(pat, clauses).map(MCT.SubPats<Pat>::drop), fuelCopy)));
-        }
-      }
-      case IntervalTerm interval -> {
-        var lrSplit = clauses
-          .mapNotNull(subPats -> head(subPats) instanceof Pat.End end ? end : null)
-          .firstOption();
-
-        if (lrSplit.isDefined()) {
-          var buffer = MutableList.<MCT<Term, PatErr>>create();
-          reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
-
-          for (var item : ImmutableSeq.of(
-            Tuple.of(FormulaTerm.LEFT, "0"),
-            Tuple.of(FormulaTerm.RIGHT, "1")
-          )) {
-            builder.append(new PatTree(item._2, explicit, 0));
-            var patClass = new MCT.Leaf<>(clauses.view()
-              // Filter out all patterns that matches it,
-              .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, item._1)).map(MCT.SubPats::ix).toImmutableSeq());
-
-            var classes = MCT.extract(patClass, clauses).map(MCT.SubPats::drop);
-
-            if (classes.isNotEmpty()) {
-              // We're going to instantiate the telescope with this term!
-              var newTele = telescope.drop(1)
-                .map(param -> param.subst(target.ref(), item._1))
-                .toImmutableSeq().view();
-              // Classify according the rest of the patterns
-              var rest = classifySub(newTele, classes, fuel);
-              // We have some new classes!
-              buffer.append(rest);
-            }
-            builder.unshift();
-          }
-          return new MCT.Node<>(interval, buffer.toImmutableSeq());
         }
       }
       // THE BIG GAME
