@@ -175,7 +175,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   public static @NotNull String normalizeId(@NotNull LinkId linkId) {
     return switch (linkId) {
-      case LinkId.AnotherPage(var link) -> link;
+      case LinkId.DirectLink(var link) -> link;
       case LinkId.LocalId(var id) -> id.fold(DocHtmlPrinter::normalizeQuerySelector, x -> "v" + x);
       // ^ CSS3 selector does not support IDs starting with a digit, so we prefix them with "v".
       // See https://stackoverflow.com/a/37271406/9506898 for more details.
@@ -184,7 +184,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   public static @NotNull String normalizeHref(@NotNull LinkId linkId) {
     return switch (linkId) {
-      case LinkId.AnotherPage(var link) -> link;
+      case LinkId.DirectLink(var link) -> link;
       case LinkId.LocalId localId -> "#" + normalizeId(localId);
     };
   }

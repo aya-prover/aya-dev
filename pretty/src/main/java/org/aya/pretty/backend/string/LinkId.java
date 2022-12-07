@@ -12,7 +12,7 @@ import java.io.Serializable;
  */
 public sealed interface LinkId extends Serializable {
   static @NotNull LinkId page(@NotNull String link) {
-    return new AnotherPage(link);
+    return new DirectLink(link);
   }
 
   static @NotNull LinkId loc(@NotNull String where) {
@@ -23,7 +23,7 @@ public sealed interface LinkId extends Serializable {
     return new LocalId(Either.right(where));
   }
 
-  record AnotherPage(@NotNull String link) implements LinkId {
+  record DirectLink(@NotNull String link) implements LinkId {
   }
 
   record LocalId(@NotNull Either<String, Integer> type) implements LinkId {
