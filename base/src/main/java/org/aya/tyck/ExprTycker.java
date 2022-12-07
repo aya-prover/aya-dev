@@ -287,6 +287,7 @@ public final class ExprTycker extends Tycker {
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
+        if (appF instanceof Expr.WithTerm withTerm) withTerm.theCore().set(new TermResult(app, pi));
         var elabArg = inherit(argument.term(), pi.param().type()).wellTyped();
         subst.addDirectly(pi.param().ref(), elabArg);
         var arg = new Arg<>(elabArg, argLicit);
@@ -688,7 +689,8 @@ public final class ExprTycker extends Tycker {
       builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
       builder.reduce();
     });
-    if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(frozen.get());
+    if (expr instanceof Expr.WithTerm withTerm)
+      withTerm.theCore().set(frozen.get());
   }
 
   public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory shapeFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
