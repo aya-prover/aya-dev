@@ -27,8 +27,8 @@ public class HtmlStyleTest {
     var d = Doc.styled(Style.bold().and().italic().colorBG(0xf08f68), "color2");
     var sym = Doc.cat(Doc.symbol("=>"), Doc.symbol("hey"));
     var e = Doc.styled(Style.strike(), Doc.cat(a, b, c, d, sym));
-    var f = Doc.cat(e, Doc.hyperLink("Click me", new LinkId.FromString("https://google.com")));
-    return Doc.cat(f, Doc.hyperLink("Show dialog", new LinkId.FromString("javascript:alert('hello world');")));
+    var f = Doc.cat(e, Doc.hyperLink("Click me", LinkId.page("https://google.com")));
+    return Doc.cat(f, Doc.hyperLink("Show dialog", LinkId.page("javascript:alert('hello world');")));
   }
 
   @NotNull private Doc escapeDoc() {

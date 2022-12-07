@@ -77,4 +77,8 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
     if (maybeSubmodule.sizeLessThan(moduleName.size())) return false;
     return maybeSubmodule.sliceView(0, moduleName.size()).sameElements(moduleName);
   }
+
+  public @NotNull ImmutableSeq<String> qualifiedName() {
+    return module == null ? ImmutableSeq.of(name) : module.appended(name);
+  }
 }

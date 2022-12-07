@@ -16,8 +16,10 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
 import org.aya.core.term.PiTerm;
+import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
+import org.aya.pretty.backend.string.LinkId;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
@@ -155,21 +157,23 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
-    return kindOf(var).toDef(sourcePos, var.hashCode(), type);
+    return kindOf(var).toDef(sourcePos, BaseDistiller.linkIdOf(var), type);
   }
 
   private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
     if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, type);
-    return kindOf(var).toRef(sourcePos, var.hashCode(), type);
+    return kindOf(var).toRef(sourcePos, BaseDistiller.linkIdOf(var), type);
   }
 
   private @NotNull HighlightInfo linkModuleRef(@NotNull QualifiedID id) {
-    return HighlightInfo.DefKind.Module.toRef(id.sourcePos(), id.join().hashCode(), null);
+    // TODO: use `LinkId.page` for cross module link
+    return HighlightInfo.DefKind.Module.toRef(id.sourcePos(), LinkId.loc(id.join()), null);
   }
 
   private @NotNull HighlightInfo linkModuleDef(@NotNull QualifiedID id) {
-    return HighlightInfo.DefKind.Module.toDef(id.sourcePos(), id.join().hashCode(), null);
+    // TODO: use `LinkId.page` for cross module link
+    return HighlightInfo.DefKind.Module.toDef(id.sourcePos(), LinkId.loc(id.join()), null);
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")

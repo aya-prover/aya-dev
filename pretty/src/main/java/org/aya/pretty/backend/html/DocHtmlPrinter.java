@@ -4,6 +4,7 @@ package org.aya.pretty.backend.html;
 
 import kala.collection.immutable.ImmutableMap;
 import org.aya.pretty.backend.string.Cursor;
+import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
@@ -146,16 +147,32 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text, Outer outer) {
     var href = text.href();
     cursor.invisibleContent("<a ");
-    if (text.id() != null) cursor.invisibleContent("id=\"" + text.id().normalize() + "\" ");
+    if (text.id() != null) cursor.invisibleContent("id=\"" + normalizeId(text.id()) + "\" ");
     if (text.hover() != null) {
       cursor.invisibleContent("class=\"aya-hover\" ");
       cursor.invisibleContent("aya-type=\"" + text.hover() + "\" ");
     }
-    cursor.invisibleContent("href=\"#");
-    cursor.invisibleContent(href.normalize());
+    cursor.invisibleContent("href=\"");
+    cursor.invisibleContent(normalizeHref(href));
     cursor.invisibleContent("\">");
     renderDoc(cursor, text.doc(), Outer.EnclosingTag);
     cursor.invisibleContent("</a>");
+  }
+
+  public static @NotNull String normalizeId(@NotNull LinkId linkId) {
+    return switch (linkId) {
+      case LinkId.AnotherPage(var link) -> link;
+      case LinkId.LocalId(var id) -> id.fold(x -> x, x -> "v" + x);
+      // ^ CSS3 selector does not support IDs starting with a digit, so we prefix them with "v".
+      // See https://stackoverflow.com/a/37271406/9506898 for more details.
+    };
+  }
+
+  public static @NotNull String normalizeHref(@NotNull LinkId linkId) {
+    return switch (linkId) {
+      case LinkId.AnotherPage(var link) -> link;
+      case LinkId.LocalId localId -> "#" + normalizeId(localId);
+    };
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {

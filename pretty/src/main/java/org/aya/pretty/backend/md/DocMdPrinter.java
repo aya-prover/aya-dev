@@ -74,7 +74,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       cursor.invisibleContent("[");
       renderDoc(cursor, text.doc(), outer);
       cursor.invisibleContent("](");
-      cursor.invisibleContent(href.normalize());
+      cursor.invisibleContent(DocHtmlPrinter.normalizeHref(href));
       cursor.invisibleContent(")");
       // TODO: text.id(), text.hover()
     };

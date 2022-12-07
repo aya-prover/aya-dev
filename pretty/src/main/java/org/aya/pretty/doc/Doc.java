@@ -223,25 +223,20 @@ public sealed interface Doc extends Docile {
   //endregion
 
   //region DocFactory functions
-  static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode) {
-    return linkDef(doc, hashCode, null);
+  static @NotNull Doc linkDef(@NotNull Doc doc, @NotNull LinkId id) {
+    return linkDef(doc, id, null);
   }
 
-  static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode) {
-    return linkRef(doc, hashCode, null);
+  static @NotNull Doc linkRef(@NotNull Doc doc, @NotNull LinkId href) {
+    return linkRef(doc, href, null);
   }
 
-  static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode, @Nullable String hover) {
-    var id = new LinkId.FromInt(hashCode);
+  static @NotNull Doc linkDef(@NotNull Doc doc, @NotNull LinkId id, @Nullable String hover) {
     return new HyperLinked(doc, id, id, hover);
   }
 
-  static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode, @Nullable String hover) {
-    return new HyperLinked(doc, new LinkId.FromInt(hashCode), null, hover);
-  }
-
-  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href) {
-    return hyperLink(doc, href, null);
+  static @NotNull Doc linkRef(@NotNull Doc doc, @NotNull LinkId href, @Nullable String hover) {
+    return new HyperLinked(doc, href, null, hover);
   }
 
   static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href, @Nullable String hover) {
@@ -249,7 +244,7 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href) {
-    return hyperLink(plain(plain), href);
+    return hyperLink(plain(plain), href, null);
   }
 
   static @NotNull Doc code(@NotNull String code) {

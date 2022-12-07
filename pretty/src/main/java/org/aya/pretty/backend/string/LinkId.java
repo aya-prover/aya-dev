@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
+import kala.control.Either;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -10,15 +11,21 @@ import java.io.Serializable;
  * @author imkiva
  */
 public sealed interface LinkId extends Serializable {
-  @NotNull String normalize();
-
-  record FromString(@NotNull String normalize) implements LinkId {
+  static @NotNull LinkId page(@NotNull String link) {
+    return new AnotherPage(link);
   }
 
-  record FromInt(int id) implements LinkId {
-    @Override public @NotNull String normalize() {
-      // https://stackoverflow.com/a/37271406/9506898
-      return "x" + id;
-    }
+  static @NotNull LinkId loc(@NotNull String where) {
+    return new LocalId(Either.left(where));
+  }
+
+  static @NotNull LinkId loc(int where) {
+    return new LocalId(Either.right(where));
+  }
+
+  record AnotherPage(@NotNull String link) implements LinkId {
+  }
+
+  record LocalId(@NotNull Either<String, Integer> type) implements LinkId {
   }
 }

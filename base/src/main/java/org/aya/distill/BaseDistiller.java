@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.PathTerm;
 import org.aya.generic.AyaDocile;
@@ -13,6 +14,7 @@ import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
@@ -223,7 +225,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   public static @NotNull Doc varDoc(@NotNull AnyVar ref) {
     if (ref == LocalVar.IGNORED) return Doc.plain("_");
-    else return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
+    else return Doc.linkRef(Doc.plain(ref.name()), linkIdOf(ref));
   }
 
   static @NotNull Doc coe(boolean coerce) {
@@ -235,23 +237,29 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static @NotNull Doc linkDef(@NotNull AnyVar ref, @NotNull Style color) {
-    return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
+    return Doc.linkDef(Doc.styled(color, ref.name()), linkIdOf(ref));
   }
 
   public static @NotNull Doc linkRef(@NotNull AnyVar ref, @NotNull Style color) {
-    return Doc.linkRef(Doc.styled(color, ref.name()), ref.hashCode());
+    return Doc.linkRef(Doc.styled(color, ref.name()), linkIdOf(ref));
+  }
+
+  public static @NotNull LinkId linkIdOf(@NotNull AnyVar ref) {
+    if (ref instanceof DefVar<?, ?> defVar)
+      return LinkId.loc(QualifiedID.join(defVar.qualifiedName()));
+    return LinkId.loc(ref.hashCode());
   }
 
   public static @NotNull Doc linkLit(int literal, @NotNull AnyVar ref, @NotNull Style color) {
-    return Doc.linkRef(Doc.styled(color, Doc.plain(String.valueOf(literal))), ref.hashCode());
+    return Doc.linkRef(Doc.styled(color, Doc.plain(String.valueOf(literal))), linkIdOf(ref));
   }
 
   public static @NotNull Doc linkListLit(Doc display, @NotNull AnyVar ref, @NotNull Style color) {
-    return Doc.linkDef(Doc.styled(color, display), ref.hashCode());
+    return Doc.linkDef(Doc.styled(color, display), linkIdOf(ref));
   }
 
   public static @NotNull Doc linkDef(@NotNull AnyVar ref) {
-    return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
+    return Doc.linkDef(Doc.plain(ref.name()), linkIdOf(ref));
   }
 
   public static @NotNull Doc defVar(DefVar<?, ?> ref) {
