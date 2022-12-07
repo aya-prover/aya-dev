@@ -19,9 +19,11 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
     // put generated styles at the end of the file
-    if (config.withHeader) {    // TODO[hoshino]: Maybe another boolean?
+    if (config.withHeader) {
       cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_STYLE);
       cursor.invisibleContent(DocHtmlPrinter.HOVER_POPUP_STYLE);
+      if (config.ayaFlavored) // TODO: add flag for Vue (server side rendering) and plain HTML
+        cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
     }
   }
 
@@ -98,7 +100,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     runSwitch(pureMd,
       () -> {
         var isAya = block.language().equalsIgnoreCase("aya");
-        if (isAya) formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", "<code>", "</code>", Outer.EnclosingTag);
+        if (isAya)
+          formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", "<code>", "</code>", Outer.EnclosingTag);
         else pureMd.run();
       });
   }

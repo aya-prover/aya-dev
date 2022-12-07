@@ -56,9 +56,8 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     .Aya [href].hover-highlight { background-color: #B4EEB4; }
     </style>
     """;
-  @Language(value = "HTML")
-  public static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS = """
-    <script>
+  @Language(value = "JavaScript")
+  private static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS_JS_HIGHLIGHT_FN = """
     var highlight = function (on) {
       return function () {
         var links = document.getElementsByTagName('a');
@@ -70,15 +69,37 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
         }
       }
     };
+    """;
+  @Language(value = "JavaScript")
+  private static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS_JS_INIT = """
+    var links = document.getElementsByTagName('a');
+    for (var i = 0; i < links.length; i++) {
+      var link = links[i];
+      if (!link.hasAttribute("href")) continue;
+      link.onmouseover = highlight(true);
+      link.onmouseout = highlight(false);
+    }
+    """;
+  @SuppressWarnings("LanguageMismatch")
+  @Language(value = "HTML")
+  public static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS = """
+    <script>
+    """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_HIGHLIGHT_FN + """
     window.onload = function () {
-      var links = document.getElementsByTagName('a');
-      for (var i = 0; i < links.length; i++) {
-        var link = links[i];
-        if (!link.hasAttribute("href")) continue;
-        link.onmouseover = highlight(true);
-        link.onmouseout = highlight(false);
-      }
+    """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_INIT + """
     };
+    </script>
+    """;
+  @SuppressWarnings("LanguageMismatch")
+  @Language(value = "HTML")
+  public static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS_VUE = """
+    <script>
+    export default {
+      mounted() {
+    """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_HIGHLIGHT_FN + """
+    """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_INIT + """
+      }
+    }
     </script>
     """;
 
