@@ -136,14 +136,14 @@ public sealed interface Doc extends Docile {
 
   /**
    * A clickable text line without '\n'.
+   *
+   * @param id   The id of the doc itself.
+   * @param href The id of jump target when clicked.
    */
   record HyperLinked(
     @NotNull Doc doc, @NotNull LinkId href,
-    @Nullable String id, @Nullable String hover
+    @Nullable LinkId id, @Nullable String hover
   ) implements Doc {
-    @Override public String toString() {
-      return doc.toString();
-    }
   }
 
   /** Inline code, with special escape settings compared to {@link PlainText} */
@@ -220,24 +220,20 @@ public sealed interface Doc extends Docile {
   //endregion
 
   //region DocFactory functions
-  static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode) {
-    return linkDef(doc, hashCode, null);
+  static @NotNull Doc linkDef(@NotNull Doc doc, @NotNull LinkId id) {
+    return linkDef(doc, id, null);
   }
 
-  static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode) {
-    return linkRef(doc, hashCode, null);
+  static @NotNull Doc linkRef(@NotNull Doc doc, @NotNull LinkId href) {
+    return linkRef(doc, href, null);
   }
 
-  static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode, @Nullable String hover) {
-    return new HyperLinked(doc, new LinkId("#" + hashCode), String.valueOf(hashCode), hover);
+  static @NotNull Doc linkDef(@NotNull Doc doc, @NotNull LinkId id, @Nullable String hover) {
+    return new HyperLinked(doc, id, id, hover);
   }
 
-  static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode, @Nullable String hover) {
-    return new HyperLinked(doc, new LinkId("#" + hashCode), null, hover);
-  }
-
-  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href) {
-    return hyperLink(doc, href, null);
+  static @NotNull Doc linkRef(@NotNull Doc doc, @NotNull LinkId href, @Nullable String hover) {
+    return new HyperLinked(doc, href, null, hover);
   }
 
   static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href, @Nullable String hover) {
@@ -245,7 +241,7 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href) {
-    return hyperLink(plain(plain), href);
+    return hyperLink(plain(plain), href, null);
   }
 
   static @NotNull Doc code(@NotNull String code) {

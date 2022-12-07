@@ -20,6 +20,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
+    // TODO: escape according to `outer`
     return content.replace("\\", "").replace("_", "\\_");
   }
 

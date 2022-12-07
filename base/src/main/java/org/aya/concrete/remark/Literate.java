@@ -31,7 +31,7 @@ public sealed interface Literate extends Docile {
               @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
-      return Doc.hyperLink(child, new LinkId(href), hover);
+      return Doc.hyperLink(child, LinkId.page(href), hover);
     }
   }
 

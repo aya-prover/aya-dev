@@ -19,9 +19,11 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
     // put generated styles at the end of the file
-    if (config.withHeader) {    // TODO[hoshino]: Maybe another boolean?
+    if (config.withHeader) {
       cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_STYLE);
       cursor.invisibleContent(DocHtmlPrinter.HOVER_POPUP_STYLE);
+      if (config.ayaFlavored) // TODO: add flag for Vue (server side rendering) and plain HTML
+        cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
     }
   }
 
@@ -31,6 +33,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       // If we are in HTML tag (like rendered Aya code), use HTML escape settings.
       return super.escapePlainText(content, outer);
     }
+    // If we are in Markdown, do not escape text in code block.
+    if (outer == Outer.Code) return content;
     // We are not need to call `super.escapePlainText`, we will escape them in markdown way.
     // I wish you can understand this genius regexp
     // What we will escape:
@@ -68,7 +72,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       cursor.invisibleContent("[");
       renderDoc(cursor, text.doc(), outer);
       cursor.invisibleContent("](");
-      cursor.invisibleContent(href.id());
+      cursor.invisibleContent(DocHtmlPrinter.normalizeHref(href));
       cursor.invisibleContent(")");
       // TODO: text.id(), text.hover()
     };
@@ -94,15 +98,27 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     runSwitch(pureMd,
       () -> {
         var isAya = block.language().equalsIgnoreCase("aya");
-        if (isAya) formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", Outer.EnclosingTag);
+        if (isAya)
+          formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", "<code>", "</code>", Outer.EnclosingTag);
         else pureMd.run();
       });
   }
 
   public void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, Outer outer) {
+    formatCodeBlock(cursor, code, begin, end, "", "", outer);
+  }
+
+  public void formatCodeBlock(
+    @NotNull Cursor cursor, @NotNull Doc code,
+    @NotNull String begin, @NotNull String end,
+    @NotNull String begin2, @NotNull String end2,
+    Outer outer
+  ) {
     cursor.invisibleContent(begin);
     cursor.lineBreakWith("\n");
+    cursor.invisibleContent(begin2);
     renderDoc(cursor, code, outer);
+    cursor.invisibleContent(end2);
     cursor.lineBreakWith("\n");
     cursor.invisibleContent(end);
     cursor.lineBreakWith("\n");
