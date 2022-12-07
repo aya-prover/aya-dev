@@ -32,6 +32,11 @@ def ≤∸⇒≤ {d : Depth β} (α ≤ pred d) : α ≤ β
 | {_}, s≤ _ ≤∸ => s≤ d (≤∸⇒≤ ≤∸)
 | {_}, {lim f}, l≤ f≤ => l≤ (λ n => ≤∸⇒≤ (f≤ n))
 
+def ≤⇒∸≤ (d : Depth α) (α ≤ β) : pred d ≤ β
+| empty, s≤ _ ≤∸ => ≤∸⇒≤ ≤∸
+| next d, s≤ _ ≤∸ => ≤⇒∸≤ d (≤∸⇒≤ ≤∸)
+| exist n d, l≤ f≤ => ≤⇒∸≤ d (f≤ n)
+
 def s≤s (p : α ≤ β) : suc α ≤ suc β => s≤ empty p
 
 def ≤-refl : Reflexive (≤)

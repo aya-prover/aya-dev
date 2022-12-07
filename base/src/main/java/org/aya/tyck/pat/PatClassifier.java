@@ -64,7 +64,7 @@ public record PatClassifier(
       .toImmutableSeq(), 5);
     var errRef = MutableValue.<MCT.Error<Term, PatErr>>create();
     classification.forEach(pats -> {
-      if (errRef.isEmpty() && pats instanceof MCT.Error<Term, PatErr> error) {
+      if (errRef.get() == null && pats instanceof MCT.Error<Term, PatErr> error) {
         reporter.report(new ClausesProblem.MissingCase(pos, error.errorMessage()));
         errRef.set(error);
       }
@@ -80,7 +80,8 @@ public record PatClassifier(
     if (mct instanceof MCT.Error<Term, PatErr>) return new int[0];
     // StackOverflow says they're initialized to zero
     var numbers = new int[clauses.size()];
-    mct.forEach(results -> numbers[results.contents().min()]++);
+    mct.forEach(results ->
+      numbers[results.contents().min()]++);
     // ^ The minimum is supposed to be the first one, but why not be robust?
     for (int i = 0; i < numbers.length; i++)
       if (0 == numbers[i]) reporter.report(
@@ -159,8 +160,8 @@ public record PatClassifier(
     var normalize = target.type().normalize(state, NormalizeMode.WHNF);
     switch (normalize) {
       default -> {
-        if (clauses.isEmpty())
-          reporter.report(new ClausesProblem.MissingBindCase(pos, target, normalize));
+        if (clauses.isEmpty()) return new MCT.Error<>(ImmutableSeq.empty(),
+          new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
       }
       // The type is sigma type, and do we have any non-catchall patterns?
       // Note that we cannot have ill-typed patterns such as constructor patterns,

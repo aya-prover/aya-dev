@@ -1,4 +1,0 @@
-prim I
-def test(i: I): I
-  | 3 => 0
-  | 4 => 1
