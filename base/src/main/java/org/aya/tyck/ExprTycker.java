@@ -9,6 +9,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableTreeSet;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -52,9 +53,11 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -70,6 +73,13 @@ public final class ExprTycker extends Tycker {
    */
   public @NotNull TypedSubst lets = new TypedSubst();
   public final @NotNull AyaShape.Factory shapeFactory;
+  public final @NotNull MutableTreeSet<Expr.WithTerm> withTerms =
+    MutableTreeSet.create(Comparator.comparing(Expr::sourcePos));
+
+  @Override public void solveMetas() {
+    super.solveMetas();
+    withTerms.forEach(w -> w.theCore().update(r -> r.freezeHoles(state)));
+  }
 
   public boolean inProp = false;
 
@@ -287,7 +297,10 @@ public final class ExprTycker extends Tycker {
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
-        if (appF instanceof Expr.WithTerm withTerm) withTerm.theCore().set(new TermResult(app, pi));
+        if (appF instanceof Expr.WithTerm withTerm) {
+          withTerms.add(withTerm);
+          withTerm.theCore().set(new TermResult(app, pi));
+        }
         var elabArg = inherit(argument.term(), pi.param().type()).wellTyped();
         subst.addDirectly(pi.param().ref(), elabArg);
         var arg = new Arg<>(elabArg, argLicit);
@@ -617,18 +630,28 @@ public final class ExprTycker extends Tycker {
     });
   }
 
-  private @NotNull ExprTycker.TyResult doTy(@NotNull Expr expr) {
+  private @NotNull TyResult doTy(@NotNull Expr expr) {
+    return doTy(expr, -1);
+  }
+
+  private @NotNull TyResult doTy(@NotNull Expr expr, int upperBound) {
+    UnaryOperator<TyResult> checkBound = result -> {
+      if (upperBound != -1 && upperBound < result.type().lift())
+        reporter.report(new LevelError(expr.sourcePos(), new SortTerm(SortKind.Type, upperBound), result.type(), true));
+      return result;
+    };
     var univ = SortTerm.Type0;
     return switch (expr) {
       case Expr.Tuple tuple -> failSort(tuple, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.Hole hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield new TyResult(freshHole._2, univ);
+        // TODO: this is definitely a bug
+        yield checkBound.apply(new TyResult(freshHole._2, univ));
       }
       case Expr.Sort sort -> {
         var self = new SortTerm(sort.kind(), sort.lift());
-        yield new TyResult(self, self.succ());
+        yield checkBound.apply(new TyResult(self, self.succ()));
       }
       case Expr.Lambda lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
       case Expr.PartEl el -> failSort(el, BadTypeError.partTy(state, el, univ));
@@ -639,7 +662,7 @@ public final class ExprTycker extends Tycker {
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
           var cod = ty(pi.last());
-          return new TyResult(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
+          return checkBound.apply(new TyResult(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type())));
         });
       }
       case Expr.Sigma sigma -> {
@@ -656,11 +679,11 @@ public final class ExprTycker extends Tycker {
         var maxSort = resultTypes.reduce(SigmaTerm::max);
         if (!maxSort.isProp()) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new TyResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
+        yield checkBound.apply(new TyResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort));
       }
       default -> {
         var result = synthesize(expr);
-        yield new TyResult(result.wellTyped(), sort(expr, result.type()));
+        yield checkBound.apply(new TyResult(result.wellTyped(), sort(expr, result.type())));
       }
     };
   }
@@ -689,8 +712,10 @@ public final class ExprTycker extends Tycker {
       builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
       builder.reduce();
     });
-    if (expr instanceof Expr.WithTerm withTerm)
+    if (expr instanceof Expr.WithTerm withTerm) {
+      withTerms.add(withTerm);
       withTerm.theCore().set(frozen.get());
+    }
   }
 
   public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory shapeFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
@@ -717,15 +742,16 @@ public final class ExprTycker extends Tycker {
     return res;
   }
 
-  public @NotNull ExprTycker.TyResult ty(@NotNull Expr expr) {
-    return ty(expr, -1);
-  }
-
-  public @NotNull ExprTycker.TyResult ty(@NotNull Expr expr, int upperBound) {
+  public @NotNull TyResult ty(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var result = doTy(expr);
-    if (upperBound != -1 && upperBound < result.type().lift())
-      reporter.report(new LevelError(expr.sourcePos(), new SortTerm(SortKind.Type, upperBound), result.type(), true));
+    traceExit(result, expr);
+    return result;
+  }
+
+  public @NotNull TyResult ty(@NotNull Expr expr, int upperBound) {
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
+    var result = doTy(expr, upperBound);
     traceExit(result, expr);
     return result;
   }
@@ -785,7 +811,7 @@ public final class ExprTycker extends Tycker {
     return new TermResult(new ErrorTerm(expr), term);
   }
 
-  private @NotNull ExprTycker.TyResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
+  private @NotNull TyResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
     reporter.report(prob);
     return new TyResult(new ErrorTerm(expr), SortTerm.Type0);
   }
@@ -964,7 +990,7 @@ public final class ExprTycker extends Tycker {
   }
 
   public record TyResult(@Override @NotNull Term wellTyped, @Override @NotNull SortTerm type) implements Result {
-    @Override public @NotNull ExprTycker.TyResult freezeHoles(@NotNull TyckState state) {
+    @Override public @NotNull TyResult freezeHoles(@NotNull TyckState state) {
       return new TyResult(wellTyped.freezeHoles(state), type);
     }
   }
