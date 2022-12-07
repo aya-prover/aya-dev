@@ -181,22 +181,6 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  record End(boolean isOne, boolean explicit) implements Pat {
-
-    @Override
-    public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return this;
-    }
-
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return this;
-    }
-
-    @Override public void storeBindings(@NotNull LocalCtx ctx) {
-      // do nothing
-    }
-  }
-
   record ShapedInt(
     @Override int repr,
     @Override @NotNull ShapeRecognition recognition,

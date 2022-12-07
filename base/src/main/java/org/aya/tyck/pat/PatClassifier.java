@@ -17,7 +17,6 @@ import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.guest0x0.cubical.Formula;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
@@ -65,7 +64,7 @@ public record PatClassifier(
       .toImmutableSeq(), 5);
     var errRef = MutableValue.<MCT.Error<Term, PatErr>>create();
     classification.forEach(pats -> {
-      if (errRef.get() == null && pats instanceof MCT.Error<Term, PatErr> error) {
+      if (errRef.isEmpty() && pats instanceof MCT.Error<Term, PatErr> error) {
         reporter.report(new ClausesProblem.MissingCase(pos, error.errorMessage()));
         errRef.set(error);
       }
@@ -292,13 +291,6 @@ public record PatClassifier(
     builder.shiftEmpty(explicit);
     builder.unshift();
     return null; // Proceed loop
-  }
-
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, FormulaTerm end) {
-    var head = head(subPats);
-    return head instanceof Pat.End headEnd
-      && end.asFormula() instanceof Formula.Lit<Term> endF
-      && headEnd.isOne() == endF.isOne() ? new MCT.SubPats<>(subPats.pats(), ix) : null;
   }
 
   private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, AnyVar ctorRef) {

@@ -33,7 +33,6 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.error.PrimError;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Arg;
@@ -291,10 +290,6 @@ public final class PatTycker {
         new LocalVar(Constants.ANONYMOUS_PREFIX, pos), term);
       case Pattern.Number(var pos, var number) -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
-        if (ty instanceof IntervalTerm) {
-          if (number == 0 || number == 1) yield new Pat.End(number == 1, licit);
-          yield withError(new PrimError.BadInterval(pos, number), licit, term);
-        }
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);

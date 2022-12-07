@@ -39,9 +39,6 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
           default -> reportError(lhs, rhs);
         }
       }
-      case Pat.End end -> {
-        if (!(rhs instanceof Pat.End)) reportError(lhs, rhs);
-      }
       case Pat.ShapedInt lhsInt -> {
         switch (rhs) {
           case Pat.ShapedInt rhsInt -> {

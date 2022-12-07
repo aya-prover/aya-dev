@@ -11,7 +11,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.PatTraversal;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
-import org.aya.guest0x0.cubical.Formula;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,12 +76,6 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
         }
       }
       case Pat.Meta ignored -> throw new InternalException("Pat.Meta is not allowed");
-      case Pat.End end -> {
-        term = pre.apply(term);
-        if (!(term.asFormula() instanceof Formula.Lit<Term>(var one) && one == end.isOne())) {
-          throw new Mismatch(true);
-        }
-      }
       case Pat.ShapedInt lit -> {
         term = pre.apply(term);
         switch (term) {
