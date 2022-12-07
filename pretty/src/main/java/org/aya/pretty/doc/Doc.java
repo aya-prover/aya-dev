@@ -144,9 +144,6 @@ public sealed interface Doc extends Docile {
     @NotNull Doc doc, @NotNull LinkId href,
     @Nullable LinkId id, @Nullable String hover
   ) implements Doc {
-    @Override public String toString() {
-      return doc.toString();
-    }
   }
 
   /** Inline code, with special escape settings compared to {@link PlainText} */
