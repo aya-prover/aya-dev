@@ -45,7 +45,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield Doc.wrap("{?", "?}",
           visitCalls(null, inner, term.args().view(), Outer.Free, showImplicits));
       }
-      case MetaLitTerm lit -> lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
+      case MetaLitTerm lit ->
+        lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
       case TupTerm(var items) -> Doc.parened(Doc.commaList(items.view().map(t -> term(Outer.Free, t))));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
@@ -148,7 +149,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         }
         // Try to omit the Pi keyword
         if (body0.findUsages(params0.ref()) == 0) yield checkParen(outer, Doc.sep(
-          Doc.bracedUnless(params0.type().toDoc(options), params0.explicit()),
+          justType(params0, Outer.BinOp),
           Doc.symbol("->"),
           term(Outer.Codomain, body0)
         ), Outer.BinOp);
