@@ -65,12 +65,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         Doc doc;
         var last = term(Outer.Codomain, expr.last());
         if (!data[0] && !data[1]) {
-          doc = Doc.sep(justType(expr.param(), Outer.BinOp), Doc.symbol("->"), last);
+          doc = Doc.sep(justType(expr.param(), Outer.Domain), Doc.symbol("->"), last);
         } else {
           doc = Doc.sep(Doc.styled(KEYWORD, Doc.symbol("Pi")), expr.param().toDoc(options), Doc.symbol("->"), last);
         }
         // When outsider is neither a codomain nor non-expression, we need to add parentheses.
-        yield checkParen(outer, doc, Outer.BinOp);
+        yield checkParen(outer, doc, Outer.Domain);
       }
       case Expr.App expr -> {
         var args = MutableList.of(expr.argument());

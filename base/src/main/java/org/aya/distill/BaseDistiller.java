@@ -360,6 +360,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     Free,
     Codomain,
     BinOp,
+    Domain,
     IMax,
     IMin,
     AppHead,
