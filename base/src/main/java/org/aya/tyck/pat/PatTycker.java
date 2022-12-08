@@ -192,8 +192,14 @@ public final class PatTycker {
       exprTycker.localCtx.modifyMyTerms(META_PAT_INLINER);
       var consumer = new PatternConsumer() {
         @Override public void pre(@NotNull Pattern pat) {
-          if (pat instanceof Pattern.Bind bind)
-            bind.type().update(t -> t == null ? null : inlineTerm(t));
+          var typeRef = switch (pat) {
+            case Pattern.Bind bind -> bind.type();
+            case Pattern.As as -> as.type();
+            default -> MutableValue.<Term>create();
+          };
+
+          typeRef.update(t -> t == null ? null : inlineTerm(t));
+
           PatternConsumer.super.pre(pat);
         }
       };
@@ -312,9 +318,10 @@ public final class PatTycker {
         }
         yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
       }
-      case Pattern.As(var pos, var inner, var as) -> {
+      case Pattern.As(var pos, var inner, var as, var type) -> {
         var innerPat = doTyck(inner, term, licit, resultIsProp);
 
+        type.set(term);
         addPatSubst(as, innerPat, term);
 
         yield innerPat;

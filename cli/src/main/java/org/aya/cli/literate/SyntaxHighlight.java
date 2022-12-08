@@ -117,6 +117,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
         yield add(acc, linkRef(ctor.resolved().sourcePos(), resolved, type));
       }
       case Pattern.Bind bind -> tryLinkLocalDef(acc, bind.bind(), bind.type().get());
+      case Pattern.As as -> tryLinkLocalDef(acc, as.as(), as.type().get());
       default -> StmtFolder.super.fold(acc, pat);
     };
   }
