@@ -642,7 +642,6 @@ public final class ExprTycker extends Tycker {
     };
     var univ = SortTerm.Type0;
     return switch (expr) {
-      case Expr.Tuple tuple -> failSort(tuple, BadTypeError.sigmaCon(state, tuple, univ));
       case Expr.Hole hole -> {
         var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
@@ -653,8 +652,6 @@ public final class ExprTycker extends Tycker {
         var self = new SortTerm(sort.kind(), sort.lift());
         yield checkBound.apply(new TyResult(self, self.succ()));
       }
-      case Expr.Lambda lam -> failSort(lam, BadTypeError.pi(state, lam, univ));
-      case Expr.PartEl el -> failSort(el, BadTypeError.partTy(state, el, univ));
       case Expr.Pi pi -> {
         var param = pi.param();
         final var var = param.ref();
@@ -809,11 +806,6 @@ public final class ExprTycker extends Tycker {
   private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
     reporter.report(prob);
     return new TermResult(new ErrorTerm(expr), term);
-  }
-
-  private @NotNull TyResult failSort(@NotNull AyaDocile expr, @NotNull Problem prob) {
-    reporter.report(prob);
-    return new TyResult(new ErrorTerm(expr), SortTerm.Type0);
   }
 
   @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
