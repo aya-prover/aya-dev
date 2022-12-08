@@ -210,7 +210,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   @NotNull Doc justType(@NotNull ParamLike<Term> monika, Outer outer) {
     return monika.explicit() ? term(outer, monika.type())
-      : Doc.braced(monika.type().toDoc(options));
+      : Doc.braced(term(Outer.Free, monika.type()));
   }
 
   /** @implNote do NOT remove the <code>toImmSeq</code> call!!! */

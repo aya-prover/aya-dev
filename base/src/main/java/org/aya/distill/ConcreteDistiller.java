@@ -65,7 +65,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         Doc doc;
         var last = term(Outer.Codomain, expr.last());
         if (!data[0] && !data[1]) {
-          var tyDoc = expr.param().type().toDoc(options);
+          var tyDoc = term(Outer.ProjHead, expr.param().type());
           doc = Doc.sep(Doc.bracedUnless(tyDoc, expr.param().explicit()), Doc.symbol("->"), last);
         } else {
           doc = Doc.sep(Doc.styled(KEYWORD, Doc.symbol("Pi")), expr.param().toDoc(options), Doc.symbol("->"), last);

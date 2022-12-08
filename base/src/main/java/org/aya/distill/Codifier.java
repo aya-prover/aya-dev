@@ -35,42 +35,42 @@ public record Codifier(
         builder.append(")");
       }
       case AppTerm(var of, var arg) -> {
-        builder.append("new ElimTerm.App(");
+        builder.append("new AppTerm(");
         term(of);
         builder.append(",");
         arg(arg);
         builder.append(")");
       }
       case ProjTerm(var of, var ix) -> {
-        builder.append("new ElimTerm.Proj(");
+        builder.append("new ProjTerm(");
         term(of);
         builder.append(",").append(ix).append(")");
       }
-      case PartialTyTerm(var ty, var restr) -> coePar(ty, restr, "FormTerm.PartTy");
+      case PartialTyTerm(var ty, var restr) -> coePar(ty, restr, "PartialTyTerm");
       case PathTerm(var cube) -> {
-        builder.append("new FormTerm.Path(");
+        builder.append("new PathTerm(");
         cube(cube);
         builder.append(")");
       }
-      case PiTerm(var param, var body) -> piLam(param, body, "FormTerm.Pi");
-      case SigmaTerm(var items) -> tupSigma(items, this::param, "FormTerm.Sigma");
-      case LamTerm(var param, var body) -> piLam(param, body, "IntroTerm.Lambda");
+      case PiTerm(var param, var body) -> piLam(param, body, "PiTerm");
+      case SigmaTerm(var items) -> tupSigma(items, this::param, "SigmaTerm");
+      case LamTerm(var param, var body) -> piLam(param, body, "LamTerm");
       case PartialTerm(var par, var ty) -> {
-        builder.append("new IntroTerm.PartEl(");
+        builder.append("new PartialTerm(");
         partial(par);
         builder.append(",");
         term(ty);
         builder.append(")");
       }
       case PLamTerm(var params, var body) -> {
-        builder.append("new IntroTerm.PathLam(ImmutableSeq.of(");
+        builder.append("new PLamTerm(ImmutableSeq.of(");
         commaSep(params, this::varDef);
         builder.append("),");
         term(body);
         builder.append(")");
       }
       case PAppTerm(var of, var args, var cube) -> {
-        builder.append("new ElimTerm.PathApp(");
+        builder.append("new PAppTerm(");
         term(of);
         builder.append(",ImmutableSeq.of(");
         commaSep(args, this::arg);
@@ -78,16 +78,16 @@ public record Codifier(
         cube(cube);
         builder.append(")");
       }
-      case TupTerm(var items) -> tupSigma(items, this::term, "IntroTerm.Tuple");
-      case CoeTerm(var ty, var restr) -> coePar(ty, restr, "PrimTerm.Coe");
+      case TupTerm(var items) -> tupSigma(items, this::term, "TupTerm");
+      case CoeTerm(var ty, var restr) -> coePar(ty, restr, "CoeTerm");
       case FormulaTerm(var mula) -> {
-        builder.append("new PrimTerm.Mula(");
+        builder.append("new FormulaTerm(");
         formula(mula);
         builder.append(")");
       }
       case ErrorTerm error -> throw new UnsupportedOperationException("Cannot generate error");
       case Callable call -> throw new UnsupportedOperationException("Cannot generate calls");
-      case IntervalTerm interval -> builder.append("PrimTerm.Interval.INSTANCE");
+      case IntervalTerm interval -> builder.append("IntervalTerm.INSTANCE");
       case SortTerm sort -> {
         builder.append("new SortTerm(SortKind.");
         builder.append(sort.kind().name());
@@ -100,7 +100,7 @@ public record Codifier(
   }
 
   private void cube(PathTerm.@NotNull Cube cube) {
-    builder.append("new FormTerm.Cube(ImmutableSeq.of(");
+    builder.append("new PathTerm.Cube(ImmutableSeq.of(");
     commaSep(cube.params(), this::varDef);
     builder.append("),");
     term(cube.type());
