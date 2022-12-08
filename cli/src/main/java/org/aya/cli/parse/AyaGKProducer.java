@@ -579,10 +579,8 @@ public record AyaGKProducer(
     }
     if (node.is(PARTIAL_EXPR)) return partial(node, pos);
     if (node.is(PATH_EXPR)) {
-      var params = node.childrenOfType(PATH_TELE).map(t -> {
-        var n = teleParamName(t.child(TELE_PARAM_NAME));
-        return LocalVar.from(n);
-      }).toImmutableSeq();
+      var params = node.childrenOfType(PATH_TELE).map(t ->
+        LocalVar.from(teleParamName(t.child(TELE_PARAM_NAME)))).toImmutableSeq();
       return new Expr.Path(pos, params, expr(node.child(EXPR)), partial(node.peekChild(PARTIAL_BLOCK), pos));
     }
     if (node.is(IDIOM_ATOM)) {

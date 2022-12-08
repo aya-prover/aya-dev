@@ -210,7 +210,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   @NotNull Doc justType(@NotNull ParamLike<Term> monika, Outer outer) {
     return monika.explicit() ? term(outer, monika.type())
-      : Doc.braced(monika.type().toDoc(options));
+      : Doc.braced(term(Outer.Free, monika.type()));
   }
 
   /** @implNote do NOT remove the <code>toImmSeq</code> call!!! */
@@ -326,6 +326,12 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return Doc.join(Doc.spaced(Doc.symbol("/\\")), conj.ands().view().map(and -> Doc.sepNonEmpty(!and.isOne() ? Doc.symbol("~") : Doc.empty(), and.inst().toDoc(options))));
   }
 
+  public @NotNull Doc unnamedParam(@NotNull ParamLike<Term> param) {
+    return param.explicit()
+      ? term(Outer.BinOp, param.type())
+      : Doc.braced(term(Outer.Free, param.type()));
+  }
+
   protected static @Nullable Style chooseStyle(Object concrete) {
     return switch (concrete) {
       case DefVar<?, ?> d -> chooseStyle(d.concrete);
@@ -354,6 +360,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     Free,
     Codomain,
     BinOp,
+    Domain,
     IMax,
     IMin,
     AppHead,

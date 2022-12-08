@@ -75,15 +75,34 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   @Override
+  public @NotNull MutableList<HighlightInfo> foldVarDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
+    return foldVarDecl(acc, var, pos, null);
+  }
+
+  public @NotNull MutableList<HighlightInfo> foldVarDecl(
+    @NotNull MutableList<HighlightInfo> acc,
+    @NotNull AnyVar var,
+    @NotNull SourcePos pos,
+    @Nullable AyaDocile type) {
+    if (var instanceof LocalVar localVar) {
+      return tryLinkLocalDef(acc, localVar, type);
+    }
+
+    return add(acc, linkDef(pos, var, type));
+  }
+
+  // Copied from ExprFolder
+  @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Expr expr) {
     return switch (expr) {
-      case Expr.LitInt lit -> add(acc, LitKind.Int.toLit(lit.sourcePos()));
-      case Expr.LitString lit -> add(acc, LitKind.String.toLit(lit.sourcePos()));
       case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(),
         Option.ofNullable(ref.theCore().get()).map(ExprTycker.Result::type).getOrNull()));
-      case Expr.Lambda lam -> tryLinkLocalDef(acc, lam.param());
-      case Expr.Pi pi -> tryLinkLocalDef(acc, pi.param());
-      case Expr.Sigma sigma -> sigma.params().foldLeft(acc, this::tryLinkLocalDef);
+      case Expr.Lambda lam -> foldVarDecl(acc, lam.param().ref(), lam.param().sourcePos(), lam.param().type());
+      case Expr.Pi pi -> foldVarDecl(acc, pi.param().ref(), pi.param().sourcePos(), pi.param().type());
+      case Expr.Sigma sigma ->
+        sigma.params().foldLeft(acc, (ac, param) -> foldVarDecl(ac, param.ref(), param.sourcePos(), param.type()));
+      case Expr.LitInt lit -> add(acc, LitKind.Int.toLit(lit.sourcePos()));
+      case Expr.LitString lit -> add(acc, LitKind.String.toLit(lit.sourcePos()));
       default -> StmtFolder.super.fold(acc, expr);
     };
   }
@@ -92,12 +111,13 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Pattern pat) {
     return switch (pat) {
       case Pattern.Number num -> add(acc, LitKind.Int.toLit(num.sourcePos()));
-      case Pattern.Bind bind -> add(acc, linkDef(bind.sourcePos(), bind.bind(), bind.type().get()));
       case Pattern.Ctor ctor -> {
         var resolved = ctor.resolved().data();
         var type = varType(resolved);
         yield add(acc, linkRef(ctor.resolved().sourcePos(), resolved, type));
       }
+      case Pattern.Bind bind -> tryLinkLocalDef(acc, bind.bind(), bind.type().get());
+      case Pattern.As as -> tryLinkLocalDef(acc, as.as(), as.type().get());
       default -> StmtFolder.super.fold(acc, pat);
     };
   }
