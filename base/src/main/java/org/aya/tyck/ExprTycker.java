@@ -631,26 +631,16 @@ public final class ExprTycker extends Tycker {
   }
 
   private @NotNull TyResult doTy(@NotNull Expr expr) {
-    return doTy(expr, -1);
-  }
-
-  private @NotNull TyResult doTy(@NotNull Expr expr, int upperBound) {
-    UnaryOperator<TyResult> checkBound = result -> {
-      if (upperBound != -1 && upperBound < result.type().lift())
-        reporter.report(new LevelError(expr.sourcePos(), new SortTerm(SortKind.Type, upperBound), result.type(), true));
-      return result;
-    };
-    var univ = SortTerm.Type0;
     return switch (expr) {
       case Expr.Hole hole -> {
-        var freshHole = localCtx.freshHole(univ, Constants.randomName(hole), hole.sourcePos());
+        var freshHole = localCtx.freshHole(SortTerm.Type0, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        // TODO: this is definitely a bug
-        yield checkBound.apply(new TyResult(freshHole._2, univ));
+        // TODO: implement type-only hole
+        yield new TyResult(freshHole._2, SortTerm.Type0);
       }
       case Expr.Sort sort -> {
         var self = new SortTerm(sort.kind(), sort.lift());
-        yield checkBound.apply(new TyResult(self, self.succ()));
+        yield new TyResult(self, self.succ());
       }
       case Expr.Pi pi -> {
         var param = pi.param();
@@ -659,7 +649,7 @@ public final class ExprTycker extends Tycker {
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
           var cod = ty(pi.last());
-          return checkBound.apply(new TyResult(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type())));
+          return new TyResult(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
         });
       }
       case Expr.Sigma sigma -> {
@@ -676,11 +666,11 @@ public final class ExprTycker extends Tycker {
         var maxSort = resultTypes.reduce(SigmaTerm::max);
         if (!maxSort.isProp()) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield checkBound.apply(new TyResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort));
+        yield new TyResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
       }
       default -> {
         var result = synthesize(expr);
-        yield checkBound.apply(new TyResult(result.wellTyped(), sort(expr, result.type())));
+        yield new TyResult(result.wellTyped(), sort(expr, result.type()));
       }
     };
   }
@@ -742,13 +732,6 @@ public final class ExprTycker extends Tycker {
   public @NotNull TyResult ty(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var result = doTy(expr);
-    traceExit(result, expr);
-    return result;
-  }
-
-  public @NotNull TyResult ty(@NotNull Expr expr, int upperBound) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var result = doTy(expr, upperBound);
     traceExit(result, expr);
     return result;
   }
