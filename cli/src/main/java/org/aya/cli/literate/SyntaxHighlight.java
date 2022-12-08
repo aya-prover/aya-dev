@@ -13,7 +13,6 @@ import org.aya.cli.parse.AyaGKProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
-import org.aya.concrete.visitor.ExprFolder;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
 import org.aya.core.term.PiTerm;
