@@ -5,6 +5,7 @@ package org.aya.lsp.utils;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import kala.value.LazyValue;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
@@ -13,6 +14,7 @@ import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
+import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -113,7 +115,7 @@ public interface Resolver {
     }
 
     @Override public @NotNull SeqView<WithPos<AnyVar>>
-    foldVar(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull AnyVar var, @NotNull SourcePos pos) {
+    foldVar(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull AnyVar var, @NotNull SourcePos pos, @NotNull LazyValue<Term> type) {
       return xy.inside(pos) ? targets.appended(new WithPos<>(pos, var)) : targets;
     }
 
@@ -121,15 +123,15 @@ public interface Resolver {
     fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
       targets = StmtFolder.super.fold(targets, stmt);
       return switch (stmt) {
-        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> foldVarRef(t, v, v.sourcePos));
-        case Command.Import imp -> foldVarRef(targets, new ModuleVar(imp.path()), imp.path().sourcePos());
-        case Command.Open open -> foldVarRef(targets, new ModuleVar(open.path()), open.path().sourcePos());
+        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> foldVarRef(t, v, v.sourcePos, noType()));
+        case Command.Import imp -> foldVarRef(targets, new ModuleVar(imp.path()), imp.path().sourcePos(), noType());
+        case Command.Open open -> foldVarRef(targets, new ModuleVar(open.path()), open.path().sourcePos(), noType());
         case Decl decl -> {
           if (decl instanceof Decl.Telescopic<?> tele) targets = tele.telescope().view()
             .map(Expr.Param::ref)
             .filterNot(LocalVar::isGenerated)
-            .foldLeft(targets, (ac, def) -> foldVarRef(ac, def, def.definition()));
-          yield foldVarRef(targets, decl.ref(), decl.sourcePos());
+            .foldLeft(targets, (ac, def) -> foldVarRef(ac, def, def.definition(), noType()));
+          yield foldVarRef(targets, decl.ref(), decl.sourcePos(), noType());
         }
         default -> targets;
       };
@@ -143,7 +145,8 @@ public interface Resolver {
     }
 
     @Override
-    public @NotNull SeqView<SourcePos> foldVarRef(@NotNull SeqView<SourcePos> refs, @NotNull AnyVar var, @NotNull SourcePos pos) {
+    public @NotNull SeqView<SourcePos>
+    foldVarRef(@NotNull SeqView<SourcePos> refs, @NotNull AnyVar var, @NotNull SourcePos pos, @NotNull LazyValue<Term> type) {
       // for imported serialized definitions, let's compare by qualified name
       var usage = (target == var)
         || var instanceof DefVar<?, ?> def

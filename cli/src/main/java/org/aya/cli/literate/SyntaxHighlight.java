@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import kala.value.LazyValue;
 import org.aya.cli.literate.HighlightInfo.LitKind;
 import org.aya.cli.parse.AyaGKProducer;
 import org.aya.concrete.Expr;
@@ -15,7 +16,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
-import org.aya.core.term.PiTerm;
+import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
@@ -24,7 +25,6 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.ExprTycker;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -69,19 +69,20 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     return MutableList.create();
   }
 
-  @Override
-  public @NotNull MutableList<HighlightInfo> foldVarRef(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
-    return add(acc, linkRef(pos, var, varType(var)));
+  @Override public @NotNull MutableList<HighlightInfo> foldVarRef(
+    @NotNull MutableList<HighlightInfo> acc,
+    @NotNull AnyVar var, @NotNull SourcePos pos,
+    @NotNull LazyValue<@Nullable Term> type
+  ) {
+    return add(acc, linkRef(pos, var, type.get()));
   }
 
-  @Override
-  public @NotNull MutableList<HighlightInfo> foldVarDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
-    return foldVarDecl(acc, var, pos, varType(var));
-  }
-
-  @Override
-  public @NotNull MutableList<HighlightInfo> foldParamDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull Expr.Param param) {
-    return foldVarDecl(acc, param.ref(), param.sourcePos(), null); // TODO: type of Expr.Param
+  @Override public @NotNull MutableList<HighlightInfo> foldVarDecl(
+    @NotNull MutableList<HighlightInfo> acc,
+    @NotNull AnyVar var, @NotNull SourcePos pos,
+    @NotNull LazyValue<@Nullable Term> type
+  ) {
+    return foldVarDecl(acc, var, pos, type.get());
   }
 
   public @NotNull MutableList<HighlightInfo> foldVarDecl(
@@ -98,8 +99,6 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Expr expr) {
     return switch (expr) {
-      case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(),
-        Option.ofNullable(ref.theCore().get()).map(ExprTycker.Result::type).getOrNull()));
       case Expr.LitInt lit -> add(acc, LitKind.Int.toLit(lit.sourcePos()));
       case Expr.LitString lit -> add(acc, LitKind.String.toLit(lit.sourcePos()));
       default -> StmtFolder.super.fold(acc, expr);
@@ -110,13 +109,6 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Pattern pat) {
     return switch (pat) {
       case Pattern.Number num -> add(acc, LitKind.Int.toLit(num.sourcePos()));
-      case Pattern.Ctor ctor -> {
-        var resolved = ctor.resolved().data();
-        var type = varType(resolved);
-        yield add(acc, linkRef(ctor.resolved().sourcePos(), resolved, type));
-      }
-      case Pattern.Bind bind -> linkLocalDef(acc, bind.bind(), bind.type().get());
-      case Pattern.As as -> linkLocalDef(acc, as.as(), as.type().get());
       default -> StmtFolder.super.fold(acc, pat);
     };
   }
@@ -147,12 +139,6 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     if (decl instanceof Decl.Telescopic<?> teleDecl) return Tuple.of(type,
       teleDecl.telescope().view().map(p -> Tuple.of(p.ref(), null)));
     return Tuple.of(null, SeqView.empty());
-  }
-
-  private @Nullable AyaDocile varType(@NotNull AnyVar var) {
-    if (var instanceof DefVar<?, ?> defVar && defVar.core instanceof Def def)
-      return PiTerm.make(def.telescope(), def.result());
-    return null;
   }
 
   private @NotNull MutableList<HighlightInfo> linkLocalDef(@NotNull MutableList<HighlightInfo> acc, @NotNull LocalVar var, @Nullable AyaDocile type) {

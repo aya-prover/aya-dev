@@ -21,7 +21,7 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
     var t = Option.ofNullable(bb.resolvedTighters().get()).getOrElse(ImmutableSeq::empty);
     var l = Option.ofNullable(bb.resolvedLoosers().get()).getOrElse(ImmutableSeq::empty);
     return t.zipView(bb.tighters()).concat(l.zipView(bb.loosers()))
-      .foldLeft(acc, (ac, v) -> foldVarRef(ac, v._1, v._2.sourcePos()));
+      .foldLeft(acc, (ac, v) -> foldVarRef(ac, v._1, v._2.sourcePos(), lazyType(v._1)));
   }
 
   @MustBeInvokedByOverriders
