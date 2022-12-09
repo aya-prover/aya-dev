@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
+import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
@@ -44,12 +45,11 @@ public interface ComputeSignature {
 
   static @NotNull Doc computeSignature(@NotNull ImmutableSeq<Term.Param> defTele, @NotNull Term defResult, boolean withResult) {
     var options = DistillerOptions.pretty();
-    var distiller = new CoreDistiller(options);
-    var tele = distiller.visitTele(defTele, defResult, Term::findUsages);
     if (withResult) {
-      var res = defResult.toDoc(options);
-      if (tele.isEmpty()) return res;
-      return Doc.stickySep(tele, Doc.symbol(":"), res);
-    } else return tele;
+      var type = PiTerm.make(defTele, defResult);
+      return type.toDoc(options);
+    }
+    var distiller = new CoreDistiller(options);
+    return distiller.visitTele(defTele, defResult, Term::findUsages);
   }
 }

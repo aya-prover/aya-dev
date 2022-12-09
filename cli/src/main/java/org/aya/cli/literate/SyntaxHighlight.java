@@ -6,8 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
+import kala.value.LazyValue;
 import org.aya.cli.literate.HighlightInfo.LitKind;
 import org.aya.cli.parse.AyaGKProducer;
 import org.aya.concrete.Expr;
@@ -15,7 +14,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
-import org.aya.core.term.PiTerm;
+import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
@@ -24,14 +23,12 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.ExprTycker;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** @implNote Use {@link MutableList} instead of {@link SeqView} for performance consideration. */
-// TODO: Simplify the logic on handling variable declaration by using the improved Folder API.
 public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   /**
    * @param sourceFile If not null, provide keyword highlights too
@@ -69,38 +66,26 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     return MutableList.create();
   }
 
-  @Override
-  public @NotNull MutableList<HighlightInfo> foldVarRef(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
-    return add(acc, linkRef(pos, var, varType(var)));
-  }
-
-  @Override
-  public @NotNull MutableList<HighlightInfo> foldVarDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
-    return foldVarDecl(acc, var, pos, null);
-  }
-
-  public @NotNull MutableList<HighlightInfo> foldVarDecl(
+  @Override public @NotNull MutableList<HighlightInfo> foldVarRef(
     @NotNull MutableList<HighlightInfo> acc,
-    @NotNull AnyVar var,
-    @NotNull SourcePos pos,
-    @Nullable AyaDocile type) {
-    if (var instanceof LocalVar localVar) {
-      return tryLinkLocalDef(acc, localVar, type);
-    }
-
-    return add(acc, linkDef(pos, var, type));
+    @NotNull AnyVar var, @NotNull SourcePos pos,
+    @NotNull LazyValue<@Nullable Term> type
+  ) {
+    return add(acc, linkRef(pos, var, type.get()));
   }
 
-  // Copied from ExprFolder
+  @Override public @NotNull MutableList<HighlightInfo> foldVarDecl(
+    @NotNull MutableList<HighlightInfo> acc,
+    @NotNull AnyVar var, @NotNull SourcePos pos,
+    @NotNull LazyValue<@Nullable Term> type
+  ) {
+    if (var instanceof LocalVar v && v.isGenerated()) return acc;
+    return add(acc, linkDef(pos, var, type.get()));
+  }
+
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Expr expr) {
     return switch (expr) {
-      case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(),
-        Option.ofNullable(ref.theCore().get()).map(ExprTycker.Result::type).getOrNull()));
-      case Expr.Lambda lam -> foldVarDecl(acc, lam.param().ref(), lam.param().sourcePos(), lam.param().type());
-      case Expr.Pi pi -> foldVarDecl(acc, pi.param().ref(), pi.param().sourcePos(), pi.param().type());
-      case Expr.Sigma sigma ->
-        sigma.params().foldLeft(acc, (ac, param) -> foldVarDecl(ac, param.ref(), param.sourcePos(), param.type()));
       case Expr.LitInt lit -> add(acc, LitKind.Int.toLit(lit.sourcePos()));
       case Expr.LitString lit -> add(acc, LitKind.String.toLit(lit.sourcePos()));
       default -> StmtFolder.super.fold(acc, expr);
@@ -111,69 +96,20 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Pattern pat) {
     return switch (pat) {
       case Pattern.Number num -> add(acc, LitKind.Int.toLit(num.sourcePos()));
-      case Pattern.Ctor ctor -> {
-        var resolved = ctor.resolved().data();
-        var type = varType(resolved);
-        yield add(acc, linkRef(ctor.resolved().sourcePos(), resolved, type));
-      }
-      case Pattern.Bind bind -> tryLinkLocalDef(acc, bind.bind(), bind.type().get());
-      case Pattern.As as -> tryLinkLocalDef(acc, as.as(), as.type().get());
       default -> StmtFolder.super.fold(acc, pat);
     };
   }
 
   @Override
-  public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Stmt stmt) {
-    acc = StmtFolder.super.fold(acc, stmt);
-    return switch (stmt) {
-      case Generalize g -> g.variables.foldLeft(acc, (a, var) -> add(a, linkDef(var.sourcePos, var, null)));
-      case Command.Module m -> add(acc, linkModuleDef(new QualifiedID(m.sourcePos(), m.name())));
-      case Command.Import i -> add(acc, linkModuleRef(i.path()));
-      case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
-      case Command.Open o -> add(acc, linkModuleRef(o.path()));
-      case Decl decl -> {
-        var declType = declType(decl);
-        acc = declType._2
-          .foldLeft(acc, (ac, p) -> tryLinkLocalDef(ac, p._1, p._2));
-        yield add(acc, linkDef(decl.sourcePos(), decl.ref(), declType._1));
-      }
-    };
+  public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
+    // TODO: use `LinkId.page` for cross module link
+    return add(acc, HighlightInfo.DefKind.Module.toRef(mod.sourcePos(), LinkId.loc(mod.join()), null));
   }
 
-  private Tuple2<AyaDocile, SeqView<Tuple2<LocalVar, AyaDocile>>> declType(@NotNull Decl decl) {
-    var type = varType(decl.ref());
-    // If it has core term, type is available.
-    if (decl.ref().core instanceof Def def) return Tuple.of(type,
-      def.telescope().view().map(p -> Tuple.of(p.ref(), p.type())));
-    // If it is telescopic, type is unavailable.
-    if (decl instanceof Decl.Telescopic<?> teleDecl) return Tuple.of(type,
-      teleDecl.telescope().view().map(p -> Tuple.of(p.ref(), null)));
-    return Tuple.of(null, SeqView.empty());
-  }
-
-  private @Nullable AyaDocile varType(@NotNull AnyVar var) {
-    if (var instanceof DefVar<?, ?> defVar && defVar.core instanceof Def def)
-      return PiTerm.make(def.telescope(), def.result());
-    return null;
-  }
-
-  private @NotNull MutableList<HighlightInfo> tryLinkLocalDef(
-    @NotNull MutableList<HighlightInfo> acc,
-    @NotNull Expr.Param param
-  ) {
-    return tryLinkLocalDef(acc, param.ref(), param.type());
-  }
-
-  private @NotNull MutableList<HighlightInfo> tryLinkLocalDef(
-    @NotNull MutableList<HighlightInfo> acc,
-    @NotNull LocalVar var,
-    @Nullable AyaDocile type
-  ) {
-    if (var.isGenerated()) {
-      return acc;
-    }
-
-    return add(acc, linkDef(var.definition(), var, type));
+  @Override
+  public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
+    // TODO: use `LinkId.page` for cross module link
+    return add(acc, HighlightInfo.DefKind.Module.toDef(mod.sourcePos(), LinkId.loc(mod.join()), null));
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
@@ -184,16 +120,6 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, type);
     return kindOf(var).toRef(sourcePos, BaseDistiller.linkIdOf(var), type);
-  }
-
-  private @NotNull HighlightInfo linkModuleRef(@NotNull QualifiedID id) {
-    // TODO: use `LinkId.page` for cross module link
-    return HighlightInfo.DefKind.Module.toRef(id.sourcePos(), LinkId.loc(id.join()), null);
-  }
-
-  private @NotNull HighlightInfo linkModuleDef(@NotNull QualifiedID id) {
-    // TODO: use `LinkId.page` for cross module link
-    return HighlightInfo.DefKind.Module.toDef(id.sourcePos(), LinkId.loc(id.join()), null);
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")

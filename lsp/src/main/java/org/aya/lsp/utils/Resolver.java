@@ -5,14 +5,18 @@ package org.aya.lsp.utils;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import kala.value.LazyValue;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.GeneralizedVar;
+import org.aya.concrete.stmt.QualifiedID;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
+import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -97,53 +101,52 @@ public interface Resolver {
   }
 
   /**
-   * In short, this class resolves position to PsiNameIdentifierOwner or PsiNamedElement.
+   * In short, this class resolves cursor position to PsiNameIdentifierOwner or PsiNamedElement.
    * <p>
-   * Resolve position to its referring target. This class extends the
-   * search to definitions and module commands compared to {@link StmtFolder},
-   * because the position may be placed at the name part of a function, a tele,
-   * an import command, etc.
+   * This class should traverse all {@link AnyVar}s, ignoring the differences between
+   * variable declaration and variable references, unlike {@link StmtFolder} and
+   * {@link org.aya.cli.literate.SyntaxHighlight}.
+   * <p>
+   * The rationale is that users may place the cursor at the name part of a function,
+   * a tele, an import command, etc. And we are expected to find the correct {@link AnyVar}
+   * no matter if it is a declaration or a reference.
    *
-   * @author ice1000, kiva
+   * @author ice1000, kiva, wsx
    */
-  // TODO: Double check the usage of foldVar here.
   record PositionResolver(XY xy) implements StmtFolder<SeqView<WithPos<AnyVar>>> {
     @Override public @NotNull SeqView<WithPos<AnyVar>> init() {
       return SeqView.empty();
     }
 
     @Override public @NotNull SeqView<WithPos<AnyVar>>
-    foldVar(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull AnyVar var, @NotNull SourcePos pos) {
+    foldVar(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull AnyVar var, @NotNull SourcePos pos, @NotNull LazyValue<Term> type) {
       return xy.inside(pos) ? targets.appended(new WithPos<>(pos, var)) : targets;
     }
 
-    @Override public @NotNull SeqView<WithPos<AnyVar>>
-    fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
-      targets = StmtFolder.super.fold(targets, stmt);
-      return switch (stmt) {
-        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> foldVarRef(t, v, v.sourcePos));
-        case Command.Import imp -> foldVarRef(targets, new ModuleVar(imp.path()), imp.path().sourcePos());
-        case Command.Open open -> foldVarRef(targets, new ModuleVar(open.path()), open.path().sourcePos());
-        case Decl decl -> {
-          if (decl instanceof Decl.Telescopic<?> tele) targets = tele.telescope().view()
-            .map(Expr.Param::ref)
-            .filterNot(LocalVar::isGenerated)
-            .foldLeft(targets, (ac, def) -> foldVarRef(ac, def, def.definition()));
-          yield foldVarRef(targets, decl.ref(), decl.sourcePos());
-        }
-        default -> targets;
-      };
+    @Override
+    public @NotNull SeqView<WithPos<AnyVar>> foldModuleRef(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
+      return foldVarRef(acc, new ModuleVar(mod), mod.sourcePos(), noType());
+    }
+
+    @Override
+    public @NotNull SeqView<WithPos<AnyVar>> foldModuleDecl(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
+      return foldVarDecl(acc, new ModuleVar(mod), mod.sourcePos(), noType());
     }
   }
 
-  /** find usages of a variable */
+  /**
+   * This class finds usages of a variable. So we only traverse variable references.
+   *
+   * @author kiva, wsx
+   */
   record UsageResolver(@NotNull AnyVar target) implements StmtFolder<SeqView<SourcePos>> {
     @Override public @NotNull SeqView<SourcePos> init() {
       return SeqView.empty();
     }
 
     @Override
-    public @NotNull SeqView<SourcePos> foldVarRef(@NotNull SeqView<SourcePos> refs, @NotNull AnyVar var, @NotNull SourcePos pos) {
+    public @NotNull SeqView<SourcePos>
+    foldVarRef(@NotNull SeqView<SourcePos> refs, @NotNull AnyVar var, @NotNull SourcePos pos, @NotNull LazyValue<Term> type) {
       // for imported serialized definitions, let's compare by qualified name
       var usage = (target == var)
         || var instanceof DefVar<?, ?> def
