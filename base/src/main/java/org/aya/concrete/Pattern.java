@@ -43,7 +43,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
       case Pattern.Ctor(var pos, var resolved, var params) -> new Pattern.Ctor(pos, resolved, descent(f, params));
       case Pattern.Tuple(var pos, var patterns) -> new Pattern.Tuple(pos, descent(f, patterns));
       case Pattern.List(var pos, var patterns) -> new Pattern.List(pos, patterns.map(f));
-      case Pattern.As(var pos, var inner, var as, var type) -> new Pattern.As(pos, f.apply(inner), as);
+      case Pattern.As(var pos, var inner, var as, var type) -> new Pattern.As(pos, f.apply(inner), as, type);
       default -> this;
     };
   }
@@ -104,12 +104,8 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     @NotNull LocalVar as,
     @ForLSP @NotNull MutableValue<@Nullable Term> type
   ) implements Pattern {
-    public As(@NotNull SourcePos sourcePos, @NotNull Pattern pattern, @NotNull LocalVar as) {
-      this(sourcePos, pattern, as, MutableValue.create());
-    }
-
     public static Arg<Pattern> wrap(@NotNull SourcePos pos, @NotNull Arg<Pattern> pattern, @NotNull LocalVar var) {
-      return new Arg<>(new As(pos, pattern.term(), var), pattern.explicit());
+      return new Arg<>(new As(pos, pattern.term(), var, MutableValue.create()), pattern.explicit());
     }
   }
 

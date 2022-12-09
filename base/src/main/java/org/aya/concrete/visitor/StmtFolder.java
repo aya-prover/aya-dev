@@ -2,14 +2,22 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import kala.value.LazyValue;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
+import org.aya.core.def.Def;
+import org.aya.core.term.Term;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -41,7 +49,11 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
         // https://github.com/aya-prover/aya-dev/issues/721
         yield o.useHide().list().foldLeft(acc1, (ac, v) -> fold(ac, v.asBind()));
       }
-      default -> acc;
+      case Decl decl -> {
+        var declType = declType(decl);
+        acc = declType._2.foldLeft(acc, (ac, p) -> foldVarDecl(ac, p._1, p._1.definition(), p._2));
+        yield foldVarDecl(acc, decl.ref(), decl.sourcePos(), declType._1);
+      }
     };
   }
 
@@ -64,5 +76,17 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
       }
     }.accept(stmt);
     return acc.get();
+  }
+
+  private Tuple2<@NotNull LazyValue<@Nullable Term>, SeqView<Tuple2<LocalVar, @NotNull LazyValue<@Nullable Term>>>>
+  declType(@NotNull Decl decl) {
+    // If it has core term, type is available.
+    if (decl.ref().core instanceof Def def) return Tuple.of(lazyType(decl.ref()),
+      def.telescope().view().map(p -> Tuple.of(p.ref(), LazyValue.ofValue(p.type()))));
+    // If it is telescopic, type is unavailable.
+    if (decl instanceof Decl.Telescopic<?> teleDecl) return Tuple.of(lazyType(decl.ref()),
+      teleDecl.telescope().view().map(p -> Tuple.of(p.ref(), noType())));
+    // Oops, no type available.
+    return Tuple.of(noType(), SeqView.empty());
   }
 }

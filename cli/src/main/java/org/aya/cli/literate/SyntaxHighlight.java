@@ -6,8 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.value.LazyValue;
 import org.aya.cli.literate.HighlightInfo.LitKind;
 import org.aya.cli.parse.AyaGKProducer;
@@ -82,9 +80,8 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     @NotNull AnyVar var, @NotNull SourcePos pos,
     @NotNull LazyValue<@Nullable Term> type
   ) {
-    return var instanceof LocalVar localVar
-      ? linkLocalDef(acc, localVar, type.get())
-      : add(acc, linkDef(pos, var, type.get()));
+    if (var instanceof LocalVar v && v.isGenerated()) return acc;
+    return add(acc, linkDef(pos, var, type.get()));
   }
 
   @Override
@@ -105,40 +102,15 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   @Override
-  public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Stmt stmt) {
-    return switch (stmt) {
-      case Decl decl -> {
-        var declType = declType(decl);
-        acc = declType._2.foldLeft(acc, (ac, p) -> linkLocalDef(ac, p._1, p._2));
-        yield add(acc, linkDef(decl.sourcePos(), decl.ref(), declType._1));
-      }
-      default -> StmtFolder.super.fold(acc, stmt);
-    };
-  }
-
-  @Override public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
+  public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
     // TODO: use `LinkId.page` for cross module link
     return add(acc, HighlightInfo.DefKind.Module.toRef(mod.sourcePos(), LinkId.loc(mod.join()), null));
   }
 
-  @Override public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
+  @Override
+  public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
     // TODO: use `LinkId.page` for cross module link
     return add(acc, HighlightInfo.DefKind.Module.toDef(mod.sourcePos(), LinkId.loc(mod.join()), null));
-  }
-
-  private Tuple2<AyaDocile, SeqView<Tuple2<LocalVar, AyaDocile>>> declType(@NotNull Decl decl) {
-    var type = varType(decl.ref());
-    // If it has core term, type is available.
-    if (decl.ref().core instanceof Def def) return Tuple.of(type,
-      def.telescope().view().map(p -> Tuple.of(p.ref(), p.type())));
-    // If it is telescopic, type is unavailable.
-    if (decl instanceof Decl.Telescopic<?> teleDecl) return Tuple.of(type,
-      teleDecl.telescope().view().map(p -> Tuple.of(p.ref(), null)));
-    return Tuple.of(null, SeqView.empty());
-  }
-
-  private @NotNull MutableList<HighlightInfo> linkLocalDef(@NotNull MutableList<HighlightInfo> acc, @NotNull LocalVar var, @Nullable AyaDocile type) {
-    return var.isGenerated() ? acc : add(acc, linkDef(var.definition(), var, type));
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {

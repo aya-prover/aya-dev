@@ -760,7 +760,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     public @NotNull Expr.LetBind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull Expr result, @NotNull Expr definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
         ? this
-        : new LetBind(sourcePos(), bindName(), telescope, result, definedAs);
+        : new LetBind(sourcePos, bindName, telescope, result, definedAs);
     }
 
     public @NotNull Expr.LetBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {

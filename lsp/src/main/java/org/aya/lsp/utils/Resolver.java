@@ -8,8 +8,10 @@ import kala.control.Option;
 import kala.value.LazyValue;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.GeneralizedVar;
+import org.aya.concrete.stmt.QualifiedID;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
@@ -119,25 +121,13 @@ public interface Resolver {
       return xy.inside(pos) ? targets.appended(new WithPos<>(pos, var)) : targets;
     }
 
-    @Override public @NotNull SeqView<WithPos<AnyVar>>
-    fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
-      return switch (stmt) {
-        case Decl decl -> {
-          if (decl instanceof Decl.Telescopic<?> tele) targets = tele.telescope().view()
-            .map(Expr.Param::ref)
-            .filterNot(LocalVar::isGenerated)
-            .foldLeft(targets, (ac, def) -> foldVarRef(ac, def, def.definition(), noType()));
-          yield foldVarRef(targets, decl.ref(), decl.sourcePos(), noType());
-        }
-        default -> StmtFolder.super.fold(targets, stmt);
-      };
-    }
-
-    @Override public @NotNull SeqView<WithPos<AnyVar>> foldModuleRef(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
+    @Override
+    public @NotNull SeqView<WithPos<AnyVar>> foldModuleRef(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
       return foldVarRef(acc, new ModuleVar(mod), mod.sourcePos(), noType());
     }
 
-    @Override public @NotNull SeqView<WithPos<AnyVar>> foldModuleDecl(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
+    @Override
+    public @NotNull SeqView<WithPos<AnyVar>> foldModuleDecl(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
       return foldVarDecl(acc, new ModuleVar(mod), mod.sourcePos(), noType());
     }
   }

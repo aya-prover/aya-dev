@@ -789,7 +789,8 @@ public record AyaGKProducer(
     var body = expr(node.child(EXPR));
 
     // The last element is a placeholder, which is meaningless
-    return new Expr.LetBind(pos, LocalVar.from(bind), teles, result, body);
+    return new Expr.LetBind(bind.sourcePos(), LocalVar.from(bind), teles, result, body);
+    // ^ see `doBinding()` for why the source pos of `LetBind` should be `bind.sourcePos()`
   }
 
   public @NotNull ImmutableSeq<Arg<Pattern>> patterns(@NotNull GenericNode<?> node) {
