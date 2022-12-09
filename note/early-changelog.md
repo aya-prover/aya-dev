@@ -2,6 +2,42 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.25
+
+New features and big changes:
+
+- Aya now has a new faithful pretty printer. Instead of generating strings from terms,
+  it uses user's code and put attributes onto the tokens.
+- The pretty printer has a markdown backend now.
+- The HTML backend now escapes HTML entities.
+- The "remark" system is rewritten as a literate mode with markdown + Aya code blocks + Aya inline code.
+  The compiler can compile the Aya code into HTML and leave the markdown parts as-is.
+  This feature is used to write Aya tutorials now.
+- Further reorganization of the library candidate, improved the style guide, added
+  ordinal numbers. The style guide now explains what to do if the same structure is
+  used in multiple areas of mathematics.
+- Module names are now highlighted.
+- Allow quantifying lambdas over types (in a synthesis mode).
+- Improved coercive subtyping from pi-path mixture to paths.
+  From pi-path mixture to pi-path mixture is still not supported.
+- The jlink release now has a `lib` folder containing the library candidate.
+  The executables from the JDK are now moved to the `jre` folder, so that
+  the `bin` folder only contains Aya scripts.
+- Allow flexible telescope. If a function returns a pi type, the parameters
+  can be matched in the patterns.
+  A bind pattern at the end of the pattern matching can be moved into the
+  bodies as a lambda parameter.
+- `ErasedTerm` is now deleted. Instead, we use `Term` directly.
+
+Bug fixes and improvements:
+
+- The coverage checker now correct handles unmatchable types.
+- Reimplemented `as` patterns.
+- When patterns are incorrect, the body is no longer checked.
+- Fixed a serious bug on HIT constructor scoping.
+- Adapted the `:codify` command with the latest core terms.
+- The `WithCore::theCore` are frozen after the type checking.
+
 ## 0.24
 
 New features and big changes:
