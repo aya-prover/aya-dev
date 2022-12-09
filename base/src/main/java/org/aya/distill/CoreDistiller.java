@@ -13,11 +13,16 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.InternalException;
+import org.aya.guest0x0.cubical.Formula;
+import org.aya.guest0x0.cubical.Partial;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -31,6 +36,46 @@ import java.util.function.UnaryOperator;
 public class CoreDistiller extends BaseDistiller<Term> {
   public CoreDistiller(@NotNull DistillerOptions options) {
     super(options);
+  }
+
+  private @Nullable Doc binCube(Restr.Side<Term> a, Restr.Side<Term> b, LocalVar var) {
+    if (a.cof().ands().sizeEquals(1)
+      && a.cof().ands().get(0).inst() instanceof RefTerm(var ref)
+      && ref == var
+      && b.cof().ands().sizeEquals(1)
+      && b.cof().ands().get(0).inst() instanceof FormulaTerm(var murasame)
+      && murasame instanceof Formula.Inv<Term> inv
+      && inv.i() instanceof RefTerm(var ref2)
+      && ref2 == var
+    ) {
+      return Doc.sep(
+        term(Outer.BinOp, b.u()),
+        Doc.symbol("="),
+        term(Outer.BinOp, a.u())
+      );
+    }
+    return null;
+  }
+
+  public @NotNull Doc cube(@NotNull PathTerm cube) {
+    if (cube.params().sizeEquals(1)
+      && cube.partial() instanceof Partial.Split<Term> split
+      && split.clauses().sizeEquals(2)
+    ) {
+      var var = cube.params().get(0);
+      var clause1 = split.clauses().get(0);
+      var clause2 = split.clauses().get(1);
+      var beauty = binCube(clause1, clause2, var);
+      if (beauty == null) beauty = binCube(clause2, clause1, var);
+      if (beauty != null) return beauty;
+    }
+    return Doc.sep(
+      Doc.symbol("[|"),
+      Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
+      Doc.symbol("|]"),
+      cube.type().toDoc(options),
+      partial(options, cube.partial(), false, "{", "}")
+    );
   }
 
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
@@ -184,7 +229,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         term(Outer.AppSpine, ty), Doc.parened(restr(options, restr))), Outer.AppSpine);
       case PartialTerm el -> partial(options, el.partial(), true, "{|", "|}");
       case FormulaTerm(var mula) -> formula(outer, mula);
-      case PathTerm cube -> cube(options, cube);
+      case PathTerm cube -> cube(cube);
       case PLamTerm(var params, var body) -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
           Doc.sep(params.map(BaseDistiller::varDoc)),

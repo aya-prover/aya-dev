@@ -8,7 +8,6 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.term.PathTerm;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
@@ -267,16 +266,6 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return style != null ? linkDef(ref, style) : varDoc(ref);
   }
 
-  public static @NotNull Doc cube(@NotNull DistillerOptions options, @NotNull PathTerm cube) {
-    return Doc.sep(
-      Doc.symbol("[|"),
-      Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
-      Doc.symbol("|]"),
-      cube.type().toDoc(options),
-      partial(options, cube.partial(), false, "{", "}")
-    );
-  }
-
   public @NotNull Doc formula(@NotNull Outer outer, @NotNull Formula<Term> formula) {
     return switch (formula) {
       case Formula.Conn<Term> cnn -> {
@@ -324,12 +313,6 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
   cofib(@NotNull DistillerOptions options, @NotNull Restr.Conj<T> conj) {
     return Doc.join(Doc.spaced(Doc.symbol("/\\")), conj.ands().view().map(and -> Doc.sepNonEmpty(!and.isOne() ? Doc.symbol("~") : Doc.empty(), and.inst().toDoc(options))));
-  }
-
-  public @NotNull Doc unnamedParam(@NotNull ParamLike<Term> param) {
-    return param.explicit()
-      ? term(Outer.BinOp, param.type())
-      : Doc.braced(term(Outer.Free, param.type()));
   }
 
   protected static @Nullable Style chooseStyle(Object concrete) {
