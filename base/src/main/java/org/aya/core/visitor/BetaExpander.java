@@ -37,14 +37,14 @@ public interface BetaExpander extends EndoTerm {
         var result = match.tryMatch();
         yield result.isDefined() ? result.get() : match;
       }
-      case PAppTerm(var of, var args, PathTerm.Cube(var xi, var type, var partial)) -> {
+      case PAppTerm(var of, var args, PathTerm(var xi, var type, var partial)) -> {
         if (of instanceof PLamTerm lam) {
           var ui = args.map(Arg::term);
           var subst = new Subst(lam.params(), ui);
           yield apply(lam.body().subst(subst));
         }
         yield switch (partial(partial)) {
-          case Partial.Split<Term> hap -> new PAppTerm(of, args, new PathTerm.Cube(xi, type, hap));
+          case Partial.Split<Term> hap -> new PAppTerm(of, args, new PathTerm(xi, type, hap));
           case Partial.Const<Term> sad -> sad.u();
         };
       }
