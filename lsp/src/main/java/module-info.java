@@ -1,6 +1,7 @@
 module aya.vsc {
   requires aya.base;
   requires aya.cli;
+  requires aya.ide;
 
   requires static org.jetbrains.annotations;
   requires com.google.gson;
