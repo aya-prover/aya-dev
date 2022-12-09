@@ -101,16 +101,18 @@ public interface Resolver {
   }
 
   /**
-   * In short, this class resolves position to PsiNameIdentifierOwner or PsiNamedElement.
+   * In short, this class resolves cursor position to PsiNameIdentifierOwner or PsiNamedElement.
    * <p>
-   * Resolve position to its referring target. This class extends the
-   * search to definitions and module commands compared to {@link StmtFolder},
-   * because the position may be placed at the name part of a function, a tele,
-   * an import command, etc.
+   * This class should traverse all {@link AnyVar}s, ignoring the differences between
+   * variable declaration and variable references, unlike {@link StmtFolder} and
+   * {@link org.aya.cli.literate.SyntaxHighlight}.
+   * <p>
+   * The rationale is that users may place the cursor at the name part of a function,
+   * a tele, an import command, etc. And we are expected to find the correct {@link AnyVar}
+   * no matter if it is a declaration or a reference.
    *
-   * @author ice1000, kiva
+   * @author ice1000, kiva, wsx
    */
-  // TODO: Double check the usage of foldVar here.
   record PositionResolver(XY xy) implements StmtFolder<SeqView<WithPos<AnyVar>>> {
     @Override public @NotNull SeqView<WithPos<AnyVar>> init() {
       return SeqView.empty();
@@ -132,7 +134,11 @@ public interface Resolver {
     }
   }
 
-  /** find usages of a variable */
+  /**
+   * This class finds usages of a variable. So we only traverse variable references.
+   *
+   * @author kiva, wsx
+   */
   record UsageResolver(@NotNull AnyVar target) implements StmtFolder<SeqView<SourcePos>> {
     @Override public @NotNull SeqView<SourcePos> init() {
       return SeqView.empty();
