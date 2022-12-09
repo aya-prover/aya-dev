@@ -13,7 +13,6 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 public interface FindReferences {
-
   static @NotNull SeqView<SourcePos> findRefs(
     @NotNull LibrarySource source,
     @NotNull SeqView<LibraryOwner> libraries, XY xy

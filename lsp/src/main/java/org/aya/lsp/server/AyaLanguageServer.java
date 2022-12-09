@@ -383,7 +383,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<InlayHint> inlayHint(InlayHintParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return InlayHintMaker.invoke(source, params.range);
+    return InlayHintMaker.invoke(source, LspRange.range(params.range));
   }
 
   @LspRequest("aya/load") @SuppressWarnings("unused")

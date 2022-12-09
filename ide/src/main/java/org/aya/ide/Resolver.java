@@ -47,7 +47,7 @@ public interface Resolver {
   ) {
     var program = source.program().get();
     if (program == null) return SeqView.empty();
-    return program.view().flatMap(new PositionResolver(xy)).mapNotNull(pos -> switch (pos.data()) {
+    return program.view().flatMap(new XYResolver(xy)).mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete != null) yield new WithPos<>(pos.sourcePos(), defVar);
         else if (defVar.module != null) {
@@ -113,7 +113,7 @@ public interface Resolver {
    *
    * @author ice1000, kiva, wsx
    */
-  record PositionResolver(XY xy) implements StmtFolder<SeqView<WithPos<AnyVar>>> {
+  record XYResolver(XY xy) implements StmtFolder<SeqView<WithPos<AnyVar>>> {
     @Override public @NotNull SeqView<WithPos<AnyVar>> init() {
       return SeqView.empty();
     }
@@ -144,8 +144,7 @@ public interface Resolver {
       return SeqView.empty();
     }
 
-    @Override
-    public @NotNull SeqView<SourcePos>
+    @Override public @NotNull SeqView<SourcePos>
     foldVarRef(@NotNull SeqView<SourcePos> refs, @NotNull AnyVar var, @NotNull SourcePos pos, @NotNull LazyValue<Term> type) {
       // for imported serialized definitions, let's compare by qualified name
       var usage = (target == var)
