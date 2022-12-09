@@ -15,7 +15,6 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
-import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
@@ -257,13 +256,6 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
   }
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return new LittleTyper(state, ctx).term(this);
-  }
-  default @NotNull SortTerm computeSort(@NotNull TyckState state, @NotNull LocalCtx ctx) {
-    var result = computeType(state, ctx);
-    if (result instanceof SortTerm sort) return sort;
-    if (result instanceof ErrorTerm || result instanceof MetaTerm)
-      return SortTerm.Type0; // TODO: improve LittleTyper and remove this hack
-    throw new InternalException("unreachable: " + result.toDoc(DistillerOptions.debug()).debugRender());
   }
 
   /**
