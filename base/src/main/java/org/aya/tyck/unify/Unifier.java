@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * we will consider it a unification failure, so be careful when returning null.
  * @see Eta Eta-contraction
  * @see TermComparator bidirectional conversion check
- * @see Unifier#compare(Term, Term, Term) the only intended API for conversion checking
+ * @see #compare(Term, Term, Term) the only intended API for conversion checking
  */
 public final class Unifier extends TermComparator {
   final boolean allowVague;

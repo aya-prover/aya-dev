@@ -91,7 +91,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    * @param fn    The applied function, pretty-printed.
    * @param fmt   Mostly just {@link #term(Outer, AyaDocile)}, but can be overridden.
    * @param <T>   Mostly <code>Term</code>.
-   * @see BaseDistiller#prefix(Doc, Fmt, Outer, SeqView)
+   * @see #prefix(Doc, Fmt, Outer, SeqView)
    */
   <T extends AyaDocile> @NotNull Doc visitCalls(
     @Nullable Assoc assoc, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
@@ -120,7 +120,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   /**
    * Pretty-print an application in a dumb (but conservative) way, using prefix syntax.
    *
-   * @see BaseDistiller#visitCalls(Assoc, Doc, Fmt, Outer, SeqView, boolean)
+   * @see #visitCalls(Assoc, Doc, Fmt, Outer, SeqView, boolean)
    */
   private <T extends AyaDocile> @NotNull Doc
   prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<? extends BinOpParser.@NotNull Elem<T>> args) {
@@ -160,7 +160,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   /**
    * Pretty-print a telescope in a dumb (but conservative) way.
    *
-   * @see BaseDistiller#visitTele(Seq, AyaDocile, ToIntBiFunction)
+   * @see #visitTele(Seq, AyaDocile, ToIntBiFunction)
    */
   public @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
     return visitTele(telescope, null, (t, v) -> 1);
@@ -175,7 +175,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
    * @param body  the body of the telescope (like the return type in a pi type),
    *              only used for finding usages (of the variables in the telescope).
    * @param altF7 a function for finding usages.
-   * @see BaseDistiller#visitTele(Seq)
+   * @see #visitTele(Seq)
    */
   public @NotNull Doc visitTele(
     @NotNull Seq<? extends ParamLike<Term>> telescope,

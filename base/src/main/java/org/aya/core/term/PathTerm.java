@@ -11,7 +11,7 @@ import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * 'Generalized path' syntax.
@@ -53,6 +53,11 @@ public record PathTerm(
     return type.subst(params.zipView(dimensions).toImmutableMap());
   }
 
+  /**
+   * @param pLam a term of "this" type (i.e. a path type)
+   * @return pLam applied with {@link #params}
+   * @see #etaLam(Term)
+   */
   public @NotNull Term applyDimsTo(@NotNull Term pLam) {
     var args = params.view().map(RefTerm::new);
     loop:
@@ -79,22 +84,22 @@ public record PathTerm(
     return new PAppTerm(pLam, newArgs, this);
   }
 
-  public @NotNull PathTerm map(@NotNull ImmutableSeq<LocalVar> params, @NotNull Function<Term, Term> mapper) {
+  public @NotNull PathTerm map(@NotNull UnaryOperator<Term> mapper) {
     var ty = mapper.apply(type);
     var par = partial.map(mapper);
     if (ty == type && par == partial) return this;
     return new PathTerm(params, ty, par);
   }
 
-  public @NotNull PathTerm map(@NotNull Function<Term, Term> mapper) {
-    return map(params, mapper);
-  }
-
   public @NotNull Term makeApp(@NotNull Term app, @NotNull Arg<Term> arg) {
     return AppTerm.make(etaLam(app), arg);
   }
 
-  /** "not really eta". Used together with {@link #computePi()} */
+  /**
+   * @param term a term of "this" type (i.e. the path itself)
+   * @return eta-expanded term into a lambda, alpha-renamed
+   * @see #computePi() for the type of the returned lambda
+   */
   public @NotNull Term etaLam(@NotNull Term term) {
     return params.map(x -> new Param(x, IntervalTerm.INSTANCE, true))
       .foldRight(applyDimsTo(term), LamTerm::new).rename();

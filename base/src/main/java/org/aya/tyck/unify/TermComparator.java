@@ -47,8 +47,8 @@ import java.util.function.Supplier;
  * This class is not called <code>Comparator</code> because there is already {@link java.util.Comparator}.
  *
  * @see Unifier Pattern unification implementation
- * @see TermComparator#compareUntyped(Term, Term, Sub, Sub) the "synthesize" direction
- * @see TermComparator#compare(Term, Term, Sub, Sub, Term) the "inherit" direction
+ * @see #compareUntyped(Term, Term, Sub, Sub) the "synthesize" direction
+ * @see #compare(Term, Term, Sub, Sub, Term) the "inherit" direction
  */
 public sealed abstract class TermComparator permits Unifier {
   protected final @Nullable Trace.Builder traceBuilder;

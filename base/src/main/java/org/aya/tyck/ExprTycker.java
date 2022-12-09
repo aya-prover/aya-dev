@@ -857,7 +857,7 @@ public final class ExprTycker extends Tycker {
    * Check if <code>lower</code> is a subtype of <code>upper</code>,
    * and report a type error if it's not the case.
    *
-   * @see ExprTycker#inheritFallbackUnify(Term, Result, Expr)
+   * @see #inheritFallbackUnify(Term, Result, Expr)
    */
   public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
@@ -869,7 +869,7 @@ public final class ExprTycker extends Tycker {
    * and try to insert implicit arguments to fulfill this goal (if possible).
    *
    * @return the term and type after insertion
-   * @see ExprTycker#unifyTyReported(Term, Term, Expr)
+   * @see #unifyTyReported(Term, Term, Expr)
    */
   private Result inheritFallbackUnify(@NotNull Term upper, @NotNull Result result, Expr loc) {
     var inst = instImplicits(result, loc.sourcePos());
