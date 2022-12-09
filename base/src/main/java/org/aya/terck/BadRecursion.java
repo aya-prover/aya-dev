@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.terck.error;
+package org.aya.terck;
 
 import kala.collection.mutable.MutableList;
 import org.aya.core.def.Def;
@@ -9,7 +9,7 @@ import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.terck.Diagonal;
+import org.aya.util.terck.Diagonal;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;

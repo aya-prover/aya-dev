@@ -1,14 +1,11 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.terck;
+package org.aya.util.terck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.ArrayUtil;
-import org.aya.util.terck.Relation;
-import org.aya.util.terck.Selector;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +78,7 @@ public record CallMatrix<Callable, Def, Param>(
     @NotNull CallMatrix<Callable, Def, Param> A, @NotNull CallMatrix<Callable, Def, Param> B
   ) {
     if (B.domain != A.codomain) // implies B.cols() != A.rows()
-      throw new InternalException("The combine cannot be applied to these two call matrices");
+      throw new AssertionError("The combine cannot be applied to these two call matrices");
 
     var BA = new CallMatrix<>(B.callable, A.domain, B.codomain,
       A.domainTele, B.codomainTele);

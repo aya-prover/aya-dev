@@ -1,11 +1,10 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.terck;
+package org.aya.util.terck;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.aya.util.terck.Relation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.IntStream;

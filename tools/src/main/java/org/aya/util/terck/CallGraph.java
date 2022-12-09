@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.terck;
+package org.aya.util.terck;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
@@ -8,8 +8,6 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.util.terck.Relation;
-import org.aya.util.terck.Selector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;

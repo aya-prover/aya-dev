@@ -16,6 +16,8 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.Arg;
+import org.aya.util.terck.CallGraph;
+import org.aya.util.terck.CallMatrix;
 import org.aya.util.terck.Relation;
 import org.jetbrains.annotations.NotNull;
 
