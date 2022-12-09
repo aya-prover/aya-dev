@@ -37,7 +37,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
     super(options);
   }
 
-  private @Nullable Doc binCube(Restr.Side<Term> a, Restr.Side<Term> b, LocalVar var) {
+  private @Nullable Doc binCube(Restr.Side<Term> a, Restr.Side<Term> b, LocalVar var, @NotNull Outer outer) {
     if (!(a.cof().ands().sizeEquals(1) && b.cof().ands().sizeEquals(1)))
       return null;
     var aa = a.cof().ands().get(0);
@@ -47,30 +47,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
     ) {
       var aaa = term(Outer.BinOp, a.u());
       var bbb = term(Outer.BinOp, b.u());
-      if (aa.isOne()) return Doc.sep(bbb, Doc.symbol("="), aaa);
-      else return Doc.sep(aaa, Doc.symbol("="), bbb);
+      var eq = Doc.symbol("=");
+      var doc = aa.isOne() ? Doc.sep(bbb, eq, aaa) : Doc.sep(aaa, eq, bbb);
+      return checkParen(outer, doc, Outer.BinOp);
     }
     return null;
-  }
-
-  public @NotNull Doc cube(@NotNull PathTerm cube) {
-    if (cube.params().sizeEquals(1)
-      && cube.partial() instanceof Partial.Split<Term> split
-      && split.clauses().sizeEquals(2)
-    ) {
-      var var = cube.params().get(0);
-      var clause1 = split.clauses().get(0);
-      var clause2 = split.clauses().get(1);
-      var beauty = binCube(clause1, clause2, var);
-      if (beauty != null) return beauty;
-    }
-    return Doc.sep(
-      Doc.symbol("[|"),
-      Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
-      Doc.symbol("|]"),
-      cube.type().toDoc(options),
-      partial(options, cube.partial(), false, "{", "}")
-    );
   }
 
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
@@ -224,7 +205,25 @@ public class CoreDistiller extends BaseDistiller<Term> {
         term(Outer.AppSpine, ty), Doc.parened(restr(options, restr))), Outer.AppSpine);
       case PartialTerm el -> partial(options, el.partial(), true, "{|", "|}");
       case FormulaTerm(var mula) -> formula(outer, mula);
-      case PathTerm cube -> cube(cube);
+      case PathTerm cube -> {
+        if (cube.params().sizeEquals(1)
+          && cube.partial() instanceof Partial.Split<Term> split
+          && split.clauses().sizeEquals(2)
+        ) {
+          var var = cube.params().get(0);
+          var clause1 = split.clauses().get(0);
+          var clause2 = split.clauses().get(1);
+          var beauty = binCube(clause1, clause2, var, outer);
+          if (beauty != null) yield beauty;
+        }
+        yield Doc.sep(
+          Doc.symbol("[|"),
+          Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
+          Doc.symbol("|]"),
+          cube.type().toDoc(options),
+          partial(options, cube.partial(), false, "{", "}")
+        );
+      }
       case PLamTerm(var params, var body) -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
           Doc.sep(params.map(BaseDistiller::varDoc)),
