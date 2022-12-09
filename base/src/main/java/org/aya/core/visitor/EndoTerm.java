@@ -59,10 +59,10 @@ public interface EndoTerm extends UnaryOperator<Term> {
         case SigmaTerm sigma -> new SigmaTerm(sigma.params().map(this::handleBinder));
         case RefTerm ref -> subst.map().getOrDefault(ref.var(), ref);
         case RefTerm.Field field -> subst.map().getOrDefault(field.ref(), field);
-        case PathTerm path -> new PathTerm(new PathTerm.Cube(
-          path.cube().params().map(this::handleBinder),
-          path.cube().type(),
-          path.cube().partial()));
+        case PathTerm path -> new PathTerm(
+          path.params().map(this::handleBinder),
+          path.type(),
+          path.partial());
         case PLamTerm lam -> new PLamTerm(
           lam.params().map(this::handleBinder),
           lam.body());
@@ -77,7 +77,8 @@ public interface EndoTerm extends UnaryOperator<Term> {
   record Substituter(@NotNull Subst subst) implements BetaExpander {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
-        case RefTerm ref when ref.var() == LocalVar.IGNORED -> throw new InternalException("found usage of ignored var");
+        case RefTerm ref when ref.var() == LocalVar.IGNORED ->
+          throw new InternalException("found usage of ignored var");
         case RefTerm ref -> replacement(ref, ref.var());
         case RefTerm.Field field -> replacement(field, field.ref());
         case Term misc -> BetaExpander.super.post(misc);

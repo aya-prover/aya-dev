@@ -266,9 +266,16 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record Path(@NotNull SerCube cube) implements SerTerm {
-    @Override public @NotNull Term de(@NotNull DeState state) {
-      return new PathTerm(cube.de(state));
+  record Path(
+    @NotNull ImmutableSeq<SimpVar> params,
+    @NotNull SerTerm type,
+    @NotNull Partial<SerTerm> partial
+  ) implements SerTerm {
+    @Override public @NotNull PathTerm de(@NotNull DeState state) {
+      return new PathTerm(
+        params.map(p -> p.de(state)),
+        type.de(state),
+        PartEl.de(state, partial));
     }
   }
 
@@ -284,7 +291,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record PathApp(
     @NotNull SerTerm of,
     @NotNull ImmutableSeq<SerArg> args,
-    @NotNull SerCube cube
+    @NotNull Path cube
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new PAppTerm(of.de(state), args.map(arg -> arg.de(state)), cube.de(state));
@@ -294,19 +301,6 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record Coe(@NotNull SerTerm type, @NotNull Restr<SerTerm> restr) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CoeTerm(type.de(state), restr.fmap(t -> t.de(state)));
-    }
-  }
-
-  record SerCube(
-    @NotNull ImmutableSeq<SimpVar> params,
-    @NotNull SerTerm type,
-    @NotNull Partial<SerTerm> partial
-  ) implements Serializable {
-    public @NotNull PathTerm.Cube de(@NotNull DeState state) {
-      return new PathTerm.Cube(
-        params.map(p -> p.de(state)),
-        type.de(state),
-        PartEl.de(state, partial));
     }
   }
 }

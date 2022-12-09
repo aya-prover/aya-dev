@@ -117,7 +117,7 @@ public record Serializer(@NotNull Serializer.State state) {
 
       case PartialTerm el -> new SerTerm.PartEl(partial(el.partial()), serialize(el.rhsType()));
       case PartialTyTerm ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
-      case PathTerm path -> new SerTerm.Path(serialize(path.cube()));
+      case PathTerm path -> serialize(path);
       case PLamTerm path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
       case PAppTerm app -> new SerTerm.PathApp(serialize(app.of()),
         serializeArgs(app.args()), serialize(app.cube()));
@@ -154,8 +154,8 @@ public record Serializer(@NotNull Serializer.State state) {
     };
   }
 
-  private @NotNull SerTerm.SerCube serialize(@NotNull PathTerm.Cube cube) {
-    return new SerTerm.SerCube(
+  private @NotNull SerTerm.Path serialize(@NotNull PathTerm cube) {
+    return new SerTerm.Path(
       serializeIntervals(cube.params()),
       serialize(cube.type()),
       partial(cube.partial()));

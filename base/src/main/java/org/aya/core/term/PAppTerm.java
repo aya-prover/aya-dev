@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
 public record PAppTerm(
   @NotNull Term of,
   @NotNull ImmutableSeq<Arg<@NotNull Term>> args,
-  @NotNull PathTerm.Cube cube
+  @NotNull PathTerm cube
 ) implements Elimination {
-  @SafeVarargs public PAppTerm(@NotNull Term of, @NotNull PathTerm.Cube cube, Arg<@NotNull Term> @NotNull ... args) {
+  @SafeVarargs public PAppTerm(@NotNull Term of, @NotNull PathTerm cube, Arg<@NotNull Term> @NotNull ... args) {
     this(of, ImmutableSeq.of(args), cube);
   }
 }

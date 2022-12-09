@@ -167,11 +167,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         if (partial == el.partial() && rhs == el.rhsType()) yield el;
         yield new PartialTerm(partial, rhs);
       }
-      case PathTerm(var cube) path -> {
-        var newCube = cube.map(f);
-        if (newCube == cube) yield path;
-        yield new PathTerm(newCube);
-      }
+      case PathTerm path -> path.map(f);
       case PLamTerm(var params, var body) lam -> {
         var newBody = f.apply(body);
         if (newBody == body) yield lam;

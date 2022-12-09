@@ -318,7 +318,7 @@ public sealed abstract class TermComparator permits Unifier {
         case default -> compare(lhs, rhs, lr, rl, null);
       });
       // In this case, both sides have the same type (I hope)
-      case PathTerm(var cube) -> ctx.withIntervals(cube.params().view(), () -> {
+      case PathTerm cube -> ctx.withIntervals(cube.params().view(), () -> {
         if (lhs instanceof PLamTerm lambda) {
           assert lambda.params().sizeEquals(cube.params());
           if (rhs instanceof PLamTerm(var rparams, var rbody)) {
@@ -354,7 +354,7 @@ public sealed abstract class TermComparator permits Unifier {
     return result;
   }
 
-  private boolean comparePathLamBody(PLamTerm lambda, Term rhs, Sub lr, Sub rl, PathTerm.Cube cube) {
+  private boolean comparePathLamBody(PLamTerm lambda, Term rhs, Sub lr, Sub rl, PathTerm cube) {
     cube.params().forEachWith(lambda.params(), (a, b) -> rl.map.put(a, new RefTerm(b)));
     var result = ctx.withIntervals(lambda.params().view(), () ->
       compare(cube.applyDimsTo(lambda), cube.applyDimsTo(rhs), lr, rl, cube.type()));
@@ -375,7 +375,7 @@ public sealed abstract class TermComparator permits Unifier {
     };
   }
 
-  private boolean compareCube(@NotNull PathTerm.Cube lhs, @NotNull PathTerm.Cube rhs, Sub lr, Sub rl) {
+  private boolean compareCube(@NotNull PathTerm lhs, @NotNull PathTerm rhs, Sub lr, Sub rl) {
     var tyVars = rhs.params();
     return ctx.withIntervals(tyVars.view(), () -> TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, tyVars, (lsub, rsub) -> {
       var lPar = (PartialTerm) new PartialTerm(lhs.partial(), lhs.type()).subst(lsub);
@@ -414,7 +414,7 @@ public sealed abstract class TermComparator permits Unifier {
       case PAppTerm lhs -> {
         if (!(preRhs instanceof PAppTerm rhs)) yield null;
         var prePathType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(prePathType instanceof PathTerm(var cube))) yield null;
+        if (!(prePathType instanceof PathTerm cube)) yield null;
         var happy = lhs.args().allMatchWith(rhs.args(), (l, r) ->
           compare(l.term(), r.term(), lr, rl, null));
         yield happy ? cube.type() : null;
@@ -459,8 +459,8 @@ public sealed abstract class TermComparator permits Unifier {
           && compareRestr(lR, rR);
         yield happy ? SortTerm.Type0 : null;
       }
-      case PathTerm(var lCube) -> {
-        if (!(preRhs instanceof PathTerm(var rCube))) yield null;
+      case PathTerm lCube -> {
+        if (!(preRhs instanceof PathTerm rCube)) yield null;
         yield compareCube(lCube, rCube, lr, rl) ? SortTerm.Type0 : null;
       }
       case IntervalTerm lhs -> preRhs instanceof IntervalTerm ? SortTerm.Type0 : null;
