@@ -216,7 +216,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           var beauty = binCube(clause1, clause2, var, outer);
           if (beauty != null) yield beauty;
         }
-        yield Doc.sep(
+        yield Doc.sepNonEmpty(
           Doc.symbol("[|"),
           Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
           Doc.symbol("|]"),
