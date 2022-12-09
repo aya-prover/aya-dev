@@ -4,6 +4,7 @@ package org.aya.terck.error;
 
 import kala.collection.mutable.MutableList;
 import org.aya.core.def.Def;
+import org.aya.core.term.Callable;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public record BadRecursion(
   @Override @NotNull SourcePos sourcePos, @NotNull DefVar<?, ?> name,
-  @Nullable Diagonal<Def, Term.Param> diag
+  @Nullable Diagonal<Callable, Def, Term.Param> diag
 ) implements Problem {
   @Override public @NotNull Severity level() {return Severity.ERROR;}
 

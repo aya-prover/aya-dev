@@ -23,14 +23,14 @@ import java.util.function.Consumer;
  * @author kiva
  * @see CallMatrix
  */
-public record CallGraph<T, P>(
-  @NotNull MutableMap<T, @NotNull MutableMap<T, MutableList<@NotNull CallMatrix<T, P>>>> graph
+public record CallGraph<C, T, P>(
+  @NotNull MutableMap<T, @NotNull MutableMap<T, MutableList<@NotNull CallMatrix<C, T, P>>>> graph
 ) {
-  public static <T, P> @NotNull CallGraph<T, P> create() {
+  public static <C, T, P> @NotNull CallGraph<C, T, P> create() {
     return new CallGraph<>(MutableLinkedHashMap.of());
   }
 
-  public void put(@NotNull CallMatrix<T, P> matrix) {
+  public void put(@NotNull CallMatrix<C, T, P> matrix) {
     var caller = matrix.domain();
     var callee = matrix.codomain();
     var calls = graph.getOrPut(caller, MutableLinkedHashMap::of)
@@ -44,7 +44,7 @@ public record CallGraph<T, P>(
   }
 
   /** completing a call graph is just finding its transitive closure */
-  private static <T, P> @NotNull CallGraph<T, P> complete(@NotNull CallGraph<T, P> initial) {
+  private static <C, T, P> @NotNull CallGraph<C, T, P> complete(@NotNull CallGraph<C, T, P> initial) {
     var step = initial;
     while (true) {
       var comb = indirect(initial, step);
@@ -55,8 +55,8 @@ public record CallGraph<T, P>(
   }
 
   /** find all indirect calls and combine them together */
-  private static <T, P> @NotNull CallGraph<T, P> indirect(@NotNull CallGraph<T, P> initial, @NotNull CallGraph<T, P> step) {
-    var comb = CallGraph.<T, P>create();
+  private static <C, T, P> @NotNull CallGraph<C, T, P> indirect(@NotNull CallGraph<C, T, P> initial, @NotNull CallGraph<C, T, P> step) {
+    var comb = CallGraph.<C, T, P>create();
     initial.graph.forEach((domain, codomains) -> codomains.forEach((codomain, mats) -> mats.forEach(mat -> {
       var indirect = step.graph.getOrNull(mat.codomain());
       if (indirect != null) indirect.forEach((indCodomain, indMats) -> indMats.forEach(ind -> {
@@ -71,11 +71,11 @@ public record CallGraph<T, P>(
    * merge newly discovered indirect matrices with old ones.
    * <a href="https://github.com/agda/agda/blob/e3bf58d8b2e95bc0481035756f44ddd9fe19b40d/src/full/Agda/Termination/CallGraph.hs#L155">CallGraph.hs</a>
    */
-  private static <T, P> @NotNull Tuple2<CallGraph<T, P>, CallGraph<T, P>> merge(
-    @NotNull CallGraph<T, P> comb, @NotNull CallGraph<T, P> cs
+  private static <C, T, P> @NotNull Tuple2<CallGraph<C, T, P>, CallGraph<C, T, P>> merge(
+    @NotNull CallGraph<C, T, P> comb, @NotNull CallGraph<C, T, P> cs
   ) {
-    var newG = CallGraph.<T, P>create(); // all accepted new matrices go here, used for indicating whether we are done.
-    var oldG = CallGraph.<T, P>create(); // all old matrices and accepted new matrices go here
+    var newG = CallGraph.<C, T, P>create(); // all accepted new matrices go here, used for indicating whether we are done.
+    var oldG = CallGraph.<C, T, P>create(); // all old matrices and accepted new matrices go here
     forEachGraph(comb.graph, cs.graph,
       // If the matrix is really new (no old matrices describing the same call -- we find a new call path), accept it
       n -> {
@@ -127,9 +127,9 @@ public record CallGraph<T, P>(
   }
 
   /** find bad recursive calls in current SCC */
-  public @NotNull ImmutableSeq<Diagonal<T, P>> findBadRecursion() {
+  public @NotNull ImmutableSeq<Diagonal<C, T, P>> findBadRecursion() {
     var complete = complete(this);
-    var bads = MutableList.<Diagonal<T, P>>create();
+    var bads = MutableList.<Diagonal<C, T, P>>create();
     for (var key : complete.graph.keysView()) {
       var matrix = complete.graph.getOption(key)
         .flatMap(g -> g.getOption(key));

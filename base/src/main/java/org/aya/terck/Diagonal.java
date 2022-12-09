@@ -10,11 +10,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.IntStream;
 
-public record Diagonal<T, P>(
-  @NotNull CallMatrix<T, P> matrix,
+public record Diagonal<C, T, P>(
+  @NotNull CallMatrix<C, T, P> matrix,
   @NotNull ImmutableSeq<Relation> diagonal
 ) implements Docile {
-  public static <T, P> @NotNull Diagonal<T, P> create(@NotNull CallMatrix<T, P> matrix) {
+  public static <C, T, P> @NotNull Diagonal<C, T, P> create(@NotNull CallMatrix<C, T, P> matrix) {
     assert matrix.rows() == matrix.cols();
     var diag = IntStream.range(0, matrix.rows())
       .mapToObj(i -> matrix.matrix()[i][i])
