@@ -5,6 +5,7 @@ package org.aya.terck;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.aya.util.terck.Relation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.IntStream;

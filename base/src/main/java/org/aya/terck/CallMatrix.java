@@ -8,6 +8,8 @@ import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.ArrayUtil;
+import org.aya.util.terck.Relation;
+import org.aya.util.terck.Selector;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;

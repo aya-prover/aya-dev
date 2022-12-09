@@ -8,6 +8,8 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import org.aya.util.terck.Relation;
+import org.aya.util.terck.Selector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
