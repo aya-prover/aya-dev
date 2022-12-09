@@ -84,9 +84,9 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
     // If it has core term, type is available.
     if (decl.ref().core instanceof Def def) return Tuple.of(lazyType(decl.ref()),
       def.telescope().view().map(p -> Tuple.of(p.ref(), LazyValue.ofValue(p.type()))));
-    // If it is telescopic, type is unavailable.
+    // If it is telescopic, type is available when it is type-checked.
     if (decl instanceof Decl.Telescopic<?> teleDecl) return Tuple.of(lazyType(decl.ref()),
-      teleDecl.telescope().view().map(p -> Tuple.of(p.ref(), noType())));
+      teleDecl.telescope().view().map(p -> Tuple.of(p.ref(), withTermType(p))));
     // Oops, no type available.
     return Tuple.of(noType(), SeqView.empty());
   }

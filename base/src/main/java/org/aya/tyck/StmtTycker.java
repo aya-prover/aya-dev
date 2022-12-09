@@ -335,6 +335,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       ).wellTyped();
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
+      exprTycker.addWithTerm(param, paramTyped);
       return new TeleResult(newParam, param.sourcePos());
     });
   }

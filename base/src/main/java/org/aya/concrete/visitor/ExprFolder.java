@@ -8,21 +8,26 @@ import org.aya.core.term.IntervalTerm;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ExprFolder<R> extends PatternFolder<R> {
   @NotNull R init();
 
+  default @NotNull LazyValue<@Nullable Term> withTermType(@NotNull Expr.WithTerm term) {
+    return LazyValue.of(() -> {
+      var core = term.core();
+      return core == null ? null : core.type();
+    });
+  }
+
   default @NotNull R foldParamDecl(@NotNull R acc, Expr.@NotNull Param param) {
-    return foldVarDecl(acc, param.ref(), param.sourcePos(), noType()); // TODO: param type
+    return foldVarDecl(acc, param.ref(), param.sourcePos(), withTermType(param));
   }
 
   @MustBeInvokedByOverriders
   default @NotNull R fold(@NotNull R acc, @NotNull Expr expr) {
     return switch (expr) {
-      case Expr.Ref ref -> foldVarRef(acc, ref.resolvedVar(), ref.sourcePos(), LazyValue.of(() -> {
-        var core = ref.core();
-        return core == null ? null : core.type();
-      }));
+      case Expr.Ref ref -> foldVarRef(acc, ref.resolvedVar(), ref.sourcePos(), withTermType(ref));
       case Expr.Lambda lam -> foldParamDecl(acc, lam.param());
       case Expr.Pi pi -> foldParamDecl(acc, pi.param());
       case Expr.Sigma sigma -> sigma.params().foldLeft(acc, this::foldParamDecl);

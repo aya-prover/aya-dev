@@ -65,7 +65,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   }
 
   @ForLSP
-  sealed interface WithTerm extends Expr {
+  sealed interface WithTerm extends SourceNode {
     @NotNull MutableValue<ExprTycker.Result> theCore();
     default @Nullable ExprTycker.Result core() {
       return theCore().get();
@@ -600,18 +600,19 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar ref,
     @NotNull Expr type,
-    boolean explicit
-  ) implements ParamLike<Expr>, SourceNode {
-    public Param(@NotNull Param param, @NotNull Expr type) {
-      this(param.sourcePos, param.ref, type, param.explicit);
+    boolean explicit,
+    @ForLSP MutableValue<ExprTycker.Result> theCore
+  ) implements ParamLike<Expr>, SourceNode, WithTerm {
+    public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, @NotNull Expr type, boolean explicit) {
+      this(sourcePos, var, type, explicit, MutableValue.create());
     }
 
     public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
-      this(sourcePos, var, new Hole(sourcePos, false, null), explicit);
+      this(sourcePos, var, new Hole(sourcePos, false, null), explicit, MutableValue.create());
     }
 
     public @NotNull Param update(@NotNull Expr type) {
-      return type == type() ? this : new Param(sourcePos, ref, type, explicit);
+      return type == type() ? this : new Param(sourcePos, ref, type, explicit, theCore);
     }
 
     public @NotNull Param descent(@NotNull Function<@NotNull Expr, @NotNull Expr> f) {
