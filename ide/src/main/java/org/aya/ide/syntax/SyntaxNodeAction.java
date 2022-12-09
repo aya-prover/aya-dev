@@ -1,14 +1,14 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.actions;
+package org.aya.ide.syntax;
 
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.EndoPattern;
 import org.aya.concrete.visitor.StmtConsumer;
-import org.aya.lsp.utils.XY;
-import org.aya.lsp.utils.XYXY;
+import org.aya.ide.util.XY;
+import org.aya.ide.util.XYXY;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

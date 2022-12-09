@@ -5,6 +5,8 @@ package org.aya.terck;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.FnCall;
 import org.aya.ref.DefVar;
+import org.aya.util.terck.CallMatrix;
+import org.aya.util.terck.Relation;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -16,6 +16,9 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.Arg;
+import org.aya.util.terck.CallGraph;
+import org.aya.util.terck.CallMatrix;
+import org.aya.util.terck.Relation;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,9 +33,13 @@ public record CallResolver(
   @NotNull FnDef caller,
   @NotNull MutableSet<Def> targets,
   @NotNull MutableValue<Term.Matching> currentMatching,
-  @NotNull CallGraph<Def, Term.Param> graph
+  @NotNull CallGraph<Callable, Def, Term.Param> graph
 ) implements DefConsumer {
-  public CallResolver(@NotNull PrimDef.Factory factory, @NotNull FnDef fn, @NotNull MutableSet<Def> targets, @NotNull CallGraph<Def, Term.Param> graph) {
+  public CallResolver(
+    @NotNull PrimDef.Factory factory, @NotNull FnDef fn,
+    @NotNull MutableSet<Def> targets,
+    @NotNull CallGraph<Callable, Def, Term.Param> graph
+  ) {
     this(factory, fn, targets, MutableValue.create(), graph);
   }
 
@@ -49,7 +56,7 @@ public record CallResolver(
     graph.put(matrix);
   }
 
-  private void fillMatrix(@NotNull Callable callable, @NotNull Def callee, CallMatrix<Def, Term.Param> matrix) {
+  private void fillMatrix(@NotNull Callable callable, @NotNull Def callee, CallMatrix<?, Def, Term.Param> matrix) {
     var matching = currentMatching.get();
     var domThings = matching != null
       // If we are in a matching, the caller is defined by pattern matching.

@@ -7,7 +7,7 @@ import kala.tuple.Unit;
 import org.aya.generic.Constants;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
-import org.aya.lsp.utils.Resolver;
+import org.aya.ide.Resolver;
 import org.javacs.lsp.DiagnosticSeverity;
 import org.javacs.lsp.PublishDiagnosticsParams;
 import org.jetbrains.annotations.NotNull;

@@ -12,8 +12,8 @@ import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.LspRange;
 import org.jetbrains.annotations.NotNull;
 
-public class SemanticHighlight {
-  public static @NotNull ImmutableSeq<HighlightResult> invoke(@NotNull LibraryOwner owner) {
+public interface SemanticHighlight {
+  static @NotNull ImmutableSeq<HighlightResult> invoke(@NotNull LibraryOwner owner) {
     var symbols = MutableList.<HighlightResult>create();
     highlight(owner, symbols);
     return symbols.toImmutableSeq();

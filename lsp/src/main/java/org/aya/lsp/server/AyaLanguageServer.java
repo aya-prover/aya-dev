@@ -22,6 +22,11 @@ import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
+import org.aya.ide.action.ComputeSignature;
+import org.aya.ide.action.ComputeTerm;
+import org.aya.ide.action.FindReferences;
+import org.aya.ide.action.GotoDefinition;
+import org.aya.ide.util.XY;
 import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
@@ -29,7 +34,6 @@ import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.prim.LspPrimFactory;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
-import org.aya.lsp.utils.XY;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.FileUtil;
 import org.aya.util.distill.DistillerOptions;
@@ -273,13 +277,19 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<List<? extends GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    return Optional.of(GotoDefinition.invoke(source, params.position, libraries.view()));
+    return Optional.of(GotoDefinition.findDefs(source, libraries.view(), LspRange.pos(params.position)).mapNotNull(pos -> {
+      var from = pos.sourcePos();
+      var to = pos.data();
+      var res = LspRange.toLoc(from, to);
+      if (res != null) Log.d("Resolved: %s in %s", to, res.targetUri);
+      return res;
+    }).collect(Collectors.toList()));
   }
 
   @Override public Optional<Hover> hover(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    var doc = ComputeSignature.invokeHover(source, params.position);
+    var doc = ComputeSignature.invokeHover(source, LspRange.pos(params.position));
     if (doc.isEmpty()) return Optional.empty();
     var marked = new MarkedString(MarkupKind.PlainText, doc.commonRender());
     return Optional.of(new Hover(List.of(marked)));
@@ -293,13 +303,18 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<List<Location>> findReferences(ReferenceParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    return Optional.of(FindReferences.invoke(source, params.position, libraries.view()));
+    @NotNull SeqView<LibraryOwner> libraries1 = libraries.view();
+    XY xy = LspRange.pos(params.position);
+    return Optional.of(FindReferences
+      .findRefs(source, libraries1, xy)
+      .map(LspRange::toLoc)
+      .collect(Collectors.toList()));
   }
 
   @Override public WorkspaceEdit rename(RenameParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return null;
-    var renames = Rename.rename(source, params.position, params.newName, libraries.view());
+    var renames = Rename.rename(source, params.newName, libraries.view(), LspRange.pos(params.position));
     return new WorkspaceEdit(renames);
   }
 
@@ -310,7 +325,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<RenameResponse> prepareRename(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    var begin = Rename.prepare(source, params.position);
+    var begin = Rename.prepare(source, LspRange.pos(params.position));
     if (begin == null) return Optional.empty();
     return Optional.of(new RenameResponse(LspRange.toRange(begin.sourcePos()), begin.data()));
   }
@@ -319,7 +334,7 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
     var currentFile = Option.ofNullable(source.underlyingFile());
-    return FindReferences.findOccurrences(source, params.position, SeqView.of(source.owner()))
+    return FindReferences.findOccurrences(source, SeqView.of(source.owner()), LspRange.pos(params.position))
       // only highlight references in the current file
       .filter(pos -> pos.file().underlying().equals(currentFile))
       .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
@@ -368,7 +383,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<InlayHint> inlayHint(InlayHintParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return InlayHintMaker.invoke(source, params.range);
+    return InlayHintMaker.invoke(source, LspRange.range(params.range));
   }
 
   @LspRequest("aya/load") @SuppressWarnings("unused")
@@ -391,7 +406,7 @@ public class AyaLanguageServer implements LanguageServer {
     if (source == null) return ComputeTermResult.bad(params);
     var program = source.program().get();
     if (program == null) return ComputeTermResult.bad(params);
-    var computer = new ComputeTerm(source, type, primFactory(source.owner()), new XY(params.position));
+    var computer = new ComputeTerm(source, type, primFactory(source.owner()), LspRange.pos(params.position));
     program.forEach(computer);
     return computer.result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, computer.result);
   }

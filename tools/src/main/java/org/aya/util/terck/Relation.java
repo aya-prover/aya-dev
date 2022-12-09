@@ -1,8 +1,7 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.terck;
+package org.aya.util.terck;
 
-import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.Contract;
@@ -45,7 +44,7 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
     return switch (this) {
       case Unknown lhs -> lhs;
       case Decrease l when rhs instanceof Decrease r -> decr(l.usable || r.usable, l.size + r.size);
-      default -> throw new InternalException("unreachable");
+      default -> throw new AssertionError("unreachable");
     };
   }
 
@@ -55,7 +54,7 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
       case Lt -> rhs;   // rhs decreases more
       case Eq -> this;  // randomly pick one
       case Gt -> this;  // this decreases more
-      case Unk -> throw new InternalException("unreachable");
+      case Unk -> throw new AssertionError("unreachable");
     };
   }
   /**

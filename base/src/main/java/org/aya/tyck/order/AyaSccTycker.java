@@ -13,12 +13,13 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.UserDef;
+import org.aya.core.term.Callable;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
-import org.aya.terck.CallGraph;
+import org.aya.util.terck.CallGraph;
 import org.aya.terck.CallResolver;
-import org.aya.terck.error.BadRecursion;
+import org.aya.terck.BadRecursion;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CounterexampleError;
@@ -225,7 +226,7 @@ public record AyaSccTycker(
   private void terckRecursiveFn(@NotNull SeqView<FnDef> fn) {
     var targets = MutableSet.<Def>from(fn);
     if (targets.isEmpty()) return;
-    var graph = CallGraph.<Def, Term.Param>create();
+    var graph = CallGraph.<Callable, Def, Term.Param>create();
     fn.forEach(def -> new CallResolver(resolveInfo.primFactory(), def, targets, graph).accept(def));
     var bads = graph.findBadRecursion();
     bads.view()

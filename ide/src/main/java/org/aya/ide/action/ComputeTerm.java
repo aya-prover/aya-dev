@@ -1,13 +1,14 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.actions;
+package org.aya.ide.action;
 
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.lsp.utils.XY;
+import org.aya.ide.syntax.SyntaxNodeAction;
+import org.aya.ide.util.XY;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.WithPos;

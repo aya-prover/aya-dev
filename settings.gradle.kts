@@ -16,5 +16,6 @@ include(
   "base",
   "pretty",
   "parser",
+  "ide",
   "lsp",
 )

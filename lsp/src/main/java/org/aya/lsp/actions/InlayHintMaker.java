@@ -6,12 +6,12 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
+import org.aya.ide.syntax.SyntaxNodeAction;
+import org.aya.ide.util.XYXY;
 import org.aya.lsp.utils.LspRange;
-import org.aya.lsp.utils.XYXY;
 import org.aya.util.distill.DistillerOptions;
 import org.javacs.lsp.InlayHint;
 import org.javacs.lsp.InlayHintKind;
-import org.javacs.lsp.Range;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -21,11 +21,10 @@ public record InlayHintMaker(
   @NotNull XYXY location,
   @NotNull MutableList<InlayHint> hints
 ) implements SyntaxNodeAction.Ranged {
-  public static @NotNull List<InlayHint> invoke(@NotNull LibrarySource source, @NotNull Range range) {
+  public static @NotNull List<InlayHint> invoke(@NotNull LibrarySource source, @NotNull XYXY range) {
     var program = source.program().get();
     if (program == null) return Collections.emptyList();
-    var xyxy = new XYXY(range);
-    var maker = new InlayHintMaker(xyxy, MutableList.create());
+    var maker = new InlayHintMaker(range, MutableList.create());
     program.forEach(maker);
     return maker.hints.asJava();
   }

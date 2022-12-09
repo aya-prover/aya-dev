@@ -1,10 +1,8 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.terck;
+package org.aya.util.terck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.Callable;
-import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.ArrayUtil;
@@ -21,13 +19,13 @@ import org.jetbrains.annotations.NotNull;
  * @see Relation
  */
 @Debug.Renderer(text = "toDoc().debugRender()")
-public record CallMatrix<Def, Param>(
+public record CallMatrix<Callable, Def, Param>(
   @NotNull Callable callable,
   @NotNull Def domain, @NotNull Def codomain,
   @NotNull ImmutableSeq<Param> domainTele,
   @NotNull ImmutableSeq<Param> codomainTele,
   @NotNull Relation[][] matrix
-) implements Docile, Selector.Candidate<CallMatrix<Def, Param>> {
+) implements Docile, Selector.Candidate<CallMatrix<Callable, Def, Param>> {
   public CallMatrix(
     @NotNull Callable callable,
     @NotNull Def domain, @NotNull Def codomain,
@@ -57,7 +55,7 @@ public record CallMatrix<Def, Param>(
   }
 
   /** Compare two call matrices by their decrease amount. */
-  @Override public @NotNull Selector.DecrOrd compare(@NotNull CallMatrix<Def, Param> other) {
+  @Override public @NotNull Selector.DecrOrd compare(@NotNull CallMatrix<Callable, Def, Param> other) {
     if (this.domain != other.domain || this.codomain != other.codomain) return Selector.DecrOrd.Unk;
     var rel = Selector.DecrOrd.Eq;
     for (int i = 0; i < rows(); i++)
@@ -76,11 +74,11 @@ public record CallMatrix<Def, Param>(
    * the `f` indirectly calls `h` with call matrix `combine(A, B)` or `AB` in matrix notation.
    */
   @Contract(pure = true)
-  public static <Def, Param> @NotNull CallMatrix<Def, Param> combine(
-    @NotNull CallMatrix<Def, Param> A, @NotNull CallMatrix<Def, Param> B
+  public static <Callable, Def, Param> @NotNull CallMatrix<Callable, Def, Param> combine(
+    @NotNull CallMatrix<Callable, Def, Param> A, @NotNull CallMatrix<Callable, Def, Param> B
   ) {
     if (B.domain != A.codomain) // implies B.cols() != A.rows()
-      throw new InternalException("The combine cannot be applied to these two call matrices");
+      throw new AssertionError("The combine cannot be applied to these two call matrices");
 
     var BA = new CallMatrix<>(B.callable, A.domain, B.codomain,
       A.domainTele, B.codomainTele);

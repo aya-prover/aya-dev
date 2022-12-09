@@ -3,6 +3,8 @@
 package org.aya.lsp.utils;
 
 import kala.control.Option;
+import org.aya.ide.util.XY;
+import org.aya.ide.util.XYXY;
 import org.aya.util.error.SourcePos;
 import org.javacs.lsp.Location;
 import org.javacs.lsp.LocationLink;
@@ -14,20 +16,24 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 import java.nio.file.Path;
 
-public class LspRange {
-  public static final Range NONE = new Range();
+public interface LspRange {
+  @NotNull Range NONE = new Range();
 
-  public static @NotNull Range toRange(@NotNull SourcePos sourcePos) {
+  static @NotNull XY pos(@NotNull Position position) {
+    return new XY(position.line + 1, position.character - 1);
+  }
+
+  static @NotNull Range toRange(@NotNull SourcePos sourcePos) {
     if (sourcePos == SourcePos.NONE) return NONE;
     return new Range(new Position(sourcePos.startLine() - 1, sourcePos.startColumn()),
       new Position(sourcePos.endLine() - 1, sourcePos.endColumn() + 1));
   }
 
-  public static @NotNull Option<URI> fileUri(@NotNull SourcePos sourcePos) {
+  static @NotNull Option<URI> fileUri(@NotNull SourcePos sourcePos) {
     return sourcePos.file().underlying().map(Path::toUri);
   }
 
-  public static @Nullable LocationLink toLoc(@NotNull SourcePos from, @NotNull SourcePos to) {
+  static @Nullable LocationLink toLoc(@NotNull SourcePos from, @NotNull SourcePos to) {
     var uri = fileUri(to);
     if (uri.isEmpty()) return null;
     var fromRange = toRange(from);
@@ -35,10 +41,13 @@ public class LspRange {
     return new LocationLink(fromRange, uri.get(), toRange, toRange);
   }
 
-  public static @Nullable Location toLoc(@NotNull SourcePos to) {
+  static @Nullable Location toLoc(@NotNull SourcePos to) {
     var uri = fileUri(to);
     if (uri.isEmpty()) return null;
     var toRange = toRange(to);
     return new Location(uri.get(), toRange);
+  }
+  @NotNull static XYXY range(@NotNull Range range) {
+    return new XYXY(pos(range.start), pos(range.end));
   }
 }
