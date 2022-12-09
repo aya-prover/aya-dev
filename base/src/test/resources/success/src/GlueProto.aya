@@ -1,0 +1,19 @@
+open import Paths
+
+variable A B : Type
+
+def isHAEquiv (f : A -> B) => Sig
+  (f⁻¹ : B -> A)
+  (linv : ∀ a -> a = f⁻¹ (f a))
+  (rinv : ∀ b → f (f⁻¹ b) = b)
+  ** (∀ a -> [| i j |] B {
+    | ~ i := f a
+    |   i := rinv (f a) j
+    | ~ j := f (linv a i)
+    |   j := f a
+  })
+
+def idFun (a : A) => a
+
+def idHA : isHAEquiv (idFun {A}) =>
+  (idFun, λ a => idp, λ b => idp, λ a i => idp)

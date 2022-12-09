@@ -27,7 +27,6 @@ import org.aya.core.visitor.Zonker;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
-import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -46,6 +45,7 @@ import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
@@ -57,7 +57,6 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -74,7 +73,7 @@ public final class ExprTycker extends Tycker {
   public @NotNull TypedSubst lets = new TypedSubst();
   public final @NotNull AyaShape.Factory shapeFactory;
   public final @NotNull MutableTreeSet<Expr.WithTerm> withTerms =
-    MutableTreeSet.create(Comparator.comparing(Expr::sourcePos));
+    MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
 
   @Override public void solveMetas() {
     super.solveMetas();
@@ -298,8 +297,7 @@ public final class ExprTycker extends Tycker {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
         if (appF instanceof Expr.WithTerm withTerm) {
-          withTerms.add(withTerm);
-          withTerm.theCore().set(new TermResult(app, pi));
+          addWithTerm(withTerm, new TermResult(app, pi));
         }
         var elabArg = inherit(argument.term(), pi.param().type()).wellTyped();
         subst.addDirectly(pi.param().ref(), elabArg);
@@ -575,6 +573,7 @@ public final class ExprTycker extends Tycker {
               // TODO: maybe also report this unification failure?
               yield fail(lam, dt, BadTypeError.lamParam(state, lam, type, result));
             } else type = result;
+            addWithTerm(param, type);
             var resultParam = new Term.Param(var, type, param.explicit());
             var body = dt.substBody(resultParam.toTerm());
             yield localCtx.with(resultParam, () -> {
@@ -646,6 +645,7 @@ public final class ExprTycker extends Tycker {
         var param = pi.param();
         final var var = param.ref();
         var domRes = ty(param.type());
+        addWithTerm(param, domRes.wellTyped());
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
           var cod = ty(pi.last());
@@ -657,6 +657,7 @@ public final class ExprTycker extends Tycker {
         var resultTypes = MutableList.<SortTerm>create();
         for (var tuple : sigma.params()) {
           var result = ty(tuple.type());
+          addWithTerm(tuple, result.wellTyped());
           resultTypes.append(result.type());
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped());
@@ -700,9 +701,17 @@ public final class ExprTycker extends Tycker {
       builder.reduce();
     });
     if (expr instanceof Expr.WithTerm withTerm) {
-      withTerms.add(withTerm);
-      withTerm.theCore().set(frozen.get());
+      addWithTerm(withTerm, frozen.get());
     }
+  }
+
+  public void addWithTerm(@NotNull Expr.WithTerm withTerm, @NotNull Result result) {
+    withTerms.add(withTerm);
+    withTerm.theCore().set(result);
+  }
+
+  public void addWithTerm(@NotNull Expr.Param param, @NotNull Term type) {
+    addWithTerm(param, new TermResult(new RefTerm(param.ref()), type));
   }
 
   public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory shapeFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {

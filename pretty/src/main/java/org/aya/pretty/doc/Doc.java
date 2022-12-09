@@ -46,6 +46,7 @@ public sealed interface Doc extends Docile {
   @Override default @NotNull Doc toDoc() {
     return this;
   }
+  /** @return a seq with cats flattened */
   default @NotNull SeqLike<Doc> asSeq() {
     return Seq.of(this);
   }
