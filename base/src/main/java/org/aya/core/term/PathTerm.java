@@ -32,12 +32,16 @@ public record PathTerm(
   public @NotNull PathTerm flatten() {
     var ty = type;
     var pa = MutableList.from(params);
+    var par = MutableList.<Partial<Term>>create();
     if (ty instanceof PathTerm path) {
+      // ^ This means the faces in par are of type `path`
       pa.appendAll(path.params());
       ty = path.type();
+      // Apply the dims to the terms in par, so their types become ty
+      par.replaceAll(p -> p.map(path::applyDimsTo));
+      par.append(path.partial);
     }
-    // TODO: deal with partial
-    return new PathTerm(pa.toImmutableSeq(), ty, partial);
+    return new PathTerm(pa.toImmutableSeq(), ty, PartialTerm.merge(par));
   }
 
   public @NotNull PiTerm computePi() {
