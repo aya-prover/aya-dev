@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.tuple.Tuple;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.ide.action.FindReferences;
 import org.aya.lsp.utils.LspRange;
 import org.aya.ide.Resolver;
 import org.aya.ide.util.XY;

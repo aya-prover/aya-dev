@@ -1,31 +1,18 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.actions;
+package org.aya.ide.action;
 
 import kala.collection.SeqView;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.ide.Resolver;
-import org.aya.lsp.utils.LspRange;
 import org.aya.ide.util.XY;
 import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.javacs.lsp.Location;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public interface FindReferences {
-  static @NotNull List<Location> invoke(
-    @NotNull LibrarySource source,
-    @NotNull SeqView<LibraryOwner> libraries, XY xy
-  ) {
-    return findRefs(source, libraries, xy)
-      .map(LspRange::toLoc)
-      .collect(Collectors.toList());
-  }
 
   static @NotNull SeqView<SourcePos> findRefs(
     @NotNull LibrarySource source,

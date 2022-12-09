@@ -22,6 +22,11 @@ import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
+import org.aya.ide.action.ComputeSignature;
+import org.aya.ide.action.ComputeTerm;
+import org.aya.ide.action.FindReferences;
+import org.aya.ide.action.GotoDefinition;
+import org.aya.ide.util.XY;
 import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
@@ -272,7 +277,13 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<List<? extends GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    return Optional.of(GotoDefinition.invoke(source, libraries.view(), LspRange.pos(params.position)));
+    return Optional.of(GotoDefinition.findDefs(source, libraries.view(), LspRange.pos(params.position)).mapNotNull(pos -> {
+      var from = pos.sourcePos();
+      var to = pos.data();
+      var res = LspRange.toLoc(from, to);
+      if (res != null) Log.d("Resolved: %s in %s", to, res.targetUri);
+      return res;
+    }).collect(Collectors.toList()));
   }
 
   @Override public Optional<Hover> hover(TextDocumentPositionParams params) {
@@ -292,7 +303,12 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<List<Location>> findReferences(ReferenceParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    return Optional.of(FindReferences.invoke(source, libraries.view(), LspRange.pos(params.position)));
+    @NotNull SeqView<LibraryOwner> libraries1 = libraries.view();
+    XY xy = LspRange.pos(params.position);
+    return Optional.of(FindReferences
+      .findRefs(source, libraries1, xy)
+      .map(LspRange::toLoc)
+      .collect(Collectors.toList()));
   }
 
   @Override public WorkspaceEdit rename(RenameParams params) {
