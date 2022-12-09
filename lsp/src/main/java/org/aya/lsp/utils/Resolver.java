@@ -121,7 +121,6 @@ public interface Resolver {
 
     @Override public @NotNull SeqView<WithPos<AnyVar>>
     fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
-      targets = StmtFolder.super.fold(targets, stmt);
       return switch (stmt) {
         case Decl decl -> {
           if (decl instanceof Decl.Telescopic<?> tele) targets = tele.telescope().view()
@@ -130,7 +129,7 @@ public interface Resolver {
             .foldLeft(targets, (ac, def) -> foldVarRef(ac, def, def.definition(), noType()));
           yield foldVarRef(targets, decl.ref(), decl.sourcePos(), noType());
         }
-        default -> targets;
+        default -> StmtFolder.super.fold(targets, stmt);
       };
     }
 

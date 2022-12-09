@@ -11,6 +11,7 @@ import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ public interface PatternFolder<R> {
     return foldVar(acc, var, pos, type);
   }
 
+  @MustBeInvokedByOverriders
   default @NotNull R fold(@NotNull R acc, @NotNull Pattern pat) {
     return switch (pat) {
       case Pattern.Ctor ctor -> {

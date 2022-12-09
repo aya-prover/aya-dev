@@ -106,14 +106,13 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
 
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Stmt stmt) {
-    acc = StmtFolder.super.fold(acc, stmt);
     return switch (stmt) {
       case Decl decl -> {
         var declType = declType(decl);
         acc = declType._2.foldLeft(acc, (ac, p) -> linkLocalDef(ac, p._1, p._2));
         yield add(acc, linkDef(decl.sourcePos(), decl.ref(), declType._1));
       }
-      default -> acc;
+      default -> StmtFolder.super.fold(acc, stmt);
     };
   }
 

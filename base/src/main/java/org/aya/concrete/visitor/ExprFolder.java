@@ -6,6 +6,7 @@ import kala.value.LazyValue;
 import org.aya.concrete.Expr;
 import org.aya.core.term.IntervalTerm;
 import org.aya.core.term.Term;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprFolder<R> extends PatternFolder<R> {
@@ -15,6 +16,7 @@ public interface ExprFolder<R> extends PatternFolder<R> {
     return foldVarDecl(acc, param.ref(), param.sourcePos(), noType()); // TODO: param type
   }
 
+  @MustBeInvokedByOverriders
   default @NotNull R fold(@NotNull R acc, @NotNull Expr expr) {
     return switch (expr) {
       case Expr.Ref ref -> foldVarRef(acc, ref.resolvedVar(), ref.sourcePos(), LazyValue.of(() -> {
