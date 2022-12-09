@@ -11,7 +11,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.lsp.utils.LspRange;
-import org.aya.lsp.utils.Resolver;
+import org.aya.ide.Resolver;
 import org.javacs.lsp.CodeLens;
 import org.javacs.lsp.Command;
 import org.jetbrains.annotations.NotNull;

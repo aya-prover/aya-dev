@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.utils;
+package org.aya.ide;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -17,12 +17,13 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.term.Term;
+import org.aya.ide.util.ModuleVar;
+import org.aya.ide.util.XY;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -42,12 +43,11 @@ public interface Resolver {
 
   /** resolve the position to its referring target */
   static @NotNull SeqView<WithPos<@NotNull AnyVar>> resolveVar(
-    @NotNull LibrarySource source,
-    @NotNull Position position
+    @NotNull LibrarySource source, XY xy
   ) {
     var program = source.program().get();
     if (program == null) return SeqView.empty();
-    return program.view().flatMap(new PositionResolver(new XY(position))).mapNotNull(pos -> switch (pos.data()) {
+    return program.view().flatMap(new PositionResolver(xy)).mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete != null) yield new WithPos<>(pos.sourcePos(), defVar);
         else if (defVar.module != null) {

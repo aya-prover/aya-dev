@@ -5,13 +5,13 @@ package org.aya.lsp.actions;
 import kala.collection.SeqView;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.ide.Resolver;
 import org.aya.lsp.utils.LspRange;
-import org.aya.lsp.utils.Resolver;
+import org.aya.ide.util.XY;
 import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.javacs.lsp.Location;
-import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,20 +20,18 @@ import java.util.stream.Collectors;
 public interface FindReferences {
   static @NotNull List<Location> invoke(
     @NotNull LibrarySource source,
-    Position position,
-    @NotNull SeqView<LibraryOwner> libraries
+    @NotNull SeqView<LibraryOwner> libraries, XY xy
   ) {
-    return findRefs(source, position, libraries)
+    return findRefs(source, libraries, xy)
       .map(LspRange::toLoc)
       .collect(Collectors.toList());
   }
 
   static @NotNull SeqView<SourcePos> findRefs(
     @NotNull LibrarySource source,
-    @NotNull Position position,
-    @NotNull SeqView<LibraryOwner> libraries
+    @NotNull SeqView<LibraryOwner> libraries, XY xy
   ) {
-    var vars = Resolver.resolveVar(source, position);
+    var vars = Resolver.resolveVar(source, xy);
     return findRefs(vars.map(WithPos::data), libraries);
   }
 
@@ -49,11 +47,10 @@ public interface FindReferences {
 
   static @NotNull SeqView<SourcePos> findOccurrences(
     @NotNull LibrarySource source,
-    @NotNull Position position,
-    @NotNull SeqView<LibraryOwner> libraries
+    @NotNull SeqView<LibraryOwner> libraries, XY xy
   ) {
-    var defs = GotoDefinition.findDefs(source, position, libraries).map(WithPos::data);
-    var refs = FindReferences.findRefs(source, position, libraries);
+    var defs = GotoDefinition.findDefs(source, libraries, xy).map(WithPos::data);
+    var refs = FindReferences.findRefs(source, libraries, xy);
     return defs.concat(refs);
   }
 

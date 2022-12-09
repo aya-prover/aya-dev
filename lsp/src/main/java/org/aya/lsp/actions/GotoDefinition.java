@@ -6,16 +6,15 @@ import kala.collection.SeqView;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.GeneralizedVar;
-import org.aya.lsp.utils.Log;
-import org.aya.lsp.utils.LspRange;
-import org.aya.lsp.utils.ModuleVar;
-import org.aya.lsp.utils.Resolver;
+import org.aya.ide.Resolver;
+import org.aya.ide.util.ModuleVar;
+import org.aya.ide.util.XY;
+import org.aya.lsp.utils.*;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.javacs.lsp.GenericLocation;
-import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,10 +27,9 @@ import java.util.stream.Collectors;
 public interface GotoDefinition {
   static @NotNull List<GenericLocation> invoke(
     @NotNull LibrarySource source,
-    @NotNull Position position,
-    @NotNull SeqView<LibraryOwner> libraries
+    @NotNull SeqView<LibraryOwner> libraries, XY xy
   ) {
-    return findDefs(source, position, libraries).mapNotNull(pos -> {
+    return findDefs(source, libraries, xy).mapNotNull(pos -> {
       var from = pos.sourcePos();
       var to = pos.data();
       var res = LspRange.toLoc(from, to);
@@ -42,10 +40,9 @@ public interface GotoDefinition {
 
   static @NotNull SeqView<WithPos<SourcePos>> findDefs(
     @NotNull LibrarySource source,
-    @NotNull Position position,
-    @NotNull SeqView<LibraryOwner> libraries
+    @NotNull SeqView<LibraryOwner> libraries, XY xy
   ) {
-    return Resolver.resolveVar(source, position).mapNotNull(pos -> {
+    return Resolver.resolveVar(source, xy).mapNotNull(pos -> {
       var from = pos.sourcePos();
       var target = switch (pos.data()) {
         case DefVar<?, ?> defVar -> defVar.concrete.sourcePos();

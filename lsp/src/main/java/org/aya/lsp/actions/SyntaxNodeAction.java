@@ -7,7 +7,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.EndoPattern;
 import org.aya.concrete.visitor.StmtConsumer;
-import org.aya.lsp.utils.XY;
+import org.aya.ide.util.XY;
 import org.aya.lsp.utils.XYXY;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;

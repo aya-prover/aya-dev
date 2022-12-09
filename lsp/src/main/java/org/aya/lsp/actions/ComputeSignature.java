@@ -10,21 +10,20 @@ import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
-import org.aya.lsp.utils.Resolver;
+import org.aya.ide.Resolver;
+import org.aya.ide.util.XY;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.distill.DistillerOptions;
-import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 
 public interface ComputeSignature {
   static @NotNull Doc invokeHover(
-    @NotNull LibrarySource source,
-    @NotNull Position position
+    @NotNull LibrarySource source, XY xy
   ) {
-    var target = Resolver.resolveVar(source, position).firstOrNull();
+    var target = Resolver.resolveVar(source, xy).firstOrNull();
     if (target == null) return Doc.empty();
     return computeSignature(target.data(), true);
   }

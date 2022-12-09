@@ -1,4 +1,4 @@
-module aya.lsp {
+module aya.vsc {
   requires aya.base;
   requires aya.cli;
 
