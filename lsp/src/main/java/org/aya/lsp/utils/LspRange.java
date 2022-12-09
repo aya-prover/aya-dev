@@ -4,6 +4,7 @@ package org.aya.lsp.utils;
 
 import kala.control.Option;
 import org.aya.ide.util.XY;
+import org.aya.ide.util.XYXY;
 import org.aya.util.error.SourcePos;
 import org.javacs.lsp.Location;
 import org.javacs.lsp.LocationLink;
@@ -45,5 +46,8 @@ public interface LspRange {
     if (uri.isEmpty()) return null;
     var toRange = toRange(to);
     return new Location(uri.get(), toRange);
+  }
+  @NotNull static XYXY range(@NotNull Range range) {
+    return new XYXY(pos(range.start), pos(range.end));
   }
 }

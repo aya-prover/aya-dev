@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.actions;
+package org.aya.ide.syntax;
 
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Stmt;

@@ -7,6 +7,7 @@ import org.aya.concrete.Expr;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XY;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;

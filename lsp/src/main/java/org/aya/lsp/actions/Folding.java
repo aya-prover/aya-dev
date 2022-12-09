@@ -7,6 +7,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.lsp.utils.LspRange;
 import org.aya.ide.Resolver;
 import org.aya.util.error.SourcePos;

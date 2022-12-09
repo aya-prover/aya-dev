@@ -6,8 +6,9 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
+import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.lsp.utils.LspRange;
-import org.aya.lsp.utils.XYXY;
+import org.aya.ide.util.XYXY;
 import org.aya.util.distill.DistillerOptions;
 import org.javacs.lsp.InlayHint;
 import org.javacs.lsp.InlayHintKind;
@@ -24,8 +25,7 @@ public record InlayHintMaker(
   public static @NotNull List<InlayHint> invoke(@NotNull LibrarySource source, @NotNull Range range) {
     var program = source.program().get();
     if (program == null) return Collections.emptyList();
-    var xyxy = new XYXY(range);
-    var maker = new InlayHintMaker(xyxy, MutableList.create());
+    var maker = new InlayHintMaker(LspRange.range(range), MutableList.create());
     program.forEach(maker);
     return maker.hints.asJava();
   }
