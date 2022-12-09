@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.core.visitor.Subst;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.LocalVar;
@@ -26,6 +27,17 @@ public record PathTerm(
 ) implements StableWHNF {
   public @NotNull Term eta(@NotNull Term term) {
     return new PLamTerm(params, applyDimsTo(term)).rename();
+  }
+
+  public @NotNull PathTerm flatten() {
+    var ty = type;
+    var pa = MutableList.from(params);
+    if (ty instanceof PathTerm path) {
+      pa.appendAll(path.params());
+      ty = path.type();
+    }
+    // TODO: deal with partial
+    return new PathTerm(pa.toImmutableSeq(), ty, partial);
   }
 
   public @NotNull PiTerm computePi() {
