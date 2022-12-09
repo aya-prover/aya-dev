@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
-import org.aya.core.term.Term;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -14,7 +13,6 @@ import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -64,11 +62,6 @@ public sealed interface Literate extends Docile {
       this.code = code;
       this.sourcePos = sourcePos;
       this.options = options;
-    }
-
-    public @NotNull Doc normalize(@NotNull Term term, @NotNull TyckState state) {
-      var mode = options.mode();
-      return term.normalize(state, mode).toDoc(options.options());
     }
 
     @Override public @NotNull Doc toDoc() {
