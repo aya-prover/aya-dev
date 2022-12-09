@@ -38,8 +38,8 @@ In file $FILE:4:53 ->
 Error: The boundary
          hcomp2d {A'} {c'} {d'} (idp {A'} {a'} <a>) (\ i => idp {A'} {a'} i) (\ i =>
         <unexpected `p`> i) i
-         (Normalized: coe (\ k => [| i |] A { ~ i := <unexpected `p`> k | i := a' 1
-        }) (_|_) (\ i => a' i) i)
+         (Normalized: coe (\ k => <unexpected `p`> k = a' 1) (_|_) (\ i => a' i)
+        i)
        disagrees with
          a
        In particular, we failed to unify
