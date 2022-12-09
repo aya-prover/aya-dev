@@ -281,7 +281,7 @@ public class AyaLanguageServer implements LanguageServer {
     if (source == null) return Optional.empty();
     var doc = ComputeSignature.invokeHover(source, params.position);
     if (doc.isEmpty()) return Optional.empty();
-    var marked = new MarkedString(MarkupKind.PlainText, doc.debugRender());
+    var marked = new MarkedString(MarkupKind.PlainText, doc.commonRender());
     return Optional.of(new Hover(List.of(marked)));
   }
 
