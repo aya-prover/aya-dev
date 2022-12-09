@@ -13,7 +13,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.InternalException;
-import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
@@ -39,20 +38,17 @@ public class CoreDistiller extends BaseDistiller<Term> {
   }
 
   private @Nullable Doc binCube(Restr.Side<Term> a, Restr.Side<Term> b, LocalVar var) {
-    if (a.cof().ands().sizeEquals(1)
-      && a.cof().ands().get(0).inst() instanceof RefTerm(var ref)
-      && ref == var
-      && b.cof().ands().sizeEquals(1)
-      && b.cof().ands().get(0).inst() instanceof FormulaTerm(var murasame)
-      && murasame instanceof Formula.Inv<Term> inv
-      && inv.i() instanceof RefTerm(var ref2)
-      && ref2 == var
+    if (!(a.cof().ands().sizeEquals(1) && b.cof().ands().sizeEquals(1)))
+      return null;
+    var aa = a.cof().ands().get(0);
+    var bb = b.cof().ands().get(0);
+    if (aa.inst() instanceof RefTerm(var ref) && ref == var && aa.isOne() == !bb.isOne()
+      && bb.inst() instanceof RefTerm(var ref2) && ref2 == var
     ) {
-      return Doc.sep(
-        term(Outer.BinOp, b.u()),
-        Doc.symbol("="),
-        term(Outer.BinOp, a.u())
-      );
+      var aaa = term(Outer.BinOp, a.u());
+      var bbb = term(Outer.BinOp, b.u());
+      if (aa.isOne()) return Doc.sep(bbb, Doc.symbol("="), aaa);
+      else return Doc.sep(aaa, Doc.symbol("="), bbb);
     }
     return null;
   }
@@ -66,7 +62,6 @@ public class CoreDistiller extends BaseDistiller<Term> {
       var clause1 = split.clauses().get(0);
       var clause2 = split.clauses().get(1);
       var beauty = binCube(clause1, clause2, var);
-      if (beauty == null) beauty = binCube(clause2, clause1, var);
       if (beauty != null) return beauty;
     }
     return Doc.sep(
