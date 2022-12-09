@@ -76,7 +76,12 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
 
   @Override
   public @NotNull MutableList<HighlightInfo> foldVarDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
-    return foldVarDecl(acc, var, pos, null);
+    return foldVarDecl(acc, var, pos, varType(var));
+  }
+
+  @Override
+  public @NotNull MutableList<HighlightInfo> foldParamDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull Expr.Param param) {
+    return foldVarDecl(acc, param.ref(), param.sourcePos(), null); // TODO: type of Expr.Param
   }
 
   public @NotNull MutableList<HighlightInfo> foldVarDecl(
@@ -84,11 +89,9 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     @NotNull AnyVar var,
     @NotNull SourcePos pos,
     @Nullable AyaDocile type) {
-    if (var instanceof LocalVar localVar) {
-      return tryLinkLocalDef(acc, localVar, type);
-    }
-
-    return add(acc, linkDef(pos, var, type));
+    return var instanceof LocalVar localVar
+      ? linkLocalDef(acc, localVar, type)
+      : add(acc, linkDef(pos, var, type));
   }
 
   // Copied from ExprFolder
@@ -97,10 +100,6 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     return switch (expr) {
       case Expr.Ref ref -> add(acc, linkRef(ref.sourcePos(), ref.resolvedVar(),
         Option.ofNullable(ref.theCore().get()).map(ExprTycker.Result::type).getOrNull()));
-      case Expr.Lambda lam -> foldVarDecl(acc, lam.param().ref(), lam.param().sourcePos(), lam.param().type());
-      case Expr.Pi pi -> foldVarDecl(acc, pi.param().ref(), pi.param().sourcePos(), pi.param().type());
-      case Expr.Sigma sigma ->
-        sigma.params().foldLeft(acc, (ac, param) -> foldVarDecl(ac, param.ref(), param.sourcePos(), param.type()));
       case Expr.LitInt lit -> add(acc, LitKind.Int.toLit(lit.sourcePos()));
       case Expr.LitString lit -> add(acc, LitKind.String.toLit(lit.sourcePos()));
       default -> StmtFolder.super.fold(acc, expr);
@@ -116,8 +115,8 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
         var type = varType(resolved);
         yield add(acc, linkRef(ctor.resolved().sourcePos(), resolved, type));
       }
-      case Pattern.Bind bind -> tryLinkLocalDef(acc, bind.bind(), bind.type().get());
-      case Pattern.As as -> tryLinkLocalDef(acc, as.as(), as.type().get());
+      case Pattern.Bind bind -> linkLocalDef(acc, bind.bind(), bind.type().get());
+      case Pattern.As as -> linkLocalDef(acc, as.as(), as.type().get());
       default -> StmtFolder.super.fold(acc, pat);
     };
   }
@@ -133,8 +132,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case Command.Open o -> add(acc, linkModuleRef(o.path()));
       case Decl decl -> {
         var declType = declType(decl);
-        acc = declType._2
-          .foldLeft(acc, (ac, p) -> tryLinkLocalDef(ac, p._1, p._2));
+        acc = declType._2.foldLeft(acc, (ac, p) -> linkLocalDef(ac, p._1, p._2));
         yield add(acc, linkDef(decl.sourcePos(), decl.ref(), declType._1));
       }
     };
@@ -157,23 +155,8 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     return null;
   }
 
-  private @NotNull MutableList<HighlightInfo> tryLinkLocalDef(
-    @NotNull MutableList<HighlightInfo> acc,
-    @NotNull Expr.Param param
-  ) {
-    return tryLinkLocalDef(acc, param.ref(), param.type());
-  }
-
-  private @NotNull MutableList<HighlightInfo> tryLinkLocalDef(
-    @NotNull MutableList<HighlightInfo> acc,
-    @NotNull LocalVar var,
-    @Nullable AyaDocile type
-  ) {
-    if (var.isGenerated()) {
-      return acc;
-    }
-
-    return add(acc, linkDef(var.definition(), var, type));
+  private @NotNull MutableList<HighlightInfo> linkLocalDef(@NotNull MutableList<HighlightInfo> acc, @NotNull LocalVar var, @Nullable AyaDocile type) {
+    return var.isGenerated() ? acc : add(acc, linkDef(var.definition(), var, type));
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {

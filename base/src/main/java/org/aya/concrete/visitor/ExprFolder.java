@@ -11,9 +11,9 @@ public interface ExprFolder<R> extends PatternFolder<R> {
   default @NotNull R fold(@NotNull R acc, @NotNull Expr expr) {
     return switch (expr) {
       case Expr.Ref ref -> foldVarRef(acc, ref.resolvedVar(), ref.sourcePos());
-      case Expr.Lambda lam -> paramVar(acc, lam.param());
-      case Expr.Pi pi -> paramVar(acc, pi.param());
-      case Expr.Sigma sigma -> sigma.params().foldLeft(acc, this::paramVar);
+      case Expr.Lambda lam -> foldParamDecl(acc, lam.param());
+      case Expr.Pi pi -> foldParamDecl(acc, pi.param());
+      case Expr.Sigma sigma -> sigma.params().foldLeft(acc, this::foldParamDecl);
       case Expr.Path path -> path.params().foldLeft(acc, (ac, var) -> foldVarDecl(ac, var, var.definition()));
       case Expr.Array array -> array.arrayBlock().fold(
         left -> left.binds().foldLeft(acc, (ac, bind) -> foldVarDecl(ac, bind.var(), bind.sourcePos())),
@@ -33,8 +33,5 @@ public interface ExprFolder<R> extends PatternFolder<R> {
         (a, p) -> fold(a, p.term())));
       default -> acc;
     };
-  }
-  private @NotNull R paramVar(@NotNull R acc, Expr.@NotNull Param param) {
-    return foldVarDecl(acc, param.ref(), param.sourcePos());
   }
 }

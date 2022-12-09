@@ -3,6 +3,7 @@
 package org.aya.concrete.visitor;
 
 import kala.value.MutableValue;
+import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
@@ -21,6 +22,10 @@ public interface PatternFolder<R> {
 
   default @NotNull R foldVarDecl(@NotNull R acc, @NotNull AnyVar var, @NotNull SourcePos pos) {
     return foldVar(acc, var, pos);
+  }
+
+  default @NotNull R foldParamDecl(@NotNull R acc, Expr.@NotNull Param param) {
+    return foldVarDecl(acc, param.ref(), param.sourcePos());
   }
 
   default @NotNull R fold(@NotNull R acc, @NotNull Pattern pat) {
