@@ -184,7 +184,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         term(Outer.AppSpine, ty), Doc.parened(restr(options, restr))), Outer.AppSpine);
       case PartialTerm el -> partial(options, el.partial(), true, "{|", "|}");
       case FormulaTerm(var mula) -> formula(outer, mula);
-      case PathTerm(var cube) -> cube(options, cube);
+      case PathTerm cube -> cube(options, cube);
       case PLamTerm(var params, var body) -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
           Doc.sep(params.map(BaseDistiller::varDoc)),

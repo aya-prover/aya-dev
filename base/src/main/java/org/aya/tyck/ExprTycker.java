@@ -271,7 +271,7 @@ public final class ExprTycker extends Tycker {
           unifier(sourcePos, Ordering.Eq).compare(fTy, pi, null);
           fTy = whnf(fTy);
         }
-        PathTerm.Cube cube;
+        PathTerm cube;
         PiTerm pi;
         var subst = new Subst();
         try {
@@ -334,8 +334,8 @@ public final class ExprTycker extends Tycker {
       case Expr.Path path -> localCtx.withIntervals(path.params().view(), () -> {
         var type = synthesize(path.type());
         var partial = elaboratePartial(path.partial(), type.wellTyped());
-        var cube = new PathTerm.Cube(path.params(), type.wellTyped(), partial);
-        return new TermResult(new PathTerm(cube), type.type());
+        var cube = new PathTerm(path.params(), type.wellTyped(), partial);
+        return new TermResult(cube, type.type());
       });
       case Expr.Array arr when arr.arrayBlock().isRight() -> {
         var arrayBlock = arr.arrayBlock().getRightValue();
@@ -497,11 +497,11 @@ public final class ExprTycker extends Tycker {
     }
   }
 
-  private Tuple2<PiTerm, PathTerm.@Nullable Cube>
+  private Tuple2<PiTerm, @Nullable PathTerm>
   ensurePiOrPath(@NotNull Term term) throws NotPi {
     term = whnf(term);
     if (term instanceof PiTerm pi) return Tuple.of(pi, null);
-    if (term instanceof PathTerm(var cube))
+    if (term instanceof PathTerm cube)
       return Tuple.of(cube.computePi(), cube);
     else throw new NotPi(term);
   }
@@ -583,7 +583,7 @@ public final class ExprTycker extends Tycker {
           }
           // Path lambda!
           case PathTerm path -> checkBoundaries(expr, path, new Subst(),
-            inherit(expr, path.cube().computePi()).wellTyped());
+            inherit(expr, path.computePi()).wellTyped());
           default -> fail(lam, term, BadTypeError.pi(state, lam, term));
         };
       }
@@ -616,15 +616,14 @@ public final class ExprTycker extends Tycker {
   }
 
   private TermResult checkBoundaries(Expr expr, PathTerm path, Subst subst, Term lambda) {
-    var cube = path.cube();
-    var applied = cube.applyDimsTo(lambda);
-    return localCtx.withIntervals(cube.params().view(), () -> {
-      var happy = switch (cube.partial()) {
-        case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), cube.type(), subst);
+    var applied = path.applyDimsTo(lambda);
+    return localCtx.withIntervals(path.params().view(), () -> {
+      var happy = switch (path.partial()) {
+        case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), path.type(), subst);
         case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
-          CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), cube.type(), s)));
+          CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), path.type(), s)));
       };
-      return happy ? new TermResult(new PLamTerm(cube.params(), applied), path)
+      return happy ? new TermResult(new PLamTerm(path.params(), applied), path)
         : new TermResult(ErrorTerm.unexpected(expr), path);
     });
   }
@@ -880,7 +879,7 @@ public final class ExprTycker extends Tycker {
     if (upperWHNF instanceof PathTerm path) {
       var res = tryEtaCompatiblePath(loc, term, lower, path);
       if (res != null) return res;
-    } else if (whnf(lower) instanceof PathTerm(var cube) && cube.params().sizeEquals(1)) {
+    } else if (whnf(lower) instanceof PathTerm cube && cube.params().sizeEquals(1)) {
       // TODO: also support n-ary path
       if (upperWHNF instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
         var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
@@ -897,16 +896,15 @@ public final class ExprTycker extends Tycker {
   }
 
   private @Nullable TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
-    var cube = path.cube();
-    int sizeLimit = cube.params().size();
+    int sizeLimit = path.params().size();
     var list = MutableArrayList.<LocalVar>create(sizeLimit);
     var innerMost = PiTerm.unpiOrPath(lower, term, this::whnf, list, sizeLimit);
     if (!list.sizeEquals(sizeLimit)) return null;
-    unifyTyReported(cube.computePi(), PiTerm.makeIntervals(list, innerMost.type), loc);
+    unifyTyReported(path.computePi(), PiTerm.makeIntervals(list, innerMost.type), loc);
     var checked = checkBoundaries(loc, path, new Subst(), LamTerm.makeIntervals(list, innerMost.wellTyped));
     return lower instanceof PathTerm actualPath
-      ? new TermResult(actualPath.cube().eta(checked.wellTyped), actualPath)
-      : new TermResult(cube.eta(checked.wellTyped), checked.type);
+      ? new TermResult(actualPath.eta(checked.wellTyped), actualPath)
+      : new TermResult(path.eta(checked.wellTyped), checked.type);
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {

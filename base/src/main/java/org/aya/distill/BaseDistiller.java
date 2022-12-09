@@ -267,7 +267,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return style != null ? linkDef(ref, style) : varDoc(ref);
   }
 
-  public static @NotNull Doc cube(@NotNull DistillerOptions options, @NotNull PathTerm.Cube cube) {
+  public static @NotNull Doc cube(@NotNull DistillerOptions options, @NotNull PathTerm cube) {
     return Doc.sep(
       Doc.symbol("[|"),
       Doc.commaList(cube.params().map(BaseDistiller::linkDef)),

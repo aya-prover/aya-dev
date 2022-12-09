@@ -36,12 +36,12 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
   ) {
     if (limit <= 0) return new ExprTycker.TermResult(term, ty);
     return switch (fmap.apply(ty)) {
-      case PiTerm(var param, var body) when param.explicit() -> {
+      case PiTerm(var param, var body)when param.explicit() -> {
         if (param.type() != IntervalTerm.INSTANCE) yield new ExprTycker.TermResult(term, ty);
         params.append(param.ref());
         yield unpiOrPath(body, AppTerm.make(term, param.toArg()), fmap, params, limit - 1);
       }
-      case PathTerm(var cube) -> {
+      case PathTerm cube -> {
         var cubeParams = cube.params();
         int delta = limit - cubeParams.size();
         if (delta >= 0) {

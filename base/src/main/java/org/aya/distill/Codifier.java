@@ -8,11 +8,11 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.*;
-import org.aya.util.Arg;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -47,11 +47,7 @@ public record Codifier(
         builder.append(",").append(ix).append(")");
       }
       case PartialTyTerm(var ty, var restr) -> coePar(ty, restr, "PartialTyTerm");
-      case PathTerm(var cube) -> {
-        builder.append("new PathTerm(");
-        cube(cube);
-        builder.append(")");
-      }
+      case PathTerm cube -> cube(cube);
       case PiTerm(var param, var body) -> piLam(param, body, "PiTerm");
       case SigmaTerm(var items) -> tupSigma(items, this::param, "SigmaTerm");
       case LamTerm(var param, var body) -> piLam(param, body, "LamTerm");
@@ -99,8 +95,8 @@ public record Codifier(
     }
   }
 
-  private void cube(PathTerm.@NotNull Cube cube) {
-    builder.append("new PathTerm.Cube(ImmutableSeq.of(");
+  private void cube(@NotNull PathTerm cube) {
+    builder.append("new PathTerm(ImmutableSeq.of(");
     commaSep(cube.params(), this::varDef);
     builder.append("),");
     term(cube.type());

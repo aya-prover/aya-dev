@@ -103,12 +103,11 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       case ListTerm shaped -> shaped.type();
       case PartialTyTerm ty -> term(ty.type());
       case PartialTerm el -> new PartialTyTerm(el.rhsType(), el.partial().restr());
-      case PathTerm(var cube) -> term(cube.type());
-      case PLamTerm lam -> new PathTerm(new PathTerm.Cube(
+      case PathTerm cube -> term(cube.type());
+      case PLamTerm lam -> new PathTerm(
         lam.params(),
         term(lam.body()),
-        new Partial.Const<>(term(lam.body()))
-      ));
+        new Partial.Const<>(term(lam.body())));
       case PAppTerm app -> {
         // v @ ui : A[ui/xi]
         var xi = app.cube().params();

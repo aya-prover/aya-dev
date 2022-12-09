@@ -169,7 +169,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var varU = new LocalVar("u");
         var paramU = new Term.Param(varU, new AppTerm(new RefTerm(varA), new Arg<>(start, true)), true);
         var i = new LocalVar("i");
-        var path = new PathTerm(new PathTerm.Cube(
+        var path = new PathTerm(
           ImmutableSeq.of(i),
           new AppTerm(new RefTerm(varA), new Arg<>(new RefTerm(i), true)),
           new Partial.Split<>(ImmutableSeq.of(
@@ -178,7 +178,7 @@ public final class PrimDef extends TopLevelDef<Term> {
               new Arg<>(new RefTerm(varA), true),
               new Arg<>(new RefTerm(varPhi), true))),
               new Arg<>(new RefTerm(varU), true)))
-          ))));
+          )));
         var result = new PiTerm(paramU, path);
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi), result, coeFill);
       }
