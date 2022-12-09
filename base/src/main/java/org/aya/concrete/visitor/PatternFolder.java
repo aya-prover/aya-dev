@@ -61,6 +61,7 @@ public interface PatternFolder<R> {
     return LazyValue.of(() -> varType(var));
   }
 
+  /** @implNote Should conceptually only be used outside of these folders, where types are all ignored. */
   default @NotNull LazyValue<@Nullable Term> noType() {
     return LazyValue.ofValue(null);
   }

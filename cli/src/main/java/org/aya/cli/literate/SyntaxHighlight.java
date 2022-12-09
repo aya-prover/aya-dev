@@ -108,17 +108,23 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Stmt stmt) {
     acc = StmtFolder.super.fold(acc, stmt);
     return switch (stmt) {
-      case Generalize g -> g.variables.foldLeft(acc, (a, var) -> add(a, linkDef(var.sourcePos, var, null)));
-      case Command.Module m -> add(acc, linkModuleDef(new QualifiedID(m.sourcePos(), m.name())));
-      case Command.Import i -> add(acc, linkModuleRef(i.path()));
-      case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
-      case Command.Open o -> add(acc, linkModuleRef(o.path()));
       case Decl decl -> {
         var declType = declType(decl);
         acc = declType._2.foldLeft(acc, (ac, p) -> linkLocalDef(ac, p._1, p._2));
         yield add(acc, linkDef(decl.sourcePos(), decl.ref(), declType._1));
       }
+      default -> acc;
     };
+  }
+
+  @Override public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
+    // TODO: use `LinkId.page` for cross module link
+    return add(acc, HighlightInfo.DefKind.Module.toRef(mod.sourcePos(), LinkId.loc(mod.join()), null));
+  }
+
+  @Override public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
+    // TODO: use `LinkId.page` for cross module link
+    return add(acc, HighlightInfo.DefKind.Module.toDef(mod.sourcePos(), LinkId.loc(mod.join()), null));
   }
 
   private Tuple2<AyaDocile, SeqView<Tuple2<LocalVar, AyaDocile>>> declType(@NotNull Decl decl) {
@@ -144,16 +150,6 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, type);
     return kindOf(var).toRef(sourcePos, BaseDistiller.linkIdOf(var), type);
-  }
-
-  private @NotNull HighlightInfo linkModuleRef(@NotNull QualifiedID id) {
-    // TODO: use `LinkId.page` for cross module link
-    return HighlightInfo.DefKind.Module.toRef(id.sourcePos(), LinkId.loc(id.join()), null);
-  }
-
-  private @NotNull HighlightInfo linkModuleDef(@NotNull QualifiedID id) {
-    // TODO: use `LinkId.page` for cross module link
-    return HighlightInfo.DefKind.Module.toDef(id.sourcePos(), LinkId.loc(id.join()), null);
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")

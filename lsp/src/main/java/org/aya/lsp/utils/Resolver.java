@@ -123,9 +123,6 @@ public interface Resolver {
     fold(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull Stmt stmt) {
       targets = StmtFolder.super.fold(targets, stmt);
       return switch (stmt) {
-        case Generalize g -> g.variables.foldLeft(targets, (t, v) -> foldVarRef(t, v, v.sourcePos, noType()));
-        case Command.Import imp -> foldVarRef(targets, new ModuleVar(imp.path()), imp.path().sourcePos(), noType());
-        case Command.Open open -> foldVarRef(targets, new ModuleVar(open.path()), open.path().sourcePos(), noType());
         case Decl decl -> {
           if (decl instanceof Decl.Telescopic<?> tele) targets = tele.telescope().view()
             .map(Expr.Param::ref)
@@ -135,6 +132,14 @@ public interface Resolver {
         }
         default -> targets;
       };
+    }
+
+    @Override public @NotNull SeqView<WithPos<AnyVar>> foldModuleRef(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
+      return foldVarRef(acc, new ModuleVar(mod), mod.sourcePos(), noType());
+    }
+
+    @Override public @NotNull SeqView<WithPos<AnyVar>> foldModuleDecl(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
+      return foldVarDecl(acc, new ModuleVar(mod), mod.sourcePos(), noType());
     }
   }
 
