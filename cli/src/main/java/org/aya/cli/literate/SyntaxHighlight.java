@@ -82,20 +82,11 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     @NotNull AnyVar var, @NotNull SourcePos pos,
     @NotNull LazyValue<@Nullable Term> type
   ) {
-    return foldVarDecl(acc, var, pos, type.get());
-  }
-
-  public @NotNull MutableList<HighlightInfo> foldVarDecl(
-    @NotNull MutableList<HighlightInfo> acc,
-    @NotNull AnyVar var,
-    @NotNull SourcePos pos,
-    @Nullable AyaDocile type) {
     return var instanceof LocalVar localVar
-      ? linkLocalDef(acc, localVar, type)
-      : add(acc, linkDef(pos, var, type));
+      ? linkLocalDef(acc, localVar, type.get())
+      : add(acc, linkDef(pos, var, type.get()));
   }
 
-  // Copied from ExprFolder
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Expr expr) {
     return switch (expr) {
