@@ -45,11 +45,12 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
       case Command.Import i -> foldModuleRef(acc, i.path());
       case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
       case Command.Open o -> {
-        var acc1 = foldModuleRef(acc, o.path());
+        acc = foldModuleRef(acc, o.path());
         // https://github.com/aya-prover/aya-dev/issues/721
-        yield o.useHide().list().foldLeft(acc1, (ac, v) -> fold(ac, v.asBind()));
+        yield o.useHide().list().foldLeft(acc, (ac, v) -> fold(ac, v.asBind()));
       }
       case Decl decl -> {
+        acc = fold(acc, decl.bindBlock());
         var declType = declType(decl);
         acc = declType._2.foldLeft(acc, (ac, p) -> foldVarDecl(ac, p._1, p._1.definition(), p._2));
         yield foldVarDecl(acc, decl.ref(), decl.sourcePos(), declType._1);
