@@ -61,11 +61,7 @@ public class HtmlStyleTest {
     var actual1 = orderedDoc().renderToHtml(false);
     @Language("HTML") var expected1 = "<ol><li>first</li><li>second</li><li>third</li></ol>";
 
-    assertEquals(wrap(expected0), actual0);
-    assertEquals(wrap(expected1), actual1);
-  }
-
-  private @NotNull String wrap(@NotNull String html) {
-    return "<pre class=\"Aya\">" + html + "</pre>";
+    assertEquals(expected0, actual0);
+    assertEquals(expected1, actual1);
   }
 }
