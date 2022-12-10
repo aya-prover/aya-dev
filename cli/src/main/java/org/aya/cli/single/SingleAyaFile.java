@@ -5,12 +5,12 @@ package org.aya.cli.single;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
+import org.aya.cli.Main;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
-import org.aya.cli.utils.MainArgs.DistillFormat;
 import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.desugar.Desugarer;
@@ -41,21 +41,7 @@ import java.util.function.BiFunction;
 public sealed interface SingleAyaFile extends GenericAyaFile {
   private static @Nullable CompilerFlags.DistillInfo parseDistillInfo(@NotNull CompilerFlags flags) {
     if (flags.distillInfo() != null) return flags.distillInfo();
-    if (flags.outputFile() != null) return new CompilerFlags.DistillInfo(
-      false,
-      MainArgs.DistillStage.literate,
-      detectFormat(flags.outputFile()),
-      DistillerOptions.pretty(),
-      new RenderOptions(),
-      null);
-    return null;
-  }
-  private static @NotNull DistillFormat detectFormat(@NotNull Path outputFile) {
-    var name = outputFile.getFileName().toString();
-    if (name.endsWith(".md")) return DistillFormat.markdown;
-    if (name.endsWith(".tex")) return DistillFormat.latex;
-    if (name.endsWith(".html")) return DistillFormat.html;
-    return DistillFormat.plain;
+    return Main.distillInfoFromOutput(flags.outputFile(), new RenderOptions(), false);
   }
 
   @SuppressWarnings("unchecked") default void distill(
@@ -79,12 +65,13 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     }
 
     var renderOptions = flags.renderOptions();
+    var withStyleDef = !flags.prettyNoCodeStyle();
     if (currentStage == MainArgs.DistillStage.literate) {
-      var text = renderOptions.render(out, docitfy((ImmutableSeq<Stmt>) doc), true, !flags.ascii());
+      var text = renderOptions.render(out, docitfy((ImmutableSeq<Stmt>) doc), true, withStyleDef, !flags.ascii());
       FileUtil.writeString(distillDir.resolve(fileName), text);
     } else {
       doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
-        (d, hdr) -> renderOptions.render(out, d, hdr, !flags.ascii()));
+        (d, hdr) -> renderOptions.render(out, d, hdr, withStyleDef, !flags.ascii()));
     }
   }
   @VisibleForTesting default @NotNull Doc docitfy(ImmutableSeq<Stmt> program) throws IOException {

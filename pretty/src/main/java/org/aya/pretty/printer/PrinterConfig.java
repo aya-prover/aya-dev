@@ -44,18 +44,18 @@ public interface PrinterConfig {
   /**
    * Basic configure for other configs to easily extend config flags.
    */
-  class Basic implements PrinterConfig {
+  class Basic<S extends Stylist> implements PrinterConfig {
     private final int pageWidth;
     private final int pageHeight;
-    private final @NotNull Stylist stylist;
+    private final @NotNull S stylist;
 
-    public Basic(int pageWidth, int pageHeight, @NotNull Stylist stylist) {
+    public Basic(int pageWidth, int pageHeight, @NotNull S stylist) {
       this.pageWidth = pageWidth;
       this.pageHeight = pageHeight;
       this.stylist = stylist;
     }
 
-    @Override public @NotNull Stylist getStylist() {
+    @Override public @NotNull S getStylist() {
       return stylist;
     }
 

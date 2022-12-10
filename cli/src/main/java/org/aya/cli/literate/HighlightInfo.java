@@ -3,7 +3,7 @@
 package org.aya.cli.literate;
 
 import org.aya.generic.AyaDocile;
-import org.aya.pretty.backend.string.LinkId;
+import org.aya.pretty.doc.Link;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +21,11 @@ public record HighlightInfo(
     Generalized, LocalVar, Module,
     Unknown;
 
-    public @NotNull HighlightInfo toRef(@NotNull SourcePos sourcePos, @NotNull LinkId target, @Nullable AyaDocile type) {
+    public @NotNull HighlightInfo toRef(@NotNull SourcePos sourcePos, @NotNull Link target, @Nullable AyaDocile type) {
       return new HighlightInfo(sourcePos, new SymRef(target, this, type));
     }
 
-    public @NotNull HighlightInfo toDef(@NotNull SourcePos sourcePos, @NotNull LinkId target, @Nullable AyaDocile type) {
+    public @NotNull HighlightInfo toDef(@NotNull SourcePos sourcePos, @NotNull Link target, @Nullable AyaDocile type) {
       return new HighlightInfo(sourcePos, new SymDef(target, this, type));
     }
   }
@@ -42,11 +42,11 @@ public record HighlightInfo(
   }
 
   /** A reference to a symbol */
-  public record SymRef(@NotNull LinkId target, @NotNull DefKind kind, @Nullable AyaDocile type) implements HighlightSymbol {
+  public record SymRef(@NotNull Link target, @NotNull DefKind kind, @Nullable AyaDocile type) implements HighlightSymbol {
   }
 
   /** A definition of a symbol */
-  public record SymDef(@NotNull LinkId target, @NotNull DefKind kind, @Nullable AyaDocile type) implements HighlightSymbol {
+  public record SymDef(@NotNull Link target, @NotNull DefKind kind, @Nullable AyaDocile type) implements HighlightSymbol {
   }
 
   /** An error element */

@@ -134,7 +134,7 @@ public class AyaMdParser {
       case Paragraph $ -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node));
       case BlockQuote $ -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node));
       case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node));
-      case Link h -> new Literate.Link(h.getDestination(), h.getTitle(), mapChildren(node));
+      case Link h -> new Literate.HyperLink(h.getDestination(), h.getTitle(), mapChildren(node));
       case Document $ -> {
         var children = mapChildren(node);
         yield children.sizeEquals(1) ? children.first() : new Literate.Many(null, children);

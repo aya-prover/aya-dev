@@ -25,6 +25,7 @@ import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -121,6 +122,12 @@ public interface Resolver {
     @Override public @NotNull SeqView<WithPos<AnyVar>>
     foldVar(@NotNull SeqView<WithPos<AnyVar>> targets, @NotNull AnyVar var, @NotNull SourcePos pos, @NotNull LazyValue<Term> type) {
       return xy.inside(pos) ? targets.appended(new WithPos<>(pos, var)) : targets;
+    }
+
+    @Override public @NotNull SeqView<WithPos<AnyVar>>
+    foldVarDecl(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull AnyVar var, @NotNull SourcePos pos, @NotNull LazyValue<@Nullable Term> type) {
+      if (var instanceof LocalVar v && v.isGenerated()) return acc;
+      return StmtFolder.super.foldVarDecl(acc, var, pos, type);
     }
 
     @Override

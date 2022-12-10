@@ -16,6 +16,7 @@ import org.aya.cli.render.Color;
 import org.aya.cli.render.adapter.EitherAdapter;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,13 +90,13 @@ public class ColorTheme {
       ? Map.<String, Integer>empty()
       : fallback.definedColors();
 
-    findAndPut(builder, AyaColorScheme.Key.Keyword.key(), VscColorTheme.SCOPE_KEYWORD, fallbackColors);
-    findAndPut(builder, AyaColorScheme.Key.FnCall.key(), VscColorTheme.SCOPE_FN_CALL, fallbackColors);
-    findAndPut(builder, AyaColorScheme.Key.Generalized.key(), VscColorTheme.SCOPE_GENERALIZED, fallbackColors);
-    findAndPut(builder, AyaColorScheme.Key.DataCall.key(), VscColorTheme.SCOPE_DATA_CALL, fallbackColors);
-    findAndPut(builder, AyaColorScheme.Key.StructCall.key(), VscColorTheme.SCOPE_STRUCT_CALL, fallbackColors);
-    findAndPut(builder, AyaColorScheme.Key.ConCall.key(), VscColorTheme.SCOPE_CON_CALL, fallbackColors);
-    findAndPut(builder, AyaColorScheme.Key.FieldCall.key(), VscColorTheme.SCOPE_FIELD_CALL, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Keyword.key(), VscColorTheme.SCOPE_KEYWORD, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Fn.key(), VscColorTheme.SCOPE_FN_CALL, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Generalized.key(), VscColorTheme.SCOPE_GENERALIZED, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Data.key(), VscColorTheme.SCOPE_DATA_CALL, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Struct.key(), VscColorTheme.SCOPE_STRUCT_CALL, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Con.key(), VscColorTheme.SCOPE_CON_CALL, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Field.key(), VscColorTheme.SCOPE_FIELD_CALL, fallbackColors);
 
     return new AyaColorScheme(builder);
   }

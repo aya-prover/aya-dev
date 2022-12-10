@@ -78,8 +78,10 @@ public class MainArgs {
   public DistillFormat prettyFormat;
   @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.", defaultValue = ".")
   public String prettyDir;
-  @Option(names = {"--style"}, description = "The color theme of pretty printing." + CANDIDATES, defaultValue = "emacs")
-  public PredefinedStyle renderStyle;
+  @Option(names = {"--pretty-color"}, description = "The color theme of pretty printing." + CANDIDATES, defaultValue = "emacs")
+  public PredefinedStyle prettyColor;
+  @Option(names = {"--pretty-no-code-style"}, description = "Do not render styled code.")
+  public boolean prettyNoCodeStyle;
   @Option(names = {"--trace"}, description = "Enable tracing.")
   public boolean enableTrace;
   @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message.")

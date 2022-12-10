@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author kiva
  */
-public class StringPrinter<Config extends StringPrinterConfig> implements Printer<String, Config> {
+public class StringPrinter<Config extends StringPrinterConfig<?>> implements Printer<String, Config> {
   /** renderer: where am I? */
   public enum Outer {
     Free,
@@ -144,8 +144,12 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
   }
 
   protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled, Outer outer) {
-    var stylist = config.getStylist();
+    var stylist = prepareStylist();
     stylist.format(styled.styles(), cursor, outer, () -> renderDoc(cursor, styled.doc(), outer));
+  }
+
+  protected @NotNull StringStylist prepareStylist() {
+    return config.getStylist();
   }
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {

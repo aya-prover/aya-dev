@@ -5,15 +5,11 @@ package org.aya.pretty.backend.string;
 import org.aya.pretty.printer.PrinterConfig;
 import org.jetbrains.annotations.NotNull;
 
-public class StringPrinterConfig extends PrinterConfig.Basic {
+public class StringPrinterConfig<S extends StringStylist> extends PrinterConfig.Basic<S> {
   public final boolean unicode;
 
-  public StringPrinterConfig(@NotNull StringStylist stylist, int pageWidth, boolean unicode) {
+  public StringPrinterConfig(@NotNull S stylist, int pageWidth, boolean unicode) {
     super(pageWidth, INFINITE_SIZE, stylist);
     this.unicode = unicode;
-  }
-
-  @Override public @NotNull StringStylist getStylist() {
-    return (StringStylist) super.getStylist();
   }
 }
