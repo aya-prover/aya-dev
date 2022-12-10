@@ -22,11 +22,7 @@ import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
-import org.aya.ide.action.ComputeSignature;
-import org.aya.ide.action.ComputeTerm;
-import org.aya.ide.action.FindReferences;
-import org.aya.ide.action.GotoDefinition;
-import org.aya.ide.util.XY;
+import org.aya.ide.action.*;
 import org.aya.lsp.actions.*;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
@@ -303,10 +299,8 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<List<Location>> findReferences(ReferenceParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    @NotNull SeqView<LibraryOwner> libraries1 = libraries.view();
-    XY xy = LspRange.pos(params.position);
     return Optional.of(FindReferences
-      .findRefs(source, libraries1, xy)
+      .findRefs(source, libraries.view(), LspRange.pos(params.position))
       .map(LspRange::toLoc)
       .collect(Collectors.toList()));
   }
@@ -314,7 +308,16 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public WorkspaceEdit rename(RenameParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return null;
-    var renames = Rename.rename(source, params.newName, libraries.view(), LspRange.pos(params.position));
+    var renames = Rename.rename(source, params.newName, libraries.view(), LspRange.pos(params.position))
+      .view()
+      .flatMap(t -> t.sourcePos().file().underlying().map(f -> Tuple.of(f.toUri(), t)))
+      .collect(Collectors.groupingBy(
+        t -> t._1,
+        Collectors.mapping(
+          t -> new TextEdit(LspRange.toRange(t._2.sourcePos()), t._2.newText()),
+          Collectors.toList()
+        )
+      ));
     return new WorkspaceEdit(renames);
   }
 
@@ -326,8 +329,7 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
     var begin = Rename.prepare(source, LspRange.pos(params.position));
-    if (begin == null) return Optional.empty();
-    return Optional.of(new RenameResponse(LspRange.toRange(begin.sourcePos()), begin.data()));
+    return begin.map(wp -> new RenameResponse(LspRange.toRange(wp.sourcePos()), wp.data())).asJava();
   }
 
   @Override public List<DocumentHighlight> documentHighlight(TextDocumentPositionParams params) {

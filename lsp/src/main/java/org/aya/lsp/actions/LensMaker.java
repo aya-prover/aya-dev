@@ -10,10 +10,10 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.ide.Resolver;
 import org.aya.ide.action.FindReferences;
 import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.lsp.utils.LspRange;
-import org.aya.ide.Resolver;
 import org.javacs.lsp.CodeLens;
 import org.javacs.lsp.Command;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public record LensMaker(
         var refs = FindReferences.findRefs(SeqView.of(dv), libraries).toImmutableSeq();
         if (refs.size() > 0) {
           var sourcePos = dv.concrete.sourcePos();
-          var uri = LspRange.fileUri(sourcePos);
+          var uri = LspRange.toFileUri(sourcePos);
           var range = LspRange.toRange(sourcePos);
 
           // https://code.visualstudio.com/api/references/commands
