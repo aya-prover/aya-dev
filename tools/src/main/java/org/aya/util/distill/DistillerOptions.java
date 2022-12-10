@@ -3,6 +3,9 @@
 package org.aya.util.distill;
 
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,9 +13,12 @@ import java.util.Map;
  * @author ice1000
  */
 public abstract class DistillerOptions {
-  public final Map<Key, Boolean> map = new HashMap<>();
+  public final Map<Key, Boolean> map;
 
-  {
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public DistillerOptions(@NotNull Class<?> keyClass) {
+    if (keyClass.isEnum()) map = new EnumMap(keyClass);
+    else map = new HashMap<>();
     reset();
   }
 

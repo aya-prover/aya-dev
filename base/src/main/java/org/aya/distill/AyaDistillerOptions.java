@@ -7,6 +7,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public class AyaDistillerOptions extends DistillerOptions {
+  public AyaDistillerOptions() {
+    super(Key.class);
+  }
+
   public enum Key implements DistillerOptions.Key {
     InlineMetas,
     ShowImplicitArgs,
