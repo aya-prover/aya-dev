@@ -24,8 +24,8 @@ public record Folding(@NotNull MutableList<FoldingArea> foldingRanges) implement
   @Override public void accept(@NotNull Stmt stmt) {
     switch (stmt) {
       case Decl maybe -> Resolver.withChildren(maybe)
-        .filter(dv -> dv.concrete != null)
-        .map(dv -> dv.concrete.entireSourcePos())
+        .mapNotNull(dv -> dv.concrete)
+        .map(Decl::entireSourcePos)
         .map(pos -> new FoldingArea(pos, maybe))
         .forEach(foldingRanges::append);
       case Command.Module mod -> foldingRanges.append(new FoldingArea(mod.entireSourcePos(), stmt));
