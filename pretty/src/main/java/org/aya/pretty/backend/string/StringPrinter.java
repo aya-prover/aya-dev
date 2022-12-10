@@ -127,7 +127,6 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
    * @implNote new line ('\n') may not be the hard line break
    */
   protected boolean requireLineStart(@NotNull Cursor cursor) {
-    // TODO: static NEW_LINE = "\n"
     if (!cursor.isAtLineStart()) {
       cursor.lineBreakWith("\n");
       return true;
