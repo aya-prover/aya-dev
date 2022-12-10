@@ -13,8 +13,8 @@ import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Link;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
@@ -243,10 +243,10 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return Doc.linkRef(Doc.styled(color, ref.name()), linkIdOf(ref));
   }
 
-  public static @NotNull LinkId linkIdOf(@NotNull AnyVar ref) {
+  public static @NotNull Link linkIdOf(@NotNull AnyVar ref) {
     if (ref instanceof DefVar<?, ?> defVar)
-      return LinkId.loc(QualifiedID.join(defVar.qualifiedName()));
-    return LinkId.loc(ref.hashCode());
+      return Link.loc(QualifiedID.join(defVar.qualifiedName()));
+    return Link.loc(ref.hashCode());
   }
 
   public static @NotNull Doc linkLit(int literal, @NotNull AnyVar ref, @NotNull Style color) {

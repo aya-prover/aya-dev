@@ -4,10 +4,10 @@ package org.aya.pretty.backend.html;
 
 import kala.collection.immutable.ImmutableMap;
 import org.aya.pretty.backend.string.Cursor;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Link;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -159,19 +159,19 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("</a>");
   }
 
-  public static @NotNull String normalizeId(@NotNull LinkId linkId) {
+  public static @NotNull String normalizeId(@NotNull Link linkId) {
     return switch (linkId) {
-      case LinkId.DirectLink(var link) -> link;
-      case LinkId.LocalId(var id) -> id.fold(DocHtmlPrinter::normalizeQuerySelector, x -> "v" + x);
+      case Link.DirectLink(var link) -> link;
+      case Link.LocalId(var id) -> id.fold(DocHtmlPrinter::normalizeQuerySelector, x -> "v" + x);
       // ^ CSS3 selector does not support IDs starting with a digit, so we prefix them with "v".
       // See https://stackoverflow.com/a/37271406/9506898 for more details.
     };
   }
 
-  public static @NotNull String normalizeHref(@NotNull LinkId linkId) {
+  public static @NotNull String normalizeHref(@NotNull Link linkId) {
     return switch (linkId) {
-      case LinkId.DirectLink(var link) -> link;
-      case LinkId.LocalId localId -> "#" + normalizeId(localId);
+      case Link.DirectLink(var link) -> link;
+      case Link.LocalId localId -> "#" + normalizeId(localId);
     };
   }
 
