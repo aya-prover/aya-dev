@@ -24,7 +24,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       cursor.invisibleContent(HtmlConstants.HOVER_POPUP_STYLE);
       if (config.ayaFlavored) // TODO: add flag for Vue (server side rendering) and plain HTML
         cursor.invisibleContent(HtmlConstants.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
-      if (config.supportsCssStyle()) renderCssStyle(cursor);
+      renderCssStyle(cursor);
     }
   }
 
@@ -139,12 +139,12 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   public static class Config extends DocHtmlPrinter.Config {
     public boolean ayaFlavored;
 
-    public Config(boolean withHeader, boolean ayaFlavored) {
-      this(MdStylist.DEFAULT, withHeader, ayaFlavored);
+    public Config(boolean withHeader, boolean withStyleDef, boolean ayaFlavored) {
+      this(MdStylist.DEFAULT, withHeader, withStyleDef, ayaFlavored);
     }
 
-    public Config(@NotNull MdStylist stylist, boolean withHeader, boolean ayaFlavored) {
-      super(stylist, withHeader);
+    public Config(@NotNull MdStylist stylist, boolean withHeader, boolean withStyleDef, boolean ayaFlavored) {
+      super(stylist, withHeader, withStyleDef);
       this.ayaFlavored = ayaFlavored;
     }
   }

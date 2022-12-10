@@ -21,6 +21,7 @@ public record CompilerFlags(
 ) {
   public record DistillInfo(
     boolean ascii,
+    boolean prettyNoCodeStyle,
     @NotNull MainArgs.DistillStage distillStage,
     @NotNull MainArgs.DistillFormat distillFormat,
     @NotNull DistillerOptions distillerOptions,

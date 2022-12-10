@@ -73,19 +73,15 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToHtml(boolean withHeader) {
-    return render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(withHeader));
+    return render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(withHeader, true));
   }
 
   default @NotNull String renderToMd() {
-    return render(new DocMdPrinter(), new DocMdPrinter.Config(false, false));
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(false, false, false));
   }
 
   default @NotNull String renderToAyaMd() {
-    return renderToAyaMd(true);
-  }
-
-  default @NotNull String renderToAyaMd(boolean withHeader) {
-    return render(new DocMdPrinter(), new DocMdPrinter.Config(withHeader, true));
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(true, true, true));
   }
 
   default @NotNull String renderToTeX() {

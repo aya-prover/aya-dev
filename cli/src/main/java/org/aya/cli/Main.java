@@ -16,10 +16,13 @@ import org.aya.core.def.PrimDef;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
@@ -53,20 +56,23 @@ public class Main extends MainArgs implements Callable<Integer> {
     var distillOptions = replConfig.distillerOptions;
     var reporter = CliReporter.stdio(!asciiOnly, distillOptions, verbosity);
     var renderOptions = replConfig.renderOptions;
-    switch (renderStyle) {
+    switch (prettyColor) {
       case emacs -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.Emacs;
       case intellij -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.IntelliJ;
       case null -> {}
     }
     replConfig.close();
-    var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
-      asciiOnly,
-      prettyStage,
-      prettyFormat,
-      distillOptions,
-      renderOptions,
-      prettyDir
-    ) : null;
+    var distillation = prettyStage == null
+      ? (outputPath != null ? distillInfoFromOutput(outputPath, renderOptions, prettyNoCodeStyle) : null)
+      : new CompilerFlags.DistillInfo(
+        asciiOnly,
+        prettyNoCodeStyle,
+        prettyStage,
+        prettyFormat,
+        distillOptions,
+        renderOptions,
+        prettyDir
+      );
     var flags = new CompilerFlags(message, interruptedTrace,
       compile.isRemake, distillation,
       modulePaths().view().map(Paths::get),
@@ -84,5 +90,29 @@ public class Main extends MainArgs implements Callable<Integer> {
       System.err.println(new MarkdownTrace(2, distillOptions, asciiOnly)
         .docify(traceBuilder).renderToString(PrinterConfig.INFINITE_SIZE, !asciiOnly));
     return status;
+  }
+
+  public static @NotNull DistillFormat detectFormat(@NotNull Path outputFile) {
+    var name = outputFile.getFileName().toString();
+    if (name.endsWith(".md")) return DistillFormat.markdown;
+    if (name.endsWith(".tex")) return DistillFormat.latex;
+    if (name.endsWith(".html")) return DistillFormat.html;
+    return DistillFormat.plain;
+  }
+
+  public static @Nullable CompilerFlags.DistillInfo distillInfoFromOutput(
+    @Nullable Path outputFile,
+    @NotNull RenderOptions renderOptions,
+    boolean noCodeStyle
+  ) {
+    if (outputFile != null) return new CompilerFlags.DistillInfo(
+      false,
+      noCodeStyle,
+      MainArgs.DistillStage.literate,
+      detectFormat(outputFile),
+      DistillerOptions.pretty(),
+      renderOptions,
+      null);
+    return null;
   }
 }

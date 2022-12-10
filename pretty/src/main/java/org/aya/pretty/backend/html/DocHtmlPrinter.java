@@ -42,7 +42,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Override protected void renderHeader(@NotNull Cursor cursor) {
     if (config.withHeader) {
       cursor.invisibleContent(HEAD);
-      if (config.supportsCssStyle()) renderCssStyle(cursor);
+      renderCssStyle(cursor);
       cursor.invisibleContent("</head><body>");
     }
   }
@@ -52,6 +52,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   protected void renderCssStyle(@NotNull Cursor cursor) {
+    if (!config.withStyleDef) return;
     cursor.invisibleContent("<style>");
     // colors are defined in global scope `:root`
     var colors = Html5Stylist.colorsToCss(config.getStylist().colorScheme);
@@ -128,19 +129,21 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   public static class Config extends StringPrinterConfig<Html5Stylist> {
     public final boolean withHeader;
+    public final boolean withStyleDef;
 
     /** Set doc style with html "class" attribute and css block */
     public boolean supportsCssStyle() {
       return withHeader;
     }
 
-    public Config(boolean withHeader) {
-      this(Html5Stylist.DEFAULT, withHeader);
+    public Config(boolean withHeader, boolean withStyleDef) {
+      this(Html5Stylist.DEFAULT, withHeader, withStyleDef);
     }
 
-    public Config(@NotNull Html5Stylist stylist, boolean withHeader) {
+    public Config(@NotNull Html5Stylist stylist, boolean withHeader, boolean withStyleDef) {
       super(stylist, INFINITE_SIZE, true);
       this.withHeader = withHeader;
+      this.withStyleDef = withStyleDef;
     }
   }
 }

@@ -143,18 +143,25 @@ public class RenderOptions {
     }
   }
 
-  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader, boolean unicode) {
-    return render(output, doc, witHeader, unicode, StringPrinterConfig.INFINITE_SIZE);
+  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader, boolean withStyleDef, boolean unicode) {
+    return render(output, doc, witHeader, withStyleDef, unicode, StringPrinterConfig.INFINITE_SIZE);
   }
 
-  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader, boolean unicode, int pageWidth) {
+  public @NotNull String render(
+    @NotNull OutputTarget output, @NotNull Doc doc,
+    boolean witHeader, boolean withStyleDef, boolean unicode,
+    int pageWidth
+  ) {
     var stylist = stylistOrDefault(output);
     return switch (output) {
-      case HTML -> doc.render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config((Html5Stylist) stylist, witHeader));
-      case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
-      case AyaMd -> doc.render(new DocMdPrinter(), new DocMdPrinter.Config((MdStylist) stylist, witHeader, true));
-      case Terminal -> doc.render(new DocTermPrinter(), new DocTermPrinter.Config((UnixTermStylist) stylist, pageWidth, unicode));
       case Plain -> doc.renderToString(new StringPrinterConfig<>(stylist, pageWidth, unicode));
+      case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
+      case HTML -> doc.render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(
+        (Html5Stylist) stylist, witHeader, withStyleDef));
+      case AyaMd -> doc.render(new DocMdPrinter(), new DocMdPrinter.Config(
+        (MdStylist) stylist, witHeader, withStyleDef, true));
+      case Terminal -> doc.render(new DocTermPrinter(), new DocTermPrinter.Config(
+        (UnixTermStylist) stylist, pageWidth, unicode));
     };
   }
 

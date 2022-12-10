@@ -89,7 +89,7 @@ public final class JlineRepl extends AyaRepl {
 
   private @NotNull String renderDoc(@NotNull Doc doc, int pageWidth) {
     return config.renderOptions.render(RenderOptions.OutputTarget.Terminal, doc,
-      false, config.enableUnicode, pageWidth);
+      false, false, config.enableUnicode, pageWidth);
   }
 
   @Override public void println(@NotNull String x) {
