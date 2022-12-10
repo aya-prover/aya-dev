@@ -13,60 +13,63 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ide.Resolver;
 import org.aya.ide.syntax.SyntaxDeclAction;
+import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record ProjectSymbol(@NotNull MutableList<Symbol> symbols) implements SyntaxDeclAction {
-  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull LibrarySource source) {
-    var symbol = new ProjectSymbol(MutableList.create());
-    collect(source, symbol);
+public record ProjectSymbol(@NotNull DistillerOptions options,
+                            @NotNull MutableList<Symbol> symbols) implements SyntaxDeclAction {
+  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull DistillerOptions options, @NotNull LibrarySource source) {
+    var symbol = new ProjectSymbol(options, MutableList.create());
+    symbol.collectSource(source);
     return symbol.symbols.toImmutableSeq();
   }
 
-  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull SeqView<LibraryOwner> libraries) {
-    var symbol = new ProjectSymbol(MutableList.create());
-    libraries.forEach(lib -> collect(lib, symbol));
+  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull DistillerOptions options, @NotNull SeqView<LibraryOwner> libraries) {
+    var symbol = new ProjectSymbol(options, MutableList.create());
+    libraries.forEach(symbol::collectLib);
     return symbol.symbols.toImmutableSeq();
   }
 
-  private static void collect(@NotNull LibraryOwner owner, @NotNull ProjectSymbol symbol) {
-    owner.librarySources().forEach(src -> collect(src, symbol));
-    owner.libraryDeps().forEach(lib -> collect(lib, symbol));
+  private void collectLib(@NotNull LibraryOwner owner) {
+    owner.librarySources().forEach(this::collectSource);
+    owner.libraryDeps().forEach(this::collectLib);
   }
 
-  private static void collect(@NotNull LibrarySource src, @NotNull ProjectSymbol symbol) {
+  private void collectSource(@NotNull LibrarySource src) {
     var program = src.program().get();
-    if (program != null) program.forEach(symbol);
+    if (program != null) program.forEach(this);
   }
 
   @Override public void accept(@NotNull Stmt stmt) {
     if (stmt instanceof Decl decl) {
-      var children = new ProjectSymbol(MutableList.create());
+      var children = new ProjectSymbol(options, MutableList.create());
       Resolver.withChildren(decl)
         .filter(dv -> dv.concrete != decl && dv.concrete != null)
-        .forEach(dv -> collect(children, dv, null));
-      collect(this, decl.ref(), children);
+        .forEach(dv -> children.collect(dv, null));
+      collect(decl.ref(), children);
     }
     SyntaxDeclAction.super.accept(stmt);
   }
 
-  private static void collect(@NotNull ProjectSymbol ps, @NotNull DefVar<?, ?> dv, @Nullable ProjectSymbol children) {
+  private void collect(@NotNull DefVar<?, ?> dv, @Nullable ProjectSymbol children) {
     var nameLoc = dv.concrete.sourcePos();
     var entireLoc = dv.concrete.entireSourcePos();
     var symbol = new Symbol(
       dv.name(),
-      ComputeSignature.computeSignature(dv, true).commonRender(),
+      ComputeSignature.computeSignature(options, dv, true),
       SyntaxHighlight.kindOf(dv),
       nameLoc, entireLoc,
       children == null ? ImmutableSeq.empty() : children.symbols.toImmutableSeq());
-    ps.symbols.append(symbol);
+    symbols.append(symbol);
   }
 
   public record Symbol(
     @NotNull String name,
-    @NotNull String description,
+    @NotNull Doc description,
     @NotNull HighlightInfo.DefKind kind,
     @NotNull SourcePos nameLocation,
     @NotNull SourcePos entireLocation,

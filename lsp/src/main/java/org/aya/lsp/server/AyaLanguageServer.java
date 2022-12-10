@@ -67,6 +67,7 @@ public class AyaLanguageServer implements LanguageServer {
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
+  private final @NotNull DistillerOptions options = DistillerOptions.pretty();
 
   public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
@@ -209,7 +210,7 @@ public class AyaLanguageServer implements LanguageServer {
       e.printStackTrace(new PrintWriter(s));
       Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
     }
-    publishProblems(reporter, DistillerOptions.pretty());
+    publishProblems(reporter, options);
     return SemanticHighlight.invoke(owner);
   }
 
@@ -287,7 +288,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<Hover> hover(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    var doc = ComputeSignature.invokeHover(source, LspRange.pos(params.position));
+    var doc = ComputeSignature.invokeHover(options, source, LspRange.pos(params.position));
     if (doc.isEmpty()) return Optional.empty();
     var marked = new MarkedString(MarkupKind.PlainText, doc.commonRender());
     return Optional.of(new Hover(List.of(marked)));
@@ -358,11 +359,11 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<? extends GenericDocumentSymbol> documentSymbol(DocumentSymbolParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return SymbolMaker.documentSymbols(source).asJava();
+    return SymbolMaker.documentSymbols(options, source).asJava();
   }
 
   @Override public List<? extends GenericWorkspaceSymbol> workspaceSymbols(WorkspaceSymbolParams params) {
-    return SymbolMaker.workspaceSymbols(libraries.view()).asJava();
+    return SymbolMaker.workspaceSymbols(options, libraries.view()).asJava();
   }
 
   @Override
@@ -392,7 +393,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<InlayHint> inlayHint(InlayHintParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return InlayHints.invoke(source, LspRange.range(params.range))
+    return InlayHints.invoke(options, source, LspRange.range(params.range))
       .map(h -> new InlayHint(LspRange.toRange(h.sourcePos()).end, h.doc().commonRender()))
       .asJava();
   }
@@ -440,7 +441,7 @@ public class AyaLanguageServer implements LanguageServer {
     }
 
     @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {
-      return describe(DistillerOptions.pretty());
+      return describe(options);
     }
   }
 

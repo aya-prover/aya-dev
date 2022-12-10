@@ -10,6 +10,7 @@ import org.aya.cli.literate.HighlightInfo;
 import org.aya.ide.action.ProjectSymbol;
 import org.aya.ide.action.ProjectSymbol.Symbol;
 import org.aya.lsp.utils.LspRange;
+import org.aya.util.distill.DistillerOptions;
 import org.intellij.lang.annotations.MagicConstant;
 import org.javacs.lsp.DocumentSymbol;
 import org.javacs.lsp.SymbolKind;
@@ -18,12 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface SymbolMaker {
-  static @NotNull ImmutableSeq<DocumentSymbol> documentSymbols(@NotNull LibrarySource source) {
-    return ProjectSymbol.invoke(source).map(SymbolMaker::documentSymbol);
+  static @NotNull ImmutableSeq<DocumentSymbol> documentSymbols(@NotNull DistillerOptions options, @NotNull LibrarySource source) {
+    return ProjectSymbol.invoke(options, source).map(SymbolMaker::documentSymbol);
   }
 
-  static @NotNull ImmutableSeq<WorkspaceSymbol> workspaceSymbols(@NotNull SeqView<LibraryOwner> libraries) {
-    return ProjectSymbol.invoke(libraries).mapNotNull(SymbolMaker::workspaceSymbol);
+  static @NotNull ImmutableSeq<WorkspaceSymbol> workspaceSymbols(@NotNull DistillerOptions options, @NotNull SeqView<LibraryOwner> libraries) {
+    return ProjectSymbol.invoke(options, libraries).mapNotNull(SymbolMaker::workspaceSymbol);
   }
 
   private static int kindOf(@NotNull HighlightInfo.DefKind kind) {
@@ -53,7 +54,7 @@ public interface SymbolMaker {
     var nameLoc = LspRange.toRange(symbol.nameLocation());
     var entireLoc = LspRange.toRange(symbol.entireLocation());
     return new DocumentSymbol(
-      symbol.name(), symbol.description(), kindOf(symbol.kind()),
+      symbol.name(), symbol.description().commonRender(), kindOf(symbol.kind()),
       false, entireLoc, nameLoc,
       symbol.children().map(SymbolMaker::documentSymbol).asJava());
   }

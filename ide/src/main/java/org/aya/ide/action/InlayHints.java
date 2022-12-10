@@ -15,20 +15,21 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record InlayHints(
+  @NotNull DistillerOptions options,
   @NotNull XYXY location,
   @NotNull MutableList<Hint> hints
 ) implements SyntaxNodeAction.Ranged {
-  public static @NotNull ImmutableSeq<Hint> invoke(@NotNull LibrarySource source, @NotNull XYXY range) {
+  public static @NotNull ImmutableSeq<Hint> invoke(@NotNull DistillerOptions options, @NotNull LibrarySource source, @NotNull XYXY range) {
     var program = source.program().get();
     if (program == null) return ImmutableSeq.empty();
-    var maker = new InlayHints(range, MutableList.create());
+    var maker = new InlayHints(options, range, MutableList.create());
     program.forEach(maker);
     return maker.hints.toImmutableSeq();
   }
 
   @Override public @NotNull Pattern pre(@NotNull Pattern pattern) {
     if (pattern instanceof Pattern.Bind bind && bind.type().get() instanceof Term term) {
-      var type = term.toDoc(DistillerOptions.pretty());
+      var type = term.toDoc(options);
       hints.append(new Hint(bind.sourcePos(), type, true));
     }
     return Ranged.super.pre(pattern);
