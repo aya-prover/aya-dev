@@ -143,4 +143,20 @@ public sealed interface PatternProblem extends Problem {
         Doc.par(1, type.toDoc(options)));
     }
   }
+
+  record InvalidEmptyBody(
+    @NotNull Pattern.Clause match
+  ) implements PatternProblem {
+    @Override @NotNull public Pattern pattern() {
+      return match.patterns.first().term();
+    }
+
+    @Override @NotNull public SourcePos sourcePos() {
+      return match.sourcePos;
+    }
+
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.english("This match arm does not contain any absurd pattern but it has an empty body");
+    }
+  }
 }
