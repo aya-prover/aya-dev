@@ -52,7 +52,17 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   protected void renderCssStyle(@NotNull Cursor cursor) {
-    // TODO: css
+    var styles = config.getStylist().styleFamily;
+    cursor.invisibleContent("<style>");
+    styles.definedStyles().forEach((name, style) -> {
+      var cssId = Html5Stylist.styleKeyToCss(name).map(x -> "." + x).joinToString(" ");
+      var stylesheet = """
+        %s {
+        }
+        """.formatted(cssId);
+      cursor.invisibleContent(stylesheet);
+    });
+    cursor.invisibleContent("</style>");
   }
 
   @Override protected @NotNull StringStylist prepareStylist() {
@@ -83,7 +93,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   public static @NotNull String normalizeId(@NotNull Link linkId) {
     return switch (linkId) {
       case Link.DirectLink(var link) -> link;
-      case Link.LocalId(var id) -> id.fold(DocHtmlPrinter::normalizeQuerySelector, x -> "v" + x);
+      case Link.LocalId(var id) -> id.fold(Html5Stylist::normalizeCssId, x -> "v" + x);
       // ^ CSS3 selector does not support IDs starting with a digit, so we prefix them with "v".
       // See https://stackoverflow.com/a/37271406/9506898 for more details.
     };
@@ -96,36 +106,12 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     };
   }
 
-  /**
-   * <a href="https://stackoverflow.com/a/45519999/9506898">Thank you!</a>
-   * <a href="https://jkorpela.fi/ucs.html8">ISO 10646 character listings</a>
-   * <p>
-   * In CSS, identifiers (including element names, classes, and IDs in selectors)
-   * can contain only the characters [a-zA-Z0-9] and ISO 10646 characters U+00A0 and higher,
-   * plus the hyphen (-) and the underscore (_);
-   * they cannot start with a digit, two hyphens, or a hyphen followed by a digit.
-   * Identifiers can also contain escaped characters and any ISO 10646 character as a numeric code (see next item).
-   * For instance, the identifier "B&W?" may be written as "B\&W\?" or "B\26 W\3F".
-   */
-  public static @NotNull String normalizeQuerySelector(@NotNull String selector) {
-    selector = selector.replaceAll("::", "-"); // note: scope::name -> scope-name
-    // Java's `Pattern` assumes only ASCII text are matched, where `T²` will be incorrectly normalize to "T?".
-    // But according to CSS3, `T²` is a valid identifier.
-    var builder = new StringBuilder();
-    for (var c : selector.toCharArray()) {
-      if (Character.isLetterOrDigit(c) || c >= 0x00A0 || c == '-' || c == '_')
-        builder.append(c);
-      else builder.append(Integer.toHexString(c));
-    }
-    return builder.toString();
-  }
-
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
     cursor.lineBreakWith("<br>");
   }
 
   @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
-    cursor.invisibleContent("<code class=\"" + capitalize(code.language()) +"\">");
+    cursor.invisibleContent("<code class=\"" + capitalize(code.language()) + "\">");
     renderDoc(cursor, code.code(), Outer.EnclosingTag); // Even in code mode, we still need to escape
     cursor.invisibleContent("</code>");
   }

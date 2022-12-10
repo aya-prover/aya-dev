@@ -47,8 +47,39 @@ public class Html5Stylist extends ClosingStylist {
       super(delegate);
     }
 
-    @Override protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, StringPrinter.Outer outer) {
-      return ImmutableSeq.of(new StyleToken("<span class=\"%s\">".formatted(styleName), "</span>", false));
+    @Override
+    protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, StringPrinter.Outer outer) {
+      var className = styleKeyToCss(styleName).last();
+      return ImmutableSeq.of(new StyleToken("<span class=\"%s\">".formatted(className), "</span>", false));
     }
+  }
+
+  /** @see org.aya.pretty.style.AyaStyleKey */
+  public static @NotNull ImmutableSeq<String> styleKeyToCss(@NotNull String className) {
+    return ImmutableSeq.from(className.split("::", -1)).map(Html5Stylist::normalizeCssId);
+  }
+
+  /**
+   * <a href="https://stackoverflow.com/a/45519999/9506898">Thank you!</a>
+   * <a href="https://jkorpela.fi/ucs.html8">ISO 10646 character listings</a>
+   * <p>
+   * In CSS, identifiers (including element names, classes, and IDs in selectors)
+   * can contain only the characters [a-zA-Z0-9] and ISO 10646 characters U+00A0 and higher,
+   * plus the hyphen (-) and the underscore (_);
+   * they cannot start with a digit, two hyphens, or a hyphen followed by a digit.
+   * Identifiers can also contain escaped characters and any ISO 10646 character as a numeric code (see next item).
+   * For instance, the identifier "B&W?" may be written as "B\&W\?" or "B\26 W\3F".
+   */
+  public static @NotNull String normalizeCssId(@NotNull String selector) {
+    selector = selector.replaceAll("::", "-"); // note: scope::name -> scope-name
+    // Java's `Pattern` assumes only ASCII text are matched, where `T²` will be incorrectly normalize to "T?".
+    // But according to CSS3, `T²` is a valid identifier.
+    var builder = new StringBuilder();
+    for (var c : selector.toCharArray()) {
+      if (Character.isLetterOrDigit(c) || c >= 0x00A0 || c == '-' || c == '_')
+        builder.append(c);
+      else builder.append(Integer.toHexString(c));
+    }
+    return builder.toString();
   }
 }
