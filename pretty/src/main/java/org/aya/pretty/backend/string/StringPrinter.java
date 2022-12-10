@@ -20,6 +20,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     Free,
     Code,
     EnclosingTag,
+    List,
   }
 
   protected Config config;
@@ -60,6 +61,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.PageWidth pageWidth -> predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
       case Doc.CodeBlock codeBlock -> predictWidth(cursor, codeBlock.code());
       case Doc.InlineCode inlineCode -> predictWidth(cursor, inlineCode.code());
+      case Doc.List list -> list.items().view().map(x -> predictWidth(cursor, x)).reduce(Integer::sum);
     };
   }
 
@@ -83,7 +85,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.SpecialSymbol symbol -> renderSpecialSymbol(cursor, symbol.text(), outer);
       case Doc.HyperLinked text -> renderHyperLinked(cursor, text, outer);
       case Doc.Styled styled -> renderStyled(cursor, styled, outer);
-      case Doc.Line d -> renderHardLineBreak(cursor);
+      case Doc.Line d -> renderHardLineBreak(cursor, outer);
       case Doc.FlatAlt alt -> renderFlatAlt(cursor, alt, outer);
       case Doc.Cat cat -> cat.inner().forEach(inner -> renderDoc(cursor, inner, outer));
       case Doc.Nest nest -> renderNest(cursor, nest, outer);
@@ -93,6 +95,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.PageWidth pageWidth -> renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()), outer);
       case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock, Outer.Code);
       case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode, Outer.Code);
+      case Doc.List list -> renderList(cursor, list, outer);
       case Doc.Empty $ -> {}
     }
   }
@@ -116,6 +119,20 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     Tuple.of("[|", "\u27E6"),
     Tuple.of("|]", "\u27E7")
   );
+
+  /**
+   * New line if needed
+   *
+   * @return true if needed; the Cursor is at line start after call.
+   * @implNote new line ('\n') may not be the hard line break
+   */
+  protected boolean requireLineStart(@NotNull Cursor cursor) {
+    // TODO: static NEW_LINE = "\n"
+    if (!cursor.isAtLineStart()) {
+      cursor.lineBreakWith("\n");
+      return true;
+    } else return false;
+  }
 
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, Outer outer) {
     if (config.unicode) for (var k : unicodeMapping.keysView()) {
@@ -160,7 +177,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     return content;
   }
 
-  protected void renderHardLineBreak(@NotNull Cursor cursor) {
+  protected void renderHardLineBreak(@NotNull Cursor cursor, @NotNull Outer outer) {
     cursor.lineBreakWith("\n");
   }
 
@@ -172,5 +189,31 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     cursor.visibleContent("`");
     renderDoc(cursor, code.code(), outer);
     cursor.visibleContent("`");
+  }
+
+  protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, @NotNull Outer outer) {
+    var isTopLevel = outer != Outer.List;
+
+    requireLineStart(cursor);
+
+    if (isTopLevel) {
+      renderHardLineBreak(cursor, outer);
+    }
+
+    for (var item : list.items()) {
+      requireLineStart(cursor);
+
+      var pre = "*";
+      var content = Doc.nest(2, item);
+      var doc = Doc.stickySep(Doc.plain(pre), content);
+
+      // render
+      renderDoc(cursor, doc, Outer.List);
+    }
+
+    if (isTopLevel) {
+      requireLineStart(cursor);
+      renderHardLineBreak(cursor, outer);
+    }
   }
 }

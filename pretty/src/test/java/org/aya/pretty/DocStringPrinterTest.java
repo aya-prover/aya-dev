@@ -109,4 +109,25 @@ public class DocStringPrinterTest {
     var doc = empty();
     assertEquals("", doc.commonRender());
   }
+
+  @Test
+  public void testList() {
+    var list = cat(
+      plain("what"),
+      bullet(
+        cat(plain("fir"), line(), plain("st")),
+        cat(plain("second"), bullet(plain("second.1"))), cat(plain("third"), line()))
+    );
+
+    assertEquals("""
+      what
+            
+      * fir
+        st
+      * second
+        * second.1
+      * third
+            
+      """, list.commonRender());
+  }
 }

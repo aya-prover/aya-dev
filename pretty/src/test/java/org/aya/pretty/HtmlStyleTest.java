@@ -5,8 +5,11 @@ package org.aya.pretty;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Link;
 import org.aya.pretty.doc.Style;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+
+import java.util.function.UnaryOperator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -41,5 +44,28 @@ public class HtmlStyleTest {
     var expected = "&amp;&lt;&gt;&quot;&bsol;";
 
     assertEquals(expected, actual);
+  }
+
+  private @NotNull Doc bulletDoc() {
+    return Doc.bullet(Doc.plain("first"), Doc.plain("second"), Doc.plain("third"));
+  }
+
+  private @NotNull Doc orderedDoc() {
+    return Doc.ordered(Doc.plain("first"), Doc.plain("second"), Doc.plain("third"));
+  }
+
+  @Test
+  public void testList() {
+    var actual0 = bulletDoc().renderToHtml(false);
+    @Language("HTML") var expected0 = "<ul><li>first</li><li>second</li><li>third</li></ul>";
+    var actual1 = orderedDoc().renderToHtml(false);
+    @Language("HTML") var expected1 = "<ol><li>first</li><li>second</li><li>third</li></ol>";
+
+    assertEquals(wrap(expected0), actual0);
+    assertEquals(wrap(expected1), actual1);
+  }
+
+  private @NotNull String wrap(@NotNull String html) {
+    return "<pre class=\"Aya\">" + html + "</pre>";
   }
 }

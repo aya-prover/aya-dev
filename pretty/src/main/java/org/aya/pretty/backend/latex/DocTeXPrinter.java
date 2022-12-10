@@ -66,7 +66,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     return "\\hspace*{" + indent * 0.5 + "em}";
   }
 
-  @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
+  @Override protected void renderHardLineBreak(@NotNull Cursor cursor, @NotNull Outer outer) {
     cursor.lineBreakWith("\\\\\n");
   }
 
@@ -74,6 +74,11 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.invisibleContent("\\fbox{");
     renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("}");
+  }
+
+  @Override
+  protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, @NotNull Outer outer) {
+    throw new UnsupportedOperationException("TODO");    // TODO: I am not good at LaTeX
   }
 
   /**

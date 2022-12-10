@@ -181,6 +181,9 @@ public sealed interface Doc extends Docile {
     }
   }
 
+  record List(@NotNull ImmutableSeq<Doc> items, boolean isOrdered) implements Doc {
+  }
+
   /**
    * Document indented by a number of columns
    */
@@ -536,6 +539,18 @@ public sealed interface Doc extends Docile {
 
   @Contract("_ -> new") static @NotNull Doc vcatNonEmpty(@NotNull SeqLike<Doc> docs) {
     return vcat(docs.view().filter(Doc::isNotEmpty));
+  }
+
+  @Contract("_, _ -> new") static @NotNull Doc list(@NotNull SeqLike<@NotNull Doc> docs, boolean isOrdered) {
+    return new List(docs.toImmutableSeq(), isOrdered);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc ordered(Doc @NotNull ... docs) {
+    return list(Seq.of(docs), true);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc bullet(Doc @NotNull ... docs) {
+    return list(Seq.of(docs), false);
   }
 
   /**

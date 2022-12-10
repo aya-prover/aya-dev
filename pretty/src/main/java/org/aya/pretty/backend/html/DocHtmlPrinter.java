@@ -107,7 +107,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     };
   }
 
-  @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
+  @Override protected void renderHardLineBreak(@NotNull Cursor cursor, @NotNull Outer outer) {
     cursor.lineBreakWith("<br>");
   }
 
@@ -121,6 +121,21 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("<pre class=\"" + capitalize(block.language()) + "\">");
     renderDoc(cursor, block.code(), Outer.EnclosingTag); // Even in code mode, we still need to escape
     cursor.invisibleContent("</pre>");
+  }
+
+  @Override
+  protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, @NotNull Outer outer) {
+    var tag = list.isOrdered() ? "ol" : "ul";
+
+    cursor.invisibleContent("<" + tag + ">");
+
+    list.items().forEach(item -> {
+      cursor.invisibleContent("<li>");
+      renderDoc(cursor, item, outer);   // TODO: outer
+      cursor.invisibleContent("</li>");
+    });
+
+    cursor.invisibleContent("</" + tag + ">");
   }
 
   private @NotNull String capitalize(@NotNull String s) {

@@ -62,8 +62,12 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     return content;
   }
 
-  @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
-    cursor.lineBreakWith("\n");
+  @Override protected void renderHardLineBreak(@NotNull Cursor cursor, @NotNull Outer outer) {
+    if (outer == Outer.List) {
+      cursor.lineBreakWith("<br/>\n");
+    } else {
+      cursor.lineBreakWith("\n");
+    }
   }
 
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, Outer outer) {
@@ -91,6 +95,40 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       if (isAya) formatInlineCode(cursor, code.code(), "<code class=\"Aya\">", "</code>", Outer.EnclosingTag);
       else pureMd.run();
     });
+  }
+
+  @Override
+  protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, @NotNull Outer outer) {
+    // Almost same as StringPrinter#renderList
+
+    var isTopLevel = outer != Outer.List;
+
+    requireLineStart(cursor);
+
+    if (isTopLevel) {
+      renderHardLineBreak(cursor, outer);
+    }
+
+    list.items().forEachIndexed((idx, item) -> {
+      requireLineStart(cursor);
+
+      var pre = list.isOrdered()
+        ? (idx + 1) + "."
+        : "+";
+      var content = Doc.nest(pre.length() + 1, item);
+
+      // render pre
+      cursor.visibleContent(pre);
+      cursor.visibleContent(" ");
+
+      // render
+      renderDoc(cursor, content, Outer.List);
+    });
+
+    if (isTopLevel) {
+      requireLineStart(cursor);
+      renderHardLineBreak(cursor, outer);
+    }
   }
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, Outer outer) {
