@@ -9,12 +9,12 @@ import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.*;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.Code(this), ReplCommands.Code::new),
       CommandArg.from(ReplUtil.HelpItem.class, new ReplCompleters.Help(() -> commandManager), ReplUtil.HelpItem::new),
       CommandArg.from(ReplCommands.Prompt.class, null, ReplCommands.Prompt::new),
-      CommandArg.fromEnum(DistillerOptions.Key.class),
+      CommandArg.fromEnum(AyaDistillerOptions.Key.class),
       CommandArg.fromEnum(NormalizeMode.class),
       CommandArg.fromEither(ReplCommands.ColorParam.class,
         CommandArg.fromEnum(RenderOptions.ColorSchemeName.class),

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -7,9 +7,9 @@ import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
+import org.aya.test.AyaThrowingReporter;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.util.error.SourcePos;
-import org.aya.util.reporter.ThrowingReporter;
 import org.aya.util.tyck.MCT;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PatCCTest {
   public static @NotNull ImmutableSeq<MCT.PatClass<Term, PatClassifier.PatErr>> testClassify(@NotNull PrimDef.Factory factory, @NotNull FnDef fnDef) {
     var clauses = fnDef.body.getRightValue().map(Pat.Preclause::weaken);
-    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(factory), ThrowingReporter.INSTANCE, SourcePos.NONE).toSeq();
+    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(factory), AyaThrowingReporter.INSTANCE, SourcePos.NONE).toSeq();
   }
 
   @Test public void addCC() {

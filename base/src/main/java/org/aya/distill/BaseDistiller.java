@@ -79,7 +79,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     @NotNull DefVar<?, ?> var, @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<Term>> args, @NotNull Outer outer
   ) {
-    return visitCalls(var, style, args, outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+    return visitCalls(var, style, args, outer, options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
   }
 
   /**
@@ -218,7 +218,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
-    return options.map.get(DistillerOptions.Key.ShowLambdaTypes) ? param.toDoc(options)
+    return options.map.get(AyaDistillerOptions.Key.ShowLambdaTypes) ? param.toDoc(options)
       : Doc.bracedUnless(param.nameDoc(), param.explicit());
   }
 

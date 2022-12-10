@@ -4,9 +4,11 @@ package org.aya.cli.repl;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonParseException;
 import org.aya.cli.render.Color;
 import org.aya.cli.render.RenderOptions;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.util.AyaHome;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.util.distill.DistillerOptions;
@@ -24,7 +26,7 @@ public class ReplConfig implements AutoCloseable {
   public transient final Path configFile;
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
-  public @NotNull DistillerOptions distillerOptions = DistillerOptions.pretty();
+  public @NotNull AyaDistillerOptions distillerOptions = AyaDistillerOptions.pretty();
   public boolean enableUnicode = true;
   /** Disables welcome message, echoing info, etc. */
   public boolean silent = false;
@@ -54,6 +56,13 @@ public class ReplConfig implements AutoCloseable {
     if (Files.notExists(file)) return new ReplConfig(file);
     var config = newGsonBuilder()
       .registerTypeAdapter(ReplConfig.class, (InstanceCreator<ReplConfig>) type -> new ReplConfig(file))
+      .registerTypeAdapter(DistillerOptions.Key.class, (JsonDeserializer<DistillerOptions.Key>) (json, typeOfT, context) -> {
+        try {
+          return AyaDistillerOptions.Key.valueOf(json.getAsString());
+        } catch (IllegalArgumentException ignored) {
+          return null;
+        }
+      })
       .create()
       .fromJson(Files.newBufferedReader(file), ReplConfig.class);
     if (config == null) return new ReplConfig(file);

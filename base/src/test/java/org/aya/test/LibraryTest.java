@@ -14,7 +14,6 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.core.def.PrimDef;
 import org.aya.lsp.prim.LspPrimFactory;
 import org.aya.util.FileUtil;
-import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -107,10 +106,10 @@ public class LibraryTest {
   public static final Path DIR = TestRunner.DEFAULT_TEST_DIR.resolve("success");
 
   private static int compile() throws IOException {
-    return LibraryCompiler.compile(new PrimDef.Factory(), ThrowingReporter.INSTANCE, TestRunner.flags(), CompilerAdvisor.onDisk(), DIR);
+    return LibraryCompiler.compile(new PrimDef.Factory(), AyaThrowingReporter.INSTANCE, TestRunner.flags(), CompilerAdvisor.onDisk(), DIR);
   }
 
   private static int compile(@NotNull PrimDef.Factory factory, @NotNull CompilerAdvisor advisor, @NotNull LibraryOwner owner) throws IOException {
-    return LibraryCompiler.newCompiler(factory, ThrowingReporter.INSTANCE, TestRunner.flags(), advisor, owner).start();
+    return LibraryCompiler.newCompiler(factory, AyaThrowingReporter.INSTANCE, TestRunner.flags(), advisor, owner).start();
   }
 }

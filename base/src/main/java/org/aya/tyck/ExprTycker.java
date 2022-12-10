@@ -24,6 +24,7 @@ import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -44,7 +45,6 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -932,7 +932,9 @@ public final class ExprTycker extends Tycker {
     }
     if (sort instanceof SortTerm s) return s.isProp();
     if (sort instanceof ErrorTerm) return false;
-    throw new InternalException("Expected computeType() to produce a sort, got " + type.toDoc(DistillerOptions.pretty()) + " : " + sort.toDoc(DistillerOptions.pretty()));
+    throw new InternalException("Expected computeType() to produce a sort, got "
+      + type.toDoc(AyaDistillerOptions.pretty())
+      + " : " + sort.toDoc(AyaDistillerOptions.pretty()));
   }
 
   public interface Result {

@@ -20,6 +20,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
 import org.aya.ide.action.*;
@@ -67,7 +68,7 @@ public class AyaLanguageServer implements LanguageServer {
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
-  private final @NotNull DistillerOptions options = DistillerOptions.pretty();
+  private final @NotNull DistillerOptions options = AyaDistillerOptions.pretty();
 
   public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);

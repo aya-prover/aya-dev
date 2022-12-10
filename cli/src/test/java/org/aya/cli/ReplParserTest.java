@@ -4,13 +4,14 @@ package org.aya.cli;
 
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.Expr;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.util.reporter.ThrowingReporter;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ReplParserTest {
-  public static final AyaParserImpl AYA_GK_PARSER = new AyaParserImpl(ThrowingReporter.INSTANCE);
+  public static final AyaParserImpl AYA_GK_PARSER = new AyaParserImpl(new ThrowingReporter(AyaDistillerOptions.informative()));
 
   @Test public void issue358() {
     var sucZero = AYA_GK_PARSER.repl("suc zero").getRightValue();

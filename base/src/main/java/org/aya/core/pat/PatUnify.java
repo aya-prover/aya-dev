@@ -5,11 +5,11 @@ package org.aya.core.pat;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.visitor.Subst;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -72,7 +72,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
   }
 
   private void reportError(@NotNull Pat lhs, @NotNull Pat pat) {
-    var doc = Doc.sep(lhs.toDoc(DistillerOptions.debug()), Doc.plain("and"), pat.toDoc(DistillerOptions.debug()));
+    var doc = Doc.sep(lhs.toDoc(AyaDistillerOptions.debug()), Doc.plain("and"), pat.toDoc(AyaDistillerOptions.debug()));
     throw new InternalException(doc.debugRender() + " are patterns of different types!");
   }
 

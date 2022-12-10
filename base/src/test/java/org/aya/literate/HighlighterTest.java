@@ -1,12 +1,12 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli;
+package org.aya.literate;
 
 import org.aya.cli.literate.HighlightInfo;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
-import static org.aya.cli.HighlighterTester.*;
+import static org.aya.literate.HighlighterTester.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("UnknownLanguage")

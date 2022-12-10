@@ -3,26 +3,11 @@
 package org.aya.util.reporter;
 
 import org.aya.util.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
-@TestOnly
-public record ThrowingReporter() implements CountingReporter {
-  public static final @NotNull ThrowingReporter INSTANCE = new ThrowingReporter();
-
-  public static @NotNull String errorMessage(
-    @NotNull Problem problem, @NotNull DistillerOptions options,
-    boolean unicode, boolean supportAnsi, int pageWidth
-  ) {
-    var doc = problem.sourcePos() == SourcePos.NONE ? problem.describe(options) : problem.toPrettyError(options).toDoc();
-    return supportAnsi
-      ? doc.renderToTerminal(pageWidth, unicode)
-      : doc.renderToString(pageWidth, unicode);
-  }
-
+public record ThrowingReporter(@NotNull DistillerOptions options) implements CountingReporter {
   @Override public void report(@NotNull Problem problem) {
-    var render = errorMessage(problem, DistillerOptions.informative(), false, false, 80);
+    var render = Reporter.errorMessage(problem, options, false, false, 80);
     if (problem.level() != Problem.Severity.ERROR) {
       System.err.println(render);
       return;

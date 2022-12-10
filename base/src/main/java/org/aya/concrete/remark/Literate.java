@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -13,7 +14,6 @@ import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public sealed interface Literate extends Docile {
       if (def.get() instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef<?> userDef) {
         var problems = userDef.problems;
         if (problems == null) return Doc.styled(Style.bold(), Doc.english("No error message."));
-        return Doc.vcat(problems.map(problem -> problem.brief(DistillerOptions.informative())));
+        return Doc.vcat(problems.map(problem -> problem.brief(AyaDistillerOptions.informative())));
       }
       return Doc.styled(Style.bold(), Doc.english("Not a definition that can obtain error message."));
     }

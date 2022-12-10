@@ -3,10 +3,10 @@
 package org.aya.experiments;
 
 import org.aya.core.def.FnDef;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.tyck.TyckState;
-import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -37,7 +37,7 @@ public class NormalizeHugeChurch {
     var nf = last.normalize(state, NormalizeMode.NF);
     println("Normalize: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
-    var doc = nf.toDoc(DistillerOptions.informative());
+    var doc = nf.toDoc(AyaDistillerOptions.informative());
     println("Docify: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var text = doc.debugRender();
