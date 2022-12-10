@@ -131,7 +131,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
     list.items().forEach(item -> {
       cursor.invisibleContent("<li>");
-      renderDoc(cursor, item, outer);   // TODO: outer
+      renderDoc(cursor, item, outer);   // TODO: we are in both Outer.List and Outer.EnclosingTag
       cursor.invisibleContent("</li>");
     });
 
