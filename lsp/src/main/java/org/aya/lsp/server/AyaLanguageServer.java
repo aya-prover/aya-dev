@@ -23,7 +23,6 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
 import org.aya.ide.action.*;
-import org.aya.lsp.actions.InlayHintMaker;
 import org.aya.lsp.actions.LensMaker;
 import org.aya.lsp.actions.SemanticHighlight;
 import org.aya.lsp.actions.SymbolMaker;
@@ -393,7 +392,9 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<InlayHint> inlayHint(InlayHintParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return InlayHintMaker.invoke(source, LspRange.range(params.range));
+    return InlayHints.invoke(source, LspRange.range(params.range))
+      .map(h -> new InlayHint(LspRange.toRange(h.sourcePos()).end, h.doc().commonRender()))
+      .asJava();
   }
 
   @LspRequest("aya/load") @SuppressWarnings("unused")
