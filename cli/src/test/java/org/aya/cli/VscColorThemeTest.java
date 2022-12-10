@@ -3,7 +3,7 @@
 package org.aya.cli;
 
 import org.aya.cli.render.vscode.ColorTheme;
-import org.aya.pretty.style.AyaColorScheme;
+import org.aya.pretty.style.AyaStyleKey;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -19,12 +19,12 @@ public class VscColorThemeTest {
     var colorScheme = colorTheme.buildColorScheme(null);
     var colors = colorScheme.definedColors();
 
-    assertEquals(0x569CD6, colors.get(AyaColorScheme.Key.Keyword.key()));
-    assertEquals(0xDCDCAA, colors.get(AyaColorScheme.Key.FnCall.key()));
-    assertEquals(0x4EC9B0, colors.get(AyaColorScheme.Key.Generalized.key()));
-    assertEquals(0x4EC9B0, colors.get(AyaColorScheme.Key.DataCall.key()));
-    assertEquals(0x4EC9B0, colors.get(AyaColorScheme.Key.StructCall.key()));
-    assertEquals(0xDCDCAA, colors.get(AyaColorScheme.Key.ConCall.key()));
-    assertEquals(0xDCDCAA, colors.get(AyaColorScheme.Key.FieldCall.key()));
+    assertEquals(0x569CD6, colors.get(AyaStyleKey.Keyword.key()));
+    assertEquals(0xDCDCAA, colors.get(AyaStyleKey.Fn.key()));
+    assertEquals(0x4EC9B0, colors.get(AyaStyleKey.Generalized.key()));
+    assertEquals(0x4EC9B0, colors.get(AyaStyleKey.Data.key()));
+    assertEquals(0x4EC9B0, colors.get(AyaStyleKey.Struct.key()));
+    assertEquals(0xDCDCAA, colors.get(AyaStyleKey.Con.key()));
+    assertEquals(0xDCDCAA, colors.get(AyaStyleKey.Field.key()));
   }
 }

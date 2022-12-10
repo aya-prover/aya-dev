@@ -32,13 +32,13 @@ public class HtmlStyleTest {
   }
 
   @NotNull private Doc escapeDoc() {
-    return Doc.plain("&<>\"");
+    return Doc.plain("&<>\"\\");
   }
 
   @Test
   public void testEscape() {
     var actual = escapeDoc().renderToHtml(false);
-    var expected = "<pre class=\"Aya\">&amp;&lt;&gt;&quot;</pre>";
+    var expected = "&amp;&lt;&gt;&quot;&bsol;";
 
     assertEquals(expected, actual);
   }

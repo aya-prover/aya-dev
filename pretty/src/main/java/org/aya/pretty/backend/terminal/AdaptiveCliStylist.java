@@ -7,6 +7,7 @@ import kala.tuple.Tuple;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
+import org.aya.pretty.style.AyaStyleKey;
 import org.jetbrains.annotations.NotNull;
 
 /** use colors from terminal instead of absolute colors to protect eyes */
@@ -15,14 +16,14 @@ public class AdaptiveCliStylist extends UnixTermStylist {
 
   private AdaptiveCliStylist() {
     super(MutableMap::create, new AyaStyleFamily(MutableMap.ofEntries(
-      Tuple.of(AyaStyleFamily.Key.Keyword.key(), Style.color(ColorScheme.colorOf(1.0f, 0.43f, 0)).and()),
-      Tuple.of(AyaStyleFamily.Key.PrimCall.key(), Style.color(ColorScheme.colorOf(1.0f, 0.43f, 0)).and()),
-      Tuple.of(AyaStyleFamily.Key.FnCall.key(), UnixTermStyle.TerminalYellow.and()),
-      Tuple.of(AyaStyleFamily.Key.DataCall.key(), UnixTermStyle.TerminalGreen.and()),
-      Tuple.of(AyaStyleFamily.Key.StructCall.key(), UnixTermStyle.TerminalGreen.and()),
-      Tuple.of(AyaStyleFamily.Key.ConCall.key(), UnixTermStyle.TerminalBlue.and()),
-      Tuple.of(AyaStyleFamily.Key.FieldCall.key(), UnixTermStyle.TerminalBlue.and()),
-      Tuple.of(AyaStyleFamily.Key.Generalized.key(), Style.italic().and())
+      Tuple.of(AyaStyleKey.Keyword.key(), Style.color(ColorScheme.colorOf(1.0f, 0.43f, 0)).and()),
+      Tuple.of(AyaStyleKey.Prim.key(), Style.color(ColorScheme.colorOf(1.0f, 0.43f, 0)).and()),
+      Tuple.of(AyaStyleKey.Fn.key(), UnixTermStyle.TerminalYellow.and()),
+      Tuple.of(AyaStyleKey.Data.key(), UnixTermStyle.TerminalGreen.and()),
+      Tuple.of(AyaStyleKey.Struct.key(), UnixTermStyle.TerminalGreen.and()),
+      Tuple.of(AyaStyleKey.Con.key(), UnixTermStyle.TerminalBlue.and()),
+      Tuple.of(AyaStyleKey.Field.key(), UnixTermStyle.TerminalBlue.and()),
+      Tuple.of(AyaStyleKey.Generalized.key(), Style.italic().and())
     )));
   }
 }

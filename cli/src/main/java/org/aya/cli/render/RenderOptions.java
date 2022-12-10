@@ -154,7 +154,7 @@ public class RenderOptions {
       case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
       case AyaMd -> doc.render(new DocMdPrinter(), new DocMdPrinter.Config((MdStylist) stylist, witHeader, true));
       case Terminal -> doc.render(new DocTermPrinter(), new DocTermPrinter.Config((UnixTermStylist) stylist, pageWidth, unicode));
-      case Plain -> doc.renderToString(new StringPrinterConfig(stylist, pageWidth, unicode));
+      case Plain -> doc.renderToString(new StringPrinterConfig<>(stylist, pageWidth, unicode));
     };
   }
 

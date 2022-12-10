@@ -24,7 +24,7 @@ public class RenderOptionsTest {
     opt.checkDeserialization();
     assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.Terminal, doc, false, true));
     assertEquals("\\noindent\\fbox{hello}", opt.render(RenderOptions.OutputTarget.LaTeX, doc, false, true));
-    assertEquals("<pre class=\"Aya\"><code>hello</code></pre>", opt.render(RenderOptions.OutputTarget.HTML, doc, false, true));
+    assertEquals("<code class=\"Aya\">hello</code>", opt.render(RenderOptions.OutputTarget.HTML, doc, false, true));
     assertEquals("`hello`", opt.render(RenderOptions.OutputTarget.Plain, doc, false, true));
   }
 }

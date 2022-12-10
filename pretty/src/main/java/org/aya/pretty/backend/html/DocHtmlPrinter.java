@@ -45,11 +45,9 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
       if (config.supportsCssStyle()) renderCssStyle(cursor);
       cursor.invisibleContent("</head><body>");
     }
-    cursor.invisibleContent("<pre class=\"Aya\">");
   }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
-    cursor.invisibleContent("</pre>");
     if (config.withHeader) cursor.invisibleContent("</body></html>");
   }
 
@@ -127,15 +125,19 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
-    cursor.invisibleContent("<code>");
+    cursor.invisibleContent("<code class=\"" + capitalize(code.language()) +"\">");
     renderDoc(cursor, code.code(), Outer.EnclosingTag); // Even in code mode, we still need to escape
     cursor.invisibleContent("</code>");
   }
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, Outer outer) {
-    cursor.invisibleContent("<pre class=\"" + block.language() + "\">");
+    cursor.invisibleContent("<pre class=\"" + capitalize(block.language()) + "\">");
     renderDoc(cursor, block.code(), Outer.EnclosingTag); // Even in code mode, we still need to escape
     cursor.invisibleContent("</pre>");
+  }
+
+  private @NotNull String capitalize(@NotNull String s) {
+    return s.isEmpty() ? s : s.substring(0, 1).toUpperCase() + s.substring(1);
   }
 
   public static class Config extends StringPrinterConfig<Html5Stylist> {

@@ -76,10 +76,6 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.invisibleContent("}");
   }
 
-  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, Outer outer) {
-    super.renderCodeBlock(cursor, block, outer);
-  }
-
   /**
    * @author ice1000
    */
