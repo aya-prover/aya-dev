@@ -78,7 +78,14 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override
   protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, @NotNull Outer outer) {
-    throw new UnsupportedOperationException("TODO");    // TODO: I am not good at LaTeX
+    var env = list.isOrdered() ? "enumerate" : "itemize";
+    cursor.invisibleContent("\\begin{" + env + "}");
+    list.items().forEach(item -> {
+      cursor.invisibleContent("\\item ");
+      renderDoc(cursor, item, outer);
+      // TODO: we are in both Outer.List and Outer.EnclosingTag
+    });
+    cursor.invisibleContent("\\end{" + env + "}");
   }
 
   /**
