@@ -5,11 +5,13 @@ package org.aya.pretty.backend.html;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.pretty.backend.string.ClosingStylist;
 import org.aya.pretty.backend.string.StringPrinter;
+import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Html5Stylist extends ClosingStylist {
   public static final @NotNull Html5Stylist DEFAULT = new Html5Stylist(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT);
@@ -57,6 +59,38 @@ public class Html5Stylist extends ClosingStylist {
   /** @see org.aya.pretty.style.AyaStyleKey */
   public static @NotNull ImmutableSeq<String> styleKeyToCss(@NotNull String className) {
     return ImmutableSeq.from(className.split("::", -1)).map(Html5Stylist::normalizeCssId);
+  }
+
+  public static @Nullable String styleToCss(@NotNull Style style) {
+    return switch (style) {
+      case Style.Attr attr -> switch (attr) {
+        case Italic -> "font-style: italic;";
+        case Bold -> "font-weight: bold;";
+        case Strike -> "text-decoration-line: line-through;";
+        case Underline -> "text-decoration: underline;";
+      };
+      case Style.ColorHex(var rgb, var background) -> background
+        ? "background-color: %s".formatted(cssColor(rgb))
+        : "color: %s;".formatted(cssColor(rgb));
+      case Style.ColorName(var name, var background) -> background
+        ? "background-color: var(%s);".formatted(cssVar(name))
+        : "color: var(%s);".formatted(cssVar(name));
+      default -> null;
+    };
+  }
+
+  public static @NotNull String colorsToCss(@NotNull ColorScheme colorScheme) {
+    return colorScheme.definedColors().toImmutableSeq().view()
+      .map(t -> "%s: %s;".formatted(Html5Stylist.cssVar(t._1), Html5Stylist.cssColor(t._2)))
+      .joinToString("\n", "  %s"::formatted);
+  }
+
+  public static @NotNull String cssVar(@NotNull String name) {
+    return "--" + normalizeCssId(name);
+  }
+
+  public static @NotNull String cssColor(int rgb) {
+    return "#%06x".formatted(rgb);
   }
 
   /**

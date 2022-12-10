@@ -52,14 +52,14 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   protected void renderCssStyle(@NotNull Cursor cursor) {
-    var styles = config.getStylist().styleFamily;
     cursor.invisibleContent("<style>");
-    styles.definedStyles().forEach((name, style) -> {
-      var cssId = Html5Stylist.styleKeyToCss(name).map(x -> "." + x).joinToString(" ");
-      var stylesheet = """
-        %s {
-        }
-        """.formatted(cssId);
+    // colors are defined in global scope `:root`
+    var colors = Html5Stylist.colorsToCss(config.getStylist().colorScheme);
+    cursor.invisibleContent("\n:root {\n%s\n}\n".formatted(colors));
+    config.getStylist().styleFamily.definedStyles().forEach((name, style) -> {
+      var selector = Html5Stylist.styleKeyToCss(name).map(x -> "." + x).joinToString(" ");
+      var css = style.styles().mapNotNull(Html5Stylist::styleToCss).joinToString("\n", "  %s"::formatted);
+      var stylesheet = "%s {\n%s\n}\n".formatted(selector, css);
       cursor.invisibleContent(stylesheet);
     });
     cursor.invisibleContent("</style>");

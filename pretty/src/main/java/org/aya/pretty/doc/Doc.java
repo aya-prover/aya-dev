@@ -57,7 +57,7 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToString(int pageWidth, boolean unicode) {
-    return renderToString(new StringPrinterConfig(DebugStylist.DEFAULT, pageWidth, unicode));
+    return renderToString(new StringPrinterConfig<>(DebugStylist.DEFAULT, pageWidth, unicode));
   }
 
   default @NotNull String renderToTerminal() {

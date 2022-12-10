@@ -24,6 +24,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       cursor.invisibleContent(HtmlConstants.HOVER_POPUP_STYLE);
       if (config.ayaFlavored) // TODO: add flag for Vue (server side rendering) and plain HTML
         cursor.invisibleContent(HtmlConstants.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
+      if (config.supportsCssStyle()) renderCssStyle(cursor);
     }
   }
 
