@@ -23,7 +23,10 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
 import org.aya.ide.action.*;
-import org.aya.lsp.actions.*;
+import org.aya.lsp.actions.InlayHintMaker;
+import org.aya.lsp.actions.LensMaker;
+import org.aya.lsp.actions.ProjectSymbol;
+import org.aya.lsp.actions.SemanticHighlight;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
@@ -375,7 +378,16 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<FoldingRange> foldingRange(FoldingRangeParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return Folding.invoke(source);
+    return Folding.invoke(source)
+      .view()
+      .filter(f -> f.entireSourcePos().linesOfCode() >= 3)
+      .map(f -> {
+        var range = LspRange.toRange(f.entireSourcePos());
+        return new FoldingRange(range.start.line, range.start.character,
+          range.end.line, range.end.character, FoldingRangeKind.Region);
+      })
+      .toImmutableSeq()
+      .asJava();
   }
 
   @Override public List<DocumentLink> documentLink(DocumentLinkParams params) {
