@@ -1,28 +1,24 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.actions;
+package org.aya.ide.action;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.cli.literate.HighlightInfo;
+import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.ide.action.ComputeSignature;
-import org.aya.ide.syntax.SyntaxDeclAction;
-import org.aya.lsp.utils.LspRange;
 import org.aya.ide.Resolver;
+import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.ref.DefVar;
-import org.intellij.lang.annotations.MagicConstant;
-import org.javacs.lsp.DocumentSymbol;
-import org.javacs.lsp.Location;
-import org.javacs.lsp.SymbolKind;
-import org.javacs.lsp.WorkspaceSymbol;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record ProjectSymbol(@NotNull MutableList<ProjectSymbol.Symbol> symbols) implements SyntaxDeclAction {
+public record ProjectSymbol(@NotNull MutableList<Symbol> symbols) implements SyntaxDeclAction {
   public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull LibrarySource source) {
     var symbol = new ProjectSymbol(MutableList.create());
     collect(source, symbol);
@@ -57,34 +53,23 @@ public record ProjectSymbol(@NotNull MutableList<ProjectSymbol.Symbol> symbols) 
   }
 
   private static void collect(@NotNull ProjectSymbol ps, @NotNull DefVar<?, ?> dv, @Nullable ProjectSymbol children) {
-    var nameLoc = LspRange.toLoc(dv.concrete.sourcePos());
-    var entireLoc = LspRange.toLoc(dv.concrete.entireSourcePos());
-    if (nameLoc == null || entireLoc == null) return;
+    var nameLoc = dv.concrete.sourcePos();
+    var entireLoc = dv.concrete.entireSourcePos();
     var symbol = new Symbol(
       dv.name(),
       ComputeSignature.computeSignature(dv, true).commonRender(),
-      SymbolKind.Function, // TODO: refactor kindOf from SyntaxHighlight
+      SyntaxHighlight.kindOf(dv),
       nameLoc, entireLoc,
       children == null ? ImmutableSeq.empty() : children.symbols.toImmutableSeq());
     ps.symbols.append(symbol);
   }
 
-  /** Our superclass of {@link WorkspaceSymbol} and {@link DocumentSymbol} */
   public record Symbol(
     @NotNull String name,
     @NotNull String description,
-    @MagicConstant(valuesFromClass = SymbolKind.class) int kind,
-    @NotNull Location nameLocation,
-    @NotNull Location entireLocation,
+    @NotNull HighlightInfo.DefKind kind,
+    @NotNull SourcePos nameLocation,
+    @NotNull SourcePos entireLocation,
     @NotNull ImmutableSeq<Symbol> children
-  ) {
-    public @NotNull DocumentSymbol document() {
-      return new DocumentSymbol(name, description, kind, false, entireLocation.range,
-        nameLocation.range, children.map(Symbol::document).asJava());
-    }
-
-    public @NotNull WorkspaceSymbol workspace() {
-      return new WorkspaceSymbol(name, kind, nameLocation);
-    }
-  }
+  ) {}
 }

@@ -25,8 +25,8 @@ import org.aya.generic.util.AyaFiles;
 import org.aya.ide.action.*;
 import org.aya.lsp.actions.InlayHintMaker;
 import org.aya.lsp.actions.LensMaker;
-import org.aya.lsp.actions.ProjectSymbol;
 import org.aya.lsp.actions.SemanticHighlight;
+import org.aya.lsp.actions.SymbolMaker;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
@@ -359,15 +359,11 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<? extends GenericDocumentSymbol> documentSymbol(DocumentSymbolParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return ProjectSymbol.invoke(source)
-      .map(ProjectSymbol.Symbol::document)
-      .asJava();
+    return SymbolMaker.documentSymbols(source).asJava();
   }
 
   @Override public List<? extends GenericWorkspaceSymbol> workspaceSymbols(WorkspaceSymbolParams params) {
-    return ProjectSymbol.invoke(libraries.view())
-      .map(ProjectSymbol.Symbol::workspace)
-      .asJava();
+    return SymbolMaker.workspaceSymbols(libraries.view()).asJava();
   }
 
   @Override
