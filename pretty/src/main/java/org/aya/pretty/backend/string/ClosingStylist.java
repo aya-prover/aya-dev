@@ -79,4 +79,45 @@ public abstract class ClosingStylist extends StringStylist {
   protected abstract @NotNull StyleToken formatStrike(StringPrinter.Outer outer);
   protected abstract @NotNull StyleToken formatUnderline(StringPrinter.Outer outer);
   protected abstract @NotNull StyleToken formatColorHex(int rgb, boolean background);
+
+  public static class Delegate extends ClosingStylist {
+    protected final @NotNull ClosingStylist delegate;
+
+    public Delegate(@NotNull ClosingStylist delegate) {
+      super(delegate.colorScheme, delegate.styleFamily);
+      this.delegate = delegate;
+    }
+
+    @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
+      return delegate.formatCustom(style);
+    }
+
+    @Override protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, StringPrinter.Outer outer) {
+      return delegate.formatPresetStyle(styleName, outer);
+    }
+
+    @Override protected @NotNull StyleToken formatPresetColor(@NotNull String colorName, boolean background) {
+      return delegate.formatPresetColor(colorName, background);
+    }
+
+    @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
+      return delegate.formatItalic(outer);
+    }
+
+    @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
+      return delegate.formatBold(outer);
+    }
+
+    @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
+      return delegate.formatStrike(outer);
+    }
+
+    @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
+      return delegate.formatUnderline(outer);
+    }
+
+    @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
+      return delegate.formatColorHex(rgb, background);
+    }
+  }
 }

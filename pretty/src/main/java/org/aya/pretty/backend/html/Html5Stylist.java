@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.pretty.backend.string.ClosingStylist;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.printer.ColorScheme;
@@ -39,5 +40,15 @@ public class Html5Stylist extends ClosingStylist {
       "</span>",
       false
     );
+  }
+
+  public static class ClassedPreset extends Delegate {
+    public ClassedPreset(@NotNull ClosingStylist delegate) {
+      super(delegate);
+    }
+
+    @Override protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, StringPrinter.Outer outer) {
+      return ImmutableSeq.of(new StyleToken("<span class=\"%s\">".formatted(styleName), "</span>", false));
+    }
   }
 }

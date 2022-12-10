@@ -58,7 +58,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   @Override protected @NotNull StringStylist prepareStylist() {
-    return config.supportsCssStyle() ? new HtmlClassStylist(config.getStylist()) : super.prepareStylist();
+    return config.supportsCssStyle() ? new Html5Stylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
