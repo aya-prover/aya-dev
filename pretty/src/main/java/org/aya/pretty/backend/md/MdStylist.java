@@ -11,6 +11,8 @@ import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public class MdStylist extends Html5Stylist {
   public static final @NotNull MdStylist DEFAULT = new MdStylist(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT);
 
@@ -18,7 +20,7 @@ public class MdStylist extends Html5Stylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatItalic(EnumSet<StringPrinter.Outer> outer) {
     // Actually, we are abusing the undefined behavior (outer != Free) of markdown.
     // Typical markdown does not allow italic/bold/strike/... in code segments,
     // which means the `outer` should always be `Free`, but Literate Aya uses
@@ -30,12 +32,12 @@ public class MdStylist extends Html5Stylist {
     return outer != StringPrinter.Outer.Free ? super.formatItalic(outer) : new StyleToken("_", "_", false);
   }
 
-  @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatBold(EnumSet<StringPrinter.Outer> outer) {
     // see comments in `formatItalic`
     return outer != StringPrinter.Outer.Free ? super.formatBold(outer) : new StyleToken("**", "**", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
     // see comments in `formatItalic`
     return outer != StringPrinter.Outer.Free ? super.formatStrike(outer) : new StyleToken("~~", "~~", false);
   }

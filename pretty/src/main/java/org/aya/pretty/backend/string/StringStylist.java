@@ -9,10 +9,12 @@ import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.printer.Stylist;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public abstract class StringStylist extends Stylist {
   public StringStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
     super(colorScheme, styleFamily);
   }
 
-  public abstract void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside);
+  public abstract void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, EnumSet<StringPrinter.Outer> outer, @NotNull Runnable inside);
 }
