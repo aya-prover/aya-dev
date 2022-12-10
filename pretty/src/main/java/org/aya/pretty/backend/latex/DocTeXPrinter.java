@@ -83,7 +83,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   /**
    * @author ice1000
    */
-  public static class Config extends StringPrinterConfig {
+  public static class Config extends StringPrinterConfig<TeXStylist> {
     public Config() {
       this(TeXStylist.DEFAULT);
     }

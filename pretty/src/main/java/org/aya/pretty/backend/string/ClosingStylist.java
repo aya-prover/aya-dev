@@ -5,7 +5,6 @@ package org.aya.pretty.backend.string;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
@@ -39,14 +38,14 @@ public abstract class ClosingStylist extends StringStylist {
 
     var style = styles.first();
     var formats = style instanceof Style.Preset preset
-      ? formatPreset(preset.styleName(), outer)
+      ? formatPresetStyle(preset.styleName(), outer)
       : ImmutableSeq.of(formatOne(style, outer));
     formats.forEach(format -> format.start.accept(cursor));
     formatInternal(styles.drop(1), cursor, outer, inside);
     formats.reversed().forEach(format -> format.end.accept(cursor));
   }
 
-  protected @NotNull StyleToken formatOne(@NotNull Style style, StringPrinter.Outer outer) {
+  private @NotNull StyleToken formatOne(@NotNull Style style, StringPrinter.Outer outer) {
     return switch (style) {
       case Style.Attr attr -> switch (attr) {
         case Italic -> formatItalic(outer);
@@ -54,25 +53,21 @@ public abstract class ClosingStylist extends StringStylist {
         case Strike -> formatStrike(outer);
         case Underline -> formatUnderline(outer);
       };
-      case Style.ColorName color -> formatColorName(color, color.background());
+      case Style.ColorName color -> formatPresetColor(color.colorName(), color.background());
       case Style.ColorHex hex -> formatColorHex(hex.color(), hex.background());
       case Style.CustomStyle custom -> formatCustom(custom);
       default -> StyleToken.NULL;
     };
   }
 
-  private @NotNull Option<Integer> getColor(@NotNull String colorName) {
-    return colorScheme.definedColors().getOption(colorName);
+  protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, StringPrinter.Outer outer) {
+    return styleFamily.definedStyles().getOption(styleName)
+      .getOrDefault(it -> it.styles().map(sub -> formatOne(sub, outer)), ImmutableSeq.empty());
   }
 
-  protected @NotNull ImmutableSeq<StyleToken> formatPreset(String styleName, StringPrinter.Outer outer) {
-    var style = styleFamily.definedStyles().getOption(styleName);
-    if (style.isEmpty()) return ImmutableSeq.empty();
-    return style.get().styles().map(style1 -> formatOne(style1, outer));
-  }
-
-  protected @NotNull StyleToken formatColorName(@NotNull Style.ColorName color, boolean background) {
-    return getColor(color.colorName()).getOrDefault(it -> formatColorHex(it, background), StyleToken.NULL);
+  protected @NotNull StyleToken formatPresetColor(@NotNull String colorName, boolean background) {
+    return colorScheme.definedColors().getOption(colorName)
+      .getOrDefault(it -> formatColorHex(it, background), StyleToken.NULL);
   }
 
   protected @NotNull StyleToken formatCustom(@NotNull Style.CustomStyle style) {

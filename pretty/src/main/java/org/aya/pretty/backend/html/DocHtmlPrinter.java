@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Link;
 import org.intellij.lang.annotations.Language;
@@ -18,102 +19,12 @@ import java.util.regex.Pattern;
  */
 public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends StringPrinter<Config> {
   @Language(value = "HTML")
-  public static final @NotNull String HOVER_POPUP_STYLE = """
-    <style>
-    .Aya .aya-hover {
-      /* make absolute position available for hover popup */
-      position: relative;
-      cursor: pointer;
-    }
-    .Aya [aya-type]:after {
-      /* hover text */
-      content: attr(aya-type);
-      visibility: hidden;
-      /* above the text, aligned to left */
-      position: absolute;
-      top: 0;
-      left: 0; /* 0% for left-aligned, 100% for right-aligned*/
-      transform: translate(0px, -110%);
-      /* spacing */
-      white-space: pre;
-      padding: 5px 10px;
-      background-color: rgba(18,26,44,0.8);
-      color: #fff;
-      box-shadow: 1px 1px 14px rgba(0,0,0,0.1)
-    }
-    .Aya .aya-hover:hover:after {
-      /* show on hover */
-      transform: translate(0px, -110%);
-      visibility: visible;
-      display: block;
-    }
-    </style>
-    """;
-  @Language(value = "HTML")
-  public static final @NotNull String HOVER_HIGHLIGHT_STYLE = """
-    <style>
-    .Aya a { text-decoration: none; color: black; }
-    .Aya a[href]:hover { background-color: #B4EEB4; }
-    .Aya [href].hover-highlight { background-color: #B4EEB4; }
-    </style>
-    """;
-  @Language(value = "JavaScript")
-  private static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS_JS_HIGHLIGHT_FN = """
-    var highlight = function (on) {
-      return function () {
-        var links = document.getElementsByTagName('a');
-        for (var i = 0; i < links.length; i++) {
-          var that = links[i];
-          if (this.href !== that.href) continue;
-          if (on) that.classList.add("hover-highlight");
-          else that.classList.remove("hover-highlight");
-        }
-      }
-    };
-    """;
-  @Language(value = "JavaScript")
-  private static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS_JS_INIT = """
-    var links = document.getElementsByTagName('a');
-    for (var i = 0; i < links.length; i++) {
-      var link = links[i];
-      if (!link.hasAttribute("href")) continue;
-      link.onmouseover = highlight(true);
-      link.onmouseout = highlight(false);
-    }
-    """;
-  @SuppressWarnings("LanguageMismatch")
-  @Language(value = "HTML")
-  public static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS = """
-    <script>
-    """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_HIGHLIGHT_FN + """
-    window.onload = function () {
-    """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_INIT + """
-    };
-    </script>
-    """;
-  @SuppressWarnings("LanguageMismatch")
-  @Language(value = "HTML")
-  public static final @NotNull String HOVER_HIGHLIGHT_ALL_OCCURS_VUE = """
-    <script>
-    export default {
-      mounted() {
-    """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_HIGHLIGHT_FN + """
-    """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_INIT + """
-      }
-    }
-    </script>
-    """;
-
-  @Language(value = "HTML")
-  private static final @NotNull String HEAD = """
+  @NotNull String HEAD = """
     <!DOCTYPE html><html lang="en"><head>
     <title>Aya file</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    """ + HOVER_HIGHLIGHT_ALL_OCCURS + HOVER_HIGHLIGHT_STYLE + HOVER_POPUP_STYLE + """
-    </head><body>
-    <pre class="Aya">
-    """;
+    """ + HtmlConstants.HOVER_ALL_OCCURS + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_POPUP_STYLE;
 
   /**
    * <a href="https://developer.mozilla.org/en-US/docs/Glossary/Entity">Mozilla doc: entity</a>
@@ -129,13 +40,25 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   );
 
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    if (config.withHeader) cursor.invisibleContent(HEAD);
-    else cursor.invisibleContent("<pre class=\"Aya\">");
+    if (config.withHeader) {
+      cursor.invisibleContent(HEAD);
+      if (config.supportsCssStyle()) renderCssStyle(cursor);
+      cursor.invisibleContent("</head><body>");
+    }
+    cursor.invisibleContent("<pre class=\"Aya\">");
   }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
     cursor.invisibleContent("</pre>");
     if (config.withHeader) cursor.invisibleContent("</body></html>");
+  }
+
+  protected void renderCssStyle(@NotNull Cursor cursor) {
+    // TODO: css
+  }
+
+  @Override protected @NotNull StringStylist prepareStylist() {
+    return config.supportsCssStyle() ? new HtmlClassStylist(config.getStylist()) : super.prepareStylist();
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
@@ -215,8 +138,13 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("</pre>");
   }
 
-  public static class Config extends StringPrinterConfig {
+  public static class Config extends StringPrinterConfig<Html5Stylist> {
     public final boolean withHeader;
+
+    /** Set doc style with html "class" attribute and css block */
+    public boolean supportsCssStyle() {
+      return withHeader;
+    }
 
     public Config(boolean withHeader) {
       this(Html5Stylist.DEFAULT, withHeader);

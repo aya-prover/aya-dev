@@ -15,7 +15,7 @@ public class DocTermPrinter extends StringPrinter<DocTermPrinter.Config> {
     cursor.invisibleContent("'");
   }
 
-  public static class Config extends StringPrinterConfig {
+  public static class Config extends StringPrinterConfig<UnixTermStylist> {
     public Config(@NotNull UnixTermStylist stylist, int pageWidth, boolean unicode) {
       super(stylist, pageWidth, unicode);
     }

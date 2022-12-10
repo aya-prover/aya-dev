@@ -3,6 +3,7 @@
 package org.aya.pretty.backend.md;
 
 import org.aya.pretty.backend.html.DocHtmlPrinter;
+import org.aya.pretty.backend.html.HtmlConstants;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Pattern;
 
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
-
   public static final Pattern MD_ESCAPE = Pattern.compile("[#&()*+\\-;<>\\[\\\\\\]_`|~]");
   public static final Pattern MD_NO_ESCAPE_BACKSLASH = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
 
@@ -20,10 +20,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderFooter(@NotNull Cursor cursor) {
     // put generated styles at the end of the file
     if (config.withHeader) {
-      cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_STYLE);
-      cursor.invisibleContent(DocHtmlPrinter.HOVER_POPUP_STYLE);
+      cursor.invisibleContent(HtmlConstants.HOVER_STYLE);
+      cursor.invisibleContent(HtmlConstants.HOVER_POPUP_STYLE);
       if (config.ayaFlavored) // TODO: add flag for Vue (server side rendering) and plain HTML
-        cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
+        cursor.invisibleContent(HtmlConstants.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
     }
   }
 

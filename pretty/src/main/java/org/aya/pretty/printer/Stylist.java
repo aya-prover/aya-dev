@@ -8,8 +8,10 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public abstract class Stylist {
-  protected @NotNull ColorScheme colorScheme;
-  protected @NotNull StyleFamily styleFamily;
+  /** predefined colors, see {@link org.aya.pretty.doc.Style#color(String)} and {@link org.aya.pretty.doc.Style#colorBg(String)} */
+  public @NotNull ColorScheme colorScheme;
+  /** predefined styles, see {@link org.aya.pretty.doc.Style#preset(String)} */
+  public @NotNull StyleFamily styleFamily;
 
   public Stylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
     this.colorScheme = colorScheme;
