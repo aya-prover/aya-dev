@@ -3,6 +3,7 @@
 package org.aya.cli;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.repl.AyaRepl;
@@ -14,12 +15,9 @@ import org.junit.jupiter.api.BeforeAll;
 
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class ReplTestBase {
-  public static final @NotNull Path configDir = Paths.get("build", "test_config.json");
-  public static final @NotNull ReplConfig config = new ReplConfig(configDir);
+  public static final @NotNull ReplConfig config = new ReplConfig(Option.none());
 
   @BeforeAll public static void setup() {
     config.enableUnicode = false;
