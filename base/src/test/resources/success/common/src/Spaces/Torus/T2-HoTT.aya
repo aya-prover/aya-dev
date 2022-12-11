@@ -3,9 +3,6 @@ open import Paths
 // Alternative definition of torus from the HoTT book
 public open data T²
 | point
-| line1 (i : I) { ∂ i := point }
-| line2 (i : I) { ∂ i := point }
-| face (i j : I) {
-  | i := (line1 <==> line2) j
-  | ~ i := (line2 <==> line1) j
-}
+| line1 : point = point
+| line2 : point = point
+| face : line1 <==> line2 = line2 <==> line1

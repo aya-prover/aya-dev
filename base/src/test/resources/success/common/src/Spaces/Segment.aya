@@ -3,7 +3,7 @@ open import Paths
 // Also known as "Interval" in the HoTT book
 public open data Segment
 | left | right
-| seg (i : I) { i := right | ~ i := left }
+| seg : left = right
 
 def uniqueness (b : Segment) : left = b
 | left => idp

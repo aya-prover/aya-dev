@@ -3,8 +3,8 @@ open import Spaces::Sphere::S1::Core
 
 public open data T²
 | point
-| line1 (i : I) { ∂ i := point }
-| line2 (i : I) { ∂ i := point }
+| line1 : point = point
+| line2 : point = point
 | face (i j : I) {
   | ∂ i := line2 j
   | ∂ j := line1 i
