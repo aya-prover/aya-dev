@@ -66,7 +66,7 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface Telescopic<RetTy extends Term> permits Resulted {
+  sealed interface Telescopic<RetTy extends Term> permits TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
     @NotNull ImmutableSeq<Expr.Param> telescope();
     void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f);
     @Nullable Def.Signature<RetTy> signature();
@@ -89,8 +89,7 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface Resulted<RetTy extends Term>
-    extends Telescopic<RetTy> permits ClassDecl, TeleDecl, TeleDecl.StructField, TeleDecl.DataCtor {
+  sealed interface Resulted permits ClassDecl, TeleDecl, TeleDecl.StructField, TeleDecl.DataCtor {
     @Nullable Expr result();
     void modifyResult(@NotNull UnaryOperator<Expr> f);
   }

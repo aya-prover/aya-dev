@@ -4,7 +4,6 @@ package org.aya.concrete.stmt;
 
 import org.aya.concrete.Expr;
 import org.aya.core.def.ClassDef;
-import org.aya.core.term.Term;
 import org.aya.resolve.context.Context;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
@@ -19,7 +18,7 @@ import java.util.function.UnaryOperator;
  * @author zaoqi
  * @see Decl
  */
-public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implements Decl.Resulted<Term>, Decl.TopLevel {
+public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implements Decl.Resulted, Decl.TopLevel {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
