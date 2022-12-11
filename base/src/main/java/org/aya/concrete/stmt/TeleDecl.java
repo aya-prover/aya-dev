@@ -33,7 +33,7 @@ import java.util.function.UnaryOperator;
  * @see Decl
  */
 public sealed abstract class TeleDecl<RetTy extends Term>
-  extends CommonDecl implements Decl.Telescopic<RetTy>, Decl.TopLevel, Decl.Resulted {
+  extends CommonDecl implements Decl.Telescopic<RetTy>, Decl.TopLevel {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
@@ -122,7 +122,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
   }
 
-  public static final class DataCtor extends CommonDecl implements Decl.Telescopic<DataCall>, Resulted {
+  public static final class DataCtor extends CommonDecl implements Decl.Telescopic<DataCall> {
     public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     /** Similar to {@link Decl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
@@ -253,7 +253,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   }
 
   public static final class StructField
-    extends CommonDecl implements Decl.Telescopic<Term>, Decl.Resulted {
+    extends CommonDecl implements Decl.Telescopic<Term> {
     public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull Expr result;
@@ -341,7 +341,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
 
     @Override public @NotNull DefVar<FnDef, FnDecl> ref() {
-      return this.ref;
+      return ref;
     }
   }
 }

@@ -100,7 +100,7 @@ public interface StmtResolver {
       case TeleDecl.StructField field -> {}
     }
   }
-  private static <T extends Decl.Resulted<?> & TyckUnit>
+  private static <T extends Decl.Telescopic<?> & TyckUnit>
   void resolveMemberSignature(T ctor, ExprResolver bodyResolver, MutableValue<@NotNull Context> mCtx, @NotNull ResolveInfo info, Decl decl) {
     ctor.modifyTelescope(t -> t.map(param -> bodyResolver.resolve(param, mCtx)));
     // If changed to method reference, `bodyResolver.enter(mCtx.get())` will be evaluated eagerly

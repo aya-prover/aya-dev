@@ -506,7 +506,7 @@ public sealed abstract class TermComparator permits Unifier {
       case FieldTerm lhs -> {
         if (!(preRhs instanceof FieldTerm rhs)) yield null;
         var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(preStructType instanceof StructCall structType)) yield null;
+        if (!(preStructType instanceof StructCall)) yield null;
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }
