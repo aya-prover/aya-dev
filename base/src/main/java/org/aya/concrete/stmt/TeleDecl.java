@@ -9,12 +9,10 @@ import kala.control.Option;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.*;
-import org.aya.core.pat.Pat;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
-import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.Arg;
@@ -74,10 +72,6 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     return signature;
   }
 
-  @Override public void setSignature(Def.@Nullable Signature<RetTy> signature) {
-    this.signature = signature;
-  }
-
   protected TeleDecl(
     @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
     @NotNull Accessibility accessibility,
@@ -126,20 +120,13 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   public static final class DataCtor extends CommonDecl implements Decl.Telescopic<DataCall> {
     public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
-    /** Similar to {@link Decl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
-    public ImmutableSeq<Term.Param> patternTele;
     public @NotNull Expr.PartEl clauses;
     public @NotNull ImmutableSeq<Arg<Pattern>> patterns;
     public @Nullable Expr result;
-    public @Nullable Partial<Term> checkedPartial;
     public final boolean coerce;
-
-    /** used when tycking constructor's header */
-    public @Nullable ImmutableSeq<Pat> yetTyckedPat;
 
     // will change after resolve
     public @NotNull ImmutableSeq<Expr.Param> telescope;
-    public @Nullable Def.Signature<DataCall> signature;
 
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -180,12 +167,9 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
 
     @Override public @Nullable Def.Signature<DataCall> signature() {
-      return signature;
+      return null;
     }
 
-    @Override public void setSignature(Def.@Nullable Signature<DataCall> signature) {
-      this.signature = signature;
-    }
   }
 
   /**
@@ -298,10 +282,6 @@ public sealed abstract class TeleDecl<RetTy extends Term>
 
     @Override public Def.@Nullable Signature<Term> signature() {
       return signature;
-    }
-
-    @Override public void setSignature(Def.@Nullable Signature<Term> signature) {
-      this.signature = signature;
     }
 
     @Override public @NotNull Expr result() {

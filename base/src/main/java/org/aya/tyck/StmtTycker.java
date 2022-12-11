@@ -17,6 +17,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
+import org.aya.core.visitor.Zonker;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.NormalizeMode;
@@ -68,7 +69,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull GenericDef doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
-    if (predecl instanceof Decl.Telescopic<?> decl && decl.signature() == null) tyckHeader(predecl, tycker);
+    if (predecl instanceof Decl.Telescopic<?> decl
+      && predecl.ref().core == null // for constructors: they do not have signature(body).
+      && decl.signature() == null
+    ) tyckHeader(predecl, tycker);
     return switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl decl -> {
@@ -116,32 +120,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var body = decl.fields.map(field -> (FieldDef) tyck(field, tycker));
         yield new StructDef(decl.ref, signature.param(), signature.result(), body);
       }
-      case TeleDecl.DataCtor ctor -> {
-        // TODO[ice]: remove this hack
-        if (ctor.ref.core != null) yield ctor.ref.core;
-        var signature = ctor.signature;
-        assert signature != null; // already handled in the entrance of this method
-        var dataRef = ctor.dataRef;
-        var dataConcrete = dataRef.concrete;
-        var dataSig = dataConcrete.signature;
-        assert dataSig != null;
-        var dataCall = signature.result();
-        var tele = signature.param();
-        var pat = ctor.yetTyckedPat;
-        assert pat != null; // header should be checked first
-        if (pat.isNotEmpty()) dataCall = (DataCall) dataCall.subst(new Subst(
-          dataSig.param().view().map(Term.Param::ref),
-          pat.view().map(Pat::toTerm)));
-        var elabClauses = tycker.zonk(tycker.elaboratePartial(ctor.clauses, dataCall));
-        elabClauses = PartialTerm.merge(Seq.of(elabClauses, ctor.checkedPartial).filterNotNull());
-        while (!(elabClauses instanceof Partial.Split<Term> split)) {
-          reporter.report(new CubicalError.PathConDominateError(ctor.clauses.sourcePos()));
-          elabClauses = new Partial.Split<>(ImmutableSeq.empty());
-        }
-        var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, split, dataCall, ctor.coerce);
-        dataConcrete.checkedBody.append(elaborated);
-        yield elaborated;
-      }
+      // Do nothing, data constructors is just a header.
+      case TeleDecl.DataCtor ctor -> ctor.ref.core;
       case TeleDecl.StructField field -> {
         // TODO[ice]: remove this hack
         if (field.ref.core != null) yield field.ref.core;
@@ -236,54 +216,9 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         tycker.solveMetas();
         tycker.localCtx = new SeqLocalCtx();
       }
-      case TeleDecl.DataCtor ctor -> {
-        if (ctor.signature != null) return;
-        var dataRef = ctor.dataRef;
-        var dataConcrete = dataRef.concrete;
-        var dataSig = dataConcrete.signature;
-        assert dataSig != null;
-        var dataArgs = dataSig.param().map(Term.Param::toArg);
-        var dataCall = new DataCall(dataRef, 0, dataArgs);
-        var sig = new Def.Signature<>(dataSig.param(), dataCall);
-        // There might be patterns in the constructor
-        if (ctor.patterns.isNotEmpty()) {
-          var lhs = PatTycker.checkLhs(tycker,
-            new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false, false);
-          ctor.yetTyckedPat = lhs.preclause().patterns();
-          // Revert to the "after patterns" state
-          tycker.localCtx = lhs.gamma();
-          tycker.lets = lhs.bodySubst();
-        } else {
-          // No patterns, leave it blank
-          ctor.yetTyckedPat = ImmutableSeq.empty();
-        }
-        var ulift = dataConcrete.signature.result();
-        var tele = tele(tycker, ctor.telescope, ulift.isProp() ? null : ulift);
-        // Users may have written the result type
-        if (ctor.result != null) {
-          var result = tycker.zonk(tycker.ty(ctor.result).wellTyped()).normalize(tycker.state, NormalizeMode.NF);
-          var additionalTele = MutableArrayList.<Term.Param>create();
-          result = PiTerm.unpi(result, tycker::whnf, additionalTele);
-          if (result instanceof PathTerm path) {
-            var flat = path.flatten();
-            additionalTele.appendAll(flat.computeParams());
-            ctor.checkedPartial = flat.partial();
-            result = flat.type();
-          }
-          var eventually = result;
-          // Using dataCall here is, in fact, incorrect, because [TODO: explain].
-          // Solution: merge checkBody & checkHeader of data ctor for data ctor.
-          tycker.unifyTyReported(eventually, dataCall, ctor.result,
-            u -> new UnifyError.ConReturn(ctor, dataCall, eventually, u, tycker.state));
-          tele = tele.concat(additionalTele);
-        }
-        ctor.signature = new Def.Signature<>(tele, dataCall);
-        ctor.patternTele = ctor.yetTyckedPat.isEmpty()
-          ? dataSig.param().map(Term.Param::implicitify)
-          : Pat.extractTele(ctor.yetTyckedPat);
-      }
+      case TeleDecl.DataCtor ctor -> checkCtor(tycker, ctor);
       case TeleDecl.StructField field -> {
-        if (field.signature != null) return;
+        if (field.signature != null) break;
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
@@ -294,6 +229,74 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       }
     }
     tracing(TreeBuilder::reduce);
+  }
+
+  /** Extracted for the extreme complexity. */
+  private void checkCtor(@NotNull ExprTycker tycker, TeleDecl.DataCtor ctor) {
+    if (ctor.ref.core != null) return;
+    var dataRef = ctor.dataRef;
+    var dataConcrete = dataRef.concrete;
+    var dataSig = dataConcrete.signature;
+    assert dataSig != null;
+    var dataArgs = dataSig.param().map(Term.Param::toArg);
+    var predataCall = new DataCall(dataRef, 0, dataArgs);
+    // There might be patterns in the constructor
+    var pat = ImmutableSeq.<Pat>empty();
+    if (ctor.patterns.isNotEmpty()) {
+      var sig = new Def.Signature<>(dataSig.param(), predataCall);
+      var lhs = PatTycker.checkLhs(tycker,
+        new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false, false);
+      pat = lhs.preclause().patterns();
+      // Revert to the "after patterns" state
+      tycker.localCtx = lhs.gamma();
+      tycker.lets = lhs.bodySubst();
+      predataCall = (DataCall) predataCall.subst(new Subst(
+        dataSig.param().view().map(Term.Param::ref),
+        pat.view().map(Pat::toTerm)));
+    }
+    // Because we need to use in a lambda expression later
+    var dataCall = predataCall;
+    var ulift = dataConcrete.signature.result();
+    var tele = tele(tycker, ctor.telescope, ulift.isProp() ? null : ulift);
+
+    var elabClauses = tycker.zonk(tycker.elaboratePartial(ctor.clauses, dataCall));
+
+    // Users may have written the result type explicitly
+    if (ctor.result != null) {
+      // At this point, they may contain metas
+      var result = tycker.ty(ctor.result).wellTyped().normalize(tycker.state, NormalizeMode.NF);
+      var additionalTele = MutableArrayList.<Term.Param>create();
+      result = PiTerm.unpi(result, tycker::whnf, additionalTele);
+      Partial<Term> partial = null;
+      if (result instanceof PathTerm path) {
+        var flat = path.flatten();
+        additionalTele.appendAll(flat.computeParams());
+        // Also can contain metas
+        partial = flat.partial();
+        result = flat.type();
+      }
+      var eventually = result;
+      tycker.unifyTyReported(eventually, dataCall, ctor.result,
+        u -> new UnifyError.ConReturn(ctor, dataCall, eventually, u, tycker.state));
+      tycker.solveMetas();
+      var zonker = Zonker.make(tycker);
+      // Zonk after the unification, because the unification may have solved some metas.
+      if (partial != null) partial = partial.map(zonker);
+      tele = tele.view()
+        .concat(additionalTele)
+        .map(p -> p.descent(zonker))
+        .toImmutableSeq();
+
+      elabClauses = PartialTerm.merge(Seq.of(elabClauses, partial).filterNotNull());
+    }
+    var patternTele = pat.isEmpty()
+      ? dataSig.param().map(Term.Param::implicitify)
+      : Pat.extractTele(pat);
+    while (!(elabClauses instanceof Partial.Split<Term> split)) {
+      reporter.report(new CubicalError.PathConDominateError(ctor.clauses.sourcePos()));
+      elabClauses = PartialTerm.DUMMY_SPLIT;
+    }
+    dataConcrete.checkedBody.append(new CtorDef(dataRef, ctor.ref, pat, patternTele, tele, split, dataCall, ctor.coerce));
   }
 
   private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl<SortTerm> data) {

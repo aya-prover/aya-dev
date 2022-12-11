@@ -7,8 +7,8 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.concrete.visitor.ExprConsumer;
-import org.aya.core.visitor.TermFolder;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
  * Concrete version of RefFinder but only header is searched.
  *
  * @author kiva
- * @see TermFolder.RefFinder
  */
-// TODO(wsx): Folder?
+// TODO(wsx): Folder? -- (kiva: please!!)
 public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements ExprConsumer {
   public void accept(@NotNull TyckUnit sn) {
     switch (sn) {
@@ -29,16 +28,19 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
           var result = proof.result();
           if (result != null) accept(result);
         }
+        // for ctor: partial is a part of header
+        if (decl instanceof TeleDecl.DataDecl.DataCtor ctor) {
+          accept(ctor.clauses);
+        }
       }
-      case Command.Module module -> {}
+      case Command.Module module -> module.contents().forEach(this::accept);
       case Command cmd -> {}
       case Generalize variables -> accept(variables.type);
     }
   }
 
   @Override public void pre(@NotNull Expr expr) {
-    if (expr instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> def
-        && def.concrete instanceof Decl.TopLevel) {
+    if (expr instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> def && def.concrete != null) {
       references.append(def.concrete);
     } else {
       ExprConsumer.super.pre(expr);

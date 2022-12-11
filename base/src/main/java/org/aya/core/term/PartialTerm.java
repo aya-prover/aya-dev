@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.guest0x0.cubical.Partial;
@@ -35,4 +36,6 @@ public record PartialTerm(@NotNull Partial<Term> partial, @NotNull Term rhsType)
       new Split<>(list.toImmutableArray()),
       UnaryOperator.identity());
   }
+
+  public static final @NotNull Partial.Split<Term> DUMMY_SPLIT = new Split<>(ImmutableSeq.empty());
 }

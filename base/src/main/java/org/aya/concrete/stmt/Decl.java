@@ -70,7 +70,6 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
     @NotNull ImmutableSeq<Expr.Param> telescope();
     void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f);
     @Nullable Def.Signature<RetTy> signature();
-    void setSignature(@Nullable Def.Signature<RetTy> signature);
   }
 
   /**

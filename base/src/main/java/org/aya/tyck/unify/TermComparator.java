@@ -9,7 +9,6 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
@@ -491,10 +490,11 @@ public sealed abstract class TermComparator permits Unifier {
       }
       case ConCall lhs -> switch (preRhs) {
         case ConCall rhs -> {
-          if (lhs.ref() != rhs.ref()) yield null;
-          var retType = getType(lhs, lhs.ref());
+          var lef = lhs.ref();
+          if (lef != rhs.ref()) yield null;
+          var retType = getType(lhs, lef);
           // Lossy comparison
-          if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl, Term.Param.subst(CtorDef.conTele(lhs.ref()), lhs.ulift())))
+          if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl, Term.Param.subst(lef.core.selfTele, lhs.ulift())))
             yield retType;
           yield null;
         }
