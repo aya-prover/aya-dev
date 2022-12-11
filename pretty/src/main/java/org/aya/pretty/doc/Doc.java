@@ -51,7 +51,7 @@ public sealed interface Doc extends Docile {
   }
 
   //region Doc APIs
-  default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
+  default @NotNull String renderToString(@NotNull StringPrinterConfig<?> config) {
     var printer = new StringPrinter<>();
     return render(printer, config);
   }
@@ -264,10 +264,6 @@ public sealed interface Doc extends Docile {
 
   static @NotNull Doc codeBlock(@NotNull String code) {
     return codeBlock("aya", plain(code));
-  }
-
-  static @NotNull Doc codeBlock(@NotNull Doc code) {
-    return codeBlock("aya", code);
   }
 
   static @NotNull Doc codeBlock(@NotNull String language, @NotNull Doc code) {
