@@ -1,0 +1,6 @@
+open import Paths
+open import Logic::HLevels
+
+open data SetTrunc (A : Type)
+| inj A
+| trunc : isSet (SetTrunc A)

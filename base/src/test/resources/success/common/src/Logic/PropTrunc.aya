@@ -1,0 +1,6 @@
+open import Paths
+open import Logic::HLevels
+
+open data PropTrunc (A : Type)
+| inj A
+| trunc : isProp (PropTrunc A)
