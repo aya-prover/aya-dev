@@ -146,10 +146,7 @@ public sealed interface PatternProblem extends Problem {
 
   record InvalidEmptyBody(
     @NotNull Pattern.Clause match
-  ) implements PatternProblem {
-    @Override @NotNull public Pattern pattern() {
-      return match.patterns.first().term();
-    }
+  ) implements Problem {
 
     @Override @NotNull public SourcePos sourcePos() {
       return match.sourcePos;
@@ -157,6 +154,11 @@ public sealed interface PatternProblem extends Problem {
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.english("This match arm does not contain any absurd pattern but it has an empty body");
+    }
+
+    @Override
+    public @NotNull Severity level() {
+      return Severity.ERROR;
     }
   }
 }
