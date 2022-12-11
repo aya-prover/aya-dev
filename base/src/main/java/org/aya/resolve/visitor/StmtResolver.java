@@ -68,7 +68,7 @@ public interface StmtResolver {
           bodyResolver.enterHead();
           var mCtx = MutableValue.create(resolver.ctx());
           ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> ExprResolver.resolve(pattern, mCtx)));
-          ctor.telescope = ctor.telescope.map(param -> bodyResolver.resolve(param, mCtx));
+          resolveDeclMemberSignature(ctor, bodyResolver, mCtx);
           addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));
 
@@ -87,8 +87,7 @@ public interface StmtResolver {
           var bodyResolver = resolver.member(decl);
           bodyResolver.enterHead();
           var mCtx = MutableValue.create(resolver.ctx());
-          field.telescope = field.telescope.map(param -> bodyResolver.resolve(param, mCtx));
-          field.result = bodyResolver.enter(mCtx.get()).apply(field.result);
+          resolveDeclMemberSignature(field, bodyResolver, mCtx);
           addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));
           bodyResolver.enterBody();
@@ -107,6 +106,12 @@ public interface StmtResolver {
       case TeleDecl.DataCtor ctor -> {}
       case TeleDecl.StructField field -> {}
     }
+  }
+  private static void resolveDeclMemberSignature(Decl.Resulted<?> ctor, ExprResolver bodyResolver, MutableValue<@NotNull Context> mCtx) {
+    ctor.modifyTelescope(t -> t.map(param -> bodyResolver.resolve(param, mCtx)));
+    // If changed to method reference, `bodyResolver.enter(mCtx.get())` will be evaluated eagerly
+    //  so please don't
+    ctor.modifyResult(t -> bodyResolver.enter(mCtx.get()).apply(t));
   }
 
   private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, SeqView<TyckOrder> refs) {
