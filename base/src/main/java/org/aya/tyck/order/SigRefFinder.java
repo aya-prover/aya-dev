@@ -25,7 +25,10 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
       case Decl decl -> {
         if (decl instanceof Decl.Telescopic<?> proof)
           proof.telescope().mapNotNull(Expr.Param::type).forEach(this);
-        if (decl instanceof Decl.Resulted proof) accept(proof.result());
+        if (decl instanceof Decl.Resulted proof) {
+          var result = proof.result();
+          if (result != null) accept(result);
+        }
       }
       case Command.Module module -> {}
       case Command cmd -> {}

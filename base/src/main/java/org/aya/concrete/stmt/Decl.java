@@ -89,8 +89,8 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface Resulted permits ClassDecl, TeleDecl, TeleDecl.StructField {
-    @NotNull Expr result();
+  sealed interface Resulted permits ClassDecl, TeleDecl, TeleDecl.StructField, TeleDecl.DataCtor {
+    @Nullable Expr result();
     void modifyResult(@NotNull UnaryOperator<Expr> f);
   }
 }

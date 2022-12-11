@@ -122,13 +122,14 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
   }
 
-  public static final class DataCtor extends CommonDecl implements Decl.Telescopic<DataCall> {
+  public static final class DataCtor extends CommonDecl implements Decl.Telescopic<DataCall>, Resulted {
     public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     /** Similar to {@link Decl.Telescopic#signature}, but stores the bindings in {@link DataCtor#patterns} */
     public ImmutableSeq<Term.Param> patternTele;
     public @NotNull Expr.PartEl clauses;
     public @NotNull ImmutableSeq<Arg<Pattern>> patterns;
+    public @Nullable Expr result;
     public final boolean coerce;
 
     /** used when tycking constructor's header */
@@ -154,6 +155,14 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       this.patterns = patterns;
       this.ref = DefVar.concrete(this, name);
       this.telescope = telescope;
+    }
+
+    @Override public @Nullable Expr result() {
+      return result;
+    }
+
+    @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
+      if (result != null) result = f.apply(result);
     }
 
     @Override public @NotNull DefVar<CtorDef, DataCtor> ref() {
