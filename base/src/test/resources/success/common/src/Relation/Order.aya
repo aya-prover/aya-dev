@@ -1,1 +1,1 @@
-open import Logic::HProp
+open import Logic::HLevels
