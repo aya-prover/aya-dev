@@ -11,6 +11,8 @@ import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 /**
  * @author ice1000
  */
@@ -19,7 +21,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.invisibleContent("\\noindent");
   }
 
-  @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
+  @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
     // TODO: escape according to `outer`
     return content.replace("\\", "").replace("_", "\\_");
   }
@@ -48,7 +50,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("}", "\\}")
   );
 
-  @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, Outer outer) {
+  @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
     for (var k : commandMapping.keysView()) {
       if (text.equals(k)) {
         cursor.invisibleContent("$");
@@ -66,14 +68,25 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     return "\\hspace*{" + indent * 0.5 + "em}";
   }
 
-  @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
+  @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
     cursor.lineBreakWith("\\\\\n");
   }
 
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
     cursor.invisibleContent("\\fbox{");
     renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("}");
+  }
+
+  @Override
+  protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, EnumSet<Outer> outer) {
+    var env = list.isOrdered() ? "enumerate" : "itemize";
+    cursor.invisibleContent("\\begin{" + env + "}");
+    list.items().forEach(item -> {
+      cursor.invisibleContent("\\item ");
+      renderDoc(cursor, item, EnumSet.of(Outer.List, Outer.EnclosingTag));
+    });
+    cursor.invisibleContent("\\end{" + env + "}");
   }
 
   /**

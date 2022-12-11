@@ -10,6 +10,8 @@ import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 /**
  * @author kiva, ice1000
  */
@@ -20,7 +22,7 @@ public class DebugStylist extends StringStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override public void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside) {
+  @Override public void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, EnumSet<StringPrinter.Outer> outer, @NotNull Runnable inside) {
     inside.run();
   }
 }

@@ -8,8 +8,10 @@ import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public class DocTermPrinter extends StringPrinter<DocTermPrinter.Config> {
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
+  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
     cursor.invisibleContent("`");
     renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("'");

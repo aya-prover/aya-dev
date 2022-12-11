@@ -12,6 +12,7 @@ import org.aya.pretty.doc.Link;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.regex.Pattern;
 
 /**
@@ -70,13 +71,14 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     return config.supportsCssStyle() ? new Html5Stylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
   }
 
-  @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
+  @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
     // note: HTML always needs escaping, regardless of `outer`
     return entityPattern.matcher(content).replaceAll(
       result -> entityMapping.get(result.group()));   // fail if bug
   }
 
-  @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text, Outer outer) {
+  @Override
+  protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text, EnumSet<Outer> outer) {
     var href = text.href();
     cursor.invisibleContent("<a ");
     if (text.id() != null) cursor.invisibleContent("id=\"" + normalizeId(text.id()) + "\" ");
@@ -87,7 +89,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("href=\"");
     cursor.invisibleContent(normalizeHref(href));
     cursor.invisibleContent("\">");
-    renderDoc(cursor, text.doc(), Outer.EnclosingTag);
+    renderDoc(cursor, text.doc(), EnumSet.of(Outer.EnclosingTag));
     cursor.invisibleContent("</a>");
   }
 
@@ -107,20 +109,36 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     };
   }
 
-  @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
+  @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
     cursor.lineBreakWith("<br>");
   }
 
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, Outer outer) {
+  @Override
+  protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
     cursor.invisibleContent("<code class=\"" + capitalize(code.language()) + "\">");
-    renderDoc(cursor, code.code(), Outer.EnclosingTag); // Even in code mode, we still need to escape
+    renderDoc(cursor, code.code(), EnumSet.of(Outer.EnclosingTag)); // Even in code mode, we still need to escape
     cursor.invisibleContent("</code>");
   }
 
-  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, Outer outer) {
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, EnumSet<Outer> outer) {
     cursor.invisibleContent("<pre class=\"" + capitalize(block.language()) + "\">");
-    renderDoc(cursor, block.code(), Outer.EnclosingTag); // Even in code mode, we still need to escape
+    renderDoc(cursor, block.code(), EnumSet.of(Outer.EnclosingTag)); // Even in code mode, we still need to escape
     cursor.invisibleContent("</pre>");
+  }
+
+  @Override
+  protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, EnumSet<Outer> outer) {
+    var tag = list.isOrdered() ? "ol" : "ul";
+
+    cursor.invisibleContent("<" + tag + ">");
+
+    list.items().forEach(item -> {
+      cursor.invisibleContent("<li>");
+      renderDoc(cursor, item, EnumSet.of(Outer.List, Outer.EnclosingTag));
+      cursor.invisibleContent("</li>");
+    });
+
+    cursor.invisibleContent("</" + tag + ">");
   }
 
   private @NotNull String capitalize(@NotNull String s) {

@@ -10,6 +10,7 @@ import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.function.Consumer;
 
 public abstract class ClosingStylist extends StringStylist {
@@ -26,11 +27,11 @@ public abstract class ClosingStylist extends StringStylist {
   }
 
   @Override
-  public void format(@NotNull Seq<Style> styles, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside) {
+  public void format(@NotNull Seq<Style> styles, @NotNull Cursor cursor, EnumSet<StringPrinter.Outer> outer, @NotNull Runnable inside) {
     formatInternal(styles.view(), cursor, outer, inside);
   }
 
-  private void formatInternal(@NotNull SeqView<Style> styles, @NotNull Cursor cursor, StringPrinter.Outer outer, @NotNull Runnable inside) {
+  private void formatInternal(@NotNull SeqView<Style> styles, @NotNull Cursor cursor, EnumSet<StringPrinter.Outer> outer, @NotNull Runnable inside) {
     if (styles.isEmpty()) {
       inside.run();
       return;
@@ -45,7 +46,7 @@ public abstract class ClosingStylist extends StringStylist {
     formats.reversed().forEach(format -> format.end.accept(cursor));
   }
 
-  private @NotNull StyleToken formatOne(@NotNull Style style, StringPrinter.Outer outer) {
+  private @NotNull StyleToken formatOne(@NotNull Style style, EnumSet<StringPrinter.Outer> outer) {
     return switch (style) {
       case Style.Attr attr -> switch (attr) {
         case Italic -> formatItalic(outer);
@@ -60,7 +61,7 @@ public abstract class ClosingStylist extends StringStylist {
     };
   }
 
-  protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, StringPrinter.Outer outer) {
+  protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, EnumSet<StringPrinter.Outer> outer) {
     return styleFamily.definedStyles().getOption(styleName)
       .getOrDefault(it -> it.styles().map(sub -> formatOne(sub, outer)), ImmutableSeq.empty());
   }
@@ -74,10 +75,10 @@ public abstract class ClosingStylist extends StringStylist {
     return StyleToken.NULL;
   }
 
-  protected abstract @NotNull StyleToken formatItalic(StringPrinter.Outer outer);
-  protected abstract @NotNull StyleToken formatBold(StringPrinter.Outer outer);
-  protected abstract @NotNull StyleToken formatStrike(StringPrinter.Outer outer);
-  protected abstract @NotNull StyleToken formatUnderline(StringPrinter.Outer outer);
+  protected abstract @NotNull StyleToken formatItalic(EnumSet<StringPrinter.Outer> outer);
+  protected abstract @NotNull StyleToken formatBold(EnumSet<StringPrinter.Outer> outer);
+  protected abstract @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer);
+  protected abstract @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer);
   protected abstract @NotNull StyleToken formatColorHex(int rgb, boolean background);
 
   public static class Delegate extends ClosingStylist {
@@ -92,7 +93,7 @@ public abstract class ClosingStylist extends StringStylist {
       return delegate.formatCustom(style);
     }
 
-    @Override protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, StringPrinter.Outer outer) {
+    @Override protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, EnumSet<StringPrinter.Outer> outer) {
       return delegate.formatPresetStyle(styleName, outer);
     }
 
@@ -100,19 +101,19 @@ public abstract class ClosingStylist extends StringStylist {
       return delegate.formatPresetColor(colorName, background);
     }
 
-    @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
+    @Override protected @NotNull StyleToken formatItalic(EnumSet<StringPrinter.Outer> outer) {
       return delegate.formatItalic(outer);
     }
 
-    @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
+    @Override protected @NotNull StyleToken formatBold(EnumSet<StringPrinter.Outer> outer) {
       return delegate.formatBold(outer);
     }
 
-    @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
+    @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
       return delegate.formatStrike(outer);
     }
 
-    @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
+    @Override protected @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer) {
       return delegate.formatUnderline(outer);
     }
 

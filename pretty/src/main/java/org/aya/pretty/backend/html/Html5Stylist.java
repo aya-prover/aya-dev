@@ -13,6 +13,8 @@ import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
+
 public class Html5Stylist extends ClosingStylist {
   public static final @NotNull Html5Stylist DEFAULT = new Html5Stylist(AyaColorScheme.EMACS, AyaStyleFamily.DEFAULT);
 
@@ -20,19 +22,19 @@ public class Html5Stylist extends ClosingStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatItalic(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("<i>", "</i>", false);
   }
 
-  @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatBold(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("<b>", "</b>", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("<s>", "</s>", false);
   }
 
-  @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("<u>", "</u>", false);
   }
 
@@ -50,7 +52,7 @@ public class Html5Stylist extends ClosingStylist {
     }
 
     @Override
-    protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, StringPrinter.Outer outer) {
+    protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, EnumSet<StringPrinter.Outer> outer) {
       var className = styleKeyToCss(styleName).last();
       return ImmutableSeq.of(new StyleToken("<span class=\"%s\">".formatted(className), "</span>", false));
     }

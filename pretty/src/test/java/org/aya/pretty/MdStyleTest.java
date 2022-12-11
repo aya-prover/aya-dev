@@ -108,4 +108,54 @@ public class MdStyleTest {
   @NotNull private Doc escapeDoc17() {
     return Doc.code("", Doc.plain("\\[\\`"));
   }
+
+  @Test
+  public void testList() {
+    var actual0 = bulletList().renderToMd();
+    var expected0 = """
+            
+      + first<br/>
+        <br/>
+        third
+      + fourth
+        + 4.1
+        + 4.2
+            
+      """;
+
+    var actual1 = orderedList().renderToMd();
+    var expected1 = """
+            
+      1. first<br/>
+         <br/>
+         third
+      2. fourth
+         + 4.1
+         + 4.2
+            
+      """;
+
+    assertEquals(expected0, actual0);
+    assertEquals(expected1, actual1);
+  }
+
+  @NotNull private Doc bulletList() {
+    return Doc.bullet(
+      Doc.cat(Doc.plain("first"), Doc.line(), Doc.line(), Doc.plain("third")),
+      Doc.cat(Doc.plain("fourth"), Doc.bullet(
+        Doc.plain("4.1"),
+        Doc.plain("4.2")
+      ))
+    );
+  }
+
+  @NotNull private Doc orderedList() {
+    return Doc.ordered(
+      Doc.cat(Doc.plain("first"), Doc.line(), Doc.line(), Doc.plain("third")),
+      Doc.cat(Doc.plain("fourth"), Doc.bullet(
+        Doc.plain("4.1"),
+        Doc.plain("4.2")
+      ))
+    );
+  }
 }
