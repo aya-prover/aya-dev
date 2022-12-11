@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author kiva
  */
-// TODO(wsx): Folder?
+// TODO(wsx): Folder? -- (kiva: please!!)
 public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements ExprConsumer {
   public void accept(@NotNull TyckUnit sn) {
     switch (sn) {
@@ -33,7 +33,7 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
           accept(ctor.clauses);
         }
       }
-      case Command.Module module -> {}
+      case Command.Module module -> module.contents().forEach(this::accept);
       case Command cmd -> {}
       case Generalize variables -> accept(variables.type);
     }
