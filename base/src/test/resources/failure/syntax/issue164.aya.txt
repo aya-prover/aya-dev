@@ -34,7 +34,7 @@ In file $FILE:6:0 ->
   5 | 
   6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
       ^-------------------------------------------------------^ Begin of the 
-  error
+                                                                error
   7 |               (f : Pi A B C -> D)
   8 |               (p : Sig A B  C) : D
       ^---------------------------------^ End of the error
