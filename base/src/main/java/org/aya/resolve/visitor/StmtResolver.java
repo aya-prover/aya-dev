@@ -69,8 +69,8 @@ public interface StmtResolver {
           ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> ExprResolver.resolve(pattern, mCtx)));
           resolveMemberSignature(ctor, bodyResolver, mCtx, info, decl);
           ctor.clauses = bodyResolver.partial(mCtx.get(), ctor.clauses);
-          addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
-            .appended(new TyckOrder.Head(decl)));
+          addReferences(info, new TyckOrder.Head(ctor), bodyResolver);
+          addReferences(info, new TyckOrder.Body(ctor), SeqView.of(new TyckOrder.Head(ctor)));
           // No body no body but you!
         });
         addReferences(info, new TyckOrder.Body(decl), resolver.reference().view()
