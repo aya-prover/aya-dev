@@ -65,8 +65,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
-    if (outer.contains(Outer.List)) cursor.lineBreakWith("<br/>\n");
-    else cursor.lineBreakWith("\n");
+    cursor.lineBreakWith("\n");
   }
 
   @Override

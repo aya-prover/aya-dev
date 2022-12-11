@@ -185,12 +185,13 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   }
 
   protected static void renderList(@NotNull StringPrinter<?> printer, @NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
+    // TODO[kiva]: improve this!
     var isTopLevel = !outer.contains(Outer.List);
-    cursor.lineBreakIfNeeded("\n");
+    cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
     if (isTopLevel) printer.renderHardLineBreak(cursor, outer);
 
     list.items().forEachIndexed((idx, item) -> {
-      cursor.lineBreakIfNeeded("\n");
+      cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
 
       var pre = list.isOrdered()
         ? (idx + 1) + "."
@@ -206,7 +207,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     });
 
     if (isTopLevel) {
-      cursor.lineBreakIfNeeded("\n");
+      cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
       printer.renderHardLineBreak(cursor, outer);
     }
   }

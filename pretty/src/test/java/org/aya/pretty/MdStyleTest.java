@@ -111,32 +111,26 @@ public class MdStyleTest {
 
   @Test
   public void testList() {
-    var actual0 = bulletList().renderToMd();
-    var expected0 = """
+    assertEquals("""
             
-      + first<br/>
-        <br/>
+      + first
+        
         third
       + fourth
         + 4.1
         + 4.2
             
-      """;
+      """.stripIndent(), bulletList().renderToMd().stripIndent());
+    assertEquals("""
 
-    var actual1 = orderedList().renderToMd();
-    var expected1 = """
-            
-      1. first<br/>
-         <br/>
+      1. first
+
          third
       2. fourth
          + 4.1
          + 4.2
-            
-      """;
 
-    assertEquals(expected0, actual0);
-    assertEquals(expected1, actual1);
+      """.stripIndent(), orderedList().renderToMd().stripIndent());
   }
 
   @NotNull private Doc bulletList() {
