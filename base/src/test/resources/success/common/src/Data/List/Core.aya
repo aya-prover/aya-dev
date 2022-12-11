@@ -4,8 +4,7 @@ open import Algebra::Formula
 
 public open data List (A : Type) : Type
 | nil
-| infixr :< A (List A)
-tighter =
+| infixr :< A (List A) tighter =
 
 variable A B C : Type
 
