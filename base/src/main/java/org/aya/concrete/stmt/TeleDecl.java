@@ -72,10 +72,6 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     return signature;
   }
 
-  @Override public void setSignature(Def.@Nullable Signature<RetTy> signature) {
-    this.signature = signature;
-  }
-
   protected TeleDecl(
     @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
     @NotNull Accessibility accessibility,
@@ -131,7 +127,6 @@ public sealed abstract class TeleDecl<RetTy extends Term>
 
     // will change after resolve
     public @NotNull ImmutableSeq<Expr.Param> telescope;
-    public @Nullable Def.Signature<DataCall> signature;
 
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -172,12 +167,9 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
 
     @Override public @Nullable Def.Signature<DataCall> signature() {
-      return signature;
+      return null;
     }
 
-    @Override public void setSignature(Def.@Nullable Signature<DataCall> signature) {
-      this.signature = signature;
-    }
   }
 
   /**
@@ -290,10 +282,6 @@ public sealed abstract class TeleDecl<RetTy extends Term>
 
     @Override public Def.@Nullable Signature<Term> signature() {
       return signature;
-    }
-
-    @Override public void setSignature(Def.@Nullable Signature<Term> signature) {
-      this.signature = signature;
     }
 
     @Override public @NotNull Expr result() {
