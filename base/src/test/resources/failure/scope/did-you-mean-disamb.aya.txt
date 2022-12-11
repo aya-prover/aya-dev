@@ -23,8 +23,8 @@ In file $FILE:2:0 ->
       ^--^
   3 | 
 
-Warning: The name `suc` introduces ambiguity and can only be accessed through a qualified
-         name
+Warning: The name `suc` introduces ambiguity and can only be accessed through a 
+         qualified name
 
 In file $FILE:2:0 ->
 

@@ -5,7 +5,8 @@ In file $FILE:5:4 ->
   5 |   | 114514, 1919810 => 1
           ^------------------^
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be unreachable
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:3:12 ->
 
@@ -29,7 +30,8 @@ In file $FILE:9:4 ->
   9 |   | a, 1919810 => 1
           ^-------------^
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be unreachable
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:7:12 ->
 
@@ -53,7 +55,8 @@ In file $FILE:14:4 ->
   14 |   | a, 1919810 => 1
            ^-------------^
 
-Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be unreachable
+Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
 
 In file $FILE:11:12 ->
 
@@ -108,7 +111,8 @@ In file $FILE:18:4 ->
   18 |   | 114514, 1919810 => 1
            ^------------------^
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be unreachable
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:16:12 ->
 
@@ -132,7 +136,8 @@ In file $FILE:22:4 ->
   22 |   | 1919810, a => 1
            ^-------------^
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be unreachable
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:20:12 ->
 
@@ -156,7 +161,8 @@ In file $FILE:27:4 ->
   27 |   | 1919810, a => 1
            ^-------------^
 
-Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be unreachable
+Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
 
 In file $FILE:24:12 ->
 
@@ -211,7 +217,8 @@ In file $FILE:30:4 ->
   30 |   | 114, 0 => 0
            ^---------^
 
-Warning: The 5th clause dominates the 1st clause. The 1st clause will be unreachable
+Warning: The 5th clause dominates the 1st clause. The 1st clause will be 
+         unreachable
 
 In file $FILE:32:4 ->
 
@@ -220,7 +227,8 @@ In file $FILE:32:4 ->
   32 |   | 114, 514 => 515
            ^-------------^
 
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be unreachable
+Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
 
 In file $FILE:29:12 ->
 
@@ -245,7 +253,8 @@ In file $FILE:31:4 ->
   31 |   | 114, suc b => suc b
            ^-----------------^
 
-Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be unreachable
+Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:31:4 ->
 
@@ -254,7 +263,8 @@ In file $FILE:31:4 ->
   31 |   | 114, suc b => suc b
            ^-----------------^
 
-Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be unreachable
+Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:33:4 ->
 
@@ -263,7 +273,8 @@ In file $FILE:33:4 ->
   33 |   | 115, 514 => 514
            ^-------------^
 
-Warning: The 5th clause dominates the 4th clause. The 4th clause will be unreachable
+Warning: The 5th clause dominates the 4th clause. The 4th clause will be 
+         unreachable
 
 11 error(s), 11 warning(s).
 What are you doing?

@@ -91,10 +91,10 @@ public record PrettyError(
         } else {
           if (lineNo == primaryRange.startLine()) {
             var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth);
-            docs.append(Doc.cat(hintUnderline, Doc.ONE_WS, Doc.english("Begin of the error")));
+            docs.append(Doc.stickySep(hintUnderline, Doc.align(Doc.english("Begin of the error"))));
           } else if (lineNo == primaryRange.endLine()) {
             var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth);
-            docs.append(Doc.cat(hintUnderline, Doc.ONE_WS, Doc.english("End of the error")));
+            docs.append(Doc.stickySep(hintUnderline, Doc.align(Doc.english("End of the error"))));
           }
         }
       }

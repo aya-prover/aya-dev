@@ -5,7 +5,8 @@ In file $FILE:1:23 ->
 
 Error: Unable to project the 11th element of the expression
          A
-       because the type of what you projected on is not a Sigma type, but instead:
+       because the type of what you projected on is not a Sigma type, but 
+       instead:
          Type 0
          (Normalized: Type 0)
 

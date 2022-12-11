@@ -9,8 +9,9 @@ In file $FILE:18:4 ->
   22 |  | posneg n i => zero
           ^----------------^ substituted to `zero`
 
-Error: The 4th clause matches on a constructor with condition(s). When checking the
-       1st condition, we failed to even reduce one of the clause(s) to check condition
+Error: The 4th clause matches on a constructor with condition(s). When checking 
+       the 1st condition, we failed to even reduce one of the clause(s) to check
+       condition
 
 1 error(s), 0 warning(s).
 What are you doing?

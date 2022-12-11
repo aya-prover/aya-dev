@@ -51,7 +51,7 @@ public sealed interface Doc extends Docile {
   }
 
   //region Doc APIs
-  default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
+  default @NotNull String renderToString(@NotNull StringPrinterConfig<?> config) {
     var printer = new StringPrinter<>();
     return render(printer, config);
   }
@@ -264,10 +264,6 @@ public sealed interface Doc extends Docile {
 
   static @NotNull Doc codeBlock(@NotNull String code) {
     return codeBlock("aya", plain(code));
-  }
-
-  static @NotNull Doc codeBlock(@NotNull Doc code) {
-    return codeBlock("aya", code);
   }
 
   static @NotNull Doc codeBlock(@NotNull String language, @NotNull Doc code) {
@@ -519,7 +515,11 @@ public sealed interface Doc extends Docile {
 
   @Contract("_ -> new") static @NotNull Doc english(String text) {
     if (!text.contains(" ")) return plain(text);
-    return sep(Seq.from(text.split(" ", -1)).view().map(Doc::plain));
+    return sep(Seq.from(text.split(" ", -1))
+      .view()
+      .map(Doc::plain)
+      .map(p -> flatAlt(p, cat(line(), p)))
+    );
   }
 
   /**
