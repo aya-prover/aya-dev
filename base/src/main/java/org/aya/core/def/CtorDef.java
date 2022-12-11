@@ -24,7 +24,7 @@ public final class CtorDef extends SubLevelDef {
 
   /**
    * @param ownerTele See "/note/glossary.md"
-   * @param selfTele Ditto
+   * @param selfTele  Ditto
    */
   public CtorDef(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef, @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
@@ -50,17 +50,7 @@ public final class CtorDef extends SubLevelDef {
    */
   public static @NotNull DataDef.CtorTelescopes
   telescopes(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> defVar) {
-    var concrete = defVar.concrete;
-    if (concrete != null) {
-      // See the TeleDecl.DataCtor case of StmtTycker#tyckHeader
-      var patternTele = concrete.patternTele;
-      var signature = concrete.signature();
-
-      assert patternTele != null;
-      assert signature != null;
-
-      return new DataDef.CtorTelescopes(patternTele, signature.param());
-    }
+    assert defVar.core != null;
     return new DataDef.CtorTelescopes(defVar.core.ownerTele, defVar.core.selfTele);
   }
 
