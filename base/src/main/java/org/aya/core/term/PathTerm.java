@@ -52,8 +52,11 @@ public record PathTerm(
   }
 
   public @NotNull PiTerm computePi() {
-    var iTele = params.view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
-    return (PiTerm) PiTerm.make(iTele, type);
+    return (PiTerm) PiTerm.make(computeParams(), type);
+  }
+
+  public @NotNull SeqView<Param> computeParams() {
+    return params.view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
   }
 
   public @NotNull Term substType(@NotNull SeqView<Term> dimensions) {

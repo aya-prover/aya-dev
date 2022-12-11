@@ -14,6 +14,7 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.Arg;
@@ -130,6 +131,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     public @NotNull Expr.PartEl clauses;
     public @NotNull ImmutableSeq<Arg<Pattern>> patterns;
     public @Nullable Expr result;
+    public @Nullable Partial<Term> checkedPartial;
     public final boolean coerce;
 
     /** used when tycking constructor's header */

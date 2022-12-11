@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.control.Either;
@@ -14,15 +15,13 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.term.DataCall;
-import org.aya.core.term.PiTerm;
-import org.aya.core.term.SortTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.SeqLocalCtx;
+import org.aya.tyck.error.CubicalError;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimError;
 import org.aya.tyck.pat.Conquer;
@@ -132,8 +131,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           dataSig.param().view().map(Term.Param::ref),
           pat.view().map(Pat::toTerm)));
         var elabClauses = tycker.zonk(tycker.elaboratePartial(ctor.clauses, dataCall));
-        if (!(elabClauses instanceof Partial.Split<Term> split)) {
-          throw new AssertionError("This does not seem right, " + elabClauses);
+        elabClauses = PartialTerm.merge(Seq.of(elabClauses, ctor.checkedPartial));
+        while (!(elabClauses instanceof Partial.Split<Term> split)) {
+          reporter.report(new CubicalError.PathConDominateError(ctor.clauses.sourcePos()));
+          elabClauses = new Partial.Split<>(ImmutableSeq.empty());
         }
         var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, split, dataCall, ctor.coerce);
         dataConcrete.checkedBody.append(elaborated);
@@ -256,6 +257,22 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         }
         var ulift = dataConcrete.signature.result();
         var tele = tele(tycker, ctor.telescope, ulift.isProp() ? null : ulift);
+        // Users may have written the result type
+        if (ctor.result != null) {
+          var result = tycker.ty(ctor.result).wellTyped();
+          var additionalTele = MutableArrayList.<Term.Param>create();
+          result = PiTerm.unpi(result, tycker::whnf, additionalTele);
+          if (result instanceof PathTerm path) {
+            var flat = path.flatten();
+            additionalTele.appendAll(flat.computeParams());
+            ctor.checkedPartial = flat.partial();
+            result = flat.type();
+          }
+          // Using dataCall here is, in fact, incorrect, because [TODO: explain].
+          // Solution: merge checkBody & checkHeader of data ctor for data ctor.
+          tycker.unifyTyReported(result, dataCall, ctor.result);
+          tele = tele.concat(additionalTele);
+        }
         ctor.signature = new Def.Signature<>(tele, dataCall);
         ctor.patternTele = ctor.yetTyckedPat.isEmpty()
           ? dataSig.param().map(Term.Param::implicitify)
