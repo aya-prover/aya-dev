@@ -42,6 +42,7 @@ import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.TermComparator;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -55,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 
@@ -859,8 +861,16 @@ public final class ExprTycker extends Tycker {
    * @see #inheritFallbackUnify(Term, Result, Expr)
    */
   public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
+    unifyTyReported(upper, lower, loc, unification ->
+      new UnifyError.Type(loc, upper, lower, unification, state));
+  }
+
+  public void unifyTyReported(
+    @NotNull Term upper, @NotNull Term lower, Expr loc,
+    Function<TermComparator.FailureData, Problem> p
+  ) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (unification != null) reporter.report(new UnifyError.Type(loc, upper, lower, unification, state));
+    if (unification != null) reporter.report(p.apply(unification));
   }
 
   /**

@@ -395,10 +395,12 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield Doc.sepNonEmpty(doc);
       }
       case TeleDecl.DataCtor ctor -> {
+        var ret = ctor.result == null ? Doc.empty() : Doc.sep(Doc.symbol(":"), term(Outer.Free, ctor.result));
         var doc = Doc.cblock(Doc.sepNonEmpty(
           coe(ctor.coerce),
           linkDef(ctor.ref, CON_CALL),
-          visitTele(ctor.telescope)), 2, partial(ctor.clauses));
+          visitTele(ctor.telescope),
+          ret), 2, partial(ctor.clauses));
         if (ctor.patterns.isNotEmpty()) {
           var pats = Doc.commaList(ctor.patterns.view().map(pattern -> pattern(pattern, Outer.Free)));
           yield Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);

@@ -19,11 +19,13 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.CubicalError;
 import org.aya.tyck.error.NobodyError;
 import org.aya.tyck.error.PrimError;
+import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
@@ -131,7 +133,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           dataSig.param().view().map(Term.Param::ref),
           pat.view().map(Pat::toTerm)));
         var elabClauses = tycker.zonk(tycker.elaboratePartial(ctor.clauses, dataCall));
-        elabClauses = PartialTerm.merge(Seq.of(elabClauses, ctor.checkedPartial));
+        elabClauses = PartialTerm.merge(Seq.of(elabClauses, ctor.checkedPartial).filterNotNull());
         while (!(elabClauses instanceof Partial.Split<Term> split)) {
           reporter.report(new CubicalError.PathConDominateError(ctor.clauses.sourcePos()));
           elabClauses = new Partial.Split<>(ImmutableSeq.empty());
@@ -259,7 +261,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var tele = tele(tycker, ctor.telescope, ulift.isProp() ? null : ulift);
         // Users may have written the result type
         if (ctor.result != null) {
-          var result = tycker.ty(ctor.result).wellTyped();
+          var result = tycker.zonk(tycker.ty(ctor.result).wellTyped()).normalize(tycker.state, NormalizeMode.NF);
           var additionalTele = MutableArrayList.<Term.Param>create();
           result = PiTerm.unpi(result, tycker::whnf, additionalTele);
           if (result instanceof PathTerm path) {
@@ -268,9 +270,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             ctor.checkedPartial = flat.partial();
             result = flat.type();
           }
+          var eventually = result;
           // Using dataCall here is, in fact, incorrect, because [TODO: explain].
           // Solution: merge checkBody & checkHeader of data ctor for data ctor.
-          tycker.unifyTyReported(result, dataCall, ctor.result);
+          tycker.unifyTyReported(eventually, dataCall, ctor.result,
+            u -> new UnifyError.ConReturn(ctor, dataCall, eventually, u, tycker.state));
           tele = tele.concat(additionalTele);
         }
         ctor.signature = new Def.Signature<>(tele, dataCall);

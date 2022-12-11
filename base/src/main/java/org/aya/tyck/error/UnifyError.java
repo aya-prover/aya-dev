@@ -4,6 +4,7 @@ package org.aya.tyck.error;
 
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
 import org.aya.generic.util.NormalizeMode;
@@ -11,6 +12,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public interface UnifyError extends TyckError {
@@ -73,6 +75,26 @@ public interface UnifyError extends TyckError {
         Doc.par(1, expr.toDoc(options)),
         Doc.english("of type"));
       return describeUnify(options, prologue, actual, Doc.english("against the type"), expected);
+    }
+  }
+
+  record ConReturn(
+    @NotNull TeleDecl.DataCtor ctor,
+    @NotNull Term expected,
+    @NotNull Term actual,
+    @Override @NotNull Unifier.FailureData failureData,
+    @Override @NotNull TyckState state
+  ) implements UnifyError {
+    @Override public @NotNull SourcePos sourcePos() {
+      return ctor.sourcePos;
+    }
+
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      var prologue = Doc.vcat(
+        Doc.english("Cannot make sense of the return type of the constructor"),
+        Doc.par(1, ctor.toDoc(options)),
+        Doc.english("which eventually returns"));
+      return describeUnify(options, prologue, actual, Doc.english("while it should return"), expected);
     }
   }
 }
