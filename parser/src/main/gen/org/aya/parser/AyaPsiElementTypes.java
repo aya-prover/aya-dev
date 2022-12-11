@@ -94,6 +94,7 @@ public interface AyaPsiElementTypes {
   IElementType TELE_BINDER = new AyaPsiElementType("TELE_BINDER");
   IElementType TELE_BINDER_ANONYMOUS = new AyaPsiElementType("TELE_BINDER_ANONYMOUS");
   IElementType TELE_BINDER_TYPED = new AyaPsiElementType("TELE_BINDER_TYPED");
+  IElementType TELE_BINDER_UNTYPED = new AyaPsiElementType("TELE_BINDER_UNTYPED");
   IElementType TELE_PARAM_NAME = new AyaPsiElementType("TELE_PARAM_NAME");
   IElementType THIS_EXPR = new AyaPsiElementType("THIS_EXPR");
   IElementType TIGHTERS = new AyaPsiElementType("TIGHTERS");

@@ -427,10 +427,14 @@ public record AyaGKProducer(
   }
 
   private @NotNull ImmutableSeq<Expr.Param> teleBinderTyped(@NotNull GenericNode<?> node, boolean explicit) {
-    var ids = node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName);
+    var ids = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED));
     var type = type(node.child(TYPE));
     return ids.map(i -> new Expr.Param(
       i.sourcePos(), LocalVar.from(i), type, explicit)).toImmutableSeq();
+  }
+
+  private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {
+    return node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName).toImmutableSeq();
   }
 
   public @NotNull ImmutableSeq<Expr.Param> lambdaTelescope(SeqView<GenericNode<?>> telescope) {
@@ -454,9 +458,16 @@ public record AyaGKProducer(
 
   public @NotNull ImmutableSeq<Expr.Param> lambdaTeleBinder(boolean explicit, @NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
+
+    // | teleBinderTyped
     var typed = node.peekChild(TELE_BINDER_TYPED);
     if (typed != null) return teleBinderTyped(typed, explicit);
-    return lambdaTeleLit(node.child(TELE_PARAM_NAME), explicit, pos);
+
+    // | teleBinderUntyped
+    var ids = node.child(TELE_BINDER_UNTYPED);
+    return teleBinderUntyped(ids).view()
+      .map(LocalVar::from)
+      .map(bind -> new Expr.Param(pos, bind, typeOrHole(null, pos), explicit)).toImmutableSeq();
   }
 
   private @NotNull ImmutableSeq<Expr.Param> lambdaTeleLit(GenericNode<?> node, boolean explicit, SourcePos pos) {
