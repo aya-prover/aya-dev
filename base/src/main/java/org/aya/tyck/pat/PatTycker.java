@@ -130,7 +130,7 @@ public final class PatTycker {
       exprTycker.isPropType(signature.result()), signature.param().view());
     return new AllLhsResult(clauses.mapIndexed((index, clause) -> exprTycker.traced(
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
-      () -> checkLhs(exprTycker, clause, signature, inProp))));
+      () -> checkLhs(exprTycker, clause, signature, inProp, true))));
   }
 
   private static @NotNull PatResult checkAllRhs(
@@ -172,14 +172,23 @@ public final class PatTycker {
   ) {
   }
 
+  /**
+   * @param isElim whether this checking is used for elimination (rather than data declaration)
+   */
   public static @NotNull LhsResult checkLhs(
     @NotNull ExprTycker exprTycker,
     @NotNull Pattern.Clause match,
     @NotNull Def.Signature<?> signature,
-    boolean inProp
+    boolean inProp,
+    boolean isElim
   ) {
     var patTycker = new PatTycker(exprTycker);
     return exprTycker.subscoped(() -> {
+      // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
+      // If it is not the case, the pattern must be accompanied by a body.
+      if (isElim && !match.patterns.anyMatch(p -> patTycker.hasAbsurdity(p.term())) && match.expr.isEmpty()) {
+        patTycker.foundError(new PatternProblem.InvalidEmptyBody(match));
+      }
       var step0 = patTycker
         .visitPatterns(signature, match.patterns.view(), null, match.expr.getOrNull(), inProp);
       match.hasError = patTycker.hasError;
@@ -245,6 +254,21 @@ public final class PatTycker {
    */
   private void addSigSubst(@NotNull Term.Param param, @NotNull Pat pat) {
     sigSubst.addDirectly(param.ref(), pat.toTerm(), param.type());
+  }
+
+  /**
+   * check if absurdity is contained in pattern
+   */
+  private boolean hasAbsurdity(@NotNull Pattern pattern) {
+    return switch (pattern) {
+      case Pattern.Absurd ignored -> true;
+      case Pattern.As as -> hasAbsurdity(as.pattern());
+      case Pattern.BinOpSeq binOpSeq -> binOpSeq.seq().anyMatch(p -> hasAbsurdity(p.term()));
+      case Pattern.Ctor ctor -> ctor.params().anyMatch(p -> hasAbsurdity(p.term()));
+      case Pattern.List list -> list.elements().anyMatch(this::hasAbsurdity);
+      case Pattern.Tuple tuple -> tuple.patterns().anyMatch(p -> hasAbsurdity(p.term()));
+      default -> false;
+    };
   }
 
   private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term, boolean licit, boolean resultIsProp) {
@@ -482,7 +506,7 @@ public final class PatTycker {
   /**
    * For every implicit parameter that not explicitly (no user given pattern) matched,
    * we generate a MetaPat for each,
-   * so that they can be inferred during {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean)}
+   * so that they can be inferred during {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean, boolean)}
    */
   private @NotNull Def.Signature<?> generatePat(@NotNull PatData data) {
     data = beforeTyck(data);
