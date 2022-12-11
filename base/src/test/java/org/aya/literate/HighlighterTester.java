@@ -16,7 +16,7 @@ import org.aya.core.def.PrimDef.Factory;
 import org.aya.literate.HighlighterTester.ExpectedHighlightType.Def;
 import org.aya.literate.HighlighterTester.ExpectedHighlightType.LitInt;
 import org.aya.literate.HighlighterTester.ExpectedHighlightType.Ref;
-import org.aya.pretty.backend.string.LinkId;
+import org.aya.pretty.doc.Link;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.test.AyaThrowingReporter;
@@ -82,8 +82,8 @@ public class HighlighterTester {
 
   // TODO[hoshino]: Inductive Defined (allow scope)
   // (User-Defined Name, (Unique ID, Nullable Def Kind))
-  public final MutableMap<String, Tuple2<LinkId, Option<HighlightInfo.DefKind>>> defMap = MutableMap.create();
-  public final MutableMap<LinkId, Option<HighlightInfo.DefKind>> defSet = MutableMap.create();
+  public final MutableMap<String, Tuple2<Link, Option<HighlightInfo.DefKind>>> defMap = MutableMap.create();
+  public final MutableMap<Link, Option<HighlightInfo.DefKind>> defSet = MutableMap.create();
 
   public HighlighterTester(@NotNull String sourceCode, @NotNull ImmutableSeq<HighlightInfo> actual, @Nullable ExpectedHighlightInfo[] expected) {
     this.sourceCode = sourceCode;

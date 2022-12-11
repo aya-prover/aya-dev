@@ -8,8 +8,9 @@ example open data Int : Type
 
 example def abs (n : Int) : Nat
  => match n, n {
- | pos n, neg m
- | neg n, pos m
+ // TODO: handle impossible patterns
+ | pos n, neg m => n
+ | neg n, pos m => n
  | pos n, pos m => n
  | neg n, neg m => n
  | negpos _, _ => 0

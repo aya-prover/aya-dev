@@ -245,7 +245,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         // There might be patterns in the constructor
         if (ctor.patterns.isNotEmpty()) {
           var lhs = PatTycker.checkLhs(tycker,
-            new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false);
+            new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false, false);
           ctor.yetTyckedPat = lhs.preclause().patterns();
           // Revert to the "after patterns" state
           tycker.localCtx = lhs.gamma();

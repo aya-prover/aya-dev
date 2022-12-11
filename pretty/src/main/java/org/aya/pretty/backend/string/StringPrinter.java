@@ -9,18 +9,22 @@ import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 /**
  * The class for all string-output printers.
  *
  * @author kiva
  */
-public class StringPrinter<Config extends StringPrinterConfig> implements Printer<String, Config> {
+public class StringPrinter<Config extends StringPrinterConfig<?>> implements Printer<String, Config> {
   /** renderer: where am I? */
   public enum Outer {
-    Free,
     Code,
     EnclosingTag,
+    List,
   }
+
+  public static final @NotNull EnumSet<Outer> FREE = EnumSet.noneOf(Outer.class);
 
   protected Config config;
 
@@ -33,7 +37,7 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
     this.config = config;
     var cursor = new Cursor(this);
     renderHeader(cursor);
-    renderDoc(cursor, doc, Outer.Free);
+    renderDoc(cursor, doc, FREE);
     renderFooter(cursor);
     return cursor.result().toString();
   }
@@ -60,6 +64,7 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
       case Doc.PageWidth pageWidth -> predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
       case Doc.CodeBlock codeBlock -> predictWidth(cursor, codeBlock.code());
       case Doc.InlineCode inlineCode -> predictWidth(cursor, inlineCode.code());
+      case Doc.List list -> list.items().view().map(x -> predictWidth(cursor, x)).reduce(Integer::sum);
     };
   }
 
@@ -77,13 +82,13 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
   protected void renderFooter(@NotNull Cursor cursor) {
   }
 
-  protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc, Outer outer) {
+  protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc, EnumSet<Outer> outer) {
     switch (doc) {
-      case Doc.PlainText text -> renderPlainText(cursor, text.text(), outer);
-      case Doc.SpecialSymbol symbol -> renderSpecialSymbol(cursor, symbol.text(), outer);
+      case Doc.PlainText(var text) -> renderPlainText(cursor, text, outer);
+      case Doc.SpecialSymbol(var symbol) -> renderSpecialSymbol(cursor, symbol, outer);
       case Doc.HyperLinked text -> renderHyperLinked(cursor, text, outer);
       case Doc.Styled styled -> renderStyled(cursor, styled, outer);
-      case Doc.Line d -> renderHardLineBreak(cursor);
+      case Doc.Line d -> renderHardLineBreak(cursor, outer);
       case Doc.FlatAlt alt -> renderFlatAlt(cursor, alt, outer);
       case Doc.Cat cat -> cat.inner().forEach(inner -> renderDoc(cursor, inner, outer));
       case Doc.Nest nest -> renderNest(cursor, nest, outer);
@@ -91,8 +96,9 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
       case Doc.Column column -> renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()), outer);
       case Doc.Nesting nesting -> renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()), outer);
       case Doc.PageWidth pageWidth -> renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()), outer);
-      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock, Outer.Code);
-      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode, Outer.Code);
+      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock, EnumSet.of(Outer.Code));
+      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode, EnumSet.of(Outer.Code));
+      case Doc.List list -> renderList(cursor, list, outer);
       case Doc.Empty $ -> {}
     }
   }
@@ -117,7 +123,20 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
     Tuple.of("|]", "\u27E7")
   );
 
-  protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, Outer outer) {
+  /**
+   * New line if needed
+   *
+   * @return true if needed; the Cursor is at line start after call.
+   * @implNote new line ('\n') may not be the hard line break
+   */
+  protected boolean requireLineStart(@NotNull Cursor cursor) {
+    if (!cursor.isAtLineStart()) {
+      cursor.lineBreakWith("\n");
+      return true;
+    } else return false;
+  }
+
+  protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
     if (config.unicode) for (var k : unicodeMapping.keysView()) {
       if (text.trim().equals(k)) {
         cursor.visibleContent(text.replace(k, unicodeMapping.get(k)));
@@ -127,46 +146,70 @@ public class StringPrinter<Config extends StringPrinterConfig> implements Printe
     renderPlainText(cursor, text, outer);
   }
 
-  protected void renderNest(@NotNull Cursor cursor, @NotNull Doc.Nest nest, Outer outer) {
+  protected void renderNest(@NotNull Cursor cursor, @NotNull Doc.Nest nest, EnumSet<Outer> outer) {
     cursor.nested(nest.indent(), () -> renderDoc(cursor, nest.doc(), outer));
   }
 
-  protected void renderUnionDoc(@NotNull Cursor cursor, @NotNull Doc.Union union, Outer outer) {
+  protected void renderUnionDoc(@NotNull Cursor cursor, @NotNull Doc.Union union, EnumSet<Outer> outer) {
     renderDoc(cursor, fitsBetter(cursor, union.shorterOne(), union.longerOne()), outer);
   }
 
-  protected void renderFlatAlt(@NotNull Cursor cursor, @NotNull Doc.FlatAlt alt, Outer outer) {
+  protected void renderFlatAlt(@NotNull Cursor cursor, @NotNull Doc.FlatAlt alt, EnumSet<Outer> outer) {
     renderDoc(cursor, fitsBetter(cursor, alt.defaultDoc(), alt.preferWhenFlatten()), outer);
   }
 
-  protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, Outer outer) {
+  protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, EnumSet<Outer> outer) {
     renderDoc(cursor, text.doc(), outer);
   }
 
-  protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled, Outer outer) {
-    var stylist = config.getStylist();
+  protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled, EnumSet<Outer> outer) {
+    var stylist = prepareStylist();
     stylist.format(styled.styles(), cursor, outer, () -> renderDoc(cursor, styled.doc(), outer));
   }
 
-  protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, Outer outer) {
+  protected @NotNull StringStylist prepareStylist() {
+    return config.getStylist();
+  }
+
+  protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, EnumSet<Outer> outer) {
     cursor.visibleContent(escapePlainText(content, outer));
   }
 
-  protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
+  protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
     return content;
   }
 
-  protected void renderHardLineBreak(@NotNull Cursor cursor) {
+  protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
     cursor.lineBreakWith("\n");
   }
 
-  protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, Outer outer) {
+  protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
     renderDoc(cursor, block.code(), outer);
   }
 
-  protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, Outer outer) {
+  protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, EnumSet<Outer> outer) {
     cursor.visibleContent("`");
     renderDoc(cursor, code.code(), outer);
     cursor.visibleContent("`");
+  }
+
+  protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
+    var isTopLevel = !outer.contains(Outer.List);
+    requireLineStart(cursor);
+    if (isTopLevel) renderHardLineBreak(cursor, outer);
+
+    for (var item : list.items()) {
+      requireLineStart(cursor);
+      var content = Doc.nest(2, item);
+      var doc = Doc.stickySep(Doc.plain("*"), content);
+
+      // render
+      renderDoc(cursor, doc, EnumSet.of(Outer.List));
+    }
+
+    if (isTopLevel) {
+      requireLineStart(cursor);
+      renderHardLineBreak(cursor, outer);
+    }
   }
 }

@@ -10,7 +10,6 @@ import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.md.DocMdPrinter;
 import org.aya.pretty.backend.string.DebugStylist;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.terminal.AdaptiveCliStylist;
@@ -58,7 +57,7 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToString(int pageWidth, boolean unicode) {
-    return renderToString(new StringPrinterConfig(DebugStylist.DEFAULT, pageWidth, unicode));
+    return renderToString(new StringPrinterConfig<>(DebugStylist.DEFAULT, pageWidth, unicode));
   }
 
   default @NotNull String renderToTerminal() {
@@ -74,19 +73,15 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToHtml(boolean withHeader) {
-    return render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(withHeader));
+    return render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(withHeader, true));
   }
 
   default @NotNull String renderToMd() {
-    return render(new DocMdPrinter(), new DocMdPrinter.Config(false, false));
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(false, false, false));
   }
 
   default @NotNull String renderToAyaMd() {
-    return renderToAyaMd(true);
-  }
-
-  default @NotNull String renderToAyaMd(boolean withHeader) {
-    return render(new DocMdPrinter(), new DocMdPrinter.Config(withHeader, true));
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(true, true, true));
   }
 
   default @NotNull String renderToTeX() {
@@ -142,8 +137,8 @@ public sealed interface Doc extends Docile {
    * @param href The id of jump target when clicked.
    */
   record HyperLinked(
-    @NotNull Doc doc, @NotNull LinkId href,
-    @Nullable LinkId id, @Nullable String hover
+    @NotNull Doc doc, @NotNull Link href,
+    @Nullable Link id, @Nullable String hover
   ) implements Doc {
   }
 
@@ -186,6 +181,9 @@ public sealed interface Doc extends Docile {
     }
   }
 
+  record List(@NotNull ImmutableSeq<Doc> items, boolean isOrdered) implements Doc {
+  }
+
   /**
    * Document indented by a number of columns
    */
@@ -221,27 +219,27 @@ public sealed interface Doc extends Docile {
   //endregion
 
   //region DocFactory functions
-  static @NotNull Doc linkDef(@NotNull Doc doc, @NotNull LinkId id) {
+  static @NotNull Doc linkDef(@NotNull Doc doc, @NotNull Link id) {
     return linkDef(doc, id, null);
   }
 
-  static @NotNull Doc linkRef(@NotNull Doc doc, @NotNull LinkId href) {
+  static @NotNull Doc linkRef(@NotNull Doc doc, @NotNull Link href) {
     return linkRef(doc, href, null);
   }
 
-  static @NotNull Doc linkDef(@NotNull Doc doc, @NotNull LinkId id, @Nullable String hover) {
+  static @NotNull Doc linkDef(@NotNull Doc doc, @NotNull Link id, @Nullable String hover) {
     return new HyperLinked(doc, id, id, hover);
   }
 
-  static @NotNull Doc linkRef(@NotNull Doc doc, @NotNull LinkId href, @Nullable String hover) {
+  static @NotNull Doc linkRef(@NotNull Doc doc, @NotNull Link href, @Nullable String hover) {
     return new HyperLinked(doc, href, null, hover);
   }
 
-  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId href, @Nullable String hover) {
+  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull Link href, @Nullable String hover) {
     return new HyperLinked(doc, href, null, hover);
   }
 
-  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId href) {
+  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull Link href) {
     return hyperLink(plain(plain), href, null);
   }
 
@@ -541,6 +539,18 @@ public sealed interface Doc extends Docile {
 
   @Contract("_ -> new") static @NotNull Doc vcatNonEmpty(@NotNull SeqLike<Doc> docs) {
     return vcat(docs.view().filter(Doc::isNotEmpty));
+  }
+
+  @Contract("_, _ -> new") static @NotNull Doc list(@NotNull SeqLike<@NotNull Doc> docs, boolean isOrdered) {
+    return new List(docs.toImmutableSeq(), isOrdered);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc ordered(Doc @NotNull ... docs) {
+    return list(Seq.of(docs), true);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc bullet(Doc @NotNull ... docs) {
+    return list(Seq.of(docs), false);
   }
 
   /**

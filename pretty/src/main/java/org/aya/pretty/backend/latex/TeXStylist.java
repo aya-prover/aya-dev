@@ -10,6 +10,8 @@ import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public class TeXStylist extends ClosingStylist {
   public static final @NotNull TeXStylist DEFAULT = new TeXStylist(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT);
 
@@ -17,19 +19,19 @@ public class TeXStylist extends ClosingStylist {
     super(colorScheme, styleFamily);
   }
 
-  @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatItalic(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("\\textit{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatBold(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("\\textbf{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("\\sout{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("\\underline{", "}", false);
   }
 

@@ -3,8 +3,8 @@
 package org.aya.pretty;
 
 import org.aya.pretty.backend.md.MdStyle;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Link;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +42,7 @@ public class MdStyleTest {
   @NotNull private Doc doc() {
     return Doc.cat(
       Doc.styled(MdStyle.h(1), "H1"),
-      Doc.styled(MdStyle.GFM.Paragraph, Doc.hyperLink("Click me", LinkId.page("https://google.com"))),
+      Doc.styled(MdStyle.GFM.Paragraph, Doc.hyperLink("Click me", Link.page("https://google.com"))),
       Doc.styled(MdStyle.h(2), "H2"),
       Doc.styled(MdStyle.h(3), "H3"),
       Doc.styled(MdStyle.h(4), "H4"),
@@ -107,5 +107,55 @@ public class MdStyleTest {
 
   @NotNull private Doc escapeDoc17() {
     return Doc.code("", Doc.plain("\\[\\`"));
+  }
+
+  @Test
+  public void testList() {
+    var actual0 = bulletList().renderToMd();
+    var expected0 = """
+            
+      + first<br/>
+        <br/>
+        third
+      + fourth
+        + 4.1
+        + 4.2
+            
+      """;
+
+    var actual1 = orderedList().renderToMd();
+    var expected1 = """
+            
+      1. first<br/>
+         <br/>
+         third
+      2. fourth
+         + 4.1
+         + 4.2
+            
+      """;
+
+    assertEquals(expected0, actual0);
+    assertEquals(expected1, actual1);
+  }
+
+  @NotNull private Doc bulletList() {
+    return Doc.bullet(
+      Doc.cat(Doc.plain("first"), Doc.line(), Doc.line(), Doc.plain("third")),
+      Doc.cat(Doc.plain("fourth"), Doc.bullet(
+        Doc.plain("4.1"),
+        Doc.plain("4.2")
+      ))
+    );
+  }
+
+  @NotNull private Doc orderedList() {
+    return Doc.ordered(
+      Doc.cat(Doc.plain("first"), Doc.line(), Doc.line(), Doc.plain("third")),
+      Doc.cat(Doc.plain("fourth"), Doc.bullet(
+        Doc.plain("4.1"),
+        Doc.plain("4.2")
+      ))
+    );
   }
 }

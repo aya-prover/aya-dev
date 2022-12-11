@@ -3,14 +3,15 @@
 package org.aya.pretty.backend.md;
 
 import org.aya.pretty.backend.html.DocHtmlPrinter;
+import org.aya.pretty.backend.html.HtmlConstants;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.regex.Pattern;
 
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
-
   public static final Pattern MD_ESCAPE = Pattern.compile("[#&()*+\\-;<>\\[\\\\\\]_`|~]");
   public static final Pattern MD_NO_ESCAPE_BACKSLASH = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
 
@@ -20,21 +21,22 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   @Override protected void renderFooter(@NotNull Cursor cursor) {
     // put generated styles at the end of the file
     if (config.withHeader) {
-      cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_STYLE);
-      cursor.invisibleContent(DocHtmlPrinter.HOVER_POPUP_STYLE);
+      cursor.invisibleContent(HtmlConstants.HOVER_STYLE);
+      cursor.invisibleContent(HtmlConstants.HOVER_POPUP_STYLE);
       if (config.ayaFlavored) // TODO: add flag for Vue (server side rendering) and plain HTML
-        cursor.invisibleContent(DocHtmlPrinter.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
+        cursor.invisibleContent(HtmlConstants.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
+      renderCssStyle(cursor);
     }
   }
 
   // markdown escape: https://spec.commonmark.org/0.30/#backslash-escapes
-  @Override protected @NotNull String escapePlainText(@NotNull String content, Outer outer) {
-    if (outer == Outer.EnclosingTag) {
+  @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
+    if (outer.contains(Outer.EnclosingTag)) {
       // If we are in HTML tag (like rendered Aya code), use HTML escape settings.
       return super.escapePlainText(content, outer);
     }
     // If we are in Markdown, do not escape text in code block.
-    if (outer == Outer.Code) return content;
+    if (outer.contains(Outer.Code)) return content;
     // We are not need to call `super.escapePlainText`, we will escape them in markdown way.
     // I wish you can understand this genius regexp
     // What we will escape:
@@ -61,11 +63,16 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     return content;
   }
 
-  @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
-    cursor.lineBreakWith("\n");
+  @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
+    if (outer.contains(Outer.List)) {
+      cursor.lineBreakWith("<br/>\n");
+    } else {
+      cursor.lineBreakWith("\n");
+    }
   }
 
-  @Override protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, Outer outer) {
+  @Override
+  protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, EnumSet<Outer> outer) {
     Runnable pureMd = () -> {
       // use markdown typesetting only when the stylist is pure markdown
       var href = text.href();
@@ -77,34 +84,65 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       // TODO: text.id(), text.hover()
     };
     runSwitch(pureMd, () -> {
-      if (outer != Outer.Free) super.renderHyperLinked(cursor, text, outer);
+      if (!outer.isEmpty()) super.renderHyperLinked(cursor, text, outer);
       else pureMd.run();
     });
   }
 
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, Outer outer) {
+  @Override
+  protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, EnumSet<Outer> outer) {
     // assumption: inline code cannot be nested in markdown, but don't assert it.
     Runnable pureMd = () -> formatInlineCode(cursor, code.code(), "`", "`", outer);
     runSwitch(pureMd, () -> {
       var isAya = code.language().equalsIgnoreCase("aya");
-      if (isAya) formatInlineCode(cursor, code.code(), "<code class=\"Aya\">", "</code>", Outer.EnclosingTag);
+      if (isAya) formatInlineCode(cursor, code.code(), "<code class=\"Aya\">", "</code>", EnumSet.of(Outer.EnclosingTag));
       else pureMd.run();
     });
   }
 
-  @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, Outer outer) {
+  /**
+   * @see org.aya.pretty.backend.string.StringPrinter#renderList
+   */
+  @Override protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
+    var isTopLevel = !outer.contains(Outer.List);
+    requireLineStart(cursor);
+    if (isTopLevel) renderHardLineBreak(cursor, outer);
+
+    list.items().forEachIndexed((idx, item) -> {
+      requireLineStart(cursor);
+
+      var pre = list.isOrdered()
+        ? (idx + 1) + "."
+        : "+";
+      var content = Doc.nest(pre.length() + 1, item);
+
+      // render pre
+      cursor.visibleContent(pre);
+      cursor.visibleContent(" ");
+
+      // render
+      renderDoc(cursor, content, EnumSet.of(Outer.List));
+    });
+
+    if (isTopLevel) {
+      requireLineStart(cursor);
+      renderHardLineBreak(cursor, outer);
+    }
+  }
+
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
     // assumption: code block cannot be nested in markdown, but don't assert it.
     Runnable pureMd = () -> formatCodeBlock(cursor, block.code(), "```" + block.language(), "```", outer);
     runSwitch(pureMd,
       () -> {
         var isAya = block.language().equalsIgnoreCase("aya");
         if (isAya)
-          formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", "<code>", "</code>", Outer.EnclosingTag);
+          formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", "<code>", "</code>", EnumSet.of(Outer.EnclosingTag));
         else pureMd.run();
       });
   }
 
-  public void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, Outer outer) {
+  public void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
     formatCodeBlock(cursor, code, begin, end, "", "", outer);
   }
 
@@ -112,7 +150,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     @NotNull Cursor cursor, @NotNull Doc code,
     @NotNull String begin, @NotNull String end,
     @NotNull String begin2, @NotNull String end2,
-    Outer outer
+    EnumSet<Outer> outer
   ) {
     cursor.invisibleContent(begin);
     cursor.lineBreakWith("\n");
@@ -124,7 +162,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     cursor.lineBreakWith("\n");
   }
 
-  public void formatInlineCode(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, Outer outer) {
+  public void formatInlineCode(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
     cursor.invisibleContent(begin);
     renderDoc(cursor, code, outer);
     cursor.invisibleContent(end);
@@ -138,12 +176,12 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   public static class Config extends DocHtmlPrinter.Config {
     public boolean ayaFlavored;
 
-    public Config(boolean withHeader, boolean ayaFlavored) {
-      this(MdStylist.DEFAULT, withHeader, ayaFlavored);
+    public Config(boolean withHeader, boolean withStyleDef, boolean ayaFlavored) {
+      this(MdStylist.DEFAULT, withHeader, withStyleDef, ayaFlavored);
     }
 
-    public Config(@NotNull MdStylist stylist, boolean withHeader, boolean ayaFlavored) {
-      super(stylist, withHeader);
+    public Config(@NotNull MdStylist stylist, boolean withHeader, boolean withStyleDef, boolean ayaFlavored) {
+      super(stylist, withHeader, withStyleDef);
       this.ayaFlavored = ayaFlavored;
     }
   }

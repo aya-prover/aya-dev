@@ -13,9 +13,10 @@ import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Link;
 import org.aya.pretty.doc.Style;
+import org.aya.pretty.style.AyaStyleKey;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -42,14 +43,14 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   protected interface Fmt<T extends AyaDocile> extends BiFunction<Outer, T, Doc> {
   }
 
-  public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
-  public static final @NotNull Style PRIM_CALL = Style.preset("aya:PrimCall");
-  public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
-  public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
-  public static final @NotNull Style STRUCT_CALL = Style.preset("aya:StructCall");
-  public static final @NotNull Style CON_CALL = Style.preset("aya:ConCall");
-  public static final @NotNull Style FIELD_CALL = Style.preset("aya:FieldCall");
-  public static final @NotNull Style GENERALIZED = Style.preset("aya:Generalized");
+  public static final @NotNull Style KEYWORD = AyaStyleKey.Keyword.preset();
+  public static final @NotNull Style PRIM_CALL = AyaStyleKey.Prim.preset();
+  public static final @NotNull Style FN_CALL = AyaStyleKey.Fn.preset();
+  public static final @NotNull Style DATA_CALL = AyaStyleKey.Data.preset();
+  public static final @NotNull Style STRUCT_CALL = AyaStyleKey.Struct.preset();
+  public static final @NotNull Style CON_CALL = AyaStyleKey.Con.preset();
+  public static final @NotNull Style FIELD_CALL = AyaStyleKey.Field.preset();
+  public static final @NotNull Style GENERALIZED = AyaStyleKey.Generalized.preset();
 
   public final @NotNull DistillerOptions options;
 
@@ -243,10 +244,10 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     return Doc.linkRef(Doc.styled(color, ref.name()), linkIdOf(ref));
   }
 
-  public static @NotNull LinkId linkIdOf(@NotNull AnyVar ref) {
+  public static @NotNull Link linkIdOf(@NotNull AnyVar ref) {
     if (ref instanceof DefVar<?, ?> defVar)
-      return LinkId.loc(QualifiedID.join(defVar.qualifiedName()));
-    return LinkId.loc(ref.hashCode());
+      return Link.loc(QualifiedID.join(defVar.qualifiedName()));
+    return Link.loc(ref.hashCode());
   }
 
   public static @NotNull Doc linkLit(int literal, @NotNull AnyVar ref, @NotNull Style color) {

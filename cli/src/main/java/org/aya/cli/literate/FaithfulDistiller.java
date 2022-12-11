@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
 import org.aya.distill.AyaDistillerOptions;
+import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -18,15 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface FaithfulDistiller {
-  @NotNull Style STYLE_KEYWORD = AyaStyleFamily.Key.Keyword.preset();
-  @NotNull Style STYLE_PRIM_CALL = AyaStyleFamily.Key.PrimCall.preset();
-  @NotNull Style STYLE_FN_CALL = AyaStyleFamily.Key.FnCall.preset();
-  @NotNull Style STYLE_DATA_CALL = AyaStyleFamily.Key.DataCall.preset();
-  @NotNull Style STYLE_STRUCT_CALL = AyaStyleFamily.Key.StructCall.preset();
-  @NotNull Style STYLE_CON_CALL = AyaStyleFamily.Key.ConCall.preset();
-  @NotNull Style STYLE_FIELD_CALL = AyaStyleFamily.Key.FieldCall.preset();
-  @NotNull Style STYLE_GENERALIZE = AyaStyleFamily.Key.Generalized.preset();
-
   static void checkHighlights(@NotNull SeqLike<HighlightInfo> highlights) {
     var lastEndIndex = -1;
 
@@ -59,7 +51,7 @@ public interface FaithfulDistiller {
 
     return doHighlight(raw, base, highlights
       .filter(h -> h.sourcePos() != SourcePos.NONE)
-      );
+    );
   }
 
   private static @NotNull Doc doHighlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
@@ -106,13 +98,13 @@ public interface FaithfulDistiller {
 
   private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {
     var style = switch (defKind) {
-      case Data -> STYLE_DATA_CALL;
-      case Con -> STYLE_CON_CALL;
-      case Struct -> STYLE_STRUCT_CALL;
-      case Field -> STYLE_FIELD_CALL;
-      case Fn -> STYLE_FN_CALL;
-      case Prim -> STYLE_PRIM_CALL;
-      case Generalized -> STYLE_GENERALIZE;
+      case Data -> BaseDistiller.DATA_CALL;
+      case Con -> BaseDistiller.CON_CALL;
+      case Struct -> BaseDistiller.STRUCT_CALL;
+      case Field -> BaseDistiller.FIELD_CALL;
+      case Fn -> BaseDistiller.FN_CALL;
+      case Prim -> BaseDistiller.PRIM_CALL;
+      case Generalized -> BaseDistiller.GENERALIZED;
       case LocalVar, Unknown, Module -> null;
     };
 
@@ -127,7 +119,7 @@ public interface FaithfulDistiller {
     return switch (litKind) {
       case Int -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
-      case Keyword -> Doc.styled(STYLE_KEYWORD, raw);
+      case Keyword -> Doc.styled(BaseDistiller.KEYWORD, raw);
     };
   }
 

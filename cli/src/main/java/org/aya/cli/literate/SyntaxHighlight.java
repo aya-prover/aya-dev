@@ -18,7 +18,7 @@ import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
-import org.aya.pretty.backend.string.LinkId;
+import org.aya.pretty.doc.Link;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
@@ -103,13 +103,13 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   @Override
   public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
     // TODO: use `LinkId.page` for cross module link
-    return add(acc, HighlightInfo.DefKind.Module.toRef(mod.sourcePos(), LinkId.loc(mod.join()), null));
+    return add(acc, HighlightInfo.DefKind.Module.toRef(mod.sourcePos(), Link.loc(mod.join()), null));
   }
 
   @Override
   public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
     // TODO: use `LinkId.page` for cross module link
-    return add(acc, HighlightInfo.DefKind.Module.toDef(mod.sourcePos(), LinkId.loc(mod.join()), null));
+    return add(acc, HighlightInfo.DefKind.Module.toDef(mod.sourcePos(), Link.loc(mod.join()), null));
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {

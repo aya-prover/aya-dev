@@ -9,24 +9,26 @@ import org.aya.pretty.printer.ColorScheme;
 import org.aya.pretty.printer.StyleFamily;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public class UnixTermStylist extends ClosingStylist {
   public UnixTermStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily) {
     super(colorScheme, styleFamily);
   }
 
-  @Override protected @NotNull StyleToken formatItalic(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatItalic(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("\033[3m", "\033[23m", false);
   }
 
-  @Override protected @NotNull StyleToken formatBold(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatBold(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("\033[1m", "\033[22m", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("\033[9m", "\033[29m", false);
   }
 
-  @Override protected @NotNull StyleToken formatUnderline(StringPrinter.Outer outer) {
+  @Override protected @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer) {
     return new StyleToken("\033[4m", "\033[24m", false);
   }
 

@@ -7,9 +7,9 @@ import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
 import org.aya.distill.AyaDistillerOptions;
-import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.aya.pretty.doc.Link;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
@@ -25,11 +25,11 @@ public sealed interface Literate extends Docile {
   record Raw(@NotNull Doc toDoc) implements Literate {
   }
 
-  record Link(@NotNull String href, @Nullable String hover,
-              @NotNull ImmutableSeq<Literate> children) implements Literate {
+  record HyperLink(@NotNull String href, @Nullable String hover,
+                   @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
-      return Doc.hyperLink(child, LinkId.page(href), hover);
+      return Doc.hyperLink(child, Link.page(href), hover);
     }
   }
 
