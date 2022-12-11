@@ -699,9 +699,8 @@ public final class ExprTycker extends Tycker {
       builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
       builder.reduce();
     });
-    if (expr instanceof Expr.WithTerm withTerm) {
-      addWithTerm(withTerm, frozen.get());
-    }
+    if (expr instanceof Expr.WithTerm wt) addWithTerm(wt, frozen.get());
+    if (expr instanceof Expr.Lift lift && lift.expr() instanceof Expr.WithTerm wt) addWithTerm(wt, frozen.get());
   }
 
   public void addWithTerm(@NotNull Expr.WithTerm withTerm, @NotNull Result result) {
