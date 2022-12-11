@@ -63,7 +63,12 @@ public class ReplCompiler {
     this.modulePaths = modulePaths;
     this.reporter = CountingReporter.delegate(reporter);
     this.locator = locator != null ? locator : new SourceFileLocator.Module(this.modulePaths);
-    this.primFactory = new PrimDef.Factory();
+    this.primFactory = new PrimDef.Factory() {
+      @Override
+      public boolean suppressRedefinition() {
+        return true;
+      }
+    };
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(this.reporter);
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
