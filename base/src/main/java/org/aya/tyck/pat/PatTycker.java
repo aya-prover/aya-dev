@@ -369,7 +369,7 @@ public final class PatTycker {
    *                     For now, {@param outerPattern} is used when {@param sig} is not empty
    *                     but {@param stream} is empty, it is possible when matching parameters of Ctor.
    * @return (wellTyped patterns, sig.result ())
-   * @see PatTycker#visitInnerPatterns(Def.Signature, SeqView, Pattern, boolean)
+   * @see #visitInnerPatterns
    */
   private @NotNull VisitPatterns visitPatterns(
     @NotNull Def.Signature<?> sig,

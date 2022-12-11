@@ -55,3 +55,4 @@ def infixr <==>
   (p : [| i |] A)
   (q : [| i |] A { ~ i := p 1 })
   : p 0 = q 1 => <=3=> idp p q
+  tighter =

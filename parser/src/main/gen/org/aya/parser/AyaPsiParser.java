@@ -432,32 +432,29 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // dataCtorClause
-  //            | (BAR dataCtor)
+  // BAR (dataCtorClause | dataCtor)
   public static boolean dataBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataBody")) return false;
     if (!nextTokenIs(b, BAR)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = dataCtorClause(b, l + 1);
-    if (!r) r = dataBody_1(b, l + 1);
+    r = consumeToken(b, BAR);
+    r = r && dataBody_1(b, l + 1);
     exit_section_(b, m, DATA_BODY, r);
     return r;
   }
 
-  // BAR dataCtor
+  // dataCtorClause | dataCtor
   private static boolean dataBody_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataBody_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, BAR);
-    r = r && dataCtor(b, l + 1);
-    exit_section_(b, m, null, r);
+    r = dataCtorClause(b, l + 1);
+    if (!r) r = dataCtor(b, l + 1);
     return r;
   }
 
   /* ********************************************************** */
-  // KW_COERCE? declNameOrInfix tele* partialBlock? bindBlock?
+  // KW_COERCE? declNameOrInfix tele* type? partialBlock? bindBlock?
   public static boolean dataCtor(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataCtor")) return false;
     boolean r;
@@ -467,6 +464,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = r && dataCtor_2(b, l + 1);
     r = r && dataCtor_3(b, l + 1);
     r = r && dataCtor_4(b, l + 1);
+    r = r && dataCtor_5(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -489,32 +487,37 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // partialBlock?
+  // type?
   private static boolean dataCtor_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataCtor_3")) return false;
+    type(b, l + 1);
+    return true;
+  }
+
+  // partialBlock?
+  private static boolean dataCtor_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dataCtor_4")) return false;
     partialBlock(b, l + 1);
     return true;
   }
 
   // bindBlock?
-  private static boolean dataCtor_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dataCtor_4")) return false;
+  private static boolean dataCtor_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dataCtor_5")) return false;
     bindBlock(b, l + 1);
     return true;
   }
 
   /* ********************************************************** */
-  // BAR patterns IMPLIES dataCtor
+  // patterns IMPLIES dataCtor
   public static boolean dataCtorClause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataCtorClause")) return false;
-    if (!nextTokenIs(b, BAR)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, BAR);
-    r = r && patterns(b, l + 1);
+    Marker m = enter_section_(b, l, _NONE_, DATA_CTOR_CLAUSE, "<data ctor clause>");
+    r = patterns(b, l + 1);
     r = r && consumeToken(b, IMPLIES);
     r = r && dataCtor(b, l + 1);
-    exit_section_(b, m, DATA_CTOR_CLAUSE, r);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

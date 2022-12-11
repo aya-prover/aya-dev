@@ -1,0 +1,4 @@
+open import Paths
+data SoWrong (A : Type)
+| zero
+| trunc : [| i |] SoWrong A { 1 := zero }

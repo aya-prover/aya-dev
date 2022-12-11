@@ -13,6 +13,7 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.tyck.order.TyckOrder;
+import org.aya.tyck.order.TyckUnit;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -52,25 +53,21 @@ public interface StmtResolver {
     switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.FnDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), resolver);
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         var bodyResolver = resolver.body();
         bodyResolver.enterBody();
         decl.body = decl.body.map(bodyResolver, pats -> pats.map(bodyResolver::apply));
         addReferences(info, new TyckOrder.Body(decl), resolver);
       }
       case TeleDecl.DataDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), resolver);
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         resolver.enterBody();
         decl.body.forEach(ctor -> {
           var bodyResolver = resolver.member(decl);
           bodyResolver.enterHead();
           var mCtx = MutableValue.create(resolver.ctx());
           ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> ExprResolver.resolve(pattern, mCtx)));
-          ctor.telescope = ctor.telescope.map(param -> bodyResolver.resolve(param, mCtx));
-          addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
-            .appended(new TyckOrder.Head(decl)));
+          resolveMemberSignature(ctor, bodyResolver, mCtx, info, decl);
 
           bodyResolver.enterBody();
           ctor.clauses = bodyResolver.partial(mCtx.get(), ctor.clauses);
@@ -80,17 +77,13 @@ public interface StmtResolver {
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
       case TeleDecl.StructDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), resolver);
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         resolver.enterBody();
         decl.fields.forEach(field -> {
           var bodyResolver = resolver.member(decl);
           bodyResolver.enterHead();
           var mCtx = MutableValue.create(resolver.ctx());
-          field.telescope = field.telescope.map(param -> bodyResolver.resolve(param, mCtx));
-          field.result = bodyResolver.enter(mCtx.get()).apply(field.result);
-          addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()
-            .appended(new TyckOrder.Head(decl)));
+          resolveMemberSignature(field, bodyResolver, mCtx, info, decl);
           bodyResolver.enterBody();
           field.body = field.body.map(bodyResolver.enter(mCtx.get()));
           addReferences(info, new TyckOrder.Body(field), bodyResolver);
@@ -99,14 +92,22 @@ public interface StmtResolver {
           .concat(decl.fields.map(TyckOrder.Body::new)));
       }
       case TeleDecl.PrimDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE);
-        addReferences(info, new TyckOrder.Head(decl), resolver);
+        resolveDeclSignature(decl, ExprResolver.RESTRICTIVE, info);
         addReferences(info, new TyckOrder.Body(decl), SeqView.empty());
       }
       // handled in DataDecl and StructDecl
       case TeleDecl.DataCtor ctor -> {}
       case TeleDecl.StructField field -> {}
     }
+  }
+  private static <T extends Decl.Telescopic<?> & TyckUnit>
+  void resolveMemberSignature(T ctor, ExprResolver bodyResolver, MutableValue<@NotNull Context> mCtx, @NotNull ResolveInfo info, Decl decl) {
+    ctor.modifyTelescope(t -> t.map(param -> bodyResolver.resolve(param, mCtx)));
+    // If changed to method reference, `bodyResolver.enter(mCtx.get())` will be evaluated eagerly
+    //  so please don't
+    ctor.modifyResult(t -> bodyResolver.enter(mCtx.get()).apply(t));
+    addReferences(info, new TyckOrder.Head(ctor), bodyResolver.reference().view()
+      .appended(new TyckOrder.Head(decl)));
   }
 
   private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, SeqView<TyckOrder> refs) {
@@ -120,7 +121,11 @@ public interface StmtResolver {
     addReferences(info, decl, resolver.reference().view());
   }
 
-  private static @NotNull ExprResolver resolveDeclSignature(@NotNull TeleDecl<?> decl, ExprResolver.@NotNull Options options) {
+  private static @NotNull ExprResolver resolveDeclSignature(
+    @NotNull TeleDecl<?> decl,
+    ExprResolver.@NotNull Options options,
+    @NotNull ResolveInfo info
+  ) {
     assert decl.ctx != null;
     var resolver = new ExprResolver(decl.ctx, options);
     resolver.enterHead();
@@ -129,6 +134,7 @@ public interface StmtResolver {
     var newResolver = resolver.enter(mCtx.get());
     decl.result = newResolver.apply(decl.result);
     decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
+    addReferences(info, new TyckOrder.Head(decl), resolver);
     return newResolver;
   }
 

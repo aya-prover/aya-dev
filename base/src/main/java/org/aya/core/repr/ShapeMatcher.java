@@ -12,7 +12,10 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
-import org.aya.core.term.*;
+import org.aya.core.term.Callable;
+import org.aya.core.term.RefTerm;
+import org.aya.core.term.SortTerm;
+import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +50,8 @@ public record ShapeMatcher(
   }
 
   private boolean matchCtor(@NotNull CodeShape.CtorShape shape, @NotNull CtorDef ctor) {
-    if (ctor.pats.isNotEmpty()) ctor.dataRef.core.telescope.zipView(ctor.ownerTele)
-      .forEach(t -> teleSubst.put(t._1.ref(), t._2.ref()));
+    if (ctor.pats.isNotEmpty()) ctor.dataRef.core.telescope.forEachWith(ctor.ownerTele,
+      (t1, t2) -> teleSubst.put(t1.ref(), t2.ref()));
     return matchTele(shape.tele(), ctor.selfTele);
   }
 

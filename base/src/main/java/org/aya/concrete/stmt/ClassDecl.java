@@ -10,6 +10,8 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.UnaryOperator;
+
 /**
  * Concrete classable definitions, corresponding to {@link ClassDef}.
  *
@@ -37,8 +39,8 @@ public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implemen
     return result;
   }
 
-  @Override public void setResult(@NotNull Expr result) {
-    this.result = result;
+  @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
+    result = f.apply(result);
   }
 
   protected ClassDecl(

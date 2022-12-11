@@ -385,8 +385,9 @@ public record AyaGKProducer(
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var bind = node.peekChild(BIND_BLOCK);
     var partial = node.peekChild(PARTIAL_BLOCK);
+    var ty = node.peekChild(TYPE);
     var namePos = nameOrInfix._1.sourcePos();
-    return new TeleDecl.DataCtor(
+    var ctor = new TeleDecl.DataCtor(
       namePos,
       sourcePosOf(node),
       nameOrInfix._2,
@@ -397,6 +398,8 @@ public record AyaGKProducer(
       node.peekChild(KW_COERCE) != null,
       bind == null ? BindBlock.EMPTY : bindBlock(bind)
     );
+    if (ty != null) ctor.result = type(ty);
+    return ctor;
   }
 
   public @NotNull ImmutableSeq<Expr.Param> telescope(SeqView<GenericNode<?>> telescope) {

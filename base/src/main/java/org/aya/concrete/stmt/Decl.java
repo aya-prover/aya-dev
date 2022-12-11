@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.UnaryOperator;
+
 /**
  * Generic concrete definitions, corresponding to {@link org.aya.core.def.GenericDef}.
  * Concrete definitions can be varied in the following ways:
@@ -64,9 +66,9 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface Telescopic<RetTy extends Term> permits TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
+  sealed interface Telescopic<RetTy extends Term> extends Resulted permits TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
     @NotNull ImmutableSeq<Expr.Param> telescope();
-    void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope);
+    void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f);
     @Nullable Def.Signature<RetTy> signature();
     void setSignature(@Nullable Def.Signature<RetTy> signature);
   }
@@ -87,8 +89,8 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface Resulted permits ClassDecl, TeleDecl, TeleDecl.StructField {
-    @NotNull Expr result();
-    void setResult(@NotNull Expr result);
+  sealed interface Resulted permits ClassDecl, Telescopic {
+    @Nullable Expr result();
+    void modifyResult(@NotNull UnaryOperator<Expr> f);
   }
 }

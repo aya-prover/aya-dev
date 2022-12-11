@@ -14,6 +14,7 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.Arg;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.function.UnaryOperator;
 
 /**
  * Concrete telescopic definition, corresponding to {@link Def}.
@@ -32,7 +34,7 @@ import java.util.EnumSet;
  * @see Decl
  */
 public sealed abstract class TeleDecl<RetTy extends Term>
-  extends CommonDecl implements Decl.Telescopic<RetTy>, Decl.TopLevel, Decl.Resulted {
+  extends CommonDecl implements Decl.Telescopic<RetTy>, Decl.TopLevel {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
   public @NotNull Expr result;
@@ -56,16 +58,16 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     return result;
   }
 
-  @Override public void setResult(@NotNull Expr result) {
-    this.result = result;
+  @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
+    result = f.apply(result);
   }
 
   @Override public @NotNull ImmutableSeq<Expr.Param> telescope() {
     return telescope;
   }
 
-  @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
-    this.telescope = telescope;
+  @Override public void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f) {
+    telescope = f.apply(telescope);
   }
 
   @Override public Def.@Nullable Signature<RetTy> signature() {
@@ -128,6 +130,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     public ImmutableSeq<Term.Param> patternTele;
     public @NotNull Expr.PartEl clauses;
     public @NotNull ImmutableSeq<Arg<Pattern>> patterns;
+    public @Nullable Expr result;
+    public @Nullable Partial<Term> checkedPartial;
     public final boolean coerce;
 
     /** used when tycking constructor's header */
@@ -155,6 +159,14 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       this.telescope = telescope;
     }
 
+    @Override public @Nullable Expr result() {
+      return result;
+    }
+
+    @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
+      if (result != null) result = f.apply(result);
+    }
+
     @Override public @NotNull DefVar<CtorDef, DataCtor> ref() {
       return ref;
     }
@@ -163,8 +175,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       return telescope;
     }
 
-    @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
-      this.telescope = telescope;
+    @Override public void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f) {
+      telescope = f.apply(telescope);
     }
 
     @Override public @Nullable Def.Signature<DataCall> signature() {
@@ -243,7 +255,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   }
 
   public static final class StructField
-    extends CommonDecl implements Decl.Telescopic<Term>, Decl.Resulted {
+    extends CommonDecl implements Decl.Telescopic<Term> {
     public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull Expr result;
@@ -280,8 +292,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       return telescope;
     }
 
-    @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
-      this.telescope = telescope;
+    @Override public void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f) {
+      telescope = f.apply(telescope);
     }
 
     @Override public Def.@Nullable Signature<Term> signature() {
@@ -296,8 +308,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       return result;
     }
 
-    @Override public void setResult(@NotNull Expr result) {
-      this.result = result;
+    @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
+      result = f.apply(result);
     }
   }
 
@@ -331,7 +343,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
 
     @Override public @NotNull DefVar<FnDef, FnDecl> ref() {
-      return this.ref;
+      return ref;
     }
   }
 }

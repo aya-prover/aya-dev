@@ -1,5 +1,5 @@
 open import Paths using (=)
-open import Logic::HProp
+open import Logic::HLevels
 
 data False
 

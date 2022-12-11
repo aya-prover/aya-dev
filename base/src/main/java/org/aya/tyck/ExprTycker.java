@@ -42,6 +42,7 @@ import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.TermComparator;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -55,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 
@@ -699,9 +701,8 @@ public final class ExprTycker extends Tycker {
       builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
       builder.reduce();
     });
-    if (expr instanceof Expr.WithTerm withTerm) {
-      addWithTerm(withTerm, frozen.get());
-    }
+    if (expr instanceof Expr.WithTerm wt) addWithTerm(wt, frozen.get());
+    if (expr instanceof Expr.Lift lift && lift.expr() instanceof Expr.WithTerm wt) addWithTerm(wt, frozen.get());
   }
 
   public void addWithTerm(@NotNull Expr.WithTerm withTerm, @NotNull Result result) {
@@ -857,11 +858,19 @@ public final class ExprTycker extends Tycker {
    * Check if <code>lower</code> is a subtype of <code>upper</code>,
    * and report a type error if it's not the case.
    *
-   * @see ExprTycker#inheritFallbackUnify(Term, Result, Expr)
+   * @see #inheritFallbackUnify(Term, Result, Expr)
    */
   public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
+    unifyTyReported(upper, lower, loc, unification ->
+      new UnifyError.Type(loc, upper, lower, unification, state));
+  }
+
+  public void unifyTyReported(
+    @NotNull Term upper, @NotNull Term lower, Expr loc,
+    Function<TermComparator.FailureData, Problem> p
+  ) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (unification != null) reporter.report(new UnifyError.Type(loc, upper, lower, unification, state));
+    if (unification != null) reporter.report(p.apply(unification));
   }
 
   /**
@@ -869,7 +878,7 @@ public final class ExprTycker extends Tycker {
    * and try to insert implicit arguments to fulfill this goal (if possible).
    *
    * @return the term and type after insertion
-   * @see ExprTycker#unifyTyReported(Term, Term, Expr)
+   * @see #unifyTyReported(Term, Term, Expr)
    */
   private Result inheritFallbackUnify(@NotNull Term upper, @NotNull Result result, Expr loc) {
     var inst = instImplicits(result, loc.sourcePos());
