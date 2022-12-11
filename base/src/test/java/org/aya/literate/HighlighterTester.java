@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli;
+package org.aya.literate;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
@@ -8,21 +8,21 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.cli.HighlighterTester.ExpectedHighlightType.Def;
-import org.aya.cli.HighlighterTester.ExpectedHighlightType.LitInt;
-import org.aya.cli.HighlighterTester.ExpectedHighlightType.Ref;
 import org.aya.cli.literate.HighlightInfo;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef.Factory;
+import org.aya.literate.HighlighterTester.ExpectedHighlightType.Def;
+import org.aya.literate.HighlighterTester.ExpectedHighlightType.LitInt;
+import org.aya.literate.HighlighterTester.ExpectedHighlightType.Ref;
 import org.aya.pretty.doc.Link;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.resolve.module.EmptyModuleLoader;
+import org.aya.test.AyaThrowingReporter;
+import org.aya.test.EmptyModuleLoader;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
-import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -199,7 +199,7 @@ public class HighlighterTester {
 
   public static void highlightAndTest(@Language("Aya") @NotNull String code, @Nullable ExpectedHighlightInfo... expected) {
     var sourceFile = new SourceFile("test.aya", Option.none(), code);
-    var reporter = ThrowingReporter.INSTANCE;
+    var reporter = AyaThrowingReporter.INSTANCE;
 
     var parser = new AyaParserImpl(reporter);
     var stmts = parser.program(sourceFile);

@@ -1,7 +1,8 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.Debug;
@@ -21,7 +22,7 @@ public interface AyaDocile /*extends Docile*/ {
    * @deprecated use {@link #toDoc(DistillerOptions)} instead
    */
   @Deprecated default @NotNull Doc debuggerOnlyToDoc() {
-    return toDoc(DistillerOptions.debug());
+    return toDoc(AyaDistillerOptions.debug());
   }
 
   @NotNull Doc toDoc(@NotNull DistillerOptions options);

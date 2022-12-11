@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.visitor.Subst;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.distill.AyaDistillerOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ public record ProjTerm(@NotNull Term of, int ix) implements Elimination {
 
   @Contract(pure = true) public static @NotNull Term proj(@NotNull ProjTerm proj) {
     if (proj.of instanceof TupTerm tup) {
-      assert tup.items().sizeGreaterThanOrEquals(proj.ix) && proj.ix > 0 : proj.of.toDoc(DistillerOptions.debug()).debugRender();
+      assert tup.items().sizeGreaterThanOrEquals(proj.ix) && proj.ix > 0 : proj.of.toDoc(AyaDistillerOptions.debug()).debugRender();
       return tup.items().get(proj.ix - 1);
     }
     return proj;

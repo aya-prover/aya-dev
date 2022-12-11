@@ -10,10 +10,10 @@ import org.aya.cli.single.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.resolve.module.EmptyModuleLoader;
+import org.aya.test.AyaThrowingReporter;
+import org.aya.test.EmptyModuleLoader;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
-import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -85,7 +85,7 @@ public class AyaMdParserTest {
   public void testExtract(String caseName) throws IOException {
     var oneCase = new Case(caseName);
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
-    var literate = SingleAyaFile.createLiterateFile(mdFile, ThrowingReporter.INSTANCE);
+    var literate = SingleAyaFile.createLiterateFile(mdFile, AyaThrowingReporter.INSTANCE);
     var actualCode = literate.codeFile().sourceCode();
     Files.writeString(oneCase.ayaFile(), actualCode);
 
@@ -106,10 +106,10 @@ public class AyaMdParserTest {
     var oneCase = new Case(caseName);
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
 
-    var literate = SingleAyaFile.createLiterateFile(mdFile, ThrowingReporter.INSTANCE);
+    var literate = SingleAyaFile.createLiterateFile(mdFile, AyaThrowingReporter.INSTANCE);
 
-    var stmts = literate.parseMe(new AyaParserImpl(ThrowingReporter.INSTANCE));
-    var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
+    var stmts = literate.parseMe(new AyaParserImpl(AyaThrowingReporter.INSTANCE));
+    var ctx = new EmptyContext(AyaThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
     var loader = EmptyModuleLoader.INSTANCE;
     var info = loader.resolveModule(new PrimDef.Factory(), ctx, stmts, loader);
     loader.tyckModule(null, info, null);
@@ -121,7 +121,7 @@ public class AyaMdParserTest {
     Files.writeString(oneCase.outMdFile(), expectedMd);
 
     // test single file compiler
-    var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, null, null);
+    var compiler = new SingleFileCompiler(AyaThrowingReporter.INSTANCE, null, null);
     compiler.compile(oneCase.mdFile(), new CompilerFlags(
       CompilerFlags.Message.ASCII, false, false, null, SeqView.empty(),
       oneCase.outMdFile()

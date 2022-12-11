@@ -59,4 +59,14 @@ public interface Reporter {
       }
     };
   }
+
+  static @NotNull String errorMessage(
+    @NotNull Problem problem, @NotNull DistillerOptions options,
+    boolean unicode, boolean supportAnsi, int pageWidth
+  ) {
+    var doc = problem.sourcePos() == SourcePos.NONE ? problem.describe(options) : problem.toPrettyError(options).toDoc();
+    return supportAnsi
+      ? doc.renderToTerminal(pageWidth, unicode)
+      : doc.renderToString(pageWidth, unicode);
+  }
 }

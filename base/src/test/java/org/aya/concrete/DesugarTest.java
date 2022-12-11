@@ -4,12 +4,12 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.PrimDef;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.test.AyaThrowingReporter;
 import org.aya.util.error.Global;
-import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,11 +54,11 @@ public class DesugarTest {
   }
 
   private void desugarAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
-    var resolveInfo = new ResolveInfo(new PrimDef.Factory(), new EmptyContext(ThrowingReporter.INSTANCE, Path.of("dummy")).derive("dummy"), ImmutableSeq.empty());
+    var resolveInfo = new ResolveInfo(new PrimDef.Factory(), new EmptyContext(AyaThrowingReporter.INSTANCE, Path.of("dummy")).derive("dummy"), ImmutableSeq.empty());
     var stmt = ParseTest.parseStmt(code);
     stmt.forEach(s -> s.desugar(resolveInfo));
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-        .map(s -> s.toDoc(DistillerOptions.debug())))
+        .map(s -> s.toDoc(AyaDistillerOptions.debug())))
       .debugRender()
       .trim());
   }

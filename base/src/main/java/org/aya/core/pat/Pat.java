@@ -13,6 +13,7 @@ import org.aya.core.def.Def;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.AyaDocile;
@@ -228,7 +229,7 @@ public sealed interface Pat extends AyaDocile {
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       var distiller = new CoreDistiller(options);
-      var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
+      var pats = options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
       var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
         pats.view().map(p -> distiller.pat(p, BaseDistiller.Outer.Free)))));
       return expr.getOrDefault(it -> Doc.sep(doc, Doc.symbol("=>"), it.toDoc(options)), doc);

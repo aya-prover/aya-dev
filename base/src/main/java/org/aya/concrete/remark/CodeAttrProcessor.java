@@ -4,8 +4,8 @@ package org.aya.concrete.remark;
 
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.mutable.MutableList;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.util.distill.DistillerOptions;
 import org.commonmark.node.*;
 import org.commonmark.parser.delimiter.DelimiterProcessor;
 import org.commonmark.parser.delimiter.DelimiterRun;
@@ -73,7 +73,7 @@ public class CodeAttrProcessor implements DelimiterProcessor {
       }
     }
 
-    var dist = new DistillerOptions();
+    var dist = new AyaDistillerOptions();
     var mode = NormalizeMode.NULL;
     var show = CodeOptions.ShowCode.Core;
     for (var s : DELIM.split(content.toString())) {
@@ -84,7 +84,7 @@ public class CodeAttrProcessor implements DelimiterProcessor {
         var val = attribute[1];
         var isTrue = val.equalsIgnoreCase("true")
           || val.equalsIgnoreCase("yes");
-        var cbt = cbt(key, DistillerOptions.Key.values(), null);
+        var cbt = cbt(key, AyaDistillerOptions.Key.values(), null);
         if (cbt != null) {
           dist.map.put(cbt, isTrue);
           continue;

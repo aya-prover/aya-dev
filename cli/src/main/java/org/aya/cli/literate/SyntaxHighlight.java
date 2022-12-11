@@ -123,7 +123,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")
-  private @NotNull HighlightInfo.DefKind kindOf(@NotNull AnyVar var) {
+  public static @NotNull HighlightInfo.DefKind kindOf(@NotNull AnyVar var) {
     record P(Decl decl, GenericDef def) {}
     return switch (var) {
       case GeneralizedVar ignored -> HighlightInfo.DefKind.Generalized;

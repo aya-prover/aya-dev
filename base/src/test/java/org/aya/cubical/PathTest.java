@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cubical;
 
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckDeclTest;
-import org.aya.util.distill.DistillerOptions;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.IntFunction;
@@ -23,7 +23,7 @@ public class PathTest {
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
       """);
-    IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(DistillerOptions.debug());
+    IntFunction<Doc> distiller = i -> res._2.get(i).toDoc(AyaDistillerOptions.debug());
     assertEquals("def = {A : Type 0} (a b : A) : Type 0 => a = b",
       distiller.apply(3).debugRender());
     assertEquals("def idp {A : Type 0} {a : A} : (=) {A} a a => \\ i => a",

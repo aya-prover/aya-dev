@@ -2,49 +2,28 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.distill;
 
-import org.jetbrains.annotations.Contract;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author ice1000
  */
-public final class DistillerOptions {
-  public final @NotNull Map<Key, Boolean> map = new EnumMap<>(Key.class);
+public abstract class DistillerOptions {
+  public final Map<Key, Boolean> map;
 
-  {
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public DistillerOptions(@NotNull Class<?> keyClass) {
+    if (keyClass.isEnum()) map = new EnumMap(keyClass);
+    else map = new HashMap<>();
     reset();
   }
 
-  public void reset() {
-    for (Key value : Key.values()) map.put(value, false);
-    map.put(Key.InlineMetas, true);
-  }
+  public abstract void reset();
 
-  public enum Key {
-    InlineMetas,
-    ShowImplicitArgs,
-    ShowImplicitPats,
-    ShowLambdaTypes,
-  }
-
-  @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions debug() {
-    var map = informative();
-    map.map.put(Key.ShowLambdaTypes, true);
-    return map;
-  }
-
-  @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions informative() {
-    var map = pretty();
-    map.map.put(Key.ShowImplicitArgs, true);
-    return map;
-  }
-
-  @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions pretty() {
-    var map = new DistillerOptions();
-    map.map.put(Key.ShowImplicitPats, true);
-    return map;
+  public interface Key {
   }
 }

@@ -7,9 +7,9 @@ import org.aya.cli.literate.FaithfulDistiller;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.resolve.context.EmptyContext;
+import org.aya.test.AyaThrowingReporter;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.util.error.SourceFile;
-import org.aya.util.reporter.ThrowingReporter;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -17,7 +17,7 @@ import java.nio.file.Files;
 
 public class FaithfulDistillerTest {
   @Test public void test() throws IOException {
-    var reporter = ThrowingReporter.INSTANCE;
+    var reporter = AyaThrowingReporter.INSTANCE;
 
     var root = AyaMdParserTest.TEST_DIR;
     var modName = "Main";

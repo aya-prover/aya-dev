@@ -3,6 +3,7 @@
 package org.aya.tyck.trace;
 
 import kala.collection.mutable.MutableList;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.distill.DistillerOptions;
@@ -24,7 +25,7 @@ public class MarkdownTrace {
   }
 
   public MarkdownTrace() {
-    this(2, DistillerOptions.informative(), false);
+    this(2, AyaDistillerOptions.informative(), false);
   }
 
   private @NotNull Doc indentedChildren(MutableList<@NotNull Trace> children) {

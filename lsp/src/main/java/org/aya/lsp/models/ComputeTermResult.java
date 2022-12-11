@@ -3,8 +3,8 @@
 package org.aya.lsp.models;
 
 import org.aya.core.term.Term;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.lsp.utils.LspRange;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.Range;
@@ -28,7 +28,7 @@ public record ComputeTermResult(@NotNull URI uri, @Nullable String computed, @No
   }
 
   public static ComputeTermResult good(@NotNull Params params, @NotNull WithPos<Term> type) {
-    return new ComputeTermResult(params.uri, type.data().toDoc(DistillerOptions.informative()).debugRender(),
+    return new ComputeTermResult(params.uri, type.data().toDoc(AyaDistillerOptions.informative()).debugRender(),
       LspRange.toRange(type.sourcePos()));
   }
 }

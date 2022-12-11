@@ -8,10 +8,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.pretty.doc.Style;
+import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +93,7 @@ public interface FaithfulDistiller {
 
   private static @Nullable String hover(@Nullable AyaDocile term) {
     if (term == null) return null;
-    return term.toDoc(DistillerOptions.pretty()).commonRender(); // TODO: distiller options
+    return term.toDoc(AyaDistillerOptions.pretty()).commonRender(); // TODO: distiller options
   }
 
   private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {

@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.distill.DistillerOptions;
@@ -167,14 +168,14 @@ public class ImGuiTrace {
 
   public static void main(String[] args) throws IOException {
     var traceBuilder = new Trace.Builder();
-    var compiler = new SingleFileCompiler(CliReporter.stdio(true, DistillerOptions.informative(), Problem.Severity.WARN),
+    var compiler = new SingleFileCompiler(CliReporter.stdio(true, AyaDistillerOptions.informative(), Problem.Severity.WARN),
       null, traceBuilder);
     var sourceFile = Paths.get("test.aya");
     compiler.compile(sourceFile,
       new CompilerFlags(CompilerFlags.Message.EMOJI,
         true, true, null, Seq.of(), null
       ), null);
-    new ImGuiTrace(Files.readString(sourceFile), DistillerOptions.informative())
+    new ImGuiTrace(Files.readString(sourceFile), AyaDistillerOptions.informative())
       .mainLoop(traceBuilder.root());
   }
 }

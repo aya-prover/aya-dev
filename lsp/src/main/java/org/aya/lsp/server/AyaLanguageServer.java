@@ -20,14 +20,13 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
-import org.aya.ide.action.ComputeSignature;
-import org.aya.ide.action.ComputeTerm;
-import org.aya.ide.action.FindReferences;
-import org.aya.ide.action.GotoDefinition;
-import org.aya.ide.util.XY;
-import org.aya.lsp.actions.*;
+import org.aya.ide.action.*;
+import org.aya.lsp.actions.LensMaker;
+import org.aya.lsp.actions.SemanticHighlight;
+import org.aya.lsp.actions.SymbolMaker;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
@@ -69,6 +68,7 @@ public class AyaLanguageServer implements LanguageServer {
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
+  private final @NotNull DistillerOptions options = AyaDistillerOptions.pretty();
 
   public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
@@ -211,7 +211,7 @@ public class AyaLanguageServer implements LanguageServer {
       e.printStackTrace(new PrintWriter(s));
       Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
     }
-    publishProblems(reporter, DistillerOptions.pretty());
+    publishProblems(reporter, options);
     return SemanticHighlight.invoke(owner);
   }
 
@@ -289,7 +289,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<Hover> hover(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    var doc = ComputeSignature.invokeHover(source, LspRange.pos(params.position));
+    var doc = ComputeSignature.invokeHover(options, source, LspRange.pos(params.position));
     if (doc.isEmpty()) return Optional.empty();
     var marked = new MarkedString(MarkupKind.PlainText, doc.commonRender());
     return Optional.of(new Hover(List.of(marked)));
@@ -303,10 +303,8 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<List<Location>> findReferences(ReferenceParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    @NotNull SeqView<LibraryOwner> libraries1 = libraries.view();
-    XY xy = LspRange.pos(params.position);
     return Optional.of(FindReferences
-      .findRefs(source, libraries1, xy)
+      .findRefs(source, libraries.view(), LspRange.pos(params.position))
       .map(LspRange::toLoc)
       .collect(Collectors.toList()));
   }
@@ -314,7 +312,16 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public WorkspaceEdit rename(RenameParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return null;
-    var renames = Rename.rename(source, params.newName, libraries.view(), LspRange.pos(params.position));
+    var renames = Rename.rename(source, params.newName, libraries.view(), LspRange.pos(params.position))
+      .view()
+      .flatMap(t -> t.sourcePos().file().underlying().map(f -> Tuple.of(f.toUri(), t)))
+      .collect(Collectors.groupingBy(
+        t -> t._1,
+        Collectors.mapping(
+          t -> new TextEdit(LspRange.toRange(t._2.sourcePos()), t._2.newText()),
+          Collectors.toList()
+        )
+      ));
     return new WorkspaceEdit(renames);
   }
 
@@ -326,8 +333,7 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
     var begin = Rename.prepare(source, LspRange.pos(params.position));
-    if (begin == null) return Optional.empty();
-    return Optional.of(new RenameResponse(LspRange.toRange(begin.sourcePos()), begin.data()));
+    return begin.map(wp -> new RenameResponse(LspRange.toRange(wp.sourcePos()), wp.data())).asJava();
   }
 
   @Override public List<DocumentHighlight> documentHighlight(TextDocumentPositionParams params) {
@@ -354,15 +360,11 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<? extends GenericDocumentSymbol> documentSymbol(DocumentSymbolParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return ProjectSymbol.invoke(source)
-      .map(ProjectSymbol.Symbol::document)
-      .asJava();
+    return SymbolMaker.documentSymbols(options, source).asJava();
   }
 
   @Override public List<? extends GenericWorkspaceSymbol> workspaceSymbols(WorkspaceSymbolParams params) {
-    return ProjectSymbol.invoke(libraries.view())
-      .map(ProjectSymbol.Symbol::workspace)
-      .asJava();
+    return SymbolMaker.workspaceSymbols(options, libraries.view()).asJava();
   }
 
   @Override
@@ -373,7 +375,16 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<FoldingRange> foldingRange(FoldingRangeParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return Folding.invoke(source);
+    return Folding.invoke(source)
+      .view()
+      .filter(f -> f.entireSourcePos().linesOfCode() >= 3)
+      .map(f -> {
+        var range = LspRange.toRange(f.entireSourcePos());
+        return new FoldingRange(range.start.line, range.start.character,
+          range.end.line, range.end.character, FoldingRangeKind.Region);
+      })
+      .toImmutableSeq()
+      .asJava();
   }
 
   @Override public List<DocumentLink> documentLink(DocumentLinkParams params) {
@@ -383,7 +394,9 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<InlayHint> inlayHint(InlayHintParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return InlayHintMaker.invoke(source, LspRange.range(params.range));
+    return InlayHints.invoke(options, source, LspRange.range(params.range))
+      .map(h -> new InlayHint(LspRange.toRange(h.sourcePos()).end, h.doc().commonRender()))
+      .asJava();
   }
 
   @LspRequest("aya/load") @SuppressWarnings("unused")
@@ -429,7 +442,7 @@ public class AyaLanguageServer implements LanguageServer {
     }
 
     @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {
-      return describe(DistillerOptions.pretty());
+      return describe(options);
     }
   }
 

@@ -13,10 +13,10 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.core.def.PrimDef;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
@@ -110,7 +110,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       noCodeStyle,
       MainArgs.DistillStage.literate,
       detectFormat(outputFile),
-      DistillerOptions.pretty(),
+      AyaDistillerOptions.pretty(),
       renderOptions,
       null);
     return null;

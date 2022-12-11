@@ -15,6 +15,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -30,7 +31,6 @@ import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Debug;
@@ -397,7 +397,7 @@ public sealed abstract class TermComparator permits Unifier {
       preRhs.freezeHoles(state), this.pos));
     var ret = switch (preLhs) {
       default ->
-        throw new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(DistillerOptions.debug()).debugRender());
+        throw new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaDistillerOptions.debug()).debugRender());
       case MetaPatTerm metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof MetaPatTerm(var rRef) && lhsRef == rRef) yield lhsRef.type();

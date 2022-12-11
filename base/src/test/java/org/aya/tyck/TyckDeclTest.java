@@ -14,9 +14,9 @@ import org.aya.core.repr.AyaShape;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.resolve.module.EmptyModuleLoader;
+import org.aya.test.AyaThrowingReporter;
+import org.aya.test.EmptyModuleLoader;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TyckDeclTest {
   public static GenericDef tyck(@NotNull PrimDef.Factory factory, @NotNull TeleDecl<?> decl, Trace.@Nullable Builder builder, @NotNull AyaShape.Factory shapes) {
-    var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
+    var tycker = new StmtTycker(AyaThrowingReporter.INSTANCE, builder);
     var def = tycker.tyck(decl, tycker.newTycker(factory, shapes));
     shapes.bonjour(def);
     return def;
@@ -37,7 +37,7 @@ public class TyckDeclTest {
 
   public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<Stmt>> successDesugarDecls(@Language("Aya") @NonNls @NotNull String text) {
     var decls = ParseTest.parseStmt(text);
-    var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
+    var ctx = new EmptyContext(AyaThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
     var factory = resolve(decls, ctx);
     return Tuple.of(factory, decls);
   }

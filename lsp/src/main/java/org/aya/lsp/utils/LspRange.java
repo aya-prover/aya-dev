@@ -23,18 +23,22 @@ public interface LspRange {
     return new XY(position.line + 1, position.character - 1);
   }
 
+  static @NotNull XYXY range(@NotNull Range range) {
+    return new XYXY(pos(range.start), pos(range.end));
+  }
+
   static @NotNull Range toRange(@NotNull SourcePos sourcePos) {
     if (sourcePos == SourcePos.NONE) return NONE;
     return new Range(new Position(sourcePos.startLine() - 1, sourcePos.startColumn()),
       new Position(sourcePos.endLine() - 1, sourcePos.endColumn() + 1));
   }
 
-  static @NotNull Option<URI> fileUri(@NotNull SourcePos sourcePos) {
+  static @NotNull Option<URI> toFileUri(@NotNull SourcePos sourcePos) {
     return sourcePos.file().underlying().map(Path::toUri);
   }
 
   static @Nullable LocationLink toLoc(@NotNull SourcePos from, @NotNull SourcePos to) {
-    var uri = fileUri(to);
+    var uri = toFileUri(to);
     if (uri.isEmpty()) return null;
     var fromRange = toRange(from);
     var toRange = toRange(to);
@@ -42,12 +46,9 @@ public interface LspRange {
   }
 
   static @Nullable Location toLoc(@NotNull SourcePos to) {
-    var uri = fileUri(to);
+    var uri = toFileUri(to);
     if (uri.isEmpty()) return null;
     var toRange = toRange(to);
     return new Location(uri.get(), toRange);
-  }
-  @NotNull static XYXY range(@NotNull Range range) {
-    return new XYXY(pos(range.start), pos(range.end));
   }
 }

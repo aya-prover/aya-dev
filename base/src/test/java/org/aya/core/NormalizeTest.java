@@ -6,10 +6,10 @@ import org.aya.core.def.FnDef;
 import org.aya.core.term.ConCall;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.tyck.TyckState;
-import org.aya.util.distill.DistillerOptions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
@@ -95,7 +95,7 @@ public class NormalizeTest {
     var state = new TyckState(res._1);
     var defs = res._2;
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
-    assertEquals("suc zero :< nil", normalizer.apply(defs.size() - 2).toDoc(DistillerOptions.debug()).debugRender());
-    assertEquals("suc zero :< nil", normalizer.apply(defs.size() - 1).toDoc(DistillerOptions.debug()).debugRender());
+    assertEquals("suc zero :< nil", normalizer.apply(defs.size() - 2).toDoc(AyaDistillerOptions.debug()).debugRender());
+    assertEquals("suc zero :< nil", normalizer.apply(defs.size() - 1).toDoc(AyaDistillerOptions.debug()).debugRender());
   }
 }

@@ -47,7 +47,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield visitCalls(null,
           term(Outer.AppSpine, first),
           seq.view().drop(1), outer,
-          options.map.get(DistillerOptions.Key.ShowImplicitArgs)
+          options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs)
         );
       }
       case Expr.LitString expr -> Doc.plain('"' + StringUtil.unescapeStringCharacters(expr.string()) + '"');
@@ -81,10 +81,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield visitCalls(assoc,
           term(Outer.AppHead, head),
           args.view(), outer,
-          options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+          options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
       }
       case Expr.Lambda expr -> {
-        if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
+        if (!options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
           yield term(outer, expr.body());
         }
         var prelude = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
@@ -115,7 +115,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         expr.restr() != null ? Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, expr.restr())) : Doc.empty());
       case Expr.Coe expr -> visitCalls(expr.resolvedVar(), PRIM_CALL,
         ImmutableSeq.of(new Arg<>(expr.type(), true), new Arg<>(expr.restr(), true)),
-        outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+        outer, options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
       case Expr.Unresolved expr -> Doc.plain(expr.name().join());
       case Expr.Ref expr -> {
         var ref = expr.resolvedVar();
@@ -283,7 +283,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Arg<Pattern>> patterns, Outer outer, @NotNull Doc delim) {
-    patterns = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Arg::explicit);
+    patterns = options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Arg::explicit);
     return Doc.join(delim, patterns.view().map(p -> pattern(p, outer)));
   }
 
