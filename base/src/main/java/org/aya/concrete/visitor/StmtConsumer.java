@@ -12,7 +12,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
     switch (stmt) {
       case Decl decl -> {
         if (decl instanceof Decl.Telescopic<?> telescopic)
-          telescopic.setTelescope(telescopic.telescope().map(param -> param.descent(this)));
+          telescopic.modifyTelescope(t -> t.map(param -> param.descent(this)));
         if (decl instanceof Decl.Resulted resulted) resulted.modifyResult(this);
         switch (decl) {
           case TeleDecl.DataDecl data -> data.body.forEach(this);
@@ -35,7 +35,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
           case Command.Open ignored -> {}
         }
       }
-      case Generalize generalize -> generalize.type = this.apply(generalize.type);
+      case Generalize generalize -> generalize.type = apply(generalize.type);
     }
   }
 }

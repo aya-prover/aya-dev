@@ -65,8 +65,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     return telescope;
   }
 
-  @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
-    this.telescope = telescope;
+  @Override public void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f) {
+    telescope = f.apply(telescope);
   }
 
   @Override public Def.@Nullable Signature<RetTy> signature() {
@@ -164,8 +164,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       return telescope;
     }
 
-    @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
-      this.telescope = telescope;
+    @Override public void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f) {
+      telescope = f.apply(telescope);
     }
 
     @Override public @Nullable Def.Signature<DataCall> signature() {
@@ -281,8 +281,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       return telescope;
     }
 
-    @Override public void setTelescope(@NotNull ImmutableSeq<Expr.Param> telescope) {
-      this.telescope = telescope;
+    @Override public void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f) {
+      telescope = f.apply(telescope);
     }
 
     @Override public Def.@Nullable Signature<Term> signature() {
