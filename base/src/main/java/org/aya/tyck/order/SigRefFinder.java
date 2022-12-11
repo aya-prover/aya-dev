@@ -7,6 +7,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Generalize;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.core.visitor.TermFolder;
 import org.aya.ref.DefVar;
@@ -28,6 +29,10 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
         if (decl instanceof Decl.Resulted proof) {
           var result = proof.result();
           if (result != null) accept(result);
+        }
+        // for ctor: partial is a part of header
+        if (decl instanceof TeleDecl.DataDecl.DataCtor ctor) {
+          accept(ctor.clauses);
         }
       }
       case Command.Module module -> {}
