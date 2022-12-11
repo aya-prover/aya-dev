@@ -244,16 +244,15 @@ structField
 
 dataDecl ::= sampleModifiers? (KW_PUBLIC? openKw)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
-dataBody ::= dataCtorClause
-           | (BAR dataCtor) {
+dataBody ::= BAR (dataCtorClause | dataCtor) {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-dataCtor ::= KW_COERCE? declNameOrInfix tele* partialBlock? bindBlock?
+dataCtor ::= KW_COERCE? declNameOrInfix tele* type? partialBlock? bindBlock?
 partialBlock ::= <<braced partialInner>>
 
-dataCtorClause ::= BAR patterns IMPLIES dataCtor
+dataCtorClause ::= patterns IMPLIES dataCtor
 
 // expressions
 expr ::= newExpr
