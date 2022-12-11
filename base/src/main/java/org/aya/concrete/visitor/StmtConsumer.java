@@ -13,7 +13,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
       case Decl decl -> {
         if (decl instanceof Decl.Telescopic<?> telescopic)
           telescopic.setTelescope(telescopic.telescope().map(param -> param.descent(this)));
-        if (decl instanceof Decl.Resulted resulted) resulted.setResult(this.apply(resulted.result()));
+        if (decl instanceof Decl.Resulted resulted) resulted.modifyResult(this);
         switch (decl) {
           case TeleDecl.DataDecl data -> data.body.forEach(this);
           case TeleDecl.StructDecl struct -> struct.fields.forEach(this);

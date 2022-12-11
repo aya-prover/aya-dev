@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.function.UnaryOperator;
 
 /**
  * Concrete telescopic definition, corresponding to {@link Def}.
@@ -56,8 +57,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     return result;
   }
 
-  @Override public void setResult(@NotNull Expr result) {
-    this.result = result;
+  @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
+    result = f.apply(result);
   }
 
   @Override public @NotNull ImmutableSeq<Expr.Param> telescope() {
@@ -296,8 +297,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       return result;
     }
 
-    @Override public void setResult(@NotNull Expr result) {
-      this.result = result;
+    @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
+      result = f.apply(result);
     }
   }
 
