@@ -311,7 +311,7 @@ public final class PrimDef extends TopLevelDef<Term> {
     }
 
     public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
-      assert !have(name);
+      assert suppressRedefinition() || !have(name);
       var rst = seeds.get(name).supply(ref);
       defs.put(name, rst);
       return rst;
