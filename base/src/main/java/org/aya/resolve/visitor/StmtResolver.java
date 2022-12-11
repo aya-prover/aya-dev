@@ -52,16 +52,14 @@ public interface StmtResolver {
     switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.FnDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), resolver);
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         var bodyResolver = resolver.body();
         bodyResolver.enterBody();
         decl.body = decl.body.map(bodyResolver, pats -> pats.map(bodyResolver::apply));
         addReferences(info, new TyckOrder.Body(decl), resolver);
       }
       case TeleDecl.DataDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), resolver);
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         resolver.enterBody();
         decl.body.forEach(ctor -> {
           var bodyResolver = resolver.member(decl);
@@ -80,8 +78,7 @@ public interface StmtResolver {
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
       case TeleDecl.StructDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.LAX);
-        addReferences(info, new TyckOrder.Head(decl), resolver);
+        var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         resolver.enterBody();
         decl.fields.forEach(field -> {
           var bodyResolver = resolver.member(decl);
@@ -98,8 +95,7 @@ public interface StmtResolver {
           .concat(decl.fields.map(TyckOrder.Body::new)));
       }
       case TeleDecl.PrimDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE);
-        addReferences(info, new TyckOrder.Head(decl), resolver);
+        resolveDeclSignature(decl, ExprResolver.RESTRICTIVE, info);
         addReferences(info, new TyckOrder.Body(decl), SeqView.empty());
       }
       // handled in DataDecl and StructDecl
@@ -125,7 +121,11 @@ public interface StmtResolver {
     addReferences(info, decl, resolver.reference().view());
   }
 
-  private static @NotNull ExprResolver resolveDeclSignature(@NotNull TeleDecl<?> decl, ExprResolver.@NotNull Options options) {
+  private static @NotNull ExprResolver resolveDeclSignature(
+    @NotNull TeleDecl<?> decl,
+    ExprResolver.@NotNull Options options,
+    @NotNull ResolveInfo info
+  ) {
     assert decl.ctx != null;
     var resolver = new ExprResolver(decl.ctx, options);
     resolver.enterHead();
@@ -134,6 +134,7 @@ public interface StmtResolver {
     var newResolver = resolver.enter(mCtx.get());
     decl.result = newResolver.apply(decl.result);
     decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
+    addReferences(info, new TyckOrder.Head(decl), resolver);
     return newResolver;
   }
 
