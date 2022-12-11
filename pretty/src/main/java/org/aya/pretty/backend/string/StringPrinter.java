@@ -186,27 +186,23 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
 
   protected static void renderList(@NotNull StringPrinter<?> printer, @NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
     // TODO[kiva]: improve this!
-    var isTopLevel = !outer.contains(Outer.List);
+    // Move to new line if needed, in case the list begins at the end of previous doc.
     cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
-    if (isTopLevel) printer.renderHardLineBreak(cursor, outer);
 
     list.items().forEachIndexed((idx, item) -> {
+      // Move to new line if needed.
       cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
-
-      var pre = list.isOrdered()
-        ? (idx + 1) + "."
-        : "+";
-      var content = Doc.nest(pre.length() + 1, item);
-
-      // render pre
+      // The beginning mark
+      var pre = list.isOrdered() ? (idx + 1) + "." : "+";
       cursor.visibleContent(pre);
       cursor.visibleContent(" ");
-
-      // render
+      // The item content
+      var content = Doc.nest(pre.length() + 1, item);
       printer.renderDoc(cursor, content, EnumSet.of(Outer.List));
     });
 
-    if (isTopLevel) {
+    // Top level list should have a line after it, or the following content will be treated as list item.
+    if (!outer.contains(Outer.List)) {
       cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
       printer.renderHardLineBreak(cursor, outer);
     }

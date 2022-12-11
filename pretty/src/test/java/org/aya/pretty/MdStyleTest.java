@@ -112,7 +112,6 @@ public class MdStyleTest {
   @Test
   public void testList() {
     assertEquals("""
-            
       + first
         
         third
@@ -122,7 +121,6 @@ public class MdStyleTest {
             
       """.stripIndent(), bulletList().renderToMd().stripIndent());
     assertEquals("""
-
       1. first
 
          third

@@ -92,7 +92,9 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     Runnable pureMd = () -> formatInlineCode(cursor, code.code(), "`", "`", outer);
     runSwitch(pureMd, () -> {
       var isAya = code.language().equalsIgnoreCase("aya");
-      if (isAya) formatInlineCode(cursor, code.code(), "<code class=\"Aya\">", "</code>", EnumSet.of(Outer.EnclosingTag));
+      if (isAya) formatInlineCode(cursor, code.code(),
+        "<code class=\"Aya\">", "</code>",
+        EnumSet.of(Outer.EnclosingTag));
       else pureMd.run();
     });
   }
@@ -107,8 +109,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     runSwitch(pureMd,
       () -> {
         var isAya = block.language().equalsIgnoreCase("aya");
-        if (isAya)
-          formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", "<code>", "</code>", EnumSet.of(Outer.EnclosingTag));
+        if (isAya) formatCodeBlock(cursor, block.code(),
+          "<pre class=\"Aya\">", "</pre>",
+          "<code>", "</code>",
+          EnumSet.of(Outer.EnclosingTag));
         else pureMd.run();
       });
   }

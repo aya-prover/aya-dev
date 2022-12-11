@@ -121,7 +121,6 @@ public class DocStringPrinterTest {
 
     assertEquals("""
       what
-            
       + fir
         st
       + second
