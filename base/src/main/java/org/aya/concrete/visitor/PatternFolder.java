@@ -10,6 +10,7 @@ import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +31,26 @@ public interface PatternFolder<R> {
     return foldVar(acc, var, pos, type);
   }
 
+  default @NotNull R fold(@NotNull R acc, @NotNull Arg<Pattern> pat) {
+    return fold(acc, pat.term());
+  }
+
   @MustBeInvokedByOverriders
   default @NotNull R fold(@NotNull R acc, @NotNull Pattern pat) {
     return switch (pat) {
+      case Pattern.List list -> list.elements().foldLeft(acc, this::fold);
+      case Pattern.Tuple tuple -> tuple.patterns().foldLeft(acc, this::fold);
+      case Pattern.BinOpSeq seq -> seq.seq().foldLeft(acc, this::fold);
       case Pattern.Ctor ctor -> {
         var resolvedVar = ctor.resolved().data();
-        yield foldVarRef(acc, resolvedVar, ctor.resolved().sourcePos(), lazyType(resolvedVar));
+        acc = foldVarRef(acc, resolvedVar, ctor.resolved().sourcePos(), lazyType(resolvedVar));
+        yield ctor.params().foldLeft(acc, this::fold);
       }
       case Pattern.Bind bind -> foldVarDecl(acc, bind.bind(), bind.sourcePos(), LazyValue.of(bind.type()));
-      case Pattern.As as -> foldVarDecl(acc, as.as(), as.as().definition(), LazyValue.of(as.type()));
+      case Pattern.As as -> {
+        acc = foldVarDecl(acc, as.as(), as.as().definition(), LazyValue.of(as.type()));
+        yield fold(acc, as.pattern());
+      }
       default -> acc;
     };
   }
