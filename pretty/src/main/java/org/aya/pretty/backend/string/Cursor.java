@@ -49,6 +49,11 @@ public class Cursor {
     }
   }
 
+  /** Do something when I am not at line start. */
+  public void whenLineUsed(@NotNull Runnable runnable) {
+    if (!isAtLineStart()) runnable.run();
+  }
+
   public void lineBreakWith(@NotNull CharSequence lineBreak) {
     invisibleContent(lineBreak);
     moveToNewLine();

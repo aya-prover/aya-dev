@@ -5,6 +5,7 @@ package org.aya.pretty.backend.md;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlConstants;
 import org.aya.pretty.backend.string.Cursor;
+import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,11 +65,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
-    if (outer.contains(Outer.List)) {
-      cursor.lineBreakWith("<br/>\n");
-    } else {
-      cursor.lineBreakWith("\n");
-    }
+    cursor.lineBreakWith("\n");
   }
 
   @Override
@@ -85,6 +82,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     };
     runSwitch(pureMd, () -> {
       if (!outer.isEmpty()) super.renderHyperLinked(cursor, text, outer);
+        // ^ In AyaMd mode, `outer != Free` (Free means empty) means whether:
+        // 1. we are in rendered Aya code block,
+        // 2. we are in an HTML tag (like `<a>`).
+        // In both cases, markdown typesetting does not work.
       else pureMd.run();
     });
   }
@@ -95,39 +96,15 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     Runnable pureMd = () -> formatInlineCode(cursor, code.code(), "`", "`", outer);
     runSwitch(pureMd, () -> {
       var isAya = code.language().equalsIgnoreCase("aya");
-      if (isAya) formatInlineCode(cursor, code.code(), "<code class=\"Aya\">", "</code>", EnumSet.of(Outer.EnclosingTag));
+      if (isAya) formatInlineCode(cursor, code.code(),
+        "<code class=\"Aya\">", "</code>",
+        EnumSet.of(Outer.EnclosingTag));
       else pureMd.run();
     });
   }
 
-  /**
-   * @see org.aya.pretty.backend.string.StringPrinter#renderList
-   */
   @Override protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
-    var isTopLevel = !outer.contains(Outer.List);
-    requireLineStart(cursor);
-    if (isTopLevel) renderHardLineBreak(cursor, outer);
-
-    list.items().forEachIndexed((idx, item) -> {
-      requireLineStart(cursor);
-
-      var pre = list.isOrdered()
-        ? (idx + 1) + "."
-        : "+";
-      var content = Doc.nest(pre.length() + 1, item);
-
-      // render pre
-      cursor.visibleContent(pre);
-      cursor.visibleContent(" ");
-
-      // render
-      renderDoc(cursor, content, EnumSet.of(Outer.List));
-    });
-
-    if (isTopLevel) {
-      requireLineStart(cursor);
-      renderHardLineBreak(cursor, outer);
-    }
+    StringPrinter.renderList(this, cursor, list, outer);
   }
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
@@ -136,8 +113,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     runSwitch(pureMd,
       () -> {
         var isAya = block.language().equalsIgnoreCase("aya");
-        if (isAya)
-          formatCodeBlock(cursor, block.code(), "<pre class=\"Aya\">", "</pre>", "<code>", "</code>", EnumSet.of(Outer.EnclosingTag));
+        if (isAya) formatCodeBlock(cursor, block.code(),
+          "<pre class=\"Aya\">", "</pre>",
+          "<code>", "</code>",
+          EnumSet.of(Outer.EnclosingTag));
         else pureMd.run();
       });
   }

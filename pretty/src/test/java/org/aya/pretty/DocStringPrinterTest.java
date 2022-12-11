@@ -121,12 +121,11 @@ public class DocStringPrinterTest {
 
     assertEquals("""
       what
-            
-      * fir
+      + fir
         st
-      * second
-        * second.1
-      * third
+      + second
+        + second.1
+      + third
             
       """, list.commonRender());
   }

@@ -129,15 +129,12 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Override
   protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, EnumSet<Outer> outer) {
     var tag = list.isOrdered() ? "ol" : "ul";
-
     cursor.invisibleContent("<" + tag + ">");
-
     list.items().forEach(item -> {
       cursor.invisibleContent("<li>");
       renderDoc(cursor, item, EnumSet.of(Outer.List, Outer.EnclosingTag));
       cursor.invisibleContent("</li>");
     });
-
     cursor.invisibleContent("</" + tag + ">");
   }
 

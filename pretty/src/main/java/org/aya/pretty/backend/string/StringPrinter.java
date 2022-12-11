@@ -50,8 +50,9 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   protected int predictWidth(@NotNull Cursor cursor, @NotNull Doc doc) {
     return switch (doc) {
       case Doc.Empty d -> 0;
-      case Doc.PlainText text -> text.text().length();
-      case Doc.SpecialSymbol symbol -> symbol.text().length();
+      case Doc.PlainText(var text) -> text.length();
+      case Doc.EscapedText(var text) -> text.length();
+      case Doc.SpecialSymbol(var text) -> text.length();
       case Doc.HyperLinked text -> predictWidth(cursor, text.doc());
       case Doc.Styled styled -> predictWidth(cursor, styled.doc());
       case Doc.Line d -> 0;
@@ -85,6 +86,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc, EnumSet<Outer> outer) {
     switch (doc) {
       case Doc.PlainText(var text) -> renderPlainText(cursor, text, outer);
+      case Doc.EscapedText(var text) -> cursor.visibleContent(text);
       case Doc.SpecialSymbol(var symbol) -> renderSpecialSymbol(cursor, symbol, outer);
       case Doc.HyperLinked text -> renderHyperLinked(cursor, text, outer);
       case Doc.Styled styled -> renderStyled(cursor, styled, outer);
@@ -122,19 +124,6 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     Tuple.of("[|", "\u27E6"),
     Tuple.of("|]", "\u27E7")
   );
-
-  /**
-   * New line if needed
-   *
-   * @return true if needed; the Cursor is at line start after call.
-   * @implNote new line ('\n') may not be the hard line break
-   */
-  protected boolean requireLineStart(@NotNull Cursor cursor) {
-    if (!cursor.isAtLineStart()) {
-      cursor.lineBreakWith("\n");
-      return true;
-    } else return false;
-  }
 
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
     if (config.unicode) for (var k : unicodeMapping.keysView()) {
@@ -194,22 +183,27 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   }
 
   protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
-    var isTopLevel = !outer.contains(Outer.List);
-    requireLineStart(cursor);
-    if (isTopLevel) renderHardLineBreak(cursor, outer);
+    renderList(this, cursor, list, outer);
+  }
 
-    for (var item : list.items()) {
-      requireLineStart(cursor);
-      var content = Doc.nest(2, item);
-      var doc = Doc.stickySep(Doc.plain("*"), content);
+  protected static void renderList(@NotNull StringPrinter<?> printer, @NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
+    // Move to new line if needed, in case the list begins at the end of previous doc.
+    cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
 
-      // render
-      renderDoc(cursor, doc, EnumSet.of(Outer.List));
-    }
+    // The items should be placed one by one, each at the beginning of a line.
+    var items = Doc.vcat(list.items().mapIndexed((idx, item) -> {
+      // The beginning mark
+      var pre = list.isOrdered() ? (idx + 1) + "." : "+";
+      // The item content
+      var content = Doc.nest(pre.length() + 1, item);
+      return Doc.stickySep(Doc.escaped(pre), content);
+    }));
+    printer.renderDoc(cursor, items, EnumSet.of(Outer.List));
 
-    if (isTopLevel) {
-      requireLineStart(cursor);
-      renderHardLineBreak(cursor, outer);
+    // Top level list should have a line after it, or the following content will be treated as list item.
+    if (!outer.contains(Outer.List)) {
+      cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
+      printer.renderHardLineBreak(cursor, outer);
     }
   }
 }
