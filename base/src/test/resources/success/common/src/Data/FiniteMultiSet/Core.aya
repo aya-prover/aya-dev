@@ -4,5 +4,5 @@ open import Logic::HLevels
 open data FMSet (A : Type)
 | nil
 | infixr :< A (FMSet A) tighter =
-// | comm (x y : A) (xs : FMSet A) : x :< y :< xs = y :< x :< xs
+| comm (x y : A) (xs : FMSet A) : x :< y :< xs = y :< x :< xs
 | trunc : isSet (FMSet A)
