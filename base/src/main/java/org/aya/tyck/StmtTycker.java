@@ -17,6 +17,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
+import org.aya.core.visitor.Zonker;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.NormalizeMode;
@@ -261,12 +262,14 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var tele = tele(tycker, ctor.telescope, ulift.isProp() ? null : ulift);
         // Users may have written the result type
         if (ctor.result != null) {
-          var result = tycker.zonk(tycker.ty(ctor.result).wellTyped()).normalize(tycker.state, NormalizeMode.NF);
+          // At this point, they may contain metas
+          var result = tycker.ty(ctor.result).wellTyped().normalize(tycker.state, NormalizeMode.NF);
           var additionalTele = MutableArrayList.<Term.Param>create();
           result = PiTerm.unpi(result, tycker::whnf, additionalTele);
           if (result instanceof PathTerm path) {
             var flat = path.flatten();
             additionalTele.appendAll(flat.computeParams());
+            // Also can contain metas
             ctor.checkedPartial = flat.partial();
             result = flat.type();
           }
@@ -275,7 +278,14 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           // Solution: merge checkBody & checkHeader of data ctor for data ctor.
           tycker.unifyTyReported(eventually, dataCall, ctor.result,
             u -> new UnifyError.ConReturn(ctor, dataCall, eventually, u, tycker.state));
-          tele = tele.concat(additionalTele);
+          tycker.solveMetas();
+          var zonker = Zonker.make(tycker);
+          // Zonk after the unification, because the unification may have solved some metas.
+          if (ctor.checkedPartial != null) ctor.checkedPartial = ctor.checkedPartial.map(zonker);
+          tele = tele.view()
+            .concat(additionalTele)
+            .map(p -> p.descent(zonker))
+            .toImmutableSeq();
         }
         ctor.signature = new Def.Signature<>(tele, dataCall);
         ctor.patternTele = ctor.yetTyckedPat.isEmpty()

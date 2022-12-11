@@ -274,7 +274,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       return buf.view().map(tup -> new Param(tup._1, tup._3, tup._2)).toImmutableSeq();
     }
 
-    public @NotNull Param descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
+    public @NotNull Param descent(@NotNull UnaryOperator<@NotNull Term> f) {
       var type = f.apply(type());
       if (type == type()) return this;
       return new Param(this, type);
