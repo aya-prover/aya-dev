@@ -49,6 +49,12 @@ public class Cursor {
     }
   }
 
+  /** New line if needed */
+  public void lineBreakIfNeeded(@NotNull CharSequence lineBreak) {
+    if (!isAtLineStart())
+      lineBreakWith(lineBreak);
+  }
+
   public void lineBreakWith(@NotNull CharSequence lineBreak) {
     invisibleContent(lineBreak);
     moveToNewLine();

@@ -84,7 +84,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     cursor.invisibleContent("\\begin{" + env + "}");
     list.items().forEach(item -> {
       cursor.invisibleContent("\\item ");
-      renderDoc(cursor, item, EnumSet.of(Outer.List, Outer.EnclosingTag));
+      renderDoc(cursor, item, EnumSet.of(Outer.List));
     });
     cursor.invisibleContent("\\end{" + env + "}");
   }

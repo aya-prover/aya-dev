@@ -123,19 +123,6 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     Tuple.of("|]", "\u27E7")
   );
 
-  /**
-   * New line if needed
-   *
-   * @return true if needed; the Cursor is at line start after call.
-   * @implNote new line ('\n') may not be the hard line break
-   */
-  protected boolean requireLineStart(@NotNull Cursor cursor) {
-    if (!cursor.isAtLineStart()) {
-      cursor.lineBreakWith("\n");
-      return true;
-    } else return false;
-  }
-
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
     if (config.unicode) for (var k : unicodeMapping.keysView()) {
       if (text.trim().equals(k)) {
@@ -194,22 +181,33 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   }
 
   protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
-    var isTopLevel = !outer.contains(Outer.List);
-    requireLineStart(cursor);
-    if (isTopLevel) renderHardLineBreak(cursor, outer);
+    renderList(this, cursor, list, outer);
+  }
 
-    for (var item : list.items()) {
-      requireLineStart(cursor);
-      var content = Doc.nest(2, item);
-      var doc = Doc.stickySep(Doc.plain("*"), content);
+  protected static void renderList(@NotNull StringPrinter<?> printer, @NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
+    var isTopLevel = !outer.contains(Outer.List);
+    cursor.lineBreakIfNeeded("\n");
+    if (isTopLevel) printer.renderHardLineBreak(cursor, outer);
+
+    list.items().forEachIndexed((idx, item) -> {
+      cursor.lineBreakIfNeeded("\n");
+
+      var pre = list.isOrdered()
+        ? (idx + 1) + "."
+        : "+";
+      var content = Doc.nest(pre.length() + 1, item);
+
+      // render pre
+      cursor.visibleContent(pre);
+      cursor.visibleContent(" ");
 
       // render
-      renderDoc(cursor, doc, EnumSet.of(Outer.List));
-    }
+      printer.renderDoc(cursor, content, EnumSet.of(Outer.List));
+    });
 
     if (isTopLevel) {
-      requireLineStart(cursor);
-      renderHardLineBreak(cursor, outer);
+      cursor.lineBreakIfNeeded("\n");
+      printer.renderHardLineBreak(cursor, outer);
     }
   }
 }
