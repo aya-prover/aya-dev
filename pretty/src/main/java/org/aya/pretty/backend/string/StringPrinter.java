@@ -185,21 +185,18 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   }
 
   protected static void renderList(@NotNull StringPrinter<?> printer, @NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
-    // TODO[kiva]: improve this!
     // Move to new line if needed, in case the list begins at the end of previous doc.
     cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
 
-    list.items().forEachIndexed((idx, item) -> {
-      // Move to new line if needed.
-      cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
+    // The items should be placed one by one, each at the beginning of a line.
+    var items = Doc.vcat(list.items().mapIndexed((idx, item) -> {
       // The beginning mark
       var pre = list.isOrdered() ? (idx + 1) + "." : "+";
-      cursor.visibleContent(pre);
-      cursor.visibleContent(" ");
       // The item content
       var content = Doc.nest(pre.length() + 1, item);
-      printer.renderDoc(cursor, content, EnumSet.of(Outer.List));
-    });
+      return Doc.stickySep(Doc.plain(pre), content);
+    }));
+    printer.renderDoc(cursor, items, EnumSet.of(Outer.List));
 
     // Top level list should have a line after it, or the following content will be treated as list item.
     if (!outer.contains(Outer.List)) {
