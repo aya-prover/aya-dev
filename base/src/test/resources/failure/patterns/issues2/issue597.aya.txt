@@ -17,8 +17,8 @@ Error: There is no parameter for the pattern
          O
        to match against, given the return type
          Nat
-       (and in case it's a function type, you may want to move its parameters before
-       the `:` in the signature)
+       (and in case it's a function type, you may want to move its parameters 
+       before the `:` in the signature)
 
 2 error(s), 0 warning(s).
 What are you doing?

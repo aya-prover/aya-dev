@@ -519,7 +519,11 @@ public sealed interface Doc extends Docile {
 
   @Contract("_ -> new") static @NotNull Doc english(String text) {
     if (!text.contains(" ")) return plain(text);
-    return sep(Seq.from(text.split(" ", -1)).view().map(Doc::plain));
+    return sep(Seq.from(text.split(" ", -1))
+      .view()
+      .map(Doc::plain)
+      .map(p -> flatAlt(p, cat(line(), p)))
+    );
   }
 
   /**

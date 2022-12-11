@@ -7,7 +7,8 @@ In file $FILE:4:77 ->
 
 Error: Unable to access field `value` of the expression
          squash
-       because the type of what you accessed is not a non-Prop struct type, but instead:
+       because the type of what you accessed is not a non-Prop struct type, but 
+       instead:
          Squash A
          (Normalized: Squash A)
 

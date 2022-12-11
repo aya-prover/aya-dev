@@ -5,6 +5,7 @@ In file $FILE:5:3 ->
   5 |  | unit => unit
          ^----------^
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be unreachable
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 That looks right!

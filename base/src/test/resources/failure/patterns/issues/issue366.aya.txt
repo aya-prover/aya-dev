@@ -5,7 +5,8 @@ In file $FILE:5:3 ->
   5 |  | zero, eldath => zero
          ^------------------^
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be unreachable
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:4:3 ->
 
@@ -14,7 +15,8 @@ In file $FILE:4:3 ->
   4 |  | zero, eldath => suc zero
          ^----------------------^
 
-Warning: The 2nd clause dominates the 1st clause. The 1st clause will be unreachable
+Warning: The 2nd clause dominates the 1st clause. The 1st clause will be 
+         unreachable
 
 In file $FILE:3:12 ->
 

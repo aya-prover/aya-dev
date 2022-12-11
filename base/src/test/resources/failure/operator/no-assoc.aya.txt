@@ -5,8 +5,8 @@ In file $FILE:9:24 ->
   9 | def test3 => (suc zero) = (suc (suc zero)) = (suc (suc (suc zero)))
                               ^^
 
-Error: Cannot figure out computation order because `=` (Infix) and `=` (Infix) share
-       the same precedence but no associativity was specified.
+Error: Cannot figure out computation order because `=` (Infix) and `=` (Infix) 
+       share the same precedence but no associativity was specified.
 note: Make them both left/right-associative to resolve this problem.
 
 1 error(s), 0 warning(s).

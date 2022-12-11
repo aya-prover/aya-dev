@@ -5,7 +5,8 @@ In file $FILE:4:4 ->
   4 |   | 0 => 0
           ^----^
 
-Warning: The 2nd clause dominates the 1st clause. The 1st clause will be unreachable
+Warning: The 2nd clause dominates the 1st clause. The 1st clause will be 
+         unreachable
 
 In file $FILE:6:4 ->
 
@@ -14,7 +15,8 @@ In file $FILE:6:4 ->
   6 |   | suc a => suc a
           ^------------^
 
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be unreachable
+Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
 
 In file $FILE:10:4 ->
 
@@ -23,7 +25,8 @@ In file $FILE:10:4 ->
   10 |   | 114514 => 1919
            ^------------^
 
-Warning: The 2nd clause dominates the 7th clause. The 7th clause will be unreachable
+Warning: The 2nd clause dominates the 7th clause. The 7th clause will be 
+         unreachable
 
 In file $FILE:3:12 ->
 
@@ -52,7 +55,8 @@ In file $FILE:6:4 ->
   6 |   | suc a => suc a
           ^------------^
 
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be unreachable
+Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
 
 In file $FILE:7:4 ->
 
@@ -61,7 +65,8 @@ In file $FILE:7:4 ->
   7 |   | suc (suc a) => a
           ^--------------^
 
-Warning: The 3rd clause dominates the 4th clause. The 4th clause will be unreachable
+Warning: The 3rd clause dominates the 4th clause. The 4th clause will be 
+         unreachable
 
 In file $FILE:3:12 ->
 
@@ -87,7 +92,8 @@ In file $FILE:9:4 ->
   9 |   | 2147483647 => 4
           ^-------------^
 
-Warning: The 5th clause dominates the 6th clause. The 6th clause will be unreachable
+Warning: The 5th clause dominates the 6th clause. The 6th clause will be 
+         unreachable
 
 In file $FILE:8:4 ->
 
@@ -96,7 +102,8 @@ In file $FILE:8:4 ->
   8 |   | 2147483647 => 3
           ^-------------^
 
-Warning: The 6th clause dominates the 5th clause. The 5th clause will be unreachable
+Warning: The 6th clause dominates the 5th clause. The 5th clause will be 
+         unreachable
 
 In file $FILE:3:12 ->
 
@@ -124,7 +131,8 @@ In file $FILE:9:4 ->
   9 |   | 2147483647 => 4
           ^-------------^
 
-Warning: The 2nd clause dominates the 6th clause. The 6th clause will be unreachable
+Warning: The 2nd clause dominates the 6th clause. The 6th clause will be 
+         unreachable
 
 In file $FILE:3:12 ->
 
@@ -152,7 +160,8 @@ In file $FILE:6:4 ->
   6 |   | suc a => suc a
           ^------------^
 
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be unreachable
+Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
 
 In file $FILE:7:4 ->
 
@@ -161,7 +170,8 @@ In file $FILE:7:4 ->
   7 |   | suc (suc a) => a
           ^--------------^
 
-Warning: The 3rd clause dominates the 4th clause. The 4th clause will be unreachable
+Warning: The 3rd clause dominates the 4th clause. The 4th clause will be 
+         unreachable
 
 In file $FILE:3:12 ->
 
@@ -187,7 +197,8 @@ In file $FILE:6:4 ->
   6 |   | suc a => suc a
           ^------------^
 
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be unreachable
+Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
 
 In file $FILE:7:4 ->
 
@@ -196,7 +207,8 @@ In file $FILE:7:4 ->
   7 |   | suc (suc a) => a
           ^--------------^
 
-Warning: The 3rd clause dominates the 4th clause. The 4th clause will be unreachable
+Warning: The 3rd clause dominates the 4th clause. The 4th clause will be 
+         unreachable
 
 In file $FILE:3:12 ->
 
