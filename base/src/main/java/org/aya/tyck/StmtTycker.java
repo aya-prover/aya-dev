@@ -230,7 +230,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   /** Extracted for the extreme complexity. */
   private void checkCtor(@NotNull ExprTycker tycker, TeleDecl.DataCtor ctor) {
-    if (ctor.signature != null) return;
+    if (ctor.ref.core != null) return;
     var dataRef = ctor.dataRef;
     var dataConcrete = dataRef.concrete;
     var dataSig = dataConcrete.signature;
@@ -286,7 +286,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
       elabClauses = PartialTerm.merge(Seq.of(elabClauses, partial).filterNotNull());
     }
-    ctor.signature = new Def.Signature<>(tele, dataCall);
     var patternTele = pat.isEmpty()
       ? dataSig.param().map(Term.Param::implicitify)
       : Pat.extractTele(pat);

@@ -40,11 +40,6 @@ public final class CtorDef extends SubLevelDef {
     this.pats = pats;
   }
 
-  public static @NotNull ImmutableSeq<Term.Param> conTele(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> conVar) {
-    if (conVar.core != null) return conVar.core.selfTele;
-    else return Objects.requireNonNull(conVar.concrete.signature).param();
-  }
-
   /**
    * @return first component: ctor's owner telescope, second component: ctor's self telescope
    */
