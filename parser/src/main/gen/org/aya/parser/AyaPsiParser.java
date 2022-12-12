@@ -998,14 +998,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // teleBinderTyped
-  //                    | teleParamName
+  //                    | teleBinderUntyped
   public static boolean lambdaTeleBinder(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTeleBinder")) return false;
     if (!nextTokenIs(b, ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = teleBinderTyped(b, l + 1);
-    if (!r) r = teleParamName(b, l + 1);
+    if (!r) r = teleBinderUntyped(b, l + 1);
     exit_section_(b, m, LAMBDA_TELE_BINDER, r);
     return r;
   }
@@ -2022,30 +2022,32 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // teleParamName+ type
+  // teleBinderUntyped type
   public static boolean teleBinderTyped(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "teleBinderTyped")) return false;
     if (!nextTokenIs(b, ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = teleBinderTyped_0(b, l + 1);
+    r = teleBinderUntyped(b, l + 1);
     r = r && type(b, l + 1);
     exit_section_(b, m, TELE_BINDER_TYPED, r);
     return r;
   }
 
+  /* ********************************************************** */
   // teleParamName+
-  private static boolean teleBinderTyped_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "teleBinderTyped_0")) return false;
+  public static boolean teleBinderUntyped(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "teleBinderUntyped")) return false;
+    if (!nextTokenIs(b, ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = teleParamName(b, l + 1);
     while (r) {
       int c = current_position_(b);
       if (!teleParamName(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "teleBinderTyped_0", c)) break;
+      if (!empty_element_parsed_guard_(b, "teleBinderUntyped", c)) break;
     }
-    exit_section_(b, m, null, r);
+    exit_section_(b, m, TELE_BINDER_UNTYPED, r);
     return r;
   }
 
