@@ -7,7 +7,7 @@ def infixl + (m n : ImNat) : ImNat
 | S {m}, n => S {m + n}
 tighter =
 
-def moreComplex {x : ImNat} (y : ImNat) : ImNat
+def moreComplex {ImNat} ImNat : ImNat
 | {O} as x, O as y => x + y
 | {O as x}, S {_} as y => x + y
 | {S {x' as x}}, O as y => S {x} + y

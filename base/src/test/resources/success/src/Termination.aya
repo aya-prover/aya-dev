@@ -1,4 +1,4 @@
-open import Arith::Nat
+open import Arith::Nat hiding (pred)
 
 example def ack Nat Nat : Nat
   | 0, n      => suc n
