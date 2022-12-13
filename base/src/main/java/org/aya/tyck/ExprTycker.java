@@ -812,7 +812,7 @@ public final class ExprTycker extends Tycker {
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
-      var type = PiTerm.make(tele, Def.defResult(conVar));
+      var type = PiTerm.make(tele, Def.defResult(conVar)).rename();
       var telescopes = CtorDef.telescopes(conVar).rename();
       var body = telescopes.toConCall(conVar, 0);
       return new TermResult(LamTerm.make(telescopes.params(), body), type);
@@ -834,7 +834,7 @@ public final class ExprTycker extends Tycker {
     var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables
     Term body = function.make(defVar, 0, teleRenamed.map(Term.Param::toArg));
-    var type = PiTerm.make(tele, Def.defResult(defVar));
+    var type = PiTerm.make(tele, Def.defResult(defVar)).rename();
     if ((defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) || defVar.core instanceof PrimDef) {
       body = whnf(body);
     }

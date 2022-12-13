@@ -6,8 +6,4 @@ open import Paths
 public open data join (A B : Type)
 | inl A
 | inr B
-| push (a : A) (b : B) (i : I) {
-// TODO: fix bug and remove the following explicit types
-  | i := inr {A} b
-  | ~ i := inl {A} {B} a
-}
+| push (a : A) (b : B) : inl a = inr b 

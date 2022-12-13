@@ -147,7 +147,7 @@ public sealed abstract class TermComparator permits Unifier {
   @Nullable
   protected Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     // lhs & rhs will both be WHNF if either is not a potentially reducible call
-    if (TermComparator.isCall(lhs) || TermComparator.isCall(rhs)) {
+    if (isCall(lhs) || isCall(rhs)) {
       var ty = compareApprox(lhs, rhs, lr, rl);
       if (ty == null) ty = doCompareUntyped(lhs, rhs, lr, rl);
       if (ty != null) return ty.normalize(state, NormalizeMode.WHNF);
@@ -225,8 +225,8 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private boolean visitLists(SeqView<Term> l, SeqView<Term> r, Sub lr, Sub rl, @NotNull SeqLike<Term.Param> types) {
-    if (!l.sizeEquals(r)) return false;
-    if (!r.sizeEquals(types)) return false;
+    assert l.sizeEquals(r);
+    assert r.sizeEquals(types);
     var typesSubst = types.view();
     var lu = l.toImmutableSeq();
     var ru = r.toImmutableSeq();
@@ -492,9 +492,12 @@ public sealed abstract class TermComparator permits Unifier {
         case ConCall rhs -> {
           var lef = lhs.ref();
           if (lef != rhs.ref()) yield null;
+          if (!visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), lr, rl,
+            Term.Param.subst(lef.core.ownerTele, lhs.ulift()))) yield null;
           var retType = getType(lhs, lef);
           // Lossy comparison
-          if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl, Term.Param.subst(lef.core.selfTele, lhs.ulift())))
+          if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
+            Term.Param.subst(lef.core.selfTele, lhs.ulift())))
             yield retType;
           yield null;
         }
