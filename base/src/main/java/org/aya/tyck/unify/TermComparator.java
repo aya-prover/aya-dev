@@ -531,6 +531,10 @@ public sealed abstract class TermComparator permits Unifier {
     return ret;
   }
 
+  /**
+   * {@link ConCall} may reduce according to conditions, so this comparison is a lossy one.
+   * If called from {@link #doCompareUntyped} then probably not so lossy.
+   */
   private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
     if (!visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), lr, rl,
       Term.Param.subst(Def.defTele(lef.core.dataRef), lhs.ulift()))) return null;

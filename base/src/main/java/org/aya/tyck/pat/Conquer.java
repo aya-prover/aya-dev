@@ -77,8 +77,7 @@ public record Conquer(
     CofThy.conv(condition.cof(), matchy, subst -> {
       // We should also restrict the current clause body under `condition`.
       var newBody = currentClause.body().subst(subst);
-      var args = currentClause.patterns().map(p -> p.toArg().descent(t ->
-        tycker.whnf(t.subst(subst))));
+      var args = currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst)));
       var matchResult = new Expander.WHNFer(tycker.state)
         .tryUnfoldClauses(orderIndependent, args, 0, matchings)
         .map(w -> w.map(t -> t.subst(subst)));
