@@ -38,7 +38,7 @@ public record PathTerm(
   public @NotNull PathTerm flatten() {
     var ty = type;
     var jon = MutableList.from(params);
-    var sterling = MutableList.<Partial<Term>>create();
+    var sterling = MutableList.of(partial);
     while (ty instanceof PathTerm path) {
       // ^ This means the faces in sterling are of type `path`
       ty = path.type();
