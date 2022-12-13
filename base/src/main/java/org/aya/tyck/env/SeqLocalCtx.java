@@ -45,4 +45,8 @@ public record SeqLocalCtx(
   @Override public void modifyMyTerms(@NotNull UnaryOperator<Term> u) {
     localSeq.replaceAll(p -> new P(p.var, u.apply(p.type)));
   }
+
+  @Override public boolean containsLocal(LocalVar dom) {
+    return localSeq.contains(dom);
+  }
 }
