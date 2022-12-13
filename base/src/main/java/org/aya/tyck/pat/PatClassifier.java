@@ -131,9 +131,10 @@ public record PatClassifier(
     LocalCtx ctx, Subst rhsSubst, Reporter reporter,
     int lhsIx, int rhsIx, Term.Matching matching
   ) {
-    if (rhsSubst.map().keysView().allMatch(dom -> ctx.contains((LocalVar) dom)))
-      reporter.report(new ClausesProblem.Domination(
-        lhsIx + 1, rhsIx + 1, matching.sourcePos()));
+    if (rhsSubst.map().valuesView().allMatch(dom ->
+      dom instanceof RefTerm(var ref) && ctx.contains(ref))
+    ) reporter.report(new ClausesProblem.Domination(
+      lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
   private @NotNull MCT<Term, PatErr> classifySub(
