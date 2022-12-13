@@ -49,6 +49,10 @@ public final class DataDef extends UserDef.Type {
       ownerTele = ownerTele.map(Term.Param::implicitify);
     }
 
+    public CtorTelescopes(@NotNull CtorDef def) {
+      this(def.ownerTele, def.selfTele);
+    }
+
     public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar, int ulift) {
       return new ConCall(fromCtor(conVar), conVar,
         ownerTele.map(Term.Param::toArg),

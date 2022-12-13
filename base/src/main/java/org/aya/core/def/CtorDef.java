@@ -40,15 +40,6 @@ public final class CtorDef extends SubLevelDef {
     this.pats = pats;
   }
 
-  /**
-   * @return first component: ctor's owner telescope, second component: ctor's self telescope
-   */
-  public static @NotNull DataDef.CtorTelescopes
-  telescopes(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> defVar) {
-    assert defVar.core != null;
-    return new DataDef.CtorTelescopes(defVar.core.ownerTele, defVar.core.selfTele);
-  }
-
   public @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref() {
     return ref;
   }
