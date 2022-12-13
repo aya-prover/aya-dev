@@ -9,6 +9,8 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
@@ -172,7 +174,7 @@ public sealed abstract class TermComparator permits Unifier {
       case FnCall lhs when preRhs instanceof FnCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case ConCall lhs when preRhs instanceof ConCall rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
+        lhs.ref() != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl, lhs.ref());
       case PrimCall lhs when preRhs instanceof PrimCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
@@ -491,15 +493,7 @@ public sealed abstract class TermComparator permits Unifier {
       case ConCall lhs -> switch (preRhs) {
         case ConCall rhs -> {
           var lef = lhs.ref();
-          if (lef != rhs.ref()) yield null;
-          if (!visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), lr, rl,
-            Term.Param.subst(lef.core.ownerTele, lhs.ulift()))) yield null;
-          var retType = getType(lhs, lef);
-          // Lossy comparison
-          if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
-            Term.Param.subst(lef.core.selfTele, lhs.ulift())))
-            yield retType;
-          yield null;
+          yield lef != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl, lef);
         }
         case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
@@ -535,6 +529,17 @@ public sealed abstract class TermComparator permits Unifier {
     };
     traceExit();
     return ret;
+  }
+
+  private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
+    if (!visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), lr, rl,
+      Term.Param.subst(lef.core.ownerTele, lhs.ulift()))) return null;
+    var retType = getType(lhs, lef);
+    // Lossy comparison
+    if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
+      Term.Param.subst(lef.core.selfTele, lhs.ulift())))
+      return retType;
+    return null;
   }
 
   protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs);

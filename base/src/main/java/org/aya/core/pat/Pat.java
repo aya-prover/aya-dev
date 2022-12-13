@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author kiva, ice1000, HoshinoTented
  */
-@Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.debug()).debugRender()")
+@Debug.Renderer(text = "toTerm().toDoc(AyaDistillerOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
   boolean explicit();
   default @NotNull Term toTerm() {

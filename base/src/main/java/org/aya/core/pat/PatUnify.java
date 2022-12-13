@@ -68,7 +68,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
   private void visitAs(@NotNull LocalVar as, Pat rhs) {
     if (rhs instanceof Pat.Bind bind) ctx.put(bind.bind(), bind.type());
     else rhs.storeBindings(ctx);
-    lhsSubst.add(as, rhs.toTerm());
+    lhsSubst.add(as, rhs.toTerm().subst(rhsSubst));
   }
 
   private void reportError(@NotNull Pat lhs, @NotNull Pat pat) {
