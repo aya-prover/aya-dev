@@ -533,9 +533,8 @@ public sealed abstract class TermComparator permits Unifier {
 
   private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
     if (!visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), lr, rl,
-      Term.Param.subst(lef.core.ownerTele, lhs.ulift()))) return null;
+      Term.Param.subst(Def.defTele(lef.core.dataRef), lhs.ulift()))) return null;
     var retType = getType(lhs, lef);
-    // Lossy comparison
     if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
       Term.Param.subst(lef.core.selfTele, lhs.ulift())))
       return retType;
