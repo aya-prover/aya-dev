@@ -5,7 +5,7 @@ open import Algebra::Formula
 
 public open data Int
 | signed Bool Nat
-| posneg (i : I) { i := pos 0 | ~ i := neg 0 }
+| posneg : neg 0 = pos 0
 
 def pos => signed true
 def neg => signed false

@@ -35,8 +35,12 @@ import java.util.function.ToIntBiFunction;
  * @author ice1000
  */
 public abstract class BaseDistiller<Term extends AyaDocile> {
-  public static <T extends AyaDocile> @NotNull Doc toDoc(@NotNull DistillerOptions options, @NotNull Arg<T> self) {
+  public static <T extends AyaDocile> @NotNull Doc argDoc(@NotNull DistillerOptions options, @NotNull Arg<T> self) {
     return BaseDistiller.arg((outer, d) -> d.toDoc(options), self, Outer.Free);
+  }
+
+  public static <T extends AyaDocile> @NotNull Doc argsDoc(@NotNull DistillerOptions options, @NotNull SeqLike<Arg<T>> self) {
+    return Doc.commaList(self.view().map(t -> argDoc(options, t)));
   }
 
   @FunctionalInterface
