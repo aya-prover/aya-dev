@@ -12,8 +12,14 @@ In file $FILE:4:12 ->
 
 Error: The 3rd and the 4th clauses are not confluent because we failed to unify
          suc (addN (suc b) a)
+         (Normalized: suc (suc (addN a b)))
        and
          suc (addN (suc a) b)
+         (Normalized: suc (suc (addN b a)))
+       In particular, we failed to unify
+         b
+       with
+         a
 
 1 error(s), 0 warning(s).
 What are you doing?

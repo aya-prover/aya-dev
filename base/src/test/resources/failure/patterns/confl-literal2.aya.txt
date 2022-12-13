@@ -74,6 +74,16 @@ Error: The 3rd and the 1st clauses are not confluent because we failed to unify
        and
          1919810
 
+In file $FILE:13:4 ->
+
+  11 | def overlap largeInt3 Nat Nat : Nat
+  12 |   | a, b => b
+  13 |   | a, suc b => b
+           ^-----------^
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
 In file $FILE:11:12 ->
 
    9 |   | a, 1919810 => 1
@@ -88,6 +98,16 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          suc b
        and
          b
+
+In file $FILE:13:4 ->
+
+  11 | def overlap largeInt3 Nat Nat : Nat
+  12 |   | a, b => b
+  13 |   | a, suc b => b
+           ^-----------^
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:11:12 ->
 
@@ -180,6 +200,16 @@ Error: The 3rd and the 1st clauses are not confluent because we failed to unify
        and
          1919810
 
+In file $FILE:26:4 ->
+
+  24 | def overlap largeInt3-inv Nat Nat : Nat
+  25 |   | b, a => b
+  26 |   | suc b, a => b
+           ^-----------^
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
 In file $FILE:24:12 ->
 
   22 |   | 1919810, a => 1
@@ -194,6 +224,16 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          suc b
        and
          b
+
+In file $FILE:26:4 ->
+
+  24 | def overlap largeInt3-inv Nat Nat : Nat
+  25 |   | b, a => b
+  26 |   | suc b, a => b
+           ^-----------^
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:24:12 ->
 
@@ -245,6 +285,10 @@ Error: The 3rd and the 2nd clauses are not confluent because we failed to unify
          515
        and
          suc 513
+       In particular, we failed to unify
+         514
+       with
+         513
 
 In file $FILE:31:4 ->
 
@@ -276,5 +320,5 @@ In file $FILE:33:4 ->
 Warning: The 5th clause dominates the 4th clause. The 4th clause will be 
          unreachable
 
-11 error(s), 11 warning(s).
+11 error(s), 15 warning(s).
 What are you doing?
