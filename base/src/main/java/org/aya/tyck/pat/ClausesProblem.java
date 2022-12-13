@@ -9,6 +9,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.UnifyError;
@@ -35,6 +36,7 @@ public sealed interface ClausesProblem extends Problem {
     int i, int j,
     @NotNull ImmutableSeq<Arg<Term>> args,
     @NotNull Term lhs,
+    @NotNull TyckState state,
     @NotNull SourcePos iPos
   ) {
   }
@@ -61,7 +63,10 @@ public sealed interface ClausesProblem extends Problem {
         Doc.english("for the arguments:")
       );
       return Doc.vcat(line,
-        Doc.par(1, BaseDistiller.argsDoc(options, data.args)));
+        Doc.par(1, BaseDistiller.argsDoc(options, data.args)),
+        Doc.english("Normalized:"),
+        Doc.par(1, BaseDistiller.argsDoc(options, data.args.map(a ->
+          a.descent(t -> t.normalize(data.state, NormalizeMode.NF))))));
     }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {

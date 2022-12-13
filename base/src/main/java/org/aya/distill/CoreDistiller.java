@@ -203,7 +203,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case StringTerm(var str) -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str) + "\"");
       case PartialTyTerm(var ty, var restr) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Partial"),
         term(Outer.AppSpine, ty), Doc.parened(restr(options, restr))), Outer.AppSpine);
-      case PartialTerm el -> partial(options, el.partial(), true, "{|", "|}");
+      case PartialTerm el -> partial(options, el.partial(), true, Doc.symbol("{|"), Doc.symbol("|}"));
       case FormulaTerm(var mula) -> formula(outer, mula);
       case PathTerm cube -> {
         if (cube.params().sizeEquals(1)
@@ -221,7 +221,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
           Doc.symbol("|]"),
           cube.type().toDoc(options),
-          partial(options, cube.partial(), false, "{", "}")
+          partial(options, cube.partial(), false, Doc.symbol("{"), Doc.symbol("}"))
         );
       }
       case PLamTerm(var params, var body) -> checkParen(outer,
@@ -293,9 +293,10 @@ public class CoreDistiller extends BaseDistiller<Term> {
           Doc.symbol(":"),
           term(Outer.Free, def.result())
         });
+        var line1sep = Doc.sepNonEmpty(line1);
         yield def.body.fold(
-          term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term(Outer.Free, term)),
-          clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
+          term -> Doc.sep(line1sep, Doc.symbol("=>"), term(Outer.Free, term)),
+          clauses -> Doc.vcat(line1sep, Doc.nest(2, visitClauses(clauses))));
       }
       case FieldDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         coe(field.coerce),
@@ -313,7 +314,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
           var pats = Doc.commaList(ctor.pats.view().map(pat -> pat(pat, Outer.Free)));
           line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
         } else line1 = Doc.sep(Doc.symbol("|"), doc);
-        yield Doc.cblock(line1, 2, partial(options, ctor.clauses, false, "{", "}"));
+        yield Doc.cblock(line1, 2, partial(options, ctor.clauses, false, Doc.empty(), Doc.empty()));
       }
       case StructDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
         linkDef(def.ref(), STRUCT_CALL),

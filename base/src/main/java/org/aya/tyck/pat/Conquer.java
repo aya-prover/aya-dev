@@ -82,7 +82,7 @@ public record Conquer(
         .tryUnfoldClauses(orderIndependent, args, 0, matchings)
         .map(w -> w.map(t -> t.subst(subst)));
       currentClause.patterns().forEach(p -> p.storeBindings(ctx, subst));
-      var errorData = new ClausesProblem.CondData(nth + 1, i, args, newBody, currentClause.sourcePos());
+      var errorData = new ClausesProblem.CondData(nth + 1, i, args, newBody, tycker.state, currentClause.sourcePos());
       if (matchResult.isEmpty()) {
         tycker.reporter.report(new ClausesProblem.Conditions(
           sourcePos, errorData, null, null));

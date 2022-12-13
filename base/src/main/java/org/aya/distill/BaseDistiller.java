@@ -289,13 +289,13 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  partial(@NotNull DistillerOptions options, @NotNull Partial<T> partial, boolean showEmpty, String lbr, String rbr) {
+  partial(@NotNull DistillerOptions options, @NotNull Partial<T> partial, boolean showEmpty, @NotNull Doc lb, @NotNull Doc rb) {
     return switch (partial) {
-      case Partial.Const<T> sad -> Doc.sep(Doc.symbol(lbr), sad.u().toDoc(options), Doc.symbol(rbr));
+      case Partial.Const<T> sad -> Doc.sepNonEmpty(lb, sad.u().toDoc(options), rb);
       case Partial.Split<T> hap when!showEmpty && hap.clauses().isEmpty() -> Doc.empty();
-      case Partial.Split<T> hap -> Doc.sep(Doc.symbol(lbr),
+      case Partial.Split<T> hap -> Doc.sepNonEmpty(lb,
         Doc.join(Doc.spaced(Doc.symbol("|")), hap.clauses().map(s -> side(options, s))),
-        Doc.symbol(rbr));
+        rb);
     };
   }
 
