@@ -10,6 +10,9 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.TyckState;
+import org.aya.tyck.error.UnifyError;
+import org.aya.tyck.unify.TermComparator;
 import org.aya.util.Arg;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
@@ -73,20 +76,22 @@ public sealed interface ClausesProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     int i, int j,
     @NotNull Term lhs, @NotNull Term rhs,
+    @Override @NotNull TyckState state,
+    @Override @NotNull TermComparator.FailureData failureData,
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
-  ) implements ClausesProblem {
+  ) implements ClausesProblem, UnifyError {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.vcat(
-        Doc.sep(
-          Doc.plain("The"),
-          Doc.ordinal(i),
-          Doc.english("and the"),
-          Doc.ordinal(j),
-          Doc.english("clauses are not confluent because we failed to unify")),
-        Doc.par(1, lhs.toDoc(options)),
-        Doc.plain("and"),
-        Doc.par(1, rhs.toDoc(options))
-      );
+      var line = Doc.sep(
+        Doc.plain("The"),
+        Doc.ordinal(i),
+        Doc.english("and the"),
+        Doc.ordinal(j),
+        Doc.english("clauses are not confluent because we failed to unify"));
+      return describeUnify(options, line, lhs, Doc.plain("and"), rhs);
+    }
+
+    @Override public @NotNull Severity level() {
+      return ClausesProblem.super.level();
     }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {

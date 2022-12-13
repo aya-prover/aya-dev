@@ -73,7 +73,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
       lhsSubst.add(as, new RefTerm(fresh));
       rhsSubst.add(bind, new RefTerm(fresh));
     } else {
-      rhs.storeBindings(ctx);
+      rhs.storeBindings(ctx, rhsSubst);
       lhsSubst.add(as, rhs.toTerm().subst(rhsSubst));
     }
   }

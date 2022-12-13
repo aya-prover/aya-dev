@@ -81,7 +81,7 @@ public record Conquer(
       var matchResult = new Expander.WHNFer(tycker.state)
         .tryUnfoldClauses(orderIndependent, args, 0, matchings)
         .map(w -> w.map(t -> t.subst(subst)));
-      currentClause.patterns().forEach(p -> p.storeBindings(ctx));
+      currentClause.patterns().forEach(p -> p.storeBindings(ctx, subst));
       var errorData = new ClausesProblem.CondData(nth + 1, i, args, newBody, currentClause.sourcePos());
       if (matchResult.isEmpty()) {
         tycker.reporter.report(new ClausesProblem.Conditions(

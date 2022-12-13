@@ -116,10 +116,10 @@ public record PatClassifier(
         } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
           hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
         }
-        var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
-        if (!unification) {
+        var unifier = tycker.unifier(pos, Ordering.Eq, ctx);
+        if (!unifier.compare(lhsTerm, rhsTerm, result)) {
           tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
-            lhsTerm, rhsTerm, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
+            lhsTerm, rhsTerm, tycker.state, unifier.getFailure(), lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
         }
       }
     });
