@@ -2,7 +2,7 @@ open import Paths
 open import Logic::HLevels
 open import Algebra::Formula
 
-open data FMSet (A : Type)
+public open data FMSet (A : Type)
 | nil
 | infixr :< A (FMSet A) tighter =
 | comm (x y : A) (xs : FMSet A) : x :< y :< xs = y :< x :< xs

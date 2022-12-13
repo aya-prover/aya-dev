@@ -44,7 +44,8 @@ public record PathTerm(
       ty = path.type();
       jon.appendAll(path.params());
       // Apply the dims to the terms in sterling, so their types become ty
-      sterling.replaceAll(p -> p.map(path::applyDimsTo));
+      // Be sure to use `amendTerms` instead of `fmap`/`map`
+      sterling.replaceAll(p -> PartialTerm.amendTerms(p, path::applyDimsTo));
       sterling.append(path.partial);
     }
     if (ty == type) return this;
