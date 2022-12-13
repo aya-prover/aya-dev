@@ -38,4 +38,12 @@ public record PartialTerm(@NotNull Partial<Term> partial, @NotNull Term rhsType)
   }
 
   public static final @NotNull Partial.Split<Term> DUMMY_SPLIT = new Split<>(ImmutableSeq.empty());
+
+  public static Partial<Term> amendTerms(Partial<Term> p, UnaryOperator<Term> applyDimsTo) {
+    return switch (p) {
+      case Partial.Split<Term> s -> new Split<>(s.clauses().map(c ->
+        new Restr.Side<>(c.cof(), applyDimsTo.apply(c.u()))));
+      case Partial.Const<Term> c -> new Const<>(applyDimsTo.apply(c.u()));
+    };
+  }
 }

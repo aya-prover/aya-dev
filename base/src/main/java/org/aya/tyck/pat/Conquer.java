@@ -77,13 +77,15 @@ public record Conquer(
     CofThy.conv(condition.cof(), matchy, subst -> {
       // We should also restrict the current clause body under `condition`.
       var newBody = currentClause.body().subst(subst);
-      var matchResult = new Expander.WHNFer(tycker.state).tryUnfoldClauses(orderIndependent,
-        currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst))),
-        0, matchings).map(w -> w.map(t -> t.subst(subst)));
-      currentClause.patterns().forEach(p -> p.storeBindings(ctx));
+      var args = currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst)));
+      var matchResult = new Expander.WHNFer(tycker.state)
+        .tryUnfoldClauses(orderIndependent, args, 0, matchings)
+        .map(w -> w.map(t -> t.subst(subst)));
+      currentClause.patterns().forEach(p -> p.storeBindings(ctx, subst));
+      var errorData = new ClausesProblem.CondData(nth + 1, i, args, newBody, tycker.state, currentClause.sourcePos());
       if (matchResult.isEmpty()) {
         tycker.reporter.report(new ClausesProblem.Conditions(
-          sourcePos, nth + 1, i, newBody, null, currentClause.sourcePos(), null));
+          sourcePos, errorData, null, null));
         return true;
       }
       var anotherClause = matchResult.get();
@@ -96,7 +98,7 @@ public record Conquer(
         .compare(newBody, anotherClause.data(), signature.result().subst(matchy));
       if (!unification) {
         tycker.reporter.report(new ClausesProblem.Conditions(
-          sourcePos, nth + 1, i, newBody, anotherClause.data(), currentClause.sourcePos(), anotherClause.sourcePos()));
+          sourcePos, errorData, anotherClause.data(), anotherClause.sourcePos()));
       }
       return unification;
     });

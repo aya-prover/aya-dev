@@ -33,7 +33,7 @@ public sealed interface HoleProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Can't perform pattern unification on hole with the following spine:"),
-        Doc.commaList(term.args().map(a -> BaseDistiller.toDoc(options, a)))
+        BaseDistiller.argsDoc(options, term.args())
       );
     }
   }

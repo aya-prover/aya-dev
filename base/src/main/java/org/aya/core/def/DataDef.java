@@ -4,9 +4,7 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.term.ConCall;
-import org.aya.core.term.SortTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,26 +41,17 @@ public final class DataDef extends UserDef.Type {
    */
   public record CtorTelescopes(
     @NotNull ImmutableSeq<Term.Param> ownerTele,
-    @NotNull ImmutableSeq<Term.Param> selfTele
+    @NotNull ImmutableSeq<Term.Param> selfTele,
+    @NotNull DataCall ret
   ) {
-    public CtorTelescopes {
-      ownerTele = ownerTele.map(Term.Param::implicitify);
+    public CtorTelescopes(@NotNull CtorDef def) {
+      this(def.ownerTele.map(Term.Param::implicitify), def.selfTele, (DataCall) def.result);
     }
 
-    public @NotNull ConCall toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar, int ulift) {
-      return new ConCall(fromCtor(conVar), conVar,
-        ownerTele.map(Term.Param::toArg),
-        ulift,
-        selfTele.map(Term.Param::toArg));
-    }
-
-    public @NotNull CtorTelescopes rename() {
-      return new CtorTelescopes(ownerTele.map(Term.Param::rename),
-        selfTele.map(Term.Param::rename));
-    }
-
-    public @NotNull ImmutableSeq<Term.Param> params() {
-      return ownerTele.concat(selfTele);
+    public @NotNull Term toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar, int ulift) {
+      var body = new ConCall(fromCtor(conVar), conVar,
+        ret.args(), ulift, selfTele.map(Term.Param::toArg));
+      return LamTerm.make(ownerTele.concat(selfTele), body).rename();
     }
   }
 }

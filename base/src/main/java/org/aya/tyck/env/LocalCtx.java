@@ -20,6 +20,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
+import org.aya.util.ForLSP;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
@@ -130,4 +131,14 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   @Nullable LocalCtx parent();
   @Contract(mutates = "this") void modifyMyTerms(@NotNull UnaryOperator<Term> u);
+  default @ForLSP boolean contains(LocalVar dom) {
+    var ctx = this;
+    while (ctx != null) {
+      if (ctx.containsLocal(dom)) return true;
+      ctx = ctx.parent();
+    }
+    return false;
+  }
+
+  boolean containsLocal(LocalVar dom);
 }

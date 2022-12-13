@@ -18,9 +18,11 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.AnyVar;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
+import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -106,8 +108,8 @@ public record PatClassifier(
         var rhsSubst = new Subst(MutableMap.create());
         var ctx = PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(),
           lhsSubst, rhsSubst, tycker.localCtx.deriveMap());
-        domination(rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
-        domination(lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
+        domination(ctx, rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
+        domination(ctx, lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
         var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
         // TODO: Currently all holes at this point are in an ErrorTerm
@@ -116,19 +118,23 @@ public record PatClassifier(
         } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
           hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
         }
-        var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
-        if (!unification) {
+        var unifier = tycker.unifier(pos, Ordering.Eq, ctx);
+        if (!unifier.compare(lhsTerm, rhsTerm, result)) {
           tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
-            lhsTerm, rhsTerm, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
+            lhsTerm, rhsTerm, tycker.state, unifier.getFailure(), lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
         }
       }
     });
   }
 
-  private static void domination(Subst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Term.Matching matching) {
-    if (rhsSubst.isEmpty())
-      reporter.report(new ClausesProblem.Domination(
-        lhsIx + 1, rhsIx + 1, matching.sourcePos()));
+  private static void domination(
+    LocalCtx ctx, Subst rhsSubst, Reporter reporter,
+    int lhsIx, int rhsIx, Term.Matching matching
+  ) {
+    if (rhsSubst.map().valuesView().allMatch(dom ->
+      dom instanceof RefTerm(var ref) && ctx.contains(ref))
+    ) reporter.report(new ClausesProblem.Domination(
+      lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
   private @NotNull MCT<Term, PatErr> classifySub(

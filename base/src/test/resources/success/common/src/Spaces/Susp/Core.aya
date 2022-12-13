@@ -3,10 +3,7 @@ open import Paths
 public open data Susp (A : Type)
 | north
 | south
-| merid A (i : I) {
-  | i := south
-  | ~ i := north
-}
+| merid A : north = south
 
 variable A B : Type
 def mapSusp (A → B) (Susp A) : Susp B

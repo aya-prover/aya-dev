@@ -47,4 +47,8 @@ public record MapLocalCtx(
   @Override public void extractToLocal(@NotNull MutableList<Term.Param> dest) {
     localMap.mapTo(dest, (k, v) -> new Term.Param(k, v, false));
   }
+
+  @Override public boolean containsLocal(LocalVar dom) {
+    return localMap.containsKey(dom);
+  }
 }

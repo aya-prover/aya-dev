@@ -13,6 +13,7 @@ import org.aya.core.def.Def;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Subst;
 import org.aya.distill.AyaDistillerOptions;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author kiva, ice1000, HoshinoTented
  */
-@Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.debug()).debugRender()")
+@Debug.Renderer(text = "toTerm().toDoc(AyaDistillerOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
   boolean explicit();
   default @NotNull Term toTerm() {
@@ -60,10 +61,10 @@ public sealed interface Pat extends AyaDocile {
    * @return inlined patterns
    */
   @NotNull Pat inline(@Nullable LocalCtx ctx);
-  void storeBindings(@NotNull LocalCtx ctx);
+  void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
     var localCtx = new SeqLocalCtx();
-    for (var pat : pats) pat.storeBindings(localCtx);
+    for (var pat : pats) pat.storeBindings(localCtx, Subst.EMPTY);
     return localCtx.extract();
   }
 
@@ -72,8 +73,8 @@ public sealed interface Pat extends AyaDocile {
     @NotNull LocalVar bind,
     @NotNull Term type
   ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx ctx) {
-      ctx.put(bind, type);
+    @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
+      ctx.put(bind, type.subst(rhsSubst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
@@ -101,7 +102,7 @@ public sealed interface Pat extends AyaDocile {
     @NotNull LocalVar fakeBind,
     @NotNull Term type
   ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx ctx) {
+    @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       // Do nothing
       // This is safe because storeBindings is called only in extractTele which is
       // only used for constructor ownerTele extraction for simpler indexed types
@@ -129,7 +130,7 @@ public sealed interface Pat extends AyaDocile {
   }
 
   record Absurd(boolean explicit) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx ctx) {
+    @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       throw new InternalException("unreachable");
     }
 
@@ -146,8 +147,8 @@ public sealed interface Pat extends AyaDocile {
     boolean explicit,
     @NotNull ImmutableSeq<Pat> pats
   ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx ctx) {
-      pats.forEach(pat -> pat.storeBindings(ctx));
+    @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
+      pats.forEach(pat -> pat.storeBindings(ctx, rhsSubst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
@@ -165,8 +166,8 @@ public sealed interface Pat extends AyaDocile {
     @NotNull ImmutableSeq<Pat> params,
     @NotNull DataCall type
   ) implements Pat {
-    @Override public void storeBindings(@NotNull LocalCtx ctx) {
-      params.forEach(pat -> pat.storeBindings(ctx));
+    @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
+      params.forEach(pat -> pat.storeBindings(ctx, rhsSubst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
@@ -199,7 +200,7 @@ public sealed interface Pat extends AyaDocile {
       return this;
     }
 
-    @Override public void storeBindings(@NotNull LocalCtx ctx) {
+    @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       // do nothing
     }
 

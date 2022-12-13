@@ -4,6 +4,7 @@ package org.aya.core.pat;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.term.RefTerm;
 import org.aya.core.visitor.Subst;
 import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.util.InternalException;
@@ -66,9 +67,15 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
   }
 
   private void visitAs(@NotNull LocalVar as, Pat rhs) {
-    if (rhs instanceof Pat.Bind bind) ctx.put(bind.bind(), bind.type());
-    else rhs.storeBindings(ctx);
-    lhsSubst.add(as, rhs.toTerm());
+    if (rhs instanceof Pat.Bind(var licit, var bind, var ty)) {
+      var fresh = new LocalVar(as.name() + bind.name());
+      ctx.put(fresh, ty.subst(rhsSubst));
+      lhsSubst.add(as, new RefTerm(fresh));
+      rhsSubst.add(bind, new RefTerm(fresh));
+    } else {
+      rhs.storeBindings(ctx, rhsSubst);
+      lhsSubst.add(as, rhs.toTerm().subst(rhsSubst));
+    }
   }
 
   private void reportError(@NotNull Pat lhs, @NotNull Pat pat) {

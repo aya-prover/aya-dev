@@ -10,8 +10,11 @@ In file $FILE:18:4 ->
           ^----------------^ substituted to `zero`
 
 Error: The 4th clause matches on a constructor with condition(s). When checking 
-       the 1st condition, we failed to even reduce one of the clause(s) to check
-       condition
+       the 1st condition, we failed to find any of the clause(s) to check 
+       condition for the arguments:
+         posneg n 1
+       Normalized:
+         pos n
 
 1 error(s), 0 warning(s).
 What are you doing?
