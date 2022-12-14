@@ -64,7 +64,7 @@ public class MdStyleTest {
 
   @Test
   public void testEscapeDocs() {
-    assertEquals("!\"\\#$%\\&'\\(\\)\\*\\+,\\-./:\\;\\<=\\>?@\\[\\\\\\]^\\_\\`{\\|}\\~",
+    assertEquals("!\"\\#$%\\&'\\(\\)\\*\\+,-./:\\;\\<=\\>?@\\[\\\\\\]^\\_\\`{\\|}\\~",
       escapeDoc12().renderToMd());
     // In fact, the markdown: `\→\A\a\ \3\φ\«` also produces the text as escapeDoc1 describes,
     // but it makes the Java/Markdown code more complex/confusing (for me at least)
