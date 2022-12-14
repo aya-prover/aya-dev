@@ -12,6 +12,8 @@ public class CommonMarkTest {
       1. what?
       2. Hey!
       
+      <!--- comment --->
+      
       + What?
         + Oh?
       + Hey!""");
