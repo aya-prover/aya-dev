@@ -48,12 +48,15 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static final @NotNull Style KEYWORD = AyaStyleKey.Keyword.preset();
-  public static final @NotNull Style PRIM_CALL = AyaStyleKey.Prim.preset();
-  public static final @NotNull Style FN_CALL = AyaStyleKey.Fn.preset();
-  public static final @NotNull Style DATA_CALL = AyaStyleKey.Data.preset();
-  public static final @NotNull Style STRUCT_CALL = AyaStyleKey.Struct.preset();
-  public static final @NotNull Style CON_CALL = AyaStyleKey.Con.preset();
-  public static final @NotNull Style FIELD_CALL = AyaStyleKey.Field.preset();
+  // Annotate the "whole call expr" (not the call head!!) with this.
+  public static final @NotNull Style CALL = AyaStyleKey.CallTerm.preset();
+  // Annotate the "call head" with styles below.
+  public static final @NotNull Style PRIM = AyaStyleKey.Prim.preset();
+  public static final @NotNull Style FN = AyaStyleKey.Fn.preset();
+  public static final @NotNull Style DATA = AyaStyleKey.Data.preset();
+  public static final @NotNull Style STRUCT = AyaStyleKey.Struct.preset();
+  public static final @NotNull Style CON = AyaStyleKey.Con.preset();
+  public static final @NotNull Style FIELD = AyaStyleKey.Field.preset();
   public static final @NotNull Style GENERALIZED = AyaStyleKey.Generalized.preset();
 
   public final @NotNull DistillerOptions options;
@@ -237,7 +240,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   static @NotNull Doc primDoc(AnyVar ref) {
-    return Doc.sep(Doc.styled(KEYWORD, "prim"), linkDef(ref, PRIM_CALL));
+    return Doc.sep(Doc.styled(KEYWORD, "prim"), linkDef(ref, PRIM));
   }
 
   public static @NotNull Doc linkDef(@NotNull AnyVar ref, @NotNull Style color) {
@@ -323,12 +326,12 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   protected static @Nullable Style chooseStyle(Object concrete) {
     return switch (concrete) {
       case DefVar<?, ?> d -> chooseStyle(d.concrete);
-      case TeleDecl.FnDecl d -> FN_CALL;
-      case TeleDecl.DataDecl d -> DATA_CALL;
-      case TeleDecl.DataCtor d -> CON_CALL;
-      case TeleDecl.StructDecl d -> STRUCT_CALL;
-      case TeleDecl.StructField d -> FIELD_CALL;
-      case TeleDecl.PrimDecl d -> PRIM_CALL;
+      case TeleDecl.FnDecl d -> FN;
+      case TeleDecl.DataDecl d -> DATA;
+      case TeleDecl.DataCtor d -> CON;
+      case TeleDecl.StructDecl d -> STRUCT;
+      case TeleDecl.StructField d -> FIELD;
+      case TeleDecl.PrimDecl d -> PRIM;
       case null, default -> null;
     };
   }

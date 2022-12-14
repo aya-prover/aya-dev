@@ -98,12 +98,12 @@ public interface FaithfulDistiller {
 
   private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {
     var style = switch (defKind) {
-      case Data -> BaseDistiller.DATA_CALL;
-      case Con -> BaseDistiller.CON_CALL;
-      case Struct -> BaseDistiller.STRUCT_CALL;
-      case Field -> BaseDistiller.FIELD_CALL;
-      case Fn -> BaseDistiller.FN_CALL;
-      case Prim -> BaseDistiller.PRIM_CALL;
+      case Data -> BaseDistiller.DATA;
+      case Con -> BaseDistiller.CON;
+      case Struct -> BaseDistiller.STRUCT;
+      case Field -> BaseDistiller.FIELD;
+      case Fn -> BaseDistiller.FN;
+      case Prim -> BaseDistiller.PRIM;
       case Generalized -> BaseDistiller.GENERALIZED;
       case LocalVar, Unknown, Module -> null;
     };
