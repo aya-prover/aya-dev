@@ -66,7 +66,7 @@ public record Conquer(
         }
       }
       case Pat.Tuple tuple -> {
-        for (var sub : tuple.pats()) visit(sub, nth);
+        for (var sub : tuple.pats()) visit(sub.term(), nth);
       }
       default -> {}
     }
@@ -78,8 +78,7 @@ public record Conquer(
     CofThy.conv(condition.cof(), matchy, subst -> {
       // We should also restrict the current clause body under `condition`.
       var newBody = currentClause.body().subst(subst);
-      var args = Arg.mapSeq(currentClause.patterns().view(), t -> t.toTerm().subst(subst))
-        .toImmutableSeq();
+      var args = Arg.mapSeq(currentClause.patterns(), t -> t.toTerm().subst(subst));
       var matchResult = new Expander.WHNFer(tycker.state)
         .tryUnfoldClauses(orderIndependent, args, 0, matchings)
         .map(w -> w.map(t -> t.subst(subst)));

@@ -35,7 +35,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
           case Pat.Ctor ctor1 -> {
             // Assumption
             assert ctor.ref() == ctor1.ref();
-            visitList(ctor.params().map(Arg::term), ctor1.params().map(Arg::term));
+            visitList(ctor.params(), ctor1.params());
           }
           case Pat.ShapedInt lit -> unifyLitWithCtor(ctor, lit, lhs);
           default -> reportError(lhs, rhs);
@@ -62,9 +62,12 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
     if (lhs == lit) unify(lit.constructorForm(), ctor);
   }
 
-  private void visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {
+  private void visitList(ImmutableSeq<Arg<Pat>> lpats, ImmutableSeq<Arg<Pat>> rpats) {
     assert rpats.sizeEquals(lpats.size());
-    lpats.forEachWith(rpats, (lp, rp) -> unifyPat(lp, rp, lhsSubst, rhsSubst, ctx));
+    lpats.forEachWith(rpats, (lp, rp) -> {
+      assert lp.explicit() == rp.explicit();
+      unifyPat(lp.term(), rp.term(), lhsSubst, rhsSubst, ctx);
+    });
   }
 
   private void visitAs(@NotNull LocalVar as, Pat rhs) {

@@ -174,7 +174,7 @@ public record PatClassifier(
       case SigmaTerm sigma -> {
         var hasTuple = clauses
           .mapIndexedNotNull((index, subPats) -> head(subPats) instanceof Pat.Tuple tuple
-            ? new MCT.SubPats<>(tuple.pats().view(), index) : null);
+            ? new MCT.SubPats<>(tuple.pats().view().map(Arg::term), index) : null);
         // In case we do,
         if (hasTuple.isNotEmpty()) {
           // Add a catchall pattern to the pattern tree builder since tuple patterns are irrefutable

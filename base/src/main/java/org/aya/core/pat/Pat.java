@@ -137,19 +137,17 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  record Tuple(
-    @NotNull ImmutableSeq<Pat> pats
-  ) implements Pat {
+  record Tuple(@NotNull ImmutableSeq<Arg<Pat>> pats) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
-      pats.forEach(pat -> pat.storeBindings(ctx, rhsSubst));
+      pats.forEach(pat -> pat.term().storeBindings(ctx, rhsSubst));
     }
 
-    @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return new Tuple(pats.map(pat -> pat.zonk(tycker)));
+    @Override public @NotNull Tuple zonk(@NotNull Tycker tycker) {
+      return new Tuple(Arg.mapSeq(pats, t -> t.zonk(tycker)));
     }
 
-    @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return new Tuple(pats.map(p -> p.inline(ctx)));
+    @Override public @NotNull Tuple inline(@Nullable LocalCtx ctx) {
+      return new Tuple(Arg.mapSeq(pats, t -> t.inline(ctx)));
     }
   }
 

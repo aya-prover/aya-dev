@@ -271,7 +271,7 @@ public final class PatTycker {
     };
   }
 
-  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term, boolean licit, boolean resultIsProp) {
+  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term, boolean resultIsProp) {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
@@ -286,12 +286,10 @@ public final class PatTycker {
         // sig.result is a dummy term
         var sig = new Def.Signature<>(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
-        var ret = new Pat.Tuple(
+        yield new Pat.Tuple(
           visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp)
             .wellTyped()
-            .map(Arg::term)
             .toImmutableSeq());
-        yield ret;
       }
       case Pattern.Ctor ctor -> {
         var var = ctor.resolved().data();
@@ -306,8 +304,7 @@ public final class PatTycker {
         var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp).wellTyped.toImmutableSeq();
-        var ret = new Pat.Ctor(realCtor._3.ref(), patterns, dataCall);
-        yield ret;
+        yield new Pat.Ctor(realCtor._3.ref(), patterns, dataCall);
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
         exprTycker.localCtx.put(bind, term);
@@ -342,12 +339,12 @@ public final class PatTycker {
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined() && shape.get().shape() == AyaShape.LIST_SHAPE)
             yield doTyck(new Pattern.FakeShapedList(pos, el, shape.get(), dataCall)
-              .constructorForm(), term, licit, resultIsProp);
+              .constructorForm(), term, resultIsProp);
         }
         yield withError(new PatternProblem.BadLitPattern(pattern, term), term);
       }
       case Pattern.As(var pos, var inner, var as, var type) -> {
-        var innerPat = doTyck(inner, term, licit, resultIsProp);
+        var innerPat = doTyck(inner, term, resultIsProp);
 
         type.set(term);
         addPatSubst(as, innerPat, term);
@@ -500,7 +497,7 @@ public final class PatTycker {
     var type = data.param.type();
     var pat = arg.term();
     var res = exprTycker.traced(() -> new Trace.PatT(type, pat, pat.sourcePos()),
-      () -> doTyck(pat, type, arg.explicit(), resultIsProp));
+      () -> doTyck(pat, type, resultIsProp));
     addSigSubst(data.param(), res);
     data.results.append(new Arg<>(res, arg.explicit()));
 

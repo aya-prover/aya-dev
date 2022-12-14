@@ -3,6 +3,7 @@
 package org.aya.util;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.util.binop.BinOpParser;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,10 @@ public record Arg<T>(@Override @NotNull T term, @Override boolean explicit) impl
   }
 
   public static @NotNull <T, R> SeqView<Arg<R>> mapSeq(SeqView<Arg<T>> args, @NotNull Function<T, R> mapper) {
+    return args.map(t -> t.map(mapper));
+  }
+
+  public static @NotNull <T, R> ImmutableSeq<Arg<R>> mapSeq(ImmutableSeq<Arg<T>> args, @NotNull Function<T, R> mapper) {
     return args.map(t -> t.map(mapper));
   }
 

@@ -23,7 +23,7 @@ public class PatToTerm {
       case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"));
       case Pat.Ctor ctor -> visitCtor(ctor);
       case Pat.Bind bind -> new RefTerm(bind.bind());
-      case Pat.Tuple tuple -> new TupTerm(tuple.pats().map(this::visit));
+      case Pat.Tuple tuple -> new TupTerm(tuple.pats().map(p -> visit(p.term())));
       case Pat.Meta meta -> new MetaPatTerm(meta);
       case Pat.ShapedInt lit -> new IntegerTerm(lit.repr(), lit.recognition(), lit.type());
     };

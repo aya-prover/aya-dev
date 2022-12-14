@@ -48,7 +48,7 @@ public interface PatTraversal extends UnaryOperator<Pat> {
       }
       case Pat.ShapedInt shapedInt -> shapedInt;
       case Pat.Tuple tuple -> {
-        var pats = tuple.pats().map(this);
+        var pats = tuple.pats().map(x -> x.descent(this));
 
         if (pats.sameElements(tuple.pats(), true)) yield tuple;
         yield new Pat.Tuple(pats);
