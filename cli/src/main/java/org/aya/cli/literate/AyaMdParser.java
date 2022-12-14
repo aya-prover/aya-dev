@@ -132,8 +132,8 @@ public class AyaMdParser {
       case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis));
       case Paragraph p -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(p));
       case BlockQuote b -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(b));
-      case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node));
-      case Link h -> new Literate.HyperLink(h.getDestination(), h.getTitle(), mapChildren(node));
+      case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(h));
+      case Link h -> new Literate.HyperLink(h.getDestination(), h.getTitle(), mapChildren(h));
       case ListItem item -> flatten(collectChildren(item.getFirstChild())
         // .flatMap(p -> p instanceof Paragraph ? collectChildren(p.getFirstChild()) : SeqView.of(p))
         .flatMap(this::mapChildren)
@@ -141,6 +141,8 @@ public class AyaMdParser {
       case OrderedList ordered -> new Literate.List(mapChildren(ordered), true);
       case BulletList bullet -> new Literate.List(mapChildren(bullet), false);
       case Document d -> flatten(mapChildren(d));
+      case HtmlBlock html when html.getLiteral().startsWith("<!--") -> new Literate.Raw(Doc.empty());
+      case ThematicBreak t -> new Literate.Many(MdStyle.GFM.ThematicBreak, mapChildren(t));
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
         var raw = codeBlock.getLiteral();
@@ -153,7 +155,6 @@ public class AyaMdParser {
         }
         throw new InternalException("SourceSpans");
       }
-      case HtmlBlock html when html.getLiteral().startsWith("<!--") -> new Literate.Raw(Doc.empty());
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();
         if (spans != null && spans.size() == 1) {
