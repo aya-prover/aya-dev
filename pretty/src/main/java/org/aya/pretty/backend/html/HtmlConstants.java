@@ -41,7 +41,7 @@ public interface HtmlConstants {
   @Language(value = "HTML")
   @NotNull String HOVER_STYLE = """
     <style>
-    .Aya a { text-decoration: none; color: black; }
+    .Aya a { text-decoration: none; }
     .Aya a[href]:hover { background-color: #B4EEB4; }
     .Aya [href].hover-highlight { background-color: #B4EEB4; }
     </style>
