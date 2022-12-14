@@ -121,7 +121,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
         return checkParen(outer, Doc.sep(fn, first), Outer.BinOp);
       }
     }
-    return prefix(fn, fmt, outer, visibleArgs.view());
+    return Doc.styled(CALL, prefix(fn, fmt, outer, visibleArgs.view()));
   }
 
   /**
