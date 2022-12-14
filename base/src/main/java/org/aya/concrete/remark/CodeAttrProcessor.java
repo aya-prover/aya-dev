@@ -82,19 +82,18 @@ public class CodeAttrProcessor implements DelimiterProcessor {
       if (attribute.length > 1) {
         var key = attribute[0];
         var val = attribute[1];
-        var isTrue = val.equalsIgnoreCase("true")
-          || val.equalsIgnoreCase("yes");
-        var cbt = cbt(key, AyaDistillerOptions.Key.values(), null);
-        if (cbt != null) {
-          dist.map.put(cbt, isTrue);
-          continue;
-        }
         if ("mode".equalsIgnoreCase(key)) {
           mode = cbt(val, NormalizeMode.values(), NormalizeMode.NULL);
           continue;
         }
         if ("show".equalsIgnoreCase(key)) {
           show = cbt(val, CodeOptions.ShowCode.values(), CodeOptions.ShowCode.Core);
+          continue;
+        }
+        var cbt = cbt(key, AyaDistillerOptions.Key.values(), null);
+        if (cbt != null) {
+          var isTrue = val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes");
+          dist.map.put(cbt, isTrue);
           continue;
         }
       }
