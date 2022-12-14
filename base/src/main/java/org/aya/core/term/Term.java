@@ -68,7 +68,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         yield new LamTerm(param, body);
       }
       case TupTerm tuple -> {
-        var items = tuple.items().map(f);
+        var items = tuple.items().map(x -> x.descent(f));
         if (items.sameElements(tuple.items(), true)) yield tuple;
         yield new TupTerm(items);
       }

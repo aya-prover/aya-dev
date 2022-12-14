@@ -31,7 +31,7 @@ public sealed interface SerPat extends Serializable {
 
   record Tuple(boolean explicit, @NotNull ImmutableSeq<SerPat> pats) implements SerPat {
     @Override public @NotNull Arg<Pat> de(SerTerm.@NotNull DeState state) {
-      return new Arg<>(new Pat.Tuple(pats.map(pat -> pat.de(state).term())), explicit);
+      return new Arg<>(new Pat.Tuple(pats.map(pat -> pat.de(state))), explicit);
     }
   }
 

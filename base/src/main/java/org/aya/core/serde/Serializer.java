@@ -110,7 +110,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case AppTerm app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
       case MatchTerm match ->
         new SerTerm.Match(match.discriminant().map(this::serialize), match.clauses().map(this::serialize));
-      case TupTerm tuple -> new SerTerm.Tup(tuple.items().map(this::serialize));
+      case TupTerm tuple -> new SerTerm.Tup(serializeArgs(tuple.items()));
       case LamTerm lambda -> new SerTerm.Lam(serialize(lambda.param()), serialize(lambda.body()));
       case NewTerm newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
@@ -144,9 +144,7 @@ public record Serializer(@NotNull Serializer.State state) {
         state.def(ctor.ref()),
         serializePats(ctor.params()),
         serializeDataCall(ctor.type()));
-      case Pat.Tuple tuple -> new SerPat.Tuple(explicit,
-        serializePats(tuple.pats().map(x -> new Arg<>(x, true)))    // TODO: Garbage code?
-      );
+      case Pat.Tuple tuple -> new SerPat.Tuple(explicit, serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(explicit, state.local(bind.bind()), serialize(bind.type()));
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
       case Pat.ShapedInt lit -> new SerPat.ShapedInt(

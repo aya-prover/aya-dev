@@ -182,7 +182,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record Tup(@NotNull ImmutableSeq<SerTerm> components) implements SerTerm {
+  record Tup(@NotNull ImmutableSeq<SerArg> components) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new TupTerm(components.map(t -> t.de(state)));
     }

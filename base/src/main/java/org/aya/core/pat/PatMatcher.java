@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
@@ -49,6 +48,11 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
     }
   }
 
+  private void match(@NotNull Arg<Pat> pat, @NotNull Arg<Term> term) throws Mismatch {
+    assert pat.explicit() == term.explicit();
+    match(pat.term(), term.term());
+  }
+
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
@@ -58,7 +62,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
         switch (term) {
           case ConCall conCall -> {
             if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
-            visitList(ctor.params().map(Arg::term), conCall.conArgs().view().map(Arg::term));
+            visitList(ctor.params(), conCall.conArgs());
           }
           case MetaPatTerm metaPat -> solve(pat, metaPat);
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
@@ -121,7 +125,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
     }
   }
 
-  private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
+  private void visitList(@NotNull ImmutableSeq<Arg<Pat>> lpats, @NotNull ImmutableSeq<Arg<Term>> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
     lpats.forEachWithChecked(terms, this::match);
   }

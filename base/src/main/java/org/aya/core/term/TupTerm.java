@@ -3,10 +3,11 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author re-xyr
  */
-public record TupTerm(@NotNull ImmutableSeq<Term> items) implements StableWHNF {
+public record TupTerm(@NotNull ImmutableSeq<Arg<Term>> items) implements StableWHNF {
 }
