@@ -90,6 +90,14 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     });
   }
 
+  @Override protected void renderImage(@NotNull Cursor cursor, @NotNull Doc.Image image, EnumSet<Outer> outer) {
+    cursor.invisibleContent("![");
+    renderDoc(cursor, image.alt(), outer);
+    cursor.invisibleContent("](");
+    cursor.invisibleContent(normalizeHref(image.src()));
+    cursor.invisibleContent(")");
+  }
+
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, EnumSet<Outer> outer) {
     // assumption: inline code cannot be nested in markdown, but don't assert it.

@@ -93,6 +93,14 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("</a>");
   }
 
+  @Override protected void renderImage(@NotNull Cursor cursor, Doc.@NotNull Image image, EnumSet<Outer> outer) {
+    cursor.invisibleContent("<img ");
+    cursor.invisibleContent("src=\"" + normalizeHref(image.src()) + "\" ");
+    cursor.invisibleContent("alt=\"");
+    renderDoc(cursor, image.alt(), outer);
+    cursor.invisibleContent("\"/>");
+  }
+
   public static @NotNull String normalizeId(@NotNull Link linkId) {
     return switch (linkId) {
       case Link.DirectLink(var link) -> link;

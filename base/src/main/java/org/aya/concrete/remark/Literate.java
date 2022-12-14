@@ -40,6 +40,13 @@ public sealed interface Literate extends Docile {
     }
   }
 
+  record Image(@NotNull String src, @NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override public @NotNull Doc toDoc() {
+      var child = Doc.cat(this.children().map(Literate::toDoc));
+      return Doc.image(child, Link.page(src));
+    }
+  }
+
   record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));

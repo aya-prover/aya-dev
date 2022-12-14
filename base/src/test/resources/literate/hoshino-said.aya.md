@@ -24,3 +24,6 @@ Example: `1 = 1`{mode=NF}.
 + Aya supports renamed import `open import X using (x as y)` and the meaning is obvious.
 + To re-export, use a `public open`.
 
+This is an image:
+
+![shameimaru](https://www.pixiv.net/artworks/88666068)
