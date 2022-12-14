@@ -4,5 +4,9 @@ package org.aya.core.term;
 
 import org.jetbrains.annotations.NotNull;
 
-public record OutSTerm(@NotNull Term phi, @NotNull Term u) implements Term {
+public record InOutTerm(@NotNull Term phi, @NotNull Term u, @NotNull Kind kind) implements Term {
+  public enum Kind {
+    In, Out;
+    public final @NotNull String fnName = name().toLowerCase() + "S";
+  }
 }
