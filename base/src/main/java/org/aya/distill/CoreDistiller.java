@@ -68,7 +68,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case MetaLitTerm lit ->
         lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
-      case TupTerm(var items) -> Doc.parened(Doc.commaList(items.view().map(t -> term(Outer.Free, t))));
+      case TupTerm(var items) -> Doc.parened(argsDoc(options, items));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
       case SigmaTerm(var params) -> {

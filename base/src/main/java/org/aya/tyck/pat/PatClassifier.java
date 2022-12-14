@@ -180,7 +180,7 @@ public record PatClassifier(
           // Add a catchall pattern to the pattern tree builder since tuple patterns are irrefutable
           builder.shiftEmpty(explicit);
           // We will subst the telescope with this fake tuple term
-          var thatTuple = new TupTerm(sigma.params().map(Term.Param::toTerm));
+          var thatTuple = new TupTerm(sigma.params().map(Term.Param::toArg));
           // Do it!! Just do it!!
           var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), thatTuple))
