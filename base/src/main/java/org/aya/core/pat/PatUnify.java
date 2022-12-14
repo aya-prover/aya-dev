@@ -11,6 +11,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +35,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
           case Pat.Ctor ctor1 -> {
             // Assumption
             assert ctor.ref() == ctor1.ref();
-            visitList(ctor.params(), ctor1.params());
+            visitList(ctor.params().map(Arg::term), ctor1.params().map(Arg::term));
           }
           case Pat.ShapedInt lit -> unifyLitWithCtor(ctor, lit, lhs);
           default -> reportError(lhs, rhs);
@@ -67,7 +68,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
   }
 
   private void visitAs(@NotNull LocalVar as, Pat rhs) {
-    if (rhs instanceof Pat.Bind(var licit, var bind, var ty)) {
+    if (rhs instanceof Pat.Bind(var bind, var ty)) {
       var fresh = new LocalVar(as.name() + bind.name());
       ctx.put(fresh, ty.subst(rhsSubst));
       lhsSubst.add(as, new RefTerm(fresh));

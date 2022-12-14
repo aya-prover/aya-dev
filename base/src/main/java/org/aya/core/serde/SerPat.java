@@ -5,6 +5,7 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
+import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,7 @@ import java.io.Serializable;
  * @author ice1000
  */
 public sealed interface SerPat extends Serializable {
-  @NotNull Pat de(@NotNull SerTerm.DeState state);
+  @NotNull Arg<Pat> de(@NotNull SerTerm.DeState state);
 
   record Clause(@NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm body) implements Serializable {
     public @NotNull Term.Matching de(@NotNull SerTerm.DeState state) {
@@ -23,20 +24,20 @@ public sealed interface SerPat extends Serializable {
   }
 
   record Absurd(boolean explicit) implements SerPat {
-    @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Absurd(explicit);
+    @Override public @NotNull Arg<Pat> de(SerTerm.@NotNull DeState state) {
+      return new Arg<>(new Pat.Absurd(), explicit);
     }
   }
 
   record Tuple(boolean explicit, @NotNull ImmutableSeq<SerPat> pats) implements SerPat {
-    @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Tuple(explicit, pats.map(pat -> pat.de(state)));
+    @Override public @NotNull Arg<Pat> de(SerTerm.@NotNull DeState state) {
+      return new Arg<>(new Pat.Tuple(pats.map(pat -> pat.de(state).term())), explicit);
     }
   }
 
   record Bind(boolean explicit, @NotNull SerTerm.SimpVar var, @NotNull SerTerm ty) implements SerPat {
-    @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Bind(explicit, var.de(state), ty.de(state));
+    @Override public @NotNull Arg<Pat> de(SerTerm.@NotNull DeState state) {
+      return new Arg<>(new Pat.Bind(var.de(state), ty.de(state)), explicit);
     }
   }
 
@@ -46,10 +47,10 @@ public sealed interface SerPat extends Serializable {
     @NotNull ImmutableSeq<SerPat> params,
     @NotNull SerTerm.Data ty
   ) implements SerPat {
-    @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Ctor(explicit, state.resolve(name),
+    @Override public @NotNull Arg<Pat> de(SerTerm.@NotNull DeState state) {
+      return new Arg<>(new Pat.Ctor(state.resolve(name),
         params.map(param -> param.de(state)),
-        ty.de(state));
+        ty.de(state)), explicit);
     }
   }
 
@@ -59,8 +60,8 @@ public sealed interface SerPat extends Serializable {
     @NotNull SerDef.SerShapeResult shape,
     @NotNull SerTerm.Data type
   ) implements SerPat {
-    @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.ShapedInt(integer, shape.de(state), type.de(state), explicit);
+    @Override public @NotNull Arg<Pat> de(SerTerm.@NotNull DeState state) {
+      return new Arg<>(new Pat.ShapedInt(integer, shape.de(state), type.de(state)), explicit);
     }
   }
 }

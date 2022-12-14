@@ -143,7 +143,7 @@ public final class PatTycker {
       () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
       () -> checkRhs(exprTycker, lhs)));
     var preclauses = res.map(c -> new Pat.Preclause<>(
-      c.sourcePos(), c.patterns().map(p -> p.zonk(exprTycker)),
+      c.sourcePos(), c.patterns().map(p -> p.descent(x -> x.zonk(exprTycker))),
       c.expr().map(exprTycker::zonk)));
     return new PatResult(exprTycker.zonk(result), preclauses,
       preclauses.flatMap(Pat.Preclause::lift), lhsResult.hasError());
@@ -193,7 +193,7 @@ public final class PatTycker {
         .visitPatterns(signature, match.patterns.view(), null, match.expr.getOrNull(), inProp);
       match.hasError = patTycker.hasError;
 
-      var patterns = step0.wellTyped.map(p -> p.inline(exprTycker.localCtx)).toImmutableSeq();
+      var patterns = step0.wellTyped.map(p -> p.descent(x -> x.inline(exprTycker.localCtx))).toImmutableSeq();
       // inline these after inline patterns
       patTycker.patSubst.inline();
       patTycker.sigSubst.inline();
@@ -276,23 +276,27 @@ public final class PatTycker {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
         if (selection != null) foundError(new PatternProblem.PossiblePat(absurd, selection._3));
-        yield new Pat.Absurd(licit);
+        yield new Pat.Absurd();
       }
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
-          yield withError(new PatternProblem.TupleNonSig(tuple, term), licit, term);
+          yield withError(new PatternProblem.TupleNonSig(tuple, term), term);
         var tupleIsProp = exprTycker.isPropType(sigma);
         if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature<>(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
-        var ret = new Pat.Tuple(licit, visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp).wellTyped.toImmutableSeq());
+        var ret = new Pat.Tuple(
+          visitInnerPatterns(sig, tuple.patterns().view(), tuple, resultIsProp)
+            .wellTyped()
+            .map(Arg::term)
+            .toImmutableSeq());
         yield ret;
       }
       case Pattern.Ctor ctor -> {
         var var = ctor.resolved().data();
         var realCtor = selectCtor(term, var, ctor);
-        if (realCtor == null) yield randomPat(licit, term);
+        if (realCtor == null) yield randomPat(term);
         var ctorRef = realCtor._3.ref();
         var dataIsProp = ctorRef.core.inProp();
         if (!resultIsProp && dataIsProp) foundError(new PatternProblem.IllegalPropPat(ctor));
@@ -302,7 +306,7 @@ public final class PatTycker {
         var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = visitInnerPatterns(sig, ctor.params().view(), ctor, resultIsProp).wellTyped.toImmutableSeq();
-        var ret = new Pat.Ctor(licit, realCtor._3.ref(), patterns, dataCall);
+        var ret = new Pat.Ctor(realCtor._3.ref(), patterns, dataCall);
         yield ret;
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
@@ -314,9 +318,9 @@ public final class PatTycker {
           return null;
         });
         tyRef.set(term);
-        yield new Pat.Bind(licit, bind, term);
+        yield new Pat.Bind(bind, term);
       }
-      case Pattern.CalmFace(var pos) -> new Pat.Meta(licit, MutableValue.create(),
+      case Pattern.CalmFace(var pos) -> new Pat.Meta(MutableValue.create(),
         new LocalVar(Constants.ANONYMOUS_PREFIX, pos), term);
       case Pattern.Number(var pos, var number) -> {
         var ty = term.normalize(exprTycker.state, NormalizeMode.WHNF);
@@ -324,9 +328,9 @@ public final class PatTycker {
           var data = dataCall.ref().core;
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined() && shape.get().shape() == AyaShape.NAT_SHAPE)
-            yield new Pat.ShapedInt(number, shape.get(), dataCall, licit);
+            yield new Pat.ShapedInt(number, shape.get(), dataCall);
         }
-        yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
+        yield withError(new PatternProblem.BadLitPattern(pattern, term), term);
       }
       case Pattern.List(var pos, var el) -> {
         // desugar `Pattern.List` to `Pattern.Ctor` here, but use `CodeShape` !
@@ -340,7 +344,7 @@ public final class PatTycker {
             yield doTyck(new Pattern.FakeShapedList(pos, el, shape.get(), dataCall)
               .constructorForm(), term, licit, resultIsProp);
         }
-        yield withError(new PatternProblem.BadLitPattern(pattern, term), licit, term);
+        yield withError(new PatternProblem.BadLitPattern(pattern, term), term);
       }
       case Pattern.As(var pos, var inner, var as, var type) -> {
         var innerPat = doTyck(inner, term, licit, resultIsProp);
@@ -355,7 +359,7 @@ public final class PatTycker {
   }
 
   private record VisitPatterns(
-    @NotNull SeqView<Pat> wellTyped,
+    @NotNull SeqView<Arg<Pat>> wellTyped,
     @NotNull Term codomain,
     @UnknownNullability Expr newBody
   ) {
@@ -378,7 +382,7 @@ public final class PatTycker {
     @Nullable Expr body,
     boolean resultIsProp
   ) {
-    var results = MutableList.<Pat>create();
+    var results = MutableList.<Arg<Pat>>create();
     // last pattern which user given (not aya generated)
     @Nullable Arg<Pattern> lastPat = null;
     while (sig.param().isNotEmpty()) {
@@ -463,7 +467,7 @@ public final class PatTycker {
    */
   private record PatData(
     @NotNull Def.Signature<?> sig,
-    @NotNull MutableList<Pat> results,
+    @NotNull MutableList<Arg<Pat>> results,
     @NotNull Term.Param param
   ) {
   }
@@ -483,7 +487,7 @@ public final class PatTycker {
     );
   }
 
-  private @NotNull VisitPatterns done(@NotNull SeqLike<Pat> results, @NotNull Term type, @Nullable Expr body) {
+  private @NotNull VisitPatterns done(@NotNull SeqLike<Arg<Pat>> results, @NotNull Term type, @Nullable Expr body) {
     return new VisitPatterns(results.view(), type.subst(sigSubst.map()), body);
   }
 
@@ -498,7 +502,7 @@ public final class PatTycker {
     var res = exprTycker.traced(() -> new Trace.PatT(type, pat, pat.sourcePos()),
       () -> doTyck(pat, type, arg.explicit(), resultIsProp));
     addSigSubst(data.param(), res);
-    data.results.append(res);
+    data.results.append(new Arg<>(res, arg.explicit()));
 
     return afterTyck(data).sig();
   }
@@ -515,19 +519,19 @@ public final class PatTycker {
     Pat bind;
     var freshVar = ref.rename();
     if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof DataCall dataCall) {
-      bind = new Pat.Meta(false, MutableValue.create(), freshVar, dataCall);
+      bind = new Pat.Meta(MutableValue.create(), freshVar, dataCall);
     } else {
-      bind = new Pat.Bind(false, freshVar, data.param.type());
+      bind = new Pat.Bind(freshVar, data.param.type());
       exprTycker.localCtx.put(freshVar, data.param.type());
     }
-    data.results.append(bind);
+    data.results.append(new Arg<>(bind, false));
     addSigSubst(data.param(), bind);
 
     return afterTyck(data).sig();
   }
 
-  private @NotNull Pat randomPat(boolean licit, Term param) {
-    return new Pat.Bind(licit, new LocalVar("?"), param);
+  private @NotNull Pat randomPat(Term param) {
+    return new Pat.Bind(new LocalVar("?"), param);
   }
 
   /**
@@ -580,7 +584,11 @@ public final class PatTycker {
 
   public static Result<Subst, Boolean> mischa(DataCall dataCall, CtorDef ctor, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) {
-      return PatMatcher.tryBuildSubstTerms(true, ctor.pats, dataCall.args().view().map(Arg::term), new Expander.WHNFer(state));
+      return PatMatcher.tryBuildSubstTerms(
+        true,
+        ctor.pats.map(Arg::term),
+        dataCall.args().view().map(Arg::term),
+        new Expander.WHNFer(state));
     } else {
       return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
     }
@@ -595,10 +603,10 @@ public final class PatTycker {
     if (problem != null) exprTycker.reporter.report(problem);
   }
 
-  private @NotNull Pat withError(Problem problem, boolean licit, Term param) {
+  private @NotNull Pat withError(Problem problem, Term param) {
     foundError(problem);
     // In case something's wrong, produce a random pattern
-    return randomPat(licit, param);
+    return randomPat(param);
   }
 
   /// endregion

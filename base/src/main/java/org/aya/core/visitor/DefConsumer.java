@@ -20,13 +20,13 @@ public interface DefConsumer extends TermConsumer {
   }
 
   default void visitMatching(@NotNull Term.Matching matching) {
-    matching.patterns().forEach(this::visitPat);
+    matching.patterns().forEach(x -> visitPat(x.term()));
     this.accept(matching.body());
   }
 
   default void visitPat(@NotNull Pat pat) {
     switch (pat) {
-      case Pat.Ctor ctor -> ctor.params().forEach(this::visitPat);
+      case Pat.Ctor ctor -> ctor.params().forEach(x -> visitPat(x.term()));
       case Pat.Tuple tuple -> tuple.pats().forEach(this::visitPat);
       default -> {}
     }
@@ -49,7 +49,7 @@ public interface DefConsumer extends TermConsumer {
         struct.fields.forEach(this::accept);
       }
       case CtorDef ctor -> {
-        ctor.pats.forEach(this::visitPat);
+        ctor.pats.forEach(x -> visitPat(x.term()));
         tele(ctor.selfTele);
         accept(ctor.result);
         partial(ctor.clauses);

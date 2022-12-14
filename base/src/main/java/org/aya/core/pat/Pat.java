@@ -42,15 +42,15 @@ import org.jetbrains.annotations.Nullable;
  */
 @Debug.Renderer(text = "toTerm().toDoc(AyaDistillerOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
-  boolean explicit();
+  static @NotNull Arg<Term> toArg(@NotNull Arg<Pat> argPat) {
+    return new Arg<>(argPat.term().toTerm(), argPat.explicit());
+  }
+
   default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
-  default @NotNull Arg<Term> toArg() {
-    return new Arg<>(toTerm(), explicit());
-  }
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new CoreDistiller(options).pat(this, BaseDistiller.Outer.Free);
+    return new CoreDistiller(options).pat(this, true, BaseDistiller.Outer.Free);
   }
 
   @NotNull Pat zonk(@NotNull Tycker tycker);
@@ -69,7 +69,6 @@ public sealed interface Pat extends AyaDocile {
   }
 
   record Bind(
-    boolean explicit,
     @NotNull LocalVar bind,
     @NotNull Term type
   ) implements Pat {
@@ -78,13 +77,13 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return new Bind(explicit, bind, tycker.zonk(type));
+      return new Bind(bind, tycker.zonk(type));
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var newTy = PatTycker.inlineTerm(type);
       if (newTy == type) return this;
-      return new Bind(explicit, bind, newTy);
+      return new Bind(bind, newTy);
     }
   }
 
@@ -94,10 +93,9 @@ public sealed interface Pat extends AyaDocile {
    *
    * @param fakeBind is used when inline if there is no solution.
    *                 So don't add this to {@link LocalCtx} too early
-   *                 and remember to inline Meta in {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean)}
+   *                 and remember to inline Meta in {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean, boolean)}
    */
   record Meta(
-    boolean explicit,
     @NotNull MutableValue<Pat> solution,
     @NotNull LocalVar fakeBind,
     @NotNull Term type
@@ -116,7 +114,7 @@ public sealed interface Pat extends AyaDocile {
       var value = solution.get();
       if (value == null) {
         var type = PatTycker.inlineTerm(this.type);
-        var bind = new Bind(explicit, fakeBind, type);
+        var bind = new Bind(fakeBind, type);
         assert ctx != null : "Pre-inline patterns must be inlined with ctx";
         // We set a solution here, so multiple inline on the same MetaPat is safe.
         solution.set(bind);
@@ -129,7 +127,7 @@ public sealed interface Pat extends AyaDocile {
 
   }
 
-  record Absurd(boolean explicit) implements Pat {
+  record Absurd() implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       throw new InternalException("unreachable");
     }
@@ -144,7 +142,6 @@ public sealed interface Pat extends AyaDocile {
   }
 
   record Tuple(
-    boolean explicit,
     @NotNull ImmutableSeq<Pat> pats
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
@@ -152,47 +149,45 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return new Tuple(explicit, pats.map(pat -> pat.zonk(tycker)));
+      return new Tuple(pats.map(pat -> pat.zonk(tycker)));
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      return new Tuple(explicit, pats.map(p -> p.inline(ctx)));
+      return new Tuple(pats.map(p -> p.inline(ctx)));
     }
   }
 
   record Ctor(
-    boolean explicit,
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
-    @NotNull ImmutableSeq<Pat> params,
+    @NotNull ImmutableSeq<Arg<Pat>> params,
     @NotNull DataCall type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
-      params.forEach(pat -> pat.storeBindings(ctx, rhsSubst));
+      params.forEach(pat -> pat.term().storeBindings(ctx, rhsSubst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
-      return new Ctor(explicit, ref,
-        params.map(pat -> pat.zonk(tycker)),
+      return new Ctor(ref,
+        params.map(pat -> pat.descent(x -> x.zonk(tycker))),
         // The cast must succeed
         (DataCall) tycker.zonk(type));
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      var params = this.params.map(p -> p.inline(ctx));
-      return new Ctor(explicit, ref, params, (DataCall) PatTycker.inlineTerm(type));
+      var params = this.params.map(p -> p.descent(x -> x.inline(ctx)));
+      return new Ctor(ref, params, (DataCall) PatTycker.inlineTerm(type));
     }
   }
 
   record ShapedInt(
     @Override int repr,
     @Override @NotNull ShapeRecognition recognition,
-    @NotNull DataCall type,
-    boolean explicit
+    @NotNull DataCall type
   ) implements Pat, Shaped.Nat<Pat> {
 
     @Override public @NotNull Pat zonk(@NotNull Tycker tycker) {
       // The cast must succeed
-      return new Pat.ShapedInt(repr, recognition, (DataCall) tycker.zonk(type), explicit);
+      return new Pat.ShapedInt(repr, recognition, (DataCall) tycker.zonk(type));
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
@@ -205,16 +200,17 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat makeZero(@NotNull CtorDef zero) {
-      return new Pat.Ctor(explicit, zero.ref, ImmutableSeq.empty(), type);
+      return new Pat.Ctor(zero.ref, ImmutableSeq.empty(), type);
     }
 
     @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Arg<Pat> pat) {
       // TODO[ice]: Arg<Pat> in core
-      return new Pat.Ctor(explicit, suc.ref, ImmutableSeq.of(pat.term()), type);
+      // TODO[hsn]: This is my work.
+      return new Pat.Ctor(suc.ref, ImmutableSeq.of(pat), type);
     }
 
     @Override public @NotNull Pat destruct(int repr) {
-      return new Pat.ShapedInt(repr, this.recognition, this.type, true);
+      return new Pat.ShapedInt(repr, this.recognition, this.type);
     }
   }
 
@@ -225,12 +221,12 @@ public sealed interface Pat extends AyaDocile {
    */
   record Preclause<T extends AyaDocile>(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull ImmutableSeq<Arg<Pat>> patterns,
     @NotNull Option<T> expr
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       var distiller = new CoreDistiller(options);
-      var pats = options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
+      var pats = options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Arg::explicit);
       var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
         pats.view().map(p -> distiller.pat(p, BaseDistiller.Outer.Free)))));
       return expr.getOrDefault(it -> Doc.sep(doc, Doc.symbol("=>"), it.toDoc(options)), doc);

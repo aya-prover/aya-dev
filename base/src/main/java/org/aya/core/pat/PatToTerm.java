@@ -34,7 +34,8 @@ public class PatToTerm {
     var core = ctor.ref().core;
     var tele = core.selfTele;
     var args = ctor.params().zipView(tele)
-      .map(p -> new Arg<>(visit(p._1), p._2.explicit()))
+      // TODO: Is it true that `p._1.explicit = p._2.explicit` ?
+      .map(p -> new Arg<>(visit(p._1.term()), p._2.explicit()))
       .toImmutableSeq();
     return new ConCall(data.ref(), ctor.ref(),
       data.args().map(Arg::implicitify),

@@ -37,7 +37,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
    * err(false) if fails positively, err(true) if fails negatively
    */
   public static Result<Subst, Boolean> tryBuildSubstTerms(
-    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Pat> pats,
+    boolean inferMeta, @NotNull ImmutableSeq<Pat> pats,
     @NotNull SeqView<@NotNull Term> terms, @NotNull UnaryOperator<Term> pre
   ) {
     var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), inferMeta, pre);
@@ -58,7 +58,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
         switch (term) {
           case ConCall conCall -> {
             if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
-            visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
+            visitList(ctor.params().map(Arg::term), conCall.conArgs().view().map(Arg::term));
           }
           case MetaPatTerm metaPat -> solve(pat, metaPat);
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?

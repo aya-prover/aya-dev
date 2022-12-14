@@ -9,9 +9,9 @@ import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
-public interface PatTraversal extends Function<Pat, Pat> {
+public interface PatTraversal extends UnaryOperator<Pat> {
   default @NotNull Pat pre(@NotNull Pat pat) {
     return pat;
   }
@@ -30,10 +30,10 @@ public interface PatTraversal extends Function<Pat, Pat> {
       case Pat.Absurd absurd -> absurd;
       case Pat.Bind bind -> bind;
       case Pat.Ctor ctor -> {
-        var params = ctor.params().map(this);
+        var params = ctor.params().map(x -> x.descent(this));
 
         if (params.sameElements(ctor.params(), true)) yield ctor;
-        yield new Pat.Ctor(ctor.explicit(), ctor.ref(), params, ctor.type());
+        yield new Pat.Ctor(ctor.ref(), params, ctor.type());
       }
       case Pat.Meta meta -> {
         var solution = meta.solution().get();
@@ -41,7 +41,7 @@ public interface PatTraversal extends Function<Pat, Pat> {
           var newSolution = apply(solution);
 
           if (newSolution == solution) yield meta;
-          yield new Pat.Meta(meta.explicit(), MutableValue.create(solution), meta.fakeBind(), meta.type());
+          yield new Pat.Meta(MutableValue.create(solution), meta.fakeBind(), meta.type());
         } else {
           yield meta;
         }
@@ -51,7 +51,7 @@ public interface PatTraversal extends Function<Pat, Pat> {
         var pats = tuple.pats().map(this);
 
         if (pats.sameElements(tuple.pats(), true)) yield tuple;
-        yield new Pat.Tuple(tuple.explicit(), pats);
+        yield new Pat.Tuple(pats);
       }
     };
   }
@@ -78,11 +78,11 @@ public interface PatTraversal extends Function<Pat, Pat> {
    */
   record MetaBind(@NotNull Subst subst, @NotNull SourcePos definition) implements NoMeta {
     @Override public @NotNull Pat post(@NotNull Pat pat) {
-      if (pat instanceof Pat.Bind(var explicit, var bind, var type)) {
+      if (pat instanceof Pat.Bind(var bind, var type)) {
         // every new var use the same definition location
         var newVar = new LocalVar(bind.name(), definition);
         // we are no need to add newVar to some localCtx, this will be done when we inline the Pat.Meta
-        var meta = new Pat.Meta(explicit, MutableValue.create(), newVar, type);
+        var meta = new Pat.Meta(MutableValue.create(), newVar, type);
 
         // add to subst
         subst.addDirectly(bind, meta.toTerm());
