@@ -68,7 +68,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case MetaLitTerm lit ->
         lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
-      case TupTerm(var items) -> Doc.parened(Doc.commaList(items.view().map(t -> term(Outer.Free, t))));
+      case TupTerm(var items) -> Doc.parened(argsDoc(options, items));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
       case SigmaTerm(var params) -> {
@@ -135,7 +135,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
       case MetaPatTerm(var ref) -> {
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
-        yield Doc.wrap("<", ">", pat(ref, outer));
+        yield Doc.wrap("<", ">", pat(ref, true, outer));
       }
       case ErrorTerm(var desc, var really) -> {
         var doc = desc.toDoc(options);
@@ -259,25 +259,29 @@ public class CoreDistiller extends BaseDistiller<Term> {
       linkRef(term.ref(), FIELD_CALL));
   }
 
-  public @NotNull Doc pat(@NotNull Pat pat, Outer outer) {
+  public @NotNull Doc pat(@NotNull Arg<Pat> pat, @NotNull Outer outer) {
+    return pat(pat.term(), pat.explicit(), outer);
+  }
+
+  public @NotNull Doc pat(@NotNull Pat pat, boolean licit, Outer outer) {
     return switch (pat) {
       case Pat.Meta meta -> {
         var sol = meta.solution().get();
-        yield sol != null ? pat(sol, outer) : Doc.bracedUnless(linkDef(meta.fakeBind()), meta.explicit());
+        yield sol != null ? pat(sol, licit, outer) : Doc.bracedUnless(linkDef(meta.fakeBind()), licit);
       }
-      case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());
+      case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
       case Pat.Ctor ctor -> {
-        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, ctor.params().view().map(Pat::toArg), outer,
+        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, Arg.mapSeq(ctor.params().view(), Pat::toTerm), outer,
           options.map.get(AyaDistillerOptions.Key.ShowImplicitPats));
-        yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.params().isEmpty());
+        yield ctorDoc(outer, licit, ctorDoc, ctor.params().isEmpty());
       }
-      case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), absurd.explicit());
-      case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
-        Doc.commaList(tuple.pats().view().map(sub -> pat(sub, Outer.Free))));
+      case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);
+      case Pat.Tuple tuple -> Doc.licit(licit,
+        Doc.commaList(tuple.pats().view().map(sub -> pat(sub.term(), sub.explicit(), Outer.Free))));
       case Pat.ShapedInt lit -> Doc.bracedUnless(lit.repr() == 0
           ? linkLit(0, lit.ctorRef(CodeShape.MomentId.ZERO), CON_CALL)
           : linkLit(lit.repr(), lit.ctorRef(CodeShape.MomentId.SUC), CON_CALL),
-        lit.explicit());
+        licit);
     };
   }
 

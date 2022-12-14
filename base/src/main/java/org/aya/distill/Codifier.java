@@ -74,7 +74,7 @@ public record Codifier(
         cube(cube);
         builder.append(")");
       }
-      case TupTerm(var items) -> tupSigma(items, this::term, "TupTerm");
+      case TupTerm(var items) -> tupSigma(items, this::arg, "TupTerm");
       case CoeTerm(var ty, var restr) -> coePar(ty, restr, "CoeTerm");
       case FormulaTerm(var mula) -> {
         builder.append("new FormulaTerm(");

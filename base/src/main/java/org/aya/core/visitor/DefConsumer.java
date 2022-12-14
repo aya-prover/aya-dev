@@ -7,6 +7,7 @@ import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.guest0x0.cubical.Partial;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 public interface DefConsumer extends TermConsumer {
@@ -20,14 +21,18 @@ public interface DefConsumer extends TermConsumer {
   }
 
   default void visitMatching(@NotNull Term.Matching matching) {
-    matching.patterns().forEach(this::visitPat);
+    matching.patterns().forEach(x -> visitPat(x.term()));
     this.accept(matching.body());
+  }
+
+  default void visitArgPat(@NotNull Arg<Pat> pat) {
+    visitPat(pat.term());
   }
 
   default void visitPat(@NotNull Pat pat) {
     switch (pat) {
-      case Pat.Ctor ctor -> ctor.params().forEach(this::visitPat);
-      case Pat.Tuple tuple -> tuple.pats().forEach(this::visitPat);
+      case Pat.Ctor ctor -> ctor.params().forEach(this::visitArgPat);
+      case Pat.Tuple tuple -> tuple.pats().forEach(this::visitArgPat);
       default -> {}
     }
   }
@@ -49,7 +54,7 @@ public interface DefConsumer extends TermConsumer {
         struct.fields.forEach(this::accept);
       }
       case CtorDef ctor -> {
-        ctor.pats.forEach(this::visitPat);
+        ctor.pats.forEach(this::visitArgPat);
         tele(ctor.selfTele);
         accept(ctor.result);
         partial(ctor.clauses);

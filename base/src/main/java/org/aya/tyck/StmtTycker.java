@@ -31,6 +31,7 @@ import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
@@ -241,7 +242,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var predataCall = new DataCall(dataRef, 0, dataArgs);
     // There might be patterns in the constructor
-    var pat = ImmutableSeq.<Pat>empty();
+    var pat = ImmutableSeq.<Arg<Pat>>empty();
     if (ctor.patterns.isNotEmpty()) {
       var sig = new Def.Signature<>(dataSig.param(), predataCall);
       var lhs = PatTycker.checkLhs(tycker,
@@ -252,7 +253,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       tycker.lets = lhs.bodySubst();
       predataCall = (DataCall) predataCall.subst(new Subst(
         dataSig.param().view().map(Term.Param::ref),
-        pat.view().map(Pat::toTerm)));
+        pat.view().map(Arg::term).map(Pat::toTerm)));
     }
     // Because we need to use in a lambda expression later
     var dataCall = predataCall;
@@ -291,7 +292,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     }
     var patternTele = pat.isEmpty()
       ? dataSig.param().map(Term.Param::implicitify)
-      : Pat.extractTele(pat);
+      : Pat.extractTele(pat.map(Arg::term));
     while (!(elabClauses instanceof Partial.Split<Term> split)) {
       reporter.report(new CubicalError.PathConDominateError(ctor.clauses.sourcePos()));
       elabClauses = PartialTerm.DUMMY_SPLIT;

@@ -9,6 +9,7 @@ import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -20,7 +21,7 @@ public final class CtorDef extends SubLevelDef {
   public final @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef;
   public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
   public final @NotNull Partial.Split<Term> clauses;
-  public final @NotNull ImmutableSeq<Pat> pats;
+  public final @NotNull ImmutableSeq<Arg<Pat>> pats;
 
   /**
    * @param ownerTele See "/note/glossary.md"
@@ -28,7 +29,7 @@ public final class CtorDef extends SubLevelDef {
    */
   public CtorDef(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef, @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
-    @NotNull ImmutableSeq<Pat> pats,
+    @NotNull ImmutableSeq<Arg<Pat>> pats,
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
     @NotNull Partial.Split<Term> clauses, @NotNull Term result, boolean coerce
   ) {

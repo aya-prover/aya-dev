@@ -219,7 +219,8 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.Tuple tuple -> {
         var items = tuple.items().map(this::synthesize);
-        yield new TermResult(new TupTerm(items.map(Result::wellTyped)), new SigmaTerm(items.map(item -> new Term.Param(Constants.anonymous(), item.type(), true))));
+        yield new TermResult(TupTerm.explicits(items.map(Result::wellTyped)),
+          new SigmaTerm(items.map(item -> new Term.Param(LocalVar.IGNORED, item.type(), true))));
       }
       case Expr.Coe coe -> {
         var defVar = coe.resolvedVar();
@@ -511,7 +512,7 @@ public final class ExprTycker extends Tycker {
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
       case Expr.Tuple(var pos, var it) -> {
-        var items = MutableList.<Term>create();
+        var items = MutableList.<Arg<Term>>create();
         var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
         if (typeWHNF instanceof MetaTerm hole) yield inheritFallbackUnify(hole, synthesize(expr), expr);
@@ -523,7 +524,7 @@ public final class ExprTycker extends Tycker {
           var item = iter.next();
           var first = againstTele.first().subst(subst);
           var result = inherit(item, first.type());
-          items.append(result.wellTyped());
+          items.append(new Arg<>(result.wellTyped(), first.explicit()));
           var ref = first.ref();
           resultTele.append(new Term.Param(ref, result.type(), first.explicit()));
           againstTele = againstTele.drop(1);

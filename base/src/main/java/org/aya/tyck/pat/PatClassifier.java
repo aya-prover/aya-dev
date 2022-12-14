@@ -18,7 +18,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.AnyVar;
-import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
@@ -62,7 +61,7 @@ public record PatClassifier(
   ) {
     var classifier = new PatClassifier(reporter, pos, state, new PatTree.Builder());
     var classification = classifier.classifySub(telescope.view(), clauses.view()
-      .mapIndexed((index, clause) -> new MCT.SubPats<>(clause.patterns().view(), index))
+      .mapIndexed((index, clause) -> new MCT.SubPats<>(clause.patterns().view().map(Arg::term), index))
       .toImmutableSeq(), 5);
     var errRef = MutableValue.<MCT.Error<Term, PatErr>>create();
     classification.forEach(pats -> {
@@ -106,7 +105,7 @@ public record PatClassifier(
         var rhsInfo = contents.get(i);
         var lhsSubst = new Subst(MutableMap.create());
         var rhsSubst = new Subst(MutableMap.create());
-        var ctx = PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(),
+        var ctx = PatUnify.unifyPat(lhsInfo._2.patterns().map(Arg::term), rhsInfo._2.patterns().map(Arg::term),
           lhsSubst, rhsSubst, tycker.localCtx.deriveMap());
         domination(ctx, rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
         domination(ctx, lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
@@ -175,13 +174,13 @@ public record PatClassifier(
       case SigmaTerm sigma -> {
         var hasTuple = clauses
           .mapIndexedNotNull((index, subPats) -> head(subPats) instanceof Pat.Tuple tuple
-            ? new MCT.SubPats<>(tuple.pats().view(), index) : null);
+            ? new MCT.SubPats<>(tuple.pats().view().map(Arg::term), index) : null);
         // In case we do,
         if (hasTuple.isNotEmpty()) {
           // Add a catchall pattern to the pattern tree builder since tuple patterns are irrefutable
           builder.shiftEmpty(explicit);
           // We will subst the telescope with this fake tuple term
-          var thatTuple = new TupTerm(sigma.params().map(Term.Param::toTerm));
+          var thatTuple = new TupTerm(sigma.params().map(Term.Param::toArg));
           // Do it!! Just do it!!
           var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), thatTuple))
@@ -305,9 +304,9 @@ public record PatClassifier(
     // Literals are matched against constructor patterns
     if (head instanceof Pat.ShapedInt lit) head = lit.constructorForm();
     if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
-      return new MCT.SubPats<>(ctorPat.params().view(), ix);
+      return new MCT.SubPats<>(ctorPat.params().view().map(Arg::term), ix);
     if (head instanceof Pat.Bind)
-      return new MCT.SubPats<>(conTele.view().map(Term.Param::toPat), ix);
+      return new MCT.SubPats<>(conTele.view().map(Term.Param::toPat).map(Arg::term), ix);
     return null;
   }
 }

@@ -17,6 +17,7 @@ import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.MapLocalCtx;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public record Conquer(
     var conquer = new Conquer(matchings, pos, signature, orderIndependent, tycker);
     for (int i = 0, size = matchings.size(); i < size; i++) {
       var matching = matchings.get(i);
-      for (var pat : matching.patterns()) conquer.visit(pat, i);
+      for (var pat : matching.patterns()) conquer.visit(pat.term(), i);
     }
   }
 
@@ -48,13 +49,13 @@ public record Conquer(
     switch (pat) {
       case Pat.Ctor ctor -> {
         var params = ctor.params();
-        for (var sub : params) visit(sub, nth);
+        for (var sub : params) visit(sub.term(), nth);
         var ctorDef = ctor.ref().core;
         assert ctorDef.selfTele.sizeEquals(params);
         // Con tele |-> pattern tele
         var subst = new Subst(
           ctorDef.selfTele.view().map(Term.Param::ref),
-          params.view().map(Pat::toTerm)
+          params.view().map(t -> t.term().toTerm())
         );
         // The split, but typed under current context
         var clauses = (Partial.Split<Term>) AyaRestrSimplifier.INSTANCE
@@ -65,7 +66,7 @@ public record Conquer(
         }
       }
       case Pat.Tuple tuple -> {
-        for (var sub : tuple.pats()) visit(sub, nth);
+        for (var sub : tuple.pats()) visit(sub.term(), nth);
       }
       default -> {}
     }
@@ -77,11 +78,11 @@ public record Conquer(
     CofThy.conv(condition.cof(), matchy, subst -> {
       // We should also restrict the current clause body under `condition`.
       var newBody = currentClause.body().subst(subst);
-      var args = currentClause.patterns().map(p -> p.toArg().descent(t -> t.subst(subst)));
+      var args = Arg.mapSeq(currentClause.patterns(), t -> t.toTerm().subst(subst));
       var matchResult = new Expander.WHNFer(tycker.state)
         .tryUnfoldClauses(orderIndependent, args, 0, matchings)
         .map(w -> w.map(t -> t.subst(subst)));
-      currentClause.patterns().forEach(p -> p.storeBindings(ctx, subst));
+      currentClause.patterns().forEach(p -> p.term().storeBindings(ctx, subst));
       var errorData = new ClausesProblem.CondData(nth + 1, i, args, newBody, tycker.state, currentClause.sourcePos());
       if (matchResult.isEmpty()) {
         tycker.reporter.report(new ClausesProblem.Conditions(

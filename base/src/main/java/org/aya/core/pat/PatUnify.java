@@ -11,6 +11,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -61,13 +62,16 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
     if (lhs == lit) unify(lit.constructorForm(), ctor);
   }
 
-  private void visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {
+  private void visitList(ImmutableSeq<Arg<Pat>> lpats, ImmutableSeq<Arg<Pat>> rpats) {
     assert rpats.sizeEquals(lpats.size());
-    lpats.forEachWith(rpats, (lp, rp) -> unifyPat(lp, rp, lhsSubst, rhsSubst, ctx));
+    lpats.forEachWith(rpats, (lp, rp) -> {
+      assert lp.explicit() == rp.explicit();
+      unifyPat(lp.term(), rp.term(), lhsSubst, rhsSubst, ctx);
+    });
   }
 
   private void visitAs(@NotNull LocalVar as, Pat rhs) {
-    if (rhs instanceof Pat.Bind(var licit, var bind, var ty)) {
+    if (rhs instanceof Pat.Bind(var bind, var ty)) {
       var fresh = new LocalVar(as.name() + bind.name());
       ctx.put(fresh, ty.subst(rhsSubst));
       lhsSubst.add(as, new RefTerm(fresh));

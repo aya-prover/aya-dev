@@ -35,7 +35,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
   public @NotNull LamTerm coe(CoeTerm coe, LocalVar i) {
     var t = new RefTerm(new LocalVar("t"));
     assert params.sizeGreaterThanOrEquals(2);
-    var items = MutableArrayList.<Term>create(params.size());
+    var items = MutableArrayList.<Arg<Term>>create(params.size());
     record Item(@NotNull CoeTerm coe, @NotNull Arg<Term> arg) {
       public @NotNull Term fill(@NotNull LocalVar i) {
         return AppTerm.make(CoeTerm.coeFill(coe.type(), coe.restr(), new RefTerm(i)), arg);
@@ -56,7 +56,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
       var item = new Item(new CoeTerm(An, coe.restr()), new Arg<>(tn, true));
       // Substitution will take care of renaming
       subst.add(param.ref(), item.fill(i));
-      items.append(item.app());
+      items.append(new Arg<>(item.app(), param.explicit()));
     }
     return new LamTerm(BetaExpander.coeDom(t.var(), coe.type()),
       new TupTerm(items.toImmutableArray()));

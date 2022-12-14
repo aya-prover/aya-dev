@@ -68,7 +68,7 @@ public record CallResolver(
     var codomThings = callable.args().zip(callee.telescope());
     for (var domThing : domThings) {
       for (var codomThing : codomThings) {
-        var relation = compare(codomThing._1.term(), domThing._1);
+        var relation = compare(codomThing._1.term(), domThing._1.term());
         matrix.set(domThing._2, codomThing._2, relation);
       }
     }
@@ -89,7 +89,7 @@ public record CallResolver(
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
         case IntegerTerm lit -> compare(lit.constructorForm(), ctor);
         default -> {
-          var subCompare = ctor.params().view().map(sub -> compare(term, sub));
+          var subCompare = ctor.params().view().map(sub -> compare(term, sub.term()));
           var attempt = subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.lt() : Relation.unk();
           if (attempt == Relation.unk()) {
             var reduce = whnf(term); // `term` may be reduced to a constructor call
@@ -120,7 +120,7 @@ public record CallResolver(
   }
 
   private Relation compareConArgs(@NotNull ImmutableSeq<Arg<Term>> conArgs, @NotNull Pat.Ctor ctor) {
-    var subCompare = conArgs.zipView(ctor.params()).map(sub -> compare(sub._1.term(), sub._2));
+    var subCompare = conArgs.zipView(ctor.params()).map(sub -> compare(sub._1.term(), sub._2.term()));
     return subCompare.foldLeft(Relation.eq(), Relation::mul);
   }
 

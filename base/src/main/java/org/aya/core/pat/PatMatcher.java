@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
@@ -20,15 +19,15 @@ import java.util.function.UnaryOperator;
  * Matches a term with a pattern.
  *
  * @author ice1000
- * @apiNote Use {@link PatMatcher#tryBuildSubstTerms} instead of instantiating the class directly.
+ * @apiNote Use {@link PatMatcher#tryBuildSubst} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
 public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull UnaryOperator<@NotNull Term> pre) {
-  public static Result<Subst, Boolean> tryBuildSubstTerms(
-    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqView<@NotNull Term> terms
+  public static Result<Subst, Boolean> tryBuildSubst(
+    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Pat>> pats,
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> terms
   ) {
-    return tryBuildSubstTerms(inferMeta, pats, terms, UnaryOperator.identity());
+    return tryBuildSubst(inferMeta, pats, terms, UnaryOperator.identity());
   }
 
   /**
@@ -36,9 +35,9 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
-  public static Result<Subst, Boolean> tryBuildSubstTerms(
-    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqView<@NotNull Term> terms, @NotNull UnaryOperator<Term> pre
+  public static Result<Subst, Boolean> tryBuildSubst(
+    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Pat>> pats,
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> terms, @NotNull UnaryOperator<Term> pre
   ) {
     var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), inferMeta, pre);
     try {
@@ -47,6 +46,11 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
     } catch (Mismatch mismatch) {
       return Result.err(mismatch.isBlocked);
     }
+  }
+
+  private void match(@NotNull Arg<Pat> pat, @NotNull Arg<Term> term) throws Mismatch {
+    assert pat.explicit() == term.explicit();
+    match(pat.term(), term.term());
   }
 
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
@@ -58,7 +62,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
         switch (term) {
           case ConCall conCall -> {
             if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
-            visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
+            visitList(ctor.params(), conCall.conArgs());
           }
           case MetaPatTerm metaPat -> solve(pat, metaPat);
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
@@ -121,7 +125,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
     }
   }
 
-  private void visitList(@NotNull ImmutableSeq<Pat> lpats, @NotNull SeqLike<Term> terms) throws Mismatch {
+  private void visitList(@NotNull ImmutableSeq<Arg<Pat>> lpats, @NotNull ImmutableSeq<Arg<Term>> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
     lpats.forEachWithChecked(terms, this::match);
   }

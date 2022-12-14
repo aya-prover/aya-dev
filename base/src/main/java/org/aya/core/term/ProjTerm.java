@@ -29,7 +29,7 @@ public record ProjTerm(@NotNull Term of, int ix) implements Elimination {
   @Contract(pure = true) public static @NotNull Term proj(@NotNull ProjTerm proj) {
     if (proj.of instanceof TupTerm tup) {
       assert tup.items().sizeGreaterThanOrEquals(proj.ix) && proj.ix > 0 : proj.of.toDoc(AyaDistillerOptions.debug()).debugRender();
-      return tup.items().get(proj.ix - 1);
+      return tup.items().get(proj.ix - 1).term();
     }
     return proj;
   }

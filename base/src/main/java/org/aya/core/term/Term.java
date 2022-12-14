@@ -68,7 +68,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         yield new LamTerm(param, body);
       }
       case TupTerm tuple -> {
-        var items = tuple.items().map(f);
+        var items = tuple.items().map(x -> x.descent(f));
         if (items.sameElements(tuple.items(), true)) yield tuple;
         yield new TupTerm(items);
       }
@@ -300,8 +300,8 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       return new RefTerm(ref);
     }
 
-    public @NotNull Pat toPat() {
-      return new Pat.Bind(explicit, ref, type);
+    public @NotNull Arg<Pat> toPat() {
+      return new Arg<>(new Pat.Bind(ref, type), explicit);
     }
 
     public @NotNull Param subst(@NotNull AnyVar var, @NotNull Term term) {
@@ -335,7 +335,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
 
   record Matching(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull ImmutableSeq<Arg<Pat>> patterns,
     @NotNull Term body
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
