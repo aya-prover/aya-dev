@@ -153,6 +153,7 @@ public class AyaMdParser {
         }
         throw new InternalException("SourceSpans");
       }
+      case HtmlBlock html when html.getLiteral().startsWith("<!--") -> new Literate.Raw(Doc.empty());
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();
         if (spans != null && spans.size() == 1) {
