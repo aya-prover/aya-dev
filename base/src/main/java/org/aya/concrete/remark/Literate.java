@@ -25,6 +25,12 @@ public sealed interface Literate extends Docile {
   record Raw(@NotNull Doc toDoc) implements Literate {
   }
 
+  record List(@NotNull ImmutableSeq<Literate> items, boolean ordered) implements Literate {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.list(items.map(Literate::toDoc), ordered);
+    }
+  }
+
   record HyperLink(@NotNull String href, @Nullable String hover,
                    @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {

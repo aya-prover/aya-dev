@@ -3,8 +3,10 @@
 package org.aya.cli.literate;
 
 import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.value.MutableValue;
 import org.aya.concrete.remark.CodeAttrProcessor;
 import org.aya.concrete.remark.CodeOptions;
 import org.aya.concrete.remark.Literate;
@@ -131,14 +133,17 @@ public class AyaMdParser {
       case HardLineBreak $ -> new Literate.Raw(Doc.line());
       case SoftLineBreak $ -> new Literate.Raw(Doc.line());
       case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis));
-      case Paragraph $ -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node));
-      case BlockQuote $ -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node));
+      case Paragraph p -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(p));
+      case BlockQuote b -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(b));
       case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node));
       case Link h -> new Literate.HyperLink(h.getDestination(), h.getTitle(), mapChildren(node));
-      case Document $ -> {
-        var children = mapChildren(node);
-        yield children.sizeEquals(1) ? children.first() : new Literate.Many(null, children);
-      }
+      case ListItem item -> flatten(collectChildren(node).view()
+        .flatMap(p -> p instanceof Paragraph ? collectChildren(p).view() : SeqView.of(p))
+        .flatMap(this::mapChildren)
+        .toImmutableSeq());
+      case OrderedList ordered -> new Literate.List(mapChildren(ordered), true);
+      case BulletList bullet -> new Literate.List(mapChildren(bullet), false);
+      case Document d -> flatten(mapChildren(d));
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
         var raw = codeBlock.getLiteral();
@@ -172,6 +177,16 @@ public class AyaMdParser {
         yield new Literate.Unsupported(mapChildren(node));
       }
     };
+  }
+
+  private Literate flatten(@NotNull Seq<Literate> children) {
+    return children.sizeEquals(1) ? children.first()
+      : new Literate.Many(null, children.toImmutableSeq());
+  }
+
+  private static @NotNull Seq<Node> collectChildren(@NotNull Node node) {
+    var itemStore = MutableValue.create(node);
+    return Seq.generateUntilNull(() -> itemStore.updateAndGet(Node::getNext));
   }
 
   public @Nullable SourcePos fromSourceSpans(@NotNull Seq<SourceSpan> sourceSpans) {
