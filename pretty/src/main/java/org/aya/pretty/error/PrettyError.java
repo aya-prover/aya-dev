@@ -22,78 +22,31 @@ public record PrettyError(
   @NotNull ImmutableSeq<Tuple2<Span, Doc>> inlineHints
 ) implements Docile {
 
-  public abstract static class FormatConfig {
+  public record FormatConfig(
+    @NotNull Option<Character> vbarForHints,
+    char lineNoSeparator,
+    @NotNull Option<Character> errorIndicator,
+    char underlineBegin,
+    char underlineEnd,
+    char underlineBody) {
 
-    abstract Option<Character> vbarForHints();
-    abstract char lineNoSeparator();
-    abstract Option<Character> errorIndicator();
-    abstract char underlineBegin();
-    abstract char underlineEnd();
-    abstract char underlineBody();
+    public static final FormatConfig CLASSIC = new FormatConfig(
+      Option.none(),
+      '|',
+      Option.none(),
+      '^',
+      '^',
+      '-'
+    );
 
-    public static final FormatConfig CLASSIC = new FormatConfig() {
-      @Override
-      Option<Character> vbarForHints() {
-        return Option.none();
-      }
-
-      @Override
-      public char lineNoSeparator() {
-        return '|';
-      }
-
-      @Override
-      Option<Character> errorIndicator() {
-        return Option.none();
-      }
-
-      @Override
-      public char underlineBegin() {
-        return '^';
-      }
-
-      @Override
-      public char underlineEnd() {
-        return '^';
-      }
-
-      @Override
-      public char underlineBody() {
-        return '-';
-      }
-    };
-
-    public static final FormatConfig UNICODE = new FormatConfig() {
-      @Override
-      Option<Character> vbarForHints() {
-        return Option.some('┝');
-      }
-
-      @Override
-      public char lineNoSeparator() {
-        return '│';
-      }
-
-      @Override
-      Option<Character> errorIndicator() {
-        return Option.some('⮬');
-      }
-
-      @Override
-      public char underlineBegin() {
-        return '╰';
-      }
-
-      @Override
-      public char underlineEnd() {
-        return '╯';
-      }
-
-      @Override
-      public char underlineBody() {
-        return '─';
-      }
-    };
+    public static final FormatConfig UNICODE = new FormatConfig(
+      Option.some('┝'),
+      '│',
+      Option.some('⮬'),
+      '╰',
+      '╯',
+      '─'
+    );
   }
 
   enum MultilineMode {
