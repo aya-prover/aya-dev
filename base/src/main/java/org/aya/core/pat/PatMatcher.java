@@ -19,15 +19,15 @@ import java.util.function.UnaryOperator;
  * Matches a term with a pattern.
  *
  * @author ice1000
- * @apiNote Use {@link PatMatcher#tryBuildSubstTerms} instead of instantiating the class directly.
+ * @apiNote Use {@link PatMatcher#tryBuildSubst} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
 public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull UnaryOperator<@NotNull Term> pre) {
-  public static Result<Subst, Boolean> tryBuildSubstTerms(
-    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqView<@NotNull Term> terms
+  public static Result<Subst, Boolean> tryBuildSubst(
+    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Pat>> pats,
+    @NotNull SeqView<@NotNull Arg<@NotNull Term>> terms
   ) {
-    return tryBuildSubstTerms(inferMeta, pats, terms, UnaryOperator.identity());
+    return tryBuildSubst(inferMeta, pats, terms, UnaryOperator.identity());
   }
 
   /**
@@ -35,9 +35,9 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
-  public static Result<Subst, Boolean> tryBuildSubstTerms(
-    boolean inferMeta, @NotNull ImmutableSeq<Pat> pats,
-    @NotNull SeqView<@NotNull Term> terms, @NotNull UnaryOperator<Term> pre
+  public static Result<Subst, Boolean> tryBuildSubst(
+    boolean inferMeta, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Pat>> pats,
+    @NotNull SeqView<@NotNull Arg<@NotNull Term>> terms, @NotNull UnaryOperator<Term> pre
   ) {
     var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), inferMeta, pre);
     try {

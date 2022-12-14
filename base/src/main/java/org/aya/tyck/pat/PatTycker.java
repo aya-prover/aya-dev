@@ -581,11 +581,7 @@ public final class PatTycker {
 
   public static Result<Subst, Boolean> mischa(DataCall dataCall, CtorDef ctor, @NotNull TyckState state) {
     if (ctor.pats.isNotEmpty()) {
-      return PatMatcher.tryBuildSubstTerms(
-        true,
-        ctor.pats.map(Arg::term),
-        dataCall.args().view().map(Arg::term),
-        new Expander.WHNFer(state));
+      return PatMatcher.tryBuildSubst(true, ctor.pats, dataCall.args().view(), new Expander.WHNFer(state));
     } else {
       return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
     }

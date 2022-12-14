@@ -54,7 +54,7 @@ public interface DefConsumer extends TermConsumer {
         struct.fields.forEach(this::accept);
       }
       case CtorDef ctor -> {
-        ctor.pats.forEach(x -> visitPat(x.term()));
+        ctor.pats.forEach(this::visitArgPat);
         tele(ctor.selfTele);
         accept(ctor.result);
         partial(ctor.clauses);

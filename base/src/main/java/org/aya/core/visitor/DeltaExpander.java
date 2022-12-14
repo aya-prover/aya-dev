@@ -71,11 +71,7 @@ public interface DeltaExpander extends EndoTerm {
     int ulift, @NotNull ImmutableSeq<Term.Matching> clauses
   ) {
     for (var matchy : clauses) {
-      var subst = PatMatcher.tryBuildSubstTerms(
-        false,
-        matchy.patterns().map(Arg::term),
-        args.view().map(Arg::term),
-        this);
+      var subst = PatMatcher.tryBuildSubst(false, matchy.patterns(), args.view(), this);
       if (subst.isOk()) {
         var newBody = matchy.body().rename().lift(ulift).subst(subst.get());
         return Option.some(new WithPos<>(matchy.sourcePos(), newBody));

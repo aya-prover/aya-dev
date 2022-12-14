@@ -14,10 +14,11 @@ public record MatchTerm(
 ) implements Term {
   public @NotNull Option<Term> tryMatch() {
     for (var clause : clauses) {
-      var subst = PatMatcher.tryBuildSubstTerms(
+      var subst = PatMatcher.tryBuildSubst(
         false,
-        clause.patterns().map(Arg::term),
-        discriminant.view());
+        clause.patterns(),
+        // TODO[wsx,kiva]: args in match
+        discriminant.view().map(x -> new Arg<>(x, true)));
       if (subst.isOk()) {
         return Option.some(clause.body().rename().subst(subst.get()));
       } else if (subst.getErr()) return Option.none();
