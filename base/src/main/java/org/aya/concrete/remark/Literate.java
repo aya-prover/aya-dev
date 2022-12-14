@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author hoshino
- * @implNote See <code>LiterateConsumer</code> in the cli module
+ * @see LiterateConsumer
  */
 public sealed interface Literate extends Docile {
   record Raw(@NotNull Doc toDoc) implements Literate {
