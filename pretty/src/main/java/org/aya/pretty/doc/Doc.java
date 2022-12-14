@@ -149,6 +149,9 @@ public sealed interface Doc extends Docile {
   ) implements Doc {
   }
 
+  record Image(@NotNull Doc alt, @NotNull Link src) implements Doc {
+  }
+
   /** Inline code, with special escape settings compared to {@link PlainText} */
   record InlineCode(@NotNull String language, @NotNull Doc code) implements Doc {
   }
@@ -248,6 +251,10 @@ public sealed interface Doc extends Docile {
 
   static @NotNull Doc hyperLink(@NotNull String plain, @NotNull Link href) {
     return hyperLink(plain(plain), href, null);
+  }
+
+  static @NotNull Doc image(@NotNull Doc alt, @NotNull Link src) {
+    return new Image(alt, src);
   }
 
   static @NotNull Doc code(@NotNull String code) {

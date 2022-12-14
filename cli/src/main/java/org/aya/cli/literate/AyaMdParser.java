@@ -134,6 +134,7 @@ public class AyaMdParser {
       case BlockQuote b -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(b));
       case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(h));
       case Link h -> new Literate.HyperLink(h.getDestination(), h.getTitle(), mapChildren(h));
+      case Image h -> new Literate.Image(h.getDestination(), mapChildren(h));
       case ListItem item -> flatten(collectChildren(item.getFirstChild())
         // .flatMap(p -> p instanceof Paragraph ? collectChildren(p.getFirstChild()) : SeqView.of(p))
         .flatMap(this::mapChildren)

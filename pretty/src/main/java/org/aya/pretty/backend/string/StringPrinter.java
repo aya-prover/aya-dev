@@ -54,6 +54,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.EscapedText(var text) -> text.length();
       case Doc.SpecialSymbol(var text) -> text.length();
       case Doc.HyperLinked text -> predictWidth(cursor, text.doc());
+      case Doc.Image i -> predictWidth(cursor, i.alt());
       case Doc.Styled styled -> predictWidth(cursor, styled.doc());
       case Doc.Line d -> 0;
       case Doc.FlatAlt alt -> predictWidth(cursor, alt.defaultDoc());
@@ -89,6 +90,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.EscapedText(var text) -> cursor.visibleContent(text);
       case Doc.SpecialSymbol(var symbol) -> renderSpecialSymbol(cursor, symbol, outer);
       case Doc.HyperLinked text -> renderHyperLinked(cursor, text, outer);
+      case Doc.Image image -> renderImage(cursor, image, outer);
       case Doc.Styled styled -> renderStyled(cursor, styled, outer);
       case Doc.Line d -> renderHardLineBreak(cursor, outer);
       case Doc.FlatAlt alt -> renderFlatAlt(cursor, alt, outer);
@@ -149,6 +151,10 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
 
   protected void renderHyperLinked(@NotNull Cursor cursor, @NotNull Doc.HyperLinked text, EnumSet<Outer> outer) {
     renderDoc(cursor, text.doc(), outer);
+  }
+
+  protected void renderImage(@NotNull Cursor cursor, @NotNull Doc.Image image, EnumSet<Outer> outer) {
+    renderDoc(cursor, image.alt(), outer);
   }
 
   protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled, EnumSet<Outer> outer) {
