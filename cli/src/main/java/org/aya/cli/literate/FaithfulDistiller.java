@@ -12,8 +12,6 @@ import org.aya.distill.AyaDistillerOptions;
 import org.aya.distill.BaseDistiller;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
-import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +44,14 @@ public interface FaithfulDistiller {
    * @param highlights the highlights for the source code
    */
   static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
-    highlights = highlights.sorted().distinct();
+    highlights = highlights.sorted().view()
+      .distinct()
+      .filter(h -> h.sourcePos() != SourcePos.NONE)
+      .filterNot(h -> h.sourcePos().isEmpty())
+      .toImmutableSeq();
     checkHighlights(highlights);
 
-    return doHighlight(raw, base, highlights
-      .filter(h -> h.sourcePos() != SourcePos.NONE)
-    );
+    return doHighlight(raw, base, highlights);
   }
 
   private static @NotNull Doc doHighlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
