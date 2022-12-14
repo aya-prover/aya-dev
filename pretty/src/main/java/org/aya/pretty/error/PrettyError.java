@@ -128,7 +128,10 @@ public record PrettyError(
             var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth, MultilineMode.START);
             docs.append(Doc.stickySep(hintUnderline, Doc.align(Doc.english("Begin of the error"))));
           } else if (lineNo == primaryRange.endLine()) {
-            var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth, MultilineMode.END);
+            var length = formatConfig.errorIndicator.isDefined()
+              ? Integer.min(line.length(), primaryRange.endCol())
+              : line.length();
+            var hintUnderline = renderHint(primaryRange.startCol(), length, linenoWidth, MultilineMode.END);
             docs.append(Doc.stickySep(hintUnderline, Doc.align(Doc.english("End of the error"))));
           }
         }
@@ -150,15 +153,19 @@ public record PrettyError(
     } else {
       builder.append(" ".repeat(startCol + " | ".length()));
     }
+    int length = endCol - startCol - 1;
     if (mode == MultilineMode.DISABLED || formatConfig.errorIndicator().isEmpty()) {
       builder.append(formatConfig.underlineBegin());
-      int length = endCol - startCol - 1;
       if (length > 0) {
         // endCol is in the next line
         builder.append(Character.toString(formatConfig.underlineBody()).repeat(length));
       }
       builder.append(formatConfig.underlineEnd());
     } else {
+      if (length > 0 && mode == MultilineMode.END) {
+        // endCol is in the next line
+        builder.append(" ".repeat(length));
+      }
       builder.append(formatConfig.errorIndicator().get());
     }
     return Doc.plain(builder.toString());
