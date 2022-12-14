@@ -13,7 +13,7 @@ import java.util.EnumSet;
 import java.util.regex.Pattern;
 
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
-  public static final Pattern MD_ESCAPE = Pattern.compile("[#&()*+\\-;<>\\[\\\\\\]_`|~]");
+  public static final Pattern MD_ESCAPE = Pattern.compile("[#&()*+;<>\\[\\\\\\]_`|~]");
   public static final Pattern MD_NO_ESCAPE_BACKSLASH = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
 
   @Override protected void renderHeader(@NotNull Cursor cursor) {
@@ -44,7 +44,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     // .
     // What we won't escape, which are not special characters
     // or don't matter in a plain text (like `:` and `"` work in footnotes only):
-    // ":,%$'=@?^{}/
+    // ":,%$'=@?^{}/-
     // What we should escape, but we don't:
     // `!`: `!` is only used in `![]()`, but we already escape `[`, `]`, `(`, `)`, so `!` doesn't work.
     content = MD_ESCAPE

@@ -49,6 +49,7 @@ public class MdStylist extends Html5Stylist {
       case MdStyle.GFM gfm -> switch (gfm) {
         case BlockQuote -> new StyleToken(c -> c.invisibleContent("> "), c -> c.lineBreakWith("\n\n"));
         case Paragraph -> new StyleToken(c -> {}, c -> c.lineBreakWith("\n\n"));
+        case ThematicBreak -> new StyleToken(c -> c.invisibleContent("---"), c -> c.lineBreakWith("\n\n"));
       };
       case MdStyle.Heading(int level) -> new StyleToken(c -> {
         c.invisibleContent("#".repeat(level));

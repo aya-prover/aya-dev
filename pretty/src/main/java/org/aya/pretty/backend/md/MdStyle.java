@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface MdStyle extends Style.CustomStyle {
   /** GitHub flavored markdown */
   enum GFM implements MdStyle {
-    BlockQuote, Paragraph,
+    BlockQuote, Paragraph, ThematicBreak,
   }
 
   static @NotNull Heading h(int level) {

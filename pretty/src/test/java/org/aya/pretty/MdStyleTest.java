@@ -64,7 +64,7 @@ public class MdStyleTest {
 
   @Test
   public void testEscapeDocs() {
-    assertEquals("!\"\\#$%\\&'\\(\\)\\*\\+,\\-./:\\;\\<=\\>?@\\[\\\\\\]^\\_\\`{\\|}\\~",
+    assertEquals("!\"\\#$%\\&'\\(\\)\\*\\+,-./:\\;\\<=\\>?@\\[\\\\\\]^\\_\\`{\\|}\\~",
       escapeDoc12().renderToMd());
     // In fact, the markdown: `\→\A\a\ \3\φ\«` also produces the text as escapeDoc1 describes,
     // but it makes the Java/Markdown code more complex/confusing (for me at least)
@@ -112,12 +112,12 @@ public class MdStyleTest {
   @Test
   public void testList() {
     assertEquals("""
-      + first
+      - first
         
         third
-      + fourth
-        + 4.1
-        + 4.2
+      - fourth
+        - 4.1
+        - 4.2
             
       """.stripIndent(), bulletList().renderToMd().stripIndent());
     assertEquals("""
@@ -125,8 +125,8 @@ public class MdStyleTest {
 
          third
       2. fourth
-         + 4.1
-         + 4.2
+         - 4.1
+         - 4.2
 
       """.stripIndent(), orderedList().renderToMd().stripIndent());
   }
