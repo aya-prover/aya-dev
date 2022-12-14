@@ -7,7 +7,8 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.Main;
 import org.aya.cli.literate.AyaMdParser;
-import org.aya.cli.literate.LiterateConsumer;
+import org.aya.cli.literate.HighlightsCollector;
+import org.aya.concrete.remark.LiterateConsumer;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
@@ -19,7 +20,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
-import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
@@ -78,7 +78,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   @VisibleForTesting default @NotNull Doc docitfy(ImmutableSeq<Stmt> program) throws IOException {
     var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
     var literate = literate();
-    new LiterateConsumer.Highlights(highlights).accept(literate);
+    new HighlightsCollector(highlights).accept(literate);
     return literate.toDoc();
   }
 
