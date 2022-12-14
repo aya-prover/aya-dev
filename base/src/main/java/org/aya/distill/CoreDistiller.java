@@ -271,7 +271,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
       case Pat.Ctor ctor -> {
-        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, ctor.params().view().map(Pat::toArg), outer,
+        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, Arg.mapSeq(ctor.params().view(), Pat::toTerm), outer,
           options.map.get(AyaDistillerOptions.Key.ShowImplicitPats));
         yield ctorDoc(outer, licit, ctorDoc, ctor.params().isEmpty());
       }

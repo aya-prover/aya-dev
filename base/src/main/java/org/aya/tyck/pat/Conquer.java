@@ -55,7 +55,7 @@ public record Conquer(
         // Con tele |-> pattern tele
         var subst = new Subst(
           ctorDef.selfTele.view().map(Term.Param::ref),
-          params.view().map(Pat::toArg).map(Arg::term)
+          params.view().map(t -> t.term().toTerm())
         );
         // The split, but typed under current context
         var clauses = (Partial.Split<Term>) AyaRestrSimplifier.INSTANCE
@@ -78,7 +78,8 @@ public record Conquer(
     CofThy.conv(condition.cof(), matchy, subst -> {
       // We should also restrict the current clause body under `condition`.
       var newBody = currentClause.body().subst(subst);
-      var args = currentClause.patterns().map(p -> Pat.toArg(p).descent(t -> t.subst(subst)));
+      var args = Arg.mapSeq(currentClause.patterns().view(), t -> t.toTerm().subst(subst))
+        .toImmutableSeq();
       var matchResult = new Expander.WHNFer(tycker.state)
         .tryUnfoldClauses(orderIndependent, args, 0, matchings)
         .map(w -> w.map(t -> t.subst(subst)));

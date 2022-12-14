@@ -42,10 +42,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @Debug.Renderer(text = "toTerm().toDoc(AyaDistillerOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
-  static @NotNull Arg<Term> toArg(@NotNull Arg<Pat> argPat) {
-    return new Arg<>(argPat.term().toTerm(), argPat.explicit());
-  }
-
   default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }

@@ -4,7 +4,6 @@ package org.aya.core.ops;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.*;
-import org.aya.util.Arg;
 import org.aya.tyck.env.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -16,18 +15,18 @@ public record Eta(@NotNull LocalCtx ctx) {
    */
   public @NotNull Term uneta(@NotNull Term term) {
     return switch (term) {
-      case LamTerm lam -> {
-        var etaBody = uneta(lam.body());
+      case LamTerm(var param, var body) -> {
+        var etaBody = uneta(body);
         var last = getLastTerm(etaBody);
         var bodyWoLast = constructBodyWithoutLast(etaBody, last);
         if (last instanceof RefTerm lastRef
-          && compareRefTerm(lam.param().toTerm(), lastRef)
+          && compareRefTerm(param.toTerm(), lastRef)
           && bodyWoLast.findUsages(lastRef.var()) <= 0) yield uneta(bodyWoLast);
-        yield LamTerm.make(ImmutableSeq.of(lam.param()), etaBody);
+        yield LamTerm.make(ImmutableSeq.of(param), etaBody);
       }
-      case TupTerm tuple -> {
-        if (tuple.items().isEmpty()) yield tuple;
-        var etaItems = tuple.items().map(this::uneta);
+      case TupTerm(var items) -> {
+        if (items.isEmpty()) yield term;
+        var etaItems = items.map(this::uneta);
         var defaultRes = new TupTerm(etaItems);
         // Get first item's Proj.of Term to compare with other items'
         var firstItem = etaItems.first();
@@ -35,7 +34,7 @@ public record Eta(@NotNull LocalCtx ctx) {
           && proj.of() instanceof RefTerm ref
           && ctx.get(ref.var()) instanceof SigmaTerm sigmaTerm)) yield defaultRes;
         // Make sure targetSigma's size is equal to this tuple's size
-        if (!sigmaTerm.params().sizeEquals(tuple.items().size())) yield defaultRes;
+        if (!sigmaTerm.params().sizeEquals(items)) yield defaultRes;
         // Make sure every Proj.of Term is the same and index match the position
         for (var i = 0; i < etaItems.size(); ++i) {
           var item = etaItems.get(i);
@@ -45,9 +44,8 @@ public record Eta(@NotNull LocalCtx ctx) {
         }
         yield ref;
       }
-      case AppTerm app -> new AppTerm(app.of(),
-        new Arg<>(uneta(app.arg().term()), app.arg().explicit()));
-      case ProjTerm proj -> new ProjTerm(uneta(proj.of()), proj.ix());
+      case AppTerm(var f, var arg) -> new AppTerm(f, arg.descent(this::uneta));
+      case ProjTerm(var t, var ix) -> new ProjTerm(uneta(t), ix);
       // Ignore other cases because they are useless in becoming a RefTerm
       default -> term;
     };
