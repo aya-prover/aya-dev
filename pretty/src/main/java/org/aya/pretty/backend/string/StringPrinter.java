@@ -193,7 +193,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     // The items should be placed one by one, each at the beginning of a line.
     var items = Doc.vcat(list.items().mapIndexed((idx, item) -> {
       // The beginning mark
-      var pre = list.isOrdered() ? (idx + 1) + "." : "+";
+      var pre = list.isOrdered() ? (idx + 1) + "." : "-";
       // The item content
       var content = Doc.align(item);
       return Doc.stickySep(Doc.escaped(pre), content);

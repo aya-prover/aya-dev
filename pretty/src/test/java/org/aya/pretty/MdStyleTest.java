@@ -112,12 +112,12 @@ public class MdStyleTest {
   @Test
   public void testList() {
     assertEquals("""
-      + first
+      - first
         
         third
-      + fourth
-        + 4.1
-        + 4.2
+      - fourth
+        - 4.1
+        - 4.2
             
       """.stripIndent(), bulletList().renderToMd().stripIndent());
     assertEquals("""
@@ -125,8 +125,8 @@ public class MdStyleTest {
 
          third
       2. fourth
-         + 4.1
-         + 4.2
+         - 4.1
+         - 4.2
 
       """.stripIndent(), orderedList().renderToMd().stripIndent());
   }
