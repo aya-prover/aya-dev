@@ -219,7 +219,7 @@ public final class ExprTycker extends Tycker {
       }
       case Expr.Tuple tuple -> {
         var items = tuple.items().map(this::synthesize);
-        yield new TermResult(new TupTerm(items.map(x -> new Arg<>(x.wellTyped(), true))),
+        yield new TermResult(TupTerm.explicits(items.map(Result::wellTyped)),
           new SigmaTerm(items.map(item -> new Term.Param(LocalVar.IGNORED, item.type(), true))));
       }
       case Expr.Coe coe -> {

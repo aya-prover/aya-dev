@@ -5,9 +5,9 @@ package org.aya.core;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
-import org.aya.util.Arg;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.MapLocalCtx;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -65,7 +65,7 @@ public class EtaTest {
     var xRefTerm = new RefTerm(X);
     var firstTerm = new ProjTerm(xRefTerm, 1);
     var secondTerm = new ProjTerm(xRefTerm, 2);
-    var tuple = new TupTerm(ImmutableSeq.of(firstTerm, secondTerm));
+    var tuple = TupTerm.explicits(ImmutableSeq.of(firstTerm, secondTerm));
     assertTrue(Eta.compareRefTerm(xRefTerm, ETA.uneta(tuple)));
   }
 
@@ -74,8 +74,8 @@ public class EtaTest {
     var xRefTerm = new RefTerm(X);
     var firstTerm = new ProjTerm(xRefTerm, 1);
     var secondTerm = new ProjTerm(xRefTerm, 2);
-    var tuple = new TupTerm(ImmutableSeq.of(firstTerm, secondTerm));
-    var finalTuple = new TupTerm(ImmutableSeq.of(firstTerm, new ProjTerm(tuple, 2)));
+    var tuple = TupTerm.explicits(ImmutableSeq.of(firstTerm, secondTerm));
+    var finalTuple = TupTerm.explicits(ImmutableSeq.of(firstTerm, new ProjTerm(tuple, 2)));
     assertTrue(Eta.compareRefTerm(xRefTerm, ETA.uneta(finalTuple)));
   }
 
@@ -87,7 +87,7 @@ public class EtaTest {
     // construct lambda body: tuple term
     var firstTerm = new ProjTerm(xRefTerm, 1);
     var secondTerm = new ProjTerm(xRefTerm, 2);
-    var tuple = new TupTerm(ImmutableSeq.of(firstTerm, secondTerm));
+    var tuple = TupTerm.explicits(ImmutableSeq.of(firstTerm, secondTerm));
     var lambda = LamTerm.make(
       // Params
       ImmutableSeq.of(xParamTerm),

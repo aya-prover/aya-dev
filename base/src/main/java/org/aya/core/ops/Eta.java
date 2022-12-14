@@ -26,10 +26,10 @@ public record Eta(@NotNull LocalCtx ctx) {
       }
       case TupTerm(var items) -> {
         if (items.isEmpty()) yield term;
-        var etaItems = items.map(this::uneta);
+        var etaItems = items.map(x -> x.descent(this::uneta));
         var defaultRes = new TupTerm(etaItems);
         // Get first item's Proj.of Term to compare with other items'
-        var firstItem = etaItems.first();
+        var firstItem = etaItems.first().term();
         if (!(firstItem instanceof ProjTerm proj
           && proj.of() instanceof RefTerm ref
           && ctx.get(ref.var()) instanceof SigmaTerm sigmaTerm)) yield defaultRes;
@@ -37,7 +37,7 @@ public record Eta(@NotNull LocalCtx ctx) {
         if (!sigmaTerm.params().sizeEquals(items)) yield defaultRes;
         // Make sure every Proj.of Term is the same and index match the position
         for (var i = 0; i < etaItems.size(); ++i) {
-          var item = etaItems.get(i);
+          var item = etaItems.get(i).term();
           if (!(item instanceof ProjTerm itemProj)
             || !compareRefTerm(itemProj.of(), ref)
             || (itemProj.ix() != i + 1)) yield defaultRes;
