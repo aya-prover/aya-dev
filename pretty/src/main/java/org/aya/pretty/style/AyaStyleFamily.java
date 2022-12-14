@@ -18,6 +18,7 @@ public record AyaStyleFamily(@NotNull MutableMap<String, Styles> definedStyles) 
     Tuple.of(AyaStyleKey.Struct.key(), Style.color(AyaStyleKey.Struct.key()).and()),
     Tuple.of(AyaStyleKey.Con.key(), Style.color(AyaStyleKey.Con.key()).and()),
     Tuple.of(AyaStyleKey.Field.key(), Style.color(AyaStyleKey.Field.key()).and()),
-    Tuple.of(AyaStyleKey.Generalized.key(), Style.color(AyaStyleKey.Generalized.key()).and())
+    Tuple.of(AyaStyleKey.Generalized.key(), Style.color(AyaStyleKey.Generalized.key()).and()),
+    Tuple.of(AyaStyleKey.CallTerm.key(), Styles.empty())
   ));
 }
