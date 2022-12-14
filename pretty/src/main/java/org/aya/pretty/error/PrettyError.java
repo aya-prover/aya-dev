@@ -18,8 +18,90 @@ public record PrettyError(
   @NotNull String filePath,
   @NotNull Span errorRange,
   @NotNull Doc brief,
+  @NotNull FormatConfig formatConfig,
   @NotNull ImmutableSeq<Tuple2<Span, Doc>> inlineHints
 ) implements Docile {
+
+  public abstract static class FormatConfig {
+
+    abstract Option<Character> vbarForHints();
+    abstract char lineNoSeparator();
+    abstract Option<Character> errorIndicator();
+    abstract char underlineBegin();
+    abstract char underlineEnd();
+    abstract char underlineBody();
+
+    public static final FormatConfig CLASSIC = new FormatConfig() {
+      @Override
+      Option<Character> vbarForHints() {
+        return Option.none();
+      }
+
+      @Override
+      public char lineNoSeparator() {
+        return '|';
+      }
+
+      @Override
+      Option<Character> errorIndicator() {
+        return Option.none();
+      }
+
+      @Override
+      public char underlineBegin() {
+        return '^';
+      }
+
+      @Override
+      public char underlineEnd() {
+        return '^';
+      }
+
+      @Override
+      public char underlineBody() {
+        return '-';
+      }
+    };
+
+    public static final FormatConfig UNICODE = new FormatConfig() {
+      @Override
+      Option<Character> vbarForHints() {
+        return Option.some('┝');
+      }
+
+      @Override
+      public char lineNoSeparator() {
+        return '│';
+      }
+
+      @Override
+      Option<Character> errorIndicator() {
+        return Option.some('⮬');
+      }
+
+      @Override
+      public char underlineBegin() {
+        return '╰';
+      }
+
+      @Override
+      public char underlineEnd() {
+        return '╯';
+      }
+
+      @Override
+      public char underlineBody() {
+        return '─';
+      }
+    };
+  }
+
+  enum MultilineMode {
+    DISABLED,
+    START,
+    END,
+  }
+
   public @NotNull Doc toDoc(@NotNull PrettyErrorConfig config) {
     var primary = errorRange.normalize(config);
     var hints = inlineHints.view()
@@ -75,7 +157,7 @@ public record PrettyError(
       hints.find(kv -> kv._1.startLine() == finalLineNo).ifDefined(find -> {
         int startCol = find._1.startCol();
         int endCol = find._1.endCol();
-        var hintUnderline = renderHint(startCol, endCol, linenoWidth);
+        var hintUnderline = renderHint(startCol, endCol, linenoWidth, MultilineMode.DISABLED);
         var doc = find._2;
         if (doc instanceof Doc.Empty) docs.append(hintUnderline);
         else docs.append(Doc.cat(hintUnderline, Doc.ONE_WS, doc));
@@ -85,15 +167,15 @@ public record PrettyError(
       if (hints.isEmpty()) {
         if (primaryRange.startLine() == primaryRange.endLine()) {
           if (lineNo == primaryRange.startLine()) {
-            var hintUnderline = renderHint(primaryRange.startCol(), primaryRange.endCol(), linenoWidth);
+            var hintUnderline = renderHint(primaryRange.startCol(), primaryRange.endCol(), linenoWidth, MultilineMode.DISABLED);
             docs.append(hintUnderline);
           }
         } else {
           if (lineNo == primaryRange.startLine()) {
-            var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth);
+            var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth, MultilineMode.START);
             docs.append(Doc.stickySep(hintUnderline, Doc.align(Doc.english("Begin of the error"))));
           } else if (lineNo == primaryRange.endLine()) {
-            var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth);
+            var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth, MultilineMode.END);
             docs.append(Doc.stickySep(hintUnderline, Doc.align(Doc.english("End of the error"))));
           }
         }
@@ -105,16 +187,27 @@ public record PrettyError(
     return Doc.vcat(docs);
   }
 
-  private Doc renderHint(int startCol, int endCol, int linenoWidth) {
+  private Doc renderHint(int startCol, int endCol, int linenoWidth, MultilineMode mode) {
     var builder = new StringBuilder();
-    builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
-    builder.append("^");
-    int length = endCol - startCol - 1;
-    if (length > 0) {
-      // endCol is in the next line
-      builder.append("-".repeat(length));
+    builder.append(" ".repeat(linenoWidth));
+    if (formatConfig.vbarForHints().isDefined()) {
+      builder.append(' ');
+      builder.append(formatConfig.vbarForHints().get());
+      builder.append(" ".repeat(startCol + 1));
+    } else {
+      builder.append(" ".repeat(startCol + " | ".length()));
     }
-    builder.append("^");
+    if (mode == MultilineMode.DISABLED || formatConfig.errorIndicator().isEmpty()) {
+      builder.append(formatConfig.underlineBegin());
+      int length = endCol - startCol - 1;
+      if (length > 0) {
+        // endCol is in the next line
+        builder.append(Character.toString(formatConfig.underlineBody()).repeat(length));
+      }
+      builder.append(formatConfig.underlineEnd());
+    } else {
+      builder.append(formatConfig.errorIndicator().get());
+    }
     return Doc.plain(builder.toString());
   }
 
@@ -125,9 +218,9 @@ public record PrettyError(
   private Doc renderLine(String line, Option<Integer> lineNo, int linenoWidth) {
     var builder = new StringBuilder();
     if (lineNo.isDefined()) {
-      builder.append(String.format("%" + linenoWidth + "d | ", lineNo.get()));
+      builder.append(String.format("%" + linenoWidth + "d %c ", lineNo.get(), formatConfig.lineNoSeparator()));
     } else {
-      builder.append(String.format("%" + linenoWidth + "s | ", ""));
+      builder.append(String.format("%" + linenoWidth + "s %c ", "", formatConfig.lineNoSeparator()));
     }
     builder.append(line);
     return Doc.plain(builder.toString());

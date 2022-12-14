@@ -55,12 +55,14 @@ public interface Problem {
     return level() == Severity.ERROR;
   }
 
-  default @NotNull PrettyError toPrettyError(@NotNull DistillerOptions options) {
+  default @NotNull PrettyError toPrettyError(@NotNull DistillerOptions options,
+                                             @NotNull PrettyError.FormatConfig prettyErrorConf) {
     var sourcePos = sourcePos();
     return new PrettyError(
       sourcePos.file().display(),
       sourcePos.toSpan(),
       brief(options),
+      prettyErrorConf,
       inlineHints(options).stream()
         .collect(Collectors.groupingBy(WithPos::sourcePos,
           Collectors.mapping(WithPos::data, Seq.factory())))
