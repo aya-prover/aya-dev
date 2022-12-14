@@ -22,7 +22,7 @@ In file $FILE:1:0 ->
       ^-------------------------------------------^ Begin of the error
   2 |              (f : Pi A B -> C)
   3 |              (p : Sig A  B) : C
-      ^------------------------------^ End of the error
+      ^-----------^ End of the error
   4 |   => f (p.1) (p.2)
   5 | 
 
@@ -37,7 +37,7 @@ In file $FILE:6:0 ->
                                                                 error
   7 |               (f : Pi A B C -> D)
   8 |               (p : Sig A B  C) : D
-      ^---------------------------------^ End of the error
+      ^------------^ End of the error
 
 Error: Unsolved meta _
 

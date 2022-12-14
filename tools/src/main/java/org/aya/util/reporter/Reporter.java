@@ -3,6 +3,7 @@
 package org.aya.util.reporter;
 
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.error.PrettyError;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
@@ -64,7 +65,12 @@ public interface Reporter {
     @NotNull Problem problem, @NotNull DistillerOptions options,
     boolean unicode, boolean supportAnsi, int pageWidth
   ) {
-    var doc = problem.sourcePos() == SourcePos.NONE ? problem.describe(options) : problem.toPrettyError(options).toDoc();
+    var prettyErrorConf = unicode
+      ? PrettyError.FormatConfig.UNICODE
+      : PrettyError.FormatConfig.CLASSIC;
+    var doc = problem.sourcePos() == SourcePos.NONE
+      ? problem.describe(options)
+      : problem.toPrettyError(options, prettyErrorConf).toDoc();
     return supportAnsi
       ? doc.renderToTerminal(pageWidth, unicode)
       : doc.renderToString(pageWidth, unicode);
