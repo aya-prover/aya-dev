@@ -6,6 +6,10 @@ import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
 
 public record Styles(@NotNull MutableList<Style> styles) {
+  public static @NotNull Styles empty() {
+    return new Styles(MutableList.create());
+  }
+
   public @NotNull Styles italic() {
     styles.append(Style.italic());
     return this;

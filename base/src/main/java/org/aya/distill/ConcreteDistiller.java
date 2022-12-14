@@ -113,7 +113,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.RawProj expr -> Doc.sepNonEmpty(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
           Doc.plain(expr.id().join())), expr.coeLeft() != null ? term(Outer.AppSpine, expr.coeLeft()) : Doc.empty(),
         expr.restr() != null ? Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, expr.restr())) : Doc.empty());
-      case Expr.Coe expr -> visitCalls(expr.resolvedVar(), PRIM_CALL,
+      case Expr.Coe expr -> visitCalls(expr.resolvedVar(), PRIM,
         ImmutableSeq.of(new Arg<>(expr.type(), true), new Arg<>(expr.restr(), true)),
         outer, options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
       case Expr.Unresolved expr -> Doc.plain(expr.name().join());
@@ -127,7 +127,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Expr.New expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
-          Doc.sep(Doc.symbol("|"), Doc.styled(FIELD_CALL, t.name().data()),
+          Doc.sep(Doc.symbol("|"), Doc.styled(FIELD, t.name().data()),
             Doc.emptyIf(t.bindings().isEmpty(), () ->
               Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
             Doc.plain("=>"), term(Outer.Free, t.body()))
@@ -247,7 +247,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case Pattern.CalmFace $ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
       case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), licit);
       case Pattern.Ctor ctor -> {
-        var name = linkRef(ctor.resolved().data(), CON_CALL);
+        var name = linkRef(ctor.resolved().data(), CON);
         var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
         yield ctorDoc(outer, licit, ctorDoc, ctor.params().isEmpty());
       }
@@ -343,7 +343,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
           visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "struct"),
-          linkDef(decl.ref, STRUCT_CALL),
+          linkDef(decl.ref, STRUCT),
           visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
@@ -358,7 +358,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "def"));
         prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
-        prelude.append(linkDef(decl.ref, FN_CALL));
+        prelude.append(linkDef(decl.ref, FN));
         prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
@@ -372,7 +372,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
           visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
           visitPersonality(decl.personality()),
           Doc.styled(KEYWORD, "data"),
-          linkDef(decl.ref, DATA_CALL),
+          linkDef(decl.ref, DATA),
           visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
@@ -385,7 +385,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
       case TeleDecl.StructField field -> {
         var doc = MutableList.of(Doc.symbol("|"),
           coe(field.coerce),
-          linkDef(field.ref, FIELD_CALL),
+          linkDef(field.ref, FIELD),
           visitTele(field.telescope));
         appendResult(doc, field.result);
         field.body.ifDefined(body -> {
@@ -398,7 +398,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var ret = ctor.result == null ? Doc.empty() : Doc.sep(Doc.symbol(":"), term(Outer.Free, ctor.result));
         var doc = Doc.cblock(Doc.sepNonEmpty(
           coe(ctor.coerce),
-          linkDef(ctor.ref, CON_CALL),
+          linkDef(ctor.ref, CON),
           visitTele(ctor.telescope),
           ret), 2, partial(ctor.clauses));
         if (ctor.patterns.isNotEmpty()) {

@@ -46,7 +46,7 @@ public record LocalVar(
   }
 
   public @NotNull LocalVar rename() {
-    return new LocalVar(this.name, this.definition, this.generateKind);
+    return new LocalVar(name, definition, new GenerateKind.Renamed(this));
   }
 
   public boolean isGenerated() {

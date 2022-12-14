@@ -13,6 +13,8 @@ import java.util.Objects;
 /**
  * Position in source code for error reporting only.
  *
+ * @param tokenEndIndex   The index of last character (inclusive)
+ * @param tokenStartIndex The index of first character (inclusive)
  * @author kiva
  */
 @SuppressWarnings("unused")
@@ -154,6 +156,6 @@ public record SourcePos(
   }
 
   private int size() {
-    return tokenEndIndex - tokenStartIndex;
+    return tokenEndIndex - tokenStartIndex + 1;
   }
 }

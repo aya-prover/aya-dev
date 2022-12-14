@@ -69,8 +69,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case MetaLitTerm lit ->
         lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
       case TupTerm(var items) -> Doc.parened(argsDoc(options, items));
-      case ConCall conCall -> visitArgsCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
-      case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
+      case ConCall conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
+      case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case SigmaTerm(var params) -> {
         var last = params.last();
         var doc = Doc.sep(
@@ -124,11 +124,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
           options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs)
         );
       }
-      case IntervalTerm term -> Doc.styled(PRIM_CALL, "I");
+      case IntervalTerm term -> Doc.styled(PRIM, "I");
       case NewTerm newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
         Doc.vcat(newTerm.params().view()
           .map((k, v) -> Doc.sep(Doc.symbol("|"),
-            linkRef(k, FIELD_CALL),
+            linkRef(k, FIELD),
             Doc.symbol("=>"), term(Outer.Free, v)))
           .toImmutableSeq()));
       case FieldTerm term -> visitCalls(null, visitAccessHead(term), term.fieldArgs().view(), outer,
@@ -144,7 +144,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case AppTerm(var of, var arg) -> {
         var args = MutableList.of(arg);
         var head = AppTerm.unapp(of, args);
-        if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD_CALL, args, outer);
+        if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD, args, outer);
         var implicits = options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs);
         // Infix def-calls
         if (head instanceof Callable call && call.ref() instanceof DefVar<?, ?> var) {
@@ -153,8 +153,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         }
         yield visitCalls(null, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
-      case PrimCall prim -> visitArgsCalls(prim.ref(), PRIM_CALL, prim.args(), outer);
-      case RefTerm.Field term -> linkRef(term.ref(), FIELD_CALL);
+      case PrimCall prim -> visitArgsCalls(prim.ref(), PRIM, prim.args(), outer);
+      case RefTerm.Field term -> linkRef(term.ref(), FIELD);
       case ProjTerm(var of, var ix) ->
         Doc.cat(term(Outer.ProjHead, of), Doc.symbol("."), Doc.plain(String.valueOf(ix)));
       case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
@@ -185,19 +185,19 @@ public class CoreDistiller extends BaseDistiller<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case StructCall structCall -> visitArgsCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
-      case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
+      case StructCall structCall -> visitArgsCalls(structCall.ref(), STRUCT, structCall.args(), outer);
+      case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA, dataCall.args(), outer);
       case IntegerTerm shaped -> shaped.repr() == 0
-        ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON_CALL)
-        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.MomentId.SUC), CON_CALL);
+        ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON)
+        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.MomentId.SUC), CON);
       case ListTerm shaped -> {
         var subterms = shaped.repr().map(x -> term(Outer.Free, x));
         var nil = shaped.ctorRef(CodeShape.MomentId.NIL);
         var cons = shaped.ctorRef(CodeShape.MomentId.CONS);
         yield Doc.sep(
-          linkListLit(Doc.symbol("["), nil, CON_CALL),
-          Doc.join(linkListLit(Doc.COMMA, cons, CON_CALL), subterms),
-          linkListLit(Doc.symbol("]"), nil, CON_CALL)
+          linkListLit(Doc.symbol("["), nil, CON),
+          Doc.join(linkListLit(Doc.COMMA, cons, CON), subterms),
+          linkListLit(Doc.symbol("]"), nil, CON)
         );
       }
       case StringTerm(var str) -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str) + "\"");
@@ -256,7 +256,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
 
   private @NotNull Doc visitAccessHead(@NotNull FieldTerm term) {
     return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
-      linkRef(term.ref(), FIELD_CALL));
+      linkRef(term.ref(), FIELD));
   }
 
   public @NotNull Doc pat(@NotNull Arg<Pat> pat, @NotNull Outer outer) {
@@ -271,7 +271,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
       case Pat.Ctor ctor -> {
-        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, Arg.mapSeq(ctor.params().view(), Pat::toTerm), outer,
+        var ctorDoc = visitCalls(ctor.ref(), CON, Arg.mapSeq(ctor.params().view(), Pat::toTerm), outer,
           options.map.get(AyaDistillerOptions.Key.ShowImplicitPats));
         yield ctorDoc(outer, licit, ctorDoc, ctor.params().isEmpty());
       }
@@ -279,8 +279,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Tuple tuple -> Doc.licit(licit,
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub.term(), sub.explicit(), Outer.Free))));
       case Pat.ShapedInt lit -> Doc.bracedUnless(lit.repr() == 0
-          ? linkLit(0, lit.ctorRef(CodeShape.MomentId.ZERO), CON_CALL)
-          : linkLit(lit.repr(), lit.ctorRef(CodeShape.MomentId.SUC), CON_CALL),
+          ? linkLit(0, lit.ctorRef(CodeShape.MomentId.ZERO), CON)
+          : linkLit(lit.repr(), lit.ctorRef(CodeShape.MomentId.SUC), CON),
         licit);
     };
   }
@@ -292,7 +292,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "def"));
         def.modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
         line1.appendAll(new Doc[]{
-          linkDef(def.ref(), FN_CALL),
+          linkDef(def.ref(), FN),
           visitTele(def.telescope()),
           Doc.symbol(":"),
           term(Outer.Free, def.result())
@@ -304,14 +304,14 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case FieldDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         coe(field.coerce),
-        linkDef(field.ref(), FIELD_CALL),
+        linkDef(field.ref(), FIELD),
         visitTele(field.selfTele),
         Doc.symbol(":"),
         term(Outer.Free, field.result));
       case PrimDef def -> primDoc(def.ref());
       case CtorDef ctor -> {
         var doc = Doc.sepNonEmpty(coe(ctor.coerce),
-          linkDef(ctor.ref(), CON_CALL),
+          linkDef(ctor.ref(), CON),
           visitTele(ctor.selfTele));
         Doc line1;
         if (ctor.pats.isNotEmpty()) {
@@ -321,14 +321,14 @@ public class CoreDistiller extends BaseDistiller<Term> {
         yield Doc.cblock(line1, 2, partial(options, ctor.clauses, false, Doc.empty(), Doc.empty()));
       }
       case StructDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
-        linkDef(def.ref(), STRUCT_CALL),
+        linkDef(def.ref(), STRUCT),
         visitTele(def.telescope()),
         Doc.symbol(":"),
         term(Outer.Free, def.result())
       ), Doc.nest(2, Doc.vcat(def.fields.view().map(this::def))));
       case DataDef def -> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "data"),
-          linkDef(def.ref(), DATA_CALL),
+          linkDef(def.ref(), DATA),
           visitTele(def.telescope()),
           Doc.symbol(":"),
           term(Outer.Free, def.result()));

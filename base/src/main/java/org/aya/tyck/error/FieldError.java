@@ -58,7 +58,7 @@ public sealed interface FieldError extends TyckError {
         Doc.english("arguments, but found"),
         Doc.plain(String.valueOf(supplied)),
         Doc.english("arguments for field"),
-        BaseDistiller.linkRef(fieldDef.ref, BaseDistiller.FIELD_CALL));
+        BaseDistiller.linkRef(fieldDef.ref, BaseDistiller.FIELD));
     }
   }
 }

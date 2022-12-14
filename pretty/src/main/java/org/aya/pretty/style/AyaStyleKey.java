@@ -23,7 +23,8 @@ public enum AyaStyleKey {
   Con("Aya::Constructor"),
   Struct("Aya::Struct"),
   Field("Aya::Field"),
-  Generalized("Aya::Generalized");
+  Generalized("Aya::Generalized"),
+  CallTerm("Aya::Call");
 
   private final String key;
 

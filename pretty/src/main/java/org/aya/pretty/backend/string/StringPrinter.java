@@ -195,7 +195,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       // The beginning mark
       var pre = list.isOrdered() ? (idx + 1) + "." : "+";
       // The item content
-      var content = Doc.nest(pre.length() + 1, item);
+      var content = Doc.align(item);
       return Doc.stickySep(Doc.escaped(pre), content);
     }));
     printer.renderDoc(cursor, items, EnumSet.of(Outer.List));
