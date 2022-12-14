@@ -25,7 +25,7 @@ import java.util.function.UnaryOperator;
 public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull UnaryOperator<@NotNull Term> pre) {
   public static Result<Subst, Boolean> tryBuildSubst(
     boolean inferMeta, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Pat>> pats,
-    @NotNull SeqView<@NotNull Arg<@NotNull Term>> terms
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> terms
   ) {
     return tryBuildSubst(inferMeta, pats, terms, UnaryOperator.identity());
   }
@@ -37,7 +37,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
    */
   public static Result<Subst, Boolean> tryBuildSubst(
     boolean inferMeta, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Pat>> pats,
-    @NotNull SeqView<@NotNull Arg<@NotNull Term>> terms, @NotNull UnaryOperator<Term> pre
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> terms, @NotNull UnaryOperator<Term> pre
   ) {
     var matchy = new PatMatcher(new Subst(new MutableHashMap<>()), inferMeta, pre);
     try {

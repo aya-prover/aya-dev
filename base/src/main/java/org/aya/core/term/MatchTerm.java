@@ -18,7 +18,7 @@ public record MatchTerm(
         false,
         clause.patterns(),
         // TODO[wsx,kiva]: args in match
-        discriminant.view().map(x -> new Arg<>(x, true)));
+        discriminant.map(x -> new Arg<>(x, true)));
       if (subst.isOk()) {
         return Option.some(clause.body().rename().subst(subst.get()));
       } else if (subst.getErr()) return Option.none();

@@ -67,11 +67,11 @@ public interface DeltaExpander extends EndoTerm {
   }
 
   default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
-    boolean orderIndependent, @NotNull SeqLike<Arg<Term>> args,
+    boolean orderIndependent, @NotNull ImmutableSeq<Arg<Term>> args,
     int ulift, @NotNull ImmutableSeq<Term.Matching> clauses
   ) {
     for (var matchy : clauses) {
-      var subst = PatMatcher.tryBuildSubst(false, matchy.patterns(), args.view(), this);
+      var subst = PatMatcher.tryBuildSubst(false, matchy.patterns(), args, this);
       if (subst.isOk()) {
         var newBody = matchy.body().rename().lift(ulift).subst(subst.get());
         return Option.some(new WithPos<>(matchy.sourcePos(), newBody));
