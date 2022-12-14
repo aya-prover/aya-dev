@@ -131,7 +131,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case SubTerm sub ->
         new SerTerm.Sub(serialize(sub.type()), sub.restr().fmap(this::serialize), sub.partial().fmap(this::serialize));
-      case InOutTerm(var phi, var u, var io) -> new SerTerm.InS(serialize(phi), serialize(u), io == InOutTerm.Kind.In);
+      case InOutTerm(var phi, var u, var io) -> new SerTerm.InOut(serialize(phi), serialize(u), io == InOutTerm.Kind.In);
     };
   }
 

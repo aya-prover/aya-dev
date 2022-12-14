@@ -188,8 +188,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var paramA = new Term.Param(varA, Type0, true);
         var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, true);
         var paramU = new Term.Param(varU, new PartialTyTerm(new RefTerm(varA), AyaRestrSimplifier.INSTANCE.isOne(new RefTerm(varPhi))), true);
-        var result = Set0;
-        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), result, ID.SUB);
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), Set0, ID.SUB);
       }, ImmutableSeq.of(ID.I, ID.PARTIAL));
       public final @NotNull PrimDef.PrimSeed stringType =
         new PrimSeed(ID.STRING,
@@ -353,10 +352,10 @@ public final class PrimDef extends TopLevelDef<Term> {
         var phi = prim.args().get(1).term();
         var u = prim.args().get(2).term();
 
-        if (u instanceof PartialTerm partialTerm)
-          return new SubTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), partialTerm.partial());
-        else
-          return prim;
+        if (u instanceof PartialTerm(var partial, var rhs))
+          // rhs == A
+          return new SubTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), partial);
+        else return prim;
       }
 
       public final @NotNull PrimDef.PrimSeed stringConcat =
