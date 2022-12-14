@@ -225,7 +225,6 @@ public final class PatTycker {
       var term = exprTycker.withSubSubst(() -> {
         // We `addDirectly` to `parentLets`.
         // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
-        // IDEA said that this line is useless...
         exprTycker.lets.addDirectly(lhsResult.bodySubst());
         return lhsResult.preclause.expr().map(e -> lhsResult.hasError
           // In case the patterns are malformed, do not check the body
@@ -490,6 +489,8 @@ public final class PatTycker {
 
   /**
    * A user given pattern matches a parameter, we update the signature.
+   *
+   * @apiNote {@code data.param.explicit = arg.explicit} or the world explode.
    */
   private @NotNull Def.Signature<?> updateSig(PatData data, Arg<Pattern> arg, boolean resultIsProp) {
     data = beforeTyck(data);
@@ -508,6 +509,7 @@ public final class PatTycker {
    * For every implicit parameter that not explicitly (no user given pattern) matched,
    * we generate a MetaPat for each,
    * so that they can be inferred during {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean, boolean)}
+   * @apiNote {@code daat.param.explicit = false} or the world explode.
    */
   private @NotNull Def.Signature<?> generatePat(@NotNull PatData data) {
     data = beforeTyck(data);
