@@ -18,7 +18,7 @@ public class PrettyErrorTest {
       "<test>",
       multiline
         ? new LineColSpan(CODE, 1, 1, 2, 6)
-        : new LineColSpan(CODE, 0, 0, 10, 10),
+        : new LineColSpan(CODE, 0, 0, 11, 11),
       Doc.empty(),
       unicode ? PrettyError.FormatConfig.UNICODE : PrettyError.FormatConfig.CLASSIC,
       multiline
@@ -57,7 +57,7 @@ public class PrettyErrorTest {
         1 │ ..........
           ┝  ⮬ Begin of the error
         2 │ ..........
-          ┝      ⮬ End of the error
+          ┝          ⮬ End of the error
         3 │ ..........
             """);
   }

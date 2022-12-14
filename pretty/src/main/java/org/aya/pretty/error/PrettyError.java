@@ -128,10 +128,7 @@ public record PrettyError(
             var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth, MultilineMode.START);
             docs.append(Doc.stickySep(hintUnderline, Doc.align(Doc.english("Begin of the error"))));
           } else if (lineNo == primaryRange.endLine()) {
-            var length = formatConfig.errorIndicator.isDefined()
-              ? Integer.min(line.length(), primaryRange.endCol())
-              : line.length();
-            var hintUnderline = renderHint(primaryRange.startCol(), length, linenoWidth, MultilineMode.END);
+            var hintUnderline = renderHint(primaryRange.startCol(), line.length(), linenoWidth, MultilineMode.END);
             docs.append(Doc.stickySep(hintUnderline, Doc.align(Doc.english("End of the error"))));
           }
         }
