@@ -181,7 +181,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       }, ImmutableSeq.of(ID.I));
 
       public final @NotNull PrimDef.PrimSeed sub = new PrimSeed(ID.SUB, this::sub, ref -> {
-        // Sub (A: Type) (phi: I) (u: Partial phi A) : Set
+        // Sub (A: Type) (φ: I) (u: Partial φ A) : Set
         var varA = new LocalVar("A");
         var varPhi = new LocalVar("phi");
         var varU = new LocalVar("u");
@@ -190,6 +190,24 @@ public final class PrimDef extends TopLevelDef<Term> {
         var paramU = new Term.Param(varU, new PartialTyTerm(new RefTerm(varA), AyaRestrSimplifier.INSTANCE.isOne(new RefTerm(varPhi))), true);
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), Set0, ID.SUB);
       }, ImmutableSeq.of(ID.I, ID.PARTIAL));
+
+      public final @NotNull PrimDef.PrimSeed outS = new PrimSeed(ID.OUTS, this::insideOut, ref -> {
+        // outS {A} {φ} {u : Partial φ A} (Sub A φ u) : A
+        var varA = new LocalVar("A");
+        var varPhi = new LocalVar("phi");
+        var varU = new LocalVar("u");
+        var paramA = new Term.Param(varA, Type0, false);
+        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
+        var phi = new RefTerm(varPhi);
+        var A = new RefTerm(varA);
+        var paramU = new Term.Param(varU, new PartialTyTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi)), false);
+
+        var paramSub = new Term.Param(LocalVar.IGNORED,
+          getCall(ID.SUB, ImmutableSeq.of(new Arg<>(A, true),
+            new Arg<>(phi, true), new Arg<>(new RefTerm(varU), true))), true);
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU, paramSub), A, ID.OUTS);
+      }, ImmutableSeq.of(ID.PARTIAL, ID.SUB));
+
       public final @NotNull PrimDef.PrimSeed stringType =
         new PrimSeed(ID.STRING,
           ((prim, tyckState) -> prim),
@@ -356,6 +374,13 @@ public final class PrimDef extends TopLevelDef<Term> {
           // rhs == A
           return new SubTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), partial);
         else return prim;
+      }
+
+      private Term insideOut(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
+        var phi = prim.args().get(0).term();
+        var u = prim.args().get(1).term();
+        var kind = prim.id() == ID.INS ? InOutTerm.Kind.In : InOutTerm.Kind.Out;
+        return new InOutTerm(phi, u, kind);
       }
 
       public final @NotNull PrimDef.PrimSeed stringConcat =
