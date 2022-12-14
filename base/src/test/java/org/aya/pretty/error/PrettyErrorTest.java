@@ -8,23 +8,10 @@ import kala.tuple.Tuple2;
 import org.aya.pretty.doc.Doc;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class PrettyErrorTest {
   public static final String CODE = "..........\n..........\n..........\n";
-
-  private void assertLineByLine(String x, String y) {
-    var xLines = x.trim().lines().toList();
-    var yLines = y.trim().lines().toList();
-    assertEquals(xLines.size(), yLines.size(), "error output does not have same line number after trim");
-    var xIter = xLines.listIterator();
-    var yIter = yLines.listIterator();
-    while (xIter.hasNext()) {
-      var xData = xIter.next();
-      var yData = yIter.next();
-      assertEquals(xData, yData);
-    }
-  }
 
   private void testError(boolean unicode, boolean multiline, String target) {
     var error = new PrettyError(
@@ -38,8 +25,7 @@ public class PrettyErrorTest {
         ? ImmutableArray.of()
         : ImmutableArray.of(new Tuple2<Span, Doc>(new LineColSpan(CODE, 1, 1, 1, 6), Doc.plain("this is a test")))
     );
-    System.out.println(error.toDoc().debugRender());
-    assertLineByLine(target, error.toDoc().debugRender());
+    assertLinesMatch(target.trim().lines(), error.toDoc().debugRender().trim().lines());
   }
 
   @Test public void inlineUnicodeError() {
