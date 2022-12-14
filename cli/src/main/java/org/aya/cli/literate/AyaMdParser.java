@@ -137,8 +137,8 @@ public class AyaMdParser {
       case BlockQuote b -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(b));
       case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(node));
       case Link h -> new Literate.HyperLink(h.getDestination(), h.getTitle(), mapChildren(node));
-      case ListItem item -> flatten(collectChildren(node).view()
-        .flatMap(p -> p instanceof Paragraph ? collectChildren(p).view() : SeqView.of(p))
+      case ListItem item -> flatten(collectChildren(item.getFirstChild())
+        // .flatMap(p -> p instanceof Paragraph ? collectChildren(p.getFirstChild()) : SeqView.of(p))
         .flatMap(this::mapChildren)
         .toImmutableSeq());
       case OrderedList ordered -> new Literate.List(mapChildren(ordered), true);
@@ -184,9 +184,10 @@ public class AyaMdParser {
       : new Literate.Many(null, children.toImmutableSeq());
   }
 
-  private static @NotNull Seq<Node> collectChildren(@NotNull Node node) {
-    var itemStore = MutableValue.create(node);
-    return Seq.generateUntilNull(() -> itemStore.updateAndGet(Node::getNext));
+  private static @NotNull SeqView<Node> collectChildren(@NotNull Node firstChild) {
+    var itemStore = MutableValue.create(firstChild);
+    return Seq.generateUntilNull(() -> itemStore.updateAndGet(Node::getNext))
+      .view().prepended(firstChild);
   }
 
   public @Nullable SourcePos fromSourceSpans(@NotNull Seq<SourceSpan> sourceSpans) {
