@@ -24,7 +24,7 @@ public record PathTerm(
   @NotNull ImmutableSeq<LocalVar> params,
   @NotNull Term type,
   @NotNull Partial<Term> partial
-) implements StableWHNF {
+) implements StableWHNF, Formation {
   public @NotNull Term eta(@NotNull Term term) {
     return new PLamTerm(params, applyDimsTo(term)).rename();
   }

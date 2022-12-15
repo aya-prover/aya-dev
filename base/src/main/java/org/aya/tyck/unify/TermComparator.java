@@ -402,7 +402,7 @@ public sealed abstract class TermComparator permits Unifier {
    * (written by re-xyr)
    * @see #doCompareUntyped
    */
-  private boolean doCompareType(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
+  private boolean doCompareType(@NotNull Formation preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     if (preLhs.getClass() != preRhs.getClass()) return false;
     return switch (new Pair(preLhs, preRhs)) {
       default -> throw noRules(preLhs);
@@ -438,7 +438,7 @@ public sealed abstract class TermComparator permits Unifier {
   private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     traceEntrance(new Trace.UnifyT(preLhs.freezeHoles(state),
       preRhs.freezeHoles(state), pos));
-    if (isType(preLhs)) return doCompareType(preLhs, preRhs, lr, rl) ? SortTerm.Type0 : null;
+    if (preLhs instanceof Formation lhs) return doCompareType(lhs, preRhs, lr, rl) ? SortTerm.Type0 : null;
     var ret = switch (preLhs) {
       default -> throw noRules(preLhs);
       case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
@@ -537,16 +537,6 @@ public sealed abstract class TermComparator permits Unifier {
     };
     traceExit();
     return ret;
-  }
-
-  private static boolean isType(@NotNull Term preLhs) {
-    return preLhs instanceof PiTerm
-      || preLhs instanceof SigmaTerm
-      || preLhs instanceof PartialTyTerm
-      || preLhs instanceof PathTerm
-      || preLhs instanceof IntervalTerm
-      || preLhs instanceof DataCall
-      || preLhs instanceof StructCall;
   }
 
   @NotNull private static InternalException noRules(@NotNull Term preLhs) {

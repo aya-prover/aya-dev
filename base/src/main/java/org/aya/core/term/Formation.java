@@ -2,10 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-public final class IntervalTerm implements StableWHNF, Formation {
-  public static final IntervalTerm INSTANCE = new IntervalTerm();
-
-  private IntervalTerm() {
-
-  }
+/**
+ * Term formers.
+ */
+public sealed interface Formation extends Term
+  permits DataCall, IntervalTerm, PartialTyTerm, PathTerm, PiTerm, SigmaTerm, StructCall, SubTerm {
 }

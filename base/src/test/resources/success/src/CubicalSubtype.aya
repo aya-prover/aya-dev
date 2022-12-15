@@ -7,3 +7,4 @@ example def idpRhs1 (i : I) : RhsIsPos1 i => inS (pos 1)
 example def whateverItTakesRhs1 : RhsIsPos1 0 => inS (pos 2)
 
 example def subProj (i : I) : Int => outS (idpRhs1 i)
+example def posNegRhs1β (i : I) : posneg i = outS (posNegRhs1 i) => idp
