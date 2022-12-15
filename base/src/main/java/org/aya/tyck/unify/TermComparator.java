@@ -378,7 +378,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private boolean compareCube(@NotNull PathTerm lhs, @NotNull PathTerm rhs, Sub lr, Sub rl) {
     var tyVars = rhs.params();
-    return ctx.withIntervals(tyVars.view(), () -> TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, tyVars, (lsub, rsub) -> {
+    return ctx.withIntervals(tyVars.view(), () -> withIntervals(lhs.params(), rhs.params(), lr, rl, tyVars, (lsub, rsub) -> {
       var lPar = (PartialTerm) new PartialTerm(lhs.partial(), lhs.type()).subst(lsub);
       var rPar = (PartialTerm) new PartialTerm(rhs.partial(), rhs.type()).subst(rsub);
       var lType = new PartialTyTerm(lPar.rhsType(), lPar.partial().restr());
@@ -420,7 +420,7 @@ public sealed abstract class TermComparator permits Unifier {
         checkParam(lParam, rParam, new Subst(), new Subst(), lr, rl, () -> null,
           (lsub, rsub) -> compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null));
       case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) ->
-        checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> true);
+        checkParams(lParams.view(), rParams.view(), lr, rl, () -> false, (lsub, rsub) -> true);
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(PartialTyTerm(var lTy, var lR), PartialTyTerm(var rTy, var rR)) ->
         compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
@@ -563,9 +563,9 @@ public sealed abstract class TermComparator permits Unifier {
 
   public boolean compareSort(SortTerm l, SortTerm r) {
     var result = switch (cmp) {
-      case Gt -> TermComparator.sortLt(r, l);
+      case Gt -> sortLt(r, l);
       case Eq -> l.kind() == r.kind() && l.lift() == r.lift();
-      case Lt -> TermComparator.sortLt(l, r);
+      case Lt -> sortLt(l, r);
     };
     if (!result) {
       switch (cmp) {
