@@ -6,6 +6,6 @@ import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
-public record SubTerm(@NotNull Term type, @NotNull Restr<Term> restr, @NotNull Partial<Term> partial) implements StableWHNF, Formation {
+public record SubTerm(@NotNull Term type, @NotNull Term restr, @NotNull Partial<Term> partial) implements StableWHNF, Formation {
 }
 

@@ -215,13 +215,6 @@ public sealed abstract class TermComparator permits Unifier {
       checkParams(l.drop(1), r.drop(1), ls, rs, lr, rl, fail, success));
   }
 
-  private <T> T checkParams(
-    SeqView<Term.Param> l, SeqView<Term.Param> r,
-    Sub lr, Sub rl, Supplier<T> fail, BiFunction<Subst, Subst, T> success
-  ) {
-    return checkParams(l, r, new Subst(), new Subst(), lr, rl, fail, success);
-  }
-
   private boolean visitArgs(SeqLike<Arg<Term>> l, SeqLike<Arg<Term>> r, Sub lr, Sub rl, SeqLike<Term.Param> params) {
     return visitLists(l.view().map(Arg::term), r.view().map(Arg::term), lr, rl, params);
   }
@@ -419,19 +412,20 @@ public sealed abstract class TermComparator permits Unifier {
       case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) ->
         checkParam(lParam, rParam, new Subst(), new Subst(), lr, rl, () -> null,
           (lsub, rsub) -> compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null));
-      case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) ->
-        checkParams(lParams.view(), rParams.view(), lr, rl, () -> false, (lsub, rsub) -> true);
+      case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) -> checkParams(lParams.view(), rParams.view(),
+        new Subst(), new Subst(), lr, rl, () -> false, (lsub, rsub) -> true);
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(PartialTyTerm(var lTy, var lR), PartialTyTerm(var rTy, var rR)) ->
         compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
       case Pair(PathTerm lCube, PathTerm rCube) -> compareCube(lCube, rCube, lr, rl);
       case Pair(SubTerm lsub, SubTerm rsub) -> {
         if (!compare(lsub.type(), rsub.type(), lr, rl, null)) yield false;
-        if (!compareRestr(lsub.restr(), rsub.restr())) yield false;
+        if (!compare(lsub.restr(), rsub.restr(), lr, rl, null)) yield false;
         // Note that here lsub.type() and rsub.type() don't matter, see impl of comparePartial
+        var restr = lsub.restr().normalize(state, NormalizeMode.NF);
         yield comparePartial(new PartialTerm(lsub.partial(), lsub.type()),
           new PartialTerm(rsub.partial(), rsub.type()),
-          new PartialTyTerm(lsub.type(), lsub.restr()), lr, rl);
+          new PartialTyTerm(lsub.type(), AyaRestrSimplifier.INSTANCE.isOne(restr)), lr, rl);
       }
       case Pair(IntervalTerm lhs, IntervalTerm rhs) -> true;
     };

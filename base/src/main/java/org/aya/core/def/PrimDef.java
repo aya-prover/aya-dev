@@ -390,9 +390,8 @@ public final class PrimDef extends TopLevelDef<Term> {
         var phi = prim.args().get(1).term();
         var u = prim.args().get(2).term();
 
-        if (u instanceof PartialTerm(var partial, var rhs))
-          // rhs == A
-          return new SubTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), partial);
+        // rhs == A
+        if (u instanceof PartialTerm(var partial, var rhs)) return new SubTerm(A, phi, partial);
         else return prim;
       }
 

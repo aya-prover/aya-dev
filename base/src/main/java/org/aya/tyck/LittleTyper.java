@@ -5,7 +5,6 @@ package org.aya.tyck;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
-import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
@@ -128,8 +127,7 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case InOutTerm inS when inS.kind() == InOutTerm.Kind.In -> {
         var ty = term(inS.u());
-        yield new SubTerm(ty, AyaRestrSimplifier.INSTANCE.isOne(inS.phi()),
-          PartialTerm.from(inS.phi(), inS.u()));
+        yield new SubTerm(ty, inS.phi(), PartialTerm.from(inS.phi(), inS.u()));
       }
       case InOutTerm outS -> {
         var ty = term(outS.u());
