@@ -160,6 +160,8 @@ public final class PrimDef extends TopLevelDef<Term> {
           init.eoc,
           init.eocFill,
           init.hcomp,
+          init.outS,
+          init.inS,
           init.sub
         ).map(seed -> Tuple.of(seed.name, seed))
         .toImmutableMap();
@@ -206,6 +208,29 @@ public final class PrimDef extends TopLevelDef<Term> {
           getCall(ID.SUB, ImmutableSeq.of(new Arg<>(A, true),
             new Arg<>(phi, true), new Arg<>(new RefTerm(varU), true))), true);
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU, paramSub), A, ID.OUTS);
+      }, ImmutableSeq.of(ID.PARTIAL, ID.SUB));
+
+      public final @NotNull PrimDef.PrimSeed inS = new PrimSeed(ID.INS, this::insideOut, ref -> {
+        // outS {A} {φ} (u : A) : Sub A φ {|φ ↦ u|}
+        var varA = new LocalVar("A");
+        var varPhi = new LocalVar("phi");
+        var varU = new LocalVar("u");
+        var paramA = new Term.Param(varA, Type0, false);
+        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
+        var phi = new RefTerm(varPhi);
+        var A = new RefTerm(varA);
+        var paramU = new Term.Param(varU, A, true);
+        var u = new RefTerm(varU);
+
+        // This `embed` is equivalent to `isOne` without normalization.
+        // It's obvious that `phi` is a var term that cannot be normalized for now.
+        //noinspection UnstableApiUsage
+        var restr = AyaRestrSimplifier.INSTANCE.embed(phi);
+        var par = new PartialTerm(new Partial.Split<>(restr.orz().map(
+          or -> new Restr.Side<>(or, u))), A);
+        var ret = getCall(ID.SUB, ImmutableSeq.of(new Arg<>(A, true),
+          new Arg<>(phi, true), new Arg<>(par, true)));
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), ret, ID.INS);
       }, ImmutableSeq.of(ID.PARTIAL, ID.SUB));
 
       public final @NotNull PrimDef.PrimSeed stringType =
@@ -376,9 +401,13 @@ public final class PrimDef extends TopLevelDef<Term> {
         else return prim;
       }
 
+      /**
+       * @see #inS
+       * @see #outS
+       */
       private Term insideOut(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
-        var phi = prim.args().get(0).term();
-        var u = prim.args().get(1).term();
+        var phi = prim.args().get(1).term();
+        var u = prim.args().last().term();
         var kind = prim.id() == ID.INS ? InOutTerm.Kind.In : InOutTerm.Kind.Out;
         return new InOutTerm(phi, u, kind);
       }
