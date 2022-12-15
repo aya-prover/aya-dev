@@ -388,6 +388,7 @@ public sealed abstract class TermComparator permits Unifier {
     }));
   }
 
+  // TODO: lr, rl are not used
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
     return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
       && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
@@ -399,38 +400,35 @@ public sealed abstract class TermComparator permits Unifier {
    * @see #doCompareUntyped
    */
   private boolean doCompareType(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
-    return switch (preLhs) {
+    if (preLhs.getClass() != preRhs.getClass()) return false;
+    return switch (new Pair(preLhs, preRhs)) {
       default -> throw noRules(preLhs);
-      case DataCall lhs -> {
-        if (!(preRhs instanceof DataCall rhs) || lhs.ref() != rhs.ref()) yield false;
+      case Pair(DataCall lhs, DataCall rhs) -> {
+        if (lhs.ref() != rhs.ref()) yield false;
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
       }
-      case StructCall lhs -> {
-        if (!(preRhs instanceof StructCall rhs) || lhs.ref() != rhs.ref()) yield false;
+      case Pair(StructCall lhs, StructCall rhs) -> {
+        if (lhs.ref() != rhs.ref()) yield false;
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
       }
-      case PiTerm(var lParam, var lBody) -> {
-        if (!(preRhs instanceof PiTerm(var rParam, var rBody))) yield false;
-        yield checkParam(lParam, rParam, null, new Subst(), new Subst(), lr, rl, () -> null,
+      case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) ->
+        checkParam(lParam, rParam, null, new Subst(), new Subst(), lr, rl, () -> null,
           (lsub, rsub) -> compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null));
+      case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) ->
+        checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> true);
+      case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
+      case Pair(PartialTyTerm(var lTy, var lR), PartialTyTerm(var rTy, var rR)) ->
+        compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
+      case Pair(PathTerm lCube, PathTerm rCube) -> compareCube(lCube, rCube, lr, rl);
+      case Pair(SubTerm lsub, SubTerm rsub) -> {
+        if (!compare(lsub.type(), rsub.type(), lr, rl, null)) yield false;
+        if (!compareRestr(lsub.restr(), rsub.restr())) yield false;
+        // Note that here lsub.type() and rsub.type() don't matter, see impl of comparePartial
+        yield comparePartial(new PartialTerm(lsub.partial(), lsub.type()),
+          new PartialTerm(rsub.partial(), rsub.type()),
+          new PartialTyTerm(lsub.type(), lsub.restr()), lr, rl);
       }
-      case SigmaTerm(var lParams) -> {
-        if (!(preRhs instanceof SigmaTerm(var rParams))) yield false;
-        yield checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> true);
-      }
-      case SortTerm lhs -> {
-        if (!(preRhs instanceof SortTerm rhs)) yield false;
-        yield compareSort(lhs, rhs);
-      }
-      case PartialTyTerm(var lTy, var lR) -> {
-        if (!(preRhs instanceof PartialTyTerm(var rTy, var rR))) yield false;
-        yield compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
-      }
-      case PathTerm lCube -> {
-        if (!(preRhs instanceof PathTerm rCube)) yield false;
-        yield compareCube(lCube, rCube, lr, rl);
-      }
-      case IntervalTerm lhs -> preRhs instanceof IntervalTerm;
+      case Pair(IntervalTerm lhs, IntervalTerm rhs) -> true;
     };
   }
 
