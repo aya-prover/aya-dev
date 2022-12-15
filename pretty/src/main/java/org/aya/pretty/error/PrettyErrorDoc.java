@@ -114,33 +114,44 @@ public record PrettyErrorDoc(
   }
 
   private void renderHints(
+    boolean continued,
     int currentLine, int codeIndent,
     int vbarUsedIndent, @NotNull Doc vbar,
-    @Nullable Doc currentCode,
+    @NotNull Doc currentCode,
     @NotNull CodeBuilder builder,
     @NotNull ImmutableSeq<HintLine> others
   ) {
     var split = splitHints(others);
+    var startOrEnd = split.startOrEnd;
     var rest = codeIndent - vbarUsedIndent;
     // commit code
-    if (currentCode != null) {
-      var codeDoc = (split.startOrEnd == null || split.startOrEnd.loc != Span.NowLoc.End)
+    if (!continued) {
+      var codeDoc = (startOrEnd == null || startOrEnd.loc != Span.NowLoc.End)
         ? Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, currentCode))
         : Doc.cat(vbar, formatConfig.lineNoSepDoc(), Doc.indent(rest * INDENT_FACTOR - 1, currentCode));
       builder.add(currentLine, codeDoc);
     }
     // commit hint
     var almost = Doc.stickySep(Doc.cat(split.underlines), Doc.cat(split.notes));
-    var codeHint = split.startOrEnd == null
-      ? Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, almost))
-      : split.startOrEnd.loc == Span.NowLoc.Start
-        ? Doc.cat(vbar, formatConfig.beginCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost)
-        : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost);
+    var codeHint = startOrEnd != null
+      ? renderStartEndHint(startOrEnd, vbar, almost, rest)
+      : renderContinuedHint(continued, vbar, almost, rest);
     builder.add(codeHint);
     // show overlapped hints in the next line
-    if (split.overlapped.isNotEmpty()) {
-      renderHints(currentLine, codeIndent, vbarUsedIndent, vbar, null, builder, split.overlapped.toImmutableSeq());
-    }
+    if (split.overlapped.isNotEmpty())
+      renderHints(true, currentLine, codeIndent, vbarUsedIndent, vbar, currentCode, builder, split.overlapped.toImmutableSeq());
+  }
+
+  private @NotNull Doc renderStartEndHint(@NotNull HintLine startOrEnd, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
+    return startOrEnd.loc == Span.NowLoc.Start
+      ? Doc.cat(vbar, formatConfig.beginCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost)
+      : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost);
+  }
+
+  private @NotNull Doc renderContinuedHint(boolean continued, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
+    return continued && vbar.isEmpty()
+      ? Doc.cat(vbar, formatConfig.lineNoSepDoc(), Doc.indent(rest * INDENT_FACTOR - 1, almost))
+      : Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, almost));
   }
 
   private Tuple2<Integer, Doc> computeMultilineVBar(@NotNull ImmutableSeq<HintLine> between) {
@@ -164,7 +175,7 @@ public record PrettyErrorDoc(
       .sorted(Comparator.comparingInt(a -> a.allocIndent));
     var others = hintLines.filter(h -> h.loc != Span.NowLoc.Between);
     var vbar = computeMultilineVBar(between);
-    renderHints(currentLine, codeIndent, vbar._1, vbar._2, currentCode, builder, others);
+    renderHints(false, currentLine, codeIndent, vbar._1, vbar._2, currentCode, builder, others);
   }
 
   private @NotNull Doc visualizeCode(
