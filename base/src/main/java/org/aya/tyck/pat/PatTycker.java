@@ -350,6 +350,7 @@ public final class PatTycker {
 
         yield innerPat;
       }
+      case Pattern.QualifiedRef ignored ->  throw new InternalException("QualifiedRef patterns should be desugared");
       case Pattern.BinOpSeq ignored -> throw new InternalException("BinOpSeq patterns should be desugared");
     };
   }

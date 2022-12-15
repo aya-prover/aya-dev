@@ -49,7 +49,7 @@ public record BindContext(
 
   @Override
   public @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
-    return null;
+    return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
   }
 
   @Override

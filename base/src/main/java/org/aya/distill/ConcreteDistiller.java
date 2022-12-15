@@ -251,6 +251,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
         yield ctorDoc(outer, licit, ctorDoc, ctor.params().isEmpty());
       }
+      case Pattern.QualifiedRef qref -> Doc.bracedUnless(Doc.plain(qref.qualifiedID().join()), licit);
       case Pattern.BinOpSeq(var pos, var param) -> {
         if (param.sizeEquals(1)) {
           yield pattern(param.first(), outer);

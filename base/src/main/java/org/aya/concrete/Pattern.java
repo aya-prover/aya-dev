@@ -5,6 +5,7 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.CtorDef;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
@@ -79,6 +80,17 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     }
   }
 
+  record QualifiedRef(
+    @NotNull SourcePos sourcePos,
+    @NotNull QualifiedID qualifiedID,
+    @Nullable Expr userType,
+    @ForLSP @NotNull MutableValue<@Nullable Term> type
+  ) implements Pattern {
+    public QualifiedRef(@NotNull SourcePos sourcePos, @NotNull QualifiedID qualifiedID) {
+      this(sourcePos, qualifiedID, null, MutableValue.create());
+    }
+  }
+
   record Ctor(
     @Override @NotNull SourcePos sourcePos,
     @NotNull WithPos<@NotNull AnyVar> resolved,
@@ -86,6 +98,9 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
   ) implements Pattern {
     public Ctor(@NotNull Pattern.Bind bind, @NotNull AnyVar maybe) {
       this(bind.sourcePos(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty());
+    }
+    public Ctor(@NotNull Pattern.QualifiedRef qref, @NotNull AnyVar maybe) {
+      this(qref.sourcePos(), new WithPos<>(qref.sourcePos(), maybe), ImmutableSeq.empty());
     }
   }
 
