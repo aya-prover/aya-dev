@@ -186,13 +186,6 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         if (type == coe.type() && restr == coe.restr()) yield coe;
         yield new CoeTerm(type, AyaRestrSimplifier.INSTANCE.normalizeRestr(restr));
       }
-      case SubTerm sub -> {
-        var type = f.apply(sub.type());
-        var restr = f.apply(sub.restr());
-        var partial = sub.partial().map(f);
-        if (type == sub.type() && restr == sub.restr() && partial == sub.partial()) yield sub;
-        yield new SubTerm(type, restr, partial);
-      }
       case RefTerm ref -> ref;
       case MetaPatTerm metaPat -> metaPat;
       case RefTerm.Field field -> field;

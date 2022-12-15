@@ -419,15 +419,6 @@ public sealed abstract class TermComparator permits Unifier {
       case Pair(PartialTyTerm(var lTy, var lR), PartialTyTerm(var rTy, var rR)) ->
         compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
       case Pair(PathTerm lCube, PathTerm rCube) -> compareCube(lCube, rCube, lr, rl);
-      case Pair(SubTerm lsub, SubTerm rsub) -> {
-        if (!compare(lsub.type(), rsub.type(), lr, rl, null)) yield false;
-        if (!compare(lsub.restr(), rsub.restr(), lr, rl, IntervalTerm.INSTANCE)) yield false;
-        // Note that here lsub.type() and rsub.type() don't matter, see impl of comparePartial
-        var restr = lsub.restr().normalize(state, NormalizeMode.NF);
-        yield comparePartial(new PartialTerm(lsub.partial(), lsub.type()),
-          new PartialTerm(rsub.partial(), rsub.type()),
-          new PartialTyTerm(lsub.type(), AyaRestrSimplifier.INSTANCE.isOne(restr)), lr, rl);
-      }
       case Pair(IntervalTerm lhs, IntervalTerm rhs) -> true;
     };
   }

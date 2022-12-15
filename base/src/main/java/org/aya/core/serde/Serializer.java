@@ -129,8 +129,6 @@ public record Serializer(@NotNull Serializer.State state) {
       case MetaLitTerm err -> throw new InternalException("Shall not have metaLiterals serialized.");
       case SortTerm sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
-      case SubTerm(var t, var r, var partial) ->
-        new SerTerm.Sub(serialize(t), serialize(r), partial.fmap(this::serialize));
       case InOutTerm(var phi, var u, var io) ->
         new SerTerm.InOut(serialize(phi), serialize(u), io == InOutTerm.Kind.In);
     };

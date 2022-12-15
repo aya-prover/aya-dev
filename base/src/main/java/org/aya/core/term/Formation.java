@@ -3,8 +3,9 @@
 package org.aya.core.term;
 
 /**
- * Term formers.
+ * Term formers, definitely.
+ * Note that {@link PrimCall} may also be term formers, but not necessarily.
  */
 public sealed interface Formation extends Term
-  permits DataCall, IntervalTerm, PartialTyTerm, PathTerm, PiTerm, SigmaTerm, SortTerm, StructCall, SubTerm {
+  permits DataCall, IntervalTerm, PartialTyTerm, PathTerm, PiTerm, SigmaTerm, SortTerm, StructCall {
 }

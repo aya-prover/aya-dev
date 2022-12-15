@@ -182,7 +182,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramRestr), result, ID.COE);
       }, ImmutableSeq.of(ID.I));
 
-      public final @NotNull PrimDef.PrimSeed sub = new PrimSeed(ID.SUB, this::sub, ref -> {
+      public final @NotNull PrimDef.PrimSeed sub = new PrimSeed(ID.SUB, this::primCall, ref -> {
         // Sub (A: Type) (φ: I) (u: Partial φ A) : Set
         var varA = new LocalVar("A");
         var varPhi = new LocalVar("phi");
@@ -222,15 +222,14 @@ public final class PrimDef extends TopLevelDef<Term> {
         var paramU = new Term.Param(varU, A, true);
         var u = new RefTerm(varU);
 
-        var par = new PartialTerm(PartialTerm.from(phi, u), A);
+        var par = PartialTerm.from(phi, u, A);
         var ret = getCall(ID.SUB, ImmutableSeq.of(new Arg<>(A, true),
           new Arg<>(phi, true), new Arg<>(par, true)));
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), ret, ID.INS);
       }, ImmutableSeq.of(ID.PARTIAL, ID.SUB));
 
       public final @NotNull PrimDef.PrimSeed stringType =
-        new PrimSeed(ID.STRING,
-          ((prim, tyckState) -> prim),
+        new PrimSeed(ID.STRING, this::primCall,
           ref -> new PrimDef(ref, Type0, ID.STRING), ImmutableSeq.empty());
 
       @Contract("_, _ -> new")
@@ -385,16 +384,6 @@ public final class PrimDef extends TopLevelDef<Term> {
         ), ImmutableSeq.of(ID.I));
       }
 
-      private Term sub(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
-        var A = prim.args().get(0).term();
-        var phi = prim.args().get(1).term();
-        var u = prim.args().get(2).term();
-
-        // rhs == A
-        if (u instanceof PartialTerm(var partial, var rhs)) return new SubTerm(A, phi, partial);
-        else return prim;
-      }
-
       /**
        * @see #inS
        * @see #outS
@@ -442,6 +431,8 @@ public final class PrimDef extends TopLevelDef<Term> {
         var u0 = prim.args().get(3).term();
         return new HCompTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), u, u0);
       }
+
+      private @NotNull PrimCall primCall(@NotNull PrimCall prim, @NotNull TyckState tyckState) {return prim;}
     }
 
     public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
