@@ -236,8 +236,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case SubTerm(var ty, var restr, var partial) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "Sub"),
-        term(Outer.AppSpine, ty), Doc.parened(restr(options, restr)),
-        Doc.parened(partial(options, partial, true, Doc.symbol("{|"), Doc.symbol("|}")))), Outer.AppSpine);
+        term(Outer.AppSpine, ty), term(Outer.AppSpine, restr),
+        partial(options, partial, true, Doc.symbol("{|"), Doc.symbol("|}"))), Outer.AppSpine);
       case InOutTerm(var phi, var u, var io) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, io.fnName),
         term(Outer.AppSpine, phi), term(Outer.AppSpine, u)), Outer.AppSpine);
     };
