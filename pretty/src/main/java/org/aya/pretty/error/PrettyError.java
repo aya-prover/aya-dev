@@ -249,7 +249,7 @@ public record PrettyError(
     int showMore = config.showMore();
 
     // calculate the maximum char width of line number
-    int linenoWidth = Math.max(widthOfLineNumber(startLine), widthOfLineNumber(endLine));
+    int linenoWidth = Math.max(widthOfLineNumber(startLine), widthOfLineNumber(endLine)) + 1;
 
     // collect lines from (startLine - SHOW_MORE_LINE) to (endLine + SHOW_MORE_LINE)
     var lines = errorRange.input()

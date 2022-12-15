@@ -18,59 +18,61 @@ public class PrettyErrorTest {
       "<test>",
       multiline
         ? new LineColSpan(CODE, 1, 1, 2, 6)
-        : new LineColSpan(CODE, 0, 0, 11, 11),
+        : new LineColSpan(CODE, 1, 0, 1, 11),
       Doc.empty(),
       unicode ? PrettyError.FormatConfig.UNICODE : PrettyError.FormatConfig.CLASSIC,
       multiline
         ? ImmutableArray.of()
-        : ImmutableArray.of(new Tuple2<Span, Doc>(new LineColSpan(CODE, 1, 1, 1, 6), Doc.plain("this is a test")))
+        : ImmutableArray.of(new Tuple2<>(new LineColSpan(CODE, 1, 1, 1, 6), Doc.plain("this is a test")))
     );
     assertLinesMatch(target.trim().lines(), error.toDoc().debugRender().trim().lines());
   }
 
   @Test public void inlineUnicodeError() {
     testError(true, false, """
-      In file <test>:0:0 ->
-
-         1 │ ..........
-           ┝  ╰────╯ this is a test
-         2 │ ..........
-         3 │ ..........
+      In file <test>:1:0 ->
+            
+        1 │     ..........
+          │     ╰──────────╯\s
+          │      ╰────╯ this is a test
+        2 │     ..........
+        3 │     ..........
             """);
   }
 
   @Test public void inlineNonUnicodeError() {
     testError(false, false, """
-      In file <test>:0:0 ->
-
-         1 | ..........
-              ^----^ this is a test
-         2 | ..........
-         3 | ..........
+      In file <test>:1:0 ->
+            
+        1 |     ..........
+          |     ^----------^\s
+          |      ^----^ this is a test
+        2 |     ..........
+        3 |     ..........
             """);
   }
 
   @Test public void multilineUnicodeError() {
     testError(true, true, """
       In file <test>:1:1 ->
-
-        1 │ ..........
-          ┝  ⮬ Begin of the error
-        2 │ ..........
-          ┝       ⮬ End of the error
-        3 │ ..........
+            
+        1 │   ..........
+          │ ┌──┘\s
+        2 │ │ ..........
+          │ └───────┘\s
+        3 │   ..........
             """);
   }
 
   @Test public void multilineNoneUnicodeError() {
     testError(false, true, """
       In file <test>:1:1 ->
-
-        1 | ..........
-             ^--------^ Begin of the error
-        2 | ..........
-            ^-----^ End of the error
-        3 | ..........
+            
+        1 |   ..........
+          | +-^^\s
+        2 | | ..........
+          | +-^-----^\s
+        3 |   ..........
             """);
   }
 }
