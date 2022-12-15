@@ -404,6 +404,9 @@ public sealed interface Doc extends Docile {
    * lays out the document {@param doc} with the current nesting level
    * (indentation of the following lines) increased by {@param indent}.
    * Negative values are allowed, and decrease the nesting level accordingly.
+   * <p>
+   * For differences between {@link Doc#hang(int, Doc)}, {@link Doc#indent(int, Doc)}
+   * and {@link Doc#nest(int, Doc)}, see unit tests in file "DocStringPrinterTest.java".
    *
    * @param indent indentation of the following lines
    * @param doc    the document to lay out
@@ -443,6 +446,9 @@ public sealed interface Doc extends Docile {
    * the /current nesting level/ plus {@code indent}.
    * When you're not sure, try the more efficient 'nest' first. In our
    * example, this would yield
+   * <p>
+   * For differences between {@link Doc#hang(int, Doc)}, {@link Doc#indent(int, Doc)}
+   * and {@link Doc#nest(int, Doc)}, see unit tests in file "DocStringPrinterTest.java".
    *
    * @param deltaNest change of nesting level, relative to the start of the first line
    * @param doc       document to indent
@@ -454,16 +460,83 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * Indents {@param doc} by {@param indent} columns, and then indent the first line again
-   * by {@param indent} columns.
+   * This method indent document {@param doc} by {@param indent} columns,
+   * * starting from the current cursor position.
+   * <p>
+   * This differs from {@link Doc#hang(int, Doc)}, which starts from the
+   * next line.
+   * <p>
+   * For differences between {@link Doc#hang(int, Doc)}, {@link Doc#indent(int, Doc)}
+   * and {@link Doc#nest(int, Doc)}, see unit tests in file "DocStringPrinterTest.java".
    *
-   * @param indent the indented nesting level
-   * @param doc    document to indent
-   * @return indented document
+   * @param indent Number of spaces to increase indentation by
+   * @return The indented document
+   */
+  @Contract("_, _ -> new")
+  static @NotNull Doc indent(int indent, @NotNull Doc doc) {
+    return hang(indent, cat(spaces(indent), doc));
+  }
+
+  static @NotNull Doc spaces(int n) {
+    return n <= 0 ? empty() : Doc.plain(" ".repeat(n));
+  }
+
+  /**
+   * Paragraph indentation: indent {@param doc} by {@param indent} columns,
+   * and then indent the first line again by {@param indent} columns.
+   * This should be used at the line start.
    */
   @Contract("_, _ -> new")
   static @NotNull Doc par(int indent, @NotNull Doc doc) {
-    return nest(indent, cat(plain(" ".repeat(indent)), doc));
+    return indent(indent, doc);
+  }
+
+  /**
+   * Concat {@param left}, {@param delim} and {@param right}, with
+   * {@param left} occupying at least {@param minBeforeDelim} length.
+   * This behaves like {@code printf("%-*s%s%s", minBeforeDelim, left, delim, right);}
+   * <p>
+   * For example:
+   * <pre>
+   *   var doc = split(8, plain("Help"), plain(":"), english("Show the help message"));
+   *   assertEquals("Help    :Show the help message", doc.commonRender());
+   * </pre>
+   *
+   * @param minBeforeDelim The minimum length before {@param delim}
+   * @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
+   */
+  static @NotNull Doc split(int minBeforeDelim, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
+    var alignedMiddle = column(k -> nesting(i -> indent(minBeforeDelim - k + i, delim)));
+    return Doc.cat(left, alignedMiddle, Doc.align(right));
+  }
+
+  /**
+   * Concat {@param left}, {@param delim} and {@param right}, with
+   * {@param left} and {@param delim} occupying at least {@param minBeforeRight} length.
+   * This behaves like {@code printf("%*s%s", minBeforeRight, (left ++ delim), right);}
+   * <p>
+   * For example:
+   * <pre>
+   *   var doc = splitR(8, plain("Help"), plain(":"), english("Show the help message"));
+   *   assertEquals("Help:   Show the help message", doc.commonRender());
+   * </pre>
+   *
+   * @param minBeforeRight The minimum length before {@param right}
+   * @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
+   */
+  static @NotNull Doc splitR(int minBeforeRight, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
+    var alignedRight = column(k -> nesting(i -> indent(minBeforeRight - k + i, Doc.align(right))));
+    return Doc.cat(left, delim, alignedRight);
+  }
+
+  static @NotNull Doc catBlock(int minBeforeDelim, @NotNull ImmutableSeq<Doc> left, @NotNull Doc delim, @NotNull ImmutableSeq<Doc> right) {
+    var vs = left.zipView(right).map(p -> Doc.split(minBeforeDelim, p._1, delim, p._2));
+    return Doc.vcat(vs);
+  }
+
+  static @NotNull Doc catBlockR(int minBeforeRight, @NotNull ImmutableSeq<Doc> left, @NotNull Doc delim, @NotNull ImmutableSeq<Doc> right) {
+    var vs = left.zipView(right).map(p -> Doc.splitR(minBeforeRight, p._1, delim, p._2));
+    return Doc.vcat(vs);
   }
 
   /**
