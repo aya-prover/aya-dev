@@ -222,12 +222,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var paramU = new Term.Param(varU, A, true);
         var u = new RefTerm(varU);
 
-        // This `embed` is equivalent to `isOne` without normalization.
-        // It's obvious that `phi` is a var term that cannot be normalized for now.
-        //noinspection UnstableApiUsage
-        var restr = AyaRestrSimplifier.INSTANCE.embed(phi);
-        var par = new PartialTerm(new Partial.Split<>(restr.orz().map(
-          or -> new Restr.Side<>(or, u))), A);
+        var par = new PartialTerm(PartialTerm.from(phi, u), A);
         var ret = getCall(ID.SUB, ImmutableSeq.of(new Arg<>(A, true),
           new Arg<>(phi, true), new Arg<>(par, true)));
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), ret, ID.INS);

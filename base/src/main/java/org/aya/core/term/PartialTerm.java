@@ -46,4 +46,13 @@ public record PartialTerm(@NotNull Partial<Term> partial, @NotNull Term rhsType)
       case Partial.Const<Term> c -> new Const<>(applyDimsTo.apply(c.u()));
     };
   }
+
+  public static @NotNull Partial<Term> from(Term phi, Term u) {
+    // This `embed` is equivalent to `isOne` without normalization.
+    // It's obvious that `phi` is a var term that cannot be normalized for now.
+    //noinspection UnstableApiUsage
+    var restr = AyaRestrSimplifier.INSTANCE.embed(phi);
+    return AyaRestrSimplifier.INSTANCE.mapPartial(new Split<>(restr.orz().map(
+      or -> new Restr.Side<>(or, u))), UnaryOperator.identity());
+  }
 }

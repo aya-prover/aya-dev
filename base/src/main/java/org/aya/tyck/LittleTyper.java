@@ -5,9 +5,11 @@ package org.aya.tyck;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
+import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
+import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
@@ -116,8 +118,24 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
       case HCompTerm hComp -> throw new InternalException("TODO");
-      case SubTerm subTerm -> throw new InternalException("TODO");
-      case InOutTerm inOutTerm -> throw new InternalException("TODO");
+      case SubTerm subTerm -> {
+        var ty = term(subTerm.type());
+        if (ty instanceof SortTerm sort) {
+          yield new SortTerm(SortKind.Set, sort.lift());
+        } else {
+          yield ErrorTerm.typeOf(subTerm);
+        }
+      }
+      case InOutTerm inS when inS.kind() == InOutTerm.Kind.In -> {
+        var ty = term(inS.u());
+        yield new SubTerm(ty, AyaRestrSimplifier.INSTANCE.isOne(inS.phi()),
+          PartialTerm.from(inS.phi(), inS.u()));
+      }
+      case InOutTerm outS -> {
+        var ty = term(outS.u());
+        if (ty instanceof SubTerm sub) yield sub.type();
+        else yield ErrorTerm.typeOf(outS);
+      }
     };
   }
 
