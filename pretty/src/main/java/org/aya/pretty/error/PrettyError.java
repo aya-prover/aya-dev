@@ -194,7 +194,10 @@ public record PrettyError(
       builder.add(currentLine, codeDoc);
     }
     // commit hint
-    var almost = Doc.stickySep(Doc.cat(split.underlines), Doc.align(Doc.cat(split.notes)));
+    var underlines = Doc.cat(split.underlines);
+    var notes = Doc.cat(split.notes);
+    var almost = notes.isEmpty() || (notes instanceof Doc.Cat cat && cat.inner().isEmpty())
+      ? underlines : Doc.stickySep(underlines, Doc.align(notes));
     var codeHint = startOrEnd != null
       ? renderStartEndHint(startOrEnd, vbar, almost, rest)
       : renderContinuedHint(continued, continuedFromStartEnd, vbar, almost, rest);
