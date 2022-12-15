@@ -404,7 +404,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var phi = prim.args().get(1).term();
         var u = prim.args().last().term();
         var kind = prim.id() == ID.INS ? InOutTerm.Kind.In : InOutTerm.Kind.Out;
-        return new InOutTerm(phi, u, kind);
+        return InOutTerm.make(phi, u, kind);
       }
 
       public final @NotNull PrimDef.PrimSeed stringConcat =

@@ -182,12 +182,12 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private <T> T checkParam(
-    Term.Param l, Term.Param r, @Nullable Term type, Subst lsub, Subst rsub,
+    Term.Param l, Term.Param r, Subst lsub, Subst rsub,
     Sub lr, Sub rl, Supplier<T> fail, BiFunction<Subst, Subst, T> success
   ) {
     if (l.explicit() != r.explicit()) return fail.get();
     var lTy = l.type().subst(lsub);
-    if (!compare(lTy, r.type().subst(rsub), lr, rl, type)) return fail.get();
+    if (!compare(lTy, r.type().subst(rsub), lr, rl, null)) return fail.get();
     // Do not substitute when one side is ignored
     if (l.ref() == LocalVar.IGNORED || r.ref() == LocalVar.IGNORED) {
       return success.apply(lsub, rsub);
@@ -211,7 +211,7 @@ public sealed abstract class TermComparator permits Unifier {
   ) {
     if (!l.sizeEquals(r)) return fail.get();
     if (l.isEmpty()) return success.apply(lsub, rsub);
-    return checkParam(l.first(), r.first(), null, lsub, rsub, lr, rl, fail, (ls, rs) ->
+    return checkParam(l.first(), r.first(), lsub, rsub, lr, rl, fail, (ls, rs) ->
       checkParams(l.drop(1), r.drop(1), ls, rs, lr, rl, fail, success));
   }
 
@@ -388,7 +388,10 @@ public sealed abstract class TermComparator permits Unifier {
     }));
   }
 
-  // TODO: lr, rl are not used
+  /**
+   * Sub lr, Sub rl are unused because they are solely for the purpose of unification.
+   * In this case, we don't expect unification.
+   */
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
     return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
       && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
@@ -412,7 +415,7 @@ public sealed abstract class TermComparator permits Unifier {
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
       }
       case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) ->
-        checkParam(lParam, rParam, null, new Subst(), new Subst(), lr, rl, () -> null,
+        checkParam(lParam, rParam, new Subst(), new Subst(), lr, rl, () -> null,
           (lsub, rsub) -> compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null));
       case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) ->
         checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> true);

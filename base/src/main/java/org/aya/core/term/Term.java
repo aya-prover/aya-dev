@@ -198,12 +198,12 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       case MetaPatTerm metaPat -> metaPat;
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
-      case HCompTerm hComp -> hComp; //TODO
+      case HCompTerm hComp -> throw new UnsupportedOperationException("TODO");
       case InOutTerm inOutTerm -> {
         var phi = f.apply(inOutTerm.phi());
         var u = f.apply(inOutTerm.u());
         if (phi == inOutTerm.phi() && u == inOutTerm.u()) yield inOutTerm;
-        yield new InOutTerm(phi, u, inOutTerm.kind());
+        yield InOutTerm.make(phi, u, inOutTerm.kind());
       }
     };
   }
