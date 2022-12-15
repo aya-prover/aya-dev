@@ -44,3 +44,12 @@ kala.collection.immutable.ImmutableSeqs$SeqN
 org.aya.util.binop.OpDecl$OpInfo
 org.aya.core.repr.CodeShape$MomentId
 org.aya.generic.SortKind
+
+kala.function.Hasher$Optimized
+org.aya.guest0x0.cubical.Formula$Conn
+org.aya.guest0x0.cubical.Formula$Inv
+org.aya.guest0x0.cubical.Partial$Split
+org.aya.guest0x0.cubical.Restr$Side
+org.aya.guest0x0.cubical.Restr$Conj
+org.aya.guest0x0.cubical.Restr$Const
+org.aya.guest0x0.cubical.Formula$Lit
