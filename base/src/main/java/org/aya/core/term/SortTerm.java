@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000, tsao-chi
  */
-public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF {
+public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, Formation {
   public SortTerm(@NotNull SortKind kind, int lift) {
     this.kind = kind;
     if (!kind.hasLevel() && lift != 0) throw new IllegalArgumentException("invalid lift");

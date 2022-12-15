@@ -404,7 +404,9 @@ public sealed abstract class TermComparator permits Unifier {
    */
   private boolean doCompareType(@NotNull Formation preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     if (preLhs.getClass() != preRhs.getClass()) return false;
-    return switch (new Pair(preLhs, preRhs)) {
+    record Pair(Formation lhs, Formation rhs) {
+    }
+    return switch (new Pair(preLhs, (Formation) preRhs)) {
       default -> throw noRules(preLhs);
       case Pair(DataCall lhs, DataCall rhs) -> {
         if (lhs.ref() != rhs.ref()) yield false;
