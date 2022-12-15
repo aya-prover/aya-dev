@@ -93,7 +93,7 @@ public record PrettyErrorDoc(
     var group = new HintGroup();
     if (others.isNotEmpty()) {
       var first = others.first();
-      group.add(0, first, formatConfig);
+      group.add(first.startCol, first, formatConfig);
       int left = first.startCol;
       int right = first.endCol;
       int last = right;
@@ -132,7 +132,7 @@ public record PrettyErrorDoc(
       builder.add(currentLine, codeDoc);
     }
     // commit hint
-    var almost = Doc.stickySep(Doc.cat(split.underlines), Doc.cat(split.notes));
+    var almost = Doc.stickySep(Doc.cat(split.underlines), Doc.align(Doc.cat(split.notes)));
     var codeHint = startOrEnd != null
       ? renderStartEndHint(startOrEnd, vbar, almost, rest)
       : renderContinuedHint(continued, vbar, almost, rest);
@@ -150,7 +150,7 @@ public record PrettyErrorDoc(
 
   private @NotNull Doc renderContinuedHint(boolean continued, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
     return continued && vbar.isEmpty()
-      ? Doc.cat(vbar, formatConfig.lineNoSepDoc(), Doc.indent(rest * INDENT_FACTOR - 1, almost))
+      ? Doc.cat(formatConfig.lineNoSepDoc(), Doc.indent(rest * INDENT_FACTOR, almost))
       : Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, almost));
   }
 
@@ -265,7 +265,7 @@ public record PrettyErrorDoc(
       }
       builder.append(cfg.errorIndicator().get());
     }
-    return Doc.indent(startCol, Doc.plain(builder.toString()));
+    return Doc.plain(builder.toString());
   }
 
   private int widthOfLineNumber(int line) {
