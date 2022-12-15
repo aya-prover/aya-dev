@@ -1,0 +1,4 @@
+data Nat | Zero | Succ Nat
+def f : Nat -> Nat
+| Nat::Zero => Nat::Zero
+| Nat::Succ n => Nat::Succ (f n)

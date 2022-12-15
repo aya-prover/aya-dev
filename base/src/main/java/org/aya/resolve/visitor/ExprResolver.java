@@ -229,6 +229,16 @@ public record ExprResolver(
             ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
             yield bind;
           }
+          case Pattern.QualifiedRef qref -> {
+            var qualification = qref.qualifiedID().ids().dropLast(1);
+            var maybe = ctx.get().iterate(c -> switch (c.getQualifiedLocalMaybe(qualification, qref.qualifiedID().justName(), qref.sourcePos())) {
+              case DefVar<?, ?> def when def.core instanceof CtorDef || def.concrete instanceof TeleDecl.DataCtor
+                || def.core instanceof PrimDef || def.concrete instanceof TeleDecl.PrimDecl -> def;
+              case null, default -> null;
+            });
+            if (maybe != null) yield new Pattern.Ctor(qref, maybe);
+            yield EndoPattern.super.post(pattern);
+          }
           case Pattern.As as -> {
             ctx.set(bindAs(as.as(), ctx.get(), as.sourcePos()));
             yield as;

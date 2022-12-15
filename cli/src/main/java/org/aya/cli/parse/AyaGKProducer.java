@@ -739,8 +739,11 @@ public record AyaGKProducer(
   private @NotNull Pattern atomPattern(@NotNull GenericNode<?> node) {
     var sourcePos = sourcePosOf(node);
     if (node.is(ATOM_BIND_PATTERN)) {
-      var id = weakId(node.child(WEAK_ID));
-      return new Pattern.Bind(sourcePos, LocalVar.from(id));
+      var qualifiedId = qualifiedId(node.child(QUALIFIED_ID));
+      if (qualifiedId.isUnqualified()) {
+        return new Pattern.Bind(sourcePos, LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.justName())));
+      }
+      return new Pattern.QualifiedRef(sourcePos, qualifiedId);
     }
     if (node.is(ATOM_LIST_PATTERN)) {
       var patternsNode = node.peekChild(PATTERNS);    // We allowed empty list pattern (nil)

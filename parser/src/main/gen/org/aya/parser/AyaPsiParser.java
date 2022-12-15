@@ -140,13 +140,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // weakId
+  // qualifiedId
   public static boolean atomBindPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomBindPattern")) return false;
     if (!nextTokenIs(b, ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = weakId(b, l + 1);
+    r = qualifiedId(b, l + 1);
     exit_section_(b, m, ATOM_BIND_PATTERN, r);
     return r;
   }
