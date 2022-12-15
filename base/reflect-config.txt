@@ -31,8 +31,11 @@ kala.control.Option
 kala.control.Option$NoneReplaced
 kala.control.AnyOption
 kala.function.Balances$Optimized
+kala.function.Hasher$Optimized
+kala.collection.ArraySeq
 kala.collection.internal.hash.HashBase
 kala.collection.mutable.MutableHashMap
+kala.collection.immutable.ImmutableArray
 kala.collection.immutable.ImmutableHashMap
 kala.collection.immutable.ImmutableVector
 kala.collection.immutable.ImmutableVectors$Vector{0,6}
@@ -45,11 +48,12 @@ org.aya.util.binop.OpDecl$OpInfo
 org.aya.core.repr.CodeShape$MomentId
 org.aya.generic.SortKind
 
-kala.function.Hasher$Optimized
 org.aya.guest0x0.cubical.Formula$Conn
 org.aya.guest0x0.cubical.Formula$Inv
 org.aya.guest0x0.cubical.Partial$Split
 org.aya.guest0x0.cubical.Restr$Side
+org.aya.guest0x0.cubical.Restr$Cond
 org.aya.guest0x0.cubical.Restr$Conj
 org.aya.guest0x0.cubical.Restr$Const
+org.aya.guest0x0.cubical.Restr$Disj
 org.aya.guest0x0.cubical.Formula$Lit
