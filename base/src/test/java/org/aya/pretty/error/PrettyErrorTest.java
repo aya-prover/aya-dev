@@ -33,7 +33,7 @@ public class PrettyErrorTest {
       In file <test>:1:0 ->
             
         1 │     ..........
-          │     ╰──────────╯\s
+          │     ╰──────────╯
           │      ╰────╯ this is a test
         2 │     ..........
         3 │     ..........
@@ -45,7 +45,7 @@ public class PrettyErrorTest {
       In file <test>:1:0 ->
             
         1 |     ..........
-          |     ^----------^\s
+          |     ^----------^
           |      ^----^ this is a test
         2 |     ..........
         3 |     ..........
@@ -57,9 +57,9 @@ public class PrettyErrorTest {
       In file <test>:1:1 ->
             
         1 │   ..........
-          │ ┌──┘\s
+          │ ┌──┘
         2 │ │ ..........
-          │ └───────┘\s
+          │ └───────┘
         3 │   ..........
             """);
   }
@@ -69,9 +69,9 @@ public class PrettyErrorTest {
       In file <test>:1:1 ->
             
         1 |   ..........
-          | +-^^\s
+          | +-^^
         2 | | ..........
-          | +-^-----^\s
+          | +-^-----^
         3 |   ..........
             """);
   }
