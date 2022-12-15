@@ -488,7 +488,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("_, _ -> new")
   static @NotNull Doc par(int indent, @NotNull Doc doc) {
-    return indent(indent, doc);
+    return nest(indent, cat(spaces(indent), doc));
   }
 
   /**
