@@ -8,4 +8,4 @@ example def whateverItTakesRhs1 : RhsIsPos1 0 => inS (pos 2)
 
 example def subProj (i : I) : Int => outS (idpRhs1 i)
 example def posNegRhs1β (i : I) : posneg i = outS (posNegRhs1 i) => idp
-example def idpRhs1β (i : I) : pos 1 = outS (idpRhs1 i) => idp
+example def idpRhs1β (i : I) : pos 0 = outS (idpRhs1 i) => idp

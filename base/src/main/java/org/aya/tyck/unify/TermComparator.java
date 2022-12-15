@@ -147,8 +147,9 @@ public sealed abstract class TermComparator permits Unifier {
     return result;
   }
 
-  @Nullable
-  protected Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
+  @Nullable protected Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
+    traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state),
+      rhs.freezeHoles(state), pos));
     // lhs & rhs will both be WHNF if either is not a potentially reducible call
     if (isCall(lhs) || isCall(rhs)) {
       var ty = compareApprox(lhs, rhs, lr, rl);
@@ -158,6 +159,7 @@ public sealed abstract class TermComparator permits Unifier {
     lhs = lhs.normalize(state, NormalizeMode.WHNF);
     rhs = rhs.normalize(state, NormalizeMode.WHNF);
     var x = doCompareUntyped(lhs, rhs, lr, rl);
+    traceExit();
     if (x != null) return x.normalize(state, NormalizeMode.WHNF);
     if (failure == null) failure = new FailureData(lhs, rhs);
     return null;
@@ -424,8 +426,6 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
-    traceEntrance(new Trace.UnifyT(preLhs.freezeHoles(state),
-      preRhs.freezeHoles(state), pos));
     if (preLhs instanceof Formation lhs) return doCompareType(lhs, preRhs, lr, rl) ? SortTerm.Type0 : null;
     var ret = switch (preLhs) {
       default -> throw noRules(preLhs);
@@ -466,11 +466,6 @@ public sealed abstract class TermComparator permits Unifier {
         }
         if (params.isNotEmpty()) yield params.first().subst(subst).type();
         yield params.last().subst(subst).type();
-      }
-      case SortTerm lhs -> {
-        if (!(preRhs instanceof SortTerm rhs)) yield null;
-        if (!compareSort(lhs, rhs)) yield null;
-        yield (cmp == Ordering.Lt ? lhs : rhs).succ();
       }
       case FormulaTerm lhs -> {
         if (!(preRhs instanceof FormulaTerm rhs)) yield null;
@@ -523,7 +518,6 @@ public sealed abstract class TermComparator permits Unifier {
       };
       case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs);
     };
-    traceExit();
     return ret;
   }
 
