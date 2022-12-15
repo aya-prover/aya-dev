@@ -65,95 +65,106 @@ public record PrettyErrorDoc(
     }
   }
 
+  private static final class HintGroup {
+    @NotNull MutableList<Doc> underlines = MutableList.create();
+    @NotNull MutableList<Doc> notes = MutableList.create();
+    @NotNull MutableList<HintLine> overlapped = MutableList.create();
+    @Nullable HintLine startOrEnd = null;
+
+    public void add(int indent, @NotNull HintLine line, @NotNull PrettyError.FormatConfig cfg) {
+      var hint = renderHint(cfg, line.startCol, line.endCol, switch (line.loc) {
+        case Shot, Between, None -> PrettyError.MultilineMode.DISABLED;
+        case Start -> PrettyError.MultilineMode.START;
+        case End -> PrettyError.MultilineMode.END;
+      });
+      underlines.append(Doc.indent(indent, hint));
+      notes.append(line.note);
+      if (line.loc == Span.NowLoc.Start || line.loc == Span.NowLoc.End)
+        startOrEnd = line;
+    }
+  }
+
   record HintLine(Doc note, Span.NowLoc loc, int startCol, int endCol, int allocIndent) {}
 
-  record HintSplit(@NotNull ImmutableSeq<Doc> underlines, @NotNull ImmutableSeq<Doc> notes,
-                   @NotNull ImmutableSeq<HintLine> overlapped, @Nullable HintLine startOrEnd) {}
+  private static final int INDENT_FACTOR = 2;
 
-  private @NotNull HintSplit splitHints(
-    @NotNull ImmutableSeq<HintLine> others
-  ) {
-    var overlapped = MutableList.<HintLine>create();
-    var underlines = MutableList.<Doc>create();
-    var notes = MutableList.<Doc>create();
-    HintLine startOrEnd = null;
+  /** invariant: `others` is sorted by `startCol` */
+  private @NotNull HintGroup splitHints(@NotNull ImmutableSeq<HintLine> others) {
+    var group = new HintGroup();
     if (others.isNotEmpty()) {
       var first = others.first();
-      underlines.append(renderHint(first.startCol, first.endCol, mode(first.loc)));
-      notes.append(first.note);
-      if (first.loc == Span.NowLoc.Start || first.loc == Span.NowLoc.End) startOrEnd = first;
+      group.add(0, first, formatConfig);
       int left = first.startCol;
       int right = first.endCol;
       int last = right;
       for (int i = 1; i < others.size(); ++i) {
         var the = others.get(i);
         if (overlaps(left, right, the.startCol, the.endCol)) {
-          overlapped.append(the);
+          group.overlapped.append(the);
         } else {
-          if (the.loc == Span.NowLoc.Start || the.loc == Span.NowLoc.End) startOrEnd = the;
           var indent = the.startCol - last;
-          underlines.append(Doc.indent(indent, renderHint(the.startCol, the.endCol, mode(the.loc))));
-          notes.append(the.note);
+          group.add(indent, the, formatConfig);
           last = the.endCol;
           left = Math.min(left, the.startCol);
           right = Math.max(right, the.endCol);
         }
       }
     }
-    return new HintSplit(underlines.toImmutableSeq(), notes.toImmutableSeq(), overlapped.toImmutableSeq(), startOrEnd);
+    return group;
   }
 
-  private void buildHints(
-    int currentLine, int codeIndent, int vbarUsedIndent,
-    @NotNull Doc vbar,
-    @NotNull String currentCode,
+  private void renderHints(
+    int currentLine, int codeIndent,
+    int vbarUsedIndent, @NotNull Doc vbar,
+    @Nullable Doc currentCode,
     @NotNull CodeBuilder builder,
     @NotNull ImmutableSeq<HintLine> others
   ) {
     var split = splitHints(others);
     var rest = codeIndent - vbarUsedIndent;
     // commit code
-    var codeDoc = (split.startOrEnd == null || split.startOrEnd.loc != Span.NowLoc.End)
-      ? Doc.cat(vbar, Doc.indent(rest * 2, Doc.plain(currentCode)))
-      : Doc.cat(vbar, formatConfig.lineNoSepDoc(),
-        Doc.indent(rest * 2 - 1, Doc.plain(currentCode)));
-    builder.add(currentLine, codeDoc);
+    if (currentCode != null) {
+      var codeDoc = (split.startOrEnd == null || split.startOrEnd.loc != Span.NowLoc.End)
+        ? Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, currentCode))
+        : Doc.cat(vbar, formatConfig.lineNoSepDoc(), Doc.indent(rest * INDENT_FACTOR - 1, currentCode));
+      builder.add(currentLine, codeDoc);
+    }
     // commit hint
     var almost = Doc.stickySep(Doc.cat(split.underlines), Doc.cat(split.notes));
     var codeHint = split.startOrEnd == null
-      ? Doc.cat(vbar, Doc.indent(rest * 2, almost))
+      ? Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, almost))
       : split.startOrEnd.loc == Span.NowLoc.Start
-        ? Doc.cat(vbar, formatConfig.beginCornerDoc(), formatConfig.underlineBodyDoc(rest * 2 - 1), almost)
-        : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * 2 - 1), almost);
+        ? Doc.cat(vbar, formatConfig.beginCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost)
+        : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost);
     builder.add(codeHint);
     // show overlapped hints in the next line
     if (split.overlapped.isNotEmpty()) {
-      buildHints(currentLine, codeIndent, vbarUsedIndent, vbar, currentCode, builder, split.overlapped);
+      renderHints(currentLine, codeIndent, vbarUsedIndent, vbar, null, builder, split.overlapped.toImmutableSeq());
     }
   }
 
-  private Tuple2<Integer, Doc> computeBetweenVBar(@NotNull ImmutableSeq<HintLine> between) {
+  private Tuple2<Integer, Doc> computeMultilineVBar(@NotNull ImmutableSeq<HintLine> between) {
     int last = 0;
     var vbar = Doc.empty();
     for (var the : between) {
       var level = the.allocIndent - last;
-      vbar = Doc.cat(vbar, Doc.indent(level * 2, formatConfig.lineNoSepDoc()));
+      vbar = Doc.cat(vbar, Doc.indent(level * INDENT_FACTOR, formatConfig.lineNoSepDoc()));
       last = the.endCol;
     }
     return Tuple.of(last, vbar);
   }
 
-  private void buildHints(
+  private void renderHints(
     int currentLine, int codeIndent,
-    @NotNull String currentCode,
+    @NotNull Doc currentCode,
     @NotNull CodeBuilder builder,
     @NotNull ImmutableSeq<HintLine> hintLines
   ) {
     var between = hintLines.filter(h -> h.loc == Span.NowLoc.Between)
       .sorted(Comparator.comparingInt(a -> a.allocIndent));
     var others = hintLines.filter(h -> h.loc != Span.NowLoc.Between);
-    var vbar = computeBetweenVBar(between);
-    buildHints(currentLine, codeIndent, vbar._1, vbar._2, currentCode, builder, others);
+    var vbar = computeMultilineVBar(between);
+    renderHints(currentLine, codeIndent, vbar._1, vbar._2, currentCode, builder, others);
   }
 
   private @NotNull Doc visualizeCode(
@@ -191,11 +202,10 @@ public record PrettyErrorDoc(
     var builder = new CodeBuilder();
 
     for (var line : lines) {
-      final int codeBegin = codeIndent * 2;
       final int currentLine = lineNo;
+      final var currentCode = Doc.plain(line);
 
-      var hintLines = MutableList.<HintLine>create();
-      alloc.view()
+      var hintLines = alloc.view()
         .mapNotNull(note -> switch (note._1.nowLoc(currentLine)) {
           case Shot -> new HintLine(note._2, Span.NowLoc.Shot, note._1.startCol(), note._1.endCol(), note._3);
           case Start -> new HintLine(Doc.empty(), Span.NowLoc.Start, 0, note._1.startCol(), note._3);
@@ -203,13 +213,13 @@ public record PrettyErrorDoc(
           case Between -> new HintLine(Doc.empty(), Span.NowLoc.Between, 0, 0, note._3);
           case None -> null;
         })
-        .forEach(hintLines::append);
+        .sorted(Comparator.comparingInt(a -> a.startCol))
+        .toImmutableSeq();
 
-      hintLines.sort(Comparator.comparingInt(a -> a.startCol));
       if (hintLines.isEmpty()) {
-        builder.add(currentLine, Doc.indent(codeBegin, Doc.plain(line)));
+        builder.add(currentLine, Doc.indent(codeIndent * INDENT_FACTOR, currentCode));
       } else {
-        buildHints(currentLine, codeIndent, line, builder, hintLines.toImmutableSeq());
+        renderHints(currentLine, codeIndent, currentCode, builder, hintLines);
       }
       lineNo++;
     }
@@ -225,32 +235,24 @@ public record PrettyErrorDoc(
     return x1 <= y2 && y1 <= x2;
   }
 
-  private static PrettyError.MultilineMode mode(@NotNull Span.NowLoc loc) {
-    return switch (loc) {
-      case Shot, Between, None -> PrettyError.MultilineMode.DISABLED;
-      case Start -> PrettyError.MultilineMode.START;
-      case End -> PrettyError.MultilineMode.END;
-    };
-  }
-
-  private Doc renderHint(int startCol, int endCol, PrettyError.MultilineMode mode) {
+  private static @NotNull Doc renderHint(@NotNull PrettyError.FormatConfig cfg, int startCol, int endCol, PrettyError.MultilineMode mode) {
     var builder = new StringBuilder();
-    if (mode == PrettyError.MultilineMode.DISABLED || formatConfig.errorIndicator().isEmpty()) {
-      builder.append(formatConfig.underlineBegin());
+    if (mode == PrettyError.MultilineMode.DISABLED || cfg.errorIndicator().isEmpty()) {
+      builder.append(cfg.underlineBegin());
       // -1 for the start symbol
       int length = endCol - startCol - 1;
       if (length > 0) {
         // endCol is in the next line
-        builder.append(formatConfig.underlineBody(length));
+        builder.append(cfg.underlineBody(length));
       }
-      builder.append(formatConfig.underlineEnd());
+      builder.append(cfg.underlineEnd());
     } else {
       int length = endCol - startCol;
       if (length > 0) {
         // endCol is in the next line
-        builder.append(formatConfig.underlineBody(length));
+        builder.append(cfg.underlineBody(length));
       }
-      builder.append(formatConfig.errorIndicator().get());
+      builder.append(cfg.errorIndicator().get());
     }
     return Doc.indent(startCol, Doc.plain(builder.toString()));
   }
