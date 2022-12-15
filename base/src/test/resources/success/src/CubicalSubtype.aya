@@ -1,9 +1,9 @@
 open import Arith::Int
 open import Paths
 
-def RhsIsPos1 (i : I) => Sub Int i {| i := pos 1 |}
+def RhsIsPos1 (i : I) => Sub Int i {| i := pos 0 |}
 example def posNegRhs1 (i : I) : RhsIsPos1 i => inS (posneg i)
-example def idpRhs1 (i : I) : RhsIsPos1 i => inS (pos 1)
+example def idpRhs1 (i : I) : RhsIsPos1 i => inS (pos 0)
 example def whateverItTakesRhs1 : RhsIsPos1 0 => inS (pos 2)
 
 example def subProj (i : I) : Int => outS (idpRhs1 i)
