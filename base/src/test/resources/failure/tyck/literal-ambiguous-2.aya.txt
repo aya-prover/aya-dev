@@ -1,9 +1,9 @@
 In file $FILE:6:17 ->
 
-  4 | 
-  5 | def take Empty => Empty
-  6 | def test => take 0
-                       ^^
+  4 |   
+  5 |   def take Empty => Empty
+  6 |   def test => take 0
+    |                    ^^
 
 Error: Unable to solve the type of this literal:
          0

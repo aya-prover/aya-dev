@@ -1,9 +1,9 @@
 In file $FILE:4:7 ->
 
-  2 | 
-  3 | def justMatch {n : Nat} (m : Nat) : Nat
-  4 | | m => {??}
-             ^--^
+  2 |   
+  3 |   def justMatch {n : Nat} (m : Nat) : Nat
+  4 |   | m => {??}
+    |          ^--^
 
 Goal: Goal of type
         Nat
@@ -14,10 +14,10 @@ Goal: Goal of type
 
 In file $FILE:4:7 ->
 
-  2 | 
-  3 | def justMatch {n : Nat} (m : Nat) : Nat
-  4 | | m => {??}
-             ^--^
+  2 |   
+  3 |   def justMatch {n : Nat} (m : Nat) : Nat
+  4 |   | m => {??}
+    |          ^--^
 
 Error: Unsolved meta _
 

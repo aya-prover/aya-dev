@@ -1,13 +1,14 @@
 In file $FILE:18:4 ->
 
-  16 |  | posneg (n : Nat) (i : I) { i := pos n }
-  17 | 
-  18 | def abs (n : Int) : Nat
-  19 |  | pos (suc n) => suc zero
-  20 |  | pos zero => suc zero
-  21 |  | neg n => zero
-  22 |  | posneg n i => zero
-          ^----------------^ substituted to `zero`
+  16 |      | posneg (n : Nat) (i : I) { i := pos n }
+  17 |     
+  18 |     def abs (n : Int) : Nat
+     |         ^-^
+  19 |      | pos (suc n) => suc zero
+  20 |      | pos zero => suc zero
+  21 |      | neg n => zero
+  22 |      | posneg n i => zero
+     |        ^----------------^ substituted to `zero`
 
 Error: The 4th clause matches on a constructor with condition(s). When checking 
        the 1st condition, we failed to find any of the clause(s) to check 

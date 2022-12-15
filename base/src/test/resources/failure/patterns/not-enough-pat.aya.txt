@@ -1,9 +1,9 @@
 In file $FILE:4:9 ->
 
-  2 | 
-  3 | def ifElse {A : Type} (b : Bool) (x y : A) : A
-  4 |  | true, x => x
-               ^^
+  2 |   
+  3 |   def ifElse {A : Type} (b : Bool) (x y : A) : A
+  4 |    | true, x => x
+    |            ^^
 
 Error: There is no pattern for the parameter
          (y : A)

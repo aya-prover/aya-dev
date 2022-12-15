@@ -1,9 +1,9 @@
 In file $FILE:3:4 ->
 
-  1 | data Z : Type
-  2 |   | zero
-  3 |   | zero
-          ^--^
+  1 |   data Z : Type
+  2 |     | zero
+  3 |     | zero
+    |       ^--^
 
 Error: The name zero (`zero`) is already defined elsewhere
 

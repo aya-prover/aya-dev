@@ -1,7 +1,7 @@
 In file $FILE:1:16 ->
 
-  1 | def a : Type => "123"
-                      ^---^
+  1 |   def a : Type => "123"
+    |                   ^---^
 
 Error: No rule inferring the type of "123"
 

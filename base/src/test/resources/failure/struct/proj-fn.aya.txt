@@ -1,9 +1,9 @@
 In file $FILE:8:12 ->
 
-  6 | def test => new Test { | value => yes }
-  7 | def use1 => test.value
-  8 | def use2 => value test test
-                  ^--------^
+  6 |   def test => new Test { | value => yes }
+  7 |   def use1 => test.value
+  8 |   def use2 => value test test
+    |               ^--------^
 
 Error: Unable to apply the expression
          value test

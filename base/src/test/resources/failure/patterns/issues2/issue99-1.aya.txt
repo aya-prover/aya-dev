@@ -1,9 +1,9 @@
 In file $FILE:5:3 ->
 
-  3 | def overlap test (a : Unit) : Unit
-  4 |  | a => a
-  5 |  | unit => unit
-         ^----------^
+  3 |   def overlap test (a : Unit) : Unit
+  4 |    | a => a
+  5 |    | unit => unit
+    |      ^----------^
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable

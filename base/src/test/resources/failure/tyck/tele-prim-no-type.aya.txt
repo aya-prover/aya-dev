@@ -1,8 +1,8 @@
 In file $FILE:2:5 ->
 
-  1 | prim I
-  2 | prim intervalInv (i : I)
-           ^---------^
+  1 |   prim I
+  2 |   prim intervalInv (i : I)
+    |        ^---------^
 
 Error: prim intervalInv is expected to have a type
 

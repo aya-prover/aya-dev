@@ -1,14 +1,15 @@
 In file $FILE:4:12 ->
 
-  2 |  | zero
-  3 |  | suc Nat
-  4 | def overlap addN (a b : Nat) : Nat
-  5 |  | zero, a => a
-  6 |  | a, zero => a
-  7 |  | suc a, b => suc (addN b a)
-         ^------------------------^ substituted to `suc (addN (suc b) a)`
-  8 |  | a, suc b => suc (addN a b)
-         ^------------------------^ substituted to `suc (addN (suc a) b)`
+  2 |        | zero
+  3 |        | suc Nat
+  4 |       def overlap addN (a b : Nat) : Nat
+    |                   ^--^
+  5 |        | zero, a => a
+  6 |        | a, zero => a
+  7 |        | suc a, b => suc (addN b a)
+    |          ^------------------------^ substituted to `suc (addN (suc b) a)`
+  8 |        | a, suc b => suc (addN a b)
+    |          ^------------------------^ substituted to `suc (addN (suc a) b)`
 
 Error: The 3rd and the 4th clauses are not confluent because we failed to unify
          suc (addN (suc b) a)

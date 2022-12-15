@@ -1,9 +1,9 @@
 In file $FILE:4:2 ->
 
-  2 | data SoWrong (A : Type)
-  3 | | zero
-  4 | | trunc : [| i |] SoWrong A { 1 := zero }
-        ^---^
+  2 |   data SoWrong (A : Type)
+  3 |   | zero
+  4 |   | trunc : [| i |] SoWrong A { 1 := zero }
+    |     ^---^
 
 Error: The path constructor must not be a constant path
 

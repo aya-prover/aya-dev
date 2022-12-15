@@ -1,29 +1,29 @@
 In file $FILE:9:17 ->
 
-  7 | 
-  8 | def ok : Option Nat1 => some 114
-  9 | def lit1 => some 514
-                       ^-^
+  7 |   
+  8 |   def ok : Option Nat1 => some 114
+  9 |   def lit1 => some 514
+    |                    ^-^
 
 Error: Unsolved meta _ty514'
        in `Option _ty514'`
 
 In file $FILE:9:17 ->
 
-  7 | 
-  8 | def ok : Option Nat1 => some 114
-  9 | def lit1 => some 514
-                       ^-^
+  7 |   
+  8 |   def ok : Option Nat1 => some 114
+  9 |   def lit1 => some 514
+    |                    ^-^
 
 Error: Unsolved meta _ty514'
        in `some 514`
 
 In file $FILE:9:17 ->
 
-  7 | 
-  8 | def ok : Option Nat1 => some 114
-  9 | def lit1 => some 514
-                       ^-^
+  7 |   
+  8 |   def ok : Option Nat1 => some 114
+  9 |   def lit1 => some 514
+    |                    ^-^
 
 Error: Unsolved meta _ty514'
        in `514`
@@ -31,10 +31,10 @@ Error: Unsolved meta _ty514'
 
 In file $FILE:9:17 ->
 
-  7 | 
-  8 | def ok : Option Nat1 => some 114
-  9 | def lit1 => some 514
-                       ^-^
+  7 |   
+  8 |   def ok : Option Nat1 => some 114
+  9 |   def lit1 => some 514
+    |                    ^-^
 
 Error: Unable to solve the type of this literal:
          514

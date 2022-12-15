@@ -1,43 +1,44 @@
 In file $FILE:3:26 ->
 
-  1 | def uncurry (A : Type) (B : Type) (C : Type)
-  2 |              (f : Pi A B -> C)
-  3 |              (p : Sig A  B) : C
-                                ^^
+  1 |   def uncurry (A : Type) (B : Type) (C : Type)
+  2 |                (f : Pi A B -> C)
+  3 |                (p : Sig A  B) : C
+    |                             ^^
 
 Error: Parser error: Cannot parse
 
 In file $FILE:8:29 ->
 
-  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
-  7 |               (f : Pi A B C -> D)
-  8 |               (p : Sig A B  C) : D
-                                   ^^
+  6 |   def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+  7 |                 (f : Pi A B C -> D)
+  8 |                 (p : Sig A B  C) : D
+    |                                ^^
 
 Error: Parser error: Cannot parse
 
 In file $FILE:1:0 ->
 
-  1 | def uncurry (A : Type) (B : Type) (C : Type)
-      ^-------------------------------------------^ Begin of the error
-  2 |              (f : Pi A B -> C)
-  3 |              (p : Sig A  B) : C
-      ^-----------^ End of the error
-  4 |   => f (p.1) (p.2)
-  5 | 
+  1 |   def uncurry (A : Type) (B : Type) (C : Type)
+    | +-^^
+  2 | |               (f : Pi A B -> C)
+    | |  
+  3 | |              (p : Sig A  B) : C
+    | +-^-----------^
+  4 |     => f (p.1) (p.2)
+  5 |   
 
 Error: Unsolved meta _
 
 In file $FILE:6:0 ->
 
-  4 |   => f (p.1) (p.2)
-  5 | 
-  6 | def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
-      ^-------------------------------------------------------^ Begin of the 
-                                                                error
-  7 |               (f : Pi A B C -> D)
-  8 |               (p : Sig A B  C) : D
-      ^------------^ End of the error
+  4 |     => f (p.1) (p.2)
+  5 |   
+  6 |   def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
+    | +-^^
+  7 | |                (f : Pi A B C -> D)
+    | |  
+  8 | |               (p : Sig A B  C) : D
+    | +-^------------^
 
 Error: Unsolved meta _
 

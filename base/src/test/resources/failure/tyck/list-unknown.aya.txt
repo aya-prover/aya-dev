@@ -1,19 +1,19 @@
 In file $FILE:5:11 ->
 
-  3 | 
-  4 | def good : List Unit => [ ]
-  5 | def bad => [ ]
-                 ^-^
+  3 |   
+  4 |   def good : List Unit => [ ]
+  5 |   def bad => [ ]
+    |              ^-^
 
 Error: Unsolved meta _
        in `List _`
 
 In file $FILE:5:11 ->
 
-  3 | 
-  4 | def good : List Unit => [ ]
-  5 | def bad => [ ]
-                 ^-^
+  3 |   
+  4 |   def good : List Unit => [ ]
+  5 |   def bad => [ ]
+    |              ^-^
 
 Error: Unsolved meta _
        in `List _`

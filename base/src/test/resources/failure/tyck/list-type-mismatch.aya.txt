@@ -1,9 +1,9 @@
 In file $FILE:5:21 ->
 
-  3 | open data Mat | zero | suc Mat
-  4 | 
-  5 | def bad => [ O, S O, zero, suc zero ]
-                           ^--^
+  3 |   open data Mat | zero | suc Mat
+  4 |   
+  5 |   def bad => [ O, S O, zero, suc zero ]
+    |                        ^--^
 
 Error: Cannot check the expression
          zero
@@ -14,10 +14,10 @@ Error: Cannot check the expression
 
 In file $FILE:5:27 ->
 
-  3 | open data Mat | zero | suc Mat
-  4 | 
-  5 | def bad => [ O, S O, zero, suc zero ]
-                                 ^------^
+  3 |   open data Mat | zero | suc Mat
+  4 |   
+  5 |   def bad => [ O, S O, zero, suc zero ]
+    |                              ^------^
 
 Error: Cannot check the expression
          suc zero

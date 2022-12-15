@@ -1,9 +1,9 @@
 In file $FILE:7:6 ->
 
-  5 | def bad (xs : List Nat) : Nat
-  6 |   | [ ] => O
-  7 |   | [ [ ] ] => S O
-            ^-^
+  5 |   def bad (xs : List Nat) : Nat
+  6 |     | [ ] => O
+  7 |     | [ [ ] ] => S O
+    |         ^-^
 
 Error: The literal
          [  ]

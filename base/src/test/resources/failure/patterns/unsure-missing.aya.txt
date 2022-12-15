@@ -1,9 +1,9 @@
 In file $FILE:16:4 ->
 
-  14 |  | suc n, fsuc a => suc (finToNat n a)
-  15 | 
-  16 | def addF (m n : Nat) (a : Fin+1 m) (b : Fin+1 n) : Fin+1 (addN (finToNat m a) n)
-           ^--^
+  14 |    | suc n, fsuc a => suc (finToNat n a)
+  15 |   
+  16 |   def addF (m n : Nat) (a : Fin+1 m) (b : Fin+1 n) : Fin+1 (addN (finToNat m a) n)
+     |       ^--^
 
 Error: I'm unsure if there should be a case for constructor
          | suc m => fsuc (_ : Fin+1 m)
