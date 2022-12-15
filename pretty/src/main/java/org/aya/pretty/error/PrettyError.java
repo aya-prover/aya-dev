@@ -211,7 +211,7 @@ public record PrettyError(
   }
 
   private @NotNull Doc renderContinuedHint(boolean continued, boolean fromStartEnd, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
-    return continued && fromStartEnd && vbar.isEmpty()
+    return continued && fromStartEnd // implies vbar.isEmpty()
       ? Doc.cat(formatConfig.lineNoSepDoc(), Doc.indent(rest * INDENT_FACTOR, almost))
       : Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, almost));
   }
