@@ -132,6 +132,9 @@ jobs:
           dependencies-cache-enabled: true
           arguments: nativeCompile --info --no-daemon --stacktrace --warning-mode all
 
+      - name: test native image
+        run: ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} --remake base/src/test/resources/success
+
       - name: Copy fat jar
         run: |
           cp ./lsp/build/libs/lsp-*-fat.jar ./lsp-fatjar.jar
