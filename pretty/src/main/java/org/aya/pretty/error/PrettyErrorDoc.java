@@ -10,6 +10,7 @@ import kala.tuple.Tuple3;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
@@ -66,6 +67,70 @@ public record PrettyErrorDoc(
 
   record HintLine(Doc note, Span.NowLoc loc, int startCol, int endCol, int allocIndent) {}
 
+  record HintSplit(@NotNull ImmutableSeq<Doc> underlines, @NotNull ImmutableSeq<Doc> notes,
+                   @NotNull ImmutableSeq<HintLine> overlapped, @Nullable HintLine startOrEnd) {}
+
+  private @NotNull HintSplit splitHints(
+    @NotNull ImmutableSeq<HintLine> others
+  ) {
+    var overlapped = MutableList.<HintLine>create();
+    var underlines = MutableList.<Doc>create();
+    var notes = MutableList.<Doc>create();
+    HintLine startOrEnd = null;
+    if (others.isNotEmpty()) {
+      var first = others.first();
+      underlines.append(renderHint(first.startCol, first.endCol, mode(first.loc)));
+      notes.append(first.note);
+      if (first.loc == Span.NowLoc.Start || first.loc == Span.NowLoc.End) startOrEnd = first;
+      int left = first.startCol;
+      int right = first.endCol;
+      int last = right;
+      for (int i = 1; i < others.size(); ++i) {
+        var the = others.get(i);
+        if (overlaps(left, right, the.startCol, the.endCol)) {
+          overlapped.append(the);
+        } else {
+          if (the.loc == Span.NowLoc.Start || the.loc == Span.NowLoc.End) startOrEnd = the;
+          var indent = the.startCol - last;
+          underlines.append(Doc.indent(indent, renderHint(the.startCol, the.endCol, mode(the.loc))));
+          notes.append(the.note);
+          last = the.endCol;
+          left = Math.min(left, the.startCol);
+          right = Math.max(right, the.endCol);
+        }
+      }
+    }
+    return new HintSplit(underlines.toImmutableSeq(), notes.toImmutableSeq(), overlapped.toImmutableSeq(), startOrEnd);
+  }
+
+  private void buildHints(
+    int currentLine, int codeIndent, int vbarUsedIndent,
+    @NotNull Doc vbar,
+    @NotNull String currentCode,
+    @NotNull CodeBuilder builder,
+    @NotNull ImmutableSeq<HintLine> others
+  ) {
+    var split = splitHints(others);
+    var rest = codeIndent - vbarUsedIndent;
+    // commit code
+    var codeDoc = (split.startOrEnd == null || split.startOrEnd.loc != Span.NowLoc.End)
+      ? Doc.cat(vbar, Doc.indent(rest * 2, Doc.plain(currentCode)))
+      : Doc.cat(vbar, formatConfig.lineNoSepDoc(),
+        Doc.indent(rest * 2 - 1, Doc.plain(currentCode)));
+    builder.add(currentLine, codeDoc);
+    // commit hint
+    var almost = Doc.stickySep(Doc.cat(split.underlines), Doc.cat(split.notes));
+    var codeHint = split.startOrEnd == null
+      ? Doc.cat(vbar, Doc.indent(rest * 2, almost))
+      : split.startOrEnd.loc == Span.NowLoc.Start
+        ? Doc.cat(vbar, formatConfig.beginCornerDoc(), formatConfig.underlineBodyDoc(rest * 2 - 1), almost)
+        : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * 2 - 1), almost);
+    builder.add(codeHint);
+    // show overlapped hints in the next line
+    if (split.overlapped.isNotEmpty()) {
+      buildHints(currentLine, codeIndent, vbarUsedIndent, vbar, currentCode, builder, split.overlapped);
+    }
+  }
 
   private Tuple2<Integer, Doc> computeBetweenVBar(@NotNull ImmutableSeq<HintLine> between) {
     int last = 0;
@@ -82,71 +147,13 @@ public record PrettyErrorDoc(
     int currentLine, int codeIndent,
     @NotNull String currentCode,
     @NotNull CodeBuilder builder,
-    @NotNull ImmutableSeq<HintLine> between,
-    @NotNull ImmutableSeq<HintLine> others
-  ) {
-    var nextLine = MutableList.<HintLine>create();
-    var thisUnderlines = MutableList.<Doc>create();
-    var thisNotes = MutableList.<Doc>create();
-    HintLine startOrEnd = null;
-    if (others.isNotEmpty()) {
-      var first = others.first();
-      thisUnderlines.append(renderHint(first.startCol, first.endCol, mode(first.loc)));
-      thisNotes.append(first.note);
-      if (first.loc == Span.NowLoc.Start || first.loc == Span.NowLoc.End) startOrEnd = first;
-      int left = first.startCol;
-      int right = first.endCol;
-      int last = right;
-      for (int i = 1; i < others.size(); ++i) {
-        var the = others.get(i);
-        if (overlaps(left, right, the.startCol, the.endCol)) {
-          nextLine.append(the);
-        } else {
-          if (the.loc == Span.NowLoc.Start || the.loc == Span.NowLoc.End) startOrEnd = the;
-          var indent = the.startCol - last;
-          thisUnderlines.append(Doc.indent(indent, renderHint(the.startCol, the.endCol, mode(the.loc))));
-          thisNotes.append(the.note);
-          last = the.endCol;
-          left = Math.min(left, the.startCol);
-          right = Math.max(right, the.endCol);
-        }
-      }
-    }
-    var betweenVBar = computeBetweenVBar(between);
-    var rest = codeIndent - betweenVBar._1;
-    var vbar = betweenVBar._2;
-    // commit code
-    var codeDoc = (startOrEnd == null || startOrEnd.loc != Span.NowLoc.End)
-      ? Doc.cat(vbar, Doc.indent(rest * 2, Doc.plain(currentCode)))
-      : Doc.cat(vbar, formatConfig.lineNoSepDoc(),
-        Doc.indent(rest * 2 - 1, Doc.plain(currentCode)));
-    builder.add(currentLine, codeDoc);
-    // commit hint
-    var u = Doc.cat(thisUnderlines);
-    var n = Doc.cat(thisNotes);
-    var un = Doc.stickySep(u, n);
-    var codeHint = startOrEnd == null
-      ? Doc.cat(vbar, Doc.indent(rest * 2, un))
-      : startOrEnd.loc == Span.NowLoc.Start
-        ? Doc.cat(vbar, formatConfig.beginCornerDoc(), formatConfig.underlineBodyDoc(rest * 2 - 1), un)
-        : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * 2 - 1), un);
-    builder.add(codeHint);
-    // TODO: show overlapped hints in the `nextLine`
-    if (nextLine.isNotEmpty()) {
-      buildHints(currentLine, codeIndent, currentCode, builder, nextLine.toImmutableSeq(), between);
-    }
-  }
-
-  private void buildHints(
-    int currentLine, int codeIndent,
-    @NotNull String currentCode,
-    @NotNull CodeBuilder builder,
     @NotNull ImmutableSeq<HintLine> hintLines
   ) {
     var between = hintLines.filter(h -> h.loc == Span.NowLoc.Between)
       .sorted(Comparator.comparingInt(a -> a.allocIndent));
     var others = hintLines.filter(h -> h.loc != Span.NowLoc.Between);
-    buildHints(currentLine, codeIndent, currentCode, builder, between, others);
+    var vbar = computeBetweenVBar(between);
+    buildHints(currentLine, codeIndent, vbar._1, vbar._2, currentCode, builder, others);
   }
 
   private @NotNull Doc visualizeCode(
