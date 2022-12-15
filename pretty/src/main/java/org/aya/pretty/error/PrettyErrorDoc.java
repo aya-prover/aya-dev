@@ -49,6 +49,21 @@ public record PrettyErrorDoc(
     return line.replaceAll("\t", " ".repeat(tabWidth));
   }
 
+  private static final class CodeBuilder {
+    private final @NotNull MutableList<Doc> lineDocs = MutableList.create();
+    private final @NotNull MutableList<Doc> codeDocs = MutableList.create();
+
+    void add(int currentLine, @NotNull Doc code) {
+      lineDocs.append(Doc.plain(String.valueOf(currentLine)));
+      codeDocs.append(code);
+    }
+
+    void add(@NotNull Doc code) {
+      lineDocs.append(Doc.plain(" ")); // cannot use `empty()` or `plain("")`
+      codeDocs.append(code);
+    }
+  }
+
   private @NotNull Doc visualizeCode(
     @NotNull PrettyErrorConfig config, @NotNull Span.Data fullRange,
     @NotNull Span.Data primaryRange, @NotNull ImmutableSeq<Tuple2<Span.Data, Doc>> hints
@@ -81,8 +96,7 @@ public record PrettyErrorDoc(
 
     int codeIndent = alloc.size();
     int lineNo = minLineNo;
-    var lineDocs = MutableList.<Doc>create();
-    var codeDocs = MutableList.<Doc>create();
+    var builder = new CodeBuilder();
 
     for (var line : lines) {
       final int codeBegin = codeIndent * 2;
@@ -103,8 +117,7 @@ public record PrettyErrorDoc(
 
       hintLines.sort(Comparator.comparingInt(a -> a.startCol));
       if (hintLines.isEmpty()) {
-        lineDocs.append(Doc.plain(String.valueOf(currentLine)));
-        codeDocs.append(Doc.indent(codeBegin, Doc.plain(line)));
+        builder.add(currentLine, Doc.indent(codeBegin, Doc.plain(line)));
       } else {
         var nextLine = MutableList.<HintLine>create();
         var thisUnderlines = MutableList.<Doc>create();
@@ -149,8 +162,7 @@ public record PrettyErrorDoc(
           ? Doc.cat(vbar, Doc.indent(rest * 2, Doc.plain(line)))
           : Doc.cat(vbar, formatConfig.lineNoSepDoc(),
             Doc.indent(rest * 2 - 1, Doc.plain(line)));
-        lineDocs.append(Doc.plain(String.valueOf(currentLine)));
-        codeDocs.append(codeDoc);
+        builder.add(currentLine, codeDoc);
         // commit hint
         var u = Doc.cat(thisUnderlines);
         var n = Doc.cat(thisNotes);
@@ -160,17 +172,16 @@ public record PrettyErrorDoc(
           : startOrEnd.loc == Span.NowLoc.Start
             ? Doc.cat(vbar, formatConfig.beginCornerDoc(), formatConfig.underlineBodyDoc(rest * 2 - 1), un)
             : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * 2 - 1), un);
-        lineDocs.append(Doc.spaces(linenoWidth));
-        codeDocs.append(codeHint);
+        builder.add(codeHint);
         // TODO: show overlapped hints in the `nextLine`
       }
       lineNo++;
     }
 
     return Doc.catBlockR(linenoWidth,
-      lineDocs,
+      builder.lineDocs,
       Doc.cat(formatConfig.lineNoSepDoc(), Doc.ONE_WS),
-      codeDocs);
+      builder.codeDocs);
   }
 
   private static boolean overlaps(int x1, int x2, int y1, int y2) {
