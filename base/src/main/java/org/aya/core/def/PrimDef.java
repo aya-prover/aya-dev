@@ -29,6 +29,9 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static org.aya.core.term.SortTerm.Set0;
+import static org.aya.core.term.SortTerm.Type0;
+
 /**
  * @author ice1000
  */
@@ -80,7 +83,94 @@ public final class PrimDef extends TopLevelDef<Term> {
     }
   }
 
+  /** <code>I -> Type</code> */
+  public static @NotNull Term intervalToType() {
+    var paramI = new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true);
+    return new PiTerm(paramI, Type0);
+  }
+
+  /** Let A be argument, then <code>A 0 -> A 1</code> */
+  public static @NotNull PiTerm familyLeftToRight(Term term) {
+    return familyI2J(term, FormulaTerm.LEFT, FormulaTerm.RIGHT);
+  }
+
+  /** Let A be argument, then <code>A 1 -> A 0</code> */
+  public static @NotNull PiTerm familyRightToLeft(Term term) {
+    return familyI2J(term, FormulaTerm.RIGHT, FormulaTerm.LEFT);
+  }
+
+  /** Let A be argument, then <code>A i -> A j</code> */
+  private static @NotNull PiTerm familyI2J(Term term, FormulaTerm i, FormulaTerm j) {
+    return new PiTerm(
+      new Term.Param(LocalVar.IGNORED, new AppTerm(term, new Arg<>(i, true)), true),
+      new AppTerm(term, new Arg<>(j, true)));
+  }
+
+  public enum ID {
+    IMIN("intervalMin"),
+    IMAX("intervalMax"),
+    INVOL("intervalInv"),
+    STRING("String"),
+    STRCONCAT("strcat"),
+    I("I"),
+    PARTIAL("Partial"),
+    COE("coe"),
+    COEFILL("coeFill"),
+    COEINV("eoc"),
+    COEINVFILL("eocFill"),
+    HCOMP("hcomp"),
+    SUB("Sub"),
+    INS("inS"),
+    OUTS("outS");
+
+    public final @NotNull @NonNls String id;
+
+    @Override public String toString() {
+      return id;
+    }
+
+    public static @Nullable ID find(@NotNull String id) {
+      for (var value : PrimDef.ID.values())
+        if (Objects.equals(value.id, id)) return value;
+      return null;
+    }
+
+    ID(@NotNull String id) {
+      this.id = id;
+    }
+
+    public static boolean projSyntax(@NotNull ID id) {
+      return id == COE || id == COEFILL || id == COEINV || id == COEINVFILL;
+    }
+  }
+
   public static class Factory {
+    public Factory() {
+      var init = new Initializer();
+      seeds = ImmutableSeq.of(
+          init.intervalMin,
+          init.intervalMax,
+          init.intervalInv,
+          init.stringType,
+          init.stringConcat,
+          init.intervalType,
+          init.partialType,
+          init.coe,
+          init.coeFill,
+          init.eoc,
+          init.eocFill,
+          init.hcomp,
+          init.outS,
+          init.inS,
+          init.sub
+        ).map(seed -> Tuple.of(seed.name, seed))
+        .toImmutableMap();
+    }
+
+    private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
+
+    private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
+
     private final class Initializer {
       public final @NotNull PrimDef.PrimSeed coe = new PrimSeed(ID.COE, this::coe, ref -> {
         // coe (A : I -> Type) (phi : I) : A 0 -> A 1
@@ -91,6 +181,56 @@ public final class PrimDef extends TopLevelDef<Term> {
 
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramRestr), result, ID.COE);
       }, ImmutableSeq.of(ID.I));
+
+      public final @NotNull PrimDef.PrimSeed sub = new PrimSeed(ID.SUB, this::primCall, ref -> {
+        // Sub (A: Type) (φ: I) (u: Partial φ A) : Set
+        var varA = new LocalVar("A");
+        var varPhi = new LocalVar("phi");
+        var varU = new LocalVar("u");
+        var paramA = new Term.Param(varA, Type0, true);
+        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, true);
+        var paramU = new Term.Param(varU, new PartialTyTerm(new RefTerm(varA), AyaRestrSimplifier.INSTANCE.isOne(new RefTerm(varPhi))), true);
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), Set0, ID.SUB);
+      }, ImmutableSeq.of(ID.I, ID.PARTIAL));
+
+      public final @NotNull PrimDef.PrimSeed outS = new PrimSeed(ID.OUTS, this::insideOut, ref -> {
+        // outS {A} {φ} {u : Partial φ A} (Sub A φ u) : A
+        var varA = new LocalVar("A");
+        var varPhi = new LocalVar("phi");
+        var varU = new LocalVar("u");
+        var paramA = new Term.Param(varA, Type0, false);
+        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
+        var phi = new RefTerm(varPhi);
+        var A = new RefTerm(varA);
+        var paramU = new Term.Param(varU, new PartialTyTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi)), false);
+
+        var paramSub = new Term.Param(LocalVar.IGNORED,
+          getCall(ID.SUB, ImmutableSeq.of(new Arg<>(A, true),
+            new Arg<>(phi, true), new Arg<>(new RefTerm(varU), true))), true);
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU, paramSub), A, ID.OUTS);
+      }, ImmutableSeq.of(ID.PARTIAL, ID.SUB));
+
+      public final @NotNull PrimDef.PrimSeed inS = new PrimSeed(ID.INS, this::insideOut, ref -> {
+        // outS {A} {φ} (u : A) : Sub A φ {|φ ↦ u|}
+        var varA = new LocalVar("A");
+        var varPhi = new LocalVar("phi");
+        var varU = new LocalVar("u");
+        var paramA = new Term.Param(varA, Type0, false);
+        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
+        var phi = new RefTerm(varPhi);
+        var A = new RefTerm(varA);
+        var paramU = new Term.Param(varU, A, true);
+        var u = new RefTerm(varU);
+
+        var par = PartialTerm.from(phi, u, A);
+        var ret = getCall(ID.SUB, ImmutableSeq.of(new Arg<>(A, true),
+          new Arg<>(phi, true), new Arg<>(par, true)));
+        return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), ret, ID.INS);
+      }, ImmutableSeq.of(ID.PARTIAL, ID.SUB));
+
+      public final @NotNull PrimDef.PrimSeed stringType =
+        new PrimSeed(ID.STRING, this::primCall,
+          ref -> new PrimDef(ref, Type0, ID.STRING), ImmutableSeq.empty());
 
       @Contract("_, _ -> new")
       private @NotNull Term coe(@NotNull PrimCall prim, @NotNull TyckState state) {
@@ -183,9 +323,25 @@ public final class PrimDef extends TopLevelDef<Term> {
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi), result, coeFill);
       }
 
+      public final @NotNull PrimDef.PrimSeed partialType =
+        new PrimSeed(ID.PARTIAL,
+          (prim, state) -> {
+            var iExp = prim.args().get(0).term();
+            var ty = prim.args().get(1).term();
+
+            return new PartialTyTerm(ty, AyaRestrSimplifier.INSTANCE.isOne(iExp));
+          },
+          ref -> new PrimDef(
+            ref,
+            ImmutableSeq.of(
+              new Term.Param(new LocalVar("phi"), IntervalTerm.INSTANCE, true),
+              new Term.Param(new LocalVar("A"), Type0, true)
+            ),
+            SortTerm.Set0, ID.PARTIAL),
+          ImmutableSeq.of(ID.I));
       private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
         var varA = new LocalVar("A");
-        var paramA = new Term.Param(varA, SortTerm.Type0, false);
+        var paramA = new Term.Param(varA, Type0, false);
         var varPhi = new LocalVar("phi");
         var paramRestr = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
         var varU = new LocalVar("u");
@@ -204,14 +360,6 @@ public final class PrimDef extends TopLevelDef<Term> {
           ID.HCOMP
         );
       }, ImmutableSeq.of(ID.I));
-
-      private @NotNull Term hcomp(@NotNull PrimCall prim, @NotNull TyckState state) {
-        var A = prim.args().get(0).term();
-        var phi = prim.args().get(1).term();
-        var u = prim.args().get(2).term();
-        var u0 = prim.args().get(3).term();
-        return new HCompTerm(A, phi, u, u0);
-      }
 
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMin = formula(ID.IMIN, prim -> {
@@ -236,10 +384,17 @@ public final class PrimDef extends TopLevelDef<Term> {
         ), ImmutableSeq.of(ID.I));
       }
 
-      public final @NotNull PrimDef.PrimSeed stringType =
-        new PrimSeed(ID.STRING,
-          ((prim, tyckState) -> prim),
-          ref -> new PrimDef(ref, SortTerm.Type0, ID.STRING), ImmutableSeq.empty());
+      /**
+       * @see #inS
+       * @see #outS
+       */
+      private Term insideOut(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
+        var phi = prim.args().get(1).term();
+        var u = prim.args().last().term();
+        var kind = prim.id() == ID.INS ? InOutTerm.Kind.In : InOutTerm.Kind.Out;
+        return InOutTerm.make(phi, u, kind);
+      }
+
       public final @NotNull PrimDef.PrimSeed stringConcat =
         new PrimSeed(ID.STRCONCAT, Initializer::concat, ref -> new PrimDef(
           ref,
@@ -269,45 +424,15 @@ public final class PrimDef extends TopLevelDef<Term> {
           ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
           ImmutableSeq.empty());
 
-      public final @NotNull PrimDef.PrimSeed partialType =
-        new PrimSeed(ID.PARTIAL,
-          (prim, state) -> {
-            var iExp = prim.args().get(0).term();
-            var ty = prim.args().get(1).term();
+      private @NotNull Term hcomp(@NotNull PrimCall prim, @NotNull TyckState state) {
+        var A = prim.args().get(0).term();
+        var phi = prim.args().get(1).term();
+        var u = prim.args().get(2).term();
+        var u0 = prim.args().get(3).term();
+        return new HCompTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), u, u0);
+      }
 
-            return new PartialTyTerm(ty, AyaRestrSimplifier.INSTANCE.isOne(iExp));
-          },
-          ref -> new PrimDef(
-            ref,
-            ImmutableSeq.of(
-              new Term.Param(new LocalVar("phi"), IntervalTerm.INSTANCE, true),
-              new Term.Param(new LocalVar("A"), SortTerm.Type0, true)
-            ),
-            SortTerm.Set0, ID.PARTIAL),
-          ImmutableSeq.of(ID.I));
-    }
-
-    private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
-
-    private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
-
-    public Factory() {
-      var init = new Initializer();
-      seeds = ImmutableSeq.of(
-          init.intervalMin,
-          init.intervalMax,
-          init.intervalInv,
-          init.stringType,
-          init.stringConcat,
-          init.intervalType,
-          init.partialType,
-          init.coe,
-          init.coeFill,
-          init.eoc,
-          init.eocFill,
-          init.hcomp
-        ).map(seed -> Tuple.of(seed.name, seed))
-        .toImmutableMap();
+      private @NotNull PrimCall primCall(@NotNull PrimCall prim, @NotNull TyckState tyckState) {return prim;}
     }
 
     public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
@@ -356,64 +481,6 @@ public final class PrimDef extends TopLevelDef<Term> {
 
     public void clear(@NotNull ID name) {
       defs.remove(name);
-    }
-  }
-
-  /** Let A be argument, then <code>A 0 -> A 1</code> */
-  public static @NotNull PiTerm familyLeftToRight(Term term) {
-    return familyI2J(term, FormulaTerm.LEFT, FormulaTerm.RIGHT);
-  }
-
-  /** Let A be argument, then <code>A 1 -> A 0</code> */
-  public static @NotNull PiTerm familyRightToLeft(Term term) {
-    return familyI2J(term, FormulaTerm.RIGHT, FormulaTerm.LEFT);
-  }
-
-  /** Let A be argument, then <code>A i -> A j</code> */
-  private static @NotNull PiTerm familyI2J(Term term, FormulaTerm i, FormulaTerm j) {
-    return new PiTerm(
-      new Term.Param(LocalVar.IGNORED, AppTerm.make(term, new Arg<>(i, true)), true),
-      AppTerm.make(term, new Arg<>(j, true)));
-  }
-
-  /** <code>I -> Type</code> */
-  public static @NotNull Term intervalToType() {
-    var paramI = new Term.Param(LocalVar.IGNORED, IntervalTerm.INSTANCE, true);
-    return new PiTerm(paramI, SortTerm.Type0);
-  }
-
-  public enum ID {
-    IMIN("intervalMin"),
-    IMAX("intervalMax"),
-    INVOL("intervalInv"),
-    STRING("String"),
-    STRCONCAT("strcat"),
-    I("I"),
-    PARTIAL("Partial"),
-    COE("coe"),
-    COEFILL("coeFill"),
-    COEINV("eoc"),
-    COEINVFILL("eocFill"),
-    HCOMP("hcomp");
-
-    public final @NotNull @NonNls String id;
-
-    @Override public String toString() {
-      return id;
-    }
-
-    public static @Nullable ID find(@NotNull String id) {
-      for (var value : PrimDef.ID.values())
-        if (Objects.equals(value.id, id)) return value;
-      return null;
-    }
-
-    ID(@NotNull String id) {
-      this.id = id;
-    }
-
-    public static boolean projSyntax(@NotNull ID id) {
-      return id == COE || id == COEFILL || id == COEINV || id == COEINVFILL;
     }
   }
 

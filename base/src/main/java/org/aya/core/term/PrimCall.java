@@ -5,8 +5,8 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.PrimDef;
-import org.aya.util.Arg;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 public record PrimCall(

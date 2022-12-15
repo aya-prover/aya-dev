@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author re-xyr
  */
-public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements StableWHNF, Term {
+public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements StableWHNF, Formation {
   public static @NotNull SortTerm max(@NotNull SortTerm x, @NotNull SortTerm y) {
     int lift = Math.max(x.lift(), y.lift());
     if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
@@ -32,7 +32,8 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
   }
 
   private static final Term I = IntervalTerm.INSTANCE;
-  public @NotNull LamTerm coe(CoeTerm coe, LocalVar i) {
+
+  public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar i) {
     var t = new RefTerm(new LocalVar("t"));
     assert params.sizeGreaterThanOrEquals(2);
     var items = MutableArrayList.<Arg<Term>>create(params.size());
@@ -40,6 +41,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
       public @NotNull Term fill(@NotNull LocalVar i) {
         return AppTerm.make(CoeTerm.coeFill(coe.type(), coe.restr(), new RefTerm(i)), arg);
       }
+
       public @NotNull Term app() {
         return AppTerm.make(coe, arg);
       }

@@ -264,7 +264,6 @@ expr ::= newExpr
        | letExpr
        | doExpr
        | thisExpr
-       | partialExpr
        | pathExpr
        | atomExpr
        // put rules that do not start with `expr` above this line
@@ -277,6 +276,7 @@ atomExpr ::= uliftAtom
            | tupleAtom
            | idiomAtom
            | arrayAtom
+           | partialAtom
 uliftAtom ::= uliftPrefix* literal
 tupleAtom ::= LPAREN exprList RPAREN
 uliftPrefix ::= KW_ULIFT
@@ -306,7 +306,7 @@ letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
 letBindBlock ::= letBind | (BAR letBind)+
 letExpr ::= KW_LET letBindBlock KW_IN expr
 
-partialExpr ::= LPARTIAL partialInner? RPARTIAL
+partialAtom ::= LPARTIAL partialInner? RPARTIAL
 private partialInner ::= bareSubSystem? barredSubSystem*
 subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem

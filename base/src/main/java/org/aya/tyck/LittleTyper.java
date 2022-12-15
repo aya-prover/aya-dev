@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
@@ -25,7 +26,9 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     return switch (preterm) {
       case RefTerm term -> localCtx.get(term.var());
       case ConCall conCall -> conCall.head().underlyingDataCall();
-      case Callable.DefCall call -> defCall(call);
+      case Callable.DefCall call -> Def.defResult(call.ref())
+        .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
+        .lift(call.ulift());
       case MetaTerm hole -> {
         var result = hole.ref().result;
         yield result == null ? ErrorTerm.typeOf(hole) : result;
@@ -116,6 +119,17 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
       }
       case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
       case HCompTerm hComp -> throw new InternalException("TODO");
+      case InOutTerm inS when inS.kind() == InOutTerm.Kind.In -> {
+        var ty = term(inS.u());
+        yield state.primFactory().getCall(PrimDef.ID.SUB, ImmutableSeq.of(
+            ty, inS.phi(), PartialTerm.from(inS.phi(), inS.u(), ty))
+          .map(t -> new Arg<>(t, true)));
+      }
+      case InOutTerm outS -> {
+        var ty = term(outS.u());
+        if (ty instanceof PrimCall sub) yield sub.args().first().term();
+        else yield ErrorTerm.typeOf(outS);
+      }
     };
   }
 
@@ -123,9 +137,4 @@ public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) 
     return x.normalize(state, NormalizeMode.WHNF);
   }
 
-  private @NotNull Term defCall(@NotNull Callable.DefCall call) {
-    return Def.defResult(call.ref())
-      .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
-      .lift(call.ulift());
-  }
 }

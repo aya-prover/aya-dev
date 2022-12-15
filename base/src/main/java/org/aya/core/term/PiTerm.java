@@ -18,7 +18,7 @@ import java.util.function.UnaryOperator;
 /**
  * @author re-xyr, kiva, ice1000
  */
-public record PiTerm(@NotNull Param param, @NotNull Term body) implements StableWHNF, Term {
+public record PiTerm(@NotNull Param param, @NotNull Term body) implements StableWHNF, Formation {
   public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params) {
     if (fmap.apply(term) instanceof PiTerm(var param, var body)) {
       params.append(param);
@@ -85,7 +85,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
     return make(list.view().map(Param::interval), type);
   }
 
-  public @NotNull LamTerm coe(CoeTerm coe, LocalVar varI) {
+  public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar varI) {
     var u0Var = new LocalVar("u0");
     var vVar = new LocalVar("v");
     var A = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), param.type());

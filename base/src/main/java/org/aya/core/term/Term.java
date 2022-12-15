@@ -39,7 +39,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, FormulaTerm, HCompTerm, IntervalTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, PiTerm, RefTerm, RefTerm.Field, SigmaTerm, StableWHNF {
+  permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InOutTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -190,7 +190,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       case MetaPatTerm metaPat -> metaPat;
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
-      case HCompTerm hComp -> hComp; //TODO
+      case HCompTerm hComp -> throw new UnsupportedOperationException("TODO");
+      case InOutTerm inOutTerm -> {
+        var phi = f.apply(inOutTerm.phi());
+        var u = f.apply(inOutTerm.u());
+        if (phi == inOutTerm.phi() && u == inOutTerm.u()) yield inOutTerm;
+        yield InOutTerm.make(phi, u, inOutTerm.kind());
+      }
     };
   }
 

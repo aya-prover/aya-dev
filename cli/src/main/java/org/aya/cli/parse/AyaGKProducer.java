@@ -430,7 +430,7 @@ public record AyaGKProducer(
     var ids = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED));
     var type = type(node.child(TYPE));
     return ids.map(i -> new Expr.Param(
-      i.sourcePos(), LocalVar.from(i), type, explicit)).toImmutableSeq();
+      i.sourcePos(), LocalVar.from(i), type, explicit));
   }
 
   private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {
@@ -591,7 +591,7 @@ public record AyaGKProducer(
       } else result = expr(bodyExpr);
       return Expr.buildLam(pos, lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(), result);
     }
-    if (node.is(PARTIAL_EXPR)) return partial(node, pos);
+    if (node.is(PARTIAL_ATOM)) return partial(node, pos);
     if (node.is(PATH_EXPR)) {
       var params = node.childrenOfType(PATH_TELE).map(t ->
         LocalVar.from(teleParamName(t.child(TELE_PARAM_NAME)))).toImmutableSeq();

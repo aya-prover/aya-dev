@@ -6,16 +6,15 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
-import org.aya.util.Arg;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 public record DataCall(
   @Override @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-) implements Callable.DefCall, StableWHNF {
-
+) implements Callable.DefCall, StableWHNF, Formation {
   public @NotNull ConCall.Head conHead(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> ctorRef) {
     return new ConCall.Head(ref, ctorRef, ulift, args);
   }

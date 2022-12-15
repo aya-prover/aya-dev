@@ -13,12 +13,12 @@ public record AppTerm(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) impleme
     return make(new AppTerm(f, arg));
   }
 
-  @Contract(pure = true) public static @NotNull Term make(@NotNull AppTerm app) {
-    return switch (app.of()) {
+  @Contract(pure = true) public static @NotNull Term make(@NotNull AppTerm material) {
+    return switch (material.of()) {
       case MetaTerm(var ref, var contextArgs, var args)
-        when args.sizeLessThan(ref.telescope) -> new MetaTerm(ref, contextArgs, args.appended(app.arg()));
-      case LamTerm lam -> make(lam, app.arg());
-      default -> app;
+        when args.sizeLessThan(ref.telescope) -> new MetaTerm(ref, contextArgs, args.appended(material.arg()));
+      case LamTerm lam -> make(lam, material.arg());
+      default -> material;
     };
   }
 

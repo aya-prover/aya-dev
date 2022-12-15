@@ -70,8 +70,8 @@ public interface AyaPsiElementTypes {
   IElementType NEW_EXPR = new AyaPsiElementType("NEW_EXPR");
   IElementType OPEN_CMD = new AyaPsiElementType("OPEN_CMD");
   IElementType OPEN_KW = new AyaPsiElementType("OPEN_KW");
+  IElementType PARTIAL_ATOM = new AyaPsiElementType("PARTIAL_ATOM");
   IElementType PARTIAL_BLOCK = new AyaPsiElementType("PARTIAL_BLOCK");
-  IElementType PARTIAL_EXPR = new AyaPsiElementType("PARTIAL_EXPR");
   IElementType PATH_EXPR = new AyaPsiElementType("PATH_EXPR");
   IElementType PATH_TELE = new AyaPsiElementType("PATH_TELE");
   IElementType PATTERN = new AyaPsiElementType("PATTERN");

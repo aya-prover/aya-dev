@@ -6,9 +6,11 @@ import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
-/** partial type */
-public record PartialTyTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements StableWHNF {
+/** Type of partial elements. */
+public record PartialTyTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements StableWHNF, Formation {
   public @NotNull PartialTyTerm normalizeRestr() {
-    return new PartialTyTerm(type, AyaRestrSimplifier.INSTANCE.normalizeRestr(restr));
+    var newRestr = AyaRestrSimplifier.INSTANCE.normalizeRestr(restr);
+    if (newRestr == restr) return this;
+    return new PartialTyTerm(type, newRestr);
   }
 }

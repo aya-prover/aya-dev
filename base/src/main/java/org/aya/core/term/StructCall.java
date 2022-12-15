@@ -16,5 +16,5 @@ public record StructCall(
   @Override @NotNull DefVar<StructDef, TeleDecl.StructDecl> ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-) implements Callable.DefCall, StableWHNF {
+) implements Callable.DefCall, StableWHNF, Formation {
 }

@@ -841,7 +841,7 @@ public final class ExprTycker extends Tycker {
     return new TermResult(LamTerm.make(teleRenamed, body), type);
   }
 
-  /** @return null if unified successfully */
+  /** @return null if unified successfully, otherwise a frozen data */
   private Unifier.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.append(
       new Trace.UnifyT(lower.freezeHoles(state), upper.freezeHoles(state), pos)));
@@ -862,7 +862,8 @@ public final class ExprTycker extends Tycker {
    */
   public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     unifyTyReported(upper, lower, loc, unification ->
-      new UnifyError.Type(loc, upper, lower, unification, state));
+      new UnifyError.Type(loc, upper.freezeHoles(state), lower.freezeHoles(state),
+        unification, state));
   }
 
   public void unifyTyReported(
@@ -901,7 +902,9 @@ public final class ExprTycker extends Tycker {
     }
     var failureData = unifyTy(upper, lower, loc.sourcePos());
     if (failureData == null) return inst;
-    return fail(term.freezeHoles(state), upper, new UnifyError.Type(loc, upper.freezeHoles(state), lower.freezeHoles(state), failureData, state));
+    var frozenUpper = upper.freezeHoles(state);
+    return fail(term.freezeHoles(state), frozenUpper,
+      new UnifyError.Type(loc, frozenUpper, lower.freezeHoles(state), failureData, state));
   }
 
   private @Nullable TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {

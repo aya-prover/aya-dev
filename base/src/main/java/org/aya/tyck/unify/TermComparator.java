@@ -42,6 +42,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /**
  * Bidirectional unification of terms, with abstract {@link TermComparator#solveMeta}.
@@ -112,7 +113,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   public @NotNull FailureData getFailure() {
     assert failure != null;
-    return failure;
+    return failure.map(t -> t.freezeHoles(state));
   }
 
   protected final void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -142,12 +143,13 @@ public sealed abstract class TermComparator permits Unifier {
     if (lhs instanceof MetaTerm || type == null) return compareUntyped(lhs, rhs, lr, rl) != null;
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
     var result = doCompareTyped(type.normalize(state, NormalizeMode.WHNF), lhs, rhs, lr, rl);
-    if (!result && failure == null) failure = new FailureData(lhs.freezeHoles(state), rhs.freezeHoles(state));
+    if (!result && failure == null) failure = new FailureData(lhs, rhs);
     return result;
   }
 
-  @Nullable
-  protected Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
+  @Nullable protected Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
+    traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state),
+      rhs.freezeHoles(state), pos));
     // lhs & rhs will both be WHNF if either is not a potentially reducible call
     if (isCall(lhs) || isCall(rhs)) {
       var ty = compareApprox(lhs, rhs, lr, rl);
@@ -157,8 +159,9 @@ public sealed abstract class TermComparator permits Unifier {
     lhs = lhs.normalize(state, NormalizeMode.WHNF);
     rhs = rhs.normalize(state, NormalizeMode.WHNF);
     var x = doCompareUntyped(lhs, rhs, lr, rl);
+    traceExit();
     if (x != null) return x.normalize(state, NormalizeMode.WHNF);
-    if (failure == null) failure = new FailureData(lhs.freezeHoles(state), rhs.freezeHoles(state));
+    if (failure == null) failure = new FailureData(lhs, rhs);
     return null;
   }
 
@@ -182,12 +185,12 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private <T> T checkParam(
-    Term.Param l, Term.Param r, @Nullable Term type, Subst lsub, Subst rsub,
+    Term.Param l, Term.Param r, Subst lsub, Subst rsub,
     Sub lr, Sub rl, Supplier<T> fail, BiFunction<Subst, Subst, T> success
   ) {
     if (l.explicit() != r.explicit()) return fail.get();
     var lTy = l.type().subst(lsub);
-    if (!compare(lTy, r.type().subst(rsub), lr, rl, type)) return fail.get();
+    if (!compare(lTy, r.type().subst(rsub), lr, rl, null)) return fail.get();
     // Do not substitute when one side is ignored
     if (l.ref() == LocalVar.IGNORED || r.ref() == LocalVar.IGNORED) {
       return success.apply(lsub, rsub);
@@ -211,15 +214,8 @@ public sealed abstract class TermComparator permits Unifier {
   ) {
     if (!l.sizeEquals(r)) return fail.get();
     if (l.isEmpty()) return success.apply(lsub, rsub);
-    return checkParam(l.first(), r.first(), null, lsub, rsub, lr, rl, fail, (ls, rs) ->
+    return checkParam(l.first(), r.first(), lsub, rsub, lr, rl, fail, (ls, rs) ->
       checkParams(l.drop(1), r.drop(1), ls, rs, lr, rl, fail, success));
-  }
-
-  private <T> T checkParams(
-    SeqView<Term.Param> l, SeqView<Term.Param> r,
-    Sub lr, Sub rl, Supplier<T> fail, BiFunction<Subst, Subst, T> success
-  ) {
-    return checkParams(l, r, new Subst(), new Subst(), lr, rl, fail, success);
   }
 
   private boolean visitArgs(SeqLike<Arg<Term>> l, SeqLike<Arg<Term>> r, Sub lr, Sub rl, SeqLike<Term.Param> params) {
@@ -378,7 +374,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   private boolean compareCube(@NotNull PathTerm lhs, @NotNull PathTerm rhs, Sub lr, Sub rl) {
     var tyVars = rhs.params();
-    return ctx.withIntervals(tyVars.view(), () -> TermComparator.withIntervals(lhs.params(), rhs.params(), lr, rl, tyVars, (lsub, rsub) -> {
+    return ctx.withIntervals(tyVars.view(), () -> withIntervals(lhs.params(), rhs.params(), lr, rl, tyVars, (lsub, rsub) -> {
       var lPar = (PartialTerm) new PartialTerm(lhs.partial(), lhs.type()).subst(lsub);
       var rPar = (PartialTerm) new PartialTerm(rhs.partial(), rhs.type()).subst(rsub);
       var lType = new PartialTyTerm(lPar.rhsType(), lPar.partial().restr());
@@ -388,17 +384,52 @@ public sealed abstract class TermComparator permits Unifier {
     }));
   }
 
+  /**
+   * Sub lr, Sub rl are unused because they are solely for the purpose of unification.
+   * In this case, we don't expect unification.
+   */
   private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
     return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
       && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
   }
 
+  /**
+   * @implNote Do not need to compute result type precisely because unification won't need this info
+   * (written by re-xyr)
+   * @see #doCompareUntyped
+   */
+  private boolean doCompareType(@NotNull Formation preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
+    if (preLhs.getClass() != preRhs.getClass()) return false;
+    record Pair(Formation lhs, Formation rhs) {
+    }
+    return switch (new Pair(preLhs, (Formation) preRhs)) {
+      default -> throw noRules(preLhs);
+      case Pair(DataCall lhs, DataCall rhs) -> {
+        if (lhs.ref() != rhs.ref()) yield false;
+        yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
+      }
+      case Pair(StructCall lhs, StructCall rhs) -> {
+        if (lhs.ref() != rhs.ref()) yield false;
+        yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
+      }
+      case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) ->
+        checkParam(lParam, rParam, new Subst(), new Subst(), lr, rl, () -> null,
+          (lsub, rsub) -> compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null));
+      case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) -> checkParams(lParams.view(), rParams.view(),
+        new Subst(), new Subst(), lr, rl, () -> false, (lsub, rsub) -> true);
+      case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
+      case Pair(PartialTyTerm(var lTy, var lR), PartialTyTerm(var rTy, var rR)) ->
+        compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
+      case Pair(PathTerm lCube, PathTerm rCube) -> compareCube(lCube, rCube, lr, rl);
+      case Pair(IntervalTerm lhs, IntervalTerm rhs) -> true;
+    };
+  }
+
   private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
-    traceEntrance(new Trace.UnifyT(preLhs.freezeHoles(state),
-      preRhs.freezeHoles(state), this.pos));
+    if (preLhs instanceof Formation lhs) return doCompareType(lhs, preRhs, lr, rl) ? SortTerm.Type0 : null;
     var ret = switch (preLhs) {
-      default ->
-        throw new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaDistillerOptions.debug()).debugRender());
+      default -> throw noRules(preLhs);
+      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
       case MetaPatTerm metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof MetaPatTerm(var rRef) && lhsRef == rRef) yield lhsRef.type();
@@ -436,35 +467,6 @@ public sealed abstract class TermComparator permits Unifier {
         if (params.isNotEmpty()) yield params.first().subst(subst).type();
         yield params.last().subst(subst).type();
       }
-      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
-      case PiTerm(var lParam, var lBody) -> {
-        if (!(preRhs instanceof PiTerm(var rParam, var rBody))) yield null;
-        yield checkParam(lParam, rParam, null, new Subst(), new Subst(), lr, rl, () -> null, (lsub, rsub) -> {
-          var bodyIsOk = compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null);
-          if (!bodyIsOk) return null;
-          return SortTerm.Type0;
-        });
-      }
-      case SigmaTerm(var lParams) -> {
-        if (!(preRhs instanceof SigmaTerm(var rParams))) yield null;
-        yield checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> SortTerm.Type0);
-      }
-      case SortTerm lhs -> {
-        if (!(preRhs instanceof SortTerm rhs)) yield null;
-        if (!compareSort(lhs, rhs)) yield null;
-        yield (cmp == Ordering.Lt ? lhs : rhs).succ();
-      }
-      case PartialTyTerm(var lTy, var lR) -> {
-        if (!(preRhs instanceof PartialTyTerm(var rTy, var rR))) yield null;
-        var happy = compare(lTy, rTy, lr, rl, null)
-          && compareRestr(lR, rR);
-        yield happy ? SortTerm.Type0 : null;
-      }
-      case PathTerm lCube -> {
-        if (!(preRhs instanceof PathTerm rCube)) yield null;
-        yield compareCube(lCube, rCube, lr, rl) ? SortTerm.Type0 : null;
-      }
-      case IntervalTerm lhs -> preRhs instanceof IntervalTerm ? SortTerm.Type0 : null;
       case FormulaTerm lhs -> {
         if (!(preRhs instanceof FormulaTerm rhs)) yield null;
         if (compareRestr(AyaRestrSimplifier.INSTANCE.isOne(lhs), AyaRestrSimplifier.INSTANCE.isOne(rhs)))
@@ -473,17 +475,6 @@ public sealed abstract class TermComparator permits Unifier {
       }
       // See compareApprox for why we don't compare these
       case FnCall lhs -> null;
-      case DataCall lhs -> {
-        if (!(preRhs instanceof DataCall rhs) || lhs.ref() != rhs.ref()) yield null;
-        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
-        // Do not need to be computed precisely because unification won't need this info
-        yield args ? SortTerm.Type0 : null;
-      }
-      case StructCall lhs -> {
-        if (!(preRhs instanceof StructCall rhs) || lhs.ref() != rhs.ref()) yield null;
-        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
-        yield args ? SortTerm.Type0 : null;
-      }
       case CoeTerm lhs -> {
         if (!(preRhs instanceof CoeTerm rhs)) yield null;
         if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
@@ -527,8 +518,11 @@ public sealed abstract class TermComparator permits Unifier {
       };
       case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs);
     };
-    traceExit();
     return ret;
+  }
+
+  @NotNull private static InternalException noRules(@NotNull Term preLhs) {
+    return new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaDistillerOptions.debug()).debugRender());
   }
 
   /**
@@ -549,9 +543,9 @@ public sealed abstract class TermComparator permits Unifier {
 
   public boolean compareSort(SortTerm l, SortTerm r) {
     var result = switch (cmp) {
-      case Gt -> TermComparator.sortLt(r, l);
+      case Gt -> sortLt(r, l);
       case Eq -> l.kind() == r.kind() && l.lift() == r.lift();
-      case Lt -> TermComparator.sortLt(l, r);
+      case Lt -> sortLt(l, r);
     };
     if (!result) {
       switch (cmp) {
@@ -575,5 +569,8 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   public record FailureData(@NotNull Term lhs, @NotNull Term rhs) {
+    public @NotNull FailureData map(@NotNull UnaryOperator<Term> f) {
+      return new FailureData(f.apply(lhs), f.apply(rhs));
+    }
   }
 }

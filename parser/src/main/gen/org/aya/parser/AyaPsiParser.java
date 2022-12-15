@@ -46,7 +46,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       CALM_FACE_EXPR, DO_EXPR, EXPR, FORALL_EXPR,
       GOAL_EXPR, HOLE_EXPR, IDIOM_ATOM, LAMBDA_EXPR,
       LET_EXPR, LITERAL, LIT_INT_EXPR, LIT_STRING_EXPR,
-      MATCH_EXPR, NEW_EXPR, PARTIAL_EXPR, PATH_EXPR,
+      MATCH_EXPR, NEW_EXPR, PARTIAL_ATOM, PATH_EXPR,
       PI_EXPR, PROJ_EXPR, REF_EXPR, SIGMA_EXPR,
       THIS_EXPR, TUPLE_ATOM, ULIFT_ATOM, UNIV_EXPR),
   };
@@ -1342,6 +1342,27 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // LPARTIAL partialInner? RPARTIAL
+  public static boolean partialAtom(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialAtom")) return false;
+    if (!nextTokenIs(b, LPARTIAL)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LPARTIAL);
+    r = r && partialAtom_1(b, l + 1);
+    r = r && consumeToken(b, RPARTIAL);
+    exit_section_(b, m, PARTIAL_ATOM, r);
+    return r;
+  }
+
+  // partialInner?
+  private static boolean partialAtom_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialAtom_1")) return false;
+    partialInner(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
   // <<braced partialInner>>
   public static boolean partialBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "partialBlock")) return false;
@@ -2368,12 +2389,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // 6: PREFIX(letExpr)
   // 7: ATOM(doExpr)
   // 8: ATOM(thisExpr)
-  // 9: ATOM(partialExpr)
-  // 10: PREFIX(pathExpr)
-  // 11: ATOM(atomExpr)
-  // 12: BINARY(arrowExpr)
-  // 13: POSTFIX(appExpr)
-  // 14: POSTFIX(projExpr)
+  // 9: PREFIX(pathExpr)
+  // 10: ATOM(atomExpr)
+  // 11: BINARY(arrowExpr)
+  // 12: POSTFIX(appExpr)
+  // 13: POSTFIX(projExpr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -2388,7 +2408,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = letExpr(b, l + 1);
     if (!r) r = doExpr(b, l + 1);
     if (!r) r = thisExpr(b, l + 1);
-    if (!r) r = partialExpr(b, l + 1);
     if (!r) r = pathExpr(b, l + 1);
     if (!r) r = atomExpr(b, l + 1);
     p = r;
@@ -2402,15 +2421,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 12 && consumeTokenSmart(b, TO)) {
-        r = expr(b, l, 11);
+      if (g < 11 && consumeTokenSmart(b, TO)) {
+        r = expr(b, l, 10);
         exit_section_(b, l, m, ARROW_EXPR, r, true, null);
       }
-      else if (g < 13 && appExpr_0(b, l + 1)) {
+      else if (g < 12 && appExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, APP_EXPR, r, true, null);
       }
-      else if (g < 14 && projFix(b, l + 1)) {
+      else if (g < 13 && projFix(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROJ_EXPR, r, true, null);
       }
@@ -2700,26 +2719,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LPARTIAL partialInner? RPARTIAL
-  public static boolean partialExpr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "partialExpr")) return false;
-    if (!nextTokenIsSmart(b, LPARTIAL)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, LPARTIAL);
-    r = r && partialExpr_1(b, l + 1);
-    r = r && consumeToken(b, RPARTIAL);
-    exit_section_(b, m, PARTIAL_EXPR, r);
-    return r;
-  }
-
-  // partialInner?
-  private static boolean partialExpr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "partialExpr_1")) return false;
-    partialInner(b, l + 1);
-    return true;
-  }
-
   public static boolean pathExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pathExpr")) return false;
     if (!nextTokenIsSmart(b, LPATH)) return false;
@@ -2727,7 +2726,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, null);
     r = pathExpr_0(b, l + 1);
     p = r;
-    r = p && expr(b, l, 10);
+    r = p && expr(b, l, 9);
     r = p && report_error_(b, pathExpr_1(b, l + 1)) && r;
     exit_section_(b, l, m, PATH_EXPR, r, p, null);
     return r || p;
@@ -2771,6 +2770,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   //            | tupleAtom
   //            | idiomAtom
   //            | arrayAtom
+  //            | partialAtom
   public static boolean atomExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomExpr")) return false;
     boolean r;
@@ -2779,6 +2779,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = tupleAtom(b, l + 1);
     if (!r) r = idiomAtom(b, l + 1);
     if (!r) r = arrayAtom(b, l + 1);
+    if (!r) r = partialAtom(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
