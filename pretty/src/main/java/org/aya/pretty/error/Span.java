@@ -9,12 +9,27 @@ public interface Span {
 
   @NotNull Span.Data normalize(PrettyErrorConfig config);
 
+  enum NowLoc {
+    Shot, Start, End, Between, None,
+  }
+
   record Data(
     int startLine,
     int startCol,
     int endLine,
     int endCol
   ) {
+    public boolean oneLinear() {
+      return startLine == endLine;
+    }
+
+    public NowLoc nowLoc(int currentLine) {
+      if (currentLine == startLine) return oneLinear() ? NowLoc.Shot : NowLoc.Start;
+      if (currentLine == endLine) return NowLoc.End;
+      if (currentLine > startLine && currentLine < endLine) return NowLoc.Between;
+      return NowLoc.None;
+    }
+
     public @NotNull Data union(@NotNull Data other) {
       return new Data(
         Math.min(startLine, other.startLine),

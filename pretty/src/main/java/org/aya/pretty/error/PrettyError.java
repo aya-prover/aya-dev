@@ -28,7 +28,29 @@ public record PrettyError(
     @NotNull Option<Character> errorIndicator,
     char underlineBegin,
     char underlineEnd,
-    char underlineBody) {
+    char underlineBody,
+    char beginCorner,
+    char endCorner
+  ) {
+    public @NotNull String underlineBody(int n) {
+      return Character.toString(underlineBody).repeat(n);
+    }
+
+    public @NotNull Doc underlineBodyDoc(int n) {
+      return Doc.plain(underlineBody(n));
+    }
+
+    public @NotNull Doc lineNoSepDoc() {
+      return Doc.plain(Character.toString(lineNoSeparator));
+    }
+
+    public @NotNull Doc beginCornerDoc() {
+      return Doc.plain(Character.toString(beginCorner));
+    }
+
+    public @NotNull Doc endCornerDoc() {
+      return Doc.plain(Character.toString(endCorner));
+    }
 
     public static final FormatConfig CLASSIC = new FormatConfig(
       Option.none(),
@@ -36,16 +58,20 @@ public record PrettyError(
       Option.none(),
       '^',
       '^',
-      '-'
+      '-',
+      '+',
+      '+'
     );
 
     public static final FormatConfig UNICODE = new FormatConfig(
       Option.some('┝'),
       '│',
-      Option.some('⮬'),
+      Option.some('┘'),
       '╰',
       '╯',
-      '─'
+      '─',
+      '┌',
+      '└'
     );
   }
 
