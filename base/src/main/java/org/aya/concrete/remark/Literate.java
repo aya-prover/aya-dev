@@ -28,7 +28,7 @@ public sealed interface Literate extends Docile {
 
   record List(@NotNull ImmutableSeq<Literate> items, boolean ordered) implements Literate {
     @Override public @NotNull Doc toDoc() {
-      return Doc.list(items.map(Literate::toDoc), ordered);
+      return Doc.list(ordered, items.map(Literate::toDoc));
     }
   }
 

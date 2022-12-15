@@ -191,7 +191,7 @@ public sealed interface Doc extends Docile {
     }
   }
 
-  record List(@NotNull ImmutableSeq<Doc> items, boolean isOrdered) implements Doc {
+  record List(boolean isOrdered, @NotNull ImmutableSeq<Doc> items) implements Doc {
   }
 
   /**
@@ -647,16 +647,16 @@ public sealed interface Doc extends Docile {
     return vcat(docs.view().filter(Doc::isNotEmpty));
   }
 
-  @Contract("_, _ -> new") static @NotNull Doc list(@NotNull SeqLike<@NotNull Doc> docs, boolean isOrdered) {
-    return new List(docs.toImmutableSeq(), isOrdered);
+  @Contract("_, _ -> new") static @NotNull Doc list(boolean isOrdered, @NotNull SeqLike<@NotNull Doc> docs) {
+    return new List(isOrdered, docs.toImmutableSeq());
   }
 
   @Contract("_ -> new") static @NotNull Doc ordered(Doc @NotNull ... docs) {
-    return list(Seq.of(docs), true);
+    return list(true, Seq.of(docs));
   }
 
   @Contract("_ -> new") static @NotNull Doc bullet(Doc @NotNull ... docs) {
-    return list(Seq.of(docs), false);
+    return list(false, Seq.of(docs));
   }
 
   /**
