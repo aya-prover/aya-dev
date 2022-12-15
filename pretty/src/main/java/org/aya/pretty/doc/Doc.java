@@ -494,8 +494,9 @@ public sealed interface Doc extends Docile {
   /**
    * Concat {@param left}, {@param delim} and {@param right}, with
    * {@param left} occupying at least {@param minBeforeDelim} length.
-   * This behaves like {@code printf("%-*s%s%s", minBeforeDelim, left, delim, right);}
+   * The "R" in method name stands for "right", which means the delim is placed near the right.
    * <p>
+   * This behaves like {@code printf("%-*s%s%s", minBeforeDelim, left, delim, right);}
    * For example:
    * <pre>
    *   var doc = split(8, plain("Help"), plain(":"), english("Show the help message"));
@@ -505,7 +506,7 @@ public sealed interface Doc extends Docile {
    * @param minBeforeDelim The minimum length before {@param delim}
    * @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
    */
-  static @NotNull Doc split(int minBeforeDelim, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
+  static @NotNull Doc splitR(int minBeforeDelim, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
     var alignedMiddle = column(k -> nesting(i -> indent(minBeforeDelim - k + i, delim)));
     return Doc.cat(left, alignedMiddle, Doc.align(right));
   }
@@ -513,8 +514,9 @@ public sealed interface Doc extends Docile {
   /**
    * Concat {@param left}, {@param delim} and {@param right}, with
    * {@param left} and {@param delim} occupying at least {@param minBeforeRight} length.
-   * This behaves like {@code printf("%*s%s", minBeforeRight, (left ++ delim), right);}
+   * The "L" in method name stands for "left", which means the delim is placed near the left.
    * <p>
+   * This behaves like {@code printf("%*s%s", minBeforeRight, (left ++ delim), right);}
    * For example:
    * <pre>
    *   var doc = splitR(8, plain("Help"), plain(":"), english("Show the help message"));
@@ -524,18 +526,18 @@ public sealed interface Doc extends Docile {
    * @param minBeforeRight The minimum length before {@param right}
    * @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
    */
-  static @NotNull Doc splitR(int minBeforeRight, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
+  static @NotNull Doc splitL(int minBeforeRight, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
     var alignedRight = column(k -> nesting(i -> indent(minBeforeRight - k + i, Doc.align(right))));
     return Doc.cat(left, delim, alignedRight);
   }
 
-  static @NotNull Doc catBlock(int minBeforeDelim, @NotNull ImmutableSeq<Doc> left, @NotNull Doc delim, @NotNull ImmutableSeq<Doc> right) {
-    var vs = left.zipView(right).map(p -> Doc.split(minBeforeDelim, p._1, delim, p._2));
+  static @NotNull Doc catBlockR(int minBeforeDelim, @NotNull SeqLike<Doc> left, @NotNull Doc delim, @NotNull SeqLike<Doc> right) {
+    var vs = left.zipView(right).map(p -> Doc.splitR(minBeforeDelim, p._1, delim, p._2));
     return Doc.vcat(vs);
   }
 
-  static @NotNull Doc catBlockR(int minBeforeRight, @NotNull ImmutableSeq<Doc> left, @NotNull Doc delim, @NotNull ImmutableSeq<Doc> right) {
-    var vs = left.zipView(right).map(p -> Doc.splitR(minBeforeRight, p._1, delim, p._2));
+  static @NotNull Doc catBlockL(int minBeforeRight, @NotNull SeqLike<Doc> left, @NotNull Doc delim, @NotNull SeqLike<Doc> right) {
+    var vs = left.zipView(right).map(p -> Doc.splitL(minBeforeRight, p._1, delim, p._2));
     return Doc.vcat(vs);
   }
 
