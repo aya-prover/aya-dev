@@ -18,4 +18,4 @@ prim eocFill
 prim Partial (φ : I) (A : Type) : Set
 prim Sub (A : Type) (φ : I) (Partial φ A) : Set
 prim inS {A : Type} {φ : I} (x : A) : Sub A φ {| φ := x |}
-// prim outS
+prim outS {A : Type} {φ : I} {p : Partial φ A} (x : Sub A φ p) : A

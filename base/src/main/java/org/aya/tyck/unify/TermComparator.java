@@ -393,12 +393,54 @@ public sealed abstract class TermComparator permits Unifier {
       && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
   }
 
+  /**
+   * @implNote Do not need to compute result type precisely because unification won't need this info
+   * (written by re-xyr)
+   * @see #doCompareUntyped
+   */
+  private boolean doCompareType(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
+    return switch (preLhs) {
+      default -> throw noRules(preLhs);
+      case DataCall lhs -> {
+        if (!(preRhs instanceof DataCall rhs) || lhs.ref() != rhs.ref()) yield false;
+        yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
+      }
+      case StructCall lhs -> {
+        if (!(preRhs instanceof StructCall rhs) || lhs.ref() != rhs.ref()) yield false;
+        yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
+      }
+      case PiTerm(var lParam, var lBody) -> {
+        if (!(preRhs instanceof PiTerm(var rParam, var rBody))) yield false;
+        yield checkParam(lParam, rParam, null, new Subst(), new Subst(), lr, rl, () -> null,
+          (lsub, rsub) -> compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null));
+      }
+      case SigmaTerm(var lParams) -> {
+        if (!(preRhs instanceof SigmaTerm(var rParams))) yield false;
+        yield checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> true);
+      }
+      case SortTerm lhs -> {
+        if (!(preRhs instanceof SortTerm rhs)) yield false;
+        yield compareSort(lhs, rhs);
+      }
+      case PartialTyTerm(var lTy, var lR) -> {
+        if (!(preRhs instanceof PartialTyTerm(var rTy, var rR))) yield false;
+        yield compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
+      }
+      case PathTerm lCube -> {
+        if (!(preRhs instanceof PathTerm rCube)) yield false;
+        yield compareCube(lCube, rCube, lr, rl);
+      }
+      case IntervalTerm lhs -> preRhs instanceof IntervalTerm;
+    };
+  }
+
   private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     traceEntrance(new Trace.UnifyT(preLhs.freezeHoles(state),
-      preRhs.freezeHoles(state), this.pos));
+      preRhs.freezeHoles(state), pos));
+    if (isType(preLhs)) return doCompareType(preLhs, preRhs, lr, rl) ? SortTerm.Type0 : null;
     var ret = switch (preLhs) {
-      default ->
-        throw new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaDistillerOptions.debug()).debugRender());
+      default -> throw noRules(preLhs);
+      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
       case MetaPatTerm metaPat -> {
         var lhsRef = metaPat.ref();
         if (preRhs instanceof MetaPatTerm(var rRef) && lhsRef == rRef) yield lhsRef.type();
@@ -436,35 +478,11 @@ public sealed abstract class TermComparator permits Unifier {
         if (params.isNotEmpty()) yield params.first().subst(subst).type();
         yield params.last().subst(subst).type();
       }
-      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
-      case PiTerm(var lParam, var lBody) -> {
-        if (!(preRhs instanceof PiTerm(var rParam, var rBody))) yield null;
-        yield checkParam(lParam, rParam, null, new Subst(), new Subst(), lr, rl, () -> null, (lsub, rsub) -> {
-          var bodyIsOk = compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null);
-          if (!bodyIsOk) return null;
-          return SortTerm.Type0;
-        });
-      }
-      case SigmaTerm(var lParams) -> {
-        if (!(preRhs instanceof SigmaTerm(var rParams))) yield null;
-        yield checkParams(lParams.view(), rParams.view(), lr, rl, () -> null, (lsub, rsub) -> SortTerm.Type0);
-      }
       case SortTerm lhs -> {
         if (!(preRhs instanceof SortTerm rhs)) yield null;
         if (!compareSort(lhs, rhs)) yield null;
         yield (cmp == Ordering.Lt ? lhs : rhs).succ();
       }
-      case PartialTyTerm(var lTy, var lR) -> {
-        if (!(preRhs instanceof PartialTyTerm(var rTy, var rR))) yield null;
-        var happy = compare(lTy, rTy, lr, rl, null)
-          && compareRestr(lR, rR);
-        yield happy ? SortTerm.Type0 : null;
-      }
-      case PathTerm lCube -> {
-        if (!(preRhs instanceof PathTerm rCube)) yield null;
-        yield compareCube(lCube, rCube, lr, rl) ? SortTerm.Type0 : null;
-      }
-      case IntervalTerm lhs -> preRhs instanceof IntervalTerm ? SortTerm.Type0 : null;
       case FormulaTerm lhs -> {
         if (!(preRhs instanceof FormulaTerm rhs)) yield null;
         if (compareRestr(AyaRestrSimplifier.INSTANCE.isOne(lhs), AyaRestrSimplifier.INSTANCE.isOne(rhs)))
@@ -473,17 +491,6 @@ public sealed abstract class TermComparator permits Unifier {
       }
       // See compareApprox for why we don't compare these
       case FnCall lhs -> null;
-      case DataCall lhs -> {
-        if (!(preRhs instanceof DataCall rhs) || lhs.ref() != rhs.ref()) yield null;
-        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
-        // Do not need to be computed precisely because unification won't need this info
-        yield args ? SortTerm.Type0 : null;
-      }
-      case StructCall lhs -> {
-        if (!(preRhs instanceof StructCall rhs) || lhs.ref() != rhs.ref()) yield null;
-        var args = visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
-        yield args ? SortTerm.Type0 : null;
-      }
       case CoeTerm lhs -> {
         if (!(preRhs instanceof CoeTerm rhs)) yield null;
         if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
@@ -529,6 +536,20 @@ public sealed abstract class TermComparator permits Unifier {
     };
     traceExit();
     return ret;
+  }
+
+  private static boolean isType(@NotNull Term preLhs) {
+    return preLhs instanceof PiTerm
+      || preLhs instanceof SigmaTerm
+      || preLhs instanceof PartialTyTerm
+      || preLhs instanceof PathTerm
+      || preLhs instanceof IntervalTerm
+      || preLhs instanceof DataCall
+      || preLhs instanceof StructCall;
+  }
+
+  @NotNull private static InternalException noRules(@NotNull Term preLhs) {
+    return new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaDistillerOptions.debug()).debugRender());
   }
 
   /**

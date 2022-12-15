@@ -4,6 +4,9 @@ public open import Primitives using
   , eoc
   , coeFill
   , eocFill
+  , Sub
+  , inS
+  , outS
   )
 public open import Intervals
 
