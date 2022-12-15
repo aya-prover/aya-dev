@@ -42,6 +42,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /**
  * Bidirectional unification of terms, with abstract {@link TermComparator#solveMeta}.
@@ -112,7 +113,7 @@ public sealed abstract class TermComparator permits Unifier {
 
   public @NotNull FailureData getFailure() {
     assert failure != null;
-    return failure;
+    return failure.map(t -> t.freezeHoles(state));
   }
 
   protected final void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -142,7 +143,7 @@ public sealed abstract class TermComparator permits Unifier {
     if (lhs instanceof MetaTerm || type == null) return compareUntyped(lhs, rhs, lr, rl) != null;
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
     var result = doCompareTyped(type.normalize(state, NormalizeMode.WHNF), lhs, rhs, lr, rl);
-    if (!result && failure == null) failure = new FailureData(lhs.freezeHoles(state), rhs.freezeHoles(state));
+    if (!result && failure == null) failure = new FailureData(lhs, rhs);
     return result;
   }
 
@@ -158,7 +159,7 @@ public sealed abstract class TermComparator permits Unifier {
     rhs = rhs.normalize(state, NormalizeMode.WHNF);
     var x = doCompareUntyped(lhs, rhs, lr, rl);
     if (x != null) return x.normalize(state, NormalizeMode.WHNF);
-    if (failure == null) failure = new FailureData(lhs.freezeHoles(state), rhs.freezeHoles(state));
+    if (failure == null) failure = new FailureData(lhs, rhs);
     return null;
   }
 
@@ -420,7 +421,7 @@ public sealed abstract class TermComparator permits Unifier {
       case Pair(PathTerm lCube, PathTerm rCube) -> compareCube(lCube, rCube, lr, rl);
       case Pair(SubTerm lsub, SubTerm rsub) -> {
         if (!compare(lsub.type(), rsub.type(), lr, rl, null)) yield false;
-        if (!compare(lsub.restr(), rsub.restr(), lr, rl, null)) yield false;
+        if (!compare(lsub.restr(), rsub.restr(), lr, rl, IntervalTerm.INSTANCE)) yield false;
         // Note that here lsub.type() and rsub.type() don't matter, see impl of comparePartial
         var restr = lsub.restr().normalize(state, NormalizeMode.NF);
         yield comparePartial(new PartialTerm(lsub.partial(), lsub.type()),
@@ -583,5 +584,8 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   public record FailureData(@NotNull Term lhs, @NotNull Term rhs) {
+    public @NotNull FailureData map(@NotNull UnaryOperator<Term> f) {
+      return new FailureData(f.apply(lhs), f.apply(rhs));
+    }
   }
 }
