@@ -176,6 +176,7 @@ public record PrettyError(
 
   private void renderHints(
     boolean continued,
+    boolean continuedFromStartEnd,
     int currentLine, int codeIndent,
     int vbarUsedIndent, @NotNull Doc vbar,
     @NotNull Doc currentCode,
@@ -196,11 +197,11 @@ public record PrettyError(
     var almost = Doc.stickySep(Doc.cat(split.underlines), Doc.align(Doc.cat(split.notes)));
     var codeHint = startOrEnd != null
       ? renderStartEndHint(startOrEnd, vbar, almost, rest)
-      : renderContinuedHint(continued, vbar, almost, rest);
+      : renderContinuedHint(continued, continuedFromStartEnd, vbar, almost, rest);
     builder.add(codeHint);
     // show overlapped hints in the next line
     if (split.overlapped.isNotEmpty())
-      renderHints(true, currentLine, codeIndent, vbarUsedIndent, vbar, currentCode, builder, split.overlapped.toImmutableSeq());
+      renderHints(true, startOrEnd != null, currentLine, codeIndent, vbarUsedIndent, vbar, currentCode, builder, split.overlapped.toImmutableSeq());
   }
 
   private @NotNull Doc renderStartEndHint(@NotNull HintLine startOrEnd, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
@@ -209,8 +210,8 @@ public record PrettyError(
       : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost);
   }
 
-  private @NotNull Doc renderContinuedHint(boolean continued, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
-    return continued && vbar.isEmpty()
+  private @NotNull Doc renderContinuedHint(boolean continued, boolean fromStartEnd, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
+    return continued && fromStartEnd && vbar.isEmpty()
       ? Doc.cat(formatConfig.lineNoSepDoc(), Doc.indent(rest * INDENT_FACTOR, almost))
       : Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, almost));
   }
@@ -236,7 +237,7 @@ public record PrettyError(
       .sorted(Comparator.comparingInt(a -> a.allocIndent));
     var others = hintLines.filter(h -> h.loc != Span.NowLoc.Between);
     var vbar = computeMultilineVBar(between);
-    renderHints(false, currentLine, codeIndent, vbar._1, vbar._2, currentCode, builder, others);
+    renderHints(false, false, currentLine, codeIndent, vbar._1, vbar._2, currentCode, builder, others);
   }
 
   private @NotNull Doc visualizeCode(
