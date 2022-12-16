@@ -1,9 +1,9 @@
 In file $FILE:6:2 ->
 
-  4 | 
-  5 | def make-vec2 (A B : Type) (a : A) (b : B) : Vec2 A B =>
-  6 |   new Vec2 A B { | x => a | y => b | z => a }
-        ^-----------------------------------------^
+  4 |   
+  5 |   def make-vec2 (A B : Type) (a : A) (b : B) : Vec2 A B =>
+  6 |     new Vec2 A B { | x => a | y => b | z => a }
+    |     ^-----------------------------------------^
 
 Error: No such field(s): `z`
 

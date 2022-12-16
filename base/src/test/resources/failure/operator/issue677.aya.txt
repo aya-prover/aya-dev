@@ -1,9 +1,9 @@
 In file $FILE:3:27 ->
 
-  1 | data False
-  2 | def fixl ¬ (A : Type) => A -> False
-  3 | def NonEmpty (A : Type) => ¬ ¬ A
-                                 ^^
+  1 |   data False
+  2 |   def fixl ¬ (A : Type) => A -> False
+  3 |   def NonEmpty (A : Type) => ¬ ¬ A
+    |                              ^^
 
 Error: There is no operand for this operator `¬`
 

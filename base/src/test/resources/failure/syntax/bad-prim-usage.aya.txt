@@ -1,9 +1,9 @@
 In file $FILE:4:53 ->
 
-  2 | prim coe
-  3 | 
-  4 | def test {A : I -> Type} (restr : I) : A 0 -> A 1 => coe A restr
-                                                           ^-^
+  2 |   prim coe
+  3 |   
+  4 |   def test {A : I -> Type} (restr : I) : A 0 -> A 1 => coe A restr
+    |                                                        ^-^
 
 Error: The primitive `coe` is not designed to be used as a function
 note: Use the projection syntax instead, like: `.coe`

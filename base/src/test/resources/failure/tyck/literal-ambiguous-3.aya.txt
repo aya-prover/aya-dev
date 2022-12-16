@@ -1,9 +1,9 @@
 In file $FILE:6:24 ->
 
-  4 | 
-  5 | // TODO: make this work
-  6 | def good : List Unit => [ ]
-                              ^-^
+  4 |   
+  5 |   // TODO: make this work
+  6 |   def good : List Unit => [ ]
+    |                           ^-^
 
 Error: Unable to solve the type of this literal:
          [  ]
@@ -12,10 +12,10 @@ Error: Unable to solve the type of this literal:
 
 In file $FILE:8:11 ->
 
-  6 | def good : List Unit => [ ]
-  7 | 
-  8 | def bad => [ unit ]
-                 ^------^
+  6 |   def good : List Unit => [ ]
+  7 |   
+  8 |   def bad => [ unit ]
+    |              ^------^
 
 Error: Unable to solve the type of this literal:
          [ unit ]

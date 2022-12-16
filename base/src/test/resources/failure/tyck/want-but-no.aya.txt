@@ -1,7 +1,7 @@
 In file $FILE:1:19 ->
 
-  1 | def test : Type => \ x => x
-                         ^------^
+  1 |   def test : Type => \ x => x
+    |                      ^------^
 
 Error: Unable to apply the expression
          \ x => x

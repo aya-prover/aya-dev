@@ -1,7 +1,7 @@
 In file $FILE:1:4 ->
 
-  1 | def a : Type
-          ^^
+  1 |   def a : Type
+    |       ^^
 
 Error: The empty pattern-matching function a does not have a telescope
 

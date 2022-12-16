@@ -1,9 +1,9 @@
 In file $FILE:6:2 ->
 
-  4 | | a, zero => a
-  5 | | suc a, b => suc (addN a b)
-  6 | | a, suc b => suc (addN a b)
-        ^------------------------^
+  4 |   | a, zero => a
+  5 |   | suc a, b => suc (addN a b)
+  6 |   | a, suc b => suc (addN a b)
+    |     ^------------------------^
 
 Warning: The 4th clause is dominated by the other clauses, hence unreachable
 

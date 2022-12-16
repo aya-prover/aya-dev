@@ -1,9 +1,9 @@
 In file $FILE:10:6 ->
 
-   8 | 
-   9 | module Bug {
-  10 |   def f D : Nat
-             ^^
+  8  |   
+  9  |   module Bug {
+  10 |     def f D : Nat
+     |         ^^
 
 Error: The recursive definition `f` is not structurally recursive
 note: In particular, the problematic call is:
@@ -13,10 +13,10 @@ note: In particular, the problematic call is:
 
 In file $FILE:10:6 ->
 
-   8 | 
-   9 | module Bug {
-  10 |   def f D : Nat
-             ^^
+  8  |   
+  9  |   module Bug {
+  10 |     def f D : Nat
+     |         ^^
 
 Error: The recursive definition `f` is not structurally recursive
 note: In particular, the problematic call is:

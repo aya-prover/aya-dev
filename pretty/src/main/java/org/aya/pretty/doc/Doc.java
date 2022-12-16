@@ -191,7 +191,7 @@ public sealed interface Doc extends Docile {
     }
   }
 
-  record List(@NotNull ImmutableSeq<Doc> items, boolean isOrdered) implements Doc {
+  record List(boolean isOrdered, @NotNull ImmutableSeq<Doc> items) implements Doc {
   }
 
   /**
@@ -404,6 +404,9 @@ public sealed interface Doc extends Docile {
    * lays out the document {@param doc} with the current nesting level
    * (indentation of the following lines) increased by {@param indent}.
    * Negative values are allowed, and decrease the nesting level accordingly.
+   * <p>
+   * For differences between {@link Doc#hang(int, Doc)}, {@link Doc#indent(int, Doc)}
+   * and {@link Doc#nest(int, Doc)}, see unit tests in file "DocStringPrinterTest.java".
    *
    * @param indent indentation of the following lines
    * @param doc    the document to lay out
@@ -443,6 +446,9 @@ public sealed interface Doc extends Docile {
    * the /current nesting level/ plus {@code indent}.
    * When you're not sure, try the more efficient 'nest' first. In our
    * example, this would yield
+   * <p>
+   * For differences between {@link Doc#hang(int, Doc)}, {@link Doc#indent(int, Doc)}
+   * and {@link Doc#nest(int, Doc)}, see unit tests in file "DocStringPrinterTest.java".
    *
    * @param deltaNest change of nesting level, relative to the start of the first line
    * @param doc       document to indent
@@ -454,16 +460,85 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * Indents {@param doc} by {@param indent} columns, and then indent the first line again
-   * by {@param indent} columns.
+   * This method indent document {@param doc} by {@param indent} columns,
+   * * starting from the current cursor position.
+   * <p>
+   * This differs from {@link Doc#hang(int, Doc)}, which starts from the
+   * next line.
+   * <p>
+   * For differences between {@link Doc#hang(int, Doc)}, {@link Doc#indent(int, Doc)}
+   * and {@link Doc#nest(int, Doc)}, see unit tests in file "DocStringPrinterTest.java".
    *
-   * @param indent the indented nesting level
-   * @param doc    document to indent
-   * @return indented document
+   * @param indent Number of spaces to increase indentation by
+   * @return The indented document
+   */
+  @Contract("_, _ -> new")
+  static @NotNull Doc indent(int indent, @NotNull Doc doc) {
+    return hang(indent, cat(spaces(indent), doc));
+  }
+
+  static @NotNull Doc spaces(int n) {
+    return n <= 0 ? empty() : Doc.plain(" ".repeat(n));
+  }
+
+  /**
+   * Paragraph indentation: indent {@param doc} by {@param indent} columns,
+   * and then indent the first line again by {@param indent} columns.
+   * This should be used at the line start.
    */
   @Contract("_, _ -> new")
   static @NotNull Doc par(int indent, @NotNull Doc doc) {
-    return nest(indent, cat(plain(" ".repeat(indent)), doc));
+    return nest(indent, cat(spaces(indent), doc));
+  }
+
+  /**
+   * Concat {@param left}, {@param delim} and {@param right}, with
+   * {@param left} occupying at least {@param minBeforeDelim} length.
+   * The "R" in method name stands for "right", which means the delim is placed near the right.
+   * <p>
+   * This behaves like {@code printf("%-*s%s%s", minBeforeDelim, left, delim, right);}
+   * For example:
+   * <pre>
+   *   var doc = split(8, plain("Help"), plain(":"), english("Show the help message"));
+   *   assertEquals("Help    :Show the help message", doc.commonRender());
+   * </pre>
+   *
+   * @param minBeforeDelim The minimum length before {@param delim}
+   * @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
+   */
+  static @NotNull Doc splitR(int minBeforeDelim, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
+    var alignedMiddle = column(k -> nesting(i -> indent(minBeforeDelim - k + i, delim)));
+    return Doc.cat(left, alignedMiddle, Doc.align(right));
+  }
+
+  /**
+   * Concat {@param left}, {@param delim} and {@param right}, with
+   * {@param left} and {@param delim} occupying at least {@param minBeforeRight} length.
+   * The "L" in method name stands for "left", which means the delim is placed near the left.
+   * <p>
+   * This behaves like {@code printf("%*s%s", minBeforeRight, (left ++ delim), right);}
+   * For example:
+   * <pre>
+   *   var doc = splitR(8, plain("Help"), plain(":"), english("Show the help message"));
+   *   assertEquals("Help:   Show the help message", doc.commonRender());
+   * </pre>
+   *
+   * @param minBeforeRight The minimum length before {@param right}
+   * @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
+   */
+  static @NotNull Doc splitL(int minBeforeRight, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
+    var alignedRight = column(k -> nesting(i -> indent(minBeforeRight - k + i, Doc.align(right))));
+    return Doc.cat(left, delim, alignedRight);
+  }
+
+  static @NotNull Doc catBlockR(int minBeforeDelim, @NotNull SeqLike<Doc> left, @NotNull Doc delim, @NotNull SeqLike<Doc> right) {
+    var vs = left.zipView(right).map(p -> Doc.splitR(minBeforeDelim, p._1, delim, p._2));
+    return Doc.vcat(vs);
+  }
+
+  static @NotNull Doc catBlockL(int minBeforeRight, @NotNull SeqLike<Doc> left, @NotNull Doc delim, @NotNull SeqLike<Doc> right) {
+    var vs = left.zipView(right).map(p -> Doc.splitL(minBeforeRight, p._1, delim, p._2));
+    return Doc.vcat(vs);
   }
 
   /**
@@ -572,16 +647,16 @@ public sealed interface Doc extends Docile {
     return vcat(docs.view().filter(Doc::isNotEmpty));
   }
 
-  @Contract("_, _ -> new") static @NotNull Doc list(@NotNull SeqLike<@NotNull Doc> docs, boolean isOrdered) {
-    return new List(docs.toImmutableSeq(), isOrdered);
+  @Contract("_, _ -> new") static @NotNull Doc list(boolean isOrdered, @NotNull SeqLike<@NotNull Doc> docs) {
+    return new List(isOrdered, docs.toImmutableSeq());
   }
 
   @Contract("_ -> new") static @NotNull Doc ordered(Doc @NotNull ... docs) {
-    return list(Seq.of(docs), true);
+    return list(true, Seq.of(docs));
   }
 
   @Contract("_ -> new") static @NotNull Doc bullet(Doc @NotNull ... docs) {
-    return list(Seq.of(docs), false);
+    return list(false, Seq.of(docs));
   }
 
   /**

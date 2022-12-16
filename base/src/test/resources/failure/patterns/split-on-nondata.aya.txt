@@ -1,9 +1,9 @@
 In file $FILE:3:3 ->
 
-  1 | open data Unit | unit
-  2 | def test (a : Type) : Type
-  3 |  | unit y => a
-         ^----^
+  1 |   open data Unit | unit
+  2 |   def test (a : Type) : Type
+  3 |    | unit y => a
+    |      ^----^
 
 Error: Cannot split on a non-inductive type
          Type 0

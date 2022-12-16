@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty;
 
+import kala.collection.Seq;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Link;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static org.aya.pretty.doc.Doc.*;
@@ -11,10 +15,130 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author kiva
  */
 public class DocStringPrinterTest {
-  @Test
-  public void testHang() {
+  private static @NotNull Doc aya() {
+    return Doc.english("A univalent proof assistant designed for formalizing math and type-directed programming.");
+  }
+
+  @Test public void testNestMultilinePrefixed() {
+    var doc = Doc.sep(Doc.plain("prefix"), Doc.nest(4, aya()));
+    assertEquals("""
+        prefix A univalent\s
+            proof assistant\s
+            designed for\s
+            formalizing math
+            and\s
+            type-directed\s
+            programming.""",
+      doc.renderToString(20, false));
+  }
+
+  @Test public void testHangMultilinePrefixed() {
+    var doc = Doc.sep(Doc.plain("prefix"), Doc.hang(4, aya()));
+    assertEquals("""
+        prefix A univalent\s
+                   proof\s
+                   assistant
+                   designed\s
+                   for\s
+                   formalizing
+                   math and\s
+                   type-directed
+                   programming.""",
+      doc.renderToString(20, false));
+  }
+
+  @Test public void testIndentMultilinePrefixed() {
+    var doc = Doc.sep(Doc.plain("prefix"), Doc.indent(4, aya()));
+    assertEquals("""
+        prefix     A\s
+                   univalent
+                   proof\s
+                   assistant
+                   designed\s
+                   for\s
+                   formalizing
+                   math and\s
+                   type-directed
+                   programming.""",
+      doc.renderToString(20, false));
+  }
+
+  @Test public void testCatBlockR() {
+    var list = Doc.catBlockR(
+      12,
+      Seq.of(
+        Doc.commaList(Seq.of(Doc.plain("exit"), Doc.plain("quit"))),
+        Doc.english("print-toggle"),
+        Doc.plain("help"),
+        Doc.hyperLink("cd", Link.page("aa"))
+      ),
+      Doc.plain(": "),
+      Seq.of(
+        Doc.english("Quit the REPL"),
+        Doc.english("Toggle a pretty printing option"),
+        Doc.english("Describe a selected command or show all commands"),
+        Doc.english("Change current working directory")
+      )
+    );
+    var doc = Doc.sep(Doc.plain("prefix"), Doc.indent(4, list));
+    assertEquals("""
+      prefix     exit, quit  : Quit the REPL
+                 print-toggle: Toggle a pretty printing\s
+                               option
+                 help        : Describe a selected\s
+                               command or show all\s
+                               commands
+                 cd          : Change current working\s
+                               directory""", doc.renderToString(50, false));
+  }
+
+  @Test public void testCatBlockL() {
+    var list = Doc.catBlockL(
+      18,
+      Seq.of(
+        Doc.commaList(Seq.of(Doc.plain("exit"), Doc.plain("quit"))),
+        Doc.english("print-toggle"),
+        Doc.plain("help"),
+        Doc.hyperLink("cd", Link.page("aa"))
+      ),
+      Doc.plain(": "),
+      Seq.of(
+        Doc.english("Quit the REPL"),
+        Doc.english("Toggle a pretty printing option"),
+        Doc.english("Describe a selected command or show all commands"),
+        Doc.english("Change current working directory")
+      )
+    );
+    var doc = Doc.sep(Doc.plain("prefix"), Doc.indent(4, list));
+    assertEquals("""
+      prefix     exit, quit:       Quit the REPL
+                 print-toggle:     Toggle a pretty\s
+                                   printing option
+                 help:             Describe a selected\s
+                                   command or show all\s
+                                   commands
+                 cd:               Change current\s
+                                   working directory""", doc.renderToString(50, false));
+  }
+
+  @Test public void testSplit() {
+    var doc = splitR(8, plain("Help"), plain(":"), english("Show the help message"));
+    assertEquals("Help    :Show the help message", doc.commonRender());
+  }
+
+  @Test public void testSplitR() {
+    var doc = splitL(8, plain("Help"), plain(":"), english("Show the help message"));
+    assertEquals("Help:   Show the help message", doc.commonRender());
+  }
+
+  @Test public void testHang() {
     var doc = hang(4, plain("boynextdoor"));
     assertEquals("    boynextdoor", doc.commonRender());
+  }
+
+  @Test public void testIndent() {
+    var doc = indent(2, vcat(plain("boynextdoor"), plain("boynextdoor")));
+    assertEquals("    boynextdoor\n  boynextdoor", doc.commonRender());
   }
 
   @Test public void testNestedNest() {

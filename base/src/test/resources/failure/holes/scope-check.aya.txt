@@ -1,9 +1,9 @@
 In file $FILE:5:45 ->
 
-  3 | 
-  4 | // https://cstheory.stackexchange.com/a/49160/50892
-  5 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
-                                                   ^^
+  3 |   
+  4 |   // https://cstheory.stackexchange.com/a/49160/50892
+  5 |   def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
+    |                                                ^^
 
 Error: The solution
          B
@@ -12,19 +12,19 @@ Error: The solution
 
 In file $FILE:5:14 ->
 
-  3 | 
-  4 | // https://cstheory.stackexchange.com/a/49160/50892
-  5 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
-                    ^^
+  3 |   
+  4 |   // https://cstheory.stackexchange.com/a/49160/50892
+  5 |   def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
+    |                 ^^
 
 Error: Unsolved meta _
 
 In file $FILE:5:14 ->
 
-  3 | 
-  4 | // https://cstheory.stackexchange.com/a/49160/50892
-  5 | def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
-                    ^^
+  3 |   
+  4 |   // https://cstheory.stackexchange.com/a/49160/50892
+  5 |   def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
+    |                 ^^
 
 Error: Unsolved meta _
        in `(=) {_}`

@@ -1,9 +1,9 @@
 In file $FILE:4:77 ->
 
-  2 |   | value: A
-  3 | 
-  4 | def badSquashElim {A: Type} {Q: Type} (f: A -> Q) (squash: Squash A): Q => f squash.value
-                                                                                   ^----^
+  2 |     | value: A
+  3 |   
+  4 |   def badSquashElim {A: Type} {Q: Type} (f: A -> Q) (squash: Squash A): Q => f squash.value
+    |                                                                                ^----^
 
 Error: Unable to access field `value` of the expression
          squash

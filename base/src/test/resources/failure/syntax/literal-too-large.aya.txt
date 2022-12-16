@@ -1,9 +1,9 @@
 In file $FILE:3:17 ->
 
-  1 | open data Nat | zero | suc Nat
-  2 | 
-  3 | def too-large => 2147483648
-                       ^--------^
+  1 |   open data Nat | zero | suc Nat
+  2 |   
+  3 |   def too-large => 2147483648
+    |                    ^--------^
 
 Error: Parser error: Unsupported integer literal `2147483648`
 

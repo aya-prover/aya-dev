@@ -1,9 +1,9 @@
 In file $FILE:5:4 ->
 
-  3 |  | suc Nat
-  4 | 
-  5 | def add {a b : Nat} : Nat
-          ^-^
+  3 |    | suc Nat
+  4 |   
+  5 |   def add {a b : Nat} : Nat
+    |       ^-^
 
 Error: Unhandled case: {zero}, {suc zero}
 

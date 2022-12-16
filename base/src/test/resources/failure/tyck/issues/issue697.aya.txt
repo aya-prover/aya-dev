@@ -1,9 +1,9 @@
 In file $FILE:4:66 ->
 
-  2 | variable A : Type
-  3 | 
-  4 | def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-                                                                        ^^
+  2 |   variable A : Type
+  3 |   
+  4 |   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+    |                                                                     ^^
 
 Error: Cannot check the expression
          a
@@ -14,10 +14,10 @@ Error: Cannot check the expression
 
 In file $FILE:4:73 ->
 
-  2 | variable A : Type
-  3 | 
-  4 | def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-                                                                               ^^
+  2 |   variable A : Type
+  3 |   
+  4 |   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+    |                                                                            ^^
 
 Error: The boundary
          p i
@@ -30,10 +30,10 @@ Error: The boundary
 
 In file $FILE:4:53 ->
 
-  2 | variable A : Type
-  3 | 
-  4 | def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-                                                           ^-------------------^
+  2 |   variable A : Type
+  3 |   
+  4 |   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+    |                                                        ^-------------------^
 
 Error: The boundary
          hcomp2d {A'} {c'} {d'} (idp {A'} {a'} <a>) (\ i => idp {A'} {a'} i) (\ i =>
@@ -49,10 +49,10 @@ Error: The boundary
 
 In file $FILE:4:66 ->
 
-  2 | variable A : Type
-  3 | 
-  4 | def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-                                                                        ^^
+  2 |   variable A : Type
+  3 |   
+  4 |   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+    |                                                                     ^^
 
 Error: Unsolved meta a'
        in `a' 1`

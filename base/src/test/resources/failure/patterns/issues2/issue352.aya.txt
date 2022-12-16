@@ -1,19 +1,19 @@
 In file $FILE:4:4 ->
 
-  2 | 
-  3 | variable A B : Type
-  4 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
-          ^----^
+  2 |   
+  3 |   variable A B : Type
+  4 |   def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+    |       ^----^
 
 Warning: The name `funExt` introduces ambiguity and can only be accessed through
          a qualified name
 
 In file $FILE:4:4 ->
 
-  2 | 
-  3 | variable A B : Type
-  4 | def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
-          ^----^
+  2 |   
+  3 |   variable A B : Type
+  4 |   def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+    |       ^----^
 
 Error: Unhandled case: 
 

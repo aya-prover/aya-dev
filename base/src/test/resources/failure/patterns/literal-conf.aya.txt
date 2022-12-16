@@ -1,32 +1,33 @@
 In file $FILE:5:4 ->
 
-  3 | def overlap not-conf Nat : Nat
-  4 |   | zero => 1
-  5 |   | 0 => 0
-          ^----^
+  3 |   def overlap not-conf Nat : Nat
+  4 |     | zero => 1
+  5 |     | 0 => 0
+    |       ^----^
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:4:4 ->
 
-  2 | 
-  3 | def overlap not-conf Nat : Nat
-  4 |   | zero => 1
-          ^-------^
+  2 |   
+  3 |   def overlap not-conf Nat : Nat
+  4 |     | zero => 1
+    |       ^-------^
 
 Warning: The 2nd clause dominates the 1st clause. The 1st clause will be 
          unreachable
 
 In file $FILE:3:12 ->
 
-  1 | open data Nat | zero | suc Nat
-  2 | 
-  3 | def overlap not-conf Nat : Nat
-  4 |   | zero => 1
-          ^-------^ substituted to `1`
-  5 |   | 0 => 0
-          ^----^ substituted to `0`
+  1 |       open data Nat | zero | suc Nat
+  2 |       
+  3 |       def overlap not-conf Nat : Nat
+    |                   ^------^
+  4 |         | zero => 1
+    |           ^-------^ substituted to `1`
+  5 |         | 0 => 0
+    |           ^----^ substituted to `0`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          1
@@ -35,26 +36,27 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
 
 In file $FILE:6:4 ->
 
-  4 |   | zero => 1
-  5 |   | 0 => 0
-  6 |   | 1 => 1
-          ^----^
+  4 |     | zero => 1
+  5 |     | 0 => 0
+  6 |     | 1 => 1
+    |       ^----^
 
 Warning: The 5th clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:3:12 ->
 
-  1 | open data Nat | zero | suc Nat
-  2 | 
-  3 | def overlap not-conf Nat : Nat
-  4 |   | zero => 1
-  5 |   | 0 => 0
-  6 |   | 1 => 1
-          ^----^ substituted to `1`
-  7 |   | suc 1 => 1
-  8 |   | suc n => n
-          ^--------^ substituted to `0`
+  1 |       open data Nat | zero | suc Nat
+  2 |       
+  3 |       def overlap not-conf Nat : Nat
+    |                   ^------^
+  4 |         | zero => 1
+  5 |         | 0 => 0
+  6 |         | 1 => 1
+    |           ^----^ substituted to `1`
+  7 |         | suc 1 => 1
+  8 |         | suc n => n
+    |           ^--------^ substituted to `0`
 
 Error: The 3rd and the 5th clauses are not confluent because we failed to unify
          1
@@ -63,10 +65,10 @@ Error: The 3rd and the 5th clauses are not confluent because we failed to unify
 
 In file $FILE:7:4 ->
 
-  5 |   | 0 => 0
-  6 |   | 1 => 1
-  7 |   | suc 1 => 1
-          ^--------^
+  5 |     | 0 => 0
+  6 |     | 1 => 1
+  7 |     | suc 1 => 1
+    |       ^--------^
 
 Warning: The 5th clause dominates the 4th clause. The 4th clause will be 
          unreachable
