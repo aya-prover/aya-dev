@@ -70,12 +70,12 @@ public record PrettyError(
     public static final FormatConfig UNICODE = new FormatConfig(
       Option.some('┝'),
       '│',
-      Option.some('┘'),
+      Option.some('╯'),
       '╰',
       '╯',
       '─',
-      '┌',
-      '└'
+      '╭',
+      '╰'
     );
   }
 
