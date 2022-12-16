@@ -1,8 +1,8 @@
 In file $FILE:2:9 ->
 
-  1 |   def infix + : Type => +
-  2 |     looser +
-    |            ^^
+  1 │   def infix + : Type => +
+  2 │     looser +
+    │            ╰╯
 
 Error: Self bind is not allowed
 

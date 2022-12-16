@@ -1,7 +1,7 @@
 In file $FILE:1:23 ->
 
-  1 |   def test (A : Type) => A.11
-    |                          ^^
+  1 │   def test (A : Type) => A.11
+    │                          ╰╯
 
 Error: Unable to project the 11th element of the expression
          A

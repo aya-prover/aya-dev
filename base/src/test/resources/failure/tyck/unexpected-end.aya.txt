@@ -1,8 +1,8 @@
 In file $FILE:2:54 ->
 
-  1 |   prim I
-  2 |   def path {A : I -> Type} (p : Pi (i : I) -> A i) => p 3
-    |                                                         ^^
+  1 │   prim I
+  2 │   def path {A : I -> Type} (p : Pi (i : I) -> A i) => p 3
+    │                                                         ╰╯
 
 Error: The point `3` does not live in interval
 note: Did you mean:  `0` or `1`

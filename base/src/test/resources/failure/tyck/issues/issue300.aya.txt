@@ -1,9 +1,9 @@
 In file $FILE:4:20 ->
 
-  2 |   open import Sets::Unit
-  3 |   def max (a : Sig Nat ** Nat) (b : Unit) : Nat
-  4 |     | (zero, b), unit x => b
-    |                       ^^
+  2 │   open import Sets::Unit
+  3 │   def max (a : Sig Nat ** Nat) (b : Unit) : Nat
+  4 │     | (zero, b), unit x => b
+    │                       ╰╯
 
 Error: There is no parameter for the pattern
          x
@@ -14,10 +14,10 @@ Error: There is no parameter for the pattern
 
 In file $FILE:6:25 ->
 
-  4 |     | (zero, b), unit x => b
-  5 |     | (a, zero), y => a
-  6 |     | (suc a, suc b), unit y => suc (max (a, b))
-    |                            ^^
+  4 │     | (zero, b), unit x => b
+  5 │     | (a, zero), y => a
+  6 │     | (suc a, suc b), unit y => suc (max (a, b))
+    │                            ╰╯
 
 Error: There is no parameter for the pattern
          y

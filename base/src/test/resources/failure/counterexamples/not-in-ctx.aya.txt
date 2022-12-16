@@ -1,9 +1,9 @@
 In file $FILE:11:36 ->
 
-  9  |    | a, suc b => suc (addN a b)
-  10 |   
-  11 |   example def add1 (a : Nat) : Nat => addN (suc zero) a
-     |                                       ^--^
+  9  │    | a, suc b => suc (addN a b)
+  10 │   
+  11 │   example def add1 (a : Nat) : Nat => addN (suc zero) a
+     │                                       ╰──╯
 
 Error: The name `addN` is not defined in the current scope
 

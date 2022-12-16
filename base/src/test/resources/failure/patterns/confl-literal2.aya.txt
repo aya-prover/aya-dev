@@ -1,23 +1,23 @@
 In file $FILE:5:4 ->
 
-  3 |   def overlap largeInt1 Nat Nat : Nat
-  4 |     | a, b => a
-  5 |     | 114514, 1919810 => 1
-    |       ^------------------^
+  3 │   def overlap largeInt1 Nat Nat : Nat
+  4 │     | a, b => a
+  5 │     | 114514, 1919810 => 1
+    │       ╰──────────────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:3:12 ->
 
-  1 |       open data Nat | zero | suc Nat
-  2 |       
-  3 |       def overlap largeInt1 Nat Nat : Nat
-    |                   ^-------^
-  4 |         | a, b => a
-    |           ^-------^ substituted to `114514`
-  5 |         | 114514, 1919810 => 1
-    |           ^------------------^ substituted to `1`
+  1 │       open data Nat | zero | suc Nat
+  2 │       
+  3 │       def overlap largeInt1 Nat Nat : Nat
+    │                   ╰───────╯
+  4 │         | a, b => a
+    │           ╰───────╯ substituted to `114514`
+  5 │         | 114514, 1919810 => 1
+    │           ╰──────────────────╯ substituted to `1`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          1
@@ -26,24 +26,24 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
 
 In file $FILE:9:4 ->
 
-  7 |   def overlap largeInt2 Nat Nat : Nat
-  8 |     | a, b => b
-  9 |     | a, 1919810 => 1
-    |       ^-------------^
+  7 │   def overlap largeInt2 Nat Nat : Nat
+  8 │     | a, b => b
+  9 │     | a, 1919810 => 1
+    │       ╰─────────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:7:12 ->
 
-  5 |         | 114514, 1919810 => 1
-  6 |       
-  7 |       def overlap largeInt2 Nat Nat : Nat
-    |                   ^-------^
-  8 |         | a, b => b
-    |           ^-------^ substituted to `1919810`
-  9 |         | a, 1919810 => 1
-    |           ^-------------^ substituted to `1`
+  5 │         | 114514, 1919810 => 1
+  6 │       
+  7 │       def overlap largeInt2 Nat Nat : Nat
+    │                   ╰───────╯
+  8 │         | a, b => b
+    │           ╰───────╯ substituted to `1919810`
+  9 │         | a, 1919810 => 1
+    │           ╰─────────────╯ substituted to `1`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          1
@@ -52,25 +52,25 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
 
 In file $FILE:14:4 ->
 
-  12 |     | a, b => b
-  13 |     | a, suc b => b
-  14 |     | a, 1919810 => 1
-     |       ^-------------^
+  12 │     | a, b => b
+  13 │     | a, suc b => b
+  14 │     | a, 1919810 => 1
+     │       ╰─────────────╯
 
 Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:11:12 ->
 
-  9  |         | a, 1919810 => 1
-  10 |       
-  11 |       def overlap largeInt3 Nat Nat : Nat
-     |                   ^-------^
-  12 |         | a, b => b
-     |           ^-------^ substituted to `1919810`
-  13 |         | a, suc b => b
-  14 |         | a, 1919810 => 1
-     |           ^-------------^ substituted to `1`
+  9  │         | a, 1919810 => 1
+  10 │       
+  11 │       def overlap largeInt3 Nat Nat : Nat
+     │                   ╰───────╯
+  12 │         | a, b => b
+     │           ╰───────╯ substituted to `1919810`
+  13 │         | a, suc b => b
+  14 │         | a, 1919810 => 1
+     │           ╰─────────────╯ substituted to `1`
 
 Error: The 3rd and the 1st clauses are not confluent because we failed to unify
          1
@@ -79,24 +79,24 @@ Error: The 3rd and the 1st clauses are not confluent because we failed to unify
 
 In file $FILE:13:4 ->
 
-  11 |   def overlap largeInt3 Nat Nat : Nat
-  12 |     | a, b => b
-  13 |     | a, suc b => b
-     |       ^-----------^
+  11 │   def overlap largeInt3 Nat Nat : Nat
+  12 │     | a, b => b
+  13 │     | a, suc b => b
+     │       ╰───────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:11:12 ->
 
-  9  |         | a, 1919810 => 1
-  10 |       
-  11 |       def overlap largeInt3 Nat Nat : Nat
-     |                   ^-------^
-  12 |         | a, b => b
-     |           ^-------^ substituted to `suc b`
-  13 |         | a, suc b => b
-     |           ^-----------^ substituted to `b`
+  9  │         | a, 1919810 => 1
+  10 │       
+  11 │       def overlap largeInt3 Nat Nat : Nat
+     │                   ╰───────╯
+  12 │         | a, b => b
+     │           ╰───────╯ substituted to `suc b`
+  13 │         | a, suc b => b
+     │           ╰───────────╯ substituted to `b`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          suc b
@@ -105,24 +105,24 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
 
 In file $FILE:13:4 ->
 
-  11 |   def overlap largeInt3 Nat Nat : Nat
-  12 |     | a, b => b
-  13 |     | a, suc b => b
-     |       ^-----------^
+  11 │   def overlap largeInt3 Nat Nat : Nat
+  12 │     | a, b => b
+  13 │     | a, suc b => b
+     │       ╰───────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:11:12 ->
 
-  9  |         | a, 1919810 => 1
-  10 |       
-  11 |       def overlap largeInt3 Nat Nat : Nat
-     |                   ^-------^
-  12 |         | a, b => b
-     |           ^-------^ substituted to `suc b`
-  13 |         | a, suc b => b
-     |           ^-----------^ substituted to `b`
+  9  │         | a, 1919810 => 1
+  10 │       
+  11 │       def overlap largeInt3 Nat Nat : Nat
+     │                   ╰───────╯
+  12 │         | a, b => b
+     │           ╰───────╯ substituted to `suc b`
+  13 │         | a, suc b => b
+     │           ╰───────────╯ substituted to `b`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          suc b
@@ -131,24 +131,24 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
 
 In file $FILE:18:4 ->
 
-  16 |   def overlap largeInt1-inv Nat Nat : Nat
-  17 |     | a, b => a
-  18 |     | 114514, 1919810 => 1
-     |       ^------------------^
+  16 │   def overlap largeInt1-inv Nat Nat : Nat
+  17 │     | a, b => a
+  18 │     | 114514, 1919810 => 1
+     │       ╰──────────────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:16:12 ->
 
-  14 |         | a, 1919810 => 1
-  15 |       
-  16 |       def overlap largeInt1-inv Nat Nat : Nat
-     |                   ^-----------^
-  17 |         | a, b => a
-     |           ^-------^ substituted to `114514`
-  18 |         | 114514, 1919810 => 1
-     |           ^------------------^ substituted to `1`
+  14 │         | a, 1919810 => 1
+  15 │       
+  16 │       def overlap largeInt1-inv Nat Nat : Nat
+     │                   ╰───────────╯
+  17 │         | a, b => a
+     │           ╰───────╯ substituted to `114514`
+  18 │         | 114514, 1919810 => 1
+     │           ╰──────────────────╯ substituted to `1`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          1
@@ -157,24 +157,24 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
 
 In file $FILE:22:4 ->
 
-  20 |   def overlap largeInt2-inv Nat Nat : Nat
-  21 |     | b, a => b
-  22 |     | 1919810, a => 1
-     |       ^-------------^
+  20 │   def overlap largeInt2-inv Nat Nat : Nat
+  21 │     | b, a => b
+  22 │     | 1919810, a => 1
+     │       ╰─────────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:20:12 ->
 
-  18 |         | 114514, 1919810 => 1
-  19 |       
-  20 |       def overlap largeInt2-inv Nat Nat : Nat
-     |                   ^-----------^
-  21 |         | b, a => b
-     |           ^-------^ substituted to `1919810`
-  22 |         | 1919810, a => 1
-     |           ^-------------^ substituted to `1`
+  18 │         | 114514, 1919810 => 1
+  19 │       
+  20 │       def overlap largeInt2-inv Nat Nat : Nat
+     │                   ╰───────────╯
+  21 │         | b, a => b
+     │           ╰───────╯ substituted to `1919810`
+  22 │         | 1919810, a => 1
+     │           ╰─────────────╯ substituted to `1`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          1
@@ -183,25 +183,25 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
 
 In file $FILE:27:4 ->
 
-  25 |     | b, a => b
-  26 |     | suc b, a => b
-  27 |     | 1919810, a => 1
-     |       ^-------------^
+  25 │     | b, a => b
+  26 │     | suc b, a => b
+  27 │     | 1919810, a => 1
+     │       ╰─────────────╯
 
 Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:24:12 ->
 
-  22 |         | 1919810, a => 1
-  23 |       
-  24 |       def overlap largeInt3-inv Nat Nat : Nat
-     |                   ^-----------^
-  25 |         | b, a => b
-     |           ^-------^ substituted to `1919810`
-  26 |         | suc b, a => b
-  27 |         | 1919810, a => 1
-     |           ^-------------^ substituted to `1`
+  22 │         | 1919810, a => 1
+  23 │       
+  24 │       def overlap largeInt3-inv Nat Nat : Nat
+     │                   ╰───────────╯
+  25 │         | b, a => b
+     │           ╰───────╯ substituted to `1919810`
+  26 │         | suc b, a => b
+  27 │         | 1919810, a => 1
+     │           ╰─────────────╯ substituted to `1`
 
 Error: The 3rd and the 1st clauses are not confluent because we failed to unify
          1
@@ -210,24 +210,24 @@ Error: The 3rd and the 1st clauses are not confluent because we failed to unify
 
 In file $FILE:26:4 ->
 
-  24 |   def overlap largeInt3-inv Nat Nat : Nat
-  25 |     | b, a => b
-  26 |     | suc b, a => b
-     |       ^-----------^
+  24 │   def overlap largeInt3-inv Nat Nat : Nat
+  25 │     | b, a => b
+  26 │     | suc b, a => b
+     │       ╰───────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:24:12 ->
 
-  22 |         | 1919810, a => 1
-  23 |       
-  24 |       def overlap largeInt3-inv Nat Nat : Nat
-     |                   ^-----------^
-  25 |         | b, a => b
-     |           ^-------^ substituted to `suc b`
-  26 |         | suc b, a => b
-     |           ^-----------^ substituted to `b`
+  22 │         | 1919810, a => 1
+  23 │       
+  24 │       def overlap largeInt3-inv Nat Nat : Nat
+     │                   ╰───────────╯
+  25 │         | b, a => b
+     │           ╰───────╯ substituted to `suc b`
+  26 │         | suc b, a => b
+     │           ╰───────────╯ substituted to `b`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          suc b
@@ -236,24 +236,24 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
 
 In file $FILE:26:4 ->
 
-  24 |   def overlap largeInt3-inv Nat Nat : Nat
-  25 |     | b, a => b
-  26 |     | suc b, a => b
-     |       ^-----------^
+  24 │   def overlap largeInt3-inv Nat Nat : Nat
+  25 │     | b, a => b
+  26 │     | suc b, a => b
+     │       ╰───────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:24:12 ->
 
-  22 |         | 1919810, a => 1
-  23 |       
-  24 |       def overlap largeInt3-inv Nat Nat : Nat
-     |                   ^-----------^
-  25 |         | b, a => b
-     |           ^-------^ substituted to `suc b`
-  26 |         | suc b, a => b
-     |           ^-----------^ substituted to `b`
+  22 │         | 1919810, a => 1
+  23 │       
+  24 │       def overlap largeInt3-inv Nat Nat : Nat
+     │                   ╰───────────╯
+  25 │         | b, a => b
+     │           ╰───────╯ substituted to `suc b`
+  26 │         | suc b, a => b
+     │           ╰───────────╯ substituted to `b`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          suc b
@@ -262,35 +262,35 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
 
 In file $FILE:30:4 ->
 
-  28 |   
-  29 |   def overlap multi-nodes Nat Nat : Nat
-  30 |     | 114, 0 => 0
-     |       ^---------^
+  28 │   
+  29 │   def overlap multi-nodes Nat Nat : Nat
+  30 │     | 114, 0 => 0
+     │       ╰─────────╯
 
 Warning: The 5th clause dominates the 1st clause. The 1st clause will be 
          unreachable
 
 In file $FILE:32:4 ->
 
-  30 |     | 114, 0 => 0
-  31 |     | 114, suc b => suc b
-  32 |     | 114, 514 => 515
-     |       ^-------------^
+  30 │     | 114, 0 => 0
+  31 │     | 114, suc b => suc b
+  32 │     | 114, 514 => 515
+     │       ╰─────────────╯
 
 Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:29:12 ->
 
-  27 |         | 1919810, a => 1
-  28 |       
-  29 |       def overlap multi-nodes Nat Nat : Nat
-     |                   ^---------^
-  30 |         | 114, 0 => 0
-  31 |         | 114, suc b => suc b
-     |           ^-----------------^ substituted to `suc 513`
-  32 |         | 114, 514 => 515
-     |           ^-------------^ substituted to `515`
+  27 │         | 1919810, a => 1
+  28 │       
+  29 │       def overlap multi-nodes Nat Nat : Nat
+     │                   ╰─────────╯
+  30 │         | 114, 0 => 0
+  31 │         | 114, suc b => suc b
+     │           ╰─────────────────╯ substituted to `suc 513`
+  32 │         | 114, 514 => 515
+     │           ╰─────────────╯ substituted to `515`
 
 Error: The 3rd and the 2nd clauses are not confluent because we failed to unify
          515
@@ -303,30 +303,30 @@ Error: The 3rd and the 2nd clauses are not confluent because we failed to unify
 
 In file $FILE:31:4 ->
 
-  29 |   def overlap multi-nodes Nat Nat : Nat
-  30 |     | 114, 0 => 0
-  31 |     | 114, suc b => suc b
-     |       ^-----------------^
+  29 │   def overlap multi-nodes Nat Nat : Nat
+  30 │     | 114, 0 => 0
+  31 │     | 114, suc b => suc b
+     │       ╰─────────────────╯
 
 Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:31:4 ->
 
-  29 |   def overlap multi-nodes Nat Nat : Nat
-  30 |     | 114, 0 => 0
-  31 |     | 114, suc b => suc b
-     |       ^-----------------^
+  29 │   def overlap multi-nodes Nat Nat : Nat
+  30 │     | 114, 0 => 0
+  31 │     | 114, suc b => suc b
+     │       ╰─────────────────╯
 
 Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:33:4 ->
 
-  31 |     | 114, suc b => suc b
-  32 |     | 114, 514 => 515
-  33 |     | 115, 514 => 514
-     |       ^-------------^
+  31 │     | 114, suc b => suc b
+  32 │     | 114, 514 => 515
+  33 │     | 115, 514 => 514
+     │       ╰─────────────╯
 
 Warning: The 5th clause dominates the 4th clause. The 4th clause will be 
          unreachable

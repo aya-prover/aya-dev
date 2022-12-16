@@ -1,9 +1,9 @@
 In file $FILE:4:4 ->
 
-  2 |     let
-  3 |     | a := x
-  4 |     | a := x
-    |       ^^
+  2 │     let
+  3 │     | a := x
+  4 │     | a := x
+    │       ╰╯
 
 Warning: The name `a` shadows a previous local definition from outer scope
 

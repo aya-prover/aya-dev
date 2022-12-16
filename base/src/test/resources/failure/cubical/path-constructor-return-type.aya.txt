@@ -1,9 +1,9 @@
 In file $FILE:5:2 ->
 
-  3 |   data PropTrunc (A : Type)
-  4 |   | emb A
-  5 |   | trunc : isProp A
-    |     ^---^
+  3 │   data PropTrunc (A : Type)
+  4 │   | emb A
+  5 │   | trunc : isProp A
+    │     ╰───╯
 
 Error: Cannot make sense of the return type of the constructor
          | trunc : isProp A

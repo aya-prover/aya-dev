@@ -1,9 +1,9 @@
 In file $FILE:7:24 ->
 
-  5 |     | 我们
-  6 |     | 他们
-  7 |   def 测测测测测测测测测 : 单人代词 => 我们
-    |                           ^^
+  5 │     | 我们
+  6 │     | 他们
+  7 │   def 测测测测测测测测测 : 单人代词 => 我们
+    │                           ╰╯
 
 Error: Cannot check the expression
          我们

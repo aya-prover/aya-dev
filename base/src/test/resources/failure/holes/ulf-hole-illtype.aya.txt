@@ -1,9 +1,9 @@
 In file $FILE:6:29 ->
 
-  4 |   def test
-  5 |    (F : Type -> Type)
-  6 |    (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
-    |                                ^^
+  4 │   def test
+  5 │    (F : Type -> Type)
+  6 │    (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
+    │                                ╰╯
 
 Error: Cannot check the expression
          X
@@ -14,14 +14,14 @@ Error: Cannot check the expression
 
 In file $FILE:6:16 ->
 
-  4 |   def test
-  5 |    (F : Type -> Type)
-  6 |    (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
-    |                   ^^
+  4 │   def test
+  5 │    (F : Type -> Type)
+  6 │    (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
+    │                   ╰╯
 
 Error: Unsolved meta _
        in `F _`
-       in `F _ -> F (Neg <X>)`
+       in `F _ → F (Neg <X>)`
 
 2 error(s), 0 warning(s).
 What are you doing?

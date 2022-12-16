@@ -1,9 +1,9 @@
 In file $FILE:6:22 ->
 
-  4 |   def id (n : Nat) : Nat => n
-  5 |   def whichOne : Nat =>
-  6 |     let x := unit in id x
-    |                         ^^
+  4 │   def id (n : Nat) : Nat => n
+  5 │   def whichOne : Nat =>
+  6 │     let x := unit in id x
+    │                         ╰╯
 
 Error: Cannot check the expression
          x
@@ -14,10 +14,10 @@ Error: Cannot check the expression
 
 In file $FILE:11:17 ->
 
-  9  |     let
-  10 |     | x0 : Nat := 1
-  11 |     | x1 : Unit := 2
-     |                    ^^
+  9  │     let
+  10 │     | x0 : Nat := 1
+  11 │     | x1 : Unit := 2
+     │                    ╰╯
 
 Error: Cannot check the expression
          2

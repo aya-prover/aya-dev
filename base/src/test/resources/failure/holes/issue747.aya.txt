@@ -1,9 +1,9 @@
 In file $FILE:11:13 ->
 
-  9  |     | pos a => a
-  10 |     | posneg _ => 0
-  11 |     | neg a => {??}
-     |                ^--^
+  9  │     | pos a => a
+  10 │     | posneg _ => 0
+  11 │     | neg a => {??}
+     │                ╰──╯
 
 Goal: Goal of type
         Nat
@@ -11,14 +11,14 @@ Goal: Goal of type
       Context:
         {a : Nat}
       To ensure confluence:
-        Given (i => _), we should have: 0
+        Given (i ⇒ _), we should have: 0
 
 In file $FILE:11:13 ->
 
-  9  |     | pos a => a
-  10 |     | posneg _ => 0
-  11 |     | neg a => {??}
-     |                ^--^
+  9  │     | pos a => a
+  10 │     | posneg _ => 0
+  11 │     | neg a => {??}
+     │                ╰──╯
 
 Error: Unsolved meta _
 

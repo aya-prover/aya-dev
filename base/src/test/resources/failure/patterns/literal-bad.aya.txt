@@ -1,9 +1,9 @@
 In file $FILE:3:4 ->
 
-  1 |   open data Test | t
-  2 |   def not-conf Test : Test
-  3 |     | 1 => t
-    |       ^^
+  1 │   open data Test | t
+  2 │   def not-conf Test : Test
+  3 │     | 1 => t
+    │       ╰╯
 
 Error: The literal
          1

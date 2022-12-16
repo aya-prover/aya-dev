@@ -1,9 +1,9 @@
 In file $FILE:3:4 ->
 
-  1 |   open import Arith::Nat::Core
-  2 |   
-  3 |   def f Nat : Nat
-    |       ^^
+  1 │   open import Arith::Nat::Core
+  2 │   
+  3 │   def f Nat : Nat
+    │       ╰╯
 
 Error: The recursive definition `f` is not structurally recursive
 note: In particular, the problematic call is:
@@ -13,10 +13,10 @@ note: In particular, the problematic call is:
 
 In file $FILE:6:4 ->
 
-  4 |     | n => g (suc n)
-  5 |   
-  6 |   def g Nat : Nat
-    |       ^^
+  4 │     | n => g (suc n)
+  5 │   
+  6 │   def g Nat : Nat
+    │       ╰╯
 
 Error: The recursive definition `g` is not structurally recursive
 note: In particular, the problematic call is:

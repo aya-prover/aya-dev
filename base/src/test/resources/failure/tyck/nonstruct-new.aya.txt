@@ -1,7 +1,7 @@
 In file $FILE:1:12 ->
 
-  1 |   def test => new Type {}
-    |               ^---------^
+  1 │   def test => new Type {}
+    │               ╰─────────╯
 
 Error: Unable to construct the expression
          new Type 0

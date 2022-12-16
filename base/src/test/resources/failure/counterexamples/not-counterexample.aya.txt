@@ -1,15 +1,15 @@
 In file $FILE:1:15 ->
 
-  1 |   counterexample open data Nat | suc Nat | zero
-    |                  ^--^
+  1 │   counterexample open data Nat | suc Nat | zero
+    │                  ╰──╯
 
 Warning: Ignoring the following statement, which is not a counterexample:
          open Nat hiding ()
 
 In file $FILE:1:25 ->
 
-  1 |   counterexample open data Nat | suc Nat | zero
-    |                            ^-^
+  1 │   counterexample open data Nat | suc Nat | zero
+    │                            ╰─╯
 
 Error: The counterexample Nat does not raise any type error
 

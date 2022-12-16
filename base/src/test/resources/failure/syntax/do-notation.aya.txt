@@ -1,9 +1,9 @@
 In file $FILE:4:5 ->
 
-  2 |   
-  3 |   def A: Type 1 =>
-  4 |     do a <- Type
-    |        ^^
+  2 │   
+  3 │   def A: Type 1 =>
+  4 │     do a <- Type
+    │        ╰╯
 
 Error: Last expression in a do block cannot be a bind expression
 

@@ -1,9 +1,9 @@
 In file $FILE:4:23 ->
 
-  2 |   open data Unit : Type | unit
-  3 |   def foo (x : Unit) : Unit => x
-  4 |   def bar : Unit => foo {unit}
-    |                          ^--^
+  2 │   open data Unit : Type | unit
+  3 │   def foo (x : Unit) : Unit => x
+  4 │   def bar : Unit => foo {unit}
+    │                          ╰──╯
 
 Error: Unexpected implicit argument `{unit}`
 

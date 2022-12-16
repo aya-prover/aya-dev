@@ -1,9 +1,9 @@
 In file $FILE:4:66 ->
 
-  2 |   variable A : Type
-  3 |   
-  4 |   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-    |                                                                     ^^
+  2 │   variable A : Type
+  3 │   
+  4 │   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+    │                                                                     ╰╯
 
 Error: Cannot check the expression
          a
@@ -14,10 +14,10 @@ Error: Cannot check the expression
 
 In file $FILE:4:73 ->
 
-  2 |   variable A : Type
-  3 |   
-  4 |   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-    |                                                                            ^^
+  2 │   variable A : Type
+  3 │   
+  4 │   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+    │                                                                            ╰╯
 
 Error: The boundary
          p i
@@ -30,16 +30,15 @@ Error: The boundary
 
 In file $FILE:4:53 ->
 
-  2 |   variable A : Type
-  3 |   
-  4 |   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-    |                                                        ^-------------------^
+  2 │   variable A : Type
+  3 │   
+  4 │   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+    │                                                        ╰───────────────────╯
 
 Error: The boundary
-         hcomp2d {A'} {c'} {d'} (idp {A'} {a'} <a>) (\ i => idp {A'} {a'} i) (\ i =>
-        <unexpected `p`> i) i
-         (Normalized: coe (\ k => <unexpected `p`> k = a' 1) (_|_) (\ i => a' i)
-        i)
+         hcomp2d {A'} {c'} {d'} (idp {A'} {a'} <a>) (\ i ⇒ idp {A'} {a'} i) (\ i
+        ⇒ <unexpected `p`> i) i
+         (Normalized: coe (λ k ⇒ <unexpected `p`> k = a' 1) (⊥) (\ i ⇒ a' i) i)
        disagrees with
          a
        In particular, we failed to unify
@@ -49,15 +48,15 @@ Error: The boundary
 
 In file $FILE:4:66 ->
 
-  2 |   variable A : Type
-  3 |   
-  4 |   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
-    |                                                                     ^^
+  2 │   variable A : Type
+  3 │   
+  4 │   def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p
+    │                                                                     ╰╯
 
 Error: Unsolved meta a'
        in `a' 1`
        in `<unexpected `hcomp2d (idp a) idp p`> i`
-       in `\ i => <unexpected `hcomp2d (idp a) idp p`> i`
+       in `\ i ⇒ <unexpected `hcomp2d (idp a) idp p`> i`
 
 4 error(s), 0 warning(s).
 What are you doing?

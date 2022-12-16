@@ -1,9 +1,9 @@
 In file $FILE:4:11 ->
 
-  2 |   
-  3 |   struct TypeStruct : Type
-  4 |     | type : Type
-    |              ^--^
+  2 │   
+  3 │   struct TypeStruct : Type
+  4 │     | type : Type
+    │              ╰──╯
 
 Error: The level here is expected to be <= Type 0 but it is actually Type 1
 

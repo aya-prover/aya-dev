@@ -1,36 +1,36 @@
 In file $FILE:17:6 ->
 
-  15 |   
-  16 |   def GG (A : I -> Type) (a : A 0) (i : I) : A i
-  17 |     => (\j => A (i ∧ j)).coe a freeze i
-     |         ^-------------^
+  15 │   
+  16 │   def GG (A : I -> Type) (a : A 0) (i : I) : A i
+  17 │     => (\j => A (i ∧ j)).coe a freeze i
+     │         ╰─────────────╯
 
 Error: Under the cofibration:
          i
        The type in the body still depends on the interval parameter:
-         \ j => A (i /\ j)
-         (Normalized under cofibration: \ j => A j)
+         λ j ⇒ A (i ∧ j)
+         (Normalized under cofibration: λ j ⇒ A j)
        which is not allowed in coercion
 
 In file $FILE:21:6 ->
 
-  19 |   
-  20 |   def GG2 (A : I -> Type) (a : A 0) (i : I) : A i
-  21 |     => (\j => A j).coe a freeze i
-     |         ^-------^
+  19 │   
+  20 │   def GG2 (A : I -> Type) (a : A 0) (i : I) : A i
+  21 │     => (\j => A j).coe a freeze i
+     │         ╰───────╯
 
 Error: Under the cofibration:
          i
        The type in the body still depends on the interval parameter:
-         \ j => A j
+         λ j ⇒ A j
        which is not allowed in coercion
 
 In file $FILE:25:5 ->
 
-  23 |   
-  24 |   def GG3 (A : I -> Type) (a : A 0) (i : I) : A i
-  25 |     => A.coe a freeze i
-     |        ^^
+  23 │   
+  24 │   def GG3 (A : I -> Type) (a : A 0) (i : I) : A i
+  25 │     => A.coe a freeze i
+     │        ╰╯
 
 Error: Under the cofibration:
          i
@@ -41,10 +41,10 @@ Error: Under the cofibration:
 
 In file $FILE:29:36 ->
 
-  27 |   
-  28 |   def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
-  29 |     => (\j => A (i ∧ j)).coe a freeze a
-     |                                       ^^
+  27 │   
+  28 │   def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
+  29 │     => (\j => A (i ∧ j)).coe a freeze a
+     │                                       ╰╯
 
 Error: Cannot check the expression
          a
@@ -55,15 +55,15 @@ Error: Cannot check the expression
 
 In file $FILE:29:6 ->
 
-  27 |   
-  28 |   def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
-  29 |     => (\j => A (i ∧ j)).coe a freeze a
-     |         ^-------------^
+  27 │   
+  28 │   def GG4 (A : I -> Type) (a : A 0) (i : I) : A i
+  29 │     => (\j => A (i ∧ j)).coe a freeze a
+     │         ╰─────────────╯
 
 Error: Under the cofibration:
          <a>
        The type in the body still depends on the interval parameter:
-         \ j => A (i /\ j)
+         λ j ⇒ A (i ∧ j)
        which is not allowed in coercion
 
 5 error(s), 0 warning(s).
