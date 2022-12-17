@@ -6,8 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.render.RenderOptions;
-import org.aya.distill.AyaDistillerOptions;
-import org.aya.distill.Codifier;
+import org.aya.prettier.AyaPrettierOptions;
+import org.aya.prettier.Codifier;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.Command;
@@ -117,13 +117,13 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command TOGGLE_DISTILL = new Command(ImmutableSeq.of("print-toggle"), "Toggle a pretty printing option") {
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable AyaDistillerOptions.Key key) {
+  @NotNull Command TOGGLE_PRETTY = new Command(ImmutableSeq.of("print-toggle"), "Toggle a pretty printing option") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable AyaPrettierOptions.Key key) {
       var builder = new StringBuilder();
-      var map = repl.config.distillerOptions.map;
+      var map = repl.config.prettierOptions.map;
       if (key == null) {
         builder.append("Current pretty printing options:");
-        for (var k : AyaDistillerOptions.Key.values())
+        for (var k : AyaPrettierOptions.Key.values())
           builder
             .append("\n").append(k.name()).append(": ")
             .append(map.get(k));

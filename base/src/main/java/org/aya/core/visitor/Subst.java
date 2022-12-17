@@ -10,7 +10,7 @@ import kala.collection.mutable.MutableTreeMap;
 import org.aya.core.term.FormulaTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -20,7 +20,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,10 +117,10 @@ public record Subst(
       restr.map(t -> t.subst(this).normalize(state, NormalizeMode.WHNF)));
   }
 
-  @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return Doc.commaList(
       map.view().map((var, term) -> Doc.sep(
-        BaseDistiller.varDoc(var),
+        BasePrettier.varDoc(var),
         Doc.symbol("=>"),
         term.toDoc(options)
       )).toImmutableSeq()

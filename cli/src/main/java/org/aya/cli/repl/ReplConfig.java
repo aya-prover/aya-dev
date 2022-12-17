@@ -9,10 +9,10 @@ import com.google.gson.JsonParseException;
 import kala.control.Option;
 import org.aya.cli.render.Color;
 import org.aya.cli.render.RenderOptions;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.AyaHome;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -27,7 +27,7 @@ public class ReplConfig implements AutoCloseable {
   public transient final Option<Path> configFile;
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
-  public @NotNull AyaDistillerOptions distillerOptions = AyaDistillerOptions.pretty();
+  public @NotNull AyaPrettierOptions prettierOptions = AyaPrettierOptions.pretty();
   public boolean enableUnicode = true;
   /** Disables welcome message, echoing info, etc. */
   public boolean silent = false;
@@ -38,7 +38,7 @@ public class ReplConfig implements AutoCloseable {
   }
 
   private void checkDeserialization() {
-    if (distillerOptions.map.isEmpty()) distillerOptions.reset();
+    if (prettierOptions.map.isEmpty()) prettierOptions.reset();
     // maintain the Nullability, renderOptions is probably null after deserializing
     if (renderOptions == null) renderOptions = new RenderOptions();
     renderOptions.checkDeserialization();
@@ -77,9 +77,9 @@ public class ReplConfig implements AutoCloseable {
   @VisibleForTesting public static GsonBuilder newGsonBuilder() {
     return new GsonBuilder()
       .registerTypeAdapter(Color.class, new Color.Adapter())
-      .registerTypeAdapter(DistillerOptions.Key.class, (JsonDeserializer<DistillerOptions.Key>) (json, typeOfT, context) -> {
+      .registerTypeAdapter(PrettierOptions.Key.class, (JsonDeserializer<PrettierOptions.Key>) (json, typeOfT, context) -> {
         try {
-          return AyaDistillerOptions.Key.valueOf(json.getAsString());
+          return AyaPrettierOptions.Key.valueOf(json.getAsString());
         } catch (IllegalArgumentException ignored) {
           return null;
         }

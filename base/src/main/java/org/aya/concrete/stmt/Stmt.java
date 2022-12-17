@@ -4,7 +4,7 @@ package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.distill.ConcreteDistiller;
+import org.aya.prettier.ConcretePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
@@ -12,7 +12,7 @@ import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.visitor.StmtResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.order.TyckUnit;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,8 +43,8 @@ public sealed interface Stmt extends AyaDocile, TyckUnit permits Decl, Command, 
     new Desugarer(resolveInfo).accept(this);
   }
 
-  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new ConcreteDistiller(options).stmt(this);
+  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    return new ConcretePrettier(options).stmt(this);
   }
 
   /**

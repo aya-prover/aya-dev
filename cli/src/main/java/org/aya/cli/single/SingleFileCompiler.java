@@ -52,14 +52,14 @@ public record SingleFileCompiler(
       var primFactory = new PrimDef.Factory();
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser);
-      ayaFile.distill(flags, program, MainArgs.DistillStage.raw);
+      ayaFile.pretty(flags, program, MainArgs.PrettyStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new FileModuleLoader(locator, path, reporter, ayaParser, fileManager, primFactory, builder)).toImmutableSeq()));
       loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
         ayaFile.tyckAdditional(moduleResolve);
-        ayaFile.distill(flags, program, MainArgs.DistillStage.scoped);
-        ayaFile.distill(flags, defs, MainArgs.DistillStage.typed);
-        if (reporter.noError()) ayaFile.distill(flags, program, MainArgs.DistillStage.literate);
+        ayaFile.pretty(flags, program, MainArgs.PrettyStage.scoped);
+        ayaFile.pretty(flags, defs, MainArgs.PrettyStage.typed);
+        if (reporter.noError()) ayaFile.pretty(flags, program, MainArgs.PrettyStage.literate);
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
       });
     });

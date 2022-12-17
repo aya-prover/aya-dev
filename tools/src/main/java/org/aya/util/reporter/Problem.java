@@ -11,7 +11,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
 import org.aya.pretty.error.PrettyError;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -39,15 +39,15 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  @NotNull Doc describe(@NotNull DistillerOptions options);
+  @NotNull Doc describe(@NotNull PrettierOptions options);
   @NotNull Severity level();
   default @NotNull Stage stage() {
     return Stage.OTHER;
   }
-  default @NotNull Doc hint(@NotNull DistillerOptions options) {
+  default @NotNull Doc hint(@NotNull PrettierOptions options) {
     return Doc.empty();
   }
-  default @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+  default @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
     return SeqView.empty();
   }
 
@@ -55,7 +55,7 @@ public interface Problem {
     return level() == Severity.ERROR;
   }
 
-  default @NotNull PrettyError toPrettyError(@NotNull DistillerOptions options,
+  default @NotNull PrettyError toPrettyError(@NotNull PrettierOptions options,
                                              @NotNull PrettyError.FormatConfig prettyErrorConf) {
     var sourcePos = sourcePos();
     return new PrettyError(
@@ -74,7 +74,7 @@ public interface Problem {
     );
   }
 
-  default @NotNull Doc brief(@NotNull DistillerOptions options) {
+  default @NotNull Doc brief(@NotNull PrettierOptions options) {
     var tag = switch (level()) {
       case WARN -> Doc.plain("Warning:");
       case GOAL -> Doc.plain("Goal:");

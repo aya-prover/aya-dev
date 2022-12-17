@@ -8,20 +8,20 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
-import org.aya.distill.CoreDistiller;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.ide.Resolver;
 import org.aya.ide.util.XY;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public interface ComputeSignature {
   static @NotNull Doc invokeHover(
-    @NotNull DistillerOptions options,
+    @NotNull PrettierOptions options,
     @NotNull LibrarySource source, XY xy
   ) {
     var target = Resolver.resolveVar(source, xy).firstOrNull();
@@ -30,9 +30,9 @@ public interface ComputeSignature {
   }
 
   @SuppressWarnings("unchecked")
-  static @NotNull Doc computeSignature(@NotNull DistillerOptions options, @NotNull AnyVar target, boolean withResult) {
+  static @NotNull Doc computeSignature(@NotNull PrettierOptions options, @NotNull AnyVar target, boolean withResult) {
     return switch (target) {
-      case LocalVar localVar -> BaseDistiller.varDoc(localVar); // TODO: compute type of local vars
+      case LocalVar localVar -> BasePrettier.varDoc(localVar); // TODO: compute type of local vars
       case DefVar<?, ?> ref -> {
         // #299: hovering a mouse on a definition whose header is failed to tyck
         if (!(ref.concrete instanceof Decl.Telescopic<?> concrete)
@@ -45,7 +45,7 @@ public interface ComputeSignature {
   }
 
   static @NotNull Doc computeSignature(
-    @NotNull DistillerOptions options,
+    @NotNull PrettierOptions options,
     @NotNull ImmutableSeq<Term.Param> defTele, @NotNull Term defResult,
     boolean withResult
   ) {
@@ -53,7 +53,7 @@ public interface ComputeSignature {
       var type = PiTerm.make(defTele, defResult);
       return type.toDoc(options);
     }
-    var distiller = new CoreDistiller(options);
-    return distiller.visitTele(defTele, defResult, Term::findUsages);
+    var prettier = new CorePrettier(options);
+    return prettier.visitTele(defTele, defResult, Term::findUsages);
   }
 }

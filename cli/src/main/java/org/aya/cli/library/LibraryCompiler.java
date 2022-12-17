@@ -143,8 +143,8 @@ public class LibraryCompiler {
   public int start() throws IOException {
     if (flags.modulePaths().isNotEmpty()) reporter.reportString(
       "Warning: command-line specified module path is ignored when compiling libraries.");
-    if (flags.distillInfo() != null) reporter.reportString(
-      "Warning: command-line specified distill info is ignored when compiling libraries.");
+    if (flags.prettyInfo() != null) reporter.reportString(
+      "Warning: command-line specified pretty info is ignored when compiling libraries.");
     return AyaCompiler.catching(reporter, flags, this::make);
   }
 

@@ -3,20 +3,20 @@
 package org.aya.tyck.trace;
 
 import kala.collection.mutable.MutableList;
-import org.aya.distill.AyaDistillerOptions;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.AyaPrettierOptions;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownTrace {
   public final int indent;
-  public final @NotNull DistillerOptions options;
+  public final @NotNull PrettierOptions options;
   public static final @NotNull Doc plus = Doc.symbol("+");
   public static final @NotNull Doc colon = Doc.symbol(":");
   private final @NotNull Doc vdash, equiv, uparr;
 
-  public MarkdownTrace(int indent, @NotNull DistillerOptions options, boolean asciiOnly) {
+  public MarkdownTrace(int indent, @NotNull PrettierOptions options, boolean asciiOnly) {
     this.indent = indent;
     this.options = options;
     vdash = asciiOnly ? Doc.symbol("|-") : Doc.symbol("\u22A2");
@@ -25,7 +25,7 @@ public class MarkdownTrace {
   }
 
   public MarkdownTrace() {
-    this(2, AyaDistillerOptions.informative(), false);
+    this(2, AyaPrettierOptions.informative(), false);
   }
 
   private @NotNull Doc indentedChildren(MutableList<@NotNull Trace> children) {
@@ -34,7 +34,7 @@ public class MarkdownTrace {
 
   public @NotNull Doc docify(@NotNull Trace trace) {
     return switch (trace) {
-      case Trace.DeclT t -> Doc.vcatNonEmpty(Doc.sep(plus, BaseDistiller.varDoc(t.var())),
+      case Trace.DeclT t -> Doc.vcatNonEmpty(Doc.sep(plus, BasePrettier.varDoc(t.var())),
         indentedChildren(t.children()));
       case Trace.LabelT t -> Doc.vcatNonEmpty(Doc.sep(plus, Doc.english(t.label())),
         indentedChildren(t.children()));

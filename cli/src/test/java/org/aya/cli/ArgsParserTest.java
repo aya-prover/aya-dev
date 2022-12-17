@@ -3,7 +3,7 @@
 package org.aya.cli;
 
 import org.aya.cli.utils.MainArgs;
-import org.aya.cli.utils.MainArgs.DistillFormat;
+import org.aya.cli.utils.MainArgs.PrettyFormat;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
@@ -46,6 +46,6 @@ public class ArgsParserTest {
     var cliArgs = new MainArgs();
     new CommandLine(cliArgs).parseArgs("boy.aya");
     assertFalse(cliArgs.interruptedTrace);
-    assertEquals(DistillFormat.markdown, cliArgs.prettyFormat);
+    assertEquals(PrettyFormat.markdown, cliArgs.prettyFormat);
   }
 }

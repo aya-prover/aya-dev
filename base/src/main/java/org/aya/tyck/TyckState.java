@@ -18,7 +18,7 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -104,7 +104,7 @@ public record TyckState(
     @NotNull LocalCtx localCtx,
     @NotNull Unifier.Sub lr, @NotNull Unifier.Sub rl
   ) implements AyaDocile {
-    public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
     }
   }

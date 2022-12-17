@@ -3,7 +3,7 @@
 package org.aya.cli.single;
 
 import org.aya.pretty.printer.PrinterConfig;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -21,13 +21,13 @@ import java.util.function.Supplier;
 public record CliReporter(
   boolean supportAnsi,
   @NotNull BooleanSupplier unicode,
-  @NotNull Supplier<DistillerOptions> options,
+  @NotNull Supplier<PrettierOptions> options,
   @NotNull Problem.Severity minimum,
   @NotNull Consumer<String> out,
   @NotNull Consumer<String> err
 ) implements Reporter {
   @Contract(pure = true, value = "_, _, _ -> new")
-  public static @NotNull CliReporter stdio(boolean unicode, @NotNull DistillerOptions options, @NotNull Problem.Severity minimum) {
+  public static @NotNull CliReporter stdio(boolean unicode, @NotNull PrettierOptions options, @NotNull Problem.Severity minimum) {
     AnsiConsole.systemInstall();
     return new CliReporter(true, () -> unicode, () -> options, minimum,
       AnsiConsole.out()::println, AnsiConsole.err()::println);

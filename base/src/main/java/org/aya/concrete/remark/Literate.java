@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Link;
@@ -59,7 +59,7 @@ public sealed interface Literate extends Docile {
       if (def.get() instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef<?> userDef) {
         var problems = userDef.problems;
         if (problems == null) return Doc.styled(Style.bold(), Doc.english("No error message."));
-        return Doc.vcat(problems.map(problem -> problem.brief(AyaDistillerOptions.informative())));
+        return Doc.vcat(problems.map(problem -> problem.brief(AyaPrettierOptions.informative())));
       }
       return Doc.styled(Style.bold(), Doc.english("Not a definition that can obtain error message."));
     }

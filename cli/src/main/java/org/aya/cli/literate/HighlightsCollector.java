@@ -11,7 +11,7 @@ public record HighlightsCollector(@NotNull ImmutableSeq<HighlightInfo> highlight
   @Override public void accept(@NotNull Literate literate) {
     if (literate instanceof Literate.CodeBlock codeBlock && codeBlock.isAya() && codeBlock.sourcePos != null) {
       var hl = highlights.filter(x -> codeBlock.sourcePos.containsIndex(x.sourcePos()));
-      codeBlock.highlighted = FaithfulDistiller.highlight(codeBlock.raw, codeBlock.sourcePos.tokenStartIndex(), hl);
+      codeBlock.highlighted = FaithfulPrettier.highlight(codeBlock.raw, codeBlock.sourcePos.tokenStartIndex(), hl);
     }
     LiterateConsumer.super.accept(literate);
   }

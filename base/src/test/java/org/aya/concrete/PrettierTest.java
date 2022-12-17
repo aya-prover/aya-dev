@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-public class DistillerTest {
+public class PrettierTest {
   @Test
   public void listPattern() {
     parseAndPretty("""

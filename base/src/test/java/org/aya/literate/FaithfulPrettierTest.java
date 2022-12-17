@@ -3,7 +3,7 @@
 package org.aya.literate;
 
 import kala.control.Option;
-import org.aya.cli.literate.FaithfulDistiller;
+import org.aya.cli.literate.FaithfulPrettier;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.resolve.context.EmptyContext;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 
-public class FaithfulDistillerTest {
+public class FaithfulPrettierTest {
   @Test public void test() throws IOException {
     var reporter = AyaThrowingReporter.INSTANCE;
 
@@ -30,7 +30,7 @@ public class FaithfulDistillerTest {
     TyckDeclTest.resolve(stmts, new EmptyContext(reporter, root).derive(modName));
 
     var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
-    var doc = FaithfulDistiller.highlight(sourceFile.sourceCode(), 0, highlights);
+    var doc = FaithfulPrettier.highlight(sourceFile.sourceCode(), 0, highlights);
     var output = doc.renderToHtml(true);
     Files.writeString(root.resolve(outputFileName), output);
   }

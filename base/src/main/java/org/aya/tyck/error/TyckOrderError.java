@@ -4,12 +4,12 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.order.TyckUnit;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public interface TyckOrderError extends TyckError {
         .max(Comparator.comparingInt(SourcePos::endLine));
     }
 
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Circular signature dependency found between"),
         Doc.commaList(cycles.view().map(this::nameOf).toImmutableSeq()
@@ -43,16 +43,16 @@ public interface TyckOrderError extends TyckError {
       return unit.sourcePos();
     }
 
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Self-reference found in the signature of"),
         Doc.plain(nameOf(unit)));
     }
   }
 
   record NotYetTyckedError(@Override @NotNull SourcePos sourcePos, @NotNull AnyVar var) implements TyckOrderError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Attempting to use a definition"),
-        Doc.code(BaseDistiller.varDoc(var)),
+        Doc.code(BasePrettier.varDoc(var)),
         Doc.english("which is not yet typechecked"));
     }
   }

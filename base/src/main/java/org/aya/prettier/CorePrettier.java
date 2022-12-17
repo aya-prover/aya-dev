@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.distill;
+package org.aya.prettier;
 
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqView;
@@ -19,21 +19,21 @@ import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
 /**
- * It's called distiller, and it serves as the pretty printer.
+ * It's the pretty printer.
  * Credit after <a href="https://github.com/jonsterling/dreamtt/blob/main/frontend/Distiller.ml">Jon Sterling</a>
  *
  * @author ice1000, kiva
- * @see ConcreteDistiller
+ * @see ConcretePrettier
  */
-public class CoreDistiller extends BaseDistiller<Term> {
-  public CoreDistiller(@NotNull DistillerOptions options) {
+public class CorePrettier extends BasePrettier<Term> {
+  public CorePrettier(@NotNull PrettierOptions options) {
     super(options);
   }
 
@@ -60,8 +60,8 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case MetaTerm term -> {
         var name = term.ref();
         var inner = varDoc(name);
-        var showImplicits = options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs);
-        if (options.map.get(AyaDistillerOptions.Key.InlineMetas))
+        var showImplicits = options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs);
+        if (options.map.get(AyaPrettierOptions.Key.InlineMetas))
           yield visitCalls(null, inner, term.args().view(), outer, showImplicits);
         yield Doc.wrap("{?", "?}",
           visitCalls(null, inner, term.args().view(), Outer.Free, showImplicits));
@@ -101,11 +101,11 @@ public class CoreDistiller extends BaseDistiller<Term> {
             bodyDoc = style != null
               ? visitArgsCalls(defVar, style, args, outer)
               : visitCalls(defVar.assoc(), varDoc(defVar), args, params.isEmpty() ? outer : Outer.Free,
-                options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
+                options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
           }
         } else bodyDoc = term(Outer.Free, body);
 
-        if (!options.map.get(AyaDistillerOptions.Key.ShowImplicitPats))
+        if (!options.map.get(AyaPrettierOptions.Key.ShowImplicitPats))
           params.retainIf(Term.Param::explicit);
         if (params.isEmpty()) yield bodyDoc;
 
@@ -121,7 +121,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         if (!kind.hasLevel()) yield fn;
         yield visitCalls(null, fn, (nest, t) -> t.toDoc(options), outer,
           SeqView.of(new Arg<>(o -> Doc.plain(String.valueOf(lift)), true)),
-          options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs)
+          options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
         );
       }
       case IntervalTerm term -> Doc.styled(PRIM, "I");
@@ -132,7 +132,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
             Doc.symbol("=>"), term(Outer.Free, v)))
           .toImmutableSeq()));
       case FieldTerm term -> visitCalls(null, visitAccessHead(term), term.fieldArgs().view(), outer,
-        options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
+        options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       case MetaPatTerm(var ref) -> {
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
         yield Doc.wrap("<", ">", pat(ref, true, outer));
@@ -145,7 +145,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         var args = MutableList.of(arg);
         var head = AppTerm.unapp(of, args);
         if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD, args, outer);
-        var implicits = options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs);
+        var implicits = options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs);
         // Infix def-calls
         if (head instanceof Callable call && call.ref() instanceof DefVar<?, ?> var) {
           yield visitCalls(var.assoc(), defVar(var),
@@ -165,7 +165,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
             Doc.symbol("=>"), term(Outer.Free, clause.body())))
           .toImmutableSeq()));
       case PiTerm(var params0, var body0) -> {
-        if (!options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) && !params0.explicit()) {
+        if (!options.map.get(AyaPrettierOptions.Key.ShowImplicitPats) && !params0.explicit()) {
           yield term(outer, body0);
         }
         // Try to omit the Pi keyword
@@ -218,7 +218,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
         }
         yield Doc.sepNonEmpty(
           Doc.symbol("[|"),
-          Doc.commaList(cube.params().map(BaseDistiller::linkDef)),
+          Doc.commaList(cube.params().map(BasePrettier::linkDef)),
           Doc.symbol("|]"),
           cube.type().toDoc(options),
           partial(options, cube.partial(), false, Doc.symbol("{"), Doc.symbol("}"))
@@ -226,12 +226,12 @@ public class CoreDistiller extends BaseDistiller<Term> {
       }
       case PLamTerm(var params, var body) -> checkParen(outer,
         Doc.sep(Doc.styled(KEYWORD, "\\"),
-          Doc.sep(params.map(BaseDistiller::varDoc)),
+          Doc.sep(params.map(BasePrettier::varDoc)),
           Doc.symbol("=>"),
           body.toDoc(options)),
         Outer.BinOp);
       case PAppTerm app -> visitCalls(null, term(Outer.AppHead, app.of()),
-        app.args().view(), outer, options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
+        app.args().view(), outer, options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
       case HCompTerm hComp -> throw new InternalException("TODO");
@@ -274,7 +274,7 @@ public class CoreDistiller extends BaseDistiller<Term> {
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
       case Pat.Ctor ctor -> {
         var ctorDoc = visitCalls(ctor.ref(), CON, Arg.mapSeq(ctor.params().view(), Pat::toTerm), outer,
-          options.map.get(AyaDistillerOptions.Key.ShowImplicitPats));
+          options.map.get(AyaPrettierOptions.Key.ShowImplicitPats));
         yield ctorDoc(outer, licit, ctorDoc, ctor.params().isEmpty());
       }
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);

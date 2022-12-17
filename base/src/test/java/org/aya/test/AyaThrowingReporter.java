@@ -2,10 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 
 public class AyaThrowingReporter {
-  public static final @NotNull ThrowingReporter INSTANCE = new ThrowingReporter(AyaDistillerOptions.informative());
+  public static final @NotNull ThrowingReporter INSTANCE = new ThrowingReporter(AyaPrettierOptions.informative());
 }

@@ -11,7 +11,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.Unifier;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ public interface UnifyError extends TyckError {
   @NotNull Unifier.FailureData failureData();
 
   default @NotNull Doc describeUnify(
-    @NotNull DistillerOptions options,
+    @NotNull PrettierOptions options,
     @NotNull Doc prologue,
     @NotNull Term actual,
     @NotNull Doc epilogue,
@@ -69,7 +69,7 @@ public interface UnifyError extends TyckError {
     @Override @NotNull Unifier.FailureData failureData,
     @Override @NotNull TyckState state
   ) implements ExprProblem, UnifyError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var prologue = Doc.vcat(
         Doc.english("Cannot check the expression"),
         Doc.par(1, expr.toDoc(options)),
@@ -89,7 +89,7 @@ public interface UnifyError extends TyckError {
       return ctor.sourcePos;
     }
 
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var prologue = Doc.vcat(
         Doc.english("Cannot make sense of the return type of the constructor"),
         Doc.par(1, ctor.toDoc(options)),

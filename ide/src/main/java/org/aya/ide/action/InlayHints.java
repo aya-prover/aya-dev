@@ -10,16 +10,16 @@ import org.aya.core.term.Term;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XYXY;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record InlayHints(
-  @NotNull DistillerOptions options,
+  @NotNull PrettierOptions options,
   @NotNull XYXY location,
   @NotNull MutableList<Hint> hints
 ) implements SyntaxNodeAction.Ranged {
-  public static @NotNull ImmutableSeq<Hint> invoke(@NotNull DistillerOptions options, @NotNull LibrarySource source, @NotNull XYXY range) {
+  public static @NotNull ImmutableSeq<Hint> invoke(@NotNull PrettierOptions options, @NotNull LibrarySource source, @NotNull XYXY range) {
     var program = source.program().get();
     if (program == null) return ImmutableSeq.empty();
     var maker = new InlayHints(options, range, MutableList.create());

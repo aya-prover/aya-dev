@@ -20,7 +20,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
 import org.aya.ide.action.*;
@@ -35,7 +35,7 @@ import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.FileUtil;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.BufferReporter;
@@ -68,7 +68,7 @@ public class AyaLanguageServer implements LanguageServer {
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
-  private final @NotNull DistillerOptions options = AyaDistillerOptions.pretty();
+  private final @NotNull PrettierOptions options = AyaPrettierOptions.pretty();
 
   public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
@@ -215,7 +215,7 @@ public class AyaLanguageServer implements LanguageServer {
     return SemanticHighlight.invoke(owner);
   }
 
-  public void publishProblems(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
+  public void publishProblems(@NotNull BufferReporter reporter, @NotNull PrettierOptions options) {
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d("%s", p.describe(options).debugRender()))
@@ -433,7 +433,7 @@ public class AyaLanguageServer implements LanguageServer {
       return docWithPos.sourcePos();
     }
 
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return docWithPos.data();
     }
 
@@ -441,7 +441,7 @@ public class AyaLanguageServer implements LanguageServer {
       return Severity.INFO;
     }
 
-    @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc brief(@NotNull PrettierOptions options) {
       return describe(options);
     }
   }

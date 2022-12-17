@@ -6,11 +6,11 @@ import kala.collection.mutable.MutableList;
 import org.aya.core.def.Def;
 import org.aya.core.term.Callable;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.terck.Diagonal;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +24,13 @@ public record BadRecursion(
 
   @Override public @NotNull Stage stage() {return Stage.TERCK;}
 
-  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.sep(Doc.english("The recursive definition"),
-      Doc.code(BaseDistiller.defVar(name)),
+      Doc.code(BasePrettier.defVar(name)),
       Doc.english("is not structurally recursive"));
   }
 
-  @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
     if (diag == null) return Doc.empty();
     var matrix = diag.matrix();
     var buffer = MutableList.of(

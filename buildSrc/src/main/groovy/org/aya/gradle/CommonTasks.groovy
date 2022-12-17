@@ -25,6 +25,7 @@ final class CommonTasks {
       fallback.set(false)
       verbose.set(true)
       sharedLibrary.set(false)
+      buildArgs.add("-H:IncludeResources=messages/AnalysisBundle.properties") // ij-parsing-core
       buildArgs.add("--report-unsupported-elements-at-runtime")
 
       javaLauncher.set(
