@@ -8,14 +8,14 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.unify.TermComparator;
 import org.aya.util.Arg;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
@@ -27,7 +27,7 @@ public sealed interface ClausesProblem extends Problem {
     return Severity.ERROR;
   }
 
-  private static @NotNull Doc termToHint(@Nullable Term term, @NotNull DistillerOptions options) {
+  private static @NotNull Doc termToHint(@Nullable Term term, @NotNull PrettierOptions options) {
     return term == null ? Doc.empty() : Doc.sep(Doc.english("substituted to"),
       Doc.code(term.toDoc(options)));
   }
@@ -46,7 +46,7 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull CondData data, @Nullable Term rhs,
     @Nullable SourcePos jPos
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var result = rhs != null ? Doc.sep(
         Doc.plain("unify"),
         Doc.code(data.lhs.toDoc(options)),
@@ -63,13 +63,13 @@ public sealed interface ClausesProblem extends Problem {
         Doc.english("for the arguments:")
       );
       return Doc.vcat(line,
-        Doc.par(1, BaseDistiller.argsDoc(options, data.args)),
+        Doc.par(1, BasePrettier.argsDoc(options, data.args)),
         Doc.english("Normalized:"),
-        Doc.par(1, BaseDistiller.argsDoc(options, data.args.map(a ->
+        Doc.par(1, BasePrettier.argsDoc(options, data.args.map(a ->
           a.descent(t -> t.normalize(data.state, NormalizeMode.NF))))));
     }
 
-    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
       var view = Seq.of(
         // new WithPos<>(conditionPos, Doc.plain("relevant condition")),
         new WithPos<>(data.iPos, termToHint(data.lhs, options))).view();
@@ -85,7 +85,7 @@ public sealed interface ClausesProblem extends Problem {
     @Override @NotNull TermComparator.FailureData failureData,
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
   ) implements ClausesProblem, UnifyError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var line = Doc.sep(
         Doc.plain("The"),
         Doc.ordinal(i),
@@ -99,7 +99,7 @@ public sealed interface ClausesProblem extends Problem {
       return ClausesProblem.super.level();
     }
 
-    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
       return Seq.of(new WithPos<>(iPos, termToHint(lhs, options)),
         new WithPos<>(jPos, termToHint(rhs, options))).view();
     }
@@ -112,9 +112,9 @@ public sealed interface ClausesProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     @NotNull PatClassifier.PatErr pats
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Unhandled case:"),
-        BaseDistiller.argsDoc(options, pats.missing()));
+        BasePrettier.argsDoc(options, pats.missing()));
     }
   }
 
@@ -123,7 +123,7 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull CtorDef ctor,
     @NotNull DataCall dataCall
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         // Use `unsure` instead of `not sure`, which is used in Agda
         Doc.english("I'm unsure if there should be a case for constructor"),
@@ -135,7 +135,7 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   record Domination(int dom, int sub, @Override @NotNull SourcePos sourcePos) implements ClausesProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var subOrdinal = Doc.ordinal(sub);
       return Doc.sep(
         Doc.english("The"), Doc.ordinal(dom),
@@ -151,7 +151,7 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   record FMDomination(int sub, @Override @NotNull SourcePos sourcePos) implements ClausesProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The"), Doc.ordinal(sub),
         Doc.english("clause is dominated by the other clauses, hence unreachable")

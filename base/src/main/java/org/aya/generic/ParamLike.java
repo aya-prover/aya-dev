@@ -3,10 +3,10 @@
 package org.aya.generic;
 
 import kala.collection.mutable.MutableList;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,13 +18,13 @@ public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
   boolean explicit();
   @NotNull LocalVar ref();
   @NotNull Expr type();
-  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return toDoc(nameDoc(), options);
   }
   default @NotNull Doc nameDoc() {
-    return BaseDistiller.linkDef(ref());
+    return BasePrettier.linkDef(ref());
   }
-  default @NotNull Doc toDoc(@NotNull Doc names, @NotNull DistillerOptions options) {
+  default @NotNull Doc toDoc(@NotNull Doc names, @NotNull PrettierOptions options) {
     var type = type();
     var docs = MutableList.of(names);
     docs.append(Doc.symbol(":"));

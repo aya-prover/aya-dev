@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-import org.aya.distill.BaseDistiller;
-import org.aya.distill.CoreDistiller;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @param isReallyError true if this is indeed an error,
  *                      false if this is just for pretty printing placeholder
  * @author ice1000
- * @see CoreDistiller#term(BaseDistiller.Outer, Term) (ErrorTerm case)
+ * @see CorePrettier#term(BasePrettier.Outer, Term) (ErrorTerm case)
  */
 public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) implements StableWHNF {
   public ErrorTerm(@NotNull Term description) {

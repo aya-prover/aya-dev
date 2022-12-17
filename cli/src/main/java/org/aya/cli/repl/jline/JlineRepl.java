@@ -8,7 +8,7 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.repl.gk.GKReplLexer;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.generic.util.AyaHome;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.pretty.backend.string.StringPrinterConfig;
@@ -55,7 +55,7 @@ public final class JlineRepl extends AyaRepl {
       .highlighter(new ReplHighlighter<>(lexer) {
         @Override protected @NotNull Doc highlight(String text, @NotNull FlexLexer.Token t) {
           return AyaParserDefinitionBase.KEYWORDS.contains(t.type())
-            ? Doc.styled(BaseDistiller.KEYWORD, text)
+            ? Doc.styled(BasePrettier.KEYWORD, text)
             : Doc.plain(text);
         }
 

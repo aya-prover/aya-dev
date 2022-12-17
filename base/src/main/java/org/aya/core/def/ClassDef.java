@@ -3,16 +3,16 @@
 package org.aya.core.def;
 
 import org.aya.concrete.stmt.ClassDecl;
-import org.aya.distill.CoreDistiller;
+import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public non-sealed/*sealed*/ interface ClassDef extends AyaDocile, GenericDef {
-  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new CoreDistiller(options).def(this);
+  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    return new CorePrettier(options).def(this);
   }
 
   @Override @NotNull DefVar<? extends ClassDef, ? extends ClassDecl> ref();

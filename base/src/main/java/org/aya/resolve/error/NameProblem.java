@@ -6,14 +6,14 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.context.BindContext;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,7 @@ public interface NameProblem extends Problem {
     @NotNull ImmutableSeq<Seq<String>> disambiguation,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(Doc.sep(
           Doc.english("The unqualified name"),
           Doc.code(Doc.plain(name)),
@@ -54,7 +54,7 @@ public interface NameProblem extends Problem {
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Warn {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(Doc.sep(
         Doc.english("The name"),
         Doc.code(Doc.plain(name)),
@@ -66,7 +66,7 @@ public interface NameProblem extends Problem {
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The name"),
         Doc.code(Doc.plain(name)),
@@ -82,7 +82,7 @@ public interface NameProblem extends Problem {
     @NotNull Seq<String> modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
         Doc.code(Doc.plain(QualifiedID.join(modName))),
@@ -95,11 +95,11 @@ public interface NameProblem extends Problem {
     @NotNull String name, @NotNull AnyVar ref,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The name"),
         Doc.plain(name),
-        Doc.parened(Doc.code(BaseDistiller.varDoc(ref))),
+        Doc.parened(Doc.code(BasePrettier.varDoc(ref))),
         Doc.english("is already defined elsewhere")
       );
     }
@@ -109,7 +109,7 @@ public interface NameProblem extends Problem {
     @NotNull Seq<String> modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
         Doc.code(Doc.plain(QualifiedID.join(modName))),
@@ -122,7 +122,7 @@ public interface NameProblem extends Problem {
     @NotNull Seq<String> modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
         Doc.code(Doc.plain(QualifiedID.join(modName))),
@@ -135,7 +135,7 @@ public interface NameProblem extends Problem {
     @NotNull Seq<String> modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Warn {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
         Doc.code(Doc.plain(QualifiedID.join(modName))),
@@ -148,7 +148,7 @@ public interface NameProblem extends Problem {
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Warn {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("The name"),
         Doc.code(Doc.plain(name)),
         Doc.english("shadows a previous local definition from outer scope")
@@ -161,7 +161,7 @@ public interface NameProblem extends Problem {
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The qualified name"),
         Doc.code(Doc.cat(Doc.plain(QualifiedID.join(modName)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
@@ -175,7 +175,7 @@ public interface NameProblem extends Problem {
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var head = Doc.sep(
         Doc.english("The name"),
         Doc.code(Doc.plain(name)),
@@ -204,7 +204,7 @@ public interface NameProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     @NotNull String name
   ) implements NameProblem.Error {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Unknown operator"),
         Doc.code(Doc.plain(name)),

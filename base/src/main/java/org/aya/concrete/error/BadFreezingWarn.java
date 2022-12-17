@@ -5,11 +5,11 @@ package org.aya.concrete.error;
 import org.aya.concrete.Expr;
 import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public record BadFreezingWarn(@NotNull Expr expr) implements ExprProblem {
-  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.english("Meaningless freeze condition in projection");
   }
 

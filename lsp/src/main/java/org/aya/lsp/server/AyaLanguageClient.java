@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.javacs.lsp.Diagnostic;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public interface AyaLanguageClient extends LanguageClient {
   default void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
-    @NotNull DistillerOptions options
+    @NotNull PrettierOptions options
   ) {
     problems.forEach((filePath, value) -> {
       Log.i("Found %d issues in %s", value.size(), filePath);
@@ -44,7 +44,7 @@ public interface AyaLanguageClient extends LanguageClient {
       f.toUri(), Collections.emptyList())));
   }
 
-  private static @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {
+  private static @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull PrettierOptions options) {
     var msgBuilder = new StringBuilder();
     var severity = DiagnosticSeverity.Hint;
     for (var p : problems) {

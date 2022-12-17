@@ -11,8 +11,8 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple3;
 import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
-import org.aya.distill.BaseDistiller;
-import org.aya.distill.CoreDistiller;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
@@ -24,7 +24,7 @@ import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.util.Arg;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -254,8 +254,8 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
     }.apply(this);
   }
 
-  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new CoreDistiller(options).term(BaseDistiller.Outer.Free, this);
+  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    return new CorePrettier(options).term(BasePrettier.Outer.Free, this);
   }
   default @NotNull Term lift(int ulift) {
     return new EndoTerm.Elevator(ulift).apply(this);
@@ -344,7 +344,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
     @NotNull ImmutableSeq<Arg<Pat>> patterns,
     @NotNull Term body
   ) implements AyaDocile {
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return Pat.Preclause.weaken(this).toDoc(options);
     }
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.distill;
+package org.aya.prettier;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -23,7 +23,7 @@ import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +34,12 @@ import java.util.function.ToIntBiFunction;
 /**
  * @author ice1000
  */
-public abstract class BaseDistiller<Term extends AyaDocile> {
-  public static <T extends AyaDocile> @NotNull Doc argDoc(@NotNull DistillerOptions options, @NotNull Arg<T> self) {
-    return BaseDistiller.arg((outer, d) -> d.toDoc(options), self, Outer.Free);
+public abstract class BasePrettier<Term extends AyaDocile> {
+  public static <T extends AyaDocile> @NotNull Doc argDoc(@NotNull PrettierOptions options, @NotNull Arg<T> self) {
+    return BasePrettier.arg((outer, d) -> d.toDoc(options), self, Outer.Free);
   }
 
-  public static <T extends AyaDocile> @NotNull Doc argsDoc(@NotNull DistillerOptions options, @NotNull SeqLike<Arg<T>> self) {
+  public static <T extends AyaDocile> @NotNull Doc argsDoc(@NotNull PrettierOptions options, @NotNull SeqLike<Arg<T>> self) {
     return Doc.commaList(self.view().map(t -> argDoc(options, t)));
   }
 
@@ -59,9 +59,9 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   public static final @NotNull Style FIELD = AyaStyleKey.Field.preset();
   public static final @NotNull Style GENERALIZED = AyaStyleKey.Generalized.preset();
 
-  public final @NotNull DistillerOptions options;
+  public final @NotNull PrettierOptions options;
 
-  protected BaseDistiller(@NotNull DistillerOptions options) {
+  protected BasePrettier(@NotNull PrettierOptions options) {
     this.options = options;
   }
 
@@ -87,7 +87,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
     @NotNull DefVar<?, ?> var, @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<Term>> args, @NotNull Outer outer
   ) {
-    return visitCalls(var, style, args, outer, options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
+    return visitCalls(var, style, args, outer, options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
   }
 
   /**
@@ -222,11 +222,11 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
 
   /** @implNote do NOT remove the <code>toImmSeq</code> call!!! */
   private Doc mutableListNames(MutableList<LocalVar> names, ParamLike<?> param) {
-    return param.toDoc(Doc.sep(names.view().map(BaseDistiller::linkDef).toImmutableSeq()), options);
+    return param.toDoc(Doc.sep(names.view().map(BasePrettier::linkDef).toImmutableSeq()), options);
   }
 
   @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
-    return options.map.get(AyaDistillerOptions.Key.ShowLambdaTypes) ? param.toDoc(options)
+    return options.map.get(AyaPrettierOptions.Key.ShowLambdaTypes) ? param.toDoc(options)
       : Doc.bracedUnless(param.nameDoc(), param.explicit());
   }
 
@@ -292,7 +292,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  partial(@NotNull DistillerOptions options, @NotNull Partial<T> partial, boolean showEmpty, @NotNull Doc lb, @NotNull Doc rb) {
+  partial(@NotNull PrettierOptions options, @NotNull Partial<T> partial, boolean showEmpty, @NotNull Doc lb, @NotNull Doc rb) {
     return switch (partial) {
       case Partial.Const<T> sad -> Doc.sepNonEmpty(lb, sad.u().toDoc(options), rb);
       case Partial.Split<T> hap when!showEmpty && hap.clauses().isEmpty() -> Doc.empty();
@@ -303,7 +303,7 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  restr(@NotNull DistillerOptions options, @NotNull Restr<T> restr) {
+  restr(@NotNull PrettierOptions options, @NotNull Restr<T> restr) {
     return switch (restr) {
       case Restr.Const<T>(var one) -> one ? Doc.symbol("top") : Doc.symbol("_|_");
       case Restr.Disj<T> v -> Doc.join(Doc.spaced(Doc.symbol("\\/")),
@@ -314,12 +314,12 @@ public abstract class BaseDistiller<Term extends AyaDocile> {
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  side(@NotNull DistillerOptions options, @NotNull Restr.Side<T> side) {
+  side(@NotNull PrettierOptions options, @NotNull Restr.Side<T> side) {
     return Doc.sep(cofib(options, side.cof()), Doc.symbol(":="), side.u().toDoc(options));
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
-  cofib(@NotNull DistillerOptions options, @NotNull Restr.Conj<T> conj) {
+  cofib(@NotNull PrettierOptions options, @NotNull Restr.Conj<T> conj) {
     return Doc.join(Doc.spaced(Doc.symbol("/\\")), conj.ands().view().map(and -> Doc.sepNonEmpty(!and.isOne() ? Doc.symbol("~") : Doc.empty(), and.inst().toDoc(options))));
   }
 

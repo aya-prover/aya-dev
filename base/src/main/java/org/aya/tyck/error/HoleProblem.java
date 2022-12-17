@@ -7,11 +7,11 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
@@ -30,10 +30,10 @@ public sealed interface HoleProblem extends Problem {
     @Override @NotNull MetaTerm term,
     @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("Can't perform pattern unification on hole with the following spine:"),
-        BaseDistiller.argsDoc(options, term.args())
+        BasePrettier.argsDoc(options, term.args())
       );
     }
   }
@@ -44,7 +44,7 @@ public sealed interface HoleProblem extends Problem {
     @NotNull Seq<LocalVar> scopeCheck,
     @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The solution"),
         Doc.par(1, solved.toDoc(options)),
@@ -52,7 +52,7 @@ public sealed interface HoleProblem extends Problem {
         Doc.cat(Doc.english("In particular, these variables are not in scope:"),
           Doc.ONE_WS,
           Doc.commaList(scopeCheck.view()
-            .map(BaseDistiller::varDoc)
+            .map(BasePrettier::varDoc)
             .map(Doc::code))));
     }
   }
@@ -65,11 +65,11 @@ public sealed interface HoleProblem extends Problem {
     @NotNull Term sol,
     @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.sep(
           Doc.english("Trying to solve hole"),
-          Doc.code(BaseDistiller.linkDef(term.ref())),
+          Doc.code(BasePrettier.linkDef(term.ref())),
           Doc.plain("as")),
         Doc.par(1, sol.toDoc(options)),
         Doc.english("which is recursive"));
@@ -83,11 +83,11 @@ public sealed interface HoleProblem extends Problem {
       return eqns.last().pos();
     }
 
-    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
       return eqns.view().map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc(options)));
     }
 
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.english("Solving equation(s) with not very general solution(s)");
     }
 

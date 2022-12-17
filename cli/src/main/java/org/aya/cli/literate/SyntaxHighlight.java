@@ -15,7 +15,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
+import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.pretty.doc.Link;
@@ -38,8 +38,8 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     @NotNull Option<SourceFile> sourceFile,
     @NotNull ImmutableSeq<Stmt> program
   ) {
-    var distiller = new SyntaxHighlight();
-    var semantics = program.flatMap(distiller);
+    var prettier = new SyntaxHighlight();
+    var semantics = program.flatMap(prettier);
     if (sourceFile.isDefined()) {
       var file = sourceFile.get();
       var lexer = AyaParserDefinitionBase.createLexer(false);
@@ -113,13 +113,13 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
-    return kindOf(var).toDef(sourcePos, BaseDistiller.linkIdOf(var), type);
+    return kindOf(var).toDef(sourcePos, BasePrettier.linkIdOf(var), type);
   }
 
   private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
     if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, type);
-    return kindOf(var).toRef(sourcePos, BaseDistiller.linkIdOf(var), type);
+    return kindOf(var).toRef(sourcePos, BasePrettier.linkIdOf(var), type);
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")

@@ -9,7 +9,7 @@ import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prelude.GeneratedVersion;
@@ -50,7 +50,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.Code(this), ReplCommands.Code::new),
       CommandArg.from(ReplUtil.HelpItem.class, new ReplCompleters.Help(() -> commandManager), ReplUtil.HelpItem::new),
       CommandArg.from(ReplCommands.Prompt.class, null, ReplCommands.Prompt::new),
-      CommandArg.fromEnum(AyaDistillerOptions.Key.class),
+      CommandArg.fromEnum(AyaPrettierOptions.Key.class),
       CommandArg.fromEnum(NormalizeMode.class),
       CommandArg.fromEither(ReplCommands.ColorParam.class,
         CommandArg.fromEnum(RenderOptions.ColorSchemeName.class),
@@ -67,7 +67,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.QUIT,
       ReplCommands.CHANGE_PROMPT,
       ReplCommands.CHANGE_NORM_MODE,
-      ReplCommands.TOGGLE_DISTILL,
+      ReplCommands.TOGGLE_PRETTY,
       ReplCommands.SHOW_TYPE,
       ReplCommands.CODIFY,
       ReplCommands.SHOW_PARSE_TREE,
@@ -90,7 +90,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   public AyaRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) {
     this.config = config;
     replCompiler = new ReplCompiler(modulePaths, new CliReporter(true,
-      () -> config.enableUnicode, () -> config.distillerOptions,
+      () -> config.enableUnicode, () -> config.prettierOptions,
       Problem.Severity.INFO, this::println, this::errPrintln), null);
   }
 
@@ -125,13 +125,13 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
       program -> config.silent ? Doc.empty() :
-        Doc.vcat(program.view().map(def -> def.toDoc(config.distillerOptions))),
+        Doc.vcat(program.view().map(def -> def.toDoc(config.prettierOptions))),
       this::render
     ));
   }
 
   public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(config.distillerOptions);
+    return ayaDocile.toDoc(config.prettierOptions);
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
