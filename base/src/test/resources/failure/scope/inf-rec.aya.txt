@@ -1,7 +1,7 @@
 In file $FILE:1:4 ->
 
-  1 |   def undefined => undefined
-    |       ^-------^
+  1 │   def undefined => undefined
+    │       ╰───────╯
 
 Error: The recursive definition `undefined` is not structurally recursive
 

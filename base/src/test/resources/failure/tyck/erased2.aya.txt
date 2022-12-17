@@ -1,9 +1,9 @@
 In file $FILE:5:8 ->
 
-  3 |   
-  4 |   def badElim2 {A: Type} {P: Type} (f: A -> P) (squash: Squash2 A): P
-  5 |     | f, (squash a) => f a
-    |           ^------^
+  3 │   
+  4 │   def badElim2 {A: Type} {P: Type} (f: A -> P) (squash: Squash2 A): P
+  5 │     | f, (squash a) => f a
+    │           ╰──────╯
 
 Error: Prop pattern is disallowed in this context:
          squash a

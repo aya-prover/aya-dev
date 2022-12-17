@@ -1,9 +1,9 @@
 In file $FILE:10:4 ->
 
-  8  |   
-  9  |   open data U2 (x : BoolPair) : Type
-  10 |     | (false, false) => zero
-     |       ^------------^
+  8  │   
+  9  │   open data U2 (x : BoolPair) : Type
+  10 │     | (false, false) => zero
+     │       ╰────────────╯
 
 Error: The tuple pattern
          (false, false)
@@ -13,10 +13,10 @@ Error: The tuple pattern
 
 In file $FILE:11:4 ->
 
-  9  |   open data U2 (x : BoolPair) : Type
-  10 |     | (false, false) => zero
-  11 |     | (false, true) => one
-     |       ^-----------^
+  9  │   open data U2 (x : BoolPair) : Type
+  10 │     | (false, false) => zero
+  11 │     | (false, true) => one
+     │       ╰───────────╯
 
 Error: The tuple pattern
          (false, true)
@@ -26,10 +26,10 @@ Error: The tuple pattern
 
 In file $FILE:12:4 ->
 
-  10 |     | (false, false) => zero
-  11 |     | (false, true) => one
-  12 |     | (true, false) => two
-     |       ^-----------^
+  10 │     | (false, false) => zero
+  11 │     | (false, true) => one
+  12 │     | (true, false) => two
+     │       ╰───────────╯
 
 Error: The tuple pattern
          (true, false)
@@ -39,10 +39,10 @@ Error: The tuple pattern
 
 In file $FILE:13:4 ->
 
-  11 |     | (false, true) => one
-  12 |     | (true, false) => two
-  13 |     | (true, true) => three
-     |       ^----------^
+  11 │     | (false, true) => one
+  12 │     | (true, false) => two
+  13 │     | (true, true) => three
+     │       ╰──────────╯
 
 Error: The tuple pattern
          (true, true)

@@ -1,9 +1,9 @@
 In file $FILE:4:4 ->
 
-  2 |   
-  3 |   def bad (n : Nat) : Nat
-  4 |     | [ ] => O
-    |       ^-^
+  2 │   
+  3 │   def bad (n : Nat) : Nat
+  4 │     | [ ] => O
+    │       ╰─╯
 
 Error: The literal
          [  ]
@@ -12,10 +12,10 @@ Error: The literal
 
 In file $FILE:5:4 ->
 
-  3 |   def bad (n : Nat) : Nat
-  4 |     | [ ] => O
-  5 |     | [ e ] => S O
-    |       ^---^
+  3 │   def bad (n : Nat) : Nat
+  4 │     | [ ] => O
+  5 │     | [ e ] => S O
+    │       ╰───╯
 
 Error: The literal
          [ e ]

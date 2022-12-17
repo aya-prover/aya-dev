@@ -1,17 +1,17 @@
 In file $FILE:2:22 ->
 
-  1 |   open data Nat | O | S Nat
-  2 |   def bad Nat : Nat | S S O => O | _ => O
-    |                         ^^
+  1 │   open data Nat | O | S Nat
+  2 │   def bad Nat : Nat | S S O => O | _ => O
+    │                         ╰╯
 
 Error: There is no pattern for the parameter
          (_ : Nat)
 
 In file $FILE:2:24 ->
 
-  1 |   open data Nat | O | S Nat
-  2 |   def bad Nat : Nat | S S O => O | _ => O
-    |                           ^^
+  1 │   open data Nat | O | S Nat
+  2 │   def bad Nat : Nat | S S O => O | _ => O
+    │                           ╰╯
 
 Error: There is no parameter for the pattern
          O

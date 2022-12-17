@@ -1,9 +1,9 @@
 In file $FILE:13:14 ->
 
-  11 |     | 🐵
-  12 |   
-  13 |   def u : 😊 => 🐒
-     |                 ^^
+  11 │     | 🐵
+  12 │   
+  13 │   def u : 😊 => 🐒
+     │                 ╰╯
 
 Error: Cannot check the expression
          🐒

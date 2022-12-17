@@ -1,7 +1,7 @@
 In file $FILE:1:42 ->
 
-  1 |   def test (A B : Type) (p : Sig A ** B) => p.0
-    |                                             ^-^
+  1 │   def test (A B : Type) (p : Sig A ** B) => p.0
+    │                                             ╰─╯
 
 Error: Cannot project the 0th element because the type has index range [1, 2]
 

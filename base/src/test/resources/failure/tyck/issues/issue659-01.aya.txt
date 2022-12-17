@@ -1,12 +1,12 @@
 In file $FILE:1:31 ->
 
-  1 |   def why {A : Type} : A -> A => \ {x} => x
-    |                                  ^--------^
+  1 │   def why {A : Type} : A -> A => \ {x} => x
+    │                                  ╰────────╯
 
 Error: Cannot check
-         \ {x} => x
+         λ {x} ⇒ x
        against the Pi type
-         A -> A
+         A → A
        because explicitness do not match
 
 1 error(s), 0 warning(s).

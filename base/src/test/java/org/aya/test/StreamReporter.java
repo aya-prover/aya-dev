@@ -16,6 +16,6 @@ import java.io.PrintStream;
 @TestOnly
 public record StreamReporter(@NotNull PrintStream stream) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
-    stream.println(Reporter.errorMessage(problem, AyaDistillerOptions.informative(), false, false, 80));
+    stream.println(Reporter.errorMessage(problem, AyaDistillerOptions.informative(), true, false, 80));
   }
 }

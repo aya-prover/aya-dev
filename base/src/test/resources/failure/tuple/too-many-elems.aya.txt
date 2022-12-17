@@ -1,9 +1,9 @@
 In file $FILE:4:7 ->
 
-  2 |               (f : (Sig A B ** C) -> D)
-  3 |               (a : A) (b : B) (c : C) : D
-  4 |     => f (a, b, c, a)
-    |          ^----------^
+  2 │               (f : (Sig A B ** C) -> D)
+  3 │               (a : A) (b : B) (c : C) : D
+  4 │     => f (a, b, c, a)
+    │          ╰──────────╯
 
 Error: Expected 3 elements in the tuple, but found 4
 

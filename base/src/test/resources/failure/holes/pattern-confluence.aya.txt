@@ -1,9 +1,9 @@
 In file $FILE:6:15 ->
 
-  4 |   
-  5 |   def overlap add (m n : Nat) : Type
-  6 |     | zero, n => n
-    |                  ^^
+  4 │   
+  5 │   def overlap add (m n : Nat) : Type
+  6 │     | zero, n => n
+    │                  ╰╯
 
 Error: Cannot check the expression
          n
@@ -14,10 +14,10 @@ Error: Cannot check the expression
 
 In file $FILE:7:15 ->
 
-  5 |   def overlap add (m n : Nat) : Type
-  6 |     | zero, n => n
-  7 |     | m, zero => {??}
-    |                  ^--^
+  5 │   def overlap add (m n : Nat) : Type
+  6 │     | zero, n => n
+  7 │     | m, zero => {??}
+    │                  ╰──╯
 
 Goal: Goal of type
         Type 0
@@ -25,15 +25,15 @@ Goal: Goal of type
       Context:
         {m : Nat}
       To ensure confluence:
-        Given (m => zero), we should have: <n>
-        Given (m => suc m), we should have: <suc <add m n>>
+        Given (m ⇒ zero), we should have: <n>
+        Given (m ⇒ suc m), we should have: <suc <add m n>>
 
 In file $FILE:8:21 ->
 
-  6 |     | zero, n => n
-  7 |     | m, zero => {??}
-  8 |     | suc m, n => suc (add m n)
-    |                        ^-----^
+  6 │     | zero, n => n
+  7 │     | m, zero => {??}
+  8 │     | suc m, n => suc (add m n)
+    │                        ╰─────╯
 
 Error: Cannot check the expression
          add m n
@@ -44,10 +44,10 @@ Error: Cannot check the expression
 
 In file $FILE:8:16 ->
 
-  6 |     | zero, n => n
-  7 |     | m, zero => {??}
-  8 |     | suc m, n => suc (add m n)
-    |                   ^----------^
+  6 │     | zero, n => n
+  7 │     | m, zero => {??}
+  8 │     | suc m, n => suc (add m n)
+    │                   ╰──────────╯
 
 Error: Cannot check the expression
          suc (add m n)
@@ -58,10 +58,10 @@ Error: Cannot check the expression
 
 In file $FILE:9:21 ->
 
-  7 |     | m, zero => {??}
-  8 |     | suc m, n => suc (add m n)
-  9 |     | m, suc n => suc (add m n)
-    |                        ^-----^
+  7 │     | m, zero => {??}
+  8 │     | suc m, n => suc (add m n)
+  9 │     | m, suc n => suc (add m n)
+    │                        ╰─────╯
 
 Error: Cannot check the expression
          add m n
@@ -72,10 +72,10 @@ Error: Cannot check the expression
 
 In file $FILE:9:16 ->
 
-  7 |     | m, zero => {??}
-  8 |     | suc m, n => suc (add m n)
-  9 |     | m, suc n => suc (add m n)
-    |                   ^----------^
+  7 │     | m, zero => {??}
+  8 │     | suc m, n => suc (add m n)
+  9 │     | m, suc n => suc (add m n)
+    │                   ╰──────────╯
 
 Error: Cannot check the expression
          suc (add m n)
@@ -86,10 +86,10 @@ Error: Cannot check the expression
 
 In file $FILE:7:15 ->
 
-  5 |   def overlap add (m n : Nat) : Type
-  6 |     | zero, n => n
-  7 |     | m, zero => {??}
-    |                  ^--^
+  5 │   def overlap add (m n : Nat) : Type
+  6 │     | zero, n => n
+  7 │     | m, zero => {??}
+    │                  ╰──╯
 
 Error: Unsolved meta _
 

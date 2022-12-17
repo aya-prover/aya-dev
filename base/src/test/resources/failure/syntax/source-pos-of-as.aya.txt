@@ -1,9 +1,9 @@
 In file $FILE:5:8 ->
 
-  3 |   
-  4 |   def matchIt (x : SomeType) : SomeType
-  5 |   | con0 (100 as x') => con0 x'
-    |           ^-^
+  3 │   
+  4 │   def matchIt (x : SomeType) : SomeType
+  5 │   | con0 (100 as x') => con0 x'
+    │           ╰─╯
 
 Error: The literal
          100

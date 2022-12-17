@@ -1,10 +1,10 @@
 In file $FILE:1:19 ->
 
-  1 |   def test : Type => \ x => x
-    |                      ^------^
+  1 │   def test : Type => \ x => x
+    │                      ╰──────╯
 
 Error: Unable to apply the expression
-         \ x => x
+         λ x ⇒ x
        because the type of what you applied is not a Pi type, but instead:
          Type 0
          (Normalized: Type 0)

@@ -1,9 +1,9 @@
 In file $FILE:5:19 ->
 
-  3 |   open data Unit : Type | unit
-  4 |   
-  5 |   def test : Unit => "123"
-    |                      ^---^
+  3 │   open data Unit : Type | unit
+  4 │   
+  5 │   def test : Unit => "123"
+    │                      ╰───╯
 
 Error: Cannot check the expression
          "123"

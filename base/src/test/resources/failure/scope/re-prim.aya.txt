@@ -1,9 +1,9 @@
 In file $FILE:3:5 ->
 
-  1 |   prim I
-  2 |   prim coe
-  3 |   prim coe
-    |        ^-^
+  1 │   prim I
+  2 │   prim coe
+  3 │   prim coe
+    │        ╰─╯
 
 Error: Redefinition of primitive `coe`
 
