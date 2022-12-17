@@ -24,7 +24,7 @@ import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;

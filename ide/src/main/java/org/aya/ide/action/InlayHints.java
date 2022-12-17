@@ -10,7 +10,7 @@ import org.aya.core.term.Term;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XYXY;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

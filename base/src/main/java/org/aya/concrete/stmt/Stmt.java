@@ -4,7 +4,7 @@ package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.pretty.ConcretePrettier;
+import org.aya.prettier.ConcretePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
@@ -12,7 +12,7 @@ import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.visitor.StmtResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.order.TyckUnit;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

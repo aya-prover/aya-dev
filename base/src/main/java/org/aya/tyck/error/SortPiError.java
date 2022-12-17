@@ -4,7 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.core.term.SortTerm;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;

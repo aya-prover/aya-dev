@@ -4,7 +4,7 @@ package org.aya.util.reporter;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

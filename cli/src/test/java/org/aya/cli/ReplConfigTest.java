@@ -4,7 +4,7 @@ package org.aya.cli;
 
 import kala.control.Option;
 import org.aya.cli.repl.ReplConfig;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;

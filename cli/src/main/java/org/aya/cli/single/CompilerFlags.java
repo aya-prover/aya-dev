@@ -5,7 +5,7 @@ package org.aya.cli.single;
 import kala.collection.SeqLike;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

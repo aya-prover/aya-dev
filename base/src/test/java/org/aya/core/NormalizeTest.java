@@ -6,7 +6,7 @@ import org.aya.core.def.FnDef;
 import org.aya.core.term.ConCall;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.tyck.TyckState;

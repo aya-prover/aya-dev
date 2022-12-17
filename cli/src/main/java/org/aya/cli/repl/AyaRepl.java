@@ -9,7 +9,7 @@ import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prelude.GeneratedVersion;

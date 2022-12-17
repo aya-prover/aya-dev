@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 

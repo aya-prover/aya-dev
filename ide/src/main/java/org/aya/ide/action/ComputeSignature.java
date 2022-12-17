@@ -8,15 +8,15 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
-import org.aya.pretty.BasePrettier;
-import org.aya.pretty.CorePrettier;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.ide.Resolver;
 import org.aya.ide.util.XY;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public interface ComputeSignature {

@@ -26,7 +26,7 @@ import org.aya.generic.util.AyaFiles;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.FileUtil;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.Reporter;

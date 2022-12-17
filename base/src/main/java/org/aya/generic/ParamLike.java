@@ -3,10 +3,10 @@
 package org.aya.generic;
 
 import kala.collection.mutable.MutableList;
-import org.aya.pretty.BasePrettier;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 /**

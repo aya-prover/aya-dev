@@ -3,11 +3,11 @@
 package org.aya.concrete.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.pretty.BasePrettier;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpSet;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;

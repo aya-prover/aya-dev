@@ -10,7 +10,7 @@ import org.aya.cli.literate.HighlightInfo;
 import org.aya.ide.action.ProjectSymbol;
 import org.aya.ide.action.ProjectSymbol.Symbol;
 import org.aya.lsp.utils.LspRange;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.intellij.lang.annotations.MagicConstant;
 import org.javacs.lsp.DocumentSymbol;
 import org.javacs.lsp.SymbolKind;

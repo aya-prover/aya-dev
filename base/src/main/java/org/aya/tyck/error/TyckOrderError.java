@@ -4,12 +4,12 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
-import org.aya.pretty.BasePrettier;
+import org.aya.prettier.BasePrettier;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.order.TyckUnit;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

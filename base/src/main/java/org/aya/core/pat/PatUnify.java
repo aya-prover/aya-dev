@@ -6,7 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.RefTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;

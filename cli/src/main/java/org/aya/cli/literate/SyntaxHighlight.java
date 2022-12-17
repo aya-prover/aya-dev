@@ -15,7 +15,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
 import org.aya.core.term.Term;
-import org.aya.pretty.BasePrettier;
+import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.pretty.doc.Link;

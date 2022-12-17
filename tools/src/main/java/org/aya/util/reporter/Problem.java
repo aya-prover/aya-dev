@@ -11,7 +11,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
 import org.aya.pretty.error.PrettyError;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;

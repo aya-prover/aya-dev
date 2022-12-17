@@ -3,7 +3,7 @@
 package org.aya.experiments;
 
 import org.aya.core.def.FnDef;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.tyck.TyckState;

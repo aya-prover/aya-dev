@@ -4,7 +4,7 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.PrimDef;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;

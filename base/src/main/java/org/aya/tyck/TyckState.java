@@ -18,7 +18,7 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;

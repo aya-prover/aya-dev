@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
-import org.aya.pretty.BasePrettier;
-import org.aya.pretty.CorePrettier;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;

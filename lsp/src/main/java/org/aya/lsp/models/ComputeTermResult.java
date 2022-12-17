@@ -3,7 +3,7 @@
 package org.aya.lsp.models;
 
 import org.aya.core.term.Term;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.lsp.utils.LspRange;
 import org.aya.util.error.WithPos;
 import org.javacs.lsp.Position;

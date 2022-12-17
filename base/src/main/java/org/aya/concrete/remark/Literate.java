@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Link;

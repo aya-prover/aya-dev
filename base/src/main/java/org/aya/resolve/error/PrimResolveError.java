@@ -5,7 +5,7 @@ package org.aya.resolve.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;

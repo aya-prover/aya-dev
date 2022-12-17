@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.Tycker;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;

@@ -5,7 +5,7 @@ package org.aya.concrete.error;
 import org.aya.concrete.Expr;
 import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

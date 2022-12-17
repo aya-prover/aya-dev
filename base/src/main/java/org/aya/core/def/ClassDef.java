@@ -3,11 +3,11 @@
 package org.aya.core.def;
 
 import org.aya.concrete.stmt.ClassDecl;
-import org.aya.pretty.CorePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public non-sealed/*sealed*/ interface ClassDef extends AyaDocile, GenericDef {

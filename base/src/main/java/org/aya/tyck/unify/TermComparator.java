@@ -16,7 +16,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;

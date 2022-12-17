@@ -10,11 +10,11 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.pretty.CorePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

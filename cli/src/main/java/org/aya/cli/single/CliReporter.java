@@ -3,7 +3,7 @@
 package org.aya.cli.single;
 
 import org.aya.pretty.printer.PrinterConfig;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;

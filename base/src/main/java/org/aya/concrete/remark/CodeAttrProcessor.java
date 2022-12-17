@@ -4,7 +4,7 @@ package org.aya.concrete.remark;
 
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.mutable.MutableList;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.commonmark.node.*;
 import org.commonmark.parser.delimiter.DelimiterProcessor;

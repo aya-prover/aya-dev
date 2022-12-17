@@ -4,7 +4,7 @@ package org.aya.cli;
 
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.Expr;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.util.reporter.ThrowingReporter;
 import org.junit.jupiter.api.Test;
 

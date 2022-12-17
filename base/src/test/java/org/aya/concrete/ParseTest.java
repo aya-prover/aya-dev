@@ -10,7 +10,7 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.pretty.AyaPrettierOptions;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.util.error.Global;

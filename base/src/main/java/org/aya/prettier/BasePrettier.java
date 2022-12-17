@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.pretty;
+package org.aya.prettier;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -23,7 +23,7 @@ import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
-import org.aya.util.pretty.PrettierOptions;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
