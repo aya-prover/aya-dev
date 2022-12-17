@@ -15,20 +15,20 @@ import org.aya.ide.Resolver;
 import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record ProjectSymbol(@NotNull DistillerOptions options,
+public record ProjectSymbol(@NotNull PrettierOptions options,
                             @NotNull MutableList<Symbol> symbols) implements SyntaxDeclAction {
-  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull DistillerOptions options, @NotNull LibrarySource source) {
+  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull PrettierOptions options, @NotNull LibrarySource source) {
     var symbol = new ProjectSymbol(options, MutableList.create());
     symbol.collectSource(source);
     return symbol.symbols.toImmutableSeq();
   }
 
-  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull DistillerOptions options, @NotNull SeqView<LibraryOwner> libraries) {
+  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull PrettierOptions options, @NotNull SeqView<LibraryOwner> libraries) {
     var symbol = new ProjectSymbol(options, MutableList.create());
     libraries.forEach(symbol::collectLib);
     return symbol.symbols.toImmutableSeq();

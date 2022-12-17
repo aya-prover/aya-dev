@@ -4,7 +4,7 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.PrimDef;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
@@ -58,7 +58,7 @@ public class DesugarTest {
     var stmt = ParseTest.parseStmt(code);
     stmt.forEach(s -> s.desugar(resolveInfo));
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-        .map(s -> s.toDoc(AyaDistillerOptions.debug())))
+        .map(s -> s.toDoc(AyaPrettierOptions.debug())))
       .debugRender()
       .trim());
   }

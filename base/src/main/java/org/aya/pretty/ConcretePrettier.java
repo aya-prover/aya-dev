@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.distill;
+package org.aya.pretty;
 
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.Seq;
@@ -22,17 +22,17 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 /**
  * @author ice1000, kiva
- * @see CoreDistiller
+ * @see CorePrettier
  */
-public class ConcreteDistiller extends BaseDistiller<Expr> {
-  public ConcreteDistiller(@NotNull DistillerOptions options) {
+public class ConcretePrettier extends BasePrettier<Expr> {
+  public ConcretePrettier(@NotNull PrettierOptions options) {
     super(options);
   }
 
@@ -47,7 +47,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield visitCalls(null,
           term(Outer.AppSpine, first),
           seq.view().drop(1), outer,
-          options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs)
+          options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
         );
       }
       case Expr.LitString expr -> Doc.plain('"' + StringUtil.unescapeStringCharacters(expr.string()) + '"');
@@ -81,10 +81,10 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         yield visitCalls(assoc,
           term(Outer.AppHead, head),
           args.view(), outer,
-          options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
+          options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       }
       case Expr.Lambda expr -> {
-        if (!options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
+        if (!options.map.get(AyaPrettierOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
           yield term(outer, expr.body());
         }
         var prelude = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
@@ -115,7 +115,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         expr.restr() != null ? Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, expr.restr())) : Doc.empty());
       case Expr.Coe expr -> visitCalls(expr.resolvedVar(), PRIM,
         ImmutableSeq.of(new Arg<>(expr.type(), true), new Arg<>(expr.restr(), true)),
-        outer, options.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
+        outer, options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       case Expr.Unresolved expr -> Doc.plain(expr.name().join());
       case Expr.Ref expr -> {
         var ref = expr.resolvedVar();
@@ -153,7 +153,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
         Doc.symbol("|}"));
       case Expr.Path path -> Doc.sep(
         Doc.symbol("[|"),
-        Doc.commaList(path.params().map(BaseDistiller::linkDef)),
+        Doc.commaList(path.params().map(BasePrettier::linkDef)),
         Doc.symbol("|]"),
         path.type().toDoc(options),
         path.partial().toDoc(options)
@@ -284,7 +284,7 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Arg<Pattern>> patterns, Outer outer, @NotNull Doc delim) {
-    patterns = options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Arg::explicit);
+    patterns = options.map.get(AyaPrettierOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Arg::explicit);
     return Doc.join(delim, patterns.view().map(p -> pattern(p, outer)));
   }
 
@@ -452,13 +452,13 @@ public class ConcreteDistiller extends BaseDistiller<Expr> {
 
     if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
       Doc.styled(KEYWORD, "tighter"),
-      Doc.commaList(tighters.view().map(BaseDistiller::defVar)))));
+      Doc.commaList(tighters.view().map(BasePrettier::defVar)))));
     else if (tighters.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
       Doc.styled(KEYWORD, "looser"),
-      Doc.commaList(loosers.view().map(BaseDistiller::defVar)))));
+      Doc.commaList(loosers.view().map(BasePrettier::defVar)))));
     return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.sep(
-      Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::defVar)),
-      Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BaseDistiller::defVar))
+      Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BasePrettier::defVar)),
+      Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BasePrettier::defVar))
     )))));
   }
 

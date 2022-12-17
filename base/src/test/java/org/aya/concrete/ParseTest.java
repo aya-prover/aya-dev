@@ -10,7 +10,7 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.util.error.Global;
@@ -164,23 +164,23 @@ public class ParseTest {
     );
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app
       && app.seq().sizeEquals(2)
-      && !app.toDoc(AyaDistillerOptions.debug()).debugRender().isEmpty()
+      && !app.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty()
       && app.seq().get(1).term() instanceof Expr.Tuple tup
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.New neo
-      && !neo.toDoc(AyaDistillerOptions.debug()).debugRender().isEmpty());
+      && !neo.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseImport(@Language("Aya") String code) {
-    assertTrue(parseStmt(code).first() instanceof Command.Import s && !s.toDoc(AyaDistillerOptions.debug()).debugRender().isEmpty());
+    assertTrue(parseStmt(code).first() instanceof Command.Import s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseOpen(@Language("Aya") String code) {
-    assertTrue(parseStmt(code).last() instanceof Command.Open s && !s.toDoc(AyaDistillerOptions.debug()).debugRender().isEmpty());
+    assertTrue(parseStmt(code).last() instanceof Command.Open s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseFn(@Language("Aya") String code) {
-    assertTrue(parseDecl(code).first() instanceof TeleDecl.FnDecl s && !s.toDoc(AyaDistillerOptions.debug()).debugRender().isEmpty());
+    assertTrue(parseDecl(code).first() instanceof TeleDecl.FnDecl s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseData(@Language("Aya") String code) {
@@ -359,7 +359,7 @@ public class ParseTest {
   public static void parseAndPretty(@NotNull @NonNls @Language("Aya") String code, @NotNull @NonNls @Language("Aya") String pretty) {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-        .map(s -> s.toDoc(AyaDistillerOptions.debug())))
+        .map(s -> s.toDoc(AyaPrettierOptions.debug())))
       .renderToString(80, false)
       .trim());
   }

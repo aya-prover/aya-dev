@@ -13,7 +13,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.tyck.TyckState;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ public record BadTypeError(
   @NotNull Doc thing, @NotNull AyaDocile desired,
   @NotNull TyckState state
 ) implements ExprProblem, TyckError {
-  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.vcat(
       Doc.sep(Doc.english("Unable to"), action, Doc.english("the expression")),
       Doc.par(1, expr.toDoc(options)),
@@ -33,7 +33,7 @@ public record BadTypeError(
     );
   }
 
-  @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
     if (expr instanceof Expr.App app && app.function() instanceof Expr.Ref ref
       && ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef) {
       var fix = new Expr.Proj(SourcePos.NONE, app.argument().term(),

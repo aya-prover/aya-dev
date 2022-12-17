@@ -10,8 +10,8 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
-import org.aya.distill.ConcreteDistiller;
+import org.aya.pretty.BasePrettier;
+import org.aya.pretty.ConcretePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.pretty.doc.Doc;
@@ -19,7 +19,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.ForLSP;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -34,8 +34,8 @@ import java.util.function.UnaryOperator;
  * @author kiva, ice1000, HoshinoTented
  */
 public sealed interface Pattern extends AyaDocile, SourceNode {
-  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new ConcreteDistiller(options).pattern(this, true, BaseDistiller.Outer.Free);
+  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    return new ConcretePrettier(options).pattern(this, true, BasePrettier.Outer.Free);
   }
 
   default @NotNull Pattern descent(@NotNull UnaryOperator<@NotNull Pattern> f) {

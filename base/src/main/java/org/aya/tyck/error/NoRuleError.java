@@ -6,12 +6,12 @@ import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record NoRuleError(@Override @NotNull Expr expr, @Nullable Term term) implements ExprProblem, TyckError {
-  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     if (term != null)
       return Doc.sep(Doc.english("No rule for checking the expression"),
         expr.toDoc(options),

@@ -3,7 +3,7 @@
 package org.aya.concrete.remark;
 
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ public record UnsupportedMarkdown(
     return Severity.WARN;
   }
 
-  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.english("Unsupported markdown syntax: " + nodeName + ".");
   }
 }

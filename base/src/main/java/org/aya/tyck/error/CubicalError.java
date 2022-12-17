@@ -5,13 +5,13 @@ package org.aya.tyck.error;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
-import org.aya.distill.BaseDistiller;
+import org.aya.pretty.BasePrettier;
 import org.aya.generic.ExprProblem;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.Unifier;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,7 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
     @Override @NotNull Unifier.FailureData failureData,
     @Override @NotNull TyckState state
   ) implements CubicalError, UnifyError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return describeUnify(options, Doc.english("The boundary"), lhs,
         Doc.english("disagrees with"), rhs);
     }
@@ -36,11 +36,11 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
     @NotNull Restr<Term> cof
   ) implements CubicalError {
     @Override
-    public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(Doc.english("The face(s) in the partial element:"),
-        Doc.par(1, BaseDistiller.restr(options, face)),
+        Doc.par(1, BasePrettier.restr(options, face)),
         Doc.english("must cover the face(s) specified in type:"),
-        Doc.par(1, BaseDistiller.restr(options, cof)));
+        Doc.par(1, BasePrettier.restr(options, cof)));
     }
   }
 
@@ -51,12 +51,12 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
     @NotNull Restr<Term> restr,
     boolean stuck
   ) implements CubicalError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var typeDoc = type.toDoc(options);
       var under = typeInst != null ? typeInst.toDoc(options) : null;
       var buf = MutableList.of(
         Doc.english("Under the cofibration:"),
-        Doc.par(1, BaseDistiller.restr(options, restr)));
+        Doc.par(1, BasePrettier.restr(options, restr)));
       if (stuck)
         buf.append(Doc.english("I am not sure if the type is constant, as my normalization is blocked for type:"));
       else buf.append(Doc.english("The type in the body still depends on the interval parameter:"));
@@ -69,7 +69,7 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
   }
 
   record PathConDominateError(@NotNull SourcePos sourcePos) implements TyckError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.english("The path constructor must not be a constant path");
     }
   }

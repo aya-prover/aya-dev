@@ -73,9 +73,9 @@ public class MainArgs {
   @Option(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace;
   @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage." + CANDIDATES)
-  public DistillStage prettyStage;
+  public PrettyStage prettyStage;
   @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES, defaultValue = "markdown")
-  public DistillFormat prettyFormat;
+  public PrettyFormat prettyFormat;
   @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.", defaultValue = ".")
   public String prettyDir;
   @Option(names = {"--pretty-color"}, description = "The color theme of pretty printing." + CANDIDATES, defaultValue = "emacs")
@@ -103,14 +103,14 @@ public class MainArgs {
     intellij,
   }
 
-  public enum DistillStage {
+  public enum PrettyStage {
     raw,
     scoped,
     typed,
     literate,
   }
 
-  public enum DistillFormat {
+  public enum PrettyFormat {
     html(RenderOptions.OutputTarget.HTML),
     plain(RenderOptions.OutputTarget.Plain),
     latex(RenderOptions.OutputTarget.LaTeX),
@@ -119,7 +119,7 @@ public class MainArgs {
 
     public final @NotNull RenderOptions.OutputTarget target;
 
-    DistillFormat(RenderOptions.@NotNull OutputTarget target) {
+    PrettyFormat(RenderOptions.@NotNull OutputTarget target) {
       this.target = target;
     }
   }

@@ -11,8 +11,8 @@ import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.PrimDef;
-import org.aya.distill.BaseDistiller;
-import org.aya.distill.ConcreteDistiller;
+import org.aya.pretty.BasePrettier;
+import org.aya.pretty.ConcretePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.SortKind;
@@ -27,7 +27,7 @@ import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.ForLSP;
 import org.aya.util.binop.BinOpParser;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -60,8 +60,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     return Expr.buildLam(sourcePos(), view, inner);
   }
 
-  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new ConcreteDistiller(options).term(BaseDistiller.Outer.Free, this);
+  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    return new ConcretePrettier(options).term(BasePrettier.Outer.Free, this);
   }
 
   @ForLSP
@@ -169,7 +169,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       return update(f.apply(term));
     }
 
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       var doc = name == null ? term.toDoc(options) :
         Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), term.toDoc(options)));
       return Doc.bracedUnless(doc, explicit);

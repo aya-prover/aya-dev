@@ -14,9 +14,9 @@ import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.distill.AyaDistillerOptions;
-import org.aya.distill.BaseDistiller;
-import org.aya.distill.CoreDistiller;
+import org.aya.pretty.AyaPrettierOptions;
+import org.aya.pretty.BasePrettier;
+import org.aya.pretty.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.generic.util.InternalException;
@@ -29,7 +29,7 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.util.Arg;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +40,13 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author kiva, ice1000, HoshinoTented
  */
-@Debug.Renderer(text = "toTerm().toDoc(AyaDistillerOptions.debug()).debugRender()")
+@Debug.Renderer(text = "toTerm().toDoc(AyaPrettierOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
   default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
-  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new CoreDistiller(options).pat(this, true, BaseDistiller.Outer.Free);
+  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    return new CorePrettier(options).pat(this, true, BasePrettier.Outer.Free);
   }
 
   @NotNull Pat zonk(@NotNull Tycker tycker);
@@ -216,11 +216,11 @@ public sealed interface Pat extends AyaDocile {
     @NotNull ImmutableSeq<Arg<Pat>> patterns,
     @NotNull Option<T> expr
   ) implements AyaDocile {
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      var distiller = new CoreDistiller(options);
-      var pats = options.map.get(AyaDistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Arg::explicit);
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+      var prettier = new CorePrettier(options);
+      var pats = options.map.get(AyaPrettierOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Arg::explicit);
       var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
-        pats.view().map(p -> distiller.pat(p, BaseDistiller.Outer.Free)))));
+        pats.view().map(p -> prettier.pat(p, BasePrettier.Outer.Free)))));
       return expr.getOrDefault(it -> Doc.sep(doc, Doc.symbol("=>"), it.toDoc(options)), doc);
     }
 

@@ -26,7 +26,7 @@ import org.aya.generic.util.AyaFiles;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.FileUtil;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.Reporter;
@@ -40,38 +40,38 @@ import java.nio.file.Path;
 import java.util.function.BiFunction;
 
 public sealed interface SingleAyaFile extends GenericAyaFile {
-  private static @Nullable CompilerFlags.DistillInfo parseDistillInfo(@NotNull CompilerFlags flags) {
-    if (flags.distillInfo() != null) return flags.distillInfo();
-    return Main.distillInfoFromOutput(flags.outputFile(), new RenderOptions(), false);
+  private static @Nullable CompilerFlags.PrettyInfo parsePrettyInfo(@NotNull CompilerFlags flags) {
+    if (flags.prettyInfo() != null) return flags.prettyInfo();
+    return Main.prettyInfoFromOutput(flags.outputFile(), new RenderOptions(), false);
   }
 
-  @SuppressWarnings("unchecked") default void distill(
+  @SuppressWarnings("unchecked") default void pretty(
     @NotNull CompilerFlags compilerFlags,
     @NotNull ImmutableSeq<? extends AyaDocile> doc,
-    @NotNull MainArgs.DistillStage currentStage
+    @NotNull MainArgs.PrettyStage currentStage
   ) throws IOException {
-    var flags = parseDistillInfo(compilerFlags);
-    if (flags == null || currentStage != flags.distillStage()) return;
+    var flags = parsePrettyInfo(compilerFlags);
+    if (flags == null || currentStage != flags.prettyStage()) return;
 
-    var out = flags.distillFormat().target;
+    var out = flags.prettyFormat().target;
     String fileName;
-    Path distillDir;
+    Path prettyDir;
 
     if (compilerFlags.outputFile() != null) {
-      distillDir = compilerFlags.outputFile().toAbsolutePath().getParent();
+      prettyDir = compilerFlags.outputFile().toAbsolutePath().getParent();
       fileName = compilerFlags.outputFile().getFileName().toString();
     } else {
-      distillDir = flags.distillDir() != null ? Path.of(flags.distillDir()) : Path.of(".");
+      prettyDir = flags.prettyDir() != null ? Path.of(flags.prettyDir()) : Path.of(".");
       fileName = AyaFiles.stripAyaSourcePostfix(originalFile().display()) + out.fileExt;
     }
 
     var renderOptions = flags.renderOptions();
     var withStyleDef = !flags.prettyNoCodeStyle();
-    if (currentStage == MainArgs.DistillStage.literate) {
+    if (currentStage == MainArgs.PrettyStage.literate) {
       var text = renderOptions.render(out, docitfy((ImmutableSeq<Stmt>) doc), true, withStyleDef, !flags.ascii());
-      FileUtil.writeString(distillDir.resolve(fileName), text);
+      FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
-      doWrite(doc, distillDir, flags.distillerOptions(), fileName, out.fileExt,
+      doWrite(doc, prettyDir, flags.prettierOptions(), fileName, out.fileExt,
         (d, hdr) -> renderOptions.render(out, d, hdr, withStyleDef, !flags.ascii()));
     }
   }
@@ -83,21 +83,21 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   }
 
   private void doWrite(
-    ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
-    @NotNull DistillerOptions options, String fileName, String fileExt,
-    BiFunction<Doc, Boolean, String> toString
+          ImmutableSeq<? extends AyaDocile> doc, Path prettyDir,
+          @NotNull PrettierOptions options, String fileName, String fileExt,
+          BiFunction<Doc, Boolean, String> toString
   ) throws IOException {
     var docs = MutableList.<Doc>create();
-    var eachDistillDir = distillDir.resolve(fileName + ".each");
+    var eachPrettyDir = prettyDir.resolve(fileName + ".each");
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
       // Skip uninteresting items
       var thisDoc = item.toDoc(options);
       docs.append(thisDoc);
       if (item instanceof PrimDef) continue;
-      FileUtil.writeString(eachDistillDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
+      FileUtil.writeString(eachPrettyDir.resolve(FileUtil.escapeFileName(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
     }
-    FileUtil.writeString(distillDir.resolve(fileName), toString.apply(Doc.vcat(docs), true));
+    FileUtil.writeString(prettyDir.resolve(fileName), toString.apply(Doc.vcat(docs), true));
   }
 
   private static @NotNull String nameOf(int i, AyaDocile item) {

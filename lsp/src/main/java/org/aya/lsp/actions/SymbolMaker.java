@@ -10,7 +10,7 @@ import org.aya.cli.literate.HighlightInfo;
 import org.aya.ide.action.ProjectSymbol;
 import org.aya.ide.action.ProjectSymbol.Symbol;
 import org.aya.lsp.utils.LspRange;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.intellij.lang.annotations.MagicConstant;
 import org.javacs.lsp.DocumentSymbol;
 import org.javacs.lsp.SymbolKind;
@@ -19,11 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface SymbolMaker {
-  static @NotNull ImmutableSeq<DocumentSymbol> documentSymbols(@NotNull DistillerOptions options, @NotNull LibrarySource source) {
+  static @NotNull ImmutableSeq<DocumentSymbol> documentSymbols(@NotNull PrettierOptions options, @NotNull LibrarySource source) {
     return ProjectSymbol.invoke(options, source).map(SymbolMaker::documentSymbol);
   }
 
-  static @NotNull ImmutableSeq<WorkspaceSymbol> workspaceSymbols(@NotNull DistillerOptions options, @NotNull SeqView<LibraryOwner> libraries) {
+  static @NotNull ImmutableSeq<WorkspaceSymbol> workspaceSymbols(@NotNull PrettierOptions options, @NotNull SeqView<LibraryOwner> libraries) {
     return ProjectSymbol.invoke(options, libraries).mapNotNull(SymbolMaker::workspaceSymbol);
   }
 

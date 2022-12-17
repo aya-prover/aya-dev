@@ -4,7 +4,7 @@ package org.aya.cli;
 
 import kala.control.Option;
 import org.aya.cli.repl.ReplConfig;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ public class ReplConfigTest {
     {
       "prompt": "\\u003e ",
       "normalizeMode": "NF",
-      "distillerOptions": {
+      "prettierOptions": {
         "map": {
           "InlineMetas": true,
           "ShowImplicitArgs": false,
@@ -44,10 +44,10 @@ public class ReplConfigTest {
       assertEquals(NormalizeMode.NF, c.normalizeMode);
       assertTrue(c.enableUnicode);
       assertFalse(c.silent);
-      assertTrue(c.distillerOptions.map.get(AyaDistillerOptions.Key.InlineMetas));
-      assertTrue(c.distillerOptions.map.get(AyaDistillerOptions.Key.ShowImplicitPats));
-      assertFalse(c.distillerOptions.map.get(AyaDistillerOptions.Key.ShowLambdaTypes));
-      assertFalse(c.distillerOptions.map.get(AyaDistillerOptions.Key.ShowImplicitArgs));
+      assertTrue(c.prettierOptions.map.get(AyaPrettierOptions.Key.InlineMetas));
+      assertTrue(c.prettierOptions.map.get(AyaPrettierOptions.Key.ShowImplicitPats));
+      assertFalse(c.prettierOptions.map.get(AyaPrettierOptions.Key.ShowLambdaTypes));
+      assertFalse(c.prettierOptions.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
     }
   }
 }

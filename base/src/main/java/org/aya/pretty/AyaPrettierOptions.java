@@ -1,17 +1,17 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.distill;
+package org.aya.pretty;
 
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public class AyaDistillerOptions extends DistillerOptions {
-  public AyaDistillerOptions() {
+public class AyaPrettierOptions extends PrettierOptions {
+  public AyaPrettierOptions() {
     super(Key.class);
   }
 
-  public enum Key implements DistillerOptions.Key {
+  public enum Key implements PrettierOptions.Key {
     InlineMetas,
     ShowImplicitArgs,
     ShowImplicitPats,
@@ -23,20 +23,20 @@ public class AyaDistillerOptions extends DistillerOptions {
     map.put(Key.InlineMetas, true);
   }
 
-  @Contract(pure = true, value = "->new") public static @NotNull AyaDistillerOptions debug() {
+  @Contract(pure = true, value = "->new") public static @NotNull AyaPrettierOptions debug() {
     var map = informative();
     map.map.put(Key.ShowLambdaTypes, true);
     return map;
   }
 
-  @Contract(pure = true, value = "->new") public static @NotNull AyaDistillerOptions informative() {
+  @Contract(pure = true, value = "->new") public static @NotNull AyaPrettierOptions informative() {
     var map = pretty();
     map.map.put(Key.ShowImplicitArgs, true);
     return map;
   }
 
-  @Contract(pure = true, value = "->new") public static @NotNull AyaDistillerOptions pretty() {
-    var map = new AyaDistillerOptions();
+  @Contract(pure = true, value = "->new") public static @NotNull AyaPrettierOptions pretty() {
+    var map = new AyaPrettierOptions();
     map.map.put(Key.ShowImplicitPats, true);
     return map;
   }

@@ -9,7 +9,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckState;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ public record Goal(
   @NotNull MetaTerm hole,
   @NotNull ImmutableSeq<LocalVar> scope
 ) implements Problem {
-  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     var meta = hole.ref();
     var result = meta.result != null ? meta.result.freezeHoles(state)
       : new ErrorTerm(Doc.plain("???"), false);

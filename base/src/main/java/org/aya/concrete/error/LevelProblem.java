@@ -5,7 +5,7 @@ package org.aya.concrete.error;
 import org.aya.concrete.Expr;
 import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface LevelProblem extends ExprProblem {
   @Override default @NotNull Severity level() {return Severity.ERROR;}
   record BadLevelExpr(@Override @NotNull Expr expr) implements LevelProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Expected level expression, got:"), expr.toDoc(options));
     }
   }

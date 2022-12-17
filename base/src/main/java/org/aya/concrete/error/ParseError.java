@@ -3,13 +3,13 @@
 package org.aya.concrete.error;
 
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
 public record ParseError(@Override @NotNull SourcePos sourcePos, @NotNull String message) implements Problem {
-  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.plain("Parser error: " + message);
   }
 

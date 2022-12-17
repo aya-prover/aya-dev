@@ -4,7 +4,7 @@ package org.aya.util.reporter;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -55,14 +55,14 @@ public interface Reporter {
         return severity;
       }
 
-      @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
         return doc;
       }
     };
   }
 
   static @NotNull String errorMessage(
-    @NotNull Problem problem, @NotNull DistillerOptions options,
+    @NotNull Problem problem, @NotNull PrettierOptions options,
     boolean unicode, boolean supportAnsi, int pageWidth
   ) {
     var prettyErrorConf = unicode

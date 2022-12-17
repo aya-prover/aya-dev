@@ -16,7 +16,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -522,7 +522,7 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   @NotNull private static InternalException noRules(@NotNull Term preLhs) {
-    return new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaDistillerOptions.debug()).debugRender());
+    return new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaPrettierOptions.debug()).debugRender());
   }
 
   /**

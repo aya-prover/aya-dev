@@ -2,10 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
-public record ThrowingReporter(@NotNull DistillerOptions options) implements CountingReporter {
+public record ThrowingReporter(@NotNull PrettierOptions options) implements CountingReporter {
   @Override public void report(@NotNull Problem problem) {
     var render = Reporter.errorMessage(problem, options, false, false, 80);
     if (problem.level() != Problem.Severity.ERROR) {

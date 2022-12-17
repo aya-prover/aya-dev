@@ -5,7 +5,7 @@ package org.aya.resolve.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ public interface PrimResolveError extends Problem {
     @Override @NotNull SourcePos sourcePos,
     @NotNull String name
   ) implements PrimResolveError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Unknown primitive"),
         Doc.code(Doc.plain(name)));
@@ -29,7 +29,7 @@ public interface PrimResolveError extends Problem {
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements PrimResolveError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Redefinition of primitive"),
         Doc.code(Doc.plain(name)));
     }
@@ -43,7 +43,7 @@ public interface PrimResolveError extends Problem {
     @NotNull ImmutableSeq<PrimDef.ID> lack,
     @Override @NotNull SourcePos sourcePos
   ) implements PrimResolveError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       assert lack.isNotEmpty();
       return Doc.sep(
         Doc.english("The primitive"), Doc.code(Doc.plain(name)),
@@ -56,13 +56,13 @@ public interface PrimResolveError extends Problem {
     @NotNull String name,
     @NotNull SourcePos sourcePos
   ) implements PrimResolveError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("The primitive"),
         Doc.code(Doc.plain(name)),
         Doc.english("is not designed to be used as a function"));
     }
 
-    @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Use the projection syntax instead, like:"),
         Doc.code(Doc.plain("." + name)));
     }

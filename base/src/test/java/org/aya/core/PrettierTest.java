@@ -8,7 +8,7 @@ import org.aya.core.term.AppTerm;
 import org.aya.core.term.LamTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.TyckDeclTest;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("UnknownLanguage")
-public class DistillerTest {
+public class PrettierTest {
   @Test public void fn() {
     var doc1 = declDoc("def id {A : Type} (a : A) : A => a");
     var doc2 = declDoc("def id {A : Type} (a : A) => a");
@@ -97,11 +97,11 @@ public class DistillerTest {
     var test1 = ((FnDef) decls.get(3)).body.getLeftValue();
     var test2 = ((FnDef) decls.get(4)).body.getLeftValue();
     var use = ((FnDef) decls.get(6)).body.getLeftValue();
-    assertNotNull(decls.get(1).ref().concrete.toDoc(AyaDistillerOptions.informative()));
-    assertNotNull(decls.get(2).ref().concrete.toDoc(AyaDistillerOptions.informative()));
-    assertEquals("Pi (A : Type 0) -> A = X", test1.toDoc(AyaDistillerOptions.informative()).debugRender());
-    assertEquals("(Pi (A : Type 0) -> A) = X", test2.toDoc(AyaDistillerOptions.informative()).debugRender());
-    assertEquals("A ?= B", use.toDoc(AyaDistillerOptions.informative()).debugRender());
+    assertNotNull(decls.get(1).ref().concrete.toDoc(AyaPrettierOptions.informative()));
+    assertNotNull(decls.get(2).ref().concrete.toDoc(AyaPrettierOptions.informative()));
+    assertEquals("Pi (A : Type 0) -> A = X", test1.toDoc(AyaPrettierOptions.informative()).debugRender());
+    assertEquals("(Pi (A : Type 0) -> A) = X", test2.toDoc(AyaPrettierOptions.informative()).debugRender());
+    assertEquals("A ?= B", use.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
 
   @Test public void binop() {
@@ -113,7 +113,7 @@ public class DistillerTest {
       def t (n : Nat) => g (n ·)
       """)._2;
     var t = ((FnDef) decls.get(3)).body.getLeftValue();
-    assertEquals("g (n ·)", t.toDoc(AyaDistillerOptions.informative()).debugRender());
+    assertEquals("g (n ·)", t.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
 
   @Test public void unary() {
@@ -126,7 +126,7 @@ public class DistillerTest {
       def NonEmpty (A : Type) => ¬ ¬ A
       """)._2;
     var t = ((FnDef) decls.get(3)).body.getLeftValue();
-    assertEquals("¬ (¬ A)", t.toDoc(AyaDistillerOptions.informative()).debugRender());
+    assertEquals("¬ (¬ A)", t.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
 
   @Test public void elimBinOP() {
@@ -140,8 +140,8 @@ public class DistillerTest {
       def test => zero = zero
       """)._2;
     var t = ((FnDef) decls.get(6)).body.getLeftValue();
-    assertEquals("(=) {Nat} zero zero", t.toDoc(AyaDistillerOptions.informative()).debugRender());
-    assertEquals("zero = zero", t.toDoc(AyaDistillerOptions.pretty()).debugRender());
+    assertEquals("(=) {Nat} zero zero", t.toDoc(AyaPrettierOptions.informative()).debugRender());
+    assertEquals("zero = zero", t.toDoc(AyaPrettierOptions.pretty()).debugRender());
   }
 
   @Test public void intervalOp() {
@@ -160,8 +160,8 @@ public class DistillerTest {
       """)._2;
     var t1 = ((FnDef) decls.get(9)).body.getLeftValue();
     var t2 = ((FnDef) decls.get(10)).body.getLeftValue();
-    assertEquals("p ((i ∨ j ∨ k) ∧ (k ∨ j ∨ i))", t1.toDoc(AyaDistillerOptions.informative()).commonRender());
-    assertEquals("p (i ∧ j ∧ k ∨ k ∧ j ∧ i)", t2.toDoc(AyaDistillerOptions.informative()).commonRender());
+    assertEquals("p ((i ∨ j ∨ k) ∧ (k ∨ j ∨ i))", t1.toDoc(AyaPrettierOptions.informative()).commonRender());
+    assertEquals("p (i ∧ j ∧ k ∨ k ∧ j ∧ i)", t2.toDoc(AyaPrettierOptions.informative()).commonRender());
   }
 
   @Test public void lambdaApp() {
@@ -169,7 +169,7 @@ public class DistillerTest {
     var A = new LocalVar("A");
     var x = new LocalVar("x");
     var t = new AppTerm(new LamTerm(new Term.Param(a, new RefTerm(A), true), new RefTerm(a)), new Arg<>(new RefTerm(x), true));
-    assertEquals("(\\ a => a) x", t.toDoc(AyaDistillerOptions.informative()).debugRender());
+    assertEquals("(\\ a => a) x", t.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
 
   @Test public void pathApp() {
@@ -182,7 +182,7 @@ public class DistillerTest {
       def test {A : Type} {a b : A} (p : a = b) : a = b => \\i => p i
       """)._2;
     var t = ((FnDef) decls.get(5)).body.getLeftValue();
-    assertEquals("\\ i => p i", t.toDoc(AyaDistillerOptions.informative()).debugRender());
+    assertEquals("\\ i => p i", t.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
 
   @Test public void literals() {
@@ -198,13 +198,13 @@ public class DistillerTest {
     var t1 = ((FnDef) decls.get(1)).body.getLeftValue();
     var t2 = ((FnDef) decls.get(2)).body.getLeftValue();
     var t3 = ((FnDef) decls.get(3));
-    assertEquals("0", t1.toDoc(AyaDistillerOptions.informative()).debugRender());
-    assertEquals("114514", t2.toDoc(AyaDistillerOptions.informative()).debugRender());
+    assertEquals("0", t1.toDoc(AyaPrettierOptions.informative()).debugRender());
+    assertEquals("114514", t2.toDoc(AyaPrettierOptions.informative()).debugRender());
     assertEquals("""
       def test3 (_7 : Nat) : Nat
         |  0 => 1
         |  1 => 2
-        |  a => suc a""", t3.toDoc(AyaDistillerOptions.informative()).debugRender());
+        |  a => suc a""", t3.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
 
   @Test public void coeExpr() {
@@ -230,10 +230,10 @@ public class DistillerTest {
   }
 
   private @NotNull Doc declDoc(@Language("Aya") String text) {
-    return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(AyaDistillerOptions.debug())));
+    return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(AyaPrettierOptions.debug())));
   }
 
   private @NotNull Doc declCDoc(@Language("Aya") String text) {
-    return Doc.vcat(TyckDeclTest.successDesugarDecls(text)._2.map(s -> s.toDoc(AyaDistillerOptions.debug())));
+    return Doc.vcat(TyckDeclTest.successDesugarDecls(text)._2.map(s -> s.toDoc(AyaPrettierOptions.debug())));
   }
 }

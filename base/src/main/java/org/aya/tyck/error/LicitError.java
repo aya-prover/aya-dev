@@ -6,7 +6,7 @@ import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,7 @@ public sealed interface LicitError extends Problem {
   @Override default @NotNull Stage stage() {return Stage.TYCK;}
 
   record LicitMismatch(@Override @NotNull Expr expr, @NotNull Term type) implements LicitError, ExprProblem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("Cannot check"),
         Doc.par(1, expr.toDoc(options)),
@@ -31,7 +31,7 @@ public sealed interface LicitError extends Problem {
       return expr.term().sourcePos();
     }
 
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Unexpected implicit argument"),
         Doc.code(expr.toDoc(options)));
     }

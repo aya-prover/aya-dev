@@ -24,7 +24,7 @@ module aya.base {
   exports org.aya.core.term;
   exports org.aya.core.visitor;
   exports org.aya.core;
-  exports org.aya.distill;
+  exports org.aya.pretty;
   exports org.aya.generic.util;
   exports org.aya.generic;
   exports org.aya.prelude;

@@ -24,7 +24,7 @@ import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -945,8 +945,8 @@ public final class ExprTycker extends Tycker {
     if (sort instanceof SortTerm s) return s.isProp();
     if (sort instanceof ErrorTerm) return false;
     throw new InternalException("Expected computeType() to produce a sort, got "
-      + type.toDoc(AyaDistillerOptions.pretty())
-      + " : " + sort.toDoc(AyaDistillerOptions.pretty()));
+      + type.toDoc(AyaPrettierOptions.pretty())
+      + " : " + sort.toDoc(AyaPrettierOptions.pretty()));
   }
 
   public interface Result {

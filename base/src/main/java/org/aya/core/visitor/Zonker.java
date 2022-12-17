@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.Tycker;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,7 @@ public record Zonker(
       return lit.sourcePos();
     }
 
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("Unable to solve the type of this literal:"),
         Doc.par(1, lit.toDoc(options)),
@@ -95,7 +95,7 @@ public record Zonker(
     @NotNull ImmutableSeq<Term> termStack,
     @Override @NotNull SourcePos sourcePos, @NotNull String name
   ) implements Problem {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var lines = MutableList.of(Doc.english("Unsolved meta " + name));
       for (var term : termStack) {
         var buf = MutableList.of(Doc.plain("in"), Doc.par(1, Doc.code(term.toDoc(options))));

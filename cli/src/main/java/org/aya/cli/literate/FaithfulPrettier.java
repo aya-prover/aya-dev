@@ -8,15 +8,15 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
-import org.aya.distill.AyaDistillerOptions;
-import org.aya.distill.BaseDistiller;
+import org.aya.pretty.AyaPrettierOptions;
+import org.aya.pretty.BasePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface FaithfulDistiller {
+public interface FaithfulPrettier {
   static void checkHighlights(@NotNull SeqLike<HighlightInfo> highlights) {
     var lastEndIndex = -1;
 
@@ -93,18 +93,18 @@ public interface FaithfulDistiller {
 
   private static @Nullable String hover(@Nullable AyaDocile term) {
     if (term == null) return null;
-    return term.toDoc(AyaDistillerOptions.pretty()).commonRender(); // TODO: distiller options
+    return term.toDoc(AyaPrettierOptions.pretty()).commonRender(); // TODO: prettier options
   }
 
   private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {
     var style = switch (defKind) {
-      case Data -> BaseDistiller.DATA;
-      case Con -> BaseDistiller.CON;
-      case Struct -> BaseDistiller.STRUCT;
-      case Field -> BaseDistiller.FIELD;
-      case Fn -> BaseDistiller.FN;
-      case Prim -> BaseDistiller.PRIM;
-      case Generalized -> BaseDistiller.GENERALIZED;
+      case Data -> BasePrettier.DATA;
+      case Con -> BasePrettier.CON;
+      case Struct -> BasePrettier.STRUCT;
+      case Field -> BasePrettier.FIELD;
+      case Fn -> BasePrettier.FN;
+      case Prim -> BasePrettier.PRIM;
+      case Generalized -> BasePrettier.GENERALIZED;
       case LocalVar, Unknown, Module -> null;
     };
 
@@ -119,7 +119,7 @@ public interface FaithfulDistiller {
     return switch (litKind) {
       case Int -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
-      case Keyword -> Doc.styled(BaseDistiller.KEYWORD, raw);
+      case Keyword -> Doc.styled(BasePrettier.KEYWORD, raw);
     };
   }
 

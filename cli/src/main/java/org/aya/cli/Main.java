@@ -13,7 +13,7 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.core.def.PrimDef;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
@@ -53,8 +53,8 @@ public class Main extends MainArgs implements Callable<Integer> {
     var filePath = Paths.get(inputFile);
     var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var replConfig = ReplConfig.loadFromDefault();
-    var distillOptions = replConfig.distillerOptions;
-    var reporter = CliReporter.stdio(!asciiOnly, distillOptions, verbosity);
+    var prettierOptions = replConfig.prettierOptions;
+    var reporter = CliReporter.stdio(!asciiOnly, prettierOptions, verbosity);
     var renderOptions = replConfig.renderOptions;
     switch (prettyColor) {
       case emacs -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.Emacs;
@@ -62,19 +62,19 @@ public class Main extends MainArgs implements Callable<Integer> {
       case null -> {}
     }
     replConfig.close();
-    var distillation = prettyStage == null
-      ? (outputPath != null ? distillInfoFromOutput(outputPath, renderOptions, prettyNoCodeStyle) : null)
-      : new CompilerFlags.DistillInfo(
+    var pretty = prettyStage == null
+      ? (outputPath != null ? prettyInfoFromOutput(outputPath, renderOptions, prettyNoCodeStyle) : null)
+      : new CompilerFlags.PrettyInfo(
         asciiOnly,
         prettyNoCodeStyle,
         prettyStage,
         prettyFormat,
-        distillOptions,
+        prettierOptions,
         renderOptions,
         prettyDir
       );
     var flags = new CompilerFlags(message, interruptedTrace,
-      compile.isRemake, distillation,
+      compile.isRemake, pretty,
       modulePaths().view().map(Paths::get),
       outputPath);
 
@@ -87,30 +87,30 @@ public class Main extends MainArgs implements Callable<Integer> {
     var compiler = new SingleFileCompiler(reporter, null, traceBuilder);
     var status = compiler.compile(filePath, flags, null);
     if (traceBuilder != null)
-      System.err.println(new MarkdownTrace(2, distillOptions, asciiOnly)
+      System.err.println(new MarkdownTrace(2, prettierOptions, asciiOnly)
         .docify(traceBuilder).renderToString(PrinterConfig.INFINITE_SIZE, !asciiOnly));
     return status;
   }
 
-  public static @NotNull DistillFormat detectFormat(@NotNull Path outputFile) {
+  public static @NotNull MainArgs.PrettyFormat detectFormat(@NotNull Path outputFile) {
     var name = outputFile.getFileName().toString();
-    if (name.endsWith(".md")) return DistillFormat.markdown;
-    if (name.endsWith(".tex")) return DistillFormat.latex;
-    if (name.endsWith(".html")) return DistillFormat.html;
-    return DistillFormat.plain;
+    if (name.endsWith(".md")) return PrettyFormat.markdown;
+    if (name.endsWith(".tex")) return PrettyFormat.latex;
+    if (name.endsWith(".html")) return PrettyFormat.html;
+    return PrettyFormat.plain;
   }
 
-  public static @Nullable CompilerFlags.DistillInfo distillInfoFromOutput(
+  public static @Nullable CompilerFlags.PrettyInfo prettyInfoFromOutput(
     @Nullable Path outputFile,
     @NotNull RenderOptions renderOptions,
     boolean noCodeStyle
   ) {
-    if (outputFile != null) return new CompilerFlags.DistillInfo(
+    if (outputFile != null) return new CompilerFlags.PrettyInfo(
       false,
       noCodeStyle,
-      MainArgs.DistillStage.literate,
+      PrettyStage.literate,
       detectFormat(outputFile),
-      AyaDistillerOptions.pretty(),
+      AyaPrettierOptions.pretty(),
       renderOptions,
       null);
     return null;

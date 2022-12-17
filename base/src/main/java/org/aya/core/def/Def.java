@@ -10,11 +10,11 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.distill.CoreDistiller;
+import org.aya.pretty.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -50,8 +50,8 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
   @Override @NotNull DefVar<? extends Def, ? extends Decl> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
-  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return new CoreDistiller(options).def(this);
+  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    return new CorePrettier(options).def(this);
   }
 
   /**
@@ -63,7 +63,7 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull T result
   ) implements AyaDocile {
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.sep(param.view().map(p -> p.toDoc(options))), Doc.symbol("->"), result.toDoc(options));
     }
   }

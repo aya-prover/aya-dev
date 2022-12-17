@@ -5,7 +5,7 @@ package org.aya.cli.single;
 import kala.collection.SeqLike;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.MainArgs;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,18 +15,18 @@ public record CompilerFlags(
   @NotNull Message message,
   boolean interruptedTrace,
   boolean remake,
-  @Nullable DistillInfo distillInfo,
+  @Nullable CompilerFlags.PrettyInfo prettyInfo,
   @NotNull SeqLike<Path> modulePaths,
   @Nullable Path outputFile
 ) {
-  public record DistillInfo(
+  public record PrettyInfo(
     boolean ascii,
     boolean prettyNoCodeStyle,
-    @NotNull MainArgs.DistillStage distillStage,
-    @NotNull MainArgs.DistillFormat distillFormat,
-    @NotNull DistillerOptions distillerOptions,
+    @NotNull MainArgs.PrettyStage prettyStage,
+    @NotNull MainArgs.PrettyFormat prettyFormat,
+    @NotNull PrettierOptions prettierOptions,
     @NotNull RenderOptions renderOptions,
-    @Nullable String distillDir
+    @Nullable String prettyDir
   ) {
   }
 

@@ -3,11 +3,11 @@
 package org.aya.concrete.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.distill.BaseDistiller;
+import org.aya.pretty.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpSet;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.util.pretty.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ public interface OperatorError extends Problem {
   @Override default @NotNull Stage stage() {return Stage.PARSE;}
 
   record BadBindBlock(@NotNull SourcePos sourcePos, @NotNull String op) implements OperatorError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.plain(op), Doc.english("is not an operator. It cannot have bind block."));
     }
   }
@@ -30,7 +30,7 @@ public interface OperatorError extends Problem {
     @Override @NotNull SourcePos sourcePos
   ) implements OperatorError {
     @Override
-    public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Cannot figure out computation order because"),
         Doc.code(Doc.plain(op1)),
@@ -48,7 +48,7 @@ public interface OperatorError extends Problem {
         : Doc.english("share the same precedence but don't share the same associativity.");
     }
 
-    @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
       return Doc.english("Make them both left/right-associative to resolve this problem.");
     }
   }
@@ -58,7 +58,7 @@ public interface OperatorError extends Problem {
     @NotNull String op2,
     @Override @NotNull SourcePos sourcePos
   ) implements OperatorError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Ambiguous operator precedence detected between"),
         Doc.code(Doc.plain(op1)),
@@ -67,15 +67,15 @@ public interface OperatorError extends Problem {
       );
     }
 
-    @Override public @NotNull Doc hint(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.plain("Use"),
-        Doc.code(Doc.styled(BaseDistiller.KEYWORD, Doc.plain("tighter/looser"))),
+        Doc.code(Doc.styled(BasePrettier.KEYWORD, Doc.plain("tighter/looser"))),
         Doc.english("clause or insert parentheses to make it clear."));
     }
   }
 
   record SelfBind(@Override @NotNull SourcePos sourcePos) implements OperatorError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.english("Self bind is not allowed");
     }
   }
@@ -88,7 +88,7 @@ public interface OperatorError extends Problem {
         .max(Comparator.comparingInt(SourcePos::endLine));
     }
 
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Circular precedence found between"),
         Doc.commaList(items.view().map(BinOpSet.BinOP::name).toImmutableSeq()
@@ -98,7 +98,7 @@ public interface OperatorError extends Problem {
   }
 
   record MissingOperand(@NotNull SourcePos sourcePos, @NotNull String op) implements OperatorError {
-    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("There is no operand for this operator"),
         Doc.code(op));
     }

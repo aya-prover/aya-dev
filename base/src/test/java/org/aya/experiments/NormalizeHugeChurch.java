@@ -3,7 +3,7 @@
 package org.aya.experiments;
 
 import org.aya.core.def.FnDef;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.tyck.TyckState;
@@ -37,7 +37,7 @@ public class NormalizeHugeChurch {
     var nf = last.normalize(state, NormalizeMode.NF);
     println("Normalize: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
-    var doc = nf.toDoc(AyaDistillerOptions.informative());
+    var doc = nf.toDoc(AyaPrettierOptions.informative());
     println("Docify: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var text = doc.debugRender();

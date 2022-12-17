@@ -8,7 +8,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeMatcher;
 import org.aya.core.repr.ShapeRecognition;
-import org.aya.distill.AyaDistillerOptions;
+import org.aya.pretty.AyaPrettierOptions;
 import org.aya.ref.DefVar;
 import org.aya.tyck.TyckDeclTest;
 import org.intellij.lang.annotations.Language;
@@ -74,7 +74,7 @@ public class ShapeMatcherTest {
   }
 
   private @NotNull String pp(@NotNull DefVar<?, ?> def) {
-    return def.core.toDoc(AyaDistillerOptions.pretty()).debugRender();
+    return def.core.toDoc(AyaPrettierOptions.pretty()).debugRender();
   }
 
   @Test
