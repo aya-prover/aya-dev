@@ -356,7 +356,7 @@ atomPattern ::= atomListPattern
 atomListPattern ::= LARRAY patterns? RARRAY
 atomBindPattern ::= qualifiedId {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedQualifiedIdImpl.AtomBindPattern"
-  implements="org.aya.intellij.psi.AyaPsiNameddQualifiedId"
+  implements="org.aya.intellij.psi.AyaPsiNamedQualifiedId"
 }
 
 literal ::= refExpr
