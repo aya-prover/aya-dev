@@ -59,6 +59,9 @@ jobs:
   nightly-build:
     needs: [move-tag]
     runs-on: ${{ matrix.os }}
+    env:
+      jlinkName: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip
+      nativeName: aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}
     strategy:
       fail-fast: false
       matrix:
@@ -132,29 +135,35 @@ jobs:
           dependencies-cache-enabled: true
           arguments: nativeCompile --info --no-daemon --stacktrace --warning-mode all
 
+      - name: Copy aya Native Image
+        run: cp ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} ./${{ env.nativeName }}
+
       - name: test native image
-        run: ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} --remake base/src/test/resources/success
+        run: ./${{ env.nativeName }} --remake base/src/test/resources/success
 
       - name: Copy fat jar
         run: |
           cp ./lsp/build/libs/lsp-*-fat.jar ./lsp-fatjar.jar
           cp ./cli/build/libs/cli-*-fat.jar ./cli-fatjar.jar
 
-      - name: Copy aya Native Image
-        run: cp ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} ./aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}
-
       - name: Zip Artifacts (Windows)
         uses: papeloto/action-zip@v1
         with:
           files: ./lsp/build/image
-          dest: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip
+          dest: ${{ env.jlinkName }}
+        if: matrix.os == 'windows-latest'
+
+      - name: Checksum (Windows)
+        run: |
+          certutil -hashfile ${{ env.jlinkName }} SHA256 > ${{ env.jlinkName }}.sha256
         if: matrix.os == 'windows-latest'
 
       - name: Zip Artifacts (Unix)
         run: |
           root="$(pwd)"
           cd ./lsp/build/image
-          zip -r "$root/aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip" .
+          zip -r "$root/${{ env.jlinkName }}" .
+          sha256sum "$root/${{ env.jlinkName }}" > "$root/${{ env.jlinkName }}.sha256"
         if: matrix.os != 'windows-latest'
 
       - name: Update Release
@@ -167,6 +176,6 @@ jobs:
           body_mrkdwn: |
             _These are latest builds, but the date on GitHub is frozen due to stupid limitations.
             Corresponding commit: <https://github.com/aya-prover/aya-dev/commit/${{ github.sha }}>_
-          assets: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip;lsp-fatjar.jar;cli-fatjar.jar;aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}|application/octet-stream
+          assets: ${{ env.jlinkName }};${{ env.jlinkName }}.sha256;lsp-fatjar.jar;cli-fatjar.jar;${{ env.nativeName }};${{ env.nativeName }}.sha256|application/octet-stream
           replace_assets: true
           github_token: ${{ secrets.GH_TOKEN }}
