@@ -59,6 +59,11 @@ jobs:
   nightly-build:
     needs: [move-tag]
     runs-on: ${{ matrix.os }}
+    env:
+      jlinkName: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip
+      nativeName: aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}
+      jlinkSha256: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.sha256.txt
+      nativeSha256: aya-native-${{ matrix.os }}_${{ matrix.arch }}.sha256.txt
     strategy:
       fail-fast: false
       matrix:
@@ -90,13 +95,13 @@ jobs:
           norm="${norm//\\//}"
           echo "org.gradle.jvmargs = -javaagent:$norm/gradle/guard-pattern-fix.jar" >> gradle.properties
 
-      - name: gradle jlink
+      - name: Run task jlink
         uses: gradle/gradle-build-action@v2
         with:
           dependencies-cache-enabled: true
           arguments: jlink --info --no-daemon --stacktrace --warning-mode all
 
-      - name: gradle fatJar
+      - name: Run task fatJar
         uses: gradle/gradle-build-action@v2
         with:
           dependencies-cache-enabled: true
@@ -115,7 +120,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         if: ${{ matrix.os }} == 'windows-latest'
 
-      - name: Gradle, let me tell you where's my JDK!
+      - name: Tell gradle where's my JDK
         run: |
           # Gradle should respect these environmental variables by default!
           echo 'org.gradle.java.installations.fromEnv=JAVA_HOME,GRAALVM_HOME' >> gradle.properties
@@ -126,35 +131,49 @@ jobs:
           dependencies-cache-enabled: true
           arguments: javaToolchains --info --no-daemon --stacktrace --warning-mode all
 
-      - name: gradle nativeCompile
+      - name: Run task nativeCompile
         uses: gradle/gradle-build-action@v2
         with:
           dependencies-cache-enabled: true
           arguments: nativeCompile --info --no-daemon --stacktrace --warning-mode all
 
-      - name: test native image
-        run: ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} --remake base/src/test/resources/success
+      - name: Copy aya Native Image
+        run: cp ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} ./${{ env.nativeName }}
+
+      - name: Checksum (Native, Unix)
+        run: shasum -a 256 ./${{ env.nativeName }} > ./${{ env.nativeSha256 }}
+        if: matrix.os != 'windows-latest'
+
+      - name: Checksum (Native, Windows)
+        run: Get-FileHash ./${{ env.nativeName }} -Algorithm SHA256 > ./${{ env.nativeSha256 }}
+        if: matrix.os == 'windows-latest'
+
+      - name: Test native image
+        run: ./${{ env.nativeName }} --remake base/src/test/resources/success
 
       - name: Copy fat jar
         run: |
           cp ./lsp/build/libs/lsp-*-fat.jar ./lsp-fatjar.jar
           cp ./cli/build/libs/cli-*-fat.jar ./cli-fatjar.jar
 
-      - name: Copy aya Native Image
-        run: cp ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} ./aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}
-
       - name: Zip Artifacts (Windows)
         uses: papeloto/action-zip@v1
         with:
           files: ./lsp/build/image
-          dest: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip
+          dest: ${{ env.jlinkName }}
+        if: matrix.os == 'windows-latest'
+
+      - name: Checksum (Windows)
+        run: |
+          Get-FileHash ${{ env.jlinkName }} -Algorithm SHA256 > ${{ env.jlinkSha256 }}
         if: matrix.os == 'windows-latest'
 
       - name: Zip Artifacts (Unix)
         run: |
           root="$(pwd)"
           cd ./lsp/build/image
-          zip -r "$root/aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip" .
+          zip -r "$root/${{ env.jlinkName }}" .
+          shasum -a 256 "$root/${{ env.jlinkName }}" > "$root/${{ env.jlinkSha256 }}"
         if: matrix.os != 'windows-latest'
 
       - name: Update Release
@@ -167,6 +186,6 @@ jobs:
           body_mrkdwn: |
             _These are latest builds, but the date on GitHub is frozen due to stupid limitations.
             Corresponding commit: <https://github.com/aya-prover/aya-dev/commit/${{ github.sha }}>_
-          assets: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip;lsp-fatjar.jar;cli-fatjar.jar;aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}|application/octet-stream
+          assets: ${{ env.jlinkName }};${{ env.jlinkSha256 }};lsp-fatjar.jar;cli-fatjar.jar;${{ env.nativeSha256 }};${{ env.nativeName }}|application/octet-stream
           replace_assets: true
           github_token: ${{ secrets.GH_TOKEN }}
