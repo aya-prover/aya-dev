@@ -2,20 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
-import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.TyckState;
-import org.aya.tyck.unify.Unifier;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
-public interface UnifyError extends TyckError {
+public sealed interface UnifyError extends TyckError {
   record Type(
     @Override @NotNull Expr expr,
     @NotNull Term expected,

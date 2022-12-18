@@ -23,6 +23,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.Tycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.TyckOrderError;
+import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -119,8 +120,9 @@ public record PatClassifier(
         }
         var unifier = tycker.unifier(pos, Ordering.Eq, ctx);
         if (!unifier.compare(lhsTerm, rhsTerm, result)) {
+          var info = new UnifyInfo(tycker.state, unifier.getFailure());
           tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
-            lhsTerm, rhsTerm, tycker.state, unifier.getFailure(), lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
+            lhsTerm, rhsTerm, info, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
         }
       }
     });

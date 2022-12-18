@@ -72,7 +72,7 @@ public sealed interface ClausesProblem extends Problem {
       var view = Seq.of(
         // new WithPos<>(conditionPos, Doc.plain("relevant condition")),
         new WithPos<>(data.iPos, termToHint(data.lhs, options))).view();
-      return rhs == null || jPos == null ? view : view.concat(Seq.of(new WithPos<>(jPos, termToHint(rhs, options))));
+      return rhs == null || jPos == null ? view : view.appended(new WithPos<>(jPos, termToHint(rhs, options)));
     }
   }
 
