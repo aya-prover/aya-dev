@@ -27,6 +27,7 @@ Bug fixes:
 + Improved pretty printing with page widths.
 + Unification is now aware of `dataArgs` of constructors.
 + Fix GraalVM native image configs.
++ The name "distill" is no longer used in favor of "prettier".
 
 ## 0.25
 
