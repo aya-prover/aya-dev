@@ -1,0 +1,6 @@
+module A {
+  data False
+  data True | truth
+}
+
+open A using (True, False as True)
