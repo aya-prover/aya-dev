@@ -141,10 +141,12 @@ jobs:
         run: cp ./cli/build/native/nativeCompile/aya${{ matrix.binaryExt }} ./${{ env.nativeName }}
 
       - name: Checksum (Native, Unix)
-        run: sha256sum ./${{ env.nativeName }} > ./${{ env.nativeSha256 }}
+        run: shasum -a 256 ./${{ env.nativeName }} > ./${{ env.nativeSha256 }}
+        if: matrix.os != 'windows-latest'
 
       - name: Checksum (Native, Windows)
         run: Get-FileHash ./${{ env.nativeName }} -Algorithm SHA256 > ./${{ env.nativeSha256 }}
+        if: matrix.os == 'windows-latest'
 
       - name: Test native image
         run: ./${{ env.nativeName }} --remake base/src/test/resources/success
@@ -171,7 +173,7 @@ jobs:
           root="$(pwd)"
           cd ./lsp/build/image
           zip -r "$root/${{ env.jlinkName }}" .
-          sha256sum "$root/${{ env.jlinkName }}" > "$root/${{ env.jlinkSha256 }}"
+          shasum -a 256 "$root/${{ env.jlinkName }}" > "$root/${{ env.jlinkSha256 }}"
         if: matrix.os != 'windows-latest'
 
       - name: Update Release
