@@ -35,7 +35,7 @@ import java.util.function.ToIntBiFunction;
  * @author ice1000
  */
 public abstract class BasePrettier<Term extends AyaDocile> {
-  public static <T extends AyaDocile> @NotNull Doc argDoc(@NotNull PrettierOptions options, @NotNull Arg<T> self) {
+  public static @NotNull Doc argDoc(@NotNull PrettierOptions options, @NotNull Arg<? extends AyaDocile> self) {
     return BasePrettier.arg((outer, d) -> d.toDoc(options), self, Outer.Free);
   }
 

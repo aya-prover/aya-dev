@@ -14,6 +14,7 @@ import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
+import kala.text.StringView;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
@@ -509,7 +510,7 @@ public record AyaGKProducer(
       throw new ParsingInterruptedException();
     }
     if (node.is(LIT_STRING_EXPR)) {
-      var text = node.tokenText();
+      var text = StringView.of(node.tokenText());
       var content = text.substring(1, text.length() - 1);
       return new Expr.LitString(pos, StringUtil.escapeStringCharacters(content));
     }

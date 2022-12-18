@@ -4,6 +4,7 @@ package org.aya.cli.render;
 
 import com.google.gson.*;
 import kala.control.Try;
+import kala.text.StringView;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
@@ -39,14 +40,14 @@ public class Color {
     }
 
     public static @NotNull Try<Integer> parseColor(@NotNull String color) {
-      String colorCode;
-      if (color.charAt(0) == '#') colorCode = color.substring(1);
-      else if (color.startsWith("0x")) colorCode = color.substring(2);
-      else colorCode = color;
+      StringView colorCode;
+      if (color.charAt(0) == '#') colorCode = StringView.of(color, 1, color.length());
+      else if (color.startsWith("0x")) colorCode = StringView.of(color, 2, color.length());
+      else colorCode = StringView.of(color);
 
       return Try.of(() -> {
         // Integer.parseInt("80000000", 16) will fail
-        var value = (int) Long.parseLong(colorCode, 16);
+        var value = (int) colorCode.toLong(16);
         return switch (colorCode.length()) {
           case 3 -> parse3(value);
           case 4 -> parse4(value);

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.text.StringView;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
 import org.aya.prettier.AyaPrettierOptions;
@@ -51,16 +52,16 @@ public interface FaithfulPrettier {
       .toImmutableSeq();
     checkHighlights(highlights);
 
-    return doHighlight(raw, base, highlights);
+    return doHighlight(StringView.of(raw), base, highlights);
   }
 
-  private static @NotNull Doc doHighlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
+  private static @NotNull Doc doHighlight(@NotNull StringView raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {
       var parts = twoKnifeThreeParts(raw, base, current.sourcePos());
-      if (!parts._1.isEmpty()) docs.append(Doc.plain(parts._1));
-      var highlightPart = highlightOne(parts._2, current.type());
+      if (!parts._1.isEmpty()) docs.append(Doc.plain(parts._1.toString()));
+      var highlightPart = highlightOne(parts._2.toString(), current.type());
       var remainPart = parts._3;
       var newBase = parts._4;
 
@@ -74,7 +75,7 @@ public interface FaithfulPrettier {
       base = newBase;
     }
 
-    if (!raw.isEmpty()) docs.append(Doc.plain(raw));
+    if (!raw.isEmpty()) docs.append(Doc.plain(raw.toString()));
 
     return Doc.cat(docs);
   }
@@ -123,12 +124,13 @@ public interface FaithfulPrettier {
     };
   }
 
-  private static @NotNull Tuple4<String, String, String, Integer> twoKnifeThreeParts(@NotNull String raw, int base, @NotNull SourcePos twoKnife) {
+  private static @NotNull Tuple4<StringView, StringView, StringView, Integer>
+  twoKnifeThreeParts(@NotNull StringView raw, int base, @NotNull SourcePos twoKnife) {
     var beginPart1 = twoKnife.tokenStartIndex() - base;
     var endPart1 = twoKnife.tokenEndIndex() + 1 - base;
     var part0 = raw.substring(0, beginPart1);
     var part1 = raw.substring(beginPart1, endPart1);
-    var part2 = raw.substring(endPart1);
+    var part2 = raw.substring(endPart1, raw.length());
 
     return Tuple.of(part0, part1, part2, twoKnife.tokenEndIndex() + 1);
   }

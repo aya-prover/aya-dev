@@ -57,7 +57,7 @@ class GenerateReflectionConfigTask extends DefaultTask {
     Files.writeString(outputDir.toPath().resolve("serialization-config.json"), serializeConfig)
   }
 
-  List<String> expand(String line) {
+  static List<String> expand(String line) {
     var matcher = pattern.matcher(line)
     if (!matcher.find()) return List.of(line)
     int start = matcher.group(1) as int

@@ -50,8 +50,7 @@ public class FillCodeBlock implements PostProcessor {
 
   private FillCodeBlock() {}
 
-  @Override
-  public Node process(Node node) {
+  @Override public Node process(Node node) {
     if (node instanceof Document doc) VISITOR.visit(doc);
     return node;
   }
