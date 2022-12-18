@@ -5,27 +5,23 @@ package org.aya.tyck.error;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
-import org.aya.prettier.BasePrettier;
 import org.aya.generic.ExprProblem;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.TyckState;
-import org.aya.tyck.unify.Unifier;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public sealed interface CubicalError extends ExprProblem, TyckError {
   record BoundaryDisagree(
     @NotNull Expr expr,
-    @NotNull Term lhs,
-    @NotNull Term rhs,
-    @Override @NotNull Unifier.FailureData failureData,
-    @Override @NotNull TyckState state
-  ) implements CubicalError, UnifyError {
+    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull UnifyInfo info
+  ) implements CubicalError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return describeUnify(options, Doc.english("The boundary"), lhs,
+      return info.describeUnify(options, Doc.english("The boundary"), lhs,
         Doc.english("disagrees with"), rhs);
     }
   }
