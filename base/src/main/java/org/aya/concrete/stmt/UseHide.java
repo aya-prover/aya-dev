@@ -7,6 +7,9 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.util.binop.Assoc;
+import org.aya.util.error.SourceNode;
+import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,10 +43,14 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
   }
 
   public record Name(
+    @NotNull SourcePos sourcePos,
     @NotNull String id,
     @NotNull String asName,
     @NotNull Assoc asAssoc,
     @NotNull BindBlock asBind
-  ) {
+  ) implements SourceNode {
+    public Name(@NotNull WithPos<@NotNull String> simple) {
+      this(simple.sourcePos(), simple.data(), simple.data(), Assoc.Invalid, BindBlock.EMPTY);
+    }
   }
 }
