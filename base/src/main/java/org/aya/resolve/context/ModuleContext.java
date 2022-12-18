@@ -43,9 +43,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var result = definitions().getOrNull(name);
     if (result == null) return null;
     if (result.size() == 1) return result.iterator().next().getValue();
-    var disamb = MutableList.<Seq<String>>create();
-    result.forEach((k, v) -> disamb.append(k));
-    return reportAndThrow(new NameProblem.AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
+    return reportAndThrow(new NameProblem.AmbiguousNameError(
+      name,
+      result.keysView().toImmutableSeq(),
+      sourcePos));
   }
 
   @Override
