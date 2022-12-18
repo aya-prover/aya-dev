@@ -19,8 +19,10 @@ import org.jetbrains.annotations.Nullable;
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
   public final @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions = MutableHashMap.create();
-  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create());
-  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create());
+  public final @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules =
+    MutableHashMap.of(TOP_LEVEL_MOD_NAME, new ModuleExport());
+  public final @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> exports =
+    MutableHashMap.of(TOP_LEVEL_MOD_NAME, new ModuleExport());
 
   private final @NotNull ImmutableSeq<String> moduleName;
 
@@ -40,10 +42,12 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     ImmutableSeq<String> componentName,
-    MutableMap<String, AnyVar> mod
+    ModuleExport modExport
   ) {
-    ModuleContext.super.importModule(accessibility, sourcePos, componentName, mod);
-    if (accessibility == Stmt.Accessibility.Public) exports.set(componentName, mod);
+    ModuleContext.super.importModule(accessibility, sourcePos, componentName, modExport);
+    if (accessibility == Stmt.Accessibility.Public) {
+      this.exports.set(componentName, modExport);
+    }
   }
 
   @Override public void addGlobal(
@@ -55,9 +59,12 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   ) {
     ModuleContext.super.addGlobal(modName, name, accessibility, ref, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
-      if (exports.get(TOP_LEVEL_MOD_NAME).containsKey(name)) {
+      var myExport = exports.get(TOP_LEVEL_MOD_NAME);
+      var success = myExport.export(name, ref);
+
+      if (!success) {
         reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
-      } else exports.get(TOP_LEVEL_MOD_NAME).set(name, ref);
+      }
     }
   }
 
@@ -74,7 +81,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return definitions;
   }
 
-  @Override public @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> modules() {
+  @Override public @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules() {
     return modules;
   }
 }

@@ -27,6 +27,10 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
     return list.view().map(i -> Tuple.of(i.id, i.asName)).toImmutableMap();
   }
 
+  public @NotNull ImmutableSeq<String> listIds() {
+    return list().map(Name::id);
+  }
+
   /**
    * @author re-xyr
    */

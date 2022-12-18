@@ -3,7 +3,6 @@
 package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -35,7 +34,7 @@ public record EmptyContext(
   }
 
   @Override
-  public @Nullable MutableMap<String, AnyVar> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
+  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
     return null;
   }
 }

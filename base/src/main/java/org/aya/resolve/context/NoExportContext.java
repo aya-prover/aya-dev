@@ -18,7 +18,7 @@ import java.nio.file.Path;
 public record NoExportContext(
   @NotNull PhysicalModuleContext parent,
   @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions,
-  @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, AnyVar>> modules
+  @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules
 ) implements ModuleContext {
   @Override
   public @NotNull ImmutableSeq<String> moduleName() {
@@ -27,7 +27,7 @@ public record NoExportContext(
 
   public NoExportContext(@NotNull PhysicalModuleContext parent) {
     this(parent, MutableMap.create(),
-      MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create()));
+      MutableHashMap.of(TOP_LEVEL_MOD_NAME, new ModuleExport()));
   }
 
   @Override public @NotNull Path underlyingFile() {

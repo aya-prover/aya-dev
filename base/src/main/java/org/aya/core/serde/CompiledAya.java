@@ -5,7 +5,6 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple3;
 import org.aya.concrete.stmt.BindBlock;
@@ -19,6 +18,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleExport;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
@@ -53,7 +53,7 @@ public record CompiledAya(
     public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
       return new SerUseHide(
         useHide.strategy() == UseHide.Strategy.Using,
-        useHide.list().map(UseHide.Name::id),
+        useHide.listIds(),
         ImmutableMap.from(useHide.renaming())
       );
     }
@@ -78,7 +78,7 @@ public record CompiledAya(
     var modName = ctx.moduleName();
     var exports = ctx.exports.view().map((k, vs) -> {
       var qnameMod = modName.appendedAll(k);
-      return vs.view().map((n, v) -> new SerDef.QName(qnameMod, n));
+      return vs.exports().view().map((n, v) -> new SerDef.QName(qnameMod, n));
     }).flatMap(Function.identity()).toImmutableSeq();
 
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
@@ -166,9 +166,9 @@ public record CompiledAya(
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
       reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modName,
         Stmt.Accessibility.Public,
-        useHide::uses,
+        useHide.names(),
         useHide.renames(),
-        SourcePos.SER));
+        SourcePos.SER, useHide.isUsing()));
       var acc = this.reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
@@ -280,8 +280,10 @@ public record CompiledAya(
   }
 
   private void export(@NotNull PhysicalModuleContext context, @NotNull ImmutableSeq<String> mod, @NotNull String name, @NotNull AnyVar var) {
-    context.exports.getOrPut(ImmutableSeq.empty(), MutableMap::create).put(name, var);
-    context.exports.getOrPut(mod, MutableMap::create).put(name, var);
+    context.exports.getOrPut(Context.TOP_LEVEL_MOD_NAME, ModuleExport::new)
+      .export(name, var);
+    context.exports.getOrPut(mod, ModuleExport::new)
+      .export(name, var);
   }
 
   private boolean isExported(@NotNull SerDef.QName qname) {

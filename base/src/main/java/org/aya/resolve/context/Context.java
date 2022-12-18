@@ -3,9 +3,9 @@
 package org.aya.resolve.context;
 
 import kala.collection.Seq;
+import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InterruptException;
@@ -52,6 +52,15 @@ public interface Context {
   @Contract("_->fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
     reporter().report(problem);
     throw new ResolvingInterruptedException();
+  }
+
+  default <T> @NotNull T reportAllAndThrow(@NotNull SeqLike<Problem> problems) {
+    reportAll(problems);
+    throw new ResolvingInterruptedException();
+  }
+
+  default void reportAll(@NotNull SeqLike<Problem> problems) {
+    problems.forEach(x -> reporter().report(x));
   }
 
   default @NotNull AnyVar get(@NotNull QualifiedID name) {
@@ -104,8 +113,21 @@ public interface Context {
     return getQualified(view.dropLast(1).toImmutableSeq(), view.last(), sourcePos);
   }
 
-  @Nullable MutableMap<String, AnyVar> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName);
-  default @Nullable MutableMap<String, AnyVar> getModuleMaybe(@NotNull ImmutableSeq<String> modName) {
+  /**
+   * Trying to get a {@link ModuleExport} of module {@param modName} locally.
+   *
+   * @param modName qualified module name
+   * @return the context of that module; null if no such module.
+   */
+  @Nullable ModuleExport getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName);
+
+  /**
+   * Trying to get a {@link ModuleExport} of module {@param modName}.
+   *
+   * @param modName qualified module name
+   * @return the context of that module; null if no such module.
+   */
+  default @Nullable ModuleExport getModuleMaybe(@NotNull ImmutableSeq<String> modName) {
     return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 

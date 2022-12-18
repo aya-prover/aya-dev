@@ -5,12 +5,12 @@ package org.aya.cli.repl;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
-import kala.collection.mutable.MutableMap;
 import kala.value.MutableValue;
 import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleExport;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +24,25 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   @Override
-  public void addGlobal(@NotNull ImmutableSeq<String> modName, @NotNull String name, Stmt.@NotNull Accessibility accessibility, @NotNull AnyVar ref, @NotNull SourcePos sourcePos) {
+  public void addGlobal(
+    @NotNull ImmutableSeq<String> modName,
+    @NotNull String name,
+    Stmt.@NotNull Accessibility accessibility,
+    @NotNull AnyVar ref,
+    @NotNull SourcePos sourcePos) {
     definitions.getOrPut(name, MutableHashMap::of).set(modName, ref);
-    if (accessibility == Stmt.Accessibility.Public) exports.get(TOP_LEVEL_MOD_NAME).set(name, ref);
+    if (accessibility == Stmt.Accessibility.Public) {
+      // TODO: check export
+      exports.get(TOP_LEVEL_MOD_NAME).export(name, ref);
+    }
   }
 
   @Override
-  public void importModule(Stmt.@NotNull Accessibility accessibility, @NotNull SourcePos sourcePos, ImmutableSeq<String> componentName, MutableMap<String, AnyVar> mod) {
+  public void importModule(
+    Stmt.@NotNull Accessibility accessibility,
+    @NotNull SourcePos sourcePos,
+    ImmutableSeq<String> componentName,
+    ModuleExport mod) {
     modules.put(componentName, mod);
     if (accessibility == Stmt.Accessibility.Public) exports.set(componentName, mod);
   }
