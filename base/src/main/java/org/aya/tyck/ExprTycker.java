@@ -24,7 +24,6 @@ import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -33,6 +32,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -438,7 +438,8 @@ public final class ExprTycker extends Tycker {
     var t = whnf(type.subst(subst));
     var unifier = unifier(loc.sourcePos(), Ordering.Eq);
     var happy = unifier.compare(l, r, t);
-    if (!happy) reporter.report(new CubicalError.BoundaryDisagree(loc, lhs, rhs, unifier.getFailure(), state));
+    if (!happy)
+      reporter.report(new CubicalError.BoundaryDisagree(loc, lhs, rhs, new UnifyInfo(state, unifier.getFailure())));
     return happy;
   }
 
@@ -863,7 +864,7 @@ public final class ExprTycker extends Tycker {
   public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     unifyTyReported(upper, lower, loc, unification ->
       new UnifyError.Type(loc, upper.freezeHoles(state), lower.freezeHoles(state),
-        unification, state));
+        new UnifyInfo(state, unification)));
   }
 
   public void unifyTyReported(
@@ -904,7 +905,7 @@ public final class ExprTycker extends Tycker {
     if (failureData == null) return inst;
     var frozenUpper = upper.freezeHoles(state);
     return fail(term.freezeHoles(state), frozenUpper,
-      new UnifyError.Type(loc, frozenUpper, lower.freezeHoles(state), failureData, state));
+      new UnifyError.Type(loc, frozenUpper, lower.freezeHoles(state), new UnifyInfo(state, failureData)));
   }
 
   private @Nullable TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {

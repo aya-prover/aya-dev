@@ -23,10 +23,7 @@ import org.aya.generic.SortKind;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.SeqLocalCtx;
-import org.aya.tyck.error.CubicalError;
-import org.aya.tyck.error.NobodyError;
-import org.aya.tyck.error.PrimError;
-import org.aya.tyck.error.UnifyError;
+import org.aya.tyck.error.*;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
@@ -278,7 +275,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       }
       var eventually = result;
       tycker.unifyTyReported(eventually, dataCall, ctor.result,
-        u -> new UnifyError.ConReturn(ctor, dataCall, eventually, u, tycker.state));
+        u -> new UnifyError.ConReturn(ctor, dataCall, eventually, new UnifyInfo(tycker.state, u)));
       tycker.solveMetas();
       var zonker = Zonker.make(tycker);
       // Zonk after the unification, because the unification may have solved some metas.

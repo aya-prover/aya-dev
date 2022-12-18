@@ -11,6 +11,8 @@ import org.aya.tyck.unify.Unifier;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public record UnifyInfo(
   @NotNull TyckState state,
   @NotNull Unifier.FailureData failureData
@@ -18,14 +20,17 @@ public record UnifyInfo(
   @NotNull private Term nf(Term failureTermL) {
     return failureTermL.normalize(state, NormalizeMode.NF);
   }
+
   private static void compareExprs(@NotNull Doc mid, Doc actualDoc, Doc expectedDoc, Doc actualNFDoc, Doc expectedNFDoc, MutableList<@NotNull Doc> buf) {
+    exprInfo(actualDoc, actualNFDoc, buf);
+    buf.append(mid);
+    exprInfo(expectedDoc, expectedNFDoc, buf);
+  }
+
+  public static void exprInfo(Doc actualDoc, Doc actualNFDoc, MutableList<@NotNull Doc> buf) {
     buf.append(Doc.par(1, actualDoc));
     if (!actualNFDoc.equals(actualDoc))
       buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualNFDoc))));
-    buf.append(mid);
-    buf.append(Doc.par(1, expectedDoc));
-    if (!expectedNFDoc.equals(expectedDoc))
-      buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expectedNFDoc))));
   }
 
   public @NotNull Doc describeUnify(
@@ -44,10 +49,10 @@ public record UnifyInfo(
     var failureTermL = failureData.lhs();
     var failureTermR = failureData.rhs();
     var failureLhs = failureTermL.toDoc(options);
-    if (!failureLhs.equals(actualDoc)
-      && !failureLhs.equals(expectedDoc)
-      && !failureLhs.equals(actualNFDoc)
-      && !failureLhs.equals(expectedNFDoc)
+    if (!Objects.equals(failureLhs, actualDoc)
+      && !Objects.equals(failureLhs, expectedDoc)
+      && !Objects.equals(failureLhs, actualNFDoc)
+      && !Objects.equals(failureLhs, expectedNFDoc)
     ) {
       buf.append(Doc.english("In particular, we failed to unify"));
       compareExprs(Doc.plain("with"),
