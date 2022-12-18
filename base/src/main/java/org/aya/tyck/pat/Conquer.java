@@ -95,8 +95,8 @@ public record Conquer(
       } else if (anotherClause.data() instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
         hole.ref().conditions.append(Tuple.of(matchy, newBody));
       }
-      var unification = tycker.unifier(sourcePos, Ordering.Eq, ctx)
-        .compare(newBody, anotherClause.data(), signature.result().subst(matchy));
+      var unifier = tycker.unifier(sourcePos, Ordering.Eq, ctx);
+      var unification = unifier.compare(newBody, anotherClause.data(), signature.result().subst(matchy));
       if (!unification) {
         tycker.reporter.report(new ClausesProblem.Conditions(
           sourcePos, errorData, anotherClause.data(), anotherClause.sourcePos()));

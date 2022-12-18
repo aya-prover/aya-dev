@@ -8,16 +8,15 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
-import org.aya.prettier.BasePrettier;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.error.UnifyError;
-import org.aya.tyck.unify.TermComparator;
+import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.Arg;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +72,7 @@ public sealed interface ClausesProblem extends Problem {
       var view = Seq.of(
         // new WithPos<>(conditionPos, Doc.plain("relevant condition")),
         new WithPos<>(data.iPos, termToHint(data.lhs, options))).view();
-      return rhs == null || jPos == null ? view : view.concat(Seq.of(new WithPos<>(jPos, termToHint(rhs, options))));
+      return rhs == null || jPos == null ? view : view.appended(new WithPos<>(jPos, termToHint(rhs, options)));
     }
   }
 
@@ -81,10 +80,9 @@ public sealed interface ClausesProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     int i, int j,
     @NotNull Term lhs, @NotNull Term rhs,
-    @Override @NotNull TyckState state,
-    @Override @NotNull TermComparator.FailureData failureData,
+    @NotNull UnifyInfo info,
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
-  ) implements ClausesProblem, UnifyError {
+  ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var line = Doc.sep(
         Doc.plain("The"),
@@ -92,7 +90,7 @@ public sealed interface ClausesProblem extends Problem {
         Doc.english("and the"),
         Doc.ordinal(j),
         Doc.english("clauses are not confluent because we failed to unify"));
-      return describeUnify(options, line, lhs, Doc.plain("and"), rhs);
+      return info.describeUnify(options, line, lhs, Doc.plain("and"), rhs);
     }
 
     @Override public @NotNull Severity level() {
