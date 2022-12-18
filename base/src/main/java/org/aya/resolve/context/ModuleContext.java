@@ -32,11 +32,11 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   // All available definitions in this context.
-  // Unqualified (in this module context) -> (Qualified (in this module context) -> AnyVar)
+  // Unqualified (in this module) -> (Module Name -> AnyVar)
   @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions();
 
   // All available modules in this context.
-  // Qualified Module (in this module context) -> Exports -> AnyVar
+  // Qualified Module (in this module) -> Module Export
   @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules();
 
   @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {

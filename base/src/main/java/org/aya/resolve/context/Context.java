@@ -117,7 +117,7 @@ public interface Context {
    * Trying to get a {@link ModuleExport} of module {@param modName} locally.
    *
    * @param modName qualified module name
-   * @return the context of that module; null if no such module.
+   * @return a ModuleExport of that module; null if no such module.
    */
   @Nullable ModuleExport getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName);
 
@@ -125,7 +125,7 @@ public interface Context {
    * Trying to get a {@link ModuleExport} of module {@param modName}.
    *
    * @param modName qualified module name
-   * @return the context of that module; null if no such module.
+   * @return a ModuleExport of that module; null if no such module.
    */
   default @Nullable ModuleExport getModuleMaybe(@NotNull ImmutableSeq<String> modName) {
     return iterate(c -> c.getModuleLocalMaybe(modName));
