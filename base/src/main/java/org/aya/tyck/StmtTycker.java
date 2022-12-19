@@ -89,18 +89,24 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
             var pos = decl.sourcePos;
-            if (decl.modifiers.contains(Modifier.Overlap)) {
+            PatTycker.PatResult result;
+            var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
+            if (orderIndependent) {
               // Order-independent.
-              var result = PatTycker.elabClausesDirectly(exprTycker, clauses, signature);
+              result = PatTycker.elabClausesDirectly(exprTycker, clauses, signature);
               def = factory.apply(result.result(), Either.right(result.matchings()));
-              if (!result.hasLhsError())
-                ensureConfluent(tycker, signature, result, pos);
+              if (!result.hasLhsError()) {
+                tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
+                PatClassifier.confluence(result, tycker, pos,
+                  PatClassifier.classify(result.clauses(), signature.param(), tycker, pos));
+                tracing(TreeBuilder::reduce);
+              }
             } else {
               // First-match semantics.
-              var result = PatTycker.elabClausesClassified(exprTycker, clauses, signature, pos);
+              result = PatTycker.elabClausesClassified(exprTycker, clauses, signature, pos);
               def = factory.apply(result.result(), Either.right(result.matchings()));
-              if (!result.hasLhsError()) Conquer.against(result.matchings(), true, tycker, pos, signature);
             }
+            if (!result.hasLhsError()) Conquer.against(result.matchings(), orderIndependent, tycker, pos, signature);
             return def;
           }
         );
@@ -303,18 +309,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       return (SortTerm) tycker.zonk(result.wellTyped());
     }
     return SortTerm.Type0;
-  }
-
-  private void ensureConfluent(
-    ExprTycker tycker, Def.Signature<?> signature,
-    PatTycker.PatResult elabClauses, SourcePos pos
-  ) {
-    tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
-    PatClassifier.confluence(elabClauses, tycker, pos,
-      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos));
-    Conquer.against(elabClauses.matchings(), true, tycker, pos, signature);
-    tycker.solveMetas();
-    tracing(TreeBuilder::reduce);
   }
 
   /**
