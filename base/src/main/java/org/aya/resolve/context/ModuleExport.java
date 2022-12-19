@@ -2,18 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Map;
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.SetView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
-import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.error.NameProblem;
-import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Contract;
@@ -31,12 +29,6 @@ public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
   public boolean export(@NotNull String name, @NotNull AnyVar ref) {
     var exists = putIfAbsent(name, ref);
     return exists.isEmpty();
-  }
-
-  // TODO: delete this garbage
-  @Deprecated
-  public @NotNull Result filter(@NotNull ImmutableSeq<String> names, boolean isUse, @NotNull SourcePos pos) {
-    return filter(names.map(x -> new WithPos<>(pos, x)), isUse);
   }
 
   /**
@@ -76,26 +68,17 @@ public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
     return new Result(new ModuleExport(newExports), badNames.toImmutableSeq(), ImmutableSeq.empty());
   }
 
-  // TODO: delete this garbage
-  @Deprecated
-  public @NotNull Result map(@NotNull Map<String, String> mapper, @NotNull SourcePos pos) {
-    var builder = MutableList.<Tuple2<WithPos<String>, WithPos<String>>>create();
-    mapper.mapTo(builder, (k, v) ->
-      Tuple.of(new WithPos<>(pos, k), new WithPos<>(pos, v)));
-
-    return map(Map.from(builder));
-  }
-
   @Contract(pure = true)
-  public @NotNull Result map(@NotNull Map<WithPos<String>, WithPos<String>> mapper) {
+  public @NotNull Result map(@NotNull Seq<WithPos<Tuple2<String, String>>> mapper) {
     var oldExports = exports();
     var newExports = MutableMap.from(oldExports);
     var badNames = MutableList.<WithPos<String>>create();
     var ambigNames = MutableList.<WithPos<String>>create();
 
-    mapper.forEach((k, v) -> {
-      var from = k.data();
-      var to = v.data();
+    mapper.forEach(pair -> {
+      var pos = pair.sourcePos();
+      var from = pair.data()._1;
+      var to = pair.data()._2;
       if (from.equals(to)) return;
 
       var ref = oldExports.getOption(from);
@@ -108,7 +91,7 @@ public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
 
         // If there is an export with name v, ambiguous!
         if (ambig) {
-          ambigNames.append(v);
+          ambigNames.append(new WithPos<>(pos, to));
         }
 
         // we still perform the ambiguous `as`
@@ -116,7 +99,7 @@ public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
         newExports.put(to, ref.get());
       } else {
         // not defined, not good
-        badNames.append(k);
+        badNames.append(new WithPos<>(pos, from));
       }
     });
 

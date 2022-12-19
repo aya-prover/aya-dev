@@ -1,9 +1,9 @@
-In file $FILE:4:5 ->
+In file $FILE:4:15 ->
 
   2 │   }
   3 │   
   4 │   open A hiding (False)
-    │        ╰╯
+    │                  ╰───╯
 
 Error: The qualified name `A::False` is not defined in the current scope
 

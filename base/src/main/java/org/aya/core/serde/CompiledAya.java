@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
@@ -26,6 +27,7 @@ import org.aya.resolve.visitor.StmtResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -48,13 +50,13 @@ public record CompiledAya(
   record SerUseHide(
     boolean isUsing,
     @NotNull ImmutableSeq<String> names,
-    @NotNull ImmutableMap<String, String> renames
+    @NotNull ImmutableSeq<Tuple2<String, String>> renames
   ) implements Serializable {
     public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
       return new SerUseHide(
         useHide.strategy() == UseHide.Strategy.Using,
-        useHide.listIds(),
-        ImmutableMap.from(useHide.renaming())
+        useHide.list().map(UseHide.Name::id),
+        useHide.renaming().map(WithPos::data)
       );
     }
 
@@ -166,8 +168,8 @@ public record CompiledAya(
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
       reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modName,
         Stmt.Accessibility.Public,
-        useHide.names(),
-        useHide.renames(),
+        useHide.names().map(x -> new WithPos<>(SourcePos.SER, x)),
+        useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
         SourcePos.SER, useHide.isUsing()));
       var acc = this.reExports.containsKey(modName)
         ? Stmt.Accessibility.Public

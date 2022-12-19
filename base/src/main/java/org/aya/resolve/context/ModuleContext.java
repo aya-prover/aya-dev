@@ -2,17 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Map;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +32,12 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   // All available definitions in this context.
-  // Unqualified (in this module) -> (Module Name -> AnyVar)
+  // Unqualified -> (Module Name -> AnyVar)
+  // It says a {AnyVar} can be referred by `{Module Name}::{Unqualified}`
   @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions();
 
   // All available modules in this context.
-  // Qualified Module (in this module) -> Module Export
+  // Qualified Module -> Module Export
   @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules();
 
   @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
@@ -93,24 +94,23 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   default void openModule(
     @NotNull ImmutableSeq<String> modName,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull ImmutableSeq<String> filter,
-    @NotNull Map<String, String> rename,
+    @NotNull ImmutableSeq<WithPos<String>> filter,
+    @NotNull ImmutableSeq<WithPos<Tuple2<String, String>>> rename,
     @NotNull SourcePos sourcePos,
     boolean useOrHide
   ) {
     var modExport = getModuleMaybe(modName);
     if (modExport == null) reportAndThrow(new NameProblem.ModNameNotFoundError(modName, sourcePos));
-    // TODO: source pos
-    var filterRes = modExport.filter(filter, useOrHide, sourcePos);
 
+    var filterRes = modExport.filter(filter, useOrHide);
     if (!filterRes.anyError()) {
       var filtered = filterRes.result();
-      var mapRes = filtered.map(rename, sourcePos);
+      var mapRes = filtered.map(rename);
+
       if (!mapRes.anyError()) {
         var renamed = mapRes.result();
-        renamed.exports().forEach((name, ref) -> {
-          addGlobal(modName, name, accessibility, ref, sourcePos);
-        });
+        renamed.exports().forEach((name, ref) ->
+          addGlobal(modName, name, accessibility, ref, sourcePos));
 
         // report all warning
         reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));

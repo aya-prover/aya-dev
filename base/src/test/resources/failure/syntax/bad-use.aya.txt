@@ -1,9 +1,9 @@
-In file $FILE:4:5 ->
+In file $FILE:4:14 ->
 
   2 │   }
   3 │   
   4 │   open A using (True)
-    │        ╰╯
+    │                 ╰──╯
 
 Error: The qualified name `A::True` is not defined in the current scope
 

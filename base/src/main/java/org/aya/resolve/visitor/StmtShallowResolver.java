@@ -19,6 +19,7 @@ import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -64,7 +65,7 @@ public record StmtShallowResolver(
         ctx.openModule(
           mod,
           acc,
-          useHide.list().map(UseHide.Name::id),
+          useHide.list().map(x -> new WithPos<>(x.sourcePos(), x.id())),
           useHide.renaming(),
           cmd.sourcePos(),
           useHide.strategy() == UseHide.Strategy.Using);
