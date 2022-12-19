@@ -9,7 +9,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
-import kala.tuple.Tuple2;
+import org.aya.concrete.stmt.UseHide;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.WithPos;
@@ -69,7 +69,7 @@ public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
   }
 
   @Contract(pure = true)
-  public @NotNull Result map(@NotNull Seq<WithPos<Tuple2<String, String>>> mapper) {
+  public @NotNull Result map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
     var oldExports = exports();
     var newExports = MutableMap.from(oldExports);
     var badNames = MutableList.<WithPos<String>>create();
@@ -77,8 +77,8 @@ public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
 
     mapper.forEach(pair -> {
       var pos = pair.sourcePos();
-      var from = pair.data()._1;
-      var to = pair.data()._2;
+      var from = pair.data().from();
+      var to = pair.data().to();
       if (from.equals(to)) return;
 
       var ref = oldExports.getOption(from);

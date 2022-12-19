@@ -3,13 +3,13 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.aya.util.binop.Assoc;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.Serializable;
 
 /**
  * @author re-xyr
@@ -17,11 +17,13 @@ import org.jetbrains.annotations.NotNull;
 public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strategy strategy) {
   public static final UseHide EMPTY = new UseHide(ImmutableSeq.empty(), Strategy.Hiding);
 
-  public @NotNull ImmutableSeq<WithPos<Tuple2<String, String>>> renaming() {
+  public record Rename(@NotNull String from, @NotNull String to) implements Serializable {}
+
+  public @NotNull ImmutableSeq<WithPos<Rename>> renaming() {
     if (strategy == Strategy.Hiding) return ImmutableSeq.empty();
-    return list.view().map(i -> new WithPos<>(i.sourcePos(), Tuple.of(
-      i.id(), i.asName()
-    ))).toImmutableSeq();
+    return list.view().map(i -> new WithPos<>(i.sourcePos(),
+        new Rename(i.id(), i.asName())))
+      .toImmutableSeq();
   }
 
   /**
