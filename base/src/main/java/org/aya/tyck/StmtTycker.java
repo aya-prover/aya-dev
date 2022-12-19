@@ -106,7 +106,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
               result = PatTycker.elabClausesClassified(exprTycker, clauses, signature, pos);
               def = factory.apply(result.result(), Either.right(result.matchings()));
             }
-            if (!result.hasLhsError()) Conquer.against(result.matchings(), orderIndependent, tycker, pos, signature);
+            if (!result.hasLhsError()) Conquer.against(def, orderIndependent, tycker, pos);
             return def;
           }
         );

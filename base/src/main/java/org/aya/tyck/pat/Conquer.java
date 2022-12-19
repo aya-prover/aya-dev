@@ -4,7 +4,7 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import org.aya.core.def.Def;
+import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.MetaTerm;
@@ -28,17 +28,18 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Conquer(
+  @NotNull FnDef def,
   @NotNull ImmutableSeq<Term.Matching> matchings,
   @NotNull SourcePos sourcePos,
-  @NotNull Def.Signature<?> signature,
   boolean orderIndependent,
   @NotNull ExprTycker tycker
 ) {
   public static void against(
-    @NotNull ImmutableSeq<Term.Matching> matchings, boolean orderIndependent,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature<?> signature
+    @NotNull FnDef def, boolean orderIndependent,
+    @NotNull ExprTycker tycker, @NotNull SourcePos pos
   ) {
-    var conquer = new Conquer(matchings, pos, signature, orderIndependent, tycker);
+    var matchings = def.body.getRightValue();
+    var conquer = new Conquer(def, matchings, pos, orderIndependent, tycker);
     for (int i = 0, size = matchings.size(); i < size; i++) {
       var matching = matchings.get(i);
       for (var pat : matching.patterns()) conquer.visit(pat.term(), i);
@@ -96,7 +97,7 @@ public record Conquer(
         hole.ref().conditions.append(Tuple.of(matchy, newBody));
       }
       var unifier = tycker.unifier(sourcePos, Ordering.Eq, ctx);
-      var unification = unifier.compare(newBody, anotherClause.data(), signature.result().subst(matchy));
+      var unification = unifier.compare(newBody, anotherClause.data(), def.result.subst(matchy));
       if (!unification) {
         tycker.reporter.report(new ClausesProblem.Conditions(
           sourcePos, errorData, anotherClause.data(), anotherClause.sourcePos()));
