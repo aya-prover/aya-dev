@@ -6,8 +6,8 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.UseHide;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.error.NameProblem;
@@ -95,7 +95,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ImmutableSeq<String> modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull ImmutableSeq<WithPos<String>> filter,
-    @NotNull ImmutableSeq<WithPos<Tuple2<String, String>>> rename,
+    @NotNull ImmutableSeq<WithPos<UseHide.Rename>> rename,
     @NotNull SourcePos sourcePos,
     boolean useOrHide
   ) {

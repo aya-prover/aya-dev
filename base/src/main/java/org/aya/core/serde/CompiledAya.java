@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
@@ -50,7 +49,7 @@ public record CompiledAya(
   record SerUseHide(
     boolean isUsing,
     @NotNull ImmutableSeq<String> names,
-    @NotNull ImmutableSeq<Tuple2<String, String>> renames
+    @NotNull ImmutableSeq<UseHide.Rename> renames
   ) implements Serializable {
     public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
       return new SerUseHide(
@@ -58,10 +57,6 @@ public record CompiledAya(
         useHide.list().map(UseHide.Name::id),
         useHide.renaming().map(WithPos::data)
       );
-    }
-
-    public boolean uses(@NotNull String name) {
-      return isUsing == names.contains(name);
     }
   }
 
