@@ -3,7 +3,7 @@ In file $FILE:6:20 ->
   4 │   }
   5 │   
   6 │   open A using (True, False as True)
-    │                       ╰───╯
+    │                       ╰───────────╯
 
 Warning: The name `True` introduces ambiguity and can only be accessed through a
          qualified name

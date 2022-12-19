@@ -152,7 +152,7 @@ public record AyaGKProducer(
     return new UseHide(hideLists
       .mapNotNull(h -> h.peekChild(COMMA_SEP))
       .flatMap(node -> node.childrenOfType(WEAK_ID).map(this::weakId))
-      .map(id -> new UseHide.Name(id))
+      .map(UseHide.Name::new)
       .toImmutableSeq(),
       strategy);
   }
@@ -167,13 +167,14 @@ public record AyaGKProducer(
 
   public SeqView<UseHide.Name> useIdsComma(@NotNull GenericNode<?> node) {
     return node.childrenOfType(USE_ID).map(id -> {
+      var wholePos = sourcePosOf(id);
       var name = weakId(id.child(WEAK_ID));
       var useAs = id.peekChild(USE_AS);
       if (useAs == null) return new UseHide.Name(name);
       var asId = weakId(useAs.child(WEAK_ID)).data();
       var asAssoc = useAs.peekChild(ASSOC);
       var asBind = useAs.peekChild(BIND_BLOCK);
-      return new UseHide.Name(name.sourcePos(), name.data(), asId,
+      return new UseHide.Name(wholePos, name.data(), asId,
         asAssoc != null ? assoc(asAssoc) : Assoc.Invalid,
         asBind != null ? bindBlock(asBind) : BindBlock.EMPTY);
     });
