@@ -1,0 +1,10 @@
+open import Paths
+
+module A {
+  data False
+  data True | truth
+}
+
+open A using (True, False as True)
+
+counterexample def true-is-true : A::True = True => idp

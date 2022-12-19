@@ -1,0 +1,12 @@
+In file $FILE:4:14 ->
+
+  2 │   }
+  3 │   
+  4 │   open A using (True)
+    │                 ╰──╯
+
+Error: The qualified name `A::True` is not defined in the current scope
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?

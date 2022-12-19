@@ -1,0 +1,4 @@
+module A {
+}
+
+open A hiding (False)

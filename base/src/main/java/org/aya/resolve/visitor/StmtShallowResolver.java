@@ -12,16 +12,14 @@ import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModuleContext;
-import org.aya.resolve.context.NoExportContext;
-import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.context.*;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -67,9 +65,10 @@ public record StmtShallowResolver(
         ctx.openModule(
           mod,
           acc,
-          useHide::uses,
+          useHide.list().map(x -> new WithPos<>(x.sourcePos(), x.id())),
           useHide.renaming(),
-          cmd.sourcePos());
+          cmd.sourcePos(),
+          useHide.strategy() == UseHide.Strategy.Using);
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
         resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
@@ -158,7 +157,7 @@ public record StmtShallowResolver(
       decl.accessibility(),
       MutableHashMap.of(
         Context.TOP_LEVEL_MOD_NAME,
-        MutableHashMap.from(children)),
+        new ModuleExport(MutableHashMap.from(children))),
       decl.sourcePos()
     );
     proof.setCtx(innerCtx);
