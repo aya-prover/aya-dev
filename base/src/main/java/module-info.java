@@ -27,6 +27,8 @@ module aya.base {
   exports org.aya.prettier;
   exports org.aya.generic.util;
   exports org.aya.generic;
+  exports org.aya.tyck.tycker;
+  // Needed by AyaProducer for reporting NotAnIntervalError
   exports org.aya.prelude;
   exports org.aya.ref;
   exports org.aya.resolve.context;
@@ -34,11 +36,10 @@ module aya.base {
   exports org.aya.resolve.module;
   exports org.aya.resolve;
   exports org.aya.tyck.env;
+  exports org.aya.tyck.error;
   exports org.aya.tyck.order;
   exports org.aya.tyck.pat;
   exports org.aya.tyck.trace;
   exports org.aya.tyck.unify;
   exports org.aya.tyck;
-  // Needed by AyaProducer for reporting NotAnIntervalError
-  exports org.aya.tyck.error;
 }

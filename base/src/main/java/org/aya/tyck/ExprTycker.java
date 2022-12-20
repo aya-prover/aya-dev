@@ -9,7 +9,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableTreeSet;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -42,10 +41,10 @@ import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.tycker.StatedTycker;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
-import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
@@ -53,7 +52,6 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -64,7 +62,7 @@ import java.util.function.Supplier;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl.TopLevel}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
-public final class ExprTycker extends Tycker {
+public final class ExprTycker extends StatedTycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
 
   /**
@@ -73,13 +71,6 @@ public final class ExprTycker extends Tycker {
    */
   public @NotNull TypedSubst lets = new TypedSubst();
   public final @NotNull AyaShape.Factory shapeFactory;
-  public final @NotNull MutableTreeSet<Expr.WithTerm> withTerms =
-    MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
-
-  @Override public void solveMetas() {
-    super.solveMetas();
-    withTerms.forEach(w -> w.theCore().update(r -> r.freezeHoles(state)));
-  }
 
   public boolean inProp = false;
 
@@ -693,27 +684,8 @@ public final class ExprTycker extends Tycker {
     };
   }
 
-  private void traceExit(Result result, @NotNull Expr expr) {
-    var frozen = LazyValue.of(() -> result.freezeHoles(state));
-    tracing(builder -> {
-      builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
-      builder.reduce();
-    });
-    if (expr instanceof Expr.WithTerm wt) addWithTerm(wt, frozen.get());
-    if (expr instanceof Expr.Lift lift && lift.expr() instanceof Expr.WithTerm wt) addWithTerm(wt, frozen.get());
-  }
-
-  public void addWithTerm(@NotNull Expr.WithTerm withTerm, @NotNull Result result) {
-    withTerms.add(withTerm);
-    withTerm.theCore().set(result);
-  }
-
-  public void addWithTerm(@NotNull Expr.Param param, @NotNull Term type) {
-    addWithTerm(param, new TermResult(new RefTerm(param.ref()), type));
-  }
-
   public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory shapeFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-    super(reporter, new TyckState(primFactory), traceBuilder);
+    super(reporter, traceBuilder, new TyckState(primFactory));
     this.shapeFactory = shapeFactory;
   }
 

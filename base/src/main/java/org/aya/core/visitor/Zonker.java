@@ -7,9 +7,9 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.Tycker;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.tyck.tycker.StatedTycker;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,10 +23,10 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Zonker(
-  @NotNull Tycker tycker,
+  @NotNull StatedTycker tycker,
   @NotNull MutableSinglyLinkedList<Term> stack
 ) implements EndoTerm {
-  public static @NotNull Zonker make(@NotNull Tycker tycker) {
+  public static @NotNull Zonker make(@NotNull StatedTycker tycker) {
     return new Zonker(tycker, MutableSinglyLinkedList.create());
   }
 
