@@ -46,7 +46,7 @@ kala.collection.immutable.ImmutableSeqs$SeqN
 # Serialized core terms, for ObjectOutputStream
 org.aya.util.binop.OpDecl$OpInfo
 org.aya.core.repr.CodeShape$MomentId
-org.aya.concrete.stmt.UseHide.Rename
+org.aya.concrete.stmt.UseHide$Rename
 org.aya.generic.SortKind
 
 org.aya.guest0x0.cubical.Formula$Conn
