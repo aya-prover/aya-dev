@@ -7,17 +7,14 @@ import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.unify.Unifier;
+import org.aya.tyck.unify.TermComparator;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public record UnifyInfo(
-  @NotNull TyckState state,
-  @NotNull Unifier.FailureData failureData
-) {
-  @NotNull private Term nf(Term failureTermL) {
+public record UnifyInfo(@NotNull TyckState state) {
+  private @NotNull Term nf(Term failureTermL) {
     return failureTermL.normalize(state, NormalizeMode.NF);
   }
 
@@ -33,21 +30,26 @@ public record UnifyInfo(
       buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualNFDoc))));
   }
 
+  public record Comparison(
+    @NotNull Term actual,
+    @NotNull Term expected,
+    @NotNull TermComparator.FailureData failureData
+  ) {}
+
   public @NotNull Doc describeUnify(
     @NotNull PrettierOptions options,
+    @NotNull Comparison comparison,
     @NotNull Doc prologue,
-    @NotNull Term actual,
-    @NotNull Doc epilogue,
-    @NotNull Term expected
+    @NotNull Doc epilogue
   ) {
-    var actualDoc = actual.toDoc(options);
-    var expectedDoc = expected.toDoc(options);
-    var actualNFDoc = nf(actual).toDoc(options);
-    var expectedNFDoc = nf(expected).toDoc(options);
+    var actualDoc = comparison.actual.toDoc(options);
+    var expectedDoc = comparison.expected.toDoc(options);
+    var actualNFDoc = nf(comparison.actual).toDoc(options);
+    var expectedNFDoc = nf(comparison.expected).toDoc(options);
     var buf = MutableList.of(prologue);
     compareExprs(epilogue, actualDoc, expectedDoc, actualNFDoc, expectedNFDoc, buf);
-    var failureTermL = failureData.lhs();
-    var failureTermR = failureData.rhs();
+    var failureTermL = comparison.failureData.lhs();
+    var failureTermR = comparison.failureData.rhs();
     var failureLhs = failureTermL.toDoc(options);
     if (!Objects.equals(failureLhs, actualDoc)
       && !Objects.equals(failureLhs, expectedDoc)
