@@ -7,7 +7,6 @@ import org.aya.core.term.*;
 import org.aya.generic.Constants;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.trace.Trace;

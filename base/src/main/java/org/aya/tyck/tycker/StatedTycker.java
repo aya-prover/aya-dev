@@ -16,7 +16,6 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;

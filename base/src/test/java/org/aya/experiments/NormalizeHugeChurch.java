@@ -6,7 +6,7 @@ import org.aya.core.def.FnDef;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;

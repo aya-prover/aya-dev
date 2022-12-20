@@ -14,7 +14,6 @@ import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.error.CubicalError;
 import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.error.UnifyInfo;

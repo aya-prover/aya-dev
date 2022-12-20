@@ -33,7 +33,7 @@ import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleListLoader;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.CountingReporter;

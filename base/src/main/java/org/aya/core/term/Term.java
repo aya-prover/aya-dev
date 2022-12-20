@@ -21,7 +21,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.LittleTyper;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.util.Arg;
 import org.aya.util.prettier.PrettierOptions;

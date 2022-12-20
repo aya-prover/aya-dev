@@ -39,6 +39,7 @@ import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.PropTycker;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.WithPos;

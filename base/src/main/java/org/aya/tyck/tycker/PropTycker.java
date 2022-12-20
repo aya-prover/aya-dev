@@ -8,7 +8,6 @@ import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.error.SortPiError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.reporter.Reporter;

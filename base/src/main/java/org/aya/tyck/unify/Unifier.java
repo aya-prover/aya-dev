@@ -13,7 +13,7 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.HoleProblem;

@@ -16,7 +16,7 @@ import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.Contract;

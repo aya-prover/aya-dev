@@ -11,7 +11,7 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Modifier;
 import org.aya.guest0x0.cubical.Partial;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;

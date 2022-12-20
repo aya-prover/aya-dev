@@ -9,6 +9,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.tyck.pat.PatClassifier;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.error.SourcePos;
 import org.aya.util.tyck.MCT;
 import org.jetbrains.annotations.NotNull;

@@ -6,7 +6,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.unify.TermComparator;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;

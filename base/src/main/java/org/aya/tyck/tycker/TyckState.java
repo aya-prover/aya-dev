@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.tyck;
+package org.aya.tyck.tycker;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;

@@ -32,7 +32,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;

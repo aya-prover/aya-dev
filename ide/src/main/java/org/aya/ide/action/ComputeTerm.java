@@ -10,7 +10,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XY;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

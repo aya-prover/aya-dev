@@ -10,7 +10,7 @@ import org.aya.core.term.Term;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
