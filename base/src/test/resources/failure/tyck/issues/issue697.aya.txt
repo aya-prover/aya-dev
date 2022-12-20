@@ -20,12 +20,8 @@ In file $FILE:4:73 ->
     │                                                                            ╰╯
 
 Error: The boundary
-         p i
-       disagrees with
-         a' 0
-       In particular, we failed to unify
          a
-       with
+       disagrees with
          a' 0
 
 In file $FILE:4:53 ->
@@ -36,14 +32,8 @@ In file $FILE:4:53 ->
     │                                                        ╰───────────────────╯
 
 Error: The boundary
-         hcomp2d {A'} {c'} {d'} (idp {A'} {a'} <a>) (\ i ⇒ idp {A'} {a'} i) (\ i
-        ⇒ <unexpected `p`> i) i
-         (Normalized: coe (λ k ⇒ <unexpected `p`> k = a' 1) (⊥) (\ i ⇒ a' i) i)
-       disagrees with
-         a
-       In particular, we failed to unify
          a' 1
-       with
+       disagrees with
          a
 
 In file $FILE:4:66 ->

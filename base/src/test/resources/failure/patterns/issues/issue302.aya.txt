@@ -12,11 +12,11 @@ In file $FILE:4:12 ->
     │          ╰────────────────────────╯ substituted to `suc (addN (suc a) b)`
 
 Error: The 3rd and the 4th clauses are not confluent because we failed to unify
-         suc (addN (suc b) a)
-         (Normalized: suc (suc (addN a b)))
-       and
          suc (addN (suc a) b)
          (Normalized: suc (suc (addN b a)))
+       and
+         suc (addN (suc b) a)
+         (Normalized: suc (suc (addN a b)))
        In particular, we failed to unify
          b
        with

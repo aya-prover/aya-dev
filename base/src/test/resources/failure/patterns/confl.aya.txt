@@ -10,9 +10,9 @@ In file $FILE:5:12 ->
     │          ╰──────────╯ substituted to `zero`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
-         suc zero
-       and
          zero
+       and
+         suc zero
 
 1 error(s), 0 warning(s).
 What are you doing?

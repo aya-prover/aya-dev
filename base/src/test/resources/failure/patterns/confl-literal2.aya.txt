@@ -20,9 +20,9 @@ In file $FILE:3:12 ->
     │           ╰──────────────────╯ substituted to `1`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
-         1
-       and
          114514
+       and
+         1
 
 In file $FILE:9:4 ->
 
@@ -46,9 +46,9 @@ In file $FILE:7:12 ->
     │           ╰─────────────╯ substituted to `1`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
-         1
-       and
          1919810
+       and
+         1
 
 In file $FILE:14:4 ->
 
@@ -73,9 +73,9 @@ In file $FILE:11:12 ->
      │           ╰─────────────╯ substituted to `1`
 
 Error: The 3rd and the 1st clauses are not confluent because we failed to unify
-         1
-       and
          1919810
+       and
+         1
 
 In file $FILE:13:4 ->
 
@@ -99,9 +99,9 @@ In file $FILE:11:12 ->
      │           ╰───────────╯ substituted to `b`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
-         suc b
-       and
          b
+       and
+         suc b
 
 In file $FILE:13:4 ->
 
@@ -125,9 +125,9 @@ In file $FILE:11:12 ->
      │           ╰───────────╯ substituted to `b`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
-         suc b
-       and
          b
+       and
+         suc b
 
 In file $FILE:18:4 ->
 
@@ -151,9 +151,9 @@ In file $FILE:16:12 ->
      │           ╰──────────────────╯ substituted to `1`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
-         1
-       and
          114514
+       and
+         1
 
 In file $FILE:22:4 ->
 
@@ -177,9 +177,9 @@ In file $FILE:20:12 ->
      │           ╰─────────────╯ substituted to `1`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
-         1
-       and
          1919810
+       and
+         1
 
 In file $FILE:27:4 ->
 
@@ -204,9 +204,9 @@ In file $FILE:24:12 ->
      │           ╰─────────────╯ substituted to `1`
 
 Error: The 3rd and the 1st clauses are not confluent because we failed to unify
-         1
-       and
          1919810
+       and
+         1
 
 In file $FILE:26:4 ->
 
@@ -230,9 +230,9 @@ In file $FILE:24:12 ->
      │           ╰───────────╯ substituted to `b`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
-         suc b
-       and
          b
+       and
+         suc b
 
 In file $FILE:26:4 ->
 
@@ -256,9 +256,9 @@ In file $FILE:24:12 ->
      │           ╰───────────╯ substituted to `b`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
-         suc b
-       and
          b
+       and
+         suc b
 
 In file $FILE:30:4 ->
 
@@ -293,9 +293,9 @@ In file $FILE:29:12 ->
      │           ╰─────────────╯ substituted to `515`
 
 Error: The 3rd and the 2nd clauses are not confluent because we failed to unify
-         515
-       and
          suc 513
+       and
+         515
        In particular, we failed to unify
          514
        with
