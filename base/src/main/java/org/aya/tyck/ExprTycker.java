@@ -42,7 +42,6 @@ import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.TermComparator;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -436,11 +435,8 @@ public final class ExprTycker extends Tycker {
     var l = whnf(lhs.subst(subst));
     var r = whnf(rhs.subst(subst));
     var t = whnf(type.subst(subst));
-    var unifier = unifier(loc.sourcePos(), Ordering.Eq);
-    var happy = unifier.compare(l, r, t);
-    if (!happy)
-      reporter.report(new CubicalError.BoundaryDisagree(loc, lhs, rhs, new UnifyInfo(state, unifier.getFailure())));
-    return happy;
+    return unifyTyReported(l, r, loc, comparison ->
+      new CubicalError.BoundaryDisagree(loc, comparison, new UnifyInfo(state)));
   }
 
   private static class ClauseTyckState {
@@ -802,6 +798,10 @@ public final class ExprTycker extends Tycker {
     return new TermResult(new ErrorTerm(expr), term);
   }
 
+  private @NotNull Result error(@NotNull AyaDocile expr, @NotNull Term term) {
+    return new TermResult(new ErrorTerm(expr), term);
+  }
+
   @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
     if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
       return defCall((DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
@@ -859,20 +859,30 @@ public final class ExprTycker extends Tycker {
    * Check if <code>lower</code> is a subtype of <code>upper</code>,
    * and report a type error if it's not the case.
    *
+   * @return true if well-typed.
    * @see #inheritFallbackUnify(Term, Result, Expr)
    */
-  public void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
-    unifyTyReported(upper, lower, loc, unification ->
-      new UnifyError.Type(loc, upper.freezeHoles(state), lower.freezeHoles(state),
-        new UnifyInfo(state, unification)));
+  public boolean unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
+    return unifyTyReported(upper, lower, loc, unification ->
+      new UnifyError.Type(loc, unification, new UnifyInfo(state)));
   }
 
-  public void unifyTyReported(
+  /**
+   * @param upper Expected type
+   * @param lower Actual type
+   * @param loc   The location of the expression
+   * @param p     Callback to generate the error message
+   * @return true if unified successfully, false otherwise
+   */
+  public boolean unifyTyReported(
     @NotNull Term upper, @NotNull Term lower, Expr loc,
-    Function<TermComparator.FailureData, Problem> p
+    Function<UnifyInfo.Comparison, Problem> p
   ) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (unification != null) reporter.report(p.apply(unification));
+    if (unification != null) reporter.report(p.apply(new UnifyInfo.Comparison(
+      upper.freezeHoles(state), lower.freezeHoles(state), unification
+    )));
+    return unification == null;
   }
 
   /**
@@ -901,11 +911,10 @@ public final class ExprTycker extends Tycker {
         return new TermResult(new LamTerm(lamParam, inner.wellTyped()), pi);
       }
     }
-    var failureData = unifyTy(upper, lower, loc.sourcePos());
-    if (failureData == null) return inst;
-    var frozenUpper = upper.freezeHoles(state);
-    return fail(term.freezeHoles(state), frozenUpper,
-      new UnifyError.Type(loc, frozenUpper, lower.freezeHoles(state), new UnifyInfo(state, failureData)));
+    if (unifyTyReported(upper, lower, loc, comparison ->
+      new UnifyError.Type(loc, comparison, new UnifyInfo(state)))
+    ) return inst;
+    else return error(term.freezeHoles(state), upper.freezeHoles(state));
   }
 
   private @Nullable TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {

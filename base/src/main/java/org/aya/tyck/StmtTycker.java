@@ -281,7 +281,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       }
       var eventually = result;
       tycker.unifyTyReported(eventually, dataCall, ctor.result,
-        u -> new UnifyError.ConReturn(ctor, dataCall, eventually, new UnifyInfo(tycker.state, u)));
+        u -> new UnifyError.ConReturn(ctor, u, new UnifyInfo(tycker.state)));
       tycker.solveMetas();
       var zonker = Zonker.make(tycker);
       // Zonk after the unification, because the unification may have solved some metas.
