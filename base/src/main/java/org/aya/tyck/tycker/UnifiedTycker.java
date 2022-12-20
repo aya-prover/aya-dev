@@ -73,7 +73,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
   ) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
     if (unification != null) reporter.report(p.apply(new UnifyInfo.Comparison(
-      upper.freezeHoles(state), lower.freezeHoles(state), unification
+      lower.freezeHoles(state), upper.freezeHoles(state), unification
     )));
     return unification == null;
   }
@@ -122,12 +122,12 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
     Function<UnifyInfo.Comparison, Problem> p
   ) {
     tracing(builder -> builder.append(
-      new Trace.UnifyT(rhs.freezeHoles(state), lhs.freezeHoles(state), loc.sourcePos())));
+      new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state), loc.sourcePos())));
     var unifier = unifier(loc.sourcePos(), Ordering.Eq);
-    var success = unifier.compare(rhs, lhs, ty);
+    var success = unifier.compare(lhs, rhs, ty);
     // success == true ==> unification != null
-    var unification = unifier.getFailure();
-    if (success) reporter.report(p.apply(new UnifyInfo.Comparison(
+    var unification = success ? null : unifier.getFailure();
+    if (!success) reporter.report(p.apply(new UnifyInfo.Comparison(
       lhs.freezeHoles(state), rhs.freezeHoles(state), unification
     )));
     return success;

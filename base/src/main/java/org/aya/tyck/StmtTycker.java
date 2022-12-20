@@ -280,7 +280,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         result = flat.type();
       }
       var eventually = result;
-      tycker.unifyTyReported(eventually, dataCall, ctor.result,
+      tycker.unifyTyReported(dataCall, eventually, ctor.result,
         u -> new UnifyError.ConReturn(ctor, u, new UnifyInfo(tycker.state)));
       tycker.solveMetas();
       var zonker = Zonker.make(tycker);

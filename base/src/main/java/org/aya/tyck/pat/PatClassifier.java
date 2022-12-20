@@ -121,7 +121,7 @@ public record PatClassifier(
         var unifier = tycker.unifier(pos, Ordering.Eq, ctx);
         if (!unifier.compare(lhsTerm, rhsTerm, result)) {
           var info = new UnifyInfo(tycker.state);
-          var comparison = new UnifyInfo.Comparison(lhsTerm, rhsTerm, unifier.getFailure());
+          var comparison = new UnifyInfo.Comparison(rhsTerm, lhsTerm, unifier.getFailure());
           tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
             comparison, info, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
         }
