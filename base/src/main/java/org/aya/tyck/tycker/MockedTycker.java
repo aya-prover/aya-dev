@@ -6,7 +6,7 @@ import org.aya.concrete.Expr;
 import org.aya.core.term.*;
 import org.aya.generic.Constants;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.trace.Trace;
@@ -74,7 +74,7 @@ public abstract sealed class MockedTycker extends StatedTycker permits UnifiedTy
     return term;
   }
 
-  protected final ExprTycker.Result instImplicits(@NotNull ExprTycker.Result result, @NotNull SourcePos pos) {
+  protected final Result instImplicits(@NotNull Result result, @NotNull SourcePos pos) {
     var type = whnf(result.type());
     var term = result.wellTyped();
     while (type instanceof PiTerm pi && !pi.param().explicit()) {
@@ -82,7 +82,7 @@ public abstract sealed class MockedTycker extends StatedTycker permits UnifiedTy
       term = AppTerm.make(term, holeApp);
       type = whnf(pi.substBody(holeApp.term()));
     }
-    return new ExprTycker.TermResult(term, type);
+    return new Result.Default(term, type);
   }
 
   public <R> R subscoped(@NotNull Supplier<R> action) {

@@ -5,7 +5,7 @@ package org.aya.tyck.tycker;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
 import org.aya.util.reporter.Problem;
@@ -44,12 +44,12 @@ public sealed abstract class TracedTycker permits StatedTycker {
     return res;
   }
 
-  protected final @NotNull ExprTycker.Result fail(@NotNull AyaDocile expr, @NotNull Problem prob) {
+  protected final @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Problem prob) {
     return fail(expr, ErrorTerm.typeOf(expr), prob);
   }
 
-  protected final @NotNull ExprTycker.Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
+  protected final @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
     reporter.report(prob);
-    return new ExprTycker.TermResult(new ErrorTerm(expr), term);
+    return new Result.Default(new ErrorTerm(expr), term);
   }
 }

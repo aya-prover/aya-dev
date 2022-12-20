@@ -14,6 +14,7 @@ import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.tyck.error.CubicalError;
 import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.error.UnifyInfo;
@@ -84,7 +85,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
    * @return the term and type after insertion
    * @see #unifyTyReported(Term, Term, Expr)
    */
-  protected final ExprTycker.Result inheritFallbackUnify(@NotNull Term upper, @NotNull ExprTycker.Result result, Expr loc) {
+  protected final Result inheritFallbackUnify(@NotNull Term upper, @NotNull Result result, Expr loc) {
     var inst = instImplicits(result, loc.sourcePos());
     var term = inst.wellTyped();
     var lower = inst.type();
@@ -98,17 +99,17 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
         var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
         var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
         var inner = inheritFallbackUnify(pi.substBody(lamBind),
-          new ExprTycker.TermResult(body, cube.substType(SeqView.of(lamBind))), loc);
+          new Result.Default(body, cube.substType(SeqView.of(lamBind))), loc);
         var lamParam = new Term.Param(lamBind.var(), IntervalTerm.INSTANCE, true);
-        return new ExprTycker.TermResult(new LamTerm(lamParam, inner.wellTyped()), pi);
+        return new Result.Default(new LamTerm(lamParam, inner.wellTyped()), pi);
       }
     }
     if (unifyTyReported(upper, lower, loc)) return inst;
     else return error(term.freezeHoles(state), upper.freezeHoles(state));
   }
 
-  protected final @NotNull ExprTycker.Result error(@NotNull AyaDocile expr, @NotNull Term term) {
-    return new ExprTycker.TermResult(new ErrorTerm(expr), term);
+  protected final @NotNull Result error(@NotNull AyaDocile expr, @NotNull Term term) {
+    return new Result.Default(new ErrorTerm(expr), term);
   }
 
   /**
@@ -142,7 +143,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
     }
   }
 
-  protected final ExprTycker.TermResult checkBoundaries(Expr expr, PathTerm path, Subst subst, Term lambda) {
+  protected final Result.Default checkBoundaries(Expr expr, PathTerm path, Subst subst, Term lambda) {
     var applied = path.applyDimsTo(lambda);
     return localCtx.withIntervals(path.params().view(), () -> {
       var happy = switch (path.partial()) {
@@ -150,12 +151,12 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
         case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
           CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), path.type(), s)));
       };
-      return happy ? new ExprTycker.TermResult(new PLamTerm(path.params(), applied), path)
-        : new ExprTycker.TermResult(ErrorTerm.unexpected(expr), path);
+      return happy ? new Result.Default(new PLamTerm(path.params(), applied), path)
+        : new Result.Default(ErrorTerm.unexpected(expr), path);
     });
   }
 
-  private @Nullable ExprTycker.TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
+  private @Nullable Result.Default tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
     int sizeLimit = path.params().size();
     var list = MutableArrayList.<LocalVar>create(sizeLimit);
     var innerMost = PiTerm.unpiOrPath(lower, term, this::whnf, list, sizeLimit);
@@ -163,8 +164,8 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
     unifyTyReported(path.computePi(), PiTerm.makeIntervals(list, innerMost.type()), loc);
     var checked = checkBoundaries(loc, path, new Subst(), LamTerm.makeIntervals(list, innerMost.wellTyped()));
     return lower instanceof PathTerm actualPath
-      ? new ExprTycker.TermResult(actualPath.eta(checked.wellTyped()), actualPath)
-      : new ExprTycker.TermResult(path.eta(checked.wellTyped()), checked.type());
+      ? new Result.Default(actualPath.eta(checked.wellTyped()), actualPath)
+      : new Result.Default(path.eta(checked.wellTyped()), checked.type());
   }
 
   private boolean boundary(@NotNull Expr loc, @NotNull Term lhs, @NotNull Term rhs, @NotNull Term type, Subst subst) {

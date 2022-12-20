@@ -15,7 +15,7 @@ import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
@@ -58,8 +58,8 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockedTyc
     return Zonker.make(this).apply(term);
   }
 
-  public @NotNull ExprTycker.Result zonk(@NotNull ExprTycker.Result result) {
-    return new ExprTycker.TermResult(zonk(result.wellTyped()), zonk(result.type()));
+  public @NotNull Result zonk(@NotNull Result result) {
+    return new Result.Default(zonk(result.wellTyped()), zonk(result.type()));
   }
 
   public @NotNull Partial<Term> zonk(@NotNull Partial<Term> term) {
@@ -76,19 +76,19 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockedTyc
     return term.normalize(state, NormalizeMode.WHNF);
   }
 
-  protected final @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
+  protected final @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
-    var teleRenamed = tele.map(Term.Param::rename);
+    var teleRenamed = tele.map(org.aya.core.term.Term.Param::rename);
     // unbound these abstracted variables
-    Term body = function.make(defVar, 0, teleRenamed.map(Term.Param::toArg));
+    Term body = function.make(defVar, 0, teleRenamed.map(org.aya.core.term.Term.Param::toArg));
     var type = PiTerm.make(tele, Def.defResult(defVar)).rename();
     if ((defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) || defVar.core instanceof PrimDef) {
       body = whnf(body);
     }
-    return new ExprTycker.TermResult(LamTerm.make(teleRenamed, body), type);
+    return new Result.Default(LamTerm.make(teleRenamed, body), type);
   }
 
-  @SuppressWarnings("unchecked") protected final @NotNull ExprTycker.Result inferRef(@NotNull DefVar<?, ?> var) {
+  @SuppressWarnings("unchecked") protected final @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
     if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
       return defCall((DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
     } else if (var.core instanceof PrimDef) {
@@ -102,14 +102,14 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockedTyc
       var tele = Def.defTele(conVar);
       var type = PiTerm.make(tele, Def.defResult(conVar)).rename();
       var telescopes = new DataDef.CtorTelescopes(conVar.core);
-      return new ExprTycker.TermResult(telescopes.toConCall(conVar, 0), type);
+      return new Result.Default(telescopes.toConCall(conVar, 0), type);
     } else if (var.core instanceof FieldDef || var.concrete instanceof TeleDecl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
       var field = (DefVar<FieldDef, TeleDecl.StructField>) var;
-      return new ExprTycker.TermResult(new RefTerm.Field(field), Def.defType(field));
+      return new Result.Default(new RefTerm.Field(field), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new InternalException(msg);
@@ -120,7 +120,7 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockedTyc
     return new Unifier(ord, reporter, false, true, traceBuilder, state, pos, ctx);
   }
 
-  protected final void traceExit(ExprTycker.Result result, @NotNull Expr expr) {
+  protected final void traceExit(Result result, @NotNull Expr expr) {
     var frozen = LazyValue.of(() -> result.freezeHoles(state));
     tracing(builder -> {
       builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
@@ -130,12 +130,12 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockedTyc
     if (expr instanceof Expr.Lift lift && lift.expr() instanceof Expr.WithTerm wt) addWithTerm(wt, frozen.get());
   }
 
-  protected final void addWithTerm(@NotNull Expr.WithTerm withTerm, @NotNull ExprTycker.Result result) {
+  protected final void addWithTerm(@NotNull Expr.WithTerm withTerm, @NotNull Result result) {
     withTerms.add(withTerm);
     withTerm.theCore().set(result);
   }
 
   public final void addWithTerm(@NotNull Expr.Param param, @NotNull Term type) {
-    addWithTerm(param, new ExprTycker.TermResult(new RefTerm(param.ref()), type));
+    addWithTerm(param, new Result.Default(new RefTerm(param.ref()), type));
   }
 }

@@ -33,6 +33,7 @@ import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleListLoader;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
@@ -78,7 +79,7 @@ public class ReplCompiler {
       new FileModuleLoader(this.locator, path, this.reporter, parser, fileManager, primFactory, null))));
   }
 
-  private @NotNull ExprTycker.Result tyckExpr(@NotNull Expr expr) {
+  private @NotNull Result tyckExpr(@NotNull Expr expr) {
     var resolvedExpr = expr.resolveLax(context);
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {

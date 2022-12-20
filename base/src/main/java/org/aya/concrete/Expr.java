@@ -24,7 +24,7 @@ import org.aya.ref.LocalVar;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.util.ForLSP;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.prettier.PrettierOptions;
@@ -66,8 +66,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
   @ForLSP
   sealed interface WithTerm extends SourceNode {
-    @NotNull MutableValue<ExprTycker.Result> theCore();
-    default @Nullable ExprTycker.Result core() {
+    @NotNull MutableValue<Result> theCore();
+    default @Nullable Result core() {
       return theCore().get();
     }
   }
@@ -315,7 +315,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record Ref(
     @NotNull SourcePos sourcePos,
     @NotNull AnyVar resolvedVar,
-    @NotNull MutableValue<ExprTycker.Result> theCore
+    @NotNull MutableValue<Result> theCore
   ) implements Expr, WithTerm {
     public Ref(@NotNull SourcePos sourcePos, @NotNull AnyVar resolvedVar) {
       this(sourcePos, resolvedVar, MutableValue.create());
@@ -412,7 +412,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr tup,
     @NotNull Either<Integer, QualifiedID> ix,
     @Nullable AnyVar resolvedVar,
-    @NotNull MutableValue<ExprTycker.Result> theCore
+    @NotNull MutableValue<Result> theCore
   ) implements Expr, WithTerm {
     public Proj(
       @NotNull SourcePos sourcePos, @NotNull Expr tup,
@@ -601,7 +601,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull LocalVar ref,
     @NotNull Expr type,
     boolean explicit,
-    @ForLSP MutableValue<ExprTycker.Result> theCore
+    @ForLSP MutableValue<Result> theCore
   ) implements ParamLike<Expr>, SourceNode, WithTerm {
     public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, @NotNull Expr type, boolean explicit) {
       this(sourcePos, var, type, explicit, MutableValue.create());

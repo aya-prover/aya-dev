@@ -323,7 +323,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
   // similiar to `ExprTycker.sortPi`. `tele` is the domain.
-  private @NotNull ExprTycker.Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
+  private @NotNull Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
     var result = exprTycker.ty(tele);
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
     var ty = result.type();

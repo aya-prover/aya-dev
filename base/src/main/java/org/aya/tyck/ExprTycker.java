@@ -24,7 +24,6 @@ import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
-import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
@@ -76,12 +75,12 @@ public final class ExprTycker extends PropTycker {
     return switch (expr) {
       case Expr.Lambda lam when lam.param().type() instanceof Expr.Hole -> inherit(lam, generatePi(lam));
       case Expr.Lambda lam -> {
-        var paramTy = ty(lam.param().type()).wellTyped;
+        var paramTy = ty(lam.param().type()).wellTyped();
         yield localCtx.with(lam.param().ref(), paramTy, () -> {
           var body = synthesize(lam.body());
           var param = new Term.Param(lam.param(), paramTy);
           var pi = new PiTerm(param, body.type()).freezeHoles(state).rename();
-          return new TermResult(new LamTerm(param, body.wellTyped()), pi);
+          return new Result.Default(new LamTerm(param, body.wellTyped()), pi);
         });
       }
       case Expr.Sort sort -> ty(sort);
@@ -89,7 +88,7 @@ public final class ExprTycker extends PropTycker {
         case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
           // not defined in lets, search localCtx
           var ty = localCtx.get(loc);
-          return new TermResult(new RefTerm(loc), ty);
+          return new Result.Default(new RefTerm(loc), ty);
         });
         case DefVar<?, ?> defVar -> inferRef(defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
@@ -99,7 +98,7 @@ public final class ExprTycker extends PropTycker {
       case Expr.Lift lift -> {
         var result = synthesize(lift.expr());
         var levels = lift.lift();
-        yield new TermResult(result.wellTyped().lift(levels), result.type().lift(levels));
+        yield new Result.Default(result.wellTyped().lift(levels), result.type().lift(levels));
       }
       case Expr.New aNew -> {
         var structExpr = aNew.struct();
@@ -107,7 +106,7 @@ public final class ExprTycker extends PropTycker {
         if (!(struct instanceof StructCall structCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, aNew, struct));
         var structRef = structCall.ref();
-        var subst = new Subst(Def.defTele(structRef).map(Term.Param::ref), structCall.args().map(Arg::term));
+        var subst = new Subst(Def.defTele(structRef).map(org.aya.core.term.Term.Param::ref), structCall.args().map(Arg::term));
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Term>>create();
         var missing = MutableList.<AnyVar>create();
@@ -130,7 +129,7 @@ public final class ExprTycker extends PropTycker {
           var conField = conFieldOpt.get();
           conField.resolvedField().set(fieldRef);
           var type = Def.defType(fieldRef).subst(subst, structCall.ulift());
-          var telescope = Term.Param.subst(fieldRef.core.selfTele, subst, structCall.ulift());
+          var telescope = org.aya.core.term.Term.Param.subst(fieldRef.core.selfTele, subst, structCall.ulift());
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
@@ -146,7 +145,7 @@ public final class ExprTycker extends PropTycker {
           yield fail(aNew, structCall, new FieldError.MissingField(aNew.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
           yield fail(aNew, structCall, new FieldError.NoSuchField(aNew.sourcePos(), conFields.keysView().toImmutableSeq()));
-        yield new TermResult(new NewTerm(structCall, ImmutableMap.from(fields)), structCall);
+        yield new Result.Default(new NewTerm(structCall, ImmutableMap.from(fields)), structCall);
       }
       case Expr.Proj proj -> {
         var struct = proj.tup();
@@ -162,7 +161,7 @@ public final class ExprTycker extends PropTycker {
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
           var type = telescope.get(index).type();
           var subst = ProjTerm.projSubst(projectee.wellTyped(), index, telescope);
-          return new TermResult(ProjTerm.proj(projectee.wellTyped(), ix), type.subst(subst));
+          return new Result.Default(ProjTerm.proj(projectee.wellTyped(), ix), type.subst(subst));
         }, sp -> {
           var fieldName = sp.justName();
           if (!(projectee.type() instanceof StructCall structCall))
@@ -177,15 +176,15 @@ public final class ExprTycker extends PropTycker {
             return fail(proj, BadTypeError.projPropStruct(state, struct, fieldName, projectee.type()));
 
           var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
-          var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
-          var teleRenamed = tele.map(Term.Param::rename);
-          var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(Term.Param::toArg));
-          return new TermResult(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(structSubst)));
+          var tele = org.aya.core.term.Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
+          var teleRenamed = tele.map(org.aya.core.term.Term.Param::rename);
+          var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(org.aya.core.term.Term.Param::toArg));
+          return new Result.Default(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(structSubst)));
         });
       }
       case Expr.Tuple tuple -> {
         var items = tuple.items().map(this::synthesize);
-        yield new TermResult(TupTerm.explicits(items.map(Result::wellTyped)),
+        yield new Result.Default(TupTerm.explicits(items.map(Result::wellTyped)),
           new SigmaTerm(items.map(item -> new Term.Param(LocalVar.IGNORED, item.type(), true))));
       }
       case Expr.Coe coe -> {
@@ -266,7 +265,7 @@ public final class ExprTycker extends PropTycker {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
         if (appF instanceof Expr.WithTerm withTerm) {
-          addWithTerm(withTerm, new TermResult(app, pi));
+          addWithTerm(withTerm, new Result.Default(app, pi));
         }
         var elabArg = inherit(argument.term(), pi.param().type()).wellTyped();
         subst.addDirectly(pi.param().ref(), elabArg);
@@ -277,10 +276,10 @@ public final class ExprTycker extends PropTycker {
         // ^ instantiate inserted implicits to the partial element in `Cube`.
         // It is better to `cube.subst().makeApp()`, but we don't have a `subst` method for `Cube`.
         // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
-        yield new TermResult(newApp, pi.body().subst(subst));
+        yield new Result.Default(newApp, pi.body().subst(subst));
       }
       case Expr.Hole hole -> inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
-      case Expr.Error err -> TermResult.error(err.description());
+      case Expr.Error err -> Result.Default.error(err.description());
       case Expr.LitInt lit -> {
         int integer = lit.integer();
         // TODO[literal]: int literals. Currently the parser does not allow negative literals.
@@ -288,23 +287,23 @@ public final class ExprTycker extends PropTycker {
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
           var type = localCtx.freshHole(null, "_ty" + lit.integer() + "'", lit.sourcePos());
-          yield new TermResult(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type._1), type._1);
+          yield new Result.Default(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type._1), type._1);
         }
         var match = defs.first();
         var type = new DataCall(((DataDef) match._1).ref, 0, ImmutableSeq.empty());
-        yield new TermResult(new IntegerTerm(integer, match._2, type), type);
+        yield new Result.Default(new IntegerTerm(integer, match._2, type), type);
       }
       case Expr.LitString litStr -> {
         if (!state.primFactory().have(PrimDef.ID.STRING))
           yield fail(expr, new NoRuleError(expr, null));
 
-        yield new TermResult(new StringTerm(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
+        yield new Result.Default(new StringTerm(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
       case Expr.Path path -> localCtx.withIntervals(path.params().view(), () -> {
         var type = synthesize(path.type());
         var partial = elaboratePartial(path.partial(), type.wellTyped());
         var cube = new PathTerm(path.params(), type.wellTyped(), partial);
-        return new TermResult(cube, type.type());
+        return new Result.Default(cube, type.type());
       });
       case Expr.Array arr when arr.arrayBlock().isRight() -> {
         var arrayBlock = arr.arrayBlock().getRightValue();
@@ -329,7 +328,7 @@ public final class ExprTycker extends PropTycker {
 
         // do type check
         var results = elements.map(element -> inherit(element, hole._1).wellTyped());
-        yield new TermResult(new ListTerm(results, match._2, type), type);
+        yield new Result.Default(new ListTerm(results, match._2, type), type);
       }
       case Expr.Let let -> {
         // pushing telescopes into lambda params, for example:
@@ -363,7 +362,7 @@ public final class ExprTycker extends PropTycker {
         // (\ (f : G) => h) g : {??}
         var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
 
-        yield new TermResult(full, bodyResult.type());
+        yield new Result.Default(full, bodyResult.type());
       }
       default -> fail(expr, new NoRuleError(expr, null));
     };
@@ -463,13 +462,13 @@ public final class ExprTycker extends PropTycker {
             yield fail(expr, term, new TupleError.ElemMismatchError(pos, params.size(), it.size()));
         }
         var resTy = new SigmaTerm(resultTele.toImmutableSeq());
-        yield new TermResult(new TupTerm(items.toImmutableSeq()), resTy);
+        yield new Result.Default(new TupTerm(items.toImmutableSeq()), resTy);
       }
       case Expr.Hole hole -> {
         // TODO[ice]: deal with unit type
         var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield new TermResult(freshHole._2, term);
+        yield new Result.Default(freshHole._2, term);
       }
       case Expr.Sort sortExpr -> {
         var result = ty(sortExpr);
@@ -480,7 +479,7 @@ public final class ExprTycker extends PropTycker {
         } else {
           unifyTyReported(result.type(), normTerm, sortExpr);
         }
-        yield new TermResult(result.wellTyped(), normTerm);
+        yield new Result.Default(result.wellTyped(), normTerm);
       }
       case Expr.Lambda lam -> {
         if (term instanceof MetaTerm) {
@@ -508,7 +507,7 @@ public final class ExprTycker extends PropTycker {
             var body = dt.substBody(resultParam.toTerm());
             yield localCtx.with(resultParam, () -> {
               var rec = check(lam.body(), body);
-              return new TermResult(new LamTerm(resultParam, rec.wellTyped()), dt);
+              return new Result.Default(new LamTerm(resultParam, rec.wellTyped()), dt);
             });
           }
           // Path lambda!
@@ -520,7 +519,7 @@ public final class ExprTycker extends PropTycker {
       case Expr.LitInt(var pos, var end) -> {
         var ty = whnf(term);
         if (ty instanceof IntervalTerm) {
-          if (end == 0 || end == 1) yield new TermResult(end == 0 ? FormulaTerm.LEFT : FormulaTerm.RIGHT, ty);
+          if (end == 0 || end == 1) yield new Result.Default(end == 0 ? FormulaTerm.LEFT : FormulaTerm.RIGHT, ty);
           else yield fail(expr, new PrimError.BadInterval(pos, end));
         }
         yield inheritFallbackUnify(term, synthesize(expr), expr);
@@ -533,29 +532,29 @@ public final class ExprTycker extends PropTycker {
         var face = partial.restr();
         if (!CofThy.conv(cofTy, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
           yield fail(el, new CubicalError.FaceMismatch(el, face, cofTy));
-        yield new TermResult(new PartialTerm(partial, rhsType), ty);
+        yield new Result.Default(new PartialTerm(partial, rhsType), ty);
       }
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(this::synthesize);
         var sig = new Def.Signature<>(discriminant.map(r -> new Term.Param(new LocalVar("_"), r.type(), true)), term);
         var result = PatTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
-        yield new TermResult(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
+        yield new Result.Default(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
       default -> inheritFallbackUnify(term, synthesize(expr), expr);
     };
   }
 
-  private @NotNull TyResult doTy(@NotNull Expr expr) {
+  private @NotNull Result.Type doTy(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Hole hole -> {
         var freshHole = localCtx.freshHole(SortTerm.Type0, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         // TODO: implement type-only hole
-        yield new TyResult(freshHole._2, SortTerm.Type0);
+        yield new Result.Type(freshHole._2, SortTerm.Type0);
       }
       case Expr.Sort sort -> {
         var self = new SortTerm(sort.kind(), sort.lift());
-        yield new TyResult(self, self.succ());
+        yield new Result.Type(self, self.succ());
       }
       case Expr.Pi pi -> {
         var param = pi.param();
@@ -565,7 +564,7 @@ public final class ExprTycker extends PropTycker {
         var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
         yield localCtx.with(resultParam, () -> {
           var cod = ty(pi.last());
-          return new TyResult(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
+          return new Result.Type(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
         });
       }
       case Expr.Sigma sigma -> {
@@ -583,17 +582,17 @@ public final class ExprTycker extends PropTycker {
         var maxSort = resultTypes.reduce(SigmaTerm::max);
         if (!maxSort.isProp()) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new TyResult(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
+        yield new Result.Type(new SigmaTerm(org.aya.core.term.Term.Param.fromBuffer(resultTele)), maxSort);
       }
       default -> {
         var result = synthesize(expr);
-        yield new TyResult(result.wellTyped(), sort(expr, result.type()));
+        yield new Result.Type(result.wellTyped(), sort(expr, result.type()));
       }
     };
   }
 
-  public @NotNull ExprTycker.SortResult sort(@NotNull Expr expr) {
-    return new SortResult(sort(expr, ty(expr).wellTyped()));
+  public @NotNull Result.Sort sort(@NotNull Expr expr) {
+    return new Result.Sort(sort(expr, ty(expr).wellTyped()));
   }
 
   private @NotNull SortTerm sort(@NotNull Expr errorMsg, @NotNull Term term) {
@@ -621,7 +620,7 @@ public final class ExprTycker extends PropTycker {
     if (type instanceof PiTerm pi && !pi.param().explicit() && needImplicitParamIns(expr)) {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
-      result = new TermResult(new LamTerm(implicitParam, body), pi);
+      result = new Result.Default(new LamTerm(implicitParam, body), pi);
     } else result = doInherit(expr, type);
     traceExit(result, expr);
     return result;
@@ -634,7 +633,7 @@ public final class ExprTycker extends PropTycker {
     return res;
   }
 
-  public @NotNull TyResult ty(@NotNull Expr expr) {
+  public @NotNull Result.Type ty(@NotNull Expr expr) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
     var result = doTy(expr);
     traceExit(result, expr);
@@ -647,45 +646,5 @@ public final class ExprTycker extends PropTycker {
 
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
     return withResult(type, () -> inherit(expr, type));
-  }
-
-  public sealed interface Result {
-    @NotNull Term wellTyped();
-    @NotNull Term type();
-    @NotNull Result freezeHoles(@NotNull TyckState state);
-    default @NotNull Result normalize(@NotNull NormalizeMode mode, @NotNull TyckState state) {
-      return new TermResult(wellTyped().normalize(state, mode), type().normalize(state, mode));
-    }
-  }
-
-  /**
-   * {@link TermResult#type} is the type of {@link TermResult#wellTyped}.
-   *
-   * @author ice1000
-   */
-  public record TermResult(@Override @NotNull Term wellTyped, @Override @NotNull Term type) implements Result {
-    public static @NotNull TermResult error(@NotNull AyaDocile description) {
-      return new TermResult(ErrorTerm.unexpected(description), ErrorTerm.typeOf(description));
-    }
-
-    @Override public @NotNull TermResult freezeHoles(@NotNull TyckState state) {
-      return new TermResult(wellTyped.freezeHoles(state), type.freezeHoles(state));
-    }
-  }
-
-  public record TyResult(@Override @NotNull Term wellTyped, @Override @NotNull SortTerm type) implements Result {
-    @Override public @NotNull TyResult freezeHoles(@NotNull TyckState state) {
-      return new TyResult(wellTyped.freezeHoles(state), type);
-    }
-  }
-
-  public record SortResult(@Override @NotNull SortTerm wellTyped) implements Result {
-    @Override public @NotNull SortTerm type() {
-      return wellTyped.succ();
-    }
-
-    @Override public @NotNull ExprTycker.SortResult freezeHoles(@NotNull TyckState state) {
-      return this;
-    }
   }
 }
