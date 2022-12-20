@@ -10,6 +10,7 @@ import kala.tuple.Tuple;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
@@ -112,6 +113,7 @@ public final class PrimDef extends TopLevelDef<Term> {
     INVOL("intervalInv"),
     STRING("String"),
     STRCONCAT("strcat"),
+    STRFOLDL("strfoldl"),
     I("I"),
     PARTIAL("Partial"),
     COE("coe"),
@@ -416,6 +418,46 @@ public final class PrimDef extends TopLevelDef<Term> {
 
         return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(
           new Arg<>(first, true), new Arg<>(second, true)));
+      }
+
+      public final @NotNull PrimDef.PrimSeed stringFoldl =
+        new PrimSeed(ID.STRFOLDL, Initializer::foldl, ref -> new PrimDef(
+          ref,
+          ImmutableSeq.of(
+            new Term.Param(new LocalVar("A"), SortTerm.Type0, false),
+            new Term.Param(new LocalVar("str"), getCall(ID.STRING, ImmutableSeq.empty()), true),
+            new Term.Param(new LocalVar("init"), new RefTerm(new LocalVar("A")), true),
+            new Term.Param(new LocalVar("f"), new PiTerm(
+              new Term.Param(new LocalVar("acc"), new RefTerm(new LocalVar("A")), true),
+              new PiTerm(
+                new Term.Param(new LocalVar("char"), getCall(ID.STRING, ImmutableSeq.empty()), true),
+                new RefTerm(new LocalVar("A"))
+              )
+            ), true)
+          ),
+          new RefTerm(new LocalVar("A")),
+          ID.STRFOLDL
+        ), ImmutableSeq.of(ID.STRING));
+
+      private static @NotNull Term foldl(@NotNull PrimCall prim, @NotNull TyckState state) {
+        var str = prim.args().get(1).term().normalize(state, NormalizeMode.WHNF);
+        var init = prim.args().get(2).term().normalize(state, NormalizeMode.WHNF);
+        var f = prim.args().get(3).term().normalize(state, NormalizeMode.WHNF);
+
+        if (str instanceof StringTerm iter) {
+          var acc = init;
+          for (var c : iter.string().toCharArray()) {
+            acc = AppTerm.make(
+                AppTerm.make(f, new Arg<>(acc, true)),
+                new Arg<>(new StringTerm(String.valueOf(c)), true))
+              .normalize(state, NormalizeMode.WHNF);
+          }
+          return acc;
+        }
+
+        var A = prim.args().get(0).term().normalize(state, NormalizeMode.WHNF);
+        return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(
+          new Arg<>(A, false), new Arg<>(str, true), new Arg<>(init, true), new Arg<>(f, true)));
       }
 
       public final @NotNull PrimDef.PrimSeed intervalType =
