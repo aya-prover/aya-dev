@@ -12,7 +12,6 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
-import kala.value.LazyValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
@@ -35,25 +34,20 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.tycker.StatedTycker;
-import org.aya.tyck.unify.Unifier;
+import org.aya.tyck.tycker.CxlTycker;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 
@@ -62,9 +56,7 @@ import java.util.function.Supplier;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl.TopLevel}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
-public final class ExprTycker extends StatedTycker {
-  public @NotNull LocalCtx localCtx = new MapLocalCtx();
-
+public final class ExprTycker extends CxlTycker {
   /**
    * a `let` sequence, consider we are tycking in
    * {@code let ... in HERE}
@@ -412,24 +404,6 @@ public final class ExprTycker extends StatedTycker {
     return new Partial.Split<>(sides);
   }
 
-  private void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc, @NotNull Term type) {
-    for (int i = 1; i < clauses.size(); i++) {
-      var lhs = clauses.get(i);
-      for (int j = 0; j < i; j++) {
-        var rhs = clauses.get(j);
-        CofThy.conv(lhs.cof().and(rhs.cof()), new Subst(), subst -> boundary(loc, lhs.u(), rhs.u(), type, subst));
-      }
-    }
-  }
-
-  private boolean boundary(@NotNull Expr loc, @NotNull Term lhs, @NotNull Term rhs, @NotNull Term type, Subst subst) {
-    var l = whnf(lhs.subst(subst));
-    var r = whnf(rhs.subst(subst));
-    var t = whnf(type.subst(subst));
-    return unifyTyReported(l, r, loc, comparison ->
-      new CubicalError.BoundaryDisagree(loc, comparison, new UnifyInfo(state)));
-  }
-
   private static class ClauseTyckState {
     public boolean isConstantFalse = false;
     public @Nullable Term truthValue;
@@ -606,19 +580,6 @@ public final class ExprTycker extends StatedTycker {
     };
   }
 
-  private TermResult checkBoundaries(Expr expr, PathTerm path, Subst subst, Term lambda) {
-    var applied = path.applyDimsTo(lambda);
-    return localCtx.withIntervals(path.params().view(), () -> {
-      var happy = switch (path.partial()) {
-        case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), path.type(), subst);
-        case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
-          CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), path.type(), s)));
-      };
-      return happy ? new TermResult(new PLamTerm(path.params(), applied), path)
-        : new TermResult(ErrorTerm.unexpected(expr), path);
-    });
-  }
-
   private @NotNull TyResult doTy(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Hole hole -> {
@@ -744,32 +705,6 @@ public final class ExprTycker extends StatedTycker {
     return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
   }
 
-  public @NotNull Result zonk(@NotNull Result result) {
-    return new TermResult(zonk(result.wellTyped()), zonk(result.type()));
-  }
-
-  private @NotNull Term generatePi(Expr.@NotNull Lambda expr) {
-    var param = expr.param();
-    return generatePi(expr.sourcePos(), param.ref().name(), param.explicit());
-  }
-
-  private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
-    var genName = name + Constants.GENERATED_POSTFIX;
-    // [ice]: unsure if ZERO is good enough
-    var domain = localCtx.freshHole(SortTerm.Type0, genName + "ty", pos)._2;
-    var codomain = localCtx.freshHole(SortTerm.Type0, pos)._2;
-    return new PiTerm(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
-  }
-
-  private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Problem prob) {
-    return fail(expr, ErrorTerm.typeOf(expr), prob);
-  }
-
-  private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
-    reporter.report(prob);
-    return new TermResult(new ErrorTerm(expr), term);
-  }
-
   private @NotNull Result error(@NotNull AyaDocile expr, @NotNull Term term) {
     return new TermResult(new ErrorTerm(expr), term);
   }
@@ -814,49 +749,6 @@ public final class ExprTycker extends StatedTycker {
     return new TermResult(LamTerm.make(teleRenamed, body), type);
   }
 
-  /** @return null if unified successfully, otherwise a frozen data */
-  private Unifier.FailureData unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
-    tracing(builder -> builder.append(
-      new Trace.UnifyT(lower.freezeHoles(state), upper.freezeHoles(state), pos)));
-    var unifier = unifier(pos, Ordering.Lt);
-    if (!unifier.compare(lower, upper, null)) return unifier.getFailure();
-    else return null;
-  }
-
-  public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return unifier(pos, ord, localCtx);
-  }
-
-  /**
-   * Check if <code>lower</code> is a subtype of <code>upper</code>,
-   * and report a type error if it's not the case.
-   *
-   * @return true if well-typed.
-   * @see #inheritFallbackUnify(Term, Result, Expr)
-   */
-  public boolean unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
-    return unifyTyReported(upper, lower, loc, unification ->
-      new UnifyError.Type(loc, unification, new UnifyInfo(state)));
-  }
-
-  /**
-   * @param upper Expected type
-   * @param lower Actual type
-   * @param loc   The location of the expression
-   * @param p     Callback to generate the error message
-   * @return true if unified successfully, false otherwise
-   */
-  public boolean unifyTyReported(
-    @NotNull Term upper, @NotNull Term lower, Expr loc,
-    Function<UnifyInfo.Comparison, Problem> p
-  ) {
-    var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (unification != null) reporter.report(p.apply(new UnifyInfo.Comparison(
-      upper.freezeHoles(state), lower.freezeHoles(state), unification
-    )));
-    return unification == null;
-  }
-
   /**
    * Check if <code>lower</code> is a subtype of <code>upper</code>,
    * and try to insert implicit arguments to fulfill this goal (if possible).
@@ -899,17 +791,6 @@ public final class ExprTycker extends StatedTycker {
     return lower instanceof PathTerm actualPath
       ? new TermResult(actualPath.eta(checked.wellTyped), actualPath)
       : new TermResult(path.eta(checked.wellTyped), checked.type);
-  }
-
-  private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
-    // TODO: maybe we should create a concrete hole and check it against the type
-    //  in case we can synthesize this term via its type only
-    var genName = param.ref().name().concat(Constants.GENERATED_POSTFIX);
-    return localCtx.freshHole(param.type(), genName, pos)._2;
-  }
-
-  private @NotNull Arg<Term> mockArg(Term.Param param, SourcePos pos) {
-    return new Arg<>(mockTerm(param, pos), param.explicit());
   }
 
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {

@@ -2,8 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
+import org.aya.core.term.ErrorTerm;
+import org.aya.core.term.Term;
+import org.aya.generic.AyaDocile;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +22,7 @@ import java.util.function.Supplier;
  *
  * @author ice1000
  */
-public abstract class TracedTycker {
+public sealed abstract class TracedTycker permits StatedTycker {
   public final @NotNull Reporter reporter;
   public final @Nullable Trace.Builder traceBuilder;
 
@@ -35,5 +40,14 @@ public abstract class TracedTycker {
     var res = computation.get();
     tracing(TreeBuilder::reduce);
     return res;
+  }
+
+  protected final @NotNull ExprTycker.Result fail(@NotNull AyaDocile expr, @NotNull Problem prob) {
+    return fail(expr, ErrorTerm.typeOf(expr), prob);
+  }
+
+  protected final @NotNull ExprTycker.Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
+    reporter.report(prob);
+    return new ExprTycker.TermResult(new ErrorTerm(expr), term);
   }
 }

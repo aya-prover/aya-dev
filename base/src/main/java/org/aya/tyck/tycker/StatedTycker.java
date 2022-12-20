@@ -5,9 +5,7 @@ package org.aya.tyck.tycker;
 import kala.collection.mutable.MutableTreeSet;
 import kala.value.LazyValue;
 import org.aya.concrete.Expr;
-import org.aya.core.term.MetaTerm;
 import org.aya.core.term.RefTerm;
-import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.util.NormalizeMode;
@@ -15,7 +13,6 @@ import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.error.BadTypeError;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
@@ -27,7 +24,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
-public abstract class StatedTycker extends TracedTycker {
+/**
+ * This is the second base-base class of a tycker.
+ * It has the zonking stuffs and basic unification functions.
+ * Apart from that, it also deals with core term references in concrete terms.
+ *
+ * @author ice1000
+ */
+public abstract sealed class StatedTycker extends TracedTycker permits CxlTycker {
   public final @NotNull TyckState state;
   public final @NotNull MutableTreeSet<Expr.WithTerm> withTerms =
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
@@ -41,6 +45,10 @@ public abstract class StatedTycker extends TracedTycker {
   public @NotNull Term zonk(@NotNull Term term) {
     solveMetas();
     return Zonker.make(this).apply(term);
+  }
+
+  public @NotNull ExprTycker.Result zonk(@NotNull ExprTycker.Result result) {
+    return new ExprTycker.TermResult(zonk(result.wellTyped()), zonk(result.type()));
   }
 
   public @NotNull Partial<Term> zonk(@NotNull Partial<Term> term) {
