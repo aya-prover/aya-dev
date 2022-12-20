@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
@@ -38,10 +37,9 @@ import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.tycker.CxlTycker;
+import org.aya.tyck.tycker.UnifiedTycker;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
-import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +54,7 @@ import java.util.function.Supplier;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl.TopLevel}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
-public final class ExprTycker extends CxlTycker {
+public final class ExprTycker extends UnifiedTycker {
   /**
    * a `let` sequence, consider we are tycking in
    * {@code let ... in HERE}
@@ -435,25 +433,6 @@ public final class ExprTycker extends CxlTycker {
     };
   }
 
-  private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
-    term = whnf(term);
-    while (term instanceof LamTerm intro && !intro.param().explicit()) {
-      term = whnf(AppTerm.make(intro, mockArg(intro.param(), pos)));
-    }
-    return term;
-  }
-
-  private Result instImplicits(@NotNull Result result, @NotNull SourcePos pos) {
-    var type = whnf(result.type());
-    var term = result.wellTyped();
-    while (type instanceof PiTerm pi && !pi.param().explicit()) {
-      var holeApp = mockArg(pi.param(), pos);
-      term = AppTerm.make(term, holeApp);
-      type = whnf(pi.substBody(holeApp.term()));
-    }
-    return new TermResult(term, type);
-  }
-
   private static final class NotPi extends Exception {
     private final @NotNull Term what;
 
@@ -775,22 +754,8 @@ public final class ExprTycker extends CxlTycker {
         return new TermResult(new LamTerm(lamParam, inner.wellTyped()), pi);
       }
     }
-    if (unifyTyReported(upper, lower, loc, comparison ->
-      new UnifyError.Type(loc, comparison, new UnifyInfo(state)))
-    ) return inst;
+    if (unifyTyReported(upper, lower, loc)) return inst;
     else return error(term.freezeHoles(state), upper.freezeHoles(state));
-  }
-
-  private @Nullable TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
-    int sizeLimit = path.params().size();
-    var list = MutableArrayList.<LocalVar>create(sizeLimit);
-    var innerMost = PiTerm.unpiOrPath(lower, term, this::whnf, list, sizeLimit);
-    if (!list.sizeEquals(sizeLimit)) return null;
-    unifyTyReported(path.computePi(), PiTerm.makeIntervals(list, innerMost.type), loc);
-    var checked = checkBoundaries(loc, path, new Subst(), LamTerm.makeIntervals(list, innerMost.wellTyped));
-    return lower instanceof PathTerm actualPath
-      ? new TermResult(actualPath.eta(checked.wellTyped), actualPath)
-      : new TermResult(path.eta(checked.wellTyped), checked.type);
   }
 
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
@@ -820,18 +785,6 @@ public final class ExprTycker extends CxlTycker {
       return new TermResult(wellTyped().normalize(state, mode), type().normalize(state, mode));
     }
   }
-
-  /// region Helper
-
-  public <R> R subscoped(@NotNull Supplier<R> action) {
-    var parent = this.localCtx;
-    this.localCtx = parent.deriveMap();
-    var result = action.get();
-    this.localCtx = parent;
-    return result;
-  }
-
-  /// endregion
 
   /**
    * {@link TermResult#type} is the type of {@link TermResult#wellTyped}.

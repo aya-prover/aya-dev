@@ -21,6 +21,8 @@ import java.util.function.Supplier;
  * It has the error reporting functionality and the tracing stuffs.
  *
  * @author ice1000
+ * @see #tracing
+ * @see #traced
  */
 public sealed abstract class TracedTycker permits StatedTycker {
   public final @NotNull Reporter reporter;

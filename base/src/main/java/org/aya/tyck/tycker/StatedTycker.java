@@ -30,8 +30,13 @@ import java.util.Comparator;
  * Apart from that, it also deals with core term references in concrete terms.
  *
  * @author ice1000
+ * @see #addWithTerm
+ * @see #zonk
+ * @see #solveMetas()
+ * @see #traceExit
+ * @see #whnf(Term)
  */
-public abstract sealed class StatedTycker extends TracedTycker permits CxlTycker {
+public abstract sealed class StatedTycker extends TracedTycker permits MockedTycker {
   public final @NotNull TyckState state;
   public final @NotNull MutableTreeSet<Expr.WithTerm> withTerms =
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));

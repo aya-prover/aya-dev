@@ -3,24 +3,21 @@
 package org.aya.tyck.tycker;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import org.aya.concrete.Expr;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.Constants;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.CubicalError;
 import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
-import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -30,15 +27,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public abstract sealed class CxlTycker extends StatedTycker permits ExprTycker {
-  public @NotNull LocalCtx localCtx = new MapLocalCtx();
-
-  protected CxlTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
+/**
+ * This is the fourth base-base class of a tycker.
+ * It has no new members, and supports some unification and cubical boundary functions.
+ *
+ * @author ice1000
+ * @see #unifier(SourcePos, Ordering)
+ * @see #unifyTy(Term, Term, SourcePos)
+ * @see #unifyReported(Term, Term, Term, Expr, Function)
+ * @see #unifyTyReported
+ * @see #confluence
+ * @see #checkBoundaries
+ * @see #tryEtaCompatiblePath
+ */
+public sealed abstract class UnifiedTycker extends MockedTycker permits ExprTycker {
+  protected UnifiedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
     super(reporter, traceBuilder, state);
-  }
-
-  public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return unifier(pos, ord, localCtx);
   }
 
   /**
@@ -115,6 +119,18 @@ public abstract sealed class CxlTycker extends StatedTycker permits ExprTycker {
     });
   }
 
+  protected final @Nullable ExprTycker.TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
+    int sizeLimit = path.params().size();
+    var list = MutableArrayList.<LocalVar>create(sizeLimit);
+    var innerMost = PiTerm.unpiOrPath(lower, term, this::whnf, list, sizeLimit);
+    if (!list.sizeEquals(sizeLimit)) return null;
+    unifyTyReported(path.computePi(), PiTerm.makeIntervals(list, innerMost.type()), loc);
+    var checked = checkBoundaries(loc, path, new Subst(), LamTerm.makeIntervals(list, innerMost.wellTyped()));
+    return lower instanceof PathTerm actualPath
+      ? new ExprTycker.TermResult(actualPath.eta(checked.wellTyped()), actualPath)
+      : new ExprTycker.TermResult(path.eta(checked.wellTyped()), checked.type());
+  }
+
   private boolean boundary(@NotNull Expr loc, @NotNull Term lhs, @NotNull Term rhs, @NotNull Term type, Subst subst) {
     var l = whnf(lhs.subst(subst));
     var r = whnf(rhs.subst(subst));
@@ -131,30 +147,4 @@ public abstract sealed class CxlTycker extends StatedTycker permits ExprTycker {
     if (!unifier.compare(lower, upper, null)) return unifier.getFailure();
     else return null;
   }
-
-  //region Term mocking
-  protected final @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
-    // TODO: maybe we should create a concrete hole and check it against the type
-    //  in case we can synthesize this term via its type only
-    var genName = param.ref().name().concat(Constants.GENERATED_POSTFIX);
-    return localCtx.freshHole(param.type(), genName, pos)._2;
-  }
-
-  protected final @NotNull Arg<Term> mockArg(Term.Param param, SourcePos pos) {
-    return new Arg<>(mockTerm(param, pos), param.explicit());
-  }
-
-  protected final @NotNull Term generatePi(Expr.@NotNull Lambda expr) {
-    var param = expr.param();
-    return generatePi(expr.sourcePos(), param.ref().name(), param.explicit());
-  }
-
-  private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
-    var genName = name + Constants.GENERATED_POSTFIX;
-    // [ice]: unsure if ZERO is good enough
-    var domain = localCtx.freshHole(SortTerm.Type0, genName + "ty", pos)._2;
-    var codomain = localCtx.freshHole(SortTerm.Type0, pos)._2;
-    return new PiTerm(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
-  }
-  //endregion
 }
