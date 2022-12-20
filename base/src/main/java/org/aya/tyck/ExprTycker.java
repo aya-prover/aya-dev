@@ -14,7 +14,10 @@ import kala.tuple.Tuple3;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.def.*;
+import org.aya.core.def.DataDef;
+import org.aya.core.def.Def;
+import org.aya.core.def.FieldDef;
+import org.aya.core.def.PrimDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
@@ -23,7 +26,6 @@ import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
-import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -682,80 +684,6 @@ public final class ExprTycker extends UnifiedTycker {
 
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
     return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
-  }
-
-  private @NotNull Result error(@NotNull AyaDocile expr, @NotNull Term term) {
-    return new TermResult(new ErrorTerm(expr), term);
-  }
-
-  @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
-    if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
-      return defCall((DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
-    } else if (var.core instanceof PrimDef) {
-      return defCall((DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
-    } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
-      return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
-    } else if (var.core instanceof StructDef || var.concrete instanceof TeleDecl.StructDecl) {
-      return defCall((DefVar<StructDef, TeleDecl.StructDecl>) var, StructCall::new);
-    } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
-      var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
-      var tele = Def.defTele(conVar);
-      var type = PiTerm.make(tele, Def.defResult(conVar)).rename();
-      var telescopes = new DataDef.CtorTelescopes(conVar.core);
-      return new TermResult(telescopes.toConCall(conVar, 0), type);
-    } else if (var.core instanceof FieldDef || var.concrete instanceof TeleDecl.StructField) {
-      // the code runs to here because we are tycking a StructField in a StructDecl
-      // there should be two-stage check for this case:
-      //  - check the definition's correctness: happens here
-      //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
-      var field = (DefVar<FieldDef, TeleDecl.StructField>) var;
-      return new TermResult(new RefTerm.Field(field), Def.defType(field));
-    } else {
-      final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
-      throw new InternalException(msg);
-    }
-  }
-
-  private @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
-    var tele = Def.defTele(defVar);
-    var teleRenamed = tele.map(Term.Param::rename);
-    // unbound these abstracted variables
-    Term body = function.make(defVar, 0, teleRenamed.map(Term.Param::toArg));
-    var type = PiTerm.make(tele, Def.defResult(defVar)).rename();
-    if ((defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) || defVar.core instanceof PrimDef) {
-      body = whnf(body);
-    }
-    return new TermResult(LamTerm.make(teleRenamed, body), type);
-  }
-
-  /**
-   * Check if <code>lower</code> is a subtype of <code>upper</code>,
-   * and try to insert implicit arguments to fulfill this goal (if possible).
-   *
-   * @return the term and type after insertion
-   * @see #unifyTyReported(Term, Term, Expr)
-   */
-  private Result inheritFallbackUnify(@NotNull Term upper, @NotNull Result result, Expr loc) {
-    var inst = instImplicits(result, loc.sourcePos());
-    var term = inst.wellTyped();
-    var lower = inst.type();
-    var upperWHNF = whnf(upper);
-    if (upperWHNF instanceof PathTerm path) {
-      var res = tryEtaCompatiblePath(loc, term, lower, path);
-      if (res != null) return res;
-    } else if (whnf(lower) instanceof PathTerm cube && cube.params().sizeEquals(1)) {
-      // TODO: also support n-ary path
-      if (upperWHNF instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
-        var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
-        var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
-        var inner = inheritFallbackUnify(pi.substBody(lamBind),
-          new TermResult(body, cube.substType(SeqView.of(lamBind))), loc);
-        var lamParam = new Term.Param(lamBind.var(), IntervalTerm.INSTANCE, true);
-        return new TermResult(new LamTerm(lamParam, inner.wellTyped()), pi);
-      }
-    }
-    if (unifyTyReported(upper, lower, loc)) return inst;
-    else return error(term.freezeHoles(state), upper.freezeHoles(state));
   }
 
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {

@@ -2,11 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import org.aya.concrete.Expr;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
+import org.aya.generic.AyaDocile;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -18,6 +20,7 @@ import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
+import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -38,7 +41,7 @@ import java.util.function.Function;
  * @see #unifyTyReported
  * @see #confluence
  * @see #checkBoundaries
- * @see #tryEtaCompatiblePath
+ * @see #inheritFallbackUnify
  */
 public sealed abstract class UnifiedTycker extends MockedTycker permits ExprTycker {
   protected UnifiedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
@@ -73,6 +76,40 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits ExprTyck
       upper.freezeHoles(state), lower.freezeHoles(state), unification
     )));
     return unification == null;
+  }
+
+  /**
+   * Check if <code>lower</code> is a subtype of <code>upper</code>,
+   * and try to insert implicit arguments to fulfill this goal (if possible).
+   *
+   * @return the term and type after insertion
+   * @see #unifyTyReported(Term, Term, Expr)
+   */
+  protected final ExprTycker.Result inheritFallbackUnify(@NotNull Term upper, @NotNull ExprTycker.Result result, Expr loc) {
+    var inst = instImplicits(result, loc.sourcePos());
+    var term = inst.wellTyped();
+    var lower = inst.type();
+    var upperWHNF = whnf(upper);
+    if (upperWHNF instanceof PathTerm path) {
+      var res = tryEtaCompatiblePath(loc, term, lower, path);
+      if (res != null) return res;
+    } else if (whnf(lower) instanceof PathTerm cube && cube.params().sizeEquals(1)) {
+      // TODO: also support n-ary path
+      if (upperWHNF instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
+        var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
+        var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
+        var inner = inheritFallbackUnify(pi.substBody(lamBind),
+          new ExprTycker.TermResult(body, cube.substType(SeqView.of(lamBind))), loc);
+        var lamParam = new Term.Param(lamBind.var(), IntervalTerm.INSTANCE, true);
+        return new ExprTycker.TermResult(new LamTerm(lamParam, inner.wellTyped()), pi);
+      }
+    }
+    if (unifyTyReported(upper, lower, loc)) return inst;
+    else return error(term.freezeHoles(state), upper.freezeHoles(state));
+  }
+
+  protected final @NotNull ExprTycker.Result error(@NotNull AyaDocile expr, @NotNull Term term) {
+    return new ExprTycker.TermResult(new ErrorTerm(expr), term);
   }
 
   /**
@@ -119,7 +156,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits ExprTyck
     });
   }
 
-  protected final @Nullable ExprTycker.TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
+  private @Nullable ExprTycker.TermResult tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
     int sizeLimit = path.params().size();
     var list = MutableArrayList.<LocalVar>create(sizeLimit);
     var innerMost = PiTerm.unpiOrPath(lower, term, this::whnf, list, sizeLimit);

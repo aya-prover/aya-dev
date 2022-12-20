@@ -5,11 +5,16 @@ package org.aya.tyck.tycker;
 import kala.collection.mutable.MutableTreeSet;
 import kala.value.LazyValue;
 import org.aya.concrete.Expr;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.def.*;
+import org.aya.core.term.*;
 import org.aya.core.visitor.Zonker;
+import org.aya.generic.Modifier;
+import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
+import org.aya.ref.DefVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.env.LocalCtx;
@@ -26,7 +31,7 @@ import java.util.Comparator;
 
 /**
  * This is the second base-base class of a tycker.
- * It has the zonking stuffs and basic unification functions.
+ * It has the zonking stuffs and basic def-call related functions.
  * Apart from that, it also deals with core term references in concrete terms.
  *
  * @author ice1000
@@ -35,6 +40,8 @@ import java.util.Comparator;
  * @see #solveMetas()
  * @see #traceExit
  * @see #whnf(Term)
+ * @see #defCall
+ * @see #inferRef(DefVar)
  */
 public abstract sealed class StatedTycker extends TracedTycker permits MockedTycker {
   public final @NotNull TyckState state;
@@ -68,6 +75,46 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockedTyc
 
   public @NotNull Term whnf(@NotNull Term term) {
     return term.normalize(state, NormalizeMode.WHNF);
+  }
+
+  protected final @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> ExprTycker.Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
+    var tele = Def.defTele(defVar);
+    var teleRenamed = tele.map(Term.Param::rename);
+    // unbound these abstracted variables
+    Term body = function.make(defVar, 0, teleRenamed.map(Term.Param::toArg));
+    var type = PiTerm.make(tele, Def.defResult(defVar)).rename();
+    if ((defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) || defVar.core instanceof PrimDef) {
+      body = whnf(body);
+    }
+    return new ExprTycker.TermResult(LamTerm.make(teleRenamed, body), type);
+  }
+
+  @SuppressWarnings("unchecked") protected final @NotNull ExprTycker.Result inferRef(@NotNull DefVar<?, ?> var) {
+    if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
+      return defCall((DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
+    } else if (var.core instanceof PrimDef) {
+      return defCall((DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
+    } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
+      return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
+    } else if (var.core instanceof StructDef || var.concrete instanceof TeleDecl.StructDecl) {
+      return defCall((DefVar<StructDef, TeleDecl.StructDecl>) var, StructCall::new);
+    } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
+      var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
+      var tele = Def.defTele(conVar);
+      var type = PiTerm.make(tele, Def.defResult(conVar)).rename();
+      var telescopes = new DataDef.CtorTelescopes(conVar.core);
+      return new ExprTycker.TermResult(telescopes.toConCall(conVar, 0), type);
+    } else if (var.core instanceof FieldDef || var.concrete instanceof TeleDecl.StructField) {
+      // the code runs to here because we are tycking a StructField in a StructDecl
+      // there should be two-stage check for this case:
+      //  - check the definition's correctness: happens here
+      //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
+      var field = (DefVar<FieldDef, TeleDecl.StructField>) var;
+      return new ExprTycker.TermResult(new RefTerm.Field(field), Def.defType(field));
+    } else {
+      final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
+      throw new InternalException(msg);
+    }
   }
 
   public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
