@@ -13,7 +13,7 @@ import org.aya.pretty.doc.Link;
 import org.aya.pretty.doc.Style;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public sealed interface Literate extends Docile {
     public final @NotNull String code;
     public final @NotNull SourcePos sourcePos;
     public @Nullable Expr expr;
-    public @Nullable ExprTycker.Result tyckResult;
+    public @Nullable Result tyckResult;
     public final @NotNull CodeOptions options;
 
     public Code(@NotNull String code, @NotNull SourcePos sourcePos, @NotNull CodeOptions options) {

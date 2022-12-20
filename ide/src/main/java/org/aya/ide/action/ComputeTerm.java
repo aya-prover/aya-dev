@@ -9,8 +9,8 @@ import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XY;
-import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.Result;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ public final class ComputeTerm implements SyntaxNodeAction.Cursor {
     return location;
   }
 
-  public record Kind(@NotNull BiFunction<PrimDef.Factory, ExprTycker.Result, Term> map) {
+  public record Kind(@NotNull BiFunction<PrimDef.Factory, Result, Term> map) {
     public static @NotNull Kind type() {
       return new Kind((fac, term) -> term.type());
     }

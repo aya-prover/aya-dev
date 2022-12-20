@@ -7,7 +7,7 @@ import kala.control.Option;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.ref.AnyVar;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,10 +35,10 @@ public record TypedSubst(
     return this;
   }
 
-  public @NotNull Option<ExprTycker.Result> getOption(@NotNull AnyVar var) {
+  public @NotNull Option<Result> getOption(@NotNull AnyVar var) {
     return map.map().getOption(var).flatMap(term ->
       this.type.getOption(var).map(type ->
-        new ExprTycker.TermResult(term, type))
+        new Result.Default(term, type))
     );
   }
 

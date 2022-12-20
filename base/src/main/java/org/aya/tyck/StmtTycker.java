@@ -89,18 +89,24 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
             var pos = decl.sourcePos;
-            if (decl.modifiers.contains(Modifier.Overlap)) {
+            PatTycker.PatResult result;
+            var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
+            if (orderIndependent) {
               // Order-independent.
-              var result = PatTycker.elabClausesDirectly(exprTycker, clauses, signature);
+              result = PatTycker.elabClausesDirectly(exprTycker, clauses, signature);
               def = factory.apply(result.result(), Either.right(result.matchings()));
-              if (!result.hasLhsError())
-                ensureConfluent(tycker, signature, result, pos);
+              if (!result.hasLhsError()) {
+                tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
+                PatClassifier.confluence(result, tycker, pos,
+                  PatClassifier.classify(result.clauses(), signature.param(), tycker, pos));
+                tracing(TreeBuilder::reduce);
+              }
             } else {
               // First-match semantics.
-              var result = PatTycker.elabClausesClassified(exprTycker, clauses, signature, pos);
+              result = PatTycker.elabClausesClassified(exprTycker, clauses, signature, pos);
               def = factory.apply(result.result(), Either.right(result.matchings()));
-              if (!result.hasLhsError()) Conquer.against(result.matchings(), true, tycker, pos, signature);
             }
+            if (!result.hasLhsError()) Conquer.against(def, orderIndependent, tycker, pos);
             return def;
           }
         );
@@ -274,8 +280,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         result = flat.type();
       }
       var eventually = result;
-      tycker.unifyTyReported(eventually, dataCall, ctor.result,
-        u -> new UnifyError.ConReturn(ctor, dataCall, eventually, new UnifyInfo(tycker.state, u)));
+      tycker.unifyTyReported(dataCall, eventually, ctor.result,
+        u -> new UnifyError.ConReturn(ctor, u, new UnifyInfo(tycker.state)));
       tycker.solveMetas();
       var zonker = Zonker.make(tycker);
       // Zonk after the unification, because the unification may have solved some metas.
@@ -305,18 +311,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     return SortTerm.Type0;
   }
 
-  private void ensureConfluent(
-    ExprTycker tycker, Def.Signature<?> signature,
-    PatTycker.PatResult elabClauses, SourcePos pos
-  ) {
-    tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
-    PatClassifier.confluence(elabClauses, tycker, pos,
-      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos));
-    Conquer.against(elabClauses.matchings(), true, tycker, pos, signature);
-    tycker.solveMetas();
-    tracing(TreeBuilder::reduce);
-  }
-
   /**
    * @param sort If < 0, apply "synthesize" to the types.
    */
@@ -329,7 +323,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
   // similiar to `ExprTycker.sortPi`. `tele` is the domain.
-  private @NotNull ExprTycker.Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
+  private @NotNull Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
     var result = exprTycker.ty(tele);
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
     var ty = result.type();

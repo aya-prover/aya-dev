@@ -14,7 +14,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.DefConsumer;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.terck.CallGraph;
 import org.aya.util.terck.CallMatrix;

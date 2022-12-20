@@ -11,7 +11,6 @@ import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
@@ -31,55 +30,45 @@ public sealed interface ClausesProblem extends Problem {
       Doc.code(term.toDoc(options)));
   }
 
-  record CondData(
-    int i, int j,
-    @NotNull ImmutableSeq<Arg<Term>> args,
-    @NotNull Term lhs,
-    @NotNull TyckState state,
-    @NotNull SourcePos iPos
-  ) {
-  }
-
   record Conditions(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull CondData data, @Nullable Term rhs,
-    @Nullable SourcePos jPos
+    @NotNull SourcePos iPos,
+    int i, int j,
+    @NotNull ImmutableSeq<Arg<Term>> args,
+    @NotNull UnifyInfo info,
+    @NotNull UnifyInfo.Comparison comparison
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      var result = rhs != null ? Doc.sep(
-        Doc.plain("unify"),
-        Doc.code(data.lhs.toDoc(options)),
-        Doc.plain("and"),
-        Doc.code(rhs.toDoc(options))
-      ) : Doc.english("find any of the clause(s) to check condition");
-      var line = Doc.sep(
+      var begin = Doc.sep(
         Doc.plain("The"),
-        Doc.ordinal(data.i),
+        Doc.ordinal(i),
         Doc.english("clause matches on a constructor with condition(s). When checking the"),
-        Doc.ordinal(data.j),
-        Doc.english("condition, we failed to"),
-        result,
-        Doc.english("for the arguments:")
+        Doc.ordinal(j),
+        Doc.english("condition, we failed to unify")
       );
-      return Doc.vcat(line,
-        Doc.par(1, BasePrettier.argsDoc(options, data.args)),
+      var end = Doc.vcat(Doc.english("for the arguments:"),
+        Doc.par(1, BasePrettier.argsDoc(options, args)),
         Doc.english("Normalized:"),
-        Doc.par(1, BasePrettier.argsDoc(options, data.args.map(a ->
-          a.descent(t -> t.normalize(data.state, NormalizeMode.NF))))));
+        Doc.par(1, BasePrettier.argsDoc(options, args.map(a ->
+          a.descent(t -> t.normalize(info.state(), NormalizeMode.NF))))));
+      return info.describeUnify(options, comparison, begin, end);
     }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
-      var view = Seq.of(
-        // new WithPos<>(conditionPos, Doc.plain("relevant condition")),
-        new WithPos<>(data.iPos, termToHint(data.lhs, options))).view();
-      return rhs == null || jPos == null ? view : view.appended(new WithPos<>(jPos, termToHint(rhs, options)));
+      var data = termToHint(comparison.actual(), options);
+      return Seq.of(new WithPos<>(iPos, data)).view();
     }
   }
 
+  /**
+   * @param i          expected
+   * @param j          actual
+   * @param comparison expected = i, actual = j
+   */
   record Confluence(
     @Override @NotNull SourcePos sourcePos,
     int i, int j,
-    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull UnifyInfo.Comparison comparison,
     @NotNull UnifyInfo info,
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
   ) implements ClausesProblem {
@@ -90,7 +79,7 @@ public sealed interface ClausesProblem extends Problem {
         Doc.english("and the"),
         Doc.ordinal(j),
         Doc.english("clauses are not confluent because we failed to unify"));
-      return info.describeUnify(options, line, lhs, Doc.plain("and"), rhs);
+      return info.describeUnify(options, comparison, line, Doc.plain("and"));
     }
 
     @Override public @NotNull Severity level() {
@@ -98,8 +87,8 @@ public sealed interface ClausesProblem extends Problem {
     }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
-      return Seq.of(new WithPos<>(iPos, termToHint(lhs, options)),
-        new WithPos<>(jPos, termToHint(rhs, options))).view();
+      return Seq.of(new WithPos<>(iPos, termToHint(comparison.expected(), options)),
+        new WithPos<>(jPos, termToHint(comparison.actual(), options))).view();
     }
   }
 

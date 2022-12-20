@@ -9,7 +9,7 @@ import org.aya.core.term.Term;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.TyckDeclTest;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;

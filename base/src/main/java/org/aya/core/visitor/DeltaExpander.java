@@ -11,9 +11,8 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Modifier;
 import org.aya.guest0x0.cubical.Partial;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,7 +44,7 @@ public interface DeltaExpander extends EndoTerm {
         yield def.body.fold(
           lamBody -> apply(lamBody.rename().lift(fn.ulift()).subst(buildSubst(def.telescope(), fn.args()))),
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
-            .map(unfolded -> apply(unfolded.data())).getOrDefault(fn));
+            .map(this).getOrDefault(fn));
       }
       case PrimCall prim -> state().primFactory().unfold(prim.id(), prim, state());
       case MetaTerm hole -> {
@@ -66,15 +65,14 @@ public interface DeltaExpander extends EndoTerm {
     };
   }
 
-  default @NotNull Option<WithPos<Term>> tryUnfoldClauses(
+  default @NotNull Option<Term> tryUnfoldClauses(
     boolean orderIndependent, @NotNull ImmutableSeq<Arg<Term>> args,
     int ulift, @NotNull ImmutableSeq<Term.Matching> clauses
   ) {
     for (var matchy : clauses) {
       var subst = PatMatcher.tryBuildSubst(false, matchy.patterns(), args, this);
       if (subst.isOk()) {
-        var newBody = matchy.body().rename().lift(ulift).subst(subst.get());
-        return Option.some(new WithPos<>(matchy.sourcePos(), newBody));
+        return Option.some(matchy.body().rename().lift(ulift).subst(subst.get()));
       } else if (!orderIndependent && subst.getErr()) return Option.none();
     }
     return Option.none();

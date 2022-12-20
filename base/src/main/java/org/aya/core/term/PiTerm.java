@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.core.visitor.BetaExpander;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,14 +30,14 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
    * @param fmap   usually whnf or identity
    * @param params will be of size unequal to limit in case of failure
    */
-  public static @NotNull ExprTycker.TermResult unpiOrPath(
+  public static @NotNull Result.Default unpiOrPath(
     @NotNull Term ty, @NotNull Term term, @NotNull UnaryOperator<Term> fmap,
     @NotNull MutableList<LocalVar> params, int limit
   ) {
-    if (limit <= 0) return new ExprTycker.TermResult(term, ty);
+    if (limit <= 0) return new Result.Default(term, ty);
     return switch (fmap.apply(ty)) {
       case PiTerm(var param, var body)when param.explicit() -> {
-        if (param.type() != IntervalTerm.INSTANCE) yield new ExprTycker.TermResult(term, ty);
+        if (param.type() != IntervalTerm.INSTANCE) yield new Result.Default(term, ty);
         params.append(param.ref());
         yield unpiOrPath(body, AppTerm.make(term, param.toArg()), fmap, params, limit - 1);
       }
@@ -51,7 +51,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
           throw new UnsupportedOperationException("TODO");
         }
       }
-      case Term anyway -> new ExprTycker.TermResult(term, anyway);
+      case Term anyway -> new Result.Default(term, anyway);
     };
   }
 

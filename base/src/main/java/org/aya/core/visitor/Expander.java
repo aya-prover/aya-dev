@@ -7,7 +7,7 @@ import kala.collection.mutable.MutableSet;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.ref.AnyVar;
-import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TyckState;
 import org.jetbrains.annotations.NotNull;
 
 public interface Expander extends DeltaExpander, BetaExpander {

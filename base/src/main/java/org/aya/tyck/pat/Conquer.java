@@ -4,19 +4,21 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import org.aya.core.def.Def;
+import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.ErrorTerm;
+import org.aya.core.term.FnCall;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.AyaRestrSimplifier;
-import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.MapLocalCtx;
+import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -28,17 +30,18 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Conquer(
+  @NotNull FnDef def,
   @NotNull ImmutableSeq<Term.Matching> matchings,
   @NotNull SourcePos sourcePos,
-  @NotNull Def.Signature<?> signature,
   boolean orderIndependent,
   @NotNull ExprTycker tycker
 ) {
   public static void against(
-    @NotNull ImmutableSeq<Term.Matching> matchings, boolean orderIndependent,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature<?> signature
+    @NotNull FnDef def, boolean orderIndependent,
+    @NotNull ExprTycker tycker, @NotNull SourcePos pos
   ) {
-    var conquer = new Conquer(matchings, pos, signature, orderIndependent, tycker);
+    var matchings = def.body.getRightValue();
+    var conquer = new Conquer(def, matchings, pos, orderIndependent, tycker);
     for (int i = 0, size = matchings.size(); i < size; i++) {
       var matching = matchings.get(i);
       for (var pat : matching.patterns()) conquer.visit(pat.term(), i);
@@ -79,27 +82,19 @@ public record Conquer(
       // We should also restrict the current clause body under `condition`.
       var newBody = currentClause.body().subst(subst);
       var args = Arg.mapSeq(currentClause.patterns(), t -> t.toTerm().subst(subst));
-      var matchResult = new Expander.WHNFer(tycker.state)
-        .tryUnfoldClauses(orderIndependent, args, 0, matchings)
-        .map(w -> w.map(t -> t.subst(subst)));
+      var matchResult = new FnCall(def.ref, 0, args).normalize(tycker.state, NormalizeMode.WHNF).subst(subst);
       currentClause.patterns().forEach(p -> p.term().storeBindings(ctx, subst));
-      var errorData = new ClausesProblem.CondData(nth + 1, i, args, newBody, tycker.state, currentClause.sourcePos());
-      if (matchResult.isEmpty()) {
-        tycker.reporter.report(new ClausesProblem.Conditions(
-          sourcePos, errorData, null, null));
-        return true;
-      }
-      var anotherClause = matchResult.get();
       if (newBody instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-        hole.ref().conditions.append(Tuple.of(matchy, anotherClause.data()));
-      } else if (anotherClause.data() instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
+        hole.ref().conditions.append(Tuple.of(matchy, matchResult));
+      } else if (matchResult instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
         hole.ref().conditions.append(Tuple.of(matchy, newBody));
       }
       var unifier = tycker.unifier(sourcePos, Ordering.Eq, ctx);
-      var unification = unifier.compare(newBody, anotherClause.data(), signature.result().subst(matchy));
+      var unification = unifier.compare(newBody, matchResult, def.result.subst(matchy));
       if (!unification) {
+        var comparison = new UnifyInfo.Comparison(matchResult, newBody, unifier.getFailure());
         tycker.reporter.report(new ClausesProblem.Conditions(
-          sourcePos, errorData, anotherClause.data(), anotherClause.sourcePos()));
+          sourcePos, currentClause.sourcePos(), nth + 1, i, args, new UnifyInfo(tycker.state), comparison));
       }
       return unification;
     });

@@ -7,7 +7,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Result;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +70,7 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
     @NotNull SourcePos pos,
     @NotNull MutableList<@NotNull Trace> children
   ) implements Trace {
-    public TyckT(@NotNull ExprTycker.Result result, @NotNull SourcePos pos) {
+    public TyckT(@NotNull Result result, @NotNull SourcePos pos) {
       this(result.wellTyped(), result.type(), pos, MutableList.create());
     }
   }

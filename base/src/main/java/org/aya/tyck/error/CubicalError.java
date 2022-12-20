@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface CubicalError extends ExprProblem, TyckError {
   record BoundaryDisagree(
     @NotNull Expr expr,
-    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull UnifyInfo.Comparison comparison,
     @NotNull UnifyInfo info
   ) implements CubicalError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return info.describeUnify(options, Doc.english("The boundary"), lhs,
-        Doc.english("disagrees with"), rhs);
+      return info.describeUnify(options, comparison, Doc.english("The boundary"),
+        Doc.english("disagrees with"));
     }
   }
 

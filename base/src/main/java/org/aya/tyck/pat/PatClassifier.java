@@ -19,11 +19,11 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
-import org.aya.tyck.Tycker;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.error.UnifyInfo;
+import org.aya.tyck.tycker.StatedTycker;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -47,7 +47,7 @@ public record PatClassifier(
 ) {
   public static @NotNull MCT<Term, PatErr> classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
-    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull Tycker tycker,
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull StatedTycker tycker,
     @NotNull SourcePos pos
   ) {
     return classify(clauses, telescope, tycker.state, tycker.reporter, pos);
@@ -120,9 +120,10 @@ public record PatClassifier(
         }
         var unifier = tycker.unifier(pos, Ordering.Eq, ctx);
         if (!unifier.compare(lhsTerm, rhsTerm, result)) {
-          var info = new UnifyInfo(tycker.state, unifier.getFailure());
+          var info = new UnifyInfo(tycker.state);
+          var comparison = new UnifyInfo.Comparison(rhsTerm, lhsTerm, unifier.getFailure());
           tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
-            lhsTerm, rhsTerm, info, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
+            comparison, info, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
         }
       }
     });
