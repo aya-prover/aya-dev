@@ -31,7 +31,6 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -39,7 +38,7 @@ import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.tycker.UnifiedTycker;
+import org.aya.tyck.tycker.PropTycker;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.WithPos;
@@ -56,7 +55,7 @@ import java.util.function.Supplier;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl.TopLevel}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
-public final class ExprTycker extends UnifiedTycker {
+public final class ExprTycker extends PropTycker {
   /**
    * a `let` sequence, consider we are tycking in
    * {@code let ... in HERE}
@@ -64,28 +63,12 @@ public final class ExprTycker extends UnifiedTycker {
   public @NotNull TypedSubst lets = new TypedSubst();
   public final @NotNull AyaShape.Factory shapeFactory;
 
-  public boolean inProp = false;
-
-  public <T> T withInProp(boolean inProp, @NotNull Supplier<T> supplier) {
-    var origin = this.inProp;
-    this.inProp = inProp;
-    try {
-      return supplier.get();
-    } finally {
-      this.inProp = origin;
-    }
-  }
-
   public <T> T withSubSubst(Supplier<T> supplier) {
     var oldLets = lets;
     lets = oldLets.derive();
     var result = supplier.get();
     lets = oldLets;
     return result;
-  }
-
-  public <T> T withResult(@NotNull Term result, @NotNull Supplier<T> supplier) {
-    return withInProp(isPropType(result), supplier);
   }
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
@@ -657,31 +640,6 @@ public final class ExprTycker extends UnifiedTycker {
     return result;
   }
 
-  public @NotNull SortTerm sortPi(@NotNull Expr expr, @NotNull SortTerm domain, @NotNull SortTerm codomain) {
-    return sortPiImpl(new SortPiParam(reporter, expr), domain, codomain);
-  }
-
-  public static @NotNull SortTerm sortPi(@NotNull SortTerm domain, @NotNull SortTerm codomain) throws IllegalArgumentException {
-    return sortPiImpl(null, domain, codomain);
-  }
-
-  private record SortPiParam(@NotNull Reporter reporter, @NotNull Expr expr) {
-  }
-
-  private static @NotNull SortTerm sortPiImpl(@Nullable SortPiParam p, @NotNull SortTerm domain, @NotNull SortTerm codomain) throws IllegalArgumentException {
-    var result = PiTerm.max(domain, codomain);
-    if (p == null) {
-      assert result != null;
-      return result;
-    }
-    if (result == null) {
-      p.reporter.report(new SortPiError(p.expr.sourcePos(), domain, codomain));
-      return SortTerm.Type0;
-    } else {
-      return result;
-    }
-  }
-
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
     return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
   }
@@ -690,22 +648,7 @@ public final class ExprTycker extends UnifiedTycker {
     return withResult(type, () -> inherit(expr, type));
   }
 
-  public boolean isPropType(@NotNull Term type) {
-    var sort = type.computeType(state, localCtx).normalize(state, NormalizeMode.WHNF);
-    if (sort instanceof MetaTerm meta) {
-      var value = state.metas().getOption(meta.ref());
-      if (value.isDefined()) return isPropType(value.get());
-      state.metaNotProps().add(meta.ref()); // assert not Prop
-      return false;
-    }
-    if (sort instanceof SortTerm s) return s.isProp();
-    if (sort instanceof ErrorTerm) return false;
-    throw new InternalException("Expected computeType() to produce a sort, got "
-      + type.toDoc(AyaPrettierOptions.pretty())
-      + " : " + sort.toDoc(AyaPrettierOptions.pretty()));
-  }
-
-  public interface Result {
+  public sealed interface Result {
     @NotNull Term wellTyped();
     @NotNull Term type();
     @NotNull Result freezeHoles(@NotNull TyckState state);
