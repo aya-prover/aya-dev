@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * This is the second base-base class of a tycker.
@@ -118,6 +120,16 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockedTyc
 
   public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
     return new Unifier(ord, reporter, false, true, traceBuilder, state, pos, ctx);
+  }
+
+  protected final <R extends Result> R traced(
+    @NotNull Supplier<Trace> trace,
+    @NotNull Expr expr, @NotNull Function<Expr, R> tyck
+  ) {
+    tracing(builder -> builder.shift(trace.get()));
+    var result = tyck.apply(expr);
+    traceExit(result, expr);
+    return result;
   }
 
   protected final void traceExit(Result result, @NotNull Expr expr) {

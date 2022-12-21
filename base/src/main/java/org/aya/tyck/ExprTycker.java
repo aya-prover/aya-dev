@@ -613,29 +613,21 @@ public final class ExprTycker extends PropTycker {
   }
 
   public @NotNull Result inherit(@NotNull Expr expr, @NotNull Term type) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(state))));
-    Result result;
-    if (type instanceof PiTerm pi && !pi.param().explicit() && needImplicitParamIns(expr)) {
-      var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
-      var body = localCtx.with(implicitParam, () -> inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped();
-      result = new Result.Default(new LamTerm(implicitParam, body), pi);
-    } else result = doInherit(expr, type);
-    traceExit(result, expr);
-    return result;
+    return traced(() -> new Trace.ExprT(expr, type.freezeHoles(state)), expr, e -> {
+      if (type instanceof PiTerm pi && !pi.param().explicit() && needImplicitParamIns(e)) {
+        var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
+        var body = localCtx.with(implicitParam, () -> inherit(e, pi.substBody(implicitParam.toTerm()))).wellTyped();
+        return new Result.Default(new LamTerm(implicitParam, body), pi);
+      } else return doInherit(e, type);
+    });
   }
 
   public @NotNull Result synthesize(@NotNull Expr expr) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var res = doSynthesize(expr);
-    traceExit(res, expr);
-    return res;
+    return traced(() -> new Trace.ExprT(expr, null), expr, this::doSynthesize);
   }
 
   public @NotNull Result.Type ty(@NotNull Expr expr) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var result = doTy(expr);
-    traceExit(result, expr);
-    return result;
+    return traced(() -> new Trace.ExprT(expr, null), expr, this::doTy);
   }
 
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
