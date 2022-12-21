@@ -2,7 +2,7 @@ open import Paths
 open import Logic::False
 open import Algebra::Formula
 
-public open data Nat
+open data Nat
 | zero
 | suc Nat
 

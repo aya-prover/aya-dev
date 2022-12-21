@@ -1,6 +1,6 @@
 public open import Arith::Nat::Core
 
-public open data Fin (n : Nat)
+open data Fin (n : Nat)
 | suc n => fzero
 | suc n => fsuc (Fin n)
 

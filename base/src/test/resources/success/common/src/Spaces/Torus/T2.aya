@@ -1,7 +1,7 @@
 open import Paths
 open import Spaces::Sphere::S1::Core
 
-public open data T²
+open data T²
 | point
 | line1 : point = point
 | line2 : point = point

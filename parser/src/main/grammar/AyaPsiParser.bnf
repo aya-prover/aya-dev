@@ -193,7 +193,7 @@ generalize ::= KW_VARIABLE generalizeParamName+ type
 
 sampleModifiers ::= KW_EXAMPLE | KW_COUNTEREXAMPLE
 
-decl ::= modLikeDecl | commonDecl {
+decl ::= fnDecl | primDecl | structDecl | dataDecl {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
@@ -206,7 +206,7 @@ bindBlock ::= (tighters | loosers)+
 tighters ::= KW_TIGHTER qualifiedId+
 loosers ::= KW_LOOSER qualifiedId+
 
-fnDecl ::= sampleModifiers? KW_DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
+fnDecl ::= declModifiers* KW_DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
 
 fnBody ::= IMPLIES expr
          | barredClause*
@@ -219,32 +219,16 @@ fnModifiers ::= KW_OPAQUE
 // see: BadCounterexampleInspection
 openKw ::= KW_OPEN
 
-
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
 // This rule is used for convenience in semantic highlight.
 // see: SemanticHighlight, AyaGenericDeclImpl, AyaRunLineMarkerContributor
 primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type?
 
-openModifier ::= (KW_PUBLIC | KW_PRIVATE)? openKw
-
-// | public open
-// | private open
-// | private
-// are allowed, single `public` is disallowed.
-modLikeDeclModifier ::= openModifier | KW_PRIVATE
-modLikeDecl ::= modLikeDeclModifier?
-  ( dataDecl
-  | structDecl
-  )
-
-commonDecl ::= KW_PRIVATE?
-  ( fnDecl
-  | primDecl
-  )
+declModifiers ::= KW_PRIVATE | openKw | KW_EXAMPLE | KW_COUNTEREXAMPLE
 
 structDecl
-  ::= sampleModifiers?
+  ::= declModifiers*
       KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS <<commaSep weakId>>)?
       (BAR structField)* bindBlock?
 
@@ -255,7 +239,7 @@ structField
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-dataDecl ::= sampleModifiers? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
+dataDecl ::= declModifiers* KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
 dataBody ::= BAR (dataCtorClause | dataCtor) {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"

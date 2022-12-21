@@ -1,5 +1,5 @@
 open import Paths
-public open data Unit | unit
+open data Unit | unit
 
 def unit-eta (u : Unit) : unit = u
 | unit => idp

@@ -3,7 +3,7 @@ public open import Arith::Bool
 open import Paths
 open import Algebra::Formula
 
-public open data Int
+open data Int
 | signed Bool Nat
 | posneg : neg 0 = pos 0
 

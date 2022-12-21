@@ -11,7 +11,7 @@ def S¹-T³ (p : S¹) (q : S¹) (r : S¹) : T³
 | loop i, loop j, base => face3 i j
 | loop i, loop j, loop k => fill3 i j k
 
-public open data T³
+open data T³
 | base3
 | line1 : base3 = base3
 | line2 : base3 = base3

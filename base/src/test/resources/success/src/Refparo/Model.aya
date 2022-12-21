@@ -1,6 +1,6 @@
 open import Paths using (coe as primCoe, =, idp, I, ~)
 
-public open data Unit | unit
+open data Unit | unit
 
 // we cannot eta-contract this, same problem as Cubical Agda
 def coe {A B : Type} (eq : A ↑ = B) (x : A) : B
@@ -11,7 +11,7 @@ def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
 
 // *** Types
 
-public open struct EventT : Type 1
+open struct EventT : Type 1
   | AgentT : Type => Unit
 
 def GetterT => EventT -> Type
@@ -26,7 +26,7 @@ def SetAgentT (E : Type) (T : EventT) : EventT
 def AgentT-inv : Invariant GetAgentT SetAgentT
   => \T E => ↑ idp
 
-public open struct Event (T : EventT) : Type
+open struct Event (T : EventT) : Type
   | agent : T.AgentT
 
 def Getter (GetT : GetterT) => Pi {T : EventT} (Event T) -> GetT T

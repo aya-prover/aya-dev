@@ -1,6 +1,6 @@
 // https://github.com/aya-prover/aya-dev/issues/557#issuecomment-1269273847
 
-public open data Single (A : Type)
+open data Single (A : Type)
   | intro A
 
 def doPatternMatch {A : Type} (t : Single A) : Single A
