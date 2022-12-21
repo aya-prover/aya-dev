@@ -497,11 +497,9 @@ public final class ExprTycker extends PropTycker {
             var lamParam = param.type();
             var type = dt.param().type();
             var result = synthesize(lamParam).wellTyped();
-            var comparison = unifyTy(result, type, lamParam.sourcePos());
-            if (comparison != null) {
-              // TODO: maybe also report this unification failure?
-              yield fail(lam, dt, BadTypeError.lamParam(state, lam, type, result));
-            } else type = result;
+            if (unifyTyReported(result, type, lamParam))
+              type = result;
+            else yield error(lam, dt);
             addWithTerm(param, type);
             var resultParam = new Term.Param(var, type, param.explicit());
             var body = dt.substBody(resultParam.toTerm());
