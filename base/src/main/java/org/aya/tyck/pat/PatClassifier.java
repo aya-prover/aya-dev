@@ -118,8 +118,8 @@ public record PatClassifier(
           hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
         }
         tycker.unifyReported(lhsTerm, rhsTerm, result, pos, ctx, comparison ->
-          new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
-            comparison, new UnifyInfo(tycker.state), lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
+          new ClausesProblem.Confluence(pos, rhsInfo._1 + 1, lhsInfo._1 + 1,
+            comparison, new UnifyInfo(tycker.state), rhsInfo._2.sourcePos(), lhsInfo._2.sourcePos()));
       }
     });
   }
