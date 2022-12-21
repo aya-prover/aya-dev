@@ -1,0 +1,13 @@
+data Dead : Set
+
+open data Cat : Set
+  | meow : (Cat → Dead) → Cat
+
+def catIsDead : Cat → Dead
+  | meow f => f (meow f)
+
+def catIsAlive : Cat
+  => meow catIsDead
+
+def catIsBothDeadAndAlive: Dead
+  => catIsDead catIsAlive
