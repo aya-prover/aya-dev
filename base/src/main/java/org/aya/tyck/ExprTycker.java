@@ -106,7 +106,7 @@ public final class ExprTycker extends PropTycker {
         if (!(struct instanceof StructCall structCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, aNew, struct));
         var structRef = structCall.ref();
-        var subst = new Subst(Def.defTele(structRef).map(org.aya.core.term.Term.Param::ref), structCall.args().map(Arg::term));
+        var subst = new Subst(Def.defTele(structRef).map(Term.Param::ref), structCall.args().map(Arg::term));
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Term>>create();
         var missing = MutableList.<AnyVar>create();
@@ -129,7 +129,7 @@ public final class ExprTycker extends PropTycker {
           var conField = conFieldOpt.get();
           conField.resolvedField().set(fieldRef);
           var type = Def.defType(fieldRef).subst(subst, structCall.ulift());
-          var telescope = org.aya.core.term.Term.Param.subst(fieldRef.core.selfTele, subst, structCall.ulift());
+          var telescope = Term.Param.subst(fieldRef.core.selfTele, subst, structCall.ulift());
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
@@ -176,9 +176,9 @@ public final class ExprTycker extends PropTycker {
             return fail(proj, BadTypeError.projPropStruct(state, struct, fieldName, projectee.type()));
 
           var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
-          var tele = org.aya.core.term.Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
-          var teleRenamed = tele.map(org.aya.core.term.Term.Param::rename);
-          var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(org.aya.core.term.Term.Param::toArg));
+          var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
+          var teleRenamed = tele.map(Term.Param::rename);
+          var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(Term.Param::toArg));
           return new Result.Default(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(structSubst)));
         });
       }
@@ -438,31 +438,14 @@ public final class ExprTycker extends PropTycker {
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
       case Expr.Tuple(var pos, var it) -> {
-        var items = MutableList.<Arg<Term>>create();
-        var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
         if (typeWHNF instanceof MetaTerm hole) yield inheritFallbackUnify(hole, synthesize(expr), expr);
-        if (!(typeWHNF instanceof SigmaTerm(var params)))
+        if (!(typeWHNF instanceof SigmaTerm sigma))
           yield fail(expr, term, BadTypeError.sigmaCon(state, expr, typeWHNF));
-        var againstTele = params.view();
-        var subst = new Subst(MutableMap.create());
-        for (var iter = it.iterator(); iter.hasNext(); ) {
-          var item = iter.next();
-          var first = againstTele.first().subst(subst);
-          var result = inherit(item, first.type());
-          items.append(new Arg<>(result.wellTyped(), first.explicit()));
-          var ref = first.ref();
-          resultTele.append(new Term.Param(ref, result.type(), first.explicit()));
-          againstTele = againstTele.drop(1);
-          if (againstTele.isNotEmpty())
-            // LGTM! The show must go on
-            subst.add(ref, result.wellTyped());
-          else if (iter.hasNext())
-            // Too many items
-            yield fail(expr, term, new TupleError.ElemMismatchError(pos, params.size(), it.size()));
-        }
-        var resTy = new SigmaTerm(resultTele.toImmutableSeq());
-        yield new Result.Default(new TupTerm(items.toImmutableSeq()), resTy);
+        var resultTuple = sigma.check(it, (e, t) -> inherit(e, t).wellTyped());
+        if (resultTuple == null)
+          yield fail(expr, term, new TupleError.ElemMismatchError(pos, sigma.params().size(), it.size()));
+        yield new Result.Default(resultTuple, term);
       }
       case Expr.Hole hole -> {
         // TODO[ice]: deal with unit type
@@ -511,7 +494,7 @@ public final class ExprTycker extends PropTycker {
           // Path lambda!
           case PathTerm path -> checkBoundaries(expr, path, new Subst(),
             inherit(expr, path.computePi()).wellTyped());
-          default -> fail(lam, term, BadTypeError.pi(state, lam, term));
+          default -> fail(lam, term, new BadExprError(lam, term));
         };
       }
       case Expr.LitInt(var pos, var end) -> {
@@ -580,7 +563,7 @@ public final class ExprTycker extends PropTycker {
         var maxSort = resultTypes.reduce(SigmaTerm::max);
         if (!maxSort.isProp()) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new Result.Type(new SigmaTerm(org.aya.core.term.Term.Param.fromBuffer(resultTele)), maxSort);
+        yield new Result.Type(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
       }
       default -> {
         var result = synthesize(expr);
