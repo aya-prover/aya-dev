@@ -230,11 +230,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert structSig != null;
         var structLvl = structSig.result();
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
-
-        if (!piPositivity(tele, structRef)) {
-          reporter.report(new PositivityError(field.sourcePos(), field, structRef.concrete));
-        }
-
         var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
 
         if (!piPositivity(result, structRef)) {
