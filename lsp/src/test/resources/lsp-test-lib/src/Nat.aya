@@ -1,1 +1,1 @@
-public open data Nat | zero | suc Nat
+open data Nat | zero | suc Nat
