@@ -511,7 +511,7 @@ public final class ExprTycker extends PropTycker {
           // Path lambda!
           case PathTerm path -> checkBoundaries(expr, path, new Subst(),
             inherit(expr, path.computePi()).wellTyped());
-          default -> fail(lam, term, BadTypeError.pi(state, lam, term));
+          default -> fail(lam, term, new BadExprError(lam, term));
         };
       }
       case Expr.LitInt(var pos, var end) -> {
