@@ -11,12 +11,12 @@ In file $FILE:4:12 ->
   8 │        | a, suc b => suc (addN a b)
     │          ╰────────────────────────╯ substituted to `suc (addN (suc a) b)`
 
-Error: The 3rd and the 4th clauses are not confluent because we failed to unify
-         suc (addN (suc a) b)
-         (Normalized: suc (suc (addN b a)))
-       and
+Error: The 4th and the 3rd clauses are not confluent because we failed to unify
          suc (addN (suc b) a)
          (Normalized: suc (suc (addN a b)))
+       and
+         suc (addN (suc a) b)
+         (Normalized: suc (suc (addN b a)))
        In particular, we failed to unify
          b
        with

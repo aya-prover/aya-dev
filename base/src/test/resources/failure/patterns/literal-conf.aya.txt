@@ -29,10 +29,10 @@ In file $FILE:3:12 ->
   5 │         | 0 => 0
     │           ╰────╯ substituted to `0`
 
-Error: The 1st and the 2nd clauses are not confluent because we failed to unify
-         0
-       and
+Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          1
+       and
+         0
 
 In file $FILE:6:4 ->
 
@@ -58,10 +58,10 @@ In file $FILE:3:12 ->
   8 │         | suc n => n
     │           ╰────────╯ substituted to `0`
 
-Error: The 3rd and the 5th clauses are not confluent because we failed to unify
-         0
-       and
+Error: The 5th and the 3rd clauses are not confluent because we failed to unify
          1
+       and
+         0
 
 In file $FILE:7:4 ->
 
