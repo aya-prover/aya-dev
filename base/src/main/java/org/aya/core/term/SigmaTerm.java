@@ -4,12 +4,17 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
+import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import org.aya.core.visitor.BetaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.BiFunction;
 
 /**
  * @author re-xyr
@@ -62,5 +67,31 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
     }
     return new LamTerm(BetaExpander.coeDom(t.var(), coe.type()),
       new TupTerm(items.toImmutableArray()));
+  }
+
+  /**
+   * A simple "generalized type checking" for tuples.
+   *
+   * @return null if "too many items" error occur
+   */
+  public <T> @Nullable TupTerm check(@NotNull ImmutableSeq<? extends T> it, @NotNull BiFunction<T, Term, Term> inherit) {
+    var items = MutableList.<Arg<Term>>create();
+    var againstTele = params.view();
+    var subst = new Subst(MutableMap.create());
+    for (var iter = it.iterator(); iter.hasNext(); ) {
+      var item = iter.next();
+      var first = againstTele.first().subst(subst);
+      var result = inherit.apply(item, first.type());
+      items.append(new Arg<>(result, first.explicit()));
+      var ref = first.ref();
+      againstTele = againstTele.drop(1);
+      if (againstTele.isNotEmpty())
+        // LGTM! The show must go on
+        subst.add(ref, result);
+      else if (iter.hasNext())
+        // Too many items
+        return null;
+    }
+    return new TupTerm(items.toImmutableArray());
   }
 }

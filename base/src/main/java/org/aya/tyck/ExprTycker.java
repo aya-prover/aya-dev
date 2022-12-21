@@ -438,31 +438,14 @@ public final class ExprTycker extends PropTycker {
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
       case Expr.Tuple(var pos, var it) -> {
-        var items = MutableList.<Arg<Term>>create();
-        var resultTele = MutableList.<Term.@NotNull Param>create();
         var typeWHNF = whnf(term);
         if (typeWHNF instanceof MetaTerm hole) yield inheritFallbackUnify(hole, synthesize(expr), expr);
-        if (!(typeWHNF instanceof SigmaTerm(var params)))
+        if (!(typeWHNF instanceof SigmaTerm sigma))
           yield fail(expr, term, BadTypeError.sigmaCon(state, expr, typeWHNF));
-        var againstTele = params.view();
-        var subst = new Subst(MutableMap.create());
-        for (var iter = it.iterator(); iter.hasNext(); ) {
-          var item = iter.next();
-          var first = againstTele.first().subst(subst);
-          var result = inherit(item, first.type());
-          items.append(new Arg<>(result.wellTyped(), first.explicit()));
-          var ref = first.ref();
-          resultTele.append(new Term.Param(ref, result.type(), first.explicit()));
-          againstTele = againstTele.drop(1);
-          if (againstTele.isNotEmpty())
-            // LGTM! The show must go on
-            subst.add(ref, result.wellTyped());
-          else if (iter.hasNext())
-            // Too many items
-            yield fail(expr, term, new TupleError.ElemMismatchError(pos, params.size(), it.size()));
-        }
-        var resTy = new SigmaTerm(resultTele.toImmutableSeq());
-        yield new Result.Default(new TupTerm(items.toImmutableSeq()), resTy);
+        var resultTuple = sigma.check(it, (e, t) -> inherit(e, t).wellTyped());
+        if (resultTuple == null)
+          yield fail(expr, term, new TupleError.ElemMismatchError(pos, sigma.params().size(), it.size()));
+        yield new Result.Default(resultTuple, term);
       }
       case Expr.Hole hole -> {
         // TODO[ice]: deal with unit type
