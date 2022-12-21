@@ -13,11 +13,11 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -88,15 +88,14 @@ public final class Unifier extends TermComparator {
     if (meta.result != null) {
       // resultTy might be an ErrorTerm, what to do?
       var checker = new DoubleChecker(this, lr, rl);
-      if (!checker.inherit(preRhs, meta.result)) {
-        // TODO: throw exception
-      }
+      if (!checker.inherit(preRhs, meta.result))
+        reporter.report(new HoleProblem.IllTypedError(lhs, preRhs));
     }
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
     var overlap = invertSpine(subst, lhs, meta);
     if (overlap == null) {
-      reporter.report(new HoleProblem.BadSpineError(lhs, pos));
+      reporter.report(new HoleProblem.BadSpineError(lhs));
       return null;
     }
     // In this case, the solution may not be unique (see #608),
@@ -133,18 +132,18 @@ public final class Unifier extends TermComparator {
       scopeCheck = solved.scopeCheck(allowedVars);
     }
     if (scopeCheck.invalid.isNotEmpty()) {
-      reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid, pos));
+      reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid));
       return new ErrorTerm(solved);
     }
     if (scopeCheck.confused.isNotEmpty()) {
       if (allowConfused) state.addEqn(createEqn(lhs, solved, lr, rl));
       else {
-        reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused, pos));
+        reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused));
         return new ErrorTerm(solved);
       }
     }
     if (!meta.solve(state, solved)) {
-      reporter.report(new HoleProblem.RecursionError(lhs, solved, pos));
+      reporter.report(new HoleProblem.RecursionError(lhs, solved));
       return new ErrorTerm(solved);
     }
     tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
