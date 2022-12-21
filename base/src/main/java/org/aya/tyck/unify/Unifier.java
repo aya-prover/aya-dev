@@ -87,7 +87,8 @@ public final class Unifier extends TermComparator {
     // Update: this is still needed, see #327 last task (`coe'`)
     if (meta.result != null) {
       // resultTy might be an ErrorTerm, what to do?
-      var checker = new DoubleChecker(this, lr, rl);
+      var checker = new DoubleChecker(new Unifier(Ordering.Lt,
+        reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
       if (!checker.inherit(preRhs, meta.result))
         reporter.report(new HoleProblem.IllTypedError(lhs, preRhs));
     }

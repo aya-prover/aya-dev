@@ -51,7 +51,7 @@ public sealed interface HoleProblem extends Problem {
       return Doc.vcat(
         Doc.english("The meta is supposed to have type"),
         Doc.par(1, result.toDoc(options)),
-        Doc.english("However, the solution does not have the same type:"),
+        Doc.english("However, the solution below does not have the same type:"),
         Doc.par(1, solution.toDoc(options))
       );
     }

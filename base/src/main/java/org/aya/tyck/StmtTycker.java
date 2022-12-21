@@ -150,9 +150,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     record Tmp(ImmutableSeq<TeleResult> okTele, Term preresult, Term prebody) {}
     var tmp = tycker.subscoped(() -> {
       var okTele = checkTele(tycker, fn.telescope, null);
-      var preresult = tycker.synthesize(fn.result).wellTyped();
-      var bodyExpr = fn.body.getLeftValue();
-      var prebody = tycker.check(bodyExpr, preresult).wellTyped();
+      var preresult = tycker.ty(fn.result).wellTyped();
+      var prebody = tycker.check(fn.body.getLeftValue(), preresult).wellTyped();
       return new Tmp(okTele, preresult, prebody);
     });
     var tele = zonkTele(tycker, tmp.okTele);
