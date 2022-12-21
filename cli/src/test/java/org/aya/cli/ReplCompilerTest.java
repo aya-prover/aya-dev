@@ -47,11 +47,11 @@ public class ReplCompilerTest {
     assertNotNull(nat);
 
     // failure cases, the context is unchanged
-    compile("data Nat =");
+    assertThrows(Throwable.class, () -> compile("data Nat ="));
     var newNat = findContext("Nat");
     assertEquals(nat, newNat);
 
-    compile("def a a");
+    assertThrows(Throwable.class, () -> compile("def a a"));
     assertNull(findContext("a"));
   }
 
