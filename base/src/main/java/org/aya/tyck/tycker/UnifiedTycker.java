@@ -15,6 +15,7 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Result;
+import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.CubicalError;
 import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.error.UnifyInfo;
@@ -113,17 +114,18 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
   }
 
   /**
-   * @param loc The location of the expression
+   * @param pos
+   * @param ctx
    * @param p   Callback to generate the error message
    * @return true if unified successfully, false otherwise
    */
   public boolean unifyReported(
-    @NotNull Term lhs, @NotNull Term rhs, @NotNull Term ty, Expr loc,
+    @NotNull Term lhs, @NotNull Term rhs, @NotNull Term ty, @NotNull SourcePos pos, @NotNull LocalCtx ctx,
     Function<UnifyInfo.Comparison, Problem> p
   ) {
     tracing(builder -> builder.append(
-      new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state), loc.sourcePos())));
-    var unifier = unifier(loc.sourcePos(), Ordering.Eq);
+      new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state), pos)));
+    var unifier = unifier(pos, Ordering.Eq, ctx);
     var success = unifier.compare(lhs, rhs, ty);
     // success == true ==> unification != null
     var unification = success ? null : unifier.getFailure();
@@ -131,6 +133,13 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
       lhs.freezeHoles(state), rhs.freezeHoles(state), unification
     )));
     return success;
+  }
+
+  public boolean unifyReported(
+    @NotNull Term lhs, @NotNull Term rhs, @NotNull Term ty, Expr loc,
+    Function<UnifyInfo.Comparison, Problem> p
+  ) {
+    return unifyReported(lhs, rhs, ty, loc.sourcePos(), localCtx, p);
   }
 
   protected final void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc, @NotNull Term type) {
@@ -169,11 +178,8 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
   }
 
   private boolean boundary(@NotNull Expr loc, @NotNull Term lhs, @NotNull Term rhs, @NotNull Term type, Subst subst) {
-    var l = whnf(lhs.subst(subst));
-    var r = whnf(rhs.subst(subst));
-    var t = whnf(type.subst(subst));
-    return unifyReported(l, r, t, loc, comparison ->
-      new CubicalError.BoundaryDisagree(loc, comparison, new UnifyInfo(state)));
+    return unifyReported(lhs.subst(subst), rhs.subst(subst), type.subst(subst),
+      loc, comparison -> new CubicalError.BoundaryDisagree(loc, comparison, new UnifyInfo(state)));
   }
 
   /** @return null if unified successfully, otherwise a frozen data */
