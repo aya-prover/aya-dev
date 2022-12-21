@@ -18,6 +18,8 @@ import kala.text.StringView;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
+import org.aya.cli.parse.ModifierParser;
+import org.aya.cli.parse.ModifierParser.ModifierSet;
 import org.aya.cli.parse.error.NotSuitableModifierWarn;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -84,31 +87,6 @@ public record AyaGKProducer(
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
-
-  public enum DeclModifier {
-    Private("private"),
-    Open("open"),
-    Example("example"),
-    Counterexample("counterexample");
-
-    public final @NotNull String keyword;
-
-    DeclModifier(@NotNull String keyword) {
-      this.keyword = keyword;
-    }
-  }
-
-  /**
-   * @param accessibility
-   * @param personality
-   * @param isReExport
-   * @apiNote the source pos is invalid if the value is the default one
-   */
-  public record ModifierSet(
-    @NotNull WithPos<Stmt.Accessibility> accessibility,
-    @NotNull WithPos<Decl.Personality> personality,
-    @NotNull WithPos<Boolean> isReExport) {
-  }
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
@@ -256,75 +234,36 @@ public record AyaGKProducer(
     return unreachable(node);
   }
 
-  public @NotNull ModifierSet declModifiersOf(@NotNull GenericNode<?> node) {
-    var modifiers = node.childrenOfType(DECL_MODIFIERS);
+  public @NotNull ModifierSet declModifiersOf(
+    @NotNull GenericNode<?> node,
+    @NotNull Predicate<WithPos<ModifierParser.Modifier>> filter) {
+    var modifiers = node.childrenOfType(DECL_MODIFIERS).map(x -> {
+      var pos = sourcePosOf(x);
+      ModifierParser.Modifier modifier = null;
+      if (x.peekChild(KW_PRIVATE) != null) modifier = ModifierParser.Modifier.Private;
+      if (x.peekChild(KW_EXAMPLE) != null) modifier = ModifierParser.Modifier.Example;
+      if (x.peekChild(KW_COUNTEREXAMPLE) != null) modifier = ModifierParser.Modifier.Counterexample;
+      if (x.peekChild(OPEN_KW) != null) modifier = ModifierParser.Modifier.Open;
+      if (modifier == null) unreachable(x);
 
-    WithPos<Stmt.Accessibility> accessibility = null;
-    WithPos<Decl.Personality> personality = null;
-    WithPos<Boolean> isOpen = new WithPos<>(SourcePos.NONE, false);
+      return new WithPos<>(pos, modifier);
+    });
 
-    for (var modi : modifiers) {
-      var pos = sourcePosOf(modi);
-
-      if (modi.peekChild(KW_PRIVATE) != null) {
-        if (accessibility != null) {
-          reporter().report(new DuplicatedModifierWarn(pos, accessibility.sourcePos()));
-          continue;
-        }
-
-        accessibility = new WithPos<>(pos, Stmt.Accessibility.Private);
-      } else if (modi.peekChild(KW_EXAMPLE) != null) {
-        if (personality != null) {
-          reporter().report(new DuplicatedModifierWarn(pos, personality.sourcePos()));
-          continue;
-        }
-
-        personality = new WithPos<>(pos, Decl.Personality.EXAMPLE);
-      } else if (modi.peekChild(KW_COUNTEREXAMPLE) != null) {
-        if (personality != null) {
-          reporter().report(new DuplicatedModifierWarn(pos, personality.sourcePos()));
-          continue;
-        }
-
-        personality = new WithPos<>(pos, Decl.Personality.COUNTEREXAMPLE);
-      } else if (modi.peekChild(OPEN_KW) != null) {
-        if (isOpen.data()) {
-          reporter().report(new DuplicatedModifierWarn(pos, isOpen.sourcePos()));
-          continue;
-        }
-
-        isOpen = new WithPos<>(pos, true);
-      } else unreachable(modi);
-
-      // ^^ TODO: that was a big mess
-    }
-
-    if (accessibility == null) accessibility = new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public);
-    if (personality == null) personality = new WithPos<>(SourcePos.NONE, Decl.Personality.NORMAL);
-
-    return new ModifierSet(accessibility, personality, isOpen);
+    return new ModifierParser(reporter()).parse(modifiers, filter);
   }
 
   private @NotNull ModifierSet commonDeclModifiersOf(@NotNull GenericNode<?> node) {
-    var modifierSet = declModifiersOf(node);
-
-    // do check!
-    if (modifierSet.isReExport().data()) {
-      // no open def please
-      reporter().report(new NotSuitableModifierWarn(modifierSet.isReExport().sourcePos(), DeclModifier.Open));
-    }
-
-    return modifierSet;
+    return declModifiersOf(node, x -> x.data() != ModifierParser.Modifier.Open);
   }
 
   private @NotNull ModifierSet moduleLikeDeclModifiersOf(@NotNull GenericNode<?> node) {
-    return declModifiersOf(node);
+    return declModifiersOf(node, x -> true);
   }
 
   public TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
     var modifier = commonDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
-    var sample = modifier.personality.data();
+    var sample = modifier.personality().data();
     var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> Tuple.of(m, fnModifier(m)))
       .toImmutableSeq();
     var inline = modifiers.find(t -> t._2 == Modifier.Inline);
@@ -366,10 +305,10 @@ public record AyaGKProducer(
   }
 
   private @NotNull ImmutableSeq<Stmt> giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl) {
-    if (!modiSet.isReExport.data()) return ImmutableSeq.empty();
+    if (!modiSet.isReExport().data()) return ImmutableSeq.empty();
 
     return ImmutableSeq.of(new Command.Open(
-      modiSet.isReExport.sourcePos(),
+      modiSet.isReExport().sourcePos(),
       modiSet.accessibility().data(),
       new QualifiedID(decl.sourcePos(), decl.ref().name()),
       UseHide.EMPTY,
@@ -419,7 +358,7 @@ public record AyaGKProducer(
   public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>> structDecl(@NotNull GenericNode<?> node) {
     var modifier = moduleLikeDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
-    var sample = modifier.personality.data();
+    var sample = modifier.personality().data();
     var bind = node.peekChild(BIND_BLOCK);
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));

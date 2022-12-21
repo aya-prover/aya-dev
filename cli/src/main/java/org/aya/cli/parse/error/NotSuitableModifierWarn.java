@@ -3,6 +3,7 @@
 package org.aya.cli.parse.error;
 
 import org.aya.cli.parse.AyaGKProducer;
+import org.aya.cli.parse.ModifierParser;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record NotSuitableModifierWarn(
   @NotNull SourcePos sourcePos,
-  @NotNull AyaGKProducer.DeclModifier modifier
+  @NotNull ModifierParser.Modifier modifier
 ) implements Problem {
   @Override
   public @NotNull Doc describe(@NotNull PrettierOptions options) {

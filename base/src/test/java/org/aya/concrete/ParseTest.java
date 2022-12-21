@@ -279,7 +279,7 @@ public class ParseTest {
         data ℕ : Type
           | zero
           | suc (_ : ℕ)
-        open ℕ hiding ()
+        public open ℕ hiding ()
       }""");
   }
 

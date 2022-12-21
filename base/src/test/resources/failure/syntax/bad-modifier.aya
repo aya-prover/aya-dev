@@ -1,0 +1,7 @@
+open open data False
+
+private open private data False2
+
+open def foo (x : False) => x
+
+example counterexample def bar => foo

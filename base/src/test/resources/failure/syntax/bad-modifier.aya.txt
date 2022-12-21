@@ -1,0 +1,38 @@
+In file $FILE:1:5 ->
+
+  1 │   open open data False
+    │        ╰──╯
+  2 │   
+  3 │   private open private data False2
+
+Warning: This modifier is duplicated with the previous, ignored.
+
+In file $FILE:3:13 ->
+
+  1 │   open open data False
+  2 │   
+  3 │   private open private data False2
+    │                ╰─────╯
+
+Warning: This modifier is duplicated with the previous, ignored.
+
+In file $FILE:5:0 ->
+
+  3 │   private open private data False2
+  4 │   
+  5 │   open def foo (x : False) => x
+    │   ╰──╯
+
+Warning: The modifier open is not suitable here.
+
+In file $FILE:7:8 ->
+
+  5 │   open def foo (x : False) => x
+  6 │   
+  7 │   example counterexample def bar => foo
+    │           ╰────────────╯
+
+Error: This modifier contradicts the others.
+
+1 error(s), 3 warning(s).
+What are you doing?

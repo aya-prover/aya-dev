@@ -9,18 +9,17 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public record DuplicatedModifierWarn(
+public record ContradictModifierError(
   @NotNull SourcePos sourcePos,
   @NotNull ModifierParser.Modifier modifier
 ) implements Problem {
-
   @Override
   public @NotNull Doc describe(@NotNull PrettierOptions options) {
-    return Doc.english("This modifier is duplicated with the previous, ignored.");
+    return Doc.english("This modifier contradicts the others.");
   }
 
   @Override
   public @NotNull Severity level() {
-    return Severity.WARN;
+    return Severity.ERROR;
   }
 }
