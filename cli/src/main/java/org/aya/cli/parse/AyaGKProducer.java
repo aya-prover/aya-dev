@@ -296,7 +296,7 @@ public record AyaGKProducer(
         isOpen = new WithPos<>(pos, true);
       } else unreachable(modi);
 
-      // ^^ TODO: that was a big mass
+      // ^^ TODO: that was a big mess
     }
 
     if (accessibility == null) accessibility = new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public);
