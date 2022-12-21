@@ -21,8 +21,7 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
 
   public @NotNull ImmutableSeq<WithPos<Rename>> renaming() {
     if (strategy == Strategy.Hiding) return ImmutableSeq.empty();
-    return list.view().map(i -> new WithPos<>(i.sourcePos(),
-        new Rename(i.id(), i.asName())))
+    return list.view().map(i -> new WithPos<>(i.sourcePos(), i.rename()))
       .toImmutableSeq();
   }
 
@@ -43,6 +42,10 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
   ) implements SourceNode {
     public Name(@NotNull WithPos<@NotNull String> simple) {
       this(simple.sourcePos(), simple.data(), simple.data(), Assoc.Invalid, BindBlock.EMPTY);
+    }
+
+    public Rename rename() {
+      return new Rename(id(), asName());
     }
   }
 }

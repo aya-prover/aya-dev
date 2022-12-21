@@ -28,6 +28,7 @@ public interface AyaPsiElementTypes {
   IElementType CLAUSE = new AyaPsiElementType("CLAUSE");
   IElementType CLAUSES = new AyaPsiElementType("CLAUSES");
   IElementType COMMA_SEP = new AyaPsiElementType("COMMA_SEP");
+  IElementType COMMON_DECL = new AyaPsiElementType("COMMON_DECL");
   IElementType DATA_BODY = new AyaPsiElementType("DATA_BODY");
   IElementType DATA_CTOR = new AyaPsiElementType("DATA_CTOR");
   IElementType DATA_CTOR_CLAUSE = new AyaPsiElementType("DATA_CTOR_CLAUSE");
@@ -63,6 +64,8 @@ public interface AyaPsiElementTypes {
   IElementType LOOSERS = new AyaPsiElementType("LOOSERS");
   IElementType MATCH_EXPR = new AyaPsiElementType("MATCH_EXPR");
   IElementType MODULE = new AyaPsiElementType("MODULE");
+  IElementType MOD_LIKE_DECL = new AyaPsiElementType("MOD_LIKE_DECL");
+  IElementType MOD_LIKE_DECL_MODIFIER = new AyaPsiElementType("MOD_LIKE_DECL_MODIFIER");
   IElementType NAMED_IM_ARGUMENT = new AyaPsiElementType("NAMED_IM_ARGUMENT");
   IElementType NEW_ARG = new AyaPsiElementType("NEW_ARG");
   IElementType NEW_ARG_FIELD = new AyaPsiElementType("NEW_ARG_FIELD");
@@ -70,6 +73,7 @@ public interface AyaPsiElementTypes {
   IElementType NEW_EXPR = new AyaPsiElementType("NEW_EXPR");
   IElementType OPEN_CMD = new AyaPsiElementType("OPEN_CMD");
   IElementType OPEN_KW = new AyaPsiElementType("OPEN_KW");
+  IElementType OPEN_MODIFIER = new AyaPsiElementType("OPEN_MODIFIER");
   IElementType PARTIAL_ATOM = new AyaPsiElementType("PARTIAL_ATOM");
   IElementType PARTIAL_BLOCK = new AyaPsiElementType("PARTIAL_BLOCK");
   IElementType PATH_EXPR = new AyaPsiElementType("PATH_EXPR");

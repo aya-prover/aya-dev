@@ -193,12 +193,7 @@ generalize ::= KW_VARIABLE generalizeParamName+ type
 
 sampleModifiers ::= KW_EXAMPLE | KW_COUNTEREXAMPLE
 
-decl ::= KW_PRIVATE?
-       ( fnDecl
-       | structDecl
-       | dataDecl
-       | primDecl
-       ) {
+decl ::= modLikeDecl | commonDecl {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
@@ -222,18 +217,36 @@ fnModifiers ::= KW_OPAQUE
 
 // turn the keyword into a psi node, so quick fix can easily delete it
 // see: BadCounterexampleInspection
-openKw::= KW_OPEN
+openKw ::= KW_OPEN
 
-structDecl
-  ::=  sampleModifiers? (KW_PUBLIC? openKw)?
-       KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS <<commaSep weakId>>)?
-       (BAR structField)* bindBlock?
 
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
 // This rule is used for convenience in semantic highlight.
 // see: SemanticHighlight, AyaGenericDeclImpl, AyaRunLineMarkerContributor
 primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type?
+
+openModifier ::= (KW_PUBLIC | KW_PRIVATE)? openKw
+
+// | public open
+// | private open
+// | private
+// are allowed, single `public` is disallowed.
+modLikeDeclModifier ::= openModifier | KW_PRIVATE
+modLikeDecl ::= modLikeDeclModifier?
+  ( dataDecl
+  | structDecl
+  )
+
+commonDecl ::= KW_PRIVATE?
+  ( fnDecl
+  | primDecl
+  )
+
+structDecl
+  ::= sampleModifiers?
+      KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS <<commaSep weakId>>)?
+      (BAR structField)* bindBlock?
 
 structField
   ::= KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
@@ -242,7 +255,7 @@ structField
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-dataDecl ::= sampleModifiers? (KW_PUBLIC? openKw)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
+dataDecl ::= sampleModifiers? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
 dataBody ::= BAR (dataCtorClause | dataCtor) {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
