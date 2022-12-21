@@ -44,10 +44,10 @@ In file $FILE:3:12 ->
   10 │         | 114514 => 1919
      │           ╰────────────╯ substituted to `1919`
 
-Error: The 7th and the 2nd clauses are not confluent because we failed to unify
-         114514
-       and
+Error: The 2nd and the 7th clauses are not confluent because we failed to unify
          1919
+       and
+         114514
 
 In file $FILE:6:4 ->
 
@@ -82,10 +82,10 @@ In file $FILE:3:12 ->
   7 │         | suc (suc a) => a
     │           ╰──────────────╯ substituted to `a`
 
-Error: The 3rd and the 4th clauses are not confluent because we failed to unify
-         a
-       and
+Error: The 4th and the 3rd clauses are not confluent because we failed to unify
          suc (suc a)
+       and
+         a
 
 In file $FILE:9:4 ->
 
@@ -122,10 +122,10 @@ In file $FILE:3:12 ->
   9 │         | 2147483647 => 4
     │           ╰─────────────╯ substituted to `4`
 
-Error: The 5th and the 6th clauses are not confluent because we failed to unify
-         4
-       and
+Error: The 6th and the 5th clauses are not confluent because we failed to unify
          3
+       and
+         4
 
 In file $FILE:9:4 ->
 
@@ -152,10 +152,10 @@ In file $FILE:3:12 ->
   9 │         | 2147483647 => 4
     │           ╰─────────────╯ substituted to `4`
 
-Error: The 6th and the 2nd clauses are not confluent because we failed to unify
-         2147483647
-       and
+Error: The 2nd and the 6th clauses are not confluent because we failed to unify
          4
+       and
+         2147483647
 
 In file $FILE:6:4 ->
 
@@ -190,10 +190,10 @@ In file $FILE:3:12 ->
   7 │         | suc (suc a) => a
     │           ╰──────────────╯ substituted to `a`
 
-Error: The 3rd and the 4th clauses are not confluent because we failed to unify
-         a
-       and
+Error: The 4th and the 3rd clauses are not confluent because we failed to unify
          suc (suc a)
+       and
+         a
 
 In file $FILE:6:4 ->
 
@@ -228,10 +228,10 @@ In file $FILE:3:12 ->
   7 │         | suc (suc a) => a
     │           ╰──────────────╯ substituted to `a`
 
-Error: The 3rd and the 4th clauses are not confluent because we failed to unify
-         a
-       and
+Error: The 4th and the 3rd clauses are not confluent because we failed to unify
          suc (suc a)
+       and
+         a
 
 6 error(s), 12 warning(s).
 What are you doing?

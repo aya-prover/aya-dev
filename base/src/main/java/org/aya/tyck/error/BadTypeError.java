@@ -13,8 +13,8 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.tyck.tycker.TyckState;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public record BadTypeError(
@@ -103,15 +103,6 @@ public record BadTypeError(
       Doc.english("make sense of"),
       Doc.english("provided"),
       options -> Doc.english("universe"),
-      state);
-  }
-
-  public static @NotNull BadTypeError lamParam(@NotNull TyckState state, @NotNull Expr lamExpr, @NotNull AyaDocile paramType,
-                                               @NotNull Term actualParamType) {
-    return new BadTypeError(lamExpr, actualParamType,
-      Doc.english("apply or construct"),
-      Doc.english("of the lambda parameter"),
-      paramType,
       state);
   }
 

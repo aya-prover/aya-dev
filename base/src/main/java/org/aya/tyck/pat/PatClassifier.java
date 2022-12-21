@@ -19,13 +19,12 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.tyck.tycker.StatedTycker;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
-import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.MCT;
@@ -118,13 +117,9 @@ public record PatClassifier(
         } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
           hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
         }
-        var unifier = tycker.unifier(pos, Ordering.Eq, ctx);
-        if (!unifier.compare(lhsTerm, rhsTerm, result)) {
-          var info = new UnifyInfo(tycker.state);
-          var comparison = new UnifyInfo.Comparison(rhsTerm, lhsTerm, unifier.getFailure());
-          tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
-            comparison, info, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
-        }
+        tycker.unifyReported(lhsTerm, rhsTerm, result, pos, ctx, comparison ->
+          new ClausesProblem.Confluence(pos, rhsInfo._1 + 1, lhsInfo._1 + 1,
+            comparison, new UnifyInfo(tycker.state), rhsInfo._2.sourcePos(), lhsInfo._2.sourcePos()));
       }
     });
   }

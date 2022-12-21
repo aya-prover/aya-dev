@@ -7,16 +7,16 @@ In file $FILE:13:4 ->
   14 │      | pos n => suc n
   15 │      | neg n => n
   16 │      | posneg _ => 0
-     │        ╰───────────╯ substituted to `suc 0`
+     │        ╰───────────╯ substituted to `0`
 
 Error: The 3rd clause matches on a constructor with condition(s). When checking 
        the 1st condition, we failed to unify
-         suc 0
+         0
        for the arguments:
          posneg 1
        Normalized:
          pos 0
-         0
+         suc 0
        In particular, we failed to unify
          zero
        with

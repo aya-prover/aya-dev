@@ -20,7 +20,6 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.Arg;
-import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,14 +88,9 @@ public record Conquer(
       } else if (matchResult instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
         hole.ref().conditions.append(Tuple.of(matchy, newBody));
       }
-      var unifier = tycker.unifier(sourcePos, Ordering.Eq, ctx);
-      var unification = unifier.compare(newBody, matchResult, def.result.subst(matchy));
-      if (!unification) {
-        var comparison = new UnifyInfo.Comparison(matchResult, newBody, unifier.getFailure());
-        tycker.reporter.report(new ClausesProblem.Conditions(
+      return tycker.unifyReported(newBody, matchResult, def.result.subst(matchy),
+        sourcePos, ctx, comparison -> new ClausesProblem.Conditions(
           sourcePos, currentClause.sourcePos(), nth + 1, i, args, new UnifyInfo(tycker.state), comparison));
-      }
-      return unification;
     });
   }
 }
