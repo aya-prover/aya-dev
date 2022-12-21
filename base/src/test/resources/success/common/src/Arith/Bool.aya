@@ -1,6 +1,6 @@
 open import Paths
 
-public open data Bool | true | false
+open data Bool | true | false
 
 def not Bool : Bool
 | true => false

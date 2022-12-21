@@ -2,7 +2,7 @@ open import Arith::Fin
 open import Data::List hiding (++, ++-assoc, !!)
 open import Paths
 
-public open data Vec (A : Type) (n : Nat) : Type
+open data Vec (A : Type) (n : Nat) : Type
 | A, 0 => vnil
 | A, suc m => infixr :> A (Vec A m)
 

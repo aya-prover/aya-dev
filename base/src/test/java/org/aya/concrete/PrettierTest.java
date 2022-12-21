@@ -70,7 +70,7 @@ public class PrettierTest {
       data ImNat
         | O
         | S {n : ImNat}
-      open ImNat hiding ()
+      public open ImNat hiding ()
       def matchIt {x : ImNat} (y : ImNat) : ImNat
         | {O} as x, y => y
         | {O} as x, S {_} as y => y

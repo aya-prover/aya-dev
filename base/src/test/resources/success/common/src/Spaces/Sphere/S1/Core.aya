@@ -1,7 +1,7 @@
 open import Paths
 open import Arith::Int
 
-public open data S¹
+open data S¹
 | base
 | loop : ΩS¹
 

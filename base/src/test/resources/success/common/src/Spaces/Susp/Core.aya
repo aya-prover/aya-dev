@@ -1,6 +1,6 @@
 open import Paths
 
-public open data Susp (A : Type)
+open data Susp (A : Type)
 | north
 | south
 | merid A : north = south

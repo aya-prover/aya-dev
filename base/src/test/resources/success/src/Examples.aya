@@ -1,7 +1,7 @@
 open import Arith::Nat
 open import Paths
 
-example open data Int : Type
+open example data Int : Type
  | pos Nat
  | neg Nat
  | posneg (i : I) { i := pos 0 | ~ i := neg 0 }

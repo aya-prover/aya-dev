@@ -4,7 +4,7 @@ In file $FILE:1:15 ->
     │                  ╰──╯
 
 Warning: Ignoring the following statement, which is not a counterexample:
-         open Nat hiding ()
+         public open Nat hiding ()
 
 In file $FILE:1:25 ->
 

@@ -1,4 +1,4 @@
-public open data Unit | unit
+open data Unit | unit
 
 def foo : SomeType => unit
 def foo' (s: SomeType) : SomeType => s

@@ -33,6 +33,7 @@ public interface AyaPsiElementTypes {
   IElementType DATA_CTOR_CLAUSE = new AyaPsiElementType("DATA_CTOR_CLAUSE");
   IElementType DATA_DECL = new AyaPsiElementType("DATA_DECL");
   IElementType DECL = new AyaPsiElementType("DECL");
+  IElementType DECL_MODIFIERS = new AyaPsiElementType("DECL_MODIFIERS");
   IElementType DECL_NAME_OR_INFIX = new AyaPsiElementType("DECL_NAME_OR_INFIX");
   IElementType DO_BINDING = new AyaPsiElementType("DO_BINDING");
   IElementType DO_BLOCK_CONTENT = new AyaPsiElementType("DO_BLOCK_CONTENT");

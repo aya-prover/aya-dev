@@ -49,7 +49,7 @@ public class DesugarTest {
         data ℕ : Type 0
           | zero
           | suc (_ : ℕ)
-        open ℕ hiding ()
+        public open ℕ hiding ()
       }""");
   }
 

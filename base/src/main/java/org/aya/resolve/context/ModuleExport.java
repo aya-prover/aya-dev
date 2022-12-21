@@ -18,6 +18,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A data class that contains all public definitions/re-exports of some module.
+ */
 public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
   public ModuleExport() {
     this(MutableMap.create());

@@ -1,7 +1,7 @@
 open import Logic::False
 open import Arith::Bool
 
-public open data Dec (P : Type)
+open data Dec (P : Type)
 | yes P
 | no (¬ P)
 
@@ -9,7 +9,7 @@ def forget {P : Type} (d : Dec P) : Bool
 | yes _ => true
 | no _ => false
 
-public open data Tri (A B C : Type)
+open data Tri (A B C : Type)
 | yesA A
 | yesB B
 | yesC C

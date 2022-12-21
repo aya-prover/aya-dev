@@ -1,0 +1,8 @@
+module A {
+  open private data Nat | O | S Nat
+  def suc (x : Nat) => S x
+}
+
+open A
+
+def no-nat : Type => Nat

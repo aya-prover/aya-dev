@@ -18,10 +18,14 @@ import kala.text.StringView;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
+import org.aya.cli.parse.ModifierParser;
+import org.aya.cli.parse.ModifierParser.ModifierSet;
+import org.aya.cli.parse.error.NotSuitableModifierWarn;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadCounterexampleWarn;
 import org.aya.concrete.error.BadModifierWarn;
+import org.aya.cli.parse.error.DuplicatedModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
@@ -44,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -81,7 +86,7 @@ public record AyaGKProducer(
   public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[2];
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
-  public static final @NotNull TokenSet DECL = TokenSet.create(AyaPsiElementTypes.DECL, DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
+  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
@@ -222,18 +227,43 @@ public record AyaGKProducer(
   }
 
   public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
-    var isPrivate = node.peekChild(KW_PRIVATE) != null;
-    var acc = isPrivate ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
-    node = isPrivate ? node.child(DECL) : node;
-    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node, acc), ImmutableSeq.empty());
-    if (node.is(DATA_DECL)) return dataDecl(node, acc);
-    if (node.is(STRUCT_DECL)) return structDecl(node, acc);
+    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node), ImmutableSeq.empty());
     if (node.is(PRIM_DECL)) return Tuple.of(primDecl(node), ImmutableSeq.empty());
+    if (node.is(DATA_DECL)) return dataDecl(node);
+    if (node.is(STRUCT_DECL)) return structDecl(node);
     return unreachable(node);
   }
 
-  public TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node, Stmt.Accessibility acc) {
-    var sample = sampleModifiers(node.peekChild(SAMPLE_MODIFIERS));
+  public @NotNull ModifierSet declModifiersOf(
+    @NotNull GenericNode<?> node,
+    @NotNull Predicate<WithPos<ModifierParser.Modifier>> filter) {
+    var modifiers = node.childrenOfType(DECL_MODIFIERS).map(x -> {
+      var pos = sourcePosOf(x);
+      ModifierParser.Modifier modifier = null;
+      if (x.peekChild(KW_PRIVATE) != null) modifier = ModifierParser.Modifier.Private;
+      if (x.peekChild(KW_EXAMPLE) != null) modifier = ModifierParser.Modifier.Example;
+      if (x.peekChild(KW_COUNTEREXAMPLE) != null) modifier = ModifierParser.Modifier.Counterexample;
+      if (x.peekChild(OPEN_KW) != null) modifier = ModifierParser.Modifier.Open;
+      if (modifier == null) unreachable(x);
+
+      return new WithPos<>(pos, modifier);
+    });
+
+    return new ModifierParser(reporter()).parse(modifiers, filter);
+  }
+
+  private @NotNull ModifierSet commonDeclModifiersOf(@NotNull GenericNode<?> node) {
+    return declModifiersOf(node, x -> x.data() != ModifierParser.Modifier.Open);
+  }
+
+  private @NotNull ModifierSet moduleLikeDeclModifiersOf(@NotNull GenericNode<?> node) {
+    return declModifiersOf(node, x -> true);
+  }
+
+  public TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
+    var modifier = commonDeclModifiersOf(node);
+    var acc = modifier.accessibility().data();
+    var sample = modifier.personality().data();
     var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> Tuple.of(m, fnModifier(m)))
       .toImmutableSeq();
     var inline = modifiers.find(t -> t._2 == Modifier.Inline);
@@ -274,16 +304,30 @@ public record AyaGKProducer(
     return Either.right(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
   }
 
+  private @NotNull ImmutableSeq<Stmt> giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl) {
+    if (!modiSet.isReExport().data()) return ImmutableSeq.empty();
+
+    return ImmutableSeq.of(new Command.Open(
+      modiSet.isReExport().sourcePos(),
+      modiSet.accessibility().data(),
+      new QualifiedID(decl.sourcePos(), decl.ref().name()),
+      UseHide.EMPTY,
+      modiSet.personality().data() == Decl.Personality.EXAMPLE,
+      true
+    ));
+  }
+
   public @NotNull Tuple2<TeleDecl.DataDecl, ImmutableSeq<Stmt>>
-  dataDecl(GenericNode<?> node, Stmt.Accessibility acc) {
-    var sample = sampleModifiers(node.peekChild(SAMPLE_MODIFIERS));
+  dataDecl(GenericNode<?> node) {
+    var modifier = moduleLikeDeclModifiersOf(node);
+    var acc = modifier.accessibility().data();
+    var sample = modifier.personality().data();
     var bind = node.peekChild(BIND_BLOCK);
-    var openAcc = node.peekChild(KW_PUBLIC) != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = node.childrenOfType(DATA_BODY).map(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var entire = sourcePosOf(node);
-    var data = new TeleDecl.DataDecl(
+    var decl = new TeleDecl.DataDecl(
       nameOrInfix._1.sourcePos(),
       entire,
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
@@ -295,16 +339,8 @@ public record AyaGKProducer(
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
-    return Tuple.of(data, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
-      new Command.Open(
-        sourcePosOf(node.child(OPEN_KW)),
-        openAcc,
-        new QualifiedID(entire, nameOrInfix._1.data()),
-        UseHide.EMPTY,
-        sample == Decl.Personality.EXAMPLE,
-        true
-      )
-    ));
+
+    return Tuple.of(decl, giveMeOpen(modifier, decl));
   }
 
   public @NotNull TeleDecl.DataCtor dataBody(@NotNull GenericNode<?> node) {
@@ -319,15 +355,16 @@ public record AyaGKProducer(
     return dataCtor(patterns(node.child(PATTERNS).child(COMMA_SEP)), node.child(DATA_CTOR));
   }
 
-  public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>> structDecl(@NotNull GenericNode<?> node, Stmt.Accessibility acc) {
-    var sample = sampleModifiers(node.peekChild(SAMPLE_MODIFIERS));
+  public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>> structDecl(@NotNull GenericNode<?> node) {
+    var modifier = moduleLikeDeclModifiersOf(node);
+    var acc = modifier.accessibility().data();
+    var sample = modifier.personality().data();
     var bind = node.peekChild(BIND_BLOCK);
-    var openAcc = node.peekChild(KW_PUBLIC) != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var entire = sourcePosOf(node);
-    var struct = new TeleDecl.StructDecl(
+    var decl = new TeleDecl.StructDecl(
       nameOrInfix._1.sourcePos(),
       entire,
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
@@ -339,16 +376,7 @@ public record AyaGKProducer(
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
-    return Tuple.of(struct, node.peekChild(OPEN_KW) == null ? ImmutableSeq.empty() : ImmutableSeq.of(
-      new Command.Open(
-        sourcePosOf(node.child(OPEN_KW)),
-        openAcc,
-        new QualifiedID(entire, nameOrInfix._1.data()),
-        UseHide.EMPTY,
-        sample == Decl.Personality.EXAMPLE,
-        true
-      )
-    ));
+    return Tuple.of(decl, giveMeOpen(modifier, decl));
   }
 
   public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
@@ -513,7 +541,7 @@ public record AyaGKProducer(
     if (node.is(LIT_STRING_EXPR)) {
       var text = StringView.of(node.tokenText());
       var content = text.substring(1, text.length() - 1);
-      return new Expr.LitString(pos, StringUtil.escapeStringCharacters(content));
+      return new Expr.LitString(pos, StringUtil.escapeStringCharacters(content.toString()));
     }
     if (node.is(ULIFT_ATOM)) {
       var expr = expr(node.child(EXPR));

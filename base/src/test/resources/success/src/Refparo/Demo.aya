@@ -3,7 +3,7 @@ open import Paths hiding (coe, coeFill)
 open import Refparo::Model
 
 module Example-V {
-  public open data RainImpl : Type 0
+  open data RainImpl : Type 0
     | rain1
 
   def Rain (e : Event (new EventT {})) : Type 0
@@ -30,7 +30,7 @@ module Example-SV {
   def john : Quantifier Entity
     => mkConstQ johnImpl
 
-  public open data RunImpl (ag : Entity) : Type 0
+  open data RunImpl (ag : Entity) : Type 0
     | johnImpl => run1
 
   def Run (e : Event (new EventT { | AgentT => Entity })) : Type 0

@@ -1,7 +1,7 @@
 open import Paths
 
 // Alternative definition of torus from the HoTT book
-public open data T²
+open data T²
 | point
 | line1 : point = point
 | line2 : point = point

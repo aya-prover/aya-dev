@@ -7,10 +7,12 @@ import org.aya.cli.repl.ReplCompiler;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.IgnoringReporter;
+import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +24,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ReplCompilerTest {
-  public final @NotNull ReplCompiler compiler = new ReplCompiler(ImmutableSeq.empty(), IgnoringReporter.INSTANCE, null);
+  public final @NotNull ReplCompiler compiler = new ReplCompiler(ImmutableSeq.empty(), new ThrowingReporter(AyaPrettierOptions.debug()), null);
 
   @BeforeEach public void setup() {
     var ctx = compiler.getContext();
@@ -45,11 +47,11 @@ public class ReplCompilerTest {
     assertNotNull(nat);
 
     // failure cases, the context is unchanged
-    compile("data Nat =");
+    assertThrows(Throwable.class, () -> compile("data Nat ="));
     var newNat = findContext("Nat");
     assertEquals(nat, newNat);
 
-    compile("def a a");
+    assertThrows(Throwable.class, () -> compile("def a a"));
     assertNull(findContext("a"));
   }
 

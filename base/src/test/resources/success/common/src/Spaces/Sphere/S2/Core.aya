@@ -1,6 +1,6 @@
 open import Paths
 
-public open data S²
+open data S²
 | base2
 | surf (i j : I) { ∂ i ∨ ∂ j := base2 }
 
