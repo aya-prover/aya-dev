@@ -85,10 +85,12 @@ public final class Unifier extends TermComparator {
     // which solves more universe levels. However, with latest version Aya (0.13),
     // removing this does not break anything.
     // Update: this is still needed, see #327 last task (`coe'`)
-    var resultTy = preRhs.computeType(state, ctx);
-    // resultTy might be an ErrorTerm, what to do?
     if (meta.result != null) {
-      compare(resultTy, meta.result, rl, lr, null);
+      // resultTy might be an ErrorTerm, what to do?
+      var checker = new DoubleChecker(this, lr, rl);
+      if (!checker.inherit(preRhs, meta.result)) {
+        // TODO: throw exception
+      }
     }
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
@@ -102,7 +104,7 @@ public final class Unifier extends TermComparator {
     if (!allowVague && overlap.anyMatch(var -> preRhs.findUsages(var) > 0)) {
       state.addEqn(createEqn(lhs, preRhs, lr, rl));
       // Skip the unification and scope check
-      return resultTy;
+      return meta.result;
     }
     // Now we are sure that the variables in overlap are all unused.
 
@@ -146,7 +148,7 @@ public final class Unifier extends TermComparator {
       return new ErrorTerm(solved);
     }
     tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-    return resultTy;
+    return meta.result;
   }
 
   /**
