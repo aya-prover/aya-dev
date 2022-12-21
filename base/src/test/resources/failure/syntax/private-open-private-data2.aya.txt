@@ -1,0 +1,12 @@
+In file $FILE:8:21 ->
+
+  6 │   open A
+  7 │   
+  8 │   def no-nat : Type => Nat
+    │                        ╰─╯
+
+Error: The name `Nat` is not defined in the current scope
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
