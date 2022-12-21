@@ -1,0 +1,13 @@
+In file $FILE:4:4 ->
+
+  2 │   
+  3 │   open data Cat : Set
+  4 │     | meow : (Cat → Dead) → Cat
+    │       ╰──╯
+
+Error: Positivity check failed for | meow : (Cat → Dead) → Cat -> data Cat : Set
+       0
+         | meow : (Cat → Dead) → Cat
+
+1 error(s), 0 warning(s).
+What are you doing?
