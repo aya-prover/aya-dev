@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import org.aya.concrete.Expr;
@@ -12,7 +11,6 @@ import org.aya.generic.AyaDocile;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
@@ -21,7 +19,6 @@ import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
-import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -45,8 +42,11 @@ import java.util.function.Function;
  * @see #inheritFallbackUnify
  */
 public sealed abstract class UnifiedTycker extends MockedTycker permits PropTycker {
+
+  CoercionAgent coercionAgent;
   protected UnifiedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
     super(reporter, traceBuilder, state);
+    coercionAgent = new CoercionAgent(this, CoercionAgent.DEFAULT_COERCERS.view());
   }
 
   /**
@@ -87,26 +87,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
    * @see #unifyTyReported(Term, Term, Expr)
    */
   protected final Result inheritFallbackUnify(@NotNull Term upper, @NotNull Result result, Expr loc) {
-    var inst = instImplicits(result, loc.sourcePos());
-    var term = inst.wellTyped();
-    var lower = inst.type();
-    var upperWHNF = whnf(upper);
-    if (upperWHNF instanceof PathTerm path) {
-      var res = tryEtaCompatiblePath(loc, term, lower, path);
-      if (res != null) return res;
-    } else if (whnf(lower) instanceof PathTerm cube && cube.params().sizeEquals(1)) {
-      // TODO: also support n-ary path
-      if (upperWHNF instanceof PiTerm pi && pi.param().explicit() && pi.param().type() == IntervalTerm.INSTANCE) {
-        var lamBind = new RefTerm(new LocalVar(cube.params().first().name()));
-        var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
-        var inner = inheritFallbackUnify(pi.substBody(lamBind),
-          new Result.Default(body, cube.substType(SeqView.of(lamBind))), loc);
-        var lamParam = new LamTerm.Param(lamBind.var(), true);
-        return new Result.Default(new LamTerm(lamParam, inner.wellTyped()), pi);
-      }
-    }
-    if (unifyTyReported(upper, lower, loc)) return inst;
-    else return error(term.freezeHoles(state), upper.freezeHoles(state));
+    return coercionAgent.coerceWithFallback(result, upper, loc);
   }
 
   protected final @NotNull Result error(@NotNull AyaDocile expr, @NotNull Term term) {
@@ -163,18 +144,6 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
       return happy ? new Result.Default(new PLamTerm(path.params(), applied), path)
         : new Result.Default(ErrorTerm.unexpected(expr), path);
     });
-  }
-
-  private @Nullable Result.Default tryEtaCompatiblePath(Expr loc, Term term, Term lower, PathTerm path) {
-    int sizeLimit = path.params().size();
-    var list = MutableArrayList.<LocalVar>create(sizeLimit);
-    var innerMost = PiTerm.unpiOrPath(lower, term, this::whnf, list, sizeLimit);
-    if (!list.sizeEquals(sizeLimit)) return null;
-    unifyTyReported(path.computePi(), PiTerm.makeIntervals(list, innerMost.type()), loc);
-    var checked = checkBoundaries(loc, path, new Subst(), LamTerm.makeIntervals(list, innerMost.wellTyped()));
-    return lower instanceof PathTerm actualPath
-      ? new Result.Default(actualPath.eta(checked.wellTyped()), actualPath)
-      : new Result.Default(path.eta(checked.wellTyped()), checked.type());
   }
 
   private boolean boundary(@NotNull Expr loc, @NotNull Term lhs, @NotNull Term rhs, @NotNull Term type, Subst subst) {
