@@ -35,7 +35,16 @@ public record DoubleChecker(@NotNull Unifier unifier, @NotNull Sub lr, @NotNull 
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
       // TODO: deal with type-only metas
-      case MetaTerm hole -> hole.ref().result;
+      case MetaTerm hole -> {
+        var result = hole.ref().result;
+        if (result != null) yield result;
+        var metas = unifier.state.metas();
+        if (metas.containsKey(hole.ref())) {
+          yield synthesize(metas.get(hole.ref()));
+        } else {
+          throw new UnsupportedOperationException("TODO");
+        }
+      }
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {
         var callRaw = synthesize(preterm);

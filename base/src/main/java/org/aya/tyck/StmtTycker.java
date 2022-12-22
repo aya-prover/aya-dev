@@ -168,7 +168,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       case TeleDecl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, null);
         // It might contain unsolved holes, but that's acceptable.
-        var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
+        var resultRes = tycker.ty(fn.result).freezeHoles(tycker.state);
         // We cannot solve metas in result type from clauses,
         //  because when we're in the clauses, the result type is substituted,
         //  and it doesn't make sense to solve a "substituted meta"

@@ -85,12 +85,15 @@ public final class Unifier extends TermComparator {
     // which solves more universe levels. However, with latest version Aya (0.13),
     // removing this does not break anything.
     // Update: this is still needed, see #327 last task (`coe'`)
-    if (meta.result != null) {
+    var checker = new DoubleChecker(new Unifier(Ordering.Lt,
+      reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
+    var expectedType = meta.result;
+    if (expectedType != null) {
       // resultTy might be an ErrorTerm, what to do?
-      var checker = new DoubleChecker(new Unifier(Ordering.Lt,
-        reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
-      if (!checker.inherit(preRhs, meta.result))
+      if (!checker.inherit(preRhs, expectedType))
         reporter.report(new HoleProblem.IllTypedError(lhs, preRhs));
+    } else {
+      expectedType = checker.synthesize(preRhs);
     }
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
@@ -104,7 +107,7 @@ public final class Unifier extends TermComparator {
     if (!allowVague && overlap.anyMatch(var -> preRhs.findUsages(var) > 0)) {
       state.addEqn(createEqn(lhs, preRhs, lr, rl));
       // Skip the unification and scope check
-      return meta.result;
+      return expectedType;
     }
     // Now we are sure that the variables in overlap are all unused.
 
@@ -148,7 +151,7 @@ public final class Unifier extends TermComparator {
       return new ErrorTerm(solved);
     }
     tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-    return meta.result;
+    return expectedType;
   }
 
   /**
