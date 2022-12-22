@@ -45,7 +45,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   default @NotNull Tuple2<MetaTerm, Term>
   freshTyHole(@NotNull String name, @NotNull SourcePos sourcePos) {
     var ctxTele = extract();
-    var meta = Meta.from(ctxTele, name, sourcePos);
+    var meta = Meta.from(ctxTele, name, null, sourcePos);
     var hole = new MetaTerm(meta, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
     return Tuple.of(hole, LamTerm.make(meta.telescope, hole));
   }

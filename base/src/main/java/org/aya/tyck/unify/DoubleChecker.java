@@ -23,6 +23,10 @@ public record DoubleChecker(@NotNull Unifier unifier, @NotNull Sub lr, @NotNull 
     assert unifier.cmp == Ordering.Lt;
   }
 
+  public DoubleChecker(@NotNull Unifier unifier) {
+    this(unifier, new Sub(), new Sub());
+  }
+
   public @NotNull Term synthesize(@NotNull Term preterm) {
     return whnf(switch (preterm) {
       case RefTerm term -> unifier.ctx.get(term.var());

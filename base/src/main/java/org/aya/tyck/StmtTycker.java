@@ -19,7 +19,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.Modifier;
-import org.aya.generic.SortKind;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.SeqLocalCtx;
@@ -28,6 +27,7 @@ import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.DoubleChecker;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.TreeBuilder;
@@ -150,7 +150,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     record Tmp(ImmutableSeq<TeleResult> okTele, Term preresult, Term prebody) {}
     var tmp = tycker.subscoped(() -> {
       var okTele = checkTele(tycker, fn.telescope, null);
-      var preresult = tycker.ty(fn.result).wellTyped();
+      var preresult = tycker.ty(fn.result);
       var prebody = tycker.check(fn.body.getLeftValue(), preresult).wellTyped();
       return new Tmp(okTele, preresult, prebody);
     });
@@ -227,7 +227,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert structSig != null;
         var structLvl = structSig.result();
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
-        var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
+        var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl).wellTyped());
         field.signature = new Def.Signature<>(tele, result);
       }
     }
@@ -267,7 +267,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     // Users may have written the result type explicitly
     if (ctor.result != null) {
       // At this point, they may contain metas
-      var result = tycker.ty(ctor.result).wellTyped().normalize(tycker.state, NormalizeMode.NF);
+      var result = tycker.ty(ctor.result).normalize(tycker.state, NormalizeMode.NF);
       var additionalTele = MutableArrayList.<Term.Param>create();
       result = PiTerm.unpi(result, tycker::whnf, additionalTele);
       Partial<Term> partial = null;
@@ -321,20 +321,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
-  // similiar to `ExprTycker.sortPi`. `tele` is the domain.
-  private @NotNull Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
+  // Similar to `ExprTycker.sortPi`. `tele` is the domain.
+  private @NotNull Term checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
     var result = exprTycker.ty(tele);
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
-    var ty = result.type();
-    switch (ty.kind()) {
-      case Type, Set -> unifier.compareSort(ty, sort);
-      case Prop -> {
-        if (sort.kind() != SortKind.Type) unifier.compareSort(ty, sort);
-      }
-      case ISet -> {
-        if (!sort.kind().hasLevel()) unifier.compareSort(ty, sort);
-      }
-    }
+    new DoubleChecker(unifier).inherit(result, sort);
     return result;
   }
 
@@ -347,7 +338,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       var paramTyped = (sort != null
         ? checkTele(exprTycker, param.type(), sort)
         : exprTycker.ty(param.type())
-      ).wellTyped();
+      );
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
       exprTycker.addWithTerm(param, paramTyped);
