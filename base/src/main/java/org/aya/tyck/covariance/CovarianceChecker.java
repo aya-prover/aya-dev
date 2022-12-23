@@ -35,97 +35,85 @@ public sealed abstract class CovarianceChecker permits ParametersCovarianceCheck
   private boolean checkConstructor(@NotNull Term term) {
     term = term.normalize(state, NormalizeMode.WHNF);
 
-    if (term instanceof LamTerm lam) {
-      return checkConstructor(lam.body());
-    }
-
-    if (term instanceof TupTerm tup) {
-      for (var item : tup.items()) {
-        if (checkConstructor(item.term())) {
-          return true;
+    return switch (term) {
+      case LamTerm lam -> checkConstructor(lam.body());
+      case TupTerm tup -> {
+        for (var item : tup.items()) {
+          if (checkConstructor(item.term())) {
+            yield true;
+          }
         }
+        yield false;
       }
-      return false;
-    }
-
-    if (term instanceof ConCall conCall) {
-      for (var argument : conCall.conArgs()) {
-        if (checkConstructor(argument.term())) {
-          return true;
+      case ConCall conCall -> {
+        for (var argument : conCall.conArgs()) {
+          if (checkConstructor(argument.term())) {
+            yield true;
+          }
         }
+        yield false;
       }
-      return false;
-    }
-
-    if (term instanceof NewTerm newTerm) {
-      for (var field : newTerm.params().keysView()) {
-        assert field.concrete.signature() != null;
-        if (checkConstructor(field.concrete.signature().result())) {
-          return true;
+      case NewTerm newTerm -> {
+        for (var field : newTerm.params().keysView()) {
+          assert field.concrete.signature() != null;
+          if (checkConstructor(field.concrete.signature().result())) {
+            yield true;
+          }
         }
+        yield false;
       }
-
-      return false;
-    }
-
-    return check(term);
+      case default -> check(term);
+    };
   }
 
   public boolean check(@NotNull Term term) {
     term = term.normalize(state, NormalizeMode.WHNF);
 
-    if (term instanceof SortTerm sort) {
-      return checkLevels(sort, null);
-    }
-
-    if (term instanceof PiTerm pi) {
-      return check(pi.body());
-    }
-
-    if (term instanceof SigmaTerm sigma) {
-      return false;
-    }
-
-    if (term instanceof DataCall dataCall && allowData()) {
-      if (checkLevels(dataCall.ulift(), dataCall)) {
-        return true;
-      }
-      int i = 0;
-      for (var argument : dataCall.args()) {
-        if (dataCall.ref().concrete.isCovariant(i)) {
-          if (checkConstructor(argument.term())) {
-            return true;
+    return switch (term) {
+      case SortTerm sort -> checkLevels(sort, null);
+      case PiTerm pi -> check(pi.body());
+      case SigmaTerm sigma -> false;
+      case DataCall dataCall when allowData() -> {
+        if (checkLevels(dataCall.ulift(), dataCall)) {
+          yield true;
+        }
+        int i = 0;
+        for (var argument : dataCall.args()) {
+          if (dataCall.ref().concrete.isCovariant(i)) {
+            if (checkConstructor(argument.term())) {
+              yield true;
+            }
+          } else {
+            if (checkNonCovariant(argument.term())) {
+              yield true;
+            }
           }
-        } else {
-          if (checkNonCovariant(argument.term())) {
-            return true;
+          i++;
+        }
+        yield false;
+      }
+      case StructCall structCall -> {
+        if (checkLevels(structCall.ulift(), structCall)) {
+          yield true;
+        }
+        var structConcrete = structCall.ref().concrete;
+        for (var field : structConcrete.fields) {
+          if (structConcrete.isCovariantField(field)) {
+            assert field.signature != null;
+            if (checkConstructor(field.signature.result())) {
+              yield true;
+            }
+          } else {
+            if (checkNonCovariant(field.signature.result())) {
+              yield true;
+            }
           }
         }
-        i++;
+        yield false;
       }
-      return false;
-    }
-
-    if (term instanceof StructCall structCall) {
-      if (checkLevels(structCall.ulift(), structCall)) {
-        return true;
+      case default -> {
+        yield checkOtherwise(term);
       }
-      var structConcrete = structCall.ref().concrete;
-      for (var field : structConcrete.fields) {
-        if (structConcrete.isCovariantField(field)) {
-          assert field.signature != null;
-          if (checkConstructor(field.signature.result())) {
-            return true;
-          }
-        } else {
-          if (checkNonCovariant(field.signature.result())) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    return checkOtherwise(term);
+    };
   }
 }
