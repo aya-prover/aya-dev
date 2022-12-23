@@ -13,6 +13,7 @@ import org.aya.core.term.DataCall;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
+import org.aya.generic.util.InternalException;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.Arg;
@@ -204,6 +205,10 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     @Override public @NotNull DefVar<DataDef, DataDecl> ref() {
       return this.ref;
     }
+
+    public boolean isCovariant(int i) {
+      throw new InternalException("Not implemented");
+    }
   }
 
   /**
@@ -235,6 +240,10 @@ public sealed abstract class TeleDecl<RetTy extends Term>
 
     @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
       return ref;
+    }
+
+    public boolean isCovariantField(StructField field) {
+      throw new InternalException("Not implemented");
     }
   }
 
