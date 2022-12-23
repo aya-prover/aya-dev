@@ -44,15 +44,22 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       var file = sourceFile.get();
       var lexer = AyaParserDefinitionBase.createLexer(false);
       lexer.reset(file.sourceCode(), 0, file.sourceCode().length(), 0);
-      var keywords = lexer.allTheWayDown()
-        .view()
+      var tokens = lexer.allTheWayDown().view();
+      var keywords = tokens
         .filter(x -> AyaParserDefinitionBase.KEYWORDS.contains(x.type()))
         .map(token -> {
           var sourcePos = AyaGKProducer.sourcePosOf(token, file);
           var type = new HighlightInfo.SymLit(LitKind.Keyword);
           return new HighlightInfo(sourcePos, type);
         });
-      semantics = semantics.concat(keywords);
+      var comments = tokens
+        .filter(x -> AyaParserDefinitionBase.SKIP_COMMENTS.contains(x.type()))
+        .map(t -> {
+          var sourcePos = AyaGKProducer.sourcePosOf(t, file);
+          var type = new HighlightInfo.SymLit(LitKind.Comment);
+          return new HighlightInfo(sourcePos, type);
+        });
+      semantics = semantics.concat(keywords).concat(comments);
     }
     return semantics;
   }
