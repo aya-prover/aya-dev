@@ -255,7 +255,8 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
 
     public boolean isCovariantField(StructField field) {
-      throw new InternalException("Not implemented");
+      assert field.structRef == ref;
+      return field.covariant;
     }
   }
 
@@ -266,6 +267,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     public @NotNull Expr result;
     public @NotNull Option<Expr> body;
     public final boolean coerce;
+    public boolean covariant = false;
 
     // will change after resolve
     public @NotNull ImmutableSeq<Expr.Param> telescope;
