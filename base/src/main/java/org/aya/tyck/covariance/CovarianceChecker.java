@@ -101,6 +101,7 @@ public sealed abstract class CovarianceChecker permits ParametersCovarianceCheck
               yield true;
             }
           } else {
+            assert field.signature != null;
             if (checkNonCovariant(field.signature.result())) {
               yield true;
             }
