@@ -8,7 +8,11 @@ import org.aya.tyck.tycker.TyckState;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CovarianceChecker {
-  public TyckState state;
+  protected final @NotNull TyckState state;
+
+  public CovarianceChecker(@NotNull TyckState state) {
+    this.state = state;
+  }
 
   protected boolean allowData() {
     return true;
