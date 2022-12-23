@@ -13,31 +13,20 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 public final class RecursiveDataChecker extends CovarianceChecker {
-  private final @NotNull ImmutableSeq<DefVar<DataDef, TeleDecl.DataDecl>> refs;
   private final @NotNull TeleDecl.DataCtor ctor;
   private final @NotNull Reporter reporter;
 
   @Override
   protected boolean checkNonCovariant(@NotNull Term term) {
-    for (var ref : refs) {
-      if (term.findUsages(ref) > 0) {
-        reporter.report(new NonPositiveDataError(ctor.sourcePos(), ctor));
-        return true;
-      }
+    if (term.findUsages(ctor.dataRef) > 0) {
+      reporter.report(new NonPositiveDataError(ctor.sourcePos(), ctor, term));
+      return true;
     }
     return false;
   }
 
-  public RecursiveDataChecker(@NotNull TyckState state, @NotNull Reporter reporter, ImmutableSeq<DefVar<DataDef, TeleDecl.DataDecl>> refs, TeleDecl.@NotNull DataCtor ctor) {
+  public RecursiveDataChecker(@NotNull TyckState state, @NotNull Reporter reporter, TeleDecl.@NotNull DataCtor ctor) {
     super(state);
-    this.refs = refs;
-    this.reporter = reporter;
-    this.ctor = ctor;
-  }
-
-  public RecursiveDataChecker(@NotNull TyckState state, @NotNull Reporter reporter, DefVar<DataDef, TeleDecl.DataDecl> ref, TeleDecl.@NotNull DataCtor ctor) {
-    super(state);
-    this.refs = ImmutableSeq.of(ref);
     this.reporter = reporter;
     this.ctor = ctor;
   }
