@@ -3,6 +3,8 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableAnySet;
+import kala.collection.mutable.MutableHashSet;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.control.Option;
@@ -184,6 +186,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     public final @NotNull ImmutableSeq<DataCtor> body;
     /** Yet type-checked constructors */
     public final @NotNull MutableList<@NotNull CtorDef> checkedBody = MutableList.create();
+    private final @NotNull MutableHashSet<@NotNull Integer> covariant = MutableHashSet.create();
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -207,7 +210,16 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
 
     public boolean isCovariant(int i) {
-      throw new InternalException("Not implemented");
+      return covariant.contains(i);
+    }
+
+    public void setCovariant(int i) {
+      setCovariant(i, true);
+    }
+
+    public void setCovariant(int i, boolean covariant) {
+      if (covariant) this.covariant.add(i);
+      else this.covariant.remove(i);
     }
   }
 
