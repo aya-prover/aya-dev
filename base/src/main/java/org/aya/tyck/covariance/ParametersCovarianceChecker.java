@@ -29,7 +29,7 @@ public final class ParametersCovarianceChecker extends CovarianceChecker {
   }
 
   @Override
-  protected boolean checkOtherwise(Term term) {
+  protected boolean checkOtherwise(@NotNull Term term) {
     while (true) {
       switch (term) {
         case AppTerm app -> {

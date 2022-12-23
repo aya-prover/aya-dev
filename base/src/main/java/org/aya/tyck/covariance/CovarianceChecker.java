@@ -6,6 +6,7 @@ import org.aya.core.term.*;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.tycker.TyckState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public sealed abstract class CovarianceChecker permits ParametersCovarianceChecker, RecursiveDataChecker {
   protected final @NotNull TyckState state;
@@ -24,7 +25,7 @@ public sealed abstract class CovarianceChecker permits ParametersCovarianceCheck
     return checkNonCovariant(term);
   }
 
-  protected boolean checkLevels(@NotNull SortTerm levels, @NotNull Callable.DefCall defCall) {
+  protected boolean checkLevels(@NotNull SortTerm levels, @Nullable Callable.DefCall defCall) {
     return false;
   }
 
