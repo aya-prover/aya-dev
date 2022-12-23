@@ -52,7 +52,7 @@ public final class ParametersCovarianceChecker extends CovarianceChecker {
         case RefTerm refTerm -> {
           return false;
         }
-        case null, default -> {
+        case default -> {
           return checkNonCovariant(term);
         }
       }
