@@ -122,7 +122,7 @@ public interface FaithfulPrettier {
       case Int -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
       case Keyword -> Doc.styled(BasePrettier.KEYWORD, raw);
-      case Comment -> Doc.styled(Style.color(0x114514), raw);   // TODO: What style for comment
+      case Comment -> Doc.styled(BasePrettier.COMMENT, raw);
     };
   }
 

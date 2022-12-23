@@ -58,6 +58,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   public static final @NotNull Style CON = AyaStyleKey.Con.preset();
   public static final @NotNull Style FIELD = AyaStyleKey.Field.preset();
   public static final @NotNull Style GENERALIZED = AyaStyleKey.Generalized.preset();
+  public static final @NotNull Style COMMENT = AyaStyleKey.Comment.preset();
 
   public final @NotNull PrettierOptions options;
 
