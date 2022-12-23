@@ -42,4 +42,5 @@ module aya.base {
   exports org.aya.tyck.trace;
   exports org.aya.tyck.unify;
   exports org.aya.tyck;
+    exports org.aya.tyck.covariance;
 }

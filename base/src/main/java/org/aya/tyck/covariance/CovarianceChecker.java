@@ -1,13 +1,13 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.tyck;
+package org.aya.tyck.covariance;
 
 import org.aya.core.term.*;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.tycker.TyckState;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CovarianceChecker {
+public sealed abstract class CovarianceChecker permits ParametersCovarianceChecker, RecursiveDataChecker {
   protected final @NotNull TyckState state;
 
   public CovarianceChecker(@NotNull TyckState state) {

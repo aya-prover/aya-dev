@@ -1,12 +1,10 @@
 // Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.tyck;
+package org.aya.tyck.covariance;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.TeleDecl;
-import org.aya.core.def.DataDef;
 import org.aya.core.term.Term;
-import org.aya.ref.DefVar;
+import org.aya.tyck.covariance.CovarianceChecker;
 import org.aya.tyck.error.NonPositiveDataError;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.reporter.Reporter;
