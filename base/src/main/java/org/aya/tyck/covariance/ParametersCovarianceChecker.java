@@ -11,12 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ParametersCovarianceChecker extends CovarianceChecker {
   private final @NotNull MutableHashSet<@NotNull AnyVar> vars;
-  private final @NotNull TermConsumer consumer = new TermConsumer() {
-    @Override public void pre(@NotNull Term term) {
-      if (term instanceof RefTerm refTerm) vars.remove(refTerm.var());
-      if (term instanceof RefTerm.Field fieldRef) vars.remove(fieldRef.ref());
-    }
-  };
 
   public ParametersCovarianceChecker(@NotNull TyckState state, @NotNull MutableHashSet<@NotNull AnyVar> vars) {
     super(state);
@@ -25,7 +19,12 @@ public final class ParametersCovarianceChecker extends CovarianceChecker {
 
   @Override
   protected boolean checkNonCovariant(@NotNull Term term) {
-    consumer.accept(term);
+    new TermConsumer() {
+      @Override public void pre(@NotNull Term term1) {
+        if (term1 instanceof RefTerm refTerm) vars.remove(refTerm.var());
+        if (term1 instanceof RefTerm.Field fieldRef) vars.remove(fieldRef.ref());
+      }
+    }.accept(term);
     return vars.isEmpty();
   }
 

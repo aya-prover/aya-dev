@@ -33,9 +33,7 @@ public sealed abstract class CovarianceChecker permits ParametersCovarianceCheck
   }
 
   private boolean checkConstructor(@NotNull Term term) {
-    term = term.normalize(state, NormalizeMode.WHNF);
-
-    return switch (term) {
+    return switch (term.normalize(state, NormalizeMode.WHNF)) {
       case LamTerm lam -> checkConstructor(lam.body());
       case TupTerm tup -> {
         for (var item : tup.items()) {
@@ -67,9 +65,7 @@ public sealed abstract class CovarianceChecker permits ParametersCovarianceCheck
   }
 
   public boolean check(@NotNull Term term) {
-    term = term.normalize(state, NormalizeMode.WHNF);
-
-    return switch (term) {
+    return switch (term.normalize(state, NormalizeMode.WHNF)) {
       case SortTerm sort -> checkLevels(sort, null);
       case PiTerm pi -> check(pi.body());
       case SigmaTerm sigma -> false;
