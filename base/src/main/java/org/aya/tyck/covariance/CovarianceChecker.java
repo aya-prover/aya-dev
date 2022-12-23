@@ -109,9 +109,7 @@ public sealed abstract class CovarianceChecker permits ParametersCovarianceCheck
         }
         yield false;
       }
-      case default -> {
-        yield checkOtherwise(term);
-      }
+      case default -> checkOtherwise(term);
     };
   }
 }
