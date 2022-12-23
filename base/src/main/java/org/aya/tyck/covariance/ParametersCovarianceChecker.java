@@ -32,19 +32,29 @@ public final class ParametersCovarianceChecker extends CovarianceChecker {
   @Override
   protected boolean checkOtherwise(Term term) {
     while (true) {
-      if (term instanceof AppTerm app) {
-        if (checkNonCovariant(app.arg().term())) {
-          return true;
+      switch (term) {
+        case AppTerm app -> {
+          if (checkNonCovariant(app.arg().term())) {
+            return true;
+          }
+          term = app.of();
         }
-        term = app.of();
-      } else if (term instanceof ProjTerm proj) {
-        term = proj.of();
-      } else if (term instanceof FieldTerm access) {
-        term = access.of();
-      } else if (term instanceof RefTerm) {
-        return false;
-      } else {
-        return checkNonCovariant(term);
+        case PAppTerm pApp -> {
+          for (var arg : pApp.args()) {
+            if (checkNonCovariant(arg.term())) {
+              return true;
+            }
+          }
+          term = pApp.of();
+        }
+        case ProjTerm proj -> term = proj.of();
+        case FieldTerm access -> term = access.of();
+        case RefTerm refTerm -> {
+          return false;
+        }
+        case null, default -> {
+          return checkNonCovariant(term);
+        }
       }
     }
   }
