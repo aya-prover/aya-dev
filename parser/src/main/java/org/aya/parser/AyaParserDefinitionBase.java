@@ -100,4 +100,7 @@ public abstract class AyaParserDefinitionBase implements ParserDefinition {
     AyaPsiElementTypes.KW_USING,
     AyaPsiElementTypes.KW_VARIABLE
   );
+
+  // For SyntaxHighlight only
+  public static final @NotNull TokenSet NOT_IN_CONCRETE = TokenSet.orSet(KEYWORDS, SKIP_COMMENTS);
 }

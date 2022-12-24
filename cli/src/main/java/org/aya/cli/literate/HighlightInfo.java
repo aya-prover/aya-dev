@@ -31,7 +31,7 @@ public record HighlightInfo(
   }
 
   public enum LitKind {
-    Int, String, Keyword;
+    Int, String, Keyword, Comment;
 
     public @NotNull HighlightInfo toLit(@NotNull SourcePos sourcePos) {
       return new HighlightInfo(sourcePos, new SymLit(this));

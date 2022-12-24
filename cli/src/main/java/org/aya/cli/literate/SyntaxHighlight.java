@@ -15,6 +15,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
 import org.aya.core.term.Term;
+import org.aya.generic.util.InternalException;
 import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
@@ -44,15 +45,20 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       var file = sourceFile.get();
       var lexer = AyaParserDefinitionBase.createLexer(false);
       lexer.reset(file.sourceCode(), 0, file.sourceCode().length(), 0);
-      var keywords = lexer.allTheWayDown()
-        .view()
-        .filter(x -> AyaParserDefinitionBase.KEYWORDS.contains(x.type()))
+      var addition = lexer.allTheWayDown().view()
+        .filter(x -> AyaParserDefinitionBase.NOT_IN_CONCRETE.contains(x.type()))
         .map(token -> {
           var sourcePos = AyaGKProducer.sourcePosOf(token, file);
-          var type = new HighlightInfo.SymLit(LitKind.Keyword);
+          HighlightInfo.HighlightSymbol type;
+          if (AyaParserDefinitionBase.KEYWORDS.contains(token.type())) {
+            type = new HighlightInfo.SymLit(LitKind.Keyword);
+          } else if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(token.type())) {
+            type = new HighlightInfo.SymLit(LitKind.Comment);
+          } else throw new InternalException("bug");
+
           return new HighlightInfo(sourcePos, type);
         });
-      semantics = semantics.concat(keywords);
+      semantics = semantics.concat(addition);
     }
     return semantics;
   }

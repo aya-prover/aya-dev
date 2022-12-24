@@ -13,6 +13,7 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,6 +122,7 @@ public interface FaithfulPrettier {
       case Int -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
       case Keyword -> Doc.styled(BasePrettier.KEYWORD, raw);
+      case Comment -> Doc.styled(BasePrettier.COMMENT, raw);
     };
   }
 

@@ -24,7 +24,8 @@ public enum AyaStyleKey {
   Struct("Aya::Struct"),
   Field("Aya::Field"),
   Generalized("Aya::Generalized"),
-  CallTerm("Aya::Call");
+  CallTerm("Aya::Call"),
+  Comment("Aya::Comment");
 
   private final String key;
 

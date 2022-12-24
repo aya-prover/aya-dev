@@ -23,7 +23,8 @@ public class AdaptiveCliStylist extends UnixTermStylist {
       Tuple.of(AyaStyleKey.Struct.key(), UnixTermStyle.TerminalGreen.and()),
       Tuple.of(AyaStyleKey.Con.key(), UnixTermStyle.TerminalBlue.and()),
       Tuple.of(AyaStyleKey.Field.key(), UnixTermStyle.TerminalBlue.and()),
-      Tuple.of(AyaStyleKey.Generalized.key(), Style.italic().and())
+      Tuple.of(AyaStyleKey.Generalized.key(), Style.italic().and()),
+      Tuple.of(AyaStyleKey.Comment.key(), Style.italic().and())
     )));
   }
 }
