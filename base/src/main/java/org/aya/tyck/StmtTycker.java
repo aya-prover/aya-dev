@@ -17,13 +17,11 @@ import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
-import org.aya.ref.DefVar;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.Conquer;
@@ -231,11 +229,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structLvl = structSig.result();
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
         var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
-
-        if (!piPositivity(result, structRef)) {
-          reporter.report(new PositivityError(field.sourcePos(), field, structRef.concrete));
-        }
-
         field.signature = new Def.Signature<>(tele, result);
       }
     }
@@ -300,9 +293,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
       elabClauses = PartialTerm.merge(Seq.of(elabClauses, partial).filterNotNull());
     }
-    if (!ctorPositivity(tele, dataRef)) {
-      reporter.report(new PositivityError(ctor.sourcePos(), ctor, dataConcrete));
-    }
     var patternTele = pat.isEmpty()
       ? dataSig.param().map(Term.Param::implicitify)
       : Pat.extractTele(pat.map(Arg::term));
@@ -319,43 +309,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       return (SortTerm) tycker.zonk(result.wellTyped());
     }
     return SortTerm.Type0;
-  }
-
-  public boolean piPositivity(@NotNull Term type, @NotNull DefVar<? extends UserDef.Type, ? extends TeleDecl<SortTerm>> result) {
-    boolean[] positivity = {true};
-
-    new TermConsumer() {
-      @Override public void pre(@NotNull Term term) {
-        if (term instanceof Callable.DefCall defCall && defCall.ref() == result) positivity[0] = false;
-        if (term instanceof PiTerm pi) {
-          if (!piPositivity(pi.param().type(), result)) positivity[0] = false;
-        }
-      }
-    }.accept(type);
-    return positivity[0];
-  }
-
-  public boolean piPositivity(@NotNull ImmutableSeq<Term.Param> tele,
-                              @NotNull DefVar<? extends UserDef.Type, ? extends TeleDecl<SortTerm>> result) {
-    return tele.map(p -> piPositivity(p.type(), result)).fold(true, Boolean::logicalAnd);
-  }
-
-  public boolean ctorPositivity(@NotNull Term type,
-                                @NotNull DefVar<? extends UserDef.Type, ? extends TeleDecl<SortTerm>> result) {
-    boolean[] positivity = {true};
-    new TermConsumer() {
-      @Override public void pre(@NotNull Term term) {
-        if (term instanceof PiTerm pi) {
-          if (!piPositivity(pi.param().type(), result)) positivity[0] = false;
-        }
-      }
-    }.accept(type);
-    return positivity[0];
-  }
-
-  public boolean ctorPositivity(@NotNull ImmutableSeq<Term.Param> tele,
-                                @NotNull DefVar<? extends UserDef.Type, ? extends TeleDecl<SortTerm>> result) {
-    return tele.map(p -> ctorPositivity(p.type(), result)).fold(true, Boolean::logicalAnd);
   }
 
   /**
