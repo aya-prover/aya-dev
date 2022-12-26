@@ -2,7 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
-import org.aya.core.term.*;
+import org.aya.core.term.ErrorTerm;
+import org.aya.core.term.MetaTerm;
+import org.aya.core.term.SortTerm;
+import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.ExprTycker;
@@ -20,7 +23,6 @@ import java.util.function.Supplier;
  *
  * @author tsao-chi
  * @see #isPropType(Term)
- * @see #sortPi(SortTerm, SortTerm)
  * @see #withInProp(boolean, Supplier)
  */
 public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker {
@@ -52,11 +54,5 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
     throw new InternalException("Expected computeType() to produce a sort, got "
       + type.toDoc(AyaPrettierOptions.pretty())
       + " : " + sort.toDoc(AyaPrettierOptions.pretty()));
-  }
-
-  public static @NotNull SortTerm sortPi(@NotNull SortTerm domain, @NotNull SortTerm codomain) throws IllegalArgumentException {
-    var result = PiTerm.max(domain, codomain);
-    assert result != null;
-    return result;
   }
 }

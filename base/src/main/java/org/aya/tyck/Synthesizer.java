@@ -80,14 +80,8 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         yield t.ctx.with(resultParam, () -> {
           var retTyRaw = whnf(t.press(pi.body()));
           if (paramTyRaw instanceof SortTerm paramTy && retTyRaw instanceof SortTerm retTy) {
-            try {
-              return ExprTycker.sortPi(paramTy, retTy);
-            } catch (IllegalArgumentException ignored) {
-              return ErrorTerm.typeOf(pi);
-            }
-          } else {
-            return ErrorTerm.typeOf(pi);
-          }
+            return PiTerm.max(paramTy, retTy);
+          } else return unreachable(pi);
         });
       }
       case NewTerm neu -> neu.struct();
