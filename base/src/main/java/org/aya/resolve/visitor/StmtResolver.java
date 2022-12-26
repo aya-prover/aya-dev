@@ -133,7 +133,7 @@ public interface StmtResolver {
     var mCtx = MutableValue.create(decl.ctx);
     var telescope = decl.telescope.map(param -> resolver.resolve(param, mCtx));
     var newResolver = resolver.enter(mCtx.get());
-    decl.result = newResolver.apply(decl.result);
+    decl.modifyResult(newResolver);
     decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
     addReferences(info, new TyckOrder.Head(decl), resolver);
     return newResolver;
