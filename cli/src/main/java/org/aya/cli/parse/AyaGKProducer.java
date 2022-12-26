@@ -18,14 +18,11 @@ import kala.text.StringView;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
-import org.aya.cli.parse.ModifierParser;
 import org.aya.cli.parse.ModifierParser.ModifierSet;
-import org.aya.cli.parse.error.NotSuitableModifierWarn;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadCounterexampleWarn;
 import org.aya.concrete.error.BadModifierWarn;
-import org.aya.cli.parse.error.DuplicatedModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.Constants;
@@ -35,7 +32,6 @@ import org.aya.generic.util.InternalException;
 import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;
-import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
@@ -281,7 +277,6 @@ public record AyaGKProducer(
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin._1), gelatin._2));
     }
-    var entire = sourcePosOf(node);
     return new TeleDecl.FnDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(node),
@@ -291,7 +286,7 @@ public record AyaGKProducer(
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
-      typeOrHole(node.peekChild(TYPE), entire),
+      typeOrNull(node.peekChild(TYPE)),
       dynamite,
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
@@ -334,7 +329,7 @@ public record AyaGKProducer(
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
-      typeOrHole(node.peekChild(TYPE), entire),
+      typeOrNull(node.peekChild(TYPE)),
       body,
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
@@ -363,15 +358,14 @@ public record AyaGKProducer(
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var entire = sourcePosOf(node);
     var decl = new TeleDecl.StructDecl(
       nameOrInfix._1.sourcePos(),
-      entire,
+      sourcePosOf(node),
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
-      typeOrHole(node.peekChild(TYPE), entire),
+      typeOrNull(node.peekChild(TYPE)),
       fields,
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
@@ -383,14 +377,13 @@ public record AyaGKProducer(
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var bind = node.peekChild(BIND_BLOCK);
-    var entire = sourcePosOf(node);
     return new TeleDecl.StructField(
       nameOrInfix._1.sourcePos(),
-      entire,
+      sourcePosOf(node),
       nameOrInfix._2,
       nameOrInfix._1.data(),
       tele,
-      typeOrHole(node.peekChild(TYPE), entire),
+      typeOrNull(node.peekChild(TYPE)),
       Option.ofNullable(node.peekChild(EXPR)).map(this::expr),
       node.peekChild(KW_COERCE) != null,
       bind == null ? BindBlock.EMPTY : bindBlock(bind)
@@ -399,14 +392,12 @@ public record AyaGKProducer(
 
   public @NotNull TeleDecl.PrimDecl primDecl(@NotNull GenericNode<?> node) {
     var id = primName(node.child(PRIM_NAME));
-    var type = node.peekChild(TYPE);
     return new TeleDecl.PrimDecl(
       id.sourcePos(),
       sourcePosOf(node),
       id.data(),
       telescope(node.childrenOfType(TELE).map(x -> x)),
-      type == null ? new Expr.Error(id.sourcePos(), Doc.plain("missing result")) : type(type)
-      // ^ Question: typeOrHole?
+      typeOrNull(node.peekChild(TYPE))
     );
   }
 
@@ -854,6 +845,11 @@ public record AyaGKProducer(
   }
 
   public @NotNull Expr type(@NotNull GenericNode<?> node) {
+    return expr(node.child(EXPR));
+  }
+
+  public @Nullable Expr typeOrNull(@Nullable GenericNode<?> node) {
+    if (node == null) return null;
     return expr(node.child(EXPR));
   }
 
