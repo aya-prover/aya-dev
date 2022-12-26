@@ -78,14 +78,12 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
-        yield decl.body.fold(
-          body -> {
+        yield decl.body.fold(body -> {
             var nobody = tycker.check(body, signature.result()).wellTyped();
             // It may contain unsolved metas. See `checkTele`.
             var resultTy = tycker.zonk(signature.result());
             return factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
-          },
-          clauses -> {
+          }, clauses -> {
             var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
             var pos = decl.sourcePos;
@@ -330,11 +328,16 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
-  // Similar to `ExprTycker.sortPi`. `tele` is the domain.
+
+  /**
+   * @param tele A type in the telescope of a constructor.
+   * @param sort the universe of the data type.
+   */
   private @NotNull Term checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
     var result = exprTycker.ty(tele);
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
-    new DoubleChecker(unifier).inherit(result, sort);
+    // TODO[urgent]: there is no restriction on constructor telescope now
+    // new DoubleChecker(unifier).inherit(result, sort);
     return result;
   }
 
