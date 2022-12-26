@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * @see #isPropType(Term)
  * @see #sortPi(SortTerm, SortTerm)
  * @see #sortPi(Expr, SortTerm, SortTerm)
- * @see #withResult
+ * @see #withInProp(boolean, Supplier)
  */
 public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker {
   protected PropTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
@@ -33,7 +33,7 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
 
   public boolean inProp = false;
 
-  private <T> T withInProp(boolean inProp, @NotNull Supplier<T> supplier) {
+  protected final <T> T withInProp(boolean inProp, @NotNull Supplier<T> supplier) {
     var origin = this.inProp;
     this.inProp = inProp;
     try {
@@ -41,10 +41,6 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
     } finally {
       this.inProp = origin;
     }
-  }
-
-  public <T> T withResult(@NotNull Term result, @NotNull Supplier<T> supplier) {
-    return withInProp(isPropType(result), supplier);
   }
 
   public boolean isPropType(@NotNull Term type) {
