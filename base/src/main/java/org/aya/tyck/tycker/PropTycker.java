@@ -2,13 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
-import org.aya.concrete.Expr;
 import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Synthesizer;
-import org.aya.tyck.error.SortPiError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +21,6 @@ import java.util.function.Supplier;
  * @author tsao-chi
  * @see #isPropType(Term)
  * @see #sortPi(SortTerm, SortTerm)
- * @see #sortPi(Expr, SortTerm, SortTerm)
  * @see #withInProp(boolean, Supplier)
  */
 public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker {
@@ -57,28 +54,9 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
       + " : " + sort.toDoc(AyaPrettierOptions.pretty()));
   }
 
-  public @NotNull SortTerm sortPi(@NotNull Expr expr, @NotNull SortTerm domain, @NotNull SortTerm codomain) {
-    return sortPiImpl(new SortPiParam(reporter, expr), domain, codomain);
-  }
-
   public static @NotNull SortTerm sortPi(@NotNull SortTerm domain, @NotNull SortTerm codomain) throws IllegalArgumentException {
-    return sortPiImpl(null, domain, codomain);
-  }
-
-  private record SortPiParam(@NotNull Reporter reporter, @NotNull Expr expr) {
-  }
-
-  private static @NotNull SortTerm sortPiImpl(@Nullable SortPiParam p, @NotNull SortTerm domain, @NotNull SortTerm codomain) throws IllegalArgumentException {
     var result = PiTerm.max(domain, codomain);
-    if (p == null) {
-      assert result != null;
-      return result;
-    }
-    if (result == null) {
-      p.reporter.report(new SortPiError(p.expr.sourcePos(), domain, codomain));
-      return SortTerm.Type0;
-    } else {
-      return result;
-    }
+    assert result != null;
+    return result;
   }
 }
