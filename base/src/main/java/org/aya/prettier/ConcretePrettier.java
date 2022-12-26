@@ -24,6 +24,7 @@ import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -438,8 +439,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         .map(doc -> Doc.sep(Doc.symbol("|"), doc)));
   }
 
-  private void appendResult(MutableList<Doc> prelude, Expr result) {
-    if (result instanceof Expr.Hole) return;
+  private void appendResult(MutableList<Doc> prelude, @Nullable Expr result) {
+    if (result == null || result instanceof Expr.Hole) return;
     prelude.append(Doc.symbol(":"));
     prelude.append(term(Outer.Free, result));
   }

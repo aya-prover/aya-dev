@@ -57,7 +57,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   }
 
   @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
-    result = f.apply(result);
+    if (result != null) result = f.apply(result);
   }
 
   @Override public @NotNull ImmutableSeq<Expr.Param> telescope() {
