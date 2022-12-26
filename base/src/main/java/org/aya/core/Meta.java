@@ -8,11 +8,9 @@ import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
-import org.aya.tyck.tycker.TyckState;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,19 +35,6 @@ public final class Meta implements AnyVar {
 
   public SeqView<Term.Param> fullTelescope() {
     return contextTele.view().concat(telescope);
-  }
-
-  public boolean solve(@NotNull TyckState state, @NotNull Term t) {
-    if (t.findUsages(this) > 0) return false;
-    if (state.metaNotProps().contains(this)) {
-      var term = t.normalize(state, NormalizeMode.WHNF);
-      if (!(term instanceof ErrorTerm)) {
-        if (!(term instanceof SortTerm sort)) throw new IllegalStateException("expected a sort: " + t);
-        if (sort.isProp()) throw new IllegalStateException("expected a non-Prop sort"); // TODO: better reporting
-      }
-    }
-    state.metas().put(this, t);
-    return true;
   }
 
   private Meta(

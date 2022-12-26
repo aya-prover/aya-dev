@@ -5,9 +5,9 @@ package org.aya.tyck.tycker;
 import org.aya.concrete.Expr;
 import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Synthesizer;
 import org.aya.tyck.error.SortPiError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.reporter.Reporter;
@@ -48,11 +48,10 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
   }
 
   public boolean isPropType(@NotNull Term type) {
-    var sort = type.computeType(state, localCtx);
+    var sort = new Synthesizer(state, localCtx).synthesize(type);
+    if (sort == null) throw new UnsupportedOperationException("Zaoqi");
     if (sort instanceof MetaTerm meta) {
-      var value = state.metas().getOption(meta.ref());
-      if (value.isDefined()) return isPropType(value.get());
-      state.metaNotProps().add(meta.ref()); // assert not Prop
+      state.notInPropMetas().add(meta.ref()); // assert not Prop
       return false;
     }
     if (sort instanceof SortTerm s) return s.isProp();

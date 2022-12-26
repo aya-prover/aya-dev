@@ -190,7 +190,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       @Nullable OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result,
+      @Nullable Expr result,
       @NotNull ImmutableSeq<DataCtor> body,
       @NotNull BindBlock bindBlock,
       @NotNull Decl.Personality personality
@@ -311,7 +311,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       @Nullable OpDecl.OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result,
+      @Nullable Expr result,
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
       @NotNull BindBlock bindBlock,
       @NotNull Decl.Personality personality

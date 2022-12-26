@@ -149,7 +149,7 @@ public final class Unifier extends TermComparator {
         return new ErrorTerm(solved);
       }
     }
-    if (!meta.solve(state, solved)) {
+    if (!state.solve(meta, solved)) {
       reporter.report(new HoleProblem.RecursionError(lhs, solved));
       return new ErrorTerm(solved);
     }
