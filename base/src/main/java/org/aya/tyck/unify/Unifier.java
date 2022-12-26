@@ -93,7 +93,10 @@ public final class Unifier extends TermComparator {
       if (!checker.inherit(preRhs, expectedType))
         reporter.report(new HoleProblem.IllTypedError(lhs, preRhs));
     } else {
-      expectedType = checker.synthesize(preRhs);
+      expectedType = checker.synthesizer().synthesize(preRhs);
+      if (expectedType == null) {
+        throw new UnsupportedOperationException("TODO: add an error report for this");
+      }
     }
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());

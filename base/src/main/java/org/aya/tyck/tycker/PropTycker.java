@@ -48,7 +48,7 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
   }
 
   public boolean isPropType(@NotNull Term type) {
-    var sort = type.computeType(state, localCtx).normalize(state, NormalizeMode.WHNF);
+    var sort = type.computeType(state, localCtx);
     if (sort instanceof MetaTerm meta) {
       var value = state.metas().getOption(meta.ref());
       if (value.isDefined()) return isPropType(value.get());
