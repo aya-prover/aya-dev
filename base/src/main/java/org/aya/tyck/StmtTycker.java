@@ -152,9 +152,16 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     record Tmp(ImmutableSeq<TeleResult> okTele, Term preresult, Term prebody) {}
     var tmp = tycker.subscoped(() -> {
       var okTele = checkTele(tycker, fn.telescope, null);
-      var preresult = tycker.synthesize(fn.result).wellTyped();
       var bodyExpr = fn.body.getLeftValue();
-      var prebody = tycker.check(bodyExpr, preresult).wellTyped();
+      Term preresult, prebody;
+      if (fn.result != null) {
+        preresult = tycker.synthesize(fn.result).wellTyped();
+        prebody = tycker.check(bodyExpr, preresult).wellTyped();
+      } else {
+        var synthesize = tycker.synthesize(bodyExpr);
+        prebody = synthesize.wellTyped();
+        preresult = synthesize.type();
+      }
       return new Tmp(okTele, preresult, prebody);
     });
     var tele = zonkTele(tycker, tmp.okTele);
@@ -204,7 +211,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var tele = tele(tycker, prim.telescope, null);
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
-          if (prim.result instanceof Expr.Error) {
+          if (prim.result == null) {
             reporter.report(new PrimError.NoResultType(prim));
             return;
           }
@@ -215,7 +222,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             PiTerm.make(core.telescope, core.result),
             prim.result);
           prim.signature = new Def.Signature<>(tele, result);
-        } else if (!(prim.result instanceof Expr.Error)) {
+        } else if (prim.result != null) {
           var result = tycker.synthesize(prim.result).wellTyped();
           tycker.unifyTyReported(result, core.result, prim.result);
         } else prim.signature = new Def.Signature<>(core.telescope, core.result);
@@ -314,7 +321,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl<SortTerm> data) {
-    if (!(data.result instanceof Expr.Hole)) {
+    if (data.result != null) {
       var result = tycker.sort(data.result);
       return (SortTerm) tycker.zonk(result.wellTyped());
     }
@@ -333,11 +340,6 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       }
     }.accept(type);
     return positivity[0];
-  }
-
-  public boolean piPositivity(@NotNull ImmutableSeq<Term.Param> tele,
-                              @NotNull DefVar<? extends UserDef.Type, ? extends TeleDecl<SortTerm>> result) {
-    return tele.map(p -> piPositivity(p.type(), result)).fold(true, Boolean::logicalAnd);
   }
 
   public boolean ctorPositivity(@NotNull Term type,
