@@ -10,8 +10,10 @@ import org.aya.tyck.error.TupleError;
 import org.aya.tyck.unify.TermComparator.Sub;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public record DoubleChecker(@NotNull Unifier unifier, @NotNull Synthesizer synthesizer,@NotNull Sub lr, @NotNull Sub rl) {
+public record DoubleChecker(@NotNull Unifier unifier, @NotNull Synthesizer synthesizer, @NotNull Sub lr,
+                            @NotNull Sub rl) {
   public DoubleChecker {
     assert unifier.cmp == Ordering.Lt;
   }
@@ -39,6 +41,10 @@ public record DoubleChecker(@NotNull Unifier unifier, @NotNull Synthesizer synth
         unifier.reporter.report(new BadExprError(lambda, unifier.pos, expected));
         yield false;
       }
+      case PartialTerm(var par, var rhsTy)when whnf(expected) instanceof PartialTyTerm(var ty, var phi) -> {
+        if (!unifier.compareRestr(par.restr(), phi)) yield false;
+        yield compare(rhsTy, ty, null);
+      }
       case TupTerm(var items)when whnf(expected) instanceof SigmaTerm sigma -> {
         var res = sigma.check(items, (e, t) -> {
           if (!inherit(e.term(), t)) return ErrorTerm.unexpected(e.term());
@@ -53,7 +59,11 @@ public record DoubleChecker(@NotNull Unifier unifier, @NotNull Synthesizer synth
         // TODO^: make sure the above is a type. Need an extra "isType"
         yield inherit(cod, expected);
       }
-      case default -> unifier.compare(synthesizer.press(preterm), expected, lr, rl, null);
+      case default -> compare(synthesizer.press(preterm), expected, null);
     };
+  }
+
+  private boolean compare(@NotNull Term lhs, @NotNull Term expected, @Nullable Term type) {
+    return unifier.compare(lhs, expected, lr, rl, type);
   }
 }
