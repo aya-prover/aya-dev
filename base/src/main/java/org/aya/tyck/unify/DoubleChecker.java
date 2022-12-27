@@ -56,7 +56,7 @@ public record DoubleChecker(@NotNull Unifier unifier, @NotNull Synthesizer synth
       }
       case PiTerm(var dom, var cod) -> {
         var domSort = synthesizer.press(dom.type());
-        // TODO^: make sure the above is a type. Need an extra "isType"
+        // TODO[isType]: make sure the above is a type. Need an extra "isType"
         yield inherit(cod, expected);
       }
       case default -> compare(synthesizer.press(preterm), expected, null);

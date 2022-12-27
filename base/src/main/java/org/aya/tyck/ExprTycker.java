@@ -602,7 +602,7 @@ public final class ExprTycker extends PropTycker {
     return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
   }
 
-  /// TODO: This function should be rewritten.
+  /// TODO[isType]: This function should be rewritten.
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
     if (type instanceof MetaTerm) {
       var synthesis = synthesize(expr);
