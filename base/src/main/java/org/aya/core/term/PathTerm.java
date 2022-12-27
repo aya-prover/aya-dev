@@ -115,4 +115,8 @@ public record PathTerm(
     return params.map(x -> new Param(x, IntervalTerm.INSTANCE, true))
       .foldRight(applyDimsTo(term), LamTerm::new).rename();
   }
+
+  public @NotNull Term substBody(ImmutableSeq<LocalVar> newParams) {
+    return type.subst(params.zipView(newParams.view().map(RefTerm::new)).toImmutableMap());
+  }
 }

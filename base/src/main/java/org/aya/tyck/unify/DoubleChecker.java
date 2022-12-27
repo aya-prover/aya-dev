@@ -44,6 +44,10 @@ public record DoubleChecker(
         unifier.reporter.report(new BadExprError(lambda, unifier.pos, expected));
         yield false;
       }
+      // TODO[ice]: checkBoundaries
+      case PLamTerm(var params, var body)when whnf(expected) instanceof PathTerm path ->
+        unifier.ctx.withIntervals(params.view(), () ->
+          inherit(body, path.substBody(params)));
       case PartialTerm(var par, var rhsTy)when whnf(expected) instanceof PartialTyTerm(var ty, var phi) -> {
         if (!PartialTerm.impliesCof(phi, par.restr(), unifier.state)) yield false;
         yield compare(rhsTy, ty, null);
