@@ -64,7 +64,7 @@ public record DoubleChecker(
       case PiTerm(var dom, var cod) -> {
         var domSort = synthesizer.press(dom.type());
         // TODO[isType]: make sure the above is a type. Need an extra "isType"
-        yield inherit(cod, expected);
+        yield unifier.ctx.with(dom, () -> inherit(cod, expected));
       }
       case default -> compare(synthesizer.press(preterm), expected, null);
     };
