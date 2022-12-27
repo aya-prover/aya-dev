@@ -3,7 +3,10 @@
 package org.aya.tyck.tycker;
 
 import org.aya.concrete.Expr;
-import org.aya.core.term.*;
+import org.aya.core.term.AppTerm;
+import org.aya.core.term.LamTerm;
+import org.aya.core.term.PiTerm;
+import org.aya.core.term.Term;
 import org.aya.generic.Constants;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.Result;
@@ -31,7 +34,7 @@ import java.util.function.Supplier;
  * @see #mockTerm
  * @see #subscoped(Supplier)
  */
-public abstract sealed class MockedTycker extends StatedTycker permits UnifiedTycker {
+public abstract sealed class MockedTycker extends ConcreteAwareTycker permits UnifiedTycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
 
   protected MockedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
