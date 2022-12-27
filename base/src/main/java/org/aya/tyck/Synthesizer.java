@@ -42,12 +42,10 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case MetaTerm hole -> {
         var result = hole.ref().result;
         if (result != null) yield result;
-        var metas = state.metas();
-        if (metas.containsKey(hole.ref())) {
-          yield press(metas.get(hole.ref()));
-        } else {
+        var simpl = whnf(hole);
+        if (simpl instanceof MetaTerm again) {
           throw new UnsupportedOperationException("TODO");
-        }
+        } else yield synthesize(simpl);
       }
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {
@@ -60,7 +58,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       }
       case SigmaTerm sigma -> {
         var univ = sigma.params().view()
-          .map(param -> whnf(press(param.type())))
+          .map(param -> press(param.type()))
           .filterIsInstance(SortTerm.class)
           .toImmutableSeq();
         if (univ.sizeEquals(sigma.params().size())) {
@@ -74,12 +72,10 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         }
       }
       case PiTerm pi -> {
-        var paramTyRaw = whnf(press(pi.param().type()));
-        var resultParam = new Term.Param(pi.param().ref(), whnf(pi.param().type()), pi.param().explicit());
+        var paramTyRaw = press(pi.param().type());
         var t = new Synthesizer(state, ctx.deriveMap());
-        yield t.ctx.with(resultParam, () -> {
-          var retTyRaw = whnf(t.press(pi.body()));
-          if (paramTyRaw instanceof SortTerm paramTy && retTyRaw instanceof SortTerm retTy) {
+        yield t.ctx.with(pi.param(), () -> {
+          if (paramTyRaw instanceof SortTerm paramTy && t.press(pi.body()) instanceof SortTerm retTy) {
             return PiTerm.max(paramTy, retTy);
           } else return unreachable(pi);
         });
@@ -96,18 +92,18 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case MetaPatTerm metaPat -> metaPat.ref().type();
       case MetaLitTerm lit -> lit.type();
       case SortTerm sort -> sort.succ();
-      case IntervalTerm interval -> SortTerm.Type0;
+      case IntervalTerm interval -> SortTerm.ISet;
       case FormulaTerm end -> IntervalTerm.INSTANCE;
       case StringTerm str -> state.primFactory().getCall(PrimDef.ID.STRING);
       case IntegerTerm shaped -> shaped.type();
       case ListTerm shaped -> shaped.type();
-      case PartialTyTerm ty -> press(ty.type());
+      case PartialTyTerm ty -> synthesize(ty.type());
       case PartialTerm(var rhs, var par) -> new PartialTyTerm(par, rhs.restr());
-      case PathTerm cube -> press(cube.type());
+      case PathTerm cube -> synthesize(cube.type());
       case MatchTerm match -> {
         // TODO: Should I normalize match.discriminant() before matching?
         var term = match.tryMatch();
-        yield term.isDefined() ? press(term.get()) : ErrorTerm.typeOf(match);
+        yield term.isDefined() ? synthesize(term.get()) : ErrorTerm.typeOf(match);
       }
       case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
       case HCompTerm hComp -> throw new InternalException("TODO");
