@@ -204,7 +204,7 @@ public final class ExprTycker extends PropTycker {
           };
           var freezes = CofThy.conv(restr, new Subst(), subst -> {
             // normalizes to NF in case the `type` was eta-expanded from a definition.
-            var typeSubst = type.subst(subst).normalize(state, NormalizeMode.NF);
+            Term typeSubst = type.subst(subst).normalize(state, NormalizeMode.NF);
             // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
             // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
             // See also: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
