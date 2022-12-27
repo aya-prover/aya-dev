@@ -73,8 +73,6 @@ public interface PatTraversal extends UnaryOperator<Pat> {
 
   /**
    * subst all binding to corresponding MetaPat
-   * <p>
-   * TODO[hoshino]: A PatTraversal or a method of Pat?
    */
   record MetaBind(@NotNull Subst subst, @NotNull SourcePos definition) implements NoMeta {
     @Override public @NotNull Pat post(@NotNull Pat pat) {

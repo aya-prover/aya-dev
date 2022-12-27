@@ -257,7 +257,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
           yield pattern(param.first(), outer);
         }
         var ctorDoc = visitMaybeCtorPatterns(param.view(), Outer.AppSpine, Doc.ALT_WS);
-        // TODO: ditto
         yield ctorDoc(outer, licit, ctorDoc, param.sizeLessThanOrEquals(1));
       }
       case Pattern.List list -> Doc.sep(

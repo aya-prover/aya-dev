@@ -10,9 +10,6 @@ import org.aya.ref.AnyVar;
 import org.aya.tyck.Result;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * TODO[hoshino]: move to another place
- */
 public record TypedSubst(
   @NotNull Subst map,
   @NotNull MutableMap<@NotNull AnyVar, @NotNull Term> type
