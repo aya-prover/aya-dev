@@ -355,7 +355,7 @@ public final class ExprTycker extends PropTycker {
         // Now everything is in the form of `let f : G := g in h`
 
         // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
-        var type = synthesize(typeExpr).wellTyped().freezeHoles(state);
+        var type = ty(typeExpr).freezeHoles(state);
         var definedAsResult = inherit(definedAsExpr, type);
         var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 

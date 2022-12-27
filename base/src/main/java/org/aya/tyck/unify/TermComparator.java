@@ -138,7 +138,13 @@ public sealed abstract class TermComparator permits Unifier {
     lhs = lhs.normalize(state, NormalizeMode.WHNF);
     rhs = rhs.normalize(state, NormalizeMode.WHNF);
     if (compareApprox(lhs, rhs, lr, rl) != null) return true;
-    if (rhs instanceof MetaTerm) return compareUntyped(rhs, lhs, rl, lr) != null;
+    if (rhs instanceof MetaTerm rMeta) {
+      // In case we're comparing two metas with one isType and the other has a type,
+      // prefer solving the isType one to the typed one.
+      if (lhs instanceof MetaTerm lMeta && lMeta.ref().result == null)
+        return compareUntyped(lMeta, rMeta, lr, rl) != null;
+      return compareUntyped(rMeta, lhs, rl, lr) != null;
+    }
     // ^ Beware of the order!!
     if (lhs instanceof MetaTerm || type == null) return compareUntyped(lhs, rhs, lr, rl) != null;
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;

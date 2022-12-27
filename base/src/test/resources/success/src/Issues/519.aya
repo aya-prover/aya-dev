@@ -3,7 +3,8 @@ open import Issues::For519
 
 // The following are copied from 289.aya
 
-def invol-prefix : ~ 0 = 1 => idp
+// intervals are not fibrant anymore :(
+// def invol-prefix : ~ 0 = 1 => idp
 
 def psqueeze-infix {A : Type} {a b : A} (p : a = b) (i : I)
  : a = p i => \j => p (i ∧ j)
