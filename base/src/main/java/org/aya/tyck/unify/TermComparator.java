@@ -516,7 +516,7 @@ public sealed abstract class TermComparator permits Unifier {
         case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
-      case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs);
+      case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs, null);
     };
     return ret;
   }
@@ -539,7 +539,7 @@ public sealed abstract class TermComparator permits Unifier {
     return null;
   }
 
-  protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs);
+  protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs, @Nullable Term providedType);
 
   public boolean compareSort(SortTerm l, SortTerm r) {
     var result = switch (cmp) {

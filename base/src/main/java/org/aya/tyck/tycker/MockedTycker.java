@@ -61,8 +61,8 @@ public abstract sealed class MockedTycker extends StatedTycker permits UnifiedTy
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
     var genName = name + Constants.GENERATED_POSTFIX;
     // [ice]: unsure if ZERO is good enough
-    var domain = localCtx.freshHole(SortTerm.Type0, genName + "ty", pos)._2;
-    var codomain = localCtx.freshHole(SortTerm.Type0, pos)._2;
+    var domain = localCtx.freshTyHole(genName + "ty", pos)._2;
+    var codomain = localCtx.freshTyHole(genName + "ret", pos)._2;
     return new PiTerm(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
   }
 

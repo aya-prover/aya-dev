@@ -204,7 +204,7 @@ public final class ExprTycker extends PropTycker {
           };
           var freezes = CofThy.conv(restr, new Subst(), subst -> {
             // normalizes to NF in case the `type` was eta-expanded from a definition.
-            var typeSubst = type.subst(subst).normalize(state, NormalizeMode.NF);
+            Term typeSubst = type.subst(subst).normalize(state, NormalizeMode.NF);
             // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
             // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
             // See also: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
@@ -278,7 +278,7 @@ public final class ExprTycker extends PropTycker {
         // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
         yield new Result.Default(newApp, pi.body().subst(subst));
       }
-      case Expr.Hole hole -> inherit(hole, localCtx.freshHole(null, Constants.randomName(hole), hole.sourcePos())._2);
+      case Expr.Hole hole -> inherit(hole, localCtx.freshTyHole(Constants.randomName(hole), hole.sourcePos())._2);
       case Expr.Error err -> Result.Default.error(err.description());
       case Expr.LitInt lit -> {
         int integer = lit.integer();
@@ -286,7 +286,7 @@ public final class ExprTycker extends PropTycker {
         var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
-          var type = localCtx.freshHole(null, "_ty" + lit.integer() + "'", lit.sourcePos());
+          var type = localCtx.freshTyHole("_ty" + lit.integer() + "'", lit.sourcePos());
           yield new Result.Default(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type._1), type._1);
         }
         var match = defs.first();
@@ -528,7 +528,7 @@ public final class ExprTycker extends PropTycker {
   private @NotNull Result.Type doTy(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Hole hole -> {
-        var freshHole = localCtx.freshHole(SortTerm.Type0, Constants.randomName(hole), hole.sourcePos());
+        var freshHole = localCtx.freshTyHole(Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         // TODO: implement type-only hole
         yield new Result.Type(freshHole._2, SortTerm.Type0);

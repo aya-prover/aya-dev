@@ -77,7 +77,7 @@ public final class Unifier extends TermComparator {
     return overlap;
   }
 
-  @Override @Nullable protected Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs) {
+  @Override @Nullable protected Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs, @Nullable Term providedType) {
     var meta = lhs.ref();
     var sameMeta = sameMeta(lr, rl, lhs, meta, preRhs);
     if (sameMeta.isDefined()) return sameMeta.get();
