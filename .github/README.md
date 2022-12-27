@@ -11,6 +11,7 @@
 + [Installation](https://www.aya-prover.org/guide/install.html)
   instructions (basically telling you what to download in [GitHub Releases])
 + [Tutorial for Haskellers](https://www.aya-prover.org/guide/haskeller-tutorial.html)
++ [Tutorial of extension types](https://www.aya-prover.org/guide/ext-types.html)
 
 Aya is under active development, so please expect bugs, usability or performance issues
 (please file issues or create threads in discussions!).
@@ -20,14 +21,13 @@ Aya is under active development, so please expect bugs, usability or performance
 + Dependent types, including pi-types, sigma types, indexed families, etc.
   You could write a [type-safe interpreter][gadt].
 + De Morgan cubical type theory with generalized path types
-  similar to a bounded cubical subtype.
+  similar to a bounded cubical subtype. We plan to switch to Cartesian later.
   + Implementation prototype: [Guest0x0].
-  + Demonstration of higher inductive types: [3-torus] (three dimensional torus!!).
+  + Demonstration of higher inductive types: [3-torus] (three-dimensional torus!!).
 + Pattern matching with first-match semantics.
   Checkout the [red-black tree][rbtree] (without deletion yet).
 + Overlapping and order-independent patterns. Very [useful][oop] in theorem proving.
-+ A literate programming mode with inline code fragment support.
-  We already have a prototype, but we plan to revise it before sharing demos.
++ A literate programming mode with inline code fragment support, inspired from [1lab].
 + Binary operators, with precedence specified by a partial ordering
   (instead of a number, such as in Haskell or Agda)
   which is useful for [equation reasoning][assoc].
@@ -43,6 +43,7 @@ See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
 [Java 19]: https://jdk.java.net/19
+[1lab]: https://1lab.dev
 
 ## Contributing to Aya
 
