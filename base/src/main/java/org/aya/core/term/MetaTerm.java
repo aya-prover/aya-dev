@@ -17,7 +17,7 @@ public record MetaTerm(
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
 ) implements Callable {
   public @NotNull PiTerm asPi(boolean explicit) {
-    return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, 0, contextArgs);
+    return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, contextArgs);
   }
 
   public @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {
