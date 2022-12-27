@@ -89,8 +89,7 @@ public interface VarConsumer extends TermConsumer {
         var checker = new ScopeChecker(allowed.appendedAll(bound), confused, confused);
         hole.contextArgs().forEach(arg -> checker.accept(arg.term()));
         hole.args().forEach(arg -> accept(arg.term()));
-      }
-      super.accept(term);
+      } else super.accept(term);
     }
 
     @Contract(pure = true)
