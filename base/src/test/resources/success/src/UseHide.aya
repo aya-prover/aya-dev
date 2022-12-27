@@ -7,4 +7,4 @@ module A {
 
 open A using (True, False as True)
 
-counterexample def true-is-true : A::True = True => idp
+counterexample def true-is-true : A::True ↑ = True => idp

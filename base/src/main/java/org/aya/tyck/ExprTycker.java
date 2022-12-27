@@ -40,7 +40,6 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.PropTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
-import org.aya.util.Ordering;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -248,7 +247,7 @@ public final class ExprTycker extends PropTycker {
           // [ice] Cannot 'generatePi' because 'generatePi' takes the current contextTele,
           // but it may contain variables absent from the 'contextTele' of 'fTyHole.ref.core'
           var pi = fTyHole.asPi(argLicit);
-          unifier(sourcePos, Ordering.Eq).compare(fTy, pi, null);
+          state.solve(fTyHole.ref(), pi);
           fTy = whnf(fTy);
         }
         PathTerm cube;
