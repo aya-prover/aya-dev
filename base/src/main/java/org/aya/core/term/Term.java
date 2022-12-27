@@ -20,7 +20,7 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.LittleTyper;
+import org.aya.tyck.Synthesizer;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.util.Arg;
@@ -260,8 +260,12 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
   default @NotNull Term lift(int ulift) {
     return new EndoTerm.Elevator(ulift).apply(this);
   }
+  /**
+   * @return WHNF
+   * @throws NullPointerException if the term is an introduction rule
+   */
   default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
-    return new LittleTyper(state, ctx).term(this);
+    return new Synthesizer(state, ctx).press(this);
   }
 
   /**

@@ -6,10 +6,14 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import org.aya.core.visitor.AyaRestrSimplifier;
+import org.aya.core.visitor.Subst;
+import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Partial.Const;
 import org.aya.guest0x0.cubical.Partial.Split;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.tyck.tycker.TyckState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -55,5 +59,10 @@ public record PartialTerm(@NotNull Partial<Term> partial, @NotNull Term rhsType)
     var inner = AyaRestrSimplifier.INSTANCE.mapPartial(new Split<>(restr.orz().map(
       or -> new Restr.Side<>(or, u))), UnaryOperator.identity());
     return new PartialTerm(inner, rhsType);
+  }
+
+  public static boolean impliesCof(Restr<Term> needed, Restr<Term> defined, TyckState state) {
+    var restr = AyaRestrSimplifier.INSTANCE.normalizeRestr(needed.map(term -> term.freezeHoles(state)));
+    return CofThy.conv(restr, new Subst(), subst -> CofThy.satisfied(subst.restr(state, defined)));
   }
 }

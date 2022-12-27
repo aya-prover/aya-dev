@@ -7,11 +7,14 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
+import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.MetaTerm;
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.HoleProblem;
@@ -32,7 +35,7 @@ public record TyckState(
   @NotNull MutableList<Eqn> eqns,
   @NotNull MutableList<WithPos<Meta>> activeMetas,
   @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas,
-  @NotNull MutableSet<@NotNull Meta> metaNotProps,
+  @NotNull MutableSet<@NotNull Meta> notInPropMetas,
   @NotNull PrimDef.Factory primFactory
 ) {
   public TyckState(@NotNull PrimDef.Factory primFactory) {
@@ -96,6 +99,19 @@ public record TyckState(
     consumer.accept(eqn.lhs);
     consumer.accept(eqn.rhs);
     assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
+  }
+
+  public boolean solve(@NotNull Meta meta, @NotNull Term t) {
+    if (t.findUsages(meta) > 0) return false;
+    if (notInPropMetas.contains(meta)) {
+      var term = t.normalize(this, NormalizeMode.WHNF);
+      if (!(term instanceof ErrorTerm)) {
+        if (!(term instanceof SortTerm sort)) throw new IllegalStateException("expected a sort: " + t);
+        if (sort.isProp()) throw new IllegalStateException("expected a non-Prop sort"); // TODO: better reporting
+      }
+    }
+    metas().put(meta, t);
+    return true;
   }
 
   public record Eqn(

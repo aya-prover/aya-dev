@@ -11,9 +11,9 @@ import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.tycker.TyckState;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,10 +25,13 @@ public sealed interface HoleProblem extends Problem {
     return Severity.ERROR;
   }
 
+  @Override default @NotNull SourcePos sourcePos() {
+    return term().ref().sourcePos;
+  }
+
   /** @author ice1000 */
   record BadSpineError(
-    @Override @NotNull MetaTerm term,
-    @Override @NotNull SourcePos sourcePos
+    @Override @NotNull MetaTerm term
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
@@ -38,11 +41,25 @@ public sealed interface HoleProblem extends Problem {
     }
   }
 
+  record IllTypedError(
+    @Override @NotNull MetaTerm term,
+    @NotNull Term result,
+    @Override @NotNull Term solution
+  ) implements HoleProblem {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.vcat(
+        Doc.english("The meta is supposed to have type"),
+        Doc.par(1, result.toDoc(options)),
+        Doc.english("However, the solution below does not have the same type:"),
+        Doc.par(1, solution.toDoc(options))
+      );
+    }
+  }
+
   record BadlyScopedError(
     @Override @NotNull MetaTerm term,
     @NotNull Term solved,
-    @NotNull Seq<LocalVar> scopeCheck,
-    @Override @NotNull SourcePos sourcePos
+    @NotNull Seq<LocalVar> scopeCheck
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
@@ -62,8 +79,7 @@ public sealed interface HoleProblem extends Problem {
    */
   record RecursionError(
     @Override @NotNull MetaTerm term,
-    @NotNull Term sol,
-    @Override @NotNull SourcePos sourcePos
+    @NotNull Term sol
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(

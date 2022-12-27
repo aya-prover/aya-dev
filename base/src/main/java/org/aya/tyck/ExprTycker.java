@@ -40,7 +40,6 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.PropTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
-import org.aya.util.Ordering;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +74,7 @@ public final class ExprTycker extends PropTycker {
     return switch (expr) {
       case Expr.Lambda lam when lam.param().type() instanceof Expr.Hole -> inherit(lam, generatePi(lam));
       case Expr.Lambda lam -> {
-        var paramTy = ty(lam.param().type()).wellTyped();
+        var paramTy = ty(lam.param().type());
         yield localCtx.with(lam.param().ref(), paramTy, () -> {
           var body = synthesize(lam.body());
           var param = new Term.Param(lam.param(), paramTy);
@@ -83,7 +82,10 @@ public final class ExprTycker extends PropTycker {
           return new Result.Default(new LamTerm(param, body.wellTyped()), pi);
         });
       }
-      case Expr.Sort sort -> ty(sort);
+      case Expr.Sort sort -> {
+        var ty = ty(sort);
+        yield new Result.Default(ty, ty.lift(1));
+      }
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
           // not defined in lets, search localCtx
@@ -93,8 +95,14 @@ public final class ExprTycker extends PropTycker {
         case DefVar<?, ?> defVar -> inferRef(defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
-      case Expr.Pi pi -> ty(pi);
-      case Expr.Sigma sigma -> ty(sigma);
+      case Expr.Pi pi -> {
+        var corePi = ty(pi);
+        yield new Result.Default(corePi, corePi.computeType(state, localCtx));
+      }
+      case Expr.Sigma sigma -> {
+        var coreSigma = ty(sigma);
+        yield new Result.Default(coreSigma, coreSigma.computeType(state, localCtx));
+      }
       case Expr.Lift lift -> {
         var result = synthesize(lift.expr());
         var levels = lift.lift();
@@ -204,6 +212,9 @@ public final class ExprTycker extends PropTycker {
           };
           var freezes = CofThy.conv(restr, new Subst(), subst -> {
             // normalizes to NF in case the `type` was eta-expanded from a definition.
+            // This type decl can be inferred by javac (say, if we use `var` instead of `Term`).
+            // However, IntelliJ IDEA is not always able to infer it, and reports error on the usages.
+            // So I decided to explicitly specify the type here.
             Term typeSubst = type.subst(subst).normalize(state, NormalizeMode.NF);
             // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
             // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
@@ -236,7 +247,7 @@ public final class ExprTycker extends PropTycker {
           // [ice] Cannot 'generatePi' because 'generatePi' takes the current contextTele,
           // but it may contain variables absent from the 'contextTele' of 'fTyHole.ref.core'
           var pi = fTyHole.asPi(argLicit);
-          unifier(sourcePos, Ordering.Eq).compare(fTy, pi, null);
+          state.solve(fTyHole.ref(), pi);
           fTy = whnf(fTy);
         }
         PathTerm cube;
@@ -344,7 +355,7 @@ public final class ExprTycker extends PropTycker {
         // Now everything is in the form of `let f : G := g in h`
 
         // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
-        var type = synthesize(typeExpr).wellTyped().freezeHoles(state);
+        var type = ty(typeExpr).freezeHoles(state);
         var definedAsResult = inherit(definedAsExpr, type);
         var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 
@@ -453,17 +464,6 @@ public final class ExprTycker extends PropTycker {
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
         yield new Result.Default(freshHole._2, term);
       }
-      case Expr.Sort sortExpr -> {
-        var result = ty(sortExpr);
-        var normTerm = whnf(term);
-        if (normTerm instanceof SortTerm sort) {
-          var unifier = unifier(sortExpr.sourcePos(), Ordering.Lt);
-          unifier.compareSort(result.type(), sort);
-        } else {
-          unifyTyReported(result.type(), normTerm, sortExpr);
-        }
-        yield new Result.Default(result.wellTyped(), normTerm);
-      }
       case Expr.Lambda lam -> {
         if (term instanceof MetaTerm) {
           if (lam.param().type() instanceof Expr.Hole)
@@ -511,7 +511,7 @@ public final class ExprTycker extends PropTycker {
         var rhsType = ty.type();
         var partial = elaboratePartial(el, rhsType);
         var face = partial.restr();
-        if (!CofThy.conv(cofTy, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
+        if (!PartialTerm.impliesCof(cofTy, face, state))
           yield fail(el, new CubicalError.FaceMismatch(el, face, cofTy));
         yield new Result.Default(new PartialTerm(partial, rhsType), ty);
       }
@@ -525,55 +525,40 @@ public final class ExprTycker extends PropTycker {
     };
   }
 
-  private @NotNull Result.Type doTy(@NotNull Expr expr) {
+  private @NotNull Term doTy(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Hole hole -> {
         var freshHole = localCtx.freshTyHole(Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        // TODO: implement type-only hole
-        yield new Result.Type(freshHole._2, SortTerm.Type0);
+        yield freshHole._2;
       }
-      case Expr.Sort sort -> {
-        var self = new SortTerm(sort.kind(), sort.lift());
-        yield new Result.Type(self, self.succ());
-      }
+      case Expr.Sort sort -> new SortTerm(sort.kind(), sort.lift());
       case Expr.Pi pi -> {
         var param = pi.param();
         final var var = param.ref();
         var domRes = ty(param.type());
-        addWithTerm(param, domRes.wellTyped());
-        var resultParam = new Term.Param(var, domRes.wellTyped(), param.explicit());
-        yield localCtx.with(resultParam, () -> {
-          var cod = ty(pi.last());
-          return new Result.Type(new PiTerm(resultParam, cod.wellTyped()), sortPi(pi, domRes.type(), cod.type()));
-        });
+        addWithTerm(param, domRes);
+        var resultParam = new Term.Param(var, domRes, param.explicit());
+        yield localCtx.with(resultParam, () -> new PiTerm(resultParam, ty(pi.last())));
       }
       case Expr.Sigma sigma -> {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
-        var resultTypes = MutableList.<SortTerm>create();
         for (var tuple : sigma.params()) {
           var result = ty(tuple.type());
-          addWithTerm(tuple, result.wellTyped());
-          resultTypes.append(result.type());
+          addWithTerm(tuple, result);
           var ref = tuple.ref();
-          localCtx.put(ref, result.wellTyped());
-          resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped()));
+          localCtx.put(ref, result);
+          resultTele.append(Tuple.of(ref, tuple.explicit(), result));
         }
-        var unifier = unifier(sigma.sourcePos(), Ordering.Lt);
-        var maxSort = resultTypes.reduce(SigmaTerm::max);
-        if (!maxSort.isProp()) resultTypes.forEach(t -> unifier.compareSort(t, maxSort));
         localCtx.remove(sigma.params().view().map(Expr.Param::ref));
-        yield new Result.Type(new SigmaTerm(Term.Param.fromBuffer(resultTele)), maxSort);
+        yield new SigmaTerm(Term.Param.fromBuffer(resultTele));
       }
-      default -> {
-        var result = synthesize(expr);
-        yield new Result.Type(result.wellTyped(), sort(expr, result.type()));
-      }
+      default -> synthesize(expr).wellTyped();
     };
   }
 
   public @NotNull Result.Sort sort(@NotNull Expr expr) {
-    return new Result.Sort(sort(expr, ty(expr).wellTyped()));
+    return new Result.Sort(sort(expr, ty(expr)));
   }
 
   private @NotNull SortTerm sort(@NotNull Expr errorMsg, @NotNull Term term) {
@@ -609,15 +594,21 @@ public final class ExprTycker extends PropTycker {
     return traced(() -> new Trace.ExprT(expr, null), expr, this::doSynthesize);
   }
 
-  public @NotNull Result.Type ty(@NotNull Expr expr) {
-    return traced(() -> new Trace.ExprT(expr, null), expr, this::doTy);
+  public @NotNull Term ty(@NotNull Expr expr) {
+    return traced(() -> new Trace.ExprT(expr, null), () -> doTy(expr));
   }
 
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
     return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
   }
 
+  /// TODO[isType]: This function should be rewritten.
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
-    return withResult(type, () -> inherit(expr, type));
+    if (type instanceof MetaTerm) {
+      var synthesis = synthesize(expr);
+      unifyTyReported(type, synthesis.type(), expr);
+      return synthesis;
+    }
+    return withInProp(isPropType(type), () -> inherit(expr, type));
   }
 }

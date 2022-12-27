@@ -19,7 +19,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.Modifier;
-import org.aya.generic.SortKind;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.SeqLocalCtx;
@@ -28,6 +27,7 @@ import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.DoubleChecker;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.TreeBuilder;
@@ -78,14 +78,12 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
-        yield decl.body.fold(
-          body -> {
+        yield decl.body.fold(body -> {
             var nobody = tycker.check(body, signature.result()).wellTyped();
             // It may contain unsolved metas. See `checkTele`.
             var resultTy = tycker.zonk(signature.result());
             return factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
-          },
-          clauses -> {
+          }, clauses -> {
             var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
             var pos = decl.sourcePos;
@@ -150,9 +148,16 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     record Tmp(ImmutableSeq<TeleResult> okTele, Term preresult, Term prebody) {}
     var tmp = tycker.subscoped(() -> {
       var okTele = checkTele(tycker, fn.telescope, null);
-      var preresult = tycker.synthesize(fn.result).wellTyped();
       var bodyExpr = fn.body.getLeftValue();
-      var prebody = tycker.check(bodyExpr, preresult).wellTyped();
+      Term preresult, prebody;
+      if (fn.result != null) {
+        preresult = tycker.synthesize(fn.result).wellTyped();
+        prebody = tycker.check(bodyExpr, preresult).wellTyped();
+      } else {
+        var synthesize = tycker.synthesize(bodyExpr);
+        prebody = synthesize.wellTyped();
+        preresult = synthesize.type();
+      }
       return new Tmp(okTele, preresult, prebody);
     });
     var tele = zonkTele(tycker, tmp.okTele);
@@ -169,7 +174,8 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       case TeleDecl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, null);
         // It might contain unsolved holes, but that's acceptable.
-        var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
+        if (fn.result == null) fn.result = new Expr.Hole(fn.sourcePos, false, null);
+        var resultRes = tycker.ty(fn.result).freezeHoles(tycker.state);
         // We cannot solve metas in result type from clauses,
         //  because when we're in the clauses, the result type is substituted,
         //  and it doesn't make sense to solve a "substituted meta"
@@ -202,7 +208,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var tele = tele(tycker, prim.telescope, null);
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
-          if (prim.result instanceof Expr.Error) {
+          if (prim.result == null) {
             reporter.report(new PrimError.NoResultType(prim));
             return;
           }
@@ -213,7 +219,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
             PiTerm.make(core.telescope, core.result),
             prim.result);
           prim.signature = new Def.Signature<>(tele, result);
-        } else if (!(prim.result instanceof Expr.Error)) {
+        } else if (prim.result != null) {
           var result = tycker.synthesize(prim.result).wellTyped();
           tycker.unifyTyReported(result, core.result, prim.result);
         } else prim.signature = new Def.Signature<>(core.telescope, core.result);
@@ -228,7 +234,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         assert structSig != null;
         var structLvl = structSig.result();
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
-        var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl)).wellTyped();
+        var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl).wellTyped());
         field.signature = new Def.Signature<>(tele, result);
       }
     }
@@ -268,7 +274,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     // Users may have written the result type explicitly
     if (ctor.result != null) {
       // At this point, they may contain metas
-      var result = tycker.ty(ctor.result).wellTyped().normalize(tycker.state, NormalizeMode.NF);
+      var result = tycker.ty(ctor.result).normalize(tycker.state, NormalizeMode.NF);
       var additionalTele = MutableArrayList.<Term.Param>create();
       result = PiTerm.unpi(result, tycker::whnf, additionalTele);
       Partial<Term> partial = null;
@@ -304,7 +310,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl<SortTerm> data) {
-    if (!(data.result instanceof Expr.Hole)) {
+    if (data.result != null) {
       var result = tycker.sort(data.result);
       return (SortTerm) tycker.zonk(result.wellTyped());
     }
@@ -322,20 +328,16 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
 
   private record TeleResult(@NotNull Term.Param param, @NotNull SourcePos pos) {}
 
-  // similiar to `ExprTycker.sortPi`. `tele` is the domain.
-  private @NotNull Result checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
+
+  /**
+   * @param tele A type in the telescope of a constructor.
+   * @param sort the universe of the data type.
+   */
+  private @NotNull Term checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
     var result = exprTycker.ty(tele);
     var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
-    var ty = result.type();
-    switch (ty.kind()) {
-      case Type, Set -> unifier.compareSort(ty, sort);
-      case Prop -> {
-        if (sort.kind() != SortKind.Type) unifier.compareSort(ty, sort);
-      }
-      case ISet -> {
-        if (!sort.kind().hasLevel()) unifier.compareSort(ty, sort);
-      }
-    }
+    // TODO[isType]: there is no restriction on constructor telescope now
+    // new DoubleChecker(unifier).inherit(result, sort);
     return result;
   }
 
@@ -348,7 +350,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       var paramTyped = (sort != null
         ? checkTele(exprTycker, param.type(), sort)
         : exprTycker.ty(param.type())
-      ).wellTyped();
+      );
       var newParam = new Term.Param(param, paramTyped);
       exprTycker.localCtx.put(newParam);
       exprTycker.addWithTerm(param, paramTyped);
@@ -357,9 +359,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull ImmutableSeq<Term.Param> zonkTele(@NotNull ExprTycker exprTycker, ImmutableSeq<TeleResult> okTele) {
+    exprTycker.solveMetas();
+    var zonker = Zonker.make(exprTycker);
     return okTele.map(tt -> {
       var rawParam = tt.param;
-      var param = new Term.Param(rawParam, exprTycker.zonk(rawParam.type()));
+      var param = new Term.Param(rawParam, zonker.apply(rawParam.type()));
       exprTycker.localCtx.put(param);
       return param;
     });

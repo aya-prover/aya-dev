@@ -138,9 +138,19 @@ public sealed abstract class TermComparator permits Unifier {
     lhs = lhs.normalize(state, NormalizeMode.WHNF);
     rhs = rhs.normalize(state, NormalizeMode.WHNF);
     if (compareApprox(lhs, rhs, lr, rl) != null) return true;
-    if (rhs instanceof MetaTerm) return compareUntyped(rhs, lhs, rl, lr) != null;
+    if (rhs instanceof MetaTerm rMeta) {
+      // In case we're comparing two metas with one isType and the other has a type,
+      // prefer solving the isType one to the typed one.
+      if (lhs instanceof MetaTerm lMeta && lMeta.ref().result == null)
+        return solveMeta(lMeta, rMeta, lr, rl, type) != null;
+      return solveMeta(rMeta, lhs, rl, lr, type) != null;
+    }
     // ^ Beware of the order!!
-    if (lhs instanceof MetaTerm || type == null) return compareUntyped(lhs, rhs, lr, rl) != null;
+    if (lhs instanceof MetaTerm lMeta) {
+      return solveMeta(lMeta, rhs, lr, rl, type) != null;
+    } else if (type == null) {
+      return compareUntyped(lhs, rhs, lr, rl) != null;
+    }
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
     var result = doCompareTyped(type.normalize(state, NormalizeMode.WHNF), lhs, rhs, lr, rl);
     if (!result && failure == null) failure = new FailureData(lhs, rhs);
@@ -516,7 +526,7 @@ public sealed abstract class TermComparator permits Unifier {
         case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
-      case MetaTerm lhs -> solveMeta(preRhs, lr, rl, lhs, null);
+      case MetaTerm lhs -> solveMeta(lhs, preRhs, lr, rl, null);
     };
     return ret;
   }
@@ -539,7 +549,7 @@ public sealed abstract class TermComparator permits Unifier {
     return null;
   }
 
-  protected abstract @Nullable Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs, @Nullable Term providedType);
+  protected abstract @Nullable Term solveMeta(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType);
 
   public boolean compareSort(SortTerm l, SortTerm r) {
     var result = switch (cmp) {

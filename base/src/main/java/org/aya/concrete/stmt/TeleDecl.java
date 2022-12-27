@@ -35,7 +35,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   extends CommonDecl implements Decl.Telescopic<RetTy>, Decl.TopLevel {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
-  public @NotNull Expr result;
+  public @Nullable Expr result;
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
   public @Nullable Def.Signature<RetTy> signature;
@@ -52,12 +52,12 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     this.ctx = ctx;
   }
 
-  @Override public @NotNull Expr result() {
+  @Override public @Nullable Expr result() {
     return result;
   }
 
   @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
-    result = f.apply(result);
+    if (result != null) result = f.apply(result);
   }
 
   @Override public @NotNull ImmutableSeq<Expr.Param> telescope() {
@@ -78,7 +78,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     @Nullable OpInfo opInfo,
     @NotNull BindBlock bindBlock,
     @NotNull ImmutableSeq<Expr.Param> telescope,
-    @NotNull Expr result,
+    @Nullable Expr result,
     @NotNull Decl.Personality personality
   ) {
     super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock);
@@ -102,7 +102,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result
+      @Nullable Expr result
     ) {
       super(sourcePos, entireSourcePos, Accessibility.Public, null, BindBlock.EMPTY, telescope, result, Personality.NORMAL);
       this.ref = DefVar.concrete(this, name);
@@ -190,7 +190,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       @Nullable OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result,
+      @Nullable Expr result,
       @NotNull ImmutableSeq<DataCtor> body,
       @NotNull BindBlock bindBlock,
       @NotNull Decl.Personality personality
@@ -311,7 +311,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       @Nullable OpDecl.OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result,
+      @Nullable Expr result,
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
       @NotNull BindBlock bindBlock,
       @NotNull Decl.Personality personality

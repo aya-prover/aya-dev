@@ -13,11 +13,11 @@ import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -77,7 +77,8 @@ public final class Unifier extends TermComparator {
     return overlap;
   }
 
-  @Override @Nullable protected Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs, @Nullable Term providedType) {
+  @Override @Nullable
+  protected Term solveMeta(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType) {
     var meta = lhs.ref();
     var sameMeta = sameMeta(lr, rl, lhs, meta, preRhs);
     if (sameMeta.isDefined()) return sameMeta.get();
@@ -85,16 +86,31 @@ public final class Unifier extends TermComparator {
     // which solves more universe levels. However, with latest version Aya (0.13),
     // removing this does not break anything.
     // Update: this is still needed, see #327 last task (`coe'`)
-    var resultTy = preRhs.computeType(state, ctx);
-    // resultTy might be an ErrorTerm, what to do?
-    if (meta.result != null) {
-      compare(resultTy, meta.result, rl, lr, null);
+    var checker = new DoubleChecker(new Unifier(Ordering.Lt,
+      reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
+    var expectedType = meta.result;
+    if (expectedType == null) expectedType = providedType;
+    else if (providedType != null) {
+      // The provided type from the context, hence neither from LHS nor RHS,
+      // so we don't substitute it backwards, hence the empty `Sub`.
+      compareUntyped(expectedType, providedType, lr, new Sub());
+      expectedType = expectedType.freezeHoles(state);
+    }
+    if (expectedType != null) {
+      // resultTy might be an ErrorTerm, what to do?
+      if (!checker.inherit(preRhs, expectedType))
+        reporter.report(new HoleProblem.IllTypedError(lhs, expectedType, preRhs));
+    } else {
+      expectedType = checker.synthesizer().synthesize(preRhs);
+      if (expectedType == null) {
+        throw new UnsupportedOperationException("TODO: add an error report for this");
+      }
     }
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
     var overlap = invertSpine(subst, lhs, meta);
     if (overlap == null) {
-      reporter.report(new HoleProblem.BadSpineError(lhs, pos));
+      reporter.report(new HoleProblem.BadSpineError(lhs));
       return null;
     }
     // In this case, the solution may not be unique (see #608),
@@ -102,7 +118,7 @@ public final class Unifier extends TermComparator {
     if (!allowVague && overlap.anyMatch(var -> preRhs.findUsages(var) > 0)) {
       state.addEqn(createEqn(lhs, preRhs, lr, rl));
       // Skip the unification and scope check
-      return resultTy;
+      return expectedType;
     }
     // Now we are sure that the variables in overlap are all unused.
 
@@ -131,22 +147,22 @@ public final class Unifier extends TermComparator {
       scopeCheck = solved.scopeCheck(allowedVars);
     }
     if (scopeCheck.invalid.isNotEmpty()) {
-      reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid, pos));
+      reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.invalid));
       return new ErrorTerm(solved);
     }
     if (scopeCheck.confused.isNotEmpty()) {
+      // Delay the equation and do not solve the meta
       if (allowConfused) state.addEqn(createEqn(lhs, solved, lr, rl));
       else {
-        reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused, pos));
+        reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused));
         return new ErrorTerm(solved);
       }
-    }
-    if (!meta.solve(state, solved)) {
-      reporter.report(new HoleProblem.RecursionError(lhs, solved, pos));
+    } else if (!state.solve(meta, solved)) {
+      reporter.report(new HoleProblem.RecursionError(lhs, solved));
       return new ErrorTerm(solved);
     }
     tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-    return resultTy;
+    return expectedType;
   }
 
   /**

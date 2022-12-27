@@ -1,11 +1,1 @@
-In file $FILE:3:8 ->
-
-  1 │   data List (A : Type 1) : Type 0
-  2 │    | nil
-  3 │    | cons A (List A)
-    │           ╰╯
-
-Error: The level here is expected to be <= Type 0 but it is actually Type 1
-
-1 error(s), 0 warning(s).
-What are you doing?
+That looks right!

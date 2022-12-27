@@ -5,8 +5,8 @@ In file $FILE:9:17 ->
   9 │   def lit1 => some 514
     │                    ╰─╯
 
-Error: Unsolved meta _ty514'
-       in `Option _ty514'`
+Error: Unsolved meta A'
+       in `Option A'`
 
 In file $FILE:9:17 ->
 
@@ -15,7 +15,7 @@ In file $FILE:9:17 ->
   9 │   def lit1 => some 514
     │                    ╰─╯
 
-Error: Unsolved meta _ty514'
+Error: Unsolved meta A'
        in `some 514`
 
 In file $FILE:9:17 ->
@@ -25,7 +25,7 @@ In file $FILE:9:17 ->
   9 │   def lit1 => some 514
     │                    ╰─╯
 
-Error: Unsolved meta _ty514'
+Error: Unsolved meta A'
        in `514`
        in `some 514`
 
