@@ -9,6 +9,7 @@ import org.aya.cli.single.SingleAyaFile;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.test.EmptyModuleLoader;
@@ -115,7 +116,7 @@ public class AyaMdParserTest {
     loader.tyckModule(null, info, null);
     literate.tyckAdditional(info);
 
-    var doc = literate.docitfy(stmts).toDoc();
+    var doc = literate.docitfy(stmts, AyaPrettierOptions.pretty()).toDoc();
     var expectedMd = doc.renderToAyaMd();
     Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
     Files.writeString(oneCase.outMdFile(), expectedMd);

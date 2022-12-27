@@ -15,11 +15,12 @@ import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface FaithfulPrettier {
-  static void checkHighlights(@NotNull SeqLike<HighlightInfo> highlights) {
+public record FaithfulPrettier(@NotNull PrettierOptions options) {
+  private static void checkHighlights(@NotNull SeqLike<HighlightInfo> highlights) {
     var lastEndIndex = -1;
 
     for (var highlight : highlights) {
@@ -45,7 +46,7 @@ public interface FaithfulPrettier {
    *                   so it probably not starts from 0).
    * @param highlights the highlights for the source code
    */
-  static @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
+  public @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
     highlights = highlights.sorted().view()
       .distinct()
       .filter(h -> h.sourcePos() != SourcePos.NONE)
@@ -56,7 +57,7 @@ public interface FaithfulPrettier {
     return doHighlight(StringView.of(raw), base, highlights);
   }
 
-  private static @NotNull Doc doHighlight(@NotNull StringView raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
+  private @NotNull Doc doHighlight(@NotNull StringView raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {
@@ -67,8 +68,7 @@ public interface FaithfulPrettier {
       var newBase = parts._4;
 
       if (highlightPart != Doc.empty()) {
-        // Hit if:
-        // * SourcePos contains nothing
+        // Hit if: SourcePos contains nothing
         docs.append(highlightPart);
       }
 
@@ -81,7 +81,7 @@ public interface FaithfulPrettier {
     return Doc.cat(docs);
   }
 
-  private static @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
+  private @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
     if (raw.isEmpty()) return Doc.empty();
     return switch (highlight) {
       case HighlightInfo.SymDef symDef ->
@@ -93,12 +93,12 @@ public interface FaithfulPrettier {
     };
   }
 
-  private static @Nullable String hover(@Nullable AyaDocile term) {
+  private @Nullable String hover(@Nullable AyaDocile term) {
     if (term == null) return null;
-    return term.toDoc(AyaPrettierOptions.pretty()).commonRender(); // TODO: prettier options
+    return term.toDoc(options()).commonRender();
   }
 
-  private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {
+  private @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {
     var style = switch (defKind) {
       case Data -> BasePrettier.DATA;
       case Con -> BasePrettier.CON;
@@ -117,7 +117,7 @@ public interface FaithfulPrettier {
     }
   }
 
-  private static @NotNull Doc highlightLit(@NotNull String raw, @NotNull HighlightInfo.LitKind litKind) {
+  private @NotNull Doc highlightLit(@NotNull String raw, @NotNull HighlightInfo.LitKind litKind) {
     return switch (litKind) {
       case Int -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
