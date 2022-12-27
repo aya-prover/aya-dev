@@ -147,8 +147,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     definitions.get(name).set(modName, ref);
     if (modName.equals(TOP_LEVEL_MOD_NAME)) {
       // Defined, not imported.
-      // TODO: check duplicate export
-      modules().get(TOP_LEVEL_MOD_NAME).export(name, ref);
+      var success = modules().get(TOP_LEVEL_MOD_NAME).export(name, ref);
+      if (!success) {
+        reporter().report(new NameProblem.DuplicateExportError(name, sourcePos));
+      }
     }
   }
 }

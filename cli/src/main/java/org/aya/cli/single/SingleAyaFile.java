@@ -68,24 +68,30 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     var renderOptions = flags.renderOptions();
     var withStyleDef = !flags.prettyNoCodeStyle();
     if (currentStage == MainArgs.PrettyStage.literate) {
-      var text = renderOptions.render(out, docitfy((ImmutableSeq<Stmt>) doc), true, withStyleDef, !flags.ascii());
+      var text = renderOptions.render(out,
+        docitfy((ImmutableSeq<Stmt>) doc, flags.prettierOptions()),
+        true,
+        withStyleDef,
+        !flags.ascii());
       FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
       doWrite(doc, prettyDir, flags.prettierOptions(), fileName, out.fileExt,
         (d, hdr) -> renderOptions.render(out, d, hdr, withStyleDef, !flags.ascii()));
     }
   }
-  @VisibleForTesting default @NotNull Doc docitfy(ImmutableSeq<Stmt> program) throws IOException {
+  @VisibleForTesting default @NotNull Doc docitfy(
+    @NotNull ImmutableSeq<Stmt> program,
+    @NotNull PrettierOptions options) throws IOException {
     var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
     var literate = literate();
-    new HighlightsCollector(highlights).accept(literate);
+    new HighlightsCollector(highlights, options).accept(literate);
     return literate.toDoc();
   }
 
   private void doWrite(
-          ImmutableSeq<? extends AyaDocile> doc, Path prettyDir,
-          @NotNull PrettierOptions options, String fileName, String fileExt,
-          BiFunction<Doc, Boolean, String> toString
+    ImmutableSeq<? extends AyaDocile> doc, Path prettyDir,
+    @NotNull PrettierOptions options, String fileName, String fileExt,
+    BiFunction<Doc, Boolean, String> toString
   ) throws IOException {
     var docs = MutableList.<Doc>create();
     var eachPrettyDir = prettyDir.resolve(fileName + ".each");

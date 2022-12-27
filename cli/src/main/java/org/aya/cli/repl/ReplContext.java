@@ -32,8 +32,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     @NotNull SourcePos sourcePos) {
     definitions.getOrPut(name, MutableHashMap::of).set(modName, ref);
     if (accessibility == Stmt.Accessibility.Public) {
-      // TODO: check export
-      exports.get(TOP_LEVEL_MOD_NAME).export(name, ref);
+      exports.get(TOP_LEVEL_MOD_NAME).exportAnyway(name, ref);
     }
   }
 
