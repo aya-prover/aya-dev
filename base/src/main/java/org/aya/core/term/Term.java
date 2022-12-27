@@ -9,23 +9,24 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple3;
+import org.aya.core.UntypedParam;
 import org.aya.core.pat.Pat;
 import org.aya.core.visitor.*;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.Synthesizer;
-import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,10 +63,9 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       }
       case StringTerm str -> str;
       case LamTerm lambda -> {
-        var param = lambda.param().descent(f);
         var body = f.apply(lambda.body());
-        if (param == lambda.param() && body == lambda.body()) yield lambda;
-        yield new LamTerm(param, body);
+        if (body == lambda.body()) yield lambda;
+        yield new LamTerm(lambda.param(), body);
       }
       case TupTerm tuple -> {
         var items = tuple.items().map(x -> x.descent(f));
@@ -272,10 +272,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
    * @author re-xyr
    */
   record Param(
-    @NotNull LocalVar ref,
-    @NotNull Term type,
-    boolean explicit
-  ) implements ParamLike<Term> {
+    @Override @NotNull LocalVar ref,
+    @Override @NotNull Term type,
+    @Override boolean explicit
+  ) implements ParamLike<Term>, UntypedParam {
     public Param(@NotNull ParamLike<?> param, @NotNull Term type) {
       this(param.ref(), type, param.explicit());
     }
@@ -296,18 +296,6 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
 
     @Contract(" -> new") public @NotNull Param rename() {
       return new Param(renameVar(), type, explicit);
-    }
-
-    @Contract(" -> new") public @NotNull LocalVar renameVar() {
-      return ref.rename();
-    }
-
-    @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
-      return new Arg<>(toTerm(), explicit);
-    }
-
-    @Contract(" -> new") public @NotNull RefTerm toTerm() {
-      return new RefTerm(ref);
     }
 
     public @NotNull Arg<Pat> toPat() {

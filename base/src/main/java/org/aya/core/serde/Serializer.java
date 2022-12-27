@@ -108,10 +108,10 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeCall(fnCall.ulift(), fnCall.args()));
       case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
       case AppTerm app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
-      case MatchTerm match ->
-        new SerTerm.Match(match.discriminant().map(this::serialize), match.clauses().map(this::serialize));
+      case MatchTerm(var disc, var clauses) ->
+        new SerTerm.Match(disc.map(this::serialize), clauses.map(this::serialize));
       case TupTerm tuple -> new SerTerm.Tup(serializeArgs(tuple.items()));
-      case LamTerm lambda -> new SerTerm.Lam(serialize(lambda.param()), serialize(lambda.body()));
+      case LamTerm(var param, var body) -> new SerTerm.Lam(serialize(param.ref()), param.explicit(), serialize(body));
       case NewTerm newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
         newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
 
@@ -122,12 +122,12 @@ public record Serializer(@NotNull Serializer.State state) {
       case PAppTerm app -> new SerTerm.PathApp(serialize(app.of()),
         serializeArgs(app.args()), serialize(app.cube()));
       case CoeTerm coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
+      case SortTerm sort -> serialize(sort);
 
       case MetaTerm hole -> throw new InternalException("Shall not have holes serialized.");
       case MetaPatTerm metaPat -> throw new InternalException("Shall not have metaPats serialized.");
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case MetaLitTerm err -> throw new InternalException("Shall not have metaLiterals serialized.");
-      case SortTerm sort -> serialize(sort);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InOutTerm(var phi, var u, var io) ->
         new SerTerm.InOut(serialize(phi), serialize(u), io == InOutTerm.Kind.In);

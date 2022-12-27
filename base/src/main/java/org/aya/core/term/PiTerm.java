@@ -88,14 +88,13 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
   public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar varI) {
     var u0Var = new LocalVar("u0");
     var vVar = new LocalVar("v");
-    var A = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), param.type());
-    var B = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), body);
-    var vType = AppTerm.make(A, new Arg<>(FormulaTerm.RIGHT, true));
+    var A = new LamTerm(new LamTerm.Param(varI, true), param.type());
+    var B = new LamTerm(new LamTerm.Param(varI, true), body);
     var w = AppTerm.make(CoeTerm.coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
     var BSubsted = B.subst(param.ref(), w.rename());
     var wSubsted = w.subst(varI, FormulaTerm.LEFT).rename();
-    return new LamTerm(BetaExpander.coeDom(u0Var, coe.type()),
-      new LamTerm(new Param(vVar, vType, true),
+    return new LamTerm(BetaExpander.coeDom(u0Var),
+      new LamTerm(new LamTerm.Param(vVar, true),
         AppTerm.make(new CoeTerm(BSubsted, coe.restr()),
           new Arg<>(AppTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
   }

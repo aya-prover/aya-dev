@@ -106,11 +106,11 @@ public class CorePrettier extends BasePrettier<Term> {
         } else bodyDoc = term(Outer.Free, body);
 
         if (!options.map.get(AyaPrettierOptions.Key.ShowImplicitPats))
-          params.retainIf(Term.Param::explicit);
+          params.retainIf(LamTerm.Param::explicit);
         if (params.isEmpty()) yield bodyDoc;
 
         var list = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
-        params.forEach(param -> list.append(lambdaParam(param)));
+        params.forEach(param -> list.append(Doc.bracedUnless(linkDef(param.ref()), param.explicit())));
         list.append(Doc.symbol("=>"));
         list.append(bodyDoc);
         var doc = Doc.sep(list);
@@ -241,7 +241,7 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   /** @return if we can eta-contract the last argument */
-  private boolean checkUneta(SeqView<Arg<Term>> args, Term.Param param) {
+  private boolean checkUneta(SeqView<Arg<Term>> args, LamTerm.Param param) {
     var arg = args.last();
     if (arg.explicit() != param.explicit()) return false;
     if (!(arg.term() instanceof RefTerm(var argVar))) return false;

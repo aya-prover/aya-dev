@@ -65,7 +65,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
       subst.add(param.ref(), item.fill(i));
       items.append(new Arg<>(item.app(), param.explicit()));
     }
-    return new LamTerm(BetaExpander.coeDom(t.var(), coe.type()),
+    return new LamTerm(BetaExpander.coeDom(t.var()),
       new TupTerm(items.toImmutableArray()));
   }
 

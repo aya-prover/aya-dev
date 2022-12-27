@@ -4,7 +4,6 @@ package org.aya.tyck.tycker;
 
 import org.aya.concrete.Expr;
 import org.aya.core.term.AppTerm;
-import org.aya.core.term.LamTerm;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Constants;
@@ -29,7 +28,7 @@ import java.util.function.Supplier;
  *
  * @author ice1000
  * @see #generatePi
- * @see #instImplicits
+ * @see #instImplicits(Result, SourcePos)
  * @see #mockArg
  * @see #mockTerm
  * @see #subscoped(Supplier)
@@ -67,14 +66,6 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
     var domain = localCtx.freshTyHole(genName + "ty", pos)._2;
     var codomain = localCtx.freshTyHole(genName + "ret", pos)._2;
     return new PiTerm(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
-  }
-
-  protected final Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
-    term = whnf(term);
-    while (term instanceof LamTerm intro && !intro.param().explicit()) {
-      term = whnf(AppTerm.make(intro, mockArg(intro.param(), pos)));
-    }
-    return term;
   }
 
   protected final Result instImplicits(@NotNull Result result, @NotNull SourcePos pos) {

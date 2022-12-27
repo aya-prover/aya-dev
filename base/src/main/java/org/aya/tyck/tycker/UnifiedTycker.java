@@ -101,7 +101,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
         var body = new PAppTerm(term, cube, new Arg<>(lamBind, true));
         var inner = inheritFallbackUnify(pi.substBody(lamBind),
           new Result.Default(body, cube.substType(SeqView.of(lamBind))), loc);
-        var lamParam = new Term.Param(lamBind.var(), IntervalTerm.INSTANCE, true);
+        var lamParam = new LamTerm.Param(lamBind.var(), true);
         return new Result.Default(new LamTerm(lamParam, inner.wellTyped()), pi);
       }
     }

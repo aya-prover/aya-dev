@@ -56,7 +56,7 @@ public interface BetaExpander extends EndoTerm {
       case CoeTerm coe -> {
         if (coe.restr() instanceof Restr.Const<Term> c && c.isOne()) {
           var var = new LocalVar("x");
-          yield new LamTerm(coeDom(var, coe.type()), new RefTerm(var));
+          yield new LamTerm(coeDom(var), new RefTerm(var));
         }
 
         var varI = new LocalVar("i");
@@ -68,7 +68,7 @@ public interface BetaExpander extends EndoTerm {
           case SigmaTerm sigma -> sigma.coe(coe, varI);
           case SortTerm type -> {
             var A = new LocalVar("A");
-            yield new LamTerm(new Term.Param(A, type, true), new RefTerm(A));
+            yield new LamTerm(new LamTerm.Param(A, true), new RefTerm(A));
           }
           default -> coe;
         };
@@ -76,7 +76,7 @@ public interface BetaExpander extends EndoTerm {
       default -> term;
     };
   }
-  @NotNull static Term.Param coeDom(LocalVar u0Var, Term type) {
-    return new Term.Param(u0Var, AppTerm.make(type, new Arg<>(FormulaTerm.LEFT, true)), true);
+  @NotNull static LamTerm.Param coeDom(LocalVar u0Var) {
+    return new LamTerm.Param(u0Var, true);
   }
 }
