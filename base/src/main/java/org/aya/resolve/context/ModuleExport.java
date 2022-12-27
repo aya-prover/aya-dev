@@ -34,6 +34,11 @@ public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
     return exists.isEmpty();
   }
 
+  public boolean exportAnyway(@NotNull String name, @NotNull AnyVar ref) {
+    var exists = put(name, ref);
+    return exists.isEmpty();
+  }
+
   /**
    * @return Ok if all the names are valid, and returns the new {@link ModuleExport};
    * Err if some names are invalid.
@@ -129,6 +134,10 @@ public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
 
   public @NotNull SetView<String> keysView() {
     return exports().keysView();
+  }
+
+  public @NotNull Option<AnyVar> put(@NotNull String key, @NotNull AnyVar value) {
+    return exports().put(key, value);
   }
 
   public @NotNull Option<AnyVar> putIfAbsent(@NotNull String key, @NotNull AnyVar value) {
