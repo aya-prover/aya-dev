@@ -359,9 +359,11 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull ImmutableSeq<Term.Param> zonkTele(@NotNull ExprTycker exprTycker, ImmutableSeq<TeleResult> okTele) {
+    exprTycker.solveMetas();
+    var zonker = Zonker.make(exprTycker);
     return okTele.map(tt -> {
       var rawParam = tt.param;
-      var param = new Term.Param(rawParam, exprTycker.zonk(rawParam.type()));
+      var param = new Term.Param(rawParam, zonker.apply(rawParam.type()));
       exprTycker.localCtx.put(param);
       return param;
     });

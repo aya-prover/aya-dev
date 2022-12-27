@@ -151,13 +151,13 @@ public final class Unifier extends TermComparator {
       return new ErrorTerm(solved);
     }
     if (scopeCheck.confused.isNotEmpty()) {
+      // Delay the equation and do not solve the meta
       if (allowConfused) state.addEqn(createEqn(lhs, solved, lr, rl));
       else {
         reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck.confused));
         return new ErrorTerm(solved);
       }
-    }
-    if (!state.solve(meta, solved)) {
+    } else if (!state.solve(meta, solved)) {
       reporter.report(new HoleProblem.RecursionError(lhs, solved));
       return new ErrorTerm(solved);
     }
