@@ -77,7 +77,8 @@ public final class Unifier extends TermComparator {
     return overlap;
   }
 
-  @Override @Nullable protected Term solveMeta(@NotNull Term preRhs, Sub lr, Sub rl, @NotNull MetaTerm lhs, @Nullable Term providedType) {
+  @Override @Nullable
+  protected Term solveMeta(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType) {
     var meta = lhs.ref();
     var sameMeta = sameMeta(lr, rl, lhs, meta, preRhs);
     if (sameMeta.isDefined()) return sameMeta.get();
@@ -88,6 +89,12 @@ public final class Unifier extends TermComparator {
     var checker = new DoubleChecker(new Unifier(Ordering.Lt,
       reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
     var expectedType = meta.result;
+    if (expectedType == null) expectedType = providedType;
+    else if (providedType != null) {
+      // The provided type from the context, hence neither from LHS nor RHS,
+      // so we don't substitute it backwards, hence the empty `Sub`.
+      compareUntyped(expectedType, providedType, lr, new Sub());
+    }
     if (expectedType != null) {
       // resultTy might be an ErrorTerm, what to do?
       if (!checker.inherit(preRhs, expectedType))
