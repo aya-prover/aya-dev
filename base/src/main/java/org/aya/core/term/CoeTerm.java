@@ -17,7 +17,7 @@ public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements
   public static @NotNull Term coeFill(@NotNull Term type, @NotNull Restr<Term> phi, Term ri) {
     var cofib = phi.or(new Restr.Cond<>(ri, false));
     var varY = new LocalVar("y");
-    var paramY = new Param(varY, IntervalTerm.INSTANCE, true);
+    var paramY = new LamTerm.Param(varY, true);
     var xAndY = FormulaTerm.and(ri, new RefTerm(varY));
     var a = new LamTerm(paramY, AppTerm.make(type, new Arg<>(xAndY, true)));
 
@@ -31,12 +31,11 @@ public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements
 
     var iOrR = FormulaTerm.or(new RefTerm(varI), r);
     var cofib = AyaRestrSimplifier.INSTANCE.isOne(r);
-    var Ar = AppTerm.make(A, new Arg<>(r, true));
     var AiOrR = AppTerm.make(A, new Arg<>(iOrR, true));
-    var lam = new LamTerm(new Param(varI, IntervalTerm.INSTANCE, true), AiOrR);
+    var lam = new LamTerm(new LamTerm.Param(varI, true), AiOrR);
     var transp = new CoeTerm(lam, cofib);
     var body = AppTerm.make(transp, new Arg<>(new RefTerm(varU), true));
-    return new LamTerm(new Param(LocalVar.IGNORED, Ar, true), body);
+    return new LamTerm(new LamTerm.Param(LocalVar.IGNORED, true), body);
   }
 
   /**
@@ -49,7 +48,7 @@ public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements
     var i = new LocalVar("i");
     var invertedI = FormulaTerm.inv(new RefTerm(i));
     return new LamTerm(
-      new Param(i, IntervalTerm.INSTANCE, true),
+      new LamTerm.Param(i, true),
       AppTerm.make(A, new Arg<>(invertedI, true)));
   }
 

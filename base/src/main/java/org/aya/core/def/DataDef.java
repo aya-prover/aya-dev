@@ -51,7 +51,7 @@ public final class DataDef extends UserDef.Type {
     public @NotNull Term toConCall(DefVar<CtorDef, TeleDecl.DataCtor> conVar, int ulift) {
       var body = new ConCall(fromCtor(conVar), conVar,
         ret.args(), ulift, selfTele.map(Term.Param::toArg));
-      return LamTerm.make(ownerTele.concat(selfTele), body).rename();
+      return LamTerm.make(ownerTele.view().concat(selfTele).map(LamTerm::param), body).rename();
     }
   }
 }
