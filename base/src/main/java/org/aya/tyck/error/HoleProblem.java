@@ -43,11 +43,10 @@ public sealed interface HoleProblem extends Problem {
 
   record IllTypedError(
     @Override @NotNull MetaTerm term,
+    @NotNull Term result,
     @Override @NotNull Term solution
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      var result = term.ref().result;
-      assert result != null;
       return Doc.vcat(
         Doc.english("The meta is supposed to have type"),
         Doc.par(1, result.toDoc(options)),

@@ -94,11 +94,12 @@ public final class Unifier extends TermComparator {
       // The provided type from the context, hence neither from LHS nor RHS,
       // so we don't substitute it backwards, hence the empty `Sub`.
       compareUntyped(expectedType, providedType, lr, new Sub());
+      expectedType = expectedType.freezeHoles(state);
     }
     if (expectedType != null) {
       // resultTy might be an ErrorTerm, what to do?
       if (!checker.inherit(preRhs, expectedType))
-        reporter.report(new HoleProblem.IllTypedError(lhs, preRhs));
+        reporter.report(new HoleProblem.IllTypedError(lhs, expectedType, preRhs));
     } else {
       expectedType = checker.synthesizer().synthesize(preRhs);
       if (expectedType == null) {
