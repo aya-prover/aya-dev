@@ -37,8 +37,9 @@ public record DoubleChecker(
       case ErrorTerm term -> true;
       case SigmaTerm sigma -> sigma.params().view()
         .allMatch(param -> inherit(param.type(), expected));
-      case LamTerm(var param, var body)when whnf(expected) instanceof PiTerm(var tparam, var tbody) ->
-        unifier.ctx.with(param.ref(), tparam.type(), () -> inherit(body, tbody));
+      case LamTerm(var param, var body)when whnf(expected) instanceof PiTerm pi ->
+        unifier.ctx.with(param.ref(), pi.param().type(), () ->
+          inherit(body, pi.substBody(new RefTerm(param.ref()))));
       case LamTerm lambda -> {
         unifier.reporter.report(new BadExprError(lambda, unifier.pos, expected));
         yield false;
