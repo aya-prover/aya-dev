@@ -111,7 +111,7 @@ public final class ExprTycker extends PropTycker {
       }
       case Expr.New aNew -> {
         var structExpr = aNew.struct();
-        var struct = instImplicits(synthesize(structExpr), structExpr.sourcePos()).wellTyped();
+        var struct = whnf(instImplicits(synthesize(structExpr), structExpr.sourcePos()).wellTyped());
         if (!(struct instanceof StructCall structCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, aNew, struct));
         var structRef = structCall.ref();
