@@ -112,7 +112,7 @@ public record PathTerm(
    * @see #computePi() for the type of the returned lambda
    */
   public @NotNull Term etaLam(@NotNull Term term) {
-    return params.map(x -> new Param(x, IntervalTerm.INSTANCE, true))
+    return params.map(x -> new LamTerm.Param(x, true))
       .foldRight(applyDimsTo(term), LamTerm::new).rename();
   }
 

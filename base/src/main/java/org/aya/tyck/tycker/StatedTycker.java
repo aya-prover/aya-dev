@@ -4,6 +4,7 @@ package org.aya.tyck.tycker;
 
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.generic.Modifier;
@@ -45,9 +46,9 @@ public abstract sealed class StatedTycker extends TracedTycker permits ConcreteA
 
   protected final @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
-    var teleRenamed = tele.map(org.aya.core.term.Term.Param::rename);
+    var teleRenamed = tele.map(LamTerm::paramRenamed);
     // unbound these abstracted variables
-    Term body = function.make(defVar, 0, teleRenamed.map(org.aya.core.term.Term.Param::toArg));
+    Term body = function.make(defVar, 0, teleRenamed.map(UntypedParam::toArg));
     var type = PiTerm.make(tele, Def.defResult(defVar)).rename();
     if ((defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) || defVar.core instanceof PrimDef) {
       body = whnf(body);

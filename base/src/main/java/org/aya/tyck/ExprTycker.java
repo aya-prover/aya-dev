@@ -186,7 +186,7 @@ public final class ExprTycker extends PropTycker {
 
           var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
-          var teleRenamed = tele.map(p -> new LamTerm.Param(p.renameVar(), p.explicit()));
+          var teleRenamed = tele.map(LamTerm::paramRenamed);
           var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(UntypedParam::toArg));
           return new Result.Default(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(structSubst)));
         });

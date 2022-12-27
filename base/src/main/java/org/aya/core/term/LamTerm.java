@@ -20,6 +20,9 @@ public record LamTerm(@NotNull Param param, @NotNull Term body) implements Stabl
   public static @NotNull Param param(@NotNull Term.Param param) {
     return new Param(param.ref(), param.explicit());
   }
+  public static @NotNull Param paramRenamed(@NotNull Term.Param param) {
+    return new Param(param.renameVar(), param.explicit());
+  }
 
   public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
     while (term instanceof LamTerm lambda) {

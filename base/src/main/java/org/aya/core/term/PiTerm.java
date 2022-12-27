@@ -82,7 +82,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
   }
 
   public static Term makeIntervals(Seq<LocalVar> list, Term type) {
-    return make(list.view().map(Param::interval), type);
+    return make(list.view().map(i -> new Param(i, IntervalTerm.INSTANCE, true)), type);
   }
 
   public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar varI) {
