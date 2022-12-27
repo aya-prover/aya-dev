@@ -45,14 +45,16 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
   public boolean isPropType(@NotNull Term type) {
     var sort = new Synthesizer(state, localCtx).synthesize(type);
     if (sort == null) throw new UnsupportedOperationException("Zaoqi");
+    sort = whnf(sort);
     if (sort instanceof MetaTerm meta) {
+      // TODO[isType]: refactor non-Prop assertions
       state.notInPropMetas().add(meta.ref()); // assert not Prop
       return false;
     }
     if (sort instanceof SortTerm s) return s.isProp();
     if (sort instanceof ErrorTerm) return false;
     throw new InternalException("Expected computeType() to produce a sort, got "
-      + type.toDoc(AyaPrettierOptions.pretty())
-      + " : " + sort.toDoc(AyaPrettierOptions.pretty()));
+      + type.toDoc(AyaPrettierOptions.pretty()).debugRender()
+      + " : " + sort.toDoc(AyaPrettierOptions.pretty()).debugRender());
   }
 }

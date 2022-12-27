@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
@@ -38,7 +39,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case Callable.DefCall call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
-      // TODO: deal with type-only metas
+      // TODO[isType]: deal with type-only metas
       case MetaTerm hole -> {
         var result = hole.ref().result;
         if (result != null) yield result;
@@ -49,7 +50,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       }
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {
-        var callRaw = press(preterm);
+        var callRaw = press(access.of());
         if (!(callRaw instanceof StructCall call)) yield unreachable(callRaw);
         var field = access.ref();
         var subst = DeltaExpander.buildSubst(Def.defTele(field), access.fieldArgs())
@@ -57,16 +58,16 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         yield Def.defResult(field).subst(subst);
       }
       case SigmaTerm sigma -> {
-        var univ = sigma.params().view()
-          .map(param -> press(param.type()))
-          .filterIsInstance(SortTerm.class)
-          .toImmutableSeq();
-        if (univ.sizeEquals(sigma.params().size())) {
-          yield univ.reduce(SigmaTerm::max);
-        } else {
-          // There can be metas in the sigma's parameters
-          yield ErrorTerm.typeOf(sigma);
+        var univ = MutableList.<SortTerm>create();
+        for (var param : sigma.params()) {
+          var pressed = press(param.type());
+          // TODO[isType]: There can be metas in the sigma's parameters
+          if (!(pressed instanceof SortTerm sort)) yield unreachable(pressed);
+          univ.append(sort);
+          ctx.put(param);
         }
+        ctx.remove(sigma.params().view().map(Term.Param::ref));
+        yield univ.reduce(SigmaTerm::max);
       }
       case PiTerm pi -> {
         var paramTyRaw = press(pi.param().type());
