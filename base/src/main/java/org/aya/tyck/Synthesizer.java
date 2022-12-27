@@ -62,12 +62,9 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
           .filterIsInstance(SortTerm.class)
           .toImmutableSeq();
         if (univ.sizeEquals(sigma.params().size())) {
-          try {
-            yield univ.reduce(SigmaTerm::max);
-          } catch (IllegalArgumentException ignored) {
-            yield ErrorTerm.typeOf(sigma);
-          }
+          yield univ.reduce(SigmaTerm::max);
         } else {
+          // There can be metas in the sigma's parameters
           yield ErrorTerm.typeOf(sigma);
         }
       }
