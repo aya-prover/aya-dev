@@ -32,12 +32,6 @@ public sealed interface Result {
     }
   }
 
-  record Type(@Override @NotNull Term wellTyped, @Override @NotNull SortTerm type) implements Result {
-    @Override public @NotNull Type freezeHoles(@NotNull TyckState state) {
-      return new Type(wellTyped.freezeHoles(state), type);
-    }
-  }
-
   record Sort(@Override @NotNull SortTerm wellTyped) implements Result {
     @Override public @NotNull SortTerm type() {
       return wellTyped.succ();

@@ -18,7 +18,6 @@ import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -344,10 +343,10 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
   }
 
   private boolean compareLambdaBody(LamTerm lambda, Term rhs, Sub lr, Sub rl, PiTerm pi) {
-    var arg = pi.param().toArg();
+    var lhsArg = lambda.param().toArg();
     rl.map.put(pi.param().ref(), lambda.param().toTerm());
-    var result = ctx.with(lambda.param(), () ->
-      compare(AppTerm.make(lambda, arg), AppTerm.make(rhs, arg), lr, rl, pi.body()));
+    var result = ctx.with(lambda.param().ref(), pi.param().type(), () ->
+      compare(AppTerm.make(lambda, lhsArg), AppTerm.make(rhs, lhsArg), lr, rl, pi.body()));
     rl.map.remove(pi.param().ref());
     return result;
   }
