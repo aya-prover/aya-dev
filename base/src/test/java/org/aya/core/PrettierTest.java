@@ -7,7 +7,6 @@ import org.aya.core.def.FnDef;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.LamTerm;
 import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -19,7 +18,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings("UnknownLanguage")
 public class PrettierTest {
   @Test public void fn() {
     var doc1 = declDoc("def id {A : Type} (a : A) : A => a");
@@ -168,7 +166,7 @@ public class PrettierTest {
     var a = new LocalVar("a");
     var A = new LocalVar("A");
     var x = new LocalVar("x");
-    var t = new AppTerm(new LamTerm(new Term.Param(a, new RefTerm(A), true), new RefTerm(a)), new Arg<>(new RefTerm(x), true));
+    var t = new AppTerm(new LamTerm(new LamTerm.Param(a, true), new RefTerm(a)), new Arg<>(new RefTerm(x), true));
     assertEquals("(\\ a => a) x", t.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
 
