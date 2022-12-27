@@ -511,7 +511,7 @@ public final class ExprTycker extends PropTycker {
         var rhsType = ty.type();
         var partial = elaboratePartial(el, rhsType);
         var face = partial.restr();
-        if (!CofThy.conv(cofTy, new Subst(), subst -> CofThy.satisfied(subst.restr(state, face))))
+        if (!PartialTerm.impliesCof(cofTy, face, state))
           yield fail(el, new CubicalError.FaceMismatch(el, face, cofTy));
         yield new Result.Default(new PartialTerm(partial, rhsType), ty);
       }

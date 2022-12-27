@@ -12,8 +12,10 @@ import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record DoubleChecker(@NotNull Unifier unifier, @NotNull Synthesizer synthesizer, @NotNull Sub lr,
-                            @NotNull Sub rl) {
+public record DoubleChecker(
+  @NotNull Unifier unifier, @NotNull Synthesizer synthesizer,
+  @NotNull Sub lr, @NotNull Sub rl
+) {
   public DoubleChecker {
     assert unifier.cmp == Ordering.Lt;
   }
@@ -42,7 +44,7 @@ public record DoubleChecker(@NotNull Unifier unifier, @NotNull Synthesizer synth
         yield false;
       }
       case PartialTerm(var par, var rhsTy)when whnf(expected) instanceof PartialTyTerm(var ty, var phi) -> {
-        if (!unifier.compareRestr(par.restr(), phi)) yield false;
+        if (!PartialTerm.impliesCof(phi, par.restr(), unifier.state)) yield false;
         yield compare(rhsTy, ty, null);
       }
       case TupTerm(var items)when whnf(expected) instanceof SigmaTerm sigma -> {

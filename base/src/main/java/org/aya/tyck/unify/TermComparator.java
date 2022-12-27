@@ -394,7 +394,7 @@ public sealed abstract class TermComparator permits Unifier {
    * Sub lr, Sub rl are unused because they are solely for the purpose of unification.
    * In this case, we don't expect unification.
    */
-  protected boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
+  private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
     return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
       && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
   }
