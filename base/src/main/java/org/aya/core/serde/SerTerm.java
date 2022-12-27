@@ -102,9 +102,9 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record Lam(@NotNull SerParam param, @NotNull SerTerm body) implements SerTerm {
+  record Lam(@NotNull SimpVar ref, boolean explicit, @NotNull SerTerm body) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new LamTerm(param.de(state), body.de(state));
+      return new LamTerm(new LamTerm.Param(ref.de(state), explicit), body.de(state));
     }
   }
 

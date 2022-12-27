@@ -36,8 +36,6 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
     throw new AssertionError("unreachable");
   }
 
-  private static final Term I = IntervalTerm.INSTANCE;
-
   public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar i) {
     var t = new RefTerm(new LocalVar("t"));
     assert params.sizeGreaterThanOrEquals(2);
@@ -58,14 +56,14 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
       // Item: t.ix
       var tn = new ProjTerm(t, ix++);
       // Because i : I |- params, so is i : I |- param, now bound An := \i. param
-      var An = new LamTerm(new Param(i, I, true), param.type().subst(subst));
+      var An = new LamTerm(new LamTerm.Param(i, true), param.type().subst(subst));
       // An.coe(Fill) t.ix
       var item = new Item(new CoeTerm(An, coe.restr()), new Arg<>(tn, true));
       // Substitution will take care of renaming
       subst.add(param.ref(), item.fill(i));
       items.append(new Arg<>(item.app(), param.explicit()));
     }
-    return new LamTerm(BetaExpander.coeDom(t.var(), coe.type()),
+    return new LamTerm(BetaExpander.coeDom(t.var()),
       new TupTerm(items.toImmutableArray()));
   }
 

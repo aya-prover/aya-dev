@@ -14,23 +14,23 @@ import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.prettier.AyaPrettierOptions;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
 import org.aya.generic.util.InternalException;
+import org.aya.prettier.AyaPrettierOptions;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.tycker.StatedTycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.pat.PatTycker;
+import org.aya.tyck.tycker.ConcreteAwareTycker;
 import org.aya.util.Arg;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public sealed interface Pat extends AyaDocile {
     return new CorePrettier(options).pat(this, true, BasePrettier.Outer.Free);
   }
 
-  @NotNull Pat zonk(@NotNull StatedTycker tycker);
+  @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker);
   /**
    * Make sure you are inline all patterns in order
    *
@@ -72,7 +72,7 @@ public sealed interface Pat extends AyaDocile {
       ctx.put(bind, type.subst(rhsSubst));
     }
 
-    @Override public @NotNull Pat zonk(@NotNull StatedTycker tycker) {
+    @Override public @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker) {
       return new Bind(bind, tycker.zonk(type));
     }
 
@@ -102,7 +102,7 @@ public sealed interface Pat extends AyaDocile {
       // only used for constructor ownerTele extraction for simpler indexed types
     }
 
-    @Override public @NotNull Pat zonk(@NotNull StatedTycker tycker) {
+    @Override public @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker) {
       throw new InternalException("unreachable");
     }
 
@@ -128,7 +128,7 @@ public sealed interface Pat extends AyaDocile {
       throw new InternalException("unreachable");
     }
 
-    @Override public @NotNull Pat zonk(@NotNull StatedTycker tycker) {
+    @Override public @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker) {
       return this;
     }
 
@@ -142,7 +142,7 @@ public sealed interface Pat extends AyaDocile {
       pats.forEach(pat -> pat.term().storeBindings(ctx, rhsSubst));
     }
 
-    @Override public @NotNull Tuple zonk(@NotNull StatedTycker tycker) {
+    @Override public @NotNull Tuple zonk(@NotNull ConcreteAwareTycker tycker) {
       return new Tuple(Arg.mapSeq(pats, t -> t.zonk(tycker)));
     }
 
@@ -160,7 +160,7 @@ public sealed interface Pat extends AyaDocile {
       params.forEach(pat -> pat.term().storeBindings(ctx, rhsSubst));
     }
 
-    @Override public @NotNull Pat zonk(@NotNull StatedTycker tycker) {
+    @Override public @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker) {
       return new Ctor(ref,
         params.map(pat -> pat.descent(x -> x.zonk(tycker))),
         // The cast must succeed
@@ -179,7 +179,7 @@ public sealed interface Pat extends AyaDocile {
     @NotNull DataCall type
   ) implements Pat, Shaped.Nat<Pat> {
 
-    @Override public @NotNull Pat zonk(@NotNull StatedTycker tycker) {
+    @Override public @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker) {
       // The cast must succeed
       return new Pat.ShapedInt(repr, recognition, (DataCall) tycker.zonk(type));
     }

@@ -16,20 +16,20 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.tycker.StatedTycker;
+import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -52,19 +51,14 @@ import java.util.function.UnaryOperator;
  * @see #compareUntyped(Term, Term, Sub, Sub) the "synthesize" direction
  * @see #compare(Term, Term, Sub, Sub, Term) the "inherit" direction
  */
-public sealed abstract class TermComparator permits Unifier {
-  protected final @Nullable Trace.Builder traceBuilder;
-  protected final @NotNull TyckState state;
-  protected final @NotNull Reporter reporter;
+public sealed abstract class TermComparator extends StatedTycker permits Unifier {
   protected final @NotNull SourcePos pos;
   protected final @NotNull Ordering cmp;
   protected final @NotNull LocalCtx ctx;
   private FailureData failure;
 
   public TermComparator(@Nullable Trace.Builder traceBuilder, @NotNull TyckState state, @NotNull Reporter reporter, @NotNull SourcePos pos, @NotNull Ordering cmp, @NotNull LocalCtx ctx) {
-    this.traceBuilder = traceBuilder;
-    this.state = state;
-    this.reporter = reporter;
+    super(reporter, traceBuilder, state);
     this.pos = pos;
     this.cmp = cmp;
     this.ctx = ctx;
@@ -116,10 +110,6 @@ public sealed abstract class TermComparator permits Unifier {
     return failure.map(t -> t.freezeHoles(state));
   }
 
-  protected final void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
-    if (traceBuilder != null) consumer.accept(traceBuilder);
-  }
-
   private void traceEntrance(@NotNull Trace trace) {
     tracing(builder -> builder.shift(trace));
   }
@@ -135,8 +125,8 @@ public sealed abstract class TermComparator permits Unifier {
   protected final boolean compare(Term lhs, Term rhs, Sub lr, Sub rl, @Nullable Term type) {
     if (lhs == rhs) return true;
     if (compareApprox(lhs, rhs, lr, rl) != null) return true;
-    lhs = lhs.normalize(state, NormalizeMode.WHNF);
-    rhs = rhs.normalize(state, NormalizeMode.WHNF);
+    lhs = whnf(lhs);
+    rhs = whnf(rhs);
     if (compareApprox(lhs, rhs, lr, rl) != null) return true;
     if (rhs instanceof MetaTerm rMeta) {
       // In case we're comparing two metas with one isType and the other has a type,
@@ -152,7 +142,7 @@ public sealed abstract class TermComparator permits Unifier {
       return compareUntyped(lhs, rhs, lr, rl) != null;
     }
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
-    var result = doCompareTyped(type.normalize(state, NormalizeMode.WHNF), lhs, rhs, lr, rl);
+    var result = doCompareTyped(whnf(type), lhs, rhs, lr, rl);
     if (!result && failure == null) failure = new FailureData(lhs, rhs);
     return result;
   }
@@ -164,20 +154,20 @@ public sealed abstract class TermComparator permits Unifier {
     if (isCall(lhs) || isCall(rhs)) {
       var ty = compareApprox(lhs, rhs, lr, rl);
       if (ty == null) ty = doCompareUntyped(lhs, rhs, lr, rl);
-      if (ty != null) return ty.normalize(state, NormalizeMode.WHNF);
+      if (ty != null) return whnf(ty);
     }
-    lhs = lhs.normalize(state, NormalizeMode.WHNF);
-    rhs = rhs.normalize(state, NormalizeMode.WHNF);
+    lhs = whnf(lhs);
+    rhs = whnf(rhs);
     var x = doCompareUntyped(lhs, rhs, lr, rl);
     traceExit();
-    if (x != null) return x.normalize(state, NormalizeMode.WHNF);
+    if (x != null) return whnf(x);
     if (failure == null) failure = new FailureData(lhs, rhs);
     return null;
   }
 
   private boolean compareWHNF(Term lhs, Term preRhs, Sub lr, Sub rl, @NotNull Term type) {
-    var whnf = lhs.normalize(state, NormalizeMode.WHNF);
-    var rhsWhnf = preRhs.normalize(state, NormalizeMode.WHNF);
+    var whnf = whnf(lhs);
+    var rhsWhnf = whnf(preRhs);
     if (Objects.equals(whnf, lhs) && Objects.equals(rhsWhnf, preRhs)) return false;
     return compare(whnf, rhsWhnf, lr, rl, type);
   }
@@ -353,10 +343,10 @@ public sealed abstract class TermComparator permits Unifier {
   }
 
   private boolean compareLambdaBody(LamTerm lambda, Term rhs, Sub lr, Sub rl, PiTerm pi) {
-    var arg = pi.param().toArg();
+    var lhsArg = lambda.param().toArg();
     rl.map.put(pi.param().ref(), lambda.param().toTerm());
-    var result = ctx.with(lambda.param(), () ->
-      compare(AppTerm.make(lambda, arg), AppTerm.make(rhs, arg), lr, rl, pi.body()));
+    var result = ctx.with(lambda.param().ref(), pi.param().type(), () ->
+      compare(AppTerm.make(lambda, lhsArg), AppTerm.make(rhs, lhsArg), lr, rl, pi.body()));
     rl.map.remove(pi.param().ref());
     return result;
   }

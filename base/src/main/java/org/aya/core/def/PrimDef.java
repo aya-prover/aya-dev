@@ -245,7 +245,7 @@ public final class PrimDef extends TopLevelDef<Term> {
       }, ImmutableSeq.of(ID.I, ID.COE));
 
       private @NotNull Term coeFill(@NotNull PrimCall prim, @NotNull TyckState state) {
-        return coeFillHelper(prim, CoeTerm::coeFill, FormulaTerm.LEFT);
+        return coeFillHelper(prim, CoeTerm::coeFill);
       }
 
       public final @NotNull PrimDef.PrimSeed eoc = new PrimSeed(ID.COEINV, this::eoc, ref -> {
@@ -263,7 +263,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var type = prim.args().get(0).term();
         var restr = prim.args().get(1).term();
         var u = new LocalVar("u");
-        var paramU = new Term.Param(u, new AppTerm(type, new Arg<>(FormulaTerm.RIGHT, true)), true);
+        var paramU = new LamTerm.Param(u, true);
         return new LamTerm(paramU, new AppTerm(CoeTerm.coeInv(type, AyaRestrSimplifier.INSTANCE.isOne(restr)), new Arg<>(new RefTerm(u), true)));
       }
 
@@ -273,13 +273,12 @@ public final class PrimDef extends TopLevelDef<Term> {
       }, ImmutableSeq.of(ID.I, ID.COEINV));
 
       private @NotNull Term eocFill(@NotNull PrimCall prim, @NotNull TyckState state) {
-        return coeFillHelper(prim, CoeTerm::coeFillInv, FormulaTerm.RIGHT);
+        return coeFillHelper(prim, CoeTerm::coeFillInv);
       }
 
       private @NotNull Term coeFillHelper(
         @NotNull PrimCall prim,
-        @NotNull TriFunction<Term, Restr<Term>, Term, Term> filler,
-        @NotNull FormulaTerm start
+        @NotNull TriFunction<Term, Restr<Term>, Term, Term> filler
       ) {
         // from hcomp.pdf:
         // Γ ⊢ u : A(i/<start>)
@@ -293,7 +292,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var u = new LocalVar("u");
         var fill = filler.apply(type, AyaRestrSimplifier.INSTANCE.isOne(restr), new RefTerm(i));
         var path = new PLamTerm(ImmutableSeq.of(i), new AppTerm(fill, new Arg<>(new RefTerm(u), true)));
-        var paramU = new Term.Param(u, new AppTerm(type, new Arg<>(start, true)), true);
+        var paramU = new LamTerm.Param(u, true);
         return new LamTerm(paramU, path);
       }
 

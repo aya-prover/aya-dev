@@ -48,15 +48,21 @@ public record Codifier(
       }
       case PartialTyTerm(var ty, var restr) -> coePar(ty, restr, "PartialTyTerm");
       case PathTerm cube -> cube(cube);
-      case PiTerm(var param, var body) -> piLam(param, body, "PiTerm");
+      case PiTerm(var param, var body) -> {
+        name("PiTerm");
+        param(param);
+        lastTerm(body);
+      }
       case SigmaTerm(var items) -> tupSigma(items, this::param, "SigmaTerm");
-      case LamTerm(var param, var body) -> piLam(param, body, "LamTerm");
+      case LamTerm(var param, var body) -> {
+        name("LamTerm");
+        param(param);
+        lastTerm(body);
+      }
       case PartialTerm(var par, var ty) -> {
         builder.append("new PartialTerm(");
         partial(par);
-        builder.append(",");
-        term(ty);
-        builder.append(")");
+        lastTerm(ty);
       }
       case PLamTerm(var params, var body) -> {
         builder.append("new PLamTerm(ImmutableSeq.of(");
@@ -95,6 +101,12 @@ public record Codifier(
     }
   }
 
+  private void lastTerm(@NotNull Term body) {
+    builder.append(",");
+    term(body);
+    builder.append(")");
+  }
+
   private void cube(@NotNull PathTerm cube) {
     builder.append("new PathTerm(ImmutableSeq.of(");
     commaSep(cube.params(), this::varDef);
@@ -114,14 +126,6 @@ public record Codifier(
     term(ty);
     builder.append(",");
     restr(restr);
-    builder.append(")");
-  }
-
-  private void piLam(Term.@NotNull Param param, @NotNull Term body, String name) {
-    name(name);
-    param(param);
-    builder.append(",");
-    term(body);
     builder.append(")");
   }
 
@@ -160,9 +164,7 @@ public record Codifier(
         commaSep(s.clauses(), side -> {
           builder.append("new Restr.Side<>(");
           restr(side.cof());
-          builder.append(",");
-          term(side.u());
-          builder.append(")");
+          lastTerm(side.u());
         });
         builder.append("))");
       }
@@ -220,6 +222,12 @@ public record Codifier(
     varDef(param.ref());
     builder.append(",");
     term(param.type());
+    builder.append(",").append(param.explicit()).append(")");
+  }
+
+  private void param(@NotNull LamTerm.Param param) {
+    builder.append("new Term.Param(");
+    varDef(param.ref());
     builder.append(",").append(param.explicit()).append(")");
   }
 

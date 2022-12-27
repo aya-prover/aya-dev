@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import org.aya.core.UntypedParam;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,15 @@ import java.util.function.Consumer;
  * @author ice1000
  */
 public record LamTerm(@NotNull Param param, @NotNull Term body) implements StableWHNF {
+  public record Param(@Override @NotNull LocalVar ref, @Override boolean explicit) implements UntypedParam {
+  }
+
+  public static @NotNull Param param(@NotNull Term.Param param) {
+    return new Param(param.ref(), param.explicit());
+  }
+  public static @NotNull Param paramRenamed(@NotNull Term.Param param) {
+    return new Param(param.renameVar(), param.explicit());
+  }
 
   public static @NotNull Term unwrap(@NotNull Term term, @NotNull Consumer<@NotNull Param> params) {
     while (term instanceof LamTerm lambda) {
@@ -27,6 +37,6 @@ public record LamTerm(@NotNull Param param, @NotNull Term body) implements Stabl
   }
 
   public static Term makeIntervals(Seq<LocalVar> list, Term wellTyped) {
-    return make(list.view().map(Param::interval), wellTyped);
+    return make(list.view().map(v -> new Param(v, true)), wellTyped);
   }
 }

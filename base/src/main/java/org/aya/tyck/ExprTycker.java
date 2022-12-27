@@ -14,6 +14,7 @@ import kala.tuple.Tuple3;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.UntypedParam;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FieldDef;
@@ -79,7 +80,7 @@ public final class ExprTycker extends PropTycker {
           var body = synthesize(lam.body());
           var param = new Term.Param(lam.param(), paramTy);
           var pi = new PiTerm(param, body.type()).freezeHoles(state).rename();
-          return new Result.Default(new LamTerm(param, body.wellTyped()), pi);
+          return new Result.Default(new LamTerm(LamTerm.param(param), body.wellTyped()), pi);
         });
       }
       case Expr.Sort sort -> {
@@ -110,7 +111,7 @@ public final class ExprTycker extends PropTycker {
       }
       case Expr.New aNew -> {
         var structExpr = aNew.struct();
-        var struct = instImplicits(synthesize(structExpr).wellTyped(), structExpr.sourcePos());
+        var struct = whnf(instImplicits(synthesize(structExpr), structExpr.sourcePos()).wellTyped());
         if (!(struct instanceof StructCall structCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, aNew, struct));
         var structRef = structCall.ref();
@@ -185,8 +186,8 @@ public final class ExprTycker extends PropTycker {
 
           var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
-          var teleRenamed = tele.map(Term.Param::rename);
-          var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(Term.Param::toArg));
+          var teleRenamed = tele.map(LamTerm::paramRenamed);
+          var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(UntypedParam::toArg));
           return new Result.Default(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(structSubst)));
         });
       }
@@ -367,7 +368,7 @@ public final class ExprTycker extends PropTycker {
         // `let f : G := g in h` is desugared to `(\ (f : G) => h) g`
 
         // (\ (f : G) => h) : G -> {??}
-        var lam = LamTerm.make(SeqView.of(nameAndType), bodyResult.wellTyped());
+        var lam = new LamTerm(LamTerm.param(nameAndType), bodyResult.wellTyped());
 
         // then apply a `g`
         // (\ (f : G) => h) g : {??}
@@ -488,7 +489,7 @@ public final class ExprTycker extends PropTycker {
             var body = dt.substBody(resultParam.toTerm());
             yield localCtx.with(resultParam, () -> {
               var rec = check(lam.body(), body);
-              return new Result.Default(new LamTerm(resultParam, rec.wellTyped()), dt);
+              return new Result.Default(new LamTerm(LamTerm.param(resultParam), rec.wellTyped()), dt);
             });
           }
           // Path lambda!
@@ -585,7 +586,7 @@ public final class ExprTycker extends PropTycker {
       if (type instanceof PiTerm pi && !pi.param().explicit() && needImplicitParamIns(e)) {
         var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
         var body = localCtx.with(implicitParam, () -> inherit(e, pi.substBody(implicitParam.toTerm()))).wellTyped();
-        return new Result.Default(new LamTerm(implicitParam, body), pi);
+        return new Result.Default(new LamTerm(LamTerm.param(implicitParam), body), pi);
       } else return doInherit(e, type);
     });
   }
