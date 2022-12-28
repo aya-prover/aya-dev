@@ -7,7 +7,7 @@
 
 # CHANGE ME IF THERE IS NEW SCRIPT
 ###################################
-AYA_MODULE="aya.lsp"
+AYA_MODULE="aya.vsc"
 AYA_MAIN="org.aya.lsp.LspMain"
 AYA_NAME="Aya"
 AYA_JVM_OPTS='"--enable-preview"'
