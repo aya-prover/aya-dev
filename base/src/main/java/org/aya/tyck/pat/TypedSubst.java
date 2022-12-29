@@ -45,10 +45,10 @@ public record TypedSubst(
    */
   public void inline() {
     map.map().replaceAll((var, term) ->
-      PatTycker.META_PAT_INLINER.apply(term));
+      ClauseTycker.META_PAT_INLINER.apply(term));
 
     type.replaceAll((var, term) ->
-      PatTycker.META_PAT_INLINER.apply(term));
+      ClauseTycker.META_PAT_INLINER.apply(term));
   }
 
   public @NotNull TypedSubst derive() {

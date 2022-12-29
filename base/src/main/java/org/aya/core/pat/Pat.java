@@ -26,7 +26,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.SeqLocalCtx;
-import org.aya.tyck.pat.PatTycker;
+import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.tycker.ConcreteAwareTycker;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
@@ -77,7 +77,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
-      var newTy = PatTycker.inlineTerm(type);
+      var newTy = ClauseTycker.inlineTerm(type);
       if (newTy == type) return this;
       return new Bind(bind, newTy);
     }
@@ -89,7 +89,7 @@ public sealed interface Pat extends AyaDocile {
    *
    * @param fakeBind is used when inline if there is no solution.
    *                 So don't add this to {@link LocalCtx} too early
-   *                 and remember to inline Meta in {@link PatTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean, boolean)}
+   *                 and remember to inline Meta in {@link ClauseTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean, boolean)}
    */
   record Meta(
     @NotNull MutableValue<Pat> solution,
@@ -109,7 +109,7 @@ public sealed interface Pat extends AyaDocile {
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var value = solution.get();
       if (value == null) {
-        var type = PatTycker.inlineTerm(this.type);
+        var type = ClauseTycker.inlineTerm(this.type);
         var bind = new Bind(fakeBind, type);
         assert ctx != null : "Pre-inline patterns must be inlined with ctx";
         // We set a solution here, so multiple inline on the same MetaPat is safe.
@@ -169,7 +169,7 @@ public sealed interface Pat extends AyaDocile {
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var params = this.params.map(p -> p.descent(x -> x.inline(ctx)));
-      return new Ctor(ref, params, (DataCall) PatTycker.inlineTerm(type));
+      return new Ctor(ref, params, (DataCall) ClauseTycker.inlineTerm(type));
     }
   }
 

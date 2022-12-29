@@ -35,7 +35,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.error.*;
-import org.aya.tyck.pat.PatTycker;
+import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.PropTycker;
 import org.aya.tyck.tycker.TyckState;
@@ -73,11 +73,13 @@ public final class ExprTycker extends PropTycker {
         yield new Result.Default(ty, ty.lift(1));
       }
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
-        case LocalVar loc -> definitionEqualities.getOption(loc).getOrElse(() -> {
-          // not defined in lets, search localCtx
-          var ty = localCtx.get(loc);
-          return new Result.Default(new RefTerm(loc), ty);
-        });
+        case LocalVar loc -> definitionEqualities
+          .getOption(loc)     // automatically unfold
+          .getOrElse(() -> {
+            // not defined in lets, search localCtx
+            var ty = localCtx.get(loc);
+            return new Result.Default(new RefTerm(loc), ty);
+          });
         case DefVar<?, ?> defVar -> inferRef(defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
@@ -504,7 +506,7 @@ public final class ExprTycker extends PropTycker {
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(this::synthesize);
         var sig = new Def.Signature<>(discriminant.map(r -> new Term.Param(new LocalVar("_"), r.type(), true)), term);
-        var result = PatTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
+        var result = ClauseTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
         yield new Result.Default(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
       default -> inheritFallbackUnify(term, synthesize(expr), expr);

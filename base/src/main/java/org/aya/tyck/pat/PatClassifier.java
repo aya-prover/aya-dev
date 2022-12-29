@@ -91,7 +91,7 @@ public record PatClassifier(
   }
 
   public static void confluence(
-    @NotNull PatTycker.PatResult clauses,
+    @NotNull ClauseTycker.PatResult clauses,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos,
     @NotNull MCT<Term, PatErr> mct
   ) {
@@ -206,7 +206,7 @@ public record PatClassifier(
         for (var ctor : body) {
           var conTele = ctor.selfTele.view();
           // Check if this constructor is available by doing the obvious thing
-          var matchy = PatTycker.mischa(dataCall, ctor, state);
+          var matchy = PatternTycker.mischa(dataCall, ctor, state);
           // If not, check the reason why: it may fail negatively or positively
           if (matchy.isErr()) {
             // Index unification fails negatively
