@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.guest0x0.cubical.Partial;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,10 +16,7 @@ public record OutTerm(@NotNull Term phi, @NotNull Term partial, @NotNull Term of
 
   public static @NotNull Term make(@NotNull OutTerm material) {
     if (material.of instanceof InTerm inS) return inS.u();
-    // TODO[861]: implement type-directed reduction, see
-    //  https://discord.com/channels/767397347218423858/767397347218423861/1057874167497756682
-    // if (out && material.phi instanceof FormulaTerm(Formula.Lit<?>(var isOne)) && isOne) {
-    // }
+    if (material.partial instanceof PartialTerm(Partial.Const<Term>(var u), var rhs)) return u;
     return material;
   }
 }
