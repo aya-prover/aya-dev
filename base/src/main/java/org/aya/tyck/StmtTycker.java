@@ -258,7 +258,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       pat = lhs.preclause().patterns();
       // Revert to the "after patterns" state
       tycker.localCtx = lhs.gamma();
-      tycker.state.definitionEqualities = lhs.bodySubst();
+      tycker.definitionEqualities = lhs.bodySubst();
       predataCall = (DataCall) predataCall.subst(new Subst(
         dataSig.param().view().map(Term.Param::ref),
         pat.view().map(Arg::term).map(Pat::toTerm)));

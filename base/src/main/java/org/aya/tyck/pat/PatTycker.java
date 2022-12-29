@@ -228,7 +228,7 @@ public final class PatTycker {
       var term = exprTycker.subscoped(() -> {
         // We `addDirectly` to `parentLets`.
         // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
-        exprTycker.state.definitionEqualities().addDirectly(lhsResult.bodySubst());
+        exprTycker.definitionEqualities.addDirectly(lhsResult.bodySubst());
         return lhsResult.preclause.expr().map(e -> lhsResult.hasError
           // In case the patterns are malformed, do not check the body
           // as we bind local variables in the pattern checker,
@@ -311,7 +311,7 @@ public final class PatTycker {
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
         exprTycker.localCtx.put(bind, term);
         if (tyExpr != null) exprTycker.subscoped(() -> {
-          exprTycker.state.definitionEqualities().addDirectly(allSubst());
+          exprTycker.definitionEqualities.addDirectly(allSubst());
           var syn = exprTycker.synthesize(tyExpr);
           exprTycker.unifyTyReported(term, syn.wellTyped(), tyExpr);
           return null;

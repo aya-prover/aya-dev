@@ -11,6 +11,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
+import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
@@ -35,6 +36,7 @@ import java.util.function.Supplier;
  */
 public abstract sealed class MockedTycker extends ConcreteAwareTycker permits UnifiedTycker {
   public @NotNull LocalCtx localCtx = new MapLocalCtx();
+  public @NotNull TypedSubst definitionEqualities = new TypedSubst();
 
   protected MockedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
     super(reporter, traceBuilder, state);
@@ -81,14 +83,14 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
 
   public <R> R subscoped(@NotNull Supplier<R> action) {
     var parentCtx = this.localCtx;
-    var parentSubst = this.state.definitionEqualities;
+    var parentSubst = this.definitionEqualities;
 
     this.localCtx = parentCtx.deriveMap();
-    this.state.definitionEqualities = parentSubst.derive();
+    this.definitionEqualities = parentSubst.derive();
 
     var result = action.get();
 
-    this.state.definitionEqualities = parentSubst;
+    this.definitionEqualities = parentSubst;
     this.localCtx = parentCtx;
 
     return result;

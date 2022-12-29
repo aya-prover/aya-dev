@@ -73,8 +73,8 @@ public final class ExprTycker extends PropTycker {
         yield new Result.Default(ty, ty.lift(1));
       }
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
-        case LocalVar loc -> state.definitionEqualities().getOption(loc).getOrElse(() -> {
-          // not defined in definitionEqualities, search for localCtx
+        case LocalVar loc -> definitionEqualities.getOption(loc).getOrElse(() -> {
+          // not defined in lets, search localCtx
           var ty = localCtx.get(loc);
           return new Result.Default(new RefTerm(loc), ty);
         });
@@ -346,17 +346,17 @@ public final class ExprTycker extends PropTycker {
         var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 
         var bodyResult = subscoped(() -> {
-          state.definitionEqualities().addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
+          definitionEqualities.addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
           return synthesize(let.body());
         });
 
         // `let f : G := g in h` is desugared to `(\ (f : G) => h) g`
 
-        // (\ (f : G) => h) : G -> H
+        // (\ (f : G) => h) : G -> {??}
         var lam = new LamTerm(LamTerm.param(nameAndType), bodyResult.wellTyped());
 
         // then apply a `g`
-        // (\ (f : G) => h) g : H
+        // (\ (f : G) => h) g : {??}
         var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
 
         yield new Result.Default(full, bodyResult.type());
@@ -561,10 +561,7 @@ public final class ExprTycker extends PropTycker {
     };
   }
 
-  public ExprTycker(@NotNull PrimDef.Factory primFactory,
-                    @NotNull AyaShape.Factory shapeFactory,
-                    @NotNull Reporter reporter,
-                    Trace.@Nullable Builder traceBuilder) {
+  public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory shapeFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
     super(reporter, traceBuilder, new TyckState(primFactory));
     this.shapeFactory = shapeFactory;
   }
