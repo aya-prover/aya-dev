@@ -304,9 +304,15 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record InOut(@NotNull SerTerm phi, @NotNull SerTerm u, boolean isIntro) implements SerTerm {
+  record InS(@NotNull SerTerm phi, @NotNull SerTerm u) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new InOutTerm(phi.de(state), u.de(state), isIntro ? InOutTerm.Kind.In : InOutTerm.Kind.Out);
+      return new InTerm(phi.de(state), u.de(state));
+    }
+  }
+
+  record OutS(@NotNull SerTerm phi, @NotNull SerTerm par, @NotNull SerTerm u) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new OutTerm(phi.de(state), par.de(state), u.de(state));
     }
   }
 }

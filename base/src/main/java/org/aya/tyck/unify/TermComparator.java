@@ -340,12 +340,7 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
       case PrimCall prim when prim.id() == PrimDef.ID.SUB -> {
         // See PrimDef.Factory.Initializer.sub
         var A = prim.args().get(0).term();
-        if (new Pair(lhs, rhs) instanceof Pair(
-          InOutTerm(var lPhi, var lU, var lKind),
-          InOutTerm(var rPhi, var rU, var rKind)
-        )) {
-          // We only compare the introduction "inS", and fail otherwise
-          if (lKind != rKind || lKind != InOutTerm.Kind.In) yield false;
+        if (new Pair(lhs, rhs) instanceof Pair(InTerm(var lPhi, var lU), InTerm(var rPhi, var rU))) {
           if (!compare(lPhi, rPhi, lr, rl, IntervalTerm.INSTANCE)) yield false;
           yield compare(lU, rU, lr, rl, A);
         } else yield compare(lhs, rhs, lr, rl, A);
@@ -520,24 +515,13 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
         default -> null;
       };
       // We expect to only compare the elimination "outS" here
-      case InOutTerm(var lPhi, var lU, var lKind) -> {
-        if (!(preRhs instanceof InOutTerm(var rPhi, var rU, var rKind)) || rKind != lKind) yield null;
+      case OutTerm(var lPhi, var pal, var lU) -> {
+        if (!(preRhs instanceof OutTerm(var rPhi, var par, var rU))) yield null;
         if (!compare(lPhi, rPhi, lr, rl, IntervalTerm.INSTANCE)) yield null;
         var innerTy = compareUntyped(lU, rU, lr, rl);
         if (innerTy == null) yield null;
-        if (lKind == InOutTerm.Kind.Out) {
-          var prim = (PrimCall) whnf(innerTy);
-          yield prim.args().get(0).term();
-        } else {
-          throw new IllegalStateException("This code is theoretically unreachable");
-          /* The code below is correct (I hope)
-          yield state.primFactory().getCall(PrimDef.ID.SUB, ImmutableSeq.of(
-            new Arg<>(innerTy, true),
-            new Arg<>(lPhi, true),
-            new Arg<>(new PartialTerm(new Partial.Const<>(lU), innerTy), true)
-          ));
-          */
-        }
+        var prim = (PrimCall) whnf(innerTy);
+        yield prim.args().get(0).term();
       }
       case ListTerm lhs -> switch (preRhs) {
         case ListTerm rhs -> {

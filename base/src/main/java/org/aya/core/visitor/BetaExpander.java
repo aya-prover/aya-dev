@@ -32,8 +32,8 @@ public interface BetaExpander extends EndoTerm {
         var result = AppTerm.make(app);
         yield result == term ? result : apply(result);
       }
-      case InOutTerm io -> {
-        var result = InOutTerm.make(io);
+      case InTerm io -> {
+        var result = InTerm.make(io);
         yield result == term ? result : apply(result);
       }
       case ProjTerm proj -> ProjTerm.proj(proj);

@@ -235,9 +235,14 @@ public class CorePrettier extends BasePrettier<Term> {
       case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
       case HCompTerm hComp -> throw new InternalException("TODO");
-      case InOutTerm(var phi, var u, var io) -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, io.fnName),
-        term(Outer.AppSpine, phi), term(Outer.AppSpine, u)), Outer.AppSpine);
+      case InTerm(var phi, var u) -> insideOut(outer, phi, u, "inS");
+      case OutTerm(var phi, var par, var u) -> insideOut(outer, phi, u, "outS");
     };
+  }
+
+  private @NotNull Doc insideOut(@NotNull Outer outer, @NotNull Term phi, @NotNull Term u, String fnName) {
+    return checkParen(outer, Doc.sep(Doc.styled(KEYWORD, fnName),
+      term(Outer.AppSpine, phi), term(Outer.AppSpine, u)), Outer.AppSpine);
   }
 
   /** @return if we can eta-contract the last argument */

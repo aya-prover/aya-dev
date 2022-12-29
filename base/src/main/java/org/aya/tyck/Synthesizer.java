@@ -105,16 +105,16 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       }
       case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
       case HCompTerm hComp -> throw new InternalException("TODO");
-      case InOutTerm inS when inS.kind() == InOutTerm.Kind.In -> {
-        var ty = press(inS.u());
+      case InTerm(var phi, var u) -> {
+        var ty = press(u);
         yield state.primFactory().getCall(PrimDef.ID.SUB, ImmutableSeq.of(
-            ty, inS.phi(), PartialTerm.from(inS.phi(), inS.u(), ty))
+            ty, phi, PartialTerm.from(phi, u, ty))
           .map(t -> new Arg<>(t, true)));
       }
-      case InOutTerm outS -> {
-        var ty = press(outS.u());
+      case OutTerm outS -> {
+        var ty = press(outS.of());
         if (ty instanceof PrimCall sub) yield sub.args().first().term();
-        else yield ErrorTerm.typeOf(outS);
+        yield unreachable(outS);
       }
       case PAppTerm app -> {
         // v @ ui : A[ui/xi]
