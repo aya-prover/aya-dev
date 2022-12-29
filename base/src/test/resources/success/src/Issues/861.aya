@@ -1,0 +1,7 @@
+open import Paths
+variable A : Type
+
+def partialGivesContr (c : Pi (φ : I) (u : Partial φ A) -> Sub A φ u) : isContr A =>
+   ( outS (c 0 {| |})
+   , \y i => outS (c (i ∨ (~ i)) {| i := y | ~ i := outS (c 0 {| |}) |})
+   )
