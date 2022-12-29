@@ -36,7 +36,6 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
-import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.PropTycker;
 import org.aya.tyck.tycker.TyckState;
@@ -48,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.IntPredicate;
-import java.util.function.Supplier;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -56,20 +54,7 @@ import java.util.function.Supplier;
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
 public final class ExprTycker extends PropTycker {
-  /**
-   * a `let` sequence, consider we are tycking in
-   * {@code let ... in HERE}
-   */
-  public @NotNull TypedSubst lets = new TypedSubst();
   public final @NotNull AyaShape.Factory shapeFactory;
-
-  public <T> T withSubSubst(Supplier<T> supplier) {
-    var oldLets = lets;
-    lets = oldLets.derive();
-    var result = supplier.get();
-    lets = oldLets;
-    return result;
-  }
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
@@ -88,7 +73,7 @@ public final class ExprTycker extends PropTycker {
         yield new Result.Default(ty, ty.lift(1));
       }
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
-        case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
+        case LocalVar loc -> definitionEqualities.getOption(loc).getOrElse(() -> {
           // not defined in lets, search localCtx
           var ty = localCtx.get(loc);
           return new Result.Default(new RefTerm(loc), ty);
@@ -361,7 +346,7 @@ public final class ExprTycker extends PropTycker {
         var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 
         var bodyResult = subscoped(() -> {
-          localCtx.put(nameAndType);
+          definitionEqualities.addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
           return synthesize(let.body());
         });
 

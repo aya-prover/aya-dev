@@ -92,7 +92,7 @@ public record TyckState(
     var consumer = new TermConsumer() {
       @Override public void pre(@NotNull Term tm) {
         if (tm instanceof MetaTerm hole && !metas.containsKey(hole.ref()))
-            activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
+          activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
         TermConsumer.super.pre(tm);
       }
     };
