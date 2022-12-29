@@ -74,7 +74,7 @@ public final class ExprTycker extends PropTycker {
       }
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> state.definitionEqualities().getOption(loc).getOrElse(() -> {
-          // not defined in localSubst, search for localCtx
+          // not defined in definitionEqualities, search for localCtx
           var ty = localCtx.get(loc);
           return new Result.Default(new RefTerm(loc), ty);
         });
