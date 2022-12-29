@@ -39,18 +39,6 @@ public record TypedSubst(
     );
   }
 
-  /**
-   * <b>Please</b> call this after inline all the patterns
-   * TODO: take out from TypedSubst
-   */
-  public void inline() {
-    subst.map().replaceAll((var, term) ->
-      ClauseTycker.META_PAT_INLINER.apply(term));
-
-    type.replaceAll((var, term) ->
-      ClauseTycker.META_PAT_INLINER.apply(term));
-  }
-
   public @NotNull TypedSubst derive() {
     return new TypedSubst(
       subst.derive(),
