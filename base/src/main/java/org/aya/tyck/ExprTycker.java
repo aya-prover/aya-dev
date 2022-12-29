@@ -76,7 +76,7 @@ public final class ExprTycker extends PropTycker {
         case LocalVar loc -> definitionEqualities
           .getOption(loc)     // automatically unfold
           .getOrElse(() -> {
-            // not defined in lets, search localCtx
+            // not defined in definitionEqualities, search localCtx
             var ty = localCtx.get(loc);
             return new Result.Default(new RefTerm(loc), ty);
           });

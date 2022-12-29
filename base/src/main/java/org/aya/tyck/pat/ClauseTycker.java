@@ -169,8 +169,8 @@ public final class ClauseTycker {
     return exprTycker.subscoped(() -> {
       exprTycker.localCtx = lhsResult.gamma;
       var term = exprTycker.subscoped(() -> {
-        // We `addDirectly` to `parentLets`.
-        // This means terms in `parentLets` won't be substituted by `lhsResult.bodySubst`
+        // We `addDirectly` to `definitionEqualities`.
+        // This means terms in `definitionEqualities` won't be substituted by `lhsResult.bodySubst`
         exprTycker.definitionEqualities.addDirectly(lhsResult.bodySubst());
         return lhsResult.preclause.expr().map(e -> lhsResult.hasError
           // In case the patterns are malformed, do not check the body
