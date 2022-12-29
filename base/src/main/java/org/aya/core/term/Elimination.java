@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author ice1000
  */
-public sealed interface Elimination extends Term permits AppTerm, PAppTerm, ProjTerm {
+public sealed interface Elimination extends Term permits AppTerm, PAppTerm, ProjTerm, OutTerm {
 
   @NotNull Term of();
 }

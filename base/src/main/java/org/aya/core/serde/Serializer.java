@@ -129,8 +129,8 @@ public record Serializer(@NotNull Serializer.State state) {
       case ErrorTerm err -> throw new InternalException("Shall not have error term serialized.");
       case MetaLitTerm err -> throw new InternalException("Shall not have metaLiterals serialized.");
       case HCompTerm hComp -> throw new InternalException("TODO");
-      case InOutTerm(var phi, var u, var io) ->
-        new SerTerm.InOut(serialize(phi), serialize(u), io == InOutTerm.Kind.In);
+      case InTerm(var phi, var u) -> new SerTerm.InS(serialize(phi), serialize(u));
+      case OutTerm(var phi, var u) -> new SerTerm.OutS(serialize(phi), serialize(u));
     };
   }
 

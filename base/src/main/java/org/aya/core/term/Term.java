@@ -40,7 +40,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InOutTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
+  permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   default @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
     return switch (this) {
       case PiTerm pi -> {
@@ -191,11 +191,17 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
       case HCompTerm hComp -> throw new UnsupportedOperationException("TODO");
-      case InOutTerm inOutTerm -> {
-        var phi = f.apply(inOutTerm.phi());
-        var u = f.apply(inOutTerm.u());
-        if (phi == inOutTerm.phi() && u == inOutTerm.u()) yield inOutTerm;
-        yield InOutTerm.make(phi, u, inOutTerm.kind());
+      case InTerm inS -> {
+        var phi = f.apply(inS.phi());
+        var u = f.apply(inS.u());
+        if (phi == inS.phi() && u == inS.u()) yield inS;
+        yield InTerm.make(phi, u);
+      }
+      case OutTerm outS -> {
+        var phi = f.apply(outS.phi());
+        var u = f.apply(outS.of());
+        if (phi == outS.phi() && u == outS.of()) yield outS;
+        yield OutTerm.make(phi, u);
       }
     };
   }

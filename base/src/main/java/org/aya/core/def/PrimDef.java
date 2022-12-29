@@ -193,7 +193,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU), Set0, ID.SUB);
       }, ImmutableSeq.of(ID.I, ID.PARTIAL));
 
-      public final @NotNull PrimDef.PrimSeed outS = new PrimSeed(ID.OUTS, this::insideOut, ref -> {
+      public final @NotNull PrimDef.PrimSeed outS = new PrimSeed(ID.OUTS, this::outS, ref -> {
         // outS {A} {φ} {u : Partial φ A} (Sub A φ u) : A
         var varA = new LocalVar("A");
         var varPhi = new LocalVar("phi");
@@ -210,7 +210,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         return new PrimDef(ref, ImmutableSeq.of(paramA, paramPhi, paramU, paramSub), A, ID.OUTS);
       }, ImmutableSeq.of(ID.PARTIAL, ID.SUB));
 
-      public final @NotNull PrimDef.PrimSeed inS = new PrimSeed(ID.INS, this::insideOut, ref -> {
+      public final @NotNull PrimDef.PrimSeed inS = new PrimSeed(ID.INS, this::inS, ref -> {
         // outS {A} {φ} (u : A) : Sub A φ {|φ ↦ u|}
         var varA = new LocalVar("A");
         var varPhi = new LocalVar("phi");
@@ -383,15 +383,16 @@ public final class PrimDef extends TopLevelDef<Term> {
         ), ImmutableSeq.of(ID.I));
       }
 
-      /**
-       * @see #inS
-       * @see #outS
-       */
-      private Term insideOut(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
+      private Term inS(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
         var phi = prim.args().get(1).term();
         var u = prim.args().last().term();
-        var kind = prim.id() == ID.INS ? InOutTerm.Kind.In : InOutTerm.Kind.Out;
-        return InOutTerm.make(phi, u, kind);
+        return InTerm.make(phi, u);
+      }
+
+      private Term outS(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
+        var phi = prim.args().get(1).term();
+        var u = prim.args().last().term();
+        return OutTerm.make(phi, u);
       }
 
       public final @NotNull PrimDef.PrimSeed stringConcat =
