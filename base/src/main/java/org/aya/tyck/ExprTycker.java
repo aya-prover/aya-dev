@@ -36,7 +36,6 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.PatTycker;
-import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.PropTycker;
 import org.aya.tyck.tycker.TyckState;
@@ -48,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.IntPredicate;
-import java.util.function.Supplier;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -75,7 +73,7 @@ public final class ExprTycker extends PropTycker {
         yield new Result.Default(ty, ty.lift(1));
       }
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
-        case LocalVar loc -> state.localSubst().getOption(loc).getOrElse(() -> {
+        case LocalVar loc -> state.definitionEqualities().getOption(loc).getOrElse(() -> {
           // not defined in localSubst, search for localCtx
           var ty = localCtx.get(loc);
           return new Result.Default(new RefTerm(loc), ty);
@@ -348,7 +346,7 @@ public final class ExprTycker extends PropTycker {
         var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 
         var bodyResult = subscoped(() -> {
-          state.localSubst().addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
+          state.definitionEqualities().addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
           return synthesize(let.body());
         });
 

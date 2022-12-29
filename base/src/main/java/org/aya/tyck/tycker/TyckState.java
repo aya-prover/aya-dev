@@ -149,7 +149,7 @@ public class TyckState {
     return notInPropMetas;
   }
 
-  public TypedSubst localSubst() {
+  public TypedSubst definitionEqualities() {
     return definitionEqualities;
   }
 
