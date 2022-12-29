@@ -515,8 +515,8 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
         default -> null;
       };
       // We expect to only compare the elimination "outS" here
-      case OutTerm(var lPhi, var lU) -> {
-        if (!(preRhs instanceof OutTerm(var rPhi, var rU))) yield null;
+      case OutTerm(var lPhi, var pal, var lU) -> {
+        if (!(preRhs instanceof OutTerm(var rPhi, var par, var rU))) yield null;
         if (!compare(lPhi, rPhi, lr, rl, IntervalTerm.INSTANCE)) yield null;
         var innerTy = compareUntyped(lU, rU, lr, rl);
         if (innerTy == null) yield null;

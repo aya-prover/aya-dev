@@ -236,7 +236,7 @@ public class CorePrettier extends BasePrettier<Term> {
         term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> insideOut(outer, phi, u, "inS");
-      case OutTerm(var phi, var u) -> insideOut(outer, phi, u, "outS");
+      case OutTerm(var phi, var par, var u) -> insideOut(outer, phi, u, "outS");
     };
   }
 

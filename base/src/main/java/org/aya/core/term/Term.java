@@ -191,17 +191,18 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       case RefTerm.Field field -> field;
       case ErrorTerm error -> error;
       case HCompTerm hComp -> throw new UnsupportedOperationException("TODO");
-      case InTerm inS -> {
-        var phi = f.apply(inS.phi());
-        var u = f.apply(inS.u());
-        if (phi == inS.phi() && u == inS.u()) yield inS;
-        yield InTerm.make(phi, u);
+      case InTerm(var phi, var u) -> {
+        var phj = f.apply(phi);
+        var v = f.apply(u);
+        if (phj == phi && v == u) yield this;
+        yield InTerm.make(phj, v);
       }
-      case OutTerm outS -> {
-        var phi = f.apply(outS.phi());
-        var u = f.apply(outS.of());
-        if (phi == outS.phi() && u == outS.of()) yield outS;
-        yield OutTerm.make(phi, u);
+      case OutTerm(var phi, var par, var u) -> {
+        var phj = f.apply(phi);
+        var pbr = f.apply(par);
+        var v = f.apply(u);
+        if (phi == phj && u == v) yield this;
+        yield OutTerm.make(phj, pbr, v);
       }
     };
   }

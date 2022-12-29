@@ -391,8 +391,9 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       private Term outS(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
         var phi = prim.args().get(1).term();
+        var par = prim.args().get(2).term();
         var u = prim.args().last().term();
-        return OutTerm.make(phi, u);
+        return OutTerm.make(phi, par, u);
       }
 
       public final @NotNull PrimDef.PrimSeed stringConcat =

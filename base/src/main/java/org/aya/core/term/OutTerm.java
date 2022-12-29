@@ -8,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @see InTerm
  */
-public record OutTerm(@NotNull Term phi, @NotNull Term of) implements Elimination {
-  public static @NotNull Term make(@NotNull Term phi, @NotNull Term u) {
-    return make(new OutTerm(phi, u));
+public record OutTerm(@NotNull Term phi, @NotNull Term partial, @NotNull Term of) implements Elimination {
+  public static @NotNull Term make(@NotNull Term phi, @NotNull Term partial, @NotNull Term u) {
+    return make(new OutTerm(phi, partial, u));
   }
 
   public static @NotNull Term make(@NotNull OutTerm material) {
