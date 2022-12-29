@@ -442,9 +442,8 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
     if (preLhs instanceof Formation lhs) return doCompareType(lhs, preRhs, lr, rl) ? SortTerm.Type0 : null;
     return switch (preLhs) {
       default -> throw noRules(preLhs);
-      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
-      case MetaPatTerm metaPat -> {
-        var lhsRef = metaPat.ref();
+      case ErrorTerm term -> ErrorTerm.typeOf(term);
+      case MetaPatTerm(var lhsRef) -> {
         if (preRhs instanceof MetaPatTerm(var rRef) && lhsRef == rRef) yield lhsRef.type();
         else yield null;
       }

@@ -258,7 +258,7 @@ public final class ExprTycker extends PropTycker {
           var tup = ensurePiOrPath(fTy);
           pi = tup._1;
           cube = tup._2;
-          while (pi.param().explicit() != argLicit || argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
+          while (pi.param().explicit() != argLicit || argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name()))
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
               var holeApp = mockArg(pi.param().subst(subst), argument.term().sourcePos());
@@ -269,7 +269,6 @@ public final class ExprTycker extends PropTycker {
               pi = tup._1;
               if (tup._2 != null) cube = tup._2;
             } else yield fail(expr, new ErrorTerm(pi.body()), new LicitError.UnexpectedImplicitArg(argument));
-          }
           tup = ensurePiOrPath(pi.subst(subst));
           pi = tup._1;
           if (tup._2 != null) cube = tup._2;

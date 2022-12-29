@@ -16,10 +16,15 @@ public record InOutTerm(@NotNull Term phi, @NotNull Term u, @NotNull Kind kind) 
   }
 
   public static @NotNull Term make(@NotNull InOutTerm material) {
+    var out = material.kind == Kind.Out;
     if (material.u instanceof InOutTerm io && io.kind != material.kind) {
-      if (material.kind == Kind.Out) return io.u;
+      if (out) return io.u;
       if (AyaRestrSimplifier.INSTANCE.implies(io.phi, material.phi)) return io.u;
     }
+    // TODO[861]: implement type-directed reduction, see
+    //  https://discord.com/channels/767397347218423858/767397347218423861/1057874167497756682
+    // if (out && material.phi instanceof FormulaTerm(Formula.Lit<?>(var isOne)) && isOne) {
+    // }
     return material;
   }
 }
