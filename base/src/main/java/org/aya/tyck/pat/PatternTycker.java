@@ -234,7 +234,7 @@ public class PatternTycker {
   }
 
   private @NotNull PatternTycker.TyckResult done(@Nullable Expr body) {
-    return new TyckResult(wellTyped.toImmutableSeq(), signature.result().subst(sigSubst.map()), body);
+    return new TyckResult(wellTyped.toImmutableSeq(), signature.result().subst(sigSubst.subst()), body);
   }
 
   /**
@@ -255,7 +255,7 @@ public class PatternTycker {
   }
 
   private void onTyck(@NotNull Runnable runnable) {
-    current = current.subst(sigSubst.map());
+    current = current.subst(sigSubst.subst());
     runnable.run();
     signature = new Def.Signature<>(signature.param().drop(1), signature.result());
   }

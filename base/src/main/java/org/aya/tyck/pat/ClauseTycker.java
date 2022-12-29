@@ -141,9 +141,8 @@ public final class ClauseTycker {
       match.hasError |= patTycker.hasError;
 
       var patterns = step0.wellTyped().map(p -> p.descent(x -> x.inline(exprTycker.localCtx))).toImmutableSeq();
-      // inline these after inline patterns
-      patTycker.bodySubst.inline();
-      patTycker.sigSubst.inline();
+      // inline after inline patterns
+      inlineTypedSubst(patTycker.bodySubst);
       var type = inlineTerm(step0.codomain());
       exprTycker.localCtx.modifyMyTerms(META_PAT_INLINER);
       var consumer = new PatternConsumer() {
@@ -205,6 +204,13 @@ public final class ClauseTycker {
 
   public static @NotNull Term inlineTerm(@NotNull Term term) {
     return META_PAT_INLINER.apply(term);
+  }
+
+  public static @NotNull TypedSubst inlineTypedSubst(@NotNull TypedSubst tySubst) {
+    tySubst.subst().map().replaceAll((var, term) -> inlineTerm(term));
+    tySubst.type().replaceAll((var, term) -> inlineTerm(term));
+
+    return tySubst;
   }
 
   /// endregion
