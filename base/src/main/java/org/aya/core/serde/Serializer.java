@@ -130,7 +130,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case MetaLitTerm err -> throw new InternalException("Shall not have metaLiterals serialized.");
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> new SerTerm.InS(serialize(phi), serialize(u));
-      case OutTerm(var phi, var u) -> new SerTerm.OutS(serialize(phi), serialize(u));
+      case OutTerm(var phi, var par, var u) -> new SerTerm.OutS(serialize(phi), serialize(par), serialize(u));
     };
   }
 

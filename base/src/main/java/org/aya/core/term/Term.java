@@ -201,7 +201,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         var phj = f.apply(phi);
         var pbr = f.apply(par);
         var v = f.apply(u);
-        if (phi == phj && u == v) yield this;
+        if (phi == phj && u == v && pbr == par) yield this;
         yield OutTerm.make(phj, pbr, v);
       }
     };
