@@ -337,6 +337,19 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
           yield comparePartial(lel, rel, ty, lr, rl);
         else yield false;
       }
+      case PrimCall prim when prim.id() == PrimDef.ID.SUB -> {
+        // See PrimDef.Factory.Initializer.sub
+        var A = prim.args().get(0).term();
+        if (new Pair(lhs, rhs) instanceof Pair(
+          InOutTerm(var lPhi, var lU, var lKind),
+          InOutTerm(var rPhi, var rU, var rKind)
+        )) {
+          // We only compare the introduction "inS", and fail otherwise
+          if (lKind != rKind || lKind != InOutTerm.Kind.In) yield false;
+          if (!compare(lPhi, rPhi, lr, rl, IntervalTerm.INSTANCE)) yield false;
+          yield compare(lU, rU, lr, rl, A);
+        } else yield compare(lhs, rhs, lr, rl, A);
+      }
     };
     traceExit();
     return ret;
@@ -427,11 +440,10 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
 
   private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     if (preLhs instanceof Formation lhs) return doCompareType(lhs, preRhs, lr, rl) ? SortTerm.Type0 : null;
-    var ret = switch (preLhs) {
+    return switch (preLhs) {
       default -> throw noRules(preLhs);
-      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
-      case MetaPatTerm metaPat -> {
-        var lhsRef = metaPat.ref();
+      case ErrorTerm term -> ErrorTerm.typeOf(term);
+      case MetaPatTerm(var lhsRef) -> {
         if (preRhs instanceof MetaPatTerm(var rRef) && lhsRef == rRef) yield lhsRef.type();
         else yield null;
       }
@@ -507,6 +519,26 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
         case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
+      // We expect to only compare the elimination "outS" here
+      case InOutTerm(var lPhi, var lU, var lKind) -> {
+        if (!(preRhs instanceof InOutTerm(var rPhi, var rU, var rKind)) || rKind != lKind) yield null;
+        if (!compare(lPhi, rPhi, lr, rl, IntervalTerm.INSTANCE)) yield null;
+        var innerTy = compareUntyped(lU, rU, lr, rl);
+        if (innerTy == null) yield null;
+        if (lKind == InOutTerm.Kind.Out) {
+          var prim = (PrimCall) whnf(innerTy);
+          yield prim.args().get(0).term();
+        } else {
+          throw new IllegalStateException("This code is theoretically unreachable");
+          /* The code below is correct (I hope)
+          yield state.primFactory().getCall(PrimDef.ID.SUB, ImmutableSeq.of(
+            new Arg<>(innerTy, true),
+            new Arg<>(lPhi, true),
+            new Arg<>(new PartialTerm(new Partial.Const<>(lU), innerTy), true)
+          ));
+          */
+        }
+      }
       case ListTerm lhs -> switch (preRhs) {
         case ListTerm rhs -> {
           if (!lhs.compareShape(this, rhs)) yield null;
@@ -518,7 +550,6 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
       };
       case MetaTerm lhs -> solveMeta(lhs, preRhs, lr, rl, null);
     };
-    return ret;
   }
 
   @NotNull private static InternalException noRules(@NotNull Term preLhs) {
