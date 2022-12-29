@@ -41,6 +41,7 @@ public record TypedSubst(
 
   /**
    * <b>Please</b> call this after inline all the patterns
+   * TODO: take out from TypedSubst
    */
   public void inline() {
     map.map().replaceAll((var, term) ->

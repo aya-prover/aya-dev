@@ -56,20 +56,7 @@ import java.util.function.Supplier;
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
 public final class ExprTycker extends PropTycker {
-  /**
-   * a `let` sequence, consider we are tycking in
-   * {@code let ... in HERE}
-   */
-  public @NotNull TypedSubst lets = new TypedSubst();
   public final @NotNull AyaShape.Factory shapeFactory;
-
-  public <T> T withSubSubst(Supplier<T> supplier) {
-    var oldLets = lets;
-    lets = oldLets.derive();
-    var result = supplier.get();
-    lets = oldLets;
-    return result;
-  }
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
@@ -88,8 +75,8 @@ public final class ExprTycker extends PropTycker {
         yield new Result.Default(ty, ty.lift(1));
       }
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
-        case LocalVar loc -> lets.getOption(loc).getOrElse(() -> {
-          // not defined in lets, search localCtx
+        case LocalVar loc -> state.localSubst().getOption(loc).getOrElse(() -> {
+          // not defined in localSubst, search for localCtx
           var ty = localCtx.get(loc);
           return new Result.Default(new RefTerm(loc), ty);
         });
@@ -361,17 +348,17 @@ public final class ExprTycker extends PropTycker {
         var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 
         var bodyResult = subscoped(() -> {
-          localCtx.put(nameAndType);
+          state.localSubst().addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
           return synthesize(let.body());
         });
 
         // `let f : G := g in h` is desugared to `(\ (f : G) => h) g`
 
-        // (\ (f : G) => h) : G -> {??}
+        // (\ (f : G) => h) : G -> H
         var lam = new LamTerm(LamTerm.param(nameAndType), bodyResult.wellTyped());
 
         // then apply a `g`
-        // (\ (f : G) => h) g : {??}
+        // (\ (f : G) => h) g : H
         var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
 
         yield new Result.Default(full, bodyResult.type());
@@ -576,7 +563,10 @@ public final class ExprTycker extends PropTycker {
     };
   }
 
-  public ExprTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory shapeFactory, @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+  public ExprTycker(@NotNull PrimDef.Factory primFactory,
+                    @NotNull AyaShape.Factory shapeFactory,
+                    @NotNull Reporter reporter,
+                    Trace.@Nullable Builder traceBuilder) {
     super(reporter, traceBuilder, new TyckState(primFactory));
     this.shapeFactory = shapeFactory;
   }

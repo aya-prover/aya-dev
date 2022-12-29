@@ -80,10 +80,17 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
   }
 
   public <R> R subscoped(@NotNull Supplier<R> action) {
-    var parent = this.localCtx;
-    this.localCtx = parent.deriveMap();
+    var parentCtx = this.localCtx;
+    var parentSubst = this.state.definitionEqualities;
+
+    this.localCtx = parentCtx.deriveMap();
+    this.state.definitionEqualities = parentSubst.derive();
+
     var result = action.get();
-    this.localCtx = parent;
+
+    this.state.definitionEqualities = parentSubst;
+    this.localCtx = parentCtx;
+
     return result;
   }
 }

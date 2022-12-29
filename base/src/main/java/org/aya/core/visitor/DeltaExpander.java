@@ -61,6 +61,9 @@ public interface DeltaExpander extends EndoTerm {
         }
         yield access;
       }
+      case RefTerm ref -> state().localSubst().getOption(ref.var()).map(replacement ->
+        post(replacement.wellTyped())
+      ).getOrDefault(ref);
       default -> term;
     };
   }

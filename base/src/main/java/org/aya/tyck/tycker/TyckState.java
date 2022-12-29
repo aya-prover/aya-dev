@@ -18,6 +18,7 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.HoleProblem;
+import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
@@ -31,15 +32,30 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Currently we only deal with ambiguous equations (so no 'stuck' equations).
  */
-public record TyckState(
-  @NotNull MutableList<Eqn> eqns,
-  @NotNull MutableList<WithPos<Meta>> activeMetas,
-  @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas,
-  @NotNull MutableSet<@NotNull Meta> notInPropMetas,
-  @NotNull PrimDef.Factory primFactory
-) {
+public class TyckState {
+  public final @NotNull MutableList<Eqn> eqns;
+  public final @NotNull MutableList<WithPos<Meta>> activeMetas;
+  public final @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas;
+  public final @NotNull MutableSet<@NotNull Meta> notInPropMetas;
+  public final @NotNull PrimDef.Factory primFactory;
+  public @NotNull TypedSubst definitionEqualities;
+
+  public TyckState(@NotNull MutableList<Eqn> eqns,
+                   @NotNull MutableList<WithPos<Meta>> activeMetas,
+                   @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas,
+                   @NotNull MutableSet<@NotNull Meta> notInPropMetas,
+                   @NotNull TypedSubst definitionEqualities,
+                   @NotNull PrimDef.Factory primFactory) {
+    this.eqns = eqns;
+    this.activeMetas = activeMetas;
+    this.metas = metas;
+    this.notInPropMetas = notInPropMetas;
+    this.definitionEqualities = definitionEqualities;
+    this.primFactory = primFactory;
+  }
+
   public TyckState(@NotNull PrimDef.Factory primFactory) {
-    this(MutableList.create(), MutableList.create(), MutableMap.create(), MutableSet.create(), primFactory);
+    this(MutableList.create(), MutableList.create(), MutableMap.create(), MutableSet.create(), new TypedSubst(), primFactory);
   }
 
   /**
@@ -113,6 +129,36 @@ public record TyckState(
     metas().put(meta, t);
     return true;
   }
+
+  /// region Record Adapter
+  // TODO: do we really need these?
+
+  public MutableList<Eqn> eqns() {
+    return eqns;
+  }
+
+  public MutableList<WithPos<Meta>> activeMetas() {
+    return activeMetas;
+  }
+
+  public MutableMap<Meta, Term> metas() {
+    return metas;
+  }
+
+  public MutableSet<Meta> notInPropMetas() {
+    return notInPropMetas;
+  }
+
+  public TypedSubst localSubst() {
+    return definitionEqualities;
+  }
+
+  public PrimDef.Factory primFactory() {
+    return primFactory;
+  }
+
+
+  /// endregion
 
   public record Eqn(
     @NotNull Term lhs, @NotNull Term rhs,

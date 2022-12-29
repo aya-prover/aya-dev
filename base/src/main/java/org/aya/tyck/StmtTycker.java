@@ -27,7 +27,6 @@ import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.DoubleChecker;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.TreeBuilder;
@@ -259,7 +258,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       pat = lhs.preclause().patterns();
       // Revert to the "after patterns" state
       tycker.localCtx = lhs.gamma();
-      tycker.lets = lhs.bodySubst();
+      tycker.state.definitionEqualities = lhs.bodySubst();
       predataCall = (DataCall) predataCall.subst(new Subst(
         dataSig.param().view().map(Term.Param::ref),
         pat.view().map(Arg::term).map(Pat::toTerm)));

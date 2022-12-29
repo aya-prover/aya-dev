@@ -47,3 +47,9 @@ def no-fix-let (n : Nat) : Nat =>
   in n
 
 example def normalize''''' : no-fix-let 7 = 9 => idp
+
+def let-definitional-equality =>
+  let
+  | x : Nat := 1
+  | x=x : x = 1 := idp
+  in 0
