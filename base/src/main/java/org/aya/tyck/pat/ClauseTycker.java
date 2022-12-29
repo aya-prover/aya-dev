@@ -138,7 +138,7 @@ public final class ClauseTycker {
       }
       var step0 = patTycker.tyck(null, match.expr.getOrNull(), inProp);
 
-      match.hasError |= patTycker.hasError;
+      match.hasError |= patTycker.hasError();
 
       var patterns = step0.wellTyped().map(p -> p.descent(x -> x.inline(exprTycker.localCtx))).toImmutableSeq();
       // inline after inline patterns
@@ -160,7 +160,7 @@ public final class ClauseTycker {
       };
       match.patterns.view().map(Arg::term).forEach(consumer::accept);
 
-      return new LhsResult(exprTycker.localCtx, type, patTycker.bodySubst, patTycker.hasError,
+      return new LhsResult(exprTycker.localCtx, type, patTycker.bodySubst, patTycker.hasError(),
         new Pat.Preclause<>(match.sourcePos, patterns, Option.ofNullable(step0.newBody())));
     });
   }

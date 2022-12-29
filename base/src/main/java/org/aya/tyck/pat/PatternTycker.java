@@ -40,27 +40,20 @@ import org.jetbrains.annotations.UnknownNullability;
 /**
  * A Pattern Tycker for only one use.
  */
-public class PatternTycker {
+public final class PatternTycker {
   public final @NotNull ExprTycker exprTycker;
-
   public final @NotNull TypedSubst bodySubst;
+  private final @NotNull TypedSubst sigSubst = new TypedSubst();
+  private @NotNull Def.Signature<?> signature;
+  private @NotNull SeqView<Arg<Pattern>> patterns;
+  private final @NotNull MutableList<Arg<Pat>> wellTyped = MutableList.create();
+  private Term.@UnknownNullability Param currParam = null;
+  private boolean hasError = false;
 
-  public final @NotNull TypedSubst sigSubst = new TypedSubst();
-
-  public @NotNull Def.Signature<?> signature;
-
-  public @NotNull SeqView<Arg<Pattern>> patterns;
-
-  public final @NotNull MutableList<Arg<Pat>> wellTyped = MutableList.create();
-
-  public Term.@UnknownNullability Param current = null;
-
-  public boolean hasError = false;
-
-  protected PatternTycker(@NotNull ExprTycker exprTycker,
-                          @NotNull TypedSubst bodySubst,
-                          @NotNull Def.Signature<?> signature,
-                          @NotNull SeqView<Arg<Pattern>> patterns) {
+  private PatternTycker(@NotNull ExprTycker exprTycker,
+                        @NotNull TypedSubst bodySubst,
+                        @NotNull Def.Signature<?> signature,
+                        @NotNull SeqView<Arg<Pattern>> patterns) {
     this.exprTycker = exprTycker;
     this.bodySubst = bodySubst;
     this.signature = signature;
@@ -73,6 +66,11 @@ public class PatternTycker {
     this(exprTycker, new TypedSubst(), signature, patterns);
   }
 
+  /**
+   * <strong>do</strong> tyck the {@param pattern} against the type {@param term}
+   *
+   * @return well typed pattern
+   */
   private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term, boolean resultIsProp) {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
@@ -171,21 +169,21 @@ public class PatternTycker {
     @Nullable Expr body,
     boolean resultIsProp
   ) {
-    assert current == null;
+    assert currParam == null;
     // last pattern which user given (not aya generated)
     @Nullable Arg<Pattern> lastPat = null;
     while (signature.param().isNotEmpty()) {
-      current = signature.param().first();
+      currParam = signature.param().first();
       Arg<Pattern> pat;
       // Type explicit, does not have pattern
       if (patterns.isEmpty()) {
         if (body instanceof Expr.Lambda(
           var lamPos, var lamParam, var lamBody
-        ) && lamParam.explicit() == current.explicit()) {
+        ) && lamParam.explicit() == currParam.explicit()) {
           body = lamBody;
           var pattern = new Pattern.Bind(lamPos, lamParam.ref(), lamParam.type(), MutableValue.create());
-          pat = new Arg<>(pattern, current.explicit());
-        } else if (current.explicit()) {
+          pat = new Arg<>(pattern, currParam.explicit());
+        } else if (currParam.explicit()) {
           Pattern errorPattern;
 
           if (lastPat == null) {
@@ -195,20 +193,20 @@ public class PatternTycker {
             errorPattern = lastPat.term();
           }
 
-          foundError(new PatternProblem.InsufficientPattern(errorPattern, current));
+          foundError(new PatternProblem.InsufficientPattern(errorPattern, currParam));
           return done(body);
         } else {
           // Type is implicit, does not have pattern
           generatePat();
           continue;
         }
-      } else if (current.explicit()) {
+      } else if (currParam.explicit()) {
         // Type explicit, does have pattern
         pat = patterns.first();
         lastPat = pat;
         patterns = patterns.drop(1);
         if (!pat.explicit()) {
-          foundError(new PatternProblem.TooManyImplicitPattern(pat.term(), current));
+          foundError(new PatternProblem.TooManyImplicitPattern(pat.term(), currParam));
           return done(body);
         }
       } else {
@@ -255,7 +253,7 @@ public class PatternTycker {
   }
 
   private void onTyck(@NotNull Runnable runnable) {
-    current = current.subst(sigSubst.subst());
+    currParam = currParam.subst(sigSubst.subst());
     runnable.run();
     signature = new Def.Signature<>(signature.param().drop(1), signature.result());
   }
@@ -267,11 +265,11 @@ public class PatternTycker {
    */
   private void updateSig(Arg<Pattern> arg, boolean resultIsProp) {
     onTyck(() -> {
-      var type = current.type();
+      var type = currParam.type();
       var pat = arg.term();
       var res = exprTycker.traced(() -> new Trace.PatT(type, pat, pat.sourcePos()),
         () -> doTyck(pat, type, resultIsProp));
-      addSigSubst(current, res);
+      addSigSubst(currParam, res);
       wellTyped.append(new Arg<>(res, arg.explicit()));
     });
   }
@@ -285,17 +283,17 @@ public class PatternTycker {
    */
   private void generatePat() {
     onTyck(() -> {
-      var ref = current.ref();
+      var ref = currParam.ref();
       Pat bind;
       var freshVar = ref.rename();
-      if (current.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof DataCall dataCall) {
+      if (currParam.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof DataCall dataCall) {
         bind = new Pat.Meta(MutableValue.create(), freshVar, dataCall);
       } else {
-        bind = new Pat.Bind(freshVar, current.type());
-        exprTycker.localCtx.put(freshVar, current.type());
+        bind = new Pat.Bind(freshVar, currParam.type());
+        exprTycker.localCtx.put(freshVar, currParam.type());
       }
       wellTyped.append(new Arg<>(bind, false));
-      addSigSubst(current, bind);
+      addSigSubst(currParam, bind);
     });
   }
 
@@ -325,6 +323,10 @@ public class PatternTycker {
     foundError(problem);
     // In case something's wrong, produce a random pattern
     return randomPat(param);
+  }
+
+  public boolean hasError() {
+    return hasError;
   }
 
   /// endregion
