@@ -25,7 +25,7 @@ import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
-import org.aya.tyck.pat.PatTycker;
+import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -85,12 +85,12 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           }, clauses -> {
             var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
-            var pos = decl.sourcePos;
-            PatTycker.PatResult result;
-            var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
+          var pos = decl.sourcePos;
+          ClauseTycker.PatResult result;
+          var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
             if (orderIndependent) {
               // Order-independent.
-              result = PatTycker.elabClausesDirectly(exprTycker, clauses, signature);
+              result = ClauseTycker.elabClausesDirectly(exprTycker, clauses, signature);
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (!result.hasLhsError()) {
                 tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
@@ -100,7 +100,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
               }
             } else {
               // First-match semantics.
-              result = PatTycker.elabClausesClassified(exprTycker, clauses, signature, pos);
+              result = ClauseTycker.elabClausesClassified(exprTycker, clauses, signature, pos);
               def = factory.apply(result.result(), Either.right(result.matchings()));
             }
             if (!result.hasLhsError()) Conquer.against(def, orderIndependent, tycker, pos);
@@ -253,7 +253,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var pat = ImmutableSeq.<Arg<Pat>>empty();
     if (ctor.patterns.isNotEmpty()) {
       var sig = new Def.Signature<>(dataSig.param(), predataCall);
-      var lhs = PatTycker.checkLhs(tycker,
+      var lhs = ClauseTycker.checkLhs(tycker,
         new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false, false);
       pat = lhs.preclause().patterns();
       // Revert to the "after patterns" state

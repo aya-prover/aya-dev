@@ -11,55 +11,43 @@ import org.aya.tyck.Result;
 import org.jetbrains.annotations.NotNull;
 
 public record TypedSubst(
-  @NotNull Subst map,
+  @NotNull Subst subst,
   @NotNull MutableMap<@NotNull AnyVar, @NotNull Term> type
-  ) {
+) {
   public TypedSubst() {
     this(new Subst(), MutableMap.create());
   }
 
   public @NotNull TypedSubst addDirectly(@NotNull AnyVar var, @NotNull Term term, @NotNull Term type) {
-    map.addDirectly(var, term);
+    this.subst.addDirectly(var, term);
     this.type.put(var, type);
 
     return this;
   }
 
   public @NotNull TypedSubst addDirectly(@NotNull TypedSubst subst) {
-    map.addAllDirectly(subst.map);
-    type.putAll(subst.type);
+    this.subst.addAllDirectly(subst.subst);
+    this.type.putAll(subst.type);
 
     return this;
   }
 
   public @NotNull Option<Result> getOption(@NotNull AnyVar var) {
-    return map.map().getOption(var).flatMap(term ->
+    return subst.map().getOption(var).flatMap(term ->
       this.type.getOption(var).map(type ->
         new Result.Default(term, type))
     );
   }
 
-  /**
-   * <b>Please</b> call this after inline all the patterns
-   * TODO: take out from TypedSubst
-   */
-  public void inline() {
-    map.map().replaceAll((var, term) ->
-      PatTycker.META_PAT_INLINER.apply(term));
-
-    type.replaceAll((var, term) ->
-      PatTycker.META_PAT_INLINER.apply(term));
-  }
-
   public @NotNull TypedSubst derive() {
     return new TypedSubst(
-      map.derive(),
+      subst.derive(),
       MutableMap.from(type)
     );
   }
 
   public void clear() {
-    map.clear();
+    subst.clear();
     type.clear();
   }
 }
