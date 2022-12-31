@@ -21,11 +21,12 @@ jobs:
           echo "org.gradle.jvmargs = -javaagent:${{ github.workspace }}/gradle/guard-pattern-fix.jar" >> gradle.properties
       - uses: gradle/gradle-build-action@v2
         with:
-          arguments: testCodeCoverageReport --info --no-daemon --stacktrace --warning-mode all
+          arguments: testCodeCoverageReport --no-daemon --stacktrace --warning-mode all
       - name: Test report
         uses: mikepenz/action-junit-report@v3
+        if: always()
         with:
-          job_name: junit-tests
+          check_name: junit-tests
           report_paths: '**/build/test-results/test/TEST-*.xml'
       - name: Upload coverage to Codecov
         if: github.base_ref != null
