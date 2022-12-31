@@ -22,6 +22,11 @@ jobs:
       - uses: gradle/gradle-build-action@v2
         with:
           arguments: testCodeCoverageReport --info --no-daemon --stacktrace --warning-mode all
+      - name: Test report
+        uses: mikepenz/action-junit-report@v3
+        with:
+          job_name: junit-tests
+          report_paths: '**/build/test-results/test/TEST-*.xml'
       - name: Upload coverage to Codecov
         if: github.base_ref != null
         uses: codecov/codecov-action@v3
