@@ -66,10 +66,15 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull GenericDef doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
-    if (predecl instanceof Decl.Telescopic<?> decl
-      && predecl.ref().core == null // for constructors: they do not have signature(body).
-      && decl.signature() == null
-    ) tyckHeader(predecl, tycker);
+    if (predecl instanceof Decl.Telescopic<?> decl) {
+      var signature = decl.signature();
+      if (predecl.ref().core == null // for constructors: they do not have signature(body).
+        && signature == null) tyckHeader(predecl, tycker);
+      else {
+        assert signature != null;
+        signature.param().forEach(tycker.localCtx::put);
+      }
+    }
     return switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl decl -> {
