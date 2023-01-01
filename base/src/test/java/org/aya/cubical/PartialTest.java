@@ -42,7 +42,7 @@ public class PartialTest {
       def t5 (A : Type) (i : I) (j : I) (a : A) (b : A) : Partial (~ i \\/ i /\\ ~ j) A =>
         {| ~ i := a | i := b |}
       """);
-    IntFunction<Doc> prettier = i -> res._2.get(i).toDoc(AyaPrettierOptions.debug());
+    IntFunction<Doc> prettier = i -> res.component2().get(i).toDoc(AyaPrettierOptions.debug());
     assertEquals("""
       def t (A : Type 0) (i : I) (a : A) : Partial A (~ i) => {| ~ i := a |}
       """.strip(), prettier.apply(8).debugRender());

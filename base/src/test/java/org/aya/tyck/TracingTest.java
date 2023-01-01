@@ -33,11 +33,11 @@ public class TracingTest {
 
   @NotNull private Trace.Builder mkBuilder(@Language("Aya") String code) {
     var res = TyckDeclTest.successDesugarDecls(code);
-    var decls = res._2;
+    var decls = res.component2();
     var builder = new Trace.Builder();
     var shapes = new AyaShape.Factory();
     decls.forEach(decl -> {
-      if (decl instanceof TeleDecl<?> signatured) TyckDeclTest.tyck(res._1, signatured, builder, shapes);
+      if (decl instanceof TeleDecl<?> signatured) TyckDeclTest.tyck(res.component1(), signatured, builder, shapes);
     });
     return builder;
   }

@@ -67,7 +67,7 @@ public final class PLCTReport {
       markdown = generate("Your Awesome Repository", args.repoName, since);
     } else {
       markdown = Doc.vcat(REPO
-        .mapChecked(t -> generate(t._1, t._2, since))
+        .mapChecked(t -> generate(t.component1(), t.component2(), since))
         .view()
         .prepended(Doc.plain("## The Aya Theorem Prover")));
     }

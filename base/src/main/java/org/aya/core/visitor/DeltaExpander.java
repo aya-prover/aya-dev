@@ -25,7 +25,7 @@ public interface DeltaExpander extends EndoTerm {
   static @NotNull Subst buildSubst(@NotNull SeqLike<Term.Param> self, @NotNull SeqLike<Arg<Term>> args) {
     assert self.sizeEquals(args);
     return new Subst(MutableMap.from(
-      self.zipView(args).map(t -> Tuple.of(t._1.ref(), t._2.term()))));
+      self.zipView(args).map(t -> Tuple.of(t.component1().ref(), t.component2().term()))));
   }
 
   @Override default @NotNull Term post(@NotNull Term term) {

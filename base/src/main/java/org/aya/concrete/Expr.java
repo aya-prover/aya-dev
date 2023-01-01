@@ -568,12 +568,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull ImmutableSeq<Tuple2<Expr, Expr>> clauses
   ) implements Expr {
     public @NotNull PartEl update(@NotNull ImmutableSeq<Tuple2<Expr, Expr>> clauses) {
-      return clauses.allMatchWith(clauses(), (l, r) -> l._1 == r._1 && l._2 == r._2) ? this
+      return clauses.allMatchWith(clauses(), (l, r) -> l.component1() == r.component1() && l.component2() == r.component2()) ? this
         : new PartEl(sourcePos, clauses);
     }
 
     @Override public @NotNull PartEl descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return update(clauses.map(cls -> kala.tuple.Tuple.of(f.apply(cls._1), f.apply(cls._2))));
+      return update(clauses.map(cls -> kala.tuple.Tuple.of(f.apply(cls.component1()), f.apply(cls.component2()))));
     }
   }
 

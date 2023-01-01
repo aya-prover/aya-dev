@@ -5,6 +5,7 @@ package org.aya.terck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -68,8 +69,8 @@ public record CallResolver(
     var codomThings = callable.args().zip(callee.telescope());
     for (var domThing : domThings) {
       for (var codomThing : codomThings) {
-        var relation = compare(codomThing._1.term(), domThing._1.term());
-        matrix.set(domThing._2, codomThing._2, relation);
+        var relation = compare(codomThing.component1().term(), domThing.component1().term());
+        matrix.set(domThing.component2(), codomThing.component2(), relation);
       }
     }
   }
@@ -120,7 +121,7 @@ public record CallResolver(
   }
 
   private Relation compareConArgs(@NotNull ImmutableSeq<Arg<Term>> conArgs, @NotNull Pat.Ctor ctor) {
-    var subCompare = conArgs.zipView(ctor.params()).map(sub -> compare(sub._1.term(), sub._2.term()));
+    var subCompare = conArgs.zipView(ctor.params()).map(sub -> compare(sub.component1().term(), sub.component2().term()));
     return subCompare.foldLeft(Relation.eq(), Relation::mul);
   }
 

@@ -31,8 +31,8 @@ public class NormalizeTest {
       def kiva : Nat => tracy (suc zero) zero
       def overlap1 (a : Nat) : Nat => tracy a zero
       def overlap2 (a : Nat) : Nat => tracy zero a""");
-    var defs = res._2;
-    var state = new TyckState(res._1);
+    var defs = res.component2();
+    var state = new TyckState(res.component1());
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
     assertTrue(normalizer.apply(2) instanceof ConCall conCall
       && Objects.equals(conCall.ref().name(), "suc"));
@@ -51,8 +51,8 @@ public class NormalizeTest {
       prim coe
       def xyr : Nat => (\\ i => Nat).coe zero freeze 1
       def kiva : Nat => (\\ i => Nat).coe (suc zero) freeze 1""");
-    var state = new TyckState(res._1);
-    var defs = res._2;
+    var state = new TyckState(res.component1());
+    var defs = res.component2();
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
     assertTrue(normalizer.apply(3) instanceof ConCall conCall
       && Objects.equals(conCall.ref().name(), "zero")
@@ -92,8 +92,8 @@ public class NormalizeTest {
       }
       def t2 => pure (zero + suc zero)
       """);
-    var state = new TyckState(res._1);
-    var defs = res._2;
+    var state = new TyckState(res.component1());
+    var defs = res.component2();
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
     assertEquals("suc zero :< nil", normalizer.apply(defs.size() - 2).toDoc(AyaPrettierOptions.debug()).debugRender());
     assertEquals("suc zero :< nil", normalizer.apply(defs.size() - 1).toDoc(AyaPrettierOptions.debug()).debugRender());

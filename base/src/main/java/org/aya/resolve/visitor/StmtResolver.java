@@ -176,8 +176,8 @@ public interface StmtResolver {
   static void resolveBind(@NotNull SeqLike<@NotNull Stmt> contents, @NotNull ResolveInfo info) {
     contents.forEach(s -> resolveBind(s, info));
     info.opRename().forEach((k, v) -> {
-      if (v._2 == BindBlock.EMPTY) return;
-      bind(v._2, info.opSet(), v._1);
+      if (v.component2() == BindBlock.EMPTY) return;
+      bind(v.component2(), info.opSet(), v.component1());
     });
   }
 

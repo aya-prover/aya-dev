@@ -77,10 +77,10 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
     var lSubst = new Subst();
     var rSubst = new Subst();
     for (var conv : l.view().zip3(r, tyVars)) {
-      lr.map.put(conv._3, new RefTerm(conv._2));
-      rl.map.put(conv._3, new RefTerm(conv._1));
-      lSubst.addDirectly(conv._1, new RefTerm(conv._3));
-      rSubst.addDirectly(conv._2, new RefTerm(conv._3));
+      lr.map.put(conv.component3(), new RefTerm(conv.component2()));
+      rl.map.put(conv.component3(), new RefTerm(conv.component1()));
+      lSubst.addDirectly(conv.component1(), new RefTerm(conv.component3()));
+      rSubst.addDirectly(conv.component2(), new RefTerm(conv.component3()));
     }
     var res = supplier.apply(lSubst, rSubst);
     lr.map.removeAll(tyVars);
@@ -254,7 +254,7 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
   private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef) {
     var substMap = MutableMap.<AnyVar, Term>create();
     for (var pa : lhs.args().view().zip(Def.defTele(lhsRef))) {
-      substMap.set(pa._2.ref(), pa._1.term());
+      substMap.set(pa.component2().ref(), pa.component1().term());
     }
     return Def.defResult(lhsRef).subst(substMap);
   }
@@ -267,12 +267,12 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
       case StructCall type1 -> {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = Def.defTele(type1.ref()).view().zip(type1.args().view()).map(x ->
-          Tuple.of(x._1.ref(), x._2.term())).<AnyVar, Term>toImmutableMap();
+          Tuple.of(x.component1().ref(), x.component2().term())).<AnyVar, Term>toImmutableMap();
         var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
           var dummyVars = fieldSig.selfTele.map(par -> par.ref().rename());
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
-            new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
+            new Arg<Term>(new RefTerm(vpa.component1()), vpa.component2().explicit()));
           var l = new FieldTerm(lhs, fieldSig.ref(), type1.args(), dummy);
           var r = new FieldTerm(rhs, fieldSig.ref(), type1.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);

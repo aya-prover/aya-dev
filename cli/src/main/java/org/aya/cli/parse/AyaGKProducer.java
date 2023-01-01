@@ -96,9 +96,9 @@ public record AyaGKProducer(
     if (node.is(OPEN_CMD)) return openCmd(node);
     if (node.is(DECL)) {
       var result = decl(node);
-      var stmts = result._2.view().prepended(result._1);
-      if (result._1 instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
-        result._2.firstOption(stmt -> !(stmt instanceof Decl))
+      var stmts = result.component2().view().prepended(result.component1());
+      if (result.component1() instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
+        result.component2().firstOption(stmt -> !(stmt instanceof Decl))
           .ifDefined(stmt -> reporter.report(new BadCounterexampleWarn(stmt)));
         return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
       }
@@ -262,11 +262,11 @@ public record AyaGKProducer(
     var sample = modifier.personality().data();
     var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> Tuple.of(m, fnModifier(m)))
       .toImmutableSeq();
-    var inline = modifiers.find(t -> t._2 == Modifier.Inline);
-    var opaque = modifiers.find(t -> t._2 == Modifier.Opaque);
+    var inline = modifiers.find(t -> t.component2() == Modifier.Inline);
+    var opaque = modifiers.find(t -> t.component2() == Modifier.Opaque);
     if (inline.isDefined() && opaque.isDefined()) {
       var gunpowder = inline.get();
-      reporter.report(new BadModifierWarn(sourcePosOf(gunpowder._1), gunpowder._2));
+      reporter.report(new BadModifierWarn(sourcePosOf(gunpowder.component1()), gunpowder.component2()));
     }
     var tele = telescope(node.childrenOfType(TELE).map(x -> x)); // make compiler happy
     var bind = node.peekChild(BIND_BLOCK);
@@ -275,16 +275,16 @@ public record AyaGKProducer(
     var dynamite = fnBody(node.child(FN_BODY));
     if (dynamite.isRight() && inline.isDefined()) {
       var gelatin = inline.get();
-      reporter.report(new BadModifierWarn(sourcePosOf(gelatin._1), gelatin._2));
+      reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
     return new TeleDecl.FnDecl(
-      nameOrInfix._1.sourcePos(),
+      nameOrInfix.component1().sourcePos(),
       sourcePosOf(node),
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
         () -> EnumSet.noneOf(Modifier.class))),
-      nameOrInfix._2,
-      nameOrInfix._1.data(),
+      nameOrInfix.component2(),
+      nameOrInfix.component1().data(),
       tele,
       typeOrNull(node.peekChild(TYPE)),
       dynamite,
@@ -323,11 +323,11 @@ public record AyaGKProducer(
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var entire = sourcePosOf(node);
     var decl = new TeleDecl.DataDecl(
-      nameOrInfix._1.sourcePos(),
+      nameOrInfix.component1().sourcePos(),
       entire,
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
-      nameOrInfix._2,
-      nameOrInfix._1.data(),
+      nameOrInfix.component2(),
+      nameOrInfix.component1().data(),
       tele,
       typeOrNull(node.peekChild(TYPE)),
       body,
@@ -359,11 +359,11 @@ public record AyaGKProducer(
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var decl = new TeleDecl.StructDecl(
-      nameOrInfix._1.sourcePos(),
+      nameOrInfix.component1().sourcePos(),
       sourcePosOf(node),
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
-      nameOrInfix._2,
-      nameOrInfix._1.data(),
+      nameOrInfix.component2(),
+      nameOrInfix.component1().data(),
       tele,
       typeOrNull(node.peekChild(TYPE)),
       fields,
@@ -378,10 +378,10 @@ public record AyaGKProducer(
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var bind = node.peekChild(BIND_BLOCK);
     return new TeleDecl.StructField(
-      nameOrInfix._1.sourcePos(),
+      nameOrInfix.component1().sourcePos(),
       sourcePosOf(node),
-      nameOrInfix._2,
-      nameOrInfix._1.data(),
+      nameOrInfix.component2(),
+      nameOrInfix.component1().data(),
       tele,
       typeOrNull(node.peekChild(TYPE)),
       Option.ofNullable(node.peekChild(EXPR)).map(this::expr),
@@ -407,12 +407,12 @@ public record AyaGKProducer(
     var bind = node.peekChild(BIND_BLOCK);
     var partial = node.peekChild(PARTIAL_BLOCK);
     var ty = node.peekChild(TYPE);
-    var namePos = nameOrInfix._1.sourcePos();
+    var namePos = nameOrInfix.component1().sourcePos();
     var ctor = new TeleDecl.DataCtor(
       namePos,
       sourcePosOf(node),
-      nameOrInfix._2,
-      nameOrInfix._1.data(),
+      nameOrInfix.component2(),
+      nameOrInfix.component1().data(),
       tele,
       partial(partial, partial != null ? sourcePosOf(partial) : namePos),
       patterns,
@@ -667,8 +667,8 @@ public record AyaGKProducer(
       var expr = expr(node.child(EXPR));
       var projected = fixes
         .foldLeft(Tuple.of(sourcePosOf(node), expr),
-          (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
-        ._2;
+          (acc, proj) -> Tuple.of(acc.component2().sourcePos(), buildProj(acc.component1(), acc.component2(), proj)))
+        .component2();
       return new Expr.NamedArg(true, projected);
     }
     if (node.is(TUPLE_IM_ARGUMENT)) {

@@ -47,8 +47,8 @@ public record CallGraph<C, T, P>(
     while (true) {
       var comb = indirect(initial, step);
       var tup = merge(comb, step);
-      if (tup._1.isEmpty()) return step; // no better matrices are found, we are complete
-      step = tup._2; // got a partially completed call graph, try complete more
+      if (tup.component1().isEmpty()) return step; // no better matrices are found, we are complete
+      step = tup.component2(); // got a partially completed call graph, try complete more
     }
   }
 
@@ -87,9 +87,9 @@ public record CallGraph<C, T, P>(
         // check if there's still old ones better than new ones...
         // note: the idea of "better" is not the same as "decrease more", see comments on `Selector.select()`
         var cmp = Selector.select(n.view(), o.view());
-        cmp._1.forEach(newG::put); // filtered really better new ones,
-        cmp._1.forEach(oldG::put); // ... and accept them.
-        cmp._2.forEach(oldG::put); // filtered old ones that still better than new ones.
+        cmp.component1().forEach(newG::put); // filtered really better new ones,
+        cmp.component1().forEach(oldG::put); // ... and accept them.
+        cmp.component2().forEach(oldG::put); // filtered old ones that still better than new ones.
       });
     return Tuple.of(newG, oldG);
   }

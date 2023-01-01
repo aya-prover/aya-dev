@@ -532,12 +532,12 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc catBlockR(int minBeforeDelim, @NotNull SeqLike<Doc> left, @NotNull Doc delim, @NotNull SeqLike<Doc> right) {
-    var vs = left.zipView(right).map(p -> Doc.splitR(minBeforeDelim, p._1, delim, p._2));
+    var vs = left.zipView(right).map(p -> Doc.splitR(minBeforeDelim, p.component1(), delim, p.component2()));
     return Doc.vcat(vs);
   }
 
   static @NotNull Doc catBlockL(int minBeforeRight, @NotNull SeqLike<Doc> left, @NotNull Doc delim, @NotNull SeqLike<Doc> right) {
-    var vs = left.zipView(right).map(p -> Doc.splitL(minBeforeRight, p._1, delim, p._2));
+    var vs = left.zipView(right).map(p -> Doc.splitL(minBeforeRight, p.component1(), delim, p.component2()));
     return Doc.vcat(vs);
   }
 

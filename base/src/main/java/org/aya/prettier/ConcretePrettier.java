@@ -194,8 +194,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       );
       case Expr.Let let -> {
         var letsAndBody = sugarLet(let);
-        var lets = letsAndBody._1;
-        var body = letsAndBody._2;
+        var lets = letsAndBody.component1();
+        var body = letsAndBody.component2();
         var oneLine = lets.sizeEquals(1);
         var letSeq = oneLine
           ? visitLetBind(lets.first())
@@ -231,7 +231,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
   private Doc partial(Expr.PartEl el) {
     return Doc.join(Doc.spaced(Doc.symbol("|")), el.clauses().map(cl -> Doc.sep(
-      term(Outer.Free, cl._1), Doc.symbol(":="), term(Outer.Free, cl._2))
+      term(Outer.Free, cl.component1()), Doc.symbol(":="), term(Outer.Free, cl.component2()))
     ));
   }
 

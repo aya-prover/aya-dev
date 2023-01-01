@@ -82,7 +82,7 @@ public record Zonker(
         Doc.english("Unable to solve the type of this literal:"),
         Doc.par(1, lit.toDoc(options)),
         Doc.plain("I'm confused about the following candidates, please help me!"),
-        Doc.par(1, Doc.join(Doc.plain(", "), lit.candidates().map(d -> Doc.code(d._1.ref().name()))))
+        Doc.par(1, Doc.join(Doc.plain(", "), lit.candidates().map(d -> Doc.code(d.component1().ref().name()))))
       );
     }
 

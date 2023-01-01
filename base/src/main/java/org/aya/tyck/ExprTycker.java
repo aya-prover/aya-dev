@@ -131,7 +131,7 @@ public final class ExprTycker extends PropTycker {
             // TODO: Maybe it's better for field to have a SourcePos?
             yield fail(aNew, structCall, new FieldError.ArgMismatch(aNew.sourcePos(), defField, bindings.size()));
           }
-          var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) -> new Expr.Lambda(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
+          var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) -> new Expr.Lambda(conField.body().sourcePos(), new Expr.Param(pair.component1().sourcePos(), pair.component1().data(), pair.component2().explicit()), lamExpr));
           var field = inherit(fieldExpr, type).wellTyped();
           fields.append(Tuple.of(fieldRef, field));
           subst.add(fieldRef, field);
@@ -243,8 +243,8 @@ public final class ExprTycker extends PropTycker {
         var subst = new Subst();
         try {
           var tup = ensurePiOrPath(fTy);
-          pi = tup._1;
-          cube = tup._2;
+          pi = tup.component1();
+          cube = tup.component2();
           while (pi.param().explicit() != argLicit || argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name()))
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
@@ -253,12 +253,12 @@ public final class ExprTycker extends PropTycker {
               app = AppTerm.make(app, holeApp);
               subst.addDirectly(pi.param().ref(), holeApp.term());
               tup = ensurePiOrPath(pi.body());
-              pi = tup._1;
-              if (tup._2 != null) cube = tup._2;
+              pi = tup.component1();
+              if (tup.component2() != null) cube = tup.component2();
             } else yield fail(expr, new ErrorTerm(pi.body()), new LicitError.UnexpectedImplicitArg(argument));
           tup = ensurePiOrPath(pi.subst(subst));
-          pi = tup._1;
-          if (tup._2 != null) cube = tup._2;
+          pi = tup.component1();
+          if (tup.component2() != null) cube = tup.component2();
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(state, expr, notPi.what));
         }
@@ -276,7 +276,7 @@ public final class ExprTycker extends PropTycker {
         // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
         yield new Result.Default(newApp, pi.body().subst(subst));
       }
-      case Expr.Hole hole -> inherit(hole, localCtx.freshTyHole(Constants.randomName(hole), hole.sourcePos())._2);
+      case Expr.Hole hole -> inherit(hole, localCtx.freshTyHole(Constants.randomName(hole), hole.sourcePos()).component2());
       case Expr.Error err -> Result.Default.error(err.description());
       case Expr.LitInt lit -> {
         int integer = lit.integer();
@@ -285,11 +285,11 @@ public final class ExprTycker extends PropTycker {
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
           var type = localCtx.freshTyHole("_ty" + lit.integer() + "'", lit.sourcePos());
-          yield new Result.Default(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type._1), type._1);
+          yield new Result.Default(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type.component1()), type.component1());
         }
         var match = defs.first();
-        var type = new DataCall(((DataDef) match._1).ref, 0, ImmutableSeq.empty());
-        yield new Result.Default(new IntegerTerm(integer, match._2, type), type);
+        var type = new DataCall(((DataDef) match.component1()).ref, 0, ImmutableSeq.empty());
+        yield new Result.Default(new IntegerTerm(integer, match.component2(), type), type);
       }
       case Expr.LitString litStr -> {
         if (!state.primFactory().have(PrimDef.ID.STRING))
@@ -315,18 +315,18 @@ public final class ExprTycker extends PropTycker {
           arr.sourcePos(), arr, defs, ErrorTerm.typeOf(arr))));
 
         var match = defs.first();
-        var def = (DataDef) match._1;
+        var def = (DataDef) match.component1();
 
         // preparing
         var dataParam = Def.defTele(def.ref).first();
         var sort = dataParam.type();    // the sort of type below.
         var hole = localCtx.freshHole(sort, arr.sourcePos());
         var type = new DataCall(def.ref(), 0, ImmutableSeq.of(
-          new Arg<>(hole._1, dataParam.explicit())));
+          new Arg<>(hole.component1(), dataParam.explicit())));
 
         // do type check
-        var results = elements.map(element -> inherit(element, hole._1).wellTyped());
-        yield new Result.Default(new ListTerm(results, match._2, type), type);
+        var results = elements.map(element -> inherit(element, hole.component1()).wellTyped());
+        yield new Result.Default(new ListTerm(results, match.component2(), type), type);
       }
       case Expr.Let let -> {
         // pushing telescopes into lambda params, for example:
@@ -378,7 +378,7 @@ public final class ExprTycker extends PropTycker {
 
   public @NotNull Partial<Term> elaboratePartial(@NotNull Expr.PartEl partial, @NotNull Term type) {
     var s = new ClauseTyckState();
-    var sides = partial.clauses().flatMap(sys -> clause(sys._1, sys._2, type, s));
+    var sides = partial.clauses().flatMap(sys -> clause(sys.component1(), sys.component2(), type, s));
     confluence(sides, partial, type);
     if (s.isConstantFalse) return new Partial.Split<>(ImmutableSeq.empty());
     if (s.truthValue != null) return new Partial.Const<>(s.truthValue);
@@ -448,8 +448,8 @@ public final class ExprTycker extends PropTycker {
       case Expr.Hole hole -> {
         // TODO[ice]: deal with unit type
         var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
-        if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield new Result.Default(freshHole._2, term);
+        if (hole.explicit()) reporter.report(new Goal(state, freshHole.component1(), hole.accessibleLocal().get()));
+        yield new Result.Default(freshHole.component2(), term);
       }
       case Expr.Lambda lam -> {
         if (term instanceof MetaTerm) {
@@ -516,8 +516,8 @@ public final class ExprTycker extends PropTycker {
     return switch (expr) {
       case Expr.Hole hole -> {
         var freshHole = localCtx.freshTyHole(Constants.randomName(hole), hole.sourcePos());
-        if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().get()));
-        yield freshHole._2;
+        if (hole.explicit()) reporter.report(new Goal(state, freshHole.component1(), hole.accessibleLocal().get()));
+        yield freshHole.component2();
       }
       case Expr.Sort sort -> new SortTerm(sort.kind(), sort.lift());
       case Expr.Pi pi -> {

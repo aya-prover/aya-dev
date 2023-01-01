@@ -222,8 +222,8 @@ public class AyaLanguageServer implements LanguageServer {
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints(options).stream().map(t -> new InlineHintProblem(p, t))))
       .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
-        t -> t._1,
-        Collectors.mapping(t -> t._2, ImmutableSeq.factory())
+        t -> t.component1(),
+        Collectors.mapping(t -> t.component2(), ImmutableSeq.factory())
       ));
     var from = ImmutableMap.from(diags);
     client.publishAyaProblems(from, options);
@@ -316,9 +316,9 @@ public class AyaLanguageServer implements LanguageServer {
       .view()
       .flatMap(t -> t.sourcePos().file().underlying().map(f -> Tuple.of(f.toUri(), t)))
       .collect(Collectors.groupingBy(
-        t -> t._1,
+        t -> t.component1(),
         Collectors.mapping(
-          t -> new TextEdit(LspRange.toRange(t._2.sourcePos()), t._2.newText()),
+          t -> new TextEdit(LspRange.toRange(t.component2().sourcePos()), t.component2().newText()),
           Collectors.toList()
         )
       ));

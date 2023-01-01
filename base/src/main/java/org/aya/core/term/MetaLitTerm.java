@@ -19,10 +19,10 @@ public record MetaLitTerm(
 ) implements Term {
   @SuppressWarnings("unchecked") public @NotNull Term inline() {
     if (!(type instanceof DataCall dataCall)) return this;
-    return candidates.find(t -> t._1.ref() == dataCall.ref()).flatMap(t -> {
-      var shape = t._2.shape();
-      if (shape == AyaShape.NAT_SHAPE) return Option.some(new IntegerTerm((int) repr, t._2, dataCall));
-      if (shape == AyaShape.LIST_SHAPE) return Option.some(new ListTerm((ImmutableSeq<Term>) repr, t._2, dataCall));
+    return candidates.find(t -> t.component1().ref() == dataCall.ref()).flatMap(t -> {
+      var shape = t.component2().shape();
+      if (shape == AyaShape.NAT_SHAPE) return Option.some(new IntegerTerm((int) repr, t.component2(), dataCall));
+      if (shape == AyaShape.LIST_SHAPE) return Option.some(new ListTerm((ImmutableSeq<Term>) repr, t.component2(), dataCall));
       return Option.<Term>none();
     }).getOrDefault(this);
   }

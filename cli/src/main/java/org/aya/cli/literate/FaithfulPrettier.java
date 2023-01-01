@@ -62,10 +62,10 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
 
     for (var current : highlights) {
       var parts = twoKnifeThreeParts(raw, base, current.sourcePos());
-      if (!parts._1.isEmpty()) docs.append(Doc.plain(parts._1.toString()));
-      var highlightPart = highlightOne(parts._2.toString(), current.type());
-      var remainPart = parts._3;
-      var newBase = parts._4;
+      if (!parts.component1().isEmpty()) docs.append(Doc.plain(parts.component1().toString()));
+      var highlightPart = highlightOne(parts.component2().toString(), current.type());
+      var remainPart = parts.component3();
+      var newBase = parts.component4();
 
       if (highlightPart != Doc.empty()) {
         // Hit if: SourcePos contains nothing
