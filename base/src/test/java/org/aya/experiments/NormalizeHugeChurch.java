@@ -29,8 +29,8 @@ public class NormalizeHugeChurch {
       def #16 : Num => mul #4 #4
       def #256 : Num => add #16 #16
       """);
-    var state = new TyckState(res._1);
-    var decls = res._2;
+    var state = new TyckState(res.component1());
+    var decls = res.component2();
     var last = ((FnDef) decls.last()).body.getLeftValue();
     println("Tyck: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();

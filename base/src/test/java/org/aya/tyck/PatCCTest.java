@@ -34,8 +34,8 @@ public class PatCCTest {
        | a, zero => a
        | suc a, b => suc (add a b)
        | a, suc b => suc (add a b)""");
-    var decls = res._2;
-    var classified = testClassify(res._1, (FnDef) decls.get(1));
+    var decls = res.component2();
+    var classified = testClassify(res.component1(), (FnDef) decls.get(1));
     assertEquals(4, classified.size());
     classified.forEach(cls ->
       assertEquals(2, cls.contents().size()));
@@ -48,8 +48,8 @@ public class PatCCTest {
        | zero, b => b
        | a, zero => a
        | suc a, suc b => suc (max a b)""");
-    var decls = res._2;
-    var classified = testClassify(res._1, (FnDef) decls.get(1));
+    var decls = res.component2();
+    var classified = testClassify(res.component1(), (FnDef) decls.get(1));
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
     assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
@@ -63,8 +63,8 @@ public class PatCCTest {
        | (zero, b), unit x => b
        | (a, zero), y => a
        | (suc a, suc b), unit y => suc (max (a, b) (unit zero))""");
-    var decls = res._2;
-    var classified = testClassify(res._1, (FnDef) decls.get(2));
+    var decls = res.component2();
+    var classified = testClassify(res.component1(), (FnDef) decls.get(2));
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
     assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());

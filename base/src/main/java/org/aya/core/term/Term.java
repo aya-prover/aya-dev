@@ -288,7 +288,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
     }
 
     public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(@NotNull MutableList<Tuple3<LocalVar, Boolean, Term>> buf) {
-      return buf.view().map(tup -> new Param(tup._1, tup._3, tup._2)).toImmutableSeq();
+      return buf.view().map(tup -> new Param(tup.component1(), tup.component3(), tup.component2())).toImmutableSeq();
     }
 
     public @NotNull Param descent(@NotNull UnaryOperator<@NotNull Term> f) {

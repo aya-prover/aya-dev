@@ -50,7 +50,7 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
     // TODO: maybe we should create a concrete hole and check it against the type
     //  in case we can synthesize this term via its type only
     var genName = param.ref().name().concat(Constants.GENERATED_POSTFIX);
-    return localCtx.freshHole(param.type(), genName, pos)._2;
+    return localCtx.freshHole(param.type(), genName, pos).component2();
   }
 
   protected final @NotNull Arg<Term> mockArg(Term.Param param, SourcePos pos) {
@@ -65,8 +65,8 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
     var genName = name + Constants.GENERATED_POSTFIX;
     // [ice]: unsure if ZERO is good enough
-    var domain = localCtx.freshTyHole(genName + "ty", pos)._2;
-    var codomain = localCtx.freshTyHole(genName + "ret", pos)._2;
+    var domain = localCtx.freshTyHole(genName + "ty", pos).component2();
+    var codomain = localCtx.freshTyHole(genName + "ret", pos).component2();
     return new PiTerm(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
   }
 

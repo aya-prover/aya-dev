@@ -88,10 +88,10 @@ public record PrettyError(
   public @NotNull Doc toDoc(@NotNull PrettyErrorConfig config) {
     var primary = errorRange.normalize(config);
     var hints = inlineHints.view()
-      .map(kv -> Tuple.of(kv._1.normalize(config), kv._2))
-      .filter(kv -> kv._1.startLine() == kv._1.endLine())
+      .map(kv -> Tuple.of(kv.component1().normalize(config), kv.component2()))
+      .filter(kv -> kv.component1().startLine() == kv.component1().endLine())
       .toImmutableSeq(); // TODO: multiline inline hints?
-    var allRange = hints.map(kv -> kv._1).foldLeft(primary, Span.Data::union);
+    var allRange = hints.map(kv -> kv.component1()).foldLeft(primary, Span.Data::union);
     return Doc.vcat(
       Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
       Doc.empty(),
@@ -240,7 +240,7 @@ public record PrettyError(
       .sorted(Comparator.comparingInt(a -> a.allocIndent));
     var others = hintLines.filter(h -> h.loc != Span.NowLoc.Between);
     var vbar = computeMultilineVBar(between);
-    renderHints(false, false, currentLine, codeIndent, vbar._1, vbar._2, currentCode, builder, others);
+    renderHints(false, false, currentLine, codeIndent, vbar.component1(), vbar.component2(), currentCode, builder, others);
   }
 
   private @NotNull Doc visualizeCode(
@@ -269,8 +269,8 @@ public record PrettyError(
     var alloc = MutableList.<Tuple3<Span.Data, Doc, Integer>>create();
     alloc.append(Tuple.of(primaryRange, Doc.empty(), 0));
     hints.view()
-      .filter(kv -> kv._1.startLine() >= minLineNo && kv._1.endLine() <= maxLineNo)
-      .mapIndexed((i, kv) -> Tuple.of(kv._1, kv._2, i + 1))
+      .filter(kv -> kv.component1().startLine() >= minLineNo && kv.component1().endLine() <= maxLineNo)
+      .mapIndexed((i, kv) -> Tuple.of(kv.component1(), kv.component2(), i + 1))
       .forEach(alloc::append);
 
     int codeIndent = alloc.size();
@@ -282,11 +282,11 @@ public record PrettyError(
       final var currentCode = Doc.plain(line);
 
       var hintLines = alloc.view()
-        .mapNotNull(note -> switch (note._1.nowLoc(currentLine)) {
-          case Shot -> new HintLine(note._2, Span.NowLoc.Shot, note._1.startCol(), note._1.endCol(), note._3);
-          case Start -> new HintLine(Doc.empty(), Span.NowLoc.Start, 0, note._1.startCol(), note._3);
-          case End -> new HintLine(note._2, Span.NowLoc.End, 0, note._1.endCol(), note._3);
-          case Between -> new HintLine(Doc.empty(), Span.NowLoc.Between, 0, 0, note._3);
+        .mapNotNull(note -> switch (note.component1().nowLoc(currentLine)) {
+          case Shot -> new HintLine(note.component2(), Span.NowLoc.Shot, note.component1().startCol(), note.component1().endCol(), note.component3());
+          case Start -> new HintLine(Doc.empty(), Span.NowLoc.Start, 0, note.component1().startCol(), note.component3());
+          case End -> new HintLine(note.component2(), Span.NowLoc.End, 0, note.component1().endCol(), note.component3());
+          case Between -> new HintLine(Doc.empty(), Span.NowLoc.Between, 0, 0, note.component3());
           case None -> null;
         })
         .sorted(Comparator.comparingInt(a -> a.startCol))

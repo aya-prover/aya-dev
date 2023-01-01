@@ -23,7 +23,7 @@ public class PathTest {
       def idp {A : Type} {a : A} : a = a =>
         \\i => a
       """);
-    IntFunction<Doc> prettier = i -> res._2.get(i).toDoc(AyaPrettierOptions.debug());
+    IntFunction<Doc> prettier = i -> res.component2().get(i).toDoc(AyaPrettierOptions.debug());
     assertEquals("def = {A : Type 0} (a b : A) : Type 0 => a = b",
       prettier.apply(3).debugRender());
     assertEquals("def idp {A : Type 0} {a : A} : (=) {A} a a => \\ i => a",

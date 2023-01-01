@@ -37,9 +37,9 @@ public record Goal(
           ImmutableSeq.of(Doc.plain("To ensure confluence:"))
             .concat(meta.conditions.toImmutableSeq().map(tup -> Doc.par(1, Doc.cat(
               Doc.plain("Given "),
-              Doc.parened(tup._1.toDoc(options)),
+              Doc.parened(tup.component1().toDoc(options)),
               Doc.plain(", we should have: "),
-              tup._2.toDoc(options)
+              tup.component2().toDoc(options)
             )))))
         : Doc.empty()
     );

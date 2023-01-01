@@ -34,7 +34,7 @@ public class AyaMdParser {
   public AyaMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
     this.file = file;
     this.reporter = reporter;
-    this.linesIndex = StringUtil.indexedLines(file.sourceCode()).map(x -> x._1);
+    this.linesIndex = StringUtil.indexedLines(file.sourceCode()).map(x -> x.component1());
   }
 
   public @NotNull Literate parseLiterate() {

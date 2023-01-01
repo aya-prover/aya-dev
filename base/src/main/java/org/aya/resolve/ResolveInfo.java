@@ -88,8 +88,8 @@ public record ResolveInfo(
         // if it is `public open`, make renamed operators transitively accessible by storing
         // them in my `opRename` bc "my importers" cannot access `other.opRename`.
         // see: https://github.com/aya-prover/aya-dev/issues/519
-        renameOp(defVar, tuple._1, tuple._2, false);
-      } else defVar.opDeclRename.put(thisModule().moduleName(), tuple._1);
+        renameOp(defVar, tuple.component1(), tuple.component2(), false);
+      } else defVar.opDeclRename.put(thisModule().moduleName(), tuple.component1());
     });
   }
 

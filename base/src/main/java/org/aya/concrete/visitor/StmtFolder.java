@@ -34,7 +34,7 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
     var t = Option.ofNullable(bb.resolvedTighters().get()).getOrElse(ImmutableSeq::empty);
     var l = Option.ofNullable(bb.resolvedLoosers().get()).getOrElse(ImmutableSeq::empty);
     return t.zipView(bb.tighters()).concat(l.zipView(bb.loosers()))
-      .foldLeft(acc, (ac, v) -> foldVarRef(ac, v._1, v._2.sourcePos(), lazyType(v._1)));
+      .foldLeft(acc, (ac, v) -> foldVarRef(ac, v.component1(), v.component2().sourcePos(), lazyType(v.component1())));
   }
 
   @MustBeInvokedByOverriders
@@ -52,8 +52,8 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
       case Decl decl -> {
         acc = fold(acc, decl.bindBlock());
         var declType = declType(decl);
-        acc = declType._2.foldLeft(acc, (ac, p) -> foldVarDecl(ac, p._1, p._1.definition(), p._2));
-        yield foldVarDecl(acc, decl.ref(), decl.sourcePos(), declType._1);
+        acc = declType.component2().foldLeft(acc, (ac, p) -> foldVarDecl(ac, p.component1(), p.component1().definition(), p.component2()));
+        yield foldVarDecl(acc, decl.ref(), decl.sourcePos(), declType.component1());
       }
     };
   }

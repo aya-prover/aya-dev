@@ -57,7 +57,7 @@ public sealed interface AyaShape {
 
     public @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeRecognition>> findImpl(@NotNull AyaShape shape) {
       return discovered.view().map(Tuple::of)
-        .filter(t -> t._2.shape() == shape)
+        .filter(t -> t.component2().shape() == shape)
         .toImmutableSeq();
     }
 

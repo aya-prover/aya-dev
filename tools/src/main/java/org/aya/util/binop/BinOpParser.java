@@ -71,17 +71,17 @@ public abstract class BinOpParser<
         var currentOp = toSetElem(expr, opSet);
         while (opStack.isNotEmpty()) {
           var top = opStack.peek();
-          var cmp = opSet.compare(top._2, currentOp);
+          var cmp = opSet.compare(top.component2(), currentOp);
           if (cmp == BinOpSet.PredCmp.Tighter) {
             if (!foldLhsFor(expr))
               return createErrorExpr(sourcePos);
           } else if (cmp == BinOpSet.PredCmp.Equal) {
             // associativity should be specified to both left/right when their share
             // the same precedence. Or a parse error should be reported.
-            var topAssoc = top._2.assoc();
+            var topAssoc = top.component2().assoc();
             var currentAssoc = currentOp.assoc();
             if (Assoc.assocAmbiguous(topAssoc, currentAssoc)) {
-              reportFixityError(topAssoc, currentAssoc, top._2.name(), currentOp.name(), of(top._1));
+              reportFixityError(topAssoc, currentAssoc, top.component2().name(), currentOp.name(), of(top.component1()));
               return createErrorExpr(sourcePos);
             }
             if (topAssoc.leftAssoc()) {
@@ -90,7 +90,7 @@ public abstract class BinOpParser<
           } else if (cmp == BinOpSet.PredCmp.Looser) {
             break;
           } else {
-            reportAmbiguousPred(currentOp.name(), top._2.name(), of(top._1));
+            reportAmbiguousPred(currentOp.name(), top.component2().name(), of(top.component1()));
             return createErrorExpr(sourcePos);
           }
         }
@@ -100,7 +100,7 @@ public abstract class BinOpParser<
 
     while (opStack.isNotEmpty()) {
       foldTop();
-      if (opStack.isNotEmpty()) markAppliedOperand(opStack.peek()._1, AppliedSide.Rhs);
+      if (opStack.isNotEmpty()) markAppliedOperand(opStack.peek().component1(), AppliedSide.Rhs);
     }
 
     assert prefixes.sizeEquals(1);
@@ -140,13 +140,13 @@ public abstract class BinOpParser<
 
   private boolean foldTop() {
     var opDef = opStack.pop();
-    if (opDef._2.assoc().isBinary()) {
-      prefixes.append(foldTopBinary(opDef._1));
+    if (opDef.component2().assoc().isBinary()) {
+      prefixes.append(foldTopBinary(opDef.component1()));
     } else { // implies isUnary()
-      var op = opDef._1;
+      var op = opDef.component1();
       if (prefixes.isEmpty()) {
         // we don't support unary section -- just raise an error.
-        reportMissingOperand(opDef._2.name(), op.term().sourcePos());
+        reportMissingOperand(opDef.component2().name(), op.term().sourcePos());
         return false;
       }
       var operand = prefixes.dequeue();

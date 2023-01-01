@@ -75,7 +75,7 @@ public final class PatternTycker {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
-        if (selection != null) foundError(new PatternProblem.PossiblePat(absurd, selection._3));
+        if (selection != null) foundError(new PatternProblem.PossiblePat(absurd, selection.component3()));
         yield new Pat.Absurd();
       }
       case Pattern.Tuple tuple -> {
@@ -95,16 +95,16 @@ public final class PatternTycker {
         var var = ctor.resolved().data();
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(term);
-        var ctorRef = realCtor._3.ref();
+        var ctorRef = realCtor.component3().ref();
         var dataIsProp = ctorRef.core.inProp();
         if (!resultIsProp && dataIsProp) foundError(new PatternProblem.IllegalPropPat(ctor));
         var ctorCore = ctorRef.core;
 
-        final var dataCall = realCtor._1;
-        var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor._2, 0), dataCall);
+        final var dataCall = realCtor.component1();
+        var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor.component2(), 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = tyckInner(sig, ctor.params().view(), ctor, resultIsProp).wellTyped.toImmutableSeq();
-        yield new Pat.Ctor(realCtor._3.ref(), patterns, dataCall);
+        yield new Pat.Ctor(realCtor.component3().ref(), patterns, dataCall);
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
         exprTycker.localCtx.put(bind, term);

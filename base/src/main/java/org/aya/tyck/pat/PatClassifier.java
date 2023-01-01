@@ -105,12 +105,12 @@ public record PatClassifier(
         var rhsInfo = contents.get(i);
         var lhsSubst = new Subst(MutableMap.create());
         var rhsSubst = new Subst(MutableMap.create());
-        var ctx = PatUnify.unifyPat(lhsInfo._2.patterns().map(Arg::term), rhsInfo._2.patterns().map(Arg::term),
+        var ctx = PatUnify.unifyPat(lhsInfo.component2().patterns().map(Arg::term), rhsInfo.component2().patterns().map(Arg::term),
           lhsSubst, rhsSubst, tycker.localCtx.deriveMap());
-        domination(ctx, rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
-        domination(ctx, lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
-        var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
-        var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
+        domination(ctx, rhsSubst, tycker.reporter, lhsInfo.component1(), rhsInfo.component1(), rhsInfo.component2());
+        domination(ctx, lhsSubst, tycker.reporter, rhsInfo.component1(), lhsInfo.component1(), lhsInfo.component2());
+        var lhsTerm = lhsInfo.component2().body().subst(lhsSubst);
+        var rhsTerm = rhsInfo.component2().body().subst(rhsSubst);
         // TODO: Currently all holes at this point are in an ErrorTerm
         if (lhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
           hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
@@ -118,8 +118,8 @@ public record PatClassifier(
           hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
         }
         tycker.unifyReported(lhsTerm, rhsTerm, result, pos, ctx, comparison ->
-          new ClausesProblem.Confluence(pos, rhsInfo._1 + 1, lhsInfo._1 + 1,
-            comparison, new UnifyInfo(tycker.state), rhsInfo._2.sourcePos(), lhsInfo._2.sourcePos()));
+          new ClausesProblem.Confluence(pos, rhsInfo.component1() + 1, lhsInfo.component1() + 1,
+            comparison, new UnifyInfo(tycker.state), rhsInfo.component2().sourcePos(), lhsInfo.component2().sourcePos()));
       }
     });
   }

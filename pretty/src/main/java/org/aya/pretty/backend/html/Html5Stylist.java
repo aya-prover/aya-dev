@@ -83,7 +83,7 @@ public class Html5Stylist extends ClosingStylist {
 
   public static @NotNull String colorsToCss(@NotNull ColorScheme colorScheme) {
     return colorScheme.definedColors().toImmutableSeq().view()
-      .map(t -> "%s: %s;".formatted(Html5Stylist.cssVar(t._1), Html5Stylist.cssColor(t._2)))
+      .map(t -> "%s: %s;".formatted(Html5Stylist.cssVar(t.component1()), Html5Stylist.cssColor(t.component2())))
       .joinToString("\n", "  %s"::formatted);
   }
 

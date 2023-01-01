@@ -91,7 +91,7 @@ public class PrettierTest {
 
       def infix ?= : Type -> Type -> Type => \\ (A B : Type) => A
       def use (A B : Type) => A ?= B
-      """)._2;
+      """).component2();
     var test1 = ((FnDef) decls.get(3)).body.getLeftValue();
     var test2 = ((FnDef) decls.get(4)).body.getLeftValue();
     var use = ((FnDef) decls.get(6)).body.getLeftValue();
@@ -109,7 +109,7 @@ public class PrettierTest {
 
       def g (h : Nat -> D) : Nat => zero
       def t (n : Nat) => g (n ·)
-      """)._2;
+      """).component2();
     var t = ((FnDef) decls.get(3)).body.getLeftValue();
     assertEquals("g (n ·)", t.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
@@ -122,7 +122,7 @@ public class PrettierTest {
 
       def elim {A : Type} False : A | ()
       def NonEmpty (A : Type) => ¬ ¬ A
-      """)._2;
+      """).component2();
     var t = ((FnDef) decls.get(3)).body.getLeftValue();
     assertEquals("¬ (¬ A)", t.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
@@ -136,7 +136,7 @@ public class PrettierTest {
       def infix = {A : Type} => Eq A
       open data Nat | zero | suc Nat
       def test => zero = zero
-      """)._2;
+      """).component2();
     var t = ((FnDef) decls.get(6)).body.getLeftValue();
     assertEquals("(=) {Nat} zero zero", t.toDoc(AyaPrettierOptions.informative()).debugRender());
     assertEquals("zero = zero", t.toDoc(AyaPrettierOptions.pretty()).debugRender());
@@ -155,7 +155,7 @@ public class PrettierTest {
       def infix = {A : Type} => Eq A
       def test1 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i ∨ j ∨ k) ∧ (k ∨ j ∨ i))
       def test2 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i ∧ j ∧ k) ∨ (k ∧ j ∧ i))
-      """)._2;
+      """).component2();
     var t1 = ((FnDef) decls.get(9)).body.getLeftValue();
     var t2 = ((FnDef) decls.get(10)).body.getLeftValue();
     assertEquals("p ((i ∨ j ∨ k) ∧ (k ∨ j ∨ i))", t1.toDoc(AyaPrettierOptions.informative()).commonRender());
@@ -178,7 +178,7 @@ public class PrettierTest {
       def infix = {A : Type} (a b : A) : Type => [| i |] A { ~ i := a | i := b }
       def idp {A : Type} {a : A} : a = a => \\i => a
       def test {A : Type} {a b : A} (p : a = b) : a = b => \\i => p i
-      """)._2;
+      """).component2();
     var t = ((FnDef) decls.get(5)).body.getLeftValue();
     assertEquals("\\ i => p i", t.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
@@ -192,7 +192,7 @@ public class PrettierTest {
         | 0 => 1
         | 1 => 2
         | a => suc a
-      """)._2;
+      """).component2();
     var t1 = ((FnDef) decls.get(1)).body.getLeftValue();
     var t2 = ((FnDef) decls.get(2)).body.getLeftValue();
     var t3 = ((FnDef) decls.get(3));
@@ -228,10 +228,10 @@ public class PrettierTest {
   }
 
   private @NotNull Doc declDoc(@Language("Aya") String text) {
-    return Doc.vcat(TyckDeclTest.successTyckDecls(text)._2.map(d -> d.toDoc(AyaPrettierOptions.debug())));
+    return Doc.vcat(TyckDeclTest.successTyckDecls(text).component2().map(d -> d.toDoc(AyaPrettierOptions.debug())));
   }
 
   private @NotNull Doc declCDoc(@Language("Aya") String text) {
-    return Doc.vcat(TyckDeclTest.successDesugarDecls(text)._2.map(s -> s.toDoc(AyaPrettierOptions.debug())));
+    return Doc.vcat(TyckDeclTest.successDesugarDecls(text).component2().map(s -> s.toDoc(AyaPrettierOptions.debug())));
   }
 }

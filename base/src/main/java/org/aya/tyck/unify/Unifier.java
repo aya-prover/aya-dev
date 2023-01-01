@@ -65,13 +65,13 @@ public final class Unifier extends TermComparator {
   private @Nullable Seq<LocalVar> invertSpine(Subst subst, @NotNull MetaTerm lhs, @NotNull Meta meta) {
     var overlap = MutableArrayList.<LocalVar>create();
     for (var arg : lhs.args().zipView(meta.telescope)) {
-      if (uneta.uneta(arg._1.term()) instanceof RefTerm ref) {
+      if (uneta.uneta(arg.component1().term()) instanceof RefTerm ref) {
         if (overlap.contains(ref.var())) continue;
         if (subst.map().containsKey(ref.var())) {
           overlap.append(ref.var());
           subst.map().remove(ref.var());
         }
-        subst.add(ref.var(), arg._2.toTerm());
+        subst.add(ref.var(), arg.component2().toTerm());
       } else return null;
     }
     return overlap;
@@ -176,9 +176,9 @@ public final class Unifier extends TermComparator {
     for (var arg : lhs.args().zipView(rcall.args())) {
       if (!(holeTy instanceof PiTerm holePi))
         throw new InternalException("meta arg size larger than param size. this should not happen");
-      if (!compare(arg._1.term(), arg._2.term(), lr, rl, holePi.param().type()))
+      if (!compare(arg.component1().term(), arg.component2().term(), lr, rl, holePi.param().type()))
         return Option.some(null);
-      holeTy = holePi.substBody(arg._1.term());
+      holeTy = holePi.substBody(arg.component1().term());
     }
     return Option.some(holeTy);
   }

@@ -87,9 +87,9 @@ public record CompiledAya(
       serialization.serOps.toImmutableSeq(),
       resolveInfo.opRename().view().map((k, v) -> {
           var name = state.def(k);
-          var info = v._1.opInfo();
-          var renamed = new SerDef.SerRenamedOp(info.name(), info.assoc(), serialization.serBind(v._2));
-          return Tuple.of(v._3, name, renamed);
+          var info = v.component1().opInfo();
+          var renamed = new SerDef.SerRenamedOp(info.name(), info.assoc(), serialization.serBind(v.component2()));
+          return Tuple.of(v.component3(), name, renamed);
         })
         .filter(Tuple3::head) // should not serialize publicly renamed ops from upstreams
         .map(Tuple3::tail)
@@ -200,7 +200,7 @@ public record CompiledAya(
     opRename.view().forEach((name, serOp) -> {
       var defVar = state.resolve(name);
       var asBind = serOp.bind();
-      var opDecl = resolveInfo.opRename().get(defVar)._1;
+      var opDecl = resolveInfo.opRename().get(defVar).component1();
       deBindDontCare(resolveInfo, state, opDecl, asBind);
     });
   }
@@ -226,7 +226,7 @@ public record CompiledAya(
   private @NotNull OpDecl resolveOp(@NotNull ResolveInfo resolveInfo, @NotNull SerTerm.DeState state, @NotNull SerDef.QName name) {
     var original = state.resolve(name);
     var renamed = resolveInfo.opRename().getOrNull(original);
-    var opDecl = renamed != null ? renamed._1 : original.opDecl;
+    var opDecl = renamed != null ? renamed.component1() : original.opDecl;
     if (opDecl != null) return opDecl;
     resolveInfo.opSet().reporter.report(new NameProblem.OperatorNameNotFound(SourcePos.SER, name.toString()));
     throw new Context.ResolvingInterruptedException();

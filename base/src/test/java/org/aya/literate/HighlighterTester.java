@@ -98,8 +98,8 @@ public class HighlighterTester {
   public void runTest(@NotNull Seq<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {
     assertEquals(actuals.size(), expecteds.size(), "size mismatch");
     for (var tup : actuals.zipView(expecteds)) {
-      var actual = tup._1;
-      var expected = tup._2;
+      var actual = tup.component1();
+      var expected = tup.component2();
 
       if (expected == null) {
         switch (actual.type()) {
@@ -191,7 +191,7 @@ public class HighlighterTester {
       assertTrue(existName.isDefined(), "Undefined name: " + expectedRef.name());
 
       var defData = existName.get();
-      assertEquals(defData._2.getOrNull(), actualRef.kind());
+      assertEquals(defData.component2().getOrNull(), actualRef.kind());
     }
 
     assertEquals(actualRef.kind(), expectedRef.kind());

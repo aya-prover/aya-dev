@@ -52,8 +52,8 @@ public class TyckDeclTest {
   public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>> successTyckDecls(@Language("Aya") @NonNls @NotNull String text) {
     var res = successDesugarDecls(text);
     var shapes = new AyaShape.Factory();
-    return Tuple.of(res._1, res._2.view()
-      .map(i -> i instanceof TeleDecl<?> s ? tyck(res._1, s, null, shapes) : null)
+    return Tuple.of(res.component1(), res.component2().view()
+      .map(i -> i instanceof TeleDecl<?> s ? tyck(res.component1(), s, null, shapes) : null)
       .filter(Objects::nonNull).toImmutableSeq());
   }
 }
