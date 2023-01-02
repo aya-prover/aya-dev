@@ -9,11 +9,20 @@ import org.aya.util.Arg;
 import org.aya.generic.Shaped;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record ListTerm(
   @Override @NotNull ImmutableSeq<Term> repr,
   @Override @NotNull ShapeRecognition recognition,
   @Override @NotNull DataCall type
 ) implements StableWHNF, Shaped.List<Term> {
+  public @NotNull ListTerm update(@NotNull DataCall type, @NotNull ImmutableSeq<Term> repr) {
+    return type == type() && repr.sameElements(repr(), true) ? this : new ListTerm(repr, recognition, type);
+  }
+
+  @Override public @NotNull ListTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update((DataCall) f.apply(type), repr.map(f));
+  }
 
   @Override
   public @NotNull Term makeNil(@NotNull CtorDef nil, @NotNull Arg<Term> dataArg) {

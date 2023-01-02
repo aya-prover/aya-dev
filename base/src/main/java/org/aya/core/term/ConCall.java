@@ -16,6 +16,14 @@ public record ConCall(
   @NotNull ConCall.Head head,
   @NotNull ImmutableSeq<Arg<Term>> conArgs
 ) implements Callable.DefCall {
+  public @NotNull ConCall update(@NotNull Head head, @NotNull ImmutableSeq<Arg<Term>> conArgs) {
+    return head == head() && conArgs.sameElements(conArgs(), true) ? this : new ConCall(head, conArgs);
+  }
+
+  @Override public @NotNull ConCall descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(head.descent(f), conArgs.map(arg -> arg.descent(f)));
+  }
+
   public ConCall(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef,
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,

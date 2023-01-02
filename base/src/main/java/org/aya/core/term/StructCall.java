@@ -9,6 +9,8 @@ import org.aya.util.Arg;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @author kiva
  */
@@ -17,4 +19,11 @@ public record StructCall(
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
 ) implements Callable.DefCall, StableWHNF, Formation {
+  public @NotNull StructCall update(@NotNull ImmutableSeq<Arg<Term>> args) {
+    return args.sameElements(args(), true) ? this : new StructCall(ref(), ulift(), args);
+  }
+
+  @Override public @NotNull StructCall descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(args.map(arg -> arg.descent(f)));
+  }
 }

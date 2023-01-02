@@ -8,10 +8,21 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record MatchTerm(
   @NotNull ImmutableSeq<Term> discriminant,
   @NotNull ImmutableSeq<Matching> clauses
 ) implements Term {
+  @Override public @NotNull MatchTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(discriminant.map(f), clauses.map(cl -> cl.descent(f)));
+  }
+
+  private @NotNull MatchTerm update(@NotNull ImmutableSeq<Term> discriminant, ImmutableSeq<Matching> clauses) {
+    return discriminant.sameElements(discriminant(), true) && clauses.sameElements(clauses(), true) ? this
+      : new MatchTerm(discriminant, clauses);
+  }
+
   public @NotNull Option<Term> tryMatch() {
     for (var clause : clauses) {
       var subst = PatMatcher.tryBuildSubst(

@@ -7,7 +7,17 @@ import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record AppTerm(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements Elimination {
+  public @NotNull Term update(@NotNull Term of, @NotNull Arg<Term> arg) {
+    return of == of() && arg == arg() ? this : AppTerm.make(of, arg);
+  }
+
+  @Override public @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(f.apply(of), arg.descent(f));
+  }
+
   @Contract(pure = true) public static @NotNull Term
   make(@NotNull Term f, @NotNull Arg<Term> arg) {
     return make(new AppTerm(f, arg));

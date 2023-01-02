@@ -8,6 +8,8 @@ import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @param isReallyError true if this is indeed an error,
  *                      false if this is just for pretty printing placeholder
@@ -25,6 +27,10 @@ public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) i
 
   public ErrorTerm(@NotNull Doc description, boolean isReallyError) {
     this(options -> description, isReallyError);
+  }
+
+  @Override public @NotNull ErrorTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return this;
   }
 
   public static @NotNull ErrorTerm typeOf(@NotNull Term origin) {

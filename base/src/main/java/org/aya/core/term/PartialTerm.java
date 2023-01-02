@@ -25,6 +25,14 @@ import java.util.function.UnaryOperator;
  * a split partial may become a const partial, is that stable?
  */
 public record PartialTerm(@NotNull Partial<Term> partial, @NotNull Term rhsType) implements Term {
+  public @NotNull PartialTerm update(@NotNull Partial<Term> partial, @NotNull Term rhsType) {
+    return partial == partial() && rhsType == rhsType() ? this : new PartialTerm(partial, rhsType);
+  }
+
+  @Override public @NotNull PartialTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(partial.map(f), f.apply(rhsType));
+  }
+
   public static @NotNull Partial<Term> merge(@NotNull Seq<Partial<Term>> partials) {
     // Just a mild guess without scientific rationale
     var list = MutableArrayList.<Restr.Side<Term>>create(partials.size() * 2);

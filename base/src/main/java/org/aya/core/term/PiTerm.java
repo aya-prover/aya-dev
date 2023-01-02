@@ -19,6 +19,13 @@ import java.util.function.UnaryOperator;
  * @author re-xyr, kiva, ice1000
  */
 public record PiTerm(@NotNull Param param, @NotNull Term body) implements StableWHNF, Formation {
+  public @NotNull PiTerm update(@NotNull Param param, @NotNull Term body) {
+    return param == param() && body == body() ? this : new PiTerm(param, body);
+  }
+  @Override public @NotNull PiTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(param.descent(f), f.apply(body));
+  }
+
   public static @NotNull Term unpi(@NotNull Term term, @NotNull UnaryOperator<Term> fmap, @NotNull MutableList<Param> params) {
     if (fmap.apply(term) instanceof PiTerm(var param, var body)) {
       params.append(param);

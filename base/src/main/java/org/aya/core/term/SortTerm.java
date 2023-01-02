@@ -5,10 +5,16 @@ package org.aya.core.term;
 import org.aya.generic.SortKind;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @author ice1000, tsao-chi
  */
 public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, Formation {
+  @Override public @NotNull SortTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return this;
+  }
+
   public SortTerm(@NotNull SortKind kind, int lift) {
     this.kind = kind;
     if (!kind.hasLevel() && lift != 0) throw new IllegalArgumentException("invalid lift");

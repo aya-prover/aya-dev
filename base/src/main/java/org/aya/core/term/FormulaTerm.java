@@ -7,6 +7,8 @@ import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record FormulaTerm(@NotNull Formula<Term> asFormula) implements Term {
   public static final @NotNull FormulaTerm LEFT = new FormulaTerm(new Formula.Lit<>(false));
   public static final @NotNull FormulaTerm RIGHT = new FormulaTerm(new Formula.Lit<>(true));
@@ -25,6 +27,14 @@ public record FormulaTerm(@NotNull Formula<Term> asFormula) implements Term {
 
   public static @NotNull FormulaTerm conn(boolean isAnd, @NotNull Term lhs, @NotNull Term rhs) {
     return new FormulaTerm(new Formula.Conn<>(isAnd, lhs, rhs));
+  }
+
+  public @NotNull FormulaTerm update(@NotNull Formula<Term> asFormula) {
+    return asFormula == asFormula() ? this : new FormulaTerm(asFormula);
+  }
+
+  @Override public @NotNull FormulaTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(asFormula.fmap(f));
   }
 
   public @NotNull Term simpl() {

@@ -25,6 +25,14 @@ public record PathTerm(
   @NotNull Term type,
   @NotNull Partial<Term> partial
 ) implements StableWHNF, Formation {
+  public @NotNull PathTerm update(@NotNull Term type, @NotNull Partial<Term> partial) {
+    return type == type() && partial == partial() ? this : new PathTerm(params, type, partial);
+  }
+
+  @Override public @NotNull PathTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(f.apply(type), partial.map(f));
+  }
+
   public @NotNull Term eta(@NotNull Term term) {
     return new PLamTerm(params, applyDimsTo(term)).rename();
   }
@@ -93,13 +101,6 @@ public record PathTerm(
     }
     var newArgs = args.map(x -> new Arg<Term>(x, true)).toImmutableSeq();
     return new PAppTerm(pLam, newArgs, this);
-  }
-
-  public @NotNull PathTerm map(@NotNull UnaryOperator<Term> mapper) {
-    var ty = mapper.apply(type);
-    var par = partial.map(mapper);
-    if (ty == type && par == partial) return this;
-    return new PathTerm(params, ty, par);
   }
 
   public @NotNull Term makeApp(@NotNull Term app, @NotNull Arg<Term> arg) {

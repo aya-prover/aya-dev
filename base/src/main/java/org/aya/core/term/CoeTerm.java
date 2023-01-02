@@ -8,7 +8,18 @@ import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record CoeTerm(@NotNull Term type, @NotNull Restr<Term> restr) implements Term {
+  public @NotNull CoeTerm update(@NotNull Term type, @NotNull Restr<Term> restr) {
+    return type == type() && restr == restr() ? this
+      : new CoeTerm(type, AyaRestrSimplifier.INSTANCE.normalizeRestr(restr));
+  }
+
+  @Override public @NotNull CoeTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(f.apply(type), restr.map(f));
+  }
+
   /**
    * <code>coeFill (A : I -> Type) (phi : I) : Pi (u : A 0) -> Path A u (coe A phi u)</code>
    *

@@ -8,6 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.UnaryOperator;
 
 public record MetaPatTerm(@NotNull Pat.Meta ref) implements Term {
+  @Override public @NotNull MetaPatTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return this;
+  }
+
   public @NotNull Term inline(@NotNull UnaryOperator<Term> afterwards) {
     var sol = ref.solution().get();
     return sol != null ? afterwards.apply(sol.toTerm()) : this;
