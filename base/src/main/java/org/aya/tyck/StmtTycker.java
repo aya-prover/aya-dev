@@ -68,7 +68,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private @NotNull GenericDef doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
     if (predecl instanceof Decl.Telescopic<?> decl) {
       var signature = decl.signature();
-      if (signature != null) signature.param().forEach(tycker.localCtx::put);
+      if (signature != null) loadTele(tycker, signature);
       // If core == null then not yet tycked. A constructor's signature is always null,
       // so we need this extra check
       else if (predecl.ref().core == null) tyckHeader(predecl, tycker);
@@ -134,7 +134,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
-        structSig.param().forEach(tycker.localCtx::put);
+        loadTele(tycker, structSig);
         var result = signature.result();
         var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
         yield new FieldDef(structRef, field.ref, structSig.param(), signature.param(), result, body, field.coerce);
@@ -235,7 +235,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
-        structSig.param().forEach(tycker.localCtx::put);
+        loadTele(tycker, structSig);
         var structLvl = structSig.result();
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
         var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl).wellTyped());
@@ -252,7 +252,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var dataConcrete = dataRef.concrete;
     var dataSig = dataConcrete.signature;
     assert dataSig != null;
-    dataSig.param().forEach(tycker.localCtx::put);
+    loadTele(tycker, dataSig);
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var predataCall = new DataCall(dataRef, 0, dataArgs);
     // There might be patterns in the constructor
@@ -312,6 +312,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       elabClauses = PartialTerm.DUMMY_SPLIT;
     }
     dataConcrete.checkedBody.append(new CtorDef(dataRef, ctor.ref, pat, patternTele, tele, split, dataCall, ctor.coerce));
+  }
+
+  private static void loadTele(@NotNull ExprTycker tycker, Def.Signature<?> dataSig) {
+    dataSig.param().forEach(tycker.localCtx::put);
   }
 
   private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl<SortTerm> data) {
