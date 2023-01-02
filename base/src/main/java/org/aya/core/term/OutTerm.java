@@ -5,11 +5,21 @@ package org.aya.core.term;
 import org.aya.guest0x0.cubical.Partial;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @author ice1000
  * @see InTerm
  */
 public record OutTerm(@NotNull Term phi, @NotNull Term partial, @NotNull Term of) implements Elimination {
+  public @NotNull Term update(@NotNull Term phi, @NotNull Term partial, @NotNull Term of) {
+    return phi == phi() && partial == partial() && of == of() ? this : make(phi, partial, of);
+  }
+
+  @Override public @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(f.apply(phi), f.apply(partial), f.apply(of));
+  }
+
   public static @NotNull Term make(@NotNull Term phi, @NotNull Term partial, @NotNull Term u) {
     return make(new OutTerm(phi, partial, u));
   }

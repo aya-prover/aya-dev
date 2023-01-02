@@ -9,10 +9,20 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @author re-xyr
  */
 public record ProjTerm(@NotNull Term of, int ix) implements Elimination {
+  public @NotNull ProjTerm update(@NotNull Term of) {
+    return of == of() ? this : new ProjTerm(of, ix);
+  }
+
+  @Override public @NotNull ProjTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(f.apply(of));
+  }
+
   public static @NotNull Subst
   projSubst(@NotNull Term term, int index, ImmutableSeq<Param> telescope) {
     // instantiate the type

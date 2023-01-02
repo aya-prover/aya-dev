@@ -4,4 +4,10 @@ package org.aya.core.term;
 
 import org.jetbrains.annotations.NotNull;
 
-public record StringTerm(@NotNull String string) implements StableWHNF {}
+import java.util.function.UnaryOperator;
+
+public record StringTerm(@NotNull String string) implements StableWHNF {
+  @Override public @NotNull StringTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return this;
+  }
+}

@@ -8,10 +8,19 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @author ice1000
  */
 public record RefTerm(@NotNull LocalVar var) implements Term {
+  @Override public @NotNull RefTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return this;
+  }
+
   public record Field(@NotNull DefVar<FieldDef, TeleDecl.StructField> ref) implements Term {
+    @Override public @NotNull Field descent(@NotNull UnaryOperator<@NotNull Term> f) {
+      return this;
+    }
   }
 }

@@ -15,11 +15,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 
 /**
  * @author re-xyr
  */
 public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements StableWHNF, Formation {
+  public @NotNull SigmaTerm update(@NotNull ImmutableSeq<Param> params) {
+    return params.sameElements(params(), true) ? this : new SigmaTerm(params);
+  }
+
+  @Override public @NotNull SigmaTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(params.map(p -> p.descent(f)));
+  }
+
   public static @NotNull SortTerm max(@NotNull SortTerm x, @NotNull SortTerm y) {
     int lift = Math.max(x.lift(), y.lift());
     if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {

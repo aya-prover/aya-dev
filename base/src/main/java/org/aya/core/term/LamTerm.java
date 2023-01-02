@@ -9,12 +9,21 @@ import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 /**
  * @author ice1000
  */
 public record LamTerm(@NotNull Param param, @NotNull Term body) implements StableWHNF {
   public record Param(@Override @NotNull LocalVar ref, @Override boolean explicit) implements UntypedParam {
+  }
+
+  public Term update(@NotNull Term body) {
+    return body == body() ? this : new LamTerm(param(), body);
+  }
+
+  @Override public @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(f.apply(body));
   }
 
   public static @NotNull Param param(@NotNull Term.Param param) {

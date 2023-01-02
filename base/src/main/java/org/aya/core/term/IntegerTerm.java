@@ -9,11 +9,20 @@ import org.aya.util.Arg;
 import org.aya.generic.Shaped;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record IntegerTerm(
   @Override int repr,
   @Override @NotNull ShapeRecognition recognition,
   @Override @NotNull DataCall type
 ) implements StableWHNF, Shaped.Nat<Term> {
+  public IntegerTerm update(DataCall type) {
+    return type == type() ? this : new IntegerTerm(repr, recognition, type);
+  }
+
+  @Override public @NotNull IntegerTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update((DataCall) f.apply(type));
+  }
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
     return new ConCall(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());

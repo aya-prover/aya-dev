@@ -11,12 +11,22 @@ import org.aya.core.repr.ShapeRecognition;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record MetaLitTerm(
   @NotNull SourcePos sourcePos,
   @NotNull Object repr,
   @NotNull ImmutableSeq<Tuple2<GenericDef, ShapeRecognition>> candidates,
   @NotNull Term type
 ) implements Term {
+  public @NotNull MetaLitTerm update(@NotNull Term type) {
+    return type == type() ? this : new MetaLitTerm(sourcePos, repr, candidates, type);
+  }
+
+  @Override public @NotNull MetaLitTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+    return update(f.apply(type));
+  }
+
   @SuppressWarnings("unchecked") public @NotNull Term inline() {
     if (!(type instanceof DataCall dataCall)) return this;
     return candidates.find(t -> t.component1().ref() == dataCall.ref()).flatMap(t -> {
