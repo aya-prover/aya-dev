@@ -23,9 +23,9 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.*;
+import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
-import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -68,12 +68,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   private @NotNull GenericDef doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
     if (predecl instanceof Decl.Telescopic<?> decl) {
       var signature = decl.signature();
-      if (predecl.ref().core == null // for constructors: they do not have signature(body).
-        && signature == null) tyckHeader(predecl, tycker);
-      else {
-        assert signature != null;
-        signature.param().forEach(tycker.localCtx::put);
-      }
+      if (signature != null) signature.param().forEach(tycker.localCtx::put);
+      // If core == null then not yet tycked. A constructor's signature is always null,
+      // so we need this extra check
+      else if (predecl.ref().core == null) tyckHeader(predecl, tycker);
     }
     return switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
@@ -136,6 +134,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
+        structSig.param().forEach(tycker.localCtx::put);
         var result = signature.result();
         var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
         yield new FieldDef(structRef, field.ref, structSig.param(), signature.param(), result, body, field.coerce);
@@ -236,6 +235,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
+        structSig.param().forEach(tycker.localCtx::put);
         var structLvl = structSig.result();
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
         var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl).wellTyped());
@@ -252,6 +252,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var dataConcrete = dataRef.concrete;
     var dataSig = dataConcrete.signature;
     assert dataSig != null;
+    dataSig.param().forEach(tycker.localCtx::put);
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var predataCall = new DataCall(dataRef, 0, dataArgs);
     // There might be patterns in the constructor
