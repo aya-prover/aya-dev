@@ -1,17 +1,15 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
 import kala.collection.Seq;
-import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Subst;
-import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
+import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.prettier.PrettierOptions;
@@ -41,10 +39,6 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
     if (defVar.core != null) return defVar.core.result();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature()).result;
-  }
-  static @NotNull ImmutableSeq<Term.Param>
-  substParams(@NotNull SeqLike<Term.@NotNull Param> param, @NotNull Subst subst) {
-    return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
   }
 
   @Override @NotNull DefVar<? extends Def, ? extends Decl> ref();

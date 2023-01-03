@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -71,7 +71,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       }
       case PiTerm pi -> {
         var paramTyRaw = press(pi.param().type());
-        var t = new Synthesizer(state, ctx.deriveMap());
+        var t = new Synthesizer(state, ctx.deriveSeq());
         yield t.ctx.with(pi.param(), () -> {
           if (paramTyRaw instanceof SortTerm paramTy && t.press(pi.body()) instanceof SortTerm retTy) {
             return PiTerm.max(paramTy, retTy);
