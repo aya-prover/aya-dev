@@ -201,13 +201,9 @@ public record AyaSccTycker(
     // prevent counterexample errors from being reported to the user reporter
     if (decl.personality() == Decl.Personality.COUNTEREXAMPLE) {
       var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);
-      return new ExprTycker(resolveInfo.primFactory(), resolveInfo.shapeFactory(), reporter, tycker.traceBuilder());
+      return new ExprTycker(resolveInfo.primFactory(), resolveInfo.shapeFactory(), reporter, tycker.traceBuilder);
     }
-    return newExprTycker(reporter);
-  }
-
-  private @NotNull ExprTycker newExprTycker(@NotNull Reporter reporter) {
-    return resolveInfo.newTycker(reporter, tycker.traceBuilder());
+    return resolveInfo.newTycker(reporter, tycker.traceBuilder);
   }
 
   private void terck(@NotNull SeqView<TyckOrder> units) {
