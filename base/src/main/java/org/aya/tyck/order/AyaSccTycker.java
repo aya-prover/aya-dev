@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
@@ -17,9 +17,8 @@ import org.aya.core.term.Callable;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
-import org.aya.util.terck.CallGraph;
-import org.aya.terck.CallResolver;
 import org.aya.terck.BadRecursion;
+import org.aya.terck.CallResolver;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CounterexampleError;
@@ -29,6 +28,7 @@ import org.aya.util.reporter.BufferReporter;
 import org.aya.util.reporter.CollectingReporter;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.terck.CallGraph;
 import org.aya.util.terck.MutableGraph;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
