@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
@@ -114,9 +114,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
   }
 
   /**
-   * @param pos
-   * @param ctx
-   * @param p   Callback to generate the error message
+   * @param p Callback to generate the error message
    * @return true if unified successfully, false otherwise
    */
   public boolean unifyReported(

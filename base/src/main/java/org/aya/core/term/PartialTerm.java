@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Partial.Const;

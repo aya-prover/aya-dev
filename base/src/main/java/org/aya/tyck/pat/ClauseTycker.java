@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -10,7 +10,9 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.PatternConsumer;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.*;
+import org.aya.core.term.ErrorTerm;
+import org.aya.core.term.MetaPatTerm;
+import org.aya.core.term.Term;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.LocalCtx;
@@ -140,7 +142,7 @@ public final class ClauseTycker {
 
       match.hasError |= patTycker.hasError();
 
-      var patterns = step0.wellTyped().map(p -> p.descent(x -> x.inline(exprTycker.localCtx))).toImmutableSeq();
+      var patterns = step0.wellTyped().map(p -> p.descent(x -> x.inline(exprTycker.localCtx)));
       // inline after inline patterns
       inlineTypedSubst(patTycker.bodySubst);
       var type = inlineTerm(step0.codomain());

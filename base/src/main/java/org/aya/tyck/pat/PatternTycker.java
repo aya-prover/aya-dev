@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -88,8 +88,7 @@ public final class PatternTycker {
           new ErrorTerm(Doc.plain("Rua"), false));
         yield new Pat.Tuple(
           tyckInner(sig, tuple.patterns().view(), tuple, resultIsProp)
-            .wellTyped()
-            .toImmutableSeq());
+            .wellTyped());
       }
       case Pattern.Ctor ctor -> {
         var var = ctor.resolved().data();
@@ -103,7 +102,7 @@ public final class PatternTycker {
         final var dataCall = realCtor.component1();
         var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor.component2(), 0), dataCall);
         // It is possible that `ctor.params()` is empty.
-        var patterns = tyckInner(sig, ctor.params().view(), ctor, resultIsProp).wellTyped.toImmutableSeq();
+        var patterns = tyckInner(sig, ctor.params().view(), ctor, resultIsProp).wellTyped;
         yield new Pat.Ctor(realCtor.component3().ref(), patterns, dataCall);
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {

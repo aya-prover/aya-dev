@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
@@ -31,8 +31,7 @@ public class PatToTerm {
 
   protected @NotNull Term visitCtor(Pat.@NotNull Ctor ctor) {
     var data = (DataCall) ctor.type();
-    var args = Arg.mapSeq(ctor.params(), this::visit)
-      .toImmutableSeq();
+    var args = Arg.mapSeq(ctor.params(), this::visit);
     return new ConCall(data.ref(), ctor.ref(),
       data.args().map(Arg::implicitify),
       data.ulift(), args);
