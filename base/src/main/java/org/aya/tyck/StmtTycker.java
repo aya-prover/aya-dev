@@ -14,7 +14,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
-import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
@@ -23,10 +22,11 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.*;
+import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
-import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.tycker.TracedTycker;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
 import org.aya.util.TreeBuilder;
@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 /**
  * @author ice1000, kiva
@@ -44,21 +43,15 @@ import java.util.function.Consumer;
  * but use the one passed to it. {@link StmtTycker#newTycker} creates instances
  * of expr tyckers.
  */
-public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-  public @NotNull ExprTycker newTycker(@NotNull PrimDef.Factory primFactory, @NotNull AyaShape.Factory literalShapes) {
-    return new ExprTycker(primFactory, literalShapes, reporter, traceBuilder);
-  }
-
-  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
-    if (traceBuilder != null) consumer.accept(traceBuilder);
+public final class StmtTycker extends TracedTycker {
+  public StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+    super(reporter, traceBuilder);
   }
 
   private <S extends Decl, D extends GenericDef> D
   traced(@NotNull S yeah, ExprTycker p, @NotNull BiFunction<S, ExprTycker, D> f) {
-    tracing(builder -> builder.shift(new Trace.DeclT(yeah.ref(), yeah.sourcePos())));
-    var r = p.subscoped(() -> f.apply(yeah, p));
-    tracing(Trace.Builder::reduce);
-    return r;
+    return traced(() -> new Trace.DeclT(yeah.ref(), yeah.sourcePos()),
+      () -> p.subscoped(() -> f.apply(yeah, p)));
   }
 
   public @NotNull GenericDef tyck(@NotNull Decl decl, @NotNull ExprTycker tycker) {
@@ -66,10 +59,13 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
   }
 
   private @NotNull GenericDef doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
-    if (predecl instanceof Decl.Telescopic<?> decl
-      && predecl.ref().core == null // for constructors: they do not have signature(body).
-      && decl.signature() == null
-    ) tyckHeader(predecl, tycker);
+    if (predecl instanceof Decl.Telescopic<?> decl) {
+      var signature = decl.signature();
+      if (signature != null) loadTele(tycker, signature);
+        // If core == null then not yet tycked. A constructor's signature is always null,
+        // so we need this extra check
+      else if (predecl.ref().core == null) tyckHeader(predecl, tycker);
+    }
     return switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl decl -> {
@@ -85,9 +81,9 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
           }, clauses -> {
             var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
-          var pos = decl.sourcePos;
-          ClauseTycker.PatResult result;
-          var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
+            var pos = decl.sourcePos;
+            ClauseTycker.PatResult result;
+            var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
             if (orderIndependent) {
               // Order-independent.
               result = ClauseTycker.elabClausesDirectly(exprTycker, clauses, signature);
@@ -131,6 +127,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
+        loadTele(tycker, structSig);
         var result = signature.result();
         var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
         yield new FieldDef(structRef, field.ref, structSig.param(), signature.param(), result, body, field.coerce);
@@ -231,6 +228,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
         var structRef = field.structRef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
+        loadTele(tycker, structSig);
         var structLvl = structSig.result();
         var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
         var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl).wellTyped());
@@ -247,6 +245,7 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
     var dataConcrete = dataRef.concrete;
     var dataSig = dataConcrete.signature;
     assert dataSig != null;
+    loadTele(tycker, dataSig);
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var predataCall = new DataCall(dataRef, 0, dataArgs);
     // There might be patterns in the constructor
@@ -306,6 +305,10 @@ public record StmtTycker(@NotNull Reporter reporter, Trace.@Nullable Builder tra
       elabClauses = PartialTerm.DUMMY_SPLIT;
     }
     dataConcrete.checkedBody.append(new CtorDef(dataRef, ctor.ref, pat, patternTele, tele, split, dataCall, ctor.coerce));
+  }
+
+  private static void loadTele(@NotNull ExprTycker tycker, Def.Signature<?> dataSig) {
+    dataSig.param().forEach(tycker.localCtx::put);
   }
 
   private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl<SortTerm> data) {

@@ -12,6 +12,5 @@ Goal: Candidate exists:
         (Normalized: Nat)
       Context:
         {a : Nat}
-        {a : Nat}
 
 That looks right!
