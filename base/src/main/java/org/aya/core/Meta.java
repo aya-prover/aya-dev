@@ -76,9 +76,8 @@ public final class Meta implements AnyVar {
     @NotNull ImmutableSeq<Arg<Term>> contextArgs
   ) {
     assert telescope.isEmpty();
-    assert result != null;
-    var domVar = Meta.from(contextTele, domName, result, sourcePos);
-    var codVar = Meta.from(contextTele, codName, result, sourcePos);
+    var domVar = new Meta(contextTele, ImmutableSeq.empty(), domName, result, isType, sourcePos);
+    var codVar = new Meta(contextTele, ImmutableSeq.empty(), codName, result, isType, sourcePos);
     var dom = new MetaTerm(domVar, contextArgs, ImmutableSeq.empty());
     var cod = new MetaTerm(codVar, contextArgs, ImmutableSeq.empty());
     var domParam = new Term.Param(Constants.randomlyNamed(sourcePos), dom, explicit);
