@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.error;
 
@@ -6,15 +6,15 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.prettier.BasePrettier;
 import org.aya.generic.Constants;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.context.BindContext;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +42,7 @@ public interface NameProblem extends Problem {
           Doc.code(Doc.plain(name)),
           Doc.english("is ambiguous")),
         Doc.english("Did you mean:"),
-        Doc.nest(2, Doc.vcat(didYouMean().map(n -> Doc.code(n)))));
+        Doc.nest(2, Doc.vcat(didYouMean().map(Doc::code))));
     }
 
     public @NotNull ImmutableSeq<String> didYouMean() {
@@ -185,7 +185,7 @@ public interface NameProblem extends Problem {
       var tail = possible.sizeEquals(1)
         ? Doc.sep(Doc.english("Did you mean:"), Doc.code(possible.first()))
         : Doc.vcat(Doc.english("Did you mean:"),
-          Doc.nest(2, Doc.vcat(possible.view().map(n -> Doc.code(n)))));
+          Doc.nest(2, Doc.vcat(possible.view().map(Doc::code))));
       return Doc.vcat(head, tail);
     }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
@@ -145,9 +145,17 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     return false;
   }
   boolean isMeEmpty();
+  /**
+   * Whether to choose map or seq is completely random in Aya.
+   *
+   * @see #deriveSeq()
+   */
   @Contract(" -> new") default @NotNull MapLocalCtx deriveMap() {
     return new MapLocalCtx(MutableLinkedHashMap.of(), this);
   }
+  /**
+   * @see #deriveMap()
+   */
   @Contract(" -> new") default @NotNull SeqLocalCtx deriveSeq() {
     return new SeqLocalCtx(MutableList.create(), this);
   }

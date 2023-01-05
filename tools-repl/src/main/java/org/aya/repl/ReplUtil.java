@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -21,7 +21,7 @@ public interface ReplUtil {
     var commands = Doc.vcat(commandManager.cmd.view()
       .map(command -> Doc.sep(
         Doc.commaList(command.owner().names().map(name -> Doc.plain(Command.PREFIX + name))),
-        Doc.plain("-"),
+        Doc.symbol("-"),
         Doc.english(command.owner().help())
       )));
     return new Command.Result(new Command.Output(commands, Doc.empty()), true);

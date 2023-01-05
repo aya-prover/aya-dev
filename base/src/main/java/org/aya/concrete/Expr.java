@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -11,12 +11,12 @@ import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.PrimDef;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.ConcretePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.ConcretePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
@@ -27,15 +27,14 @@ import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.Result;
 import org.aya.util.ForLSP;
 import org.aya.util.binop.BinOpParser;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -278,14 +277,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @Override public @NotNull Expr.Lambda descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(param.descent(f), f.apply(body));
     }
-  }
-
-  static @NotNull Expr unlam(@NotNull Expr expr, int max, @NotNull Consumer<Param> params) {
-    while (expr instanceof Lambda lambda && max-- > 0) {
-      params.accept(lambda.param);
-      expr = lambda.body;
-    }
-    return expr;
   }
 
   /**

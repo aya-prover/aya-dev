@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -6,11 +6,13 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
-import org.aya.core.term.*;
+import org.aya.core.term.MetaTerm;
+import org.aya.core.term.PiTerm;
+import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
-import org.aya.util.Arg;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
+import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +76,8 @@ public final class Meta implements AnyVar {
     @NotNull ImmutableSeq<Arg<Term>> contextArgs
   ) {
     assert telescope.isEmpty();
-    var domVar = Meta.from(contextTele, domName, result, sourcePos);
-    var codVar = Meta.from(contextTele, codName, result, sourcePos);
+    var domVar = new Meta(contextTele, ImmutableSeq.empty(), domName, result, isType, sourcePos);
+    var codVar = new Meta(contextTele, ImmutableSeq.empty(), codName, result, isType, sourcePos);
     var dom = new MetaTerm(domVar, contextArgs, ImmutableSeq.empty());
     var cod = new MetaTerm(codVar, contextArgs, ImmutableSeq.empty());
     var domParam = new Term.Param(Constants.randomlyNamed(sourcePos), dom, explicit);

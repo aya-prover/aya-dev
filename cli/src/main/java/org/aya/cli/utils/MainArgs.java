@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.render.RenderOptions;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.util.reporter.Problem;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
@@ -14,8 +15,6 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.util.List;
-
-import static org.aya.cli.utils.PicocliUtils.CANDIDATES;
 
 @Command(name = "aya",
   mixinStandardHelpOptions = true,
@@ -72,6 +71,11 @@ public class MainArgs {
 
   @Option(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace;
+  /**
+   * I couldn't find a simpler way to let Picocli automatically show candidate values.
+   * Appending this is a workaround solution.
+   */
+  public static final @NonNls String CANDIDATES = "\n  Candidates: ${COMPLETION-CANDIDATES}";
   @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage." + CANDIDATES)
   public PrettyStage prettyStage;
   @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES, defaultValue = "markdown")
