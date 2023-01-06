@@ -25,6 +25,7 @@ import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
+import org.aya.tyck.pat.YouTrack;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.TracedTycker;
 import org.aya.util.Arg;
@@ -89,7 +90,8 @@ public final class StmtTycker extends TracedTycker {
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (!result.hasLhsError()) {
                 tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
-                PatClassifier.confluence(signature.param(), result, tycker, pos,
+                var confluence = new YouTrack(signature.param(), tycker, pos);
+                confluence.check(result,
                   PatClassifier.classify(result.clauses(), signature.param(), tycker, pos));
                 tracing(TreeBuilder::reduce);
               }

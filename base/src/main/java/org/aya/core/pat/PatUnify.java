@@ -5,7 +5,6 @@ package org.aya.core.pat;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * The unification of patterns. This is <strong>not</strong> pattern unification.
  *
  * @author ice1000
- * @see PatUnify#unifyPat(ImmutableSeq, SeqView, SeqView, Subst, Subst, LocalCtx)
+ * @see #unifyPat(SeqView, SeqView, Subst, Subst, LocalCtx)
  */
 public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNull LocalCtx ctx) {
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
@@ -109,7 +108,6 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
    * @see PatUnify#visitAs(LocalVar, org.aya.core.pat.Pat)
    */
   public static @NotNull LocalCtx unifyPat(
-    @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull SeqView<Pat> lpats,
     @NotNull SeqView<Pat> rpats,
     @NotNull Subst lhsSubst,

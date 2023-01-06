@@ -6,21 +6,14 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.Tuple;
-import kala.tuple.primitive.IntObjTuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
-import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.AnyVar;
-import org.aya.tyck.ExprTycker;
-import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.TyckOrderError;
-import org.aya.tyck.error.UnifyInfo;
 import org.aya.tyck.tycker.StatedTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
@@ -87,53 +80,6 @@ public record PatClassifier(
       if (0 == numbers[i]) reporter.report(
         new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
     return numbers;
-  }
-
-  public static void confluence(
-    @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ClauseTycker.PatResult clauses,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos,
-    @NotNull MCT<Term, PatErr> mct
-  ) {
-    var result = clauses.result();
-    mct.forEach(results -> {
-      var contents = results.contents()
-        .flatMap(i -> Pat.Preclause.lift(clauses.clauses().get(i))
-          .map(matching -> IntObjTuple2.of(i, matching)));
-      for (int i = 1, size = contents.size(); i < size; i++) {
-        var lhsInfo = contents.get(i - 1);
-        var rhsInfo = contents.get(i);
-        var lhsSubst = new Subst();
-        var rhsSubst = new Subst();
-        var ctx = PatUnify.unifyPat(telescope,
-          lhsInfo.component2().patterns().view().map(Arg::term),
-          rhsInfo.component2().patterns().view().map(Arg::term),
-          lhsSubst, rhsSubst, tycker.ctx.deriveMap());
-        domination(ctx, rhsSubst, tycker.reporter, lhsInfo.component1(), rhsInfo.component1(), rhsInfo.component2());
-        domination(ctx, lhsSubst, tycker.reporter, rhsInfo.component1(), lhsInfo.component1(), lhsInfo.component2());
-        var lhsTerm = lhsInfo.component2().body().subst(lhsSubst);
-        var rhsTerm = rhsInfo.component2().body().subst(rhsSubst);
-        // TODO: Currently all holes at this point are in an ErrorTerm
-        if (lhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-          hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
-        } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-          hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
-        }
-        tycker.unifyReported(lhsTerm, rhsTerm, result, pos, ctx, comparison ->
-          new ClausesProblem.Confluence(pos, rhsInfo.component1() + 1, lhsInfo.component1() + 1,
-            comparison, new UnifyInfo(tycker.state), rhsInfo.component2().sourcePos(), lhsInfo.component2().sourcePos()));
-      }
-    });
-  }
-
-  private static void domination(
-    LocalCtx ctx, Subst rhsSubst, Reporter reporter,
-    int lhsIx, int rhsIx, Term.Matching matching
-  ) {
-    if (rhsSubst.map().valuesView().allMatch(dom ->
-      dom instanceof RefTerm(var ref) && ctx.contains(ref))
-    ) reporter.report(new ClausesProblem.Domination(
-      lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
   private @NotNull MCT<Term, PatErr> classifySub(
