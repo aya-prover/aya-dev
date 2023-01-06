@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.meta.MetaInfo;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.prettier.BasePrettier;
@@ -43,12 +44,12 @@ public sealed interface HoleProblem extends Problem {
 
   record IllTypedError(
     @Override @NotNull MetaTerm term,
-    @NotNull Term result,
+    @NotNull MetaInfo result,
     @Override @NotNull Term solution
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
-        Doc.english("The meta is supposed to have type"),
+        Doc.english("The meta (denoted ?) is supposed to satisfy"),
         Doc.par(1, result.toDoc(options)),
         Doc.english("However, the solution below does not have the same type:"),
         Doc.par(1, solution.toDoc(options))

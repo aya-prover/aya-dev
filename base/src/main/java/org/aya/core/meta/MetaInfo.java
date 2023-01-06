@@ -4,6 +4,9 @@ package org.aya.core.meta;
 
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.AyaDocile;
+import org.aya.pretty.doc.Doc;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,13 +15,17 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed interface MetaInfo {
+public sealed interface MetaInfo extends AyaDocile {
   @Nullable Term result();
   /**
    * The type of the meta is known.
    * We shall check the solution against this type.
    */
-  record Result(@NotNull Term result) implements MetaInfo {}
+  record Result(@NotNull Term result) implements MetaInfo {
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+      return Doc.sep(Doc.symbol("?"), Doc.symbol(":"), result.toDoc(options));
+    }
+  }
 
   /**
    * The meta variable is a type.
@@ -27,6 +34,10 @@ public sealed interface MetaInfo {
   record AnyType() implements MetaInfo {
     @Override public @Nullable Term result() {
       return null;
+    }
+
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+      return Doc.sep(Doc.plain("_"), Doc.symbols(":", "?"));
     }
   }
 
@@ -38,6 +49,10 @@ public sealed interface MetaInfo {
   record PiDom(@NotNull SortTerm sort) implements MetaInfo {
     @Override public @Nullable Term result() {
       return null;
+    }
+
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+      return Doc.sep(Doc.symbols("?", "->", "_", ":"), sort.toDoc(options));
     }
   }
 }

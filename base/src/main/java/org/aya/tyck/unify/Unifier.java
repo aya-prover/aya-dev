@@ -91,7 +91,9 @@ public final class Unifier extends TermComparator {
       reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
     // Check the expected type.
     switch (meta.info) {
-      case MetaInfo.AnyType() -> {}
+      case MetaInfo.AnyType() -> {
+
+      }
       case MetaInfo.Result(var expectedType) -> {
         if (providedType != null) {
           // The provided type from the context, hence neither from LHS nor RHS,
@@ -100,13 +102,17 @@ public final class Unifier extends TermComparator {
           providedType = expectedType.freezeHoles(state);
         } else providedType = expectedType;
       }
-      case MetaInfo.PiDom(var sort) -> checker.synthesizer().inheritPiDom(preRhs, sort);
+      case MetaInfo.PiDom(var sort) -> {
+        if (!checker.synthesizer().inheritPiDom(preRhs, sort)) {
+          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+        }
+      }
     }
     // Check the solution.
     if (providedType != null) {
       // resultTy might be an ErrorTerm, what to do?
       if (!checker.inherit(preRhs, providedType))
-        reporter.report(new HoleProblem.IllTypedError(lhs, providedType, preRhs));
+        reporter.report(new HoleProblem.IllTypedError(lhs, new MetaInfo.Result(providedType), preRhs));
     } else {
       providedType = checker.synthesizer().synthesize(preRhs);
       if (providedType == null) {

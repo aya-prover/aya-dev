@@ -39,7 +39,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return synthesize;
   }
 
-  public boolean inheritPiDom(Term type, SortTerm expected) {
+  public boolean inheritPiDom(@NotNull Term type, @NotNull SortTerm expected) {
     if (type instanceof MetaTerm meta && meta.ref().info instanceof MetaInfo.AnyType) {
       var typed = meta.asPiDom(expected);
       return state.solve(meta.ref(), typed);
