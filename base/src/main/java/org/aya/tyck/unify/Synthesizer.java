@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.core.meta.MetaInfo;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
@@ -32,6 +33,27 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return whnf(synthesize);
   }
 
+  public boolean inheritPiDom(Term type, SortTerm expected) {
+    if (type instanceof MetaTerm meta && meta.ref().info instanceof MetaInfo.AnyType) {
+      var typed = meta.asPiDom(expected);
+      state.solve(meta.ref(), typed);
+      return false;
+    }
+    if (!(synthesize(type) instanceof SortTerm actual)) return false;
+    return switch (expected.kind()) {
+      case Prop -> switch (actual.kind()) {
+        case Prop, Type -> true;
+        case Set, ISet -> false;
+      };
+      case Type -> switch (actual.kind()) {
+        case Prop, Type -> actual.lift() <= expected.lift();
+        case Set, ISet -> false;
+      };
+      case Set -> actual.lift() <= expected.lift();
+      case ISet -> unreachable(type);
+    };
+  }
+
   public @Nullable Term synthesize(@NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> ctx.get(term.var());
@@ -41,8 +63,8 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         .lift(call.ulift());
       // TODO[isType]: deal with type-only metas
       case MetaTerm hole -> {
-        var result = hole.ref().result;
-        if (result != null) yield result;
+        var info = hole.ref().info;
+        if (info instanceof MetaInfo.Result(var result)) yield result;
         var simpl = whnf(hole);
         if (simpl instanceof MetaTerm again) {
           throw new UnsupportedOperationException("TODO");
@@ -134,12 +156,11 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     };
   }
 
-  private static <T> T unreachable(@NotNull Term preterm) {
+  static <T> T unreachable(@NotNull Term preterm) {
     throw new AssertionError("Unexpected term: " + preterm);
   }
 
   private @NotNull Term whnf(Term x) {
     return x.normalize(state, NormalizeMode.WHNF);
   }
-
 }

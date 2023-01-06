@@ -249,6 +249,7 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
     else return null;
   }
 
+  /** TODO: Revise when JDK 20 is released. */
   private record Pair(Term lhs, Term rhs) {}
 
   private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef) {

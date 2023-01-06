@@ -24,8 +24,7 @@ Related rules on the $\Pi$-type:
   + If result is `Set`, then can be any kind with suitable levels.
 + Domain's sort:
   + If result is `Prop`/`Type`, then can be `Prop`/`Type` with suitable levels.
-  + If result is `Set`, then can be anything.
-  + If result is `Type`, then can be anything except `Set`/`ISet`.
+  + If result is `Set`, then can be anything with suitable levels.
 
 # Regarding impredicativity
 
