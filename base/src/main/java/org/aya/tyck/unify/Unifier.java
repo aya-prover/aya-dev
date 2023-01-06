@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
 import kala.collection.Seq;
 import kala.collection.mutable.MutableArrayList;
 import kala.control.Option;
-import org.aya.core.Meta;
+import org.aya.core.meta.Meta;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;

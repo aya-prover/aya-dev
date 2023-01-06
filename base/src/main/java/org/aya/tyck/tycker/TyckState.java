@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import org.aya.core.Meta;
 import org.aya.core.def.PrimDef;
+import org.aya.core.meta.Meta;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.SortTerm;
@@ -21,9 +21,9 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
