@@ -96,14 +96,20 @@ public final class Unifier extends TermComparator {
       reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
     // Check the expected type.
     switch (meta.info) {
-      case MetaInfo.AnyType() -> {
-        if (!(preRhs instanceof Formation)) {
-          providedType = checker.synthesizer().synthesize(preRhs);
-          if (!(providedType instanceof SortTerm)) {
-            reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
-            return null;
-          }
+      case MetaInfo.AnyType()when preRhs instanceof Formation -> {}
+      case MetaInfo.AnyType()when preRhs instanceof MetaTerm rhsMeta -> {
+        if (!rhsMeta.ref().info.isType(checker.synthesizer())) {
+          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+          return null;
         }
+      }
+      case MetaInfo.AnyType() -> {
+        var synthesize = checker.synthesizer().synthesize(preRhs);
+        if (!(synthesize instanceof SortTerm)) {
+          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+          return null;
+        }
+        if (providedType == null) providedType = synthesize;
       }
       case MetaInfo.Result(var expectedType) -> {
         if (providedType != null) {

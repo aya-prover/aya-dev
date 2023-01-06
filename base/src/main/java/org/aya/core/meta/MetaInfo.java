@@ -6,6 +6,7 @@ import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.unify.Synthesizer;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface MetaInfo extends AyaDocile {
   @Nullable Term result();
+  boolean isType(@NotNull Synthesizer synthesizer);
   /**
    * The type of the meta is known.
    * We shall check the solution against this type.
@@ -24,6 +26,10 @@ public sealed interface MetaInfo extends AyaDocile {
   record Result(@NotNull Term result) implements MetaInfo {
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.symbol("?"), Doc.symbol(":"), result.toDoc(options));
+    }
+
+    @Override public boolean isType(@NotNull Synthesizer synthesizer) {
+      return synthesizer.tryPress(result) instanceof SortTerm;
     }
   }
 
@@ -34,6 +40,10 @@ public sealed interface MetaInfo extends AyaDocile {
   record AnyType() implements MetaInfo {
     @Override public @Nullable Term result() {
       return null;
+    }
+
+    @Override public boolean isType(@NotNull Synthesizer synthesizer) {
+      return true;
     }
 
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
@@ -49,6 +59,10 @@ public sealed interface MetaInfo extends AyaDocile {
   record PiDom(@NotNull SortTerm sort) implements MetaInfo {
     @Override public @Nullable Term result() {
       return null;
+    }
+
+    @Override public boolean isType(@NotNull Synthesizer synthesizer) {
+      return true;
     }
 
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
