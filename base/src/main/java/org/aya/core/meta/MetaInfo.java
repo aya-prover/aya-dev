@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.meta;
 
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,17 @@ public sealed interface MetaInfo {
    * It should be able to appear on the RHS of a judgment.
    */
   record AnyType() implements MetaInfo {
+    @Override public @Nullable Term result() {
+      return null;
+    }
+  }
+
+  /**
+   * The meta variable is the domain of a pi type which is of a known type.
+   * <p>
+   * See: <code>notes/sort-system.md</code>
+   */
+  record PiDom(@NotNull SortTerm sort) implements MetaInfo {
     @Override public @Nullable Term result() {
       return null;
     }

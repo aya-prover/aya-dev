@@ -100,6 +100,7 @@ public final class Unifier extends TermComparator {
           providedType = expectedType.freezeHoles(state);
         } else providedType = expectedType;
       }
+      case MetaInfo.PiDom(var sort) -> checker.synthesizer().inheritPiDom(preRhs, sort);
     }
     // Check the solution.
     if (providedType != null) {
