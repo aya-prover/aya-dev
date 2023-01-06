@@ -11,6 +11,7 @@ import org.aya.core.term.FnCall;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.AyaRestrSimplifier;
+import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -84,11 +85,13 @@ public record Conquer(
       var matchResult = new FnCall(def.ref, 0, args).normalize(tycker.state, NormalizeMode.WHNF).subst(subst);
       currentClause.patterns().forEach(p -> p.term().storeBindings(ctx, subst));
       if (newBody instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-        hole.ref().conditions.append(Tuple.of(matchy, matchResult));
+        hole.ref().conditions.append(Tuple.of(subst, matchResult));
       } else if (matchResult instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-        hole.ref().conditions.append(Tuple.of(matchy, newBody));
+        hole.ref().conditions.append(Tuple.of(subst, newBody));
       }
-      return tycker.unifyReported(newBody, matchResult, def.result.subst(matchy),
+      var retSubst = DeltaExpander.buildSubst(def.telescope, currentClause.patterns().map(t -> t.map(Pat::toTerm)));
+      retSubst.add(subst);
+      return tycker.unifyReported(newBody, matchResult, def.result.subst(retSubst),
         sourcePos, ctx, comparison -> new ClausesProblem.Conditions(
           sourcePos, currentClause.sourcePos(), nth + 1, i, args, new UnifyInfo(tycker.state), comparison));
     });
