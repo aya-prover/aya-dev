@@ -20,7 +20,6 @@ import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
-import org.aya.guest0x0.cubical.Restr;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
@@ -259,6 +258,11 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   }
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
+    // Skip tracing, because too easy.
+    // Note that it looks tempting to apply some unification here, but it is not correct:
+    // If ?x =_A y where A : Prop, then it may not be the case that ?x is y!
+    // I think Arend has probably made such a mistake before, but they removed this feature anyway.
+    if (synthesizer().tryPress(type) instanceof SortTerm sort && sort.isProp()) return true;
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state),
       pos, type.freezeHoles(state)));
     var ret = switch (type) {
@@ -389,15 +393,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       if (!compare(lType, rType, lr, rl, null)) return false;
       return comparePartial(lPar, rPar, lType, lr, rl);
     }));
-  }
-
-  /**
-   * Sub lr, Sub rl are unused because they are solely for the purpose of unification.
-   * In this case, we don't expect unification.
-   */
-  private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
-    return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
-      && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
   }
 
   /**
@@ -535,7 +530,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     };
   }
 
-  @NotNull private static InternalException noRules(@NotNull Term preLhs) {
+  private static @NotNull InternalException noRules(@NotNull Term preLhs) {
     return new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaPrettierOptions.debug()).debugRender());
   }
 
