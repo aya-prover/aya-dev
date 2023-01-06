@@ -36,7 +36,7 @@ import java.util.function.Supplier;
  * @see #subscoped(Supplier)
  */
 public abstract sealed class MockedTycker extends ConcreteAwareTycker permits UnifiedTycker {
-  public @NotNull LocalCtx localCtx = new MapLocalCtx();
+  public @NotNull LocalCtx ctx = new MapLocalCtx();
   public @NotNull TypedSubst definitionEqualities = new TypedSubst();
 
   protected MockedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
@@ -44,18 +44,18 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
   }
 
   public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return unifier(pos, ord, localCtx);
+    return unifier(pos, ord, ctx);
   }
 
   public @NotNull Synthesizer synthesizer() {
-    return new Synthesizer(state, localCtx);
+    return new Synthesizer(state, ctx);
   }
 
   protected final @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
     // TODO: maybe we should create a concrete hole and check it against the type
     //  in case we can synthesize this term via its type only
     var genName = param.ref().name().concat(Constants.GENERATED_POSTFIX);
-    return localCtx.freshHole(param.type(), genName, pos).component2();
+    return ctx.freshHole(param.type(), genName, pos).component2();
   }
 
   protected final @NotNull Arg<Term> mockArg(Term.Param param, SourcePos pos) {
@@ -70,8 +70,8 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
     var genName = name + Constants.GENERATED_POSTFIX;
     // [ice]: unsure if ZERO is good enough
-    var domain = localCtx.freshTyHole(genName + "ty", pos).component2();
-    var codomain = localCtx.freshTyHole(genName + "ret", pos).component2();
+    var domain = ctx.freshTyHole(genName + "ty", pos).component2();
+    var codomain = ctx.freshTyHole(genName + "ret", pos).component2();
     return new PiTerm(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
   }
 
@@ -87,16 +87,16 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
   }
 
   public <R> R subscoped(@NotNull Supplier<R> action) {
-    var parentCtx = this.localCtx;
+    var parentCtx = this.ctx;
     var parentSubst = this.definitionEqualities;
 
-    this.localCtx = parentCtx.deriveMap();
+    this.ctx = parentCtx.deriveMap();
     this.definitionEqualities = parentSubst.derive();
 
     var result = action.get();
 
     this.definitionEqualities = parentSubst;
-    this.localCtx = parentCtx;
+    this.ctx = parentCtx;
 
     return result;
   }

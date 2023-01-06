@@ -43,7 +43,7 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
   }
 
   public boolean isPropType(@NotNull Term type) {
-    var sort = new Synthesizer(state, localCtx).synthesize(type);
+    var sort = new Synthesizer(state, ctx).synthesize(type);
     if (sort == null) throw new UnsupportedOperationException("Zaoqi");
     sort = whnf(sort);
     if (sort instanceof MetaTerm meta) {

@@ -106,7 +106,7 @@ public final class PatternTycker {
         yield new Pat.Ctor(realCtor.component3().ref(), patterns, dataCall);
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
-        exprTycker.localCtx.put(bind, term);
+        exprTycker.ctx.put(bind, term);
         if (tyExpr != null) exprTycker.subscoped(() -> {
           exprTycker.definitionEqualities.addDirectly(bodySubst);
           var syn = exprTycker.synthesize(tyExpr);
@@ -289,7 +289,7 @@ public final class PatternTycker {
         bind = new Pat.Meta(MutableValue.create(), freshVar, dataCall);
       } else {
         bind = new Pat.Bind(freshVar, currParam.type());
-        exprTycker.localCtx.put(freshVar, currParam.type());
+        exprTycker.ctx.put(freshVar, currParam.type());
       }
       wellTyped.append(new Arg<>(bind, false));
       addSigSubst(currParam, bind);

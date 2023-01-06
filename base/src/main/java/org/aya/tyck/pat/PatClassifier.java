@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -106,7 +106,7 @@ public record PatClassifier(
         var lhsSubst = new Subst(MutableMap.create());
         var rhsSubst = new Subst(MutableMap.create());
         var ctx = PatUnify.unifyPat(lhsInfo.component2().patterns().map(Arg::term), rhsInfo.component2().patterns().map(Arg::term),
-          lhsSubst, rhsSubst, tycker.localCtx.deriveMap());
+          lhsSubst, rhsSubst, tycker.ctx.deriveMap());
         domination(ctx, rhsSubst, tycker.reporter, lhsInfo.component1(), rhsInfo.component1(), rhsInfo.component2());
         domination(ctx, lhsSubst, tycker.reporter, rhsInfo.component1(), lhsInfo.component1(), lhsInfo.component2());
         var lhsTerm = lhsInfo.component2().body().subst(lhsSubst);
