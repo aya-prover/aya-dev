@@ -10,10 +10,9 @@ import org.aya.generic.Constants;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.env.MapLocalCtx;
-import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Synthesizer;
+import org.aya.tyck.unify.TermComparator;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -22,25 +21,21 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
-
 /**
- * This is the third base-base class of a tycker.
- * It has a localCtx and supports some term mocking functions.
+ * This is the 2.25-th base class of a tycker.
  *
  * @author ice1000
  * @see #generatePi
  * @see #instImplicits(Result, SourcePos)
  * @see #mockArg
  * @see #mockTerm
- * @see #subscoped(Supplier)
  */
-public abstract sealed class MockedTycker extends ConcreteAwareTycker permits UnifiedTycker {
-  public @NotNull LocalCtx ctx = new MapLocalCtx();
-  public @NotNull TypedSubst definitionEqualities = new TypedSubst();
+public abstract sealed class MockTycker extends StatedTycker permits ConcreteAwareTycker, TermComparator {
+  public @NotNull LocalCtx ctx;
 
-  protected MockedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
+  protected MockTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state, @NotNull LocalCtx ctx) {
     super(reporter, traceBuilder, state);
+    this.ctx = ctx;
   }
 
   public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
@@ -84,20 +79,5 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
       type = whnf(pi.substBody(holeApp.term()));
     }
     return new Result.Default(term, type);
-  }
-
-  public <R> R subscoped(@NotNull Supplier<R> action) {
-    var parentCtx = this.ctx;
-    var parentSubst = this.definitionEqualities;
-
-    this.ctx = parentCtx.deriveMap();
-    this.definitionEqualities = parentSubst.derive();
-
-    var result = action.get();
-
-    this.definitionEqualities = parentSubst;
-    this.ctx = parentCtx;
-
-    return result;
   }
 }

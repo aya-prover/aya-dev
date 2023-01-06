@@ -28,7 +28,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.tycker.StatedTycker;
+import org.aya.tyck.tycker.MockTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -51,17 +51,15 @@ import java.util.function.UnaryOperator;
  * @see #compareUntyped(Term, Term, Sub, Sub) the "synthesize" direction
  * @see #compare(Term, Term, Sub, Sub, Term) the "inherit" direction
  */
-public sealed abstract class TermComparator extends StatedTycker permits Unifier {
+public sealed abstract class TermComparator extends MockTycker permits Unifier {
   protected final @NotNull SourcePos pos;
   protected final @NotNull Ordering cmp;
-  protected final @NotNull LocalCtx ctx;
   private FailureData failure;
 
   public TermComparator(@Nullable Trace.Builder traceBuilder, @NotNull TyckState state, @NotNull Reporter reporter, @NotNull SourcePos pos, @NotNull Ordering cmp, @NotNull LocalCtx ctx) {
-    super(reporter, traceBuilder, state);
+    super(reporter, traceBuilder, state, ctx);
     this.pos = pos;
     this.cmp = cmp;
-    this.ctx = ctx;
   }
 
   private static boolean isCall(@NotNull Term term) {
