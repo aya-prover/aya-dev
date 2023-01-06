@@ -32,6 +32,14 @@ public record DoubleChecker(
   }
 
   public boolean inherit(@NotNull Term preterm, @NotNull Term expected) {
+    if (expected instanceof MetaTerm) {
+      var lhs = synthesizer().synthesize(preterm);
+      if (lhs == null) {
+        assert false : "No rules -- unsure if reachable";
+        return false;
+      }
+      return compare(lhs, expected, null);
+    }
     return switch (preterm) {
       case ErrorTerm term -> true;
       case SigmaTerm sigma -> sigma.params().view()
