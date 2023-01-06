@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple2;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.PiTerm;
+import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
@@ -69,23 +70,25 @@ public final class Meta implements AnyVar {
     @NotNull ImmutableSeq<Arg<Term>> contextArgs
   ) {
     assert telescope.isEmpty();
-    // TODO[isType]: this one should be piDom
-    var domVar = new Meta(contextTele, ImmutableSeq.empty(), domName, info, sourcePos);
-    // TODO[isType]: this one should be piCod
-    var codVar = new Meta(contextTele, ImmutableSeq.empty(), codName, info, sourcePos);
+    var knownDomInfo = info;
+    // TODO[isType]: deal with piCod
+    var knownCodInfo = info;
+    if (knownDomInfo instanceof MetaInfo.Result(var result)) {
+      if (!(result instanceof SortTerm sort)) throw new AssertionError("This should be unreachable");
+      knownDomInfo = new MetaInfo.PiDom(sort);
+    }
+    var domVar = new Meta(contextTele, ImmutableSeq.empty(), domName, knownDomInfo, sourcePos);
+    var codVar = new Meta(contextTele, ImmutableSeq.empty(), codName, knownCodInfo, sourcePos);
     var dom = new MetaTerm(domVar, contextArgs, ImmutableSeq.empty());
     var cod = new MetaTerm(codVar, contextArgs, ImmutableSeq.empty());
     var domParam = new Term.Param(Constants.randomlyNamed(sourcePos), dom, explicit);
     return new PiTerm(domParam, cod);
   }
 
-  public @NotNull MetaTerm asPiDom(
-    @NotNull Term resultNew, @NotNull ImmutableSeq<Arg<Term>> contextArgs
-  ) {
+  public @NotNull MetaTerm asPiDom(@NotNull SortTerm sort, @NotNull ImmutableSeq<Arg<Term>> contextArgs) {
     assert telescope.isEmpty();
     assert info instanceof MetaInfo.AnyType;
-    // TODO[isType]: this one should be piDom
-    var typed = new Meta(contextTele, ImmutableSeq.empty(), name, info, sourcePos);
+    var typed = new Meta(contextTele, ImmutableSeq.empty(), name, new MetaInfo.PiDom(sort), sourcePos);
     return new MetaTerm(typed, contextArgs, ImmutableSeq.empty());
   }
 

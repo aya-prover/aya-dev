@@ -31,7 +31,7 @@ public record MetaTerm(
     return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, contextArgs);
   }
 
-  public @NotNull MetaTerm asPiDom(@NotNull Term result) {
+  public @NotNull MetaTerm asPiDom(@NotNull SortTerm result) {
     return ref.asPiDom(result, contextArgs);
   }
 
