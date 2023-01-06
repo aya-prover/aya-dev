@@ -8,4 +8,4 @@ data TestPiDomMeta : Prop
 | con (x : _) (x = 1)
 
 data TestPiDomMeta2 : Type
-| con (x : _) (x = 1)
+| con : ∀ x -> (x = 1) -> _

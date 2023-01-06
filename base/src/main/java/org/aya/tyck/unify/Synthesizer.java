@@ -44,7 +44,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       var typed = meta.asPiDom(expected);
       return state.solve(meta.ref(), typed);
     }
-    if (!(synthesize(type) instanceof SortTerm actual)) return false;
+    if (!(tryPress(type) instanceof SortTerm actual)) return false;
     return switch (expected.kind()) {
       case Prop -> switch (actual.kind()) {
         case Prop, Type -> true;
@@ -67,19 +67,11 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case Callable.DefCall call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
-      // TODO[isType]: deal with type-only metas
-      case MetaTerm hole -> {
-        var info = hole.ref().info;
-        if (info instanceof MetaInfo.Result(var result)) yield result;
-        var simpl = whnf(hole);
-        if (simpl instanceof MetaTerm again) {
-          throw new UnsupportedOperationException("TODO");
-        } else yield synthesize(simpl);
-      }
+      case MetaTerm hole -> hole.ref().info.result();
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {
         var callRaw = tryPress(access.of());
-        if (!(callRaw instanceof StructCall call)) yield unreachable(callRaw);
+        if (!(callRaw instanceof StructCall call)) yield unreachable(access);
         var field = access.ref();
         var subst = DeltaExpander.buildSubst(Def.defTele(field), access.fieldArgs())
           .add(DeltaExpander.buildSubst(Def.defTele(call.ref()), access.structArgs()));
@@ -88,7 +80,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case SigmaTerm sigma -> {
         var univ = MutableList.<SortTerm>create();
         for (var param : sigma.params()) {
-          var pressed = synthesize(param.type());
+          var pressed = tryPress(param.type());
           if (!(pressed instanceof SortTerm sort)) yield null;
           univ.append(sort);
           ctx.put(param);
