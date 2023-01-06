@@ -15,6 +15,7 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
+import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
@@ -251,11 +252,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   private record Pair(Term lhs, Term rhs) {}
 
   private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef) {
-    var substMap = MutableMap.<AnyVar, Term>create();
-    for (var pa : lhs.args().view().zip(Def.defTele(lhsRef))) {
-      substMap.set(pa.component2().ref(), pa.component1().term());
-    }
-    return Def.defResult(lhsRef).subst(substMap);
+    return Def.defResult(lhsRef).subst(DeltaExpander.buildSubst(Def.defTele(lhsRef), lhs.args()));
   }
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
@@ -541,11 +538,14 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
    */
   private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
     var retType = getType(lhs, lef);
-    if (Def.defResult(lhs.head().dataRef()).isProp()) return retType;
-    if (!visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), lr, rl,
+    var dataRef = lhs.head().dataRef();
+    if (Def.defResult(dataRef).isProp()) return retType;
+    var dataAlgs = lhs.head().dataArgs();
+    if (!visitArgs(dataAlgs, rhs.head().dataArgs(), lr, rl,
       Term.Param.subst(Def.defTele(lef.core.dataRef), lhs.ulift()))) return null;
+    var ownerSubst = DeltaExpander.buildSubst(Def.defTele(dataRef), dataAlgs);
     if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
-      Term.Param.subst(lef.core.selfTele, lhs.ulift())))
+      Term.Param.subst(lef.core.selfTele, ownerSubst, lhs.ulift())))
       return retType;
     return null;
   }

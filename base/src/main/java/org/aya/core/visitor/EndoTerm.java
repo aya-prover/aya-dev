@@ -1,8 +1,7 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
-import kala.collection.mutable.MutableMap;
 import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
@@ -37,7 +36,7 @@ public interface EndoTerm extends UnaryOperator<Term> {
   /** Not an IntelliJ Renamer. */
   record Renamer(@NotNull Subst subst) implements EndoTerm {
     public Renamer() {
-      this(new Subst(MutableMap.create()));
+      this(new Subst());
     }
 
     private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {

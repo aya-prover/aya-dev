@@ -6,7 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
 import kala.value.MutableValue;
@@ -103,8 +102,8 @@ public record PatClassifier(
       for (int i = 1, size = contents.size(); i < size; i++) {
         var lhsInfo = contents.get(i - 1);
         var rhsInfo = contents.get(i);
-        var lhsSubst = new Subst(MutableMap.create());
-        var rhsSubst = new Subst(MutableMap.create());
+        var lhsSubst = new Subst();
+        var rhsSubst = new Subst();
         var ctx = PatUnify.unifyPat(lhsInfo.component2().patterns().map(Arg::term), rhsInfo.component2().patterns().map(Arg::term),
           lhsSubst, rhsSubst, tycker.ctx.deriveMap());
         domination(ctx, rhsSubst, tycker.reporter, lhsInfo.component1(), rhsInfo.component1(), rhsInfo.component2());
