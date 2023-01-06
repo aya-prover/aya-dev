@@ -1,0 +1,38 @@
+In file $FILE:1:0 ->
+
+  1 │   prim
+    │   ╰──╯
+  2 │   def
+  3 │   def k =>
+
+Error: Expect a primitive's name
+
+In file $FILE:2:0 ->
+
+  1 │   prim
+  2 │   def
+    │   ╰─╯
+  3 │   def k =>
+
+Error: Expect a function name
+
+In file $FILE:3:6 ->
+
+  1 │   prim
+  2 │   def
+  3 │   def k =>
+    │         ╰╯
+
+Error: Expect function body
+
+In file $FILE:4:0 ->
+
+  2 │   def
+  3 │   def k =>
+  4 │   data
+    │   ╰──╯
+
+Error: Expect a data name
+
+4 error(s), 0 warning(s).
+What are you doing?

@@ -5,7 +5,7 @@ In file $FILE:3:17 ->
   3 │   def too-large => 2147483648
     │                    ╰────────╯
 
-Error: Parser error: Unsupported integer literal `2147483648`
+Error: Unsupported integer literal `2147483648`
 
 Parsing interrupted due to:
 1 error(s), 0 warning(s).

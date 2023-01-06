@@ -62,7 +62,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
    */
   public @Nullable Term synthesize(@NotNull Term preterm) {
     return switch (preterm) {
-      case RefTerm term -> ctx.get(term.var());
+      case RefTerm(var var) -> ctx.get(var);
       case ConCall conCall -> conCall.head().underlyingDataCall();
       case Callable.DefCall call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
@@ -72,8 +72,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         if (result == null) {
           preterm = whnf(preterm);
           yield preterm instanceof MetaTerm ? null : synthesize(preterm);
-        }
-        else yield result;
+        } else yield result;
       }
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {

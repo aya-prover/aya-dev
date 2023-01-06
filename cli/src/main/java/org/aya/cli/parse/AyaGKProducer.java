@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
@@ -95,10 +96,11 @@ public record AyaGKProducer(
     if (node.is(MODULE)) return ImmutableSeq.of(module(node));
     if (node.is(OPEN_CMD)) return openCmd(node);
     if (node.is(DECL)) {
-      var result = decl(node);
-      var stmts = result.component2().view().prepended(result.component1());
-      if (result.component1() instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
-        result.component2().firstOption(stmt -> !(stmt instanceof Decl))
+      var stmts = MutableList.<Stmt>create();
+      var result = decl(node, stmts);
+      if (result != null) stmts.prepend(result);
+      if (result instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
+        stmts.firstOption(stmt -> !(stmt instanceof Decl))
           .ifDefined(stmt -> reporter.report(new BadCounterexampleWarn(stmt)));
         return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
       }
@@ -222,11 +224,11 @@ public record AyaGKProducer(
       node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq());
   }
 
-  public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
-    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node), ImmutableSeq.empty());
-    if (node.is(PRIM_DECL)) return Tuple.of(primDecl(node), ImmutableSeq.empty());
-    if (node.is(DATA_DECL)) return dataDecl(node);
-    if (node.is(STRUCT_DECL)) return structDecl(node);
+  public @Nullable Decl decl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+    if (node.is(FN_DECL)) return fnDecl(node);
+    if (node.is(PRIM_DECL)) return primDecl(node);
+    if (node.is(DATA_DECL)) return dataDecl(node, additional);
+    if (node.is(STRUCT_DECL)) return structDecl(node, additional);
     return unreachable(node);
   }
 
@@ -256,7 +258,18 @@ public record AyaGKProducer(
     return declModifiersOf(node, x -> true);
   }
 
-  public TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
+  public @Nullable TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
+    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
+    if (nameOrInfix == null) {
+      error(node.childrenView().first(), "Expect a function name");
+      return null;
+    }
+    var fnBodyNode = node.peekChild(FN_BODY);
+    if (fnBodyNode == null) {
+      error(node.childrenView().first(), "Expect a function body");
+      return null;
+    }
+
     var modifier = commonDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
     var sample = modifier.personality().data();
@@ -270,9 +283,9 @@ public record AyaGKProducer(
     }
     var tele = telescope(node.childrenOfType(TELE).map(x -> x)); // make compiler happy
     var bind = node.peekChild(BIND_BLOCK);
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
 
-    var dynamite = fnBody(node.child(FN_BODY));
+    var dynamite = fnBody(fnBodyNode);
+    if (dynamite == null) return null;
     if (dynamite.isRight() && inline.isDefined()) {
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
@@ -293,16 +306,22 @@ public record AyaGKProducer(
     );
   }
 
-  public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> fnBody(@NotNull GenericNode<?> node) {
+  public @Nullable Either<Expr, ImmutableSeq<Pattern.Clause>>
+  fnBody(@NotNull GenericNode<?> node) {
     var expr = node.peekChild(EXPR);
+    var implies = node.peekChild(IMPLIES);
+    if (expr == null && implies != null) {
+      error(implies, "Expect function body");
+      return null;
+    }
     if (expr != null) return Either.left(expr(expr));
     return Either.right(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
   }
 
-  private @NotNull ImmutableSeq<Stmt> giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl) {
-    if (!modiSet.isReExport().data()) return ImmutableSeq.empty();
+  private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl, @NotNull MutableList<Stmt> additional) {
+    if (!modiSet.isReExport().data()) return;
 
-    return ImmutableSeq.of(new Command.Open(
+    additional.append(new Command.Open(
       modiSet.isReExport().sourcePos(),
       modiSet.accessibility().data(),
       new QualifiedID(decl.sourcePos(), decl.ref().name()),
@@ -312,19 +331,21 @@ public record AyaGKProducer(
     ));
   }
 
-  public @NotNull Tuple2<TeleDecl.DataDecl, ImmutableSeq<Stmt>>
-  dataDecl(GenericNode<?> node) {
+  public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
+    if (nameOrInfix == null) {
+      error(node.childrenView().first(), "Expect a data name");
+      return null;
+    }
     var modifier = moduleLikeDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
     var sample = modifier.personality().data();
     var bind = node.peekChild(BIND_BLOCK);
-    var body = node.childrenOfType(DATA_BODY).map(this::dataBody).toImmutableSeq();
+    var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var entire = sourcePosOf(node);
     var decl = new TeleDecl.DataDecl(
       nameOrInfix.component1().sourcePos(),
-      entire,
+      sourcePosOf(node),
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       nameOrInfix.component2(),
       nameOrInfix.component1().data(),
@@ -335,22 +356,24 @@ public record AyaGKProducer(
       sample
     );
 
-    return Tuple.of(decl, giveMeOpen(modifier, decl));
+    giveMeOpen(modifier, decl, additional);
+    return decl;
   }
 
-  public @NotNull TeleDecl.DataCtor dataBody(@NotNull GenericNode<?> node) {
+  public @Nullable TeleDecl.DataCtor dataBody(@NotNull GenericNode<?> node) {
     var dataCtorClause = node.peekChild(DATA_CTOR_CLAUSE);
     if (dataCtorClause != null) return dataCtorClause(dataCtorClause);
     var dataCtor = node.peekChild(DATA_CTOR);
     if (dataCtor != null) return dataCtor(ImmutableSeq.empty(), dataCtor);
-    return unreachable(node);
+    error(node.childrenView().first(), "Expect a data constructor");
+    return null;
   }
 
   public @NotNull TeleDecl.DataCtor dataCtorClause(@NotNull GenericNode<?> node) {
     return dataCtor(patterns(node.child(PATTERNS).child(COMMA_SEP)), node.child(DATA_CTOR));
   }
 
-  public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>> structDecl(@NotNull GenericNode<?> node) {
+  public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var modifier = moduleLikeDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
     var sample = modifier.personality().data();
@@ -370,7 +393,8 @@ public record AyaGKProducer(
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
-    return Tuple.of(decl, giveMeOpen(modifier, decl));
+    giveMeOpen(modifier, decl, additional);
+    return decl;
   }
 
   public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
@@ -390,8 +414,17 @@ public record AyaGKProducer(
     );
   }
 
-  public @NotNull TeleDecl.PrimDecl primDecl(@NotNull GenericNode<?> node) {
-    var id = primName(node.child(PRIM_NAME));
+  private void error(@NotNull GenericNode<?> node, @NotNull String message) {
+    reporter.report(new ParseError(sourcePosOf(node), message));
+  }
+
+  public @Nullable TeleDecl.PrimDecl primDecl(@NotNull GenericNode<?> node) {
+    var nameEl = node.peekChild(PRIM_NAME);
+    if (nameEl == null) {
+      error(node.childrenView().first(), "Expect a primitive's name");
+      return null;
+    }
+    var id = weakId(nameEl.child(WEAK_ID));
     return new TeleDecl.PrimDecl(
       id.sourcePos(),
       sourcePosOf(node),
@@ -496,7 +529,9 @@ public record AyaGKProducer(
       LocalVar.from(teleParamName(node)), typeOrHole(null, pos), explicit));
   }
 
-  public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> declNameOrInfix(@NotNull GenericNode<?> node) {
+  public @Nullable Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo>
+  declNameOrInfix(@Nullable GenericNode<?> node) {
+    if (node == null) return null;
     var assoc = node.peekChild(ASSOC);
     var id = weakId(node.child(WEAK_ID));
     if (assoc == null) return Tuple.of(id, null);
@@ -506,6 +541,9 @@ public record AyaGKProducer(
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
+    // if (node.is(TokenType.ERROR_ELEMENT)) {
+    //   return new Expr.Hole(pos, true, null);
+    // }
     if (node.is(REF_EXPR)) {
       var qid = qualifiedId(node.child(QUALIFIED_ID));
       return new Expr.Unresolved(qid.sourcePos(), qid);
@@ -850,7 +888,12 @@ public record AyaGKProducer(
 
   public @Nullable Expr typeOrNull(@Nullable GenericNode<?> node) {
     if (node == null) return null;
-    return expr(node.child(EXPR));
+    var child = node.peekChild(EXPR);
+    if (child == null) {
+      reporter.report(new ParseError(sourcePosOf(node), "Expect the return type expression"));
+      return null;
+    }
+    return expr(child);
   }
 
   public @NotNull Expr typeOrHole(@Nullable GenericNode<?> node, SourcePos sourcePos) {
@@ -868,10 +911,6 @@ public record AyaGKProducer(
   }
 
   public @NotNull WithPos<String> teleParamName(@NotNull GenericNode<?> node) {
-    return weakId(node.child(WEAK_ID));
-  }
-
-  public @NotNull WithPos<String> primName(@NotNull GenericNode<?> node) {
     return weakId(node.child(WEAK_ID));
   }
 
