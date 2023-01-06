@@ -96,7 +96,8 @@ public final class Unifier extends TermComparator {
       reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
     // Check the expected type.
     var needUnify = true;
-    switch (meta.info) {
+    if (preRhs instanceof ErrorTerm) needUnify = false;
+    else switch (meta.info) {
       case MetaInfo.AnyType()when preRhs instanceof Formation -> needUnify = false;
       case MetaInfo.AnyType()when preRhs instanceof MetaTerm rhsMeta -> {
         if (!rhsMeta.ref().info.isType(checker.synthesizer())) {
@@ -141,7 +142,7 @@ public final class Unifier extends TermComparator {
         }
       }
     }
-    if (!needUnify) providedType = SortTerm.Type0;
+    if (!needUnify && providedType == null) providedType = SortTerm.Type0;
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
     var overlap = invertSpine(subst, lhs, meta);
