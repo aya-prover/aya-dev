@@ -239,6 +239,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef, int ulift
   ) {
     var retType = getType(lhs, lhsRef);
+    if (synthesizer().tryPress(retType) instanceof SortTerm sort && sort.isProp()) return retType;
     // Lossy comparison
     if (visitArgs(lhs.args(), rhs.args(), lr, rl,
       Term.Param.subst(Def.defTele(lhsRef), ulift))) return retType;
@@ -539,9 +540,10 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
    * If called from {@link #doCompareUntyped} then probably not so lossy.
    */
   private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
+    var retType = getType(lhs, lef);
+    if (Def.defResult(lhs.head().dataRef()).isProp()) return retType;
     if (!visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), lr, rl,
       Term.Param.subst(Def.defTele(lef.core.dataRef), lhs.ulift()))) return null;
-    var retType = getType(lhs, lef);
     if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
       Term.Param.subst(lef.core.selfTele, lhs.ulift())))
       return retType;

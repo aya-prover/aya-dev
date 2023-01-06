@@ -13,6 +13,7 @@ import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.prettier.PrettierOptions;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -35,8 +36,10 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
       // guaranteed as this is already a core term
     else return defVar.concrete.checkedBody;
   }
-  static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> defVar) {
-    if (defVar.core != null) return defVar.core.result();
+  @SuppressWarnings("unchecked") @Contract(pure = true)
+  static <T extends Term> @NotNull T
+  defResult(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<? extends T>> defVar) {
+    if (defVar.core != null) return (T) defVar.core.result();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature()).result;
   }

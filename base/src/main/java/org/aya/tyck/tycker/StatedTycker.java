@@ -46,7 +46,8 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockTycke
     return term.normalize(state, NormalizeMode.WHNF);
   }
 
-  protected final @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
+  protected final <D extends Def, S extends Decl & Decl.Telescopic<? extends Term>> @NotNull Result
+  defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(LamTerm::paramRenamed);
     // unbound these abstracted variables
