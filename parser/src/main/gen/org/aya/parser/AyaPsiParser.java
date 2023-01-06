@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -1621,19 +1624,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "repl_0")) return false;
     consumeToken(b, REPL_COMMAND);
     return true;
-  }
-
-  /* ********************************************************** */
-  // KW_EXAMPLE | KW_COUNTEREXAMPLE
-  public static boolean sampleModifiers(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "sampleModifiers")) return false;
-    if (!nextTokenIs(b, "<sample modifiers>", KW_COUNTEREXAMPLE, KW_EXAMPLE)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, SAMPLE_MODIFIERS, "<sample modifiers>");
-    r = consumeToken(b, KW_EXAMPLE);
-    if (!r) r = consumeToken(b, KW_COUNTEREXAMPLE);
-    exit_section_(b, l, m, r, false, null);
-    return r;
   }
 
   /* ********************************************************** */

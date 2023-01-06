@@ -6,7 +6,6 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
@@ -507,9 +506,9 @@ public record AyaGKProducer(
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
-    if (node.is(TokenType.ERROR_ELEMENT)) {
-      return new Expr.Hole(pos, true, null);
-    }
+    // if (node.is(TokenType.ERROR_ELEMENT)) {
+    //   return new Expr.Hole(pos, true, null);
+    // }
     if (node.is(REF_EXPR)) {
       var qid = qualifiedId(node.child(QUALIFIED_ID));
       return new Expr.Unresolved(qid.sourcePos(), qid);
@@ -854,7 +853,12 @@ public record AyaGKProducer(
 
   public @Nullable Expr typeOrNull(@Nullable GenericNode<?> node) {
     if (node == null) return null;
-    return expr(node.child(EXPR));
+    var child = node.peekChild(EXPR);
+    if (child == null) {
+      reporter.report(new ParseError(sourcePosOf(node), "Expected the return type expression"));
+      return null;
+    }
+    return expr(child);
   }
 
   public @NotNull Expr typeOrHole(@Nullable GenericNode<?> node, SourcePos sourcePos) {

@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -85,7 +88,6 @@ public interface AyaPsiElementTypes {
   IElementType PROJ_FIX_ID = new AyaPsiElementType("PROJ_FIX_ID");
   IElementType QUALIFIED_ID = new AyaPsiElementType("QUALIFIED_ID");
   IElementType REF_EXPR = new AyaPsiElementType("REF_EXPR");
-  IElementType SAMPLE_MODIFIERS = new AyaPsiElementType("SAMPLE_MODIFIERS");
   IElementType SIGMA_EXPR = new AyaPsiElementType("SIGMA_EXPR");
   IElementType STMT = new AyaPsiElementType("STMT");
   IElementType STRUCT_DECL = new AyaPsiElementType("STRUCT_DECL");

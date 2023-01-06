@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+ * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
  * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
  */
 
@@ -190,8 +190,6 @@ generalizeParamName ::= teleParamName
 generalize ::= KW_VARIABLE generalizeParamName+ type
 
 // declarations
-
-sampleModifiers ::= KW_EXAMPLE | KW_COUNTEREXAMPLE
 
 decl ::= fnDecl | primDecl | structDecl | dataDecl {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
