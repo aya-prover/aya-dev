@@ -5,7 +5,7 @@ In file $FILE:3:26 ->
   3 │                (p : Sig A  B) : C
     │                             ╰╯
 
-Error: Parser error: Cannot parse
+Error: Cannot parse
 
 In file $FILE:8:29 ->
 
@@ -14,7 +14,7 @@ In file $FILE:8:29 ->
   8 │                 (p : Sig A B  C) : D
     │                                ╰╯
 
-Error: Parser error: Cannot parse
+Error: Cannot parse
 
 In file $FILE:1:4 ->
 

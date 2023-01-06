@@ -1,9 +1,9 @@
-In file $FILE:1:3 ->
+In file $FILE:1:0 ->
 
   1 │   def
-    │      ╰╯
+    │   ╰─╯
 
-Error: Parser error: Cannot parse
+Error: Expect a function name
 
 1 error(s), 0 warning(s).
 What are you doing?
