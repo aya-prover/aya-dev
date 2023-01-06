@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
@@ -9,8 +9,8 @@ import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.Synthesizer;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.Synthesizer;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
