@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -16,9 +16,9 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.UnifyInfo;
+import org.aya.tyck.tycker.UnifiedTycker;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +33,11 @@ public record Conquer(
   @NotNull ImmutableSeq<Term.Matching> matchings,
   @NotNull SourcePos sourcePos,
   boolean orderIndependent,
-  @NotNull ExprTycker tycker
+  @NotNull UnifiedTycker tycker
 ) {
   public static void against(
     @NotNull FnDef def, boolean orderIndependent,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos
+    @NotNull UnifiedTycker tycker, @NotNull SourcePos pos
   ) {
     var matchings = def.body.getRightValue();
     var conquer = new Conquer(def, matchings, pos, orderIndependent, tycker);
