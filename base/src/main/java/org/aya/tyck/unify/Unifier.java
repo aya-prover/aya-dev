@@ -78,8 +78,13 @@ public final class Unifier extends TermComparator {
     return overlap;
   }
 
-  @Override @Nullable
-  protected Term solveMeta(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType) {
+  @Override protected @Nullable Term
+  solveMeta(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType) {
+    return solveMetaWHNF(lhs, whnf(preRhs), lr, rl, providedType);
+  }
+
+  private @Nullable Term
+  solveMetaWHNF(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType) {
     var meta = lhs.ref();
     var sameMeta = sameMeta(lr, rl, lhs, meta, preRhs);
     if (sameMeta.isDefined()) return sameMeta.get();
@@ -92,7 +97,13 @@ public final class Unifier extends TermComparator {
     // Check the expected type.
     switch (meta.info) {
       case MetaInfo.AnyType() -> {
-
+        if (!(preRhs instanceof Formation)) {
+          providedType = checker.synthesizer().synthesize(preRhs);
+          if (!(providedType instanceof SortTerm)) {
+            reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+            return null;
+          }
+        }
       }
       case MetaInfo.Result(var expectedType) -> {
         if (providedType != null) {
