@@ -24,7 +24,7 @@ public record DoubleChecker(
   }
 
   public DoubleChecker(@NotNull Unifier unifier, @NotNull Sub lr, @NotNull Sub rl) {
-    this(unifier, new Synthesizer(unifier.state, unifier.ctx), lr, rl);
+    this(unifier, unifier.synthesizer(), lr, rl);
   }
 
   private @NotNull Term whnf(Term x) {

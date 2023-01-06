@@ -89,21 +89,26 @@ public final class Unifier extends TermComparator {
     // Update: this is still needed, see #327 last task (`coe'`)
     var checker = new DoubleChecker(new Unifier(Ordering.Lt,
       reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
-    var expectedType = meta.info.result();
-    if (expectedType == null) expectedType = providedType;
-    else if (providedType != null) {
-      // The provided type from the context, hence neither from LHS nor RHS,
-      // so we don't substitute it backwards, hence the empty `Sub`.
-      compareUntyped(expectedType, providedType, lr, new Sub());
-      expectedType = expectedType.freezeHoles(state);
+    // Check the expected type.
+    switch (meta.info) {
+      case MetaInfo.AnyType() -> {}
+      case MetaInfo.Result(var expectedType) -> {
+        if (providedType != null) {
+          // The provided type from the context, hence neither from LHS nor RHS,
+          // so we don't substitute it backwards, hence the empty `Sub`.
+          compareUntyped(expectedType, providedType, lr, new Sub());
+          providedType = expectedType.freezeHoles(state);
+        } else providedType = expectedType;
+      }
     }
-    if (expectedType != null) {
+    // Check the solution.
+    if (providedType != null) {
       // resultTy might be an ErrorTerm, what to do?
-      if (!checker.inherit(preRhs, expectedType))
-        reporter.report(new HoleProblem.IllTypedError(lhs, expectedType, preRhs));
+      if (!checker.inherit(preRhs, providedType))
+        reporter.report(new HoleProblem.IllTypedError(lhs, providedType, preRhs));
     } else {
-      expectedType = checker.synthesizer().synthesize(preRhs);
-      if (expectedType == null) {
+      providedType = checker.synthesizer().synthesize(preRhs);
+      if (providedType == null) {
         throw new UnsupportedOperationException("TODO: add an error report for this");
       }
     }
@@ -119,7 +124,7 @@ public final class Unifier extends TermComparator {
     if (!allowVague && overlap.anyMatch(var -> preRhs.findUsages(var) > 0)) {
       state.addEqn(createEqn(lhs, preRhs, lr, rl));
       // Skip the unification and scope check
-      return expectedType;
+      return providedType;
     }
     // Now we are sure that the variables in overlap are all unused.
 
@@ -163,7 +168,7 @@ public final class Unifier extends TermComparator {
       return new ErrorTerm(solved);
     }
     tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-    return expectedType;
+    return providedType;
   }
 
   /**
