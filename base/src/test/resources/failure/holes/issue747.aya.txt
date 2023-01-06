@@ -11,7 +11,7 @@ Goal: Goal of type
       Context:
         {a : Nat}
       To ensure confluence:
-        Given (i ⇒ _), we should have: 0
+        Given (_ ⇒ 0, i ⇒ _), we should have: 0
 
 In file $FILE:11:13 ->
 
