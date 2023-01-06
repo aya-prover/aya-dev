@@ -388,7 +388,7 @@ public final class PatternTycker {
     if (ctor.pats.isNotEmpty()) {
       return PatMatcher.tryBuildSubst(true, ctor.pats, dataCall.args(), new Expander.WHNFer(state));
     } else {
-      return kala.control.Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
+      return Result.ok(DeltaExpander.buildSubst(Def.defTele(dataCall.ref()), dataCall.args()));
     }
   }
 

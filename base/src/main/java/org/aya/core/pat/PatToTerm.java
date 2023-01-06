@@ -32,8 +32,6 @@ public class PatToTerm {
   protected @NotNull Term visitCtor(Pat.@NotNull Ctor ctor) {
     var data = (DataCall) ctor.type();
     var args = Arg.mapSeq(ctor.params(), this::visit);
-    return new ConCall(data.ref(), ctor.ref(),
-      data.args().map(Arg::implicitify),
-      data.ulift(), args);
+    return new ConCall(data.ref(), ctor.ref(), data.args(), data.ulift(), args);
   }
 }

@@ -15,7 +15,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
-import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
@@ -27,6 +26,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
+import org.aya.tyck.pat.PatternTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.MockTycker;
 import org.aya.tyck.tycker.TyckState;
@@ -534,12 +534,12 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
    */
   private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
     var retType = synthesizer().press(lhs);
-    var dataRef = lhs.head().dataRef();
+    var dataRef = lef.core.dataRef;
     if (Def.defResult(dataRef).isProp()) return retType;
     var dataAlgs = lhs.head().dataArgs();
     if (!visitArgs(dataAlgs, rhs.head().dataArgs(), lr, rl,
-      Term.Param.subst(Def.defTele(lef.core.dataRef), lhs.ulift()))) return null;
-    var ownerSubst = DeltaExpander.buildSubst(Def.defTele(dataRef), dataAlgs);
+      Term.Param.subst(Def.defTele(dataRef), lhs.ulift()))) return null;
+    var ownerSubst = PatternTycker.mischa(lhs.head().underlyingDataCall(), lef.core, state).get();
     if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
       Term.Param.subst(lef.core.selfTele, ownerSubst, lhs.ulift())))
       return retType;
