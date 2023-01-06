@@ -28,10 +28,15 @@ import org.jetbrains.annotations.Nullable;
  * @see org.aya.tyck.unify.DoubleChecker
  */
 public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
-  public @NotNull Term press(@NotNull Term preterm) {
+  public @Nullable Term tryPress(@NotNull Term preterm) {
     var synthesize = synthesize(preterm);
+    return synthesize != null ? whnf(synthesize) : null;
+  }
+
+  public @NotNull Term press(@NotNull Term preterm) {
+    var synthesize = tryPress(preterm);
     assert synthesize != null : preterm.toDoc(AyaPrettierOptions.pretty()).debugRender();
-    return whnf(synthesize);
+    return synthesize;
   }
 
   public boolean inheritPiDom(Term type, SortTerm expected) {
@@ -52,6 +57,10 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     };
   }
 
+  /**
+   * @param preterm expected to be whnf
+   * @return null if failed to synthesize
+   */
   public @Nullable Term synthesize(@NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm term -> ctx.get(term.var());
@@ -70,7 +79,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       }
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {
-        var callRaw = press(access.of());
+        var callRaw = tryPress(access.of());
         if (!(callRaw instanceof StructCall call)) yield unreachable(callRaw);
         var field = access.ref();
         var subst = DeltaExpander.buildSubst(Def.defTele(field), access.fieldArgs())
@@ -89,7 +98,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         yield univ.reduce(SigmaTerm::max);
       }
       case PiTerm pi -> {
-        var paramTyRaw = synthesize(pi.param().type());
+        var paramTyRaw = tryPress(pi.param().type());
         if (!(paramTyRaw instanceof SortTerm paramTy)) yield null;
         var t = new Synthesizer(state, ctx.deriveSeq());
         yield t.ctx.with(pi.param(), () -> {
@@ -101,7 +110,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case NewTerm neu -> neu.struct();
       case ErrorTerm term -> ErrorTerm.typeOf(term.description());
       case ProjTerm proj -> {
-        var sigmaRaw = synthesize(proj.of());
+        var sigmaRaw = tryPress(proj.of());
         if (!(sigmaRaw instanceof SigmaTerm sigma)) yield null;
         var index = proj.ix() - 1;
         var telescope = sigma.params();
@@ -132,9 +141,9 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
           .map(t -> new Arg<>(t, true)));
       }
       case OutTerm outS -> {
-        var ty = press(outS.of());
+        var ty = tryPress(outS.of());
         if (ty instanceof PrimCall sub) yield sub.args().first().term();
-        yield unreachable(outS);
+        yield null;
       }
       case PAppTerm app -> {
         // v @ ui : A[ui/xi]
@@ -142,13 +151,14 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         var ui = app.args().map(Arg::term);
         yield app.cube().type().subst(new Subst(xi, ui));
       }
-      case PLamTerm lam -> {
-        var bud = press(lam.body());
-        yield new PathTerm(lam.params(), bud, new Partial.Const<>(bud));
+      case PLamTerm(var params, var body) -> {
+        var bud = tryPress(body);
+        if (bud == null) yield null;
+        yield new PathTerm(params, bud, new Partial.Const<>(body));
       }
-      case AppTerm app -> {
-        var piRaw = press(app.of());
-        yield piRaw instanceof PiTerm pi ? pi.substBody(app.arg().term()) : null;
+      case AppTerm(var of, var arg) -> {
+        var piRaw = tryPress(of);
+        yield piRaw instanceof PiTerm pi ? pi.substBody(arg.term()) : null;
       }
       case default -> null;
     };
