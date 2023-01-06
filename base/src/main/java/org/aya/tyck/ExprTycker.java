@@ -466,7 +466,7 @@ public final class ExprTycker extends PropTycker {
             var var = param.ref();
             var lamParam = param.type();
             var type = dt.param().type();
-            var result = synthesize(lamParam).wellTyped();
+            var result = ty(lamParam);
             if (unifyTyReported(result, type, lamParam))
               type = result;
             else yield error(lam, dt);

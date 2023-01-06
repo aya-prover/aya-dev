@@ -95,13 +95,15 @@ public final class Unifier extends TermComparator {
     var checker = new DoubleChecker(new Unifier(Ordering.Lt,
       reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
     // Check the expected type.
+    var needUnify = true;
     switch (meta.info) {
-      case MetaInfo.AnyType()when preRhs instanceof Formation -> {}
+      case MetaInfo.AnyType()when preRhs instanceof Formation -> needUnify = false;
       case MetaInfo.AnyType()when preRhs instanceof MetaTerm rhsMeta -> {
         if (!rhsMeta.ref().info.isType(checker.synthesizer())) {
           reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
           return null;
         }
+        needUnify = false;
       }
       case MetaInfo.AnyType() -> {
         var synthesize = checker.synthesizer().synthesize(preRhs);
@@ -109,6 +111,7 @@ public final class Unifier extends TermComparator {
           reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
           return null;
         }
+        needUnify = false;
         if (providedType == null) providedType = synthesize;
       }
       case MetaInfo.Result(var expectedType) -> {
@@ -125,17 +128,20 @@ public final class Unifier extends TermComparator {
         }
       }
     }
-    // Check the solution.
-    if (providedType != null) {
-      // resultTy might be an ErrorTerm, what to do?
-      if (!checker.inherit(preRhs, providedType))
-        reporter.report(new HoleProblem.IllTypedError(lhs, new MetaInfo.Result(providedType), preRhs));
-    } else {
-      providedType = checker.synthesizer().synthesize(preRhs);
-      if (providedType == null) {
-        throw new UnsupportedOperationException("TODO: add an error report for this");
+    if (needUnify) {
+      // Check the solution.
+      if (providedType != null) {
+        // resultTy might be an ErrorTerm, what to do?
+        if (!checker.inherit(preRhs, providedType))
+          reporter.report(new HoleProblem.IllTypedError(lhs, new MetaInfo.Result(providedType), preRhs));
+      } else {
+        providedType = checker.synthesizer().synthesize(preRhs);
+        if (providedType == null) {
+          throw new UnsupportedOperationException("TODO: add an error report for this");
+        }
       }
     }
+    if (!needUnify) providedType = SortTerm.Type0;
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
     var overlap = invertSpine(subst, lhs, meta);
