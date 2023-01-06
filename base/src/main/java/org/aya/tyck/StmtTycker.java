@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -28,7 +28,6 @@ import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.TracedTycker;
 import org.aya.util.Arg;
-import org.aya.util.Ordering;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -337,9 +336,8 @@ public final class StmtTycker extends TracedTycker {
    */
   private @NotNull Term checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
     var result = exprTycker.ty(tele);
-    var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
-    // TODO[isType]: there is no restriction on constructor telescope now
-    // new DoubleChecker(unifier).inherit(result, sort);
+    if (!exprTycker.synthesizer().inheritPiDom(result, sort))
+      reporter.report(new UnifyError.PiDom(tele, result, sort));
     return result;
   }
 

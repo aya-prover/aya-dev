@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
@@ -13,6 +13,7 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.pat.TypedSubst;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.Synthesizer;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -44,6 +45,10 @@ public abstract sealed class MockedTycker extends ConcreteAwareTycker permits Un
 
   public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
     return unifier(pos, ord, localCtx);
+  }
+
+  public @NotNull Synthesizer synthesizer() {
+    return new Synthesizer(state, localCtx);
   }
 
   protected final @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
