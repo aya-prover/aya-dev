@@ -98,6 +98,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   }
 
   /**
+   * @param explicit whether the hole is a type-directed programming goal or
+   *                 a to-be-solved by tycking hole.
    * @author ice1000
    */
   record Hole(

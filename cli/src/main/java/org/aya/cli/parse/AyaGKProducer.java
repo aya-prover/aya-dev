@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -6,6 +6,7 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
@@ -506,6 +507,9 @@ public record AyaGKProducer(
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
+    if (node.is(TokenType.ERROR_ELEMENT)) {
+      return new Expr.Hole(pos, true, null);
+    }
     if (node.is(REF_EXPR)) {
       var qid = qualifiedId(node.child(QUALIFIED_ID));
       return new Expr.Unresolved(qid.sourcePos(), qid);
