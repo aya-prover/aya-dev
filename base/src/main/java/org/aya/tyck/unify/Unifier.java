@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.mutable.MutableArrayList;
 import kala.control.Option;
 import org.aya.core.meta.Meta;
+import org.aya.core.meta.MetaInfo;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
@@ -88,7 +89,7 @@ public final class Unifier extends TermComparator {
     // Update: this is still needed, see #327 last task (`coe'`)
     var checker = new DoubleChecker(new Unifier(Ordering.Lt,
       reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
-    var expectedType = meta.result;
+    var expectedType = meta.info.result();
     if (expectedType == null) expectedType = providedType;
     else if (providedType != null) {
       // The provided type from the context, hence neither from LHS nor RHS,
@@ -171,8 +172,8 @@ public final class Unifier extends TermComparator {
   private @NotNull Option<@Nullable Term> sameMeta(Sub lr, Sub rl, @NotNull MetaTerm lhs, Meta meta, Term preRhs) {
     if (!(preRhs instanceof MetaTerm rcall && meta == rcall.ref())) return Option.none();
     // If we do not know the type, then we do not perform the comparison
-    if (meta.result == null) return Option.some(null);
-    var holeTy = PiTerm.make(meta.telescope, meta.result);
+    if (!(meta.info instanceof MetaInfo.Result(var result))) return Option.some(null);
+    var holeTy = PiTerm.make(meta.telescope, result);
     for (var arg : lhs.args().zipView(rcall.args())) {
       if (!(holeTy instanceof PiTerm holePi))
         throw new InternalException("meta arg size larger than param size. this should not happen");

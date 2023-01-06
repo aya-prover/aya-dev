@@ -10,17 +10,22 @@ Comments:
 
 Related rules on the $\Pi$-type:
 
-| Input sort | Output sort  | Sort             |
-|------------|--------------|------------------|
-| `Prop` a   | `Type` b     | `Type` a ∨ b     |
-| `Type` a   | `Prop` b     | `Prop` a ∨ b     |
-| `?` a      | `?` b (same) | `?` a ∨ b (same) |
-| `?` a      | `¿` b        | `Set` a ∨ b      |
+| Input sort      | Output sort  | Result           |
+|-----------------|--------------|------------------|
+| `Prop`/`Type` a | `Type` b     | `Type` a ∨ b     |
+| `Prop`/`Type` a | `Prop` b     | `Prop` a ∨ b     |
+| `?` a           | `?` b (same) | `?` a ∨ b (same) |
+| `?` a           | `¿` b        | `Set` a ∨ b      |
 
 # Notes
 
-+ If sort is not `Set`, then cod's sort is just `<=` the result sort and should have the same kind.
-+ If sort is `Set`, then cod's sort is `<=` the result sort and can be any kind.
++ Codomain's sort:
+  + If result is not `Set`: just `<=` the result sort and should have the same kind.
+  + If result is `Set`, then can be any kind with suitable levels.
++ Domain's sort:
+  + If result is `Prop`/`Type`, then can be `Prop`/`Type` with suitable levels.
+  + If result is `Set`, then can be anything.
+  + If result is `Type`, then can be anything except `Set`/`ISet`.
 
 # Regarding impredicativity
 
