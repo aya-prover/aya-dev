@@ -239,7 +239,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     @NotNull Callable lhs, @NotNull Callable rhs, Sub lr, Sub rl,
     @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef, int ulift
   ) {
-    var retType = getType(lhs, lhsRef);
+    var retType = synthesizer().press(lhs);
     if (synthesizer().tryPress(retType) instanceof SortTerm sort && sort.isProp()) return retType;
     // Lossy comparison
     if (visitArgs(lhs.args(), rhs.args(), lr, rl,
@@ -250,10 +250,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
 
   /** TODO: Revise when JDK 20 is released. */
   private record Pair(Term lhs, Term rhs) {}
-
-  private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef) {
-    return Def.defResult(lhsRef).subst(DeltaExpander.buildSubst(Def.defTele(lhsRef), lhs.args()));
-  }
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     // Skip tracing, because too easy.
@@ -537,7 +533,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
    * If called from {@link #doCompareUntyped} then probably not so lossy.
    */
   private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
-    var retType = getType(lhs, lef);
+    var retType = synthesizer().press(lhs);
     var dataRef = lhs.head().dataRef();
     if (Def.defResult(dataRef).isProp()) return retType;
     var dataAlgs = lhs.head().dataArgs();

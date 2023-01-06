@@ -89,7 +89,7 @@ public record Conquer(
       } else if (matchResult instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
         hole.ref().conditions.append(Tuple.of(subst, newBody));
       }
-      var retSubst = DeltaExpander.buildSubst(def.telescope, currentClause.patterns().map(t -> t.map(Pat::toTerm)));
+      var retSubst = DeltaExpander.buildSubst(def.telescope, args);
       retSubst.add(subst);
       return tycker.unifyReported(newBody, matchResult, def.result.subst(retSubst),
         sourcePos, ctx, comparison -> new ClausesProblem.Conditions(
