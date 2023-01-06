@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
@@ -95,10 +96,11 @@ public record AyaGKProducer(
     if (node.is(MODULE)) return ImmutableSeq.of(module(node));
     if (node.is(OPEN_CMD)) return openCmd(node);
     if (node.is(DECL)) {
-      var result = decl(node);
-      var stmts = result.component2().view().prepended(result.component1());
-      if (result.component1() instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
-        result.component2().firstOption(stmt -> !(stmt instanceof Decl))
+      var stmts = MutableList.<Stmt>create();
+      var result = decl(node, stmts);
+      stmts.prepend(result);
+      if (result instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
+        stmts.firstOption(stmt -> !(stmt instanceof Decl))
           .ifDefined(stmt -> reporter.report(new BadCounterexampleWarn(stmt)));
         return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
       }
@@ -222,11 +224,11 @@ public record AyaGKProducer(
       node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq());
   }
 
-  public Tuple2<? extends Decl, ImmutableSeq<Stmt>> decl(@NotNull GenericNode<?> node) {
-    if (node.is(FN_DECL)) return Tuple.of(fnDecl(node), ImmutableSeq.empty());
-    if (node.is(PRIM_DECL)) return Tuple.of(primDecl(node), ImmutableSeq.empty());
-    if (node.is(DATA_DECL)) return dataDecl(node);
-    if (node.is(STRUCT_DECL)) return structDecl(node);
+  public Decl decl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+    if (node.is(FN_DECL)) return fnDecl(node);
+    if (node.is(PRIM_DECL)) return primDecl(node);
+    if (node.is(DATA_DECL)) return dataDecl(node, additional);
+    if (node.is(STRUCT_DECL)) return structDecl(node, additional);
     return unreachable(node);
   }
 
@@ -299,10 +301,10 @@ public record AyaGKProducer(
     return Either.right(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
   }
 
-  private @NotNull ImmutableSeq<Stmt> giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl) {
-    if (!modiSet.isReExport().data()) return ImmutableSeq.empty();
+  private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl, @NotNull MutableList<Stmt> additional) {
+    if (!modiSet.isReExport().data()) return;
 
-    return ImmutableSeq.of(new Command.Open(
+    additional.append(new Command.Open(
       modiSet.isReExport().sourcePos(),
       modiSet.accessibility().data(),
       new QualifiedID(decl.sourcePos(), decl.ref().name()),
@@ -312,8 +314,7 @@ public record AyaGKProducer(
     ));
   }
 
-  public @NotNull Tuple2<TeleDecl.DataDecl, ImmutableSeq<Stmt>>
-  dataDecl(GenericNode<?> node) {
+  public @NotNull TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var modifier = moduleLikeDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
     var sample = modifier.personality().data();
@@ -335,7 +336,8 @@ public record AyaGKProducer(
       sample
     );
 
-    return Tuple.of(decl, giveMeOpen(modifier, decl));
+    giveMeOpen(modifier, decl, additional);
+    return decl;
   }
 
   public @NotNull TeleDecl.DataCtor dataBody(@NotNull GenericNode<?> node) {
@@ -350,7 +352,7 @@ public record AyaGKProducer(
     return dataCtor(patterns(node.child(PATTERNS).child(COMMA_SEP)), node.child(DATA_CTOR));
   }
 
-  public @NotNull Tuple2<TeleDecl.StructDecl, ImmutableSeq<Stmt>> structDecl(@NotNull GenericNode<?> node) {
+  public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var modifier = moduleLikeDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
     var sample = modifier.personality().data();
@@ -370,7 +372,8 @@ public record AyaGKProducer(
       bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
-    return Tuple.of(decl, giveMeOpen(modifier, decl));
+    giveMeOpen(modifier, decl, additional);
+    return decl;
   }
 
   public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
@@ -391,7 +394,8 @@ public record AyaGKProducer(
   }
 
   public @NotNull TeleDecl.PrimDecl primDecl(@NotNull GenericNode<?> node) {
-    var id = primName(node.child(PRIM_NAME));
+    var nameEl = node.child(PRIM_NAME);
+    var id = weakId(nameEl.child(WEAK_ID));
     return new TeleDecl.PrimDecl(
       id.sourcePos(),
       sourcePosOf(node),
@@ -876,10 +880,6 @@ public record AyaGKProducer(
   }
 
   public @NotNull WithPos<String> teleParamName(@NotNull GenericNode<?> node) {
-    return weakId(node.child(WEAK_ID));
-  }
-
-  public @NotNull WithPos<String> primName(@NotNull GenericNode<?> node) {
     return weakId(node.child(WEAK_ID));
   }
 
