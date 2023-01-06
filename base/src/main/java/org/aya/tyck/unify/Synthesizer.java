@@ -10,6 +10,7 @@ import org.aya.core.meta.MetaInfo;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
+import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
@@ -45,10 +46,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         case Prop, Type -> true;
         case Set, ISet -> false;
       };
-      case Type -> switch (actual.kind()) {
-        case Prop, Type -> actual.lift() <= expected.lift();
-        case Set, ISet -> false;
-      };
+      case Type -> actual.kind() != SortKind.Set && actual.lift() <= expected.lift();
       case Set -> actual.lift() <= expected.lift();
       case ISet -> unreachable(type);
     };

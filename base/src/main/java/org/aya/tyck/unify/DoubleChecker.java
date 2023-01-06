@@ -61,7 +61,7 @@ public record DoubleChecker(
         yield res != null && res.items().allMatch(i -> !(i.term() instanceof ErrorTerm));
       }
       case PiTerm(var dom, var cod) -> {
-        if (!(expected instanceof SortTerm sort)) yield Synthesizer.unreachable(expected);
+        if (!(whnf(expected) instanceof SortTerm sort)) yield Synthesizer.unreachable(expected);
         if (!synthesizer.inheritPiDom(dom.type(), sort)) yield false;
         yield unifier.ctx.with(dom, () -> inherit(cod, sort));
       }

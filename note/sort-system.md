@@ -13,6 +13,7 @@ Related rules on the $\Pi$-type:
 | Input sort      | Output sort  | Result           |
 |-----------------|--------------|------------------|
 | `Prop`/`Type` a | `Type` b     | `Type` a ∨ b     |
+| `ISet`          | `Type` b     | `Type` b         |
 | `Prop`/`Type` a | `Prop` b     | `Prop` a ∨ b     |
 | `?` a           | `?` b (same) | `?` a ∨ b (same) |
 | `?` a           | `¿` b        | `Set` a ∨ b      |
@@ -24,6 +25,7 @@ Related rules on the $\Pi$-type:
   + If result is `Set`, then can be any kind with suitable levels.
 + Domain's sort:
   + If result is `Prop`/`Type`, then can be `Prop`/`Type` with suitable levels.
+  + If result is `Type`, then can be `ISet`.
   + If result is `Set`, then can be anything with suitable levels.
 
 # Regarding impredicativity
