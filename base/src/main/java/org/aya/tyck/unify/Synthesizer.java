@@ -57,7 +57,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
   }
 
   /**
-   * @param preterm expected to be whnf
+   * @param preterm expected to be beta-normalized
    * @return null if failed to synthesize
    */
   public @Nullable Term synthesize(@NotNull Term preterm) {
@@ -67,7 +67,14 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case Callable.DefCall call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
-      case MetaTerm hole -> hole.ref().info.result();
+      case MetaTerm hole -> {
+        var result = hole.ref().info.result();
+        if (result == null) {
+          preterm = whnf(preterm);
+          yield preterm instanceof MetaTerm ? null : synthesize(preterm);
+        }
+        else yield result;
+      }
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {
         var callRaw = tryPress(access.of());
