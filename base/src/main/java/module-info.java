@@ -17,6 +17,7 @@ module aya.base {
   exports org.aya.concrete.visitor;
   exports org.aya.concrete;
   exports org.aya.core.def;
+  exports org.aya.core.meta;
   exports org.aya.core.ops;
   exports org.aya.core.pat;
   exports org.aya.core.repr;

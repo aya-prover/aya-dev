@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -61,7 +61,7 @@ public final class ExprTycker extends PropTycker {
       case Expr.Lambda lam when lam.param().type() instanceof Expr.Hole -> inherit(lam, generatePi(lam));
       case Expr.Lambda lam -> {
         var paramTy = ty(lam.param().type());
-        yield localCtx.with(lam.param().ref(), paramTy, () -> {
+        yield ctx.with(lam.param().ref(), paramTy, () -> {
           var body = synthesize(lam.body());
           var param = new Term.Param(lam.param(), paramTy);
           var pi = new PiTerm(param, body.type()).freezeHoles(state).rename();
@@ -77,7 +77,7 @@ public final class ExprTycker extends PropTycker {
           .getOption(loc)     // automatically unfold
           .getOrElse(() -> {
             // not defined in definitionEqualities, search localCtx
-            var ty = localCtx.get(loc);
+            var ty = ctx.get(loc);
             return new Result.Default(new RefTerm(loc), ty);
           });
         case DefVar<?, ?> defVar -> inferRef(defVar);
@@ -85,11 +85,11 @@ public final class ExprTycker extends PropTycker {
       };
       case Expr.Pi pi -> {
         var corePi = ty(pi);
-        yield new Result.Default(corePi, corePi.computeType(state, localCtx));
+        yield new Result.Default(corePi, corePi.computeType(state, ctx));
       }
       case Expr.Sigma sigma -> {
         var coreSigma = ty(sigma);
-        yield new Result.Default(coreSigma, coreSigma.computeType(state, localCtx));
+        yield new Result.Default(coreSigma, coreSigma.computeType(state, ctx));
       }
       case Expr.Lift lift -> {
         var result = synthesize(lift.expr());
@@ -276,7 +276,7 @@ public final class ExprTycker extends PropTycker {
         // Anyway, the `Term.descent` will recurse into the `Cube` for `PathApp` and substitute the partial element.
         yield new Result.Default(newApp, pi.body().subst(subst));
       }
-      case Expr.Hole hole -> inherit(hole, localCtx.freshTyHole(Constants.randomName(hole), hole.sourcePos()).component2());
+      case Expr.Hole hole -> inherit(hole, ctx.freshTyHole(Constants.randomName(hole), hole.sourcePos()).component2());
       case Expr.Error err -> Result.Default.error(err.description());
       case Expr.LitInt lit -> {
         int integer = lit.integer();
@@ -284,7 +284,7 @@ public final class ExprTycker extends PropTycker {
         var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
-          var type = localCtx.freshTyHole("_ty" + lit.integer() + "'", lit.sourcePos());
+          var type = ctx.freshTyHole("_ty" + lit.integer() + "'", lit.sourcePos());
           yield new Result.Default(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type.component1()), type.component1());
         }
         var match = defs.first();
@@ -297,7 +297,7 @@ public final class ExprTycker extends PropTycker {
 
         yield new Result.Default(new StringTerm(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
-      case Expr.Path path -> localCtx.withIntervals(path.params().view(), () -> {
+      case Expr.Path path -> ctx.withIntervals(path.params().view(), () -> {
         var type = synthesize(path.type());
         var partial = elaboratePartial(path.partial(), type.wellTyped());
         var cube = new PathTerm(path.params(), type.wellTyped(), partial);
@@ -320,7 +320,7 @@ public final class ExprTycker extends PropTycker {
         // preparing
         var dataParam = Def.defTele(def.ref).first();
         var sort = dataParam.type();    // the sort of type below.
-        var hole = localCtx.freshHole(sort, arr.sourcePos());
+        var hole = ctx.freshHole(sort, arr.sourcePos());
         var type = new DataCall(def.ref(), 0, ImmutableSeq.of(
           new Arg<>(hole.component1(), dataParam.explicit())));
 
@@ -447,7 +447,7 @@ public final class ExprTycker extends PropTycker {
       }
       case Expr.Hole hole -> {
         // TODO[ice]: deal with unit type
-        var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
+        var freshHole = ctx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole.component1(), hole.accessibleLocal().get()));
         yield new Result.Default(freshHole.component2(), term);
       }
@@ -466,14 +466,14 @@ public final class ExprTycker extends PropTycker {
             var var = param.ref();
             var lamParam = param.type();
             var type = dt.param().type();
-            var result = synthesize(lamParam).wellTyped();
+            var result = ty(lamParam);
             if (unifyTyReported(result, type, lamParam))
               type = result;
             else yield error(lam, dt);
             addWithTerm(param, type);
             var resultParam = new Term.Param(var, type, param.explicit());
             var body = dt.substBody(resultParam.toTerm());
-            yield localCtx.with(resultParam, () -> {
+            yield ctx.with(resultParam, () -> {
               var rec = check(lam.body(), body);
               return new Result.Default(new LamTerm(LamTerm.param(resultParam), rec.wellTyped()), dt);
             });
@@ -515,7 +515,7 @@ public final class ExprTycker extends PropTycker {
   private @NotNull Term doTy(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Hole hole -> {
-        var freshHole = localCtx.freshTyHole(Constants.randomName(hole), hole.sourcePos());
+        var freshHole = ctx.freshTyHole(Constants.randomName(hole), hole.sourcePos());
         if (hole.explicit()) reporter.report(new Goal(state, freshHole.component1(), hole.accessibleLocal().get()));
         yield freshHole.component2();
       }
@@ -526,7 +526,7 @@ public final class ExprTycker extends PropTycker {
         var domRes = ty(param.type());
         addWithTerm(param, domRes);
         var resultParam = new Term.Param(var, domRes, param.explicit());
-        yield localCtx.with(resultParam, () -> new PiTerm(resultParam, ty(pi.last())));
+        yield ctx.with(resultParam, () -> new PiTerm(resultParam, ty(pi.last())));
       }
       case Expr.Sigma sigma -> {
         var resultTele = MutableList.<Tuple3<LocalVar, Boolean, Term>>create();
@@ -534,10 +534,10 @@ public final class ExprTycker extends PropTycker {
           var result = ty(tuple.type());
           addWithTerm(tuple, result);
           var ref = tuple.ref();
-          localCtx.put(ref, result);
+          ctx.put(ref, result);
           resultTele.append(Tuple.of(ref, tuple.explicit(), result));
         }
-        localCtx.remove(sigma.params().view().map(Expr.Param::ref));
+        ctx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new SigmaTerm(Term.Param.fromBuffer(resultTele));
       }
       default -> synthesize(expr).wellTyped();
@@ -571,7 +571,7 @@ public final class ExprTycker extends PropTycker {
     return traced(() -> new Trace.ExprT(expr, type.freezeHoles(state)), expr, e -> {
       if (type instanceof PiTerm pi && !pi.param().explicit() && needImplicitParamIns(e)) {
         var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
-        var body = localCtx.with(implicitParam, () -> inherit(e, pi.substBody(implicitParam.toTerm()))).wellTyped();
+        var body = ctx.with(implicitParam, () -> inherit(e, pi.substBody(implicitParam.toTerm()))).wellTyped();
         return new Result.Default(new LamTerm(LamTerm.param(implicitParam), body), pi);
       } else return doInherit(e, type);
     });

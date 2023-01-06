@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
@@ -28,7 +28,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.tycker.StatedTycker;
+import org.aya.tyck.tycker.MockTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
@@ -51,17 +51,15 @@ import java.util.function.UnaryOperator;
  * @see #compareUntyped(Term, Term, Sub, Sub) the "synthesize" direction
  * @see #compare(Term, Term, Sub, Sub, Term) the "inherit" direction
  */
-public sealed abstract class TermComparator extends StatedTycker permits Unifier {
+public sealed abstract class TermComparator extends MockTycker permits Unifier {
   protected final @NotNull SourcePos pos;
   protected final @NotNull Ordering cmp;
-  protected final @NotNull LocalCtx ctx;
   private FailureData failure;
 
   public TermComparator(@Nullable Trace.Builder traceBuilder, @NotNull TyckState state, @NotNull Reporter reporter, @NotNull SourcePos pos, @NotNull Ordering cmp, @NotNull LocalCtx ctx) {
-    super(reporter, traceBuilder, state);
+    super(reporter, traceBuilder, state, ctx);
     this.pos = pos;
     this.cmp = cmp;
-    this.ctx = ctx;
   }
 
   private static boolean isCall(@NotNull Term term) {
@@ -131,7 +129,7 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
     if (rhs instanceof MetaTerm rMeta) {
       // In case we're comparing two metas with one isType and the other has a type,
       // prefer solving the isType one to the typed one.
-      if (lhs instanceof MetaTerm lMeta && lMeta.ref().result == null)
+      if (lhs instanceof MetaTerm lMeta && lMeta.ref().info.result() == null)
         return solveMeta(lMeta, rMeta, lr, rl, type) != null;
       return solveMeta(rMeta, lhs, rl, lr, type) != null;
     }
@@ -249,6 +247,7 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
     else return null;
   }
 
+  /** TODO: Revise when JDK 20 is released. */
   private record Pair(Term lhs, Term rhs) {}
 
   private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef) {

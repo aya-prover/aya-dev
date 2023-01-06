@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.latex;
 
@@ -40,6 +40,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("=>", "\\Rightarrow"),
     Tuple.of("->", "\\to"),
     Tuple.of("_|_", "\\bot"),
+    Tuple.of("_", "\\textunderscore"),
     Tuple.of("~", "\\neg"),
     Tuple.of("**", "\\times"),
     id(":"), id("."),

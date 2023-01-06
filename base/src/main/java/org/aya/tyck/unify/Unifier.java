@@ -1,11 +1,12 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
 import kala.collection.Seq;
 import kala.collection.mutable.MutableArrayList;
 import kala.control.Option;
-import org.aya.core.Meta;
+import org.aya.core.meta.Meta;
+import org.aya.core.meta.MetaInfo;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
@@ -77,8 +78,13 @@ public final class Unifier extends TermComparator {
     return overlap;
   }
 
-  @Override @Nullable
-  protected Term solveMeta(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType) {
+  @Override protected @Nullable Term
+  solveMeta(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType) {
+    return solveMetaWHNF(lhs, whnf(preRhs), lr, rl, providedType);
+  }
+
+  private @Nullable Term
+  solveMetaWHNF(@NotNull MetaTerm lhs, @NotNull Term preRhs, Sub lr, Sub rl, @Nullable Term providedType) {
     var meta = lhs.ref();
     var sameMeta = sameMeta(lr, rl, lhs, meta, preRhs);
     if (sameMeta.isDefined()) return sameMeta.get();
@@ -88,24 +94,55 @@ public final class Unifier extends TermComparator {
     // Update: this is still needed, see #327 last task (`coe'`)
     var checker = new DoubleChecker(new Unifier(Ordering.Lt,
       reporter, false, false, traceBuilder, state, pos, ctx.deriveMap()), lr, rl);
-    var expectedType = meta.result;
-    if (expectedType == null) expectedType = providedType;
-    else if (providedType != null) {
-      // The provided type from the context, hence neither from LHS nor RHS,
-      // so we don't substitute it backwards, hence the empty `Sub`.
-      compareUntyped(expectedType, providedType, lr, new Sub());
-      expectedType = expectedType.freezeHoles(state);
-    }
-    if (expectedType != null) {
-      // resultTy might be an ErrorTerm, what to do?
-      if (!checker.inherit(preRhs, expectedType))
-        reporter.report(new HoleProblem.IllTypedError(lhs, expectedType, preRhs));
-    } else {
-      expectedType = checker.synthesizer().synthesize(preRhs);
-      if (expectedType == null) {
-        throw new UnsupportedOperationException("TODO: add an error report for this");
+    // Check the expected type.
+    var needUnify = true;
+    if (preRhs instanceof ErrorTerm) needUnify = false;
+    else switch (meta.info) {
+      case MetaInfo.AnyType()when preRhs instanceof Formation -> needUnify = false;
+      case MetaInfo.AnyType()when preRhs instanceof MetaTerm rhsMeta -> {
+        if (!rhsMeta.ref().info.isType(checker.synthesizer())) {
+          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+          return null;
+        }
+        needUnify = false;
+      }
+      case MetaInfo.AnyType() -> {
+        var synthesize = checker.synthesizer().tryPress(preRhs);
+        if (!(synthesize instanceof SortTerm)) {
+          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+          return null;
+        }
+        needUnify = false;
+        if (providedType == null) providedType = synthesize;
+      }
+      case MetaInfo.Result(var expectedType) -> {
+        if (providedType != null) {
+          // The provided type from the context, hence neither from LHS nor RHS,
+          // so we don't substitute it backwards, hence the empty `Sub`.
+          compareUntyped(expectedType, providedType, lr, new Sub());
+          providedType = expectedType.freezeHoles(state);
+        } else providedType = expectedType;
+      }
+      case MetaInfo.PiDom(var sort) -> {
+        if (!checker.synthesizer().inheritPiDom(preRhs, sort)) {
+          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+        }
       }
     }
+    if (needUnify) {
+      // Check the solution.
+      if (providedType != null) {
+        // resultTy might be an ErrorTerm, what to do?
+        if (!checker.inherit(preRhs, providedType))
+          reporter.report(new HoleProblem.IllTypedError(lhs, new MetaInfo.Result(providedType), preRhs));
+      } else {
+        providedType = checker.synthesizer().synthesize(preRhs);
+        if (providedType == null) {
+          throw new UnsupportedOperationException("TODO: add an error report for this");
+        }
+      }
+    }
+    if (!needUnify && providedType == null) providedType = SortTerm.Type0;
     // Pattern unification: buildSubst(lhs.args.invert(), meta.telescope)
     var subst = DeltaExpander.buildSubst(meta.contextTele, lhs.contextArgs());
     var overlap = invertSpine(subst, lhs, meta);
@@ -118,7 +155,7 @@ public final class Unifier extends TermComparator {
     if (!allowVague && overlap.anyMatch(var -> preRhs.findUsages(var) > 0)) {
       state.addEqn(createEqn(lhs, preRhs, lr, rl));
       // Skip the unification and scope check
-      return expectedType;
+      return providedType;
     }
     // Now we are sure that the variables in overlap are all unused.
 
@@ -162,7 +199,7 @@ public final class Unifier extends TermComparator {
       return new ErrorTerm(solved);
     }
     tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
-    return expectedType;
+    return providedType;
   }
 
   /**
@@ -171,8 +208,8 @@ public final class Unifier extends TermComparator {
   private @NotNull Option<@Nullable Term> sameMeta(Sub lr, Sub rl, @NotNull MetaTerm lhs, Meta meta, Term preRhs) {
     if (!(preRhs instanceof MetaTerm rcall && meta == rcall.ref())) return Option.none();
     // If we do not know the type, then we do not perform the comparison
-    if (meta.result == null) return Option.some(null);
-    var holeTy = PiTerm.make(meta.telescope, meta.result);
+    if (!(meta.info instanceof MetaInfo.Result(var result))) return Option.some(null);
+    var holeTy = PiTerm.make(meta.telescope, result);
     for (var arg : lhs.args().zipView(rcall.args())) {
       if (!(holeTy instanceof PiTerm holePi))
         throw new InternalException("meta arg size larger than param size. this should not happen");

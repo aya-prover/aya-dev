@@ -1,0 +1,38 @@
+In file $FILE:5:19 ->
+
+  3 │   
+  4 │   data Test : Type
+  5 │   | con (x : _) (y : X) (x = y)
+    │                      ╰╯
+
+Error: The type
+         X
+       is in the domain of a function whose type is
+         Type 0
+
+In file $FILE:5:11 ->
+
+  3 │   
+  4 │   data Test : Type
+  5 │   | con (x : _) (y : X) (x = y)
+    │              ╰╯
+
+Error: The meta (denoted ? below) is supposed to satisfy:
+         ? → _ : Type 0
+       However, the solution below does not seem so:
+         X
+
+In file $FILE:5:23 ->
+
+  3 │   
+  4 │   data Test : Type
+  5 │   | con (x : _) (y : X) (x = y)
+    │                          ╰───╯
+
+Error: The type
+         x = y
+       is in the domain of a function whose type is
+         Type 0
+
+3 error(s), 0 warning(s).
+What are you doing?

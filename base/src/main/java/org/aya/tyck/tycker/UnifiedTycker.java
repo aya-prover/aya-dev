@@ -44,7 +44,7 @@ import java.util.function.Function;
  * @see #checkBoundaries
  * @see #inheritFallbackUnify
  */
-public sealed abstract class UnifiedTycker extends MockedTycker permits PropTycker {
+public sealed abstract class UnifiedTycker extends LetListTycker permits PropTycker {
   protected UnifiedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
     super(reporter, traceBuilder, state);
   }
@@ -137,7 +137,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
     @NotNull Term lhs, @NotNull Term rhs, @NotNull Term ty, Expr loc,
     Function<UnifyInfo.Comparison, Problem> p
   ) {
-    return unifyReported(lhs, rhs, ty, loc.sourcePos(), localCtx, p);
+    return unifyReported(lhs, rhs, ty, loc.sourcePos(), ctx, p);
   }
 
   protected final void confluence(@NotNull ImmutableSeq<Restr.Side<Term>> clauses, @NotNull Expr loc, @NotNull Term type) {
@@ -152,7 +152,7 @@ public sealed abstract class UnifiedTycker extends MockedTycker permits PropTyck
 
   protected final Result.Default checkBoundaries(Expr expr, PathTerm path, Subst subst, Term lambda) {
     var applied = path.applyDimsTo(lambda);
-    return localCtx.withIntervals(path.params().view(), () -> {
+    return ctx.withIntervals(path.params().view(), () -> {
       var happy = switch (path.partial()) {
         case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), path.type(), subst);
         case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->

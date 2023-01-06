@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
@@ -10,6 +10,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Zonker;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.Result;
+import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.error.SourceNode;
 import org.aya.util.reporter.Reporter;
@@ -28,12 +29,12 @@ import java.util.function.Supplier;
  * @see #solveMetas()
  * @see #traceExit
  */
-public sealed abstract class ConcreteAwareTycker extends StatedTycker permits MockedTycker {
+public sealed abstract class ConcreteAwareTycker extends MockTycker permits LetListTycker {
   public final @NotNull MutableTreeSet<Expr.WithTerm> withTerms =
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
 
   protected ConcreteAwareTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
-    super(reporter, traceBuilder, state);
+    super(reporter, traceBuilder, state, new MapLocalCtx());
   }
 
   //region Zonk + solveMetas

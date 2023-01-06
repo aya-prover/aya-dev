@@ -1,0 +1,14 @@
+In file $FILE:4:6 ->
+
+  2 │   
+  3 │   data Test : Type
+  4 │   | con X
+    │         ╰╯
+
+Error: The type
+         X
+       is in the domain of a function whose type is
+         Type 0
+
+1 error(s), 0 warning(s).
+What are you doing?

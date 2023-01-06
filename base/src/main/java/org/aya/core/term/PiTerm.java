@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -11,7 +11,6 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.Result;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -62,7 +61,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
     };
   }
 
-  public static @Nullable SortTerm max(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
+  public static @NotNull SortTerm max(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
     var alift = domain.lift();
     var blift = codomain.lift();
     return switch (domain.kind()) {
@@ -72,18 +71,16 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
         case Prop -> codomain;
       };
       case ISet -> switch (codomain.kind()) {
-        case ISet -> SortTerm.Set0;
+        case ISet, Prop -> SortTerm.Set0;
         case Set, Type -> codomain;
-        default -> null;
       };
       case Set -> switch (codomain.kind()) {
         case Set, Type -> new SortTerm(SortKind.Set, Math.max(alift, blift));
-        case ISet -> new SortTerm(SortKind.Set, alift);
-        default -> null;
+        case ISet, Prop -> new SortTerm(SortKind.Set, alift);
       };
       case Prop -> switch (codomain.kind()) {
         case Prop, Type -> codomain;
-        default -> null;
+        default -> new SortTerm(SortKind.Set, blift);
       };
     };
   }

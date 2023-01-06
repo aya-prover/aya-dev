@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -9,8 +9,8 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.tycker.TyckState;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,8 @@ public record Goal(
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     var meta = hole.ref();
-    var result = meta.result != null ? meta.result.freezeHoles(state)
+    var nullableResult = meta.info.result();
+    var result = nullableResult != null ? nullableResult.freezeHoles(state)
       : new ErrorTerm(Doc.plain("???"), false);
     var doc = Doc.vcatNonEmpty(
       Doc.english("Goal of type"),

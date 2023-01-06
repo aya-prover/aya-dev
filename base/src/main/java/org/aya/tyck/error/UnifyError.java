@@ -1,9 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.TeleDecl;
+import org.aya.core.term.SortTerm;
+import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
@@ -40,6 +42,19 @@ public sealed interface UnifyError extends TyckError {
         Doc.par(1, ctor.toDoc(options)),
         Doc.english("which eventually returns"));
       return info.describeUnify(options, comparison, prologue, Doc.english("while it should return"));
+    }
+  }
+
+  record PiDom(
+    @Override @NotNull Expr expr,
+    Term result, SortTerm sort
+  ) implements UnifyError, ExprProblem {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.vcat(
+        Doc.english("The type"),
+        Doc.par(1, result.toDoc(options)),
+        Doc.english("is in the domain of a function whose type is"),
+        Doc.par(1, sort.toDoc(options)));
     }
   }
 }

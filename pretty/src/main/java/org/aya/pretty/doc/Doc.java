@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
@@ -605,12 +605,16 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * @param text '\n' not allowed!
+   * @param symbol '\n' not allowed!
    * @return special symbol
    */
-  @Contract("_ -> new") static @NotNull Doc symbol(String text) {
-    assert !text.contains("\n");
-    return new SpecialSymbol(text);
+  @Contract("_ -> new") static @NotNull Doc symbol(String symbol) {
+    assert !symbol.contains("\n");
+    return new SpecialSymbol(symbol);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc symbols(String... symbols) {
+    return sep(Seq.of(symbols).map(Doc::symbol));
   }
 
   /**

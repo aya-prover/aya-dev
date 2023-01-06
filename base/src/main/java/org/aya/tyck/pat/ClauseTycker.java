@@ -74,7 +74,7 @@ public final class ClauseTycker {
   ) {
     // TODO[isType]: revise this
     // https://github.com/agda/agda/blob/66d22577abe9ac67649c6e662c91d8593d1bf86c/src/full/Agda/TypeChecking/Rules/LHS.hs#L2099-L2136
-    var inProp = exprTycker.localCtx.with(() ->
+    var inProp = exprTycker.ctx.with(() ->
       exprTycker.isPropType(signature.result()), signature.param().view());
     return new AllLhsResult(clauses.mapIndexed((index, clause) -> exprTycker.traced(
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
@@ -142,11 +142,11 @@ public final class ClauseTycker {
 
       match.hasError |= patTycker.hasError();
 
-      var patterns = step0.wellTyped().map(p -> p.descent(x -> x.inline(exprTycker.localCtx)));
+      var patterns = step0.wellTyped().map(p -> p.descent(x -> x.inline(exprTycker.ctx)));
       // inline after inline patterns
       inlineTypedSubst(patTycker.bodySubst);
       var type = inlineTerm(step0.codomain());
-      exprTycker.localCtx.modifyMyTerms(META_PAT_INLINER);
+      exprTycker.ctx.modifyMyTerms(META_PAT_INLINER);
       var consumer = new PatternConsumer() {
         @Override public void pre(@NotNull Pattern pat) {
           var typeRef = switch (pat) {
@@ -162,14 +162,14 @@ public final class ClauseTycker {
       };
       match.patterns.view().map(Arg::term).forEach(consumer::accept);
 
-      return new LhsResult(exprTycker.localCtx, type, patTycker.bodySubst, patTycker.hasError(),
+      return new LhsResult(exprTycker.ctx, type, patTycker.bodySubst, patTycker.hasError(),
         new Pat.Preclause<>(match.sourcePos, patterns, Option.ofNullable(step0.newBody())));
     });
   }
 
   private static Pat.Preclause<Term> checkRhs(@NotNull ExprTycker exprTycker, @NotNull LhsResult lhsResult) {
     return exprTycker.subscoped(() -> {
-      exprTycker.localCtx = lhsResult.gamma;
+      exprTycker.ctx = lhsResult.gamma;
       var term = exprTycker.subscoped(() -> {
         // We `addDirectly` to `definitionEqualities`.
         // This means terms in `definitionEqualities` won't be substituted by `lhsResult.bodySubst`

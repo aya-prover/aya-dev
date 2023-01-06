@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -28,7 +28,6 @@ import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.TracedTycker;
 import org.aya.util.Arg;
-import org.aya.util.Ordering;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -199,7 +198,7 @@ public final class StmtTycker extends TracedTycker {
       case TeleDecl.PrimDecl prim -> {
         // This directly corresponds to the tycker.localCtx = new LocalCtx();
         //  at the end of this case clause.
-        assert tycker.localCtx.isEmpty();
+        assert tycker.ctx.isEmpty();
         var core = prim.ref.core;
         var tele = tele(tycker, prim.telescope, null);
         if (tele.isNotEmpty()) {
@@ -220,7 +219,7 @@ public final class StmtTycker extends TracedTycker {
           tycker.unifyTyReported(result, core.result, prim.result);
         } else prim.signature = new Def.Signature<>(core.telescope, core.result);
         tycker.solveMetas();
-        tycker.localCtx = new SeqLocalCtx();
+        tycker.ctx = new SeqLocalCtx();
       }
       case TeleDecl.DataCtor ctor -> checkCtor(tycker, ctor);
       case TeleDecl.StructField field -> {
@@ -256,7 +255,7 @@ public final class StmtTycker extends TracedTycker {
         new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false, false);
       pat = lhs.preclause().patterns();
       // Revert to the "after patterns" state
-      tycker.localCtx = lhs.gamma();
+      tycker.ctx = lhs.gamma();
       tycker.definitionEqualities = lhs.bodySubst();
       predataCall = (DataCall) predataCall.subst(new Subst(
         dataSig.param().view().map(Term.Param::ref),
@@ -308,7 +307,7 @@ public final class StmtTycker extends TracedTycker {
   }
 
   private static void loadTele(@NotNull ExprTycker tycker, Def.Signature<?> dataSig) {
-    dataSig.param().forEach(tycker.localCtx::put);
+    dataSig.param().forEach(tycker.ctx::put);
   }
 
   private SortTerm resultTy(@NotNull ExprTycker tycker, TeleDecl<SortTerm> data) {
@@ -337,9 +336,8 @@ public final class StmtTycker extends TracedTycker {
    */
   private @NotNull Term checkTele(@NotNull ExprTycker exprTycker, @NotNull Expr tele, @NotNull SortTerm sort) {
     var result = exprTycker.ty(tele);
-    var unifier = exprTycker.unifier(tele.sourcePos(), Ordering.Lt);
-    // TODO[isType]: there is no restriction on constructor telescope now
-    // new DoubleChecker(unifier).inherit(result, sort);
+    if (!exprTycker.synthesizer().inheritPiDom(result, sort))
+      reporter.report(new UnifyError.PiDom(tele, result, sort));
     return result;
   }
 
@@ -354,7 +352,7 @@ public final class StmtTycker extends TracedTycker {
         : exprTycker.ty(param.type())
       );
       var newParam = new Term.Param(param, paramTyped);
-      exprTycker.localCtx.put(newParam);
+      exprTycker.ctx.put(newParam);
       exprTycker.addWithTerm(param, paramTyped);
       return new TeleResult(newParam, param.sourcePos());
     });
@@ -366,7 +364,7 @@ public final class StmtTycker extends TracedTycker {
     return okTele.map(tt -> {
       var rawParam = tt.param;
       var param = new Term.Param(rawParam, zonker.apply(rawParam.type()));
-      exprTycker.localCtx.put(param);
+      exprTycker.ctx.put(param);
       return param;
     });
   }

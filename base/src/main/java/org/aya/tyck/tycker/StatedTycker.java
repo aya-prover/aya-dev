@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
@@ -14,7 +14,6 @@ import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.TermComparator;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @see #defCall
  * @see #inferRef(DefVar)
  */
-public abstract sealed class StatedTycker extends TracedTycker permits ConcreteAwareTycker, TermComparator {
+public abstract sealed class StatedTycker extends TracedTycker permits MockTycker {
   public final @NotNull TyckState state;
 
   protected StatedTycker(@NotNull Reporter reporter, @Nullable Trace.Builder traceBuilder, @NotNull TyckState state) {

@@ -1,0 +1,11 @@
+open import Paths
+open import Arith::Nat::Core
+
+data Test : Prop
+| con Nat
+
+data TestPiDomMeta : Prop
+| con (x : _) (x = 1)
+
+data TestPiDomMeta2 : Type
+| con : ∀ x -> (x = 1) -> _
