@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
@@ -131,7 +131,7 @@ public sealed abstract class TermComparator extends StatedTycker permits Unifier
     if (rhs instanceof MetaTerm rMeta) {
       // In case we're comparing two metas with one isType and the other has a type,
       // prefer solving the isType one to the typed one.
-      if (lhs instanceof MetaTerm lMeta && lMeta.ref().result == null)
+      if (lhs instanceof MetaTerm lMeta && lMeta.ref().info.result() == null)
         return solveMeta(lMeta, rMeta, lr, rl, type) != null;
       return solveMeta(rMeta, lhs, rl, lr, type) != null;
     }
