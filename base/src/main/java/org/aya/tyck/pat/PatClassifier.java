@@ -90,6 +90,7 @@ public record PatClassifier(
   }
 
   public static void confluence(
+    @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ClauseTycker.PatResult clauses,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos,
     @NotNull MCT<Term, PatErr> mct
@@ -104,7 +105,9 @@ public record PatClassifier(
         var rhsInfo = contents.get(i);
         var lhsSubst = new Subst();
         var rhsSubst = new Subst();
-        var ctx = PatUnify.unifyPat(lhsInfo.component2().patterns().map(Arg::term), rhsInfo.component2().patterns().map(Arg::term),
+        var ctx = PatUnify.unifyPat(telescope,
+          lhsInfo.component2().patterns().view().map(Arg::term),
+          rhsInfo.component2().patterns().view().map(Arg::term),
           lhsSubst, rhsSubst, tycker.ctx.deriveMap());
         domination(ctx, rhsSubst, tycker.reporter, lhsInfo.component1(), rhsInfo.component1(), rhsInfo.component2());
         domination(ctx, lhsSubst, tycker.reporter, rhsInfo.component1(), lhsInfo.component1(), lhsInfo.component2());

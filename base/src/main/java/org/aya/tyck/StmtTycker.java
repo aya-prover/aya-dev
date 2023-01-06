@@ -89,7 +89,7 @@ public final class StmtTycker extends TracedTycker {
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (!result.hasLhsError()) {
                 tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
-                PatClassifier.confluence(result, tycker, pos,
+                PatClassifier.confluence(signature.param(), result, tycker, pos,
                   PatClassifier.classify(result.clauses(), signature.param(), tycker, pos));
                 tracing(TreeBuilder::reduce);
               }
