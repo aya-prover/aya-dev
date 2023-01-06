@@ -80,9 +80,8 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case SigmaTerm sigma -> {
         var univ = MutableList.<SortTerm>create();
         for (var param : sigma.params()) {
-          var pressed = press(param.type());
-          // TODO[isType]: There can be metas in the sigma's parameters
-          if (!(pressed instanceof SortTerm sort)) yield unreachable(pressed);
+          var pressed = synthesize(param.type());
+          if (!(pressed instanceof SortTerm sort)) yield null;
           univ.append(sort);
           ctx.put(param);
         }
@@ -90,19 +89,20 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         yield univ.reduce(SigmaTerm::max);
       }
       case PiTerm pi -> {
-        var paramTyRaw = press(pi.param().type());
+        var paramTyRaw = synthesize(pi.param().type());
+        if (!(paramTyRaw instanceof SortTerm paramTy)) yield null;
         var t = new Synthesizer(state, ctx.deriveSeq());
         yield t.ctx.with(pi.param(), () -> {
-          if (paramTyRaw instanceof SortTerm paramTy && t.press(pi.body()) instanceof SortTerm retTy) {
+          if (t.press(pi.body()) instanceof SortTerm retTy) {
             return PiTerm.max(paramTy, retTy);
-          } else return unreachable(pi);
+          } else return null;
         });
       }
       case NewTerm neu -> neu.struct();
       case ErrorTerm term -> ErrorTerm.typeOf(term.description());
       case ProjTerm proj -> {
-        var sigmaRaw = press(proj.of());
-        if (!(sigmaRaw instanceof SigmaTerm sigma)) yield ErrorTerm.typeOf(proj);
+        var sigmaRaw = synthesize(proj.of());
+        if (!(sigmaRaw instanceof SigmaTerm sigma)) yield null;
         var index = proj.ix() - 1;
         var telescope = sigma.params();
         yield telescope.get(index).type().subst(ProjTerm.projSubst(proj.of(), index, telescope));
