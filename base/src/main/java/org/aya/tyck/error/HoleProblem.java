@@ -49,9 +49,9 @@ public sealed interface HoleProblem extends Problem {
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
-        Doc.english("The meta (denoted ?) is supposed to satisfy"),
+        Doc.english("The meta (denoted ? below) is supposed to satisfy:"),
         Doc.par(1, result.toDoc(options)),
-        Doc.english("However, the solution below does not have the same type:"),
+        Doc.english("However, the solution below does not seem so:"),
         Doc.par(1, solution.toDoc(options))
       );
     }

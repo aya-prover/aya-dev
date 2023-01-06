@@ -106,7 +106,7 @@ public final class Unifier extends TermComparator {
         needUnify = false;
       }
       case MetaInfo.AnyType() -> {
-        var synthesize = checker.synthesizer().synthesize(preRhs);
+        var synthesize = checker.synthesizer().tryPress(preRhs);
         if (!(synthesize instanceof SortTerm)) {
           reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
           return null;
