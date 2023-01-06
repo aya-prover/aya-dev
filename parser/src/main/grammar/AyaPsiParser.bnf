@@ -208,7 +208,8 @@ fnDecl ::= declModifiers*
  KW_DEF fnModifiers* declNameOrInfix
  tele* type? fnBody bindBlock? { pin=2 }
 
-fnBody ::= IMPLIES expr
+private simpleBody ::= IMPLIES expr { pin=1 }
+fnBody ::= simpleBody
          | barredClause*
 
 fnModifiers ::= KW_OPAQUE

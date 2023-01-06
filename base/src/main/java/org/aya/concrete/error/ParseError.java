@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record ParseError(@Override @NotNull SourcePos sourcePos, @NotNull String message) implements Problem {
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-    return Doc.english("Parser error: " + message);
+    return Doc.english(message);
   }
 
   @Override public @NotNull Severity level() {

@@ -259,14 +259,16 @@ public record AyaGKProducer(
   }
 
   public @Nullable TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
-    var entire = sourcePosOf(node);
     var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
     if (nameOrInfix == null) {
-      reporter.report(new ParseError(entire, "Expect function name"));
+      error(node.childrenView().first(), "Expect a function name");
       return null;
     }
     var fnBodyNode = node.peekChild(FN_BODY);
-    if (fnBodyNode == null) return null;
+    if (fnBodyNode == null) {
+      error(node.childrenView().first(), "Expect a function body");
+      return null;
+    }
 
     var modifier = commonDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
@@ -283,13 +285,14 @@ public record AyaGKProducer(
     var bind = node.peekChild(BIND_BLOCK);
 
     var dynamite = fnBody(fnBodyNode);
+    if (dynamite == null) return null;
     if (dynamite.isRight() && inline.isDefined()) {
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
     return new TeleDecl.FnDecl(
       nameOrInfix.component1().sourcePos(),
-      entire,
+      sourcePosOf(node),
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
         () -> EnumSet.noneOf(Modifier.class))),
@@ -303,8 +306,14 @@ public record AyaGKProducer(
     );
   }
 
-  public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> fnBody(@NotNull GenericNode<?> node) {
+  public @Nullable Either<Expr, ImmutableSeq<Pattern.Clause>>
+  fnBody(@NotNull GenericNode<?> node) {
     var expr = node.peekChild(EXPR);
+    var implies = node.peekChild(IMPLIES);
+    if (expr == null && implies != null) {
+      error(implies, "Expect function body");
+      return null;
+    }
     if (expr != null) return Either.left(expr(expr));
     return Either.right(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
   }
@@ -323,10 +332,9 @@ public record AyaGKProducer(
   }
 
   public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-    var entire = sourcePosOf(node);
     var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
     if (nameOrInfix == null) {
-      reporter.report(new ParseError(entire, "Expect data's name"));
+      error(node.childrenView().first(), "Expect a data name");
       return null;
     }
     var modifier = moduleLikeDeclModifiersOf(node);
@@ -337,7 +345,7 @@ public record AyaGKProducer(
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var decl = new TeleDecl.DataDecl(
       nameOrInfix.component1().sourcePos(),
-      entire,
+      sourcePosOf(node),
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       nameOrInfix.component2(),
       nameOrInfix.component1().data(),
@@ -357,7 +365,7 @@ public record AyaGKProducer(
     if (dataCtorClause != null) return dataCtorClause(dataCtorClause);
     var dataCtor = node.peekChild(DATA_CTOR);
     if (dataCtor != null) return dataCtor(ImmutableSeq.empty(), dataCtor);
-    reporter.report(new ParseError(sourcePosOf(node), "Expect a data constructor"));
+    error(node.childrenView().first(), "Expect a data constructor");
     return null;
   }
 
@@ -406,17 +414,20 @@ public record AyaGKProducer(
     );
   }
 
+  private void error(@NotNull GenericNode<?> node, @NotNull String message) {
+    reporter.report(new ParseError(sourcePosOf(node), message));
+  }
+
   public @Nullable TeleDecl.PrimDecl primDecl(@NotNull GenericNode<?> node) {
     var nameEl = node.peekChild(PRIM_NAME);
-    var entire = sourcePosOf(node);
     if (nameEl == null) {
-      reporter.report(new ParseError(entire, "Expect a primitive's name"));
+      error(node.childrenView().first(), "Expect a primitive's name");
       return null;
     }
     var id = weakId(nameEl.child(WEAK_ID));
     return new TeleDecl.PrimDecl(
       id.sourcePos(),
-      entire,
+      sourcePosOf(node),
       id.data(),
       telescope(node.childrenOfType(TELE).map(x -> x)),
       typeOrNull(node.peekChild(TYPE))

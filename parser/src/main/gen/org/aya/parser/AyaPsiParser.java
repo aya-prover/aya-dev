@@ -676,26 +676,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IMPLIES expr
+  // simpleBody
   //          | barredClause*
   public static boolean fnBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fnBody")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, FN_BODY, "<fn body>");
-    r = fnBody_0(b, l + 1);
+    r = simpleBody(b, l + 1);
     if (!r) r = fnBody_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // IMPLIES expr
-  private static boolean fnBody_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "fnBody_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, IMPLIES);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1632,6 +1621,20 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "repl_0")) return false;
     consumeToken(b, REPL_COMMAND);
     return true;
+  }
+
+  /* ********************************************************** */
+  // IMPLIES expr
+  static boolean simpleBody(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simpleBody")) return false;
+    if (!nextTokenIs(b, IMPLIES)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, IMPLIES);
+    p = r; // pin = 1
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
