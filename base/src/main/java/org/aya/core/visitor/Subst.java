@@ -1,21 +1,22 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
 import org.aya.core.term.FormulaTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
@@ -49,7 +50,7 @@ public record Subst(
   }
 
   public Subst(@NotNull SeqLike<LocalVar> from, @NotNull SeqLike<? extends Term> to) {
-    this(MutableMap.from(from.zipView(to)));
+    this(MutableLinkedHashMap.from(from.zipView(to)));
   }
 
   public void subst(@NotNull Subst subst) {
