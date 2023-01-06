@@ -98,7 +98,7 @@ public record AyaGKProducer(
     if (node.is(DECL)) {
       var stmts = MutableList.<Stmt>create();
       var result = decl(node, stmts);
-      stmts.prepend(result);
+      if (result != null) stmts.prepend(result);
       if (result instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
         stmts.firstOption(stmt -> !(stmt instanceof Decl))
           .ifDefined(stmt -> reporter.report(new BadCounterexampleWarn(stmt)));
@@ -224,7 +224,7 @@ public record AyaGKProducer(
       node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq());
   }
 
-  public Decl decl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+  public @Nullable Decl decl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     if (node.is(FN_DECL)) return fnDecl(node);
     if (node.is(PRIM_DECL)) return primDecl(node);
     if (node.is(DATA_DECL)) return dataDecl(node, additional);
@@ -258,7 +258,16 @@ public record AyaGKProducer(
     return declModifiersOf(node, x -> true);
   }
 
-  public TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
+  public @Nullable TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
+    var entire = sourcePosOf(node);
+    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
+    if (nameOrInfix == null) {
+      reporter.report(new ParseError(entire, "Expect function name"));
+      return null;
+    }
+    var fnBodyNode = node.peekChild(FN_BODY);
+    if (fnBodyNode == null) return null;
+
     var modifier = commonDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
     var sample = modifier.personality().data();
@@ -272,16 +281,15 @@ public record AyaGKProducer(
     }
     var tele = telescope(node.childrenOfType(TELE).map(x -> x)); // make compiler happy
     var bind = node.peekChild(BIND_BLOCK);
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
 
-    var dynamite = fnBody(node.child(FN_BODY));
+    var dynamite = fnBody(fnBodyNode);
     if (dynamite.isRight() && inline.isDefined()) {
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
     return new TeleDecl.FnDecl(
       nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
+      entire,
       sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
         () -> EnumSet.noneOf(Modifier.class))),
@@ -314,15 +322,19 @@ public record AyaGKProducer(
     ));
   }
 
-  public @NotNull TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+  public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+    var entire = sourcePosOf(node);
+    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
+    if (nameOrInfix == null) {
+      reporter.report(new ParseError(entire, "Expect data's name"));
+      return null;
+    }
     var modifier = moduleLikeDeclModifiersOf(node);
     var acc = modifier.accessibility().data();
     var sample = modifier.personality().data();
     var bind = node.peekChild(BIND_BLOCK);
-    var body = node.childrenOfType(DATA_BODY).map(this::dataBody).toImmutableSeq();
+    var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var entire = sourcePosOf(node);
     var decl = new TeleDecl.DataDecl(
       nameOrInfix.component1().sourcePos(),
       entire,
@@ -340,12 +352,13 @@ public record AyaGKProducer(
     return decl;
   }
 
-  public @NotNull TeleDecl.DataCtor dataBody(@NotNull GenericNode<?> node) {
+  public @Nullable TeleDecl.DataCtor dataBody(@NotNull GenericNode<?> node) {
     var dataCtorClause = node.peekChild(DATA_CTOR_CLAUSE);
     if (dataCtorClause != null) return dataCtorClause(dataCtorClause);
     var dataCtor = node.peekChild(DATA_CTOR);
     if (dataCtor != null) return dataCtor(ImmutableSeq.empty(), dataCtor);
-    return unreachable(node);
+    reporter.report(new ParseError(sourcePosOf(node), "Expect a data constructor"));
+    return null;
   }
 
   public @NotNull TeleDecl.DataCtor dataCtorClause(@NotNull GenericNode<?> node) {
@@ -393,12 +406,17 @@ public record AyaGKProducer(
     );
   }
 
-  public @NotNull TeleDecl.PrimDecl primDecl(@NotNull GenericNode<?> node) {
-    var nameEl = node.child(PRIM_NAME);
+  public @Nullable TeleDecl.PrimDecl primDecl(@NotNull GenericNode<?> node) {
+    var nameEl = node.peekChild(PRIM_NAME);
+    var entire = sourcePosOf(node);
+    if (nameEl == null) {
+      reporter.report(new ParseError(entire, "Expect a primitive's name"));
+      return null;
+    }
     var id = weakId(nameEl.child(WEAK_ID));
     return new TeleDecl.PrimDecl(
       id.sourcePos(),
-      sourcePosOf(node),
+      entire,
       id.data(),
       telescope(node.childrenOfType(TELE).map(x -> x)),
       typeOrNull(node.peekChild(TYPE))
@@ -500,7 +518,9 @@ public record AyaGKProducer(
       LocalVar.from(teleParamName(node)), typeOrHole(null, pos), explicit));
   }
 
-  public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> declNameOrInfix(@NotNull GenericNode<?> node) {
+  public @Nullable Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo>
+  declNameOrInfix(@Nullable GenericNode<?> node) {
+    if (node == null) return null;
     var assoc = node.peekChild(ASSOC);
     var id = weakId(node.child(WEAK_ID));
     if (assoc == null) return Tuple.of(id, null);
@@ -859,7 +879,7 @@ public record AyaGKProducer(
     if (node == null) return null;
     var child = node.peekChild(EXPR);
     if (child == null) {
-      reporter.report(new ParseError(sourcePosOf(node), "Expected the return type expression"));
+      reporter.report(new ParseError(sourcePosOf(node), "Expect the return type expression"));
       return null;
     }
     return expr(child);

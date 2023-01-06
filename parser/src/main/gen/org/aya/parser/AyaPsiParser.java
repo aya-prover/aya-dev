@@ -439,12 +439,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   public static boolean dataBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataBody")) return false;
     if (!nextTokenIs(b, BAR)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, DATA_BODY, null);
     r = consumeToken(b, BAR);
+    p = r; // pin = 1
     r = r && dataBody_1(b, l + 1);
-    exit_section_(b, m, DATA_BODY, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // dataCtorClause | dataCtor
@@ -525,20 +526,23 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // declModifiers* KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
+  // declModifiers*
+  //  KW_DATA declNameOrInfix
+  //  tele* type? dataBody* bindBlock?
   public static boolean dataDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataDecl")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, DATA_DECL, "<data decl>");
     r = dataDecl_0(b, l + 1);
     r = r && consumeToken(b, KW_DATA);
-    r = r && declNameOrInfix(b, l + 1);
-    r = r && dataDecl_3(b, l + 1);
-    r = r && dataDecl_4(b, l + 1);
-    r = r && dataDecl_5(b, l + 1);
-    r = r && dataDecl_6(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 2
+    r = r && report_error_(b, declNameOrInfix(b, l + 1));
+    r = p && report_error_(b, dataDecl_3(b, l + 1)) && r;
+    r = p && report_error_(b, dataDecl_4(b, l + 1)) && r;
+    r = p && report_error_(b, dataDecl_5(b, l + 1)) && r;
+    r = p && dataDecl_6(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // declModifiers*
@@ -707,21 +711,24 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // declModifiers* KW_DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
+  // declModifiers*
+  //  KW_DEF fnModifiers* declNameOrInfix
+  //  tele* type? fnBody bindBlock?
   public static boolean fnDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fnDecl")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, FN_DECL, "<fn decl>");
     r = fnDecl_0(b, l + 1);
     r = r && consumeToken(b, KW_DEF);
-    r = r && fnDecl_2(b, l + 1);
-    r = r && declNameOrInfix(b, l + 1);
-    r = r && fnDecl_4(b, l + 1);
-    r = r && fnDecl_5(b, l + 1);
-    r = r && fnBody(b, l + 1);
-    r = r && fnDecl_7(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 2
+    r = r && report_error_(b, fnDecl_2(b, l + 1));
+    r = p && report_error_(b, declNameOrInfix(b, l + 1)) && r;
+    r = p && report_error_(b, fnDecl_4(b, l + 1)) && r;
+    r = p && report_error_(b, fnDecl_5(b, l + 1)) && r;
+    r = p && report_error_(b, fnBody(b, l + 1)) && r;
+    r = p && fnDecl_7(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // declModifiers*
@@ -1437,14 +1444,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   public static boolean primDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "primDecl")) return false;
     if (!nextTokenIs(b, KW_PRIM)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PRIM_DECL, null);
     r = consumeToken(b, KW_PRIM);
-    r = r && primName(b, l + 1);
-    r = r && primDecl_2(b, l + 1);
-    r = r && primDecl_3(b, l + 1);
-    exit_section_(b, m, PRIM_DECL, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, primName(b, l + 1));
+    r = p && report_error_(b, primDecl_2(b, l + 1)) && r;
+    r = p && primDecl_3(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // tele*
