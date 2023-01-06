@@ -61,9 +61,9 @@ public record DoubleChecker(
         yield res != null && res.items().allMatch(i -> !(i.term() instanceof ErrorTerm));
       }
       case PiTerm(var dom, var cod) -> {
-        var domSort = synthesizer.press(dom.type());
-        // TODO[isType]: make sure the above is a type. Need an extra "isType"
-        yield unifier.ctx.with(dom, () -> inherit(cod, expected));
+        if (!(expected instanceof SortTerm sort)) yield Synthesizer.unreachable(expected);
+        if (!synthesizer.inheritPiDom(dom.type(), sort)) yield false;
+        yield unifier.ctx.with(dom, () -> inherit(cod, sort));
       }
       case default -> compare(synthesizer.press(preterm), expected, null);
     };

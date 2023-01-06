@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.Meta;
+import org.aya.core.meta.Meta;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +29,10 @@ public record MetaTerm(
 
   public @NotNull PiTerm asPi(boolean explicit) {
     return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, contextArgs);
+  }
+
+  public @NotNull MetaTerm asPiDom(@NotNull Term result) {
+    return ref.asPiDom(result, contextArgs);
   }
 
   public @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {
