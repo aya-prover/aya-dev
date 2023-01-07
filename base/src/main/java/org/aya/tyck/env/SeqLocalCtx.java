@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
@@ -34,7 +34,7 @@ public record SeqLocalCtx(
     return localSeq.firstOption(p -> p.var.equals(var)).map(p -> p.type).getOrNull();
   }
 
-  @Override public void put(@NotNull LocalVar var, @NotNull Term term) {
+  @Override public void putUnchecked(@NotNull LocalVar var, @NotNull Term term) {
     localSeq.append(new P(var, term));
   }
 
@@ -44,9 +44,5 @@ public record SeqLocalCtx(
 
   @Override public void modifyMyTerms(@NotNull UnaryOperator<Term> u) {
     localSeq.replaceAll(p -> new P(p.var, u.apply(p.type)));
-  }
-
-  @Override public boolean containsLocal(LocalVar dom) {
-    return localSeq.contains(dom);
   }
 }

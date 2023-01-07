@@ -21,7 +21,6 @@ import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.tycker.TyckState;
-import org.aya.util.ForLSP;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
@@ -57,7 +56,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   default <T> T with(@NotNull Seq<Term.Param> params, @NotNull Supplier<T> action) {
     if (params.isEmpty()) return action.get();
-    params.forEach(x -> putIgnoreAware(x.ref(), x.type()));
+    params.forEach(x -> put(x.ref(), x.type()));
     try {
       return action.get();
     } finally {
@@ -66,7 +65,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   default <T> T withIntervals(@NotNull SeqView<LocalVar> params, @NotNull Supplier<T> action) {
     if (params.isEmpty()) return action.get();
-    params.forEach(x -> putIgnoreAware(x, IntervalTerm.INSTANCE));
+    params.forEach(x -> put(x, IntervalTerm.INSTANCE));
     try {
       return action.get();
     } finally {
@@ -79,7 +78,8 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
       @Override public void var(@NotNull AnyVar var) {
         if (bound.contains(var)) return;
         switch (var) {
-          case LocalVar localVar -> dest.put(localVar, get(localVar));
+          // This is intentional, we don't want to check for duplication in forwarding
+          case LocalVar localVar -> dest.putUnchecked(localVar, get(localVar));
           case Meta meta -> {
             var sol = state.metas().getOrNull(meta);
             if (sol != null) forward(dest, sol, state);
@@ -90,15 +90,12 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     }.accept(term);
   }
   default <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
-    putIgnoreAware(var, type);
+    put(var, type);
     try {
       return action.get();
     } finally {
       remove(SeqView.of(var));
     }
-  }
-  private void putIgnoreAware(@NotNull LocalVar var, @NotNull Term type) {
-    if (var != LocalVar.IGNORED) put(var, type);
   }
   default <T> T with(@NotNull Supplier<T> action, @NotNull Term.Param... param) {
     return with(action, Seq.of(param).view());
@@ -122,13 +119,23 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   @Contract(mutates = "param1") void extractToLocal(@NotNull MutableList<Term.Param> dest);
   @Contract(pure = true) default @NotNull Term get(@NotNull LocalVar var) {
+    var res = getUnchecked(var);
+    if (res != null) return res;
+    throw new InternalException(var.name());
+  }
+
+  @Contract(pure = true) default @Nullable Term getUnchecked(@NotNull LocalVar var) {
     var ctx = this;
     while (ctx != null) {
       var res = ctx.getLocal(var);
       if (res != null) return res;
       ctx = ctx.parent();
     }
-    throw new InternalException(var.name());
+    return null;
+  }
+
+  @Contract(pure = true) default boolean contains(@NotNull LocalVar var) {
+    return getUnchecked(var) != null;
   }
 
   @Contract(pure = true) @Nullable Term getLocal(@NotNull LocalVar var);
@@ -136,7 +143,22 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     put(param.ref(), param.type());
   }
 
-  void put(@NotNull LocalVar var, @NotNull Term term);
+  /**
+   * Put a <b>new</b> var into the current local context
+   *
+   * @param var  a <b>new</b> var
+   * @param term the type of that var
+   * @implNote panic is expected when the var is duplicated
+   */
+  default void put(@NotNull LocalVar var, @NotNull Term term) {
+    // assert !contains(var);
+    if (var != LocalVar.IGNORED) putUnchecked(var, term);
+  }
+
+  /**
+   * DON'T USE THIS, USE {@link LocalCtx#put(LocalVar, Term)} instead.
+   */
+  void putUnchecked(@NotNull LocalVar var, @NotNull Term tern);
   default boolean isEmpty() {
     if (isMeEmpty()) {
       var parent = parent();
@@ -161,14 +183,4 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   @Nullable LocalCtx parent();
   @Contract(mutates = "this") void modifyMyTerms(@NotNull UnaryOperator<Term> u);
-  default @ForLSP boolean contains(LocalVar dom) {
-    var ctx = this;
-    while (ctx != null) {
-      if (ctx.containsLocal(dom)) return true;
-      ctx = ctx.parent();
-    }
-    return false;
-  }
-
-  boolean containsLocal(LocalVar dom);
 }
