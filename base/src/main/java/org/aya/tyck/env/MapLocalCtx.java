@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
@@ -46,9 +46,5 @@ public record MapLocalCtx(
 
   @Override public void extractToLocal(@NotNull MutableList<Term.Param> dest) {
     localMap.mapTo(dest, (k, v) -> new Term.Param(k, v, false));
-  }
-
-  @Override public boolean containsLocal(LocalVar dom) {
-    return localMap.containsKey(dom);
   }
 }
