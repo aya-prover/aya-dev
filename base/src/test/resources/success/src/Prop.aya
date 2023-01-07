@@ -1,3 +1,5 @@
+open import Paths
+
 open struct Squash (A: Type): Prop
   | value: A
 
@@ -9,3 +11,9 @@ def squashElim {A: Type} {P: Prop} (f: A -> P) (squash: Squash A): P => f squash
 def squash2Elim {A: Type} {P: Prop} (f: A -> P) (squash: Squash2 A): P
   | f, (squash a) => f a
 
+open data Carry (A : Prop) : Type
+| carry A
+
+open data Bool : Prop | true | false
+
+def check : carry true = carry false => idp

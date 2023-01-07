@@ -20,13 +20,13 @@ import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
-import org.aya.guest0x0.cubical.Restr;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
+import org.aya.tyck.pat.PatternTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.MockTycker;
 import org.aya.tyck.tycker.TyckState;
@@ -239,7 +239,8 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     @NotNull Callable lhs, @NotNull Callable rhs, Sub lr, Sub rl,
     @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef, int ulift
   ) {
-    var retType = getType(lhs, lhsRef);
+    var retType = synthesizer().press(lhs);
+    if (synthesizer().tryPress(retType) instanceof SortTerm sort && sort.isProp()) return retType;
     // Lossy comparison
     if (visitArgs(lhs.args(), rhs.args(), lr, rl,
       Term.Param.subst(Def.defTele(lhsRef), ulift))) return retType;
@@ -250,15 +251,12 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   /** TODO: Revise when JDK 20 is released. */
   private record Pair(Term lhs, Term rhs) {}
 
-  private @NotNull Term getType(@NotNull Callable lhs, @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef) {
-    var substMap = MutableMap.<AnyVar, Term>create();
-    for (var pa : lhs.args().view().zip(Def.defTele(lhsRef))) {
-      substMap.set(pa.component2().ref(), pa.component1().term());
-    }
-    return Def.defResult(lhsRef).subst(substMap);
-  }
-
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
+    // Skip tracing, because too easy.
+    // Note that it looks tempting to apply some unification here, but it is not correct:
+    // If ?x =_A y where A : Prop, then it may not be the case that ?x is y!
+    // I think Arend has probably made such a mistake before, but they removed this feature anyway.
+    if (synthesizer().tryPress(type) instanceof SortTerm sort && sort.isProp()) return true;
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state),
       pos, type.freezeHoles(state)));
     var ret = switch (type) {
@@ -389,15 +387,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       if (!compare(lType, rType, lr, rl, null)) return false;
       return comparePartial(lPar, rPar, lType, lr, rl);
     }));
-  }
-
-  /**
-   * Sub lr, Sub rl are unused because they are solely for the purpose of unification.
-   * In this case, we don't expect unification.
-   */
-  private boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
-    return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
-      && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
   }
 
   /**
@@ -535,7 +524,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     };
   }
 
-  @NotNull private static InternalException noRules(@NotNull Term preLhs) {
+  private static @NotNull InternalException noRules(@NotNull Term preLhs) {
     return new InternalException(preLhs.getClass() + ": " + preLhs.toDoc(AyaPrettierOptions.debug()).debugRender());
   }
 
@@ -544,11 +533,15 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
    * If called from {@link #doCompareUntyped} then probably not so lossy.
    */
   private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
-    if (!visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), lr, rl,
-      Term.Param.subst(Def.defTele(lef.core.dataRef), lhs.ulift()))) return null;
-    var retType = getType(lhs, lef);
+    var retType = synthesizer().press(lhs);
+    var dataRef = lef.core.dataRef;
+    if (Def.defResult(dataRef).isProp()) return retType;
+    var dataAlgs = lhs.head().dataArgs();
+    if (!visitArgs(dataAlgs, rhs.head().dataArgs(), lr, rl,
+      Term.Param.subst(Def.defTele(dataRef), lhs.ulift()))) return null;
+    var ownerSubst = PatternTycker.mischa(lhs.head().underlyingDataCall(), lef.core, state).get();
     if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
-      Term.Param.subst(lef.core.selfTele, lhs.ulift())))
+      Term.Param.subst(lef.core.selfTele, ownerSubst, lhs.ulift())))
       return retType;
     return null;
   }

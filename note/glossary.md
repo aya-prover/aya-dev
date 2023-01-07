@@ -57,7 +57,10 @@ data Vec (n : Nat) (A : Type)
   对于非 simple indexed data types，它是 `dataTele`
 + `dataTele` -- 一个 data 的 telescope，对于 `Vec`，它是 `(n : Nat) (A : Type)`
 
-> 关于类似的 xxxArgs，也使用这种解释方式。
+> 关于类似的 `xxxArgs`，也使用这种解释方式。
+
++ `ConCall::dataArgs` 完全对应 `dataTele`，因此和 `ownerTele` 是不配对的（在非 indexed constructor 下是配对的，但是 indexed 的情况下，`ownerTele` 对应的是 pattern 而不是 `dataTele`）。在获取对应的 subst 的时候应该使用 `PatternTycker::mischa`。
++ `ConCall::conArgs` 完全对应 `selfTele`。
 
 ## 类型检查时用到的状态
 

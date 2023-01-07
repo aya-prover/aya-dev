@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -43,11 +43,13 @@ public record ConCall(
   }
 
   @Override public @NotNull ImmutableSeq<Arg<@NotNull Term>> args() {
-    return head.dataArgs.view().concat(conArgs).toImmutableSeq();
+    return head.dataArgs.view().map(Arg::implicitify).concat(conArgs).toImmutableSeq();
   }
 
   /**
    * @param dataArgs the arguments to the data type, NOT the constructor patterns!!
+   *                 They need to be turned implicit when used as arguments.
+   * @see org.aya.tyck.pat.PatternTycker#mischa
    */
   public record Head(
     @NotNull DefVar<DataDef, TeleDecl.DataDecl> dataRef,

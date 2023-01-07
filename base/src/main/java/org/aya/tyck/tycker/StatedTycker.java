@@ -7,9 +7,12 @@ import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.guest0x0.cubical.CofThy;
+import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
@@ -43,7 +46,8 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockTycke
     return term.normalize(state, NormalizeMode.WHNF);
   }
 
-  protected final @NotNull <D extends Def, S extends Decl & Decl.Telescopic<?>> Result defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
+  protected final <D extends Def, S extends Decl & Decl.Telescopic<? extends Term>> @NotNull Result
+  defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(LamTerm::paramRenamed);
     // unbound these abstracted variables
@@ -85,5 +89,14 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockTycke
 
   public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
     return new Unifier(ord, reporter, false, true, traceBuilder, state, pos, ctx);
+  }
+
+  /**
+   * <code>Sub lr, Sub rl</code> are unused because they are solely for the purpose of unification.
+   * In this case, we don't expect unification.
+   */
+  protected final boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
+    return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
+      && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
   }
 }

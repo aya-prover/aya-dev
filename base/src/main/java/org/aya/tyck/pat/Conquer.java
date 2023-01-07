@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -11,14 +11,15 @@ import org.aya.core.term.FnCall;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.AyaRestrSimplifier;
+import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.env.MapLocalCtx;
 import org.aya.tyck.error.UnifyInfo;
+import org.aya.tyck.tycker.UnifiedTycker;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +34,11 @@ public record Conquer(
   @NotNull ImmutableSeq<Term.Matching> matchings,
   @NotNull SourcePos sourcePos,
   boolean orderIndependent,
-  @NotNull ExprTycker tycker
+  @NotNull UnifiedTycker tycker
 ) {
   public static void against(
     @NotNull FnDef def, boolean orderIndependent,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos
+    @NotNull UnifiedTycker tycker, @NotNull SourcePos pos
   ) {
     var matchings = def.body.getRightValue();
     var conquer = new Conquer(def, matchings, pos, orderIndependent, tycker);
@@ -84,11 +85,13 @@ public record Conquer(
       var matchResult = new FnCall(def.ref, 0, args).normalize(tycker.state, NormalizeMode.WHNF).subst(subst);
       currentClause.patterns().forEach(p -> p.term().storeBindings(ctx, subst));
       if (newBody instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-        hole.ref().conditions.append(Tuple.of(matchy, matchResult));
+        hole.ref().conditions.append(Tuple.of(subst, matchResult));
       } else if (matchResult instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-        hole.ref().conditions.append(Tuple.of(matchy, newBody));
+        hole.ref().conditions.append(Tuple.of(subst, newBody));
       }
-      return tycker.unifyReported(newBody, matchResult, def.result.subst(matchy),
+      var retSubst = DeltaExpander.buildSubst(def.telescope, args);
+      retSubst.add(subst);
+      return tycker.unifyReported(newBody, matchResult, def.result.subst(retSubst),
         sourcePos, ctx, comparison -> new ClausesProblem.Conditions(
           sourcePos, currentClause.sourcePos(), nth + 1, i, args, new UnifyInfo(tycker.state), comparison));
     });

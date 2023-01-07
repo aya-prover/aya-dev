@@ -1,13 +1,13 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
-import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.RefTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.InternalException;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * The unification of patterns. This is <strong>not</strong> pattern unification.
  *
  * @author ice1000
- * @see PatUnify#unifyPat(SeqLike, SeqLike, Subst, Subst, LocalCtx)
+ * @see #unifyPat(SeqView, SeqView, Subst, Subst, LocalCtx)
  */
 public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNull LocalCtx ctx) {
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
@@ -108,8 +108,8 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
    * @see PatUnify#visitAs(LocalVar, org.aya.core.pat.Pat)
    */
   public static @NotNull LocalCtx unifyPat(
-    @NotNull SeqLike<Pat> lpats,
-    @NotNull SeqLike<Pat> rpats,
+    @NotNull SeqView<Pat> lpats,
+    @NotNull SeqView<Pat> rpats,
     @NotNull Subst lhsSubst,
     @NotNull Subst rhsSubst,
     @NotNull LocalCtx ctx
