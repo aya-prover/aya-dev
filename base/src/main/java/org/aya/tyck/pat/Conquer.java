@@ -87,7 +87,8 @@ public record Conquer(
       if (newBody instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
         hole.ref().conditions.append(Tuple.of(subst, matchResult));
       } else if (matchResult instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-        hole.ref().conditions.append(Tuple.of(subst, newBody));
+        var newSubst = new Subst(hole.ref().contextTele.map(Term.Param::ref), hole.contextArgs().map(Arg::term));
+        hole.ref().conditions.append(Tuple.of(newSubst, newBody));
       }
       var retSubst = DeltaExpander.buildSubst(def.telescope, args);
       retSubst.add(subst);

@@ -29,8 +29,11 @@ public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) i
     this(options -> description, isReallyError);
   }
 
+  private ErrorTerm update(AyaDocile description) {
+    return description == description() ? this : new ErrorTerm(description, isReallyError);
+  }
   @Override public @NotNull ErrorTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
-    return this;
+    return description instanceof Term term ? update(term.descent(f)) : this;
   }
 
   public static @NotNull ErrorTerm typeOf(@NotNull Term origin) {

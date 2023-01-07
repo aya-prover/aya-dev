@@ -26,7 +26,7 @@ Goal: Goal of type
         {m : Nat}
       To ensure confluence:
         Given (m ⇒ zero), we should have: <n>
-        Given (m ⇒ suc m), we should have: <suc <add m n>>
+        Given (m ⇒ suc m), we should have: <suc <add m zero>>
 
 In file $FILE:8:21 ->
 
