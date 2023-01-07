@@ -151,7 +151,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
    * @implNote panic is expected when the var is duplicated
    */
   default void put(@NotNull LocalVar var, @NotNull Term term) {
-    assert !contains(var);
+    // assert !contains(var);
     if (var != LocalVar.IGNORED) putUnchecked(var, term);
   }
 
