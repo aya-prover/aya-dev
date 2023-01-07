@@ -42,7 +42,7 @@ public record Subst(
   }));
 
   public Subst() {
-    this(MutableMap.create());
+    this(MutableLinkedHashMap.of());
   }
 
   public Subst(@NotNull AnyVar var, @NotNull Term term) {
