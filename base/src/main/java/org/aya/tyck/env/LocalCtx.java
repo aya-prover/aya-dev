@@ -56,7 +56,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   default <T> T with(@NotNull Seq<Term.Param> params, @NotNull Supplier<T> action) {
     if (params.isEmpty()) return action.get();
-    params.forEach(x -> putIgnoreAware(x.ref(), x.type()));
+    params.forEach(x -> put(x.ref(), x.type()));
     try {
       return action.get();
     } finally {
@@ -65,7 +65,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
   }
   default <T> T withIntervals(@NotNull SeqView<LocalVar> params, @NotNull Supplier<T> action) {
     if (params.isEmpty()) return action.get();
-    params.forEach(x -> putIgnoreAware(x, IntervalTerm.INSTANCE));
+    params.forEach(x -> put(x, IntervalTerm.INSTANCE));
     try {
       return action.get();
     } finally {
@@ -78,7 +78,8 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
       @Override public void var(@NotNull AnyVar var) {
         if (bound.contains(var)) return;
         switch (var) {
-          case LocalVar localVar -> dest.put(localVar, get(localVar));
+          // This is intentional, we don't want to check for duplication in forwarding
+          case LocalVar localVar -> dest.putUnchecked(localVar, get(localVar));
           case Meta meta -> {
             var sol = state.metas().getOrNull(meta);
             if (sol != null) forward(dest, sol, state);
@@ -89,15 +90,12 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     }.accept(term);
   }
   default <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
-    putIgnoreAware(var, type);
+    put(var, type);
     try {
       return action.get();
     } finally {
       remove(SeqView.of(var));
     }
-  }
-  private void putIgnoreAware(@NotNull LocalVar var, @NotNull Term type) {
-    if (var != LocalVar.IGNORED) put(var, type);
   }
   default <T> T with(@NotNull Supplier<T> action, @NotNull Term.Param... param) {
     return with(action, Seq.of(param).view());
@@ -154,7 +152,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
    */
   default void put(@NotNull LocalVar var, @NotNull Term term) {
     assert !contains(var);
-    putUnchecked(var, term);
+    if (var != LocalVar.IGNORED) putUnchecked(var, term);
   }
 
   /**
