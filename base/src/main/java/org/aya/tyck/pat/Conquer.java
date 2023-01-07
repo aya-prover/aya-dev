@@ -65,7 +65,7 @@ public record Conquer(
           .mapSplit(ctorDef.clauses, t -> t.subst(subst));
         var faces = clauses.clauses();
         for (int i = 0, size = faces.size(); i < size; i++) {
-          checkConditions(nth, i + 1, faces.get(i), subst);
+          checkConditions(nth, i + 1, faces.get(i));
         }
       }
       case Pat.Tuple tuple -> {
@@ -75,10 +75,10 @@ public record Conquer(
     }
   }
 
-  private void checkConditions(int nth, int i, Restr.Side<Term> condition, Subst matchy) {
+  private void checkConditions(int nth, int i, Restr.Side<Term> condition) {
     var ctx = new MapLocalCtx();
     var currentClause = matchings.get(nth);
-    CofThy.conv(condition.cof(), matchy, subst -> {
+    CofThy.conv(condition.cof(), new Subst(), subst -> {
       // We should also restrict the current clause body under `condition`.
       var newBody = currentClause.body().subst(subst);
       var args = Arg.mapSeq(currentClause.patterns(), t -> t.toTerm().subst(subst));
