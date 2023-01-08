@@ -61,7 +61,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
     };
   }
 
-  public static @NotNull SortTerm max(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
+  public static @NotNull SortTerm lub(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
     var alift = domain.lift();
     var blift = codomain.lift();
     return switch (domain.kind()) {

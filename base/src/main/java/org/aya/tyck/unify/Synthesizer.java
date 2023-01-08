@@ -92,7 +92,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
           ctx.put(param);
         }
         ctx.remove(sigma.params().view().map(Term.Param::ref));
-        yield univ.reduce(SigmaTerm::max);
+        yield univ.reduce(SigmaTerm::lub);
       }
       case PiTerm pi -> {
         var paramTyRaw = tryPress(pi.param().type());
@@ -100,7 +100,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         var t = new Synthesizer(state, ctx.deriveSeq());
         yield t.ctx.with(pi.param(), () -> {
           if (t.press(pi.body()) instanceof SortTerm retTy) {
-            return PiTerm.max(paramTy, retTy);
+            return PiTerm.lub(paramTy, retTy);
           } else return null;
         });
       }

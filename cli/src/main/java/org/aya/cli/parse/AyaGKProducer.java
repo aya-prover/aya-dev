@@ -541,6 +541,7 @@ public record AyaGKProducer(
 
   public @NotNull Expr expr(@NotNull GenericNode<?> node) {
     var pos = sourcePosOf(node);
+    // exprNode.is\(([a-zA-Z_\.]+)\)
     // if (node.is(TokenType.ERROR_ELEMENT)) {
     //   return new Expr.Hole(pos, true, null);
     // }
