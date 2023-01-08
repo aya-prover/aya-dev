@@ -148,7 +148,7 @@ public final class StmtTycker extends TracedTycker {
       var bodyExpr = fn.body.getLeftValue();
       Term preresult, prebody;
       if (fn.result != null) {
-        preresult = tycker.synthesize(fn.result).wellTyped();
+        preresult = tycker.ty(fn.result);
         prebody = tycker.check(bodyExpr, preresult).wellTyped();
       } else {
         var synthesize = tycker.synthesize(bodyExpr);
