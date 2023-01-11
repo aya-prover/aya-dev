@@ -147,11 +147,11 @@ public final class ExprTycker extends PropTycker {
         var struct = proj.tup();
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
-          if (!(projectee.type() instanceof SigmaTerm(var telescope)))
-            return fail(struct, projectee.type(), BadTypeError.sigmaAcc(state, struct, ix, projectee.type()));
-          var projecteeIsProp = isPropType(projectee.type());
-          if (!inProp && projecteeIsProp)
-            return fail(struct, projectee.type(), BadTypeError.projProp(state, struct, ix, projectee.type()));
+          var pseudoSigma = projectee.type();
+          if (!(pseudoSigma instanceof SigmaTerm(var telescope)))
+            return fail(struct, pseudoSigma, BadTypeError.sigmaAcc(state, struct, ix, pseudoSigma));
+          if (!inProp && isPropType(pseudoSigma))
+            return fail(struct, pseudoSigma, BadTypeError.projProp(state, struct, ix, pseudoSigma));
           var index = ix - 1;
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
@@ -167,8 +167,7 @@ public final class ExprTycker extends PropTycker {
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
 
-          var structIsProp = fieldRef.core.inProp();
-          if (!inProp && structIsProp)
+          if (!inProp && fieldRef.core.inProp())
             return fail(proj, BadTypeError.projPropStruct(state, struct, fieldName, projectee.type()));
 
           var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
@@ -227,8 +226,8 @@ public final class ExprTycker extends PropTycker {
       }
       case Expr.App(var sourcePos, var appF, var argument) -> {
         var f = synthesize(appF);
-        if (f.wellTyped() instanceof ErrorTerm || f.type() instanceof ErrorTerm) yield f;
         var app = f.wellTyped();
+        if (app instanceof ErrorTerm || f.type() instanceof ErrorTerm) yield f;
         var fTy = whnf(f.type());
         var argLicit = argument.explicit();
         if (fTy instanceof MetaTerm fTyHole) {
