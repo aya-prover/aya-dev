@@ -3,14 +3,12 @@
 package org.aya.tyck.tycker;
 
 import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.MetaTerm;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.Synthesizer;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,18 +40,17 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
     }
   }
 
+  /**
+   * @return false means unsure or not a prop type.
+   */
   public boolean isPropType(@NotNull Term type) {
-    var sort = new Synthesizer(state, ctx).tryPress(type);
-    if (sort == null) throw new UnsupportedOperationException("Zaoqi");
-    if (sort instanceof MetaTerm meta) {
-      // TODO[isType]: refactor non-Prop assertions
-      state.notInPropMetas().add(meta.ref()); // assert not Prop
-      return false;
-    }
-    if (sort instanceof SortTerm s) return s.isProp();
-    if (sort instanceof ErrorTerm) return false;
-    throw new InternalException("Expected computeType() to produce a sort, got "
-      + type.toDoc(AyaPrettierOptions.pretty()).debugRender()
-      + " : " + sort.toDoc(AyaPrettierOptions.pretty()).debugRender());
+    return switch (synthesizer().tryPress(type)) {
+      case null -> false;
+      case SortTerm sort -> sort.isProp();
+      case ErrorTerm err -> true;
+      case Term sort -> throw new InternalException("Expected computeType() to produce a sort, got "
+        + type.toDoc(AyaPrettierOptions.pretty()).debugRender()
+        + " : " + sort.toDoc(AyaPrettierOptions.pretty()).debugRender());
+    };
   }
 }

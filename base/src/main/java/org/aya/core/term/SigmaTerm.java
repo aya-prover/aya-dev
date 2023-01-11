@@ -28,7 +28,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
     return update(params.map(p -> p.descent(f)));
   }
 
-  public static @NotNull SortTerm max(@NotNull SortTerm x, @NotNull SortTerm y) {
+  public static @NotNull SortTerm lub(@NotNull SortTerm x, @NotNull SortTerm y) {
     int lift = Math.max(x.lift(), y.lift());
     if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
       return SortTerm.Prop;
