@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -55,14 +55,6 @@ public record BadTypeError(
       Doc.sep(Doc.english("project the"), Doc.ordinal(ix), Doc.english("element of")),
       Doc.english("of what you projected on"),
       options -> Doc.english("Sigma type"),
-      state);
-  }
-
-  public static @NotNull BadTypeError projProp(@NotNull TyckState state, @NotNull Expr expr, int ix, @NotNull Term type) {
-    return new BadTypeError(expr, type,
-      Doc.sep(Doc.english("project the"), Doc.ordinal(ix), Doc.english("element of")),
-      Doc.english("of what you projected on"),
-      options -> Doc.english("non-Prop Sigma type"),
       state);
   }
 

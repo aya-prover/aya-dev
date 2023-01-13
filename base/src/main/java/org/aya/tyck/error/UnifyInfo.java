@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -28,6 +28,10 @@ public record UnifyInfo(@NotNull TyckState state) {
     buf.append(Doc.par(1, actualDoc));
     if (!actualNFDoc.equals(actualDoc))
       buf.append(Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualNFDoc))));
+  }
+
+  public static void exprInfo(Term term, PrettierOptions options, TyckState state, MutableList<@NotNull Doc> buf) {
+    exprInfo(term.toDoc(options), term.normalize(state, NormalizeMode.NF).toDoc(options), buf);
   }
 
   public record Comparison(

@@ -81,8 +81,7 @@ public final class PatternTycker {
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), term);
-        var tupleIsProp = exprTycker.isPropType(sigma);
-        if (!resultIsProp && tupleIsProp) foundError(new PatternProblem.IllegalPropPat(tuple));
+        if (!resultIsProp && exprTycker.inProp(sigma)) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature<>(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
