@@ -10,7 +10,6 @@ Error: Unable to access field `value` of the expression
        because the type of what you accessed is not a non-Prop struct type, but 
        instead:
          Squash A
-         (Normalized: Squash A)
 
 1 error(s), 0 warning(s).
 What are you doing?

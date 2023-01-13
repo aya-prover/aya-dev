@@ -7,7 +7,6 @@ Error: Unable to construct the expression
          new Type 0
        because the type you gave is not a struct type, but instead:
          Type 0
-         (Normalized: Type 0)
 
 1 error(s), 0 warning(s).
 What are you doing?
