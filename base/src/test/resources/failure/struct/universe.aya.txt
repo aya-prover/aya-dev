@@ -8,7 +8,6 @@ Error: Unable to make sense of the expression
          I
        because the type provided is not a universe, but instead:
          I
-         (Normalized: I)
 
 1 error(s), 0 warning(s).
 What are you doing?

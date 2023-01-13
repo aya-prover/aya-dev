@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  * It has a member isProp, and supports some Prop-related functions.
  *
  * @author tsao-chi
- * @see #isPropType(Term)
+ * @see #inProp(Term)
  * @see #withInProp(boolean, Supplier)
  */
 public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker {
@@ -43,7 +43,7 @@ public sealed abstract class PropTycker extends UnifiedTycker permits ExprTycker
   /**
    * @return false means unsure or not a prop type.
    */
-  public boolean isPropType(@NotNull Term type) {
+  public boolean inProp(@NotNull Term type) {
     return switch (synthesizer().tryPress(type)) {
       case null -> false;
       case SortTerm sort -> sort.isProp();

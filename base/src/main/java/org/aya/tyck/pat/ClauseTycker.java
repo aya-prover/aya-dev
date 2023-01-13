@@ -75,7 +75,7 @@ public final class ClauseTycker {
     // TODO[isType]: revise this
     // https://github.com/agda/agda/blob/66d22577abe9ac67649c6e662c91d8593d1bf86c/src/full/Agda/TypeChecking/Rules/LHS.hs#L2099-L2136
     var inProp = exprTycker.ctx.with(() ->
-      exprTycker.isPropType(signature.result()), signature.param().view());
+      exprTycker.inProp(signature.result()), signature.param().view());
     return new AllLhsResult(clauses.mapIndexed((index, clause) -> exprTycker.traced(
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
       () -> checkLhs(exprTycker, clause, signature, inProp, true))));

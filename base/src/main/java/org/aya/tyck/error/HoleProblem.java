@@ -5,6 +5,7 @@ package org.aya.tyck.error;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.core.meta.MetaInfo;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
@@ -44,16 +45,16 @@ public sealed interface HoleProblem extends Problem {
 
   record IllTypedError(
     @Override @NotNull MetaTerm term,
+    @NotNull TyckState state,
     @NotNull MetaInfo result,
     @Override @NotNull Term solution
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.vcat(
-        Doc.english("The meta (denoted ? below) is supposed to satisfy:"),
+      var list = MutableList.of(Doc.english("The meta (denoted ? below) is supposed to satisfy:"),
         Doc.par(1, result.toDoc(options)),
-        Doc.english("However, the solution below does not seem so:"),
-        Doc.par(1, solution.toDoc(options))
-      );
+        Doc.english("However, the solution below does not seem so:"));
+      UnifyInfo.exprInfo(solution, options, state, list);
+      return Doc.vcat(list);
     }
   }
 

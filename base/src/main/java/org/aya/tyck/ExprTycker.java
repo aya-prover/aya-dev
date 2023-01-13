@@ -147,17 +147,18 @@ public final class ExprTycker extends PropTycker {
         var struct = proj.tup();
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
-          var pseudoSigma = projectee.type();
+          var pseudoSigma = projectee.type().freezeHoles(state);
           if (!(pseudoSigma instanceof SigmaTerm(var telescope)))
             return fail(struct, pseudoSigma, BadTypeError.sigmaAcc(state, struct, ix, pseudoSigma));
-          if (!inProp && isPropType(pseudoSigma))
-            return fail(struct, pseudoSigma, BadTypeError.projProp(state, struct, ix, pseudoSigma));
           var index = ix - 1;
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
           var type = telescope.get(index).type();
           var subst = ProjTerm.projSubst(projectee.wellTyped(), index, telescope);
-          return new Result.Default(ProjTerm.proj(projectee.wellTyped(), ix), type.subst(subst));
+          var resultTy = type.subst(subst).freezeHoles(state);
+          if (inProp(pseudoSigma) && !inProp(resultTy))
+            return fail(proj, resultTy, new IrrElimProblem.Proj(proj, projectee.wellTyped(), pseudoSigma, resultTy, state));
+          return new Result.Default(ProjTerm.proj(projectee.wellTyped(), ix), resultTy);
         }, sp -> {
           var fieldName = sp.justName();
           if (!(projectee.type() instanceof StructCall structCall))
@@ -589,6 +590,6 @@ public final class ExprTycker extends PropTycker {
   }
 
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
-    return withInProp(isPropType(type), () -> inherit(expr, type));
+    return withInProp(inProp(type), () -> inherit(expr, type));
   }
 }

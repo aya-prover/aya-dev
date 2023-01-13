@@ -9,7 +9,6 @@ Error: Unable to apply the expression
          value test
        because the type of what you applied is not a Pi type, but instead:
          Yes
-         (Normalized: Yes)
 note: Did you mean `test.value` ?
 
 1 error(s), 0 warning(s).
