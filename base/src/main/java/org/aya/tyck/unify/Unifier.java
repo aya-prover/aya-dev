@@ -101,7 +101,7 @@ public final class Unifier extends TermComparator {
       case MetaInfo.AnyType()when preRhs instanceof Formation -> needUnify = false;
       case MetaInfo.AnyType()when preRhs instanceof MetaTerm rhsMeta -> {
         if (!rhsMeta.ref().info.isType(checker.synthesizer())) {
-          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+          reporter.report(new HoleProblem.IllTypedError(lhs, state, meta.info, preRhs));
           return null;
         }
         needUnify = false;
@@ -109,7 +109,7 @@ public final class Unifier extends TermComparator {
       case MetaInfo.AnyType() -> {
         var synthesize = checker.synthesizer().tryPress(preRhs);
         if (!(synthesize instanceof SortTerm)) {
-          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+          reporter.report(new HoleProblem.IllTypedError(lhs, state, meta.info, preRhs));
           return null;
         }
         needUnify = false;
@@ -125,7 +125,7 @@ public final class Unifier extends TermComparator {
       }
       case MetaInfo.PiDom(var sort) -> {
         if (!checker.synthesizer().inheritPiDom(preRhs, sort)) {
-          reporter.report(new HoleProblem.IllTypedError(lhs, meta.info, preRhs));
+          reporter.report(new HoleProblem.IllTypedError(lhs, state, meta.info, preRhs));
         }
       }
     }
@@ -134,7 +134,7 @@ public final class Unifier extends TermComparator {
       if (providedType != null) {
         // resultTy might be an ErrorTerm, what to do?
         if (!checker.inherit(preRhs, providedType))
-          reporter.report(new HoleProblem.IllTypedError(lhs, new MetaInfo.Result(providedType), preRhs));
+          reporter.report(new HoleProblem.IllTypedError(lhs, state, new MetaInfo.Result(providedType), preRhs));
       } else {
         providedType = checker.synthesizer().synthesize(preRhs);
         if (providedType == null) {
