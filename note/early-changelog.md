@@ -2,6 +2,33 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.27
+
+Happy new year! New features and big changes:
+
++ Checksums are now available for all releases. You may use them to verify the integrity of the downloaded files.
++ Overall improvements to term-related error messages. There is a uniform way to display the normalized terms now.
++ `using` and `hiding` are reimplemented. Invalid `using` and `hiding` will now be reported as errors.
+  This also allows future improvements to allow qualified identifiers in `using`.
++ Confluence (for both cubical HITs and overlapping patterns) check error messages are now more informative.
++ The semantics of `private` and `public` and `open` of data types are now more consistent and `private public open` no longer makes sense.
++ Comments are now highlighted in the pretty printed output.
++ Meta variables are now type checked in a more consistent way. This can eliminate a lot of possible bugs.
++ Let expressions are now available.
++ Improved the implementation of `inS` and `outS`. There is now type-directed reduction for `outS`.
++ The sort system is reimplemented. The PTS rules are written in [this document](/note/sort-system.md).
++ Parsing is now more robust than before. There will be more parsing errors reported and fewer crashes.
+
+Internal refactorings:
+
++ `ExprTycker` is now split into a package of type checkers. `Unifier` and `StmtTycker` now extend part of them.
++ Lambdas in core are now untyped. The parameter types are expected to be obtainable from a given type.
++ There is a new constraint system for meta variables.
++ `PatTycker` is split into two parts for clauses' checking and pattern checking.
++ Added an implementation of dynamic forest in the `tools` module.
++ `Term` operations are now based on subtyping polymorphism instead of pattern matching.
++ `ExprTycker` are no longer reused.
+
 ## 0.26
 
 New features and big changes:
