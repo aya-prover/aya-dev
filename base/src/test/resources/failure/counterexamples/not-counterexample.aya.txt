@@ -1,17 +1,8 @@
-In file $FILE:1:15 ->
+In file $FILE:1:0 ->
 
   1 │   counterexample open data Nat | suc Nat | zero
-    │                  ╰──╯
+    │   ╰────────────╯
 
-Warning: Ignoring the following statement, which is not a counterexample:
-         public open Nat hiding ()
+Warning: The modifier counterexample is not suitable here.
 
-In file $FILE:1:25 ->
-
-  1 │   counterexample open data Nat | suc Nat | zero
-    │                            ╰─╯
-
-Error: The counterexample Nat does not raise any type error
-
-1 error(s), 1 warning(s).
-What are you doing?
+That looks right!

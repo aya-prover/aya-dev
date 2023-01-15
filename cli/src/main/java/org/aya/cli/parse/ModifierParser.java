@@ -6,6 +6,10 @@ import kala.collection.Map;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
+import kala.control.Option;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.cli.parse.error.ContradictModifierError;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
 import org.aya.cli.parse.error.NotSuitableModifierWarn;
@@ -18,6 +22,7 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class ModifierParser {
@@ -54,6 +59,21 @@ public class ModifierParser {
     @NotNull WithPos<Boolean> isOpen) {
   }
 
+  public record Replacement(@NotNull ImmutableSeq<Modifier> replacement) {
+    public static @NotNull Replacement of(@NotNull Modifier modifier) {
+      return new Replacement(ImmutableSeq.of(modifier));
+    }
+
+    public static @NotNull Replacement ignore() {
+      return new Replacement(ImmutableSeq.empty());
+    }
+
+    public static @NotNull Option<Replacement> ignoreIf(boolean isOne) {
+      if (isOne) return Option.some(ignore());
+      return Option.none();
+    }
+  }
+
   public final @NotNull Reporter reporter;
 
   public ModifierParser(@NotNull Reporter reporter) {
@@ -61,7 +81,7 @@ public class ModifierParser {
   }
 
   public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
-    return parse(modifiers, x -> true);
+    return parse(modifiers, x -> Option.none());
   }
 
   private @NotNull ImmutableSeq<WithPos<Modifier>> implication(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
@@ -80,19 +100,26 @@ public class ModifierParser {
   /**
    * @param filter The filter also perform on the modifiers that expanded from input.
    */
-  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Predicate<Modifier> filter) {
+  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Function<Modifier, Option<Replacement>> filter) {
     EnumMap<ModifierGroup, EnumMap<Modifier, SourcePos>> map = new EnumMap<>(ModifierGroup.class);
 
-    var inserts = implication(modifiers);
-    modifiers = inserts.concat(modifiers);
+    // do filter
+    var replacedModifiers = MutableList.<WithPos<Modifier>>create();
+    for (var modifier : modifiers) {
+      var replacement = filter.apply(modifier.data());
+      if (replacement.isDefined()) {
+        reportUnsuitableModifier(modifier);
+        replacedModifiers.appendAll(replacement.get().replacement()
+          .map(x -> new WithPos<>(modifier.sourcePos(), x)));
+      } else replacedModifiers.append(modifier);
+    }
+
+
+    var inserts = implication(replacedModifiers);
+    var finalModifiers = inserts.concat(replacedModifiers);
 
     // parsing
-    for (var data : modifiers) {
-      if (!filter.test(data.data())) {
-        reportUnsuitableModifier(data);
-        continue;
-      }
-
+    for (var data : finalModifiers) {
       var pos = data.sourcePos();
       var modifier = data.data();
 
@@ -161,6 +188,7 @@ public class ModifierParser {
     return new ModifierSet(acc, pers, isReExport);
   }
 
+  // TODO: also report the replacement
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
     reporter.report(new NotSuitableModifierWarn(data.sourcePos(), data.data()));
   }

@@ -5,7 +5,7 @@ In file $FILE:1:5 ->
   2 │   
   3 │   private open private data False2
 
-Warning: This modifier is duplicated with the previous, ignored.
+Warning: This modifier is duplicated with the other, ignored.
 
 In file $FILE:3:13 ->
 
@@ -14,7 +14,7 @@ In file $FILE:3:13 ->
   3 │   private open private data False2
     │                ╰─────╯
 
-Warning: This modifier is duplicated with the previous, ignored.
+Warning: This modifier is duplicated with the other, ignored.
 
 In file $FILE:5:0 ->
 
