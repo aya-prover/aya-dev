@@ -22,14 +22,14 @@ import java.util.Objects;
  * @author ice1000
  */
 public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, TopLevelDef {
-  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> defVar) {
+  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar) {
     return PiTerm.make(defTele(defVar), defResult(defVar));
   }
 
-  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> defVar) {
+  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
-    else return Objects.requireNonNull(defVar.concrete.signature()).param;
+    else return Objects.requireNonNull(defVar.concrete.signature).param;
   }
   static @NotNull Seq<CtorDef> dataBody(@NotNull DefVar<? extends DataDef, ? extends TeleDecl.DataDecl> defVar) {
     if (defVar.core != null) return defVar.core.body;

@@ -146,7 +146,7 @@ public record AyaSccTycker(
 
   private void checkSimpleFn(@NotNull TyckOrder order, @NotNull TeleDecl.FnDecl fn) {
     if (selfReferencing(resolveInfo.depGraph(), order)) {
-      reporter.report(new BadRecursion(fn.sourcePos, fn.ref, null));
+      reporter.report(new BadRecursion(fn.sourcePos(), fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
     decideTyckResult(fn, fn, tycker.simpleFn(reuseTopLevel(fn), fn));

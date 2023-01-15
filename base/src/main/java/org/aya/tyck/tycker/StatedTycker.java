@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
@@ -46,7 +45,7 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockTycke
     return term.normalize(state, NormalizeMode.WHNF);
   }
 
-  protected final <D extends Def, S extends Decl & Decl.Telescopic<? extends Term>> @NotNull Result
+  protected final <D extends Def, S extends TeleDecl<? extends Term>> @NotNull Result
   defCall(DefVar<D, S> defVar, Callable.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var teleRenamed = tele.map(LamTerm::paramRenamed);

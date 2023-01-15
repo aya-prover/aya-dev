@@ -11,7 +11,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
   default void accept(@NotNull Stmt stmt) {
     switch (stmt) {
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic<?> telescopic) visitTelescopic(telescopic);
+        if (decl instanceof TeleDecl<?> telescopic) visitTelescopic(telescopic);
         switch (decl) {
           case TeleDecl.DataDecl data -> data.body.forEach(this);
           case TeleDecl.StructDecl struct -> struct.fields.forEach(this);
@@ -37,7 +37,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
     }
   }
 
-  default void visitTelescopic(@NotNull Decl.Telescopic<?> telescopic) {
+  default void visitTelescopic(@NotNull TeleDecl<?> telescopic) {
     telescopic.modifyTelescope(t -> t.map(param -> param.descent(this)));
     telescopic.modifyResult(this);
   }

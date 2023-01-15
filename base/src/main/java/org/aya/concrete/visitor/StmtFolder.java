@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -85,8 +85,8 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
     if (decl.ref().core instanceof Def def) return Tuple.of(lazyType(decl.ref()),
       def.telescope().view().map(p -> Tuple.of(p.ref(), LazyValue.ofValue(p.type()))));
     // If it is telescopic, type is available when it is type-checked.
-    if (decl instanceof Decl.Telescopic<?> teleDecl) return Tuple.of(lazyType(decl.ref()),
-      teleDecl.telescope().view().map(p -> Tuple.of(p.ref(), withTermType(p))));
+    if (decl instanceof TeleDecl<?> teleDecl) return Tuple.of(lazyType(decl.ref()),
+      teleDecl.telescope.view().map(p -> Tuple.of(p.ref(), withTermType(p))));
     // Oops, no type available.
     return Tuple.of(noType(), SeqView.empty());
   }

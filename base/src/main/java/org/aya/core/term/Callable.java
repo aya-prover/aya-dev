@@ -1,13 +1,14 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.Def;
-import org.aya.util.Arg;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public sealed interface Callable extends Term permits Callable.DefCall, FieldTer
   @NotNull AnyVar ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
   sealed interface DefCall extends Callable permits ConCall, DataCall, FnCall, PrimCall, StructCall {
-    @Override @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> ref();
+    @Override @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref();
     int ulift();
   }
 
