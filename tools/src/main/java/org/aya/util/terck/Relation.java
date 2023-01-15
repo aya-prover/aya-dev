@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.terck;
 
@@ -18,8 +18,10 @@ import org.jetbrains.annotations.NotNull;
 @Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   /** increase or unrelated of callee argument wrt. caller parameter. */
-  record Unknown() implements Relation {
+  final class Unknown implements Relation {
     public static final @NotNull Unknown INSTANCE = new Unknown();
+
+    private Unknown() {}
   }
 
   /**

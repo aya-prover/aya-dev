@@ -107,7 +107,7 @@ public record CallResolver(
       }
       case Pat.ShapedInt intPat -> switch (term) {
         case IntegerTerm intTerm -> {
-          // TODO: compareShape
+          // ice: by well-typedness, we don't need to compareShape
           if (intTerm.recognition().shape() != intPat.recognition().shape()) yield Relation.unk();
           yield Relation.fromCompare(Integer.compare(intTerm.repr(), intPat.repr()));
         }
@@ -141,9 +141,7 @@ public record CallResolver(
   }
 
   @Override public void pre(@NotNull Term term) {
-    if (term instanceof Callable call) {
-      resolveCall(call);
-    }
+    if (term instanceof Callable call) resolveCall(call);
     DefConsumer.super.pre(term);
   }
 }

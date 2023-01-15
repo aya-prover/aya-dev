@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -21,7 +21,7 @@ import java.util.function.UnaryOperator;
 public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implements Decl.Resulted, Decl.TopLevel {
   private final @NotNull Decl.Personality personality;
   public @Nullable Context ctx = null;
-  public @NotNull Expr result;
+  public @Nullable Expr result;
 
   @Override public @NotNull Decl.Personality personality() {
     return personality;
@@ -35,12 +35,12 @@ public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implemen
     this.ctx = ctx;
   }
 
-  @Override public @NotNull Expr result() {
+  @Override public @Nullable Expr result() {
     return result;
   }
 
   @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
-    result = f.apply(result);
+    if (result != null) result = f.apply(result);
   }
 
   protected ClassDecl(
@@ -55,9 +55,5 @@ public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implemen
     super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock);
     this.result = result;
     this.personality = personality;
-  }
-
-  @Override public String toString() {
-    return getClass().getSimpleName() + "[" + ref().name() + "]";
   }
 }

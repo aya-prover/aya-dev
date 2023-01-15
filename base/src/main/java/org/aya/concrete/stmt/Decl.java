@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -90,6 +90,6 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    */
   sealed interface Resulted permits ClassDecl, Telescopic {
     @Nullable Expr result();
-    void modifyResult(@NotNull UnaryOperator<Expr> f);
+    void modifyResult(@NotNull UnaryOperator<@NotNull Expr> f);
   }
 }
