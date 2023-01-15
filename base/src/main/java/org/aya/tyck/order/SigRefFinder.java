@@ -22,7 +22,7 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
   public void accept(@NotNull TyckUnit sn) {
     switch (sn) {
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic<?> proof) telescopic(proof);
+        if (decl instanceof TeleDecl<?> proof) telescopic(proof);
         // for ctor: partial is a part of header
         if (decl instanceof TeleDecl.DataCtor ctor) accept(ctor.clauses);
       }
@@ -32,10 +32,9 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
     }
   }
 
-  public void telescopic(Decl.Telescopic<?> proof) {
-    proof.telescope().mapNotNull(Expr.Param::type).forEach(this);
-    var result = proof.result();
-    if (result != null) accept(result);
+  public void telescopic(@NotNull TeleDecl<?> proof) {
+    proof.telescope.mapNotNull(Expr.Param::type).forEach(this);
+    if (proof.result != null) accept(proof.result);
   }
 
   @Override public void pre(@NotNull Expr expr) {

@@ -30,8 +30,7 @@ import java.util.function.UnaryOperator;
  * @author re-xyr
  * @see Decl
  */
-public sealed abstract class TeleDecl<RetTy extends Term>
-  extends CommonDecl implements Decl.Telescopic<RetTy> {
+public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
   public @Nullable Expr result;
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
@@ -62,31 +61,15 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
   }
 
-  @Override public @Nullable Expr result() {
-    return result;
-  }
-
-  @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
+  public void modifyResult(@NotNull UnaryOperator<Expr> f) {
     if (result != null) result = f.apply(result);
   }
 
-  @Override public @NotNull ImmutableSeq<Expr.Param> telescope() {
-    return telescope;
-  }
-
-  @Override public void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f) {
+  public void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f) {
     telescope = f.apply(telescope);
   }
 
-  @Override public Def.@Nullable Signature<RetTy> signature() {
-    return signature;
-  }
-
-  protected TeleDecl(
-    @NotNull DeclInfo info,
-    @NotNull ImmutableSeq<Expr.Param> telescope,
-    @Nullable Expr result
-  ) {
+  protected TeleDecl(@NotNull DeclInfo info, @NotNull ImmutableSeq<Expr.Param> telescope, @Nullable Expr result) {
     super(info);
     this.result = result;
     this.telescope = telescope;
@@ -148,14 +131,6 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       this.patterns = patterns;
       this.ref = DefVar.concrete(this, name);
       this.telescope = telescope;
-    }
-
-    @Override public @Nullable Expr result() {
-      return result;
-    }
-
-    @Override public void modifyResult(@NotNull UnaryOperator<Expr> f) {
-      if (result != null) result = f.apply(result);
     }
 
     @Override public @NotNull DefVar<CtorDef, DataCtor> ref() {

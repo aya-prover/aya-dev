@@ -3,9 +3,6 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.Expr;
-import org.aya.core.def.Def;
-import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.tyck.order.TyckUnit;
@@ -16,13 +13,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.UnaryOperator;
-
 /**
  * Generic concrete definitions, corresponding to {@link org.aya.core.def.GenericDef}.
  * Concrete definitions can be varied in the following ways:
  * <ul>
- *   <li>Whether it has a telescope, see {@link Telescopic}</li>
+ *   <li>Whether it has a telescope, see {@link TeleDecl}</li>
  *   <li>Whether it can be defined at top-level, see {@link TopLevel}</li>
  * </ul>
  * We say these are properties of a concrete definition and should be implemented selectively.
@@ -64,19 +59,6 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
 
   @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     return ref().isInModule(currentMod) && ref().core == null;
-  }
-
-  /**
-   * Denotes that the definition is telescopic
-   *
-   * @author kiva
-   */
-  sealed interface Telescopic<RetTy extends Term> permits TeleDecl {
-    @NotNull ImmutableSeq<Expr.Param> telescope();
-    void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f);
-    @Nullable Def.Signature<RetTy> signature();
-    @Nullable Expr result();
-    void modifyResult(@NotNull UnaryOperator<@NotNull Expr> f);
   }
 
   /**

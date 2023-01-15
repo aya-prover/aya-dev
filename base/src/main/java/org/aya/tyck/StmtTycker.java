@@ -59,9 +59,8 @@ public final class StmtTycker extends TracedTycker {
   }
 
   private @NotNull GenericDef doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
-    if (predecl instanceof Decl.Telescopic<?> decl) {
-      var signature = decl.signature();
-      if (signature != null) loadTele(tycker, signature);
+    if (predecl instanceof TeleDecl<?> decl) {
+      if (decl.signature != null) loadTele(tycker, decl.signature);
         // If core == null then not yet tycked. A constructor's signature is always null,
         // so we need this extra check
       else if (predecl.ref().core == null) tyckHeader(predecl, tycker);

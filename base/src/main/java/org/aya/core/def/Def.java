@@ -38,10 +38,10 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
   }
   @SuppressWarnings("unchecked") @Contract(pure = true)
   static <T extends Term> @NotNull T
-  defResult(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<? extends T>> defVar) {
+  defResult(@NotNull DefVar<? extends Def, ? extends TeleDecl<? extends T>> defVar) {
     if (defVar.core != null) return (T) defVar.core.result();
       // guaranteed as this is already a core term
-    else return Objects.requireNonNull(defVar.concrete.signature()).result;
+    else return Objects.requireNonNull(defVar.concrete.signature).result;
   }
 
   @Override @NotNull DefVar<? extends Def, ? extends Decl> ref();
