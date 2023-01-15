@@ -203,16 +203,13 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
     public final boolean coerce;
 
     public StructField(
-      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @Nullable OpInfo opInfo,
-      @NotNull String name,
+      @NotNull DeclInfo info, @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull Option<Expr> body,
-      boolean coerce,
-      @NotNull BindBlock bindBlock
+      boolean coerce
     ) {
-      super(new DeclInfo(Accessibility.Public, sourcePos, entireSourcePos, opInfo, bindBlock), telescope, result);
+      super(info, telescope, result);
       this.coerce = coerce;
       this.body = body;
       this.ref = DefVar.concrete(this, name);

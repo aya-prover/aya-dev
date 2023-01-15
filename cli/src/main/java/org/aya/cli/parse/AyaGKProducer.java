@@ -368,17 +368,12 @@ public record AyaGKProducer(
   public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var bind = node.peekChild(BIND_BLOCK);
+    var info = declInfo(node, x -> false);
     return new TeleDecl.StructField(
-      nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      nameOrInfix.component1().data(),
-      tele,
+      info.info, info.name, tele,
       typeOrNull(node.peekChild(TYPE)),
       Option.ofNullable(node.peekChild(EXPR)).map(this::expr),
-      node.peekChild(KW_COERCE) != null,
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
+      node.peekChild(KW_COERCE) != null
     );
   }
 
