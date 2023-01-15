@@ -449,9 +449,9 @@ public record AyaGKProducer(
       partial(partial, partial != null ? sourcePosOf(partial) : namePos),
       patterns,
       node.peekChild(KW_COERCE) != null,
+      ty == null ? null : type(ty),
       bind == null ? BindBlock.EMPTY : bindBlock(bind)
     );
-    if (ty != null) ctor.result = type(ty);
     return ctor;
   }
 

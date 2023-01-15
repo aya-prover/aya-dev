@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -123,7 +123,7 @@ public interface StmtResolver {
   }
 
   private static @NotNull ExprResolver resolveDeclSignature(
-    @NotNull TeleDecl<?> decl,
+    @NotNull TeleDecl.TopLevel<?> decl,
     ExprResolver.@NotNull Options options,
     @NotNull ResolveInfo info
   ) {

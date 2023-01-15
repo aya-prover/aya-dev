@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @apiNote This class should only be used in extends and permits clause. Use {@link Decl} elsewhere instead.
  * @see Decl
  */
-public sealed abstract class CommonDecl implements Decl permits ClassDecl, TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
+public sealed abstract class CommonDecl implements Decl permits ClassDecl, TeleDecl {
   public final @NotNull Accessibility accessibility;
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
