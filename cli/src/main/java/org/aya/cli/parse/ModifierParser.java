@@ -175,7 +175,6 @@ public class ModifierParser {
     return new ModifierSet(acc, pers, isOpen);
   }
 
-  // TODO: also report the replacement
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
     reporter.report(new NotSuitableModifierError(data.sourcePos(), data.data()));
   }
