@@ -6,14 +6,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.text.StringView;
+import kala.text.StringSlice;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +52,10 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       .toImmutableSeq();
     checkHighlights(highlights);
 
-    return doHighlight(StringView.of(raw), base, highlights);
+    return doHighlight(StringSlice.of(raw), base, highlights);
   }
 
-  private @NotNull Doc doHighlight(@NotNull StringView raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
+  private @NotNull Doc doHighlight(@NotNull CharSequence raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {
@@ -126,13 +124,13 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     };
   }
 
-  private static @NotNull Tuple4<StringView, StringView, StringView, Integer>
-  twoKnifeThreeParts(@NotNull StringView raw, int base, @NotNull SourcePos twoKnife) {
+  private static @NotNull Tuple4<CharSequence, CharSequence, CharSequence, Integer>
+  twoKnifeThreeParts(@NotNull CharSequence raw, int base, @NotNull SourcePos twoKnife) {
     var beginPart1 = twoKnife.tokenStartIndex() - base;
     var endPart1 = twoKnife.tokenEndIndex() + 1 - base;
-    var part0 = raw.substring(0, beginPart1);
-    var part1 = raw.substring(beginPart1, endPart1);
-    var part2 = raw.substring(endPart1, raw.length());
+    var part0 = raw.subSequence(0, beginPart1);
+    var part1 = raw.subSequence(beginPart1, endPart1);
+    var part2 = raw.subSequence(endPart1, raw.length());
 
     return Tuple.of(part0, part1, part2, twoKnife.tokenEndIndex() + 1);
   }
