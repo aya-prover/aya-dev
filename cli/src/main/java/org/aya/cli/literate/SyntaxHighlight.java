@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.value.LazyValue;
 import org.aya.cli.literate.HighlightInfo.LitKind;
-import org.aya.cli.parse.AyaGKProducer;
+import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.GeneralizedVar;
@@ -52,7 +52,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       var addition = lexer.allTheWayDown().view()
         .filter(x -> AyaParserDefinitionBase.NOT_IN_CONCRETE.contains(x.type()))
         .map(token -> {
-          var sourcePos = AyaGKProducer.sourcePosOf(token, file);
+          var sourcePos = AyaProducer.sourcePosOf(token, file);
           HighlightInfo.HighlightSymbol type;
           if (AyaParserDefinitionBase.KEYWORDS.contains(token.type())) {
             type = new HighlightInfo.SymLit(LitKind.Keyword);

@@ -60,11 +60,11 @@ import static org.aya.parser.AyaPsiElementTypes.*;
  *     For psi nodes with <code>extends</code> attribute in `AyaPsiParser.bnf` (like expr, decl, stmt, etc.):
  *     <ul>
  *       <li>Use {@link GenericNode#peekChild(TokenSet)}, {@link GenericNode#child(TokenSet)} if you want to obtain
- *       the node itself from its parent. Available {@link TokenSet}s are {@link AyaGKProducer#EXPR}, {@link AyaGKProducer#STMT},
- *       {@link AyaGKProducer#ARGUMENT} and something alike.</li>
+ *       the node itself from its parent. Available {@link TokenSet}s are {@link AyaProducer#EXPR}, {@link AyaProducer#STMT},
+ *       {@link AyaProducer#ARGUMENT} and something alike.</li>
  *       <li>Use {@link GenericNode#is(IElementType)} to pattern-matching on the node.</li>
  *       <li>Note that extends nodes are flattened so producing concrete tree from parse tree is different from
- *       other nodes, compare {@link AyaGKProducer#expr(GenericNode)} and its bnf rule for more details.</li>
+ *       other nodes, compare {@link AyaProducer#expr(GenericNode)} and its bnf rule for more details.</li>
  *       <li>You may inspect the produced node tree by the <code>toDebugString</code> method.</li>
  *       <li>If you edited extends attribute in the bnf file, do not forgot to update them here. We don't have any compile-time error
  *       thanks to the parse node being dynamically typed (we may improve it in the future) -- so be careful and patient!</li>
@@ -75,7 +75,7 @@ import static org.aya.parser.AyaPsiElementTypes.*;
  * @author kiva
  * @see AyaPsiElementTypes
  */
-public record AyaGKProducer(
+public record AyaProducer(
   @NotNull Either<SourceFile, SourcePos> source,
   @NotNull Reporter reporter
 ) {
