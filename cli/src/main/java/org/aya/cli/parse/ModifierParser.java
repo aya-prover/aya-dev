@@ -5,7 +5,6 @@ package org.aya.cli.parse;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import kala.function.Functions;
 import org.aya.cli.parse.error.ContradictModifierError;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
@@ -22,7 +21,7 @@ import java.util.EnumMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class ModifierParser {
+public record ModifierParser(@NotNull Reporter reporter) {
   public enum ModifierGroup {
     None,
     Accessibility,
@@ -54,27 +53,6 @@ public class ModifierParser {
     @NotNull WithPos<Stmt.Accessibility> accessibility,
     @NotNull WithPos<DeclInfo.Personality> personality,
     @NotNull WithPos<Boolean> isOpen) {
-  }
-
-  public record Replacement(@NotNull ImmutableSeq<Modifier> replacement) {
-    public static @NotNull Replacement of(@NotNull Modifier modifier) {
-      return new Replacement(ImmutableSeq.of(modifier));
-    }
-
-    public static @NotNull Replacement ignore() {
-      return new Replacement(ImmutableSeq.empty());
-    }
-
-    public static @NotNull Option<Replacement> ignoreIf(boolean isOne) {
-      if (isOne) return Option.some(ignore());
-      return Option.none();
-    }
-  }
-
-  public final @NotNull Reporter reporter;
-
-  public ModifierParser(@NotNull Reporter reporter) {
-    this.reporter = reporter;
   }
 
   public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
