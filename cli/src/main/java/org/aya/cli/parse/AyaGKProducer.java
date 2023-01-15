@@ -309,10 +309,11 @@ public record AyaGKProducer(
   }
 
   private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl, @NotNull MutableList<Stmt> additional) {
-    if (!modiSet.isOpen().data()) return;
+    var keyword = modiSet.openKw();
+    if (keyword == null) return;
 
     additional.append(new Command.Open(
-      modiSet.isOpen().sourcePos(),
+      keyword,
       modiSet.accessibility().data(),
       new QualifiedID(decl.sourcePos(), decl.ref().name()),
       UseHide.EMPTY,

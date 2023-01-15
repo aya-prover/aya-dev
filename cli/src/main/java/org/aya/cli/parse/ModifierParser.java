@@ -16,6 +16,7 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.function.Predicate;
@@ -52,7 +53,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
   public record ModifierSet(
     @NotNull WithPos<Stmt.Accessibility> accessibility,
     @NotNull WithPos<DeclInfo.Personality> personality,
-    @NotNull WithPos<Boolean> isOpen) {
+    @Nullable SourcePos openKw) {
   }
 
   public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
@@ -143,11 +144,11 @@ public record ModifierParser(@NotNull Reporter reporter) {
 
     // others
     var noneGroup = map.get(ModifierGroup.None);
-    WithPos<Boolean> isOpen = new WithPos<>(SourcePos.NONE, false);
+    SourcePos isOpen = null;
 
     if (noneGroup != null) {
       var open = noneGroup.get(Modifier.Open);
-      if (open != null) isOpen = new WithPos<>(open, true);
+      if (open != null) isOpen = open;
     }
 
     return new ModifierSet(acc, pers, isOpen);
