@@ -18,8 +18,8 @@ import org.jetbrains.annotations.Nullable;
 public final class ClassDecl extends CommonDecl implements Decl.TopLevel {
   private final @NotNull DeclInfo.Personality personality;
   public @Nullable Context ctx = null;
-  public @NotNull ImmutableSeq<TeleDecl.StructField> fields;
-  public final @NotNull DefVar<?, ClassDecl> ref;
+  public @NotNull ImmutableSeq<TeleDecl.ClassMember> fields;
+  public final @NotNull DefVar<ClassDef, ClassDecl> ref;
 
   @Override public @NotNull DeclInfo.Personality personality() {
     return personality;
@@ -36,7 +36,7 @@ public final class ClassDecl extends CommonDecl implements Decl.TopLevel {
   public ClassDecl(
     @NotNull DeclInfo info, @NotNull String name,
     @NotNull DeclInfo.Personality personality,
-    @NotNull ImmutableSeq<TeleDecl.StructField> fields
+    @NotNull ImmutableSeq<TeleDecl.ClassMember> fields
   ) {
     super(info);
     this.personality = personality;
@@ -44,7 +44,7 @@ public final class ClassDecl extends CommonDecl implements Decl.TopLevel {
     this.ref = DefVar.concrete(this, name);
   }
 
-  @Override public @NotNull DefVar<?, ClassDecl> ref() {
+  @Override public @NotNull DefVar<ClassDef, ClassDecl> ref() {
     return ref;
   }
 }

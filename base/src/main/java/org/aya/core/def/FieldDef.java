@@ -14,11 +14,11 @@ import java.util.Objects;
 
 public final class FieldDef extends SubLevelDef {
   public final @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef;
-  public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
+  public final @NotNull DefVar<FieldDef, TeleDecl.ClassMember> ref;
   public final @NotNull Option<Term> body;
 
   public FieldDef(
-    @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef, @NotNull DefVar<FieldDef, TeleDecl.StructField> ref,
+    @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef, @NotNull DefVar<FieldDef, TeleDecl.ClassMember> ref,
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
     @NotNull Term result, @NotNull Option<Term> body, boolean coerce
   ) {
@@ -33,7 +33,7 @@ public final class FieldDef extends SubLevelDef {
     return selfTele;
   }
 
-  public @NotNull DefVar<FieldDef, TeleDecl.StructField> ref() {
+  public @NotNull DefVar<FieldDef, TeleDecl.ClassMember> ref() {
     return ref;
   }
 

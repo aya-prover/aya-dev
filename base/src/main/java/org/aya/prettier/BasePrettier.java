@@ -331,7 +331,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
       case TeleDecl.DataDecl d -> DATA;
       case TeleDecl.DataCtor d -> CON;
       case TeleDecl.StructDecl d -> STRUCT;
-      case TeleDecl.StructField d -> FIELD;
+      case TeleDecl.ClassMember d -> FIELD;
       case TeleDecl.PrimDecl d -> PRIM;
       case null, default -> null;
     };

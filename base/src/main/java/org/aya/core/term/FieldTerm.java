@@ -16,7 +16,7 @@ import java.util.function.UnaryOperator;
  */
 public record FieldTerm(
   @NotNull Term of,
-  @NotNull DefVar<FieldDef, TeleDecl.StructField> ref,
+  @NotNull DefVar<FieldDef, TeleDecl.ClassMember> ref,
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
 ) implements Callable {

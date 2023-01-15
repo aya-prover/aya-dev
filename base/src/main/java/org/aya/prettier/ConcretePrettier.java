@@ -378,7 +378,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         );
       }
       case TeleDecl.PrimDecl decl -> primDoc(decl.ref);
-      case TeleDecl.StructField field -> {
+      case TeleDecl.ClassMember field -> {
         var doc = MutableList.of(Doc.symbol("|"),
           coe(field.coerce),
           linkDef(field.ref, FIELD),

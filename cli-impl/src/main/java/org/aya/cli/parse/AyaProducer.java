@@ -368,11 +368,11 @@ public record AyaProducer(
     return decl;
   }
 
-  public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
+  public @NotNull TeleDecl.ClassMember structField(GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var info = declInfo(node, x -> false);
-    return new TeleDecl.StructField(
+    return new TeleDecl.ClassMember(
       info.info, info.name, tele,
       typeOrNull(node.peekChild(TYPE)),
       Option.ofNullable(node.peekChild(EXPR)).map(this::expr),

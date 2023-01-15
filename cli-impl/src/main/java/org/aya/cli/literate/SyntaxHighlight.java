@@ -140,7 +140,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       case DefVar<?, ?> defVar -> switch (new P(defVar.concrete, defVar.core)) {
         case P(TeleDecl.FnDecl $, var $$) -> HighlightInfo.DefKind.Fn;
         case P(TeleDecl.StructDecl $, var $$) -> HighlightInfo.DefKind.Struct;
-        case P(TeleDecl.StructField $, var $$) -> HighlightInfo.DefKind.Field;
+        case P(TeleDecl.ClassMember $, var $$) -> HighlightInfo.DefKind.Field;
         case P(TeleDecl.DataDecl $, var $$) -> HighlightInfo.DefKind.Data;
         case P(TeleDecl.DataCtor $, var $$) -> HighlightInfo.DefKind.Con;
         case P(TeleDecl.PrimDecl $, var $$) -> HighlightInfo.DefKind.Prim;

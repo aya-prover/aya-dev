@@ -16,9 +16,9 @@ import java.util.function.UnaryOperator;
  */
 public record NewTerm(
   @NotNull StructCall struct,
-  @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.StructField>, Term> params
+  @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.ClassMember>, Term> params
 ) implements StableWHNF {
-  public @NotNull NewTerm update(@NotNull StructCall struct, @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.StructField>, Term> params) {
+  public @NotNull NewTerm update(@NotNull StructCall struct, @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.ClassMember>, Term> params) {
     var equalParams = params == params()
       || params.view().map(Tuple::of).sameElements(params().view().map(Tuple::of));
     return struct == struct() && equalParams ? this : new NewTerm(struct, params);

@@ -194,7 +194,7 @@ public record AyaSccTycker(
     return switch (decl) {
       case Decl.TopLevel topLevel -> reuseTopLevel(topLevel);
       case TeleDecl.DataCtor ctor -> reuseTopLevel(ctor.dataRef.concrete);
-      case TeleDecl.StructField field -> reuseTopLevel(field.structRef.concrete);
+      case TeleDecl.ClassMember field -> reuseTopLevel(field.classDef.concrete);
     };
   }
 

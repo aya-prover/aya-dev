@@ -80,7 +80,7 @@ public interface Resolver {
       case TeleDecl.DataDecl data ->
         SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
       case TeleDecl.StructDecl struct ->
-        SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
+        SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.ClassMember::ref));
       default -> SeqView.of(def.ref());
     };
   }

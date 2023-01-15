@@ -18,7 +18,7 @@ public record RefTerm(@NotNull LocalVar var) implements Term {
     return this;
   }
 
-  public record Field(@NotNull DefVar<FieldDef, TeleDecl.StructField> ref) implements Term {
+  public record Field(@NotNull DefVar<FieldDef, TeleDecl.ClassMember> ref) implements Term {
     @Override public @NotNull Field descent(@NotNull UnaryOperator<@NotNull Term> f) {
       return this;
     }

@@ -54,7 +54,6 @@ public interface StmtResolver {
   /** @apiNote Note that this function MUTATES the decl */
   private static void resolveDecl(@NotNull Decl predecl, @NotNull ResolveInfo info) {
     switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.FnDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         var bodyResolver = resolver.body();
@@ -80,9 +79,10 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(decl), resolver.reference().view()
           .concat(decl.body.map(TyckOrder.Body::new)));
       }
-      case TeleDecl.StructDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
-        resolver.enterBody();
+      case ClassDecl decl -> {
+        assert decl.ctx != null;
+        var resolver = new ExprResolver(decl.ctx, ExprResolver.LAX);
+        resolver.enterHead();
         decl.fields.forEach(field -> {
           var bodyResolver = resolver.member(decl);
           bodyResolver.enterHead();
@@ -103,7 +103,7 @@ public interface StmtResolver {
       }
       // handled in DataDecl and StructDecl
       case TeleDecl.DataCtor ctor -> {}
-      case TeleDecl.StructField field -> {}
+      case TeleDecl.ClassMember field -> {}
     }
   }
   private static <T extends TeleDecl<?> & TyckUnit>
@@ -187,17 +187,16 @@ public interface StmtResolver {
   static void resolveBind(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
       case Command.Module mod -> resolveBind(mod.contents(), info);
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
+      case ClassDecl decl -> {
+        decl.fields.forEach(field -> resolveBind(field, info));
+        visitBind(decl.ref, decl.bindBlock(), info);
+      }
       case TeleDecl.DataDecl decl -> {
         decl.body.forEach(ctor -> resolveBind(ctor, info));
         visitBind(decl.ref, decl.bindBlock(), info);
       }
-      case TeleDecl.StructDecl decl -> {
-        decl.fields.forEach(field -> resolveBind(field, info));
-        visitBind(decl.ref, decl.bindBlock(), info);
-      }
       case TeleDecl.DataCtor ctor -> visitBind(ctor.ref, ctor.bindBlock(), info);
-      case TeleDecl.StructField field -> visitBind(field.ref, field.bindBlock(), info);
+      case TeleDecl.ClassMember field -> visitBind(field.ref, field.bindBlock(), info);
       case TeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock(), info);
       case TeleDecl.PrimDecl decl -> {}
       case Command cmd -> {}

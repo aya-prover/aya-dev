@@ -119,12 +119,12 @@ public final class StmtTycker extends TracedTycker {
       }
       // Do nothing, data constructors is just a header.
       case TeleDecl.DataCtor ctor -> ctor.ref.core;
-      case TeleDecl.StructField field -> {
+      case TeleDecl.ClassMember field -> {
         // TODO[ice]: remove this hack
         if (field.ref.core != null) yield field.ref.core;
         var signature = field.signature;
         assert signature != null; // already handled in the entrance of this method
-        var structRef = field.structRef;
+        var structRef = field.classDef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
         loadTele(tycker, structSig);
@@ -223,9 +223,9 @@ public final class StmtTycker extends TracedTycker {
         tycker.ctx = new SeqLocalCtx();
       }
       case TeleDecl.DataCtor ctor -> checkCtor(tycker, ctor);
-      case TeleDecl.StructField field -> {
+      case TeleDecl.ClassMember field -> {
         if (field.signature != null) break;
-        var structRef = field.structRef;
+        var structRef = field.classDef;
         var structSig = structRef.concrete.signature;
         assert structSig != null;
         loadTele(tycker, structSig);

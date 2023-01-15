@@ -104,7 +104,7 @@ public final class ExprTycker extends PropTycker {
         var structRef = structCall.ref();
         var subst = new Subst(Def.defTele(structRef).map(Term.Param::ref), structCall.args().map(Arg::term));
 
-        var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.StructField>, Term>>create();
+        var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.ClassMember>, Term>>create();
         var missing = MutableList.<AnyVar>create();
         var conFields = MutableMap.from(aNew.fields().view().map(t -> Tuple.of(t.name().data(), t)));
 
