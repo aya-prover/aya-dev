@@ -233,7 +233,7 @@ public record AyaGKProducer(
 
   public @NotNull ModifierSet declModifiersOf(
     @NotNull GenericNode<?> node,
-    @NotNull Predicate<WithPos<ModifierParser.Modifier>> filter) {
+    @NotNull Predicate<ModifierParser.Modifier> filter) {
     var modifiers = node.childrenOfType(DECL_MODIFIERS).map(x -> {
       var pos = sourcePosOf(x);
       ModifierParser.Modifier modifier = null;
@@ -249,29 +249,31 @@ public record AyaGKProducer(
     return new ModifierParser(reporter()).parse(modifiers, filter);
   }
 
-  private @NotNull ModifierSet commonDeclModifiersOf(@NotNull GenericNode<?> node) {
-    return declModifiersOf(node, x -> x.data() != ModifierParser.Modifier.Open);
-  }
+  record DeclParseData(@NotNull DeclInfo info, @NotNull String name, @NotNull ModifierSet modifier) {}
 
-  private @NotNull ModifierSet moduleLikeDeclModifiersOf(@NotNull GenericNode<?> node) {
-    return declModifiersOf(node, x -> true);
+  private @NotNull DeclParseData declInfo(@NotNull GenericNode<?> node, @NotNull Predicate<ModifierParser.Modifier> filter) {
+    var modifier = declModifiersOf(node, filter);
+    var bind = node.peekChild(BIND_BLOCK);
+    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
+    var info = new DeclInfo(
+      modifier.personality().data() == DeclInfo.Personality.NORMAL
+        ? modifier.accessibility().data()
+        : Stmt.Accessibility.Private,
+      nameOrInfix.component1().sourcePos(),
+      sourcePosOf(node),
+      nameOrInfix.component2(),
+      bind == null ? BindBlock.EMPTY : bindBlock(bind)
+    );
+    return new DeclParseData(info, nameOrInfix.component1().data(), modifier);
   }
 
   public @Nullable TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
-    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
-    if (nameOrInfix == null) {
-      error(node.childrenView().first(), "Expect a function name");
-      return null;
-    }
     var fnBodyNode = node.peekChild(FN_BODY);
     if (fnBodyNode == null) {
       error(node.childrenView().first(), "Expect a function body");
       return null;
     }
 
-    var modifier = commonDeclModifiersOf(node);
-    var acc = modifier.accessibility().data();
-    var sample = modifier.personality().data();
     var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> Tuple.of(m, fnModifier(m)))
       .toImmutableSeq();
     var inline = modifiers.find(t -> t.component2() == Modifier.Inline);
@@ -289,27 +291,16 @@ public record AyaGKProducer(
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
-    var info = new DeclInfo(
-      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
-      nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
-    );
-    return new TeleDecl.FnDecl(
-      info,
-      modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
-        () -> EnumSet.noneOf(Modifier.class))),
-      nameOrInfix.component1().data(),
-      tele,
-      typeOrNull(node.peekChild(TYPE)),
-      dynamite,
-      sample
-    );
+    var info = declInfo(node, x -> x != ModifierParser.Modifier.Open);
+    var modifier = info.modifier;
+    var sample = modifier.personality().data();
+    var fnMods = modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
+      () -> EnumSet.noneOf(Modifier.class)));
+    var ty = typeOrNull(node.peekChild(TYPE));
+    return new TeleDecl.FnDecl(info.info, fnMods, info.name, tele, ty, dynamite, sample);
   }
 
-  public @Nullable Either<Expr, ImmutableSeq<Pattern.Clause>>
-  fnBody(@NotNull GenericNode<?> node) {
+  public @Nullable Either<Expr, ImmutableSeq<Pattern.Clause>> fnBody(@NotNull GenericNode<?> node) {
     var expr = node.peekChild(EXPR);
     var implies = node.peekChild(IMPLIES);
     if (expr == null && implies != null) {
@@ -334,34 +325,13 @@ public record AyaGKProducer(
   }
 
   public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
-    if (nameOrInfix == null) {
-      error(node.childrenView().first(), "Expect a data name");
-      return null;
-    }
-    var modifier = moduleLikeDeclModifiersOf(node);
-    var acc = modifier.accessibility().data();
-    var sample = modifier.personality().data();
-    var bind = node.peekChild(BIND_BLOCK);
     var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var info = new DeclInfo(
-      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
-      nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
-    );
-    var decl = new TeleDecl.DataDecl(
-      info,
-      nameOrInfix.component1().data(),
-      tele,
-      typeOrNull(node.peekChild(TYPE)),
-      body,
-      sample
-    );
-
-    giveMeOpen(modifier, decl, additional);
+    var info = declInfo(node, x -> true);
+    var sample = info.modifier.personality().data();
+    var ty = typeOrNull(node.peekChild(TYPE));
+    var decl = new TeleDecl.DataDecl(info.info, info.name, tele, ty, body, sample);
+    giveMeOpen(info.modifier, decl, additional);
     return decl;
   }
 
@@ -379,29 +349,13 @@ public record AyaGKProducer(
   }
 
   public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-    var modifier = moduleLikeDeclModifiersOf(node);
-    var acc = modifier.accessibility().data();
-    var sample = modifier.personality().data();
-    var bind = node.peekChild(BIND_BLOCK);
+    var info = declInfo(node, x -> true);
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var info = new DeclInfo(
-      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
-      nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
-    );
-    var decl = new TeleDecl.StructDecl(
-      info,
-      nameOrInfix.component1().data(),
-      tele,
-      typeOrNull(node.peekChild(TYPE)),
-      fields,
-      sample
-    );
-    giveMeOpen(modifier, decl, additional);
+    var ty = typeOrNull(node.peekChild(TYPE));
+    var personality = info.modifier.personality().data();
+    var decl = new TeleDecl.StructDecl(info.info, info.name, tele, ty, fields, personality);
+    giveMeOpen(info.modifier, decl, additional);
     return decl;
   }
 

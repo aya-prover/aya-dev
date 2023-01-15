@@ -709,10 +709,10 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, FN_DECL, "<fn decl>");
     r = fnDecl_0(b, l + 1);
     r = r && consumeToken(b, KW_DEF);
-    p = r; // pin = 2
-    r = r && report_error_(b, fnDecl_2(b, l + 1));
-    r = p && report_error_(b, declNameOrInfix(b, l + 1)) && r;
-    r = p && report_error_(b, fnDecl_4(b, l + 1)) && r;
+    r = r && fnDecl_2(b, l + 1);
+    r = r && declNameOrInfix(b, l + 1);
+    p = r; // pin = 4
+    r = r && report_error_(b, fnDecl_4(b, l + 1));
     r = p && report_error_(b, fnDecl_5(b, l + 1)) && r;
     r = p && report_error_(b, fnBody(b, l + 1)) && r;
     r = p && fnDecl_7(b, l + 1) && r;

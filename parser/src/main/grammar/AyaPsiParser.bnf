@@ -206,7 +206,7 @@ loosers ::= KW_LOOSER qualifiedId+
 
 fnDecl ::= declModifiers*
  KW_DEF fnModifiers* declNameOrInfix
- tele* type? fnBody bindBlock? { pin=2 }
+ tele* type? fnBody bindBlock? { pin=4 }
 
 private simpleBody ::= IMPLIES expr { pin=1 }
 fnBody ::= simpleBody

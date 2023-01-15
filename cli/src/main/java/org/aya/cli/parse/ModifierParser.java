@@ -56,12 +56,12 @@ public class ModifierParser {
     return parse(modifiers, x -> true);
   }
 
-  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Predicate<WithPos<Modifier>> filter) {
+  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Predicate<Modifier> filter) {
     EnumMap<ModifierGroup, EnumMap<Modifier, SourcePos>> map = new EnumMap<>(ModifierGroup.class);
 
     // parsing
     for (var data : modifiers) {
-      if (!filter.test(data)) {
+      if (!filter.test(data.data())) {
         reportUnsuitableModifier(data);
         continue;
       }
