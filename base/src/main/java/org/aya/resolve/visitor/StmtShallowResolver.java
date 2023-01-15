@@ -97,13 +97,12 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
 
   private void resolveDecl(@NotNull Decl predecl, @NotNull ModuleContext context) {
     switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), this::resolveDecl);
         resolveOpInfo(decl, innerCtx);
       }
-      case TeleDecl.StructDecl decl -> {
+      case ClassDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), this::resolveDecl);
         resolveOpInfo(decl, innerCtx);

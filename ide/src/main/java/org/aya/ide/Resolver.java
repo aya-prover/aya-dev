@@ -10,6 +10,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.concrete.stmt.QualifiedID;
+import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.StmtFolder;
@@ -79,7 +80,7 @@ public interface Resolver {
     return switch (def) {
       case TeleDecl.DataDecl data ->
         SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
-      case TeleDecl.StructDecl struct ->
+      case ClassDecl struct ->
         SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.ClassMember::ref));
       default -> SeqView.of(def.ref());
     };
