@@ -245,13 +245,17 @@ public record AyaGKProducer(
 
   record DeclParseData(@NotNull DeclInfo info, @NotNull String name, @NotNull ModifierSet modifier) {}
 
-  private @NotNull DeclParseData declInfo(
+  private @Nullable DeclParseData declInfo(
     @NotNull GenericNode<?> node,
     @NotNull Predicate<ModifierParser.Modifier> filter
   ) {
     var modifier = declModifiersOf(node, filter);
     var bind = node.peekChild(BIND_BLOCK);
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
+    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
+    if (nameOrInfix == null) {
+      error(node.childrenView().first(), "Expect a name");
+      return null;
+    }
     var info = new DeclInfo(
       modifier.accessibility().data(),
       nameOrInfix.component1().sourcePos(),
@@ -287,6 +291,7 @@ public record AyaGKProducer(
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
     var info = declInfo(node, x -> x != ModifierParser.Modifier.Open);
+    if (info == null) return null;
     var sample = info.modifier.personality().data();
     var fnMods = modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
       () -> EnumSet.noneOf(Modifier.class)));
@@ -323,6 +328,7 @@ public record AyaGKProducer(
     var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var info = declInfo(node, x -> x != ModifierParser.Modifier.Counterexample);
+    if (info == null) return null;
     var sample = info.modifier.personality().data();
     var ty = typeOrNull(node.peekChild(TYPE));
     var decl = new TeleDecl.DataDecl(info.info, info.name, tele, ty, body, sample);
@@ -345,6 +351,7 @@ public record AyaGKProducer(
 
   public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var info = declInfo(node, x -> true);
+    if (info == null) return null;
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var ty = typeOrNull(node.peekChild(TYPE));

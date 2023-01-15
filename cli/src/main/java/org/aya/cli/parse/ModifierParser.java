@@ -65,7 +65,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     var result = modifiers
       .flatMap(modi -> Seq.from(modi.data().implies)
         .map(imply -> new WithPos<>(modi.sourcePos(), imply)))
-      .collect(Collectors.toMap(WithPos::data, Functions.identity()))
+      .collect(Collectors.toUnmodifiableMap(WithPos::data, Functions.identity(), (a, b) -> a))
       .values();
 
     return ImmutableSeq.from(result);
