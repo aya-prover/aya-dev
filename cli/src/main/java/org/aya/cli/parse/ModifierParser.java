@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
+import kala.collection.Map;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.error.ContradictModifierError;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
 import org.aya.cli.parse.error.NotSuitableModifierWarn;
@@ -27,23 +29,29 @@ public class ModifierParser {
 
   public enum Modifier {
     Private(ModifierGroup.Accessibility, "private"),
-    Example(ModifierGroup.Personality, "example"),
-    Counterexample(ModifierGroup.Personality, "counterexample"),
+    Example(ModifierGroup.Personality, "example", Private),
+    Counterexample(ModifierGroup.Personality, "counterexample", Private),
     Open(ModifierGroup.None, "open");
 
     public final @NotNull ModifierGroup group;
     public final @NotNull String keyword;
 
-    Modifier(@NotNull ModifierGroup group, @NotNull String keyword) {
+    /**
+     * {@code implies} will/should expand only once
+     */
+    public final @NotNull Modifier[] implies;
+
+    Modifier(@NotNull ModifierGroup group, @NotNull String keyword, @NotNull Modifier... implies) {
       this.group = group;
       this.keyword = keyword;
+      this.implies = implies;
     }
   }
 
   public record ModifierSet(
     @NotNull WithPos<Stmt.Accessibility> accessibility,
     @NotNull WithPos<DeclInfo.Personality> personality,
-    @NotNull WithPos<Boolean> isReExport) {
+    @NotNull WithPos<Boolean> isOpen) {
   }
 
   public final @NotNull Reporter reporter;
@@ -56,8 +64,27 @@ public class ModifierParser {
     return parse(modifiers, x -> true);
   }
 
+  private @NotNull ImmutableSeq<WithPos<Modifier>> implication(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
+    EnumMap<Modifier, SourcePos> map = new EnumMap<>(Modifier.class);
+
+    for (var modi : modifiers) {
+      for (var implies : modi.data().implies) {
+        map.putIfAbsent(implies, modi.sourcePos());
+      }
+    }
+
+    return Map.from(map).view()
+      .map((modi, pos) -> new WithPos<>(pos, modi)).toImmutableSeq();
+  }
+
+  /**
+   * @param filter The filter also perform on the modifiers that expanded from input.
+   */
   public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Predicate<Modifier> filter) {
     EnumMap<ModifierGroup, EnumMap<Modifier, SourcePos>> map = new EnumMap<>(ModifierGroup.class);
+
+    var inserts = implication(modifiers);
+    modifiers = inserts.concat(modifiers);
 
     // parsing
     for (var data : modifiers) {

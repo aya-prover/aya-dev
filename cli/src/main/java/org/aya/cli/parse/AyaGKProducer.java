@@ -312,10 +312,10 @@ public record AyaGKProducer(
   }
 
   private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl, @NotNull MutableList<Stmt> additional) {
-    if (!modiSet.isReExport().data()) return;
+    if (!modiSet.isOpen().data()) return;
 
     additional.append(new Command.Open(
-      modiSet.isReExport().sourcePos(),
+      modiSet.isOpen().sourcePos(),
       modiSet.accessibility().data(),
       new QualifiedID(decl.sourcePos(), decl.ref().name()),
       UseHide.EMPTY,
