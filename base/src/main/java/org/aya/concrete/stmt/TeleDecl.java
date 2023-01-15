@@ -116,16 +116,14 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
     public final boolean coerce;
 
     public DataCtor(
-      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @Nullable OpInfo opInfo,
+      @NotNull DeclInfo info,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr.PartEl clauses,
       @NotNull ImmutableSeq<Arg<Pattern>> patterns,
-      boolean coerce, @Nullable Expr result,
-      @NotNull BindBlock bindBlock
+      boolean coerce, @Nullable Expr result
     ) {
-      super(new DeclInfo(Accessibility.Public, sourcePos, entireSourcePos, opInfo, bindBlock), telescope, result);
+      super(info, telescope, result);
       this.clauses = clauses;
       this.coerce = coerce;
       this.patterns = patterns;

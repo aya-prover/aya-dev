@@ -21,7 +21,6 @@ import kala.value.MutableValue;
 import org.aya.cli.parse.ModifierParser.ModifierSet;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.error.BadCounterexampleWarn;
 import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.*;
@@ -98,11 +97,6 @@ public record AyaGKProducer(
       var stmts = MutableList.<Stmt>create();
       var result = decl(node, stmts);
       if (result != null) stmts.prepend(result);
-      if (result instanceof Decl.TopLevel top && top.personality() == DeclInfo.Personality.COUNTEREXAMPLE) {
-        stmts.firstOption(stmt -> !(stmt instanceof Decl))
-          .ifDefined(stmt -> reporter.report(new BadCounterexampleWarn(stmt)));
-        return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
-      }
       return stmts.toImmutableSeq();
     }
     if (node.is(GENERALIZE)) return ImmutableSeq.of(generalize(node));
@@ -231,9 +225,13 @@ public record AyaGKProducer(
     return unreachable(node);
   }
 
+  /**
+   * @return public if accessiblity is unspecified
+   * @see ModifierParser#parse(ImmutableSeq, Predicate)
+   */
   public @NotNull ModifierSet declModifiersOf(
     @NotNull GenericNode<?> node,
-    @NotNull Predicate<WithPos<ModifierParser.Modifier>> filter) {
+    @NotNull Predicate<ModifierParser.Modifier> filter) {
     var modifiers = node.childrenOfType(DECL_MODIFIERS).map(x -> {
       var pos = sourcePosOf(x);
       ModifierParser.Modifier modifier = null;
@@ -246,32 +244,39 @@ public record AyaGKProducer(
       return new WithPos<>(pos, modifier);
     });
 
-    return new ModifierParser(reporter()).parse(modifiers, filter);
+    return new ModifierParser(reporter()).parse(modifiers.toImmutableSeq(), filter);
   }
 
-  private @NotNull ModifierSet commonDeclModifiersOf(@NotNull GenericNode<?> node) {
-    return declModifiersOf(node, x -> x.data() != ModifierParser.Modifier.Open);
-  }
+  record DeclParseData(@NotNull DeclInfo info, @NotNull String name, @NotNull ModifierSet modifier) {}
 
-  private @NotNull ModifierSet moduleLikeDeclModifiersOf(@NotNull GenericNode<?> node) {
-    return declModifiersOf(node, x -> true);
+  private @Nullable DeclParseData declInfo(
+    @NotNull GenericNode<?> node,
+    @NotNull Predicate<ModifierParser.Modifier> filter
+  ) {
+    var modifier = declModifiersOf(node, filter);
+    var bind = node.peekChild(BIND_BLOCK);
+    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
+    if (nameOrInfix == null) {
+      error(node.childrenView().first(), "Expect a name");
+      return null;
+    }
+    var info = new DeclInfo(
+      modifier.accessibility().data(),
+      nameOrInfix.component1().sourcePos(),
+      sourcePosOf(node),
+      nameOrInfix.component2(),
+      bind == null ? BindBlock.EMPTY : bindBlock(bind)
+    );
+    return new DeclParseData(info, nameOrInfix.component1().data(), modifier);
   }
 
   public @Nullable TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
-    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
-    if (nameOrInfix == null) {
-      error(node.childrenView().first(), "Expect a function name");
-      return null;
-    }
     var fnBodyNode = node.peekChild(FN_BODY);
     if (fnBodyNode == null) {
       error(node.childrenView().first(), "Expect a function body");
       return null;
     }
 
-    var modifier = commonDeclModifiersOf(node);
-    var acc = modifier.accessibility().data();
-    var sample = modifier.personality().data();
     var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> Tuple.of(m, fnModifier(m)))
       .toImmutableSeq();
     var inline = modifiers.find(t -> t.component2() == Modifier.Inline);
@@ -289,27 +294,16 @@ public record AyaGKProducer(
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
-    var info = new DeclInfo(
-      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
-      nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
-    );
-    return new TeleDecl.FnDecl(
-      info,
-      modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
-        () -> EnumSet.noneOf(Modifier.class))),
-      nameOrInfix.component1().data(),
-      tele,
-      typeOrNull(node.peekChild(TYPE)),
-      dynamite,
-      sample
-    );
+    var info = declInfo(node, x -> x != ModifierParser.Modifier.Open);
+    if (info == null) return null;
+    var sample = info.modifier.personality().data();
+    var fnMods = modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
+      () -> EnumSet.noneOf(Modifier.class)));
+    var ty = typeOrNull(node.peekChild(TYPE));
+    return new TeleDecl.FnDecl(info.info, fnMods, info.name, tele, ty, dynamite, sample);
   }
 
-  public @Nullable Either<Expr, ImmutableSeq<Pattern.Clause>>
-  fnBody(@NotNull GenericNode<?> node) {
+  public @Nullable Either<Expr, ImmutableSeq<Pattern.Clause>> fnBody(@NotNull GenericNode<?> node) {
     var expr = node.peekChild(EXPR);
     var implies = node.peekChild(IMPLIES);
     if (expr == null && implies != null) {
@@ -321,10 +315,11 @@ public record AyaGKProducer(
   }
 
   private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl, @NotNull MutableList<Stmt> additional) {
-    if (!modiSet.isReExport().data()) return;
+    var keyword = modiSet.openKw();
+    if (keyword == null) return;
 
     additional.append(new Command.Open(
-      modiSet.isReExport().sourcePos(),
+      keyword,
       modiSet.accessibility().data(),
       new QualifiedID(decl.sourcePos(), decl.ref().name()),
       UseHide.EMPTY,
@@ -334,34 +329,14 @@ public record AyaGKProducer(
   }
 
   public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-    var nameOrInfix = declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX));
-    if (nameOrInfix == null) {
-      error(node.childrenView().first(), "Expect a data name");
-      return null;
-    }
-    var modifier = moduleLikeDeclModifiersOf(node);
-    var acc = modifier.accessibility().data();
-    var sample = modifier.personality().data();
-    var bind = node.peekChild(BIND_BLOCK);
     var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var info = new DeclInfo(
-      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
-      nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
-    );
-    var decl = new TeleDecl.DataDecl(
-      info,
-      nameOrInfix.component1().data(),
-      tele,
-      typeOrNull(node.peekChild(TYPE)),
-      body,
-      sample
-    );
-
-    giveMeOpen(modifier, decl, additional);
+    var info = declInfo(node, x -> x != ModifierParser.Modifier.Counterexample);
+    if (info == null) return null;
+    var sample = info.modifier.personality().data();
+    var ty = typeOrNull(node.peekChild(TYPE));
+    var decl = new TeleDecl.DataDecl(info.info, info.name, tele, ty, body, sample);
+    giveMeOpen(info.modifier, decl, additional);
     return decl;
   }
 
@@ -379,29 +354,14 @@ public record AyaGKProducer(
   }
 
   public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-    var modifier = moduleLikeDeclModifiersOf(node);
-    var acc = modifier.accessibility().data();
-    var sample = modifier.personality().data();
-    var bind = node.peekChild(BIND_BLOCK);
+    var info = declInfo(node, x -> true);
+    if (info == null) return null;
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var info = new DeclInfo(
-      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
-      nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
-    );
-    var decl = new TeleDecl.StructDecl(
-      info,
-      nameOrInfix.component1().data(),
-      tele,
-      typeOrNull(node.peekChild(TYPE)),
-      fields,
-      sample
-    );
-    giveMeOpen(modifier, decl, additional);
+    var ty = typeOrNull(node.peekChild(TYPE));
+    var personality = info.modifier.personality().data();
+    var decl = new TeleDecl.StructDecl(info.info, info.name, tele, ty, fields, personality);
+    giveMeOpen(info.modifier, decl, additional);
     return decl;
   }
 
@@ -444,24 +404,12 @@ public record AyaGKProducer(
 
   public @NotNull TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var bind = node.peekChild(BIND_BLOCK);
     var partial = node.peekChild(PARTIAL_BLOCK);
     var ty = node.peekChild(TYPE);
-    var namePos = nameOrInfix.component1().sourcePos();
-    var ctor = new TeleDecl.DataCtor(
-      namePos,
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      nameOrInfix.component1().data(),
-      tele,
-      partial(partial, partial != null ? sourcePosOf(partial) : namePos),
-      patterns,
-      node.peekChild(KW_COERCE) != null,
-      ty == null ? null : type(ty),
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
-    );
-    return ctor;
+    var info = declInfo(node, x -> false);
+    var par = partial(partial, partial != null ? sourcePosOf(partial) : info.info.sourcePos());
+    var coe = node.peekChild(KW_COERCE) != null;
+    return new TeleDecl.DataCtor(info.info, info.name, tele, par, patterns, coe, ty == null ? null : type(ty));
   }
 
   public @NotNull ImmutableSeq<Expr.Param> telescope(SeqView<GenericNode<?>> telescope) {

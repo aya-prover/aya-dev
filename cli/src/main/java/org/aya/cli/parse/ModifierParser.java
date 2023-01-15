@@ -4,9 +4,11 @@ package org.aya.cli.parse;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.function.Functions;
 import org.aya.cli.parse.error.ContradictModifierError;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
-import org.aya.cli.parse.error.NotSuitableModifierWarn;
+import org.aya.cli.parse.error.NotSuitableModifierError;
 import org.aya.concrete.stmt.DeclInfo;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.util.InternalException;
@@ -14,11 +16,14 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.EnumMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-public class ModifierParser {
+public record ModifierParser(@NotNull Reporter reporter) {
   public enum ModifierGroup {
     None,
     Accessibility,
@@ -27,51 +32,66 @@ public class ModifierParser {
 
   public enum Modifier {
     Private(ModifierGroup.Accessibility, "private"),
-    Example(ModifierGroup.Personality, "example"),
-    Counterexample(ModifierGroup.Personality, "counterexample"),
+    Example(ModifierGroup.Personality, "example", Private),
+    Counterexample(ModifierGroup.Personality, "counterexample", Private),
     Open(ModifierGroup.None, "open");
 
     public final @NotNull ModifierGroup group;
     public final @NotNull String keyword;
 
-    Modifier(@NotNull ModifierGroup group, @NotNull String keyword) {
+    /**
+     * {@code implies} will/should expand only once
+     */
+    public final @NotNull Modifier[] implies;
+
+    Modifier(@NotNull ModifierGroup group, @NotNull String keyword, @NotNull Modifier... implies) {
       this.group = group;
       this.keyword = keyword;
+      this.implies = implies;
     }
   }
 
   public record ModifierSet(
     @NotNull WithPos<Stmt.Accessibility> accessibility,
     @NotNull WithPos<DeclInfo.Personality> personality,
-    @NotNull WithPos<Boolean> isReExport) {
+    @Nullable SourcePos openKw) {
   }
 
-  public final @NotNull Reporter reporter;
-
-  public ModifierParser(@NotNull Reporter reporter) {
-    this.reporter = reporter;
-  }
-
-  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
+  @TestOnly public @NotNull ModifierSet parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
     return parse(modifiers, x -> true);
   }
 
-  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Predicate<WithPos<Modifier>> filter) {
+  private @NotNull ImmutableSeq<WithPos<Modifier>> implication(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
+    var result = modifiers
+      .flatMap(modi -> Seq.from(modi.data().implies)
+        .map(imply -> new WithPos<>(modi.sourcePos(), imply)))
+      .collect(Collectors.toUnmodifiableMap(WithPos::data, Functions.identity(), (a, b) -> a))
+      .values();
+
+    return ImmutableSeq.from(result);
+  }
+
+  /**
+   * @param filter The filter also performs on the modifiers that expanded from input.
+   */
+  public @NotNull ModifierSet parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers, @NotNull Predicate<Modifier> filter) {
     EnumMap<ModifierGroup, EnumMap<Modifier, SourcePos>> map = new EnumMap<>(ModifierGroup.class);
+
+    modifiers = implication(modifiers).concat(modifiers);
 
     // parsing
     for (var data : modifiers) {
-      if (!filter.test(data)) {
+      var pos = data.sourcePos();
+      var modifier = data.data();
+
+      // do filter
+      if (!filter.test(data.data())) {
         reportUnsuitableModifier(data);
         continue;
       }
 
-      var pos = data.sourcePos();
-      var modifier = data.data();
-
-      // getOrPut
-      var exists = map.getOrDefault(modifier.group, new EnumMap<>(Modifier.class));
-      map.putIfAbsent(modifier.group, exists);
+      map.computeIfAbsent(modifier.group, k -> new EnumMap<>(Modifier.class));
+      var exists = map.get(modifier.group);
 
       if (exists.containsKey(modifier)) {
         reportDuplicatedModifier(data);
@@ -89,7 +109,7 @@ public class ModifierParser {
         continue;
       }
 
-      // no contradict modifier, no duplicate modifier, everything is fine
+      // no contradict modifier, no redundant modifier, everything is good
       exists.put(modifier, pos);
     }
 
@@ -124,18 +144,13 @@ public class ModifierParser {
 
     // others
     var noneGroup = map.get(ModifierGroup.None);
-    WithPos<Boolean> isReExport = new WithPos<>(SourcePos.NONE, false);
+    var openKw = noneGroup != null ? noneGroup.get(Modifier.Open) : null;
 
-    if (noneGroup != null) {
-      var open = noneGroup.get(Modifier.Open);
-      if (open != null) isReExport = new WithPos<>(open, true);
-    }
-
-    return new ModifierSet(acc, pers, isReExport);
+    return new ModifierSet(acc, pers, openKw);
   }
 
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
-    reporter.report(new NotSuitableModifierWarn(data.sourcePos(), data.data()));
+    reporter.report(new NotSuitableModifierError(data.sourcePos(), data.data()));
   }
 
   public void reportDuplicatedModifier(@NotNull WithPos<Modifier> data) {
