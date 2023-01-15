@@ -16,7 +16,7 @@ public record DuplicatedModifierWarn(
 
   @Override
   public @NotNull Doc describe(@NotNull PrettierOptions options) {
-    return Doc.english("This modifier is duplicated with the other, ignored.");
+    return Doc.english("This modifier is redundant, ignored.");
   }
 
   @Override

@@ -21,7 +21,6 @@ import kala.value.MutableValue;
 import org.aya.cli.parse.ModifierParser.ModifierSet;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.error.BadCounterexampleWarn;
 import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.*;
@@ -44,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -229,7 +227,7 @@ public record AyaGKProducer(
 
   public @NotNull ModifierSet declModifiersOf(
     @NotNull GenericNode<?> node,
-    @NotNull Function<ModifierParser.Modifier, Option<ModifierParser.Replacement>> filter) {
+    @NotNull Predicate<ModifierParser.Modifier> filter) {
     var modifiers = node.childrenOfType(DECL_MODIFIERS).map(x -> {
       var pos = sourcePosOf(x);
       ModifierParser.Modifier modifier = null;
@@ -249,7 +247,7 @@ public record AyaGKProducer(
 
   private @NotNull DeclParseData declInfo(
     @NotNull GenericNode<?> node,
-    @NotNull Function<ModifierParser.Modifier, Option<ModifierParser.Replacement>> filter
+    @NotNull Predicate<ModifierParser.Modifier> filter
   ) {
     var modifier = declModifiersOf(node, filter);
     var bind = node.peekChild(BIND_BLOCK);
@@ -290,7 +288,7 @@ public record AyaGKProducer(
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
-    var info = declInfo(node, x -> ModifierParser.Replacement.ignoreIf(x == ModifierParser.Modifier.Open));
+    var info = declInfo(node, x -> x != ModifierParser.Modifier.Open);
     var modifier = info.modifier;
     var sample = modifier.personality().data();
     var fnMods = modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
@@ -326,11 +324,7 @@ public record AyaGKProducer(
   public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var info = declInfo(node, x -> {
-      if (x == ModifierParser.Modifier.Counterexample) {
-        return Option.some(ModifierParser.Replacement.of(ModifierParser.Modifier.Example));
-      } else return Option.none();
-    });
+    var info = declInfo(node, x -> x != ModifierParser.Modifier.Counterexample);
     var sample = info.modifier.personality().data();
     var ty = typeOrNull(node.peekChild(TYPE));
     var decl = new TeleDecl.DataDecl(info.info, info.name, tele, ty, body, sample);
@@ -352,7 +346,7 @@ public record AyaGKProducer(
   }
 
   public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-    var info = declInfo(node, x -> Option.none());
+    var info = declInfo(node, x -> true);
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var ty = typeOrNull(node.peekChild(TYPE));

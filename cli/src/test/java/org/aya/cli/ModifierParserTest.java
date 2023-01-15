@@ -3,12 +3,10 @@
 package org.aya.cli;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.parse.ModifierParser;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
-import org.aya.cli.parse.error.NotSuitableModifierWarn;
 import org.aya.concrete.stmt.DeclInfo;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.util.error.SourcePos;
@@ -21,7 +19,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
 
-import static org.aya.cli.parse.ModifierParser.Modifier.*;
+import static org.aya.cli.parse.ModifierParser.Modifier.Example;
+import static org.aya.cli.parse.ModifierParser.Modifier.Private;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
@@ -67,29 +66,5 @@ public class ModifierParserTest {
       new WithPos<>(SourcePos.NONE, false)
     ), returns);
     assertEquals(returns, returns2);
-  }
-
-  @Test
-  public void replacement() {
-    var modis = posed(ImmutableSeq.of(
-      Counterexample
-    ));
-
-    var result = withParser(parser -> parser.parse(modis,
-      x -> x == Counterexample
-        ? Option.some(ModifierParser.Replacement.of(Example))
-        : Option.none()));
-
-    var reporter = result.component1();
-    var returns = result.component2();
-
-    assertEquals(1, reporter.problems().size());
-    assertEquals(1, reporter.problemSize(Problem.Severity.WARN));
-
-    var warn = reporter.problems().first();
-    assertInstanceOf(NotSuitableModifierWarn.class, warn);
-    assertEquals(Counterexample, ((NotSuitableModifierWarn) warn).modifier());
-    assertEquals(Stmt.Accessibility.Private, returns.accessibility().data());
-    assertEquals(DeclInfo.Personality.EXAMPLE, returns.personality().data());
   }
 }

@@ -2,17 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
-import kala.collection.Map;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
+import kala.function.Functions;
 import org.aya.cli.parse.error.ContradictModifierError;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
-import org.aya.cli.parse.error.NotSuitableModifierWarn;
+import org.aya.cli.parse.error.NotSuitableModifierError;
 import org.aya.concrete.stmt.DeclInfo;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.util.InternalException;
@@ -22,8 +19,8 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ModifierParser {
   public enum ModifierGroup {
@@ -81,49 +78,39 @@ public class ModifierParser {
   }
 
   public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
-    return parse(modifiers, x -> Option.none());
+    return parse(modifiers, x -> true);
   }
 
   private @NotNull ImmutableSeq<WithPos<Modifier>> implication(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
-    EnumMap<Modifier, SourcePos> map = new EnumMap<>(Modifier.class);
+    var result = modifiers
+      .flatMap(modi -> Seq.from(modi.data().implies)
+        .map(imply -> new WithPos<>(modi.sourcePos(), imply)))
+      .collect(Collectors.toMap(WithPos::data, Functions.identity()))
+      .values();
 
-    for (var modi : modifiers) {
-      for (var implies : modi.data().implies) {
-        map.putIfAbsent(implies, modi.sourcePos());
-      }
-    }
-
-    return Map.from(map).view()
-      .map((modi, pos) -> new WithPos<>(pos, modi)).toImmutableSeq();
+    return ImmutableSeq.from(result);
   }
 
   /**
-   * @param filter The filter also perform on the modifiers that expanded from input.
+   * @param filter The filter also performs on the modifiers that expanded from input.
    */
-  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Function<Modifier, Option<Replacement>> filter) {
+  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Predicate<Modifier> filter) {
     EnumMap<ModifierGroup, EnumMap<Modifier, SourcePos>> map = new EnumMap<>(ModifierGroup.class);
 
-    // do filter
-    var replacedModifiers = MutableList.<WithPos<Modifier>>create();
-    for (var modifier : modifiers) {
-      var replacement = filter.apply(modifier.data());
-      if (replacement.isDefined()) {
-        reportUnsuitableModifier(modifier);
-        replacedModifiers.appendAll(replacement.get().replacement()
-          .map(x -> new WithPos<>(modifier.sourcePos(), x)));
-      } else replacedModifiers.append(modifier);
-    }
-
-
-    var inserts = implication(replacedModifiers);
-    var finalModifiers = inserts.concat(replacedModifiers);
+    modifiers = implication(modifiers).concat(modifiers);
 
     // parsing
-    for (var data : finalModifiers) {
+    for (var data : modifiers) {
       var pos = data.sourcePos();
       var modifier = data.data();
 
-      // getOrPut
+      // do filter
+      if (!filter.test(data.data())) {
+        reportUnsuitableModifier(data);
+        continue;
+      }
+
+      // TODO: silly getOrPut or use kala map
       var exists = map.getOrDefault(modifier.group, new EnumMap<>(Modifier.class));
       map.putIfAbsent(modifier.group, exists);
 
@@ -143,7 +130,7 @@ public class ModifierParser {
         continue;
       }
 
-      // no contradict modifier, no duplicate modifier, everything is fine
+      // no contradict modifier, no redundant modifier, everything is good
       exists.put(modifier, pos);
     }
 
@@ -178,19 +165,19 @@ public class ModifierParser {
 
     // others
     var noneGroup = map.get(ModifierGroup.None);
-    WithPos<Boolean> isReExport = new WithPos<>(SourcePos.NONE, false);
+    WithPos<Boolean> isOpen = new WithPos<>(SourcePos.NONE, false);
 
     if (noneGroup != null) {
       var open = noneGroup.get(Modifier.Open);
-      if (open != null) isReExport = new WithPos<>(open, true);
+      if (open != null) isOpen = new WithPos<>(open, true);
     }
 
-    return new ModifierSet(acc, pers, isReExport);
+    return new ModifierSet(acc, pers, isOpen);
   }
 
   // TODO: also report the replacement
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
-    reporter.report(new NotSuitableModifierWarn(data.sourcePos(), data.data()));
+    reporter.report(new NotSuitableModifierError(data.sourcePos(), data.data()));
   }
 
   public void reportDuplicatedModifier(@NotNull WithPos<Modifier> data) {
