@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Common parts of concrete definitions.
+ * In particular, it does not assume the definition to have a telescope.
  *
  * @author ice1000
  * @apiNote This class should only be used in extends and permits clause. Use {@link Decl} elsewhere instead.

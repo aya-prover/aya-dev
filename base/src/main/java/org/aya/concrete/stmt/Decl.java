@@ -24,7 +24,6 @@ import java.util.function.UnaryOperator;
  * <ul>
  *   <li>Whether it has a telescope, see {@link Telescopic}</li>
  *   <li>Whether it can be defined at top-level, see {@link TopLevel}</li>
- *   <li>Whether it has a result type, see {@link Resulted}</li>
  * </ul>
  * We say these are properties of a concrete definition and should be implemented selectively.
  *
@@ -66,10 +65,12 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface Telescopic<RetTy extends Term> extends Resulted permits TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
+  sealed interface Telescopic<RetTy extends Term> permits TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
     @NotNull ImmutableSeq<Expr.Param> telescope();
     void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f);
     @Nullable Def.Signature<RetTy> signature();
+    @Nullable Expr result();
+    void modifyResult(@NotNull UnaryOperator<@NotNull Expr> f);
   }
 
   /**
@@ -81,15 +82,5 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
     @NotNull Personality personality();
     @Nullable Context getCtx();
     void setCtx(@NotNull Context ctx);
-  }
-
-  /**
-   * Denotes that the definition has a result type
-   *
-   * @author kiva
-   */
-  sealed interface Resulted permits Telescopic {
-    @Nullable Expr result();
-    void modifyResult(@NotNull UnaryOperator<@NotNull Expr> f);
   }
 }

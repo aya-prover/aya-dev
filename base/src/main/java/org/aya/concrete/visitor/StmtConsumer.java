@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -11,9 +11,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
   default void accept(@NotNull Stmt stmt) {
     switch (stmt) {
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic<?> telescopic)
-          telescopic.modifyTelescope(t -> t.map(param -> param.descent(this)));
-        if (decl instanceof Decl.Resulted resulted) resulted.modifyResult(this);
+        if (decl instanceof Decl.Telescopic<?> telescopic) visitTelescopic(telescopic);
         switch (decl) {
           case TeleDecl.DataDecl data -> data.body.forEach(this);
           case TeleDecl.StructDecl struct -> struct.fields.forEach(this);
@@ -37,5 +35,10 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
       }
       case Generalize generalize -> generalize.type = apply(generalize.type);
     }
+  }
+
+  default void visitTelescopic(@NotNull Decl.Telescopic<?> telescopic) {
+    telescopic.modifyTelescope(t -> t.map(param -> param.descent(this)));
+    telescopic.modifyResult(this);
   }
 }
