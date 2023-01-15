@@ -253,9 +253,7 @@ public record AyaGKProducer(
     var bind = node.peekChild(BIND_BLOCK);
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
     var info = new DeclInfo(
-      modifier.personality().data() == DeclInfo.Personality.NORMAL
-        ? modifier.accessibility().data()
-        : Stmt.Accessibility.Private,
+      modifier.accessibility().data(),
       nameOrInfix.component1().sourcePos(),
       sourcePosOf(node),
       nameOrInfix.component2(),
@@ -289,8 +287,7 @@ public record AyaGKProducer(
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
     var info = declInfo(node, x -> x != ModifierParser.Modifier.Open);
-    var modifier = info.modifier;
-    var sample = modifier.personality().data();
+    var sample = info.modifier.personality().data();
     var fnMods = modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
       () -> EnumSet.noneOf(Modifier.class)));
     var ty = typeOrNull(node.peekChild(TYPE));

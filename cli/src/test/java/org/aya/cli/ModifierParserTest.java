@@ -33,16 +33,8 @@ public class ModifierParserTest {
     return Tuple.of(reporter, result);
   }
 
-  public @NotNull ImmutableSeq<WithPos<ModifierParser.Modifier>> posed(@NotNull ImmutableSeq<ModifierParser.Modifier> modifiers) {
-    return modifiers.map(x -> new WithPos<>(SourcePos.NONE, x));
-  }
-
-  @Test
-  public void implication() {
-    var modis = ImmutableSeq.of(
-      Private,
-      Example
-    );
+  @Test public void implication() {
+    var modis = ImmutableSeq.of(Private, Example);
 
     var posModis = modis.mapIndexed((idx, x) -> new WithPos<>(SourcePos.NONE, x));
 
