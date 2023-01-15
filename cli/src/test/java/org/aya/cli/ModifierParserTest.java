@@ -63,7 +63,7 @@ public class ModifierParserTest {
     assertEquals(new ModifierParser.ModifierSet(
       new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private),
       new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE),
-      new WithPos<>(SourcePos.NONE, false)
+      null
     ), returns);
     assertEquals(returns, returns2);
   }

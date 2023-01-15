@@ -17,6 +17,7 @@ import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.EnumMap;
 import java.util.function.Predicate;
@@ -56,7 +57,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     @Nullable SourcePos openKw) {
   }
 
-  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
+  @TestOnly public @NotNull ModifierSet parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
     return parse(modifiers, x -> true);
   }
 
@@ -73,7 +74,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
   /**
    * @param filter The filter also performs on the modifiers that expanded from input.
    */
-  public @NotNull ModifierSet parse(@NotNull SeqLike<WithPos<Modifier>> modifiers, @NotNull Predicate<Modifier> filter) {
+  public @NotNull ModifierSet parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers, @NotNull Predicate<Modifier> filter) {
     EnumMap<ModifierGroup, EnumMap<Modifier, SourcePos>> map = new EnumMap<>(ModifierGroup.class);
 
     modifiers = implication(modifiers).concat(modifiers);
@@ -89,9 +90,8 @@ public record ModifierParser(@NotNull Reporter reporter) {
         continue;
       }
 
-      // TODO: silly getOrPut or use kala map
-      var exists = map.getOrDefault(modifier.group, new EnumMap<>(Modifier.class));
-      map.putIfAbsent(modifier.group, exists);
+      map.computeIfAbsent(modifier.group, k -> new EnumMap<>(Modifier.class));
+      var exists = map.get(modifier.group);
 
       if (exists.containsKey(modifier)) {
         reportDuplicatedModifier(data);
@@ -144,14 +144,9 @@ public record ModifierParser(@NotNull Reporter reporter) {
 
     // others
     var noneGroup = map.get(ModifierGroup.None);
-    SourcePos isOpen = null;
+    var openKw = noneGroup != null ? noneGroup.get(Modifier.Open) : null;
 
-    if (noneGroup != null) {
-      var open = noneGroup.get(Modifier.Open);
-      if (open != null) isOpen = open;
-    }
-
-    return new ModifierSet(acc, pers, isOpen);
+    return new ModifierSet(acc, pers, openKw);
   }
 
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {

@@ -240,7 +240,7 @@ public record AyaGKProducer(
       return new WithPos<>(pos, modifier);
     });
 
-    return new ModifierParser(reporter()).parse(modifiers, filter);
+    return new ModifierParser(reporter()).parse(modifiers.toImmutableSeq(), filter);
   }
 
   record DeclParseData(@NotNull DeclInfo info, @NotNull String name, @NotNull ModifierSet modifier) {}
