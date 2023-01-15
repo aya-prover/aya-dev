@@ -128,6 +128,9 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     }
   }
 
+  /**
+   * @implNote {@link TeleDecl#signature} is always null.
+   */
   public static final class DataCtor extends TeleDecl<DataCall> {
     public final @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
