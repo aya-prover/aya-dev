@@ -4,11 +4,11 @@ package org.aya.tyck.unify;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -237,7 +237,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
 
   private @Nullable Term visitCall(
     @NotNull Callable lhs, @NotNull Callable rhs, Sub lr, Sub rl,
-    @NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> lhsRef, int ulift
+    @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> lhsRef, int ulift
   ) {
     var retType = synthesizer().press(lhs);
     if (synthesizer().tryPress(retType) instanceof SortTerm sort && sort.isProp()) return retType;
@@ -263,8 +263,8 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
       case StructCall type1 -> {
         var fieldSigs = type1.ref().core.fields;
-        var paramSubst = Def.defTele(type1.ref()).view().zip(type1.args().view()).map(x ->
-          Tuple.of(x.component1().ref(), x.component2().term())).<AnyVar, Term>toImmutableMap();
+        var paramSubst = ImmutableMap.from(Def.defTele(type1.ref()).zipView(type1.args()).map(x ->
+          Tuple.of(x.component1().ref(), x.component2().term())));
         var fieldSubst = new Subst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
           var dummyVars = fieldSig.selfTele.map(par -> par.ref().rename());

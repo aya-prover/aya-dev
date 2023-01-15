@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -103,7 +103,7 @@ public interface StmtResolver {
       case TeleDecl.StructField field -> {}
     }
   }
-  private static <T extends Decl.Telescopic<?> & TyckUnit>
+  private static <T extends TeleDecl<?> & TyckUnit>
   void resolveMemberSignature(T ctor, ExprResolver bodyResolver, MutableValue<@NotNull Context> mCtx) {
     ctor.modifyTelescope(t -> t.map(param -> bodyResolver.resolve(param, mCtx)));
     // If changed to method reference, `bodyResolver.enter(mCtx.get())` will be evaluated eagerly
@@ -123,7 +123,7 @@ public interface StmtResolver {
   }
 
   private static @NotNull ExprResolver resolveDeclSignature(
-    @NotNull TeleDecl<?> decl,
+    @NotNull TeleDecl.TopLevel<?> decl,
     ExprResolver.@NotNull Options options,
     @NotNull ResolveInfo info
   ) {
@@ -187,15 +187,15 @@ public interface StmtResolver {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.DataDecl decl -> {
         decl.body.forEach(ctor -> resolveBind(ctor, info));
-        visitBind(decl.ref, decl.bindBlock, info);
+        visitBind(decl.ref, decl.bindBlock(), info);
       }
       case TeleDecl.StructDecl decl -> {
         decl.fields.forEach(field -> resolveBind(field, info));
-        visitBind(decl.ref, decl.bindBlock, info);
+        visitBind(decl.ref, decl.bindBlock(), info);
       }
-      case TeleDecl.DataCtor ctor -> visitBind(ctor.ref, ctor.bindBlock, info);
-      case TeleDecl.StructField field -> visitBind(field.ref, field.bindBlock, info);
-      case TeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
+      case TeleDecl.DataCtor ctor -> visitBind(ctor.ref, ctor.bindBlock(), info);
+      case TeleDecl.StructField field -> visitBind(field.ref, field.bindBlock(), info);
+      case TeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock(), info);
       case TeleDecl.PrimDecl decl -> {}
       case Command cmd -> {}
       case Generalize generalize -> {}

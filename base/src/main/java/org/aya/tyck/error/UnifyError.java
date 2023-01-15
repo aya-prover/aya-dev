@@ -33,7 +33,7 @@ public sealed interface UnifyError extends TyckError {
     @NotNull UnifyInfo info
   ) implements UnifyError {
     @Override public @NotNull SourcePos sourcePos() {
-      return ctor.sourcePos;
+      return ctor.sourcePos();
     }
 
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {

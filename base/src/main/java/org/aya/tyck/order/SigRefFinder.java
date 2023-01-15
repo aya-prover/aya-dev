@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
@@ -22,21 +22,19 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
   public void accept(@NotNull TyckUnit sn) {
     switch (sn) {
       case Decl decl -> {
-        if (decl instanceof Decl.Telescopic<?> proof)
-          proof.telescope().mapNotNull(Expr.Param::type).forEach(this);
-        if (decl instanceof Decl.Resulted proof) {
-          var result = proof.result();
-          if (result != null) accept(result);
-        }
+        if (decl instanceof TeleDecl<?> proof) telescopic(proof);
         // for ctor: partial is a part of header
-        if (decl instanceof TeleDecl.DataDecl.DataCtor ctor) {
-          accept(ctor.clauses);
-        }
+        if (decl instanceof TeleDecl.DataCtor ctor) accept(ctor.clauses);
       }
       case Command.Module module -> module.contents().forEach(this::accept);
       case Command cmd -> {}
       case Generalize variables -> accept(variables.type);
     }
+  }
+
+  public void telescopic(@NotNull TeleDecl<?> proof) {
+    proof.telescope.mapNotNull(Expr.Param::type).forEach(this);
+    if (proof.result != null) accept(proof.result);
   }
 
   @Override public void pre(@NotNull Expr expr) {

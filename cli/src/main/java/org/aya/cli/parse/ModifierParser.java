@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -7,7 +7,7 @@ import kala.collection.SeqLike;
 import org.aya.cli.parse.error.ContradictModifierError;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
 import org.aya.cli.parse.error.NotSuitableModifierWarn;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.DeclInfo;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.util.InternalException;
 import org.aya.util.error.SourcePos;
@@ -42,7 +42,7 @@ public class ModifierParser {
 
   public record ModifierSet(
     @NotNull WithPos<Stmt.Accessibility> accessibility,
-    @NotNull WithPos<Decl.Personality> personality,
+    @NotNull WithPos<DeclInfo.Personality> personality,
     @NotNull WithPos<Boolean> isReExport) {
   }
 
@@ -109,18 +109,18 @@ public class ModifierParser {
 
     // personality
     var persGroup = map.get(ModifierGroup.Personality);
-    WithPos<Decl.Personality> pers;
+    WithPos<DeclInfo.Personality> pers;
 
     if (persGroup != null && !persGroup.isEmpty()) {
       var entry = persGroup.entrySet().iterator().next();
-      Decl.Personality key = switch (entry.getKey()) {
-        case Example -> Decl.Personality.EXAMPLE;
-        case Counterexample -> Decl.Personality.COUNTEREXAMPLE;
+      DeclInfo.Personality key = switch (entry.getKey()) {
+        case Example -> DeclInfo.Personality.EXAMPLE;
+        case Counterexample -> DeclInfo.Personality.COUNTEREXAMPLE;
         default -> unreachable();
       };
 
       pers = new WithPos<>(entry.getValue(), key);
-    } else pers = new WithPos<>(SourcePos.NONE, Decl.Personality.NORMAL);
+    } else pers = new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL);
 
     // others
     var noneGroup = map.get(ModifierGroup.None);

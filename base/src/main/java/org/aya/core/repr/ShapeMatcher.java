@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.repr;
 
@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -28,7 +28,7 @@ import java.util.function.Function;
  * @author kiva
  */
 public record ShapeMatcher(
-  @NotNull MutableLinkedList<DefVar<? extends Def, ? extends Decl.Telescopic<?>>> def,
+  @NotNull MutableLinkedList<DefVar<? extends Def, ? extends TeleDecl<?>>> def,
   @NotNull MutableMap<CodeShape.MomentId, DefVar<?, ?>> captures,
   @NotNull MutableMap<AnyVar, AnyVar> teleSubst
 ) {
@@ -117,7 +117,7 @@ public record ShapeMatcher(
       || (xlicit == CodeShape.ParamShape.Licit.Kind.Ex) == isExplicit;
   }
 
-  private boolean matchInside(@NotNull DefVar<? extends Def, ? extends Decl.Telescopic<?>> defVar, @NotNull BooleanSupplier matcher) {
+  private boolean matchInside(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar, @NotNull BooleanSupplier matcher) {
     def.push(defVar);
     var result = matcher.getAsBoolean();
     def.pop();

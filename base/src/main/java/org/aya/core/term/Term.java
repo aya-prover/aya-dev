@@ -51,7 +51,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
     return new EndoTerm.Substituter(subst).apply(this);
   }
 
-  default @NotNull Term subst(@NotNull Map<AnyVar, ? extends Term> subst) {
+  default @NotNull Term subst(@NotNull Map<? extends AnyVar, ? extends Term> subst) {
     return subst(new Subst(MutableMap.from(subst)));
   }
 

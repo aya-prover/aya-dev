@@ -1,11 +1,8 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.Expr;
-import org.aya.core.def.Def;
-import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.tyck.order.TyckUnit;
@@ -16,15 +13,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.UnaryOperator;
-
 /**
  * Generic concrete definitions, corresponding to {@link org.aya.core.def.GenericDef}.
  * Concrete definitions can be varied in the following ways:
  * <ul>
- *   <li>Whether it has a telescope, see {@link Telescopic}</li>
+ *   <li>Whether it has a telescope, see {@link TeleDecl}</li>
  *   <li>Whether it can be defined at top-level, see {@link TopLevel}</li>
- *   <li>Whether it has a result type, see {@link Resulted}</li>
  * </ul>
  * We say these are properties of a concrete definition and should be implemented selectively.
  *
@@ -41,35 +35,30 @@ import java.util.function.UnaryOperator;
  * @see ClassDecl
  */
 public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits CommonDecl {
-  /** @see org.aya.generic.Modifier */
-  enum Personality {
-    /** Denotes that the definition is a normal definition (default behavior) */
-    NORMAL,
-    /** Denotes that the definition is an example (same as normal, but in separated context) */
-    EXAMPLE,
-    /** Denotes that the definition is a counterexample (errors expected, in separated context) */
-    COUNTEREXAMPLE,
+  @Contract(pure = true) @NotNull DefVar<?, ?> ref();
+  @Contract(pure = true) @NotNull DeclInfo info();
+  default @NotNull BindBlock bindBlock() {
+    return info().bindBlock();
   }
 
-  @Override @NotNull Accessibility accessibility();
-  @Contract(pure = true) @NotNull DefVar<?, ?> ref();
-  @NotNull BindBlock bindBlock();
-  @Override @Nullable OpInfo opInfo();
-  @NotNull SourcePos entireSourcePos();
+  default @NotNull SourcePos entireSourcePos() {
+    return info().entireSourcePos();
+  }
+
+  @Override default @NotNull SourcePos sourcePos() {
+    return info().sourcePos();
+  }
+
+  @Override default @NotNull Accessibility accessibility() {
+    return info().accessibility();
+  }
+
+  @Override default @Nullable OpInfo opInfo() {
+    return info().opInfo();
+  }
 
   @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     return ref().isInModule(currentMod) && ref().core == null;
-  }
-
-  /**
-   * Denotes that the definition is telescopic
-   *
-   * @author kiva
-   */
-  sealed interface Telescopic<RetTy extends Term> extends Resulted permits TeleDecl, TeleDecl.DataCtor, TeleDecl.StructField {
-    @NotNull ImmutableSeq<Expr.Param> telescope();
-    void modifyTelescope(@NotNull UnaryOperator<ImmutableSeq<Expr.Param>> f);
-    @Nullable Def.Signature<RetTy> signature();
   }
 
   /**
@@ -77,19 +66,9 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface TopLevel permits ClassDecl, TeleDecl {
-    @NotNull Personality personality();
+  sealed interface TopLevel permits ClassDecl, TeleDecl.TopLevel {
+    @NotNull DeclInfo.Personality personality();
     @Nullable Context getCtx();
     void setCtx(@NotNull Context ctx);
-  }
-
-  /**
-   * Denotes that the definition has a result type
-   *
-   * @author kiva
-   */
-  sealed interface Resulted permits ClassDecl, Telescopic {
-    @Nullable Expr result();
-    void modifyResult(@NotNull UnaryOperator<Expr> f);
   }
 }
