@@ -225,6 +225,10 @@ public record AyaGKProducer(
     return unreachable(node);
   }
 
+  /**
+   * @return public if accessiblity is unspecified
+   * @see ModifierParser#parse(ImmutableSeq, Predicate)
+   */
   public @NotNull ModifierSet declModifiersOf(
     @NotNull GenericNode<?> node,
     @NotNull Predicate<ModifierParser.Modifier> filter) {
@@ -400,24 +404,12 @@ public record AyaGKProducer(
 
   public @NotNull TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var bind = node.peekChild(BIND_BLOCK);
     var partial = node.peekChild(PARTIAL_BLOCK);
     var ty = node.peekChild(TYPE);
-    var namePos = nameOrInfix.component1().sourcePos();
-    var ctor = new TeleDecl.DataCtor(
-      namePos,
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      nameOrInfix.component1().data(),
-      tele,
-      partial(partial, partial != null ? sourcePosOf(partial) : namePos),
-      patterns,
-      node.peekChild(KW_COERCE) != null,
-      ty == null ? null : type(ty),
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
-    );
-    return ctor;
+    var info = declInfo(node, x -> false);
+    var par = partial(partial, partial != null ? sourcePosOf(partial) : info.info.sourcePos());
+    var coe = node.peekChild(KW_COERCE) != null;
+    return new TeleDecl.DataCtor(info.info, info.name, tele, par, patterns, coe, ty == null ? null : type(ty));
   }
 
   public @NotNull ImmutableSeq<Expr.Param> telescope(SeqView<GenericNode<?>> telescope) {
