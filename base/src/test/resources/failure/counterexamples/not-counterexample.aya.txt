@@ -3,6 +3,7 @@ In file $FILE:1:0 ->
   1 │   counterexample open data Nat | suc Nat | zero
     │   ╰────────────╯
 
-Warning: The modifier counterexample is not suitable here.
+Error: The modifier counterexample is not suitable here.
 
-That looks right!
+1 error(s), 0 warning(s).
+What are you doing?
