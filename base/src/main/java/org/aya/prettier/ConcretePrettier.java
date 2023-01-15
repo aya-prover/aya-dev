@@ -340,24 +340,18 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     return switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.StructDecl decl -> {
-        var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
-          visitPersonality(decl.personality()),
-          Doc.styled(KEYWORD, "struct"),
-          linkDef(decl.ref, STRUCT),
-          visitTele(decl.telescope));
+        var prelude = declPrelude(decl, "struct");
+        prelude.append(linkDef(decl.ref, STRUCT));
+        prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
             decl.fields.view().map(this::decl))))),
-          visitBindBlock(decl.bindBlock)
+          visitBindBlock(decl.bindBlock())
         );
       }
       case TeleDecl.FnDecl decl -> {
-        var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
-          visitPersonality(decl.personality()),
-          Doc.styled(KEYWORD, "def"));
+        var prelude = declPrelude(decl, "def");
         prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
         prelude.append(linkDef(decl.ref, FN));
         prelude.append(visitTele(decl.telescope));
@@ -365,21 +359,18 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           decl.body.fold(expr -> Doc.cat(Doc.spaced(Doc.symbol("=>")), term(Outer.Free, expr)),
             clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses)))),
-          visitBindBlock(decl.bindBlock)
+          visitBindBlock(decl.bindBlock())
         );
       }
       case TeleDecl.DataDecl decl -> {
-        var prelude = MutableList.of(
-          visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
-          visitPersonality(decl.personality()),
-          Doc.styled(KEYWORD, "data"),
-          linkDef(decl.ref, DATA),
-          visitTele(decl.telescope));
+        var prelude = declPrelude(decl, "data");
+        prelude.append(linkDef(decl.ref, STRUCT));
+        prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           Doc.emptyIf(decl.body.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
             decl.body.view().map(this::decl))))),
-          visitBindBlock(decl.bindBlock)
+          visitBindBlock(decl.bindBlock())
         );
       }
       case TeleDecl.PrimDecl decl -> primDoc(decl.ref);
@@ -408,6 +399,13 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         } else yield Doc.sep(Doc.symbol("|"), doc);
       }
     };
+  }
+
+  private @NotNull MutableList<Doc> declPrelude(TeleDecl.TopLevel<?> decl, String name) {
+    return MutableList.of(
+      visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
+      visitPersonality(decl.personality()),
+      Doc.styled(KEYWORD, name));
   }
 
   /**

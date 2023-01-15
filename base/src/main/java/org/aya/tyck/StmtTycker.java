@@ -81,7 +81,7 @@ public final class StmtTycker extends TracedTycker {
           }, clauses -> {
             var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
-            var pos = decl.sourcePos;
+            var pos = decl.sourcePos();
             ClauseTycker.PatResult result;
             var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
             if (orderIndependent) {
@@ -171,7 +171,7 @@ public final class StmtTycker extends TracedTycker {
       case TeleDecl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, null);
         // It might contain unsolved holes, but that's acceptable.
-        if (fn.result == null) fn.result = new Expr.Hole(fn.sourcePos, false, null);
+        if (fn.result == null) fn.result = new Expr.Hole(fn.sourcePos(), false, null);
         var resultRes = tycker.ty(fn.result).freezeHoles(tycker.state);
         // We cannot solve metas in result type from clauses,
         //  because when we're in the clauses, the result type is substituted,
@@ -254,7 +254,7 @@ public final class StmtTycker extends TracedTycker {
     if (ctor.patterns.isNotEmpty()) {
       var sig = new Def.Signature<>(dataSig.param(), predataCall);
       var lhs = ClauseTycker.checkLhs(tycker,
-        new Pattern.Clause(ctor.sourcePos, ctor.patterns, Option.none()), sig, false, false);
+        new Pattern.Clause(ctor.sourcePos(), ctor.patterns, Option.none()), sig, false, false);
       pat = lhs.preclause().patterns();
       // Revert to the "after patterns" state
       tycker.ctx = lhs.gamma();

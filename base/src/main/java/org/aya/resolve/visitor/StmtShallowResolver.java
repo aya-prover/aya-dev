@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -115,7 +115,7 @@ public record StmtShallowResolver(
       case TeleDecl.PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
-        var sourcePos = decl.sourcePos;
+        var sourcePos = decl.sourcePos();
         var primID = PrimDef.ID.find(name);
         if (primID == null) context.reportAndThrow(new PrimResolveError.UnknownPrim(sourcePos, name));
         var lack = factory.checkDependency(primID);
@@ -128,12 +128,12 @@ public record StmtShallowResolver(
       }
       case TeleDecl.DataCtor ctor -> {
         ctor.ref().module = context.moduleName();
-        context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
+        context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos());
         resolveOpInfo(ctor, context);
       }
       case TeleDecl.StructField field -> {
         field.ref().module = context.moduleName();
-        context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
+        context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos());
         resolveOpInfo(field, context);
       }
     }

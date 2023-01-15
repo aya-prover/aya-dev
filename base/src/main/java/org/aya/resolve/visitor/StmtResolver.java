@@ -187,15 +187,15 @@ public interface StmtResolver {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.DataDecl decl -> {
         decl.body.forEach(ctor -> resolveBind(ctor, info));
-        visitBind(decl.ref, decl.bindBlock, info);
+        visitBind(decl.ref, decl.bindBlock(), info);
       }
       case TeleDecl.StructDecl decl -> {
         decl.fields.forEach(field -> resolveBind(field, info));
-        visitBind(decl.ref, decl.bindBlock, info);
+        visitBind(decl.ref, decl.bindBlock(), info);
       }
-      case TeleDecl.DataCtor ctor -> visitBind(ctor.ref, ctor.bindBlock, info);
-      case TeleDecl.StructField field -> visitBind(field.ref, field.bindBlock, info);
-      case TeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
+      case TeleDecl.DataCtor ctor -> visitBind(ctor.ref, ctor.bindBlock(), info);
+      case TeleDecl.StructField field -> visitBind(field.ref, field.bindBlock(), info);
+      case TeleDecl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock(), info);
       case TeleDecl.PrimDecl decl -> {}
       case Command cmd -> {}
       case Generalize generalize -> {}
